@@ -1,29 +1,35 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './lib/hooks/useAuth';
 import LandingPage from './pages/LandingPage';
 import AuthPlaceholder from './pages/AuthPlaceholder';
+import LoadingScreen from './components/LoadingScreen';
 
 // Dashboard pages
-import Beranda from './dashboard/pages/Beranda';
-import Transaksi from './dashboard/pages/Transaksi';
-import RPA from './dashboard/pages/RPA';
-import RPADetail from './dashboard/pages/RPADetail';
-import Kandang from './dashboard/pages/Kandang';
-import Simulator from './dashboard/pages/Simulator';
-import Akun from './dashboard/pages/Akun';
+import BrokerBeranda from './dashboard/broker/Beranda';
+import PeternakBeranda from './dashboard/peternak/Beranda';
+import RPABeranda from './dashboard/rpa/Beranda';
+
+import Transaksi from './dashboard/broker/Transaksi';
+import RPA from './dashboard/broker/RPA';
+import RPADetail from './dashboard/broker/RPADetail';
+import Kandang from './dashboard/broker/Kandang';
+import Simulator from './dashboard/broker/Simulator';
+import Akun from './dashboard/broker/Akun';
 import OnboardingFlow from './dashboard/pages/OnboardingFlow';
-import StokVirtual from './dashboard/pages/StokVirtual';
-import Orders from './dashboard/pages/Orders';
-import Pengiriman from './dashboard/pages/Pengiriman';
-import LossReport from './dashboard/pages/LossReport';
-import CashFlow from './dashboard/pages/CashFlow';
-import Forecast from './dashboard/pages/Forecast';
 import HargaPasar from './dashboard/pages/HargaPasar';
+import Pengiriman from './dashboard/broker/Pengiriman';
+import CashFlow from './dashboard/broker/CashFlow';
+import Armada from './dashboard/broker/Armada';
 
 // Components
+import ErrorBoundary from './components/ErrorBoundary';
 import BottomNav from './dashboard/components/BottomNav';
-import LoadingSpinner from './dashboard/components/LoadingSpinner';
+import BusinessModelOverlay from './dashboard/components/BusinessModelOverlay';
+import ComingSoon from './dashboard/components/ComingSoon';
+import BrokerLayout from './dashboard/layouts/BrokerLayout';
+import DesktopSidebarLayout from './dashboard/layouts/DesktopSidebarLayout';
+import { useMediaQuery } from './lib/hooks/useMediaQuery';
 
 // Scroll to top on route change
 const ScrollToTop = () => {
@@ -34,24 +40,48 @@ const ScrollToTop = () => {
   return null;
 };
 
-function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
-  if (loading) return <LoadingSpinner fullPage={true} />;
+function ProtectedRoute({ children, requiredType }) {
+  const { user, profile, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) return <LoadingScreen />;
+  
   if (!user) return <Navigate to="/login" replace />;
+
+  if (profile && !profile.onboarded && location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  // Role guard (only check if business model is selected)
+  if (profile?.business_model_selected && requiredType && profile.user_type !== requiredType) {
+    const role = profile.user_type === 'rpa' ? 'rpa-buyer' : profile.user_type;
+    return <Navigate to={`/${role}/beranda`} replace />;
+  }
+
   return children;
 }
 
+function RoleRedirector() {
+  const { profile, loading } = useAuth();
+  if (loading) return <LoadingScreen />;
+  if (!profile) return <Navigate to="/login" replace />;
+  
+  // If no model selected, we just stay let the overlay handle them
+  if (!profile.business_model_selected) return <Navigate to="/broker/beranda" replace />; 
+  
+  const role = profile.user_type === 'rpa' ? 'rpa-buyer' : profile.user_type;
+  return <Navigate to={`/${role}/beranda`} replace />;
+}
+
 function DashboardLayout({ children }) {
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
+
+  if (isDesktop) {
+    return <DesktopSidebarLayout>{children}</DesktopSidebarLayout>;
+  }
+
   return (
-    <div style={{ 
-      background: '#06090F', 
-      minHeight: '100vh', 
-      maxWidth: '480px',
-      margin: '0 auto', 
-      position: 'relative', 
-      paddingBottom: '80px',
-      boxShadow: '0 0 100px rgba(0,0,0,0.5)'
-    }}>
+    <div className="bg-background min-h-screen max-w-[480px] mx-auto relative pb-[80px] shadow-2xl overflow-x-hidden">
       {children}
       <BottomNav />
     </div>
@@ -59,91 +89,155 @@ function DashboardLayout({ children }) {
 }
 
 function App() {
+  const { profile, refetchProfile } = useAuth();
+
   return (
     <BrowserRouter>
       <ScrollToTop />
+      
+      {/* Forced Business Model Selection Overlay */}
+      <BusinessModelOverlay 
+        profile={profile} 
+        onComplete={() => refetchProfile()} 
+      />
+
       <Routes>
         {/* Public */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<AuthPlaceholder type="login" />} />
         <Route path="/register" element={<AuthPlaceholder type="register" />} />
 
-        {/* Protected Dashboard */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <DashboardLayout><Beranda /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/transaksi" element={
-          <ProtectedRoute>
-            <DashboardLayout><Transaksi /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/rpa" element={
-          <ProtectedRoute>
-            <DashboardLayout><RPA /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/rpa/:id" element={
-          <ProtectedRoute>
-            <DashboardLayout><RPADetail /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/kandang" element={
-          <ProtectedRoute>
-            <DashboardLayout><Kandang /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/simulator" element={
-          <ProtectedRoute>
-            <DashboardLayout><Simulator /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/akun" element={
-          <ProtectedRoute>
-            <DashboardLayout><Akun /></DashboardLayout>
-          </ProtectedRoute>
-        } />
+        {/* Onboarding */}
         <Route path="/onboarding" element={
           <ProtectedRoute>
             <OnboardingFlow />
           </ProtectedRoute>
         } />
-        <Route path="/stok" element={
-          <ProtectedRoute>
-            <DashboardLayout><StokVirtual /></DashboardLayout>
+
+        {/* Broker routes */}
+        <Route path="/broker" element={<Navigate to="/broker/beranda" replace />} />
+        <Route path="/broker/beranda" element={
+          <ProtectedRoute requiredType="broker">
+            <BrokerLayout><BrokerBeranda /></BrokerLayout>
           </ProtectedRoute>
         } />
-        <Route path="/orders" element={
-          <ProtectedRoute>
-            <DashboardLayout><Orders /></DashboardLayout>
+        <Route path="/broker/transaksi" element={
+          <ProtectedRoute requiredType="broker">
+            <BrokerLayout><Transaksi /></BrokerLayout>
           </ProtectedRoute>
         } />
-        <Route path="/pengiriman" element={
-          <ProtectedRoute>
-            <DashboardLayout><Pengiriman /></DashboardLayout>
+        <Route path="/broker/rpa" element={
+          <ProtectedRoute requiredType="broker">
+            <BrokerLayout><RPA /></BrokerLayout>
           </ProtectedRoute>
         } />
-        <Route path="/loss" element={
-          <ProtectedRoute>
-            <DashboardLayout><LossReport /></DashboardLayout>
+        <Route path="/broker/rpa/:id" element={
+          <ProtectedRoute requiredType="broker">
+            <BrokerLayout>
+              <ErrorBoundary>
+                <RPADetail />
+              </ErrorBoundary>
+            </BrokerLayout>
           </ProtectedRoute>
         } />
-        <Route path="/cashflow" element={
-          <ProtectedRoute>
-            <DashboardLayout><CashFlow /></DashboardLayout>
+        <Route path="/broker/kandang" element={
+          <ProtectedRoute requiredType="broker">
+            <BrokerLayout><Kandang /></BrokerLayout>
           </ProtectedRoute>
         } />
-        <Route path="/forecast" element={
-          <ProtectedRoute>
-            <DashboardLayout><Forecast /></DashboardLayout>
+        <Route path="/broker/pengiriman" element={
+          <ProtectedRoute requiredType="broker">
+            <BrokerLayout><Pengiriman /></BrokerLayout>
           </ProtectedRoute>
         } />
+        <Route path="/broker/cashflow" element={
+          <ProtectedRoute requiredType="broker">
+            <BrokerLayout><CashFlow /></BrokerLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/broker/armada" element={
+          <ProtectedRoute requiredType="broker">
+            <BrokerLayout><Armada /></BrokerLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/broker/simulator" element={
+          <ProtectedRoute requiredType="broker">
+            <BrokerLayout><Simulator /></BrokerLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/broker/akun" element={
+          <ProtectedRoute requiredType="broker">
+            <BrokerLayout><Akun /></BrokerLayout>
+          </ProtectedRoute>
+        } />
+
+        {/* Peternak routes */}
+        <Route path="/peternak" element={<Navigate to="/peternak/beranda" replace />} />
+        <Route path="/peternak/beranda" element={
+          <ProtectedRoute requiredType="peternak">
+            <DashboardLayout><PeternakBeranda /></DashboardLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/peternak/siklus" element={
+          <ProtectedRoute requiredType="peternak">
+            <DashboardLayout><ComingSoon title="Siklus Pemeliharaan" icon="🔄" /></DashboardLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/peternak/input" element={
+          <ProtectedRoute requiredType="peternak">
+            <DashboardLayout><ComingSoon title="Input Harian" icon="📋" /></DashboardLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/peternak/pakan" element={
+          <ProtectedRoute requiredType="peternak">
+            <DashboardLayout><ComingSoon title="Stok & Pakan" icon="📦" /></DashboardLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/peternak/akun" element={
+          <ProtectedRoute requiredType="peternak">
+            <DashboardLayout><Akun /></DashboardLayout>
+          </ProtectedRoute>
+        } />
+
+        {/* RPA routes */}
+        <Route path="/rpa-buyer" element={<Navigate to="/rpa-buyer/beranda" replace />} />
+        <Route path="/rpa-buyer/beranda" element={
+          <ProtectedRoute requiredType="rpa">
+            <DashboardLayout><RPABeranda /></DashboardLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/rpa-buyer/order" element={
+          <ProtectedRoute requiredType="rpa">
+            <DashboardLayout><ComingSoon title="Order ke Broker" icon="🛒" /></DashboardLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/rpa-buyer/hutang" element={
+          <ProtectedRoute requiredType="rpa">
+            <DashboardLayout><ComingSoon title="Hutang Saya" icon="💳" /></DashboardLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/rpa-buyer/akun" element={
+          <ProtectedRoute requiredType="rpa">
+            <DashboardLayout><Akun /></DashboardLayout>
+          </ProtectedRoute>
+        } />
+
+        {/* Shared routes */}
         <Route path="/harga-pasar" element={
           <ProtectedRoute>
             <DashboardLayout><HargaPasar /></DashboardLayout>
           </ProtectedRoute>
         } />
+
+        {/* Root Redirector */}
+        <Route path="/home" element={<RoleRedirector />} />
+
+        {/* Legacy Redirects */}
+        <Route path="/dashboard" element={<RoleRedirector />} />
+        <Route path="/beranda" element={<RoleRedirector />} />
+        <Route path="/akun" element={<RoleRedirector />} />
+        <Route path="/transaksi" element={<RoleRedirector />} />
+        <Route path="/rpa-dashboard" element={<RoleRedirector />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -59,7 +59,7 @@ export default function Simulator() {
               {profit >= 0 ? '+' : ''}{formatIDR(profit)}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', borderTop: '1px solid hsl(var(--border))', paddingTop: '20px' }}>
               <div>
                 <div style={{ fontSize: '10px', fontWeight: 700, opacity: 0.8, marginBottom: '2px' }}>PROFIT / KG</div>
                 <div style={{ fontSize: '16px', fontWeight: 800 }}>{formatIDR(profitPerKg)}</div>
@@ -87,7 +87,7 @@ export default function Simulator() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', background: 'rgba(59,130,246,0.05)', borderRadius: '12px', border: '1px solid rgba(59,130,246,0.1)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px', background: 'rgba(59,130,246,0.1)', borderRadius: '12px', border: '1px solid rgba(59,130,246,0.1)' }}>
             <Info size={14} color="#60A5FA" />
             <span style={{ fontSize: '11px', color: '#93C5FD', lineHeight: 1.4 }}>
               Simulator ini menggunakan perhitangan estimasi kasar. Hasil lapangan dapat berbeda karena penyusutan berat.

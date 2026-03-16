@@ -33,5 +33,11 @@ export function useAuth() {
     setLoading(false)
   }
 
-  return { user, profile, loading }
+  return { 
+    user, 
+    profile, 
+    tenant: profile?.tenants, 
+    loading,
+    refetchProfile: () => user && fetchProfile(user.id)
+  }
 }

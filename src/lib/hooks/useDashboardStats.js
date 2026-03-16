@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../supabase'
+import { safeNumber } from '../format'
 
 export function useDashboardStats() {
   return useQuery({
@@ -30,14 +30,14 @@ export function useDashboardStats() {
       const todaySales = sales.filter(s => s.transaction_date === today)
       const todayPurchases = purchases.filter(p => p.transaction_date === today)
 
-      const todayRevenue = todaySales.reduce((s, t) => s + (t.net_revenue || 0), 0)
-      const todayModal = todayPurchases.reduce((s, t) => s + (t.total_modal || 0), 0)
-      const todayProfit = todayRevenue - todayModal
+      const todayRevenue = todaySales.reduce((s, t) => s + safeNumber(t.net_revenue), 0)
+      const todayModal = todayPurchases.reduce((s, t) => s + safeNumber(t.total_modal), 0)
+      const todayProfit = safeNumber(todayRevenue) - safeNumber(todayModal)
 
-      const totalPiutang = rpas.reduce((s, r) => s + (r.total_outstanding || 0), 0)
-      const rpaWithDebt = rpas.filter(r => r.total_outstanding > 0)
+      const totalPiutang = rpas.reduce((s, r) => s + safeNumber(r.total_outstanding), 0)
+      const rpaWithDebt = rpas.filter(r => safeNumber(r.total_outstanding) > 0)
       const topRPADebt = [...rpaWithDebt]
-        .sort((a, b) => b.total_outstanding - a.total_outstanding)
+        .sort((a, b) => safeNumber(b.total_outstanding) - safeNumber(a.total_outstanding))
         .slice(0, 3)
 
       const readyFarms = farms.filter(f => f.status === 'ready')
@@ -59,12 +59,12 @@ export function useDashboardStats() {
       ].sort((a, b) => new Date(b.date) - new Date(a.date))
 
       return {
-        todayProfit,
-        todayTransactionCount: todaySales.length + todayPurchases.length,
-        todaySalesCount: todaySales.length,
-        todayPurchasesCount: todayPurchases.length,
-        totalPiutang,
-        rpaWithDebtCount: rpaWithDebt.length,
+        todayProfit: safeNumber(todayProfit),
+        todayTransactionCount: safeNumber(todaySales.length + todayPurchases.length),
+        todaySalesCount: safeNumber(todaySales.length),
+        todayPurchasesCount: safeNumber(todayPurchases.length),
+        totalPiutang: safeNumber(totalPiutang),
+        rpaWithDebtCount: safeNumber(rpaWithDebt.length),
         topRPADebt,
         readyFarmsCount: readyFarms.length,
         readyFarms,

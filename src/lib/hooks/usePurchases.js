@@ -1,18 +1,33 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../supabase'
+import { useAuth } from './useAuth'
 
 export function usePurchases() {
+  const { tenant } = useAuth()
   return useQuery({
-    queryKey: ['purchases'],
+    queryKey: ['purchases', tenant?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('purchases')
-        .select('*, farms(farm_name)')
+        .select(`
+          id, 
+          transaction_date, 
+          quantity, 
+          total_weight_kg, 
+          price_per_kg,
+          total_modal, 
+          transport_cost,
+          tenant_id,
+          farm_id,
+          farms(farm_name)
+        `)
+        .eq('tenant_id', tenant.id)
         .eq('is_deleted', false)
         .order('transaction_date', { ascending: false })
       
       if (error) throw error
       return data
     },
+    enabled: !!tenant?.id
   })
 }

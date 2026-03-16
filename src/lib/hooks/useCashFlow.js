@@ -1,72 +1,85 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 
-export function useCashFlow(period = 'month') {
+export function useCashFlow(startDate, endDate, tenantId) {
   return useQuery({
-    queryKey: ['cashflow', period],
+    queryKey: ['cashflow', tenantId, startDate, endDate],
     queryFn: async () => {
-      const now = new Date()
-      let startDate
-      if (period === 'week') {
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-      } else if (period === 'month') {
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-      } else {
-        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-      }
+      // Ensure date strings are in correct format for filtering
+      const startStr = typeof startDate === 'string' ? startDate : startDate.toISOString().split('T')[0]
+      const endStr = typeof endDate === 'string' ? endDate : endDate.toISOString().split('T')[0]
 
-      const start = startDate.toISOString().split('T')[0]
+      const [salesRes, purchasesRes, deliveriesRes, lossRes, expensesRes] = await Promise.all([
+        supabase.from('sales')
+          .select('id, net_revenue, transaction_date, payment_status, rpa_id, rpa_clients(rpa_name)')
+          .eq('tenant_id', tenantId)
+          .eq('is_deleted', false)
+          .gte('transaction_date', startStr)
+          .lte('transaction_date', endStr)
+          .order('transaction_date', { ascending: true }),
 
-      const [salesRes, purchasesRes, deliveriesRes, lossRes] =
-        await Promise.all([
-          supabase.from('sales')
-            .select('net_revenue, transaction_date, payment_status')
-            .gte('transaction_date', start)
-            .eq('is_deleted', false),
+        supabase.from('purchases')
+          .select('id, total_modal, transaction_date, farm_id, farms(farm_name)')
+          .eq('tenant_id', tenantId)
+          .eq('is_deleted', false)
+          .gte('transaction_date', startStr)
+          .lte('transaction_date', endStr)
+          .order('transaction_date', { ascending: true }),
 
-          supabase.from('purchases')
-            .select('total_modal, transaction_date')
-            .eq('is_deleted', false)
-            .gte('transaction_date', start),
+        supabase.from('deliveries')
+          .select('id, delivery_cost, created_at, driver_name, sale_id, sales(rpa_clients(rpa_name))')
+          .eq('tenant_id', tenantId)
+          .eq('is_deleted', false)
+          .gte('created_at', startStr + 'T00:00:00')
+          .lte('created_at', endStr + 'T23:59:59'),
 
-          supabase.from('deliveries')
-            .select('delivery_cost, created_at')
-            .eq('is_deleted', false)
-            .gte('created_at', start),
+        supabase.from('loss_reports')
+          .select('id, financial_loss, report_date, loss_type, description')
+          .eq('tenant_id', tenantId)
+          .eq('is_deleted', false)
+          .gte('report_date', startStr)
+          .lte('report_date', endStr),
 
-          supabase.from('loss_reports')
-            .select('financial_loss, report_date')
-            .eq('is_deleted', false)
-            .gte('report_date', start),
-        ])
+        supabase.from('extra_expenses')
+          .select('id, amount, expense_date, category, description')
+          .eq('tenant_id', tenantId)
+          .eq('is_deleted', false)
+          .gte('expense_date', startStr)
+          .lte('expense_date', endStr)
+          .order('expense_date', { ascending: true }),
+      ])
 
-      const income = (salesRes.data || [])
-        .filter(s => s.payment_status === 'lunas')
-        .reduce((s, p) => s + (p.net_revenue || 0), 0)
+      const sales      = salesRes.data      || []
+      const purchases  = purchasesRes.data  || []
+      const deliveries = deliveriesRes.data || []
+      const losses     = lossRes.data       || []
+      const expenses   = expensesRes.data   || []
 
-      const modalBeli = (purchasesRes.data || [])
-        .reduce((s, p) => s + (p.total_modal || 0), 0)
-
-      const transport = (deliveriesRes.data || [])
-        .reduce((s, d) => s + (d.delivery_cost || 0), 0)
-
-      const losses = (lossRes.data || [])
-        .reduce((s, l) => s + (l.financial_loss || 0), 0)
-
-      const totalOut = modalBeli + transport + losses
-      const netFlow = income - totalOut
+      const totalPemasukan = sales.reduce((s, t) => s + (Number(t.net_revenue) || 0), 0)
+      const totalModal = purchases.reduce((s, t) => s + (Number(t.total_modal) || 0), 0)
+      const totalTransport = deliveries.reduce((s, t) => s + (Number(t.delivery_cost) || 0), 0)
+      const totalKerugian = losses.reduce((s, t) => s + (Number(t.financial_loss) || 0), 0)
+      const totalExtra = expenses.reduce((s, t) => s + (Number(t.amount) || 0), 0)
+      
+      const totalKeluar = totalModal + totalTransport + totalKerugian + totalExtra
+      const netCashFlow = totalPemasukan - totalKeluar
 
       return {
-        income,
-        totalOut,
-        modalBeli,
-        transport,
-        losses,
-        netFlow,
-        margin: income > 0 ? ((netFlow / income) * 100).toFixed(1) : 0,
-        sales: salesRes.data || [],
-        purchases: purchasesRes.data || [],
+        sales, purchases, deliveries, losses, expenses,
+        summary: {
+          totalPemasukan, 
+          totalModal, 
+          totalTransport,
+          totalKerugian, 
+          totalExtra, 
+          totalKeluar,
+          netCashFlow,
+          marginPct: totalPemasukan > 0
+            ? ((netCashFlow / totalPemasukan) * 100).toFixed(1)
+            : 0
+        }
       }
     },
+    enabled: !!tenantId && !!startDate && !!endDate
   })
 }

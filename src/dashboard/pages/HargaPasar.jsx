@@ -1,110 +1,406 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, MapPin, Clock, Info, ShieldCheck, Zap } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
-import { formatIDR } from '../../lib/format';
-import TopBar from '../components/TopBar';
+import React, { useState, useEffect, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { 
+  TrendingUp, TrendingDown, Clock, Info, 
+  Zap, Calendar, ChevronDown, ChevronUp,
+  Save, AlertCircle, BarChart3, History
+} from 'lucide-react'
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, 
+  Tooltip, ResponsiveContainer, Legend 
+} from 'recharts'
+import { supabase } from '@/lib/supabase'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import { formatIDR, formatDate } from '@/lib/format'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { toast } from 'sonner'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { cn } from '@/lib/utils'
 
 export default function HargaPasar() {
-  const [prices, setPrices] = useState([
-    { region: 'Jawa Barat', price: 21500, trend: 'up', change: 200 },
-    { region: 'Jawa Tengah', price: 20800, trend: 'down', change: 100 },
-    { region: 'Jawa Timur', price: 21200, trend: 'stable', change: 0 },
-    { region: 'Jabodetabek', price: 22100, trend: 'up', change: 300 },
-  ]);
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const [isManualOpen, setIsManualOpen] = useState(false)
+  const queryClient = useQueryClient()
 
+  // Fetch Market Prices (14 days)
+  const { data: prices, isLoading } = useQuery({
+    queryKey: ['market-prices'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('market_prices')
+        .select('*')
+        .order('price_date', { ascending: false })
+        .limit(14)
+      if (error) throw error
+      return data
+    }
+  })
+
+  // Realtime Subscription
   useEffect(() => {
     const channel = supabase
-      .channel('prices-live')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'market_prices' }, payload => {
-        // Logic to update state from payload
+      .channel('market-prices-live')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'market_prices'
+      }, () => {
+        queryClient.invalidateQueries({ queryKey: ['market-prices'] })
+        toast.info('📊 Harga pasar baru tersedia', {
+            icon: '💡'
+        })
       })
-      .subscribe();
-    return () => supabase.removeChannel(channel);
-  }, []);
+      .subscribe()
+    
+    return () => supabase.removeChannel(channel)
+  }, [queryClient])
+
+  const todayPrice = prices?.[0]
+  const yesterdayPrice = prices?.[1]
+
+  const buyDiff = todayPrice && yesterdayPrice ? todayPrice.avg_buy_price - yesterdayPrice.avg_buy_price : 0
+  const sellDiff = todayPrice && yesterdayPrice ? todayPrice.avg_sell_price - yesterdayPrice.avg_sell_price : 0
+  
+  const margin = todayPrice ? todayPrice.avg_sell_price - todayPrice.avg_buy_price : 0
+
+  const chartData = useMemo(() => {
+    if (!prices) return []
+    return [...prices].reverse().map(p => ({
+      date: formatDate(p.price_date, 'dd MMM'),
+      beli: p.avg_buy_price,
+      jual: p.avg_sell_price,
+      margin: p.avg_sell_price - p.avg_buy_price
+    }))
+  }, [prices])
 
   return (
-    <div style={{ background: '#06090F', minHeight: '100vh', paddingBottom: '20px' }}>
-      <TopBar title="Harga Pasar" subtitle="Update live harga farm gate" />
-
-      {/* Live Banner */}
-      <div style={{ padding: '20px' }}>
-        <div style={{
-          background: 'linear-gradient(90deg, #10B981 0%, #059669 100%)',
-          borderRadius: '16px',
-          padding: '16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          boxShadow: '0 8px 32px rgba(16,185,129,0.2)'
-        }}>
-          <Zap size={24} color="white" fill="white" />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '13px', fontWeight: 800, color: 'white' }}>Update Terakhir</div>
-            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)' }}>Baru saja · Berdasarkan Pinsar/GOPAN</div>
-          </div>
-          <div style={{ background: 'rgba(255,255,255,0.2)', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', color: 'white', fontWeight: 800 }}>LIVE</div>
-        </div>
-      </div>
-
-      <main style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-          <h3 style={{ fontFamily: 'Sora', fontSize: '16px', fontWeight: 800, color: '#F1F5F9' }}>Regional Pricing</h3>
-          <span style={{ fontSize: '12px', color: '#4B6478' }}>Rp / kg</span>
-        </div>
-
-        {prices.map((p, i) => (
-          <PriceCard key={i} data={p} />
-        ))}
-
-        <div style={{ marginTop: '20px', padding: '16px', background: '#111C24', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <ShieldCheck size={18} color="#10B981" />
-            <span style={{ fontSize: '14px', fontWeight: 800, color: '#F1F5F9' }}>Disclaimer Harga</span>
-          </div>
-          <p style={{ fontSize: '12px', color: '#94A3B8', lineHeight: 1.5 }}>
-            Harga yang ditampilkan adalah referensi rata-rata pasar. Harga riil dapat berbeda tergantung pada kualitas ayam, bobot rata-rata, dan jarak farm.
-          </p>
-        </div>
-      </main>
-    </div>
-  );
-}
-
-function PriceCard({ data }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      style={{
-        background: '#111C24',
-        border: '1px solid rgba(255,255,255,0.07)',
-        borderRadius: '16px',
-        padding: '16px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}
+    <motion.div 
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+        className={cn("bg-[#06090F] min-h-screen pb-24", isDesktop && "pb-10")}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <MapPin size={20} color="#4B6478" />
-        </div>
-        <div>
-          <div style={{ fontSize: '15px', fontWeight: 700, color: '#F1F5F9' }}>{data.region}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            {data.trend === 'up' && <TrendingUp size={12} color="#10B981" />}
-            {data.trend === 'down' && <TrendingDown size={12} color="#F87171" />}
-            <span style={{ fontSize: '11px', color: data.trend === 'up' ? '#10B981' : data.trend === 'down' ? '#F87171' : '#4B6478', fontWeight: 700 }}>
-              {data.change !== 0 ? `${data.trend === 'up' ? '+' : '-'}${data.change}` : 'Stabil'}
-            </span>
-          </div>
-        </div>
-      </div>
-      <div style={{ textAlign: 'right' }}>
-        <div style={{ fontSize: '18px', fontWeight: 800, color: '#F1F5F9' }}>{data.price.toLocaleString()}</div>
-        <div style={{ fontSize: '10px', color: '#4B6478', fontWeight: 700 }}>HARI INI</div>
+      {/* TopBar */}
+      {!isDesktop && (
+        <header className="px-5 pt-8 pb-4 border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 flex justify-between items-center">
+            <div>
+                <h1 className="font-display text-xl font-black text-white tracking-tight leading-none uppercase">Harga Pasar</h1>
+                <p className="text-[11px] font-bold text-[#4B6478] uppercase mt-1">Broiler Nasional</p>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Live</span>
+            </div>
+        </header>
+      )}
+
+      {/* Main Content */}
+      <div className="space-y-6">
+        
+        {/* HARGA HARI INI */}
+        <section className="px-5 pt-4">
+            {isLoading ? (
+                <Skeleton className="h-48 w-full rounded-[20px] bg-secondary/10" />
+            ) : todayPrice ? (
+                <Card className="bg-gradient-to-br from-[#0C1319] to-[#111C24] border-emerald-500/20 rounded-[24px] p-5 shadow-2xl relative overflow-hidden group">
+                     {/* Decorative background pulse */}
+                    <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/5 blur-[60px] rounded-full group-hover:bg-emerald-500/10 transition-colors duration-700" />
+                    
+                    <div className="flex justify-between items-center mb-6 relative z-10">
+                        <span className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Harga Broiler Hari Ini</span>
+                        <span className="text-[11px] font-bold text-white/40">{formatDate(todayPrice.price_date)}</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 relative z-10">
+                        <div className="space-y-1">
+                            <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Harga Beli</Label>
+                            <div className="flex flex-col">
+                                <span className="font-display text-[26px] font-black text-white leading-none tracking-tighter">
+                                    {formatIDR(todayPrice.avg_buy_price)}
+                                </span>
+                                <ChangeIndicator diff={buyDiff} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1 text-right">
+                            <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Harga Jual</Label>
+                            <div className="flex flex-col items-end">
+                                <span className="font-display text-[26px] font-black text-emerald-400 leading-none tracking-tighter">
+                                    {formatIDR(todayPrice.avg_sell_price)}
+                                </span>
+                                <ChangeIndicator diff={sellDiff} />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-8 pt-5 border-t border-white/5 flex flex-col gap-1 relative z-10">
+                         <p className={cn(
+                            "font-display text-[16px] font-bold tracking-tight",
+                            margin > 2000 ? "text-emerald-400" : margin >= 1000 ? "text-amber-500" : "text-red-400"
+                         )}>
+                            Margin Rata-rata: {formatIDR(margin)}/kg
+                         </p>
+                         <p className="text-[11px] font-bold text-[#4B6478]">dari {todayPrice.transaction_count} transaksi hari ini</p>
+                    </div>
+                </Card>
+            ) : (
+                <EmptyStateSmall icon={History} title="Belum ada data hari ini" desc="Harga akan diperbarui otomatis saat ada transaksi." />
+            )}
+        </section>
+
+        {/* INPUT HARGA MANUAL */}
+        <section className="px-5">
+            <Collapsible open={isManualOpen} onOpenChange={setIsManualOpen} className="bg-[#111C24] border border-white/5 rounded-2xl overflow-hidden">
+                <CollapsibleTrigger asChild>
+                    <button className="w-full flex items-center justify-between p-4 hover:bg-secondary/5 transition-colors">
+                        <div className="flex items-center gap-2.5">
+                            <Zap size={16} className="text-amber-500" />
+                            <span className="text-[11px] font-black text-white/60 uppercase tracking-widest">Update Harga Manual</span>
+                        </div>
+                        {isManualOpen ? <ChevronUp size={14} className="text-white/20" /> : <ChevronDown size={14} className="text-white/20" />}
+                    </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="p-4 pt-0">
+                    <ManualPriceForm onSuccess={() => {
+                        setIsManualOpen(false)
+                        queryClient.invalidateQueries(['market-prices'])
+                    }} />
+                </CollapsibleContent>
+            </Collapsible>
+        </section>
+
+        {/* GRAFIK 14 HARI */}
+        <section className="px-5 space-y-4">
+            <h3 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em] px-1">Trend 14 Hari Terakhir</h3>
+            <div className="h-[220px] w-full bg-[#111C24]/50 rounded-[28px] border border-white/5 p-4 pt-8">
+                <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                        <defs>
+                            <linearGradient id="colorBeli" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#4B6478" stopOpacity={0.1}/>
+                                <stop offset="95%" stopColor="#4B6478" stopOpacity={0}/>
+                            </linearGradient>
+                            <linearGradient id="colorJual" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#10B981" stopOpacity={0.1}/>
+                                <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
+                        <XAxis 
+                            dataKey="date" 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 9, fill: '#4B6478', fontWeight: 800 }} 
+                            dy={10}
+                        />
+                        <YAxis 
+                            axisLine={false} 
+                            tickLine={false} 
+                            tick={{ fontSize: 9, fill: '#4B6478', fontWeight: 800 }}
+                            domain={['dataMin - 1000', 'dataMax + 1000']}
+                        />
+                        <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
+                        <Area 
+                            type="monotone" dataKey="beli" 
+                            stroke="#4B6478" strokeWidth={2} 
+                            fillOpacity={1} fill="url(#colorBeli)" 
+                        />
+                        <Area 
+                            type="monotone" dataKey="jual" 
+                            stroke="#10B981" strokeWidth={2} 
+                            fillOpacity={1} fill="url(#colorJual)" 
+                        />
+                    </AreaChart>
+                </ResponsiveContainer>
+                <div className="flex justify-center gap-6 mt-2">
+                    <LegendItem color="#4B6478" label="Beli" />
+                    <LegendItem color="#10B981" label="Jual" />
+                </div>
+            </div>
+        </section>
+
+        {/* TABEL 7 HARI */}
+        <section className="px-5 pb-10">
+            <h3 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em] px-1 mb-4">Riwayat Harga</h3>
+            <div className="bg-[#111C24] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
+                <ScrollArea className="w-full">
+                    <table className="w-full border-collapse">
+                        <thead>
+                            <tr className="border-b border-white/5 bg-secondary/5">
+                                <th className="text-left py-3 px-4 text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Tanggal</th>
+                                <th className="text-right py-3 px-4 text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Beli</th>
+                                <th className="text-right py-3 px-4 text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Jual</th>
+                                <th className="text-right py-3 px-4 text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Margin</th>
+                                <th className="text-right py-3 px-4 text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Tx</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {isLoading ? (
+                                Array(5).fill(0).map((_, i) => (
+                                    <tr key={i} className="border-b border-white/5">
+                                        <td colSpan={5} className="p-4"><Skeleton className="h-4 w-full bg-secondary/10" /></td>
+                                    </tr>
+                                ))
+                            ) : prices?.map((p, i) => {
+                                const m = p.avg_sell_price - p.avg_buy_price
+                                const isToday = i === 0
+                                return (
+                                    <tr key={p.id} className={cn(
+                                        "border-b border-white/5 transition-colors hover:bg-secondary/5",
+                                        isToday && "bg-emerald-500/[0.04]"
+                                    )}>
+                                        <td className="py-3 px-4 text-[11px] font-bold text-slate-300">{formatDate(p.price_date, 'dd/MM/yy')}</td>
+                                        <td className="py-3 px-4 text-right text-[11px] font-bold text-[#94A3B8] tabular-nums">{p.avg_buy_price.toLocaleString('id-ID')}</td>
+                                        <td className="py-3 px-4 text-right text-[11px] font-black text-white tabular-nums">{p.avg_sell_price.toLocaleString('id-ID')}</td>
+                                        <td className={cn(
+                                            "py-3 px-4 text-right text-[11px] font-bold tabular-nums",
+                                            m > 2000 ? "text-emerald-400" : m >= 1000 ? "text-amber-500" : "text-red-400"
+                                        )}>
+                                            {m.toLocaleString('id-ID')}
+                                        </td>
+                                        <td className="py-3 px-4 text-right text-[10px] font-black text-[#4B6478]">{p.transaction_count}</td>
+                                    </tr>
+                                )
+                            })}
+                        </tbody>
+                    </table>
+                    <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+            </div>
+        </section>
+
       </div>
     </motion.div>
-  );
+  )
+}
+
+function ChangeIndicator({ diff }) {
+    if (diff === 0) return <span className="text-[10px] font-bold text-[#4B6478] leading-none mt-1">Stabil</span>
+    return (
+        <span className={cn(
+            "text-[10px] font-black leading-none mt-1 flex items-center gap-0.5",
+            diff > 0 ? "text-[#34D399]" : "text-[#F87171]"
+        )}>
+            {diff > 0 ? '▲' : '▼'}{Math.abs(diff).toLocaleString('id-ID')}
+        </span>
+    )
+}
+
+function LegendItem({ color, label }) {
+    return (
+        <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full" style={{ background: color }} />
+            <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">{label}</span>
+        </div>
+    )
+}
+
+function CustomTooltip({ active, payload }) {
+    if (active && payload && payload.length) {
+        const data = payload[0].payload
+        const margin = payload[1].value - payload[0].value
+        return (
+            <div className="bg-[#111C24] border border-white/10 rounded-xl p-3 shadow-2xl space-y-2 min-w-[120px]">
+                <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest border-b border-white/5 pb-1.5 mb-1.5">{data.date}</p>
+                <div className="space-y-1">
+                    <div className="flex justify-between items-center gap-4">
+                        <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Beli</span>
+                        <span className="text-[11px] font-bold text-[#F1F5F9] tabular-nums">{payload[0].value.toLocaleString('id-ID')}</span>
+                    </div>
+                    <div className="flex justify-between items-center gap-4">
+                        <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Jual</span>
+                        <span className="text-[11px] font-bold text-white tabular-nums">{payload[1].value.toLocaleString('id-ID')}</span>
+                    </div>
+                    <div className="flex justify-between items-center gap-4 pt-1.5 mt-1.5 border-t border-white/5">
+                        <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">Margin</span>
+                        <span className="text-[11px] font-black text-amber-500 tabular-nums">{margin.toLocaleString('id-ID')}</span>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+    return null
+}
+
+function ManualPriceForm({ onSuccess }) {
+    const [loading, setLoading] = useState(false)
+    const [formData, setFormData] = useState({ beli: '', jual: '' })
+    
+    const handleSave = async (e) => {
+        e.preventDefault()
+        if (!formData.beli || !formData.jual) return toast.error('Harap isi harga beli dan jual')
+        
+        setLoading(true)
+        try {
+            const today = new Date().toISOString().split('T')[0]
+            const { error } = await supabase
+                .from('market_prices')
+                .upsert({
+                    price_date: today,
+                    chicken_type: 'broker', // as per schema v2 context check? usually broiler
+                    chicken_type: 'broiler', // keeping standard from schema
+                    region: 'nasional',
+                    avg_buy_price: Number(formData.beli),
+                    avg_sell_price: Number(formData.jual),
+                    farm_gate_price: Number(formData.beli),
+                    buyer_price: Number(formData.jual),
+                    source: 'manual'
+                }, { onConflict: 'price_date, chicken_type, region' })
+            
+            if (error) throw error
+            toast.success('Harga pasar diperbarui!')
+            onSuccess()
+        } catch (err) {
+            toast.error(err.message)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    return (
+        <form onSubmit={handleSave} className="space-y-4 pt-4">
+            <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Harga Beli</Label>
+                    <Input 
+                        type="number" placeholder="Rp/kg"
+                        value={formData.beli} 
+                        onChange={e => setFormData({...formData, beli: e.target.value})}
+                        className="bg-black/20 border-white/5 h-10 font-bold"
+                    />
+                </div>
+                <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Harga Jual</Label>
+                    <Input 
+                        type="number" placeholder="Rp/kg"
+                        value={formData.jual} 
+                        onChange={e => setFormData({...formData, jual: e.target.value})}
+                        className="bg-black/20 border-white/5 h-10 font-bold"
+                    />
+                </div>
+            </div>
+            <Button type="submit" disabled={loading} className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-xs tracking-widest rounded-xl border-none">
+                {loading ? 'Menyimpan...' : 'Simpan Update'}
+            </Button>
+        </form>
+    )
+}
+
+function EmptyStateSmall({ icon: Icon, title, desc }) {
+    return (
+        <div className="h-48 border border-dashed border-white/10 rounded-[24px] flex flex-col items-center justify-center p-6 text-center bg-secondary/5">
+            <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center mb-3">
+                <Icon size={18} className="text-[#4B6478]" />
+            </div>
+            <h4 className="text-[13px] font-black text-white/60 mb-1 uppercase tracking-tight">{title}</h4>
+            <p className="text-[11px] font-bold text-[#4B6478] max-w-[200px] leading-relaxed">{desc}</p>
+        </div>
+    )
 }

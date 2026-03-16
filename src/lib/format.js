@@ -1,40 +1,109 @@
-import { format, formatDistanceToNow } from 'date-fns'
+import { format, formatDistanceToNow, parseISO, isValid } from 'date-fns'
 import { id } from 'date-fns/locale'
 
-export const formatIDR = (n) =>
-  new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-  }).format(n ?? 0)
-
-export const formatIDRShort = (n) => {
-  if (!n) return 'Rp 0'
-  if (n >= 1_000_000_000) return `Rp ${(n / 1_000_000_000).toFixed(1)}M`
-  if (n >= 1_000_000) return `Rp ${(n / 1_000_000).toFixed(1)}jt`
-  if (n >= 1_000) return `Rp ${(n / 1_000).toFixed(0)}rb`
-  return `Rp ${n}`
+export const safeNumber = (val, fallback = 0) => {
+  const num = Number(val)
+  return isNaN(num) || val === null || val === undefined ? fallback : num
 }
 
-export const formatDate = (date) =>
-  format(new Date(date), 'd MMM yyyy', { locale: id })
+export const safePercent = (num, den, fallback = 0) => {
+  const n = Number(num)
+  const d = Number(den)
+  return d === 0 || isNaN(n) || isNaN(d) ? fallback : (n / d) * 100
+}
 
-export const formatDateFull = (date) =>
-  format(new Date(date), 'EEEE, d MMMM yyyy', { locale: id })
+export const safeNum = (v) => Number(v) || 0
 
-export const formatRelative = (date) =>
-  formatDistanceToNow(new Date(date), { addSuffix: true, locale: id })
+export const formatIDR = (n) => {
+  const num = safeNum(n)
+  return 'Rp ' + num.toLocaleString('id-ID')
+}
+
+export const formatIDRShort = (n) => {
+  const num = safeNum(n)
+  if (num >= 1_000_000_000)
+    return 'Rp ' + (num/1_000_000_000).toFixed(1) + 'M'
+  if (num >= 1_000_000)
+    return 'Rp ' + (num/1_000_000).toFixed(1) + 'jt'
+  if (num >= 1_000)
+    return 'Rp ' + (num/1_000).toFixed(0) + 'rb'
+  return 'Rp ' + num.toLocaleString('id-ID')
+}
+
+export const formatDate = (dateValue, fallback = '-') => {
+  if (!dateValue) return fallback
+  
+  try {
+    let date
+    if (dateValue instanceof Date) {
+      date = dateValue
+    } else if (typeof dateValue === 'string') {
+      date = parseISO(dateValue)
+    } else {
+      return fallback
+    }
+    
+    if (!isValid(date)) return fallback
+    
+    return format(date, 'd MMM yyyy', { locale: id })
+  } catch {
+    return fallback
+  }
+}
+
+export const formatDateFull = (dateValue, fallback = '-') => {
+  if (!dateValue) return fallback
+  
+  try {
+    const date = dateValue instanceof Date
+      ? dateValue
+      : parseISO(dateValue)
+    
+    if (!isValid(date)) return fallback
+    
+    return format(date, 'EEEE, d MMMM yyyy', { locale: id })
+  } catch {
+    return fallback
+  }
+}
+
+export const formatRelative = (dateValue, fallback = '-') => {
+  if (!dateValue) return fallback
+  
+  try {
+    const date = dateValue instanceof Date
+      ? dateValue
+      : parseISO(dateValue)
+    
+    if (!isValid(date)) return fallback
+    
+    const now = new Date()
+    const diffMs = now - date
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+    
+    if (diffMins < 1) return 'Baru saja'
+    if (diffMins < 60) return `${diffMins} menit lalu`
+    if (diffHours < 24) return `${diffHours} jam lalu`
+    if (diffDays < 7) return `${diffDays} hari lalu`
+    
+    return format(date, 'd MMM yyyy', { locale: id })
+  } catch {
+    return fallback
+  }
+}
 
 export const formatWeight = (kg) =>
-  kg >= 1000 ? `${(kg / 1000).toFixed(1)} ton` : `${kg} kg`
+  kg >= 1000 ? `${(kg / 1000).toFixed(1).replace('.', ',')} ton` : `${kg} kg`
 
 export const formatEkor = (n) =>
-  `${(n || 0).toLocaleString('id-ID')} ekor`
+  `${safeNum(n).toLocaleString('id-ID')} ekor`
 
 export const formatKg = (n) =>
-  n >= 1000
-    ? `${(n / 1000).toFixed(2)} ton`
-    : `${Number(n || 0).toFixed(1)} kg`
+  safeNum(n) >= 1000
+    ? `${(safeNum(n) / 1000).toFixed(2).replace('.', ',')} ton`
+    : `${safeNum(n).toFixed(1).replace('.', ',')} kg`
 
 export const calcMargin = (buyPrice, sellPrice) =>
   sellPrice - buyPrice
@@ -52,3 +121,35 @@ export const calcShrinkage = (initialKg, arrivedKg) => ({
     : 0,
 })
 
+// Map nilai database → label tampilan yang rapi
+export const BUYER_TYPE_LABELS = {
+  'rpa':            'RPA (Rumah Potong Ayam)',
+  'pedagang_pasar': 'Pedagang Pasar',
+  'restoran':       'Restoran',
+  'pengepul':       'Pengepul',
+  'supermarket':    'Supermarket',
+  'lainnya':        'Lainnya',
+}
+
+export const PAYMENT_TERMS_LABELS = {
+  'cash':  'Cash',
+  'net3':  'NET 3 Hari',
+  'net7':  'NET 7 Hari',
+  'net14': 'NET 14 Hari',
+  'net30': 'NET 30 Hari',
+}
+
+export const PAYMENT_STATUS_LABELS = {
+  'lunas':        'Lunas',
+  'belum_lunas':  'Belum Lunas',
+  'sebagian':     'Sebagian',
+}
+
+export const formatBuyerType = (value) =>
+  BUYER_TYPE_LABELS[value] || value
+
+export const formatPaymentTerms = (value) =>
+  PAYMENT_TERMS_LABELS[value] || value
+
+export const formatPaymentStatus = (value) =>
+  PAYMENT_STATUS_LABELS[value] || value
