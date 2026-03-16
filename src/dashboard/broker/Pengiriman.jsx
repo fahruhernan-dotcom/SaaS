@@ -1,11 +1,13 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
     Truck, Package, AlertTriangle, CheckCircle2, 
     Plus, Search, Filter, ChevronRight, 
     Clock, MapPin, User, Smartphone, 
     TrendingDown, AlertCircle, Info, Calendar,
-    ArrowRightLeft, MoreHorizontal, Check
+    ArrowRightLeft, MoreHorizontal, Check,
+    ChevronDown, ChevronsUpDown
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
@@ -15,7 +17,9 @@ import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { formatIDR, safeNumber, safePercent } from '@/lib/format'
+import { formatIDR, safeNumber, safePercent, safeNum, formatWeight, formatEkor } from '@/lib/format'
+import { useUpdateDelivery } from '@/lib/hooks/useUpdateDelivery'
+import { InputNumber } from '@/components/ui/InputNumber'
 
 // Components
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -58,6 +62,19 @@ export default function Pengiriman() {
     const [isUpdateArrivalOpen, setIsUpdateArrivalOpen] = useState(false)
     const [isCreateLossOpen, setIsCreateLossOpen] = useState(false)
     const [selectedDelivery, setSelectedDelivery] = useState(null)
+    const [initialLossData, setInitialLossData] = useState(null)
+
+    const location = useLocation()
+
+    useEffect(() => {
+        if (location.state?.openLoss) {
+            setActiveTab('loss')
+            setInitialLossData(location.state.initialLoss)
+            setIsCreateLossOpen(true)
+            // Clear state so it doesn't reopen on refresh
+            window.history.replaceState({}, document.title)
+        }
+    }, [location])
 
     // --- QUERIES ---
     const { data: deliveries = [], isLoading: isLoadingDeliveries } = useQuery({
@@ -306,8 +323,11 @@ export default function Pengiriman() {
             />
             <CreateLossSheet
                 isOpen={isCreateLossOpen}
-                onClose={() => setIsCreateLossOpen(false)}
-                initialData={null}
+                onClose={() => {
+                    setIsCreateLossOpen(false)
+                    setInitialLossData(null)
+                }}
+                initialData={initialLossData}
             />
         </motion.div>
     )
@@ -1028,126 +1048,568 @@ function CreateDeliverySheet({ isOpen, onClose }) {
 }
 
 function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
+    const { tenant } = useAuth()
     const queryClient = useQueryClient()
     const [isLoading, setIsLoading] = useState(false)
-    const [arrivedQty, setArrivedQty] = useState(0)
-    const [arrivedWeight, setArrivedWeight] = useState(0)
+    const [arrivedQty, setArrivedQty] = useState('')
+    const [notes, setNotes] = useState('')
+    const { updateTiba } = useUpdateDelivery()
 
-    useMemo(() => {
-        if (delivery) {
-            setArrivedQty(delivery.initial_count)
-            setArrivedWeight(delivery.initial_weight_kg)
+    // Unit Selector State
+    const [beratTiba, setBeratTiba] = useState(0)
+    const [unitTiba, setUnitTiba] = useState('kg')
+    const [unitOpen, setUnitOpen] = useState(false)
+
+    // Driver Selector State
+    const [selectedDriver, setSelectedDriver] = useState(null)
+    const [driverManual, setDriverManual] = useState(false)
+    const [driverOpen, setDriverOpen] = useState(false)
+    const [driverName, setDriverName] = useState('')
+    const [driverPhone, setDriverPhone] = useState('')
+
+    // Fetch Drivers
+    const { data: drivers = [] } = useQuery({
+        queryKey: ['drivers', tenant?.id],
+        queryFn: async () => {
+            const { data } = await supabase
+                .from('drivers')
+                .select('id, full_name, phone')
+                .eq('tenant_id', tenant?.id)
+                .eq('status', 'aktif')
+                .eq('is_deleted', false)
+            return data || []
+        },
+        enabled: !!tenant?.id && isOpen
+    })
+
+    // Conversion Logic
+    const toKg = (val, unit) => {
+        const n = parseFloat(val) || 0
+        if (unit === 'ton') return n * 1000
+        if (unit === 'rit') return n * 5000
+        return n
+    }
+
+    const beratTibaKg = toKg(beratTiba, unitTiba)
+
+    useEffect(() => {
+        if (delivery && isOpen) {
+            setArrivedQty(delivery.initial_count || '')
+            setNotes('')
+            
+            // Initial Weight & Unit
+            const kg = safeNum(delivery.initial_weight_kg)
+            if (kg >= 1000) {
+                setUnitTiba('ton')
+                setBeratTiba(kg / 1000)
+            } else {
+                setUnitTiba('kg')
+                setBeratTiba(kg)
+            }
+
+            // Initial Driver Info
+            setDriverName(delivery.driver_name || '')
+            setDriverPhone(delivery.driver_phone || '')
+            if (delivery.driver_id) {
+                // If we have driver_id, we'll try to match it in drivers list
+                // Realistically, the query might not be done yet, so we set fallback name
+                setDriverManual(false)
+            } else {
+                setDriverManual(true)
+            }
         }
-    }, [delivery])
+    }, [delivery, isOpen])
 
-    const mortality = (delivery?.initial_count || 0) - arrivedQty
-    const shrinkage = (delivery?.initial_weight_kg || 0) - arrivedWeight
+    // Update selectedDriver when drivers are loaded if driver_id exists
+    useEffect(() => {
+        if (delivery?.driver_id && drivers.length > 0) {
+            const matched = drivers.find(d => d.id === delivery.driver_id)
+            if (matched) {
+                setSelectedDriver(matched)
+                setDriverManual(false)
+            }
+        }
+    }, [drivers, delivery])
+
+    const initialKg = safeNum(delivery?.initial_weight_kg)
+    const initialCount = safeNum(delivery?.initial_count)
+    const tibaKg = beratTibaKg
+    const tibaCount = safeNum(arrivedQty)
+    
+    const susutKg = initialKg - tibaKg
+    const matiEkor = initialCount - tibaCount
+    const susutPct = initialKg > 0
+      ? (susutKg / initialKg * 100).toFixed(1)
+      : 0
 
     const handleUpdate = async (e) => {
-        e.preventDefault()
+        if (e && e.preventDefault) e.preventDefault()
         setIsLoading(true)
         
-        const payload = {
-            arrival_time: new Date().toISOString(),
-            arrived_count: arrivedQty,
-            arrived_weight_kg: arrivedWeight,
-            mortality_count: mortality,
-            status: 'completed'
-        }
-
-        const { error } = await supabase
-            .from('deliveries')
-            .update(payload)
-            .eq('id', delivery.id)
-        
-        if (error) {
-            toast.error('Gagal update kedatangan')
-        } else {
-            toast.success('Kedatangan tercatat!')
-            queryClient.invalidateQueries(['deliveries'])
+        try {
+            await updateTiba({
+                deliveryId: delivery.id,
+                arrivedCount: arrivedQty,
+                arrivedWeight: tibaKg,
+                notes: notes,
+                driverId: selectedDriver?.id || null,
+                driverName: selectedDriver?.full_name || driverName || delivery?.driver_name,
+                driverPhone: selectedDriver?.phone || driverPhone || delivery?.driver_phone
+            })
             
-            // Suggest loss report if mortality > 0
-            if (mortality > 0) {
-                 if (confirm(`Ada ${mortality} ekor mati dalam perjalanan. Buat loss report sekarang?`)) {
-                     // In a real app, we might open another sheet. 
-                     // For now, let's just toast and the user can click "Catat Kerugian"
-                     toast.info('Silakan catat kerugian di tab Loss Report')
-                 }
-            }
+            toast.success('Kedatangan berhasil dicatat!')
             onClose()
+        } catch (err) {
+            console.error('Error update arrival:', err)
+            toast.error('Gagal mencatat kedatangan: ' + err.message)
+        } finally {
+            setIsLoading(false)
         }
-        setIsLoading(false)
     }
 
     if (!delivery) return null
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
-            <SheetContent side="bottom" className="h-[75vh] bg-[#0C1319] border-white/10 rounded-t-[40px] px-6 text-left">
+            <SheetContent side="bottom" className="h-[90vh] bg-[#0C1319] border-white/10 rounded-t-[40px] px-6 text-left overflow-y-auto">
                 <SheetHeader className="mb-6">
                     <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">Catat Kedatangan</SheetTitle>
                     <SheetDescription className="text-[#4B6478] font-bold uppercase text-[10px] tracking-widest mt-1">Konfirmasi jumlah dan berat tiba di buyer</SheetDescription>
                 </SheetHeader>
 
                 <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 mb-6">
-                     <div className="flex justify-between items-center">
+                     <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.2em] text-[#4B6478] mb-1 px-1">
+                         <span>Target Pengiriman</span>
+                     </div>
+                     <div className="bg-[#111C24] p-4 rounded-xl border border-white/5 flex justify-between items-center">
                          <div>
-                             <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mb-1">Dari Kandang</p>
+                             <p className="text-[9px] font-black text-[#4B6478] uppercase mb-1">Kiriman Dari</p>
                              <p className="text-xs font-black text-white">{delivery.sales?.purchases?.farms?.farm_name || '-'}</p>
                          </div>
                          <ArrowRightLeft className="text-[#4B6478]" size={16} />
                          <div className="text-right">
-                             <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mb-1">Target Tiba</p>
-                             <p className="text-xs font-black text-white uppercase">{delivery.initial_count} EKOR / {delivery.initial_weight_kg} KG</p>
+                             <p className="text-[9px] font-black text-[#4B6478] uppercase mb-1">Target Tiba</p>
+                             <p className="text-xs font-black text-white uppercase">
+                                 {formatEkor(delivery.initial_count)} / {formatWeight(delivery.initial_weight_kg)}
+                             </p>
                          </div>
                      </div>
                 </div>
 
-                <form onSubmit={handleUpdate} className="space-y-6">
+                <form onSubmit={handleUpdate} className="space-y-6 pb-20">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Jumlah Tiba (Ekor) *</Label>
-                            <Input 
-                                type="number" 
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Ekor Tiba *</Label>
+                            <InputNumber 
                                 value={arrivedQty} 
-                                onChange={(e) => setArrivedQty(parseInt(e.target.value) || 0)}
-                                className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs" 
+                                onChange={setArrivedQty}
+                                placeholder={delivery.initial_count}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Berat Tiba (kg) *</Label>
-                            <Input 
-                                type="number" 
-                                step="0.1" 
-                                value={arrivedWeight}
-                                onChange={(e) => setArrivedWeight(parseFloat(e.target.value) || 0)}
-                                className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs" 
-                            />
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Berat Tiba *</Label>
+                            
+                            <div style={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 90px',
+                                gap: 8
+                            }}>
+                                <InputNumber
+                                    value={beratTiba}
+                                    onChange={setBeratTiba}
+                                    step={unitTiba === 'kg' ? 10 : 0.01}
+                                    min={0}
+                                    placeholder="0"
+                                />
+                                
+                                {/* Custom unit dropdown */}
+                                <div style={{position: 'relative'}}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setUnitOpen(!unitOpen)}
+                                        style={{
+                                            width: '100%', height: '50px',
+                                            padding: '0 12px',
+                                            background: 'hsl(var(--secondary))',
+                                            border: '1px solid hsl(var(--border))',
+                                            borderRadius: '10px',
+                                            fontSize: '14px', fontWeight: 700,
+                                            color: 'hsl(var(--foreground))',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center'
+                                        }}
+                                    >
+                                        <span style={{textTransform: 'lowercase'}}>
+                                            {unitTiba}
+                                        </span>
+                                        <ChevronDown size={13}
+                                            color="hsl(var(--muted-foreground))"
+                                            style={{
+                                                transform: unitOpen
+                                                    ? 'rotate(180deg)' : 'none',
+                                                transition: 'transform 0.15s'
+                                            }}
+                                        />
+                                    </button>
+                                    
+                                    {unitOpen && (
+                                        <>
+                                            <div
+                                                style={{position:'fixed',inset:0,zIndex:40}}
+                                                onClick={() => setUnitOpen(false)}
+                                            />
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: 'calc(100% + 4px)',
+                                                left: 0, right: 0, zIndex: 50,
+                                                background: 'hsl(var(--popover))',
+                                                border: '1px solid hsl(var(--border))',
+                                                borderRadius: '10px',
+                                                overflow: 'hidden',
+                                                boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
+                                            }}>
+                                                {['kg','ton','rit'].map((unit, i, arr) => (
+                                                    <button
+                                                        key={unit}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const currentKg = toKg(beratTiba, unitTiba)
+                                                            if (unit === 'ton')
+                                                                setBeratTiba(currentKg / 1000)
+                                                            else if (unit === 'rit')
+                                                                setBeratTiba(currentKg / 5000)
+                                                            else
+                                                                setBeratTiba(currentKg)
+                                                            
+                                                            setUnitTiba(unit)
+                                                            setUnitOpen(false)
+                                                        }}
+                                                        style={{
+                                                            width: '100%',
+                                                            padding: '11px 14px',
+                                                            background: unitTiba === unit
+                                                                ? 'rgba(16,185,129,0.10)' : 'transparent',
+                                                            border: 'none',
+                                                            borderBottom: i < arr.length - 1
+                                                                ? '1px solid hsl(var(--border))' : 'none',
+                                                            color: unitTiba === unit
+                                                                ? '#34D399' : 'hsl(var(--foreground))',
+                                                            fontSize: '14px',
+                                                            fontWeight: unitTiba === unit ? 700 : 400,
+                                                            cursor: 'pointer',
+                                                            textAlign: 'left',
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            alignItems: 'center'
+                                                        }}
+                                                    >
+                                                        <span>{unit}</span>
+                                                        {unitTiba === unit && (
+                                                            <Check size={12} color="#34D399" />
+                                                        )}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    {(mortality > 0 || shrinkage > 0) && (
-                        <motion.div 
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20 space-y-2"
-                        >
-                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                                <span className="text-red-400">Mati di Perjalanan:</span>
-                                <span className="text-white">{mortality} Ekor</span>
+                    {/* Driver Section */}
+                    <div style={{
+                        padding: '12px 14px',
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '12px',
+                        marginBottom: 16
+                    }}>
+                        <p style={{
+                            fontSize: '11px', fontWeight: 700,
+                            color: '#4B6478', textTransform: 'uppercase',
+                            letterSpacing: '0.8px', margin: '0 0 12px'
+                        }}>
+                            DETAIL PENGIRIMAN
+                        </p>
+                        
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                            gap: 10
+                        }}>
+                            {/* Sopir */}
+                            <div>
+                                <label style={{fontSize:'11px',color:'#4B6478',
+                                    textTransform:'uppercase',letterSpacing:'0.8px',
+                                    display:'block',marginBottom:6}}>
+                                    Nama Sopir
+                                </label>
+                                
+                                {drivers?.length > 0 ? (
+                                    <div style={{position:'relative'}}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setDriverOpen(!driverOpen)}
+                                            style={{
+                                                width:'100%', height:'50px',
+                                                padding:'0 14px',
+                                                background:'hsl(var(--input))',
+                                                border:'1px solid hsl(var(--border))',
+                                                borderRadius:'10px',
+                                                fontSize:'14px',
+                                                color: selectedDriver
+                                                    ? 'hsl(var(--foreground))'
+                                                    : 'hsl(var(--muted-foreground))',
+                                                cursor:'pointer',
+                                                display:'flex',
+                                                justifyContent:'space-between',
+                                                alignItems:'center'
+                                            }}
+                                        >
+                                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '85%' }}>
+                                                {selectedDriver?.full_name || 'Pilih sopir...'}
+                                            </span>
+                                            <ChevronsUpDown size={14}
+                                                color="hsl(var(--muted-foreground))" />
+                                        </button>
+                                        
+                                        {driverOpen && (
+                                            <>
+                                                <div
+                                                    style={{position:'fixed',inset:0,zIndex:40}}
+                                                    onClick={() => setDriverOpen(false)}
+                                                />
+                                                <div style={{
+                                                    position:'absolute',
+                                                    top:'calc(100% + 4px)',
+                                                    left:0, right:0, zIndex:50,
+                                                    background:'hsl(var(--popover))',
+                                                    border:'1px solid hsl(var(--border))',
+                                                    borderRadius:'10px',
+                                                    overflow:'hidden',
+                                                    boxShadow:'0 8px 24px rgba(0,0,0,0.4)',
+                                                    maxHeight:200,
+                                                    overflowY:'auto'
+                                                }}>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSelectedDriver(null)
+                                                            setDriverManual(true)
+                                                            setDriverOpen(false)
+                                                        }}
+                                                        style={{
+                                                            width:'100%', padding:'10px 14px',
+                                                            background:'transparent', border:'none',
+                                                            borderBottom:'1px solid hsl(var(--border))',
+                                                            color:'#34D399', fontSize:'13px',
+                                                            fontWeight:600, cursor:'pointer',
+                                                            textAlign:'left'
+                                                        }}
+                                                    >
+                                                        + Input Manual
+                                                    </button>
+                                                    
+                                                    {drivers.map((d, i) => (
+                                                        <button
+                                                            key={d.id}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setSelectedDriver(d)
+                                                                setDriverManual(false)
+                                                                setDriverOpen(false)
+                                                            }}
+                                                            style={{
+                                                                width:'100%',
+                                                                padding:'10px 14px',
+                                                                background: selectedDriver?.id === d.id
+                                                                    ? 'rgba(16,185,129,0.08)' : 'transparent',
+                                                                border:'none',
+                                                                borderBottom: i < drivers.length - 1
+                                                                    ? '1px solid hsl(var(--border))' : 'none',
+                                                                color:'hsl(var(--foreground))',
+                                                                fontSize:'13px', cursor:'pointer',
+                                                                textAlign:'left'
+                                                            }}
+                                                        >
+                                                            <p style={{margin:0,fontWeight:600}}>
+                                                                {d.full_name}
+                                                            </p>
+                                                            <p style={{
+                                                                margin:0, fontSize:'11px',
+                                                                color:'hsl(var(--muted-foreground))'
+                                                            }}>
+                                                                {d.phone}
+                                                            </p>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <Input
+                                        value={driverName}
+                                        onChange={e => setDriverName(e.target.value)}
+                                        placeholder="Nama sopir"
+                                        style={{fontSize:'16px'}}
+                                    />
+                                )}
+                                
+                                {driverManual && drivers?.length > 0 && (
+                                    <div style={{marginTop: 8}}>
+                                        <Input
+                                            value={driverName}
+                                            onChange={e => setDriverName(e.target.value)}
+                                            placeholder="Nama sopir (manual)"
+                                            style={{fontSize:'16px'}}
+                                        />
+                                        <button 
+                                            type="button"
+                                            onClick={() => setDriverManual(false)}
+                                            style={{fontSize: '10px', color: '#10B981', marginTop: 4, fontWeight: 700, textTransform: 'uppercase'}}
+                                        >
+                                            Batal Manual
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                                <span className="text-red-400">Susut Berat:</span>
-                                <span className="text-white">{shrinkage.toFixed(1)} kg</span>
+                            
+                            {/* No HP Sopir */}
+                            <div>
+                                <label style={{fontSize:'11px',color:'#4B6478',
+                                    textTransform:'uppercase',letterSpacing:'0.8px',
+                                    display:'block',marginBottom:6}}>
+                                    No HP Sopir
+                                </label>
+                                <Input
+                                    type="tel"
+                                    value={driverManual || !drivers?.length ? driverPhone : (selectedDriver?.phone || '')}
+                                    onChange={e => setDriverPhone(e.target.value)}
+                                    placeholder="08123..."
+                                    style={{fontSize:'16px'}}
+                                    readOnly={!driverManual && drivers?.length > 0}
+                                />
                             </div>
-                        </motion.div>
+                        </div>
+                    </div>
+
+                    {/* Summary Live Calculation */}
+                    <div style={{
+                      padding: '14px 16px',
+                      background: susutKg > 0 || matiEkor > 0
+                        ? 'rgba(248,113,113,0.04)'
+                        : 'rgba(16,185,129,0.04)',
+                      border: `1px solid ${susutKg > 0 || matiEkor > 0
+                        ? 'rgba(248,113,113,0.15)'
+                        : 'rgba(16,185,129,0.15)'}`,
+                      borderRadius: '12px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 8,
+                      marginTop: 12
+                    }}>
+                      <p style={{
+                        fontSize: '11px', fontWeight: 700,
+                        textTransform: 'uppercase', letterSpacing: '0.8px',
+                        margin: 0,
+                        color: susutKg > 0 || matiEkor > 0
+                          ? '#F87171' : '#34D399'
+                      }}>
+                        {susutKg > 0 || matiEkor > 0
+                          ? 'ADA SUSUT / KEHILANGAN'
+                          : 'KONDISI NORMAL'}
+                      </p>
+                      
+                      {[
+                        {
+                          label: 'Berat dikirim',
+                          value: formatWeight(initialKg),
+                          color: 'hsl(var(--foreground))'
+                        },
+                        {
+                          label: 'Berat tiba',
+                          value: formatWeight(tibaKg),
+                          color: '#34D399'
+                        },
+                        {
+                          label: 'Susut berat',
+                          value: susutKg > 0
+                            ? `${formatWeight(susutKg)} (${susutPct}%)`
+                            : '—',
+                          color: susutKg > 0 ? '#F87171' : '#34D399'
+                        },
+                        {
+                          label: 'Ekor dikirim',
+                          value: initialCount.toLocaleString('id-ID') + ' ekor',
+                          color: 'hsl(var(--foreground))'
+                        },
+                        {
+                          label: 'Ekor tiba',
+                          value: tibaCount.toLocaleString('id-ID') + ' ekor',
+                          color: '#34D399'
+                        },
+                        {
+                          label: 'Mati di perjalanan',
+                          value: matiEkor > 0
+                            ? matiEkor.toLocaleString('id-ID') + ' ekor'
+                            : '—',
+                          color: matiEkor > 0 ? '#F87171' : '#34D399'
+                        },
+                      ].map(({ label, value, color }) => (
+                        <div key={label} style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          fontSize: '13px',
+                          padding: '2px 0',
+                          borderBottom: '1px solid rgba(255,255,255,0.04)'
+                        }}>
+                          <span style={{color:'#4B6478'}}>{label}</span>
+                          <span style={{
+                            color, fontWeight: 600,
+                            fontVariantNumeric: 'tabular-nums'
+                          }}>
+                            {value}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {matiEkor > 0 && (
+                      <div style={{
+                        padding: '10px 14px',
+                        background: 'rgba(248,113,113,0.08)',
+                        border: '1px solid rgba(248,113,113,0.20)',
+                        borderRadius: '10px',
+                        fontSize: '12px',
+                        color: '#F87171',
+                        display: 'flex',
+                        gap: 8,
+                        alignItems: 'center'
+                      }}>
+                        <AlertCircle size={14} style={{flexShrink:0}} />
+                        Loss report akan dibuat otomatis untuk {matiEkor} ekor yang mati.
+                      </div>
                     )}
+
+                    <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Catatan</Label>
+                        <Textarea 
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            placeholder="CATATAN KEDATANGAN..." 
+                            className="rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase p-4 min-h-[100px]" 
+                        />
+                    </div>
 
                     <Button 
                         disabled={isLoading}
-                        className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-[24px] shadow-xl shadow-emerald-500/20 mt-4 h-16 active:scale-95 transition-all"
+                        className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-[24px] shadow-xl shadow-emerald-500/20 active:scale-95 transition-all mt-4"
                     >
-                        {isLoading ? 'MENYIMPAN...' : 'SIMPAN & TANDAI TIBA'}
+                        {isLoading ? 'MENYIMPAN...' : 'SIMPAN & SELESAIKAN'}
                     </Button>
                 </form>
             </SheetContent>
@@ -1155,12 +1617,24 @@ function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
     )
 }
 
-function CreateLossSheet({ isOpen, onClose }) {
+function CreateLossSheet({ isOpen, onClose, initialData }) {
     const { tenant } = useAuth()
     const queryClient = useQueryClient()
     const [isLoading, setIsLoading] = useState(false)
     const [weightLoss, setWeightLoss] = useState(0)
     const [pricePerKg, setPricePerKg] = useState(0)
+
+    useEffect(() => {
+        if (initialData && isOpen) {
+            // Pre-fill mortality count if provided
+            const countInput = document.querySelector('input[name="chicken_count"]')
+            if (countInput) countInput.value = initialData.count || 0
+            
+            const typeInput = document.querySelector('select[name="loss_type"]')
+            // Note: Select might be a Shadcn component, so defaultValue is better
+            // but for reactive updates, we might need more state.
+        }
+    }, [initialData, isOpen])
 
     const financialLoss = Math.round(weightLoss * pricePerKg)
 
@@ -1171,6 +1645,8 @@ function CreateLossSheet({ isOpen, onClose }) {
         
         const payload = {
             tenant_id: tenant.id,
+            sale_id: initialData?.saleId || null,
+            delivery_id: initialData?.deliveryId || null,
             loss_type: formData.get('loss_type'),
             chicken_count: parseInt(formData.get('chicken_count')) || 0,
             weight_loss_kg: weightLoss,

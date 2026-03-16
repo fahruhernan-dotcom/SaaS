@@ -94,16 +94,17 @@ export const formatRelative = (dateValue, fallback = '-') => {
   }
 }
 
-export const formatWeight = (kg) =>
-  kg >= 1000 ? `${(kg / 1000).toFixed(1).replace('.', ',')} ton` : `${kg} kg`
+export const formatWeight = (kg) => {
+  const num = safeNum(kg)
+  if (num >= 1000)
+    return (num / 1000).toFixed(2).replace('.', ',') + ' ton'
+  return num.toFixed(1).replace('.', ',') + ' kg'
+}
+
+export const formatKg = (n) => formatWeight(n)
 
 export const formatEkor = (n) =>
-  `${safeNum(n).toLocaleString('id-ID')} ekor`
-
-export const formatKg = (n) =>
-  safeNum(n) >= 1000
-    ? `${(safeNum(n) / 1000).toFixed(2).replace('.', ',')} ton`
-    : `${safeNum(n).toFixed(1).replace('.', ',')} kg`
+  safeNum(n).toLocaleString('id-ID') + ' ekor'
 
 export const calcMargin = (buyPrice, sellPrice) =>
   sellPrice - buyPrice

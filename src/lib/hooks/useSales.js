@@ -21,7 +21,8 @@ export function useSales() {
           tenant_id,
           rpa_id,
           rpa_clients(rpa_name), 
-          purchases(farm_id, farms(farm_name))
+          purchases(total_cost, farm_id, farms(farm_name)),
+          deliveries(status)
         `)
         .eq('tenant_id', tenant.id)
         .eq('is_deleted', false)

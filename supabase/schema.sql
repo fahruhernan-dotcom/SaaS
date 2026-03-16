@@ -43,8 +43,9 @@ create table profiles (
   phone           text,
   avatar_url      text,
   is_active       boolean not null default true,
-  onboarded       boolean not null default false,
-  last_seen_at    timestamptz,
+  onboarded                boolean not null default false,
+  business_model_selected  boolean not null default false,
+  last_seen_at             timestamptz,
   created_at      timestamptz default now(),
   updated_at      timestamptz default now()
 );

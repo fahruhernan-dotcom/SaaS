@@ -495,12 +495,24 @@ export default function RPADetail() {
   if (!rpa && !loadingSales && !loadingRpa) return <EmptyState icon={AlertCircle} title="RPA Tidak Ditemukan" description="Data RPA yang Anda cari mungkin telah dihapus." action={<Button onClick={() => navigate('/broker/rpa')}>Kembali ke List</Button>} />
 
   const totalOutstanding = safeNumber(rpa?.total_outstanding)
-  const activeSalesCount = rpaSales.filter(s => s.payment_status !== 'lunas').length
+  const unpaidSales = useMemo(() => rpaSales.filter(s => s.payment_status !== 'lunas'), [rpaSales])
+  const activeSalesCount = unpaidSales.length
+
+  const canPay = (sale) => {
+    if (!sale.deliveries || sale.deliveries.length === 0) return true
+    const delivery = sale.deliveries[0]
+    return delivery.status === 'completed'
+  }
+
+  const allDelivered = useMemo(() => unpaidSales.every(sale => canPay(sale)), [unpaidSales])
 
   const handleMarkAllPaid = async () => {
+    if (!allDelivered) {
+      toast.error('Ada transaksi yang pengirimannya belum selesai')
+      return
+    }
     if (!confirm(`Tandai semua (${activeSalesCount}) transaksi sebagai lunas?`)) return
     try {
-        const unpaidSales = rpaSales.filter(s => s.payment_status !== 'lunas')
         for (const s of unpaidSales) {
             await supabase.from('payments').insert({
                 tenant_id: tenant.id,
@@ -611,11 +623,24 @@ export default function RPADetail() {
                    <p className="text-[11px] font-black text-red-400/50 uppercase tracking-wider mt-1">{activeSalesCount} transaksi aktif</p>
                 </div>
                 <Button 
+                    disabled={!allDelivered}
                     onClick={handleMarkAllPaid}
                     className="w-full h-12 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest border-none shadow-lg"
+                    style={{ opacity: allDelivered ? 1 : 0.5 }}
                 >
                     Tandai Semua Lunas
                 </Button>
+                {!allDelivered && (
+                    <p style={{
+                        fontSize:'12px', color:'#FBBF24',
+                        textAlign:'center', marginTop:8,
+                        display:'flex', alignItems:'center',
+                        justifyContent:'center', gap:4
+                    }}>
+                        <AlertCircle size={12} />
+                        Ada transaksi yang pengirimannya belum selesai
+                    </p>
+                )}
             </Card>
           </div>
       )}
@@ -633,13 +658,13 @@ export default function RPADetail() {
             </div>
 
             <TabsContent value="semua" className="space-y-3 mt-0">
-                <SaleList sales={rpaSales} onPay={(s) => { setSelectedSale(s); setOpenModal('bayar'); }} />
+                <SaleList sales={rpaSales} canPayFunc={canPay} onPay={(s) => { setSelectedSale(s); setOpenModal('bayar'); }} />
             </TabsContent>
             <TabsContent value="unpaid" className="space-y-3 mt-0">
-                <SaleList sales={rpaSales.filter(s => s.payment_status !== 'lunas')} onPay={(s) => { setSelectedSale(s); setOpenModal('bayar'); }} />
+                <SaleList sales={rpaSales.filter(s => s.payment_status !== 'lunas')} canPayFunc={canPay} onPay={(s) => { setSelectedSale(s); setOpenModal('bayar'); }} />
             </TabsContent>
             <TabsContent value="paid" className="space-y-3 mt-0">
-                <SaleList sales={rpaSales.filter(s => s.payment_status === 'lunas')} />
+                <SaleList sales={rpaSales.filter(s => s.payment_status === 'lunas')} canPayFunc={canPay} />
             </TabsContent>
         </Tabs>
       </div>
@@ -762,7 +787,7 @@ function InfoItem({ label, value }) {
     )
 }
 
-function SaleList({ sales, onPay }) {
+function SaleList({ sales, onPay, canPayFunc }) {
     const { tenant } = useAuth()
     const queryClient = useQueryClient()
 
@@ -813,35 +838,65 @@ function SaleList({ sales, onPay }) {
                             </div>
 
                             {sale.payment_status !== 'lunas' && (
-                                <div className="flex gap-2">
-                                    <Button 
-                                        size="sm" 
-                                        variant="ghost" 
-                                        onClick={() => onPay(sale)}
-                                        className="h-8 bg-secondary/10 text-[10px] font-black rounded-lg hover:bg-secondary/20 uppercase tracking-widest px-3"
-                                    >
-                                        Bayar
-                                    </Button>
-                                    <Button 
-                                        size="sm" 
-                                        className="h-8 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black rounded-lg uppercase tracking-widest px-3 border-none"
-                                        onClick={async () => {
-                                            if (!confirm('Tandai lunas sepenuhnya?')) return
-                                            const { error } = await supabase.from('payments').insert({
-                                                tenant_id: sale.tenant_id,
-                                                sale_id: sale.id,
-                                                amount: sale.remaining_amount,
-                                                payment_method: 'cash',
-                                                notes: 'Pelunasan langsung'
-                                            })
-                                            if (error) return toast.error('Gagal melunasi')
-                                            toast.success('Transaksi dilunasi!')
-                                            queryClient.invalidateQueries({ queryKey: ['sales', tenant?.id] })
-                                            queryClient.invalidateQueries({ queryKey: ['rpa-clients', tenant?.id] })
-                                        }}
-                                    >
-                                        Lunas
-                                    </Button>
+                                <div className="space-y-2">
+                                    <div className="flex gap-2">
+                                        <Button 
+                                            size="sm" 
+                                            variant="ghost" 
+                                            disabled={!canPayFunc(sale)}
+                                            onClick={() => {
+                                                if (!canPayFunc(sale)) return
+                                                onPay(sale)
+                                            }}
+                                            className="h-8 bg-secondary/10 text-[10px] font-black rounded-lg hover:bg-secondary/20 uppercase tracking-widest px-3"
+                                            style={{
+                                                opacity: canPayFunc(sale) ? 1 : 0.4,
+                                                cursor: canPayFunc(sale) ? 'pointer' : 'not-allowed'
+                                            }}
+                                        >
+                                            Bayar
+                                        </Button>
+                                        <Button 
+                                            size="sm" 
+                                            disabled={!canPayFunc(sale)}
+                                            className="h-8 bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-black rounded-lg uppercase tracking-widest px-3 border-none"
+                                            style={{
+                                                opacity: canPayFunc(sale) ? 1 : 0.4,
+                                                cursor: canPayFunc(sale) ? 'pointer' : 'not-allowed'
+                                            }}
+                                            onClick={async () => {
+                                                if (!canPayFunc(sale)) return
+                                                if (!confirm('Tandai lunas sepenuhnya?')) return
+                                                const { error } = await supabase.from('payments').insert({
+                                                    tenant_id: sale.tenant_id,
+                                                    sale_id: sale.id,
+                                                    amount: sale.remaining_amount,
+                                                    payment_method: 'cash',
+                                                    notes: 'Pelunasan langsung'
+                                                })
+                                                if (error) return toast.error('Gagal melunasi')
+                                                toast.success('Transaksi dilunasi!')
+                                                queryClient.invalidateQueries({ queryKey: ['sales', tenant?.id] })
+                                                queryClient.invalidateQueries({ queryKey: ['rpa-clients', tenant?.id] })
+                                            }}
+                                        >
+                                            Lunas
+                                        </Button>
+                                    </div>
+                                    {!canPayFunc(sale) && (
+                                        <p style={{
+                                            fontSize: '10px',
+                                            color: '#FBBF24',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 4,
+                                            fontWeight: 700,
+                                            textTransform: 'uppercase'
+                                        }}>
+                                            <AlertCircle size={11} />
+                                            Konfirmasi pengiriman dulu
+                                        </p>
+                                    )}
                                 </div>
                             )}
                         </div>

@@ -75,21 +75,32 @@ export default function BrokerBeranda() {
         { data: purchases },
         { data: rpaWithDebt },
         { data: farmsReady },
-        { data: overdueSales }
+        { data: overdueSales },
+        { data: losses },
+        { data: expenses }
       ] = await Promise.all([
-        supabase.from('sales').select('net_revenue, total_revenue, quantity, total_weight_kg, payment_status, rpa_clients(rpa_name)').eq('tenant_id', tenant.id).eq('transaction_date', today).eq('is_deleted', false),
-        supabase.from('purchases').select('total_modal, quantity, total_weight_kg, farms(farm_name)').eq('tenant_id', tenant.id).eq('transaction_date', today).eq('is_deleted', false),
+        supabase.from('sales')
+          .select('net_revenue, total_revenue, quantity, total_weight_kg, payment_status, transaction_date, rpa_clients(rpa_name), purchases(total_cost)')
+          .eq('tenant_id', tenant.id)
+          .eq('transaction_date', today)
+          .eq('is_deleted', false),
+        supabase.from('purchases').select('total_modal, total_cost, quantity, total_weight_kg, transaction_date, farms(farm_name)').eq('tenant_id', tenant.id).eq('transaction_date', today).eq('is_deleted', false),
         supabase.from('rpa_clients').select('id, rpa_name, total_outstanding').eq('tenant_id', tenant.id).eq('is_deleted', false).gt('total_outstanding', 0).order('total_outstanding', { ascending: false }),
         supabase.from('farms').select('id').eq('tenant_id', tenant.id).eq('status', 'ready').eq('is_deleted', false),
-        supabase.from('sales').select('id').eq('tenant_id', tenant.id).lte('due_date', today).neq('payment_status', 'lunas').eq('is_deleted', false)
+        supabase.from('sales').select('id').eq('tenant_id', tenant.id).lte('due_date', today).neq('payment_status', 'lunas').eq('is_deleted', false),
+        supabase.from('loss_reports').select('financial_loss').eq('tenant_id', tenant.id).eq('report_date', today).eq('is_deleted', false),
+        supabase.from('extra_expenses').select('amount').eq('tenant_id', tenant.id).eq('expense_date', today).eq('is_deleted', false)
       ])
 
-      const todaySalesRev = sales?.reduce((acc, s) => acc + Number(s.net_revenue || 0), 0) || 0
-      const todayPurchaseCost = purchases?.reduce((acc, p) => acc + Number(p.total_modal || 0), 0) || 0
+      const todaySalesProfit = sales?.reduce((acc, s) => acc + (Number(s.net_revenue || 0) - Number(s.purchases?.total_cost || 0)), 0) || 0
+      const todayLosses = losses?.reduce((acc, l) => acc + Number(l.financial_loss || 0), 0) || 0
+      const todayExpenses = expenses?.reduce((acc, e) => acc + Number(e.amount || 0), 0) || 0
+      const todayProfit = todaySalesProfit - todayLosses - todayExpenses
+      
       const totalPiutang = rpaWithDebt?.reduce((acc, r) => acc + Number(r.total_outstanding || 0), 0) || 0
       
       return {
-        todayProfit: todaySalesRev - todayPurchaseCost,
+        todayProfit,
         todaySalesCount: sales?.length || 0,
         todayBuyCount: purchases?.length || 0,
         totalPiutang,
@@ -144,7 +155,7 @@ export default function BrokerBeranda() {
 
       const { data: salesData } = await supabase
         .from('sales')
-        .select('net_revenue, transaction_date')
+        .select('net_revenue, transaction_date, purchases(total_cost)')
         .eq('tenant_id', tenant.id)
         .eq('is_deleted', false)
         .gte('transaction_date', days[0].date)
@@ -152,18 +163,43 @@ export default function BrokerBeranda() {
 
       const { data: purchasesData } = await supabase
         .from('purchases')
-        .select('total_modal, transaction_date')
+        .select('total_modal, total_cost, transaction_date')
         .eq('tenant_id', tenant.id)
         .eq('is_deleted', false)
         .gte('transaction_date', days[0].date)
         .lte('transaction_date', days[6].date)
 
+      const { data: lossesData } = await supabase
+        .from('loss_reports')
+        .select('financial_loss, report_date')
+        .eq('tenant_id', tenant.id)
+        .eq('is_deleted', false)
+        .gte('report_date', days[0].date)
+        .lte('report_date', days[6].date)
+
+      const { data: expensesData } = await supabase
+        .from('extra_expenses')
+        .select('amount, expense_date')
+        .eq('tenant_id', tenant.id)
+        .eq('is_deleted', false)
+        .gte('expense_date', days[0].date)
+        .lte('expense_date', days[6].date)
+
       return days.map(day => {
         const daySales = (salesData || []).filter(s => s.transaction_date === day.date)
-        const dayPurchases = (purchasesData || []).filter(p => p.transaction_date === day.date)
-        const revenue = daySales.reduce((sum, s) => sum + (Number(s.net_revenue) || 0), 0)
-        const modal = dayPurchases.reduce((sum, p) => sum + (Number(p.total_modal) || 0), 0)
-        return { name: day.label, profit: revenue - modal }
+        const dayLosses = (lossesData || []).filter(l => l.report_date === day.date)
+        const dayExpenses = (expensesData || []).filter(e => e.expense_date === day.date)
+
+        const salesProfit = daySales.reduce((sum, s) => {
+          const rev = Number(s.net_revenue || 0)
+          const modal = Number(s.purchases?.total_cost || 0)
+          return sum + (rev - modal)
+        }, 0)
+
+        const totalLoss = dayLosses.reduce((sum, l) => sum + Number(l.financial_loss || 0), 0)
+        const totalExtra = dayExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0)
+
+        return { name: day.label, profit: salesProfit - totalLoss - totalExtra }
       })
     },
     enabled: !!tenant?.id
@@ -298,7 +334,7 @@ function DesktopDashboard({ homeData, armadaAlerts, weeklyData, profile, navigat
         />
         <KPICard 
           label="Transaksi Hari Ini"
-          value={homeData?.todaySalesCount + homeData?.todayBuyCount}
+          value={homeData?.todaySalesCount}
           sub={`${homeData?.todaySalesCount} jual · ${homeData?.todayBuyCount} beli`}
           icon={BarChart2}
         />
@@ -540,7 +576,7 @@ function MobileDashboard({ homeData, armadaAlerts, profile, navigate, setWizardO
         <motion.div variants={fadeUp}>
             <StatCard 
             label="Transaksi Hari Ini"
-            value={homeData?.todaySalesCount + homeData?.todayBuyCount}
+            value={homeData?.todaySalesCount}
             sub={`${homeData?.todaySalesCount} jual · ${homeData?.todayBuyCount} beli`}
             icon={BarChart2}
             onClick={() => navigate('/broker/transaksi')}

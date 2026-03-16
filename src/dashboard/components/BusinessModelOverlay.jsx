@@ -8,7 +8,9 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
   const [selected, setSelected] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  if (profile?.business_model_selected) return null
+  // Don't render if profile hasn't loaded yet or if already selected
+  if (!profile) return null
+  if (profile.business_model_selected) return null
 
   const handleConfirm = async () => {
     if (!selected) return

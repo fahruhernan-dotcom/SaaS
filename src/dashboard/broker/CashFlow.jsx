@@ -77,8 +77,8 @@ export default function CashFlow() {
     const { summary = {}, sales = [], purchases = [], deliveries = [], losses = [], expenses = [] } = data || {}
 
     // --- CHART DATA PROCESSING ---
-    const { chartData, breakdownData } = useMemo(() => {
-        if (!data) return { chartData: [], breakdownData: [] }
+    const { chartData, breakdownData, totalTransport } = useMemo(() => {
+        if (!data) return { chartData: [], breakdownData: [], totalTransport: 0 }
 
         const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end })
         let runningBalance = 0
@@ -93,11 +93,11 @@ export default function CashFlow() {
 
             const dayModal = purchases
                 .filter(p => p.transaction_date === dateStr)
-                .reduce((sum, p) => sum + (Number(p.total_modal) || 0), 0)
+                .reduce((sum, p) => sum + (Number(p.total_cost) || 0), 0)
 
-            const dayTransport = deliveries
-                .filter(d => d.created_at?.startsWith(dateStr))
-                .reduce((sum, d) => sum + (Number(d.delivery_cost) || 0), 0)
+            const dayTransport = sales
+                .filter(s => s.transaction_date === dateStr)
+                .reduce((sum, s) => sum + (Number(s.delivery_cost) || 0), 0)
 
             const dayLoss = losses
                 .filter(l => l.report_date === dateStr)
@@ -107,7 +107,7 @@ export default function CashFlow() {
                 .filter(e => e.expense_date === dateStr)
                 .reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
 
-            const dayOut = dayModal + dayTransport + dayLoss + dayExtra
+            const dayOut = dayModal + dayLoss + dayExtra + dayTransport
             const dayNet = dayRevenue - dayOut
             runningBalance += dayNet
 
@@ -121,26 +121,26 @@ export default function CashFlow() {
         })
 
         const bData = [
-            { name: 'Modal Beli',  value: summary.totalModal || 0,     fill: '#3B82F6' },
-            { name: 'Transport',   value: summary.totalTransport || 0, fill: '#F59E0B' },
+            { name: 'Modal Beli (Produk)',  value: summary.totalModal || 0,     fill: '#3B82F6' },
             { name: 'Kerugian',    value: summary.totalKerugian || 0,  fill: '#F87171' },
             { name: 'Biaya Extra', value: summary.totalExtra || 0,     fill: '#8B5CF6' },
         ].filter(d => d.value > 0)
 
-        return { chartData: cData, breakdownData: bData }
+        const totalTransportCost = sales.reduce((s, t) => s + (Number(t.delivery_cost) || 0), 0)
+
+        return { chartData: cData, breakdownData: bData, totalTransport: totalTransportCost }
     }, [data, dateRange, sales, purchases, deliveries, losses, expenses, summary])
 
     // --- TRANSACTION LIST MERGING ---
     const allTransactions = useMemo(() => {
         const list = [
-            ...sales.map(s => ({ ...s, type: 'in', category: 'jual', label: `Jual ke ${s.rpa_clients?.rpa_name}`, date: s.transaction_date })),
-            ...purchases.map(p => ({ ...p, type: 'out', category: 'beli', label: `Beli dari ${p.farms?.farm_name}`, date: p.transaction_date, amount: p.total_modal })),
-            ...deliveries.map(d => ({ ...d, type: 'out', category: 'transport', label: `Kirim ke ${d.sales?.rpa_clients?.rpa_name || 'Buyer'}`, date: d.created_at.split('T')[0], amount: d.delivery_cost })),
+            ...sales.map(s => ({ ...s, type: 'in', category: 'jual', label: `Jual ke ${s.rpa_clients?.rpa_name} (Termasuk potongan kirim)`, date: s.transaction_date })),
+            ...purchases.map(p => ({ ...p, type: 'out', category: 'beli', label: `Beli dari ${p.farms?.farm_name}`, date: p.transaction_date, amount: p.total_cost })),
             ...losses.map(l => ({ ...l, type: 'out', category: 'kerugian', label: `${l.loss_type} — ${l.description}`, date: l.report_date, amount: l.financial_loss })),
             ...expenses.map(e => ({ ...e, type: 'out', category: 'extra', label: `${e.category}: ${e.description}`, date: e.expense_date, amount: e.amount }))
         ].sort((a, b) => new Date(b.date) - new Date(a.date))
         return list
-    }, [sales, purchases, deliveries, losses, expenses])
+    }, [sales, purchases, losses, expenses])
 
     return (
         <motion.div 
@@ -233,7 +233,7 @@ export default function CashFlow() {
                         value={summary.totalKeluar} 
                         icon={TrendingDown} 
                         color="red" 
-                        sub="modal + transport + lainnya"
+                        sub="modal + kerugian + extra"
                     />
                     <SummaryCard 
                         label="NET CASH FLOW" 
@@ -297,7 +297,7 @@ export default function CashFlow() {
                                         height={36}
                                         iconType="circle"
                                         formatter={(value) => {
-                                            const labels = { saldo: 'Saldo Kumulatif', pemasukan: 'Pemasukan', pengeluaran: 'Pengeluaran' }
+                                            const labels = { saldo: 'Saldo Kumulatif', pemasukan: 'Pemasukan (Net)', pengeluaran: 'Pengeluaran' }
                                             return <span className="text-[11px] font-black uppercase tracking-widest text-[#94A3B8] ml-2">{labels[value]}</span>
                                         }}
                                     />
@@ -354,8 +354,8 @@ export default function CashFlow() {
                                     </ResponsiveContainer>
                                     {/* Center Text */}
                                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                        <span className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">KELUAR</span>
-                                        <span className="text-lg font-display font-black text-white">{formatIDRShort(summary.totalKeluar)}</span>
+                                        <span className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest uppercase">PROFIT BERSIH</span>
+                                        <span className="text-lg font-display font-black text-emerald-400">{formatIDRShort(summary.netCashFlow)}</span>
                                     </div>
                                 </div>
 
@@ -391,6 +391,25 @@ export default function CashFlow() {
                                 </div>
                             </div>
                         </Card>
+
+                        {totalTransport > 0 && (
+                            <motion.div 
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="p-5 rounded-[28px] bg-white/[0.03] border border-white/5 flex items-center justify-between group overflow-hidden relative"
+                            >
+                                <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:scale-110 transition-transform text-white">
+                                    <Truck size={60} strokeWidth={1.5} />
+                                </div>
+                                <div className="relative z-10 flex flex-col gap-0.5">
+                                    <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Biaya Pengiriman</p>
+                                    <p className="text-xs font-bold text-[#94A3B8]">Sudah dipotong dari pendapatan bersih</p>
+                                </div>
+                                <div className="relative z-10 text-right">
+                                    <p className="text-sm font-black text-[#F1F5F9] tabular-nums">-{formatIDRShort(totalTransport)}</p>
+                                </div>
+                            </motion.div>
+                        )}
                     </div>
 
                     {/* Transaction Detail */}
@@ -556,6 +575,11 @@ function TransactionRow({ tx }) {
                                  {formatPaymentStatus(tx.payment_status)}
                              </span>
                         )}
+                         {tx.category === 'jual' && safeNumber(tx.delivery_cost) > 0 && (
+                             <span className="text-[9px] font-bold text-amber-500/60 uppercase tracking-widest">
+                                 Termasuk Biaya Kirim {formatIDRShort(tx.delivery_cost)}
+                             </span>
+                         )}
                     </div>
                 </div>
             </div>

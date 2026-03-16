@@ -1,25 +1,46 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Plus, Package, TrendingUp, TrendingDown, 
-  History, Trash2, Loader2, AlertCircle
+import {
+  Truck, Package, AlertTriangle, CheckCircle2,
+  Plus, Search, Filter, ChevronRight,
+  Clock, MapPin, User, Smartphone, History,
+  TrendingDown, TrendingUp, AlertCircle, Info, Calendar,
+  ArrowRightLeft, MoreHorizontal, Check, Edit2, Pencil, Trash2, Loader2
 } from 'lucide-react'
-import { useQueryClient } from '@tanstack/react-query'
+import { format } from 'date-fns'
+import { id } from 'date-fns/locale'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
+import { formatIDR, safeNumber, safePercent, safeNum, formatWeight, formatEkor } from '@/lib/format'
+import { useUpdateDelivery } from '@/lib/hooks/useUpdateDelivery'
 import { useSales } from '@/lib/hooks/useSales'
 import { usePurchases } from '@/lib/hooks/usePurchases'
-import { formatIDR, formatDate, formatRelative, formatWeight, safeNumber, formatIDRShort, formatPaymentStatus } from '@/lib/format'
+import { formatDate, formatRelative, formatIDRShort, formatPaymentStatus } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription
+} from '@/components/ui/sheet'
+import { InputNumber } from '@/components/ui/InputNumber'
+import { InputRupiah } from '@/components/ui/InputRupiah'
+import { DatePicker } from '@/components/ui/DatePicker'
+import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import SlideModal from '@/dashboard/components/SlideModal'
 import FormBeliModal from '@/dashboard/components/FormBeliModal'
 import FormJualModal from '@/dashboard/components/FormJualModal'
 import EmptyState from '@/components/EmptyState'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+
 
 const staggerContainer = {
   hidden: {},
@@ -28,23 +49,110 @@ const staggerContainer = {
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
-  visible: { 
+  visible: {
     opacity: 1, y: 0,
-    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } 
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }
   }
+}
+
+const getDeliveryBadge = (delivery) => {
+  if (!delivery) return {
+    label: 'Belum Ada Pengiriman',
+    color: '#4B6478',
+    bg: 'transparent',
+    border: 'transparent',
+    icon: null
+  }
+
+  const map = {
+    preparing: {
+      label: 'Persiapan',
+      color: '#94A3B8',
+      bg: 'rgba(255,255,255,0.04)',
+      border: 'rgba(255,255,255,0.08)',
+      icon: '📦'
+    },
+    loading: {
+      label: 'Sedang Dimuat',
+      color: '#FBBF24',
+      bg: 'rgba(251,191,36,0.08)',
+      border: 'rgba(251,191,36,0.15)',
+      icon: '📦'
+    },
+    on_route: {
+      label: 'Di Jalan',
+      color: '#FBBF24',
+      bg: 'rgba(251,191,36,0.08)',
+      border: 'rgba(251,191,36,0.15)',
+      icon: '🚚'
+    },
+    arrived: {
+      label: 'Tiba di Tujuan',
+      color: '#93C5FD',
+      bg: 'rgba(96,165,250,0.08)',
+      border: 'rgba(96,165,250,0.15)',
+      icon: '📍'
+    },
+    completed: {
+      label: 'Terkirim',
+      color: '#34D399',
+      bg: 'rgba(16,185,129,0.08)',
+      border: 'rgba(16,185,129,0.20)',
+      icon: '✓'
+    }
+  }
+
+  return map[delivery.status] || map.preparing
 }
 
 export default function Transaksi() {
   const { tenant } = useAuth()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('jual')
   const { data: sales, isLoading: loadingSales } = useSales()
   const { data: purchases, isLoading: loadingPurchases } = usePurchases()
-  
+
   const [openModal, setOpenModal] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  const [editTarget, setEditTarget] = useState(null)
+  const [showEditPurchase, setShowEditPurchase] = useState(false)
+  const [editForm, setEditForm] = useState({})
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false)
+
+  const [updateDeliveryTarget, setUpdateDeliveryTarget] = useState(null)
+  const [showUpdateDelivery, setShowUpdateDelivery] = useState(false)
+  const [arrivedCount, setArrivedCount] = useState('')
+  const [arrivedWeight, setArrivedWeight] = useState('')
+  const [arrivalNotes, setArrivalNotes] = useState('')
+  const { updateTiba } = useUpdateDelivery()
+  const [isUpdateArrivalSubmitting, setIsUpdateArrivalSubmitting] = useState(false)
+
+
+  React.useEffect(() => {
+    if (editTarget) {
+      setEditForm({
+        quantity:         editTarget.quantity || 0,
+        avg_weight_kg:    editTarget.avg_weight_kg || 0,
+        price_per_kg:     editTarget.price_per_kg || 0,
+        transport_cost:   editTarget.transport_cost || 0,
+        other_cost:       editTarget.other_cost || 0,
+        transaction_date: editTarget.transaction_date,
+        notes:            editTarget.notes || ''
+      })
+    }
+  }, [editTarget])
+
+  React.useEffect(() => {
+    if (updateDeliveryTarget) {
+        setArrivedCount(updateDeliveryTarget.initial_count || '')
+        setArrivedWeight(updateDeliveryTarget.initial_weight_kg || '')
+        setArrivalNotes('')
+    }
+  }, [updateDeliveryTarget])
 
   const handleClickDelete = async (e, purchase) => {
     e.stopPropagation()
@@ -85,6 +193,76 @@ export default function Transaksi() {
     }
   }
 
+  const handleEditPurchase = async () => {
+    if (!editTarget) return
+    setIsEditSubmitting(true)
+
+    try {
+      const totalWeight = Number(editForm.quantity || 0) * Number(editForm.avg_weight_kg || 0)
+      const totalCost = totalWeight * Number(editForm.price_per_kg || 0)
+
+      const { error } = await supabase
+        .from('purchases')
+        .update({
+          quantity:         editForm.quantity,
+          avg_weight_kg:    editForm.avg_weight_kg,
+          total_weight_kg:  totalWeight,
+          price_per_kg:     editForm.price_per_kg,
+          total_cost:       totalCost,
+          transport_cost:   safeNumber(editForm.transport_cost),
+          other_cost:       safeNumber(editForm.other_cost),
+          transaction_date: editForm.transaction_date,
+          notes:            editForm.notes || null
+        })
+        .eq('id', editTarget.id)
+        .eq('tenant_id', tenant.id)
+
+      if (error) throw error
+
+      queryClient.invalidateQueries({
+        queryKey: ['purchases', tenant.id]
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['broker-stats', tenant.id]
+      })
+
+      const { toast } = await import('sonner')
+      toast.success('Pembelian berhasil diperbarui')
+      setShowEditPurchase(false)
+      setEditTarget(null)
+
+    } catch (err) {
+      const { toast } = await import('sonner')
+      toast.error('Gagal memperbarui: ' + err.message)
+    } finally {
+      setIsEditSubmitting(false)
+    }
+  }
+
+  const handleCompleteDelivery = async (e) => {
+    if (e && e.preventDefault) e.preventDefault()
+    if (!updateDeliveryTarget) return
+
+    setIsUpdateArrivalSubmitting(true)
+    try {
+        await updateTiba({
+            deliveryId: updateDeliveryTarget.id,
+            arrivedCount: arrivedCount,
+            arrivedWeight: arrivedWeight,
+            notes: arrivalNotes
+        })
+
+        toast.success('Kedatangan berhasil dicatat')
+        setShowUpdateDelivery(false)
+        setUpdateDeliveryTarget(null)
+    } catch (err) {
+        console.error('Error update arrival:', err)
+        toast.error('Gagal mencatat kedatangan')
+    } finally {
+        setIsUpdateArrivalSubmitting(false)
+    }
+  }
+
   // Summary Logic
   const monthStart = new Date()
   monthStart.setDate(1)
@@ -94,11 +272,11 @@ export default function Transaksi() {
   const monthPurchases = purchases?.filter(p => new Date(p.transaction_date) >= monthStart) || []
 
   const totalSalesVal = monthSales.reduce((acc, s) => acc + (Number(s.net_revenue) || 0), 0)
-  const totalBeliVal = monthPurchases.reduce((acc, p) => acc + (Number(p.total_modal) || 0), 0)
-  const netProfit = totalSalesVal - totalBeliVal
+  const totalModalVal = monthSales.reduce((acc, s) => acc + (Number(s.purchases?.total_cost) || 0), 0)
+  const netProfit = totalSalesVal - totalModalVal
 
   return (
-    <motion.div 
+    <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -109,8 +287,8 @@ export default function Transaksi() {
         <div>
           <h1 className="font-display text-2xl font-black text-white tracking-tight uppercase">Transaksi</h1>
         </div>
-        <Button 
-          size="sm" 
+        <Button
+          size="sm"
           onClick={() => setOpenModal('options')}
           className="bg-[#10B981] hover:bg-emerald-600 text-white font-black rounded-xl h-10 px-5 gap-2 border-none shadow-[0_4px_20px_rgba(16,185,129,0.15)] active:scale-95 transition-transform uppercase text-xs tracking-widest"
         >
@@ -126,8 +304,8 @@ export default function Transaksi() {
           <p className="font-display text-[13px] font-black text-emerald-400 tabular-nums">{formatIDR(totalSalesVal)}</p>
         </div>
         <div className="space-y-0.5 min-w-[100px] text-center px-4 border-x border-white/5">
-          <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-[0.15em] leading-none mb-1">Total Beli</p>
-          <p className="font-display text-[13px] font-black text-[#F1F5F9] tabular-nums">{formatIDR(totalBeliVal)}</p>
+          <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-[0.15em] leading-none mb-1">Modal Produk</p>
+          <p className="font-display text-[13px] font-black text-[#F1F5F9] tabular-nums">{formatIDR(totalModalVal)}</p>
         </div>
         <div className="space-y-0.5 min-w-[100px] text-right">
           <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-[0.15em] leading-none mb-1">Net Margin</p>
@@ -141,14 +319,14 @@ export default function Transaksi() {
       <Tabs defaultValue="jual" className="mt-4" onValueChange={setActiveTab}>
         <div className="px-5">
           <TabsList className="w-full bg-[#111C24] border border-white/5 h-12 p-1 rounded-2xl">
-            <TabsTrigger 
-              value="jual" 
+            <TabsTrigger
+              value="jual"
               className="flex-1 rounded-xl font-black text-[10px] h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]"
             >
               Penjualan
             </TabsTrigger>
-            <TabsTrigger 
-              value="beli" 
+            <TabsTrigger
+              value="beli"
               className="flex-1 rounded-xl font-black text-[10px] h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]"
             >
               Pembelian
@@ -161,13 +339,13 @@ export default function Transaksi() {
             {loadingSales ? (
               <LoadingList />
             ) : !sales?.length ? (
-              <EmptyState 
-                  icon={History} 
-                  title="Belum ada penjualan" 
-                  description="Catat penjualan pertamamu hari ini untuk melihat riwayat di sini." 
+              <EmptyState
+                  icon={History}
+                  title="Belum ada penjualan"
+                  description="Catat penjualan pertamamu hari ini untuk melihat riwayat di sini."
               />
             ) : (
-              <motion.div 
+              <motion.div
                 key="sale-list"
                 variants={staggerContainer}
                 initial="hidden"
@@ -176,7 +354,12 @@ export default function Transaksi() {
               >
                 {sales.map(sale => (
                    <motion.div key={sale.id} variants={fadeUp}>
-                      <SaleCard sale={sale} />
+                      <SaleCard
+                        sale={sale}
+                        setUpdateDeliveryTarget={setUpdateDeliveryTarget}
+                        setShowUpdateDelivery={setShowUpdateDelivery}
+                        handleCompleteDelivery={handleCompleteDelivery}
+                      />
                    </motion.div>
                 ))}
               </motion.div>
@@ -189,24 +372,29 @@ export default function Transaksi() {
               {loadingPurchases ? (
                 <LoadingList />
               ) : !purchases?.length ? (
-                <EmptyState 
-                    icon={Package} 
-                    title="Belum ada pembelian" 
-                    description="Catat pembelian dari kandang untuk memantau stok dan biaya." 
+                <EmptyState
+                    icon={Package}
+                    title="Belum ada pembelian"
+                    description="Catat pembelian dari kandang untuk memantau stok dan biaya."
                 />
               ) : (
-                <motion.div 
+                <motion.div
                   key="purchase-list"
                   variants={staggerContainer}
                   initial="hidden"
                   animate="visible"
                   className="space-y-3"
                 >
-                  {purchases.map(purchase => (
-                     <motion.div key={purchase.id} variants={fadeUp}>
-                        <PurchaseCard purchase={purchase} onDelete={handleClickDelete} />
-                     </motion.div>
-                  ))}
+                {purchases.map(purchase => (
+                   <motion.div key={purchase.id} variants={fadeUp}>
+                      <PurchaseCard
+                        purchase={purchase}
+                        onDelete={handleClickDelete}
+                        setEditTarget={setEditTarget}
+                        setShowEditPurchase={setShowEditPurchase}
+                      />
+                   </motion.div>
+                ))}
                 </motion.div>
               )}
           </AnimatePresence>
@@ -214,13 +402,13 @@ export default function Transaksi() {
       </Tabs>
 
       {/* Modals */}
-      <SlideModal 
-        title="Opsi Transaksi" 
-        isOpen={openModal === 'options'} 
+      <SlideModal
+        title="Opsi Transaksi"
+        isOpen={openModal === 'options'}
         onClose={() => setOpenModal(null)}
       >
         <div className="grid grid-cols-2 gap-4 pb-12">
-          <button 
+          <button
             onClick={() => setOpenModal('beli')}
             className="flex flex-col items-center justify-center p-6 bg-[#111C24] border border-white/5 rounded-[32px] hover:border-emerald-500/30 transition-all group active:scale-95"
           >
@@ -229,7 +417,7 @@ export default function Transaksi() {
             </div>
             <span className="font-black text-white text-[11px] uppercase tracking-widest">Catat Beli</span>
           </button>
-          <button 
+          <button
              onClick={() => setOpenModal('jual')}
              className="flex flex-col items-center justify-center p-6 bg-[#111C24] border border-white/5 rounded-[32px] hover:border-emerald-500/30 transition-all group active:scale-95"
           >
@@ -302,13 +490,414 @@ export default function Transaksi() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Sheet Edit Pembelian */}
+      <Sheet
+        open={showEditPurchase}
+        onOpenChange={setShowEditPurchase}
+      >
+        <SheetContent
+          side="right"
+          style={{
+            background: 'hsl(var(--card))',
+            borderLeft: '1px solid hsl(var(--border))',
+            width: '100%',
+            maxWidth: '440px',
+            padding: 0,
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
+          <SheetHeader style={{
+            padding: '20px 24px 16px',
+            borderBottom: '1px solid hsl(var(--border))',
+            flexShrink: 0
+          }}>
+            <SheetTitle style={{
+              fontFamily: 'Sora',
+              fontSize: '18px',
+              fontWeight: 700
+            }}>
+              Edit Pembelian
+            </SheetTitle>
+            <SheetDescription className="sr-only">
+              Edit data transaksi pembelian
+            </SheetDescription>
+          </SheetHeader>
+
+          {editTarget && (
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '20px 24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 16
+            }}>
+
+              {/* Info kandang (readonly) */}
+              <div style={{
+                padding: '12px 14px',
+                background: 'rgba(16,185,129,0.06)',
+                border: '1px solid rgba(16,185,129,0.12)',
+                borderRadius: '10px',
+                fontSize: '13px',
+                color: '#34D399'
+              }}>
+                📦 {editTarget.farms?.farm_name}
+              </div>
+
+              {/* Jumlah Ekor */}
+              <div>
+                <label style={{fontSize:'11px',color:'#4B6478',
+                  textTransform:'uppercase',letterSpacing:'0.8px',
+                  display:'block',marginBottom:6}}>
+                  Jumlah Ekor *
+                </label>
+                <InputNumber
+                  value={editForm.quantity}
+                  onChange={v => setEditForm(p=>({
+                    ...p, quantity: v
+                  }))}
+                  step={1} min={1}
+                  placeholder="500"
+                />
+              </div>
+
+              {/* Bobot rata-rata */}
+              <div>
+                <label style={{fontSize:'11px',color:'#4B6478',
+                  textTransform:'uppercase',letterSpacing:'0.8px',
+                  display:'block',marginBottom:6}}>
+                  Bobot Rata-rata (kg/ekor) *
+                </label>
+                <InputNumber
+                  value={editForm.avg_weight_kg}
+                  onChange={v => setEditForm(p=>({
+                    ...p, avg_weight_kg: v
+                  }))}
+                  step={0.01} min={0.1}
+                  placeholder="1.85"
+                />
+              </div>
+
+              {/* Harga Beli */}
+              <div>
+                <label style={{fontSize:'11px',color:'#4B6478',
+                  textTransform:'uppercase',letterSpacing:'0.8px',
+                  display:'block',marginBottom:6}}>
+                  Harga Beli (Rp/kg) *
+                </label>
+                <InputRupiah
+                  value={editForm.price_per_kg}
+                  onChange={v => setEditForm(p=>({
+                    ...p, price_per_kg: v
+                  }))}
+                  placeholder="22.000"
+                />
+              </div>
+
+              {/* Biaya Perjalanan */}
+              <div>
+                <label style={{fontSize:'11px',color:'#4B6478',
+                  textTransform:'uppercase',letterSpacing:'0.8px',
+                  display:'block',marginBottom:6}}>
+                  Biaya Perjalanan (Transport)
+                </label>
+                <InputRupiah
+                  value={editForm.transport_cost}
+                  onChange={v => setEditForm(p=>({
+                    ...p, transport_cost: v
+                  }))}
+                  placeholder="0"
+                />
+              </div>
+
+              {/* Biaya Lain */}
+              <div>
+                <label style={{fontSize:'11px',color:'#4B6478',
+                  textTransform:'uppercase',letterSpacing:'0.8px',
+                  display:'block',marginBottom:6}}>
+                  Biaya Lain
+                </label>
+                <InputRupiah
+                  value={editForm.other_cost}
+                  onChange={v => setEditForm(p=>({
+                    ...p, other_cost: v
+                  }))}
+                  placeholder="0"
+                />
+              </div>
+
+              {/* Tanggal */}
+              <div>
+                <label style={{fontSize:'11px',color:'#4B6478',
+                  textTransform:'uppercase',letterSpacing:'0.8px',
+                  display:'block',marginBottom:6}}>
+                  Tanggal Transaksi
+                </label>
+                <DatePicker
+                  value={editForm.transaction_date ? new Date(editForm.transaction_date) : null}
+                  onChange={v => setEditForm(p=>({
+                    ...p, transaction_date: v ? v.toISOString().split('T')[0] : null
+                  }))}
+                />
+              </div>
+
+              {/* Catatan */}
+              <div>
+                <label style={{fontSize:'11px',color:'#4B6478',
+                  textTransform:'uppercase',letterSpacing:'0.8px',
+                  display:'block',marginBottom:6}}>
+                  Catatan
+                </label>
+                <Textarea
+                  value={editForm.notes || ''}
+                  onChange={e => setEditForm(p=>({
+                    ...p, notes: e.target.value
+                  }))}
+                  placeholder="Catatan tambahan..."
+                  style={{fontSize:'16px', minHeight:'80px'}}
+                />
+              </div>
+
+              {/* Live preview */}
+              <div style={{
+                padding: '14px',
+                background: 'hsl(var(--secondary))',
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '12px'
+              }}>
+                <p style={{
+                  fontSize:'11px',fontWeight:700,
+                  color:'#4B6478',textTransform:'uppercase',
+                  letterSpacing:'0.8px',margin:'0 0 8px'
+                }}>
+                  RINGKASAN
+                </p>
+                {(() => {
+                  const tw = Number(editForm.quantity || 0) * Number(editForm.avg_weight_kg || 0)
+                  const tc = tw * Number(editForm.price_per_kg || 0)
+                  const tm = tc + Number(editForm.transport_cost || 0) + Number(editForm.other_cost || 0)
+
+                  return (
+                    <>
+                      {[
+                        ['Total Berat', `${tw.toFixed(1)} kg`],
+                        ['Total Beli', formatIDR(tc)],
+                        ['Biaya Perjalanan', formatIDR(Number(editForm.transport_cost || 0))],
+                        ['Biaya Lain', formatIDR(Number(editForm.other_cost || 0))],
+                      ].map(([label, val]) => (
+                        <div key={label} style={{
+                          display:'flex',justifyContent:'space-between',
+                          padding:'4px 0',fontSize:'13px',
+                          borderBottom:'1px solid rgba(255,255,255,0.05)'
+                        }}>
+                          <span style={{color:'#94A3B8'}}>{label}</span>
+                          <span style={{color:'#F1F5F9', fontVariantNumeric:'tabular-nums'}}>
+                            {val}
+                          </span>
+                        </div>
+                      ))}
+
+                      <div style={{
+                        display:'flex', justifyContent:'space-between',
+                        alignItems:'baseline', marginTop:8,
+                        paddingTop:8,
+                        borderTop:'1px solid rgba(255,255,255,0.08)'
+                      }}>
+                        <span style={{
+                          fontFamily:'Sora', fontSize:'12px',
+                          fontWeight:700, color:'hsl(var(--muted-foreground))'
+                        }}>
+                          TOTAL MODAL
+                        </span>
+                        <span style={{
+                          fontFamily:'Sora', fontSize:'18px',
+                          fontWeight:800, color:'#34D399',
+                          fontVariantNumeric:'tabular-nums'
+                        }}>
+                          {formatIDR(tm)}
+                        </span>
+                      </div>
+                    </>
+                  )
+                })()}
+              </div>
+
+              {/* Tombol simpan */}
+              <Button
+                onClick={handleEditPurchase}
+                disabled={isEditSubmitting}
+                style={{
+                  width:'100%', height:'46px',
+                  background:'#10B981', border:'none',
+                  borderRadius:'10px', color:'white',
+                  fontFamily:'DM Sans', fontSize:'15px',
+                  fontWeight:700
+                }}
+              >
+                {isEditSubmitting
+                  ? <><Loader2 size={16} className="animate-spin" /> Menyimpan...</>
+                  : 'Simpan Perubahan'}
+              </Button>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Catat Kedatangan Sheet */}
+      <Sheet open={showUpdateDelivery} onOpenChange={setShowUpdateDelivery}>
+          <SheetContent side="bottom" className="h-[80vh] bg-[#0C1319] border-white/10 rounded-t-[40px] px-6 text-left overflow-y-auto">
+              <SheetHeader className="mb-6">
+                  <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">Catat Kedatangan</SheetTitle>
+                  <SheetDescription className="text-[#4B6478] font-bold uppercase text-[10px] tracking-widest mt-1">Konfirmasi jumlah dan berat tiba di buyer</SheetDescription>
+              </SheetHeader>
+
+              <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 mb-6">
+                   <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.2em] text-[#4B6478] mb-1 px-1">
+                       <span>Target Pengiriman</span>
+                   </div>
+                   <div className="bg-[#111C24] p-4 rounded-xl border border-white/5 flex justify-between items-center">
+                       <div>
+                           <p className="text-[9px] font-black text-[#4B6478] uppercase mb-1">Kiriman Dari</p>
+                           <p className="text-xs font-black text-white">{updateDeliveryTarget?.sales?.purchases?.farms?.farm_name || '-'}</p>
+                       </div>
+                       <div className="text-right">
+                           <p className="text-[9px] font-black text-[#4B6478] uppercase mb-1">Target Tiba</p>
+                           <p className="text-xs font-black text-white uppercase">
+                               {formatEkor(updateDeliveryTarget?.initial_count)} / {formatWeight(updateDeliveryTarget?.initial_weight_kg)}
+                           </p>
+                       </div>
+                   </div>
+              </div>
+
+              <form onSubmit={handleCompleteDelivery} className="space-y-6 pb-20">
+                  <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Ekor Tiba *</Label>
+                          <Input 
+                              type="number" 
+                              value={arrivedCount} 
+                              onChange={(e) => setArrivedCount(e.target.value)}
+                              placeholder={updateDeliveryTarget?.initial_count}
+                              className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs" 
+                          />
+                      </div>
+                      <div className="space-y-2">
+                          <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Berat Tiba (kg) *</Label>
+                          <Input 
+                              type="number" 
+                              step="0.1" 
+                              value={arrivedWeight}
+                              onChange={(e) => setArrivedWeight(e.target.value)}
+                              placeholder={updateDeliveryTarget?.initial_weight_kg}
+                              className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs" 
+                          />
+                      </div>
+                  </div>
+
+                  {/* Summary Live Calculation */}
+                  {(() => {
+                      const mortality = safeNum(updateDeliveryTarget?.initial_count) - safeNum(arrivedCount)
+                      const shrinkage = safeNum(updateDeliveryTarget?.initial_weight_kg) - safeNum(arrivedWeight)
+                      
+                      return (
+                          <>
+                              <div style={{
+                                padding: '14px 16px',
+                                background: 'hsl(var(--secondary))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '12px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 8
+                              }}>
+                                {[
+                                  {
+                                    label: 'Berat dikirim',
+                                    value: formatWeight(updateDeliveryTarget?.initial_weight_kg),
+                                    color: 'hsl(var(--foreground))'
+                                  },
+                                  {
+                                    label: 'Berat tiba',
+                                    value: formatWeight(arrivedWeight),
+                                    color: '#34D399'
+                                  },
+                                  {
+                                    label: 'Susut berat',
+                                    value: formatWeight(shrinkage),
+                                    color: shrinkage > 0 ? '#F87171' : '#34D399'
+                                  },
+                                  {
+                                    label: 'Mati di perjalanan',
+                                    value: formatEkor(mortality),
+                                    color: mortality > 0 ? '#F87171' : '#34D399'
+                                  },
+                                ].map(({ label, value, color }) => (
+                                  <div key={label} style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    fontSize: '13px'
+                                  }}>
+                                    <span style={{color:'#4B6478'}}>{label}</span>
+                                    <span style={{
+                                      color, fontWeight: 600,
+                                      fontVariantNumeric: 'tabular-nums'
+                                    }}>
+                                      {value}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {mortality > 0 && (
+                                <div style={{
+                                  padding: '10px 14px',
+                                  background: 'rgba(248,113,113,0.08)',
+                                  border: '1px solid rgba(248,113,113,0.20)',
+                                  borderRadius: '10px',
+                                  fontSize: '12px',
+                                  color: '#F87171',
+                                  display: 'flex',
+                                  gap: 8,
+                                  alignItems: 'center'
+                                }}>
+                                  <AlertCircle size={14} style={{flexShrink:0}} />
+                                  Loss report akan dibuat otomatis untuk {mortality} ekor yang mati.
+                                </div>
+                              )}
+                          </>
+                      )
+                  })()}
+
+                  <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Catatan</Label>
+                      <Textarea 
+                          value={arrivalNotes}
+                          onChange={(e) => setArrivalNotes(e.target.value)}
+                          placeholder="CATATAN KEDATANGAN..." 
+                          className="rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase p-4 min-h-[100px]" 
+                      />
+                  </div>
+
+                  <Button 
+                      disabled={isUpdateArrivalSubmitting}
+                      className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-[24px] shadow-xl shadow-emerald-500/20 active:scale-95 transition-all mt-4"
+                  >
+                      {isUpdateArrivalSubmitting ? 'MENYIMPAN...' : 'SIMPAN & SELESAIKAN'}
+                  </Button>
+              </form>
+          </SheetContent>
+      </Sheet>
     </motion.div>
   )
 }
 
-function SaleCard({ sale }) {
-  const profit = sale.profit || 0
+function SaleCard({ sale, setUpdateDeliveryTarget, setShowUpdateDelivery, handleCompleteDelivery }) {
+  const profit = safeNumber(sale.net_revenue) - safeNumber(sale.purchases?.total_cost)
   const remaining = (sale.net_revenue || 0) - (sale.paid_amount || 0)
+  const delivery = sale.deliveries?.[0] || null
 
   return (
     <Card className="bg-[#111C24] border-white/5 rounded-[22px] p-4 space-y-4 overflow-hidden relative active:scale-[0.98] transition-transform">
@@ -354,15 +943,84 @@ function SaleCard({ sale }) {
             <p className="text-[11px] font-black text-red-500 tabular-nums">Sisa {formatIDR(remaining)}</p>
           )}
         </div>
-        {sale.due_date && sale.payment_status !== 'lunas' && (
-          <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Tempo: {formatDate(sale.due_date)}</p>
-        )}
+        <div className="flex items-center gap-2">
+           {(() => {
+             const badge = getDeliveryBadge(sale.deliveries?.[0])
+             return (
+               <span style={{
+                 display: 'inline-flex',
+                 alignItems: 'center',
+                 gap: '5px',
+                 fontSize: '11px',
+                 fontWeight: 600,
+                 padding: '3px 10px',
+                 borderRadius: '99px',
+                 background: badge.bg,
+                 border: `1px solid ${badge.border}`,
+                 color: badge.color
+               }}>
+                 {badge.icon && (
+                   <span style={{fontSize:'12px'}}>{badge.icon}</span>
+                 )}
+                 {badge.label}
+               </span>
+             )
+           })()}
+
+           {/* QUICK ACTION BUTTONS */}
+           {sale.deliveries?.[0]?.status === 'on_route' && (
+             <button
+               onClick={(e) => {
+                 e.stopPropagation()
+                 setUpdateDeliveryTarget(sale.deliveries[0])
+                 setShowUpdateDelivery(true)
+               }}
+               style={{
+                 fontSize: '11px',
+                 fontWeight: 600,
+                 padding: '4px 12px',
+                 borderRadius: '99px',
+                 background: 'rgba(16,185,129,0.10)',
+                 border: '1px solid rgba(16,185,129,0.20)',
+                 color: '#34D399',
+                 cursor: 'pointer'
+               }}
+             >
+               Catat Tiba →
+             </button>
+           )}
+
+           {sale.deliveries?.[0]?.status === 'arrived' && (
+             <button
+               onClick={(e) => {
+                 e.stopPropagation()
+                 handleCompleteDelivery(sale.deliveries[0].id)
+               }}
+               style={{
+                 fontSize: '11px',
+                 fontWeight: 600,
+                 padding: '4px 12px',
+                 borderRadius: '99px',
+                 background: 'rgba(16,185,129,0.10)',
+                 border: '1px solid rgba(16,185,129,0.20)',
+                 color: '#34D399',
+                 cursor: 'pointer'
+               }}
+             >
+               Konfirmasi Terkirim ✓
+             </button>
+           )}
+
+           {sale.due_date && sale.payment_status !== 'lunas' && (
+             <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Tempo: {formatDate(sale.due_date)}</p>
+           )}
+        </div>
       </div>
     </Card>
   )
 }
 
-function PurchaseCard({ purchase, onDelete }) {
+function PurchaseCard({ purchase, onDelete, setEditTarget, setShowEditPurchase }) {
   return (
     <Card className="bg-[#111C24] border-white/5 rounded-[22px] p-4 space-y-4 text-left active:scale-[0.98] transition-transform">
       {/* Header row: badge + farm name + date + trash */}
@@ -375,29 +1033,71 @@ function PurchaseCard({ purchase, onDelete }) {
           <p className="text-[11px] font-black text-[#4B6478] uppercase mt-0.5 tracking-wider">{formatDate(purchase.transaction_date)}</p>
         </div>
         <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-[0.1em] flex-shrink-0">{formatRelative(purchase.transaction_date)}</p>
-        {/* Trash button */}
-        <button
-          onClick={(e) => onDelete(e, purchase)}
-          style={{
-            width: 28, height: 28, borderRadius: 6,
-            background: 'transparent', border: '1px solid transparent',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', color: 'hsl(var(--muted-foreground))',
-            transition: 'all 0.15s', flexShrink: 0
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.background = 'rgba(248,113,113,0.08)'
-            e.currentTarget.style.borderColor = 'rgba(248,113,113,0.20)'
-            e.currentTarget.style.color = '#F87171'
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.background = 'transparent'
-            e.currentTarget.style.borderColor = 'transparent'
-            e.currentTarget.style.color = 'hsl(var(--muted-foreground))'
-          }}
-        >
-          <Trash2 size={13} />
-        </button>
+        
+        {/* ACTION BUTTONS */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px'
+        }}>
+          {/* TOMBOL EDIT */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setEditTarget(purchase)
+              setShowEditPurchase(true)
+            }}
+            style={{
+              width: 28, height: 28,
+              borderRadius: '6px',
+              background: 'transparent',
+              border: '1px solid transparent',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'hsl(var(--muted-foreground))',
+              transition: 'all 0.15s',
+              flexShrink: 0
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(16,185,129,0.08)'
+              e.currentTarget.style.borderColor = 'rgba(16,185,129,0.20)'
+              e.currentTarget.style.color = '#34D399'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.borderColor = 'transparent'
+              e.currentTarget.style.color = 'hsl(var(--muted-foreground))'
+            }}
+          >
+            <Pencil size={13} />
+          </button>
+
+          {/* Trash button */}
+          <button
+            onClick={(e) => onDelete(e, purchase)}
+            style={{
+              width: 28, height: 28, borderRadius: 6,
+              background: 'transparent', border: '1px solid transparent',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: 'hsl(var(--muted-foreground))',
+              transition: 'all 0.15s', flexShrink: 0
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(248,113,113,0.08)'
+              e.currentTarget.style.borderColor = 'rgba(248,113,113,0.20)'
+              e.currentTarget.style.color = '#F87171'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'transparent'
+              e.currentTarget.style.borderColor = 'transparent'
+              e.currentTarget.style.color = 'hsl(var(--muted-foreground))'
+            }}
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
       </div>
 
       <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex justify-between items-end">
@@ -409,8 +1109,36 @@ function PurchaseCard({ purchase, onDelete }) {
            </p>
          </div>
          <div className="text-right pb-1">
-           <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mb-1 leading-none">Biaya Ops</p>
-           <p className="font-black text-slate-400 text-[11px] tabular-nums leading-none">{formatIDR(purchase.transport_cost || 0)}</p>
+           {(() => {
+             const biayaOps = safeNumber(purchase.transport_cost) + safeNumber(purchase.other_cost)
+             return (
+               <div style={{
+                 display: 'flex', flexDirection: 'column',
+                 alignItems: 'flex-end', gap: 2
+               }}>
+                 <span style={{
+                   fontSize: '10px', fontWeight: 600,
+                   color: '#4B6478', textTransform: 'uppercase',
+                   letterSpacing: '0.8px'
+                 }}>
+                   Biaya Perjalanan
+                 </span>
+                 {biayaOps > 0 ? (
+                   <span style={{
+                     fontSize: '13px', fontWeight: 700,
+                     color: '#FBBF24',
+                     fontVariantNumeric: 'tabular-nums'
+                   }}>
+                     {formatIDR(biayaOps)}
+                   </span>
+                 ) : (
+                   <span style={{ fontSize: '13px', color: '#4B6478' }}>
+                     —
+                   </span>
+                 )}
+               </div>
+             )
+           })()}
          </div>
       </div>
     </Card>

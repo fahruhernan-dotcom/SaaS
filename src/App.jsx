@@ -2,7 +2,8 @@ import React, { useEffect, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './lib/hooks/useAuth';
 import LandingPage from './pages/LandingPage';
-import AuthPlaceholder from './pages/AuthPlaceholder';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import LoadingScreen from './components/LoadingScreen';
 
 // Dashboard pages
@@ -25,7 +26,7 @@ import Armada from './dashboard/broker/Armada';
 // Components
 import ErrorBoundary from './components/ErrorBoundary';
 import BottomNav from './dashboard/components/BottomNav';
-import BusinessModelOverlay from './dashboard/components/BusinessModelOverlay';
+
 import ComingSoon from './dashboard/components/ComingSoon';
 import BrokerLayout from './dashboard/layouts/BrokerLayout';
 import DesktopSidebarLayout from './dashboard/layouts/DesktopSidebarLayout';
@@ -89,23 +90,16 @@ function DashboardLayout({ children }) {
 }
 
 function App() {
-  const { profile, refetchProfile } = useAuth();
 
   return (
     <BrowserRouter>
       <ScrollToTop />
-      
-      {/* Forced Business Model Selection Overlay */}
-      <BusinessModelOverlay 
-        profile={profile} 
-        onComplete={() => refetchProfile()} 
-      />
 
       <Routes>
         {/* Public */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<AuthPlaceholder type="login" />} />
-        <Route path="/register" element={<AuthPlaceholder type="register" />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
         {/* Onboarding */}
         <Route path="/onboarding" element={

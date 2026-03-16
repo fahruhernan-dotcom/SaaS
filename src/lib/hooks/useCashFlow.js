@@ -11,7 +11,7 @@ export function useCashFlow(startDate, endDate, tenantId) {
 
       const [salesRes, purchasesRes, deliveriesRes, lossRes, expensesRes] = await Promise.all([
         supabase.from('sales')
-          .select('id, net_revenue, transaction_date, payment_status, rpa_id, rpa_clients(rpa_name)')
+          .select('id, net_revenue, delivery_cost, total_revenue, total_weight_kg, transaction_date, payment_status, rpa_id, rpa_clients(rpa_name)')
           .eq('tenant_id', tenantId)
           .eq('is_deleted', false)
           .gte('transaction_date', startStr)
@@ -19,7 +19,7 @@ export function useCashFlow(startDate, endDate, tenantId) {
           .order('transaction_date', { ascending: true }),
 
         supabase.from('purchases')
-          .select('id, total_modal, transaction_date, farm_id, farms(farm_name)')
+          .select('id, total_modal, total_cost, transaction_date, farm_id, farms(farm_name)')
           .eq('tenant_id', tenantId)
           .eq('is_deleted', false)
           .gte('transaction_date', startStr)
@@ -56,19 +56,19 @@ export function useCashFlow(startDate, endDate, tenantId) {
       const expenses   = expensesRes.data   || []
 
       const totalPemasukan = sales.reduce((s, t) => s + (Number(t.net_revenue) || 0), 0)
-      const totalModal = purchases.reduce((s, t) => s + (Number(t.total_modal) || 0), 0)
-      const totalTransport = deliveries.reduce((s, t) => s + (Number(t.delivery_cost) || 0), 0)
+      const totalModalBeli = purchases.reduce((s, t) => s + (Number(t.total_cost) || 0), 0)
+      const totalTransport = sales.reduce((s, t) => s + (Number(t.delivery_cost) || 0), 0)
       const totalKerugian = losses.reduce((s, t) => s + (Number(t.financial_loss) || 0), 0)
       const totalExtra = expenses.reduce((s, t) => s + (Number(t.amount) || 0), 0)
       
-      const totalKeluar = totalModal + totalTransport + totalKerugian + totalExtra
+      const totalKeluar = totalModalBeli + totalKerugian + totalExtra
       const netCashFlow = totalPemasukan - totalKeluar
 
       return {
         sales, purchases, deliveries, losses, expenses,
         summary: {
           totalPemasukan, 
-          totalModal, 
+          totalModal: totalModalBeli, 
           totalTransport,
           totalKerugian, 
           totalExtra, 
