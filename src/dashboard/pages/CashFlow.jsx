@@ -1,14 +1,33 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Wallet, ArrowUpRight, ArrowDownRight, Calendar, Filter, Download, Info } from 'lucide-react';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { useCashFlow } from '../../lib/hooks/useCashFlow';
+import { useAuth } from '../../lib/hooks/useAuth';
 import { formatIDR, formatIDRShort } from '../../lib/format';
 import TopBar from '../components/TopBar';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function CashFlow() {
+  const { tenant } = useAuth();
   const [period, setPeriod] = useState('week');
-  const { data: cashflow, isLoading } = useCashFlow(period);
+
+  const { startStr, endStr } = (() => {
+    const today = new Date();
+    if (period === 'week') {
+      return { 
+        startStr: format(startOfWeek(today, { weekStartsOn: 1 }), 'yyyy-MM-dd'),
+        endStr: format(endOfWeek(today, { weekStartsOn: 1 }), 'yyyy-MM-dd')
+      };
+    }
+    return {
+      startStr: format(startOfMonth(today), 'yyyy-MM-dd'),
+      endStr: format(endOfMonth(today), 'yyyy-MM-dd')
+    };
+  })();
+
+  const { data, isLoading } = useCashFlow(startStr, endStr, tenant?.id);
+  const cashflow = data?.summary || {};
 
   return (
     <div style={{ background: '#06090F', minHeight: '100vh', paddingBottom: '20px' }}>
@@ -28,7 +47,7 @@ export default function CashFlow() {
             Estimasi Laba Bersih ({period})
           </div>
           <div style={{ fontFamily: 'Sora', fontSize: '28px', fontWeight: 800, color: '#10B981' }}>
-            {formatIDR(cashflow?.totalNetProfit || 0)}
+            {formatIDR(cashflow?.netCashFlow || 0)}
           </div>
           
           <div style={{ height: '120px', marginTop: '20px', display: 'flex', alignItems: 'flex-end', gap: '8px' }}>
@@ -64,10 +83,10 @@ export default function CashFlow() {
 
       <main style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <Section title="Rincian Keuangan">
-          <FinanceRow label="Penjualan (Sales)" value={formatIDR(cashflow?.totalIncome || 0)} icon={<ArrowUpRight size={16} color="#10B981" />} />
-          <FinanceRow label="Pembelian (COGS)" value={formatIDR(cashflow?.totalExpenses || 0)} icon={<ArrowDownRight size={16} color="#F87171" />} isExpense />
-          <FinanceRow label="Logistik & Ops" value={formatIDR(period === 'week' ? 1250000 : 5000000)} icon={<ArrowDownRight size={16} color="#F87171" />} isExpense />
-          <FinanceRow label="Loss Lapangan" value={formatIDR(cashflow?.totalLoss || 0)} icon={<ArrowDownRight size={16} color="#F87171" />} isExpense />
+          <FinanceRow label="Penjualan (Sales)" value={formatIDR(cashflow?.totalPemasukan || 0)} icon={<ArrowUpRight size={16} color="#10B981" />} />
+          <FinanceRow label="Pembelian (COGS)" value={formatIDR(cashflow?.totalModal || 0)} icon={<ArrowDownRight size={16} color="#F87171" />} isExpense />
+          <FinanceRow label="Logistik & Ops" value={formatIDR(cashflow?.totalTransport || 0)} icon={<ArrowDownRight size={16} color="#F87171" />} isExpense />
+          <FinanceRow label="Loss Lapangan" value={formatIDR(cashflow?.totalKerugian || 0)} icon={<ArrowDownRight size={16} color="#F87171" />} isExpense />
         </Section>
 
         <div style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.1)', borderRadius: '16px', padding: '16px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>

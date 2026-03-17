@@ -32,7 +32,8 @@ import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { 
   formatIDRShort, 
   formatDateFull, 
-  formatEkor 
+  formatEkor,
+  safeNum
 } from '@/lib/format'
 import { toast } from 'sonner'
 import { Card } from '@/components/ui/card'
@@ -62,7 +63,7 @@ export default function BrokerBeranda() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const today = new Date().toISOString().split('T')[0]
+  const today = new Date(new Date().getTime() + (7 * 60 * 60 * 1000)).toISOString().split('T')[0]
   
   const [modalType, setModalType] = useState(null)
   const [wizardOpen, setWizardOpen] = useState(false)
@@ -80,11 +81,15 @@ export default function BrokerBeranda() {
         { data: expenses }
       ] = await Promise.all([
         supabase.from('sales')
-          .select('net_revenue, total_revenue, quantity, total_weight_kg, payment_status, transaction_date, rpa_clients(rpa_name), purchases(total_cost)')
+          .select('created_at, net_revenue, total_revenue, price_per_kg, delivery_cost, quantity, total_weight_kg, payment_status, transaction_date, rpa_clients(rpa_name), purchases(total_cost, price_per_kg), deliveries(initial_weight_kg, arrived_weight_kg)')
           .eq('tenant_id', tenant.id)
           .eq('transaction_date', today)
           .eq('is_deleted', false),
-        supabase.from('purchases').select('total_modal, total_cost, quantity, total_weight_kg, transaction_date, farms(farm_name)').eq('tenant_id', tenant.id).eq('transaction_date', today).eq('is_deleted', false),
+        supabase.from('purchases')
+          .select('created_at, total_modal, total_cost, quantity, total_weight_kg, transaction_date, farms(farm_name)')
+          .eq('tenant_id', tenant.id)
+          .eq('transaction_date', today)
+          .eq('is_deleted', false),
         supabase.from('rpa_clients').select('id, rpa_name, total_outstanding').eq('tenant_id', tenant.id).eq('is_deleted', false).gt('total_outstanding', 0).order('total_outstanding', { ascending: false }),
         supabase.from('farms').select('id').eq('tenant_id', tenant.id).eq('status', 'ready').eq('is_deleted', false),
         supabase.from('sales').select('id').eq('tenant_id', tenant.id).lte('due_date', today).neq('payment_status', 'lunas').eq('is_deleted', false),
@@ -92,12 +97,25 @@ export default function BrokerBeranda() {
         supabase.from('extra_expenses').select('amount').eq('tenant_id', tenant.id).eq('expense_date', today).eq('is_deleted', false)
       ])
 
-      const todaySalesProfit = sales?.reduce((acc, s) => acc + (Number(s.net_revenue || 0) - Number(s.purchases?.total_cost || 0)), 0) || 0
-      const todayLosses = losses?.reduce((acc, l) => acc + Number(l.financial_loss || 0), 0) || 0
-      const todayExpenses = expenses?.reduce((acc, e) => acc + Number(e.amount || 0), 0) || 0
-      const todayProfit = todaySalesProfit - todayLosses - todayExpenses
+      // KPI 1: PROFIT HARI INI (Gross Profit from Sales today)
+      // Prompt requirement: sum(net_revenue) - sum(purchases.total_cost)
+      const todayProfit = sales?.reduce((acc, s) => {
+        const delivery = s.deliveries?.[0]
+        const purchase = s.purchases
+        
+        const totalJual = delivery?.arrived_weight_kg 
+          ? safeNum(delivery.arrived_weight_kg) * safeNum(s.price_per_kg)
+          : safeNum(s.net_revenue)
+        
+        const susutLoss = (delivery?.initial_weight_kg && delivery?.arrived_weight_kg)
+          ? (safeNum(delivery.initial_weight_kg) - safeNum(delivery.arrived_weight_kg)) * safeNum(purchase?.price_per_kg)
+          : 0
+
+        const profit = totalJual - safeNum(purchase?.total_cost) - safeNum(s.delivery_cost) - susutLoss
+        return acc + profit
+      }, 0) || 0
       
-      const totalPiutang = rpaWithDebt?.reduce((acc, r) => acc + Number(r.total_outstanding || 0), 0) || 0
+      const totalPiutang = rpaWithDebt?.reduce((acc, r) => acc + safeNum(r.total_outstanding), 0) || 0
       
       return {
         todayProfit,
@@ -111,7 +129,7 @@ export default function BrokerBeranda() {
         recentFeed: [
           ...(sales?.map(s => ({ ...s, type: 'JUAL' })) || []),
           ...(purchases?.map(p => ({ ...p, type: 'BELI' })) || [])
-        ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5),
+        ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5),
         expiringSIMs: [] // Placeholder, will fetch below
       }
     },
@@ -155,7 +173,7 @@ export default function BrokerBeranda() {
 
       const { data: salesData } = await supabase
         .from('sales')
-        .select('net_revenue, transaction_date, purchases(total_cost)')
+        .select('net_revenue, price_per_kg, delivery_cost, transaction_date, purchases(total_cost, price_per_kg), deliveries(initial_weight_kg, arrived_weight_kg)')
         .eq('tenant_id', tenant.id)
         .eq('is_deleted', false)
         .gte('transaction_date', days[0].date)
@@ -191,9 +209,18 @@ export default function BrokerBeranda() {
         const dayExpenses = (expensesData || []).filter(e => e.expense_date === day.date)
 
         const salesProfit = daySales.reduce((sum, s) => {
-          const rev = Number(s.net_revenue || 0)
-          const modal = Number(s.purchases?.total_cost || 0)
-          return sum + (rev - modal)
+          const delivery = s.deliveries?.[0]
+          const purchase = s.purchases
+          
+          const totalJual = delivery?.arrived_weight_kg 
+            ? safeNum(delivery.arrived_weight_kg) * safeNum(s.price_per_kg)
+            : safeNum(s.net_revenue)
+            
+          const susutLoss = (delivery?.initial_weight_kg && delivery?.arrived_weight_kg)
+            ? (safeNum(delivery.initial_weight_kg) - safeNum(delivery.arrived_weight_kg)) * safeNum(purchase?.price_per_kg)
+            : 0
+
+          return sum + (totalJual - safeNum(purchase?.total_cost) - safeNum(s.delivery_cost) - susutLoss)
         }, 0)
 
         const totalLoss = dayLosses.reduce((sum, l) => sum + Number(l.financial_loss || 0), 0)

@@ -4,10 +4,96 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== Landing Page Section Utilities ===== */
+.section-padding {
+  padding: 5rem clamp(1.25rem, 5vw, 5rem);
+}
+@media (min-width: 768px) {
+  .section-padding {
+    padding: 7rem clamp(2.5rem, 5vw, 5rem);
+  }
+}
+
+.section-fade-bottom {
+  position: relative;
+}
+.section-fade-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, #06090F);
+  pointer-events: none;
+}
+
+.section-h2 {
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(28px, 5vw, 44px);
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  line-height: 1.15;
+  color: #F1F5F9;
+}
+
+.section-subtitle {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  color: #64748B;
+  line-height: 1.7;
+}
+@media (min-width: 768px) {
+  .section-subtitle {
+    font-size: 16px;
+  }
+}
+
+/* Card hover accent line */
+.group:hover .card-top-line,
+*:hover > .card-top-line {
+  opacity: 1 !important;
+}
+
+/* Featured pricing card border */
+.featured-card-border {
+  background: linear-gradient(135deg, rgba(16,185,129,0.25) 0%, rgba(16,185,129,0.05) 100%);
+  border-radius: 20px;
+  padding: 1px;
+}
+
+/* Pulse glow animation for pricing */
+@keyframes pulse-glow-kf {
+  0%, 100% { box-shadow: 0 0 20px rgba(16,185,129,0.08); }
+  50% { box-shadow: 0 0 35px rgba(16,185,129,0.15); }
+}
+.animate-pulse-glow {
+  animation: pulse-glow-kf 3s ease-in-out infinite;
+}
+
+/* Shimmer pass for Hero headline */
+@keyframes shimmer-pass {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* Scale in for testimonial stars */
+@keyframes scale-in {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Border accent alias */
+.border-border-acc {
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
 @layer base {
   :root {
     --background: 220 14% 4%;
     --foreground: 210 40% 96%;
+    --em-400: #34D399;
+    --em-500: #10B981;
     --card: 215 22% 8%;
     --card-foreground: 210 40% 96%;
     --popover: 215 22% 8%;

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { 
   Home, 
@@ -13,7 +13,9 @@ import {
   ChevronsUpDown,
   User,
   LogOut,
-  Bell
+  Bell,
+  Check,
+  Plus
 } from 'lucide-react'
 import {
   Sidebar,
@@ -38,11 +40,40 @@ import {
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase } from '../../lib/supabase'
 import { toast } from 'sonner'
+import { useQueryClient } from '@tanstack/react-query'
 
 export default function AppSidebar() {
-  const { user, profile, tenant } = useAuth()
+  const { user, profile: authProfile, tenant: authTenant } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
+  const [profiles, setProfiles] = useState([])
+  const [activeProfileId, setActiveProfileId] = useState(null)
+
+  useEffect(() => {
+    if (authProfile && !activeProfileId) {
+      setActiveProfileId(authProfile.id)
+    }
+  }, [authProfile])
+
+  useEffect(() => {
+    async function fetchProfiles() {
+      if (!user?.id) return
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*, tenants(*)')
+        .eq('auth_user_id', user.id)
+      
+      if (!error && data) {
+        setProfiles(data)
+      }
+    }
+    fetchProfiles()
+  }, [user?.id])
+
+  const profile = profiles.find(p => p.id === activeProfileId) || authProfile
+  const tenant = profile?.tenants || authTenant
 
   const tenantInitials = tenant?.business_name?.slice(0, 2).toUpperCase() || 'TO'
   const userInitials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
@@ -111,28 +142,78 @@ export default function AppSidebar() {
         {/* Tenant selector */}
         <SidebarMenu className="mt-2">
           <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              className="bg-secondary border border-border rounded-xl   group-data-[collapsible=icon]:border-none group-data-[collapsible=icon]:bg-transparent"
-            >
-              <div className="w-7 h-7 rounded-md bg-emerald-500/15 flex items-center justify-center text-[11px] font-display font-extrabold text-emerald-400 flex-shrink-0">
-                {tenantInitials}
-              </div>
-              <div className="flex-1 overflow-hidden  text-left ml-2">
-                <p className="text-[13px] font-semibold truncate leading-tight">
-                  {tenant?.business_name || 'My Business'}
-                </p>
-                <p style={{
-                  fontSize: '11px',
-                  color: 'hsl(var(--muted-foreground))',
-                  margin: 0,
-                  letterSpacing: '0.3px'
-                }}>
-                  Broker Dashboard
-                </p>
-              </div>
-              <ChevronsUpDown size={14} className="text-muted-foreground  ml-auto" />
-            </SidebarMenuButton>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  size="lg"
+                  className="bg-secondary border border-border rounded-xl group-data-[collapsible=icon]:border-none group-data-[collapsible=icon]:bg-transparent hover:bg-white/[0.03] transition-colors"
+                >
+                  <div className="w-7 h-7 rounded-md bg-emerald-500/15 flex items-center justify-center text-[11px] font-display font-extrabold text-emerald-400 flex-shrink-0">
+                    {tenantInitials}
+                  </div>
+                  <div className="flex-1 overflow-hidden text-left ml-2">
+                    <p className="text-[13px] font-semibold truncate leading-tight">
+                      {tenant?.business_name || 'My Business'}
+                    </p>
+                    <p style={{
+                      fontSize: '11px',
+                      color: 'hsl(var(--muted-foreground))',
+                      margin: 0,
+                      letterSpacing: '0.3px'
+                    }}>
+                      Broker Dashboard
+                    </p>
+                  </div>
+                  <ChevronsUpDown size={14} className="text-muted-foreground ml-auto" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                side="bottom"
+                align="start"
+                className="w-64 bg-[#0C1319] border border-border rounded-xl p-1.5 shadow-2xl"
+              >
+                <div className="px-2 py-1.5 mb-1">
+                  <p className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+                    Bisnis Anda
+                  </p>
+                </div>
+                {profiles.map((p) => {
+                  const isActive = p.id === activeProfileId
+                  return (
+                    <DropdownMenuItem
+                      key={p.id}
+                      onClick={() => {
+                        setActiveProfileId(p.id)
+                        queryClient.invalidateQueries()
+                      }}
+                      className={`gap-3 rounded-lg p-2 cursor-pointer transition-colors focus:bg-accent focus:text-foreground ${
+                        isActive ? 'text-emerald-400 bg-emerald-500/10' : 'hover:bg-accent text-foreground'
+                      }`}
+                    >
+                      <div className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                        isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-secondary text-muted-foreground'
+                      }`}>
+                        {p.tenants?.business_name?.slice(0, 2).toUpperCase() || 'TO'}
+                      </div>
+                      <span className="text-[13px] font-medium flex-1 truncate">
+                        {p.tenants?.business_name || 'My Business'}
+                      </span>
+                      {isActive && <Check size={14} className="text-emerald-400 flex-shrink-0" />}
+                    </DropdownMenuItem>
+                  )
+                })}
+                <DropdownMenuSeparator className="my-1.5 bg-border" />
+                <DropdownMenuItem
+                  onClick={() => toast.info('Fitur segera hadir')}
+                  className="gap-3 rounded-lg p-2 cursor-pointer text-muted-foreground hover:bg-accent hover:text-foreground transition-colors focus:bg-accent focus:text-foreground"
+                >
+                  <div className="w-6 h-6 rounded flex items-center justify-center bg-white/5 flex-shrink-0">
+                    <Plus size={14} />
+                  </div>
+                  <span className="text-[13px] font-medium">Tambah Bisnis Baru</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

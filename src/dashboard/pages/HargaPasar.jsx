@@ -10,6 +10,7 @@ import {
   Tooltip, ResponsiveContainer, Legend 
 } from 'recharts'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { formatIDR, formatDate } from '@/lib/format'
 import { Button } from '@/components/ui/button'
@@ -23,11 +24,21 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { toast } from 'sonner'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
+import { 
+  Tooltip as UITooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from '@/components/ui/tooltip'
 
 export default function HargaPasar() {
+  const { tenant } = useAuth()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [isManualOpen, setIsManualOpen] = useState(false)
   const queryClient = useQueryClient()
+
+  // Today date WIB
+  const today = new Date(new Date().getTime() + (7 * 60 * 60 * 1000)).toISOString().split('T')[0]
 
   // Fetch Market Prices (14 days)
   const { data: prices, isLoading } = useQuery({
@@ -36,10 +47,15 @@ export default function HargaPasar() {
       const { data, error } = await supabase
         .from('market_prices')
         .select('*')
+        .eq('is_deleted', false)
         .order('price_date', { ascending: false })
-        .limit(14)
+        .order('region', { ascending: false })
+        .order('source', { ascending: false })
+        .limit(50)
       if (error) throw error
-      return data
+      
+      // Filter out buggy records where Jual < Beli (suspicious data)
+      return (data || []).filter(x => x.avg_sell_price >= x.avg_buy_price)
     }
   })
 
@@ -62,8 +78,66 @@ export default function HargaPasar() {
     return () => supabase.removeChannel(channel)
   }, [queryClient])
 
-  const todayPrice = prices?.[0]
-  const yesterdayPrice = prices?.[1]
+  // LIVE Data from today's transactions
+  const { data: liveData } = useQuery({
+    queryKey: ['live-market-price', tenant?.id, today],
+    queryFn: async () => {
+      const { data: sales } = await supabase.from('sales')
+        .select('price_per_kg')
+        .eq('tenant_id', tenant.id)
+        .eq('transaction_date', today)
+        .eq('is_deleted', false)
+        .gt('price_per_kg', 0)
+      
+      const { data: purchases } = await supabase.from('purchases')
+        .select('price_per_kg')
+        .eq('tenant_id', tenant.id)
+        .eq('transaction_date', today)
+        .eq('is_deleted', false)
+        .gt('price_per_kg', 0)
+
+      const MIN_REALISTIC_PRICE = 15000
+      const s = (sales || []).filter(x => Number(x.price_per_kg) >= MIN_REALISTIC_PRICE)
+      const p = (purchases || []).filter(x => Number(x.price_per_kg) >= MIN_REALISTIC_PRICE)
+
+      const avgSell = s.length > 0 ? s.reduce((acc, x) => acc + (Number(x.price_per_kg) || 0), 0) / s.length : 0
+      const avgBuy = p.length > 0 ? p.reduce((acc, x) => acc + (Number(x.price_per_kg) || 0), 0) / p.length : 0
+
+      return {
+        avg_sell_price: avgSell,
+        avg_buy_price: avgBuy,
+        transaction_count: s.length + p.length
+      }
+    },
+    enabled: !!tenant?.id
+  })
+
+  const todayPrice = useMemo(() => {
+    // Priority 1: Live transactions today (filtered by is_deleted=false)
+    if (liveData && liveData.transaction_count > 0) {
+        return {
+            price_date: today,
+            avg_buy_price: liveData.avg_buy_price,
+            avg_sell_price: liveData.avg_sell_price,
+            transaction_count: liveData.transaction_count
+        }
+    }
+    
+    // Priority 2: Market prices table (usually manual inputs or global stats)
+    const marketRecord = prices?.find(p => p.price_date === today)
+    if (marketRecord) return marketRecord
+
+    // Fallback: If live data exists but transaction_count is 0, show null today (will show as "-" in UI)
+    if (liveData && liveData.transaction_count === 0) {
+        return null
+    }
+
+    return null
+  }, [liveData, prices, today])
+
+  const yesterdayPrice = useMemo(() => {
+    return prices?.find(p => p.price_date < today) || null
+  }, [prices, today])
 
   const buyDiff = todayPrice && yesterdayPrice ? todayPrice.avg_buy_price - yesterdayPrice.avg_buy_price : 0
   const sellDiff = todayPrice && yesterdayPrice ? todayPrice.avg_sell_price - yesterdayPrice.avg_sell_price : 0
@@ -71,17 +145,28 @@ export default function HargaPasar() {
   const margin = todayPrice ? todayPrice.avg_sell_price - todayPrice.avg_buy_price : 0
 
   const chartData = useMemo(() => {
-    if (!prices) return []
-    return [...prices].reverse().map(p => ({
-      date: formatDate(p.price_date, 'dd MMM'),
-      beli: p.avg_buy_price,
-      jual: p.avg_sell_price,
-      margin: p.avg_sell_price - p.avg_buy_price
-    }))
+    if (!prices || prices.length === 0) return []
+    // Filter to last 14 unique dates, then sort ascending for chart
+    const uniqueDates = Array.from(new Set(prices.map(p => p.price_date)))
+        .sort()
+        .slice(-14)
+    
+    return uniqueDates.map(date => {
+        // Find best source for this date (priority: manual > auto_scraper > transaction)
+        const datePrices = prices.filter(p => p.price_date === date)
+        const p = datePrices[0] // Already sorted by source DESC in query
+        return {
+            date: formatDate(date, 'dd MMM'),
+            beli: p.avg_buy_price,
+            jual: p.avg_sell_price,
+            margin: p.avg_sell_price - p.avg_buy_price
+        }
+    })
   }, [prices])
 
   return (
-    <motion.div 
+    <TooltipProvider>
+      <motion.div 
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -92,7 +177,7 @@ export default function HargaPasar() {
         <header className="px-5 pt-8 pb-4 border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 flex justify-between items-center">
             <div>
                 <h1 className="font-display text-xl font-black text-white tracking-tight leading-none uppercase">Harga Pasar</h1>
-                <p className="text-[11px] font-bold text-[#4B6478] uppercase mt-1">Broiler Nasional</p>
+                <p className="text-[11px] font-bold text-[#4B6478] uppercase mt-1">Broiler {todayPrice?.region || 'Nasional'}</p>
             </div>
             <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">
                 <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
@@ -114,8 +199,36 @@ export default function HargaPasar() {
                     <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/5 blur-[60px] rounded-full group-hover:bg-emerald-500/10 transition-colors duration-700" />
                     
                     <div className="flex justify-between items-center mb-6 relative z-10">
-                        <span className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Harga Broiler Hari Ini</span>
-                        <span className="text-[11px] font-bold text-white/40">{formatDate(todayPrice.price_date)}</span>
+                        <div className="flex flex-col gap-1">
+                            <span className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Harga Broiler Hari Ini</span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[11px] font-bold text-white/40">{formatDate(todayPrice.price_date)} • {todayPrice.region}</span>
+                                {todayPrice.source === 'auto_scraper' ? (
+                                    <UITooltip>
+                                        <TooltipTrigger asChild>
+                                            <Badge variant="outline" className="bg-white/5 border-white/10 text-[#4B6478] text-[9px] font-black px-1.5 py-0 rounded-md h-4 flex items-center gap-1 cursor-help">
+                                                AUTO
+                                                <Info size={10} />
+                                            </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right" className="bg-[#111C24] border-white/10 text-[10px] font-bold text-white/60">
+                                            Estimasi dari chickin.id
+                                        </TooltipContent>
+                                    </UITooltip>
+                                ) : todayPrice.source === 'manual' ? (
+                                    <UITooltip>
+                                        <TooltipTrigger asChild>
+                                            <Badge variant="outline" className="bg-emerald-500/10 border-emerald-500/20 text-emerald-400 text-[9px] font-black px-1.5 py-0 rounded-md h-4 flex items-center gap-1 cursor-help">
+                                                MANUAL
+                                            </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right" className="bg-[#111C24] border-emerald-500/20 text-[10px] font-bold text-emerald-400">
+                                            Diinput oleh broker
+                                        </TooltipContent>
+                                    </UITooltip>
+                                ) : null}
+                            </div>
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 relative z-10">
@@ -123,7 +236,8 @@ export default function HargaPasar() {
                             <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Harga Beli</Label>
                             <div className="flex flex-col">
                                 <span className="font-display text-[26px] font-black text-white leading-none tracking-tighter">
-                                    {formatIDR(todayPrice.avg_buy_price)}
+                                    {todayPrice.source === 'auto_scraper' && '~'}
+                                    {todayPrice.avg_buy_price > 0 ? formatIDR(todayPrice.avg_buy_price) : '-'}
                                 </span>
                                 <ChangeIndicator diff={buyDiff} />
                             </div>
@@ -133,7 +247,8 @@ export default function HargaPasar() {
                             <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Harga Jual</Label>
                             <div className="flex flex-col items-end">
                                 <span className="font-display text-[26px] font-black text-emerald-400 leading-none tracking-tighter">
-                                    {formatIDR(todayPrice.avg_sell_price)}
+                                    {todayPrice.source === 'auto_scraper' && '~'}
+                                    {todayPrice.avg_sell_price > 0 ? formatIDR(todayPrice.avg_sell_price) : '-'}
                                 </span>
                                 <ChangeIndicator diff={sellDiff} />
                             </div>
@@ -145,9 +260,13 @@ export default function HargaPasar() {
                             "font-display text-[16px] font-bold tracking-tight",
                             margin > 2000 ? "text-emerald-400" : margin >= 1000 ? "text-amber-500" : "text-red-400"
                          )}>
-                            Margin Rata-rata: {formatIDR(margin)}/kg
+                            Margin Rata-rata: {margin !== 0 ? `${formatIDR(margin)}/kg` : '-'}
                          </p>
-                         <p className="text-[11px] font-bold text-[#4B6478]">dari {todayPrice.transaction_count} transaksi hari ini</p>
+                         {todayPrice.source === 'auto_scraper' ? (
+                            <p className="text-[11px] font-bold text-[#4B6478]">estimasi +Rp 2.500 margin dari chickin.id</p>
+                         ) : (
+                            <p className="text-[11px] font-bold text-[#4B6478]">dari {todayPrice.transaction_count} transaksi hari ini</p>
+                         )}
                     </div>
                 </Card>
             ) : (
@@ -265,7 +384,9 @@ export default function HargaPasar() {
                                         )}>
                                             {m.toLocaleString('id-ID')}
                                         </td>
-                                        <td className="py-3 px-4 text-right text-[10px] font-black text-[#4B6478]">{p.transaction_count}</td>
+                                        <td className="py-3 px-4 text-right text-[10px] font-black text-[#4B6478]">
+                                            {isToday ? (liveData?.transaction_count ?? p.transaction_count) : p.transaction_count}
+                                        </td>
                                     </tr>
                                 )
                             })}
@@ -278,6 +399,7 @@ export default function HargaPasar() {
 
       </div>
     </motion.div>
+    </TooltipProvider>
   )
 }
 
@@ -339,19 +461,19 @@ function ManualPriceForm({ onSuccess }) {
         
         setLoading(true)
         try {
-            const today = new Date().toISOString().split('T')[0]
+            const todayString = new Date().toISOString().split('T')[0]
             const { error } = await supabase
                 .from('market_prices')
                 .upsert({
-                    price_date: today,
-                    chicken_type: 'broker', // as per schema v2 context check? usually broiler
-                    chicken_type: 'broiler', // keeping standard from schema
-                    region: 'nasional',
+                    price_date: todayString,
+                    chicken_type: 'broiler',
+                    region: 'Jawa Tengah',
                     avg_buy_price: Number(formData.beli),
                     avg_sell_price: Number(formData.jual),
                     farm_gate_price: Number(formData.beli),
                     buyer_price: Number(formData.jual),
-                    source: 'manual'
+                    source: 'manual',
+                    is_deleted: false
                 }, { onConflict: 'price_date, chicken_type, region' })
             
             if (error) throw error

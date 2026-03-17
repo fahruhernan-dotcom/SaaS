@@ -60,17 +60,49 @@ export default function DesktopTopBar() {
   const navigate = useNavigate()
   const pageTitle = usePageTitle()
 
+  const { profile, tenant } = useAuth()
   const { data: marketPrice } = useQuery({
-    queryKey: ['market-price-topbar'],
+    queryKey: ['market-price-topbar', tenant?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('market_prices')
-        .select('*')
-        .order('price_date', { ascending: false })
-        .limit(1)
-        .single()
-      return data
-    }
+      // 1. Timezone-aware date (WIB)
+      const today = new Date(new Date().getTime() + (7 * 60 * 60 * 1000)).toISOString().split('T')[0]
+      
+      // 2. Fetch live transactions and global market price in parallel
+      const [salesRes, purchasesRes, globalRes] = await Promise.all([
+        supabase.from('sales').select('price_per_kg').eq('tenant_id', tenant.id).eq('transaction_date', today).eq('is_deleted', false).gt('price_per_kg', 0),
+        supabase.from('purchases').select('price_per_kg').eq('tenant_id', tenant.id).eq('transaction_date', today).eq('is_deleted', false).gt('price_per_kg', 0),
+        supabase.from('market_prices')
+          .select('*')
+          .eq('is_deleted', false)
+          .order('price_date', { ascending: false })
+          .order('region', { ascending: false }) // Prioritizes 'nasional' or higher alpha regions if needed, but we want 'Jawa Tengah'
+          .order('source', { ascending: false })
+          .limit(10)
+      ])
+
+      // Filter out suspicious transaction prices (buggy or dummy data)
+      const MIN_REALISTIC_PRICE = 15000
+      const s = (salesRes.data || []).filter(x => Number(x.price_per_kg) >= MIN_REALISTIC_PRICE)
+      const p = (purchasesRes.data || []).filter(x => Number(x.price_per_kg) >= MIN_REALISTIC_PRICE)
+
+      // Filter out buggy records where Jual < Beli (suspicious data)
+      const prices = (globalRes.data || []).filter(x => x.buyer_price >= x.farm_gate_price && x.buyer_price >= MIN_REALISTIC_PRICE)
+      
+      // Prioritize Jawa Tengah from the global list
+      const jatengPrice = prices.find(x => x.region === 'Jawa Tengah')
+      const g = jatengPrice || prices[0] // Fallback to latest global if no Jateng found
+
+      // Simple simple average as per requirement
+      const liveSell = s.length > 0 ? s.reduce((acc, x) => acc + (Number(x.price_per_kg) || 0), 0) / s.length : 0
+      const liveBuy = p.length > 0 ? p.reduce((acc, x) => acc + (Number(x.price_per_kg) || 0), 0) / p.length : 0
+
+      // If live transactions exist today, use them. Otherwise fallback to global market_prices
+      return {
+        farm_gate_price: liveBuy > 0 ? liveBuy : (g?.farm_gate_price || 0),
+        buyer_price: liveSell > 0 ? liveSell : (g?.buyer_price || 0)
+      }
+    },
+    enabled: !!tenant?.id
   })
 
   return (

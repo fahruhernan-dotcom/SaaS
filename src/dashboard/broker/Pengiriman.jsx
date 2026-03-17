@@ -84,8 +84,9 @@ export default function Pengiriman() {
                 .from('deliveries')
                 .select(`
                     *,
-                    sales (
+                    sales!inner (
                         id,
+                        is_deleted,
                         total_revenue,
                         quantity,
                         total_weight_kg,
@@ -95,6 +96,7 @@ export default function Pengiriman() {
                 `)
                 .eq('tenant_id', tenant?.id)
                 .eq('is_deleted', false)
+                .eq('sales.is_deleted', false)
                 .order('created_at', { ascending: false })
             if (error) throw error
             return data
@@ -109,11 +111,12 @@ export default function Pengiriman() {
                 .from('loss_reports')
                 .select(`
                     *,
-                    sales ( rpa_clients ( rpa_name ) ),
+                    sales!inner ( rpa_clients ( rpa_name ) ),
                     deliveries ( driver_name, vehicle_plate )
                 `)
                 .eq('tenant_id', tenant?.id)
                 .eq('is_deleted', false)
+                .eq('sales.is_deleted', false)
                 .order('report_date', { ascending: false })
             if (error) throw error
             return data
@@ -779,7 +782,7 @@ function CreateDeliverySheet({ isOpen, onClose }) {
                     purchases ( farms ( farm_name ) )
                 `)
                 .eq('tenant_id', tenant?.id)
-                .is('is_deleted', false)
+                .eq('is_deleted', false)
                 .order('created_at', { ascending: false })
                 .limit(20)
             if (error) throw error

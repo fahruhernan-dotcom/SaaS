@@ -95,6 +95,7 @@ export default function FormBeliModal({ onClose }) {
         transport_cost: values.transport_cost || 0,
         other_cost: values.other_cost || 0,
         transaction_date: values.transaction_date,
+        is_deleted: false,
         notes: values.notes || null
       })
 

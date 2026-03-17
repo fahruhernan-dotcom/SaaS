@@ -147,7 +147,8 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 px-5 pb-8">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full min-h-0 relative">
+      <div className="flex-1 space-y-5 px-5 pb-24 overflow-y-auto">
       <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">{title}</p>
 
       {orderData && (
@@ -464,8 +465,10 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
         </Card>
       )}
 
-      {/* Buttons */}
-      <div className="flex gap-3 pt-4">
+      </div>
+      
+      {/* Buttons — Sticky Footer */}
+      <div className="sticky bottom-0 z-10 bg-[#0C1319] border-t border-white/10 p-4 px-5 flex gap-3">
         <Button type="button" variant="ghost" onClick={onBack} className="gap-2 text-[#4B6478] hover:text-white font-bold h-12 rounded-xl">
           <ChevronLeft size={18} /> KEMBALI
         </Button>

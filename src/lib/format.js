@@ -154,3 +154,42 @@ export const formatPaymentTerms = (value) =>
 
 export const formatPaymentStatus = (value) =>
   PAYMENT_STATUS_LABELS[value] || value
+
+// --- NEW PROFIT CALCULATION HELPERS WITH SHRINKAGE ---
+
+/**
+ * Calculates total revenue based on arrived weight if delivery exists.
+ * Formula: arrived_weight_kg * price_per_kg
+ * Fallback: sale.total_revenue
+ */
+export const calcTotalJual = (sale, delivery) => {
+  if (delivery?.arrived_weight_kg) {
+    return safeNum(delivery.arrived_weight_kg) * safeNum(sale?.price_per_kg)
+  }
+  return safeNum(sale?.total_revenue || sale?.net_revenue)
+}
+
+/**
+ * Calculates financial loss from weight shrinkage.
+ * Formula: (initial - arrived) * purchase price
+ */
+export const calcKerugianSusut = (delivery, purchase) => {
+  if (!delivery?.arrived_weight_kg || !delivery?.initial_weight_kg) return 0
+  const susutKg = safeNum(delivery.initial_weight_kg) - safeNum(delivery.arrived_weight_kg)
+  if (susutKg <= 0) return 0
+  return susutKg * safeNum(purchase?.price_per_kg)
+}
+
+/**
+ * Calculates net profit accounting for costs and shrinkage.
+ * Formula: Total Jual - Modal - Delivery Cost - Shrinkage Loss
+ */
+export const calcNetProfit = (sale, purchase, delivery) => {
+  const totalJual = calcTotalJual(sale, delivery)
+  const shrinkageLoss = calcKerugianSusut(delivery, purchase)
+  
+  return totalJual 
+    - safeNum(purchase?.total_cost) 
+    - safeNum(sale?.delivery_cost) 
+    - shrinkageLoss
+}

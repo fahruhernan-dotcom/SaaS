@@ -1,13 +1,15 @@
-import React, { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import React, { useState, useEffect, useRef } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ChevronLeft, Loader2, Truck, Clock, ChevronsUpDown, Check, Plus, ChevronUp, ChevronDown } from 'lucide-react'
+import { ChevronLeft, Loader2, Truck, Clock, ChevronsUpDown, Check, Plus, ChevronUp, ChevronDown, User } from 'lucide-react'
 import { InputRupiah } from '@/components/ui/InputRupiah'
+import { Input } from '@/components/ui/input'
 import { formatIDR, safeNum } from '@/lib/format'
 import { Card } from '@/components/ui/card'
+import { toast } from 'sonner'
 import {
   Popover, PopoverContent, PopoverTrigger
 } from '@/components/ui/popover'
@@ -115,15 +117,23 @@ const TimePicker = ({ value, onChange, label }) => {
 
 export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3Data, setStep3Data, onSubmit, onBack, submitting }) {
   const { tenant } = useAuth()
+  const queryClient = useQueryClient()
   const [vehicleMode, setVehicleMode] = useState('armada')
   const [driverMode, setDriverMode] = useState('driver')
   const [openVehicle, setOpenVehicle] = useState(false)
   const [openDriver, setOpenDriver] = useState(false)
 
+  // Quick Add State
+  const [showQuickAddVehicle, setShowQuickAddVehicle] = useState(false)
+  const [newVehicle, setNewVehicle] = useState({ brand: '', vehicle_plate: '' })
+  const [showQuickAddDriver, setShowQuickAddDriver] = useState(false)
+  const [newDriver, setNewDriver] = useState({ full_name: '', phone: '' })
+  const [isAdding, setIsAdding] = useState(false)
+
   const { data: vehicles } = useQuery({
     queryKey: ['vehicles-active', tenant?.id],
     queryFn: async () => {
-      const { data } = await supabase.from('vehicles').select('*').eq('tenant_id', tenant.id).eq('status', 'aktif').eq('is_deleted', false).order('plate_number')
+      const { data } = await supabase.from('vehicles').select('*').eq('tenant_id', tenant.id).eq('status', 'aktif').eq('is_deleted', false).order('vehicle_plate')
       return data || []
     },
     enabled: !!tenant?.id && !!step3Data.enabled
@@ -153,6 +163,66 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
 
   const update = (key, val) => setStep3Data(prev => ({ ...prev, [key]: val }))
 
+  const handleQuickAddVehicle = async () => {
+    if (!newVehicle.brand || !newVehicle.vehicle_plate) return
+    setIsAdding(true)
+    
+    const { data, error } = await supabase
+      .from('vehicles')
+      .insert({
+        tenant_id: tenant?.id,
+        brand: newVehicle.brand,
+        vehicle_plate: newVehicle.vehicle_plate.toUpperCase(),
+        vehicle_type: 'truk',
+        ownership: 'milik_sendiri',
+        status: 'aktif'
+      })
+      .select()
+      .single()
+    
+    if (error) {
+      toast.error('Gagal tambah kendaraan: ' + error.message)
+    } else {
+      queryClient.invalidateQueries({ queryKey: ['vehicles-active', tenant?.id] })
+      update('vehicle_id', data.id)
+      update('vehicle_type', data.vehicle_type)
+      update('vehicle_plate', data.vehicle_plate)
+      setShowQuickAddVehicle(false)
+      setNewVehicle({ brand: '', vehicle_plate: '' })
+      toast.success(`✅ Kendaraan ${data.vehicle_plate} ditambahkan!`)
+    }
+    setIsAdding(false)
+  }
+
+  const handleQuickAddDriver = async () => {
+    if (!newDriver.full_name) return
+    setIsAdding(true)
+    
+    const { data, error } = await supabase
+      .from('drivers')
+      .insert({
+        tenant_id: tenant?.id,
+        full_name: newDriver.full_name,
+        phone: newDriver.phone || null,
+        status: 'aktif'
+      })
+      .select()
+      .single()
+    
+    if (error) {
+      toast.error('Gagal tambah sopir: ' + error.message)
+    } else {
+      queryClient.invalidateQueries({ queryKey: ['drivers-active', tenant?.id] })
+      update('driver_id', data.id)
+      update('driver_name', data.full_name)
+      update('driver_phone', data.phone)
+      setShowQuickAddDriver(false)
+      setNewDriver({ full_name: '', phone: '' })
+      toast.success(`✅ Sopir ${data.full_name} ditambahkan!`)
+    }
+    setIsAdding(false)
+  }
+
   const vehicleLabel = (v) => {
     const parts = []
     if (v.brand) parts.push(v.brand)
@@ -161,7 +231,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
   }
 
   const driverSubLabel = (d) => {
-    const hp = d.phone_number || 'Tidak ada HP'
+    const hp = d.phone || 'Tidak ada HP'
     const expiry = d.sim_expires_at ? parseISO(d.sim_expires_at) : null
     let statusBadge = null
     
@@ -183,7 +253,8 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
   const selectedDriver = drivers?.find(d => d.id === step3Data.driver_id)
 
   return (
-    <div className="space-y-5 px-5 pb-8">
+    <div className="flex flex-col h-full min-h-0 relative">
+      <div className="flex-1 space-y-5 px-5 pb-24 overflow-y-auto">
       <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">Step 3 — Detail Pengiriman</p>
       
       {/* Summary Card Update */}
@@ -270,7 +341,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                     color: step3Data.vehicle_id ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', textAlign: 'left'
                   }}>
                     <span className="truncate">
-                      {selectedVehicle ? `${selectedVehicle.plate_number} · ${selectedVehicle.vehicle_type}` : 'Pilih kendaraan armada'}
+                      {selectedVehicle ? `${selectedVehicle.vehicle_plate} · ${selectedVehicle.vehicle_type}` : 'Pilih kendaraan armada'}
                     </span>
                     <ChevronsUpDown size={14} className="ml-2 flex-shrink-0 text-muted-foreground" />
                   </button>
@@ -283,22 +354,35 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                       {vehicles?.map(v => (
                         <CommandItem
                           key={v.id}
-                          value={v.plate_number + ' ' + v.vehicle_type}
+                          value={v.vehicle_plate + ' ' + v.vehicle_type}
                           onSelect={() => {
                             update('vehicle_id', v.id)
                             update('vehicle_type', v.vehicle_type)
-                            update('vehicle_plate', v.plate_number)
+                            update('vehicle_plate', v.vehicle_plate)
                             setOpenVehicle(false)
                           }}
                           className="cursor-pointer py-3 px-4 border-b border-white/5 last:border-none focus:bg-white/5"
                         >
                           <div className="flex-1">
-                            <p className="text-sm font-bold text-white">{v.plate_number} · {v.vehicle_type}</p>
+                            <p className="text-sm font-bold text-white">{v.vehicle_plate} · {v.vehicle_type}</p>
                             <p className="text-[11px] text-[#4B6478] font-medium mt-0.5">{vehicleLabel(v)}</p>
                           </div>
                           {step3Data.vehicle_id === v.id && <Check size={14} className="text-emerald-400 ml-2" />}
                         </CommandItem>
                       ))}
+                    </CommandGroup>
+                    <CommandSeparator className="bg-white/5" />
+                    <CommandGroup>
+                      <CommandItem
+                        onSelect={() => {
+                          setOpenVehicle(false)
+                          setShowQuickAddVehicle(true)
+                        }}
+                        className="cursor-pointer py-3 px-4 text-emerald-400 focus:bg-emerald-400/5"
+                      >
+                        <Plus size={14} className="mr-2" />
+                        <span className="text-xs font-black uppercase tracking-widest">Tambah Kendaraan Baru</span>
+                      </CommandItem>
                     </CommandGroup>
                   </Command>
                 </PopoverContent>
@@ -307,6 +391,39 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
               <div className="grid grid-cols-2 gap-2">
                 <input type="text" placeholder="Jenis Mobil" value={step3Data.vehicle_type || ''} onChange={e => update('vehicle_type', e.target.value)} className={S.input} />
                 <input type="text" placeholder="Plat Nomor" value={step3Data.vehicle_plate || ''} onChange={e => update('vehicle_plate', e.target.value)} className={S.input} />
+              </div>
+            )}
+
+            {showQuickAddVehicle && (
+              <div style={{
+                marginTop: 8,
+                padding: '14px',
+                background: 'rgba(16,185,129,0.06)',
+                border: '1px solid rgba(16,185,129,0.20)',
+                borderRadius: '12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10
+              }}>
+                <p style={{ fontSize: '11px', fontWeight: 900, color: '#34D399', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+                  Kendaraan Baru
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Nama Kendaraan *</label>
+                    <Input placeholder="Truk Canter" value={newVehicle.brand} onChange={e => setNewVehicle(p => ({ ...p, brand: e.target.value }))} className="h-9 bg-black/20" />
+                  </div>
+                  <div className="space-y-1">
+                    <label style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Plat Nomor *</label>
+                    <Input placeholder="B 1234 ABC" value={newVehicle.vehicle_plate} onChange={e => setNewVehicle(p => ({ ...p, vehicle_plate: e.target.value }))} className="h-9 bg-black/20 uppercase" />
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-1">
+                  <Button type="button" onClick={handleQuickAddVehicle} disabled={isAdding || !newVehicle.brand || !newVehicle.vehicle_plate} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] h-9 rounded-lg">
+                    {isAdding ? 'PROSES...' : 'SIMPAN & PILIH'}
+                  </Button>
+                  <Button type="button" variant="ghost" onClick={() => setShowQuickAddVehicle(false)} className="px-3 text-muted-foreground font-bold text-[11px] h-9">BATAL</Button>
+                </div>
               </div>
             )}
           </div>
@@ -349,7 +466,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                             onSelect={() => {
                               update('driver_id', d.id)
                               update('driver_name', d.full_name)
-                              update('driver_phone', d.phone_number)
+                              update('driver_phone', d.phone)
                               setOpenDriver(false)
                             }}
                             className="cursor-pointer py-3 px-4 border-b border-white/5 last:border-none focus:bg-white/5"
@@ -364,10 +481,23 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                             {step3Data.driver_id === d.id && <Check size={14} className="text-emerald-400 ml-2" />}
                           </CommandItem>
                         ))}
-                      </CommandGroup>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                        </CommandGroup>
+                        <CommandSeparator className="bg-white/5" />
+                        <CommandGroup>
+                          <CommandItem
+                            onSelect={() => {
+                              setOpenDriver(false)
+                              setShowQuickAddDriver(true)
+                            }}
+                            className="cursor-pointer py-3 px-4 text-emerald-400 focus:bg-emerald-400/5"
+                          >
+                            <Plus size={14} className="mr-2" />
+                            <span className="text-xs font-black uppercase tracking-widest">Tambah Sopir Baru</span>
+                          </CommandItem>
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 
                 {step3Data.driver_id && selectedDriver?.wage_per_trip && (
                   <p className="text-[10px] text-emerald-400 mt-1.5 font-black uppercase italic tracking-wider">
@@ -381,6 +511,39 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                 <input type="text" placeholder="No HP" value={step3Data.driver_phone || ''} onChange={e => update('driver_phone', e.target.value)} className={S.input} />
               </div>
             )}
+
+            {showQuickAddDriver && (
+                <div style={{
+                  marginTop: 8,
+                  padding: '14px',
+                  background: 'rgba(16,185,129,0.06)',
+                  border: '1px solid rgba(16,185,129,0.20)',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10
+                }}>
+                  <p style={{ fontSize: '11px', fontWeight: 900, color: '#34D399', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+                    Sopir Baru
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Nama Sopir *</label>
+                      <Input placeholder="Pak Ahmad" value={newDriver.full_name} onChange={e => setNewDriver(p => ({ ...p, full_name: e.target.value }))} className="h-9 bg-black/20" />
+                    </div>
+                    <div className="space-y-1">
+                      <label style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>No HP</label>
+                      <Input placeholder="081..." value={newDriver.phone} onChange={e => setNewDriver(p => ({ ...p, phone: e.target.value }))} className="h-9 bg-black/20" />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-1">
+                    <Button type="button" onClick={handleQuickAddDriver} disabled={isAdding || !newDriver.full_name} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] h-9 rounded-lg">
+                      {isAdding ? 'PROSES...' : 'SIMPAN & PILIH'}
+                    </Button>
+                    <Button type="button" variant="ghost" onClick={() => setShowQuickAddDriver(false)} className="px-3 text-muted-foreground font-bold text-[11px] h-9">BATAL</Button>
+                  </div>
+                </div>
+              )}
           </div>
 
           {/* Times with Custom TimePicker */}
@@ -408,8 +571,10 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
         </div>
       )}
 
-      {/* Buttons */}
-      <div className="space-y-4 pt-4">
+      </div>
+      
+      {/* Buttons — Sticky Footer */}
+      <div className="sticky bottom-0 z-10 bg-[#0C1319] border-t border-white/10 p-4 px-5 space-y-4">
         <button type="button" onClick={onSubmit} disabled={submitting}
           className="w-full h-14 rounded-2xl font-black text-sm tracking-[0.15em] text-white flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
           style={{ background: '#10B981', boxShadow: '0 12px 24px -8px rgba(16,185,129,0.4)', opacity: submitting ? 0.7 : 1 }}

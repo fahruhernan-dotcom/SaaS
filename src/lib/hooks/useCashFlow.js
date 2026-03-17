@@ -11,7 +11,21 @@ export function useCashFlow(startDate, endDate, tenantId) {
 
       const [salesRes, purchasesRes, deliveriesRes, lossRes, expensesRes] = await Promise.all([
         supabase.from('sales')
-          .select('id, net_revenue, delivery_cost, total_revenue, total_weight_kg, transaction_date, payment_status, rpa_id, rpa_clients(rpa_name)')
+          .select(`
+            id, 
+            net_revenue, 
+            delivery_cost, 
+            total_revenue, 
+            price_per_kg,
+            total_weight_kg, 
+            transaction_date, 
+            payment_status, 
+            rpa_id, 
+            is_deleted,
+            rpa_clients(rpa_name),
+            purchases(total_cost, price_per_kg),
+            deliveries(initial_weight_kg, arrived_weight_kg)
+          `)
           .eq('tenant_id', tenantId)
           .eq('is_deleted', false)
           .gte('transaction_date', startStr)
@@ -19,7 +33,7 @@ export function useCashFlow(startDate, endDate, tenantId) {
           .order('transaction_date', { ascending: true }),
 
         supabase.from('purchases')
-          .select('id, total_modal, total_cost, transaction_date, farm_id, farms(farm_name)')
+          .select('id, total_modal, total_cost, transaction_date, farm_id, is_deleted, farms(farm_name)')
           .eq('tenant_id', tenantId)
           .eq('is_deleted', false)
           .gte('transaction_date', startStr)

@@ -2,7 +2,12 @@ import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Search, Phone, MapPin, ChevronRight, CheckCircle2, Building2, User, Star, Trash2 } from 'lucide-react'
 import { useRPA } from '@/lib/hooks/useRPA'
-import { formatIDR, formatIDRShort, formatBuyerType, BUYER_TYPE_LABELS, PAYMENT_TERMS_LABELS, formatPaymentTerms } from '@/lib/format'
+import { useSales } from '@/lib/hooks/useSales'
+import { 
+  formatIDR, formatIDRShort, formatBuyerType, 
+  BUYER_TYPE_LABELS, PAYMENT_TERMS_LABELS, formatPaymentTerms, 
+  calcTotalJual, safeNum 
+} from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -36,6 +41,7 @@ const fadeUp = {
 export default function RPA() {
   const { tenant } = useAuth()
   const { data: rpas, isLoading } = useRPA()
+  const { data: allSales, isLoading: loadingSales } = useSales()
   const [search, setSearch] = useState('')
   const [openModal, setOpenModal] = useState(false)
   const [editingRPA, setEditingRPA] = useState(null)
@@ -43,15 +49,26 @@ export default function RPA() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  const filteredRpas = useMemo(() => {
-    if (!rpas) return []
-    return rpas
-      .filter(r => r.rpa_name.toLowerCase().includes(search.toLowerCase()))
-      .sort((a, b) => (b.total_outstanding || 0) - (a.total_outstanding || 0))
-  }, [rpas, search])
+  const rpaStats = useMemo(() => {
+    if (!rpas || !allSales) return []
+    return rpas.map(r => {
+      const sales = allSales.filter(s => s.rpa_id === r.id)
+      const outstanding = sales.reduce((acc, s) => {
+        const totalJual = calcTotalJual(s, s.deliveries?.[0])
+        return acc + (totalJual - safeNum(s.paid_amount))
+      }, 0)
+      return { ...r, calculated_outstanding: Math.max(0, outstanding) }
+    })
+  }, [rpas, allSales])
 
-  const totalPiutang = rpas?.reduce((acc, r) => acc + (r.total_outstanding || 0), 0) || 0
-  const activeCount = rpas?.filter(r => r.total_outstanding > 0).length || 0
+  const filteredRpas = useMemo(() => {
+    return rpaStats
+      .filter(r => r.rpa_name.toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => b.calculated_outstanding - a.calculated_outstanding)
+  }, [rpaStats, search])
+
+  const totalPiutang = rpaStats?.reduce((acc, r) => acc + r.calculated_outstanding, 0) || 0
+  const activeCount = rpaStats?.filter(r => r.calculated_outstanding > 0).length || 0
 
   const handleEdit = (rpa, e) => {
     e.stopPropagation()
@@ -115,7 +132,7 @@ export default function RPA() {
 
       {/* RPA List */}
       <div className="mt-6 px-5 space-y-3">
-        {isLoading ? (
+        {isLoading || loadingSales ? (
           <LoadingList />
         ) : filteredRpas.length === 0 ? (
           <EmptyState 
@@ -222,10 +239,10 @@ function RPACard({ rpa, onClick, onEdit }) {
 
         <div className="text-right flex items-center gap-1.5">
             <div className="space-y-0.5">
-                {rpa.total_outstanding > 0 ? (
+                {rpa.calculated_outstanding > 0 ? (
                     <>
                         <p className="text-[10px] font-black text-red-400 uppercase tracking-widest leading-none text-right">Piutang</p>
-                        <p className="font-display font-black text-red-500 tabular-nums leading-none mt-1 text-right">{formatIDRShort(rpa.total_outstanding)}</p>
+                        <p className="font-display font-black text-red-500 tabular-nums leading-none mt-1 text-right">{formatIDRShort(rpa.calculated_outstanding)}</p>
                     </>
                 ) : (
                     <div className="flex items-center gap-1 text-[#34D399] font-black text-[11px] uppercase tracking-wider">

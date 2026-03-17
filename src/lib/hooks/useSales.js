@@ -11,18 +11,20 @@ export function useSales() {
         .from('sales')
         .select(`
           id, 
-          transaction_date, 
-          quantity, 
-          total_weight_kg, 
           net_revenue, 
+          delivery_cost, 
+          total_revenue, 
+          price_per_kg,
+          total_weight_kg, 
+          transaction_date, 
           payment_status, 
           paid_amount, 
           remaining_amount, 
           tenant_id,
           rpa_id,
           rpa_clients(rpa_name), 
-          purchases(total_cost, farm_id, farms(farm_name)),
-          deliveries(status)
+          purchases(total_cost, price_per_kg, farm_id, farms(farm_name)),
+          deliveries(status, initial_weight_kg, arrived_weight_kg)
         `)
         .eq('tenant_id', tenant.id)
         .eq('is_deleted', false)

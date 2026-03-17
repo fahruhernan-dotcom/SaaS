@@ -95,6 +95,7 @@ export default function FormJualModal({ onClose }) {
         payment_status: 'belum_lunas',
         transaction_date: values.transaction_date,
         due_date: values.due_date,
+        is_deleted: false,
         notes: values.notes
       })
 

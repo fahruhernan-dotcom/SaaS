@@ -74,7 +74,9 @@ export default {
   			'tx-3': '#4B6478',
   			'border-sub': 'rgba(255, 255, 255, 0.05)',
   			'border-def': 'rgba(255, 255, 255, 0.09)',
+  			'border-acc': 'rgba(16, 185, 129, 0.35)',
   			gold: '#FBBF24',
+  			'em-glow': 'rgba(16, 185, 129, 0.12)',
   			sidebar: {
   				DEFAULT: 'hsl(var(--sidebar-background))',
   				foreground: 'hsl(var(--sidebar-foreground))',

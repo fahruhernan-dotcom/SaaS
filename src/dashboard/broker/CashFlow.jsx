@@ -14,7 +14,10 @@ import {
     isWithinInterval, parseISO 
 } from 'date-fns'
 import { id } from 'date-fns/locale'
-import { formatIDR, formatIDRShort, formatPaymentStatus, safeNumber } from '@/lib/format'
+import { 
+  formatIDR, formatIDRShort, formatDate, formatWeight, safeNum,
+  calcTotalJual, calcNetProfit 
+} from '@/lib/format'
 import { 
     LineChart, Line, XAxis, YAxis, CartesianGrid, 
     Tooltip, ResponsiveContainer, Legend, Area, ReferenceLine,
@@ -87,24 +90,24 @@ export default function CashFlow() {
             const dateStr = format(day, 'yyyy-MM-dd')
             const dayLabel = format(day, 'EEE', { locale: id })
 
-            const dayRevenue = sales
-                .filter(s => s.transaction_date === dateStr)
-                .reduce((sum, s) => sum + (Number(s.net_revenue) || 0), 0)
+            const daySales = sales.filter(s => s.transaction_date === dateStr)
+            const dayLosses = losses.filter(l => l.report_date === dateStr)
+            const dayExpenses = expenses.filter(e => e.expense_date === dateStr)
 
-            const dayModal = purchases
-                .filter(p => p.transaction_date === dateStr)
-                .reduce((sum, p) => sum + (Number(p.total_cost) || 0), 0)
-
-            const dayTransport = sales
-                .filter(s => s.transaction_date === dateStr)
-                .reduce((sum, s) => sum + (Number(s.delivery_cost) || 0), 0)
-
-            const dayLoss = losses
-                .filter(l => l.report_date === dateStr)
-                .reduce((sum, l) => sum + (Number(l.financial_loss) || 0), 0)
-
-            const dayExtra = expenses
-                .filter(e => e.expense_date === dateStr)
+            const dayRevenue = daySales.reduce((s, t) => s + calcTotalJual(t, t.deliveries?.[0]), 0)
+            const dayModal   = daySales.reduce((s, t) => s + safeNum(t.purchases?.total_cost), 0)
+            const dayTransport = daySales.reduce((s, t) => s + safeNum(t.delivery_cost), 0)
+            
+            const dayLoss    = dayLosses.reduce((s, t) => s + safeNum(t.financial_loss), 0)
+            const daySusut   = daySales.reduce((s, t) => {
+                const delivery = t.deliveries?.[0]
+                const purchase = t.purchases
+                if (!delivery?.arrived_weight_kg || !delivery?.initial_weight_kg) return s
+                const susutKg = safeNum(delivery.initial_weight_kg) - safeNum(delivery.arrived_weight_kg)
+                return s + (susutKg > 0 ? susutKg * safeNum(purchase?.price_per_kg) : 0)
+            }, 0)
+            
+            const dayExtra = dayExpenses
                 .reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
 
             const dayOut = dayModal + dayLoss + dayExtra + dayTransport
@@ -575,7 +578,7 @@ function TransactionRow({ tx }) {
                                  {formatPaymentStatus(tx.payment_status)}
                              </span>
                         )}
-                         {tx.category === 'jual' && safeNumber(tx.delivery_cost) > 0 && (
+                         {tx.category === 'jual' && safeNum(tx.delivery_cost) > 0 && (
                              <span className="text-[9px] font-bold text-amber-500/60 uppercase tracking-widest">
                                  Termasuk Biaya Kirim {formatIDRShort(tx.delivery_cost)}
                              </span>
@@ -588,7 +591,7 @@ function TransactionRow({ tx }) {
                     "text-sm font-black tabular-nums tracking-tight",
                     tx.type === 'in' ? "text-emerald-400" : "text-red-400"
                 )}>
-                    {tx.type === 'in' ? '+' : '-'}{formatIDR(safeNumber(tx.amount || tx.net_revenue)).replace('Rp', '')}
+                    {tx.type === 'in' ? '+' : '-'}{formatIDR(safeNum(tx.amount || tx.net_revenue)).replace('Rp', '')}
                 </p>
                 <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mt-0.5">IDR</p>
             </div>
@@ -636,7 +639,8 @@ function CreateExtraExpenseSheet({ isOpen, onClose }) {
             description: formData.get('description'),
             amount: parseInt(formData.get('amount')) || 0,
             expense_date: formData.get('expense_date'),
-            notes: formData.get('notes')
+            notes: formData.get('notes'),
+            is_deleted: false
         }
 
         const { error } = await supabase.from('extra_expenses').insert(payload)

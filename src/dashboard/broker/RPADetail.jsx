@@ -12,7 +12,11 @@ import {
 } from 'lucide-react'
 import { useRPA } from '@/lib/hooks/useRPA'
 import { useSales } from '@/lib/hooks/useSales'
-import { formatIDR, formatDate, formatRelative, formatWeight, formatBuyerType, formatPaymentTerms, safeNumber, safePercent, formatIDRShort } from '@/lib/format'
+import { 
+  formatIDR, formatDate, formatRelative, formatWeight, 
+  formatBuyerType, formatPaymentTerms, safeNumber, safePercent, 
+  formatIDRShort, safeNum, calcTotalJual 
+} from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -494,8 +498,16 @@ export default function RPADetail() {
 
   if (!rpa && !loadingSales && !loadingRpa) return <EmptyState icon={AlertCircle} title="RPA Tidak Ditemukan" description="Data RPA yang Anda cari mungkin telah dihapus." action={<Button onClick={() => navigate('/broker/rpa')}>Kembali ke List</Button>} />
 
-  const totalOutstanding = safeNumber(rpa?.total_outstanding)
-  const unpaidSales = useMemo(() => rpaSales.filter(s => s.payment_status !== 'lunas'), [rpaSales])
+  const unpaidSales = useMemo(() => rpaSales.filter(s => {
+    const totalJual = calcTotalJual(s, s.deliveries?.[0])
+    return totalJual - safeNum(s.paid_amount) > 0
+  }), [rpaSales])
+  
+  const totalOutstanding = useMemo(() => unpaidSales.reduce((acc, s) => {
+    const totalJual = calcTotalJual(s, s.deliveries?.[0])
+    return acc + (totalJual - safeNum(s.paid_amount))
+  }, 0), [unpaidSales])
+
   const activeSalesCount = unpaidSales.length
 
   const canPay = (sale) => {
@@ -517,7 +529,7 @@ export default function RPADetail() {
             await supabase.from('payments').insert({
                 tenant_id: tenant.id,
                 sale_id: s.id,
-                amount: s.remaining_amount,
+                amount: calcTotalJual(s, s.deliveries?.[0]) - safeNum(s.paid_amount),
                 payment_method: 'cash',
                 notes: 'Pelunasan massal'
             })
@@ -817,7 +829,7 @@ function SaleList({ sales, onPay, canPayFunc }) {
                                     <span className="block text-[11px] text-[#4B6478] mt-0.5">dari {sale.purchases?.farms?.farm_name}</span>
                                 </p>
                             </div>
-                            <p className="font-display font-black text-[#F1F5F9] text-lg leading-none tabular-nums">{formatIDR(safeNumber(sale.net_revenue))}</p>
+                            <p className="font-display font-black text-[#F1F5F9] text-lg leading-none tabular-nums">{formatIDR(calcTotalJual(sale, sale.deliveries?.[0]))}</p>
                         </div>
 
                         <div className="flex justify-between items-center pt-1">
@@ -829,12 +841,19 @@ function SaleList({ sales, onPay, canPayFunc }) {
                                 >
                                     {sale.payment_status?.toUpperCase() || 'BELUM LUNAS'}
                                 </Badge>
-                                {sale.remaining_amount > 0 && (
-                                    <div className="text-[11px] font-bold tabular-nums">
-                                        <span className="text-[#4B6478]">Sisa: </span>
-                                        <span className="text-red-500">{formatIDR(sale.remaining_amount)}</span>
-                                    </div>
-                                )}
+                                {(() => {
+                                    const totalJual = calcTotalJual(sale, sale.deliveries?.[0])
+                                    const remaining = totalJual - safeNum(sale.paid_amount)
+                                    if (remaining > 0) {
+                                        return (
+                                            <div className="text-[11px] font-bold tabular-nums">
+                                                <span className="text-[#4B6478]">Sisa: </span>
+                                                <span className="text-red-500">{formatIDR(remaining)}</span>
+                                            </div>
+                                        )
+                                    }
+                                    return null
+                                })()}
                             </div>
 
                             {sale.payment_status !== 'lunas' && (
@@ -867,10 +886,11 @@ function SaleList({ sales, onPay, canPayFunc }) {
                                             onClick={async () => {
                                                 if (!canPayFunc(sale)) return
                                                 if (!confirm('Tandai lunas sepenuhnya?')) return
+                                                const totalJual = calcTotalJual(sale, sale.deliveries?.[0])
                                                 const { error } = await supabase.from('payments').insert({
                                                     tenant_id: sale.tenant_id,
                                                     sale_id: sale.id,
-                                                    amount: sale.remaining_amount,
+                                                    amount: totalJual - safeNum(sale.paid_amount),
                                                     payment_method: 'cash',
                                                     notes: 'Pelunasan langsung'
                                                 })
@@ -938,13 +958,18 @@ function PaymentHistory({ saleId }) {
 
 function FormPaymentModal({ sale, onClose }) {
     const [isLoading, setIsLoading] = useState(false)
-    const [amount, setAmount] = useState(safeNumber(sale.remaining_amount))
+    const currentRemaining = useMemo(() => {
+        const totalJual = calcTotalJual(sale, sale.deliveries?.[0])
+        return totalJual - safeNum(sale.paid_amount)
+    }, [sale])
+    
+    const [amount, setAmount] = useState(currentRemaining)
     const [method, setMethod] = useState('transfer')
     const queryClient = useQueryClient()
     const { tenant } = useAuth()
 
-    const remaining = safeNumber(sale.remaining_amount) - safeNumber(amount)
-    const isFull = safeNumber(amount) >= safeNumber(sale.remaining_amount)
+    const remaining = currentRemaining - safeNumber(amount)
+    const isFull = safeNumber(amount) >= currentRemaining
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -975,7 +1000,7 @@ function FormPaymentModal({ sale, onClose }) {
         <form onSubmit={handleSubmit} className="space-y-6 pb-12">
             <div className="text-center space-y-1">
                 <p className="text-[10px] font-black text-red-400 uppercase tracking-widest leading-none mb-1">Sisa Hutang</p>
-                <p className="font-display text-4xl font-black text-red-500 tracking-tight tabular-nums">{formatIDR(sale.remaining_amount)}</p>
+                <p className="font-display text-4xl font-black text-red-500 tracking-tight tabular-nums">{formatIDR(currentRemaining)}</p>
             </div>
 
             <Separator className="bg-secondary/10" />
@@ -1009,7 +1034,7 @@ function FormPaymentModal({ sale, onClose }) {
             <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl flex justify-between items-center text-left">
                 <div>
                    <p className="text-[9px] font-black text-[#4B6478] uppercase mb-0.5">Sisa Setelah Bayar</p>
-                   <p className="font-black text-[#F1F5F9] tabular-nums">{formatIDR(safeNumber(sale.remaining_amount) - safeNumber(amount))}</p>
+                   <p className="font-black text-[#F1F5F9] tabular-nums">{formatIDR(currentRemaining - safeNumber(amount))}</p>
                 </div>
                 {isFull && (
                     <Badge className="bg-emerald-500/20 text-emerald-400 font-black text-[9px] h-6 uppercase tracking-wider border-emerald-500/30">AKAN LUNAS ✓</Badge>
