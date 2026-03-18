@@ -24,6 +24,7 @@ import {
   formatDate, formatRelative, formatIDRShort, formatPaymentStatus,
   calcTotalJual, calcKerugianSusut, calcNetProfit 
 } from '@/lib/format'
+import { useRPA } from '@/lib/hooks/useRPA'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -43,6 +44,13 @@ import FormJualModal from '@/dashboard/components/FormJualModal'
 import EmptyState from '@/components/EmptyState'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 
 const staggerContainer = {
@@ -366,18 +374,11 @@ export default function Transaksi() {
     }
   }
 
-  // Summary Logic
-  const monthStart = new Date()
-  monthStart.setDate(1)
-  monthStart.setHours(0,0,0,0)
-
-  const monthSales = sales?.filter(s => new Date(s.transaction_date) >= monthStart) || []
-  const monthPurchases = purchases?.filter(p => new Date(p.transaction_date) >= monthStart) || []
-
-  const totalSalesVal = monthSales.reduce((acc, s) => acc + calcTotalJual(s, s.deliveries?.[0]), 0)
-  const totalModalVal = monthSales.reduce((acc, s) => acc + safeNum(s.purchases?.total_cost), 0)
-  const totalSusutVal = monthSales.reduce((acc, s) => acc + calcKerugianSusut(s.deliveries?.[0], s.purchases), 0)
-  const totalDeliveryVal = monthSales.reduce((acc, s) => acc + safeNum(s.delivery_cost), 0)
+  // Summary Logic - Show all history totals as per user request
+  const totalSalesVal = sales?.reduce((acc, s) => acc + calcTotalJual(s, s.deliveries?.[0]), 0) || 0
+  const totalModalVal = sales?.reduce((acc, s) => acc + safeNum(s.purchases?.total_cost), 0) || 0
+  const totalSusutVal = sales?.reduce((acc, s) => acc + calcKerugianSusut(s.deliveries?.[0], s.purchases), 0) || 0
+  const totalDeliveryVal = sales?.reduce((acc, s) => acc + safeNum(s.delivery_cost), 0) || 0
   
   const netProfit = totalSalesVal - totalModalVal - totalDeliveryVal - totalSusutVal
 
@@ -1198,29 +1199,95 @@ function SaleCard({ sale, onOpenAuditSheet, setUpdateDeliveryTarget, setShowUpda
 }
 
 function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelete }) {
+  const queryClient = useQueryClient()
+  const { tenant } = useAuth()
+  const { data: rpaClients } = useRPA()
+  
+  const [isEditing, setIsEditing] = useState(false)
+  const [editData, setEditData] = useState({})
+  const [isUpdating, setIsUpdating] = useState(false)
+
+  // Sync editData when data changes or entering edit mode
+  React.useEffect(() => {
+    if (data && isEditing) {
+      setEditData({
+        rpa_id: data.rpa_id,
+        price_per_kg: data.price_per_kg || 0,
+        payment_status: data.payment_status || 'belum_lunas',
+        due_date: data.due_date,
+        transaction_date: data.transaction_date
+      })
+    }
+  }, [data, isEditing])
+
   if (!saleId) return null
+
+  const handleUpdateSale = async () => {
+    setIsUpdating(true)
+    try {
+      const payload = {
+        rpa_id: editData.rpa_id,
+        price_per_kg: Number(editData.price_per_kg),
+        payment_status: editData.payment_status,
+        due_date: editData.due_date,
+        transaction_date: editData.transaction_date,
+        total_revenue: Number(data.total_weight_kg || 0) * Number(editData.price_per_kg)
+      }
+
+      const { error } = await supabase
+        .from('sales')
+        .update(payload)
+        .eq('id', saleId)
+        .eq('tenant_id', tenant.id)
+
+      if (error) throw error
+
+      toast.success('Transaksi berhasil diperbarui')
+      setIsEditing(false)
+      
+      queryClient.invalidateQueries({ queryKey: ['sales', tenant.id] })
+      queryClient.invalidateQueries({ queryKey: ['sales', saleId] })
+      queryClient.invalidateQueries({ queryKey: ['broker-stats', tenant.id] })
+      queryClient.invalidateQueries({ queryKey: ['cashflow'] })
+      
+    } catch (err) {
+      console.error('Update sale error:', err)
+      toast.error('Gagal memperbarui transaksi')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
 
   const delivery = data?.deliveries?.[0]
   const purchase = data?.purchases
-  const totalJual = calcTotalJual(data, delivery)
+  const totalJual = isEditing 
+    ? (Number(data?.total_weight_kg || 0) * Number(editData.price_per_kg || 0))
+    : calcTotalJual(data, delivery)
   const susutLoss = calcKerugianSusut(delivery, purchase)
-  const profit = calcNetProfit(data, purchase, delivery)
+  const profit = isEditing
+    ? (totalJual - safeNum(purchase?.total_cost) - safeNum(data?.delivery_cost) - susutLoss)
+    : calcNetProfit(data, purchase, delivery)
   const isOverdue = data?.due_date && new Date(data.due_date) < new Date() && data?.payment_status !== 'lunas'
 
   return (
-    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+    <Sheet open={isOpen} onOpenChange={(open) => {
+      onOpenChange(open)
+      if (!open) setIsEditing(false)
+    }}>
       <SheetContent side="right" className="bg-[#0C1319] border-white/10 w-full sm:max-w-[480px] p-0 flex flex-col">
         <SheetHeader className="p-6 border-b border-white/5 shrink-0 text-left">
           <div className="flex justify-between items-start">
             <div className="space-y-1">
               <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">
-                {isLoading ? <Skeleton className="h-8 w-40" /> : (data?.rpa_clients?.rpa_name || 'RPA Umum')}
+                {isLoading ? <Skeleton className="h-8 w-40" /> : (
+                  isEditing ? 'Edit Transaksi' : (data?.rpa_clients?.rpa_name || 'RPA Umum')
+                )}
               </SheetTitle>
               <div className="flex items-center gap-2">
                 <div className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest leading-none">
-                  {isLoading ? <Skeleton className="h-4 w-24" /> : formatDate(data?.transaction_date)}
+                  {isLoading ? <Skeleton className="h-4 w-24" /> : formatDate(isEditing ? editData.transaction_date : data?.transaction_date)}
                 </div>
-                {!isLoading && (
+                {!isLoading && !isEditing && (
                   <Badge className={`rounded-full h-5 px-2 border-none font-black text-[8px] uppercase tracking-wider
                     ${data?.payment_status === 'lunas' ? 'bg-emerald-500/10 text-emerald-400' : 
                       data?.payment_status === 'sebagian' ? 'bg-amber-500/10 text-amber-500' : 
@@ -1249,24 +1316,19 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
                 <div className="bg-emerald-500/[0.03] border border-emerald-500/10 rounded-2xl p-4 grid grid-cols-4 gap-2">
                   <div className="text-center space-y-1">
                     <p className="text-[8px] font-black text-[#4B6478] uppercase tracking-[0.15em]">Pendapatan</p>
-                    <p className="font-display text-sm font-black text-white">{formatIDR(totalJual)}</p>
+                    <p className="font-display text-sm font-black text-white tabular-nums">{formatIDR(totalJual)}</p>
                   </div>
                   <div className="text-center space-y-1 border-l border-white/5">
                     <p className="text-[8px] font-black text-[#4B6478] uppercase tracking-[0.15em]">Modal (HPP)</p>
-                    <p className="font-display text-sm font-black text-white">{formatIDR(purchase?.total_cost)}</p>
+                    <p className="font-display text-sm font-black text-white tabular-nums">{formatIDR(purchase?.total_cost)}</p>
                   </div>
                   <div className="text-center space-y-1 border-l border-white/5">
                     <p className="text-[8px] font-black text-[#4B6478] uppercase tracking-[0.15em]">Biaya Kirim</p>
-                    <p className="font-display text-sm font-black text-white">{formatIDR(data?.delivery_cost)}</p>
+                    <p className="font-display text-sm font-black text-white tabular-nums">{formatIDR(data?.delivery_cost)}</p>
                   </div>
                   <div className="text-center space-y-1 border-l border-white/5">
-                    <p className="text-[8px] font-black text-red-400/80 uppercase tracking-[0.15em]">Kerugian Susut</p>
-                    <p className="font-display text-sm font-black text-red-400">{formatIDR(susutLoss)}</p>
-                    {susutLoss > 0 && (
-                      <p className="text-[8px] font-bold text-red-500/50 uppercase">
-                        -{formatWeight(safeNum(delivery?.initial_weight_kg) - safeNum(delivery?.arrived_weight_kg))} susut
-                      </p>
-                    )}
+                    <p className="text-[8px] font-black text-red-400/80 uppercase tracking-[0.15em]">Susut</p>
+                    <p className="font-display text-sm font-black text-red-400 tabular-nums">{formatIDR(susutLoss)}</p>
                   </div>
                 </div>
 
@@ -1278,137 +1340,243 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
                 </div>
               </div>
 
-              {/* SECTION 2: DETAIL PEMBELIAN */}
-              <div className="space-y-4">
-                <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Pembelian</Label>
-                <div className="space-y-3 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
-                  <DetailRow label="Kandang" value={data?.purchases?.farms?.farm_name} icon={<MapPin size={14} />} />
-                  <DetailRow label="Jumlah" value={`${formatEkor(data?.purchases?.quantity)} · ${formatWeight(data?.purchases?.total_weight_kg)}`} icon={<Package size={14} />} />
-                  <DetailRow label="Harga Beli" value={`${formatIDR(data?.purchases?.price_per_kg)}/kg`} icon={<TrendingDown size={14} />} />
-                  <DetailRow label="Total Modal" value={formatIDR(data?.purchases?.total_cost)} highlight />
-                  <DetailRow label="Tanggal Beli" value={formatDate(data?.purchases?.transaction_date)} icon={<Calendar size={14} />} />
-                  {data?.purchases?.notes && (
-                    <p className="text-[12px] text-[#4B6478] italic mt-2 leading-relaxed">"{data.purchases.notes}"</p>
-                  )}
-                </div>
-              </div>
+              {isEditing ? (
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Data Penjualan</Label>
+                    
+                    <div className="space-y-2">
+                       <Label className="text-[11px] font-bold text-[#4B6478] uppercase ml-1">RPA / Pembeli</Label>
+                       <Select 
+                         value={editData.rpa_id} 
+                         onValueChange={(val) => setEditData(p => ({ ...p, rpa_id: val }))}
+                       >
+                         <SelectTrigger className="h-12 bg-[#111C24] border-white/5 rounded-xl font-bold">
+                           <SelectValue placeholder="Pilih RPA/Pembeli" />
+                         </SelectTrigger>
+                         <SelectContent className="bg-[#0C1319] border-white/10">
+                           {rpaClients?.map(client => (
+                             <SelectItem key={client.id} value={client.id} className="font-bold">
+                               {client.rpa_name}
+                             </SelectItem>
+                           ))}
+                         </SelectContent>
+                       </Select>
+                    </div>
 
-              {/* SECTION 3: DETAIL PENJUALAN */}
-              <div className="space-y-4">
-                <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Penjualan</Label>
-                <div className="space-y-3 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
-                  <DetailRow label="Pembeli" value={data?.rpa_clients?.rpa_name} icon={<User size={14} />} />
-                  <DetailRow label="Harga Jual" value={`${formatIDR(data?.price_per_kg)}/kg`} icon={<TrendingUp size={14} />} />
-                  <DetailRow label="Total Jual" value={formatIDR(totalJual)} highlight />
-                  <DetailRow label="Tanggal Jual" value={formatDate(data?.transaction_date)} icon={<Calendar size={14} />} />
-                </div>
-              </div>
+                    <div className="space-y-2">
+                      <Label className="text-[11px] font-bold text-[#4B6478] uppercase ml-1">Harga Jual (Rp/kg)</Label>
+                      <InputRupiah 
+                        value={editData.price_per_kg}
+                        onChange={(val) => setEditData(p => ({ ...p, price_per_kg: val }))}
+                      />
+                    </div>
 
-              {/* SECTION 4: STATUS PEMBAYARAN */}
-              <div className="space-y-4">
-                <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Pembayaran</Label>
-                <div className="space-y-3 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-[#4B6478]">Status</span>
-                    <Badge className={`rounded-full h-5 px-2 border-none font-black text-[9px] uppercase tracking-wider
-                      ${data?.payment_status === 'lunas' ? 'bg-emerald-500/10 text-emerald-400' : 
-                        data?.payment_status === 'sebagian' ? 'bg-amber-500/10 text-amber-500' : 
-                        'bg-red-500/10 text-red-500'}`}
-                    >
-                      {formatPaymentStatus(data?.payment_status)?.toUpperCase() ?? '-'}
-                    </Badge>
+                    <div className="space-y-2">
+                       <Label className="text-[11px] font-bold text-[#4B6478] uppercase ml-1">Status Bayar</Label>
+                       <Select 
+                         value={editData.payment_status} 
+                         onValueChange={(val) => setEditData(p => ({ ...p, payment_status: val }))}
+                       >
+                         <SelectTrigger className="h-12 bg-[#111C24] border-white/5 rounded-xl font-bold uppercase">
+                           <SelectValue />
+                         </SelectTrigger>
+                         <SelectContent className="bg-[#0C1319] border-white/10 uppercase">
+                           <SelectItem value="belum_lunas" className="font-bold">BELUM LUNAS</SelectItem>
+                           <SelectItem value="sebagian" className="font-bold">SEBAGIAN</SelectItem>
+                           <SelectItem value="lunas" className="font-bold text-emerald-400">LUNAS</SelectItem>
+                         </SelectContent>
+                       </Select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 pt-2">
+                      <div className="space-y-2">
+                        <Label className="text-[11px] font-bold text-[#4B6478] uppercase ml-1">Tanggal Jual</Label>
+                        <DatePicker
+                          value={editData.transaction_date ? new Date(editData.transaction_date) : null}
+                          onChange={(date) => setEditData(p => ({ 
+                            ...p, 
+                            transaction_date: date ? date.toISOString().split('T')[0] : null 
+                          }))}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[11px] font-bold text-[#4B6478] uppercase ml-1">Jatuh Tempo</Label>
+                        <DatePicker
+                          value={editData.due_date ? new Date(editData.due_date) : null}
+                          onChange={(date) => setEditData(p => ({ 
+                            ...p, 
+                            due_date: date ? date.toISOString().split('T')[0] : null 
+                          }))}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <DetailRow label="Sudah Dibayar" value={formatIDR(data?.paid_amount)} icon={<CheckCircle2 size={14} className="text-emerald-500" />} />
-                  <DetailRow label="Sisa Tagihan" value={formatIDR(data?.remaining_amount)} color={data?.remaining_amount > 0 ? 'text-red-400' : 'text-[#4B6478]'} />
-                  <DetailRow label="Jatuh Tempo" value={data?.due_date ? formatDate(data.due_date) : '-'} color={isOverdue ? 'text-amber-500' : 'text-[#4B6478]'} />
-                  
-                  {data?.payments?.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-white/5 space-y-2">
-                      <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Riwayat Bayar</p>
-                      {data.payments.map((p, idx) => (
-                        <div key={idx} className="flex justify-between items-center text-[11px]">
-                          <span className="text-[#4B6478]">{formatDate(p.payment_date)}</span>
-                          <span className="font-bold text-white">{formatIDR(p.amount)}</span>
+
+                  <div className="p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl flex gap-3 italic text-[11px] text-amber-500/80 leading-relaxed">
+                    <AlertCircle size={16} className="shrink-0 mt-0.5" />
+                    <span>Data pembelian dan pengiriman sudah terkunci untuk menjaga integritas.</span>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* SECTION 2: DETAIL PEMBELIAN */}
+                  <div className="space-y-4">
+                    <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Pembelian</Label>
+                    <div className="space-y-3 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+                      <DetailRow label="Kandang" value={data?.purchases?.farms?.farm_name} icon={<MapPin size={14} />} />
+                      <DetailRow label="Jumlah" value={`${formatEkor(data?.purchases?.quantity)} · ${formatWeight(data?.purchases?.total_weight_kg)}`} icon={<Package size={14} />} />
+                      <DetailRow label="Harga Beli" value={`${formatIDR(data?.purchases?.price_per_kg)}/kg`} icon={<TrendingDown size={14} />} />
+                      <DetailRow label="Total Modal" value={formatIDR(data?.purchases?.total_cost)} highlight />
+                      <DetailRow label="Tanggal Beli" value={formatDate(data?.purchases?.transaction_date)} icon={<Calendar size={14} />} />
+                      {data?.purchases?.notes && (
+                        <p className="text-[12px] text-[#4B6478] italic mt-2 leading-relaxed">"{data.purchases.notes}"</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* SECTION 3: DETAIL PENJUALAN */}
+                  <div className="space-y-4">
+                    <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Penjualan</Label>
+                    <div className="space-y-3 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+                      <DetailRow label="Pembeli" value={data?.rpa_clients?.rpa_name} icon={<User size={14} />} />
+                      <DetailRow label="Harga Jual" value={`${formatIDR(data?.price_per_kg)}/kg`} icon={<TrendingUp size={14} />} />
+                      <DetailRow label="Total Jual" value={formatIDR(totalJual)} highlight />
+                      <DetailRow label="Tanggal Jual" value={formatDate(data?.transaction_date)} icon={<Calendar size={14} />} />
+                    </div>
+                  </div>
+
+                  {/* SECTION 4: STATUS PEMBAYARAN */}
+                  <div className="space-y-4">
+                    <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Pembayaran</Label>
+                    <div className="space-y-3 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-bold text-[#4B6478]">Status</span>
+                        <Badge className={`rounded-full h-5 px-2 border-none font-black text-[9px] uppercase tracking-wider
+                          ${data?.payment_status === 'lunas' ? 'bg-emerald-500/10 text-emerald-400' : 
+                            data?.payment_status === 'sebagian' ? 'bg-amber-500/10 text-amber-500' : 
+                            'bg-red-500/10 text-red-500'}`}
+                        >
+                          {formatPaymentStatus(data?.payment_status)?.toUpperCase() ?? '-'}
+                        </Badge>
+                      </div>
+                      <DetailRow label="Sudah Dibayar" value={formatIDR(data?.paid_amount)} icon={<CheckCircle2 size={14} className="text-emerald-500" />} />
+                      <DetailRow label="Sisa Tagihan" value={formatIDR(data?.remaining_amount)} color={data?.remaining_amount > 0 ? 'text-red-400' : 'text-[#4B6478]'} />
+                      <DetailRow label="Jatuh Tempo" value={data?.due_date ? formatDate(data.due_date) : '-'} color={isOverdue ? 'text-amber-500' : 'text-[#4B6478]'} />
+                      
+                      {data?.payments?.length > 0 && (
+                        <div className="mt-4 pt-4 border-t border-white/5 space-y-2">
+                          <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Riwayat Bayar</p>
+                          {data.payments.map((p, idx) => (
+                            <div key={idx} className="flex justify-between items-center text-[11px]">
+                              <span className="text-[#4B6478]">{formatDate(p.payment_date)}</span>
+                              <span className="font-bold text-white">{formatIDR(p.amount)}</span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  )}
-                </div>
-              </div>
-
-              {/* SECTION 5: PENGIRIMAN */}
-              <div className="space-y-4 pb-12">
-                <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Pengiriman</Label>
-                {!data?.deliveries?.length ? (
-                  <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 text-center">
-                    <Truck size={24} className="mx-auto text-[#4B6478] mb-2 opacity-20" />
-                    <p className="text-[12px] font-bold text-[#4B6478]">Belum Ada Pengiriman</p>
                   </div>
-                ) : (
-                  <div className="space-y-3 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-bold text-[#4B6478]">Status</span>
-                      <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-widest">
-                        {data.deliveries[0].status.replace('_', ' ')}
-                      </span>
-                    </div>
-                    <DetailRow 
-                      label="Kendaraan" 
-                      value={data.deliveries[0].vehicles?.vehicle_plate 
-                        ? `${data.deliveries[0].vehicles.vehicle_plate}${data.deliveries[0].vehicles.brand ? ` · ${data.deliveries[0].vehicles.brand}` : ''}` 
-                        : (data.deliveries[0].vehicle_plate || data.deliveries[0].vehicle_notes || '-')} 
-                      icon={<Truck size={14} />} 
-                    />
-                    <DetailRow 
-                      label="Sopir" 
-                      value={data.deliveries[0].drivers?.full_name || data.deliveries[0].driver_name || data.deliveries[0].driver_notes || '-'} 
-                      icon={<User size={14} />} 
-                    />
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                      <div className="space-y-1">
-                        <p className="text-[9px] font-black text-[#4B6478] uppercase">Berat Awal</p>
-                        <p className="text-xs font-bold text-[#F1F5F9]">{formatWeight(data.deliveries[0].initial_weight_kg)}</p>
+
+                  {/* SECTION 5: PENGIRIMAN */}
+                  <div className="space-y-4 pb-12">
+                    <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Pengiriman</Label>
+                    {!data?.deliveries?.length ? (
+                      <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 text-center">
+                        <Truck size={24} className="mx-auto text-[#4B6478] mb-2 opacity-20" />
+                        <p className="text-[12px] font-bold text-[#4B6478]">Belum Ada Pengiriman</p>
                       </div>
-                      <div className="space-y-1 text-right">
-                        <p className="text-[9px] font-black text-[#4B6478] uppercase">Berat Tiba</p>
-                        <p className="text-xs font-bold text-[#F1F5F9]">{formatWeight(data.deliveries[0].arrived_weight_kg)}</p>
+                    ) : (
+                      <div className="space-y-3 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-bold text-[#4B6478]">Status</span>
+                          <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-widest">
+                            {data.deliveries[0].status.replace('_', ' ')}
+                          </span>
+                        </div>
+                        <DetailRow 
+                          label="Kendaraan" 
+                          value={data.deliveries[0].vehicles?.vehicle_plate 
+                            ? `${data.deliveries[0].vehicles.vehicle_plate}${data.deliveries[0].vehicles.brand ? ` · ${data.deliveries[0].vehicles.brand}` : ''}` 
+                            : (data.deliveries[0].vehicle_plate || data.deliveries[0].vehicle_notes || '-')} 
+                          icon={<Truck size={14} />} 
+                        />
+                        <DetailRow 
+                          label="Sopir" 
+                          value={data.deliveries[0].drivers?.full_name || data.deliveries[0].driver_name || data.deliveries[0].driver_notes || '-'} 
+                          icon={<User size={14} />} 
+                        />
+                        <div className="grid grid-cols-2 gap-4 mt-2">
+                          <div className="space-y-1">
+                            <p className="text-[9px] font-black text-[#4B6478] uppercase">Berat Awal</p>
+                            <p className="text-xs font-bold text-[#F1F5F9]">{formatWeight(data.deliveries[0].initial_weight_kg)}</p>
+                          </div>
+                          <div className="space-y-1 text-right">
+                            <p className="text-[9px] font-black text-[#4B6478] uppercase">Berat Tiba</p>
+                            <p className="text-xs font-bold text-[#F1F5F9]">{formatWeight(data.deliveries[0].arrived_weight_kg)}</p>
+                          </div>
+                        </div>
+                        <DetailRow 
+                          label="Susut" 
+                          value={formatWeight(data.deliveries[0].shrinkage_kg)} 
+                          color={data.deliveries[0].shrinkage_kg > 0 ? 'text-red-400' : 'text-emerald-400'} 
+                        />
+                        <DetailRow label="Biaya Kirim" value={formatIDR(data.delivery_cost)} icon={<ArrowRightLeft size={14} />} />
+                        <DetailRow label="Tanggal Tiba" value={data.deliveries[0].arrived_at ? formatDate(data.deliveries[0].arrived_at) : (data.deliveries[0].arrival_time ? formatDate(data.deliveries[0].arrival_time) : '-')} icon={<Clock size={14} />} />
+                        {data.deliveries[0].notes && (
+                          <p className="text-[12px] text-[#4B6478] italic mt-2 leading-relaxed">"{data.deliveries[0].notes}"</p>
+                        )}
                       </div>
-                    </div>
-                    <DetailRow 
-                      label="Susut" 
-                      value={formatWeight(data.deliveries[0].shrinkage_kg)} 
-                      color={data.deliveries[0].shrinkage_kg > 0 ? 'text-red-400' : 'text-emerald-400'} 
-                    />
-                    <DetailRow label="Biaya Kirim" value={formatIDR(data.delivery_cost)} icon={<ArrowRightLeft size={14} />} />
-                    <DetailRow label="Tanggal Tiba" value={data.deliveries[0].arrived_at ? formatDate(data.deliveries[0].arrived_at) : (data.deliveries[0].arrival_time ? formatDate(data.deliveries[0].arrival_time) : '-')} icon={<Clock size={14} />} />
-                    {data.deliveries[0].notes && (
-                      <p className="text-[12px] text-[#4B6478] italic mt-2 leading-relaxed">"{data.deliveries[0].notes}"</p>
                     )}
                   </div>
-                )}
-              </div>
+                </>
+              )}
             </>
           )}
         </div>
 
         {/* FOOTER ACTIONS */}
         <div className="p-6 border-t border-white/5 bg-[#0C1319]/80 backdrop-blur-md space-y-3">
-          {data?.payment_status !== 'lunas' && !isLoading && (
-            <Button className="w-full h-12 bg-[#10B981] hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/10">
-              Catat Bayar
-            </Button>
+          {isEditing ? (
+            <div className="grid grid-cols-2 gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsEditing(false)}
+                className="h-12 border-white/10 bg-white/5 text-white font-black text-xs uppercase tracking-widest rounded-xl"
+              >
+                Batal
+              </Button>
+              <Button 
+                onClick={handleUpdateSale}
+                disabled={isUpdating}
+                className="h-12 bg-[#10B981] hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl"
+              >
+                {isUpdating ? <Loader2 size={14} className="animate-spin mr-2" /> : 'Simpan'}
+              </Button>
+            </div>
+          ) : (
+            <>
+              {data?.payment_status !== 'lunas' && !isLoading && (
+                <Button className="w-full h-12 bg-[#10B981] hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/10">
+                  Catat Bayar
+                </Button>
+              )}
+              <div className="grid grid-cols-2 gap-3">
+                <Button 
+                  onClick={() => setIsEditing(true)}
+                  variant="outline" className="h-12 border-white/10 bg-white/5 text-white font-black text-xs uppercase tracking-widest rounded-xl"
+                >
+                  <Pencil size={14} className="mr-2" /> Edit
+                </Button>
+                <Button 
+                  onClick={onDelete}
+                  className="h-12 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-black text-xs uppercase tracking-widest rounded-xl"
+                >
+                  <Trash2 size={14} className="mr-2" /> Hapus
+                </Button>
+              </div>
+            </>
           )}
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" className="h-12 border-white/10 bg-white/5 text-white font-black text-xs uppercase tracking-widest rounded-xl">
-              <Pencil size={14} className="mr-2" /> Edit
-            </Button>
-            <Button 
-              onClick={onDelete}
-              variant="destructive" className="h-12 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-black text-xs uppercase tracking-widest rounded-xl"
-            >
-              <Trash2 size={14} className="mr-2" /> Hapus
-            </Button>
-          </div>
         </div>
       </SheetContent>
     </Sheet>

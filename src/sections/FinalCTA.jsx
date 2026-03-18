@@ -10,7 +10,7 @@ const FinalCTA = () => {
     ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
   return (
-    <section className="bg-[#0A0F16] section-padding text-center relative overflow-hidden">
+    <section className="bg-[#06090F] section-padding text-center relative overflow-hidden">
       
       {/* Background Particles */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>

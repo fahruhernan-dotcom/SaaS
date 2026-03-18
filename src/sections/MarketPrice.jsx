@@ -1,11 +1,43 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import CountUp from '../components/reactbits/CountUp';
 import AnimatedContent from '../components/reactbits/AnimatedContent';
 
-const MarketPrice = () => {
+const MarketPrice = ({ activeRole }) => {
+  const content = {
+    broker: {
+      title: <>Data Harga Pasar yang <br/><span className="text-emerald-400">Selalu Up-to-Date</span></>,
+      desc: "Setiap kali broker mencatat transaksi, harga secara otomatis masuk ke sistem. Kamu tahu rata-rata harga pasar hari ini — bahkan sebelum mulai negosiasi.",
+      checklist: [
+        'Data dari transaksi nyata — bukan rumor WA',
+        'Update otomatis setiap transaksi',
+        'Semua broker lihat rata-rata (anonim)'
+      ]
+    },
+    peternak: {
+      title: <>Tahu Harga Beli Broker <br/><span className="text-emerald-400">Sebelum Negosiasi</span></>,
+      desc: "Lihat rata-rata harga yang broker bayar ke kandang di daerahmu. Tidak perlu tanya satu-satu lagi ke teman peternak lain.",
+      checklist: [
+        'Harga beli broker real dari transaksi',
+        'Update otomatis setiap ada transaksi baru',
+        'Tahu kapan harga sedang tinggi untuk jual'
+      ]
+    },
+    rpa: {
+      title: <>Beli Ayam di <br/><span className="text-emerald-400">Harga yang Tepat</span></>,
+      desc: "Referensi harga jual broker hari ini dari data transaksi nyata. Negosiasi dengan data, bukan feeling.",
+      checklist: [
+        'Harga jual broker rata-rata per wilayah',
+        'Tren harga 14 hari terakhir',
+        'Deteksi harga anomali dari broker'
+      ]
+    }
+  };
+
+  const active = content[activeRole] || content.broker;
+
   return (
-    <section className="bg-[#06090F] section-fade-bottom section-padding">
+    <section id="harga-pasar" className="bg-[#0C1319] section-padding overflow-hidden">
       <div className="max-w-[1280px] mx-auto">
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-16 items-center">
           
@@ -20,35 +52,40 @@ const MarketPrice = () => {
               </div>
             </AnimatedContent>
             
-            <AnimatedContent direction="horizontal" reverse={true} distance={50} delay={0.1}>
-              <h2 className="section-h2 mb-5">
-                Data Harga Pasar yang <br/>
-                <span className="text-emerald-400">Selalu Up-to-Date</span>
-              </h2>
-            </AnimatedContent>
-            
-            <AnimatedContent direction="horizontal" reverse={true} distance={50} delay={0.2}>
-              <p className="section-subtitle mb-8 max-w-[480px]">
-                Setiap kali broker mencatat transaksi, harga secara otomatis masuk ke sistem. Kamu tahu rata-rata harga pasar hari ini — bahkan sebelum mulai negosiasi.
-              </p>
-            </AnimatedContent>
-
-            <ul className="space-y-4 mb-8">
-              {[
-                { text: 'Data dari transaksi nyata — bukan rumor WA' },
-                { text: 'Update otomatis setiap transaksi' },
-                { text: 'Semua broker lihat rata-rata (anonim)' }
-              ].map((item, i) => (
-                <AnimatedContent key={i} direction="vertical" distance={20} delay={0.3 + i * 0.07}>
-                  <li className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400 text-[12px]">
-                      ✓
-                    </div>
-                    <span className="text-[15px] text-text-secondary">{item.text}</span>
-                  </li>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeRole}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <AnimatedContent direction="none">
+                  <h2 className="section-h2 mb-5">
+                    {active.title}
+                  </h2>
                 </AnimatedContent>
-              ))}
-            </ul>
+                
+                <AnimatedContent direction="none">
+                  <p className="section-subtitle mb-8 max-w-[480px]">
+                    {active.desc}
+                  </p>
+                </AnimatedContent>
+
+                <ul className="space-y-4 mb-8">
+                  {active.checklist.map((item, i) => (
+                    <AnimatedContent key={i} direction="none">
+                      <li className="flex items-center gap-3">
+                        <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400 text-[12px]">
+                          ✓
+                        </div>
+                        <span className="text-[15px] text-text-secondary">{item}</span>
+                      </li>
+                    </AnimatedContent>
+                  ))}
+                </ul>
+              </motion.div>
+            </AnimatePresence>
 
             <AnimatedContent direction="vertical" distance={20} delay={0.6}>
               <a href="#demo" className="inline-flex items-center gap-2 text-[14px] font-semibold text-emerald-400 hover:text-emerald-300 group transition-all">

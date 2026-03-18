@@ -5,7 +5,8 @@ import {
   HelpCircle, LogOut, CreditCard, Building, 
   ArrowLeftRight, ShieldCheck, Settings, Store,
   Check, Smartphone, Mail, Info, Trash2,
-  Trophy, Star, Crown
+  Trophy, Star, Crown, Undo2, FileX2, ChevronDown, ChevronUp,
+  History, Warehouse, Factory, Truck
 } from 'lucide-react'
 import { differenceInDays, isAfter } from 'date-fns'
 import { supabase } from '@/lib/supabase'
@@ -26,8 +27,12 @@ import {
   AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger 
 } from '@/components/ui/alert-dialog'
 import SlideModal from '@/dashboard/components/SlideModal'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { 
+  Tabs, TabsList, TabsTrigger, TabsContent 
+} from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
+import { formatIDR, formatDate } from '@/lib/format'
 
 const staggerContainer = {
   hidden: {},
@@ -271,6 +276,11 @@ export default function Akun() {
             </AlertDialog>
         </motion.div>
 
+        {/* Recycle Bin Section */}
+        <motion.div variants={fadeUp} className="px-5">
+            <RecycleBinSection tenantId={tenant?.id} />
+        </motion.div>
+
         <motion.footer variants={fadeUp} className="text-center pt-6 opacity-40">
             <p className="text-[9px] text-[#4B6478] font-black uppercase tracking-[0.4em]">
                 TernakOS v2.0.0 • PRO EDITION
@@ -382,6 +392,234 @@ function ProfileForm({ profile, onSuccess }) {
                 {isLoading ? 'Menyimpan...' : 'Simpan Perubahan'}
             </Button>
         </form>
+    )
+}
+
+function RecycleBinSection({ tenantId }) {
+    const [isOpen, setIsOpen] = useState(false)
+    const [activeTab, setActiveTab] = useState('transaksi')
+    const queryClient = useQueryClient()
+
+    const { data: deletedData, isLoading, refetch } = useQuery({
+        queryKey: ['recycle-bin', tenantId, activeTab],
+        queryFn: async () => {
+            if (activeTab === 'transaksi') {
+                const { data } = await supabase.from('sales').select('*, rpa_clients(rpa_name)').eq('tenant_id', tenantId).eq('is_deleted', true).order('updated_at', { ascending: false })
+                return data || []
+            } else if (activeTab === 'kandang') {
+                const { data } = await supabase.from('farms').select('*').eq('tenant_id', tenantId).eq('is_deleted', true).order('updated_at', { ascending: false })
+                return data || []
+            } else if (activeTab === 'rpa') {
+                const { data } = await supabase.from('rpa_clients').select('*').eq('tenant_id', tenantId).eq('is_deleted', true).order('updated_at', { ascending: false })
+                return data || []
+            } else if (activeTab === 'pengiriman') {
+                const { data } = await supabase.from('deliveries').select('*, sales(rpa_clients(rpa_name))').eq('tenant_id', tenantId).eq('is_deleted', true).order('updated_at', { ascending: false })
+                return data || []
+            }
+            return []
+        },
+        enabled: !!tenantId && isOpen
+    })
+
+    const handleRestore = async (type, item) => {
+        try {
+            if (type === 'transaksi') {
+                await supabase.from('sales').update({ is_deleted: false }).eq('id', item.id)
+                if (item.purchase_id) await supabase.from('purchases').update({ is_deleted: false }).eq('id', item.purchase_id)
+                await supabase.from('deliveries').update({ is_deleted: false }).eq('sale_id', item.id)
+            } else if (type === 'kandang') {
+                await supabase.from('farms').update({ is_deleted: false }).eq('id', item.id)
+            } else if (type === 'rpa') {
+                await supabase.from('rpa_clients').update({ is_deleted: false }).eq('id', item.id)
+            } else if (type === 'pengiriman') {
+                await supabase.from('deliveries').update({ is_deleted: false }).eq('id', item.id)
+            }
+            
+            toast.success('✅ Berhasil dipulihkan')
+            refetch()
+            queryClient.invalidateQueries()
+        } catch (err) {
+            toast.error('❌ Gagal memulihkan data')
+        }
+    }
+
+    const handleDeletePermanent = async (type, item) => {
+        try {
+            if (type === 'transaksi') {
+                await supabase.from('payments').delete().eq('sale_id', item.id)
+                await supabase.from('deliveries').delete().eq('sale_id', item.id)
+                await supabase.from('sales').delete().eq('id', item.id)
+                if (item.purchase_id) await supabase.from('purchases').delete().eq('id', item.purchase_id)
+            } else if (type === 'kandang') {
+                await supabase.from('farms').delete().eq('id', item.id)
+            } else if (type === 'rpa') {
+                await supabase.from('rpa_clients').delete().eq('id', item.id)
+            } else if (type === 'pengiriman') {
+                await supabase.from('deliveries').delete().eq('id', item.id)
+            }
+
+            toast.success('🗑️ Data dihapus permanen')
+            refetch()
+        } catch (err) {
+            toast.error('❌ Gagal menghapus permanen')
+        }
+    }
+
+    return (
+        <Card className="bg-[#111C24] border-white/5 rounded-[28px] overflow-hidden">
+            <div 
+                className="p-6 flex items-center justify-between cursor-pointer hover:bg-white/[0.02] transition-all"
+                onClick={() => setIsOpen(!isOpen)}
+            >
+                <div className="flex items-center gap-3">
+                    <Trash2 size={20} className="text-[#4B6478]" />
+                    <h3 className="font-display font-black text-white text-lg tracking-tight uppercase">Recycle Bin</h3>
+                </div>
+                {isOpen ? <ChevronUp size={20} className="text-[#4B6478]" /> : <ChevronDown size={20} className="text-[#4B6478]" />}
+            </div>
+
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                    >
+                        <div className="px-6 pb-8 space-y-6 border-t border-white/5 pt-6">
+                            <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl flex items-start gap-3">
+                                <Info size={18} className="text-amber-500 shrink-0 mt-0.5" />
+                                <p className="text-[11px] font-bold text-amber-500/80 leading-relaxed uppercase tracking-wider">
+                                    Data yang dihapus akan otomatis terhapus permanen setelah 30 hari.
+                                </p>
+                            </div>
+
+                            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                                <TabsList className="bg-secondary/10 p-1 h-12 rounded-xl grid grid-cols-4 gap-1 mb-6">
+                                    <TabsTrigger value="transaksi" className="rounded-lg text-[10px] font-black uppercase tracking-wider data-[state=active]:bg-emerald-500 data-[state=active]:text-white">Trans</TabsTrigger>
+                                    <TabsTrigger value="kandang" className="rounded-lg text-[10px] font-black uppercase tracking-wider data-[state=active]:bg-emerald-500 data-[state=active]:text-white">Kandang</TabsTrigger>
+                                    <TabsTrigger value="rpa" className="rounded-lg text-[10px] font-black uppercase tracking-wider data-[state=active]:bg-emerald-500 data-[state=active]:text-white">RPA</TabsTrigger>
+                                    <TabsTrigger value="pengiriman" className="rounded-lg text-[10px] font-black uppercase tracking-wider data-[state=active]:bg-emerald-500 data-[state=active]:text-white">Kirim</TabsTrigger>
+                                </TabsList>
+
+                                <div className="min-h-[200px]">
+                                    {isLoading ? (
+                                        <div className="flex items-center justify-center h-40">
+                                            <div className="w-8 h-8 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin" />
+                                        </div>
+                                    ) : deletedData?.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-12 text-center">
+                                            <div className="w-16 h-16 rounded-3xl bg-secondary/10 flex items-center justify-center mb-4 border border-white/5 opacity-40">
+                                                <Trash2 size={24} className="text-[#4B6478]" />
+                                            </div>
+                                            <p className="text-sm font-black text-white uppercase tracking-tight">Recycle Bin Kosong</p>
+                                            <p className="text-[10px] text-[#4B6478] font-black uppercase tracking-widest mt-1.5">Data yang dihapus akan muncul di sini</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {deletedData?.map((item) => (
+                                                <RecycleItem 
+                                                    key={item.id} 
+                                                    item={item} 
+                                                    type={activeTab} 
+                                                    onRestore={() => handleRestore(activeTab, item)}
+                                                    onDelete={() => handleDeletePermanent(activeTab, item)}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </Tabs>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </Card>
+    )
+}
+
+function RecycleItem({ item, type, onRestore, onDelete }) {
+    const getTitle = () => {
+        if (type === 'transaksi') return item.rpa_clients?.rpa_name || 'Transaksi Tanpa Nama'
+        if (type === 'kandang') return item.farm_name
+        if (type === 'rpa') return item.rpa_name
+        if (type === 'pengiriman') return item.sales?.rpa_clients?.rpa_name || 'Pengiriman Tanpa Tujuan'
+        return 'Item'
+    }
+
+    const getSub = () => {
+        if (type === 'transaksi') return `${formatDate(item.transaction_date)} • ${formatIDR(item.total_revenue)}`
+        if (type === 'kandang') return `${item.owner_name} • ${item.location}`
+        if (type === 'rpa') return `${item.buyer_type} • ${item.city}`
+        if (type === 'pengiriman') return `${formatDate(item.created_at)} • ${item.status}`
+        return ''
+    }
+
+    const getIcon = () => {
+        if (type === 'transaksi') return History
+        if (type === 'kandang') return Warehouse
+        if (type === 'rpa') return Factory
+        if (type === 'pengiriman') return Truck
+        return Trash2
+    }
+
+    const Icon = getIcon()
+
+    return (
+        <div className="p-4 rounded-2xl bg-[#0C1319] border border-white/5 flex flex-col gap-4">
+            <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center border border-red-500/20 text-red-500">
+                    <Icon size={18} />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                        <p className="text-[13px] font-black text-white truncate uppercase tracking-tight">{getTitle()}</p>
+                        <Badge className="bg-red-500/10 text-red-500 border border-red-500/20 text-[8px] px-1.5 h-4.5 uppercase font-black">TERHAPUS</Badge>
+                    </div>
+                    <p className="text-[10px] text-[#4B6478] font-black uppercase tracking-wider">{getSub()}</p>
+                </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2">
+                <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={onRestore}
+                    className="h-10 rounded-xl border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 text-[9px] font-black uppercase tracking-widest gap-2"
+                >
+                    <Undo2 size={12} /> Pulihkan
+                </Button>
+
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="h-10 rounded-xl border-red-500/30 text-red-400 hover:bg-red-500/10 text-[9px] font-black uppercase tracking-widest gap-2"
+                        >
+                            <FileX2 size={12} /> Hapus Permanen
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="bg-[#0C1319] border-white/10 rounded-[32px] p-8">
+                        <AlertDialogHeader>
+                            <AlertDialogTitle className="text-white font-display font-black tracking-tight uppercase text-2xl">Hapus Permanen?</AlertDialogTitle>
+                            <AlertDialogDescription className="text-slate-400 font-bold mt-2">
+                                Data akan dihapus selamanya dan tidak bisa dipulihkan. Seluruh relasi data terkait juga akan hilang.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter className="gap-3 mt-8">
+                            <AlertDialogCancel className="bg-secondary/10 border-none text-white rounded-2xl h-14 font-black uppercase tracking-widest text-[11px]">Batal</AlertDialogCancel>
+                            <AlertDialogAction 
+                                onClick={onDelete}
+                                className="bg-red-500 hover:bg-red-600 text-white rounded-2xl h-14 font-black uppercase tracking-widest text-[11px] border-none"
+                            >
+                                Hapus
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
+        </div>
     )
 }
 

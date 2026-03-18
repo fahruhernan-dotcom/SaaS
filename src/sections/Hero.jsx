@@ -140,10 +140,9 @@ const Hero = () => {
             initial={{ opacity: 0, y: 32 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.4 }}
-            className="text-base md:text-lg text-tx-3 leading-relaxed max-w-[500px] mb-8 text-center lg:text-left"
+            className="text-base md:text-lg text-tx-3 leading-relaxed max-w-[500px] mb-8 text-center lg:text-left font-medium"
           >
-            Catat transaksi, hitung profit, pantau piutang RPA — semua otomatis. 
-            Khusus untuk broker dan peternak Indonesia.
+            Mulai Rp 499rb/bulan — <span className="text-em-400">kurang dari Rp 17.000/hari</span>.
           </motion.p>
 
           {/* CTA Buttons */}

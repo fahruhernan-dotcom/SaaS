@@ -22,6 +22,10 @@ import HargaPasar from './dashboard/pages/HargaPasar';
 import Pengiriman from './dashboard/broker/Pengiriman';
 import CashFlow from './dashboard/broker/CashFlow';
 import Armada from './dashboard/broker/Armada';
+import Tim from './dashboard/broker/Tim';
+import Invite from './pages/Invite';
+import TermsPage from './pages/TermsPage';
+import PrivacyPage from './pages/PrivacyPage';
 
 // Components
 import ErrorBoundary from './components/ErrorBoundary';
@@ -100,6 +104,9 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/invite/:token" element={<Invite />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
 
         {/* Onboarding */}
         <Route path="/onboarding" element={
@@ -118,6 +125,11 @@ function App() {
         <Route path="/broker/transaksi" element={
           <ProtectedRoute requiredType="broker">
             <BrokerLayout><Transaksi /></BrokerLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/broker/tim" element={
+          <ProtectedRoute requiredType="broker">
+            <BrokerLayout><Tim /></BrokerLayout>
           </ProtectedRoute>
         } />
         <Route path="/broker/rpa" element={

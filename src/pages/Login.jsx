@@ -31,9 +31,14 @@ export default function Login() {
       })
       
       if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          setError('Email atau password salah. Coba lagi.')
-        } else if (error.message.includes('Email not confirmed')) {
+        const msg = error.message.toLowerCase()
+        if (msg.includes('invalid login credentials')) {
+          setError('Email atau password salah')
+        } else if (msg.includes('user not found')) {
+          setError('Akun tidak ditemukan')
+        } else if (msg.includes('network') || msg.includes('fetch')) {
+          setError('Gagal terhubung, coba lagi')
+        } else if (msg.includes('email not confirmed')) {
           setError('Email belum dikonfirmasi. Cek inbox kamu.')
         } else {
           setError(error.message)
@@ -45,7 +50,11 @@ export default function Login() {
       toast.success('Selamat datang kembali!')
       
     } catch (err) {
-      setError('Terjadi kesalahan. Coba lagi.')
+      if (err.message?.toLowerCase().includes('fetch') || err.message?.toLowerCase().includes('network')) {
+        setError('Gagal terhubung, coba lagi')
+      } else {
+        setError('Terjadi kesalahan. Coba lagi.')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -85,7 +94,7 @@ export default function Login() {
         }} />
 
         {/* LOGO */}
-        <div className="flex items-center gap-[10px] relative z-10">
+        <Link to="/" className="flex items-center gap-[10px] relative z-10 group">
           <div style={{
             width: 36, height: 36,
             borderRadius: '10px',
@@ -94,7 +103,7 @@ export default function Login() {
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '18px'
-          }}>
+          }} className="group-hover:scale-105 transition-transform">
             🐔
           </div>
           <span style={{
@@ -106,7 +115,7 @@ export default function Login() {
           }}>
             TernakOS
           </span>
-        </div>
+        </Link>
 
         {/* MIDDLE STATS */}
         <div className="flex flex-col gap-6 relative z-10">
@@ -243,13 +252,13 @@ export default function Login() {
           className="w-full max-w-[400px]"
         >
           {/* HEADER (Mobile Logo) */}
-          <div className="md:hidden flex items-center justify-center gap-2 mb-8">
-            <span className="text-2xl">🐔</span>
+          <Link to="/" className="md:hidden flex items-center justify-center gap-2 mb-8 group">
+            <span className="text-2xl group-hover:scale-110 transition-transform">🐔</span>
             <span style={{
               fontFamily:'Sora', fontWeight:800,
               fontSize:'18px', color:'#F1F5F9'
             }}>TernakOS</span>
-          </div>
+          </Link>
           
           <h1 style={{
             fontFamily: 'Sora',
@@ -294,8 +303,9 @@ export default function Login() {
                   padding: '13px 14px',
                   fontSize: '16px',
                   color: '#F1F5F9',
-                  height: 'auto',
-                  width: '100%'
+                  height: '50px',
+                  width: '100%',
+                  outline: 'none'
                 }}
                 className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
               />
@@ -341,8 +351,9 @@ export default function Login() {
                     padding: '13px 44px 13px 14px',
                     fontSize: '16px',
                     color: '#F1F5F9',
-                    height: 'auto',
-                    width: '100%'
+                    height: '50px',
+                    width: '100%',
+                    outline: 'none'
                   }}
                   className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
                 />
@@ -446,13 +457,23 @@ export default function Login() {
           
           <p className="text-[12px] text-[#4B6478] text-center mt-8 leading-relaxed">
             Dengan masuk, kamu menyetujui{' '}
-            <span className="text-emerald-400 cursor-pointer hover:underline">
+            <Link 
+              to="/terms" 
+              target="_blank" 
+              rel="noopener"
+              className="text-emerald-400 cursor-pointer hover:underline"
+            >
               Syarat & Ketentuan
-            </span>{' '}
+            </Link>{' '}
             dan{' '}
-            <span className="text-emerald-400 cursor-pointer hover:underline">
+            <Link 
+              to="/privacy" 
+              target="_blank" 
+              rel="noopener"
+              className="text-emerald-400 cursor-pointer hover:underline"
+            >
               Kebijakan Privasi
-            </span>{' '}
+            </Link>{' '}
             kami.
           </p>
         </motion.div>

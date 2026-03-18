@@ -12,6 +12,7 @@ import {
   Calculator,
   ChevronsUpDown,
   User,
+  Users,
   LogOut,
   Bell,
   Check,
@@ -86,6 +87,7 @@ export default function AppSidebar() {
         { title: 'Transaksi',  url: '/broker/transaksi', icon: ArrowLeftRight },
         { title: 'RPA & Piutang', url: '/broker/rpa',   icon: Building2 },
         { title: 'Kandang',    url: '/broker/kandang',   icon: Warehouse },
+        { title: 'Tim & Akses', url: '/broker/tim',      icon: Users },
       ]
     },
     {

@@ -42,7 +42,7 @@ const Testimonials = () => {
     }
   };
   return (
-    <section id="testimoni" className="bg-[#06090F] section-fade-bottom section-padding">
+    <section id="testimoni" className="bg-[#0C1319] section-fade-bottom section-padding">
       <div className="max-w-[1280px] mx-auto">
         
         <div className="text-center mb-[40px] md:mb-[60px]">

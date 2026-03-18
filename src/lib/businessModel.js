@@ -16,6 +16,7 @@ export const BUSINESS_MODELS = {
       { path: '/harga-pasar',       icon: 'BarChart2',       label: 'Harga Pasar'       },
       { path: '/broker/armada',      icon: 'Car',             label: 'Armada & Sopir'    },
       { path: '/broker/simulator',   icon: 'Calculator',      label: 'Simulator Margin'  },
+      { path: '/broker/tim',         icon: 'User',            label: 'Tim & Akses'       },
       { path: '/broker/akun',        icon: 'User',            label: 'Akun & Profil'     },
     ]
   },

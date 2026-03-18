@@ -48,7 +48,7 @@ export function useCashFlow(startDate, endDate, tenantId) {
           .lte('created_at', endStr + 'T23:59:59'),
 
         supabase.from('loss_reports')
-          .select('id, financial_loss, report_date, loss_type, description')
+          .select('id, financial_loss, report_date, loss_type, description, sale_id, sales(is_deleted)')
           .eq('tenant_id', tenantId)
           .eq('is_deleted', false)
           .gte('report_date', startStr)
@@ -66,10 +66,10 @@ export function useCashFlow(startDate, endDate, tenantId) {
       const sales      = salesRes.data      || []
       const purchases  = purchasesRes.data  || []
       const deliveries = deliveriesRes.data || []
-      const losses     = lossRes.data       || []
+      const losses     = (lossRes.data      || []).filter(l => !l.sales || l.sales.is_deleted === false)
       const expenses   = expensesRes.data   || []
 
-      const totalPemasukan = sales.reduce((s, t) => s + (Number(t.net_revenue) || 0), 0)
+      const totalPemasukan = sales.reduce((s, t) => s + (Number(t.net_revenue || t.total_revenue) || 0), 0)
       const totalModalBeli = purchases.reduce((s, t) => s + (Number(t.total_cost) || 0), 0)
       const totalTransport = sales.reduce((s, t) => s + (Number(t.delivery_cost) || 0), 0)
       const totalKerugian = losses.reduce((s, t) => s + (Number(t.financial_loss) || 0), 0)

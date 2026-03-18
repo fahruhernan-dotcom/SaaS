@@ -30,6 +30,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { 
+  formatIDR,
   formatIDRShort, 
   formatDateFull, 
   formatEkor,
@@ -91,9 +92,9 @@ export default function BrokerBeranda() {
           .eq('transaction_date', today)
           .eq('is_deleted', false),
         supabase.from('rpa_clients').select('id, rpa_name, total_outstanding').eq('tenant_id', tenant.id).eq('is_deleted', false).gt('total_outstanding', 0).order('total_outstanding', { ascending: false }),
-        supabase.from('farms').select('id').eq('tenant_id', tenant.id).eq('status', 'ready').eq('is_deleted', false),
+        supabase.from('farms').select('id').eq('tenant_id', tenant.id).ilike('status', 'ready').eq('is_deleted', false),
         supabase.from('sales').select('id').eq('tenant_id', tenant.id).lte('due_date', today).neq('payment_status', 'lunas').eq('is_deleted', false),
-        supabase.from('loss_reports').select('financial_loss').eq('tenant_id', tenant.id).eq('report_date', today).eq('is_deleted', false),
+        supabase.from('loss_reports').select('financial_loss, sale_id, sales(is_deleted)').eq('tenant_id', tenant.id).eq('report_date', today).eq('is_deleted', false),
         supabase.from('extra_expenses').select('amount').eq('tenant_id', tenant.id).eq('expense_date', today).eq('is_deleted', false)
       ])
 
@@ -163,9 +164,12 @@ export default function BrokerBeranda() {
     queryKey: ['weekly-profit', tenant?.id],
     queryFn: async () => {
       const days = []
+      // Use WIB (+7h) for both date labels and matching to ensure today appears correctly
+      const now = new Date(new Date().getTime() + (7 * 60 * 60 * 1000))
+      
       for (let i = 6; i >= 0; i--) {
-        const date = new Date()
-        date.setDate(date.getDate() - i)
+        const date = new Date(now)
+        date.setDate(now.getDate() - i)
         const dateStr = date.toISOString().split('T')[0]
         const dayNames = ['Min','Sen','Sel','Rab','Kam','Jum','Sab']
         days.push({ date: dateStr, label: dayNames[date.getDay()] })
@@ -189,7 +193,7 @@ export default function BrokerBeranda() {
 
       const { data: lossesData } = await supabase
         .from('loss_reports')
-        .select('financial_loss, report_date')
+        .select('financial_loss, report_date, sale_id, sales(is_deleted)')
         .eq('tenant_id', tenant.id)
         .eq('is_deleted', false)
         .gte('report_date', days[0].date)
@@ -205,7 +209,9 @@ export default function BrokerBeranda() {
 
       return days.map(day => {
         const daySales = (salesData || []).filter(s => s.transaction_date === day.date)
-        const dayLosses = (lossesData || []).filter(l => l.report_date === day.date)
+        const dayLosses = (lossesData || [])
+          .filter(l => l.report_date === day.date)
+          .filter(l => !l.sales || l.sales.is_deleted === false)
         const dayExpenses = (expensesData || []).filter(e => e.expense_date === day.date)
 
         const salesProfit = daySales.reduce((sum, s) => {
@@ -409,6 +415,7 @@ function DesktopDashboard({ homeData, armadaAlerts, weeklyData, profile, navigat
                   <RechartsTooltip 
                     contentStyle={{ backgroundColor: '#111C24', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
                     itemStyle={{ color: '#F1F5F9', fontWeight: 'bold' }}
+                    formatter={(value) => formatIDR(value)}
                   />
                   <Area 
                     type="monotone" 
