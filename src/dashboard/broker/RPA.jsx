@@ -21,9 +21,15 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import SlideModal from '@/dashboard/components/SlideModal'
 import EmptyState from '@/components/EmptyState'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet"
 
 const staggerContainer = {
   hidden: {},
@@ -169,12 +175,19 @@ export default function RPA() {
       </div>
 
       {/* Form Sheet */}
-      <SlideModal 
-        title={editingRPA ? "Edit RPA" : "Tambah RPA"} 
-        isOpen={openModal} 
-        onClose={() => setOpenModal(false)}
-      >
-        <RPAForm 
+      <Sheet open={openModal} onOpenChange={setOpenModal}>
+        <SheetContent 
+          side="right" 
+          className="bg-[#0C1319] border-l border-white/8 w-full sm:max-w-[480px] p-8 overflow-y-auto"
+        >
+          <SheetHeader className="mb-8">
+            <SheetTitle className="font-display text-2xl font-black text-white uppercase tracking-tight text-left">
+              {editingRPA ? "EDIT RPA" : "TAMBAH RPA"}
+            </SheetTitle>
+            <SheetDescription className="sr-only">Form RPA</SheetDescription>
+          </SheetHeader>
+
+          <RPAForm 
             rpa={editingRPA} 
             onClose={() => setOpenModal(false)} 
             tenantId={tenant?.id} 
@@ -182,8 +195,9 @@ export default function RPA() {
                 queryClient.invalidateQueries({ queryKey: ['rpa-clients', tenant?.id] })
                 setOpenModal(false)
             }}
-        />
-      </SlideModal>
+          />
+        </SheetContent>
+      </Sheet>
     </motion.div>
   )
 }

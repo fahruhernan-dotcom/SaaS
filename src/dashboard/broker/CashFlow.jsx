@@ -16,7 +16,7 @@ import {
 import { id } from 'date-fns/locale'
 import { 
   formatIDR, formatIDRShort, formatDate, formatWeight, safeNum,
-  calcTotalJual, calcNetProfit 
+  calcTotalJual, calcNetProfit, formatPaymentStatus 
 } from '@/lib/format'
 import { 
     LineChart, Line, XAxis, YAxis, CartesianGrid, 
@@ -94,18 +94,14 @@ export default function CashFlow() {
             const dayLosses = losses.filter(l => l.report_date === dateStr)
             const dayExpenses = expenses.filter(e => e.expense_date === dateStr)
 
-            const dayRevenue = daySales.reduce((s, t) => s + calcTotalJual(t, t.deliveries?.[0]), 0)
+            const dayRevenue = daySales.reduce((s, t) => s + safeNum(t.total_revenue), 0)
             const dayModal   = daySales.reduce((s, t) => s + safeNum(t.purchases?.total_cost), 0)
             const dayTransport = daySales.reduce((s, t) => s + safeNum(t.delivery_cost), 0)
             
-            const dayLoss    = dayLosses.reduce((s, t) => s + safeNum(t.financial_loss), 0)
-            const daySusut   = daySales.reduce((s, t) => {
-                const delivery = t.deliveries?.[0]
-                const purchase = t.purchases
-                if (!delivery?.arrived_weight_kg || !delivery?.initial_weight_kg) return s
-                const susutKg = safeNum(delivery.initial_weight_kg) - safeNum(delivery.arrived_weight_kg)
-                return s + (susutKg > 0 ? susutKg * safeNum(purchase?.price_per_kg) : 0)
-            }, 0)
+            // Only include shrinkage losses in the flow
+            const dayLoss    = dayLosses
+              .filter(l => l.loss_type === 'shrinkage')
+              .reduce((s, t) => s + safeNum(t.financial_loss), 0)
             
             const dayExtra = dayExpenses
                 .reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
@@ -125,8 +121,9 @@ export default function CashFlow() {
 
         const bData = [
             { name: 'Modal Beli (Produk)',  value: summary.totalModal || 0,     fill: '#3B82F6' },
-            { name: 'Kerugian',    value: summary.totalKerugian || 0,  fill: '#F87171' },
-            { name: 'Biaya Extra', value: summary.totalExtra || 0,     fill: '#8B5CF6' },
+            { name: 'Biaya Pengiriman',     value: summary.totalTransport || 0, fill: '#FBBF24' },
+            { name: 'Kerugian (Susut)',     value: summary.totalKerugian || 0,  fill: '#F87171' },
+            { name: 'Biaya Extra',          value: summary.totalExtra || 0,     fill: '#8B5CF6' },
         ].filter(d => d.value > 0)
 
         const totalTransportCost = sales.reduce((s, t) => s + (Number(t.delivery_cost) || 0), 0)
@@ -137,9 +134,9 @@ export default function CashFlow() {
     // --- TRANSACTION LIST MERGING ---
     const allTransactions = useMemo(() => {
         const list = [
-            ...sales.map(s => ({ ...s, type: 'in', category: 'jual', label: `Jual ke ${s.rpa_clients?.rpa_name} (Termasuk potongan kirim)`, date: s.transaction_date })),
+            ...sales.map(s => ({ ...s, type: 'in', category: 'jual', label: `Jual ke ${s.rpa_clients?.rpa_name}`, amount: s.total_revenue, date: s.transaction_date })),
             ...purchases.map(p => ({ ...p, type: 'out', category: 'beli', label: `Beli dari ${p.farms?.farm_name}`, date: p.transaction_date, amount: p.total_cost })),
-            ...losses.map(l => ({ ...l, type: 'out', category: 'kerugian', label: `${l.loss_type} — ${l.description}`, date: l.report_date, amount: l.financial_loss })),
+            ...losses.filter(l => l.loss_type === 'shrinkage').map(l => ({ ...l, type: 'out', category: 'kerugian', label: `Susut — ${l.description}`, date: l.report_date, amount: l.financial_loss })),
             ...expenses.map(e => ({ ...e, type: 'out', category: 'extra', label: `${e.category}: ${e.description}`, date: e.expense_date, amount: e.amount }))
         ].sort((a, b) => new Date(b.date) - new Date(a.date))
         return list
@@ -591,7 +588,7 @@ function TransactionRow({ tx }) {
                     "text-sm font-black tabular-nums tracking-tight",
                     tx.type === 'in' ? "text-emerald-400" : "text-red-400"
                 )}>
-                    {tx.type === 'in' ? '+' : '-'}{formatIDR(safeNum(tx.amount || tx.net_revenue)).replace('Rp', '')}
+                    {tx.type === 'in' ? '+' : '-'}{formatIDR(safeNum(tx.amount)).replace('Rp', '')}
                 </p>
                 <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mt-0.5">IDR</p>
             </div>

@@ -155,41 +155,40 @@ export const formatPaymentTerms = (value) =>
 export const formatPaymentStatus = (value) =>
   PAYMENT_STATUS_LABELS[value] || value
 
-// --- NEW PROFIT CALCULATION HELPERS WITH SHRINKAGE ---
-
-/**
- * Calculates total revenue based on arrived weight if delivery exists.
- * Formula: arrived_weight_kg * price_per_kg
- * Fallback: sale.total_revenue
- */
 export const calcTotalJual = (sale, delivery) => {
-  if (delivery?.arrived_weight_kg) {
-    return safeNum(delivery.arrived_weight_kg) * safeNum(sale?.price_per_kg)
+  if (!sale) return 0
+  // Prioritize total_revenue from DB if present
+  if (sale.total_revenue !== undefined && sale.total_revenue !== null) {
+    return safeNum(sale.total_revenue)
   }
-  return safeNum(sale?.total_revenue || sale?.net_revenue)
-}
-
-/**
- * Calculates financial loss from weight shrinkage.
- * Formula: (initial - arrived) * purchase price
- */
-export const calcKerugianSusut = (delivery, purchase) => {
-  if (!delivery?.arrived_weight_kg || !delivery?.initial_weight_kg) return 0
-  const susutKg = safeNum(delivery.initial_weight_kg) - safeNum(delivery.arrived_weight_kg)
-  if (susutKg <= 0) return 0
-  return susutKg * safeNum(purchase?.price_per_kg)
-}
-
-/**
- * Calculates net profit accounting for costs and shrinkage.
- * Formula: Total Jual - Modal - Delivery Cost - Shrinkage Loss
- */
-export const calcNetProfit = (sale, purchase, delivery) => {
-  const totalJual = calcTotalJual(sale, delivery)
-  const shrinkageLoss = calcKerugianSusut(delivery, purchase)
   
-  return totalJual 
-    - safeNum(purchase?.total_cost) 
-    - safeNum(sale?.delivery_cost) 
-    - shrinkageLoss
+  // Fallback: calculation based on arrived weight
+  const weight = safeNum(delivery?.arrived_weight_kg || sale.total_weight_kg)
+  const price = safeNum(sale.price_per_kg)
+  return weight * price
+}
+
+export const calcKerugianSusut = (delivery, sale) => {
+  // Can accept objects (delivery, sale) or direct values (shrinkageKg, pricePerKg)
+  if (typeof delivery === 'object') {
+    const shrinkageKg = safeNum(delivery?.shrinkage_kg || (safeNum(delivery?.initial_weight_kg) - safeNum(delivery?.arrived_weight_kg)))
+    const price = safeNum(sale?.price_per_kg)
+    return shrinkageKg * price
+  }
+  // Direct values fallback
+  return safeNum(delivery) * safeNum(sale)
+}
+
+export const calcNetProfit = (sale) => {
+  const revenue = Number(sale?.total_revenue) || 0
+  const totalCost = Number(sale?.purchases?.total_cost) || 0
+  const transportCost = Number(sale?.purchases?.transport_cost) || 0
+  const otherCost = Number(sale?.purchases?.other_cost) || 0
+  const deliveryCost = Number(sale?.delivery_cost) || 0
+  
+  return revenue - totalCost - transportCost - otherCost - deliveryCost
+}
+
+export const calcRemainingAmount = (sale) => {
+  return (Number(sale?.total_revenue) || 0) - (Number(sale?.paid_amount) || 0)
 }

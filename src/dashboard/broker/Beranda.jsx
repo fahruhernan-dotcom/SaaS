@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
-import { 
-  TrendingUp, 
-  AlertCircle, 
-  ChevronRight, 
-  ShoppingCart, 
+import {
+  TrendingUp,
+  AlertCircle,
+  ChevronRight,
+  ShoppingCart,
   BarChart2,
   Warehouse,
   Clock,
@@ -17,25 +17,28 @@ import {
   ArrowDownLeft,
   CreditCard
 } from 'lucide-react'
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip as RechartsTooltip, 
-  ResponsiveContainer 
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer
 } from 'recharts'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
-import { 
+import {
   formatIDR,
-  formatIDRShort, 
-  formatDateFull, 
+  formatIDRShort,
+  formatDateFull,
   formatEkor,
-  safeNum
+  formatRelative,
+  safeNum,
+  calcNetProfit
 } from '@/lib/format'
+import { useDashboardStats } from '@/lib/hooks/useDashboardStats'
 import { toast } from 'sonner'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -53,9 +56,9 @@ const staggerContainer = {
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
-  visible: { 
+  visible: {
     opacity: 1, y: 0,
-    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } 
+    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }
   }
 }
 
@@ -64,179 +67,10 @@ export default function BrokerBeranda() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const today = new Date(new Date().getTime() + (7 * 60 * 60 * 1000)).toISOString().split('T')[0]
-  
-  const [modalType, setModalType] = useState(null)
+
   const [wizardOpen, setWizardOpen] = useState(false)
 
-  const { data: homeData, isLoading } = useQuery({
-    queryKey: ['broker-stats', tenant?.id],
-    queryFn: async () => {
-      const [
-        { data: sales },
-        { data: purchases },
-        { data: rpaWithDebt },
-        { data: farmsReady },
-        { data: overdueSales },
-        { data: losses },
-        { data: expenses }
-      ] = await Promise.all([
-        supabase.from('sales')
-          .select('created_at, net_revenue, total_revenue, price_per_kg, delivery_cost, quantity, total_weight_kg, payment_status, transaction_date, rpa_clients(rpa_name), purchases(total_cost, price_per_kg), deliveries(initial_weight_kg, arrived_weight_kg)')
-          .eq('tenant_id', tenant.id)
-          .eq('transaction_date', today)
-          .eq('is_deleted', false),
-        supabase.from('purchases')
-          .select('created_at, total_modal, total_cost, quantity, total_weight_kg, transaction_date, farms(farm_name)')
-          .eq('tenant_id', tenant.id)
-          .eq('transaction_date', today)
-          .eq('is_deleted', false),
-        supabase.from('rpa_clients').select('id, rpa_name, total_outstanding').eq('tenant_id', tenant.id).eq('is_deleted', false).gt('total_outstanding', 0).order('total_outstanding', { ascending: false }),
-        supabase.from('farms').select('id').eq('tenant_id', tenant.id).ilike('status', 'ready').eq('is_deleted', false),
-        supabase.from('sales').select('id').eq('tenant_id', tenant.id).lte('due_date', today).neq('payment_status', 'lunas').eq('is_deleted', false),
-        supabase.from('loss_reports').select('financial_loss, sale_id, sales(is_deleted)').eq('tenant_id', tenant.id).eq('report_date', today).eq('is_deleted', false),
-        supabase.from('extra_expenses').select('amount').eq('tenant_id', tenant.id).eq('expense_date', today).eq('is_deleted', false)
-      ])
-
-      // KPI 1: PROFIT HARI INI (Gross Profit from Sales today)
-      // Prompt requirement: sum(net_revenue) - sum(purchases.total_cost)
-      const todayProfit = sales?.reduce((acc, s) => {
-        const delivery = s.deliveries?.[0]
-        const purchase = s.purchases
-        
-        const totalJual = delivery?.arrived_weight_kg 
-          ? safeNum(delivery.arrived_weight_kg) * safeNum(s.price_per_kg)
-          : safeNum(s.net_revenue)
-        
-        const susutLoss = (delivery?.initial_weight_kg && delivery?.arrived_weight_kg)
-          ? (safeNum(delivery.initial_weight_kg) - safeNum(delivery.arrived_weight_kg)) * safeNum(purchase?.price_per_kg)
-          : 0
-
-        const profit = totalJual - safeNum(purchase?.total_cost) - safeNum(s.delivery_cost) - susutLoss
-        return acc + profit
-      }, 0) || 0
-      
-      const totalPiutang = rpaWithDebt?.reduce((acc, r) => acc + safeNum(r.total_outstanding), 0) || 0
-      
-      return {
-        todayProfit,
-        todaySalesCount: sales?.length || 0,
-        todayBuyCount: purchases?.length || 0,
-        totalPiutang,
-        rpaCount: rpaWithDebt?.length || 0,
-        rpaWithDebt: rpaWithDebt?.slice(0, 5) || [],
-        farmsReadyCount: farmsReady?.length || 0,
-        overdueCount: overdueSales?.length || 0,
-        recentFeed: [
-          ...(sales?.map(s => ({ ...s, type: 'JUAL' })) || []),
-          ...(purchases?.map(p => ({ ...p, type: 'BELI' })) || [])
-        ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 5),
-        expiringSIMs: [] // Placeholder, will fetch below
-      }
-    },
-    enabled: !!tenant?.id
-  })
-
-  // Separate query for Armada alerts to keep it clean
-  const { data: armadaAlerts } = useQuery({
-    queryKey: ['armada-alerts', tenant?.id],
-    queryFn: async () => {
-      const today = new Date()
-      const nextMonth = new Date()
-      nextMonth.setDate(today.getDate() + 30)
-
-      const { data: expiringDrivers } = await supabase
-        .from('drivers')
-        .select('id, full_name, sim_expires_at')
-        .eq('tenant_id', tenant.id)
-        .eq('is_deleted', false)
-        .lte('sim_expires_at', nextMonth.toISOString().split('T')[0])
-        .order('sim_expires_at', { ascending: true })
-
-      return {
-        expiringSIMs: expiringDrivers || []
-      }
-    },
-    enabled: !!tenant?.id
-  })
-
-  const { data: weeklyData, isLoading: isWeeklyLoading } = useQuery({
-    queryKey: ['weekly-profit', tenant?.id],
-    queryFn: async () => {
-      const days = []
-      // Use WIB (+7h) for both date labels and matching to ensure today appears correctly
-      const now = new Date(new Date().getTime() + (7 * 60 * 60 * 1000))
-      
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date(now)
-        date.setDate(now.getDate() - i)
-        const dateStr = date.toISOString().split('T')[0]
-        const dayNames = ['Min','Sen','Sel','Rab','Kam','Jum','Sab']
-        days.push({ date: dateStr, label: dayNames[date.getDay()] })
-      }
-
-      const { data: salesData } = await supabase
-        .from('sales')
-        .select('net_revenue, price_per_kg, delivery_cost, transaction_date, purchases(total_cost, price_per_kg), deliveries(initial_weight_kg, arrived_weight_kg)')
-        .eq('tenant_id', tenant.id)
-        .eq('is_deleted', false)
-        .gte('transaction_date', days[0].date)
-        .lte('transaction_date', days[6].date)
-
-      const { data: purchasesData } = await supabase
-        .from('purchases')
-        .select('total_modal, total_cost, transaction_date')
-        .eq('tenant_id', tenant.id)
-        .eq('is_deleted', false)
-        .gte('transaction_date', days[0].date)
-        .lte('transaction_date', days[6].date)
-
-      const { data: lossesData } = await supabase
-        .from('loss_reports')
-        .select('financial_loss, report_date, sale_id, sales(is_deleted)')
-        .eq('tenant_id', tenant.id)
-        .eq('is_deleted', false)
-        .gte('report_date', days[0].date)
-        .lte('report_date', days[6].date)
-
-      const { data: expensesData } = await supabase
-        .from('extra_expenses')
-        .select('amount, expense_date')
-        .eq('tenant_id', tenant.id)
-        .eq('is_deleted', false)
-        .gte('expense_date', days[0].date)
-        .lte('expense_date', days[6].date)
-
-      return days.map(day => {
-        const daySales = (salesData || []).filter(s => s.transaction_date === day.date)
-        const dayLosses = (lossesData || [])
-          .filter(l => l.report_date === day.date)
-          .filter(l => !l.sales || l.sales.is_deleted === false)
-        const dayExpenses = (expensesData || []).filter(e => e.expense_date === day.date)
-
-        const salesProfit = daySales.reduce((sum, s) => {
-          const delivery = s.deliveries?.[0]
-          const purchase = s.purchases
-          
-          const totalJual = delivery?.arrived_weight_kg 
-            ? safeNum(delivery.arrived_weight_kg) * safeNum(s.price_per_kg)
-            : safeNum(s.net_revenue)
-            
-          const susutLoss = (delivery?.initial_weight_kg && delivery?.arrived_weight_kg)
-            ? (safeNum(delivery.initial_weight_kg) - safeNum(delivery.arrived_weight_kg)) * safeNum(purchase?.price_per_kg)
-            : 0
-
-          return sum + (totalJual - safeNum(purchase?.total_cost) - safeNum(s.delivery_cost) - susutLoss)
-        }, 0)
-
-        const totalLoss = dayLosses.reduce((sum, l) => sum + Number(l.financial_loss || 0), 0)
-        const totalExtra = dayExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0)
-
-        return { name: day.label, profit: salesProfit - totalLoss - totalExtra }
-      })
-    },
-    enabled: !!tenant?.id
-  })
+  const { data: homeData, isLoading } = useDashboardStats(tenant?.id)
 
   const handleTandaiLunas = async (rpaId, rpaName) => {
     try {
@@ -256,7 +90,7 @@ export default function BrokerBeranda() {
         }).eq('id', sale.id)
       }
 
-      queryClient.invalidateQueries({ queryKey: ['broker-stats', tenant.id] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats', tenant.id] })
       toast.success(`✅ Semua piutang ${rpaName} ditandai lunas!`)
     } catch (err) {
       toast.error('❌ Gagal memperbarui status lunas')
@@ -269,23 +103,23 @@ export default function BrokerBeranda() {
     <>
       <AnimatePresence mode="wait">
         {isDesktop ? (
-          <DesktopDashboard 
+          <DesktopDashboard
             key="desktop"
-            homeData={homeData} 
-            armadaAlerts={armadaAlerts}
-            weeklyData={weeklyData}
-            profile={profile} 
-            navigate={navigate} 
+            homeData={homeData}
+            armadaAlerts={homeData?.armadaAlerts}
+            weeklyData={homeData?.weeklyData}
+            profile={profile}
+            navigate={navigate}
             setWizardOpen={setWizardOpen}
             handleTandaiLunas={handleTandaiLunas}
           />
         ) : (
-          <MobileDashboard 
+          <MobileDashboard
             key="mobile"
-            homeData={homeData} 
-            armadaAlerts={armadaAlerts}
-            profile={profile} 
-            navigate={navigate} 
+            homeData={homeData}
+            armadaAlerts={homeData?.armadaAlerts}
+            profile={profile}
+            navigate={navigate}
             setWizardOpen={setWizardOpen}
             handleTandaiLunas={handleTandaiLunas}
           />
@@ -325,14 +159,14 @@ function DesktopDashboard({ homeData, armadaAlerts, weeklyData, profile, navigat
       </div>
 
       {armadaAlerts?.expiringSIMs?.length > 0 && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="p-4 rounded-[24px] bg-amber-500/10 border border-amber-500/20 flex items-center justify-between"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500">
-               <CreditCard size={20} />
+              <CreditCard size={20} />
             </div>
             <div>
               <p className="text-xs font-black uppercase tracking-widest text-amber-500 mb-0.5">Peringatan SIM Driver</p>
@@ -341,8 +175,8 @@ function DesktopDashboard({ homeData, armadaAlerts, weeklyData, profile, navigat
               </p>
             </div>
           </div>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => navigate('/broker/armada')}
             className="rounded-xl border-amber-500/30 bg-amber-500/5 text-amber-500 hover:bg-amber-500/10 font-black text-[10px] uppercase tracking-widest"
@@ -353,25 +187,25 @@ function DesktopDashboard({ homeData, armadaAlerts, weeklyData, profile, navigat
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KPICard 
-          label="Profit Hari Ini"
-          value={formatIDRShort(homeData?.todayProfit)} 
-          sub="Earning bersih hari ini"
+        <KPICard
+          label="Profit Minggu Ini"
+          value={formatIDRShort(homeData?.weeklyProfit)}
+          sub="Earning bersih 7 hari terakhir"
           icon={TrendingUp}
         />
-        <KPICard 
+        <KPICard
           label="Total Piutang"
           value={formatIDRShort(homeData?.totalPiutang)}
           sub={`${homeData?.rpaCount} RPA belum lunas`}
           icon={Clock}
         />
-        <KPICard 
-          label="Transaksi Hari Ini"
-          value={homeData?.todaySalesCount}
-          sub={`${homeData?.todaySalesCount} jual · ${homeData?.todayBuyCount} beli`}
+        <KPICard
+          label="Transaksi Minggu Ini"
+          value={homeData?.weeklySalesCount}
+          sub={`${homeData?.weeklySalesCount} jual · ${homeData?.weeklyBuyCount} beli`}
           icon={BarChart2}
         />
-        <KPICard 
+        <KPICard
           label="Kandang Ready"
           value={homeData?.farmsReadyCount}
           sub="Siap untuk dipanen"
@@ -399,31 +233,31 @@ function DesktopDashboard({ homeData, armadaAlerts, weeklyData, profile, navigat
                 <AreaChart data={weeklyData}>
                   <defs>
                     <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis 
-                    dataKey="name" 
-                    axisLine={false} 
-                    tickLine={false} 
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
                     tick={{ fill: '#4B6478', fontSize: 12, fontWeight: 600 }}
                     dy={10}
                   />
                   <YAxis hide />
-                  <RechartsTooltip 
+                  <RechartsTooltip
                     contentStyle={{ backgroundColor: '#111C24', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
                     itemStyle={{ color: '#F1F5F9', fontWeight: 'bold' }}
                     formatter={(value) => formatIDR(value)}
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="profit" 
-                    stroke="#10B981" 
+                  <Area
+                    type="monotone"
+                    dataKey="profit"
+                    stroke="#10B981"
                     strokeWidth={3}
-                    fillOpacity={1} 
-                    fill="url(#colorProfit)" 
+                    fillOpacity={1}
+                    fill="url(#colorProfit)"
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -440,22 +274,21 @@ function DesktopDashboard({ homeData, armadaAlerts, weeklyData, profile, navigat
             {homeData?.recentFeed?.length > 0 ? (
               homeData.recentFeed.map((item, idx) => (
                 <div key={idx} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-secondary/20 transition-all cursor-pointer group" onClick={() => navigate('/broker/transaksi')}>
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                      item.type === 'JUAL' ? 'bg-emerald-500/10' : 'bg-blue-500/10'
-                  }`}>
-                    {item.type === 'JUAL' ? <ArrowUpRight size={16} className="text-emerald-400" /> : <ArrowDownLeft size={16} className="text-blue-400" />}
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${item.profit >= 0 ? 'bg-emerald-500/10' : 'bg-red-500/10'
+                    }`}>
+                    <ArrowUpRight size={16} className={item.profit >= 0 ? "text-emerald-400" : "text-red-400"} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-[#F1F5F9] truncate group-hover:text-emerald-400 transition-colors">
-                      {item.type === 'JUAL' ? item.rpa_clients?.rpa_name : item.farms?.farm_name}
+                      {item.rpa_clients?.rpa_name || 'RPA Umum'}
                     </p>
                     <p className="text-[11px] text-muted-foreground mt-0.5 font-medium tabular-nums">
-                      {item.quantity.toLocaleString()} ekor · Hari ini
+                      {item.quantity.toLocaleString()} ekor · {formatRelative(item.created_at)}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className={`text-[13px] font-black ${item.type === 'JUAL' ? 'text-emerald-400' : 'text-foreground'}`}>
-                      {item.type === 'JUAL' ? '+' : '-'}{formatIDRShort(item.total_revenue || item.total_modal)}
+                    <p className={`text-[13px] font-black ${item.profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {item.profit >= 0 ? '+' : ''}{formatIDRShort(item.profit)}
                     </p>
                   </div>
                 </div>
@@ -479,35 +312,35 @@ function DesktopDashboard({ homeData, armadaAlerts, weeklyData, profile, navigat
       </div>
 
       <Card className="p-6 bg-[#0C1319] border-border rounded-3xl">
-         <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-6">
           <h3 className="text-md font-display font-bold uppercase tracking-widest text-xs text-muted-foreground">Piutang RPA Belum Lunas</h3>
           <Button variant="ghost" size="sm" className="text-xs font-bold text-emerald-400 h-8" onClick={() => navigate('/broker/rpa')}>Lihat Semua</Button>
         </div>
         {homeData?.rpaWithDebt?.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {homeData.rpaWithDebt.map((rpa) => (
-                <div key={rpa.id} className="p-4 border border-border rounded-2xl bg-secondary/30 flex items-center justify-between group hover:border-emerald-500/30 transition-all">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center font-display font-black text-emerald-400 text-xs">
-                      {rpa.rpa_name.substring(0, 2).toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-[#F1F5F9]">{rpa.rpa_name}</p>
-                      <p className="text-sm font-black text-red-400 tabular-nums">
-                        {formatIDRShort(rpa.total_outstanding)}
-                      </p>
-                    </div>
+              <div key={rpa.id} className="p-4 border border-border rounded-2xl bg-secondary/30 flex items-center justify-between group hover:border-emerald-500/30 transition-all">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center font-display font-black text-emerald-400 text-xs">
+                    {rpa.rpa_name.substring(0, 2).toUpperCase()}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 rounded-xl bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/15"
-                    onClick={() => handleTandaiLunas(rpa.id, rpa.rpa_name)}
-                  >
-                    <CheckCircle size={18} />
-                  </Button>
+                  <div>
+                    <p className="text-sm font-bold text-[#F1F5F9]">{rpa.rpa_name}</p>
+                    <p className="text-sm font-black text-red-400 tabular-nums">
+                      {formatIDRShort(rpa.total_outstanding)}
+                    </p>
+                  </div>
                 </div>
-              ))}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-xl bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/15"
+                  onClick={() => handleTandaiLunas(rpa.id, rpa.rpa_name)}
+                >
+                  <CheckCircle size={18} />
+                </Button>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="py-10 text-center flex flex-col items-center gap-2">
@@ -525,7 +358,7 @@ function MobileDashboard({ homeData, armadaAlerts, profile, navigate, setWizardO
   const firstName = profile?.full_name?.split(' ')[0] || 'User'
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -12 }}
@@ -551,7 +384,7 @@ function MobileDashboard({ homeData, armadaAlerts, profile, navigate, setWizardO
       </header>
 
       {armadaAlerts?.expiringSIMs?.length > 0 && (
-         <div 
+        <div
           onClick={() => navigate('/broker/armada')}
           className="mx-5 mt-3 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex items-center gap-2.5 active:scale-95 transition-all"
         >
@@ -565,7 +398,7 @@ function MobileDashboard({ homeData, armadaAlerts, profile, navigate, setWizardO
 
       <AnimatePresence>
         {homeData?.overdueCount > 0 && (
-          <motion.div 
+          <motion.div
             initial={{ y: -8, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             className="mx-5 mt-3 bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex items-center gap-2.5"
@@ -580,24 +413,24 @@ function MobileDashboard({ homeData, armadaAlerts, profile, navigate, setWizardO
         )}
       </AnimatePresence>
 
-      <motion.section 
+      <motion.section
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
         className="px-5 mt-4 grid grid-cols-2 gap-2.5"
       >
         <motion.div variants={fadeUp}>
-            <StatCard 
-            label="Profit Hari Ini"
-            value={homeData?.todayProfit || 0}
+          <StatCard
+            label="Profit Minggu Ini"
+            value={homeData?.weeklyProfit || 0}
             isCurrency
-            valueColor={homeData?.todayProfit >= 0 ? '#34D399' : '#F87171'}
-            sub={`dari ${homeData?.todaySalesCount + homeData?.todayBuyCount} tx`}
+            valueColor={homeData?.weeklyProfit >= 0 ? '#34D399' : '#F87171'}
+            sub={`dari ${homeData?.weeklySalesCount + homeData?.weeklyBuyCount} tx`}
             icon={TrendingUp}
-            />
+          />
         </motion.div>
         <motion.div variants={fadeUp}>
-            <StatCard 
+          <StatCard
             label="Total Piutang"
             value={homeData?.totalPiutang || 0}
             isCurrency
@@ -605,26 +438,26 @@ function MobileDashboard({ homeData, armadaAlerts, profile, navigate, setWizardO
             sub={`${homeData?.rpaCount} RPA outstanding`}
             icon={Clock}
             onClick={() => navigate('/broker/rpa')}
-            />
+          />
         </motion.div>
         <motion.div variants={fadeUp}>
-            <StatCard 
-            label="Transaksi Hari Ini"
-            value={homeData?.todaySalesCount}
-            sub={`${homeData?.todaySalesCount} jual · ${homeData?.todayBuyCount} beli`}
+          <StatCard
+            label="Transaksi Minggu Ini"
+            value={homeData?.weeklySalesCount}
+            sub={`${homeData?.weeklySalesCount} jual · ${homeData?.weeklyBuyCount} beli`}
             icon={BarChart2}
             onClick={() => navigate('/broker/transaksi')}
-            />
+          />
         </motion.div>
         <motion.div variants={fadeUp}>
-            <StatCard 
+          <StatCard
             label="Kandang Ready"
             value={homeData?.farmsReadyCount}
             valueColor={homeData?.farmsReadyCount > 0 ? '#34D399' : '#F1F5F9'}
             sub="siap panen"
             icon={Warehouse}
             onClick={() => navigate('/broker/kandang')}
-            />
+          />
         </motion.div>
       </motion.section>
 
@@ -640,10 +473,10 @@ function MobileDashboard({ homeData, armadaAlerts, profile, navigate, setWizardO
 
       <section className="px-5 mt-6 mb-8 space-y-3">
         <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4B6478] px-1">
-            Aktivitas Hari Ini
+          Aktivitas Hari Ini
         </h3>
         {(!homeData || !homeData.recentFeed || homeData.recentFeed.length === 0) ? (
-          <EmptyState 
+          <EmptyState
             icon={Package}
             title="Belum ada transaksi"
             description="Mulai catat pembelian atau penjualan pertamamu hari ini."
@@ -652,19 +485,18 @@ function MobileDashboard({ homeData, armadaAlerts, profile, navigate, setWizardO
           <div className="bg-[#111C24] border border-white/5 rounded-2xl overflow-hidden divide-y divide-white/5">
             {homeData.recentFeed.map((item, idx) => (
               <div key={idx} className="p-4 flex items-center gap-3" onClick={() => navigate('/broker/transaksi')}>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                    item.type === 'JUAL' ? 'bg-emerald-500/10' : 'bg-blue-500/10'
-                }`}>
-                  {item.type === 'JUAL' ? <ArrowUpRight size={18} className="text-[#34D399]" /> : <ArrowDownLeft size={18} className="text-[#93C5FD]" />}
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${item.profit >= 0 ? 'bg-emerald-500/10' : 'bg-red-500/10'
+                  }`}>
+                  <ArrowUpRight size={18} className={item.profit >= 0 ? "text-[#34D399]" : "text-red-400"} />
                 </div>
                 <div className="flex-1 min-w-0">
-                   <p className="text-[14px] font-bold text-[#F1F5F9] truncate">{item.type === 'JUAL' ? item.rpa_clients?.rpa_name : item.farms?.farm_name}</p>
-                   <p className="text-[11px] text-[#4B6478] font-bold mt-0.5">{item.quantity} ekor · {item.type}</p>
+                  <p className="text-[14px] font-bold text-[#F1F5F9] truncate">{item.rpa_clients?.rpa_name || 'RPA Umum'}</p>
+                  <p className="text-[11px] text-[#4B6478] font-bold mt-0.5">{item.quantity} ekor · {formatRelative(item.created_at)}</p>
                 </div>
                 <div className="text-right">
-                    <p className={`text-[15px] font-black ${item.type === 'JUAL' ? 'text-emerald-400' : 'text-foreground'}`}>
-                        {item.type === 'JUAL' ? '+' : '-'}{formatIDRShort(item.total_revenue || item.total_modal)}
-                    </p>
+                  <p className={`text-[15px] font-black ${item.profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {item.profit >= 0 ? '+' : ''}{formatIDRShort(item.profit)}
+                  </p>
                 </div>
               </div>
             ))}
@@ -696,7 +528,7 @@ function StatCard({ label, value, sub, valueColor, icon: Icon, onClick, isCurren
         <Icon size={12} className="opacity-50" />
         {label}
       </div>
-      <motion.div 
+      <motion.div
         className="font-display text-[20px] font-black leading-none tracking-tight tabular-nums"
         style={{ color: valueColor || '#F1F5F9' }}
       >
@@ -711,9 +543,9 @@ function LoadingState() {
   return (
     <div className="p-0 bg-[#06090F] min-h-screen">
       <div className="px-5 pt-10 mb-8 space-y-3">
-          <Skeleton className="h-3 w-24 bg-white/5" />
-          <Skeleton className="h-8 w-40 bg-white/5" />
-          <Skeleton className="h-3 w-32 bg-white/5" />
+        <Skeleton className="h-3 w-24 bg-white/5" />
+        <Skeleton className="h-8 w-40 bg-white/5" />
+        <Skeleton className="h-3 w-32 bg-white/5" />
       </div>
       <div className="px-5 grid grid-cols-2 gap-3 mb-6">
         <Skeleton className="h-[96px] rounded-2xl bg-white/5" />
@@ -726,12 +558,12 @@ function LoadingState() {
         <Skeleton className="h-[52px] rounded-2xl bg-white/5" />
       </div>
       <div className="px-5 space-y-3">
-          <Skeleton className="h-3 w-32 bg-white/5 ml-1" />
-          <div className="border border-white/5 rounded-2xl overflow-hidden divide-y divide-white/5">
-            <Skeleton className="h-[72px] bg-white/5" />
-            <Skeleton className="h-[72px] bg-white/5" />
-            <Skeleton className="h-[72px] bg-white/5" />
-          </div>
+        <Skeleton className="h-3 w-32 bg-white/5 ml-1" />
+        <div className="border border-white/5 rounded-2xl overflow-hidden divide-y divide-white/5">
+          <Skeleton className="h-[72px] bg-white/5" />
+          <Skeleton className="h-[72px] bg-white/5" />
+          <Skeleton className="h-[72px] bg-white/5" />
+        </div>
       </div>
     </div>
   )

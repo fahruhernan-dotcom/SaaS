@@ -1,6 +1,6 @@
 # TernakOS — Developer Context
 
-> Last updated: 2026-03-20 | Use this as reference for all future implementations.
+> Last updated: 2026-03-20 (Pengiriman module refactored & completed) | Use this as reference for all future implementations.
 
 ---
 
@@ -403,7 +403,14 @@ src/
 │   │   ├── RPA.jsx                 ← RPA client list, search, CRUD
 │   │   ├── RPADetail.jsx           ← RPA detail: agreements, transactions, outstanding
 │   │   ├── Kandang.jsx             ← Farm CRUD: add/edit/delete farm
-│   │   ├── Pengiriman.jsx          ← Delivery management + loss report tabs
+│   │   ├── Pengiriman.jsx          ← Delivery management orchestrator
+│   │   ├── pengiriman/             ← Extracted modular components
+│   │   │   ├── DeliveryCard.jsx    ← List item for delivery
+│   │   │   ├── UpdateArrivalSheet.jsx ← Arrival edit + timbangan flow
+│   │   │   ├── LogisticsDetailSheet.jsx ← Read-only logistics history
+│   │   │   ├── LossCard.jsx        ← Card per delivery for loss report
+│   │   │   ├── CreateLossSheet.jsx ← Create manual loss form
+│   │   │   └── Common.jsx          ← Shared small UI components
 │   │   ├── CashFlow.jsx            ← Cash flow chart + breakdown + expense form
 │   │   ├── Armada.jsx              ← Vehicle + driver CRUD, SIM expiry alerts
 │   │   ├── Simulator.jsx           ← Margin profit simulator
@@ -793,13 +800,12 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 | Peternak: Siklus | 🚧 | `ComingSoon` | Planned features |
 | RPA: Order, Hutang | 🚧 | `ComingSoon` | Planned features |
 
----
-
 ## 22. Scripts & Automation
 
 ### `scripts/ternakos_harga_scraper.py`
-- **Purpose**: Scrape chicken prices from `chickin.id` (Central Java region).
-- **Execution Mode**: CLI once-run or `--daemon` mode (background service).
+- Setup: `pip install -r scripts/requirements.txt` (uses Playwright, undetected_chromedriver, bs4)
+- Run: `python scripts/ternakos_harga_scraper.py`
+- Fetches prices from pinsarindonesia.com, maps to `market_prices` table in Supabase. Wait time 15-20s.
 - **Schedule**: Best run at 12:00 and 18:00 WIB.
 - **Database**: Insert/Upsert into `market_prices` table.
 - **Dependencies**: `requests`, `beautifulsoup4`, `psycopg2`.
@@ -832,3 +838,29 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 ---
 
 *Last updated: March 20, 2026 — by Antigravity AI*
+
+---
+
+## 23. Recent Major Updates (2026-03-20)
+
+### Modul Pengiriman (Completed & Modularized)
+**Refactor**:
+- Pengiriman.jsx dipecah jadi 7 komponen modular (dari 2600 baris menjadi ~500 baris, komponen di-extract ke folder src/dashboard/broker/pengiriman/).
+
+**Fitur Baru**:
+- Timbangan digital (mode langsung & per timbangan).
+- Selisih dari berat kirim (realtime).
+- Print/cetak dokumen report timbangan.
+- Edit kedatangan dengan kontrol lock/unlock untuk data kendaraan & sopir.
+- Lihat Detail Logistik menggunakan sheet terpisah di panel kanan.
+- Loss Report direstrukturisasi untuk menampilkan 1 card agregat per delivery (sinkronisasi mortalitas + susut).
+- Auto-resolve loss report via Database Trigger (aktif saat sales.payment_status berubah jadi 'lunas').
+
+**Bug Fixes**:
+- Timezone WIB fix (mencegah jam bergeser 7 jam karena mapping UTC).
+- Field Kendaraan & Sopir tersimpan persisten ke tabel delivery.
+- Perbaikan layout form auto-expand pada input angka.
+- Plat nomor kendaraan di-format otomatis uppercase.
+- Nama sopir tidak lagi dipaksa otomatis uppercase.
+- shrinkage_kg sudah tidak disertakan di payload insert (berubah dari table base menjadi computed generated column).
+- Loss reports terintegrasi sepenuhnya dengan workflow kedatangan pengiriman.

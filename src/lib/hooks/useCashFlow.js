@@ -12,19 +12,10 @@ export function useCashFlow(startDate, endDate, tenantId) {
       const [salesRes, purchasesRes, deliveriesRes, lossRes, expensesRes] = await Promise.all([
         supabase.from('sales')
           .select(`
-            id, 
-            net_revenue, 
-            delivery_cost, 
-            total_revenue, 
-            price_per_kg,
-            total_weight_kg, 
-            transaction_date, 
-            payment_status, 
-            rpa_id, 
-            is_deleted,
+            *,
             rpa_clients(rpa_name),
-            purchases(total_cost, price_per_kg),
-            deliveries(initial_weight_kg, arrived_weight_kg)
+            purchases(total_cost, transport_cost, other_cost, farms(farm_name)),
+            deliveries(shrinkage_kg, status, vehicle_plate, driver_name)
           `)
           .eq('tenant_id', tenantId)
           .eq('is_deleted', false)
@@ -33,7 +24,7 @@ export function useCashFlow(startDate, endDate, tenantId) {
           .order('transaction_date', { ascending: true }),
 
         supabase.from('purchases')
-          .select('id, total_modal, total_cost, transaction_date, farm_id, is_deleted, farms(farm_name)')
+          .select('id, total_modal, total_cost, transport_cost, other_cost, transaction_date, farm_id, is_deleted, farms(farm_name)')
           .eq('tenant_id', tenantId)
           .eq('is_deleted', false)
           .gte('transaction_date', startStr)
@@ -66,16 +57,32 @@ export function useCashFlow(startDate, endDate, tenantId) {
       const sales      = salesRes.data      || []
       const purchases  = purchasesRes.data  || []
       const deliveries = deliveriesRes.data || []
-      const losses     = (lossRes.data      || []).filter(l => !l.sales || l.sales.is_deleted === false)
+      const losses     = (lossRes.data      || [])
+        .filter(l => !l.sales || l.sales.is_deleted === false)
+        .filter(l => l.loss_type === 'shrinkage') // Only include shrinkage as per requirement
       const expenses   = expensesRes.data   || []
 
-      const totalPemasukan = sales.reduce((s, t) => s + (Number(t.net_revenue || t.total_revenue) || 0), 0)
-      const totalModalBeli = purchases.reduce((s, t) => s + (Number(t.total_cost) || 0), 0)
+      // Standardize Formulas: 
+      // 1. Pemasukan = SUM(total_revenue)
+      const totalPemasukan = sales.reduce((s, t) => s + (Number(t.total_revenue) || 0), 0)
+      
+      // 2. Modal Beli (Total Cost + Transport + Other)
+      const totalModalBeli = purchases.reduce((s, t) => 
+        s + (Number(t.total_cost) || 0) + (Number(t.transport_cost) || 0) + (Number(t.other_cost) || 0), 0)
+      
+      // 3. Biaya Kirim (Source of truth: sales table)
       const totalTransport = sales.reduce((s, t) => s + (Number(t.delivery_cost) || 0), 0)
+      
+      // 4. Kerugian (Shrinkage only)
       const totalKerugian = losses.reduce((s, t) => s + (Number(t.financial_loss) || 0), 0)
+      
+      // 5. Extra Expenses
       const totalExtra = expenses.reduce((s, t) => s + (Number(t.amount) || 0), 0)
       
-      const totalKeluar = totalModalBeli + totalKerugian + totalExtra
+      // 6. Total Keluar = Modal + Transport + Kerugian + Extra
+      const totalKeluar = totalModalBeli + totalTransport + totalKerugian + totalExtra
+      
+      // 7. Net Cash Flow = Pemasukan - Keluar
       const netCashFlow = totalPemasukan - totalKeluar
 
       return {

@@ -16,14 +16,12 @@ import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { formatIDR, safeNumber, safePercent, safeNum, formatWeight, formatEkor } from '@/lib/format'
-import { useUpdateDelivery } from '@/lib/hooks/useUpdateDelivery'
-import { useSales } from '@/lib/hooks/useSales'
-import { usePurchases } from '@/lib/hooks/usePurchases'
 import { 
+  formatIDR, safeNumber, safePercent, safeNum, formatWeight, formatEkor, formatKg,
   formatDate, formatRelative, formatIDRShort, formatPaymentStatus,
-  calcTotalJual, calcKerugianSusut, calcNetProfit 
+  calcTotalJual, calcKerugianSusut, calcNetProfit, calcRemainingAmount
 } from '@/lib/format'
+import { useUpdateDelivery } from '@/lib/hooks/useUpdateDelivery'
 import { useRPA } from '@/lib/hooks/useRPA'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -120,7 +118,7 @@ export default function Transaksi() {
   const navigate = useNavigate()
 
   // --- STATES ---
-  const [activeTab, setActiveTab] = useState('jual')
+  const [activeTab, setActiveTab] = useState('semua')
   const [wizardOpen, setWizardOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -145,43 +143,74 @@ export default function Transaksi() {
   const [isUpdateArrivalSubmitting, setIsUpdateArrivalSubmitting] = useState(false)
 
   // --- DATA FETCHING ---
-  const { data: sales, isLoading: loadingSales } = useSales()
-  const { data: purchases, isLoading: loadingPurchases } = usePurchases()
+  const { data: sales, isLoading: loadingSales } = useQuery({
+    queryKey: ['sales', tenant?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sales')
+        .select(`
+          *,
+          rpa_clients(rpa_name),
+          purchases(
+            total_cost, transport_cost, other_cost, 
+            total_weight_kg, quantity, price_per_kg,
+            farms(farm_name)
+          ),
+          deliveries(
+            status,
+            shrinkage_kg,
+            arrived_weight_kg,
+            initial_weight_kg,
+            delivery_cost,
+            vehicle_id,
+            vehicle_plate,
+            vehicle_type,
+            driver_name,
+            vehicles(brand)
+          )
+        `)
+        .eq('tenant_id', tenant.id)
+        .eq('is_deleted', false)
+        .order('transaction_date', { ascending: false })
+      
+      if (error) throw error
+      return data
+    },
+    enabled: !!tenant?.id
+  })
+
   const { data: saleDetail, isLoading: loadingDetail } = useQuery({
     queryKey: ['sales', selectedSaleId],
     queryFn: async () => {
-      // 1. Fetch main sale data + purchase + rpa
       const { data: sale, error: saleErr } = await supabase
         .from('sales')
-        .select('*, rpa_clients(*), purchases(*, farms(farm_name))')
+        .select(`
+          *,
+          rpa_clients(rpa_name),
+          purchases(
+            total_cost, transport_cost, other_cost,
+            quantity, avg_weight_kg, total_weight_kg,
+            price_per_kg, transaction_date,
+            farms(farm_name)
+          ),
+          deliveries(
+            status, shrinkage_kg, arrived_weight_kg,
+            initial_weight_kg, delivery_cost,
+            vehicle_plate, vehicle_type, driver_name,
+            arrival_time, departure_time, load_time,
+            vehicles(brand)
+          ),
+          payments(amount, payment_date, payment_method)
+        `)
         .eq('id', selectedSaleId)
         .eq('is_deleted', false)
-        .single()
+        .single();
       
-      if (saleErr) throw saleErr
-
-      // 2. Fetch deliveries + vehicles + drivers
-      const { data: deliveries } = await supabase
-        .from('deliveries')
-        .select('*, vehicles(id, brand, vehicle_plate), drivers(id, full_name)')
-        .eq('sale_id', selectedSaleId)
-        .eq('is_deleted', false)
-
-      // 3. Fetch payments
-      const { data: payments } = await supabase
-        .from('payments')
-        .select('*')
-        .eq('sale_id', selectedSaleId)
-        .eq('is_deleted', false)
-
-      return {
-        ...sale,
-        deliveries: deliveries || [],
-        payments: payments || []
-      }
+      if (saleErr) throw saleErr;
+      return sale;
     },
     enabled: !!selectedSaleId
-  })
+  });
 
   // --- OTHER HOOKS ---
   const { updateTiba } = useUpdateDelivery()
@@ -372,13 +401,11 @@ export default function Transaksi() {
     }
   }
 
-  // Summary Logic - Show all history totals as per user request
-  const totalSalesVal = sales?.reduce((acc, s) => acc + calcTotalJual(s, s.deliveries?.[0]), 0) || 0
-  const totalModalVal = sales?.reduce((acc, s) => acc + safeNum(s.purchases?.total_cost), 0) || 0
-  const totalSusutVal = sales?.reduce((acc, s) => acc + calcKerugianSusut(s.deliveries?.[0], s.purchases), 0) || 0
-  const totalDeliveryVal = sales?.reduce((acc, s) => acc + safeNum(s.delivery_cost), 0) || 0
+  // Summary Logic
+  const totalSalesVal = sales?.reduce((acc, s) => acc + (Number(s.total_revenue) || 0), 0) || 0
+  const totalModalVal = sales?.reduce((acc, s) => acc + (Number(s.purchases?.total_cost) || 0), 0) || 0
   
-  const netProfit = totalSalesVal - totalModalVal - totalDeliveryVal - totalSusutVal
+  const netProfitVal = sales?.reduce((acc, s) => acc + calcNetProfit(s), 0) || 0
 
   return (
     <motion.div
@@ -414,98 +441,76 @@ export default function Transaksi() {
         </div>
         <div className="space-y-0.5 min-w-[100px] text-right">
           <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-[0.15em] leading-none mb-1">Net Margin</p>
-          <p className={`font-display text-[13px] font-black tabular-nums ${netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-            {netProfit >= 0 ? '+' : ''}{formatIDR(netProfit)}
+          <p className={`font-display text-[13px] font-black tabular-nums ${netProfitVal >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+            {netProfitVal >= 0 ? '+' : '−'}{formatIDR(Math.abs(netProfitVal))}
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="jual" className="mt-4" onValueChange={setActiveTab}>
+      <Tabs defaultValue="semua" className="mt-4" onValueChange={setActiveTab}>
         <div className="px-5">
           <TabsList className="w-full bg-[#111C24] border border-white/5 h-12 p-1 rounded-2xl">
             <TabsTrigger
-              value="jual"
+              value="semua"
               className="flex-1 rounded-xl font-black text-[10px] h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]"
             >
-              Penjualan
+              Semua
             </TabsTrigger>
             <TabsTrigger
-              value="beli"
+              value="lunas"
               className="flex-1 rounded-xl font-black text-[10px] h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]"
             >
-              Pembelian
+              Lunas
+            </TabsTrigger>
+            <TabsTrigger
+              value="belum_lunas"
+              className="flex-1 rounded-xl font-black text-[10px] h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]"
+            >
+              Belum Lunas
+            </TabsTrigger>
+            <TabsTrigger
+              value="sebagian"
+              className="flex-1 rounded-xl font-black text-[10px] h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]"
+            >
+              Sebagian
             </TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value="jual" className="px-5 mt-4 outline-none">
+        <TabsContent value={activeTab} className="px-5 mt-4 outline-none">
           <AnimatePresence mode="wait">
             {loadingSales ? (
               <LoadingList />
-            ) : !sales?.length ? (
+            ) : !sales?.filter(s => activeTab === 'semua' ? true : s.payment_status === activeTab).length ? (
               <EmptyState
                   icon={History}
-                  title="Belum ada penjualan"
-                  description="Catat penjualan pertamamu hari ini untuk melihat riwayat di sini."
+                  title="Tidak ada transaksi"
+                  description={activeTab === 'semua' ? "Catat transaksi pertamamu hari ini." : `Belum ada transaksi dengan status ${activeTab.replace('_', ' ')}.`}
               />
             ) : (
               <motion.div
-                key="sale-list"
+                key={activeTab}
                 variants={staggerContainer}
                 initial="hidden"
                 animate="visible"
                 className="space-y-3"
               >
-                {sales.map(sale => (
+                {sales
+                  .filter(s => activeTab === 'semua' ? true : s.payment_status === activeTab)
+                  .map(sale => (
                    <motion.div key={sale.id} variants={fadeUp}>
-                      <SaleCard
+                      <UnifiedTransactionCard
                         sale={sale}
                         onOpenAuditSheet={(id) => {
                           setSelectedSaleId(id)
                           setShowAuditSheet(true)
                         }}
-                        setUpdateDeliveryTarget={setUpdateDeliveryTarget}
-                        setShowUpdateDelivery={setShowUpdateDelivery}
-                        handleCompleteDelivery={handleCompleteDelivery}
                       />
                    </motion.div>
                 ))}
               </motion.div>
             )}
-          </AnimatePresence>
-        </TabsContent>
-
-        <TabsContent value="beli" className="px-5 mt-4 outline-none">
-          <AnimatePresence mode="wait">
-              {loadingPurchases ? (
-                <LoadingList />
-              ) : !purchases?.length ? (
-                <EmptyState
-                    icon={Package}
-                    title="Belum ada pembelian"
-                    description="Catat pembelian dari kandang untuk memantau stok dan biaya."
-                />
-              ) : (
-                <motion.div
-                  key="purchase-list"
-                  variants={staggerContainer}
-                  initial="hidden"
-                  animate="visible"
-                  className="space-y-3"
-                >
-                {purchases.map(purchase => (
-                   <motion.div key={purchase.id} variants={fadeUp}>
-                      <PurchaseCard
-                        purchase={purchase}
-                        onDelete={handleClickDelete}
-                        setEditTarget={setEditTarget}
-                        setShowEditPurchase={setShowEditPurchase}
-                      />
-                   </motion.div>
-                ))}
-                </motion.div>
-              )}
           </AnimatePresence>
         </TabsContent>
       </Tabs>
@@ -1032,131 +1037,218 @@ export default function Transaksi() {
   )
 }
 
-function SaleCard({ sale, onOpenAuditSheet, setUpdateDeliveryTarget, setShowUpdateDelivery, handleCompleteDelivery }) {
+function UnifiedTransactionCard({ sale, onOpenAuditSheet }) {
+  // Calculations
+  const totalRevenue = Number(sale.total_revenue || 0)
+  const totalModal = Number(sale.purchases?.total_cost || 0)
+  const deliveryCost = Number(sale.delivery_cost || 0)
+  const remainingDebt = calcRemainingAmount(sale)
+  
+  // Bug Fix: Pass full sale object (including purchases & deliveries) to calcNetProfit
+  const netProfit = calcNetProfit(sale)
+  
   const delivery = sale.deliveries?.[0] || null
-  const purchase = sale.purchases
-  const profit = calcNetProfit(sale, purchase, delivery)
-  const totalJual = calcTotalJual(sale, delivery)
-  const remaining = totalJual - safeNum(sale.paid_amount)
+  const totalWeightJual = delivery?.status === 'arrived' || delivery?.status === 'completed' 
+    ? safeNum(delivery?.arrived_weight_kg) 
+    : safeNum(sale.total_weight_kg)
+
+  const susutWeight = safeNum(delivery?.shrinkage_kg)
+  const susutLoss = susutWeight * safeNum(sale.price_per_kg)
+  
+  const isLoss = netProfit < 0
+  const isOnRoute = delivery?.status === 'on_route'
+  
+  const rpaName = sale.rpa_clients?.rpa_name || 'RPA Umum'
+  const farmName = sale.purchases?.farms?.farm_name || 'Kandang'
+  const initialRpa = rpaName.charAt(0).toUpperCase()
 
   return (
     <Card 
       onClick={() => onOpenAuditSheet(sale.id)}
-      className="bg-[#111C24] border-white/5 rounded-[22px] p-4 space-y-4 overflow-hidden relative cursor-pointer hover:bg-white/[0.04] active:scale-[0.98] transition-all"
+      className={cn(
+        "bg-[#111C24] rounded-[22px] overflow-hidden relative cursor-pointer hover:bg-white/[0.04] active:scale-[0.98] transition-all group",
+        isLoss ? "border-[#F87171]" : "border-white/5"
+      )}
     >
-      <div className="flex justify-between items-start text-left">
-        <div className="flex gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-black text-[9px] tracking-tighter uppercase px-1">
-            JUAL
+      <div className="p-5 space-y-6">
+        {/* HEADER */}
+        <div className="flex justify-between items-center text-left">
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "w-[34px] h-[34px] rounded-xl flex items-center justify-center font-black text-lg border-2",
+              isLoss ? "bg-red-500/10 border-red-500/40 text-red-500" : "bg-emerald-500/10 border-emerald-500/40 text-emerald-400"
+            )}>
+              {initialRpa}
+            </div>
+            <div>
+              <h3 className="font-display font-bold text-sm text-[#F1F5F9] leading-none uppercase tracking-tight flex items-center gap-2">
+                <span>{farmName}</span>
+                <ChevronRight size={14} className="text-[#4B6478]" />
+                <span>{rpaName}</span>
+              </h3>
+              <p className="text-xs font-medium text-[#4B6478] mt-1.5 tabular-nums">
+                {formatDate(sale.transaction_date)} {sale.due_date ? ` · Tempo: ${formatDate(sale.due_date)}` : ' · COD'}
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-display font-black text-[#F1F5F9] leading-tight uppercase tracking-tight">{sale.rpa_clients?.rpa_name || 'RPA Umum'}</h3>
-            <p className="text-[11px] font-black text-[#4B6478] uppercase mt-0.5 tracking-wider">{formatDate(sale.transaction_date)}</p>
+          <div className="flex items-center gap-3">
+            <Badge className={cn(
+              "rounded-full h-6 px-3 border-none font-black text-[10px] uppercase tracking-wider",
+              sale.payment_status === 'lunas' ? 'bg-emerald-500/10 text-emerald-400' : 
+              sale.payment_status === 'sebagian' ? 'bg-amber-500/10 text-amber-500' : 
+              'bg-red-500/10 text-red-500'
+            )}>
+              {formatPaymentStatus(sale.payment_status)?.toUpperCase() ?? '-'}
+            </Badge>
+            {(() => {
+              const badge = getDeliveryBadge(delivery)
+              return (
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  fontSize: '10px',
+                  fontWeight: 900,
+                  padding: '3px 12px',
+                  borderRadius: '99px',
+                  background: badge.bg,
+                  border: `1px solid ${badge.border}`,
+                  color: badge.color,
+                  textTransform: 'uppercase'
+                }}>
+                   {badge.icon && <span className="opacity-70">{badge.icon}</span>}
+                  {badge.label}
+                </span>
+              )
+            })()}
           </div>
         </div>
-        <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-[0.1em]">{formatRelative(sale.transaction_date)}</p>
+
+        {/* MIDDLE - 3 COLUMNS */}
+        <div className="grid grid-cols-[1fr_1fr_1.6fr] gap-4">
+          {/* Kolom 1: PEMBELIAN */}
+          <div className="space-y-2 text-left border-r border-white/8 pr-4">
+            <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Pembelian</p>
+            <p className="font-display text-[22px] font-bold text-[#F1F5F9] tabular-nums leading-none">
+              {(safeNum(sale.purchases?.total_weight_kg) / 1000).toFixed(2)} <span className="text-xs font-normal text-[#94A3B8] ml-0.5">ton</span>
+            </p>
+            <div className="space-y-1">
+              <p className="text-[11px] font-medium text-[#94A3B8]">
+                {formatEkor(sale.purchases?.quantity)} · {formatIDRShort(sale.purchases?.price_per_kg)}/kg
+              </p>
+              <p className="text-[11px] font-medium text-[#4B6478]">Modal: {formatIDR(totalModal)}</p>
+            </div>
+          </div>
+
+          {/* Kolom 2: PENJUALAN */}
+          <div className="space-y-2 text-left border-r border-white/8 pr-4">
+            <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Penjualan</p>
+            <p className="font-display text-[22px] font-bold text-[#F1F5F9] tabular-nums leading-none">
+              {(totalWeightJual / 1000).toFixed(2)} <span className="text-xs font-normal text-[#94A3B8] ml-0.5">ton</span>
+            </p>
+            <div className="space-y-1">
+              <p className="text-[11px] font-medium text-[#94A3B8]">
+                {formatEkor(sale.quantity)} · {formatIDRShort(sale.price_per_kg)}/kg
+              </p>
+              <p className="text-[11px] font-medium text-[#4B6478]">Pendapatan: {formatIDR(totalRevenue)}</p>
+            </div>
+          </div>
+
+          {/* Kolom 3: PENGIRIMAN */}
+          <div className="space-y-3 text-left">
+            <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Pengiriman</p>
+            
+            <div className="grid grid-cols-1 gap-y-3">
+              {/* Row 1: Shrinkage Info */}
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-[10px] font-bold text-[#4B6478] leading-none uppercase tracking-wider">Susut berat</p>
+                  {!isOnRoute && <span className="text-[10px] text-[#4B6478] font-medium leading-none">(sudah tercermin dalam pendapatan)</span>}
+                </div>
+                <p className={cn("text-[13px] font-black tabular-nums leading-none", isOnRoute ? "text-[#4B6478]" : "text-[#F59E0B]")}>
+                  {isOnRoute ? "—" : `${formatWeight(susutWeight)}`}
+                </p>
+              </div>
+              
+              {/* Row 2 costs */}
+              <div className="space-y-1">
+                <p className="text-[10px] font-bold text-[#4B6478] leading-none">Biaya kirim</p>
+                <p className="text-[13px] font-semibold text-[#F1F5F9] tabular-nums leading-none">
+                  {formatIDR(deliveryCost)}
+                </p>
+              </div>
+              <div />
+
+              {/* Separator */}
+              <div className="col-span-2 border-t border-white/5 my-1" />
+
+              {/* Row 3 Armada labels */}
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-[#4B6478] uppercase leading-none">Kendaraan</p>
+                <div className="space-y-0.5">
+                  <p className="text-[13px] font-semibold text-[#F1F5F9] leading-none uppercase truncate">
+                    {delivery?.vehicle_plate || '—'}
+                  </p>
+                  <p className="text-[11px] font-medium text-[#94A3B8] leading-none uppercase truncate">
+                    {delivery?.vehicles?.brand ?? (delivery?.vehicle_type ? (delivery.vehicle_type.charAt(0).toUpperCase() + delivery.vehicle_type.slice(1)) : '—')}
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] font-black text-[#4B6478] uppercase leading-none">Sopir</p>
+                <p className="text-[13px] font-semibold text-[#F1F5F9] leading-none truncate">
+                  {delivery?.driver_name || '—'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex justify-between items-center text-left">
-         <div className="space-y-1">
-           <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest leading-none">Status Transaksi</p>
-           <p className="font-display font-black text-[#F1F5F9] text-xl tabular-nums leading-none mt-1">{formatIDR(totalJual)}</p>
-            <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-tight">
-             {sale.quantity} ekor · {formatWeight(sale.total_weight_kg)} · {formatIDRShort(safeNumber(sale.price_per_kg))}/kg
-           </p>
-         </div>
-         <div className="text-right">
-           <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mb-1.5 leading-none">Profit</p>
-           <div className={`px-2 py-1 rounded-lg text-[13px] font-black leading-none tabular-nums ${profit >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-500'}`}>
-             {profit >= 0 ? '+' : ''}{formatIDR(profit)}
-           </div>
-         </div>
-      </div>
-
-      <div className="flex justify-between items-center pt-1">
-        <div className="flex gap-2 items-center">
-          <Badge className={`rounded-full h-6 px-3 border-none font-black text-[9px] uppercase tracking-wider
-            ${sale.payment_status === 'lunas' ? 'bg-emerald-500/10 text-emerald-400' : 
-              sale.payment_status === 'sebagian' ? 'bg-amber-500/10 text-amber-500' : 
-              'bg-red-500/10 text-red-500'}`}
-          >
-            {formatPaymentStatus(sale.payment_status)?.toUpperCase() ?? '-'}
-          </Badge>
-          {remaining > 0 && (
-            <p className="text-[11px] font-black text-red-500 tabular-nums">Sisa {formatIDR(remaining)}</p>
+      {/* FOOTER */}
+      <div className={cn(
+        "px-6 py-3 flex justify-between items-center",
+        isLoss ? "bg-[#3d0f0f] border-t border-[#F87171]" : "bg-[#0C1319] border-t border-white/5"
+      )}>
+        <div className="text-left">
+          {isLoss ? (
+            <div className="space-y-0.5">
+              <p className="text-[10px] font-semibold text-[#F87171] uppercase tracking-widest leading-none">RUGI</p>
+              <p className="text-[18px] font-display font-bold text-[#F87171] tabular-nums leading-none mt-1">
+                −{formatIDR(Math.abs(netProfit))}
+              </p>
+              <p className="text-xs text-[#f5a0a0] mt-1 italic leading-none font-medium">Harga jual lebih rendah dari modal</p>
+            </div>
+          ) : sale.payment_status === 'lunas' ? (
+            <div className="space-y-1">
+              <p className="text-[10px] uppercase font-bold text-[#10B981] tracking-widest leading-none">TOTAL DIBAYAR</p>
+              <p className="text-[18px] font-display font-bold text-[#10B981] leading-none mt-1 tabular-nums">
+                {formatIDR(totalRevenue)}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <p className="text-[10px] uppercase font-bold text-[#F87171] tracking-widest leading-none">SISA HUTANG</p>
+              <p className="text-[18px] font-display font-bold text-[#F87171] tabular-nums leading-none mt-1">
+                {formatIDR(remainingDebt)}
+              </p>
+            </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
-           {(() => {
-             const badge = getDeliveryBadge(sale.deliveries?.[0])
-             return (
-               <span style={{
-                 display: 'inline-flex',
-                 alignItems: 'center',
-                 gap: '5px',
-                 fontSize: '11px',
-                 fontWeight: 600,
-                 padding: '3px 10px',
-                 borderRadius: '99px',
-                 background: badge.bg,
-                 border: `1px solid ${badge.border}`,
-                 color: badge.color
-               }}>
-                 {badge.icon && (
-                   <span style={{fontSize:'12px'}}>{badge.icon}</span>
-                 )}
-                 {badge.label}
-               </span>
-             )
-           })()}
 
-           {/* QUICK ACTION BUTTONS */}
-           {sale.deliveries?.[0]?.status === 'on_route' && (
-             <button
-               onClick={(e) => {
-                 e.stopPropagation()
-                 setUpdateDeliveryTarget(sale.deliveries[0])
-                 setShowUpdateDelivery(true)
-               }}
-               style={{
-                 fontSize: '11px',
-                 fontWeight: 600,
-                 padding: '4px 12px',
-                 borderRadius: '99px',
-                 background: 'rgba(16,185,129,0.10)',
-                 border: '1px solid rgba(16,185,129,0.20)',
-                 color: '#34D399',
-                 cursor: 'pointer'
-               }}
-             >
-               Catat Tiba →
-             </button>
-           )}
-
-           {sale.deliveries?.[0]?.status === 'arrived' && (
-             <button
-               onClick={(e) => {
-                 e.stopPropagation()
-                 handleCompleteDelivery(sale.deliveries[0].id)
-               }}
-               style={{
-                 fontSize: '11px',
-                 fontWeight: 600,
-                 padding: '4px 12px',
-                 borderRadius: '99px',
-                 background: 'rgba(16,185,129,0.10)',
-                 border: '1px solid rgba(16,185,129,0.20)',
-                 color: '#34D399',
-                 cursor: 'pointer'
-               }}
-             >
-               Konfirmasi Terkirim ✓
-             </button>
-           )}
-
-           {sale.due_date && sale.payment_status !== 'lunas' && (
-             <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Tempo: {formatDate(sale.due_date)}</p>
-           )}
+        <div className="text-right">
+          <p className={cn(
+            "text-[10px] font-black uppercase tracking-widest leading-none",
+            isLoss ? "text-[#F59E0B]" : "text-[#4B6478]"
+          )}>
+            {isOnRoute ? "EST. PROFIT" : isLoss ? "NET PROFIT" : "NET PROFIT"}
+          </p>
+          <p className={cn(
+            "font-display font-bold tabular-nums leading-none mt-1.5 transition-colors text-[18px]",
+            isOnRoute ? "text-[#94A3B8]" : isLoss ? "text-[#F87171]" : "text-[#10B981]"
+          )}>
+            {isOnRoute ? "~" : isLoss ? "−" : "+"}{formatIDR(Math.abs(netProfit))}
+          </p>
         </div>
       </div>
     </Card>
@@ -1169,8 +1261,15 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
   const { data: rpaClients } = useRPA()
   
   const [isEditing, setIsEditing] = useState(false)
-  const [editData, setEditData] = useState({})
+  const [editData, setEditData] = useState({
+    rpa_id: '',
+    price_per_kg: '',
+    payment_status: 'belum_lunas',
+    due_date: '',
+    transaction_date: ''
+  })
   const [isUpdating, setIsUpdating] = useState(false)
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false)
 
   // Sync editData when data changes or entering edit mode
   React.useEffect(() => {
@@ -1195,8 +1294,7 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
         price_per_kg: Number(editData.price_per_kg),
         payment_status: editData.payment_status,
         due_date: editData.due_date,
-        transaction_date: editData.transaction_date,
-        total_revenue: Number(data.total_weight_kg || 0) * Number(editData.price_per_kg)
+        transaction_date: editData.transaction_date
       }
 
       const { error } = await supabase
@@ -1225,21 +1323,33 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
 
   const delivery = data?.deliveries?.[0]
   const purchase = data?.purchases
-  const totalJual = isEditing 
-    ? (Number(data?.total_weight_kg || 0) * Number(editData.price_per_kg || 0))
-    : calcTotalJual(data, delivery)
-  const susutLoss = calcKerugianSusut(delivery, purchase)
-  const profit = isEditing
-    ? (totalJual - safeNum(purchase?.total_cost) - safeNum(data?.delivery_cost) - susutLoss)
-    : calcNetProfit(data, purchase, delivery)
+  
+  const totalRevenue = Number(data?.total_revenue || 0)
+  const totalModal = Number(purchase?.total_cost || 0)
+  const deliveryCost = Number(data?.delivery_cost || 0)
+  
+  const susutWeight = safeNum(delivery?.shrinkage_kg)
+  const paramPricePerKg = isEditing ? Number(editData.price_per_kg || 0) : safeNum(data?.price_per_kg)
+  const susutLoss = susutWeight * paramPricePerKg
+  
+  // Use calcNetProfit for consistency
+  const profit = isEditing 
+    ? (totalRevenue - totalModal - deliveryCost) // Simplified for edit preview if needed
+    : calcNetProfit(data)
+
+  const remainingAmount = isEditing
+    ? (totalRevenue - Number(data?.paid_amount || 0))
+    : calcRemainingAmount(data)
+
   const isOverdue = data?.due_date && new Date(data.due_date) < new Date() && data?.payment_status !== 'lunas'
 
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => {
-      onOpenChange(open)
-      if (!open) setIsEditing(false)
-    }}>
-      <SheetContent side="right" className="bg-[#0C1319] border-white/10 w-full sm:max-w-[480px] p-0 flex flex-col">
+    <>
+      <Sheet open={isOpen} onOpenChange={(open) => {
+        onOpenChange(open)
+        if (!open) setIsEditing(false)
+      }}>
+        <SheetContent side="right" className="bg-[#0C1319] border-white/10 w-full sm:max-w-[480px] p-0 flex flex-col p-0">
         <SheetHeader className="p-6 border-b border-white/5 shrink-0 text-left">
           <div className="flex justify-between items-start">
             <div className="space-y-1">
@@ -1281,7 +1391,7 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
                 <div className="bg-emerald-500/[0.03] border border-emerald-500/10 rounded-2xl p-4 grid grid-cols-4 gap-2">
                   <div className="text-center space-y-1">
                     <p className="text-[8px] font-black text-[#4B6478] uppercase tracking-[0.15em]">Pendapatan</p>
-                    <p className="font-display text-sm font-black text-white tabular-nums">{formatIDR(totalJual)}</p>
+                    <p className="font-display text-sm font-black text-white tabular-nums">{formatIDR(totalRevenue)}</p>
                   </div>
                   <div className="text-center space-y-1 border-l border-white/5">
                     <p className="text-[8px] font-black text-[#4B6478] uppercase tracking-[0.15em]">Modal (HPP)</p>
@@ -1292,8 +1402,9 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
                     <p className="font-display text-sm font-black text-white tabular-nums">{formatIDR(data?.delivery_cost)}</p>
                   </div>
                   <div className="text-center space-y-1 border-l border-white/5">
-                    <p className="text-[8px] font-black text-red-400/80 uppercase tracking-[0.15em]">Susut</p>
-                    <p className="font-display text-sm font-black text-red-400 tabular-nums">{formatIDR(susutLoss)}</p>
+                    <p className="text-[8px] font-black text-amber-500 uppercase tracking-[0.15em]">Susut Berat</p>
+                    <p className="font-display text-sm font-black text-amber-500 tabular-nums">-{formatKg(susutWeight)}</p>
+                    <p className="text-[7px] font-medium text-[#4B6478] leading-tight">Reflected in revenue</p>
                   </div>
                 </div>
 
@@ -1313,7 +1424,7 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
                     <div className="space-y-2">
                        <Label className="text-[11px] font-bold text-[#4B6478] uppercase ml-1">RPA / Pembeli</Label>
                        <Select 
-                         value={editData.rpa_id} 
+                         value={editData.rpa_id || ''} 
                          onValueChange={(val) => setEditData(p => ({ ...p, rpa_id: val }))}
                        >
                          <SelectTrigger className="h-12 bg-[#111C24] border-white/5 rounded-xl font-bold">
@@ -1340,7 +1451,7 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
                     <div className="space-y-2">
                        <Label className="text-[11px] font-bold text-[#4B6478] uppercase ml-1">Status Bayar</Label>
                        <Select 
-                         value={editData.payment_status} 
+                         value={editData.payment_status || 'belum_lunas'} 
                          onValueChange={(val) => setEditData(p => ({ ...p, payment_status: val }))}
                        >
                          <SelectTrigger className="h-12 bg-[#111C24] border-white/5 rounded-xl font-bold uppercase">
@@ -1406,7 +1517,7 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
                     <div className="space-y-3 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
                       <DetailRow label="Pembeli" value={data?.rpa_clients?.rpa_name} icon={<User size={14} />} />
                       <DetailRow label="Harga Jual" value={`${formatIDR(data?.price_per_kg)}/kg`} icon={<TrendingUp size={14} />} />
-                      <DetailRow label="Total Jual" value={formatIDR(totalJual)} highlight />
+                      <DetailRow label="Total Jual" value={formatIDR(totalRevenue)} highlight />
                       <DetailRow label="Tanggal Jual" value={formatDate(data?.transaction_date)} icon={<Calendar size={14} />} />
                     </div>
                   </div>
@@ -1426,7 +1537,11 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
                         </Badge>
                       </div>
                       <DetailRow label="Sudah Dibayar" value={formatIDR(data?.paid_amount)} icon={<CheckCircle2 size={14} className="text-emerald-500" />} />
-                      <DetailRow label="Sisa Tagihan" value={formatIDR(data?.remaining_amount)} color={data?.remaining_amount > 0 ? 'text-red-400' : 'text-[#4B6478]'} />
+                      <DetailRow 
+                        label="Sisa Tagihan" 
+                        value={remainingAmount > 0 ? formatIDR(remainingAmount) : "Lunas"} 
+                        color={remainingAmount > 0 ? 'text-red-400' : 'text-emerald-400'} 
+                      />
                       <DetailRow label="Jatuh Tempo" value={data?.due_date ? formatDate(data.due_date) : '-'} color={isOverdue ? 'text-amber-500' : 'text-[#4B6478]'} />
                       
                       {data?.payments?.length > 0 && (
@@ -1483,8 +1598,13 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
                         </div>
                         <DetailRow 
                           label="Susut" 
-                          value={formatWeight(data.deliveries[0].shrinkage_kg)} 
-                          color={data.deliveries[0].shrinkage_kg > 0 ? 'text-red-400' : 'text-emerald-400'} 
+                          value={data.deliveries[0].shrinkage_kg > 0 ? formatWeight(data.deliveries[0].shrinkage_kg) : "—"} 
+                          color={data.deliveries[0].shrinkage_kg > 0 ? 'text-red-400' : 'text-[#4B6478]'} 
+                        />
+                        <DetailRow 
+                          label="Susut Berat" 
+                          value={data.deliveries[0].shrinkage_kg > 0 ? formatKg(data.deliveries[0].shrinkage_kg) : "—"} 
+                          color={safeNum(data.deliveries[0].shrinkage_kg) > 0 ? 'text-amber-500' : 'text-[#4B6478]'} 
                         />
                         <DetailRow label="Biaya Kirim" value={formatIDR(data.delivery_cost)} icon={<ArrowRightLeft size={14} />} />
                         <DetailRow label="Tanggal Tiba" value={data.deliveries[0].arrived_at ? formatDate(data.deliveries[0].arrived_at) : (data.deliveries[0].arrival_time ? formatDate(data.deliveries[0].arrival_time) : '-')} icon={<Clock size={14} />} />
@@ -1522,7 +1642,10 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
           ) : (
             <>
               {data?.payment_status !== 'lunas' && !isLoading && (
-                <Button className="w-full h-12 bg-[#10B981] hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/10">
+                <Button 
+                  onClick={() => setIsPaymentOpen(true)}
+                  className="w-full h-12 bg-[#10B981] hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/10"
+                >
                   Catat Bayar
                 </Button>
               )}
@@ -1543,8 +1666,17 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
             </>
           )}
         </div>
-      </SheetContent>
-    </Sheet>
+        </SheetContent>
+      </Sheet>
+
+      {data && (
+        <FormPaymentSheet 
+          isOpen={isPaymentOpen} 
+          onClose={() => setIsPaymentOpen(false)} 
+          sale={data} 
+        />
+      )}
+    </>
   )
 }
 
@@ -1566,130 +1698,7 @@ function DetailRow({ label, value, icon, highlight, color = 'text-[#4B6478]' }) 
   )
 }
 
-function PurchaseCard({ purchase, onDelete, setEditTarget, setShowEditPurchase }) {
-  return (
-    <Card className="bg-[#111C24] border-white/5 rounded-[22px] p-4 space-y-4 text-left active:scale-[0.98] transition-transform">
-      {/* Header row: badge + farm name + date + trash */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 font-black text-[9px] tracking-tighter uppercase px-1 flex-shrink-0">
-          BELI
-        </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-display font-black text-[#F1F5F9] leading-tight uppercase tracking-tight truncate">{purchase.farms?.farm_name || 'Kandang'}</h3>
-          <p className="text-[11px] font-black text-[#4B6478] uppercase mt-0.5 tracking-wider">{formatDate(purchase.transaction_date)}</p>
-        </div>
-        <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-[0.1em] flex-shrink-0">{formatRelative(purchase.transaction_date)}</p>
-        
-        {/* ACTION BUTTONS */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px'
-        }}>
-          {/* TOMBOL EDIT */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setEditTarget(purchase)
-              setShowEditPurchase(true)
-            }}
-            style={{
-              width: 28, height: 28,
-              borderRadius: '6px',
-              background: 'transparent',
-              border: '1px solid transparent',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              color: 'hsl(var(--muted-foreground))',
-              transition: 'all 0.15s',
-              flexShrink: 0
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(16,185,129,0.08)'
-              e.currentTarget.style.borderColor = 'rgba(16,185,129,0.20)'
-              e.currentTarget.style.color = '#34D399'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'transparent'
-              e.currentTarget.style.borderColor = 'transparent'
-              e.currentTarget.style.color = 'hsl(var(--muted-foreground))'
-            }}
-          >
-            <Pencil size={13} />
-          </button>
 
-          {/* Trash button */}
-          <button
-            onClick={(e) => onDelete(e, purchase)}
-            style={{
-              width: 28, height: 28, borderRadius: 6,
-              background: 'transparent', border: '1px solid transparent',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', color: 'hsl(var(--muted-foreground))',
-              transition: 'all 0.15s', flexShrink: 0
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(248,113,113,0.08)'
-              e.currentTarget.style.borderColor = 'rgba(248,113,113,0.20)'
-              e.currentTarget.style.color = '#F87171'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'transparent'
-              e.currentTarget.style.borderColor = 'transparent'
-              e.currentTarget.style.color = 'hsl(var(--muted-foreground))'
-            }}
-          >
-            <Trash2 size={13} />
-          </button>
-        </div>
-      </div>
-
-      <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 flex justify-between items-end">
-         <div className="space-y-1">
-           <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest leading-none">Nilai Pembelian</p>
-           <p className="font-display font-black text-[#F1F5F9] text-xl tabular-nums leading-none mt-1">{formatIDR(purchase.total_modal)}</p>
-            <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-tight">
-             {purchase.quantity} ekor · {formatWeight(purchase.total_weight_kg)} · {formatIDRShort(safeNumber(purchase.price_per_kg))}/kg
-           </p>
-         </div>
-         <div className="text-right pb-1">
-           {(() => {
-             const biayaOps = safeNumber(purchase.transport_cost) + safeNumber(purchase.other_cost)
-             return (
-               <div style={{
-                 display: 'flex', flexDirection: 'column',
-                 alignItems: 'flex-end', gap: 2
-               }}>
-                 <span style={{
-                   fontSize: '10px', fontWeight: 600,
-                   color: '#4B6478', textTransform: 'uppercase',
-                   letterSpacing: '0.8px'
-                 }}>
-                   Biaya Perjalanan
-                 </span>
-                 {biayaOps > 0 ? (
-                   <span style={{
-                     fontSize: '13px', fontWeight: 700,
-                     color: '#FBBF24',
-                     fontVariantNumeric: 'tabular-nums'
-                   }}>
-                     {formatIDR(biayaOps)}
-                   </span>
-                 ) : (
-                   <span style={{ fontSize: '13px', color: '#4B6478' }}>
-                     —
-                   </span>
-                 )}
-               </div>
-             )
-           })()}
-         </div>
-      </div>
-    </Card>
-  )
-}
 
 function LoadingList() {
   return (
@@ -1703,3 +1712,121 @@ function LoadingList() {
 
 // (Local formatIDRShort removed, using @/lib/format)
 
+function FormPaymentSheet({ isOpen, onClose, sale }) {
+  const { tenant } = useAuth()
+  const queryClient = useQueryClient()
+  const [amount, setAmount] = useState('')
+  const [method, setMethod] = useState('transfer')
+  const [isLoading, setIsLoading] = useState(false)
+
+  const totalRevenue = Number(sale?.total_revenue || 0)
+  const remaining = totalRevenue - safeNum(sale?.paid_amount)
+  
+  React.useEffect(() => {
+    if (isOpen) setAmount(remaining)
+  }, [isOpen, remaining])
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!amount || Number(amount) <= 0) {
+      return toast.error('Jumlah bayar tidak valid')
+    }
+    
+    setIsLoading(true)
+    try {
+      const payAmount = Number(amount)
+      const newPaid = safeNum(sale.paid_amount) + payAmount
+      const total = totalRevenue
+      
+      let status = 'belum_lunas'
+      if (newPaid >= total) status = 'lunas'
+      else if (newPaid > 0) status = 'sebagian'
+
+      const { error: err1 } = await supabase.from('payments').insert({
+        tenant_id: tenant.id,
+        sale_id: sale.id,
+        amount: payAmount,
+        payment_method: method,
+        payment_date: new Date().toISOString().split('T')[0]
+      })
+      if (err1) throw err1
+
+      const { error: err2 } = await supabase.from('sales').update({
+        paid_amount: newPaid,
+        payment_status: status
+      }).eq('id', sale.id)
+      if (err2) throw err2
+
+      toast.success('Pembayaran berhasil dicatat')
+      queryClient.invalidateQueries({ queryKey: ['sales', tenant.id] })
+      queryClient.invalidateQueries({ queryKey: ['broker-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['cashflow'] })
+      onClose()
+    } catch (err) {
+      toast.error('Gagal mencatat pembayaran')
+      console.error(err)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  return (
+    <Sheet open={isOpen} onOpenChange={onClose}>
+      <SheetContent side="right" className="bg-[#0C1319] border-l border-white/8 w-full sm:max-w-[480px] p-8 overflow-y-auto z-[100]">
+        <SheetHeader className="mb-8">
+          <SheetTitle className="font-display text-2xl font-black text-white uppercase tracking-tight text-left">
+            CATAT PEMBAYARAN
+          </SheetTitle>
+          <SheetDescription className="sr-only">Form Catat Pembayaran</SheetDescription>
+        </SheetHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-6 flex flex-col h-full">
+          <div className="flex-1">
+            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl mb-6 text-left">
+              <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mb-1">Total Tagihan</p>
+              <p className="font-display text-2xl font-black text-white tabular-nums">{formatIDR(totalRevenue)}</p>
+              <div className="flex justify-between mt-3 text-xs">
+                <span className="text-[#4B6478] font-bold">Sisa Tagihan</span>
+                <span className="font-black text-red-400 tabular-nums">{formatIDR(remaining)}</span>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2 text-left">
+                <Label className="text-[11px] font-bold text-[#4B6478] uppercase ml-1">Jumlah Bayar *</Label>
+                <InputRupiah 
+                  value={amount}
+                  onChange={setAmount}
+                />
+              </div>
+
+              <div className="space-y-2 text-left">
+                <Label className="text-[11px] font-bold text-[#4B6478] uppercase ml-1">Metode Bayar *</Label>
+                <Select value={method} onValueChange={setMethod}>
+                  <SelectTrigger className="h-12 bg-[#111C24] border-white/5 rounded-xl font-bold uppercase">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0C1319] border-white/10 uppercase z-[110]">
+                    <SelectItem value="transfer" className="font-bold cursor-pointer">Transfer Bank</SelectItem>
+                    <SelectItem value="cash" className="font-bold cursor-pointer">Tunai (Cash)</SelectItem>
+                    <SelectItem value="giro" className="font-bold cursor-pointer">Giro / Cek</SelectItem>
+                    <SelectItem value="qris" className="font-bold cursor-pointer">QRIS</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-6 mt-auto">
+            <Button 
+              disabled={isLoading}
+              className="w-full h-14 bg-[#10B981] hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg"
+            >
+              {isLoading ? <Loader2 size={16} className="animate-spin" /> : 'KONFIRMASI PEMBAYARAN'}
+            </Button>
+          </div>
+        </form>
+      </SheetContent>
+    </Sheet>
+  )
+}

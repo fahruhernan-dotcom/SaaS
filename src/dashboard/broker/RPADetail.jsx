@@ -15,7 +15,7 @@ import { useSales } from '@/lib/hooks/useSales'
 import { 
   formatIDR, formatDate, formatRelative, formatWeight, 
   formatBuyerType, formatPaymentTerms, safeNumber, safePercent, 
-  formatIDRShort, safeNum, calcTotalJual 
+  formatIDRShort, safeNum, calcTotalJual, calcRemainingAmount
 } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -33,7 +33,6 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import SlideModal from '@/dashboard/components/SlideModal'
 import EmptyState from '@/components/EmptyState'
 import {
   Sheet,
@@ -498,15 +497,9 @@ export default function RPADetail() {
 
   if (!rpa && !loadingSales && !loadingRpa) return <EmptyState icon={AlertCircle} title="RPA Tidak Ditemukan" description="Data RPA yang Anda cari mungkin telah dihapus." action={<Button onClick={() => navigate('/broker/rpa')}>Kembali ke List</Button>} />
 
-  const unpaidSales = useMemo(() => rpaSales.filter(s => {
-    const totalJual = calcTotalJual(s, s.deliveries?.[0])
-    return totalJual - safeNum(s.paid_amount) > 0
-  }), [rpaSales])
+  const unpaidSales = useMemo(() => rpaSales.filter(s => calcRemainingAmount(s) > 0), [rpaSales])
   
-  const totalOutstanding = useMemo(() => unpaidSales.reduce((acc, s) => {
-    const totalJual = calcTotalJual(s, s.deliveries?.[0])
-    return acc + (totalJual - safeNum(s.paid_amount))
-  }, 0), [unpaidSales])
+  const totalOutstanding = useMemo(() => unpaidSales.reduce((acc, s) => acc + calcRemainingAmount(s), 0), [unpaidSales])
 
   const activeSalesCount = unpaidSales.length
 
@@ -529,7 +522,7 @@ export default function RPADetail() {
             await supabase.from('payments').insert({
                 tenant_id: tenant.id,
                 sale_id: s.id,
-                amount: calcTotalJual(s, s.deliveries?.[0]) - safeNum(s.paid_amount),
+                amount: calcRemainingAmount(s),
                 payment_method: 'cash',
                 notes: 'Pelunasan massal'
             })
@@ -673,18 +666,30 @@ export default function RPADetail() {
                 <SaleList sales={rpaSales} canPayFunc={canPay} onPay={(s) => { setSelectedSale(s); setOpenModal('bayar'); }} />
             </TabsContent>
             <TabsContent value="unpaid" className="space-y-3 mt-0">
-                <SaleList sales={rpaSales.filter(s => s.payment_status !== 'lunas')} canPayFunc={canPay} onPay={(s) => { setSelectedSale(s); setOpenModal('bayar'); }} />
+                <SaleList sales={rpaSales.filter(s => calcRemainingAmount(s) > 0)} canPayFunc={canPay} onPay={(s) => { setSelectedSale(s); setOpenModal('bayar'); }} />
             </TabsContent>
             <TabsContent value="paid" className="space-y-3 mt-0">
-                <SaleList sales={rpaSales.filter(s => s.payment_status === 'lunas')} canPayFunc={canPay} />
+                <SaleList sales={rpaSales.filter(s => calcRemainingAmount(s) <= 0)} canPayFunc={canPay} />
             </TabsContent>
         </Tabs>
       </div>
 
-      {/* Modals */}
-      <SlideModal title="Catat Pembayaran" isOpen={openModal === 'bayar'} onClose={() => setOpenModal(null)}>
-        {selectedSale && <FormPaymentModal sale={selectedSale} onClose={() => setOpenModal(null)} />}
-      </SlideModal>
+      {/* Modal Catat Pembayaran */}
+      <Sheet open={openModal === 'bayar'} onOpenChange={(open) => !open && setOpenModal(null)}>
+        <SheetContent 
+          side="right" 
+          className="bg-[#0C1319] border-l border-white/8 w-full sm:max-w-[480px] p-8 overflow-y-auto"
+        >
+          <SheetHeader className="mb-8 text-left">
+            <SheetTitle className="font-display text-2xl font-black text-white uppercase tracking-tight text-left">
+              CATAT PEMBAYARAN
+            </SheetTitle>
+            <SheetDescription className="sr-only">Form Catat Pembayaran RPA</SheetDescription>
+          </SheetHeader>
+          
+          {selectedSale && <FormPaymentModal sale={selectedSale} onClose={() => setOpenModal(null)} />}
+        </SheetContent>
+      </Sheet>
 
       {/* Edit RPA Sheet */}
       <Sheet open={showEdit} onOpenChange={setShowEdit}>

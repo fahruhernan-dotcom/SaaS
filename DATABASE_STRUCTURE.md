@@ -1,6 +1,6 @@
 # TernakOS — Database Structure
 > Generated from Supabase schema. Gunakan sebagai referensi Antigravity.
-> Last updated: 2026-03-20
+> Last updated: 2026-03-20 (added trigger: auto_resolve_loss_reports)
 
 ---
 
@@ -747,6 +747,61 @@ profiles.role:           'owner' | 'staff' | 'superadmin'
 profiles.user_type:      'broker' | 'peternak' | 'rpa' | 'superadmin'
 payments.payment_method: 'transfer' | 'cash' | 'giro' | 'qris'
 ```
+
+---
+
+## ⚡ DATABASE TRIGGERS & FUNCTIONS
+
+> Jangan dibuat ulang — sudah ada di Supabase. Antigravity tidak perlu menyentuh ini.
+
+---
+
+### `trigger_auto_resolve_loss_reports`
+**Tabel**: `sales`
+**Event**: `AFTER UPDATE OF payment_status`
+**Function**: `auto_resolve_loss_reports()`
+
+**Logic**:
+- Ketika `sales.payment_status` berubah → `'lunas'`:
+  → `UPDATE loss_reports SET resolved=true, resolved_at=now() WHERE sale_id=NEW.id`
+- Ketika `sales.payment_status` berubah dari `'lunas'` ke status lain:
+  → `UPDATE loss_reports SET resolved=false, resolved_at=null WHERE sale_id=NEW.id`
+
+**Implikasi untuk frontend**:
+- Jangan manual set `resolved=true` di loss_reports dari frontend
+- Cukup update `sales.payment_status = 'lunas'` → trigger otomatis handle sisanya
+- Invalidate query `['loss-reports']` setelah update payment_status
+
+---
+
+---
+
+## 💰 STANDARD FORMULA
+> Gunakan formula ini untuk perhitungan di seluruh aplikasi broker.
+
+```js
+export const calcNetProfit = (sale) => {
+  const revenue = Number(sale?.total_revenue) || 0
+  const totalCost = Number(sale?.purchases?.total_cost) || 0
+  const transportCost = Number(sale?.purchases?.transport_cost) || 0
+  const otherCost = Number(sale?.purchases?.other_cost) || 0
+  const deliveryCost = Number(sale?.delivery_cost) || 0
+  return revenue - totalCost - transportCost - otherCost - deliveryCost
+  // CATATAN: shrinkage TIDAK dikurangi lagi karena total_revenue
+  // sudah pakai bobot tiba (susut sudah tercermin otomatis)
+}
+```
+
+### ✅ Target Verifikasi (Dashboard Broker)
+Gunakan data `RPA UD Jaya` dan `RPA Jaya Abadi` sebagai benchmark:
+
+- **RPA UD Jaya**:
+  - `total_revenue`: Rp 245.247.405
+  - `net_profit`: **+Rp 22.264.655**
+- **RPA Jaya Abadi**:
+  - `total_revenue`: Rp 41.365.000
+  - `net_profit`: **+Rp 5.037.173**
+- **Total Margin (Header Dashboard)**: **Rp 27.301.828**
 
 ---
 
