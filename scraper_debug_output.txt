@@ -1,0 +1,89 @@
+﻿python : 2026-03-19 
+21:19:31 [INFO] \u2550\
+u2550\u2550\u2550\u2550
+\u2550\u2550\u2550\u255
+0\u2550\u2550\u2550\u25
+50\u2550\u2550\u2550\u2
+550\u2550\u2550\u2550\u
+2550\u2550\u2550\u2550\
+u2550\u2550\u2550\u2550
+\u2550\u2550\u2550\u255
+0\u2550\u2550\u2550\u25
+50\u2550\u2550\u2550\u2
+550\u2550\u2550\u2550\u
+2550\u2550\u2550\u2550\
+u2550\u2550\u2550\u2550
+\u2550\u2550\u2550\u255
+0
+At line:1 char:13
++ chcp 65001; python sc
+ripts/ternakos_harga_sc
+raper.py --dry-run 
+2>&1 | ...
++             ~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (2026-03-19 21   
+ :1...550\u2550\u25    
+50:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+2026-03-19 21:19:31 
+[INFO] TernakOS Harga 
+Scraper ù START
+2026-03-19 21:19:31 
+[INFO] Fetching: https:
+//chickin.id/blog/updat
+e/harga-ayam/
+2026-03-19 21:19:32 
+[INFO]   ? Found row: 
+Jawa TengahDIY | < 2,0 
+| 26000
+2026-03-19 21:19:32 
+[INFO]     => Match 
+added! (Current avg: 
+26,000)
+2026-03-19 21:19:32 
+[INFO]   ? Found row: 
+Jawa TengahDIY | > 2,0 
+| 25000
+2026-03-19 21:19:32 
+[INFO] \u2713 
+Rata-rata ditemukan: 
+Rp 26,000 (dari 1 
+baris)
+2026-03-19 21:19:32 
+[INFO] DRY RUN ù Hasil 
+Scraping:
+2026-03-19 21:19:32 
+[INFO] {
+  "farm_gate_price": 
+26000,
+  "buyer_price": 28500,
+  "region": "Jawa 
+Tengah",
+  "source_url": "https:
+//chickin.id/blog/updat
+e/harga-ayam/"
+}
+2026-03-19 21:19:32 
+[INFO] \u2550\u2550\u25
+50\u2550\u2550\u2550\u2
+550\u2550\u2550\u2550\u
+2550\u2550\u2550\u2550\
+u2550\u2550\u2550\u2550
+\u2550\u2550\u2550\u255
+0\u2550\u2550\u2550\u25
+50\u2550\u2550\u2550\u2
+550\u2550\u2550\u2550\u
+2550\u2550\u2550\u2550\
+u2550\u2550\u2550\u2550
+\u2550\u2550\u2550\u255
+0\u2550\u2550\u2550\u25
+50\u2550\u2550\u2550\u2
+550\u2550\u2550

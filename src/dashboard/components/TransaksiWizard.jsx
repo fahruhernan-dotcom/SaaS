@@ -230,23 +230,36 @@ export default function TransaksiWizard({ isOpen, onClose }) {
 
       // 3. Insert delivery if enabled
       if (step3Data?.enabled) {
-        await supabase.from('deliveries').insert({
+        // DEBUG: Ensure everything is captured correctly
+        console.log('--- WIZARD SUBMIT DEBUG ---')
+        console.log('Mode:', mode)
+        console.log('Step 3 Data (Raw):', step3Data)
+        
+        const deliveryPayload = {
           tenant_id: tenant.id,
           sale_id: saleId,
           vehicle_id: step3Data.vehicle_id || null,
           driver_id: step3Data.driver_id || null,
-          vehicle_type: step3Data.vehicle_type,
-          vehicle_plate: step3Data.vehicle_plate,
-          driver_name: step3Data.driver_name,
+          vehicle_type: step3Data.vehicle_type || '',
+          vehicle_plate: step3Data.vehicle_plate || '',
+          driver_name: step3Data.driver_name || '',
           driver_phone: step3Data.driver_phone || null,
-          initial_count: step3Data.initial_count || step1Data?.quantity || step2Data?.quantity,
-          initial_weight_kg: step3Data.initial_weight_kg || step1Data?.total_weight_kg || step2Data?.total_weight_kg,
+          initial_count: Number(step3Data.initial_count) || Number(step1Data?.quantity) || Number(step2Data?.quantity) || 0,
+          initial_weight_kg: Number(step3Data.initial_weight_kg) || Number(step1Data?.total_weight_kg) || Number(step2Data?.total_weight_kg) || 0,
           load_time: step3Data.load_time || null,
           departure_time: step3Data.departure_time || null,
           delivery_cost: finalDeliveryCost,
           status: 'on_route',
           notes: step3Data.notes || null
-        })
+        }
+
+        console.log('Inserting Delivery Payload:', deliveryPayload)
+
+        const { error: deliveryError } = await supabase.from('deliveries').insert(deliveryPayload)
+        if (deliveryError) {
+           console.error('Delivery Insert Error:', deliveryError)
+           throw deliveryError
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: ['broker-stats'] })

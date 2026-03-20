@@ -12,7 +12,7 @@ import {
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
-import { formatIDR, formatDate } from '@/lib/format'
+import { formatIDR, formatDate, safeNum } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -54,8 +54,15 @@ export default function HargaPasar() {
         .limit(50)
       if (error) throw error
       
+      // Clean data: map scraper data to avg_buy_price/avg_sell_price if null, and safe cast to numbers
+      const cleanedData = (data || []).map(row => ({
+        ...row,
+        avg_buy_price: safeNum(row.avg_buy_price) || safeNum(row.farm_gate_price),
+        avg_sell_price: safeNum(row.avg_sell_price) || safeNum(row.buyer_price)
+      }))
+
       // Filter out buggy records where Jual < Beli (suspicious data)
-      return (data || []).filter(x => x.avg_sell_price >= x.avg_buy_price)
+      return cleanedData.filter(x => x.avg_sell_price >= x.avg_buy_price)
     }
   })
 
@@ -376,13 +383,13 @@ export default function HargaPasar() {
                                         isToday && "bg-emerald-500/[0.04]"
                                     )}>
                                         <td className="py-3 px-4 text-[11px] font-bold text-slate-300">{formatDate(p.price_date, 'dd/MM/yy')}</td>
-                                        <td className="py-3 px-4 text-right text-[11px] font-bold text-[#94A3B8] tabular-nums">{p.avg_buy_price.toLocaleString('id-ID')}</td>
-                                        <td className="py-3 px-4 text-right text-[11px] font-black text-white tabular-nums">{p.avg_sell_price.toLocaleString('id-ID')}</td>
+                                        <td className="py-3 px-4 text-right text-[11px] font-bold text-[#94A3B8] tabular-nums">{formatIDR(safeNum(p.avg_buy_price)).replace('Rp ', '')}</td>
+                                        <td className="py-3 px-4 text-right text-[11px] font-black text-white tabular-nums">{formatIDR(safeNum(p.avg_sell_price)).replace('Rp ', '')}</td>
                                         <td className={cn(
                                             "py-3 px-4 text-right text-[11px] font-bold tabular-nums",
                                             m > 2000 ? "text-emerald-400" : m >= 1000 ? "text-amber-500" : "text-red-400"
                                         )}>
-                                            {m.toLocaleString('id-ID')}
+                                            {formatIDR(safeNum(m)).replace('Rp ', '')}
                                         </td>
                                         <td className="py-3 px-4 text-right text-[10px] font-black text-[#4B6478]">
                                             {isToday ? (liveData?.transaction_count ?? p.transaction_count) : p.transaction_count}
@@ -410,7 +417,7 @@ function ChangeIndicator({ diff }) {
             "text-[10px] font-black leading-none mt-1 flex items-center gap-0.5",
             diff > 0 ? "text-[#34D399]" : "text-[#F87171]"
         )}>
-            {diff > 0 ? '▲' : '▼'}{Math.abs(diff).toLocaleString('id-ID')}
+            {diff > 0 ? '▲' : '▼'}{safeNum(Math.abs(diff)).toLocaleString('id-ID')}
         </span>
     )
 }
@@ -434,15 +441,15 @@ function CustomTooltip({ active, payload }) {
                 <div className="space-y-1">
                     <div className="flex justify-between items-center gap-4">
                         <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Beli</span>
-                        <span className="text-[11px] font-bold text-[#F1F5F9] tabular-nums">{payload[0].value.toLocaleString('id-ID')}</span>
+                        <span className="text-[11px] font-bold text-[#F1F5F9] tabular-nums">{safeNum(payload[0].value).toLocaleString('id-ID')}</span>
                     </div>
                     <div className="flex justify-between items-center gap-4">
                         <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Jual</span>
-                        <span className="text-[11px] font-bold text-white tabular-nums">{payload[1].value.toLocaleString('id-ID')}</span>
+                        <span className="text-[11px] font-bold text-white tabular-nums">{safeNum(payload[1].value).toLocaleString('id-ID')}</span>
                     </div>
                     <div className="flex justify-between items-center gap-4 pt-1.5 mt-1.5 border-t border-white/5">
                         <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">Margin</span>
-                        <span className="text-[11px] font-black text-amber-500 tabular-nums">{margin.toLocaleString('id-ID')}</span>
+                        <span className="text-[11px] font-black text-amber-500 tabular-nums">{safeNum(margin).toLocaleString('id-ID')}</span>
                     </div>
                 </div>
             </div>

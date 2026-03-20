@@ -1,6 +1,6 @@
 # TernakOS — Developer Context
 
-> Last updated: 2026-03-16 | Use this as reference for all future implementations.
+> Last updated: 2026-03-20 | Use this as reference for all future implementations.
 
 ---
 
@@ -8,17 +8,17 @@
 
 | Category | Technology | Version |
 |----------|-----------|---------|
-| Framework | React + Vite | React 19, Vite 8 |
-| Styling | Tailwind CSS + Shadcn UI | Tailwind v3 (NOT v4) |
-| Auth & DB | Supabase (PostgreSQL) | supabase-js v2 |
-| State | React Query | @tanstack/react-query v5 |
-| Forms | React Hook Form + Zod | RHF v7, Zod v4 |
-| Routing | React Router | react-router-dom v7 |
-| Charts | Recharts | v2 |
-| Animations | Framer Motion | v12 |
-| Date | date-fns + react-day-picker | date-fns v4, rdp v9 |
-| Notifications | Sonner | v2 |
-| 3D/Canvas | @react-three/fiber + drei | For landing page AuroraBackground |
+| Framework | React + Vite | React 19.2, Vite 8.0 |
+| Styling | Tailwind CSS + Shadcn UI | Tailwind v3.4 (NOT v4) |
+| Auth & DB | Supabase (PostgreSQL) | @supabase/supabase-js v2.99 |
+| State | React Query | @tanstack/react-query v5.90 |
+| Forms | React Hook Form + Zod | RHF v7.71, Zod v4.3 |
+| Routing | React Router | react-router-dom v7.13 |
+| Charts | Recharts | v2.15 |
+| Animations | Framer Motion | v12.36 |
+| Date | date-fns + react-day-picker | date-fns v4.1, rdp v9.14 |
+| Notifications | Sonner | v2.0 |
+| 3D/Canvas | @react-three/fiber + drei | fiber v8.17, drei v10.7 |
 | Icons | Lucide React | v0.577 |
 | UI Primitives | Radix UI | Multiple packages (dialog, dropdown, popover, tabs, etc.) |
 
@@ -98,13 +98,16 @@
 
 ## 4. Database Schema (Schema v2)
 
+> [!IMPORTANT]
+> **Primary Source of Truth**: Selalu rujuk ke [DATABASE_STRUCTURE.md](file:///d:/Dokumen/02_Kerja_Profesional/Ternak%20OS/DATABASE_STRUCTURE.md) untuk struktur tabel, enum, dan dependency map yang paling update.
+
 > **Rule**: Use `.select()` only columns that exist. **NEVER insert GENERATED columns.**
 
 ### `profiles`
-- `auth_user_id`, `full_name`, `tenant_id`
-- `user_type` (`'broker'` | `'peternak'` | `'rpa'`)
-- `onboarded` (boolean) — `false` → redirect to `/onboarding`
-- `business_model_selected` (boolean, default `false`) — `false` → show `BusinessModelOverlay`
+- `id`, `tenant_id`, `auth_user_id`, `full_name`, `role` (`'owner'` | `'staff'` | `'superadmin'`)
+- `user_type` (`'broker'` | `'peternak'` | `'rpa'` | `'superadmin'`)
+- `onboarded` (boolean), `business_model_selected` (boolean)
+- `is_active` (boolean) — ⚠️ Note: Project is moving to `is_deleted` for soft delete.
 - Queried via: `supabase.from('profiles').select('*, tenants(*)')` in `useAuth`
 
 ### `tenants`
@@ -196,8 +199,20 @@
 - `is_deleted`
 
 ### `market_prices`
+- `id`, `price_date` (date), `chicken_type`, `region`
+- `farm_gate_price`, `avg_buy_price`, `avg_sell_price`, `buyer_price`, `broker_margin` (generated)
+- `transaction_count`, `source` (`'transaction'` | `'manual'` | `'import'`)
+- Unique constraint on `(price_date, chicken_type, region)`
 - Queried by `DesktopTopBar` and `HargaPasar` page
-- Columns include: `farm_gate_price`, `buyer_price`, `price_date`
+
+### `team_invitations`
+- `id`, `tenant_id`, `invited_by`, `email`, `role`, `status` (`'pending'` | `'accepted'` | `'expired'`)
+- `token`, `expires_at`, `created_at`
+- Used in `Tim.jsx` for member management.
+
+### `payments`
+- `id`, `tenant_id`, `sale_id`, `amount`, `payment_date`, `payment_method`, `reference_no`
+- Tracked in `RecycleBinSection` for permanent deletion.
 
 ---
 
@@ -575,7 +590,7 @@ Formatter functions: `formatBuyerType(val)`, `formatPaymentTerms(val)`, `formatP
 | `['forecast']` | `useForecast()` | Supply/demand gap |
 | `['market-price-topbar']` | DesktopTopBar inline | Latest market price |
 | `['broker-stats']` | Used in Beranda | Broker KPI stats |
-| `['rpa-name', id]` | DesktopTopBar inline | RPA name for breadcrumb |
+> Last updated: 2026-03-20
 
 After mutations, invalidate relevant keys. The wizard invalidates: `broker-stats`, `purchases`, `sales`, `deliveries`, `rpa-clients`.
 
@@ -620,8 +635,9 @@ Located: `src/lib/hooks/useUpdateDelivery.js`
 1. Fetch current delivery for `initial_count`, `initial_weight_kg`
 2. Calculate `mortality = initial_count - arrivedCount`, `shrinkage = initial_weight_kg - arrivedWeight`
 3. Update delivery: set `arrived_count`, `arrived_weight_kg`, `mortality_count`, `arrival_time`, `status: 'completed'`
-4. If mortality > 0: auto-create `loss_reports` entry with `loss_type: 'mortality'`, estimated financial loss (mortality × 1.85kg × price_per_kg)
-5. Invalidate: `deliveries`, `sales`, `broker-stats`, `loss-reports`
+4. **UI**: `UpdateArrivalSheet` in `Pengiriman.jsx` uses a **7-row layout** with **dual-input synchronization** (changing Ekor Tiba updates Ekor Mati and vice versa based on initial count).
+5. If mortality > 0: auto-create `loss_reports` entry with `loss_type: 'mortality'`, estimated financial loss.
+6. Invalidate: `deliveries`, `sales`, `broker-stats`, `loss-reports`
 
 ---
 
@@ -712,13 +728,13 @@ Pre-built Framer Motion variants:
 
 1. `Navbar` — sticky header with login/register CTAs
 2. `Hero` — headline, subtitle, CTA buttons, animated background
-3. `StatsBar` — key statistics
-4. `PainPoints` — problem showcase
-5. `Features` — feature highlight cards
-6. `HowItWorks` — step-by-step flow
-7. `MarketPrice` — live market price display
-8. `Testimonials` — user testimonials
-9. `Pricing` — plan comparison
+3. `PainPoints` — problem showcase
+4. `Features` — feature highlight cards
+5. `HowItWorks` — step-by-step flow
+6. `MarketPrice` — live market price display
+7. `Testimonials` — user testimonials
+8. `Pricing` — plan comparison
+9. `StatsBar` — key statistics
 10. `FinalCTA` — final conversion CTA
 11. `Footer` — links, social media
 
@@ -729,16 +745,16 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 ## 20. Known Rules & Gotchas
 
 1. **NEVER insert generated columns**: `total_modal`, `net_revenue`, `remaining_amount`
-2. **`formatDate` must be the safe version** from `lib/format.js` — crashes if given raw null without the safe wrapper
+2. **`formatDate` must be the safe version** from `lib/format.js`
 3. **ESLint is strict** — `useEffect` with setState triggers error; prefer derived values
-4. **Tailwind `font-body` string must NOT have extra quotes** — use `fontFamily: 'DM Sans'` not `"'DM Sans'"`
-5. **`buyer_type` in DB is lowercase**: `'rpa'`, `'pedagang_pasar'`, `'restoran'`, `'pengepul'`, `'supermarket'`, `'lainnya'` (not Title Case)
-6. **`payment_status` values**: `'lunas'`, `'belum_lunas'`, `'sebagian'`
-7. **`payment_terms` values**: `'cash'`, `'net3'`, `'net7'`, `'net14'`, `'net30'`
-8. **React Hook Form `watch()`** is incompatible with React Compiler memoization — expected warning
-9. **`purchases` query** — do NOT select `total_eggs` (column doesn't exist in v2)
-10. **Delivery status values**: `'on_route'`, `'arrived'`, `'completed'`, `'cancelled'`
-11. **Farm status values**: `'ready'`, `'empty'`, `'active'`
+4. **Tailwind `font-body` string must NOT have extra quotes**
+5. **Database Naming**: `market_prices` pakai `price_date` bukan `date`.
+6. **Null Fallbacks**: `avg_buy_price`/`avg_sell_price` bisa null — fallback ke `farm_gate_price`/`buyer_price`.
+7. **Soft Delete**: Gunakan `is_deleted=true`, bukan hard delete (kecuali di Recycle Bin).
+8. **Recycle Bin**: Tersedia di `Akun.jsx` untuk restore data yang terhapus (sales, farms, rpa, deliveries).
+9. **`buyer_type` in DB is lowercase**: `'rpa'`, `'pedagang_pasar'`, etc.
+10. **`payment_status` values**: `'lunas'`, `'belum_lunas'`, `'sebagian'`
+11. **`payment_terms` values**: `'cash'`, `'net3'`, `'net7'`, `'net14'`, `'net30'`
 12. **Vehicle/Driver status values**: `'aktif'`, `'tidak_aktif'`
 13. **Chicken batch status values**: `'growing'`, `'ready'`, `'booked'`, `'sold'`
 14. **Order status values**: `'open'`, `'matched'`
@@ -748,6 +764,7 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 18. **Wizard transport_cost**: Set to `0` in purchase insert — delivery costs now tracked in `deliveries` table
 19. **Mortality auto-report**: `useUpdateDelivery.updateTiba()` auto-creates `loss_reports` for mortality > 0
 20. **Toast dark styling**: Sonner toaster configured globally with custom dark card styles in `main.jsx`
+21. **Arrival Sheet Redesign**: `UpdateArrivalSheet` in `Pengiriman.jsx` reorganized into a specific **7-row responsive layout**. Includes bidirectional sync between "Ekor Tiba" and "Ekor Mati" based on `initial_count`.
 
 ---
 
@@ -755,32 +772,63 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 
 | Module | Status | Location | Notes |
 |--------|--------|----------|-------|
-| Landing Page | ✅ | `src/pages/LandingPage.jsx` + `src/sections/*` | Hero, Features, Pricing, etc. |
+| Landing Page | ✅ | `src/pages/LandingPage.jsx` | Hero, Features, Pricing, etc. |
 | Login / Register | ✅ | `src/pages/Login.jsx`, `Register.jsx` | Supabase auth |
-| Onboarding | ✅ | `src/dashboard/pages/OnboardingFlow.jsx` | Multi-step flow |
-| Business Model Selection | ✅ | `BusinessModelOverlay.jsx` | First-time role picker |
-| Beranda (Broker Dashboard) | ✅ | `src/dashboard/broker/Beranda.jsx` | KPI cards, chart, piutang list, wizard trigger |
-| Transaksi | ✅ | `src/dashboard/broker/Transaksi.jsx` | Purchase + sale history, filters |
-| Kandang | ✅ | `src/dashboard/broker/Kandang.jsx` | CRUD farms |
-| RPA / RPADetail | ✅ | `src/dashboard/broker/RPA.jsx`, `RPADetail.jsx` | Client management + agreements + outstanding |
-| Pengiriman | ✅ | `src/dashboard/broker/Pengiriman.jsx` | Delivery tracking + loss report tabs |
-| Cash Flow | ✅ | `src/dashboard/broker/CashFlow.jsx` | Chart + breakdown + expense form |
-| Armada | ✅ | `src/dashboard/broker/Armada.jsx` | Vehicle + driver CRUD, SIM expiry alerts |
+| Onboarding | ✅ | `OnboardingFlow.jsx` | Multi-step flow |
+| Beranda (Dashboard) | ✅ | `src/dashboard/broker/Beranda.jsx` | KPI cards, chart, piutang list |
+| Transaksi | ✅ | `src/dashboard/broker/Transaksi.jsx` | History filters + Audit Sheet pattern |
+| Kandang | ✅ | `src/dashboard/broker/Kandang.jsx` | View/Edit Sheet refactor |
+| Tim & Akses | ✅ | `src/dashboard/broker/Tim.jsx` | Member & Invitation management |
+| Recycle Bin | ✅ | `src/dashboard/broker/Akun.jsx` | Soft-delete recovery system |
+| RPA / RPADetail | ✅ | `src/dashboard/broker/RPA.jsx` | Client & Outstanding tracking |
+| Pengiriman | ✅ | `src/dashboard/broker/Pengiriman.jsx` | Delivery tracking + Loss reports |
+| Cash Flow | ✅ | `src/dashboard/broker/CashFlow.jsx` | Chart + Expenses form |
+| Armada | ✅ | `src/dashboard/broker/Armada.jsx` | Vehicle + Driver management |
+| Harga Pasar Scraper | ✅ | `scripts/harga_scraper.py` | Automatic regional price updates |
 | Simulator | ✅ | `src/dashboard/broker/Simulator.jsx` | Margin profit simulator |
-| Harga Pasar | ✅ | `src/dashboard/pages/HargaPasar.jsx` | Market price view (shared) |
-| Akun | ✅ | `src/dashboard/broker/Akun.jsx` | Profile + plan info |
-| TransaksiWizard | ✅ | `TransaksiWizard.jsx` + `wizard/*` | Multi-step Beli+Jual+Kirim flow |
-| FormBeliModal (standalone) | ✅ | `dashboard/components/FormBeliModal.jsx` | Standalone purchase form |
-| FormJualModal (standalone) | ✅ | `dashboard/components/FormJualModal.jsx` | Standalone sale form |
-| FormBayarModal | ✅ | `dashboard/forms/FormBayarModal.jsx` | Payment form |
-| Stok Virtual (Peternak) | ✅ | `src/dashboard/pages/StokVirtual.jsx` | Batch tracking per farm |
+| Harga Pasar (View) | ✅ | `src/dashboard/pages/HargaPasar.jsx` | Market price view (shared) |
+| Stok Virtual | ✅ | `src/dashboard/pages/StokVirtual.jsx` | Batch tracking per farm |
 | Forecast | ✅ | `src/dashboard/pages/Forecast.jsx` | Supply/demand analysis |
 | Orders | ✅ | `src/dashboard/pages/Orders.jsx` | Order management |
-| Peternak Dashboard | ✅ | `src/dashboard/peternak/Beranda.jsx` | Peternak home |
-| RPA Dashboard | ✅ | `src/dashboard/rpa/Beranda.jsx` | RPA buyer home |
-| Peternak: Siklus, Input, Pakan | 🚧 | `ComingSoon` placeholder | Planned features |
-| RPA: Order, Hutang | 🚧 | `ComingSoon` placeholder | Planned features |
+| Peternak: Siklus | 🚧 | `ComingSoon` | Planned features |
+| RPA: Order, Hutang | 🚧 | `ComingSoon` | Planned features |
 
 ---
 
-*Last updated: March 16, 2026 — by Antigravity AI*
+## 22. Scripts & Automation
+
+### `scripts/ternakos_harga_scraper.py`
+- **Purpose**: Scrape chicken prices from `chickin.id` (Central Java region).
+- **Execution Mode**: CLI once-run or `--daemon` mode (background service).
+- **Schedule**: Best run at 12:00 and 18:00 WIB.
+- **Database**: Insert/Upsert into `market_prices` table.
+- **Dependencies**: `requests`, `beautifulsoup4`, `psycopg2`.
+
+---
+
+## 23. Pricing Structure
+
+| Target Role | PRO Plan | BUSINESS Plan |
+|-------------|----------|---------------|
+| **Broker** | Rp 999.000 / bln | Rp 1.499.000 / bln |
+| **Peternak**| Rp 499.000 / bln | Rp 999.000 / bln |
+| **RPA**     | Rp 699.000 / bln | Rp 1.499.000 / bln |
+
+**BUSINESS Tier** = All PRO features + AI Suite (TernakBot).
+
+---
+
+## 24. AI Roadmap (Business Plan)
+
+- **AI Engine**: Grok 4.1 Fast (planned integration).
+- **Key Features**:
+  - **TernakBot Chat**: Ask questions about your business data in natural language.
+  - **Profit Analysis**: Detailed breakdown of margin and cost optimization.
+  - **Anomaly Detection**: Alerts for suspicious transaction patterns or sudden weight drops.
+  - **Harvest Prediction**: AI-driven estimated harvest date based on historical growth logs.
+  - **Auto Reports**: Weekly/Monthly PDF reports generated automatically.
+- **Status**: Planned (Design Phase).
+
+---
+
+*Last updated: March 20, 2026 — by Antigravity AI*

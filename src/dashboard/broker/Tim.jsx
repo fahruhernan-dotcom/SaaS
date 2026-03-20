@@ -40,7 +40,7 @@ export default function Tim() {
         .from('profiles')
         .select('*')
         .eq('tenant_id', profile.tenant_id)
-        .eq('is_deleted', false)
+        .eq('is_active', true)
         .order('created_at', { ascending: true });
         
       if (error) throw error;
@@ -101,7 +101,7 @@ export default function Tim() {
     mutationFn: async (memberId) => {
       const { error } = await supabase
         .from('profiles')
-        .update({ is_deleted: true })
+        .update({ is_active: false })
         .eq('id', memberId)
         .eq('tenant_id', profile.tenant_id);
       if (error) throw error;

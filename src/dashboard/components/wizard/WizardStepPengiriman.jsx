@@ -18,7 +18,7 @@ import {
   CommandInput, CommandItem, CommandSeparator
 } from '@/components/ui/command'
 import { Badge } from '@/components/ui/badge'
-import { differenceInDays, parseISO } from 'date-fns'
+import { differenceInDays, parseISO, format } from 'date-fns'
 
 const S = {
   label: { fontSize: 11, fontWeight: 700, color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: 6, fontFamily: 'Sora' },
@@ -39,14 +39,14 @@ const TimePicker = ({ value, onChange, label }) => {
   
   const handleHour = (h) => {
     const hh = String(Math.min(23, Math.max(0, h))).padStart(2, '0')
-    const today = new Date().toISOString().split('T')[0]
-    onChange(`${today}T${hh}:${minute || '00'}:00`)
+    const today = format(new Date(), 'yyyy-MM-dd')
+    onChange(`${today}T${hh}:${minute || '00'}:00+07:00`)
   }
   
   const handleMinute = (m) => {
     const mm = String(Math.min(59, Math.max(0, m))).padStart(2, '0')
-    const today = new Date().toISOString().split('T')[0]
-    onChange(`${today}T${hour || '08'}:${mm}:00`)
+    const today = format(new Date(), 'yyyy-MM-dd')
+    onChange(`${today}T${hour || '08'}:${mm}:00+07:00`)
   }
   
   return (
@@ -123,7 +123,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
   const [openVehicle, setOpenVehicle] = useState(false)
   const [openDriver, setOpenDriver] = useState(false)
 
-  // Quick Add State
+  // Quick Add State (Ensure they are false by default)
   const [showQuickAddVehicle, setShowQuickAddVehicle] = useState(false)
   const [newVehicle, setNewVehicle] = useState({ brand: '', vehicle_plate: '' })
   const [showQuickAddDriver, setShowQuickAddDriver] = useState(false)
@@ -162,6 +162,37 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
   const profitBersih = totalRevenue - totalModal - deliveryCost
 
   const update = (key, val) => setStep3Data(prev => ({ ...prev, [key]: val }))
+  
+  const handlePreSubmit = () => {
+    // 1. Validasi Kendaraan
+    if (vehicleMode === 'armada') {
+      if (!step3Data.vehicle_id) {
+        toast.error("Pilih atau isi data kendaraan terlebih dahulu")
+        return
+      }
+    } else {
+      if (!step3Data.vehicle_plate || !step3Data.vehicle_type) {
+        toast.error("Pilih atau isi data kendaraan terlebih dahulu")
+        return
+      }
+    }
+
+    // 2. Validasi Sopir
+    if (driverMode === 'driver') {
+      if (!step3Data.driver_id) {
+        toast.error("Pilih atau isi data sopir terlebih dahulu")
+        return
+      }
+    } else {
+      if (!step3Data.driver_name) {
+        toast.error("Pilih atau isi data sopir terlebih dahulu")
+        return
+      }
+    }
+    
+    // Semua valid, panggil onSubmit
+    onSubmit()
+  }
 
   const handleQuickAddVehicle = async () => {
     if (!newVehicle.brand || !newVehicle.vehicle_plate) return
@@ -323,10 +354,16 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
         <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
           {/* Kendaraan */}
           <div className="space-y-2.5">
-            <label style={S.label}>Pilih Kendaraan</label>
+            <label style={S.label}>Pilih Kendaraan *</label>
             <div className="flex gap-1.5 mb-2">
               {['armada', 'manual'].map(m => (
-                <button key={m} type="button" onClick={() => setVehicleMode(m)}
+                <button key={m} type="button" 
+                  onClick={() => {
+                    setVehicleMode(m)
+                    if (m === 'manual') {
+                      update('vehicle_id', null)
+                    }
+                  }}
                   className={`flex-1 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${vehicleMode === m ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400' : 'border-white/5 bg-white/[0.02] text-[#4B6478]'}`}
                 >{m === 'armada' ? 'Armada Sendiri' : 'Input Manual'}</button>
               ))}
@@ -390,7 +427,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
             ) : (
               <div className="grid grid-cols-2 gap-2">
                 <input type="text" placeholder="Jenis Mobil" value={step3Data.vehicle_type || ''} onChange={e => update('vehicle_type', e.target.value)} className={S.input} />
-                <input type="text" placeholder="Plat Nomor" value={step3Data.vehicle_plate || ''} onChange={e => update('vehicle_plate', e.target.value)} className={S.input} />
+                <input type="text" placeholder="Plat Nomor" value={step3Data.vehicle_plate || ''} onChange={e => update('vehicle_plate', e.target.value.toUpperCase())} className={S.input} />
               </div>
             )}
 
@@ -415,14 +452,22 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                   </div>
                   <div className="space-y-1">
                     <label style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Plat Nomor *</label>
-                    <Input placeholder="B 1234 ABC" value={newVehicle.vehicle_plate} onChange={e => setNewVehicle(p => ({ ...p, vehicle_plate: e.target.value }))} className="h-9 bg-black/20 uppercase" />
+                    <Input placeholder="B 1234 ABC" value={newVehicle.vehicle_plate} onChange={e => setNewVehicle(p => ({ ...p, vehicle_plate: e.target.value.toUpperCase() }))} className="h-9 bg-black/20 uppercase" />
                   </div>
                 </div>
                 <div className="flex gap-2 mt-1">
                   <Button type="button" onClick={handleQuickAddVehicle} disabled={isAdding || !newVehicle.brand || !newVehicle.vehicle_plate} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] h-9 rounded-lg">
                     {isAdding ? 'PROSES...' : 'SIMPAN & PILIH'}
                   </Button>
-                  <Button type="button" variant="ghost" onClick={() => setShowQuickAddVehicle(false)} className="px-3 text-muted-foreground font-bold text-[11px] h-9">BATAL</Button>
+                  <Button type="button" variant="ghost" 
+                    onClick={() => {
+                      setShowQuickAddVehicle(false)
+                      setNewVehicle({ brand: '', vehicle_plate: '' })
+                    }} 
+                    className="px-3 text-muted-foreground font-bold text-[11px] h-9"
+                  >
+                    BATAL
+                  </Button>
                 </div>
               </div>
             )}
@@ -430,10 +475,16 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
 
           {/* Sopir */}
           <div className="space-y-2.5">
-            <label style={S.label}>Pilih Sopir</label>
+            <label style={S.label}>Pilih Sopir *</label>
             <div className="flex gap-1.5 mb-2">
               {['driver', 'manual'].map(m => (
-                <button key={m} type="button" onClick={() => setDriverMode(m)}
+                <button key={m} type="button" 
+                  onClick={() => {
+                    setDriverMode(m)
+                    if (m === 'manual') {
+                      update('driver_id', null)
+                    }
+                  }}
                   className={`flex-1 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${driverMode === m ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400' : 'border-white/5 bg-white/[0.02] text-[#4B6478]'}`}
                 >{m === 'driver' ? 'Sopir Terdaftar' : 'Input Manual'}</button>
               ))}
@@ -540,7 +591,15 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                     <Button type="button" onClick={handleQuickAddDriver} disabled={isAdding || !newDriver.full_name} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] h-9 rounded-lg">
                       {isAdding ? 'PROSES...' : 'SIMPAN & PILIH'}
                     </Button>
-                    <Button type="button" variant="ghost" onClick={() => setShowQuickAddDriver(false)} className="px-3 text-muted-foreground font-bold text-[11px] h-9">BATAL</Button>
+                    <Button type="button" variant="ghost" 
+                      onClick={() => {
+                        setShowQuickAddDriver(false)
+                        setNewDriver({ full_name: '', phone: '' })
+                      }} 
+                      className="px-3 text-muted-foreground font-bold text-[11px] h-9"
+                    >
+                      BATAL
+                    </Button>
                   </div>
                 </div>
               )}
@@ -575,7 +634,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
       
       {/* Buttons — Sticky Footer */}
       <div className="sticky bottom-0 z-10 bg-[#0C1319] border-t border-white/10 p-4 px-5 space-y-4">
-        <button type="button" onClick={onSubmit} disabled={submitting}
+        <button type="button" onClick={handlePreSubmit} disabled={submitting}
           className="w-full h-14 rounded-2xl font-black text-sm tracking-[0.15em] text-white flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
           style={{ background: '#10B981', boxShadow: '0 12px 24px -8px rgba(16,185,129,0.4)', opacity: submitting ? 0.7 : 1 }}
         >
@@ -587,7 +646,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
             <ChevronLeft size={18} /> KEMBALI
           </Button>
           {!step3Data.enabled && (
-             <button type="button" onClick={onSubmit} disabled={submitting}
+             <button type="button" onClick={handlePreSubmit} disabled={submitting}
               className="flex-1 text-[11px] text-[#4B6478] font-black uppercase tracking-widest hover:text-emerald-400 transition-colors"
             >
               Lewati & Simpan

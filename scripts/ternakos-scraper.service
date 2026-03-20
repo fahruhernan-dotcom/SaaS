@@ -1,0 +1,14 @@
+[Unit]
+Description=TernakOS Harga Scraper
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/path/to/project
+EnvironmentFile=/path/to/project/.env
+ExecStart=/usr/bin/python3 scripts/ternakos_harga_scraper.py --daemon
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

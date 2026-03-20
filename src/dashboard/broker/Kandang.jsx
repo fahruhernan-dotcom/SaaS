@@ -3,34 +3,36 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Plus, Search, MapPin, ChevronRight, Warehouse, 
   Trash2, Edit, Star, Calendar, Info, AlertTriangle,
-  Clock, CheckCircle2, History
+  Clock, CheckCircle2, History, Phone
 } from 'lucide-react'
 import { differenceInDays } from 'date-fns'
 import { useFarms } from '@/lib/hooks/useFarms'
-import { formatIDR, formatDate, formatWeight, formatRelative, safeNumber } from '@/lib/format'
+import { formatIDR, formatDate, formatWeight, formatRelative, safeNumber, formatEkor } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { InputNumber } from '@/components/ui/InputNumber'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { 
-  Dialog, DialogContent, DialogHeader, DialogTitle, 
-  DialogDescription, DialogFooter 
-} from '@/components/ui/dialog'
+  Sheet, SheetContent, SheetHeader, SheetTitle, 
+  SheetDescription, SheetFooter 
+} from '@/components/ui/sheet'
 import { 
   AlertDialog, AlertDialogAction, AlertDialogCancel, 
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter, 
-  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger 
+  AlertDialogHeader, AlertDialogTitle 
 } from '@/components/ui/alert-dialog'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import ConfirmDialog from '@/dashboard/components/ConfirmDialog'
 import { toast } from 'sonner'
-import SlideModal from '@/dashboard/components/SlideModal'
+import { cn } from '@/lib/utils'
 import EmptyState from '@/components/EmptyState'
 
 const staggerContainer = {
@@ -164,21 +166,13 @@ export default function Kandang() {
         </AnimatePresence>
       </div>
 
-      {/* Form Sheet */}
-      <SlideModal 
-        title={editingFarm ? "Edit Kandang" : "Tambah Kandang"} 
+      {/* Farm Detail/Edit Sheet */}
+      <FarmSheet 
         isOpen={openModal} 
         onClose={() => setOpenModal(false)}
-      >
-        <FarmForm 
-            farm={editingFarm} 
-            tenantId={tenant?.id} 
-            onSuccess={() => {
-                queryClient.invalidateQueries({ queryKey: ['farms', tenant?.id] })
-                setOpenModal(false)
-            }}
-        />
-      </SlideModal>
+        farm={editingFarm}
+        tenantId={tenant?.id}
+      />
     </motion.div>
   )
 }
@@ -196,7 +190,10 @@ function FarmCard({ farm, onEdit }) {
   const daysToHarvest = farm.harvest_date ? differenceInDays(new Date(farm.harvest_date), new Date()) : null
   
   return (
-    <Card className="bg-[#111C24] border-white/5 rounded-[24px] p-5 space-y-4 hover:border-white/10 transition-all relative group active:scale-[0.98] text-left">
+    <Card 
+        onClick={onEdit}
+        className="bg-[#111C24] border-white/5 rounded-[24px] p-5 space-y-4 hover:border-emerald-500/30 hover:ring-1 hover:ring-emerald-500/30 transition-all cursor-pointer relative group active:scale-[0.98] text-left"
+    >
         <div className="flex justify-between items-start">
             <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
@@ -224,11 +221,11 @@ function FarmCard({ farm, onEdit }) {
         <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 grid grid-cols-2 gap-4">
             <div className="space-y-1">
                 <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest leading-none">Stok Tersedia</p>
-                <p className="font-display font-black text-[#F1F5F9] text-base leading-none tabular-nums mt-1">{farm.available_stock || 0} ekor</p>
+                <p className="font-display font-black text-[#F1F5F9] text-base leading-none tabular-nums mt-1">{safeNumber(farm.available_stock).toLocaleString('id-ID')} ekor</p>
             </div>
             <div className="space-y-1 text-right">
                 <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest leading-none">Rata-rata Bobot</p>
-                <p className="font-display font-black text-[#F1F5F9] text-base leading-none tabular-nums mt-1">{farm.avg_weight_kg ? `${farm.avg_weight_kg} kg` : '-'}</p>
+                <p className="font-display font-black text-[#F1F5F9] text-base leading-none tabular-nums mt-1">{farm.avg_weight_kg ? formatWeight(farm.avg_weight_kg) : '-'}</p>
             </div>
         </div>
 
@@ -236,28 +233,19 @@ function FarmCard({ farm, onEdit }) {
             {farm.harvest_date && (farm.status === 'growing' || farm.status === 'ready') ? (
                 <HarvestPill days={daysToHarvest} date={farm.harvest_date} />
             ) : <div />}
-            
-            <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                className="h-8 px-4 rounded-xl bg-secondary/10 border border-white/5 text-[10px] font-black text-[#F1F5F9] hover:bg-white/10 uppercase tracking-widest"
-            >
-                Detail
-            </Button>
         </div>
     </Card>
   )
 }
 
-function StatusBadge({ status }) {
+function StatusBadge({ status, className }) {
     switch(status) {
         case 'ready': 
-            return <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-black text-[9px] px-3 h-6 uppercase tracking-wider">SIAP PANEN</Badge>
+            return <Badge className={cn("bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-black text-[9px] px-3 h-6 uppercase tracking-wider", className)}>SIAP PANEN</Badge>
         case 'growing':
-            return <Badge className="bg-amber-500/10 text-amber-500 border border-amber-500/20 font-black text-[9px] px-3 h-6 uppercase tracking-wider">TUMBUH</Badge>
+            return <Badge className={cn("bg-amber-500/10 text-amber-500 border border-amber-500/20 font-black text-[9px] px-3 h-6 uppercase tracking-wider", className)}>TUMBUH</Badge>
         default:
-            return <Badge className="bg-secondary/10 text-[#4B6478] border border-white/5 font-black text-[9px] px-3 h-6 uppercase tracking-wider">KOSONG</Badge>
+            return <Badge className={cn("bg-secondary/10 text-[#4B6478] border border-white/5 font-black text-[9px] px-3 h-6 uppercase tracking-wider", className)}>KOSONG</Badge>
     }
 }
 
@@ -294,23 +282,163 @@ function HarvestPill({ days, date }) {
     )
 }
 
-function FarmForm({ farm, tenantId, onSuccess }) {
+// --- SHEET: FARM DETAIL & EDIT ---
+
+function FarmSheet({ isOpen, onClose, farm, tenantId }) {
+    const [mode, setMode] = useState('view')
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+    const queryClient = useQueryClient()
+
+    // Reset mode to 'view' when opening for an existing farm, 'edit' for new
+    React.useEffect(() => {
+        if (isOpen) {
+            setMode(farm ? 'view' : 'edit')
+        }
+    }, [isOpen, farm])
+
+    const handleDelete = async () => {
+        const { error } = await supabase.from('farms').update({ is_deleted: true }).eq('id', farm.id)
+        if (error) {
+            toast.error('Gagal menghapus kandang')
+        } else {
+            toast.success('Kandang dihapus')
+            queryClient.invalidateQueries(['farms'])
+            onClose()
+        }
+        setIsDeleteDialogOpen(false)
+    }
+
+    return (
+        <Sheet open={isOpen} onOpenChange={onClose}>
+            <SheetContent side="right" className="sm:max-w-md bg-[#0C1319] border-white/10 p-0 overflow-y-auto">
+                {mode === 'view' ? (
+                    <div className="flex flex-col h-full">
+                        <div className="p-6 space-y-8 flex-1">
+                            <SheetHeader className="text-left space-y-3">
+                                <div className="space-y-1">
+                                    <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight leading-none">
+                                        {farm?.farm_name}
+                                    </SheetTitle>
+                                    <SheetDescription className="sr-only">Detail informasi kandang</SheetDescription>
+                                </div>
+                                <StatusBadge status={farm?.status} className="w-fit" />
+                            </SheetHeader>
+
+                            <div className="space-y-6">
+                                <div className="space-y-4">
+                                    <DetailRow label="Nama Pemilik" value={farm?.owner_name} />
+                                    <DetailRow 
+                                        label="No. WhatsApp / HP" 
+                                        value={
+                                            <a href={`tel:${farm?.phone}`} className="text-emerald-400 hover:underline flex items-center gap-2">
+                                                <Phone size={14} /> {farm?.phone}
+                                            </a>
+                                        } 
+                                    />
+                                    <DetailRow label="Lokasi" value={farm?.location} />
+                                    <DetailRow label="Jenis Ayam" value={farm?.chicken_type} className="capitalize" />
+                                    <DetailRow label="Status" value={farm?.status} className="uppercase" />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Stok Ayam</p>
+                                        <p className="text-white font-black text-lg">{formatEkor(farm?.available_stock)}</p>
+                                    </div>
+                                    <div className="space-y-1 text-right">
+                                        <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Rata-rata Bobot</p>
+                                        <p className="text-white font-black text-lg">{farm?.avg_weight_kg ? `${farm.avg_weight_kg} kg` : '-'}</p>
+                                    </div>
+                                </div>
+
+                                {farm?.notes && (
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Catatan</p>
+                                        <p className="text-[#94A3B8] text-xs leading-relaxed">{farm.notes}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <SheetFooter className="p-6 border-t border-white/5 flex-col gap-3">
+                            <Button 
+                                onClick={() => setMode('edit')}
+                                variant="outline"
+                                className="w-full h-14 border-emerald-500/20 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/10 font-black text-xs uppercase tracking-widest rounded-2xl"
+                            >
+                                <Edit size={16} className="mr-2" /> Edit Kandang
+                            </Button>
+                            <Button 
+                                onClick={() => setIsDeleteDialogOpen(true)}
+                                variant="ghost"
+                                className="w-full h-12 text-red-500/60 hover:text-red-500 hover:bg-red-500/5 font-black text-[10px] uppercase tracking-widest rounded-2xl"
+                            >
+                                <Trash2 size={14} className="mr-2" /> Hapus Kandang
+                            </Button>
+                        </SheetFooter>
+                    </div>
+                ) : (
+                    <div className="p-6 space-y-8">
+                        <SheetHeader className="text-left">
+                            <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">
+                                {farm ? 'Edit Kandang' : 'Tambah Kandang'}
+                            </SheetTitle>
+                            <SheetDescription className="text-[#4B6478] font-bold uppercase text-[10px] tracking-widest mt-1">
+                                {farm ? 'Sesuaikan data stok dan status' : 'Daftarkan kandang baru ke sistem'}
+                            </SheetDescription>
+                        </SheetHeader>
+
+                        <FarmForm 
+                            farm={farm} 
+                            tenantId={tenantId} 
+                            onSuccess={() => {
+                                queryClient.invalidateQueries(['farms'])
+                                if (!farm) onClose() // Close if new
+                                else setMode('view') // Return to view if edit
+                            }}
+                            onCancel={() => farm ? setMode('view') : onClose()}
+                            isSheet
+                        />
+                    </div>
+                )}
+            </SheetContent>
+
+            <ConfirmDialog 
+                isOpen={isDeleteDialogOpen}
+                onClose={() => setIsDeleteDialogOpen(false)}
+                onConfirm={handleDelete}
+                title="Hapus Kandang?"
+                message={`Semua data terkait ${farm?.farm_name} akan dihapus secara permanen.`}
+            />
+        </Sheet>
+    )
+}
+
+function DetailRow({ label, value, className }) {
+    return (
+        <div className="flex flex-col gap-1 border-b border-white/5 pb-3">
+            <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">{label}</span>
+            <span className={cn("text-white text-sm font-bold", className)}>{value || '-'}</span>
+        </div>
+    )
+}
+
+function FarmForm({ farm, tenantId, onSuccess, onCancel, isSheet }) {
     const [isLoading, setIsLoading] = useState(false)
-    const [deleteLoading, setDeleteLoading] = useState(false)
-    const [formData, setFormData] = useState(farm || {
-        farm_name: '',
-        owner_name: '',
-        phone: '',
-        location: '',
-        chicken_type: 'broiler',
-        status: 'empty',
-        available_stock: 0,
-        avg_weight_kg: '',
-        harvest_date: '',
-        capacity: '',
-        quality_rating: 0,
-        quality_notes: '',
-        notes: ''
+    const [formData, setFormData] = useState({
+        farm_name: farm?.farm_name ?? '',
+        owner_name: farm?.owner_name ?? '',
+        phone: farm?.phone ?? '',
+        location: farm?.location ?? '',
+        chicken_type: farm?.chicken_type ?? 'broiler',
+        status: farm?.status ?? 'empty',
+        available_stock: farm?.available_stock ?? 0,
+        avg_weight_kg: farm?.avg_weight_kg ?? '',
+        harvest_date: farm?.harvest_date ?? '',
+        capacity: farm?.capacity ?? '',
+        quality_rating: farm?.quality_rating ?? 0,
+        quality_notes: farm?.quality_notes ?? '',
+        notes: farm?.notes ?? ''
     })
 
     const handleSubmit = async (e) => {
@@ -342,19 +470,7 @@ function FarmForm({ farm, tenantId, onSuccess }) {
         }
     }
 
-    const handleDelete = async () => {
-        setDeleteLoading(true)
-        try {
-            const { error } = await supabase.from('farms').update({ is_deleted: true }).eq('id', farm.id)
-            if (error) throw error
-            toast.success('Kandang dihapus')
-            onSuccess()
-        } catch (err) {
-            toast.error('❌ ' + err.message)
-        } finally {
-            setDeleteLoading(false)
-        }
-    }
+
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6 pb-12 text-left">
@@ -435,19 +551,18 @@ function FarmForm({ farm, tenantId, onSuccess }) {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Stok Ayam (Ekor)</Label>
-                        <Input 
-                            type="number"
+                        <InputNumber 
                             value={formData.available_stock} 
-                            onChange={e => setFormData({...formData, available_stock: e.target.value})}
+                            onChange={v => setFormData({...formData, available_stock: v})}
                             className="bg-[#111C24] border-white/10 h-14 font-black rounded-2xl tabular-nums"
                         />
                     </div>
                     <div className="space-y-2">
                         <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Bobot Rata-rata (kg)</Label>
-                        <Input 
-                            type="number" step="0.01"
+                        <InputNumber 
+                            step={0.01}
                             value={formData.avg_weight_kg} 
-                            onChange={e => setFormData({...formData, avg_weight_kg: e.target.value})}
+                            onChange={v => setFormData({...formData, avg_weight_kg: v})}
                             className="bg-[#111C24] border-white/10 h-14 font-black rounded-2xl tabular-nums"
                         />
                     </div>
@@ -469,10 +584,9 @@ function FarmForm({ farm, tenantId, onSuccess }) {
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Kapasitas (Ekor)</Label>
-                    <Input 
-                        type="number"
+                    <InputNumber 
                         value={formData.capacity} 
-                        onChange={e => setFormData({...formData, capacity: e.target.value})}
+                        onChange={v => setFormData({...formData, capacity: v})}
                         className="bg-[#111C24] border-white/10 h-14 rounded-2xl tabular-nums"
                     />
                 </div>
@@ -492,43 +606,24 @@ function FarmForm({ farm, tenantId, onSuccess }) {
             </div>
 
             <div className="flex gap-3 pt-6">
-                {farm && (
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button 
-                                type="button"
-                                variant="ghost"
-                                className="w-16 h-16 rounded-[22px] border border-red-500/20 text-red-500 hover:bg-red-500/10 active:scale-90 transition-transform"
-                            >
-                                <Trash2 size={24} />
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent className="bg-[#0C1319] border-white/10 rounded-[32px] p-8">
-                            <AlertDialogHeader>
-                                <AlertDialogTitle className="text-white font-display font-black tracking-tight text-2xl uppercase">Hapus Kandang?</AlertDialogTitle>
-                                <AlertDialogDescription className="text-slate-400 font-bold mt-2">
-                                    Data kandang akan dihapus secara permanen. Riwayat transaksi pembelian yang berkaitan dengan kandang ini tetap akan tersimpan.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter className="gap-3 mt-8">
-                                <AlertDialogCancel className="bg-white/5 border-none text-[#F1F5F9] rounded-2xl h-14 font-black uppercase tracking-widest text-xs">Batal</AlertDialogCancel>
-                                <AlertDialogAction 
-                                    onClick={handleDelete}
-                                    className="bg-red-500 hover:bg-red-600 text-white rounded-2xl h-14 font-black uppercase tracking-widest text-xs border-none"
-                                >
-                                    Ya, Hapus
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                )}
                 <Button 
                     type="submit" 
-                    className="flex-1 h-16 rounded-[22px] bg-[#10B981] hover:bg-emerald-600 text-sm font-black border-none shadow-[0_4px_20px_rgba(16,185,129,0.15)] uppercase tracking-[0.2em]"
                     disabled={isLoading}
+                    className="flex-1 h-14 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl"
                 >
-                    {isLoading ? 'Menyimpan...' : (farm ? 'Simpan Perubahan' : 'Tambah Kandang')}
+                    {isLoading ? 'Menyimpan...' : farm ? 'Simpan Kandang' : 'Tambah Kandang'}
                 </Button>
+                
+                {onCancel && (
+                    <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={onCancel}
+                        className="h-14 border-white/10 text-[#4B6478] hover:text-white font-black text-xs uppercase tracking-widest rounded-2xl px-8"
+                    >
+                        Batal
+                    </Button>
+                )}
             </div>
         </form>
     )

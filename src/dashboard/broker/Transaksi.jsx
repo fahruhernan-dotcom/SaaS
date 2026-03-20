@@ -38,9 +38,7 @@ import { DatePicker } from '@/components/ui/DatePicker'
 import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import SlideModal from '@/dashboard/components/SlideModal'
-import FormBeliModal from '@/dashboard/components/FormBeliModal'
-import FormJualModal from '@/dashboard/components/FormJualModal'
+import TransaksiWizard from '../components/TransaksiWizard'
 import EmptyState from '@/components/EmptyState'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
@@ -123,7 +121,7 @@ export default function Transaksi() {
 
   // --- STATES ---
   const [activeTab, setActiveTab] = useState('jual')
-  const [openModal, setOpenModal] = useState(null)
+  const [wizardOpen, setWizardOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -396,7 +394,7 @@ export default function Transaksi() {
         </div>
         <Button
           size="sm"
-          onClick={() => setOpenModal('options')}
+          onClick={() => setWizardOpen(true)}
           className="bg-[#10B981] hover:bg-emerald-600 text-white font-black rounded-xl h-10 px-5 gap-2 border-none shadow-[0_4px_20px_rgba(16,185,129,0.15)] active:scale-95 transition-transform uppercase text-xs tracking-widest"
         >
           <Plus size={16} strokeWidth={3} />
@@ -513,40 +511,7 @@ export default function Transaksi() {
       </Tabs>
 
       {/* Modals */}
-      <SlideModal
-        title="Opsi Transaksi"
-        isOpen={openModal === 'options'}
-        onClose={() => setOpenModal(null)}
-      >
-        <div className="grid grid-cols-2 gap-4 pb-12">
-          <button
-            onClick={() => setOpenModal('beli')}
-            className="flex flex-col items-center justify-center p-6 bg-[#111C24] border border-white/5 rounded-[32px] hover:border-emerald-500/30 transition-all group active:scale-95"
-          >
-            <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-4 text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
-              <TrendingDown size={32} />
-            </div>
-            <span className="font-black text-white text-[11px] uppercase tracking-widest">Catat Beli</span>
-          </button>
-          <button
-             onClick={() => setOpenModal('jual')}
-             className="flex flex-col items-center justify-center p-6 bg-[#111C24] border border-white/5 rounded-[32px] hover:border-emerald-500/30 transition-all group active:scale-95"
-          >
-            <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-4 text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
-              <TrendingUp size={32} />
-            </div>
-            <span className="font-black text-white text-[11px] uppercase tracking-widest">Catat Jual</span>
-          </button>
-        </div>
-      </SlideModal>
-
-      <SlideModal title="Catat Pembelian" isOpen={openModal === 'beli'} onClose={() => setOpenModal(null)}>
-        <FormBeliModal onClose={() => setOpenModal(null)} />
-      </SlideModal>
-
-      <SlideModal title="Catat Penjualan" isOpen={openModal === 'jual'} onClose={() => setOpenModal(null)}>
-        <FormJualModal onClose={() => setOpenModal(null)} />
-      </SlideModal>
+      <TransaksiWizard isOpen={wizardOpen} onClose={() => setWizardOpen(false)} />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={(o) => { if (!o) { setShowDeleteDialog(false); setDeleteTarget(null) } }}>

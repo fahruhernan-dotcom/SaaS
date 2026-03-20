@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 
 export function InputNumber({
@@ -11,6 +12,65 @@ export function InputNumber({
   className = '',
   ...props
 }) {
+  const [displayVal, setDisplayVal] = useState('')
+
+  useEffect(() => {
+    if (value === null || value === undefined || value === '') {
+      setDisplayVal('')
+      return
+    }
+
+    const rawDisplay = displayVal.replace(/\./g, '').replace(/,/g, '.')
+    const currentNum = parseFloat(rawDisplay)
+
+    // Sync from props if mismatch (allow trailing commas/zeros while typing)
+    if (isNaN(currentNum) || currentNum !== value) {
+      if (rawDisplay.endsWith('.') || (rawDisplay.includes('.') && rawDisplay.endsWith('0') && currentNum === value)) {
+        return
+      }
+      const parts = value.toString().split('.')
+      const intPart = parseInt(parts[0], 10).toLocaleString('id-ID')
+      const decPart = parts.length > 1 ? ',' + parts[1] : ''
+      setDisplayVal(intPart + decPart)
+    }
+  }, [value])
+
+  const handleChange = (e) => {
+    let raw = e.target.value
+
+    if (raw === '') {
+      setDisplayVal('')
+      onChange('')
+      return
+    }
+
+    raw = raw.replace(/[^\d,]/g, '')
+    const commaSplit = raw.split(',')
+    if (commaSplit.length > 2) {
+      raw = commaSplit[0] + ',' + commaSplit.slice(1).join('')
+    }
+
+    const intPartRaw = commaSplit[0]
+    const decPartRaw = commaSplit.length > 1 ? commaSplit[1] : undefined
+
+    let parsedInt = parseInt(intPartRaw, 10)
+    let newDisplay = ''
+    if (!isNaN(parsedInt)) {
+      newDisplay = parsedInt.toLocaleString('id-ID')
+    }
+
+    if (decPartRaw !== undefined) {
+      newDisplay += ',' + decPartRaw
+    }
+
+    setDisplayVal(newDisplay)
+
+    const numericStr = raw.replace(/,/g, '.')
+    const numericVal = parseFloat(numericStr)
+    if (!isNaN(numericVal)) {
+      onChange(numericVal)
+    }
+  }
   const handleUp = () => {
     const current = parseFloat(value) || 0
     const next = current + step
@@ -32,13 +92,10 @@ export function InputNumber({
       
       {/* Input */}
       <input
-        type="number"
-        value={value ?? ''}
-        onChange={e => onChange(
-          e.target.value === ''
-            ? ''
-            : parseFloat(e.target.value)
-        )}
+        type="text"
+        inputMode="decimal"
+        value={displayVal}
+        onChange={handleChange}
         placeholder={placeholder}
         min={min}
         max={max}
@@ -50,7 +107,7 @@ export function InputNumber({
           border: '1px solid hsl(var(--border))',
           borderRadius: '10px',
           fontSize: '16px',
-          color: 'hsl(var(--foreground))',
+          color: 'inherit',
           outline: 'none',
           MozAppearance: 'textfield',
         }}

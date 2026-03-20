@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
+import { format } from 'date-fns'
 import { supabase } from '../supabase'
 import { safeNum } from '../format'
 
@@ -33,7 +34,7 @@ export function useUpdateDelivery() {
         arrived_count:     safeNum(arrivedCount),
         arrived_weight_kg: safeNum(arrivedWeight),
         mortality_count:   mortality,
-        arrival_time:      new Date().toISOString(),
+        arrival_time:      format(new Date(), "yyyy-MM-dd'T'HH:mm:ssxxx"),
         status:            'completed',
         notes:             notes || null,
         driver_id:         driverId || null,
@@ -67,7 +68,7 @@ export function useUpdateDelivery() {
           price_per_kg:   saleData.price_per_kg,
           financial_loss: financialLoss,
           description:    `${mortality} ekor mati dalam perjalanan`,
-          report_date:    new Date().toISOString().split('T')[0]
+          report_date:    format(new Date(), 'yyyy-MM-dd')
         })
       }
     }

@@ -1,0 +1,90 @@
+﻿python : 2026-03-19 
+21:21:41 [INFO] ΓòÉΓòÉΓ
+òÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò
+ÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓ
+òÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò
+ÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓ
+òÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+At line:1 char:32
++ ... CODING='utf-8'; 
+python scripts/ternakos
+_harga_scraper.py 2>&1 
+| Out-F ...
++                     ~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (2026-03-19 21   
+ :2...ΓòÉΓòÉΓòÉΓòÉΓ    
+òÉ:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+2026-03-19 21:21:41 
+[INFO] TernakOS Harga 
+Scraper ΓÇö START
+2026-03-19 21:21:42 
+[INFO] Fetching: https:
+//chickin.id/blog/updat
+e/harga-ayam/
+2026-03-19 21:21:43 
+[INFO]   ? Found row: 
+Jawa TengahDIY | < 2,0 
+| 26000
+2026-03-19 21:21:43 
+[INFO]     => Match 
+added! (Current avg: 
+26,000)
+2026-03-19 21:21:43 
+[INFO]   ? Found row: 
+Jawa TengahDIY | > 2,0 
+| 25000
+2026-03-19 21:21:43 
+[INFO] Γ£ô Rata-rata 
+ditemukan: Rp 26,000 
+(dari 1 baris)
+2026-03-19 21:21:43 
+[INFO] Insert payload: 
+{
+  "price_date": 
+"2026-03-19",
+  "chicken_type": 
+"broiler",
+  "farm_gate_price": 
+26000,
+  "buyer_price": 28500,
+  "region": "Jawa 
+Tengah",
+  "source": 
+"auto_scraper",
+  "source_url": "https:
+//chickin.id/blog/updat
+e/harga-ayam/",
+  "transaction_count": 
+0
+}
+2026-03-19 21:21:44 
+[INFO] Γ£ô Insert OK 
+[2026-03-19] ΓÇö Beli: 
+Rp 26,000 | Jual est.: 
+Rp 28,500
+2026-03-19 21:21:44 
+[INFO] Γ£ô SELESAI
+2026-03-19 21:21:44 
+[INFO] ΓòÉΓòÉΓòÉΓòÉΓòÉΓ
+òÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò
+ÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓ
+òÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ
+ΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò
+ÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓ
+òÉΓòÉΓòÉΓòÉ
+Tanggal web: 19 March 2026
+Farm gate: 26000
+Buyer price: 28500
+Price date: 2026-03-19

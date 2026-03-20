@@ -22,7 +22,9 @@ import { cn } from '@/lib/utils'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { formatIDR, safeNumber, safePercent } from '@/lib/format'
+import { formatIDR, safeNumber, safePercent, formatEkor, formatWeight } from '@/lib/format'
+import { InputNumber } from '@/components/ui/InputNumber'
+import { InputRupiah } from '@/components/ui/InputRupiah'
 
 // UI Components
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -117,6 +119,24 @@ export default function Armada() {
         enabled: !!tenant?.id
     })
 
+    const { data: activeDeliveries = [] } = useQuery({
+        queryKey: ['active-deliveries', tenant?.id],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('deliveries')
+                .select('vehicle_id, driver_id')
+                .eq('tenant_id', tenant?.id)
+                .eq('status', 'on_route')
+                .eq('is_deleted', false)
+            if (error) throw error
+            return data
+        },
+        enabled: !!tenant?.id
+    })
+
+    const onRouteVehicleIds = useMemo(() => new Set(activeDeliveries.map(d => d.vehicle_id).filter(Boolean)), [activeDeliveries])
+    const onRouteDriverIds = useMemo(() => new Set(activeDeliveries.map(d => d.driver_id).filter(Boolean)), [activeDeliveries])
+
     // --- STATE ---
     const [isVehicleSheetOpen, setIsVehicleSheetOpen] = useState(false)
     const [editingVehicle, setEditingVehicle] = useState(null)
@@ -197,9 +217,9 @@ export default function Armada() {
                     </TabsList>
 
                     <TabsContent value="kendaraan" className="space-y-8 m-0 outline-none">
-                        {/* Vehicle Summary */}
                         <div className="flex overflow-x-auto pb-2 scrollbar-none gap-3">
                             <SummaryPill label="Total" count={vehicles.length} />
+                            <SummaryPill label="Mengirim" count={onRouteVehicleIds.size} color="amber" />
                             <SummaryPill label="Aktif" count={vehicles.filter(v => v.status === 'aktif').length} color="emerald" />
                             <SummaryPill label="Servis" count={vehicles.filter(v => v.status === 'servis').length} color="amber" />
                             <SummaryPill label="Nonaktif" count={vehicles.filter(v => v.status === 'nonaktif').length} color="gray" />
@@ -207,7 +227,7 @@ export default function Armada() {
 
                         {/* Filter Chips */}
                         <div className="flex gap-2">
-                            {['Semua', 'Aktif', 'Servis', 'Nonaktif'].map(f => (
+                            {['Semua', 'Mengirim', 'Aktif', 'Servis', 'Nonaktif'].map(f => (
                                 <FilterChip 
                                     key={f} 
                                     label={f} 
@@ -217,12 +237,16 @@ export default function Armada() {
                             ))}
                         </div>
 
-                        {/* Vehicle Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {vehicles.filter(v => vehicleFilter === 'Semua' || v.status === vehicleFilter.toLowerCase()).map(v => (
+                            {vehicles.filter(v => {
+                                if (vehicleFilter === 'Semua') return true
+                                if (vehicleFilter === 'Mengirim') return onRouteVehicleIds.has(v.id)
+                                return v.status === vehicleFilter.toLowerCase()
+                            }).map(v => (
                                 <VehicleCard 
                                     key={v.id} 
                                     vehicle={v} 
+                                    isOnRoute={onRouteVehicleIds.has(v.id)}
                                     onEdit={() => {
                                         setEditingVehicle(v)
                                         setIsVehicleSheetOpen(true)
@@ -249,9 +273,9 @@ export default function Armada() {
                     </TabsContent>
 
                     <TabsContent value="sopir" className="space-y-8 m-0 outline-none">
-                         {/* Driver Summary */}
                          <div className="flex overflow-x-auto pb-2 scrollbar-none gap-3">
                             <SummaryPill label="Total" count={drivers.length} />
+                            <SummaryPill label="Mengirim" count={onRouteDriverIds.size} color="amber" />
                             <SummaryPill label="Aktif" count={drivers.filter(d => d.status === 'aktif').length} color="emerald" />
                             <SummaryPill label="Cuti" count={drivers.filter(d => d.status === 'cuti').length} color="amber" />
                             <SummaryPill label="Nonaktif" count={drivers.filter(d => d.status === 'nonaktif').length} color="gray" />
@@ -259,7 +283,7 @@ export default function Armada() {
 
                         {/* Filter Chips */}
                         <div className="flex gap-2">
-                            {['Semua', 'Aktif', 'Nonaktif', 'Cuti'].map(f => (
+                            {['Semua', 'Mengirim', 'Aktif', 'Nonaktif', 'Cuti'].map(f => (
                                 <FilterChip 
                                     key={f} 
                                     label={f} 
@@ -269,12 +293,16 @@ export default function Armada() {
                             ))}
                         </div>
 
-                        {/* Driver Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {drivers.filter(d => driverFilter === 'Semua' || d.status === driverFilter.toLowerCase()).map(d => (
+                            {drivers.filter(d => {
+                                if (driverFilter === 'Semua') return true
+                                if (driverFilter === 'Mengirim') return onRouteDriverIds.has(d.id)
+                                return d.status === driverFilter.toLowerCase()
+                            }).map(d => (
                                 <DriverCard 
                                     key={d.id} 
                                     driver={d} 
+                                    isOnRoute={onRouteDriverIds.has(d.id)}
                                     onEdit={() => {
                                         setEditingDriver(d)
                                         setIsDriverSheetOpen(true)
@@ -336,7 +364,7 @@ function SummaryPill({ label, count, color }) {
             colors[color] || colors.default
         )}>
             <span>{label}</span>
-            <span className="text-xs bg-white/5 px-2 py-0.5 rounded-lg border border-white/5 text-white">{count}</span>
+            <span className="text-xs bg-white/5 px-2 py-0.5 rounded-lg border border-white/5 text-white">{(count || 0).toLocaleString('id-ID')}</span>
         </div>
     )
 }
@@ -355,7 +383,7 @@ function FilterChip({ label, active, onClick }) {
     )
 }
 
-function VehicleCard({ vehicle, onEdit, onAddExpense }) {
+function VehicleCard({ vehicle, isOnRoute, onEdit, onAddExpense }) {
     const statusMeta = {
         aktif:    { label: 'Aktif',    color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
         servis:   { label: 'Servis',   color: 'text-amber-400',   bg: 'bg-amber-500/10' },
@@ -366,12 +394,18 @@ function VehicleCard({ vehicle, onEdit, onAddExpense }) {
     return (
         <Card className="bg-[#111C24] border-white/5 rounded-[32px] overflow-hidden group hover:border-white/10 transition-all">
             <CardContent className="p-6 space-y-5">
-                {/* Row 1: Plate & Status */}
                 <div className="flex justify-between items-start">
                     <h3 className="font-display text-lg font-black tracking-tight text-[#F1F5F9] uppercase">{vehicle.vehicle_plate}</h3>
-                    <Badge className={cn("rounded-lg border-none px-2 py-0.5 text-[9px] font-black uppercase tracking-widest", meta.bg, meta.color)}>
-                        {meta.label}
-                    </Badge>
+                    <div className="flex gap-2">
+                        {isOnRoute && (
+                            <Badge className="rounded-lg border-none px-2 py-0.5 text-[9px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-500">
+                                Sedang Mengirim
+                            </Badge>
+                        )}
+                        <Badge className={cn("rounded-lg border-none px-2 py-0.5 text-[9px] font-black uppercase tracking-widest", meta.bg, meta.color)}>
+                            {meta.label}
+                        </Badge>
+                    </div>
                 </div>
 
                 {/* Row 2: Type, Brand, Year */}
@@ -389,16 +423,16 @@ function VehicleCard({ vehicle, onEdit, onAddExpense }) {
                         {vehicle.ownership === 'pinjaman' && <Badge variant="outline" className="text-[8px] font-black uppercase border-blue-500/20 text-blue-500 bg-blue-500/5">Pinjaman: {vehicle.rental_owner}</Badge>}
                     </div>
                     <p className="text-[11px] font-bold text-[#4B6478] flex items-center gap-1.5">
-                        {vehicle.capacity_ekor && <span>{vehicle.capacity_ekor} Ekor</span>}
+                        {vehicle.capacity_ekor && <span>{safeNumber(vehicle.capacity_ekor).toLocaleString('id-ID')} Ekor</span>}
                         {vehicle.capacity_ekor && vehicle.capacity_kg && <span>·</span>}
-                        {vehicle.capacity_kg && <span>{vehicle.capacity_kg} Kg</span>}
+                        {vehicle.capacity_kg && <span>{safeNumber(vehicle.capacity_kg).toLocaleString('id-ID')} Kg</span>}
                     </p>
                 </div>
 
                 {/* Row 4: Stats */}
                 <div className="pt-2 border-t border-white/5 flex items-center gap-2 text-[10px] font-black text-[#4B6478] uppercase tracking-widest">
                     <Clock size={12} />
-                    <span>Total {vehicle.deliveries?.length || 0} Pengiriman</span>
+                    <span>Total {safeNumber(vehicle.deliveries?.length).toLocaleString('id-ID')} Pengiriman</span>
                 </div>
 
                 {/* Actions */}
@@ -425,7 +459,7 @@ function VehicleCard({ vehicle, onEdit, onAddExpense }) {
     )
 }
 
-function DriverCard({ driver, onEdit }) {
+function DriverCard({ driver, isOnRoute, onEdit }) {
     const statusMeta = {
         aktif:    { label: 'Aktif',    color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
         cuti:     { label: 'Cuti',     color: 'text-amber-400',   bg: 'bg-amber-500/10' },
@@ -450,9 +484,16 @@ function DriverCard({ driver, onEdit }) {
                     <div className="flex-1 min-w-0">
                         <div className="flex justify-between items-start">
                             <h3 className="font-display font-black text-sm text-white uppercase truncate">{driver.full_name}</h3>
-                            <Badge className={cn("rounded-lg border-none px-2 py-0.5 text-[8px] font-black uppercase tracking-widest", meta.bg, meta.color)}>
-                                {meta.label}
-                            </Badge>
+                            <div className="flex flex-col items-end gap-1">
+                                {isOnRoute && (
+                                    <Badge className="rounded-lg border-none px-2 py-0.5 text-[8px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-500">
+                                        Sedang Mengirim
+                                    </Badge>
+                                )}
+                                <Badge className={cn("rounded-lg border-none px-2 py-0.5 text-[8px] font-black uppercase tracking-widest", meta.bg, meta.color)}>
+                                    {meta.label}
+                                </Badge>
+                            </div>
                         </div>
                         <a href={`tel:${driver.phone}`} className="flex items-center gap-1.5 mt-1 text-[#4B6478] hover:text-white transition-colors">
                             <Phone size={11} />
@@ -487,11 +528,11 @@ function DriverCard({ driver, onEdit }) {
                 <div className="pt-2 border-t border-white/5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-black text-[#4B6478] uppercase tracking-widest">
                     <div className="flex items-center gap-1.5">
                         <DollarSign size={12} />
-                        <span>Rp {driver.wage_per_trip?.toLocaleString()}/Trip</span>
+                        <span>{formatIDR(driver.wage_per_trip)}/Trip</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                         <Truck size={12} />
-                        <span>{driver.deliveries?.length || 0} Pengiriman</span>
+                        <span>{safeNumber(driver.deliveries?.length).toLocaleString('id-ID')} Pengiriman</span>
                     </div>
                 </div>
 
@@ -596,8 +637,9 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
-            <SheetContent side="bottom" className="h-[90vh] bg-[#0C1319] border-white/10 rounded-t-[40px] px-6 text-left overflow-y-auto">
-                <SheetHeader className="mb-8">
+            <SheetContent side="right" className="w-full sm:max-w-[520px] bg-[#0C1319] border-l border-white/8 p-0 overflow-y-auto">
+                <div className="p-8 space-y-8">
+                    <SheetHeader className="text-left">
                     <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">
                         {editingData ? 'Edit Kendaraan' : 'Tambah Kendaraan'}
                     </SheetTitle>
@@ -661,7 +703,12 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
                         {ownership === 'sewa' && (
                             <div className="space-y-2">
                                 <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Biaya Sewa / Trip Rp</Label>
-                                <Input {...register('rental_cost')} type="number" placeholder="150000" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase" />
+                                <InputRupiah 
+                                    value={watch('rental_cost')} 
+                                    onChange={(v) => setValue('rental_cost', v)} 
+                                    placeholder="150000" 
+                                    className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase" 
+                                />
                             </div>
                         )}
 
@@ -676,11 +723,22 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                              <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Cap. Ekor</Label>
-                             <Input {...register('capacity_ekor')} type="number" placeholder="500" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase" />
+                             <InputNumber 
+                                value={watch('capacity_ekor')} 
+                                onChange={(v) => setValue('capacity_ekor', v)} 
+                                placeholder="500" 
+                                className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase" 
+                             />
                         </div>
                         <div className="space-y-2">
                              <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Cap. Kg</Label>
-                             <Input {...register('capacity_kg')} type="number" step="0.1" placeholder="800" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase" />
+                             <InputNumber 
+                                value={watch('capacity_kg')} 
+                                onChange={(v) => setValue('capacity_kg', v)} 
+                                step={0.1} 
+                                placeholder="800" 
+                                className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase" 
+                             />
                         </div>
                     </div>
 
@@ -727,7 +785,8 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
                             </Button>
                         )}
                     </SheetFooter>
-                </form>
+                    </form>
+                </div>
 
                 <DeleteConfirm 
                     isOpen={isDeleteDialogOpen} 
@@ -769,24 +828,31 @@ function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
 
     const onSubmit = async (vals) => {
         setIsSubmitting(true)
-        const payload = {
-            ...vals,
-            tenant_id: tenantId,
-            wage_per_trip: parseInt(vals.wage_per_trip) || 0
-        }
+        try {
+            const payload = {
+                tenant_id: tenantId,
+                full_name: vals.full_name,
+                phone_number: vals.phone, // Map phone -> phone_number
+                sim_expires_at: vals.sim_expires_at || null,
+                wage_per_trip: parseInt(vals.wage_per_trip) || 0,
+                status: vals.status
+            }
 
-        const { error } = editingData 
-            ? await supabase.from('drivers').update(payload).eq('id', editingData.id)
-            : await supabase.from('drivers').insert(payload)
+            const { error } = editingData 
+                ? await supabase.from('drivers').update(payload).eq('id', editingData.id)
+                : await supabase.from('drivers').insert(payload)
 
-        if (error) {
-            toast.error('Gagal menyimpan data sopir')
-        } else {
+            if (error) throw error
+
             toast.success('Sopir tersimpan!')
             queryClient.invalidateQueries(['drivers'])
             onClose()
+        } catch (err) {
+            console.error('Error saving driver:', err)
+            toast.error('Gagal menyimpan data sopir: ' + (err.message || 'Error tidak diketahui'))
+        } finally {
+            setIsSubmitting(false)
         }
-        setIsSubmitting(false)
     }
 
     const handleDelete = async () => {
@@ -811,8 +877,9 @@ function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
-            <SheetContent side="bottom" className="h-[90vh] bg-[#0C1319] border-white/10 rounded-t-[40px] px-6 text-left overflow-y-auto">
-                <SheetHeader className="mb-8">
+            <SheetContent side="right" className="w-full sm:max-w-[520px] bg-[#0C1319] border-l border-white/8 p-0 overflow-y-auto">
+                <div className="p-8 space-y-8">
+                    <SheetHeader className="text-left">
                     <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">
                         {editingData ? 'Edit Sopir' : 'Tambah Sopir'}
                     </SheetTitle>
@@ -862,7 +929,12 @@ function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                              <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Upah Per Trip Rp</Label>
-                             <Input {...register('wage_per_trip')} type="number" placeholder="150000" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase" />
+                             <InputRupiah 
+                                value={watch('wage_per_trip')} 
+                                onChange={(v) => setValue('wage_per_trip', v)} 
+                                placeholder="150000" 
+                                className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase" 
+                             />
                         </div>
                         <div className="space-y-2">
                              <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Status Sopir</Label>
@@ -887,7 +959,7 @@ function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
                     <SheetFooter className="flex flex-col gap-3">
                         <Button 
                             disabled={isSubmitting}
-                            className="w-full h-16 bg-blue-500 hover:bg-blue-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-[24px] shadow-xl shadow-blue-500/20 active:scale-95 transition-all"
+                            className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-[24px] shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
                         >
                             {isSubmitting ? 'MENYIMPAN...' : editingData ? 'SIMPAN PERUBAHAN' : 'TAMBAH SOPIR'}
                         </Button>
@@ -902,7 +974,8 @@ function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
                             </Button>
                         )}
                     </SheetFooter>
-                </form>
+                    </form>
+                </div>
 
                 <DeleteConfirm 
                     isOpen={isDeleteDialogOpen} 
@@ -953,8 +1026,9 @@ function ExpenseSheet({ isOpen, onClose, vehicle, tenantId }) {
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
-            <SheetContent side="bottom" className="h-[80vh] bg-[#0C1319] border-white/10 rounded-t-[40px] px-6 text-left">
-                <SheetHeader className="mb-8">
+            <SheetContent side="right" className="w-full sm:max-w-[520px] bg-[#0C1319] border-l border-white/8 p-0 overflow-y-auto">
+                <div className="p-8 space-y-8">
+                    <SheetHeader className="text-left">
                     <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">
                         Catat Biaya — {vehicle?.vehicle_plate}
                     </SheetTitle>
@@ -982,7 +1056,12 @@ function ExpenseSheet({ isOpen, onClose, vehicle, tenantId }) {
                         </div>
                         <div className="space-y-2">
                              <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Nominal Rp *</Label>
-                             <Input {...register('amount')} type="number" placeholder="500000" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs" />
+                             <InputRupiah 
+                                value={watch('amount')} 
+                                onChange={(v) => setValue('amount', v)} 
+                                placeholder="500000" 
+                                className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs" 
+                             />
                         </div>
                     </div>
 
@@ -1002,7 +1081,8 @@ function ExpenseSheet({ isOpen, onClose, vehicle, tenantId }) {
                     >
                         {isSubmitting ? 'MENYIMPAN...' : 'SIMPAN BIAYA'}
                     </Button>
-                </form>
+                    </form>
+                </div>
             </SheetContent>
         </Sheet>
     )

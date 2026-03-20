@@ -22,14 +22,16 @@ import sys
 import json
 import os
 import logging
+import time
+import schedule    # type: ignore
 from dotenv import load_dotenv # type: ignore
 
 # ── Load env ──────────────────────────────────────────────
 # Load from root directory if running from scripts/
 load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
-SUPABASE_URL    = os.getenv("SUPABASE_URL", "https://llgqxzrlcewugufzwyer.supabase.co")
-SUPABASE_KEY    = os.getenv("SUPABASE_SERVICE_KEY")
+SUPABASE_URL    = os.getenv("SUPABASE_URL", os.getenv("VITE_SUPABASE_URL", "https://llgqxzrlcewugufzwyer.supabase.co"))
+SUPABASE_KEY    = os.getenv("SUPABASE_SERVICE_KEY", os.getenv("VITE_SUPABASE_ANON_KEY"))
 
 # ── Config ────────────────────────────────────────────────
 SOURCE_URL      = "https://chickin.id/blog/update/harga-ayam/"
@@ -137,11 +139,20 @@ def fetch_harga_from_chickin() -> dict:
         raise ValueError("Tidak ada data harga valid ditemukan untuk wilayah target")
 
     avg_farm_gate = sum(collected_prices) // len(collected_prices)
+    buyer_price   = avg_farm_gate + BUYER_MARGIN
+    today_wib     = datetime.now(WIB).strftime("%Y-%m-%d")
+
     log.info(f"✓ Rata-rata ditemukan: Rp {avg_farm_gate:,} (dari {len(collected_prices)} baris)")
+
+    # ── Debug prints (requested) ──
+    print(f"Tanggal web: {datetime.now(WIB).strftime('%d %B %Y')}")
+    print(f"Farm gate: {avg_farm_gate}")
+    print(f"Buyer price: {buyer_price}")
+    print(f"Price date: {today_wib}")
 
     return {
         "farm_gate_price": avg_farm_gate,
-        "buyer_price":     avg_farm_gate + BUYER_MARGIN,
+        "buyer_price":     buyer_price,
         "region":          "Jawa Tengah",
         "source_url":      SOURCE_URL,
     }
@@ -171,25 +182,24 @@ def already_exists_today() -> bool:
 def insert_to_supabase(harga: dict) -> bool:
     today   = datetime.now(WIB).strftime("%Y-%m-%d")
     payload = {
-        "price_date":      today,
-        "chicken_type":    "broiler",
-        "farm_gate_price": harga["farm_gate_price"],
-        "avg_buy_price":   harga["farm_gate_price"],
-        "buyer_price":     harga["buyer_price"],
-        "avg_sell_price":  harga["buyer_price"],
-        "region":          harga["region"],
-        "source":          "auto_scraper",
-        "source_url":      harga["source_url"],
+        "price_date":        today,
+        "chicken_type":      "broiler",
+        "farm_gate_price":   harga["farm_gate_price"],
+        "buyer_price":       harga["buyer_price"],
+        "region":            harga["region"],
+        "source":            "auto_scraper",
+        "source_url":        harga["source_url"],
         "transaction_count": 0,
-        "is_deleted":      False,
-        "created_at":      datetime.now(WIB).isoformat(),
     }
+
+    # ── Debug: print payload before insert ──
+    log.info(f"Insert payload: {json.dumps(payload, indent=2)}")
 
     headers = {
         "apikey":        SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
         "Content-Type":  "application/json",
-        "Prefer":        "resolution=merge-duplicates",
+        "Prefer":        "return=minimal",
     }
 
     try:
@@ -252,4 +262,20 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if "--daemon" in sys.argv:
+        log.info("Memulai mode DAEMON")
+        main() # Jalankan sekali saat start
+        
+        # Jadwalkan 2x sehari WIB
+        schedule.every().day.at("12:00").do(main)
+        schedule.every().day.at("18:00").do(main)
+        
+        log.info("Daemon aktif — jadwal scrape: 12:00 & 18:00 WIB")
+        try:
+            while True:
+                schedule.run_pending()
+                time.sleep(60)
+        except KeyboardInterrupt:
+            log.info("Daemon dihentikan (KeyboardInterrupt)")
+    else:
+        main()

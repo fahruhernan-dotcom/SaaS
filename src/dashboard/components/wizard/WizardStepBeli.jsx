@@ -16,7 +16,7 @@ import { InputNumber } from '@/components/ui/InputNumber'
 import { useNavigate } from 'react-router-dom'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { DatePicker } from '@/components/ui/DatePicker'
-import { formatIDR, safeNum } from '@/lib/format'
+import { formatIDR, safeNum, formatWeight } from '@/lib/format'
 import { toast } from 'sonner'
 import {
   Command, CommandEmpty, CommandGroup,
@@ -450,7 +450,7 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
           <div className="space-y-2.5">
             <div className="flex justify-between items-baseline">
               <span className="text-[12px] font-bold text-[#4B6478] uppercase tracking-wider">Total Berat</span>
-              <span className="text-base font-black text-white">{totalWeight > 1000 ? `${(totalWeight / 1000).toFixed(2)} ton` : `${totalWeight.toFixed(1)} kg`}</span>
+              <span className="text-base font-black text-white">{formatWeight(totalWeight)}</span>
             </div>
             <div className="flex justify-between items-baseline">
               <span className="text-[12px] font-bold text-[#4B6478] uppercase tracking-wider">Harga Beli</span>
