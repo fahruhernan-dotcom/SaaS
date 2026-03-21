@@ -1,10 +1,11 @@
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '../../lib/supabase';
 import { formatIDR } from '../../lib/format';
+import { DatePicker } from '@/components/ui/DatePicker';
 import SlideModal from '../components/SlideModal';
 
 const bayarSchema = z.object({
@@ -16,7 +17,7 @@ const bayarSchema = z.object({
 export default function FormBayarModal({ isOpen, onClose, rpa }) {
   const queryClient = useQueryClient();
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, reset, control, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(bayarSchema),
     defaultValues: {
       payment_date: new Date().toISOString().split('T')[0],
@@ -95,7 +96,16 @@ export default function FormBayarModal({ isOpen, onClose, rpa }) {
 
         <div>
           <label style={labelStyle}>Tanggal Pembayaran</label>
-          <input type="date" {...register('payment_date')} style={inputStyle} />
+          <Controller
+            control={control}
+            name="payment_date"
+            render={({ field }) => (
+              <DatePicker
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
         </div>
 
         <button 

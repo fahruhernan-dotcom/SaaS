@@ -73,6 +73,8 @@ export default function Beranda() {
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['today-stats', tenant?.id],
     queryFn: async () => {
+      if (!tenant?.id) return { sales: 0, purchases: 0, profit: 0, weight: 0 }
+      
       const [{ data: sales }, { data: purchases }] = await Promise.all([
         supabase
           .from('sales')
@@ -88,9 +90,9 @@ export default function Beranda() {
           .eq('is_deleted', false)
       ])
 
-      const totalSales = sales?.reduce((acc, s) => acc + (safeNumber(s.total_revenue)), 0) || 0
-      const totalPurchases = purchases?.reduce((acc, p) => acc + (safeNumber(p.total_modal)), 0) || 0
-      const totalWeightSold = sales?.reduce((acc, s) => acc + (safeNumber(s.total_weight_kg)), 0) || 0
+      const totalSales = (sales ?? []).reduce((acc, s) => acc + (safeNumber(s?.total_revenue)), 0)
+      const totalPurchases = (purchases ?? []).reduce((acc, p) => acc + (safeNumber(p?.total_modal)), 0)
+      const totalWeightSold = (sales ?? []).reduce((acc, s) => acc + (safeNumber(s?.total_weight_kg)), 0)
       
       return {
         sales: safeNumber(totalSales),
@@ -138,6 +140,8 @@ export default function Beranda() {
   const { data: transactions } = useQuery({
     queryKey: ['recent-tx', tenant?.id],
     queryFn: async () => {
+      if (!tenant?.id) return []
+      
       const [{ data: sales }, { data: purchases }] = await Promise.all([
         supabase
           .from('sales')
@@ -156,9 +160,9 @@ export default function Beranda() {
       ])
 
       const combined = [
-        ...(sales?.map(s => ({ ...s, type: 'sale' })) || []),
-        ...(purchases?.map(p => ({ ...p, type: 'purchase' })) || [])
-      ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5)
+        ...((sales ?? []).map(s => ({ ...s, type: 'sale' }))),
+        ...((purchases ?? []).map(p => ({ ...p, type: 'purchase' })))
+      ].sort((a, b) => new Date(b?.created_at ?? 0) - new Date(a?.created_at ?? 0)).slice(0, 5)
 
       return combined
     },
@@ -215,7 +219,7 @@ export default function Beranda() {
               fontWeight: 800,
               color: '#34D399'
             }}>
-              {profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+              {(profile?.full_name ?? 'User').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
             </div>
             {/* Pulse Dot */}
             <div style={{
@@ -353,7 +357,7 @@ export default function Beranda() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {transactions?.length === 0 ? (
+            {(transactions ?? []).length === 0 ? (
               <div style={{ 
                 padding: '40px 0', 
                 textAlign: 'center', 
@@ -364,7 +368,7 @@ export default function Beranda() {
                 <p style={{ color: '#4B6478', fontSize: '13px' }}>Belum ada transaksi hari ini</p>
               </div>
             ) : (
-              transactions?.map((tx) => (
+              (transactions ?? []).map((tx) => (
                 <div key={tx.id} style={{
                   background: '#0C1319',
                   borderRadius: '16px',
@@ -388,10 +392,10 @@ export default function Beranda() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontSize: '13px', fontWeight: 600 }}>
-                      {tx.type === 'sale' ? tx.rpa_clients?.rpa_name : tx.farms?.farm_name}
+                      {tx.type === 'sale' ? (tx.rpa_clients?.rpa_name ?? 'Buyer Umum') : (tx.farms?.farm_name ?? 'Kandang Umum')}
                     </p>
                     <p style={{ fontSize: '11px', color: '#4B6478', marginTop: '2px' }}>
-                      {formatEkor(tx.quantity)} • {tx.type === 'sale' ? 'Penjualan' : 'Pembelian'}
+                      {formatEkor(tx.quantity ?? 0)} • {tx.type === 'sale' ? 'Penjualan' : 'Pembelian'}
                     </p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
@@ -399,7 +403,7 @@ export default function Beranda() {
                       {tx.type === 'sale' ? '+' : '-'}{formatIDRShort(safeNumber(tx.type === 'sale' ? tx.total_revenue : tx.total_modal))}
                     </p>
                     <p style={{ fontSize: '10px', color: '#4B6478', marginTop: '2px' }}>
-                      {new Date(tx.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(tx?.created_at ?? Date.now()).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 </div>

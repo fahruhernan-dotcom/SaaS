@@ -111,7 +111,7 @@ payment_settings ← GLOBAL
 | `tenant_id` | uuid FK → tenants | NOT NULL |
 | `auth_user_id` | uuid FK → auth.users | NOT NULL, UNIQUE |
 | `full_name` | text | nullable |
-| `role` | text | `'owner'` `'staff'` `'superadmin'` |
+| `role` | text | `'owner'` `'staff'` `'superadmin'` `'view_only'` `'sopir'` |
 | `user_type` | text | `'broker'` `'peternak'` `'rpa'` `'superadmin'` |
 | `phone` | text | nullable |
 | `avatar_url` | text | nullable |
@@ -465,11 +465,15 @@ payment_settings ← GLOBAL
 | `id` | uuid PK | |
 | `tenant_id` | uuid FK → tenants | NOT NULL |
 | `invited_by` | uuid FK → profiles | NOT NULL |
-| `email` | text | NOT NULL |
-| `role` | text | `'owner'` `'staff'` `'view_only'` `'supir'` |
-| `token` | text | UNIQUE, auto-generated |
+| `email` | text | **nullable** |
+| `role` | text | `'owner'` `'staff'` `'view_only'` `'sopir'` |
+| `token` | text | 6 karakter uppercase, kode undangan |
 | `status` | text | `'pending'` `'accepted'` `'expired'` |
 | `expires_at` | timestamptz | default now()+7 days |
+
+⚠️ Kolom `is_deleted` TIDAK ADA di tabel ini  
+⚠️ Kolom `email` nullable — tidak diisi saat generate kode undangan  
+⚠️ Gunakan `expires_at` bukan `expired_at`
 
 ---
 
@@ -743,16 +747,81 @@ extra_expenses.category: 'tenaga_kerja' | 'sewa' | 'administrasi' | 'komunikasi'
 vehicle_expenses.expense_type: 'bbm' | 'servis' | 'pajak' | 'sewa' | 'lainnya'
 market_prices.source:    'transaction' | 'manual' | 'import' | 'auto_scraper'
 tenants.plan:            'starter' | 'pro' | 'business'
-profiles.role:           'owner' | 'staff' | 'superadmin'
+profiles.role:           'owner' | 'staff' | 'superadmin' | 'view_only' | 'sopir'
 profiles.user_type:      'broker' | 'peternak' | 'rpa' | 'superadmin'
 payments.payment_method: 'transfer' | 'cash' | 'giro' | 'qris'
 ```
 
 ---
 
-## ⚡ DATABASE TRIGGERS & FUNCTIONS
+## 🔐 RBAC — Role Based Access Control
 
-> Jangan dibuat ulang — sudah ada di Supabase. Antigravity tidak perlu menyentuh ini.
+### Akses per role:
+
+| Role | Beranda | Transaksi | Kandang | Pengiriman | RPA | Cash Flow | Armada | Tim & Akses | Simulator |
+|------|---------|-----------|---------|------------|-----|-----------|--------|-------------|-----------|
+| owner | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| staff | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| view_only | ✅ | ✅ (read) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| sopir | ❌ | ❌ | ❌ | ✅ (own only) | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+### Route per role setelah login:
+- owner → `/broker/beranda`
+- staff → `/broker/beranda`
+- view_only → `/broker/beranda`
+- sopir → `/broker/sopir`
+
+### Komponen guard:
+- `RoleGuard` di `App.jsx` wraps route sensitif
+- `allowedRoles` prop berisi array role yang diizinkan
+
+---
+
+## 🎫 SISTEM UNDANGAN TIM
+
+### Flow generate kode (Tim.jsx):
+1. Owner klik "Generate Kode Undangan"
+2. Generate kode 6 karakter random uppercase
+3. Insert ke `team_invitations`:
+   `{ tenant_id, invited_by, token: kode, role, status: 'pending', expires_at: now() + 7 hari }`
+   ✗ JANGAN insert email — nullable
+
+### Flow join via kode (Register.jsx):
+1. Staff pilih mode "Punya Kode Undangan"
+2. Input kode 6 digit
+3. Query: `SELECT * FROM team_invitations WHERE token = kode AND status = 'pending'`
+   ✗ JANGAN filter `is_deleted` — kolom tidak ada
+   ✗ JANGAN filter `expires_at` di query — cek manual setelah dapat data
+4. `signUp` dengan `options.data.invite_token = kode`
+5. Trigger DB handle sisanya otomatis
+
+### RLS yang dibutuhkan:
+- `team_invitations`: anon dan authenticated bisa SELECT
+- `tenants`: anon dan authenticated bisa SELECT
+
+---
+
+### `handle_new_user()` — Updated Logic (2026-03-22)
+
+Trigger: `AFTER INSERT ON auth.users`
+
+**Logic baru**:
+- Cek `raw_user_meta_data->>'invite_token'`
+- Jika ada `invite_token`:
+  → Cari `team_invitations WHERE token = invite_token AND status = 'pending'`
+  → Insert `profiles` dengan `tenant_id` dari invitation
+  → role = role dari invitation (default 'staff'), onboarded = true, business_model_selected = true
+  → Update `team_invitations SET status = 'accepted'`
+- Jika tidak ada `invite_token`:
+  → Buat tenant baru (owner flow seperti biasa)
+  → onboarded = false, business_model_selected = false
+
+Frontend wajib kirim `invite_token` di:
+```js
+supabase.auth.signUp({
+  options: { data: { invite_token: 'KODE6DIGIT', full_name: '...' } }
+})
+```
 
 ---
 

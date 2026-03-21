@@ -270,7 +270,9 @@ function RPACard({ rpa, onClick, onEdit }) {
   )
 }
 
-function RPAForm({ rpa, onClose, tenantId, onSuccess }) {
+function RPAForm({ rpa, onClose, tenantId, onSubmit, onDelete }) {
+    const { profile } = useAuth()
+    const isOwner = profile?.role === 'owner'
     const [isLoading, setIsLoading] = useState(false)
     const [formData, setFormData] = useState(rpa || {
         rpa_name: '',
@@ -288,33 +290,10 @@ function RPAForm({ rpa, onClose, tenantId, onSuccess }) {
         e.preventDefault()
         setIsLoading(true)
         try {
-            if (rpa) {
-                const { error } = await supabase.from('rpa_clients').update(formData).eq('id', rpa.id)
-                if (error) throw error
-                toast.success('RPA diperbarui!')
-            } else {
-                const { error } = await supabase.from('rpa_clients').insert({ ...formData, tenant_id: tenantId })
-                if (error) throw error
-                toast.success('RPA ditambahkan!')
-            }
-            onSuccess()
+            await onSubmit(formData)
+            onClose()
         } catch (err) {
-            toast.error('Error: ' + err.message)
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    const handleDelete = async () => {
-        if (!confirm('Hapus RPA ini? Semua data piutang akan tetap ada di riwayat transaksi.')) return
-        setIsLoading(true)
-        try {
-            const { error } = await supabase.from('rpa_clients').update({ is_deleted: true }).eq('id', rpa.id)
-            if (error) throw error
-            toast.success('RPA dihapus')
-            onSuccess()
-        } catch (err) {
-            toast.error('Error: ' + err.message)
+            // Error handling is done in onSubmit, but keep this for local state management
         } finally {
             setIsLoading(false)
         }
@@ -324,9 +303,9 @@ function RPAForm({ rpa, onClose, tenantId, onSuccess }) {
         <form onSubmit={handleSubmit} className="space-y-6 pb-12">
             <div className="space-y-2">
                 <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Nama RPA / Pembeli *</Label>
-                <Input 
+                <Input
                     required
-                    value={formData.rpa_name} 
+                    value={formData.rpa_name}
                     onChange={e => setFormData({...formData, rpa_name: e.target.value})}
                     className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold"
                 />
@@ -350,10 +329,10 @@ function RPAForm({ rpa, onClose, tenantId, onSuccess }) {
                 </div>
                 <div className="space-y-2">
                     <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">No HP *</Label>
-                    <Input 
+                    <Input
                         required
                         type="tel"
-                        value={formData.phone} 
+                        value={formData.phone}
                         onChange={e => setFormData({...formData, phone: e.target.value})}
                         className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold"
                     />
@@ -362,8 +341,8 @@ function RPAForm({ rpa, onClose, tenantId, onSuccess }) {
 
             <div className="space-y-2">
                 <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Lokasi / Alamat</Label>
-                <Input 
-                    value={formData.location} 
+                <Input
+                    value={formData.location}
                     onChange={e => setFormData({...formData, location: e.target.value})}
                     className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold"
                 />
@@ -389,9 +368,9 @@ function RPAForm({ rpa, onClose, tenantId, onSuccess }) {
                     <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Reliabilitas</Label>
                     <div className="flex gap-2 h-12 items-center">
                         {[1,2,3,4,5].map(s => (
-                            <Star 
-                                key={s} 
-                                size={20} 
+                            <Star
+                                key={s}
+                                size={20}
                                 className={`cursor-pointer transition-all ${s <= formData.reliability_score ? 'fill-amber-400 text-amber-400' : 'text-[#4B6478]'}`}
                                 onClick={() => setFormData({...formData, reliability_score: s})}
                             />
@@ -402,26 +381,31 @@ function RPAForm({ rpa, onClose, tenantId, onSuccess }) {
 
             <div className="space-y-2">
                 <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Catatan</Label>
-                <Textarea 
-                    value={formData.notes} 
+                <Textarea
+                    value={formData.notes}
                     onChange={e => setFormData({...formData, notes: e.target.value})}
                     className="bg-[#111C24] border-white/10 rounded-xl min-h-[80px]"
                 />
             </div>
 
             <div className="flex gap-3 pt-4">
-                {rpa && (
-                    <Button 
+                {rpa && isOwner && (
+                    <Button
                         type="button"
-                        onClick={handleDelete}
                         variant="ghost"
-                        className="w-14 h-14 rounded-2xl border border-red-500/20 text-red-500 hover:bg-red-500/10"
+                        size="icon"
+                        onClick={() => {
+                            if (confirm('Hapus RPA ini? Semua data piutang akan tetap ada di riwayat transaksi.')) {
+                                onDelete(rpa.id)
+                            }
+                        }}
+                        className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/5 text-[#F87171] hover:bg-red-500/10 transition-all"
                     >
-                        <Trash2 size={24} />
+                        <Trash2 size={20} />
                     </Button>
                 )}
-                <Button 
-                    type="submit" 
+                <Button
+                    type="submit"
                     className="flex-1 h-14 rounded-2xl bg-[#10B981] hover:bg-[#0D9668] text-base font-black border-none shadow-lg uppercase tracking-widest text-xs"
                     disabled={isLoading}
                 >

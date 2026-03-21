@@ -16,6 +16,7 @@ import {
   CreditCard,
   History
 } from 'lucide-react'
+import { useAuth } from '../../lib/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { getBusinessModel } from '../../lib/businessModel'
 
@@ -25,8 +26,29 @@ const ICON_MAP = {
 }
 
 export default function DrawerLainnya({ isOpen, onClose, userType }) {
+  const { profile } = useAuth()
   const navigate = useNavigate()
   const model = getBusinessModel(userType)
+
+  const isOwner = profile?.role === 'owner'
+  const isStaff = profile?.role === 'staff'
+  const isViewOnly = profile?.role === 'view_only'
+
+  const filteredMenu = model.drawerMenu.filter(item => {
+    if (userType !== 'broker') return true // only apply to broker
+    
+    if (isOwner) return true
+    if (isStaff) {
+      return ['Pengiriman & Loss', 'Harga Pasar', 'Akun & Profil'].includes(item.label)
+    }
+    if (isViewOnly) {
+      return ['Harga Pasar', 'Akun & Profil'].includes(item.label)
+    }
+    if (profile?.role === 'sopir') {
+      return false
+    }
+    return true
+  })
 
   return (
     <AnimatePresence>
@@ -63,7 +85,7 @@ export default function DrawerLainnya({ isOpen, onClose, userType }) {
 
               {/* Menu List */}
               <div className="space-y-2">
-                {model.drawerMenu.map((item, idx) => {
+                {filteredMenu.map((item, idx) => {
                   const Icon = ICON_MAP[item.icon] || User
                   return (
                     <motion.div

@@ -1,3 +1,4 @@
+import * as React from 'react'
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { CalendarIcon } from 'lucide-react'
@@ -6,44 +7,35 @@ import {
   Popover, PopoverContent, PopoverTrigger
 } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
-export function DatePicker({ value, onChange, placeholder }) {
+export function DatePicker({ value, onChange, placeholder, className }) {
+  const dateValue = value ? (value instanceof Date ? value : new Date(value)) : null
+
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          style={{
-            width: '100%',
-            justifyContent: 'flex-start',
-            gap: '10px',
-            background: 'hsl(var(--input))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '10px',
-            padding: '13px 14px',
-            height: 'auto',
-            fontSize: '16px',
-            color: value
-              ? 'hsl(var(--foreground))'
-              : 'hsl(var(--muted-foreground))',
-            fontWeight: 400
-          }}
+          className={cn(
+            "h-14 w-full rounded-2xl bg-[#111C24] border-white/5 px-4 flex items-center justify-start gap-3 hover:bg-white/5 hover:border-white/10 transition-all",
+            !value && "text-[#4B6478]",
+            value && "text-white font-black text-xs uppercase tracking-widest",
+            className
+          )}
         >
-          <CalendarIcon size={16} color="hsl(var(--muted-foreground))" />
-          {value
-            ? format(new Date(value), 'd MMMM yyyy', { locale: id })
-            : (placeholder || 'Pilih tanggal')}
+          <CalendarIcon size={18} className={cn("transition-colors", value ? "text-[#10B981]" : "text-[#4B6478]")} />
+          <span>
+            {dateValue && !isNaN(dateValue.getTime())
+              ? format(dateValue, 'dd MMM yyyy', { locale: id })
+              : (placeholder || 'PILIH TANGGAL')}
+          </span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent style={{
-        width: 'auto', padding: 0,
-        background: 'hsl(var(--popover))',
-        border: '1px solid hsl(var(--border))',
-        borderRadius: '14px'
-      }}>
+      <PopoverContent align="start" className="w-auto p-0 border-none bg-transparent shadow-none">
         <Calendar
           mode="single"
-          selected={value ? new Date(value) : undefined}
+          selected={dateValue}
           onSelect={(date) => {
             if (date) {
               onChange(format(date, 'yyyy-MM-dd'))

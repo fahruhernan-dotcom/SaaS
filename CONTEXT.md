@@ -1,6 +1,6 @@
 # TernakOS — Developer Context
 
-> Last updated: 2026-03-20 (Pengiriman module refactored & completed) | Use this as reference for all future implementations.
+> Last updated: 2026-03-22 (RBAC, Undangan Kode, Role Baru, UI/UX) | Use this as reference for all future implementations.
 
 ---
 
@@ -104,11 +104,43 @@
 > **Rule**: Use `.select()` only columns that exist. **NEVER insert GENERATED columns.**
 
 ### `profiles`
-- `id`, `tenant_id`, `auth_user_id`, `full_name`, `role` (`'owner'` | `'staff'` | `'superadmin'`)
+- `id`, `tenant_id`, `auth_user_id`, `full_name`, `role` (`'owner'` | `'staff'` | `'superadmin'` | `'view_only'` | `'sopir'`)
 - `user_type` (`'broker'` | `'peternak'` | `'rpa'` | `'superadmin'`)
 - `onboarded` (boolean), `business_model_selected` (boolean)
 - `is_active` (boolean) — ⚠️ Note: Project is moving to `is_deleted` for soft delete.
 - Queried via: `supabase.from('profiles').select('*, tenants(*)')` in `useAuth`
+
+### Role Based Access Control (RBAC)
+
+Pattern wajib di semua komponen:
+```javascript
+const { profile } = useAuth()
+const isOwner = profile?.role === 'owner'
+const isViewOnly = profile?.role === 'view_only'
+const canWrite = ['owner', 'staff'].includes(profile?.role)
+```
+
+**Akses per role:**
+- **owner**: Semua fitur.
+- **staff**: Beranda, Transaksi, Kandang, Pengiriman, RPA, Harga Pasar.
+  - ✗ Tidak bisa: Cash Flow, Armada, Tim & Akses, Simulator.
+  - ✗ Tidak bisa: Hapus data, edit data sensitif.
+- **view_only**: Beranda, Transaksi, Harga Pasar (semua read-only).
+  - ✗ Tidak ada tombol tambah/edit/hapus.
+  - ✓ Tampilkan banner "View Only" di setiap halaman.
+- **sopir**: Hanya `/broker/sopir`.
+  - ✓ Lihat & update status pengiriman yang di-assign.
+
+**Route setelah login:**
+- owner, staff, view_only → `/broker/beranda`
+- sopir → `/broker/sopir`
+
+**Guard component**: `RoleGuard` di `App.jsx`
+```jsx
+<RoleGuard allowedRoles={['owner']}>
+  <CashFlow />
+</RoleGuard>
+```
 
 ### `tenants`
 - `id`, `business_name`, `plan` (`'free'` | `'pro'` | `'enterprise'`), `is_trial`, `trial_ends_at`
@@ -206,9 +238,35 @@
 - Queried by `DesktopTopBar` and `HargaPasar` page
 
 ### `team_invitations`
-- `id`, `tenant_id`, `invited_by`, `email`, `role`, `status` (`'pending'` | `'accepted'` | `'expired'`)
-- `token`, `expires_at`, `created_at`
-- Used in `Tim.jsx` for member management.
+- `id`, `tenant_id`, `invited_by`, `email` (nullable), `role`, `status` (`'pending'` | `'accepted'` | `'expired'`)
+- `token` (6 karakter uppercase), `expires_at` (timestamptz), `created_at`
+- ⚠️ **Note**: Kolom `is_deleted` TIDAK ADA di tabel ini. Jangan filter `is_deleted` di query.
+
+### Sistem Undangan Tim (Kode 6 Digit)
+
+**Flow owner generate kode (Tim.jsx):**
+1. Generate kode 6 karakter random uppercase.
+2. Insert `team_invitations`: `{ tenant_id, invited_by, token, role, status: 'pending', expires_at: +7 hari }`.
+3. **JANGAN** insert email — kolom nullable.
+
+**Flow staff/sopir join via kode (Register.jsx):**
+1. Input kode 6 digit di mode "Punya Kode Undangan".
+2. Query `team_invitations` WHERE `token = kode` AND `status = 'pending'`.
+   - ✗ **JANGAN** filter `is_deleted` (kolom tidak ada).
+   - ✗ **JANGAN** filter `expires_at` di query — cek manual setelah dapat data.
+3. `signUp({ options: { data: { invite_token: kode } } })`.
+4. Trigger `handle_new_user()` handle sisanya otomatis.
+
+**Trigger handle_new_user() (PostgreSQL):**
+- **Jika ada invite_token di metadata** → Join tenant existing.
+  - `profiles`: `role='staff'`, `onboarded=true`, `business_model_selected=true`.
+  - `team_invitations`: `status='accepted'`.
+- **Jika tidak ada invite_token** → Buat tenant baru (owner flow).
+  - `profiles`: `role='owner'`, `onboarded=false`, `business_model_selected=false`.
+
+**RLS yang dibutuhkan:**
+- `team_invitations`: anon + authenticated bisa SELECT.
+- `tenants`: anon + authenticated bisa SELECT.
 
 ### `payments`
 - `id`, `tenant_id`, `sale_id`, `amount`, `payment_date`, `payment_method`, `reference_no`
@@ -414,6 +472,7 @@ src/
 │   │   ├── CashFlow.jsx            ← Cash flow chart + breakdown + expense form
 │   │   ├── Armada.jsx              ← Vehicle + driver CRUD, SIM expiry alerts
 │   │   ├── Simulator.jsx           ← Margin profit simulator
+│   │   ├── Tim.jsx                 ← Team & member management
 │   │   └── Akun.jsx                ← Profile, plan info, notifications, logout
 │   │
 │   ├── peternak/
@@ -458,6 +517,7 @@ src/
 │       ├── HargaPasar.jsx          ← Market price view
 │       ├── OnboardingFlow.jsx      ← Multi-step onboarding
 │       ├── Akun.jsx                ← Account (shared across roles, old location)
+│       ├── Beranda.jsx             ← Dashboard redirect (old)
 │       ├── StokVirtual.jsx         ← Virtual stock page (Peternak)
 │       ├── Forecast.jsx            ← Supply/demand forecast
 │       ├── Orders.jsx              ← Order management
@@ -557,6 +617,8 @@ src/
 | `calcROI(modal, profit)` | ROI percentage | |
 | `calcMortalityRate(initial, died)` | Mortality % | |
 | `calcShrinkage(initialKg, arrivedKg)` | Shrinkage kg + % | `{ kg, percent }` |
+| `calcNetProfit(sale)` | Standard Net Profit (using revenue - costs) | |
+| `calcRemainingAmount(sale)` | Standard Remaining Debt (revenue - paid) | |
 
 ### Label Maps (also in `lib/format.js`)
 
@@ -772,10 +834,65 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 19. **Mortality auto-report**: `useUpdateDelivery.updateTiba()` auto-creates `loss_reports` for mortality > 0
 20. **Toast dark styling**: Sonner toaster configured globally with custom dark card styles in `main.jsx`
 21. **Arrival Sheet Redesign**: `UpdateArrivalSheet` in `Pengiriman.jsx` reorganized into a specific **7-row responsive layout**. Includes bidirectional sync between "Ekor Tiba" and "Ekor Mati" based on `initial_count`.
+22. **Financial Standardization (2026-03-20)**: Selalu gunakan `sale.total_revenue` langsung untuk pendapatan (Bobot Tiba × Harga), JANGAN hitung ulang dari `total_weight_kg` (bobot awal/kirim).
+23. **RPA Outstanding Calculation**: Perhitungan saldo/piutang di detail page (`RPADetail.jsx`) harus menggunakan `calcRemainingAmount(s)` di frontend. Jangan mengandalkan kolom `remaining_amount` di database karena mungkin masih menggunakan kalkulasi bobot awal.
+24. **`team_invitations` tidak punya `is_deleted`** — jangan filter `.eq('is_deleted', false)`.
+25. **`team_invitations.expires_at`** — nama kolom `expires_at` BUKAN `expired_at`.
+26. **`team_invitations.email` nullable** — jangan insert email saat generate kode.
+27. **RBAC pattern** — selalu cek `profile.role` sebelum render tombol aksi sensitif.
+28. **`invite_token` di `signUp` metadata** — wajib dikirim agar trigger DB handle join tenant.
+29. **View Only banner** — tampilkan di setiap halaman yang bisa diakses `view_only`.
 
 ---
 
-## 21. Implemented Modules Status
+## 21. RBAC System
+
+**`profiles.role` enum**: `owner`, `staff`, `view_only`, `sopir`.
+- `owner`: Full access, can manage team, billing.
+- `staff`: Standard operational access, cannot manage team/billing.
+- `view_only`: Read-only access to most data.
+- `sopir`: Limited access, primarily for `SopirDashboard` to update delivery status.
+
+**Implementation**:
+- `RoleGuard` component in `App.jsx` protects routes based on required roles.
+- Sidebar and Bottom Navigation menus dynamically filter visible items based on user's role.
+- Role badge displayed in sidebar footer for quick identification.
+- Frontend components should check `profile.role` before rendering sensitive action buttons or forms.
+
+---
+
+## 22. Team Invitations System
+
+**Purpose**: Allows `owner` role to invite new members to their tenant using a 6-digit uppercase code.
+
+**Schema**: `team_invitations` table
+- `id`: UUID
+- `tenant_id`: UUID (FK to `tenants.id`)
+- `invite_code`: TEXT (6-digit uppercase, unique)
+- `expires_at`: TIMESTAMPZ (7 days from creation)
+- `email`: TEXT (nullable, can be used for pre-filling or direct invite)
+- `role`: TEXT (enum: `staff`, `view_only`, `sopir`)
+- `created_at`: TIMESTAMPZ
+
+**Flow**:
+1. `owner` generates an invite code via `Tim.jsx`.
+2. Code is stored in `team_invitations` with an `expires_at` (7 days).
+3. Invited user navigates to `/invite`, inputs the 6-digit code.
+4. If valid, the user is prompted to sign up/log in.
+5. During `signUp`, the `invite_token` (the 6-digit code) is passed in the `metadata`.
+6. A Supabase Database Trigger handles the `auth.users` insert event:
+   - It checks `user_metadata ->> 'invite_token'`.
+   - If a valid token exists, it finds the corresponding `team_invitations` entry.
+   - It then inserts a new record into `profiles` table, linking the new user to the `tenant_id` and `role` from the invitation, and marks the invitation as used (or deletes it).
+
+**Important Notes**:
+- `team_invitations` does NOT have an `is_deleted` column; filter by `expires_at` instead.
+- The `email` column is nullable; it's not mandatory to provide an email when generating a code.
+- The `invite_token` in `signUp` metadata is crucial for the DB trigger to link the user to the tenant.
+
+---
+
+## 23. Implemented Modules Status
 
 | Module | Status | Location | Notes |
 |--------|--------|----------|-------|
@@ -797,10 +914,19 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 | Stok Virtual | ✅ | `src/dashboard/pages/StokVirtual.jsx` | Batch tracking per farm |
 | Forecast | ✅ | `src/dashboard/pages/Forecast.jsx` | Supply/demand analysis |
 | Orders | ✅ | `src/dashboard/pages/Orders.jsx` | Order management |
+| Sopir Dashboard | ✅ | `src/dashboard/broker/SopirDashboard.jsx` | Mobile-first, update status pengiriman |
+| RBAC System | ✅ | `App.jsx` + `AppSidebar.jsx` + `BottomNav.jsx` | Role-based routing & menu visibility |
+| Accept Invite | ✅ | `src/pages/AcceptInvite.jsx` | Kode 6 digit, join tenant existing |
+| About Us | ✅ | `src/pages/AboutUs.jsx` | Spline robot, full sections |
+| Register Upgrade | ✅ | `src/pages/Register.jsx` | Google OAuth, kode undangan, terms |
+| Login Upgrade | ✅ | `src/pages/Login.jsx` | Google OAuth, feature highlights |
+| Loading Screen | ✅ | `src/components/LoadingScreen.jsx` | Sweep line animation |
+| Privacy Policy | ✅ | `src/pages/PrivacyPolicy.jsx` | Tab per role, klausul harga pasar |
+| Calendar Global | ✅ | `src/components/ui/calendar.jsx` | Date picker global semua halaman |
 | Peternak: Siklus | 🚧 | `ComingSoon` | Planned features |
 | RPA: Order, Hutang | 🚧 | `ComingSoon` | Planned features |
 
-## 22. Scripts & Automation
+## 24. Scripts & Automation
 
 ### `scripts/ternakos_harga_scraper.py`
 - Setup: `pip install -r scripts/requirements.txt` (uses Playwright, undetected_chromedriver, bs4)
@@ -812,7 +938,7 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 
 ---
 
-## 23. Pricing Structure
+## 25. Pricing Structure
 
 | Target Role | PRO Plan | BUSINESS Plan |
 |-------------|----------|---------------|
@@ -824,7 +950,7 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 
 ---
 
-## 24. AI Roadmap (Business Plan)
+## 26. AI Roadmap (Business Plan)
 
 - **AI Engine**: Grok 4.1 Fast (planned integration).
 - **Key Features**:
@@ -837,30 +963,31 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 
 ---
 
-*Last updated: March 20, 2026 — by Antigravity AI*
-
 ---
 
-## 23. Recent Major Updates (2026-03-20)
+## 27. Recent Major Updates (2026-03-22)
 
-### Modul Pengiriman (Completed & Modularized)
-**Refactor**:
-- Pengiriman.jsx dipecah jadi 7 komponen modular (dari 2600 baris menjadi ~500 baris, komponen di-extract ke folder src/dashboard/broker/pengiriman/).
+### RBAC Implementation
+- Role baru: `view_only`, `sopir`.
+- `RoleGuard` component di `App.jsx` untuk proteksi route granular.
+- Filter menu otomatis di `AppSidebar.jsx` dan `BottomNav.jsx`.
+- Role badge di sidebar footer untuk identitas user.
 
-**Fitur Baru**:
-- Timbangan digital (mode langsung & per timbangan).
-- Selisih dari berat kirim (realtime).
-- Print/cetak dokumen report timbangan.
-- Edit kedatangan dengan kontrol lock/unlock untuk data kendaraan & sopir.
-- Lihat Detail Logistik menggunakan sheet terpisah di panel kanan.
-- Loss Report direstrukturisasi untuk menampilkan 1 card agregat per delivery (sinkronisasi mortalitas + susut).
-- Auto-resolve loss report via Database Trigger (aktif saat sales.payment_status berubah jadi 'lunas').
+### Sistem Undangan Kode 6 Digit
+- Ganti link undangan → kode 6 karakter uppercase.
+- Flow terintegrasi: Owner (Tim.jsx) → Staff (AcceptInvite.jsx) → SignUp (Register.jsx).
+- Trigger database otomatis menangani join tenant via `invite_token`.
 
-**Bug Fixes**:
-- Timezone WIB fix (mencegah jam bergeser 7 jam karena mapping UTC).
-- Field Kendaraan & Sopir tersimpan persisten ke tabel delivery.
-- Perbaikan layout form auto-expand pada input angka.
-- Plat nomor kendaraan di-format otomatis uppercase.
-- Nama sopir tidak lagi dipaksa otomatis uppercase.
-- shrinkage_kg sudah tidak disertakan di payload insert (berubah dari table base menjadi computed generated column).
-- Loss reports terintegrasi sepenuhnya dengan workflow kedatangan pengiriman.
+### Modul Pengiriman (Modularized)
+- `Pengiriman.jsx` dipecah jadi komponen terpisah di `src/dashboard/broker/pengiriman/`.
+- Fitur timbangan digital, print report, dan edit kedatangan dengan lock/unlock.
+- `Loss Report` terintegrasi penuh dengan workflow kedatangan.
+
+### Halaman & UI/UX Baru
+- **Sopir Dashboard**: Antarmuka mobile-first untuk sopir memperbarui status.
+- **About Us**: Halaman marketing dengan Spline robot dan konten interaktif.
+- **Login & Register Upgrade**: Integrasi Google OAuth dan antarmuka yang lebih modern.
+- **Privacy Policy**: Tab khusus per role untuk transparansi data.
+- **Loading Screen**: Animasi sweep line emerald yang premium.
+
+*Last updated: March 22, 2026 — by Antigravity AI*

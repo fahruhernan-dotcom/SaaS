@@ -8,6 +8,7 @@ import {
 import { differenceInDays } from 'date-fns'
 import { useFarms } from '@/lib/hooks/useFarms'
 import { formatIDR, formatDate, formatWeight, formatRelative, safeNumber, formatEkor } from '@/lib/format'
+import { DatePicker } from '@/components/ui/DatePicker'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -284,9 +285,10 @@ function HarvestPill({ days, date }) {
 
 // --- SHEET: FARM DETAIL & EDIT ---
 
-function FarmSheet({ isOpen, onClose, farm, tenantId }) {
+function FarmSheet({ isOpen, onOpenChange, farm, onUpdate, onDelete }) {
+    const { profile } = useAuth()
+    const isOwner = profile?.role === 'owner'
     const [mode, setMode] = useState('view')
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
     const queryClient = useQueryClient()
 
     // Reset mode to 'view' when opening for an existing farm, 'edit' for new
@@ -296,20 +298,8 @@ function FarmSheet({ isOpen, onClose, farm, tenantId }) {
         }
     }, [isOpen, farm])
 
-    const handleDelete = async () => {
-        const { error } = await supabase.from('farms').update({ is_deleted: true }).eq('id', farm.id)
-        if (error) {
-            toast.error('Gagal menghapus kandang')
-        } else {
-            toast.success('Kandang dihapus')
-            queryClient.invalidateQueries(['farms'])
-            onClose()
-        }
-        setIsDeleteDialogOpen(false)
-    }
-
     return (
-        <Sheet open={isOpen} onOpenChange={onClose}>
+        <Sheet open={isOpen} onOpenChange={onOpenChange}>
             <SheetContent side="right" className="sm:max-w-md bg-[#0C1319] border-white/10 p-0 overflow-y-auto">
                 {mode === 'view' ? (
                     <div className="flex flex-col h-full">
@@ -368,13 +358,22 @@ function FarmSheet({ isOpen, onClose, farm, tenantId }) {
                             >
                                 <Edit size={16} className="mr-2" /> Edit Kandang
                             </Button>
-                            <Button 
-                                onClick={() => setIsDeleteDialogOpen(true)}
-                                variant="ghost"
-                                className="w-full h-12 text-red-500/60 hover:text-red-500 hover:bg-red-500/5 font-black text-[10px] uppercase tracking-widest rounded-2xl"
-                            >
-                                <Trash2 size={14} className="mr-2" /> Hapus Kandang
-                            </Button>
+                            {/* Delete Button */}
+            {isOwner && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  if (confirm('Hapus kandang ini? Semua data histori akan hilang.')) {
+                    onDelete(farm.id)
+                  }
+                }}
+                className="w-full h-12 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl font-bold uppercase tracking-widest text-[10px]"
+              >
+                <Trash2 size={16} className="mr-2" />
+                Hapus Kandang
+              </Button>
+            )}
                         </SheetFooter>
                     </div>
                 ) : (
@@ -572,11 +571,10 @@ function FarmForm({ farm, tenantId, onSuccess, onCancel, isSheet }) {
             {(formData.status === 'ready' || formData.status === 'growing') && (
                 <div className="space-y-2">
                     <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Estimasi Panen</Label>
-                    <Input 
-                        type="date"
+                    <DatePicker 
                         value={formData.harvest_date} 
-                        onChange={e => setFormData({...formData, harvest_date: e.target.value})}
-                        className="bg-[#111C24] border-white/10 h-14 font-black rounded-2xl text-white uppercase text-[10px] tracking-widest"
+                        onChange={date => setFormData({...formData, harvest_date: date})}
+                        className="h-14"
                     />
                 </div>
             )}

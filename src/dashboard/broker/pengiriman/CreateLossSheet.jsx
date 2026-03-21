@@ -4,6 +4,7 @@ import { AlertCircle, Plus, Receipt } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { toast } from 'sonner'
+import { DatePicker } from '@/components/ui/DatePicker'
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
@@ -16,6 +17,7 @@ export default function CreateLossSheet({ isOpen, onClose, initialData }) {
     const { tenant } = useAuth()
     const queryClient = useQueryClient()
     const [isLoading, setIsLoading] = useState(false)
+    const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0])
     const [weightLoss, setWeightLoss] = useState(0)
     const [pricePerKg, setPricePerKg] = useState(0)
 
@@ -75,7 +77,12 @@ export default function CreateLossSheet({ isOpen, onClose, initialData }) {
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Tanggal *</Label>
-                                <Input required name="report_date" type="date" defaultValue={new Date().toISOString().split('T')[0]} className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs" />
+                                <DatePicker 
+                                    value={reportDate}
+                                    onChange={setReportDate}
+                                    className="h-14"
+                                />
+                                <input type="hidden" name="report_date" value={reportDate} />
                             </div>
                         </div>
 

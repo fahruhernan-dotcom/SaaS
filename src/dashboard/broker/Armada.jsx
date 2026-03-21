@@ -19,8 +19,9 @@ import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { DatePicker } from '@/components/ui/DatePicker'
 import * as z from 'zod'
 import { formatIDR, safeNumber, safePercent, formatEkor, formatWeight } from '@/lib/format'
 import { InputNumber } from '@/components/ui/InputNumber'
@@ -577,7 +578,7 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
     
-    const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm({
+    const { register, handleSubmit, watch, setValue, reset, control, formState: { errors } } = useForm({
         resolver: zodResolver(vehicleSchema)
     })
 
@@ -756,10 +757,20 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
                                 </SelectContent>
                              </Select>
                         </div>
-                        <div className="space-y-2">
-                             <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Servis Terakhir</Label>
-                             <Input {...register('last_service_date')} type="date" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase text-white" />
-                        </div>
+                         <div className="space-y-2">
+                              <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Servis Terakhir</Label>
+                              <Controller
+                                 control={control}
+                                 name="last_service_date"
+                                 render={({ field }) => (
+                                     <DatePicker 
+                                         value={field.value}
+                                         onChange={field.onChange}
+                                         className="h-14"
+                                     />
+                                 )}
+                              />
+                         </div>
                     </div>
 
                     <div className="space-y-2">
@@ -807,7 +818,7 @@ function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
     
-    const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm({
+    const { register, handleSubmit, watch, setValue, reset, control, formState: { errors } } = useForm({
         resolver: zodResolver(driverSchema)
     })
 
@@ -922,7 +933,17 @@ function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
 
                     <div className="space-y-2">
                              <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Masa Berlaku SIM</Label>
-                             <Input {...register('sim_expires_at')} type="date" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase text-white" />
+                             <Controller
+                                control={control}
+                                name="sim_expires_at"
+                                render={({ field }) => (
+                                    <DatePicker 
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        className="h-14"
+                                    />
+                                )}
+                             />
                              {simIndicator && <p className={cn("text-[9px] font-black uppercase mt-1 ml-1", simIndicator.color)}>{simIndicator.label}</p>}
                     </div>
 
@@ -995,7 +1016,7 @@ function ExpenseSheet({ isOpen, onClose, vehicle, tenantId }) {
     const queryClient = useQueryClient()
     const [isSubmitting, setIsSubmitting] = useState(false)
     
-    const { register, handleSubmit, setValue, reset, watch } = useForm({
+    const { register, handleSubmit, setValue, reset, watch, control } = useForm({
         resolver: zodResolver(expenseSchema)
     })
 
@@ -1072,7 +1093,17 @@ function ExpenseSheet({ isOpen, onClose, vehicle, tenantId }) {
 
                     <div className="space-y-2">
                          <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Tanggal</Label>
-                         <Input {...register('expense_date')} type="date" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase text-white" />
+                         <Controller
+                            control={control}
+                            name="expense_date"
+                            render={({ field }) => (
+                                <DatePicker 
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    className="h-14"
+                                />
+                            )}
+                         />
                     </div>
 
                     <Button 

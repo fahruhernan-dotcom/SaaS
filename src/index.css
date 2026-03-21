@@ -194,3 +194,12 @@ input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* Hide Spline watermark */
+#logo-bottom-right,
+a[href*="spline.design"],
+canvas ~ div > a {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

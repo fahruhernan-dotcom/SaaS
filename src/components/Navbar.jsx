@@ -13,7 +13,7 @@ const Navbar = ({ authPage = false }) => {
   const navLinks = [
     { name: 'Fitur', href: '#fitur' },
     { name: 'Harga', href: '#harga' },
-    { name: 'Tentang Kami', href: '#tentang' },
+    { name: 'Tentang Kami', href: '/tentang-kami' },
   ];
 
   return (
@@ -31,9 +31,9 @@ const Navbar = ({ authPage = false }) => {
         borderBottomStyle: 'solid',
         borderBottomWidth: '1px'
       }}
-      className="fixed top-0 left-0 right-0 z-[100] h-[64px] flex items-center"
+      className="fixed top-0 left-0 right-0 z-[100] h-[64px] flex items-center px-5 md:px-10 lg:px-20"
     >
-      <div className="w-full max-w-7xl mx-auto px-5 md:px-10 lg:px-20">
+      <div className="w-full max-w-[1280px] mx-auto">
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}

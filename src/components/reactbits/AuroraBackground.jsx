@@ -1,15 +1,19 @@
-function AuroraBackground({ children }) {
+function AuroraBackground({ children, className = "", style = {} }) {
   return (
-    <div style={{
-      position: 'relative',
-      minHeight: '100vh',
-      width: '100%',
-      background: '#06090F',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      overflow: 'hidden',
-    }}>
+    <div 
+      className={className}
+      style={{
+        position: 'relative',
+        minHeight: '100vh',
+        width: '100%',
+        background: '#06090F',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+        ...style
+      }}
+    >
 
       {/* Aurora layer 1 — emerald besar */}
       <div style={{

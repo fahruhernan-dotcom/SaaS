@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useQueryClient } from '@tanstack/react-query';
@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { supabase } from '../../lib/supabase';
 import { useFarms } from '../../lib/hooks/useFarms';
 import { formatIDR } from '../../lib/format';
+import { DatePicker } from '@/components/ui/DatePicker';
 import SlideModal from '../components/SlideModal';
 
 const beliSchema = z.object({
@@ -22,7 +23,7 @@ export default function FormBeliModal({ isOpen, onClose }) {
   const { data: farms } = useFarms();
   const queryClient = useQueryClient();
 
-  const { register, handleSubmit, watch, reset, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, watch, reset, control, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(beliSchema),
     defaultValues: {
       transaction_date: new Date().toISOString().split('T')[0],
@@ -102,7 +103,16 @@ export default function FormBeliModal({ isOpen, onClose }) {
 
         <div>
           <label style={labelStyle}>Tanggal Transaksi</label>
-          <input type="date" {...register('transaction_date')} style={inputStyle} />
+          <Controller
+            control={control}
+            name="transaction_date"
+            render={({ field }) => (
+              <DatePicker
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
         </div>
 
         {/* Live Preview */}

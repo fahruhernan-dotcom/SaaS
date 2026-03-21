@@ -79,33 +79,45 @@ export default function AppSidebar() {
   const tenantInitials = tenant?.business_name?.slice(0, 2).toUpperCase() || 'TO'
   const userInitials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
 
+  const isOwner = profile?.role === 'owner'
+  const isStaff = profile?.role === 'staff'
+  const isViewOnly = profile?.role === 'view_only'
+
   const navMain = [
     {
       label: 'UTAMA',
       items: [
         { title: 'Beranda',    url: '/broker/beranda',   icon: Home },
         { title: 'Transaksi',  url: '/broker/transaksi', icon: ArrowLeftRight },
-        { title: 'RPA & Piutang', url: '/broker/rpa',   icon: Building2 },
-        { title: 'Kandang',    url: '/broker/kandang',   icon: Warehouse },
-        { title: 'Tim & Akses', url: '/broker/tim',      icon: Users },
+        { title: 'RPA & Piutang', url: '/broker/rpa',   icon: Building2, roles: ['owner', 'staff'] },
+        { title: 'Kandang',    url: '/broker/kandang',   icon: Warehouse, roles: ['owner', 'staff'] },
+        { title: 'Tim & Akses', url: '/broker/tim',      icon: Users, roles: ['owner'] },
       ]
     },
     {
       label: 'OPERASIONAL',
       items: [
-        { title: 'Pengiriman', url: '/broker/pengiriman', icon: Truck },
-        { title: 'Cash Flow',  url: '/broker/cashflow',  icon: Wallet },
-        { title: 'Armada',     url: '/broker/armada',    icon: Car },
+        { title: 'Pengiriman', url: '/broker/pengiriman', icon: Truck, roles: ['owner', 'staff'] },
+        { title: 'Cash Flow',  url: '/broker/cashflow',  icon: Wallet, roles: ['owner'] },
+        { title: 'Armada',     url: '/broker/armada',    icon: Car, roles: ['owner'] },
       ]
     },
     {
       label: 'ANALISIS',
       items: [
         { title: 'Harga Pasar', url: '/harga-pasar',    icon: BarChart2 },
-        { title: 'Simulator',   url: '/broker/simulator', icon: Calculator },
+        { title: 'Simulator',   url: '/broker/simulator', icon: Calculator, roles: ['owner'] },
       ]
     }
   ]
+
+  const filteredNavMain = navMain.map(group => ({
+    ...group,
+    items: group.items.filter(item => {
+      if (!item.roles) return true // default accessible to all roles
+      return item.roles.includes(profile?.role)
+    })
+  })).filter(group => group.items.length > 0)
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut()
@@ -221,7 +233,7 @@ export default function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-2">
-        {navMain.map((group) => (
+        {filteredNavMain.map((group) => (
           <SidebarGroup key={group.label}>
             <SidebarGroupLabel className="text-[10px] font-bold tracking-[0.15em] text-muted-foreground px-2 mb-1 ">
               {group.label}
@@ -361,9 +373,20 @@ export default function AppSidebar() {
                     <p className="text-[13px] font-semibold truncate leading-tight">
                       {profile?.full_name || 'User'}
                     </p>
-                    <p className="text-[11px] text-muted-foreground truncate font-medium">
-                      {user?.email}
-                    </p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <p className="text-[11px] text-muted-foreground truncate font-medium">
+                        {user?.email}
+                      </p>
+                      {profile?.role && (
+                        <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                          profile.role === 'owner' ? 'bg-[#10B981]/10 text-[#10B981]' :
+                          profile.role === 'staff' ? 'bg-blue-500/10 text-blue-400' :
+                          'bg-white/5 text-[#4B6478]'
+                        }`}>
+                          {profile.role.replace('_', ' ')}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <ChevronsUpDown size={14} className="text-muted-foreground  ml-auto" />
                 </SidebarMenuButton>

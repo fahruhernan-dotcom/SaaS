@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Trash2, X, Plus, UserPlus, Users, Clock } from 'lucide-react';
+import { Loader2, Trash2, X, Plus, UserPlus, Users, Clock, Copy } from 'lucide-react';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { id } from 'date-fns/locale';
 
@@ -67,33 +67,39 @@ export default function Tim() {
     enabled: !!profile?.tenant_id,
   });
 
+  const [inviteCode, setInviteCode] = useState(null);
+  const [showCode, setShowCode] = useState(false);
+
   // --- MUTATIONS ---
   const inviteMutation = useMutation({
     mutationFn: async (payload) => {
+      // Generate kode 6 karakter uppercase alphanumeric
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      
       const { data, error } = await supabase
         .from('team_invitations')
         .insert([{
           tenant_id: profile.tenant_id,
           invited_by: profile.id,
-          email: payload.email,
+          token: code,
           role: payload.role,
+          status: 'pending',
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
         }])
         .select()
         .single();
         
       if (error) throw error;
-      return data;
+      return { ...data, code };
     },
     onSuccess: (data) => {
-      toast.success(`Undangan berhasil dikirim ke ${data.email}`, {
-        description: 'Link: ' + window.location.origin + '/invite/' + data.token,
-        duration: 8000
-      });
+      setInviteCode(data.code);
+      setShowCode(true);
+      toast.success('Kode undangan berhasil dibuat');
       queryClient.invalidateQueries(['team_invitations']);
-      setIsInviteSheetOpen(false);
     },
     onError: (error) => {
-      toast.error('Gagal mengirim undangan', { description: error.message });
+      toast.error('Gagal membuat kode undangan', { description: error.message });
     }
   });
 
@@ -238,15 +244,28 @@ export default function Tim() {
                 return (
                   <div key={invite.id} className="p-4 md:px-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-[rgba(245,158,11,0.1)] border border-[rgba(245,158,11,0.2)] flex items-center justify-center text-gold flex-shrink-0">
-                        <UserPlus size={16} />
+                      <div className="w-12 h-12 rounded-full bg-bg-3 border border-border-def flex items-center justify-center text-em-400 flex-shrink-0 shadow-sm">
+                        <UserPlus size={20} />
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-semibold text-tx-1">{invite.email}</span>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-tx-3">
-                            <Clock size={12} className="inline mr-1 -mt-0.5" />
-                            Sisa {daysLeft > 0 ? `${daysLeft} hari` : 'hari ini'}
+                        <div className="flex items-center gap-2">
+                          <span className="font-display text-lg font-bold text-[#10B981] tracking-widest">
+                            {invite.token}
+                          </span>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(invite.token);
+                              toast.success('Kode disalin');
+                            }}
+                            className="text-[#4B6478] hover:text-[#10B981] cursor-pointer transition-colors"
+                            title="Salin Kode"
+                          >
+                            <Copy size={14} />
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs text-[#4B6478]">
+                            Belum digunakan · Sisa {daysLeft > 0 ? `${daysLeft} hari` : 'hari ini'}
                           </span>
                         </div>
                       </div>
@@ -261,7 +280,7 @@ export default function Tim() {
                           size="sm"
                           className="text-tx-3 border-border-def hover:text-tx-1 hover:bg-bg-3 rounded-xl transition-colors shrink-0"
                           onClick={() => {
-                            if (confirm(`Batalkan undangan untuk ${invite.email}?`)) {
+                            if (confirm(`Batalkan undangan kode ${invite.token}?`)) {
                               cancelInviteMutation.mutate(invite.id);
                             }
                           }}
@@ -280,30 +299,35 @@ export default function Tim() {
         </div>
       </section>
 
-      {/* Invite Form Sheet */}
       <InviteSheet 
         isOpen={isInviteSheetOpen} 
-        onClose={() => setIsInviteSheetOpen(false)} 
+        onClose={() => {
+          setIsInviteSheetOpen(false);
+          setShowCode(false);
+          setInviteCode(null);
+        }} 
         onSubmit={(data) => inviteMutation.mutate(data)}
         isPending={inviteMutation.isPending}
+        showCode={showCode}
+        inviteCode={inviteCode}
       />
 
     </div>
   );
 }
 
-function InviteSheet({ isOpen, onClose, onSubmit, isPending }) {
-  const [email, setEmail] = useState('');
+function InviteSheet({ isOpen, onClose, onSubmit, isPending, showCode, inviteCode }) {
   const [role, setRole] = useState('staff');
   const isDesktop = useMediaQuery('(min-width: 1024px)');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!email) {
-      toast.error('Email wajib diisi');
-      return;
-    }
-    onSubmit({ email, role });
+    onSubmit({ role });
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(inviteCode);
+    toast.success('Kode disalin');
   };
 
   return (
@@ -324,63 +348,96 @@ function InviteSheet({ isOpen, onClose, onSubmit, isPending }) {
         <SheetHeader className="text-left p-6 sm:p-8 pb-0">
           <SheetTitle className="font-display text-xl font-bold text-tx-1">Undang Anggota</SheetTitle>
           <SheetDescription className="text-tx-3 text-sm">
-            Kirimkan email undangan ke anggota baru untuk bergabung ke bisnis Anda.
+            {showCode 
+              ? "Kode berhasil dibuat. Bagikan ke anggota yang ingin diundang."
+              : "Generate kode undangan untuk anggota baru bergabung ke bisnis Anda."}
           </SheetDescription>
         </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-6 p-6 sm:p-8 pt-4">
-          <div className="space-y-2">
-            <Label className="text-xs font-bold text-tx-3 uppercase tracking-wider">Email Tujuan <span className="text-red">*</span></Label>
-            <Input 
-              type="email" 
-              placeholder="nama@email.com" 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-bg-2 border-border-def h-12 rounded-xl text-tx-1 placeholder:text-tx-3/50 focus-visible:ring-1 focus-visible:ring-em-400"
-              required
-            />
-          </div>
+        <div className="flex-1 flex flex-col gap-6 p-6 sm:p-8 pt-4">
+          {!showCode ? (
+            <form onSubmit={handleSubmit} className="space-y-6 flex-1 flex flex-col">
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-tx-3 uppercase tracking-wider">Level Akses (Role) <span className="text-red">*</span></Label>
+                <Select value={role} onValueChange={setRole}>
+                  <SelectTrigger className="w-full bg-bg-2 border-border-def h-12 rounded-xl text-tx-1 focus-visible:ring-1 focus-visible:ring-em-400">
+                    <SelectValue placeholder="Pilih Role" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-bg-1 border border-border-def rounded-xl shadow-xl">
+                    <SelectItem value="staff" className="focus:bg-bg-2 cursor-pointer py-3 rounded-lg mx-1 my-0.5">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-semibold text-tx-1">Staff</span>
+                        <span className="text-[11px] text-tx-3">Bisa input transaksi & akses fitur, tidak bisa hapus</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="view_only" className="focus:bg-bg-2 cursor-pointer py-3 rounded-lg mx-1 my-0.5">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-semibold text-tx-1">View Only</span>
+                        <span className="text-[11px] text-tx-3">Hanya lihat laporan & data, tanpa akses edit</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="supir" className="focus:bg-bg-2 cursor-pointer py-3 rounded-lg mx-1 my-0.5">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-semibold text-tx-1">Supir</span>
+                        <span className="text-[11px] text-tx-3">Akses terbatas: Hanya melihat & update status pengiriman</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs font-bold text-tx-3 uppercase tracking-wider">Level Akses (Role) <span className="text-red">*</span></Label>
-            <Select value={role} onValueChange={setRole}>
-              <SelectTrigger className="w-full bg-bg-2 border-border-def h-12 rounded-xl text-tx-1 focus-visible:ring-1 focus-visible:ring-em-400">
-                <SelectValue placeholder="Pilih Role" />
-              </SelectTrigger>
-              <SelectContent className="bg-bg-1 border border-border-def rounded-xl shadow-xl">
-                <SelectItem value="staff" className="focus:bg-bg-2 cursor-pointer py-3 rounded-lg mx-1 my-0.5">
-                  <div className="flex flex-col gap-1">
-                    <span className="font-semibold text-tx-1">Staff</span>
-                    <span className="text-[11px] text-tx-3">Bisa input transaksi & akses fitur, tidak bisa hapus</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="view_only" className="focus:bg-bg-2 cursor-pointer py-3 rounded-lg mx-1 my-0.5">
-                  <div className="flex flex-col gap-1">
-                    <span className="font-semibold text-tx-1">View Only</span>
-                    <span className="text-[11px] text-tx-3">Hanya lihat laporan & data, tanpa akses edit</span>
-                  </div>
-                </SelectItem>
-                <SelectItem value="supir" className="focus:bg-bg-2 cursor-pointer py-3 rounded-lg mx-1 my-0.5">
-                  <div className="flex flex-col gap-1">
-                    <span className="font-semibold text-tx-1">Supir</span>
-                    <span className="text-[11px] text-tx-3">Akses terbatas: Hanya melihat & update status pengiriman</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="mt-auto pt-6 border-t border-border-sub">
+                <Button 
+                  type="submit" 
+                  className="w-full bg-em-500 hover:bg-em-600 text-white font-bold h-12 rounded-xl text-[15px] transition-all"
+                  disabled={isPending}
+                >
+                  {isPending ? <Loader2 className="animate-spin mr-2" /> : <Plus size={18} className="mr-2" />}
+                  {isPending ? "Generating..." : "Generate Kode Undangan"}
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center space-y-8 animate-in fade-in zoom-in duration-300">
+              <div className="w-full bg-[#0C1319] border border-[#10B981]/30 rounded-2xl p-8 text-center space-y-6 shadow-xl shadow-emerald-500/5">
+                <h3 className="text-tx-3 text-xs font-bold uppercase tracking-[0.2em]">Kode Undangan Tim</h3>
+                
+                <div className="font-display text-4xl font-black text-[#10B981] tracking-[0.4em] py-6 bg-[#10B981]/5 rounded-2xl border border-[#10B981]/10">
+                  {inviteCode}
+                </div>
 
-          <SheetFooter className="mt-auto pt-6 border-t border-border-sub">
-            <Button 
-              type="submit" 
-              className="w-full bg-em-500 hover:bg-em-600 text-white font-bold h-12 rounded-xl text-[15px] transition-all"
-              disabled={isPending}
-            >
-              {isPending ? <Loader2 className="animate-spin mr-2" /> : null}
-              {isPending ? "Mengirim..." : "Kirim Undangan"}
-            </Button>
-          </SheetFooter>
-        </form>
+                <div className="space-y-1">
+                  <p className="text-[#4B6478] text-xs font-medium">Berlaku 7 hari · Hanya 1x pakai</p>
+                </div>
+
+                <Button 
+                  onClick={copyToClipboard}
+                  className="w-full bg-[#10B981] hover:bg-em-600 text-white font-bold h-12 rounded-xl transition-all shadow-lg shadow-emerald-500/20"
+                >
+                  <Copy size={16} className="mr-2" />
+                  Salin Kode
+                </Button>
+              </div>
+
+              <div className="space-y-4 px-4 text-center">
+                <p className="text-[#94A3B8] text-sm leading-relaxed">
+                  Bagikan kode ini via <strong>WhatsApp atau chat</strong> ke anggota yang ingin diundang.
+                </p>
+                <div className="p-3 bg-bg-2 border border-border-sub rounded-xl text-xs text-tx-3 text-left">
+                  <p>💡 Calon staff dapat mendaftar sendiri menggunakan kode ini tanpa perlu input data bisnis.</p>
+                </div>
+              </div>
+
+              <Button 
+                variant="ghost" 
+                onClick={onClose}
+                className="text-tx-3 hover:text-tx-1"
+              >
+                Selesai
+              </Button>
+            </div>
+          )}
+        </div>
       </SheetContent>
     </Sheet>
   );

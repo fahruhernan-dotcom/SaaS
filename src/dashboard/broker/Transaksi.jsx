@@ -6,7 +6,7 @@ import {
   Plus, Search, Filter, ChevronRight,
   Clock, MapPin, User, Smartphone, History,
   TrendingDown, TrendingUp, AlertCircle, Info, Calendar,
-  ArrowRightLeft, MoreHorizontal, Check, Edit2, Pencil, Trash2, Loader2
+  Loader2, Eye, Trash2, Pencil
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
@@ -113,9 +113,13 @@ const getDeliveryBadge = (delivery) => {
 }
 
 export default function Transaksi() {
-  const { tenant } = useAuth()
+  const { tenant, profile } = useAuth()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  
+  const isOwner = profile?.role === 'owner'
+  const isViewOnly = profile?.role === 'view_only'
+  const canWrite = profile?.role === 'owner' || profile?.role === 'staff'
 
   // --- STATES ---
   const [activeTab, setActiveTab] = useState('semua')
@@ -242,6 +246,10 @@ export default function Transaksi() {
 
   const handleClickDelete = async (e, purchase) => {
     e.stopPropagation()
+    if (isViewOnly) {
+      toast.info('Kamu dalam mode View Only. Tidak bisa menghapus data.')
+      return
+    }
     const { count } = await supabase
       .from('sales')
       .select('id', { count: 'exact', head: true })
@@ -415,18 +423,32 @@ export default function Transaksi() {
         className="bg-[#06090F] min-h-screen pb-24"
     >
       {/* TopBar */}
-      <header className="px-5 pt-8 pb-4 flex justify-between items-center border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30">
-        <div>
-          <h1 className="font-display text-2xl font-black text-white tracking-tight uppercase">Transaksi</h1>
+      <header className="px-5 pt-8 pb-4 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 space-y-4">
+        <div className="flex justify-between items-center">
+            <div>
+                <h1 className="font-display text-2xl font-black text-white tracking-tight uppercase leading-none">Transaksi</h1>
+                <p className="text-[10px] font-bold text-[#4B6478] uppercase mt-1 tracking-widest">{tenant?.business_name || 'BROKER OPS'}</p>
+            </div>
+            {canWrite && (
+              <div className="flex items-center gap-2">
+                  <Button 
+                      onClick={() => setWizardOpen(true)}
+                      className="h-10 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+                  >
+                      <Plus size={14} className="mr-1" /> JUAL
+                  </Button>
+              </div>
+            )}
         </div>
-        <Button
-          size="sm"
-          onClick={() => setWizardOpen(true)}
-          className="bg-[#10B981] hover:bg-emerald-600 text-white font-black rounded-xl h-10 px-5 gap-2 border-none shadow-[0_4px_20px_rgba(16,185,129,0.15)] active:scale-95 transition-transform uppercase text-xs tracking-widest"
-        >
-          <Plus size={16} strokeWidth={3} />
-          Catat
-        </Button>
+
+        {isViewOnly && (
+          <div className="bg-[#0C1319] border border-white/8 rounded-xl px-4 py-2 flex items-center gap-2">
+            <Eye className="w-4 h-4 text-[#4B6478]" />
+            <span className="text-[#4B6478] text-xs">
+              Kamu dalam mode <strong className="text-[#94A3B8]">View Only</strong> — hanya bisa melihat data
+            </span>
+          </div>
+        )}
       </header>
 
       {/* Summary Strip */}
@@ -983,10 +1005,10 @@ export default function Transaksi() {
         saleId={selectedSaleId}
         data={saleDetail}
         isLoading={loadingDetail}
-        onDelete={() => {
+        onDelete={isOwner ? () => {
           setDeleteTargetSale(saleDetail)
           setShowDeleteSaleDialog(true)
-        }}
+        } : null}
       />
 
       {/* Delete Sale Confirmation */}
@@ -1038,6 +1060,8 @@ export default function Transaksi() {
 }
 
 function UnifiedTransactionCard({ sale, onOpenAuditSheet }) {
+  const { profile } = useAuth()
+  const isOwner = profile?.role === 'owner'
   // Calculations
   const totalRevenue = Number(sale.total_revenue || 0)
   const totalModal = Number(sale.purchases?.total_cost || 0)
@@ -1136,7 +1160,7 @@ function UnifiedTransactionCard({ sale, onOpenAuditSheet }) {
               <p className="text-[11px] font-medium text-[#94A3B8]">
                 {formatEkor(sale.purchases?.quantity)} · {formatIDRShort(sale.purchases?.price_per_kg)}/kg
               </p>
-              <p className="text-[11px] font-medium text-[#4B6478]">Modal: {formatIDR(totalModal)}</p>
+              {isOwner && <p className="text-[11px] font-medium text-[#4B6478]">Modal: {formatIDR(totalModal)}</p>}
             </div>
           </div>
 
@@ -1237,18 +1261,22 @@ function UnifiedTransactionCard({ sale, onOpenAuditSheet }) {
         </div>
 
         <div className="text-right">
-          <p className={cn(
-            "text-[10px] font-black uppercase tracking-widest leading-none",
-            isLoss ? "text-[#F59E0B]" : "text-[#4B6478]"
-          )}>
-            {isOnRoute ? "EST. PROFIT" : isLoss ? "NET PROFIT" : "NET PROFIT"}
-          </p>
-          <p className={cn(
-            "font-display font-bold tabular-nums leading-none mt-1.5 transition-colors text-[18px]",
-            isOnRoute ? "text-[#94A3B8]" : isLoss ? "text-[#F87171]" : "text-[#10B981]"
-          )}>
-            {isOnRoute ? "~" : isLoss ? "−" : "+"}{formatIDR(Math.abs(netProfit))}
-          </p>
+          {isOwner && (
+            <>
+              <p className={cn(
+                "text-[10px] font-black uppercase tracking-widest leading-none",
+                isLoss ? "text-[#F59E0B]" : "text-[#4B6478]"
+              )}>
+                {isOnRoute ? "EST. PROFIT" : isLoss ? "NET PROFIT" : "NET PROFIT"}
+              </p>
+              <p className={cn(
+                "font-display font-bold tabular-nums leading-none mt-1.5 transition-colors text-[18px]",
+                isOnRoute ? "text-[#94A3B8]" : isLoss ? "text-[#F87171]" : "text-[#10B981]"
+              )}>
+                {isOnRoute ? "~" : isLoss ? "−" : "+"}{formatIDR(Math.abs(netProfit))}
+              </p>
+            </>
+          )}
         </div>
       </div>
     </Card>
@@ -1257,7 +1285,10 @@ function UnifiedTransactionCard({ sale, onOpenAuditSheet }) {
 
 function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelete }) {
   const queryClient = useQueryClient()
-  const { tenant } = useAuth()
+  const { tenant, profile } = useAuth()
+  const isOwner = profile?.role === 'owner'
+  const isViewOnly = profile?.role === 'view_only'
+  const canWrite = profile?.role === 'owner' || profile?.role === 'staff'
   const { data: rpaClients } = useRPA()
   
   const [isEditing, setIsEditing] = useState(false)
@@ -1373,6 +1404,14 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
                 )}
               </div>
             </div>
+            {!isLoading && !isEditing && isOwner && (
+              <button
+                onClick={() => onDelete?.()}
+                className="w-10 h-10 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-[#F87171] hover:bg-red-500/10 active:scale-95 transition-all mt-1"
+              >
+                <Trash2 size={18} />
+              </button>
+            )}
           </div>
           <SheetDescription className="sr-only">Detail transaksi penjualan</SheetDescription>
         </SheetHeader>
@@ -1408,12 +1447,23 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
                   </div>
                 </div>
 
-                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex justify-between items-center h-16">
-                  <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">Net Profit</p>
-                  <p className={`font-display text-2xl font-black ${profit >= 0 ? 'text-emerald-400' : 'text-red-400'} tabular-nums`}>
-                    {profit >= 0 ? '+' : ''}{formatIDR(profit)}
-                  </p>
-                </div>
+                {isOwner && (
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex justify-between items-center h-16">
+                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">Net Profit</p>
+                    <p className={`font-display text-2xl font-black ${profit >= 0 ? 'text-emerald-400' : 'text-red-400'} tabular-nums`}>
+                      {profit >= 0 ? '+' : ''}{formatIDR(profit)}
+                    </p>
+                  </div>
+                )}
+
+                {!isEditing && canWrite && (
+                  <Button
+                    onClick={() => setIsEditing(true)}
+                    className="w-full h-12 bg-white/5 border border-white/10 rounded-2xl text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+                  >
+                    Edit Transaksi
+                  </Button>
+                )}
               </div>
 
               {isEditing ? (

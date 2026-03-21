@@ -1,4 +1,4 @@
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useQueryClient } from '@tanstack/react-query';
@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { useRPA } from '../../lib/hooks/useRPA';
 import { usePurchases } from '../../lib/hooks/usePurchases';
 import { formatIDR } from '../../lib/format';
+import { DatePicker } from '@/components/ui/DatePicker';
 import SlideModal from '../components/SlideModal';
 
 const jualSchema = z.object({
@@ -28,7 +29,7 @@ export default function FormJualModal({ isOpen, onClose }) {
   const { data: purchases } = usePurchases();
   const queryClient = useQueryClient();
 
-  const { register, handleSubmit, watch, reset, setValue, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, watch, reset, setValue, control, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(jualSchema),
     defaultValues: {
       transaction_date: new Date().toISOString().split('T')[0],
@@ -164,7 +165,16 @@ export default function FormJualModal({ isOpen, onClose }) {
           {watched.payment_status !== 'lunas' && (
             <div style={{ marginTop: '16px' }}>
               <label style={labelStyle}>Tanggal Jatuh Tempo</label>
-              <input type="date" {...register('due_date')} style={inputStyle} />
+              <Controller
+                control={control}
+                name="due_date"
+                render={({ field }) => (
+                  <DatePicker
+                    value={field.value}
+                    onChange={field.onChange}
+                  />
+                )}
+              />
             </div>
           )}
         </div>

@@ -1,252 +1,274 @@
-import React, { useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
-import CountUp from '../components/reactbits/CountUp';
+import React, { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Check, ChevronDown, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import confetti from 'canvas-confetti';
+import NumberFlow from '@number-flow/react';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import AnimatedContent from '../components/reactbits/AnimatedContent';
 
 const Pricing = () => {
+  const [isAnnual, setIsAnnual] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
-  const [activeRole, setActiveRole] = useState('broker');
+  const switchRef = useRef(null);
 
-  const prices = {
-    broker: { pro: 999, business: 1499 },
-    peternak: { pro: 499, business: 999 },
-    rpa: { pro: 699, business: 1499 }
-  };
-
-  const proFeatures = [
-    '3 pengguna',
-    'Data unlimited',
-    'Semua fitur role',
-    'Export laporan',
-    'Support email'
-  ];
-
-  const businessFeatures = [
-    'Unlimited pengguna',
-    'Semua fitur Pro',
-    'Analisis mendalam',
-    'Export PDF & Excel',
-    'Priority support WhatsApp',
-    'Custom onboarding'
-  ];
-  
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
+  const handleToggle = (checked) => {
+    setIsAnnual(checked);
+    if (checked) {
+      const rect = switchRef.current?.getBoundingClientRect();
+      if (rect) {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { 
+            x: (rect.left + rect.width / 2) / window.innerWidth, 
+            y: (rect.top + rect.height / 2) / window.innerHeight 
+          },
+          colors: ['#10B981', '#34D399', '#F59E0B']
+        });
+      }
     }
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 28 },
-    visible: { 
-      opacity: 1, y: 0,
-      transition: { duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] }
+  const plans = [
+    {
+      name: 'PRO',
+      subtitle: 'Broker',
+      monthlyPrice: 999000,
+      annualPrice: 799000,
+      description: 'Solusi lengkap untuk manajemen operasional broker harian.',
+      features: [
+        'Manajemen transaksi & kandang',
+        'Tracking pengiriman & loss report',
+        'RPA & piutang management',
+        'Cash flow & laporan keuangan',
+        'Armada & tim (maks 3 anggota)',
+        'Harga pasar realtime'
+      ],
+      buttonText: 'Mulai 14 Hari Gratis',
+      href: '/register',
+      isPopular: false
+    },
+    {
+      name: 'BUSINESS',
+      subtitle: 'Broker',
+      monthlyPrice: 1499000,
+      annualPrice: 1199000,
+      description: 'Optimalkan profit dengan kecerdasan buatan dan analitik mendalam.',
+      features: [
+        'Semua fitur PRO',
+        'TernakBot AI (Grok 4.1 Fast)',
+        'Analisis profit otomatis',
+        'Deteksi anomali transaksi',
+        'Prediksi panen AI',
+        'Laporan PDF/Excel otomatis',
+        'Tim unlimited'
+      ],
+      buttonText: 'Mulai 14 Hari Gratis',
+      href: '/register',
+      isPopular: true
+    },
+    {
+      name: 'ENTERPRISE',
+      subtitle: 'Custom',
+      price: 'Custom',
+      description: 'Skalabilitas penuh dan dukungan prioritas untuk korporasi besar.',
+      features: [
+        'Semua fitur BUSINESS',
+        'Multi-tenant management',
+        'Dedicated onboarding',
+        'SLA & support prioritas',
+        'Integrasi custom',
+        'Kontrak fleksibel'
+      ],
+      buttonText: 'Hubungi Kami',
+      href: 'https://wa.me/628123456789', // Example WA link
+      isPopular: false
     }
-  };
+  ];
 
   const faqs = [
-     { q: "Bisa cancel kapan saja?", a: "Tentu. Tidak ada kontrak panjang. Anda bisa berhenti berlangganan kapan saja." },
-     { q: "Kalau HP rusak, data saya hilang?", a: "Tidak. Semua data tersimpan aman di cloud TernakOS. Cukup login di HP baru, semua data kembali seperti semula." },
-     { q: "Komoditas apa yang didukung sekarang?", a: "Saat ini TernakOS berfokus pada ayam broiler dan pejantan. Kami akan terus menambah komoditas lain." },
-     { q: "Apakah data saya aman?", a: "Sangat aman. Kami menggunakan enkripsi kelas bank untuk melindungi data transaksi dan harga pasar Anda. Data Anda tidak akan dibagikan ke pihak ketiga." }
+    { q: "Bisa cancel kapan saja?", a: "Tentu. Tidak ada kontrak panjang. Anda bisa berhenti berlangganan kapan saja." },
+    { q: "Kalau HP rusak, data saya hilang?", a: "Tidak. Semua data tersimpan aman di cloud TernakOS. Cukup login di HP baru, semua data kembali seperti semula." },
+    { q: "Komoditas apa yang didukung sekarang?", a: "Saat ini TernakOS berfokus pada ayam broiler dan pejantan. Kami akan terus menambah komoditas lain." },
+    { q: "Apakah data saya aman?", a: "Sangat aman. Kami menggunakan enkripsi kelas bank untuk melindungi data transaksi dan harga pasar Anda. Data Anda tidak akan dibagikan ke pihak ketiga." }
   ];
 
   return (
-    <section id="harga" className="bg-[#06090F] section-padding">
-      <div className="max-w-[1280px] mx-auto">
-         
-         <div className="text-center mb-[48px] lg:mb-[64px]">
-           <AnimatedContent direction="vertical" distance={30} delay={0}>
-             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.14)', borderRadius: '99px', padding: '5px 14px', marginBottom: '16px' }}>
-               <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10B981', animation: 'pulse-dot 2s infinite' }}/>
-               <span style={{ fontSize: '11px', fontWeight: 600, color: '#34D399', letterSpacing: '2px', textTransform: 'uppercase' }}>
-                 HARGA
-               </span>
-             </div>
-           </AnimatedContent>
-           <AnimatedContent direction="vertical" distance={40} delay={0.1}>
-             <h2 className="section-h2 mb-[12px]">
-               Pilih Plan yang Sesuai Bisnismu
-             </h2>
-           </AnimatedContent>
-           <AnimatedContent direction="vertical" distance={30} delay={0.2}>
-             <p className="section-subtitle max-w-[480px] mx-auto mb-8">
-               Mulai gratis, upgrade kapan saja. Tidak ada kontrak.
-             </p>
-           </AnimatedContent>
+    <section id="harga" className="bg-[#06090F] section-padding relative overflow-hidden">
+      {/* Background Glows */}
+      <div className="absolute top-1/4 left-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
 
-           {/* Role Toggle */}
-           <AnimatedContent direction="vertical" distance={20} delay={0.3} className="flex justify-center mb-12 lg:mb-16">
-             <div className="inline-flex bg-bg-2 border border-border-def p-1.5 rounded-full relative z-20 shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
-               {['broker', 'peternak', 'rpa'].map((role) => (
-                 <button
-                   key={role}
-                   onClick={() => setActiveRole(role)}
-                   className={`px-8 py-2.5 rounded-full font-body text-[13px] font-bold tracking-wide uppercase transition-all duration-300 ${
-                     activeRole === role
-                       ? 'bg-[rgba(16,185,129,0.15)] text-em-400 shadow-[0_2px_10px_rgba(16,185,129,0.2)]'
-                       : 'text-tx-3 hover:text-tx-2 hover:bg-white/[0.02]'
-                   }`}
-                 >
-                   {role}
-                 </button>
-               ))}
-             </div>
-           </AnimatedContent>
-         </div>
-
-         {/* Pricing Cards (Column flex for mobile, grid for md+) */}
-         <div className="flex flex-col lg:grid lg:grid-cols-2 max-w-[800px] mx-auto gap-4 lg:gap-[32px] relative items-stretch">
-            {/* Glow di belakang card Pro */}
-            <div style={{ position: 'absolute', top: '50%', left: '30%', transform: 'translate(-50%, -50%)', width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: 0 }}/>
-
-            {/* Pro (Featured) */}
-            <AnimatedContent direction="vertical" distance={40} delay={0.1} className="order-first lg:order-none featured-card-border shadow-[0_20px_50px_rgba(16,185,129,0.10)] lg:-translate-y-4 z-10 animate-pulse-glow flex flex-col h-[520px] rounded-[20px]">
-              <div className="bg-[linear-gradient(160deg,rgba(16,185,129,0.10)_0%,rgba(16,185,129,0.04)_100%)] rounded-[20px] p-[28px] lg:p-[40px_32px] relative flex flex-col h-full w-full justify-between">
-                <div className="absolute -top-[13px] left-1/2 -translate-x-1/2 bg-em-500 text-white font-display text-[11px] font-bold tracking-[0.5px] py-[5px] px-[18px] rounded-full shadow-[0_4px_14px_rgba(16,185,129,0.30)] whitespace-nowrap z-20">
-                  PALING POPULER
-                </div>
-
-                <div>
-                  <p className="font-body text-[11px] uppercase tracking-[1.5px] text-em-400 font-bold mb-[10px]">PRO</p>
-                  <div className="flex items-baseline mb-[12px]">
-                    <CountUp 
-                      key={`pro-${activeRole}`}
-                      from={0} 
-                      to={prices[activeRole].pro} 
-                      duration={1.2}
-                      prefix="Rp "
-                      suffix="rb"
-                      style={{
-                        fontFamily: "'Sora', sans-serif",
-                        fontSize: 'clamp(38px, 5vw, 44px)',
-                        fontWeight: 800,
-                        color: '#F1F5F9',
-                        letterSpacing: '-1.5px'
-                      }}
-                    />
-                    <span className="font-body text-[14px] text-tx-3 font-medium ml-1">/bln</span>
-                  </div>
-                  <p className="font-body text-[13px] text-tx-3 mb-[24px] h-[36px] leading-[1.6]">
-                    Akses {activeRole} penuh tanpa batas. Coba gratis 14 hari tanpa kartu kredit.
-                  </p>
-                  
-                  <div className="w-full h-px bg-[rgba(16,185,129,0.20)] mb-[24px]"></div>
-                  
-                  <ul className="space-y-[12px] mb-[32px]">
-                    {proFeatures.map((f, i) => (
-                      <li key={i} className="flex items-start gap-[12px]">
-                        <div className="w-[16px] h-[16px] min-w-[16px] bg-[rgba(16,185,129,0.12)] rounded-[4px] flex items-center justify-center shrink-0 mt-[2px] text-em-400 font-bold text-[9px]">
-                          ✓
-                        </div>
-                        <span className="font-body text-[13px] leading-[1.5] mt-[-1px] text-tx-1 font-medium">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <button className="w-full py-[14px] bg-em-500 rounded-[12px] shadow-[0_4px_20px_rgba(16,185,129,0.25)] font-body text-[14px] font-bold text-white hover:bg-em-400 active:scale-[0.98] transition-all">
-                  Mulai 14 Hari Trial
-                </button>
-              </div>
-            </AnimatedContent>
-
-            {/* Business */}
-            <AnimatedContent direction="vertical" distance={40} delay={0.2} className="bg-bg-2 border border-border-def rounded-[20px] shadow-lg flex flex-col h-full lg:h-[500px] lg:mt-[10px] z-10 transition-all hover:border-[rgba(255,255,255,0.15)] relative">
-              <div className="p-[28px] lg:p-[40px_32px] py-[34px] flex flex-col h-full justify-between">
-                <div>
-                  <p className="font-body text-[11px] uppercase tracking-[1.5px] text-tx-1 font-bold mb-[10px]">BUSINESS</p>
-                  <div className="flex items-baseline mb-[12px]">
-                    <CountUp 
-                      key={`biz-${activeRole}`}
-                      from={0} 
-                      to={prices[activeRole].business} 
-                      duration={1.2}
-                      prefix="Rp "
-                      suffix="rb"
-                      style={{
-                        fontFamily: "'Sora', sans-serif",
-                        fontSize: '38px',
-                        fontWeight: 800,
-                        color: '#F1F5F9',
-                        letterSpacing: '-1px'
-                      }}
-                    />
-                    <span className="font-body text-[14px] text-tx-3 font-medium ml-1">/bln</span>
-                  </div>
-                  <p className="font-body text-[13px] text-tx-3 mb-[24px] h-[36px] leading-[1.6]">
-                    Skala besar dengan prioritas dan analitik khusus korporasi.
-                  </p>
-                  
-                  <div className="w-full h-px bg-border-sub mb-[24px]"></div>
-                  
-                  <ul className="space-y-[12px] mb-[32px]">
-                    {businessFeatures.map((f, i) => (
-                      <li key={i} className="flex items-start gap-[12px]">
-                        <div className="w-[16px] h-[16px] min-w-[16px] bg-[rgba(255,255,255,0.08)] rounded-[4px] flex items-center justify-center shrink-0 mt-[2px] font-bold text-[9px] text-tx-3">
-                          ✓
-                        </div>
-                        <span className="font-body text-[13px] leading-[1.5] mt-[-1px] text-tx-3 font-medium">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <button className="w-full py-[14px] bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.1)] rounded-[12px] font-body text-[14px] font-bold text-tx-2 hover:bg-[rgba(255,255,255,0.08)] hover:text-white active:scale-[0.98] transition-all">
-                  Mulai 14 Hari Trial
-                </button>
-              </div>
-            </AnimatedContent>
-         </div>
-
-         {/* FAQ Accordion */}
-         <div className="max-w-[480px] mx-auto mt-[40px] md:mt-[64px] border-t border-border-sub pt-[24px]">
-            <AnimatedContent direction="vertical" distance={20} delay={0.1}>
-              <h3 className="font-display text-[20px] font-bold text-tx-1 text-center mb-[24px]">Pertanyaan Umum</h3>
-            </AnimatedContent>
-            
-            <div className="flex flex-col">
-               {faqs.map((faq, i) => (
-                 <AnimatedContent 
-                   key={i} 
-                   direction="vertical"
-                   distance={20}
-                   delay={0.2 + i * 0.05}
-                   className="border-b border-border-sub py-[16px]"
-                 >
-                   <button 
-                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                     className="w-full text-left flex justify-between items-center bg-transparent focus:outline-none group"
-                   >
-                     <p className="font-body font-semibold text-[15px] text-tx-1 transition-colors group-hover:text-em-400">{faq.q}</p>
-                     <ChevronDown 
-                       size={18} 
-                       className={`text-tx-3 transition-transform duration-300 shrink-0 ${openFaq === i ? 'rotate-180 text-em-400' : ''}`} 
-                     />
-                   </button>
-                   <AnimatePresence>
-                     {openFaq === i && (
-                       <motion.div 
-                         initial={{ height: 0, opacity: 0 }}
-                         animate={{ height: "auto", opacity: 1 }}
-                         exit={{ height: 0, opacity: 0 }}
-                         transition={{ duration: 0.25, ease: "easeInOut" }}
-                         className="overflow-hidden"
-                       >
-                         <p className="font-body text-[14px] text-tx-3 leading-[1.7] pt-[10px] md:pr-[24px]">
-                           {faq.a}
-                         </p>
-                       </motion.div>
-                     )}
-                   </AnimatePresence>
-                 </AnimatedContent>
-               ))}
+      <div className="max-w-[1280px] mx-auto px-5 relative z-10">
+        <div className="text-center mb-16">
+          <AnimatedContent direction="vertical" distance={30}>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6">
+              <Sparkles size={14} className="text-emerald-500" />
+              <span className="text-[11px] font-black text-emerald-500 uppercase tracking-[0.2em]">PRICING PLANS</span>
             </div>
-         </div>
+          </AnimatedContent>
+          
+          <AnimatedContent direction="vertical" distance={40} delay={0.1}>
+            <h2 className="font-display text-4xl md:text-5xl font-black text-white mb-6 uppercase tracking-tight">
+              PILIH PLAN <span className="text-emerald-500">TERBAIKMU</span>
+            </h2>
+          </AnimatedContent>
 
+          <AnimatedContent direction="vertical" distance={30} delay={0.2}>
+            <p className="text-[#94A3B8] max-w-xl mx-auto mb-12 font-medium">
+              Mulai dengan 14 hari gratis tanpa kartu kredit. Upgrade atau downgrade kapan saja sesuai kebutuhan bisnis Anda.
+            </p>
+          </AnimatedContent>
+
+          {/* Toggle Switch */}
+          <AnimatedContent direction="vertical" distance={20} delay={0.3}>
+            <div className="flex items-center justify-center gap-4 mb-8">
+              <span className={`text-[11px] font-black uppercase tracking-widest ${!isAnnual ? 'text-white' : 'text-[#4B6478]'}`}>Bulanan</span>
+              <div ref={switchRef}>
+                <Switch 
+                  checked={isAnnual} 
+                  onCheckedChange={handleToggle}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`text-[11px] font-black uppercase tracking-widest ${isAnnual ? 'text-white' : 'text-[#4B6478]'}`}>Tahunan</span>
+                <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase tracking-widest">Hemat 20%</span>
+              </div>
+            </div>
+          </AnimatedContent>
+        </div>
+
+        {/* Pricing Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto items-center">
+          {plans.map((plan, idx) => (
+            <motion.div
+              key={plan.name}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={plan.isPopular ? { opacity: 1, y: -16, scale: 1 } : { opacity: 1, y: 0, scale: 0.96 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: idx * 0.1 }}
+              className={cn(
+                "relative p-8 rounded-[32px] border flex flex-col h-full transition-all duration-300",
+                plan.isPopular 
+                  ? "bg-[#0C1319] border-emerald-500 border-2 shadow-[0_32px_64px_-16px_rgba(16,185,129,0.2)] z-10" 
+                  : "bg-[#0C1319] border-white/8 hover:border-white/20"
+              )}
+            >
+              {plan.isPopular && (
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">
+                  Paling Populer
+                </div>
+              )}
+
+              <div className="mb-8">
+                <div className="flex flex-col gap-1 mb-6">
+                  <span className={cn("text-[10px] font-black uppercase tracking-[0.2em]", plan.isPopular ? "text-emerald-500" : "text-[#4B6478]")}>
+                    {plan.subtitle}
+                  </span>
+                  <h3 className="font-display text-2xl font-black text-white uppercase">{plan.name}</h3>
+                </div>
+
+                <div className="flex items-baseline gap-1 mb-4 h-12">
+                  {plan.price === 'Custom' ? (
+                    <span className="text-4xl font-black text-white uppercase tracking-tight">CUSTOM</span>
+                  ) : (
+                    <>
+                      <span className="text-xl font-black text-white tracking-tight mr-1">Rp</span>
+                      <NumberFlow
+                        value={isAnnual ? plan.annualPrice : plan.monthlyPrice}
+                        format={{ 
+                          style: 'decimal',
+                          useGrouping: true,
+                        }}
+                        className="text-4xl font-black text-white tabular-nums tracking-tighter"
+                      />
+                      <span className="text-[#4B6478] text-[10px] font-black uppercase tracking-widest ml-1">/Bln</span>
+                    </>
+                  )}
+                </div>
+                <p className="text-[#94A3B8] text-sm font-medium leading-relaxed">
+                  {plan.description}
+                </p>
+              </div>
+
+              <div className="space-y-4 mb-10 flex-grow">
+                {plan.features.map((feature, fidx) => (
+                  <div key={fidx} className="flex items-start gap-3">
+                    <div className="mt-1 w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                      <Check size={12} className="text-emerald-500" strokeWidth={3} />
+                    </div>
+                    <span className="text-sm font-medium text-white/90 leading-snug">{feature}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                asChild
+                className={cn(
+                  "w-full h-14 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95",
+                  plan.isPopular
+                    ? "bg-emerald-500 hover:bg-[#34D399] text-white shadow-lg shadow-emerald-500/20"
+                    : "bg-white/5 border border-white/10 text-white hover:bg-emerald-500 hover:border-emerald-500"
+                )}
+              >
+                {plan.href.startsWith('http') ? (
+                  <a href={plan.href} target="_blank" rel="noopener noreferrer">{plan.buttonText}</a>
+                ) : (
+                  <Link to={plan.href}>{plan.buttonText}</Link>
+                )}
+              </Button>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* FAQ Section */}
+        <div className="max-w-2xl mx-auto mt-24">
+          <div className="text-center mb-12">
+            <h3 className="font-display text-2xl font-black text-white uppercase tracking-tight">Pertanyaan Umum</h3>
+          </div>
+          
+          <div className="space-y-4">
+            {faqs.map((faq, i) => (
+              <div 
+                key={i}
+                className="rounded-2xl border border-white/5 bg-white/[0.02] overflow-hidden"
+              >
+                <button 
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full text-left px-6 py-5 flex justify-between items-center bg-transparent group"
+                >
+                  <span className="font-display text-sm font-bold text-white uppercase tracking-wide group-hover:text-emerald-500 transition-colors">
+                    {faq.q}
+                  </span>
+                  <ChevronDown 
+                    size={18} 
+                    className={cn(
+                      "text-[#4B6478] transition-transform duration-300 shrink-0",
+                      openFaq === i && "rotate-180 text-emerald-500"
+                    )} 
+                  />
+                </button>
+                <AnimatePresence>
+                  {openFaq === i && (
+                    <motion.div 
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                    >
+                      <div className="px-6 pb-6 text-sm font-medium text-[#94A3B8] leading-relaxed">
+                        {faq.a}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

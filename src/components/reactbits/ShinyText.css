@@ -1,10 +1,10 @@
 .shiny-text {
-  color: #34D399;
+  color: #10B981;
   background: linear-gradient(
     120deg,
-    rgba(52, 211, 153, 0) 40%,
-    rgba(52, 211, 153, 0.8) 50%,
-    rgba(52, 211, 153, 0) 60%
+    #10B981 40%,
+    #F1F5F9 50%,
+    #10B981 60%
   );
   background-size: 200% 100%;
   -webkit-background-clip: text;

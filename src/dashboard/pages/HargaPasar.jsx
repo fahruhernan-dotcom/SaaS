@@ -32,7 +32,9 @@ import {
 } from '@/components/ui/tooltip'
 
 export default function HargaPasar() {
-  const { tenant } = useAuth()
+  const { profile, tenant } = useAuth()
+  const isViewOnly = profile?.role === 'view_only'
+  const canWrite = profile?.role === 'owner' || profile?.role === 'staff'
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [isManualOpen, setIsManualOpen] = useState(false)
   const queryClient = useQueryClient()
@@ -282,25 +284,27 @@ export default function HargaPasar() {
         </section>
 
         {/* INPUT HARGA MANUAL */}
-        <section className="px-5">
-            <Collapsible open={isManualOpen} onOpenChange={setIsManualOpen} className="bg-[#111C24] border border-white/5 rounded-2xl overflow-hidden">
-                <CollapsibleTrigger asChild>
-                    <button className="w-full flex items-center justify-between p-4 hover:bg-secondary/5 transition-colors">
-                        <div className="flex items-center gap-2.5">
-                            <Zap size={16} className="text-amber-500" />
-                            <span className="text-[11px] font-black text-white/60 uppercase tracking-widest">Update Harga Manual</span>
-                        </div>
-                        {isManualOpen ? <ChevronUp size={14} className="text-white/20" /> : <ChevronDown size={14} className="text-white/20" />}
-                    </button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="p-4 pt-0">
-                    <ManualPriceForm onSuccess={() => {
-                        setIsManualOpen(false)
-                        queryClient.invalidateQueries(['market-prices'])
-                    }} />
-                </CollapsibleContent>
-            </Collapsible>
-        </section>
+        {canWrite && (
+          <section className="px-5">
+              <Collapsible open={isManualOpen} onOpenChange={setIsManualOpen} className="bg-[#111C24] border border-white/5 rounded-2xl overflow-hidden">
+                  <CollapsibleTrigger asChild>
+                      <button className="w-full flex items-center justify-between p-4 hover:bg-secondary/5 transition-colors">
+                          <div className="flex items-center gap-2.5">
+                              <Zap size={16} className="text-amber-500" />
+                              <span className="text-[11px] font-black text-white/60 uppercase tracking_widest">Update Harga Manual</span>
+                          </div>
+                          {isManualOpen ? <ChevronUp size={14} className="text-white/20" /> : <ChevronDown size={14} className="text-white/20" />}
+                      </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="p-4 pt-0">
+                      <ManualPriceForm onSuccess={() => {
+                          setIsManualOpen(false)
+                          queryClient.invalidateQueries(['market-prices'])
+                      }} />
+                  </CollapsibleContent>
+              </Collapsible>
+          </section>
+        )}
 
         {/* GRAFIK 14 HARI */}
         <section className="px-5 space-y-4">

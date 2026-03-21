@@ -15,8 +15,10 @@ import {
   Plus,
   ArrowUpRight,
   ArrowDownLeft,
-  CreditCard
+  CreditCard,
+  Eye
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import {
   AreaChart,
   Area,
@@ -134,6 +136,9 @@ export default function BrokerBeranda() {
 function DesktopDashboard({ homeData, armadaAlerts, weeklyData, profile, navigate, setWizardOpen, handleTandaiLunas }) {
   const firstName = profile?.full_name?.split(' ')[0] || 'User'
   const isChartEmpty = !weeklyData || weeklyData.every(d => d.profit === 0)
+  const isOwner = profile?.role === 'owner'
+  const isViewOnly = profile?.role === 'view_only'
+  const canWrite = profile?.role === 'owner' || profile?.role === 'staff'
 
   return (
     <motion.div
@@ -142,20 +147,31 @@ function DesktopDashboard({ homeData, armadaAlerts, weeklyData, profile, navigat
       exit={{ opacity: 0 }}
       className="space-y-8 pb-10"
     >
-      <div className="flex justify-between items-end">
+      <div className="flex justify-between items-start mb-10">
         <div>
-          <p className="text-muted-foreground font-body text-sm font-medium uppercase tracking-widest leading-loose">Selamat {getGreeting()},</p>
-          <h1 className="text-3xl font-display font-extrabold text-[#F1F5F9] tracking-tight">
-            Dashboard {firstName} <span className="animate-float inline-block">👋</span>
-          </h1>
+          <h2 className="font-display text-4xl font-black text-white tracking-tight uppercase">BROKER DASHBOARD</h2>
+          <p className="text-sm font-bold text-[#4B6478] uppercase mt-2 tracking-widest flex items-center gap-2">
+            Selamat datang kembali, <span className="text-emerald-400">{firstName}</span>
+          </p>
+
+          {isViewOnly && (
+            <div className="bg-[#0C1319] border border-white/8 rounded-xl px-4 py-2 mt-4 flex items-center gap-2 w-fit">
+              <Eye className="w-4 h-4 text-[#4B6478]" />
+              <span className="text-[#4B6478] text-xs">
+                Kamu dalam mode <strong className="text-[#94A3B8]">View Only</strong> — hanya bisa melihat data
+              </span>
+            </div>
+          )}
         </div>
-        <Button
-          onClick={() => setWizardOpen(true)}
-          style={{ background: '#10B981', color: 'white', borderRadius: 10, gap: 8, boxShadow: '0 4px 14px rgba(16,185,129,0.25)', height: 44, paddingLeft: 20, paddingRight: 20, fontWeight: 700 }}
-        >
-          <Plus size={15} />
-          Catat Transaksi
-        </Button>
+        {canWrite && (
+          <Button
+            onClick={() => setWizardOpen(true)}
+            className="h-14 px-8 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
+          >
+            <Plus size={18} className="mr-2" />
+            Catat Transaksi
+          </Button>
+        )}
       </div>
 
       {armadaAlerts?.expiringSIMs?.length > 0 && (
@@ -187,12 +203,14 @@ function DesktopDashboard({ homeData, armadaAlerts, weeklyData, profile, navigat
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KPICard
-          label="Profit Minggu Ini"
-          value={formatIDRShort(homeData?.weeklyProfit)}
-          sub="Earning bersih 7 hari terakhir"
-          icon={TrendingUp}
-        />
+        {isOwner && (
+          <KPICard
+            label="Profit Minggu Ini"
+            value={formatIDRShort(homeData?.weeklyProfit)}
+            sub="Earning bersih 7 hari terakhir"
+            icon={TrendingUp}
+          />
+        )}
         <KPICard
           label="Total Piutang"
           value={formatIDRShort(homeData?.totalPiutang)}
@@ -214,58 +232,63 @@ function DesktopDashboard({ homeData, armadaAlerts, weeklyData, profile, navigat
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-2 p-6 bg-[#0C1319] border-border rounded-3xl">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h3 className="text-lg font-display font-bold">Ringkasan Profit</h3>
-              <p className="text-xs text-muted-foreground font-medium mt-0.5">7 hari terakhir penjualan broker</p>
-            </div>
-          </div>
-          <div className="h-[300px] w-full">
-            {isChartEmpty ? (
-              <div className="h-full flex flex-col items-center justify-center gap-2 text-muted-foreground">
-                <BarChart2 size={32} className="text-emerald-500/30" />
-                <p className="text-sm font-medium">Belum ada data transaksi</p>
-                <p className="text-xs">Catat transaksi pertama untuk melihat grafik profit</p>
+        {isOwner && (
+          <Card className="lg:col-span-2 p-6 bg-[#0C1319] border-border rounded-3xl">
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h3 className="text-lg font-display font-bold">Ringkasan Profit</h3>
+                <p className="text-xs text-muted-foreground font-medium mt-0.5">7 hari terakhir penjualan broker</p>
               </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={weeklyData}>
-                  <defs>
-                    <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: '#4B6478', fontSize: 12, fontWeight: 600 }}
-                    dy={10}
-                  />
-                  <YAxis hide />
-                  <RechartsTooltip
-                    contentStyle={{ backgroundColor: '#111C24', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
-                    itemStyle={{ color: '#F1F5F9', fontWeight: 'bold' }}
-                    formatter={(value) => formatIDR(value)}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="profit"
-                    stroke="#10B981"
-                    strokeWidth={3}
-                    fillOpacity={1}
-                    fill="url(#colorProfit)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </Card>
+            </div>
+            <div className="h-[300px] w-full">
+              {isChartEmpty ? (
+                <div className="h-full flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                  <BarChart2 size={32} className="text-emerald-500/30" />
+                  <p className="text-sm font-medium">Belum ada data transaksi</p>
+                  <p className="text-xs">Catat transaksi pertama untuk melihat grafik profit</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={weeklyData}>
+                    <defs>
+                      <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#4B6478', fontSize: 12, fontWeight: 600 }}
+                      dy={10}
+                    />
+                    <YAxis hide />
+                    <RechartsTooltip
+                      contentStyle={{ backgroundColor: '#111C24', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                      itemStyle={{ color: '#F1F5F9', fontWeight: 'bold' }}
+                      formatter={(value) => formatIDR(value)}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="profit"
+                      stroke="#10B981"
+                      strokeWidth={3}
+                      fillOpacity={1}
+                      fill="url(#colorProfit)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </Card>
+        )}
 
-        <Card className="p-6 bg-[#0C1319] border-border rounded-3xl overflow-hidden flex flex-col">
+        <Card className={cn(
+          "p-6 bg-[#0C1319] border-border rounded-3xl overflow-hidden flex flex-col",
+          !isOwner && "lg:col-span-3"
+        )}>
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-md font-display font-bold uppercase tracking-widest text-xs text-muted-foreground">Aktivitas Hari Ini</h3>
             <button className="text-[11px] font-bold text-emerald-400 hover:underline" onClick={() => navigate('/broker/transaksi')}>Lihat Semua</button>
@@ -294,18 +317,19 @@ function DesktopDashboard({ homeData, armadaAlerts, weeklyData, profile, navigat
                 </div>
               ))
             ) : (
-              <div className="h-full flex flex-col items-center justify-center gap-3 py-10">
-                <Package size={24} className="text-emerald-500/30" />
-                <p className="text-xs text-muted-foreground">Belum ada transaksi hari ini</p>
+              canWrite ? (
                 <Button
-                  size="sm"
-                  variant="outline"
-                  className="bg-emerald-500 border-none text-white hover:bg-emerald-600 text-xs font-bold px-4 h-8 rounded-lg"
                   onClick={() => setWizardOpen(true)}
+                  variant="ghost"
+                  className="w-full h-12 rounded-2xl border border-dashed border-white/10 text-[#4B6478] hover:text-emerald-400 hover:bg-emerald-500/5 hover:border-emerald-500/20 transition-all font-bold text-xs uppercase tracking-widest"
                 >
-                  + Catat Sekarang
+                  <Plus size={14} className="mr-2" /> Catat Sekarang
                 </Button>
-              </div>
+              ) : (
+                <div className="py-4 text-center border border-dashed border-white/5 rounded-2xl">
+                  <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-widest">Aksi dinonaktifkan (View Only)</p>
+                </div>
+              )
             )}
           </div>
         </Card>
@@ -331,14 +355,16 @@ function DesktopDashboard({ homeData, armadaAlerts, weeklyData, profile, navigat
                     </p>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 rounded-xl bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/15"
-                  onClick={() => handleTandaiLunas(rpa.id, rpa.rpa_name)}
-                >
-                  <CheckCircle size={18} />
-                </Button>
+                {canWrite && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-xl bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/15"
+                    onClick={() => handleTandaiLunas(rpa.id, rpa.rpa_name)}
+                  >
+                    <CheckCircle size={18} />
+                  </Button>
+                )}
               </div>
             ))}
           </div>
@@ -356,6 +382,9 @@ function DesktopDashboard({ homeData, armadaAlerts, weeklyData, profile, navigat
 function MobileDashboard({ homeData, armadaAlerts, profile, navigate, setWizardOpen, handleTandaiLunas }) {
   const initials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'BR'
   const firstName = profile?.full_name?.split(' ')[0] || 'User'
+  const isOwner = profile?.role === 'owner'
+  const isViewOnly = profile?.role === 'view_only'
+  const canWrite = profile?.role === 'owner' || profile?.role === 'staff'
 
   return (
     <motion.div
@@ -419,16 +448,18 @@ function MobileDashboard({ homeData, armadaAlerts, profile, navigate, setWizardO
         animate="visible"
         className="px-5 mt-4 grid grid-cols-2 gap-2.5"
       >
-        <motion.div variants={fadeUp}>
-          <StatCard
-            label="Profit Minggu Ini"
-            value={homeData?.weeklyProfit || 0}
-            isCurrency
-            valueColor={homeData?.weeklyProfit >= 0 ? '#34D399' : '#F87171'}
-            sub={`dari ${homeData?.weeklySalesCount + homeData?.weeklyBuyCount} tx`}
-            icon={TrendingUp}
-          />
-        </motion.div>
+        {isOwner && (
+          <motion.div variants={fadeUp}>
+            <StatCard
+              label="Profit Minggu Ini"
+              value={homeData?.weeklyProfit || 0}
+              isCurrency
+              valueColor={homeData?.weeklyProfit >= 0 ? '#34D399' : '#F87171'}
+              sub={`dari ${homeData?.weeklySalesCount + homeData?.weeklyBuyCount} tx`}
+              icon={TrendingUp}
+            />
+          </motion.div>
+        )}
         <motion.div variants={fadeUp}>
           <StatCard
             label="Total Piutang"
@@ -462,13 +493,45 @@ function MobileDashboard({ homeData, armadaAlerts, profile, navigate, setWizardO
       </motion.section>
 
       <section className="px-5 mt-4">
-        <Button
-          style={{ width: '100%', height: 52, background: '#10B981', color: 'white', borderRadius: 14, gap: 8, fontSize: 15, fontWeight: 700, boxShadow: '0 4px 16px rgba(16,185,129,0.25)', border: 'none' }}
-          onClick={() => setWizardOpen(true)}
+        <motion.div variants={fadeUp} className="px-5 mb-2">
+          {isViewOnly && (
+            <div className="bg-[#0C1319] border border-white/8 rounded-xl px-4 py-3 flex items-center gap-3">
+              <Eye className="w-4 h-4 text-[#4B6478]" />
+              <span className="text-[#4B6478] text-[11px] font-bold">
+                Mode <strong className="text-[#94A3B8]">View Only</strong> — hanya bisa melihat data
+              </span>
+            </div>
+          )}
+        </motion.div>
+
+        <motion.div
+          variants={fadeUp}
+          className="px-5"
         >
-          <Plus size={18} />
-          Catat Transaksi
-        </Button>
+          <div className="bg-gradient-to-br from-[#10B981] to-[#059669] rounded-[32px] p-6 text-white shadow-2xl shadow-emerald-500/20 relative overflow-hidden">
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 blur-2xl rounded-full" />
+            <div className="relative z-10">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-1">Total Penjualan</p>
+              <h2 className="text-3xl font-display font-black tracking-tight leading-none tabular-nums">
+                {formatIDRShort(homeData?.totalSales)}
+              </h2>
+              <div className="flex gap-2 mt-4 pt-4 border-t border-white/10">
+                <p className="text-[11px] font-bold leading-none opacity-90">{homeData?.weeklySalesCount} Transaksi</p>
+                <p className="text-[11px] font-medium leading-none opacity-60">· 7 hari terakhir</p>
+              </div>
+
+              {canWrite && (
+                <button
+                  onClick={() => setWizardOpen(true)}
+                  className="mt-6 w-full h-14 bg-white text-emerald-600 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
+                  <Plus size={18} />
+                  Catat Transaksi
+                </button>
+              )}
+            </div>
+          </div>
+        </motion.div>
       </section>
 
       <section className="px-5 mt-6 mb-8 space-y-3">
@@ -493,11 +556,13 @@ function MobileDashboard({ homeData, armadaAlerts, profile, navigate, setWizardO
                   <p className="text-[14px] font-bold text-[#F1F5F9] truncate">{item.rpa_clients?.rpa_name || 'RPA Umum'}</p>
                   <p className="text-[11px] text-[#4B6478] font-bold mt-0.5">{item.quantity} ekor · {formatRelative(item.created_at)}</p>
                 </div>
-                <div className="text-right">
-                  <p className={`text-[15px] font-black ${item.profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {item.profit >= 0 ? '+' : ''}{formatIDRShort(item.profit)}
-                  </p>
-                </div>
+                {isOwner && (
+                  <div className="text-right">
+                    <p className={`text-[15px] font-black ${item.profit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {item.profit >= 0 ? '+' : ''}{formatIDRShort(item.profit)}
+                    </p>
+                  </div>
+                )}
               </div>
             ))}
           </div>

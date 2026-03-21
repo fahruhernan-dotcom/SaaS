@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { DatePicker } from '@/components/ui/DatePicker'
 import * as z from 'zod'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
@@ -34,7 +34,7 @@ export default function FormJualModal({ onClose }) {
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, setValue, control, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       transaction_date: new Date().toISOString().split('T')[0],
@@ -239,27 +239,35 @@ export default function FormJualModal({ onClose }) {
         {errors.price_per_kg && <p className="text-[10px] text-red-500 font-bold">{errors.price_per_kg.message}</p>}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
         {/* 6. Tanggal */}
         <div className="space-y-2">
           <Label className="font-display text-[11px] font-bold text-[#4B6478] uppercase tracking-widest">Tanggal Jual</Label>
-          <Input 
-              type="date" 
-              className="bg-[#111C24] border-white/10 h-12 rounded-xl font-bold text-white block w-full"
-              {...register('transaction_date')}
+          <Controller
+            control={control}
+            name="transaction_date"
+            render={({ field }) => (
+              <DatePicker
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
           />
         </div>
 
         {/* 7. Jatuh Tempo */}
         <div className="space-y-2">
           <Label className="font-display text-[11px] font-bold text-[#4B6478] uppercase tracking-widest">Jatuh Tempo</Label>
-          <Input 
-              type="date" 
-              className="bg-[#111C24] border-white/10 h-12 rounded-xl font-bold text-white block w-full"
-              {...register('due_date')}
+          <Controller
+            control={control}
+            name="due_date"
+            render={({ field }) => (
+              <DatePicker
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
           />
         </div>
-      </div>
 
       {/* 8. Catatan */}
       <div className="space-y-2">

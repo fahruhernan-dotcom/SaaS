@@ -58,7 +58,7 @@ const Footer = () => {
             <ul className="space-y-[8px]">
               {['Tentang Kami', 'Karir', 'Blog', 'Hubungi Kami'].map((link, i) => (
                 <li key={i}>
-                  <a href="#" className="font-body text-[14px] text-tx-3 hover:text-tx-1 block transition-colors duration-150">
+                  <a href={link === 'Tentang Kami' ? '/tentang-kami' : '#'} className="font-body text-[14px] text-tx-3 hover:text-tx-1 block transition-colors duration-150">
                     {link}
                   </a>
                 </li>

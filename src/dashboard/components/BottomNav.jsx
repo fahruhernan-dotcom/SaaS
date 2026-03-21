@@ -9,7 +9,12 @@ import {
   RefreshCw,
   ClipboardList,
   ShoppingCart,
-  CreditCard
+  CreditCard,
+  Truck,
+  Wallet,
+  Car,
+  BarChart2,
+  Calculator
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -18,7 +23,8 @@ import DrawerLainnya from './DrawerLainnya'
 
 const ICON_MAP = {
   Home, ArrowLeftRight, Building2, User, MoreHorizontal,
-  RefreshCw, ClipboardList, ShoppingCart, CreditCard
+  RefreshCw, ClipboardList, ShoppingCart, CreditCard,
+  Truck, Wallet, Car, BarChart2, Calculator
 }
 
 export default function BottomNav() {
@@ -28,7 +34,28 @@ export default function BottomNav() {
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   const model = getBusinessModel(profile?.user_type)
-  const tabs = model.bottomNav
+  const allTabs = model.bottomNav
+  
+  // Role-based filtering for broker tabs
+  const tabs = allTabs.filter(tab => {
+    if (profile?.user_type !== 'broker') return true
+    
+    const isOwner = profile?.role === 'owner'
+    const isStaff = profile?.role === 'staff'
+    const isViewOnly = profile?.role === 'view_only'
+
+    if (isOwner) return true
+    if (isStaff) {
+      return ['Beranda', 'Transaksi', 'RPA', 'Akun'].includes(tab.label)
+    }
+    if (isViewOnly) {
+      return ['Beranda', 'Transaksi', 'Akun'].includes(tab.label)
+    }
+    if (profile?.role === 'sopir') {
+      return false // Sopir has their own standalone dashboard without BottomNav
+    }
+    return true
+  })
 
   const color = model.color || '#10B981'
 

@@ -15,7 +15,7 @@ export function useCashFlow(startDate, endDate, tenantId) {
             *,
             rpa_clients(rpa_name),
             purchases(total_cost, transport_cost, other_cost, farms(farm_name)),
-            deliveries(shrinkage_kg, status, vehicle_plate, driver_name)
+            deliveries(shrinkage_kg, arrived_weight_kg, initial_weight_kg, status, vehicle_plate, driver_name)
           `)
           .eq('tenant_id', tenantId)
           .eq('is_deleted', false)
@@ -73,16 +73,14 @@ export function useCashFlow(startDate, endDate, tenantId) {
       // 3. Biaya Kirim (Source of truth: sales table)
       const totalTransport = sales.reduce((s, t) => s + (Number(t.delivery_cost) || 0), 0)
       
-      // 4. Kerugian (Shrinkage only)
-      const totalKerugian = losses.reduce((s, t) => s + (Number(t.financial_loss) || 0), 0)
-      
-      // 5. Extra Expenses
+      // 4. Extra Expenses
       const totalExtra = expenses.reduce((s, t) => s + (Number(t.amount) || 0), 0)
       
-      // 6. Total Keluar = Modal + Transport + Kerugian + Extra
-      const totalKeluar = totalModalBeli + totalTransport + totalKerugian + totalExtra
+      // 5. Total Keluar = Modal + Transport + Extra
+      // Shrinkage TIDAK dikurangi karena total_revenue sudah pakai bobot tiba
+      const totalKeluar = totalModalBeli + totalTransport + totalExtra
       
-      // 7. Net Cash Flow = Pemasukan - Keluar
+      // 6. Net Cash Flow = Pemasukan - Keluar
       const netCashFlow = totalPemasukan - totalKeluar
 
       return {
@@ -91,7 +89,6 @@ export function useCashFlow(startDate, endDate, tenantId) {
           totalPemasukan, 
           totalModal: totalModalBeli, 
           totalTransport,
-          totalKerugian, 
           totalExtra, 
           totalKeluar,
           netCashFlow,

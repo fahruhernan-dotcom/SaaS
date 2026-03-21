@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Building2, 
@@ -10,7 +10,8 @@ import {
   ChevronRight,
   User,
   Smartphone,
-  Check
+  Check,
+  Loader2
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../lib/hooks/useAuth';
@@ -47,12 +48,42 @@ export default function OnboardingFlow() {
   const [isFarmAdded, setIsFarmAdded] = useState(false);
   const [isRPAAdded, setIsRPAAdded] = useState(false);
 
+  // Guard: Skip Step 0 if user_type is already set
+  useEffect(() => {
+    if (profile?.user_type && step === 0) {
+      setStep(1);
+    }
+  }, [profile, step]);
+
+  // Guard: Redirect non-owners or already onboarded users
+  useEffect(() => {
+    if (!profile) return
+
+    // Staff → langsung ke dashboard
+    if (profile.role === 'staff') {
+      navigate('/broker/beranda', { replace: true })
+      return
+    }
+
+    // Owner sudah onboarded → ke dashboard
+    if (profile.onboarded === true && profile.business_model_selected === true) {
+      navigate('/broker/beranda', { replace: true })
+      return
+    }
+  }, [profile, navigate])
+
   // Sync initial business name from profile/tenant if available
   useEffect(() => {
     if (tenant?.business_name) {
       setFormData(prev => ({ ...prev, business_name: tenant.business_name }));
     }
   }, [tenant]);
+
+  if (!profile) return (
+    <div className="min-h-screen bg-[#06090F] flex items-center justify-center">
+      <div className="text-[#4B6478] text-sm font-medium animate-pulse">Memuat profil...</div>
+    </div>
+  )
 
   const nextStep = () => {
     setDirection(1);
@@ -64,28 +95,34 @@ export default function OnboardingFlow() {
     setStep(s => s - 1);
   };
 
-  // Step 0: Handle Role Selection
+  // Step 0: Handle Role Selection (Improve 1 & 2)
   const handleRoleSelection = async (role) => {
+    setSelectedRole(role);
     if (role !== 'broker') {
       toast.info(`🚧 Dashboard ${role.toUpperCase()} sedang dalam pengembangan. Kami akan notifikasi kamu begitu siap!`);
       
       setLoading(true);
       try {
-        await supabase
+        const { error } = await supabase
           .from('profiles')
-          .update({ user_type: role, onboarded: true })
+          .update({ 
+            user_type: role, 
+            business_model_selected: true,
+            onboarded: true 
+          })
           .eq('auth_user_id', user.id);
         
-        navigate(role === 'peternak' ? '/peternak/dashboard' : '/rpa/dashboard');
+        if (error) throw error;
+        
+        const path = role === 'peternak' ? '/peternak/beranda' : '/rpa-buyer/beranda';
+        navigate(path);
       } catch (err) {
-        toast.error('Gagal memperbarui profil');
+        toast.error('Gagal memperbarui profil. ' + err.message);
       } finally {
         setLoading(false);
       }
       return;
     }
-
-    setSelectedRole('broker');
   };
 
   const proceedFromRole = async () => {
@@ -93,7 +130,10 @@ export default function OnboardingFlow() {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ user_type: 'broker' })
+        .update({ 
+          user_type: 'broker',
+          business_model_selected: true 
+        })
         .eq('auth_user_id', user.id);
       
       if (error) throw error;
@@ -188,7 +228,7 @@ export default function OnboardingFlow() {
         .eq('auth_user_id', user.id);
       
       toast.success(`🎉 Selamat datang di TernakOS, ${profile?.full_name?.split(' ')[0]}!`);
-      navigate('/dashboard');
+      navigate('/broker/beranda');
     } catch (err) {
       toast.error('Gagal menyelesaikan onboarding');
     } finally {
@@ -270,6 +310,7 @@ export default function OnboardingFlow() {
                   desc="Beli ayam dari kandang, jual ke RPA atau pasar. Kelola margin, piutang, dan pengiriman."
                   badge="Tersedia"
                   badgeColor="#10B981"
+                  loading={loading && selectedRole === 'broker'}
                   selected={selectedRole === 'broker'}
                   onClick={() => handleRoleSelection('broker')}
                 />
@@ -279,7 +320,8 @@ export default function OnboardingFlow() {
                   desc="Pelihara ayam di kandang, pantau FCR, deplesi, dan estimasi panen. Catat biaya produksi."
                   badge="Segera Hadir"
                   badgeColor="#F59E0B"
-                  disabled
+                  loading={loading && selectedRole === 'peternak'}
+                  disabled={loading}
                   onClick={() => handleRoleSelection('peternak')}
                 />
                 <RoleCard 
@@ -288,7 +330,8 @@ export default function OnboardingFlow() {
                   desc="Beli ayam dari broker, kelola order pembelian, dan pantau riwayat transaksi."
                   badge="Segera Hadir"
                   badgeColor="#F59E0B"
-                  disabled
+                  loading={loading && selectedRole === 'rpa'}
+                  disabled={loading}
                   onClick={() => handleRoleSelection('rpa')}
                 />
               </div>
@@ -301,7 +344,7 @@ export default function OnboardingFlow() {
                   disabled={loading}
                   style={primaryBtnStyle}
                 >
-                  {loading ? 'Processing...' : 'Lanjut'} <ArrowRight size={18} />
+                  {loading ? <><Loader2 size={18} className="animate-spin mr-2" /> Menyiapkan...</> : 'Lanjut'} <ArrowRight size={18} />
                 </motion.button>
               )}
             </motion.div>
@@ -370,7 +413,7 @@ export default function OnboardingFlow() {
                     disabled={loading || !formData.business_name || !formData.phone || !formData.location}
                     style={{ ...primaryBtnStyle, marginTop: '12px' }}
                   >
-                    {loading ? 'Menyimpan...' : 'Lanjut'} <ArrowRight size={18} />
+                    {loading ? <><Loader2 size={16} className="animate-spin mr-2" /> Menyimpan...</> : 'Lanjut'} <ArrowRight size={18} />
                   </button>
                 </div>
               )}
@@ -437,7 +480,7 @@ export default function OnboardingFlow() {
                       color: isFarmAdded ? '#10B981' : 'white'
                     }}
                   >
-                    {isFarmAdded ? <><Check size={18} /> Kandang ditambahkan!</> : loading ? 'Menambahkan...' : 'Tambah Kandang'}
+                    {isFarmAdded ? <><Check size={18} /> Kandang ditambahkan!</> : loading ? <><Loader2 size={16} className="animate-spin mr-2" /> Menambahkan...</> : 'Tambah Kandang'}
                   </button>
 
                   <button onClick={nextStep} style={secondaryBtnStyle}>
@@ -510,11 +553,11 @@ export default function OnboardingFlow() {
                       color: isRPAAdded ? '#10B981' : 'white'
                     }}
                   >
-                    {isRPAAdded ? <><Check size={18} /> RPA ditambahkan!</> : loading ? 'Menambahkan...' : 'Tambah RPA'}
+                    {isRPAAdded ? <><Check size={18} /> RPA ditambahkan!</> : loading ? <><Loader2 size={16} className="animate-spin mr-2" /> Menambahkan...</> : 'Tambah RPA'}
                   </button>
 
-                  <button onClick={handleFinish} style={secondaryBtnStyle}>
-                    Mulai Pakai TernakOS <ArrowRight size={18} />
+                  <button onClick={handleFinish} disabled={loading} style={secondaryBtnStyle}>
+                    {loading ? <Loader2 size={16} className="animate-spin" /> : 'Mulai Pakai TernakOS'} <ArrowRight size={18} />
                   </button>
                 </div>
               )}
@@ -526,23 +569,24 @@ export default function OnboardingFlow() {
   );
 }
 
-function RoleCard({ icon, title, desc, badge, badgeColor, selected, disabled, onClick }) {
+function RoleCard({ icon, title, desc, badge, badgeColor, loading, selected, disabled, onClick }) {
   return (
     <motion.div
       whileHover={{ borderColor: disabled ? 'rgba(255,255,255,0.09)' : 'rgba(16,185,129,0.4)' }}
       whileTap={{ scale: disabled ? 1 : 0.98 }}
-      onClick={onClick}
+      onClick={!disabled ? onClick : undefined}
       style={{
         background: selected ? 'rgba(16,185,129,0.06)' : '#111C24',
         border: `1px solid ${selected ? 'rgba(16,185,129,0.5)' : 'rgba(255,255,255,0.09)'}`,
         borderRadius: '20px',
         padding: '24px 20px',
-        cursor: 'pointer',
+        cursor: disabled ? 'default' : 'pointer',
         display: 'flex',
         alignItems: 'center',
         gap: '16px',
         opacity: disabled ? 0.65 : 1,
-        transition: 'all 0.2s ease'
+        transition: 'all 0.2s ease',
+        position: 'relative'
       }}
     >
       <div style={{ 
@@ -555,7 +599,7 @@ function RoleCard({ icon, title, desc, badge, badgeColor, selected, disabled, on
         alignItems: 'center', 
         justifyContent: 'center' 
       }}>
-        {icon}
+        {loading ? <Loader2 size={24} className="animate-spin text-[#10B981]" /> : icon}
       </div>
       <div style={{ flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>

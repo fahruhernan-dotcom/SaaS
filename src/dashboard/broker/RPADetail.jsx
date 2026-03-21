@@ -68,7 +68,8 @@ const fadeUp = {
 }
 
 function EditRPAForm({ rpa, onSuccess, onDelete }) {
-  const { tenant } = useAuth()
+  const { tenant, profile } = useAuth()
+  const isOwner = profile?.role === 'owner'
   const tenantId = tenant?.id
   const queryClient = useQueryClient()
   
@@ -421,21 +422,23 @@ function EditRPAForm({ rpa, onSuccess, onDelete }) {
             ? 'Menyimpan...'
             : 'Simpan Perubahan'}
         </Button>
-        <Button
-          type="button"
-          onClick={onDelete}
-          style={{
-            width: '46px',
-            height: '46px',
-            background: 'rgba(248,113,113,0.08)',
-            border: '1px solid rgba(248,113,113,0.20)',
-            borderRadius: '10px',
-            color: '#F87171',
-            flexShrink: 0
-          }}
-        >
-          <Trash2 size={16} />
-        </Button>
+        {isOwner && (
+          <Button
+            type="button"
+            onClick={onDelete}
+            style={{
+              width: '46px',
+              height: '46px',
+              background: 'rgba(248,113,113,0.08)',
+              border: '1px solid rgba(248,113,113,0.20)',
+              borderRadius: '10px',
+              color: '#F87171',
+              flexShrink: 0
+            }}
+          >
+            <Trash2 size={16} />
+          </Button>
+        )}
       </div>
     </form>
   )
@@ -445,7 +448,8 @@ export default function RPADetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { tenant } = useAuth()
+  const { tenant, profile } = useAuth()
+  const isOwner = profile?.role === 'owner'
 
   // Queries
   const { data: rpa, isLoading: loadingRpa } = useQuery({
@@ -556,14 +560,16 @@ export default function RPADetail() {
                 <p className="text-[10px] font-black text-[#4B6478] uppercase mt-1 tracking-widest">Detail Pembeli</p>
             </div>
         </div>
-        <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-slate-400 hover:text-white"
-            onClick={() => setShowEdit(true)}
-        >
-            <Edit size={18} />
-        </Button>
+        {isOwner && (
+          <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-slate-400 hover:text-white"
+              onClick={() => setShowEdit(true)}
+          >
+              <Edit size={18} />
+          </Button>
+        )}
       </header>
 
       {/* Profile Card */}

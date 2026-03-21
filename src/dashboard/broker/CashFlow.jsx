@@ -41,6 +41,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { DatePicker } from '@/components/ui/DatePicker'
+import { DateRangePicker } from '@/components/ui/DateRangePicker'
 
 // --- HELPER FORMATTERS ---
 // Imported from @/lib/format
@@ -80,8 +82,8 @@ export default function CashFlow() {
     const { summary = {}, sales = [], purchases = [], deliveries = [], losses = [], expenses = [] } = data || {}
 
     // --- CHART DATA PROCESSING ---
-    const { chartData, breakdownData, totalTransport } = useMemo(() => {
-        if (!data) return { chartData: [], breakdownData: [], totalTransport: 0 }
+    const { chartData, breakdownData, totalTransport, totalSusutValue } = useMemo(() => {
+        if (!data) return { chartData: [], breakdownData: [], totalTransport: 0, totalSusutValue: 0 }
 
         const days = eachDayOfInterval({ start: dateRange.start, end: dateRange.end })
         let runningBalance = 0
@@ -91,22 +93,16 @@ export default function CashFlow() {
             const dayLabel = format(day, 'EEE', { locale: id })
 
             const daySales = sales.filter(s => s.transaction_date === dateStr)
-            const dayLosses = losses.filter(l => l.report_date === dateStr)
             const dayExpenses = expenses.filter(e => e.expense_date === dateStr)
 
             const dayRevenue = daySales.reduce((s, t) => s + safeNum(t.total_revenue), 0)
             const dayModal   = daySales.reduce((s, t) => s + safeNum(t.purchases?.total_cost), 0)
             const dayTransport = daySales.reduce((s, t) => s + safeNum(t.delivery_cost), 0)
             
-            // Only include shrinkage losses in the flow
-            const dayLoss    = dayLosses
-              .filter(l => l.loss_type === 'shrinkage')
-              .reduce((s, t) => s + safeNum(t.financial_loss), 0)
-            
             const dayExtra = dayExpenses
                 .reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
 
-            const dayOut = dayModal + dayLoss + dayExtra + dayTransport
+            const dayOut = dayModal + dayExtra + dayTransport
             const dayNet = dayRevenue - dayOut
             runningBalance += dayNet
 
@@ -122,13 +118,18 @@ export default function CashFlow() {
         const bData = [
             { name: 'Modal Beli (Produk)',  value: summary.totalModal || 0,     fill: '#3B82F6' },
             { name: 'Biaya Pengiriman',     value: summary.totalTransport || 0, fill: '#FBBF24' },
-            { name: 'Kerugian (Susut)',     value: summary.totalKerugian || 0,  fill: '#F87171' },
             { name: 'Biaya Extra',          value: summary.totalExtra || 0,     fill: '#8B5CF6' },
         ].filter(d => d.value > 0)
 
         const totalTransportCost = sales.reduce((s, t) => s + (Number(t.delivery_cost) || 0), 0)
+        
+        const totalSusutValue = sales.reduce((sum, s) => {
+            const shrinkage = s.deliveries?.[0]?.shrinkage_kg || 0
+            const price = s.price_per_kg || 0
+            return sum + (Number(shrinkage) * Number(price))
+        }, 0)
 
-        return { chartData: cData, breakdownData: bData, totalTransport: totalTransportCost }
+        return { chartData: cData, breakdownData: bData, totalTransport: totalTransportCost, totalSusutValue }
     }, [data, dateRange, sales, purchases, deliveries, losses, expenses, summary])
 
     // --- TRANSACTION LIST MERGING ---
@@ -136,7 +137,6 @@ export default function CashFlow() {
         const list = [
             ...sales.map(s => ({ ...s, type: 'in', category: 'jual', label: `Jual ke ${s.rpa_clients?.rpa_name}`, amount: s.total_revenue, date: s.transaction_date })),
             ...purchases.map(p => ({ ...p, type: 'out', category: 'beli', label: `Beli dari ${p.farms?.farm_name}`, date: p.transaction_date, amount: p.total_cost })),
-            ...losses.filter(l => l.loss_type === 'shrinkage').map(l => ({ ...l, type: 'out', category: 'kerugian', label: `Susut — ${l.description}`, date: l.report_date, amount: l.financial_loss })),
             ...expenses.map(e => ({ ...e, type: 'out', category: 'extra', label: `${e.category}: ${e.description}`, date: e.expense_date, amount: e.amount }))
         ].sort((a, b) => new Date(b.date) - new Date(a.date))
         return list
@@ -194,24 +194,12 @@ export default function CashFlow() {
                         <motion.div 
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="flex items-center gap-3 p-4 rounded-2xl bg-secondary/10 border border-white/5 w-fit"
+                            className="w-full sm:w-auto"
                         >
-                            <Calendar size={16} className="text-[#4B6478]" />
-                            <div className="flex items-center gap-2">
-                                <Input 
-                                    type="date" 
-                                    value={format(customRange.from, 'yyyy-MM-dd')}
-                                    onChange={(e) => setCustomRange(p => ({ ...p, from: new Date(e.target.value) }))}
-                                    className="h-9 w-36 bg-transparent border-none text-xs font-black uppercase text-white p-0 focus-visible:ring-0" 
-                                />
-                                <span className="text-[#4B6478] font-black">—</span>
-                                <Input 
-                                    type="date" 
-                                    value={format(customRange.to, 'yyyy-MM-dd')}
-                                    onChange={(e) => setCustomRange(p => ({ ...p, to: new Date(e.target.value) }))}
-                                    className="h-9 w-36 bg-transparent border-none text-xs font-black uppercase text-white p-0 focus-visible:ring-0" 
-                                />
-                            </div>
+                            <DateRangePicker 
+                                value={customRange}
+                                onChange={(range) => range && setCustomRange(range)}
+                            />
                         </motion.div>
                     )}
                 </div>
@@ -233,7 +221,7 @@ export default function CashFlow() {
                         value={summary.totalKeluar} 
                         icon={TrendingDown} 
                         color="red" 
-                        sub="modal + kerugian + extra"
+                        sub="modal + pengiriman + extra"
                     />
                     <SummaryCard 
                         label="NET CASH FLOW" 
@@ -386,6 +374,22 @@ export default function CashFlow() {
                                     )) : (
                                         <div className="h-[180px] flex items-center justify-center text-[#4B6478] text-[10px] font-black uppercase tracking-widest italic border border-dashed border-white/5 rounded-[24px]">
                                             Data belanja kosong
+                                        </div>
+                                    )}
+
+                                    {/* Informative Shrinkage Row */}
+                                    {data && (chartData.length > 0) && (
+                                        <div className="flex flex-col gap-1 pt-4 border-t border-white/5 mt-2">
+                                            <div className="flex items-center justify-between text-xs font-bold">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
+                                                    <span className="text-[#F59E0B] uppercase tracking-wider">Susut Berat</span>
+                                                </div>
+                                                <span className="text-[#F59E0B] tabular-nums">{formatIDRShort(totalSusutValue || 0)}</span>
+                                            </div>
+                                            <p className="text-[9px] font-bold text-[#F59E0B]/60 uppercase tracking-widest">
+                                                (sudah tercermin dalam pendapatan)
+                                            </p>
                                         </div>
                                     )}
                                 </div>
@@ -624,6 +628,7 @@ function CreateExtraExpenseSheet({ isOpen, onClose }) {
     const { tenant } = useAuth()
     const queryClient = useQueryClient()
     const [isLoading, setIsLoading] = useState(false)
+    const [expenseDate, setExpenseDate] = useState(format(new Date(), 'yyyy-MM-dd'))
 
     const handleCreate = async (e) => {
         e.preventDefault()
@@ -690,7 +695,12 @@ function CreateExtraExpenseSheet({ isOpen, onClose }) {
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Tanggal *</Label>
-                                <Input required name="expense_date" type="date" defaultValue={format(new Date(), 'yyyy-MM-dd')} className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs" />
+                                <DatePicker 
+                                    value={expenseDate}
+                                    onChange={setExpenseDate}
+                                    className="h-14"
+                                />
+                                <input type="hidden" name="expense_date" value={expenseDate} />
                             </div>
                         </div>
 
