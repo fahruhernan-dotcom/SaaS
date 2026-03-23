@@ -1,6 +1,6 @@
 # TernakOS — Developer Context
 
-> Last updated: 2026-03-22 (RBAC, Undangan Kode, Role Baru, UI/UX) | Use this as reference for all future implementations.
+> Last updated: 2026-03-24 (Dashboard redesign & UI refinement) | Use this as reference for all future implementations.
 
 ---
 
@@ -160,6 +160,7 @@ const canWrite = ['owner', 'staff'].includes(profile?.role)
 - ⚠️ `total_eggs` does NOT exist in v2. Never include in `.select()`.
 - Hook: `usePurchases()` — queryKey `['purchases', tenant.id]`
 - `.select()` joins: `farms(farm_name)`
+- ⚠️ `is_deleted` filter: **ALWAYS APPLY**
 
 ### `sales`
 - `id`, `tenant_id`, `rpa_id`, `purchase_id`, `quantity`, `avg_weight_kg`, `total_weight_kg`
@@ -270,6 +271,7 @@ const canWrite = ['owner', 'staff'].includes(profile?.role)
 
 ### `payments`
 - `id`, `tenant_id`, `sale_id`, `amount`, `payment_date`, `payment_method`, `reference_no`
+- ⚠️ **Note**: Kolom `is_deleted` TIDAK ADA di tabel ini. Jangan filter `is_deleted` di query. (Resolved 400 error in dashboard).
 - Tracked in `RecycleBinSection` for permanent deletion.
 
 ---
@@ -456,8 +458,8 @@ src/
 │
 ├── dashboard/
 │   ├── broker/                     ← MAIN BROKER PAGES
-│   │   ├── Beranda.jsx             ← Dashboard: KPI cards, 7-day chart, piutang, wizard trigger
-│   │   ├── Transaksi.jsx           ← Transaction history (purchases + sales list, filters)
+│   │   ├── Beranda.jsx             ← Redesigned Dashboard: KPI cards (80px), 7-day profit chart (Sen-Min), Weekly/Monthly toggle, Dynamic tooltips.
+│   │   ├── Transaksi.jsx           ← Transaction history: Purchases + Sales list, SaleAuditSheet refined (No header trash icon).
 │   │   ├── RPA.jsx                 ← RPA client list, search, CRUD
 │   │   ├── RPADetail.jsx           ← RPA detail: agreements, transactions, outstanding
 │   │   ├── Kandang.jsx             ← Farm CRUD: add/edit/delete farm
@@ -842,6 +844,10 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 27. **RBAC pattern** — selalu cek `profile.role` sebelum render tombol aksi sensitif.
 28. **`invite_token` di `signUp` metadata** — wajib dikirim agar trigger DB handle join tenant.
 29. **View Only banner** — tampilkan di setiap halaman yang bisa diakses `view_only`.
+30. **Revenue WAJIB dari bobot TIBA** — total_revenue harus selalu dihitung dari arrived_weight_kg × price_per_kg, BUKAN dari initial_weight_kg (bobot kirim), total_weight_kg (bobot awal di purchases), atau quantity × avg_weight_kg (estimasi ekor).
+31. **Ekor (count) hanya informasi** — arrived_count, initial_count, mortality_count TIDAK BOLEH dipakai untuk kalkulasi uang apapun. Ekor hanya untuk: tracking kematian, estimasi stok, data kandang.
+32. **Update total_revenue saat catat kedatangan** — di `useUpdateDelivery.js` dan `UpdateArrivalSheet.jsx`, setelah arrived_weight_kg tersimpan, wajib update: `sales.total_revenue = arrived_weight_kg × price_per_kg`.
+33. **Query invalidation setelah update revenue** — wajib invalidate: `['sales']`, `['sales', tenant.id]`, `['deliveries']`, `['deliveries', tenant.id]` agar semua halaman (Beranda, Transaksi, CashFlow, RPA) langsung update.
 
 ---
 
@@ -861,7 +867,22 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 
 ---
 
-## 22. Team Invitations System
+## 22. Financial Standardization
+
+**Revenue Recalculation on Arrival (2026-03-24)**:
+Saat catat kedatangan pengiriman, total_revenue di tabel sales WAJIB di-recalculate menggunakan:
+  total_revenue = deliveries.arrived_weight_kg × sales.price_per_kg
+
+Ini memastikan susut berat otomatis tercermin dalam pendapatan.
+Flow kalkulasi yang benar:
+1. Bobot tiba ditimbang → arrived_weight_kg tersimpan di deliveries
+2. total_revenue di-update: arrived_weight_kg × price_per_kg
+3. Net profit = total_revenue - modal - delivery_cost
+4. Ekor tidak dipakai dalam kalkulasi apapun
+
+---
+
+## 23. Team Invitations System
 
 **Purpose**: Allows `owner` role to invite new members to their tenant using a 6-digit uppercase code.
 
@@ -892,7 +913,7 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 
 ---
 
-## 23. Implemented Modules Status
+## 24. Implemented Modules Status
 
 | Module | Status | Location | Notes |
 |--------|--------|----------|-------|
@@ -926,7 +947,7 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 | Peternak: Siklus | 🚧 | `ComingSoon` | Planned features |
 | RPA: Order, Hutang | 🚧 | `ComingSoon` | Planned features |
 
-## 24. Scripts & Automation
+## 25. Scripts & Automation
 
 ### `scripts/ternakos_harga_scraper.py`
 - Setup: `pip install -r scripts/requirements.txt` (uses Playwright, undetected_chromedriver, bs4)
@@ -938,7 +959,7 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 
 ---
 
-## 25. Pricing Structure
+## 26. Pricing Structure
 
 | Target Role | PRO Plan | BUSINESS Plan |
 |-------------|----------|---------------|
@@ -950,7 +971,7 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 
 ---
 
-## 26. AI Roadmap (Business Plan)
+## 27. AI Roadmap (Business Plan)
 
 - **AI Engine**: Grok 4.1 Fast (planned integration).
 - **Key Features**:
@@ -965,9 +986,18 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 
 ---
 
-## 27. Recent Major Updates (2026-03-22)
+## 28. Recent Major Updates (2026-03-24)
 
-### RBAC Implementation
+### Updates 2026-03-24
+
+**Revenue Calculation Fix:**
+- total_revenue sekarang selalu dari arrived_weight_kg × price_per_kg
+- `useUpdateDelivery.js` auto-recalculate saat catat kedatangan
+- `UpdateArrivalSheet.jsx` handle recalculation untuk new arrival & edit
+- Data lama di DB sudah di-fix via SQL update
+- Ekor (count) hanya informasi, tidak dipakai untuk kalkulasi uang
+
+### Updates 2026-03-22
 - Role baru: `view_only`, `sopir`.
 - `RoleGuard` component di `App.jsx` untuk proteksi route granular.
 - Filter menu otomatis di `AppSidebar.jsx` dan `BottomNav.jsx`.

@@ -34,7 +34,7 @@ const registerSchema = z.object({
   password: z.string().min(8, 'Password minimal 8 karakter'),
   confirmPassword: z.string(),
   agreedToTerms: z.literal(true, {
-    errorMap: () => ({ message: 'Harap setujui syarat & ketentuan' }),
+    errorMap: () => ({ message: 'Kamu harus menyetujui syarat & ketentuan untuk melanjutkan.' }),
   }),
   // Optional/Conditional fields
   businessName: z.string().optional(),
@@ -236,16 +236,20 @@ export default function Register() {
             full_name: formData.fullName,
             business_name: formData.businessName,
             user_type: formData.user_type,
-            onboarded: false,
-            business_model_selected: false
+            onboarded: true,
+            business_model_selected: true
           }
         }
       })
       
       if (error) throw error;
 
-      // Redirect to onboarding after manual success (Trigger handles Profile & Tenant)
-      navigate('/onboarding')
+      // Skip onboarding and go directly to dashboard
+      const dashboardPath = formData.user_type === 'broker' ? '/broker/beranda' : 
+                          formData.user_type === 'peternak' ? '/peternak/beranda' : 
+                          '/rpa-buyer/beranda';
+                          
+      navigate(dashboardPath)
       toast.success('Akun berhasil dibuat! Selamat datang di TernakOS.')
       
     } catch (err) {

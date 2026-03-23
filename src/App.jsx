@@ -18,7 +18,7 @@ import RPADetail from './dashboard/broker/RPADetail';
 import Kandang from './dashboard/broker/Kandang';
 import Simulator from './dashboard/broker/Simulator';
 import Akun from './dashboard/broker/Akun';
-import OnboardingFlow from './dashboard/pages/OnboardingFlow';
+// Dashboard pages
 import HargaPasar from './dashboard/pages/HargaPasar';
 import Pengiriman from './dashboard/broker/Pengiriman';
 import CashFlow from './dashboard/broker/CashFlow';
@@ -57,8 +57,8 @@ function ProtectedRoute({ children, requiredType }) {
   
   if (!user) return <Navigate to="/login" replace />;
 
-  if (profile && !profile.onboarded && location.pathname !== '/onboarding' && profile.role === 'owner') {
-    return <Navigate to="/onboarding" replace />;
+  if (profile && !profile.onboarded && location.pathname !== '/broker/tim' && profile.role === 'owner') {
+    return <Navigate to="/broker/tim" replace />;
   }
 
   // Role guard (only check if business model is selected)
@@ -87,8 +87,8 @@ function RoleRedirector() {
   if (loading) return <LoadingScreen />;
   if (!profile) return <Navigate to="/login" replace />;
   
-  // If no model selected, we just stay let the overlay handle them
-  if (!profile.business_model_selected) return <Navigate to="/broker/beranda" replace />; 
+  // If no model selected, we just default to broker for now
+  // if (!profile.business_model_selected) return <Navigate to="/broker/beranda" replace />; 
   
   if (profile.role === 'sopir') return <Navigate to="/broker/sopir" replace />;
   
@@ -132,12 +132,7 @@ function App() {
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/tentang-kami" element={<AboutUs />} />
 
-        {/* Onboarding */}
-        <Route path="/onboarding" element={
-          <ProtectedRoute>
-            <OnboardingFlow />
-          </ProtectedRoute>
-        } />
+        {/* Onboarding removed - functionality moved to /broker/tim */}
 
         {/* Broker routes */}
         <Route path="/broker" element={<Navigate to="/broker/beranda" replace />} />

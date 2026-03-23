@@ -99,7 +99,8 @@ export default function DesktopTopBar() {
       // If live transactions exist today, use them. Otherwise fallback to global market_prices
       return {
         farm_gate_price: liveBuy > 0 ? liveBuy : (g?.farm_gate_price || 0),
-        buyer_price: liveSell > 0 ? liveSell : (g?.buyer_price || 0)
+        buyer_price: liveSell > 0 ? liveSell : (g?.buyer_price || 0),
+        price_date: g?.price_date
       }
     },
     enabled: !!tenant?.id
@@ -138,7 +139,7 @@ export default function DesktopTopBar() {
               Rp {marketPrice?.farm_gate_price?.toLocaleString('id-ID') || '--'}
             </span>
           </div>
-          <div className="w-px h-3 bg-border" />
+          <div className="w-px h-3 bg-border mx-1" />
           <div className="flex items-center gap-1.5 text-[11px] font-body">
             <span className="text-muted-foreground">Jual</span>
             <span className="font-bold text-foreground tabular-nums">

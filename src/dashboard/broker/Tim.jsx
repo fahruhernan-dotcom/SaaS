@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Trash2, X, Plus, UserPlus, Users, Clock, Copy } from 'lucide-react';
+import { Loader2, Trash2, X, Plus, UserPlus, Users, Clock, Copy, Pencil, Save, AlertCircle } from 'lucide-react';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { id } from 'date-fns/locale';
 
@@ -29,9 +29,48 @@ export default function Tim() {
   const { profile } = useAuth();
   const queryClient = useQueryClient();
   const [isInviteSheetOpen, setIsInviteSheetOpen] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    business_name: '',
+    phone: '',
+    location: ''
+  });
+  
   const isOwner = profile?.role === 'owner';
 
   // --- QUERIES ---
+  const { data: tenant, isLoading: loadingTenant } = useQuery({
+    queryKey: ['tenants', profile?.tenant_id],
+    queryFn: async () => {
+      if (!profile?.tenant_id) return null;
+      const { data, error } = await supabase
+        .from('tenants')
+        .select('*')
+        .eq('id', profile.tenant_id)
+        .single();
+        
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!profile?.tenant_id,
+  });
+
+  // Sync form when tenant data loads or edit mode starts
+  React.useEffect(() => {
+    if (tenant) {
+      setProfileForm({
+        business_name: tenant.business_name || '',
+        phone: tenant.phone || '',
+        location: tenant.location || ''
+      });
+      
+      // Auto-edit if name is missing (new user)
+      if (!tenant.business_name && isOwner) {
+        setIsEditingProfile(true);
+      }
+    }
+  }, [tenant, isOwner]);
+
   const { data: members = [], isLoading: loadingMembers } = useQuery({
     queryKey: ['team_members', profile?.tenant_id],
     queryFn: async () => {
@@ -103,6 +142,24 @@ export default function Tim() {
     }
   });
 
+  const updateTenantMutation = useMutation({
+    mutationFn: async (payload) => {
+      const { error } = await supabase
+        .from('tenants')
+        .update(payload)
+        .eq('id', profile.tenant_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Profil bisnis berhasil disimpan');
+      queryClient.invalidateQueries(['tenants']);
+      setIsEditingProfile(false);
+    },
+    onError: (error) => {
+      toast.error('Gagal menyimpan profil', { description: error.message });
+    }
+  });
+
   const removeMemberMutation = useMutation({
     mutationFn: async (memberId) => {
       const { error } = await supabase
@@ -171,6 +228,119 @@ export default function Tim() {
           Anda masuk sebagai <strong>{ROLE_BADGE_MAP[profile?.role]?.label || profile?.role}</strong>. Hanya owner yang dapat mengelola undangan dan akses.
         </div>
       )}
+
+      {/* Section: Profil Bisnis */}
+      {isOwner && !tenant?.business_name && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
+          <AlertCircle size={18} className="text-amber-500 mt-0.5 flex-shrink-0" />
+          <p className="text-amber-500 text-sm font-medium">
+            Lengkapi profil bisnis kamu agar semua fitur dapat digunakan.
+          </p>
+        </div>
+      )}
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display font-semibold text-lg text-tx-2 flex items-center gap-2">
+            <Badge variant="outline" className="bg-em-500/10 text-em-400 border-em-500/20 p-1 rounded-md">
+              <Users size={16} />
+            </Badge>
+            Profil Bisnis
+          </h2>
+          {isOwner && !isEditingProfile && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setIsEditingProfile(true)}
+              className="text-tx-3 hover:text-tx-1 hover:bg-white/5 rounded-lg h-8 px-2"
+            >
+              <Pencil size={14} className="mr-2" />
+              Edit Profil
+            </Button>
+          )}
+        </div>
+
+        <div className="bg-[#0C1319] rounded-2xl border border-white/8 p-6 shadow-sm transition-all duration-300">
+          {loadingTenant ? (
+            <div className="py-8 flex justify-center text-tx-3"><Loader2 className="animate-spin" /></div>
+          ) : isEditingProfile ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">Nama Bisnis</Label>
+                  <Input 
+                    value={profileForm.business_name}
+                    onChange={(e) => setProfileForm({...profileForm, business_name: e.target.value})}
+                    placeholder="Contoh: UD Ayam Jaya"
+                    className="bg-[#111C24] border-white/10 h-12 rounded-xl text-[16px] focus:border-em-500/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">No HP Bisnis</Label>
+                  <Input 
+                    value={profileForm.phone}
+                    onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
+                    placeholder="0812..."
+                    className="bg-[#111C24] border-white/10 h-12 rounded-xl text-[16px] focus:border-em-500/50"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">Lokasi / Kota</Label>
+                <Input 
+                  value={profileForm.location}
+                  onChange={(e) => setProfileForm({...profileForm, location: e.target.value})}
+                  placeholder="Contoh: Boyolali, Jawa Tengah"
+                  className="bg-[#111C24] border-white/10 h-12 rounded-xl text-[16px] focus:border-em-500/50"
+                />
+              </div>
+              <div className="flex items-center gap-3 pt-2">
+                <Button 
+                  onClick={() => updateTenantMutation.mutate(profileForm)}
+                  disabled={updateTenantMutation.isPending || !profileForm.business_name}
+                  className="bg-em-500 hover:bg-em-600 text-white font-bold h-11 px-6 rounded-xl flex-1 md:flex-none"
+                >
+                  {updateTenantMutation.isPending ? <Loader2 size={18} className="animate-spin mr-2" /> : <Save size={18} className="mr-2" />}
+                  Simpan Perubahan
+                </Button>
+                <Button 
+                  variant="ghost"
+                  onClick={() => {
+                    setIsEditingProfile(false);
+                    // Reset form to latest data
+                    if (tenant) {
+                      setProfileForm({
+                        business_name: tenant.business_name || '',
+                        phone: tenant.phone || '',
+                        location: tenant.location || ''
+                      });
+                    }
+                  }}
+                  disabled={updateTenantMutation.isPending}
+                  className="text-tx-3 hover:text-tx-1 h-11 px-6 rounded-xl"
+                >
+                  Batal
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="space-y-1">
+                <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">Nama Bisnis</p>
+                <p className="text-[16px] font-semibold text-tx-1">{tenant?.business_name || '-'}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">No HP Bisnis</p>
+                <p className="text-[16px] font-semibold text-tx-1">{tenant?.phone || '-'}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">Lokasi / Kota</p>
+                <p className="text-[16px] font-semibold text-tx-1">{tenant?.location || '-'}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* Section: Anggota Aktif */}
       <section className="space-y-4">

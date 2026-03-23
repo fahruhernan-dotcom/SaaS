@@ -2,7 +2,6 @@ import React from 'react'
 import BottomNav from '../components/BottomNav'
 import { useMediaQuery } from '../../lib/hooks/useMediaQuery'
 import DesktopSidebarLayout from './DesktopSidebarLayout'
-import BusinessModelOverlay from '../components/BusinessModelOverlay'
 import { useAuth } from '../../lib/hooks/useAuth'
 
 export default function BrokerLayout({ children }) {
@@ -34,10 +33,6 @@ export default function BrokerLayout({ children }) {
   return (
     <>
       {renderContent()}
-      <BusinessModelOverlay 
-        profile={profile} 
-        onComplete={() => refetchProfile()} 
-      />
     </>
   )
 }

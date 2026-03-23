@@ -416,9 +416,18 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     .eq('id', delivery.id)
 
                 if (error) throw error
+                
+                // Update Sales Revenue
+                const pricePerKg = delivery?.sales?.price_per_kg ?? 0
+                const newTotalRevenue = Math.round(arrivedWeightKg * pricePerKg)
+                await supabase
+                    .from('sales')
+                    .update({ total_revenue: newTotalRevenue })
+                    .eq('id', delivery.sale_id)
+
                 toast.success('Data kedatangan berhasil diperbarui')
             } else {
-                // Standard arrival via hook
+                // Standard arrival via hook (hook now handles sales update)
                 const arrivalPayload = {
                     deliveryId: delivery.id,
                     arrivedCount: arrivedQty,
@@ -504,9 +513,13 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
             }
 
             // 5. Invalidate queries
+            await queryClient.invalidateQueries({ queryKey: ['sales'] })
+            await queryClient.invalidateQueries({ queryKey: ['sales', tenant.id] })
+            await queryClient.invalidateQueries({ queryKey: ['deliveries'] })
+            await queryClient.invalidateQueries({ queryKey: ['deliveries', tenant.id] })
+            await queryClient.refetchQueries({ queryKey: ['sales', tenant.id] })
             queryClient.invalidateQueries({ queryKey: ['loss-reports'] })
             queryClient.invalidateQueries({ queryKey: ['broker-stats'] })
-            queryClient.invalidateQueries({ queryKey: ['deliveries'] })
             onClose()
         } catch (err) {
             console.error('Error update arrival:', err)

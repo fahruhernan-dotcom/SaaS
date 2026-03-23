@@ -33,7 +33,6 @@ import AnimatedContent from '../components/reactbits/AnimatedContent';
 import Particles from '../components/reactbits/Particles';
 import CountUp from '../components/reactbits/CountUp';
 import TiltedCard from '../components/reactbits/TiltedCard';
-import AuroraBackground from '../components/reactbits/AuroraBackground';
 
 // Styles
 import '../components/reactbits/ShinyText.css';
@@ -604,40 +603,35 @@ export default function AboutUs() {
         </section>
 
         {/* SECTION CTA */}
-        <section className="py-12 relative overflow-hidden w-full">
-          <AuroraBackground
-            className="w-full"
-            style={{ minHeight: 'auto' }}
-          >
-            <div className="max-w-5xl mx-auto px-6 relative z-10 py-12 md:py-20">
-              <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-[40px] p-12 md:p-20 text-center relative overflow-hidden shadow-2xl">
-                <div className="relative z-10 space-y-10">
-                  <div className="flex justify-center">
-                    <ShinyText
-                      text="Siap bergabung dengan ekosistem peternakan modern?"
-                      disabled={false}
-                      speed={3}
-                      className="text-3xl font-black text-white font-display leading-tight text-wrap-balance"
-                    />
-                  </div>
+        <section className="py-12 relative overflow-hidden w-full bg-[#06090F]">
+          <div className="max-w-5xl mx-auto px-6 relative z-10 py-12 md:py-20">
+            <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-[40px] p-12 md:p-20 text-center relative overflow-hidden shadow-2xl">
+              <div className="relative z-10 space-y-10">
+                <div className="flex justify-center">
+                  <ShinyText
+                    text="Siap bergabung dengan ekosistem peternakan modern?"
+                    disabled={false}
+                    speed={3}
+                    className="text-3xl font-black text-white font-display leading-tight text-wrap-balance"
+                  />
+                </div>
 
-                  <p className="text-white/60 text-lg md:text-xl font-medium max-w-2xl mx-auto">
-                    Digitalisasi bisnis kamu sekarang. Trial 14 hari gratis tanpa perlu kartu kredit.
-                  </p>
+                <p className="text-white/60 text-lg md:text-xl font-medium max-w-2xl mx-auto">
+                  Digitalisasi bisnis kamu sekarang. Trial 14 hari gratis tanpa perlu kartu kredit.
+                </p>
 
-                  <div className="pt-4 flex justify-center">
-                    <Link
-                      to="/register"
-                      className="group relative inline-flex items-center gap-3 px-12 py-6 bg-[#10B981] text-white font-black rounded-2xl transition-all duration-300 transform hover:scale-105 hover:bg-[#34D399] shadow-[0_8px_32px_rgba(16,185,129,0.35)] hover:shadow-[0_8px_40px_rgba(16,185,129,0.5)] text-lg"
-                    >
-                      Mulai Gratis Sekarang
-                      <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                    </Link>
-                  </div>
+                <div className="pt-4 flex justify-center">
+                  <Link
+                    to="/register"
+                    className="group relative inline-flex items-center gap-3 px-12 py-6 bg-[#10B981] text-white font-black rounded-2xl transition-all duration-300 transform hover:scale-105 hover:bg-[#34D399] shadow-[0_8px_32px_rgba(16,185,129,0.35)] hover:shadow-[0_8px_40px_rgba(16,185,129,0.5)] text-lg"
+                  >
+                    Mulai Gratis Sekarang
+                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                  </Link>
                 </div>
               </div>
             </div>
-          </AuroraBackground>
+          </div>
         </section>
       </main>
 

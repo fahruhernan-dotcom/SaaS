@@ -14,7 +14,7 @@
    deliveries.shrinkage_kg
    market_prices.broker_margin
 
-✅ ALWAYS filter: .eq('is_deleted', false)
+✅ ALWAYS filter: .eq('is_deleted', false) (Except for `payments` and `team_invitations`)
 ✅ ALL enum values are LOWERCASE
 ```
 
@@ -370,6 +370,8 @@ payment_settings ← GLOBAL
 | `payment_method` | text | `'transfer'` `'cash'` `'giro'` `'qris'` |
 | `reference_no` | text | nullable |
 | `notes` | text | nullable |
+
+⚠️ **Note**: Kolom `is_deleted` TIDAK ADA di tabel ini. Jangan filter `is_deleted` di query.
 
 ---
 

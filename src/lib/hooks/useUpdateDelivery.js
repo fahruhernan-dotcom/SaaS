@@ -45,15 +45,26 @@ export function useUpdateDelivery() {
     
     if (updateError) throw updateError
     
-    // 3. Auto-create loss report if there is mortality
-    if (mortality > 0) {
-      const { data: saleData } = await supabase
-        .from('sales')
-        .select('price_per_kg, tenant_id')
-        .eq('id', delivery.sale_id)
-        .single()
+    // 3. Update Sales Revenue based on Arrived Weight
+    const { data: saleData } = await supabase
+      .from('sales')
+      .select('price_per_kg, tenant_id')
+      .eq('id', delivery.sale_id)
+      .single()
+
+    if (saleData) {
+      const newTotalRevenue = Math.round(safeNum(arrivedWeight) * safeNum(saleData.price_per_kg))
       
-      if (saleData) {
+      const { error: saleUpdateError } = await supabase
+        .from('sales')
+        .update({ total_revenue: newTotalRevenue })
+        .eq('id', delivery.sale_id)
+
+      if (saleUpdateError) console.error('Error updating sale revenue:', saleUpdateError)
+      else console.log('✅ Sales total_revenue updated:', newTotalRevenue)
+
+      // 4. Auto-create loss report if there is mortality
+      if (mortality > 0) {
         // We use a standardized weight per chicken (1.85kg) for mortality financial loss
         const estWeightLoss = mortality * 1.85
         const financialLoss = Math.round(estWeightLoss * safeNum(saleData.price_per_kg))
@@ -74,10 +85,13 @@ export function useUpdateDelivery() {
     }
     
     // 4. Invalidate all relevant queries
-    queryClient.invalidateQueries({ queryKey: ['deliveries'] })
-    queryClient.invalidateQueries({ queryKey: ['sales'] })
-    queryClient.invalidateQueries({ queryKey: ['broker-stats'] })
-    queryClient.invalidateQueries({ queryKey: ['loss-reports'] })
+    await queryClient.invalidateQueries({ queryKey: ['sales'] })
+    await queryClient.invalidateQueries({ queryKey: ['sales', saleData.tenant_id] })
+    await queryClient.invalidateQueries({ queryKey: ['deliveries'] })
+    await queryClient.invalidateQueries({ queryKey: ['deliveries', saleData.tenant_id] })
+    await queryClient.refetchQueries({ queryKey: ['sales', saleData.tenant_id] })
+    await queryClient.invalidateQueries({ queryKey: ['broker-stats'] })
+    await queryClient.invalidateQueries({ queryKey: ['loss-reports'] })
     
     return { mortality, shrinkage }
   }

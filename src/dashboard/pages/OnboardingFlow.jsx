@@ -369,10 +369,12 @@ export default function OnboardingFlow() {
                   <p style={stepDescStyle}>Data ini membantu kami menyiapkan dashboard kamu.</p>
                   
                   <div style={formGroupStyle}>
-                    <label style={labelStyle}>Nama Bisnis</label>
+                    <label htmlFor="business_name" style={labelStyle}>Nama Bisnis</label>
                     <div style={inputWrapperStyle}>
                       <Building size={18} style={inputIconStyle} />
                       <input 
+                        id="business_name"
+                        name="business_name"
                         style={inputStyle}
                         placeholder="Contoh: UD Ayam Jaya"
                         value={formData.business_name}
@@ -382,10 +384,12 @@ export default function OnboardingFlow() {
                   </div>
 
                   <div style={formGroupStyle}>
-                    <label style={labelStyle}>No HP Bisnis</label>
+                    <label htmlFor="phone" style={labelStyle}>No HP Bisnis</label>
                     <div style={inputWrapperStyle}>
                       <Smartphone size={18} style={inputIconStyle} />
                       <input 
+                        id="phone"
+                        name="phone"
                         type="tel"
                         style={inputStyle}
                         placeholder="08123456789"
@@ -396,10 +400,12 @@ export default function OnboardingFlow() {
                   </div>
 
                   <div style={formGroupStyle}>
-                    <label style={labelStyle}>Lokasi / Kota</label>
+                    <label htmlFor="location" style={labelStyle}>Lokasi / Kota</label>
                     <div style={inputWrapperStyle}>
                       <MapPin size={18} style={inputIconStyle} />
                       <input 
+                        id="location"
+                        name="location"
                         style={inputStyle}
                         placeholder="Contoh: Boyolali, Jawa Tengah"
                         value={formData.location}

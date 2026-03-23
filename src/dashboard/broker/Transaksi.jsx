@@ -6,7 +6,7 @@ import {
   Plus, Search, Filter, ChevronRight,
   Clock, MapPin, User, Smartphone, History,
   TrendingDown, TrendingUp, AlertCircle, Info, Calendar,
-  Loader2, Eye, Trash2, Pencil
+  Loader2, Eye, Trash2, Pencil, ArrowRightLeft
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
@@ -1404,14 +1404,6 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
                 )}
               </div>
             </div>
-            {!isLoading && !isEditing && isOwner && (
-              <button
-                onClick={() => onDelete?.()}
-                className="w-10 h-10 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-[#F87171] hover:bg-red-500/10 active:scale-95 transition-all mt-1"
-              >
-                <Trash2 size={18} />
-              </button>
-            )}
           </div>
           <SheetDescription className="sr-only">Detail transaksi penjualan</SheetDescription>
         </SheetHeader>
