@@ -14,7 +14,8 @@ import {
   Wallet,
   Car,
   BarChart2,
-  Calculator
+  Calculator,
+  Shield
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../../lib/hooks/useAuth'
@@ -24,11 +25,11 @@ import DrawerLainnya from './DrawerLainnya'
 const ICON_MAP = {
   Home, ArrowLeftRight, Building2, User, MoreHorizontal,
   RefreshCw, ClipboardList, ShoppingCart, CreditCard,
-  Truck, Wallet, Car, BarChart2, Calculator
+  Truck, Wallet, Car, BarChart2, Calculator, Shield
 }
 
 export default function BottomNav() {
-  const { profile } = useAuth()
+  const { user, profile, profiles, switchTenant } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -38,6 +39,7 @@ export default function BottomNav() {
   
   // Role-based filtering for broker tabs
   const tabs = allTabs.filter(tab => {
+    if (profile?.role === 'superadmin') return true
     if (profile?.user_type !== 'broker') return true
     
     const isOwner = profile?.role === 'owner'
@@ -57,6 +59,14 @@ export default function BottomNav() {
     return true
   })
 
+  const isSuperadmin = (profile?.role === 'superadmin' || profile?.user_type === 'superadmin') && 
+                      user?.email === 'fahruhernansakti@gmail.com'
+
+  // Inject Admin tab for superadmin
+  const finalTabs = isSuperadmin 
+    ? [...tabs, { label: 'Admin', icon: 'Shield', path: '/admin' }]
+    : tabs
+
   const color = model.color || '#10B981'
 
   return (
@@ -73,21 +83,30 @@ export default function BottomNav() {
         backdropFilter: 'blur(20px)',
         borderTop: '1px solid rgba(255,255,255,0.07)',
         display: 'grid',
-        gridTemplateColumns: `repeat(${tabs.length}, 1fr)`,
+        gridTemplateColumns: `repeat(${finalTabs.length}, 1fr)`,
         alignItems: 'center',
         zIndex: 100,
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}>
-        {tabs.map((tab) => {
+        {finalTabs.map((tab) => {
           const active = location.pathname === tab.path
           const Icon = ICON_MAP[tab.icon] || Home
           const isMore = tab.path === '/lainnya'
+          
+          const tabColor = (tab.label === 'Admin') ? '#F59E0B' : (active ? color : '#4B6478')
 
           return (
             <motion.button
               key={tab.path}
               onClick={() => {
                 if (isMore) setDrawerOpen(true)
+                else if (tab.label === 'Admin') {
+                  const adminProfile = profiles?.find(p => p.role === 'superadmin' || p.user_type === 'superadmin')
+                  if (adminProfile) {
+                    switchTenant(adminProfile.tenant_id)
+                    navigate('/admin')
+                  }
+                }
                 else navigate(tab.path)
               }}
               whileTap={{ scale: 0.9 }}
@@ -112,7 +131,7 @@ export default function BottomNav() {
                     left: '25%',
                     right: '25%',
                     height: '2px',
-                    background: color,
+                    background: tabColor,
                     borderRadius: '0 0 4px 4px',
                   }}
                   transition={{ type: 'spring', stiffness: 500, damping: 35 }}
@@ -120,14 +139,14 @@ export default function BottomNav() {
               )}
               <Icon
                 size={20}
-                color={active ? color : '#4B6478'}
+                color={tabColor}
                 strokeWidth={active ? 2.5 : 1.8}
               />
               <span style={{
                 fontSize: '10px',
                 fontWeight: active ? 700 : 500,
                 fontFamily: 'DM Sans',
-                color: active ? color : '#4B6478',
+                color: tabColor,
               }}>
                 {tab.label}
               </span>

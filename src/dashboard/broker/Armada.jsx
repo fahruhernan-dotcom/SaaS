@@ -51,10 +51,10 @@ const vehicleSchema = z.object({
     vehicle_plate: z.string().min(3).toUpperCase(),
     brand: z.string().optional(),
     year: z.string().optional(),
-    capacity_ekor: z.string().optional(),
-    capacity_kg: z.string().optional(),
-    ownership: z.enum(['milik_sendiri', 'sewa', 'pinjaman']),
-    rental_cost: z.string().optional(),
+    capacity_ekor: z.union([z.string(), z.number()]).optional(),
+    capacity_kg: z.union([z.string(), z.number()]).optional(),
+    ownership: z.enum(['milik_sendiri', 'sewa', 'pinjaman', 'cicilan', 'lainnya']),
+    rental_cost: z.union([z.string(), z.number()]).optional(),
     rental_owner: z.string().optional(),
     status: z.enum(['aktif', 'nonaktif', 'servis']),
     last_service_date: z.string().optional(),
@@ -75,7 +75,10 @@ const driverSchema = z.object({
 
 const expenseSchema = z.object({
     expense_type: z.enum(['bbm', 'servis', 'pajak', 'sewa', 'lainnya']),
-    amount: z.string().min(1),
+    amount: z.union([z.string(), z.number()]).refine(val => {
+        if (typeof val === 'string') return val.length > 0;
+        return val > 0;
+    }, { message: "Nominal harus diisi" }),
     description: z.string().optional(),
     expense_date: z.string().default(format(new Date(), 'yyyy-MM-dd'))
 })
@@ -110,7 +113,7 @@ export default function Armada() {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('drivers')
-                .select('*, deliveries(id, created_at)')
+                .select('*, deliveries(id, created_at, is_deleted)')
                 .eq('tenant_id', tenant?.id)
                 .eq('is_deleted', false)
                 .order('full_name', { ascending: true })
@@ -135,6 +138,34 @@ export default function Armada() {
         enabled: !!tenant?.id
     })
 
+    const { data: unregisteredCount = 0 } = useQuery({
+        queryKey: ['unregistered-drivers-count', tenant?.id],
+        queryFn: async () => {
+            const { count } = await supabase
+                .from('deliveries')
+                .select('*', { count: 'exact', head: true })
+                .eq('tenant_id', tenant?.id)
+                .is('driver_id', null)
+                .eq('is_deleted', false)
+            return count || 0
+        },
+        enabled: !!tenant?.id
+    })
+
+    const { data: unregisteredVehicleCount = 0 } = useQuery({
+        queryKey: ['unregistered-vehicles-count', tenant?.id],
+        queryFn: async () => {
+            const { count } = await supabase
+                .from('deliveries')
+                .select('*', { count: 'exact', head: true })
+                .eq('tenant_id', tenant?.id)
+                .is('vehicle_id', null)
+                .eq('is_deleted', false)
+            return count || 0
+        },
+        enabled: !!tenant?.id
+    })
+
     const onRouteVehicleIds = useMemo(() => new Set(activeDeliveries.map(d => d.vehicle_id).filter(Boolean)), [activeDeliveries])
     const onRouteDriverIds = useMemo(() => new Set(activeDeliveries.map(d => d.driver_id).filter(Boolean)), [activeDeliveries])
 
@@ -145,6 +176,8 @@ export default function Armada() {
     const [editingDriver, setEditingDriver] = useState(null)
     const [isExpenseSheetOpen, setIsExpenseSheetOpen] = useState(false)
     const [selectedVehicleForExpense, setSelectedVehicleForExpense] = useState(null)
+    const [detailVehicle, setDetailVehicle] = useState(null)
+    const [detailDriver, setDetailDriver] = useState(null)
     const [vehicleFilter, setVehicleFilter] = useState('Semua')
     const [driverFilter, setDriverFilter] = useState('Semua')
 
@@ -239,6 +272,28 @@ export default function Armada() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {unregisteredVehicleCount > 0 && (vehicleFilter === 'Semua' || vehicleFilter === 'Nonaktif') && (
+                                <div 
+                                    onClick={() => setDetailVehicle({ id: 'unregistered', vehicle_plate: 'TANPA PLAT', brand: 'BELUM TERDAFTAR', vehicle_type: 'Tidak diketahui', status: 'nonaktif', isUnregistered: true })}
+                                    className="p-5 rounded-3xl bg-red-500/5 border border-red-500/20 hover:bg-red-500/10 cursor-pointer transition-all flex flex-col justify-between min-h-[160px] relative overflow-hidden group"
+                                >
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 text-red-500 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500">
+                                        <AlertCircle size={64} />
+                                    </div>
+                                    <div className="flex justify-between items-start relative z-10">
+                                        <div className="w-12 h-12 rounded-2xl bg-red-500/20 text-red-400 flex items-center justify-center font-display font-black text-lg border border-red-500/20">
+                                            ?
+                                        </div>
+                                        <Badge className="bg-red-500/10 text-red-500 border-none hover:bg-red-500/20 font-black uppercase tracking-widest text-[10px]">Perlu Audit</Badge>
+                                    </div>
+                                    <div className="relative z-10 mt-4">
+                                        <h3 className="font-display text-lg font-black uppercase text-red-400 mb-1 leading-snug">KENDARAAN BELUM TERDAFTAR</h3>
+                                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-red-500/80">
+                                            <AlertCircle size={12} /> ADA {unregisteredVehicleCount} PENGIRIMAN
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             {vehicles.filter(v => {
                                 if (vehicleFilter === 'Semua') return true
                                 if (vehicleFilter === 'Mengirim') return onRouteVehicleIds.has(v.id)
@@ -248,6 +303,7 @@ export default function Armada() {
                                     key={v.id} 
                                     vehicle={v} 
                                     isOnRoute={onRouteVehicleIds.has(v.id)}
+                                    onClickCard={() => setDetailVehicle(v)}
                                     onEdit={() => {
                                         setEditingVehicle(v)
                                         setIsVehicleSheetOpen(true)
@@ -295,6 +351,28 @@ export default function Armada() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {unregisteredCount > 0 && (driverFilter === 'Semua' || driverFilter === 'Nonaktif') && (
+                                <div 
+                                    onClick={() => setDetailDriver({ id: 'unregistered', full_name: 'PENGIRIMAN TANPA SOPIR', phone: 'Perlu dicek di menu Pengiriman', status: 'nonaktif', isUnregistered: true })}
+                                    className="p-5 rounded-3xl bg-red-500/5 border border-red-500/20 hover:bg-red-500/10 cursor-pointer transition-all flex flex-col justify-between min-h-[160px] relative overflow-hidden group"
+                                >
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 text-red-500 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500">
+                                        <AlertCircle size={64} />
+                                    </div>
+                                    <div className="flex justify-between items-start relative z-10">
+                                        <div className="w-12 h-12 rounded-2xl bg-red-500/20 text-red-400 flex items-center justify-center font-display font-black text-lg border border-red-500/20">
+                                            ?
+                                        </div>
+                                        <Badge className="bg-red-500/10 text-red-500 border-none hover:bg-red-500/20 font-black uppercase tracking-widest text-[10px]">Perlu Audit</Badge>
+                                    </div>
+                                    <div className="relative z-10 mt-4">
+                                        <h3 className="font-display text-lg font-black uppercase text-red-400 mb-1 leading-snug">PENGIRIMAN TANPA SOPIR</h3>
+                                        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-red-500/80">
+                                            <AlertCircle size={12} /> ADA {unregisteredCount} TRANSAKSI
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             {drivers.filter(d => {
                                 if (driverFilter === 'Semua') return true
                                 if (driverFilter === 'Mengirim') return onRouteDriverIds.has(d.id)
@@ -304,6 +382,7 @@ export default function Armada() {
                                     key={d.id} 
                                     driver={d} 
                                     isOnRoute={onRouteDriverIds.has(d.id)}
+                                    onClickCard={() => setDetailDriver(d)}
                                     onEdit={() => {
                                         setEditingDriver(d)
                                         setIsDriverSheetOpen(true)
@@ -346,6 +425,8 @@ export default function Armada() {
                 vehicle={selectedVehicleForExpense}
                 tenantId={tenant?.id}
             />
+            {detailVehicle && <VehicleDetailSheet vehicle={detailVehicle} onClose={() => setDetailVehicle(null)} />}
+            {detailDriver && <DriverDetailSheet driver={detailDriver} onClose={() => setDetailDriver(null)} />}
         </motion.div>
     )
 }
@@ -384,7 +465,7 @@ function FilterChip({ label, active, onClick }) {
     )
 }
 
-function VehicleCard({ vehicle, isOnRoute, onEdit, onAddExpense }) {
+function VehicleCard({ vehicle, isOnRoute, onEdit, onAddExpense, onClickCard }) {
     const statusMeta = {
         aktif:    { label: 'Aktif',    color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
         servis:   { label: 'Servis',   color: 'text-amber-400',   bg: 'bg-amber-500/10' },
@@ -393,7 +474,13 @@ function VehicleCard({ vehicle, isOnRoute, onEdit, onAddExpense }) {
     const meta = statusMeta[vehicle.status] || statusMeta.nonaktif
 
     return (
-        <Card className="bg-[#111C24] border-white/5 rounded-[32px] overflow-hidden group hover:border-white/10 transition-all">
+        <div 
+            role="button"
+            tabIndex={0}
+            onClick={onClickCard}
+            className="block h-full outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-[32px]"
+        >
+        <Card className="h-full bg-[#111C24] border-white/5 rounded-[32px] overflow-hidden group hover:border-emerald-500/30 transition-all cursor-pointer">
             <CardContent className="p-6 space-y-5">
                 <div className="flex justify-between items-start">
                     <div className="space-y-2">
@@ -433,7 +520,7 @@ function VehicleCard({ vehicle, isOnRoute, onEdit, onAddExpense }) {
                 {/* Row 4: Stats */}
                 <div className="pt-2 border-t border-white/5 flex items-center gap-2 text-[10px] font-black text-[#4B6478] uppercase tracking-widest">
                     <Clock size={12} />
-                    <span>Total {safeNumber(vehicle.deliveries?.length).toLocaleString('id-ID')} Pengiriman</span>
+                    <span>Total {safeNumber(vehicle.deliveries?.filter(d => !d.is_deleted)?.length).toLocaleString('id-ID')} Pengiriman</span>
                 </div>
 
                 {/* Actions */}
@@ -441,26 +528,27 @@ function VehicleCard({ vehicle, isOnRoute, onEdit, onAddExpense }) {
                     <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={onAddExpense}
-                        className="flex-1 h-9 rounded-xl border-white/5 bg-white/[0.02] text-[9px] font-black uppercase tracking-widest hover:bg-white/5"
+                        onClick={(e) => { e.stopPropagation(); onAddExpense(); }}
+                        className="flex-1 h-9 rounded-xl border-white/5 bg-white/[0.02] text-[9px] font-black uppercase tracking-widest hover:bg-white/5 hover:text-white"
                     >
                          <DollarSign size={12} className="mr-1.5 text-red-400" /> Catat Biaya
                     </Button>
                     <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={onEdit}
-                        className="w-12 h-9 rounded-xl border-white/5 bg-white/[0.02] text-[#4B6478] hover:text-white"
+                        onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                        className="w-12 h-9 rounded-xl border-white/5 bg-white/[0.02] text-[#4B6478] hover:text-white hover:bg-white/5"
                     >
                         <Edit2 size={14} />
                     </Button>
                 </div>
             </CardContent>
         </Card>
+        </div>
     )
 }
 
-function DriverCard({ driver, isOnRoute, onEdit }) {
+function DriverCard({ driver, isOnRoute, onEdit, onClickCard }) {
     const statusMeta = {
         aktif:    { label: 'Aktif',    color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
         cuti:     { label: 'Cuti',     color: 'text-amber-400',   bg: 'bg-amber-500/10' },
@@ -473,7 +561,13 @@ function DriverCard({ driver, isOnRoute, onEdit }) {
     const isSoonExpiry = expiryDays !== null && expiryDays >= 0 && expiryDays <= 30
 
     return (
-        <Card className="bg-[#111C24] border-white/5 rounded-[32px] overflow-hidden group hover:border-white/10 transition-all">
+        <div 
+            role="button"
+            tabIndex={0}
+            onClick={onClickCard}
+            className="block h-full outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-[32px]"
+        >
+        <Card className="h-full bg-[#111C24] border-white/5 rounded-[32px] overflow-hidden group hover:border-emerald-500/30 transition-all cursor-pointer">
             <CardContent className="p-6 space-y-5">
                 {/* Row 1: Identity */}
                 <div className="flex items-center gap-4">
@@ -535,7 +629,7 @@ function DriverCard({ driver, isOnRoute, onEdit }) {
                     </div>
                     <div className="flex items-center gap-1.5">
                         <Truck size={12} />
-                        <span>{safeNumber(driver.deliveries?.length).toLocaleString('id-ID')} Pengiriman</span>
+                        <span>{safeNumber(driver.deliveries?.filter(d => !d.is_deleted)?.length).toLocaleString('id-ID')} Pengiriman</span>
                     </div>
                 </div>
 
@@ -543,13 +637,14 @@ function DriverCard({ driver, isOnRoute, onEdit }) {
                 <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={onEdit}
-                    className="w-full h-10 rounded-xl border-white/5 bg-white/[0.02] text-[9px] font-black uppercase tracking-widest hover:bg-white/5 gap-2"
+                    onClick={(e) => { e.stopPropagation(); onEdit(); }}
+                    className="w-full h-10 rounded-xl border-white/5 bg-white/[0.02] text-[9px] font-black uppercase tracking-widest hover:bg-white/5 gap-2 hover:text-white"
                 >
                     <Edit2 size={12} /> Edit Profil Sopir
                 </Button>
             </CardContent>
         </Card>
+        </div>
     )
 }
 
@@ -699,6 +794,8 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
                                     <SelectItem value="milik_sendiri" className="text-xs font-black uppercase">🏠 Milik Sendiri</SelectItem>
                                     <SelectItem value="sewa" className="text-xs font-black uppercase">💳 Sewa</SelectItem>
                                     <SelectItem value="pinjaman" className="text-xs font-black uppercase">🤝 Pinjaman</SelectItem>
+                                    <SelectItem value="cicilan" className="text-xs font-black uppercase">📋 Cicilan</SelectItem>
+                                    <SelectItem value="lainnya" className="text-xs font-black uppercase">📦 Lainnya</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -1060,7 +1157,7 @@ function ExpenseSheet({ isOpen, onClose, vehicle, tenantId }) {
                     </SheetDescription>
                 </SheetHeader>
 
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <form onSubmit={handleSubmit(onSubmit, (errs) => toast.error('Harap lengkapi form dengan benar!'))} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                              <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Jenis Biaya *</Label>
@@ -1109,6 +1206,7 @@ function ExpenseSheet({ isOpen, onClose, vehicle, tenantId }) {
                     </div>
 
                     <Button 
+                        type="submit"
                         disabled={isSubmitting}
                         className="w-full h-16 bg-white text-black font-black text-xs uppercase tracking-[0.2em] rounded-[24px] shadow-xl active:scale-95 transition-all mt-4"
                     >
@@ -1135,5 +1233,193 @@ function DeleteConfirm({ isOpen, onClose, onConfirm, title, desc }) {
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
+    )
+}
+
+// --- SHEET: VEHICLE DETAIL ---
+function VehicleDetailSheet({ vehicle, onClose }) {
+    const [tab, setTab] = useState('pengiriman')
+
+    const { data: deliveries = [], isLoading: loadDel } = useQuery({
+        queryKey: ['vehicle-deliveries', vehicle?.id],
+        queryFn: async () => {
+            let query = supabase.from('deliveries').select('*, drivers(full_name)')
+            if (vehicle?.isUnregistered) {
+                query = query.is('vehicle_id', null).eq('is_deleted', false)
+            } else {
+                query = query.eq('vehicle_id', vehicle?.id).eq('is_deleted', false)
+            }
+            const { data } = await query.order('created_at', { ascending: false })
+            return data || []
+        },
+        enabled: !!vehicle?.id
+    })
+
+    const { data: expenses = [], isLoading: loadExp } = useQuery({
+        queryKey: ['vehicle-expenses', vehicle?.id],
+        queryFn: async () => {
+            const { data } = await supabase.from('vehicle_expenses')
+                .select('*')
+                .eq('vehicle_id', vehicle?.id)
+                .order('expense_date', { ascending: false })
+            return data || []
+        },
+        enabled: !!vehicle?.id
+    })
+
+    const totalExpense = expenses.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0)
+
+    return (
+        <Sheet open={!!vehicle} onOpenChange={onClose}>
+            <SheetContent side="right" className="w-full sm:max-w-[520px] bg-[#0C1319] border-l border-white/8 p-0 flex flex-col">
+                <div className="p-6 border-b border-white/5">
+                    <SheetHeader className="text-left">
+                        <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight leading-none mb-1" style={{ color: vehicle?.isUnregistered ? '#EF4444' : 'white' }}>
+                            {vehicle?.isUnregistered ? 'PENGIRIMAN TANPA KENDARAAN' : vehicle?.vehicle_plate}
+                        </SheetTitle>
+                        <SheetDescription className="text-[#4B6478] font-bold uppercase text-[10px] tracking-widest leading-none">
+                            {vehicle?.isUnregistered ? 'PERLU AUDIT • KENDARAAN BELUM DIDAFTARKAN' : `${vehicle?.brand || 'TIDAK ADA MERK'} • ${vehicle?.vehicle_type}`}
+                        </SheetDescription>
+                    </SheetHeader>
+                </div>
+                
+                <Tabs value={tab} onValueChange={setTab} className="flex-1 overflow-hidden flex flex-col mt-4">
+                    <div className="px-6 mb-4 shrink-0">
+                        <TabsList className="w-full bg-[#111C24] border border-white/5 h-12 p-1 rounded-2xl">
+                            <TabsTrigger value="pengiriman" className="flex-1 rounded-xl font-black text-[10px] h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]">
+                                Pengiriman ({deliveries.length})
+                            </TabsTrigger>
+                            <TabsTrigger value="pengeluaran" className="flex-1 rounded-xl font-black text-[10px] h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-red-400 text-[#4B6478]">
+                                Biaya ({expenses.length})
+                            </TabsTrigger>
+                        </TabsList>
+                    </div>
+
+                    <TabsContent value="pengiriman" className="flex-1 overflow-y-auto px-6 pb-6 m-0 outline-none space-y-3">
+                        {loadDel ? <div className="p-4 text-center text-[#4B6478] text-xs font-bold uppercase">Memuat data...</div> : 
+                         deliveries.length === 0 ? <div className="p-8 text-center text-[#4B6478] text-xs font-bold uppercase border border-dashed border-white/10 rounded-2xl">Belum ada riwayat pengiriman</div> :
+                         deliveries.map(d => (
+                            <div key={d.id} className="p-4 rounded-2xl bg-[#111C24] border border-white/5">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-black text-white uppercase">{d.drivers?.full_name || d.driver_name || 'Tanpa Sopir'}</p>
+                                        <p className="text-[10px] font-bold text-[#4B6478]">{format(new Date(d.created_at), 'dd MMM yyyy, HH:mm')}</p>
+                                        {vehicle?.isUnregistered && d.vehicle_plate && (
+                                            <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mt-1">PLAT DICATAT: {d.vehicle_plate}</p>
+                                        )}
+                                    </div>
+                                    <Badge className="text-[10px] font-black uppercase tracking-widest border-none bg-emerald-500/10 text-emerald-400">{d.status}</Badge>
+                                </div>
+                                <div className="flex gap-4 mt-3 pt-3 border-t border-white/5">
+                                    <div className="flex-1">
+                                        <p className="text-[9px] text-[#4B6478] uppercase font-black tracking-widest">Berat Muatan</p>
+                                        <p className="text-xs text-white font-bold">{d.initial_weight_kg ? safeNumber(d.initial_weight_kg).toLocaleString('id-ID') : 0} Kg</p>
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-[9px] text-[#4B6478] uppercase font-black tracking-widest">Susut / Mati</p>
+                                        <p className="text-xs text-amber-400 font-bold">{d.shrinkage_kg ? safeNumber(d.shrinkage_kg).toLocaleString('id-ID') : 0} Kg</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </TabsContent>
+
+                    <TabsContent value="pengeluaran" className="flex-1 overflow-y-auto px-6 pb-6 m-0 outline-none space-y-4">
+                        <div className="bg-red-500/5 border border-red-500/10 p-4 rounded-2xl flex justify-between items-center shrink-0">
+                            <span className="text-[10px] uppercase font-black tracking-widest text-red-500/80">Total Biaya Operasional</span>
+                            <span className="font-display font-black text-red-400 text-lg">{formatIDR(totalExpense)}</span>
+                        </div>
+                        {loadExp ? <div className="p-4 text-center text-[#4B6478] text-xs font-bold uppercase">Memuat data...</div> : 
+                         expenses.length === 0 ? <div className="p-8 text-center text-[#4B6478] text-xs font-bold uppercase border border-dashed border-white/10 rounded-2xl">Belum ada pengeluaran</div> :
+                         expenses.map(exp => (
+                            <div key={exp.id} className="p-4 rounded-2xl bg-[#111C24] border border-white/5 flex gap-4 items-start">
+                                <div className="w-10 h-10 shrink-0 bg-white/5 rounded-xl flex items-center justify-center text-lg">
+                                    {exp.expense_type === 'bbm' ? '⛽' : exp.expense_type === 'servis' ? '🔧' : exp.expense_type === 'pajak' ? '📋' : exp.expense_type === 'sewa' ? '💳' : '📦'}
+                                </div>
+                                <div className="flex-1 space-y-1 mt-0.5">
+                                    <div className="flex justify-between items-start">
+                                        <p className="text-sm font-black text-white uppercase">{exp.expense_type}</p>
+                                        <span className="font-display text-sm font-black text-red-400">{formatIDR(exp.amount)}</span>
+                                    </div>
+                                    <p className="text-[10px] font-bold text-[#4B6478]">{format(new Date(exp.expense_date), 'dd MMM yyyy')}</p>
+                                    {exp.description && <p className="text-xs font-bold text-[#94A3B8] uppercase mt-2">{exp.description}</p>}
+                                </div>
+                            </div>
+                         ))}
+                    </TabsContent>
+                </Tabs>
+            </SheetContent>
+        </Sheet>
+    )
+}
+
+// --- SHEET: DRIVER DETAIL ---
+function DriverDetailSheet({ driver, onClose }) {
+    const { data: deliveries = [], isLoading: loadDel } = useQuery({
+        queryKey: ['driver-deliveries', driver?.id],
+        queryFn: async () => {
+            let query = supabase.from('deliveries').select('*, vehicles(vehicle_plate, brand)')
+            if (driver?.isUnregistered) {
+                query = query.is('driver_id', null).eq('is_deleted', false)
+            } else {
+                query = query.eq('driver_id', driver?.id).eq('is_deleted', false)
+            }
+            const { data } = await query.order('created_at', { ascending: false })
+            return data || []
+        },
+        enabled: !!driver?.id
+    })
+
+    return (
+        <Sheet open={!!driver} onOpenChange={onClose}>
+            <SheetContent side="right" className="w-full sm:max-w-[520px] bg-[#0C1319] border-l border-white/8 p-0 flex flex-col">
+                <div className="p-6 border-b border-white/5 flex gap-4 items-center">
+                    <Avatar className="h-14 w-14 rounded-[20px] border border-white/5 shrink-0" style={{ backgroundColor: driver?.isUnregistered ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)' }}>
+                        <AvatarFallback className="bg-transparent font-display font-black text-lg uppercase" style={{ color: driver?.isUnregistered ? '#EF4444' : '#34D399' }}>
+                            {driver?.isUnregistered ? '?' : driver?.full_name?.substring(0, 2)}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                        <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight leading-none mb-1 truncate">
+                            {driver?.full_name}
+                        </SheetTitle>
+                        <SheetDescription className="text-[#4B6478] font-bold uppercase text-[10px] tracking-widest leading-none">
+                            SOPIR • {driver?.phone}
+                        </SheetDescription>
+                    </div>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] mb-2">Riwayat Pengiriman ({deliveries.length})</h4>
+                    
+                    {loadDel ? <div className="p-4 text-center text-[#4B6478] text-xs font-bold uppercase">Memuat data...</div> : 
+                     deliveries.length === 0 ? <div className="p-8 text-center text-[#4B6478] text-xs font-bold uppercase border border-dashed border-white/10 rounded-2xl">Belum ada riwayat pengiriman</div> :
+                     deliveries.map(d => (
+                        <div key={d.id} className="p-4 rounded-2xl bg-[#111C24] border border-white/5">
+                            <div className="flex justify-between items-start mb-2">
+                                <div className="space-y-1">
+                                    <p className="text-sm font-black text-white uppercase">{d.vehicles?.vehicle_plate || d.vehicle_plate || 'Tanpa Kendaraan'}</p>
+                                    <p className="text-[10px] font-bold text-[#4B6478]">{format(new Date(d.created_at), 'dd MMM yyyy, HH:mm')}</p>
+                                    {driver?.isUnregistered && d.driver_name && (
+                                        <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mt-1">NAMA DICATAT: {d.driver_name}</p>
+                                    )}
+                                </div>
+                                <Badge className="text-[10px] font-black uppercase tracking-widest border-none bg-emerald-500/10 text-emerald-400">{d.status}</Badge>
+                            </div>
+                            <div className="flex gap-4 mt-3 pt-3 border-t border-white/5">
+                                <div className="flex-1">
+                                    <p className="text-[9px] text-[#4B6478] uppercase font-black tracking-widest">Berat Muatan</p>
+                                    <p className="text-xs text-white font-bold">{d.initial_weight_kg ? safeNumber(d.initial_weight_kg).toLocaleString('id-ID') : 0} Kg</p>
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-[9px] text-[#4B6478] uppercase font-black tracking-widest">Upah (Estimasi)</p>
+                                    <p className="text-xs text-blue-400 font-bold">{driver?.isUnregistered ? '-' : formatIDR(driver?.wage_per_trip || 0)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </SheetContent>
+        </Sheet>
     )
 }

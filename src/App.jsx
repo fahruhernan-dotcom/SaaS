@@ -50,6 +50,13 @@ import BrokerLayout from './dashboard/layouts/BrokerLayout';
 import DesktopSidebarLayout from './dashboard/layouts/DesktopSidebarLayout';
 import { useMediaQuery } from './lib/hooks/useMediaQuery';
 
+// Admin
+import AdminLayout from './dashboard/admin/AdminLayout';
+import AdminBeranda from './dashboard/admin/AdminBeranda';
+import AdminUsers from './dashboard/admin/AdminUsers';
+import AdminSubscriptions from './dashboard/admin/AdminSubscriptions';
+import AdminPricing from './dashboard/admin/AdminPricing';
+
 // Scroll to top on route change
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -66,6 +73,9 @@ function ProtectedRoute({ children, requiredType, requiredVertical }) {
   if (loading) return <LoadingScreen />;
   
   if (!user) return <Navigate to="/login" replace />;
+
+  // Allow superadmin to access any business route without guards
+  if (profile?.role === 'superadmin') return children;
 
   if (profile && !profile.onboarded && !['/broker/tim', '/onboarding'].includes(location.pathname) && profile.role === 'owner') {
     return <Navigate to="/broker/tim" replace />;
@@ -92,6 +102,9 @@ function RoleGuard({ allowedRoles, children }) {
   
   if (loading) return <LoadingScreen />;
   
+  // Superadmin bypass
+  if (profile?.role === 'superadmin') return children;
+  
   if (!profile || !allowedRoles.includes(profile.role)) {
     // If mismatch, go to the vertical-aware beranda
     const vertical = tenant?.business_vertical || 'poultry_broker'
@@ -103,11 +116,23 @@ function RoleGuard({ allowedRoles, children }) {
 }
 
 function RoleRedirector() {
-  const { profile, tenant, loading } = useAuth();
+  const { user, profile, tenant, loading } = useAuth();
   if (loading) return <LoadingScreen />;
+  
+  // Superadmin can navigate freely, no auto-redirects
+  if (profile?.role === 'superadmin') return null;
+
   if (!profile) return <Navigate to="/login" replace />;
   
   if (profile.role === 'sopir') return <Navigate to="/broker/sopir" replace />;
+  
+  const isSuperAdmin = (profile.role === 'superadmin' || profile.user_type === 'superadmin') && 
+                      user?.email === 'fahruhernansakti@gmail.com';
+
+  // Superadmin → /admin
+  if (isSuperAdmin) {
+    return <Navigate to="/admin" replace />;
+  }
   
   const role = profile.user_type === 'rpa' ? 'rpa-buyer' : profile.user_type;
   
@@ -134,6 +159,24 @@ function DashboardLayout({ children }) {
       <BottomNav />
     </div>
   );
+}
+
+function AdminRoute({ children }) {
+  const { user, profile, loading } = useAuth();
+
+  if (loading) return <LoadingScreen />;
+  if (!user) return <Navigate to="/login" replace />;
+  
+  const isSuperAdmin = (profile?.role === 'superadmin' || profile?.user_type === 'superadmin') && 
+                      user?.email === 'fahruhernansakti@gmail.com';
+  
+  if (!isSuperAdmin) {
+    const vertical = profile?.tenants?.business_vertical || 'poultry_broker'
+    const path = vertical === 'egg_broker' ? '/egg/beranda' : `/broker/${vertical}/beranda`;
+    return <Navigate to={path} replace />;
+  }
+
+  return children;
 }
 
 function App() {
@@ -381,6 +424,28 @@ function App() {
         <Route path="/akun" element={<RoleRedirector />} />
         <Route path="/transaksi" element={<RoleRedirector />} />
         <Route path="/rpa-dashboard" element={<RoleRedirector />} />
+
+        {/* Admin routes */}
+        <Route path="/admin" element={
+          <AdminRoute>
+            <AdminLayout><AdminBeranda /></AdminLayout>
+          </AdminRoute>
+        } />
+        <Route path="/admin/users" element={
+          <AdminRoute>
+            <AdminLayout><AdminUsers /></AdminLayout>
+          </AdminRoute>
+        } />
+        <Route path="/admin/subscriptions" element={
+          <AdminRoute>
+            <AdminLayout><AdminSubscriptions /></AdminLayout>
+          </AdminRoute>
+        } />
+        <Route path="/admin/pricing" element={
+          <AdminRoute>
+            <AdminLayout><AdminPricing /></AdminLayout>
+          </AdminRoute>
+        } />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

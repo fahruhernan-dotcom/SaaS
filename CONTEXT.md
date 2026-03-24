@@ -1,6 +1,6 @@
 # TernakOS — Developer Context
 
-> Last updated: 2026-03-24 (Multi-Tenant & Egg Broker Vertical) | Use this as reference for all future implementations.
+> Last updated: 2026-03-25 (Superadmin Dashboard & Signup Trigger Fix) | Use this as reference for all future implementations.
 
 ---
 
@@ -366,6 +366,14 @@ const canWrite = ['owner', 'staff'].includes(profile?.role)
 |------|-----------|
 | `/harga-pasar` | `HargaPasar` (ProtectedRoute, any role) |
 
+#### Admin Routes (`/admin/*`) — Uses `AdminLayout`
+| Path | Component | Guard |
+|------|-----------|-------|
+| `/admin` | `AdminBeranda` | `AdminRoute` (superadmin + email check) |
+| `/admin/users` | `AdminUsers` | `AdminRoute` |
+| `/admin/subscriptions` | `AdminSubscriptions` | `AdminRoute` |
+| `/admin/pricing` | `AdminPricing` | `AdminRoute` |
+
 #### Legacy Redirects
 `/home`, `/dashboard`, `/beranda`, `/akun`, `/transaksi`, `/rpa-dashboard` → all go through `RoleRedirector`
 
@@ -394,7 +402,10 @@ const canWrite = ['owner', 'staff'].includes(profile?.role)
   - UTAMA: Beranda, Transaksi/POS, Kandang/Inventori, Tim.
   - Link dinamis sesuai vertikal aktif (`isPoultry` vs `isEgg`).
 - Active state: emerald-500/10 bg, emerald-400 text, 1px emerald border
-- Footer: Plan info (shows plan name, trial countdown + progress bar), User dropdown (Akun, Logout)
+- **Superadmin Bypass**: 
+  - Superadmin bypass role-based filters (`isOwner` = true).
+  - Hide trial widget for superadmin, replaced with **🛡️ PLATFORM ADMIN** gold badge.
+- Footer: Plan info (shows plan name, trial countdown + progress bar for users), User dropdown (Akun, Admin Panel, Logout)
  emerald border
 - Footer: Plan info (shows plan name, trial countdown + progress bar), User dropdown (Akun, Logout)
 
@@ -868,6 +879,7 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 31. **Ekor (count) hanya informasi** — arrived_count, initial_count, mortality_count TIDAK BOLEH dipakai untuk kalkulasi uang apapun. Ekor hanya untuk: tracking kematian, estimasi stok, data kandang.
 32. **Update total_revenue saat catat kedatangan** — di `useUpdateDelivery.js` dan `UpdateArrivalSheet.jsx`, setelah arrived_weight_kg tersimpan, wajib update: `sales.total_revenue = arrived_weight_kg × price_per_kg`.
 33. **Query invalidation setelah update revenue** — wajib invalidate: `['sales']`, `['sales', tenant.id]`, `['deliveries']`, `['deliveries', tenant.id]` agar semua halaman (Beranda, Transaksi, CashFlow, RPA) langsung update.
+34. **Superadmin Access**: Hanya profile dengan `role='superadmin'` DAN email `fahruhernansakti@gmail.com` yang bisa mengakses `/admin/*`. Redirect otomatis di `RoleRedirector`.
 
 ---
 
@@ -966,6 +978,10 @@ Flow kalkulasi yang benar:
 | Calendar Global | ✅ | `src/components/ui/calendar.jsx` | Date picker global semua halaman |
 | Peternak: Siklus | 🚧 | `ComingSoon` | Planned features |
 | RPA: Order, Hutang | 🚧 | `ComingSoon` | Planned features |
+| Admin Dashboard | ✅ | `src/dashboard/admin/AdminBeranda.jsx` | Superadmin controls (Real-time Global Stats, Charts) |
+| Admin: Users & Tenant | ✅ | `src/dashboard/admin/AdminUsers.jsx` | Phase 3: Total stats, Filters, Detail Sheet |
+| Admin: Subscriptions & Invoices | ✅ | `src/dashboard/admin/AdminSubscriptions.jsx` | Phase 4: Invoice monitoring, Bank settings, Manual confirmation |
+| Admin: Pricing & Discounts | ✅ | `src/dashboard/admin/AdminPricing.jsx` | Phase 5: Pricing matrix & Voucher management (LocalStorage) |
 
 ## 25. Scripts & Automation
 
@@ -1007,6 +1023,34 @@ Flow kalkulasi yang benar:
 ---
 
 ## 28. Recent Major Updates (2026-03-24)
+
+### Updates 2026-03-25
+**Database & Registration Fix:**
+- **Trigger `handle_new_user` Fixed:** Ditambahkan pengecekan `invite_token`. Sekarang pendaftaran via undangan tidak akan lagi membuat tenant "hantu" baru secara otomatis.
+- **Data Cleanup:** Dilakukan pembersihan tenant duplikat yang tidak memiliki profile (orphaned tenants) untuk merapikan dashboard admin.
+
+**Admin Phase 6: Global Overview Dashboard:**
+- Transformasi total `/admin` (AdminBeranda) menjadi real-time Command Center.
+- Integrasi **Recharts**: AreaChart untuk pertumbuhan tenant (6 bulan) dan PieChart untuk distribusi plan.
+- Fitur **Actionable Lists**: Monitoring "Trial Akan Habis" (dengan tombol extend cepat) dan "Invoice Pending Terbaru".
+- Auto-refresh data tiap 60 detik menggunakan custom hook `useGlobalStats`.
+
+**Admin Phase 5: Pricing & Discounts:**
+- Implementasi baru `/admin/pricing` untuk manajemen harga per plan (Pro/Business) per vertikal.
+- Sistem **Voucher Generator**: Buat kode diskon dengan tipe persentase atau nominal, lengkap dengan kuota dan expiry date.
+- Data dikelola via `localStorage` (ternakos_pricing_config & ternakos_discount_codes) sebagai solusi sementara sebelum migrasi DB.
+
+**Admin Phase 4: Monitor Subscription & Invoice:**
+- Implementasi baru `/admin/subscriptions` untuk monitoring invoice tenant.
+- Fitur **Stat Dashboard** (Pending, Paid Month, Revenue, Failed) khusus superadmin.
+- Sistem Konfirmasi Manual: Verifikasi bukti transfer dan update otomatis `trial_ends_at` tenant.
+- Pengaturan Rekening Bank: Kelola daftar rekening (BCA, Mandiri, dll) yang aktif untuk mutasi TernakOS.
+
+**Admin Phase 3: Users & Tenant Management:**
+- Implementasi penuh `/admin/users` dengan tabel tenant, search, dan multi-tab filtering.
+- Fitur **Detail Sheet** untuk edit nama bisnis, ganti paket (Pro/Business), dan perpanjang trial (+14 Hari).
+- Monitoring anggota tim (full name, role, last seen) langsung dari panel admin.
+- Integrasi global bypass untuk `superadmin` di sidebar, layout, dan menu kuncian.
 
 ### Updates 2026-03-24
 

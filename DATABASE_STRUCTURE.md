@@ -1,6 +1,6 @@
 # TernakOS — Database Structure
 > Generated from Supabase schema. Gunakan sebagai referensi Antigravity.
-> Last updated: 2026-03-24 (Multi-Tenant & Egg Broker Vertical)
+> Last updated: 2026-03-25 (Superadmin & Phase 6 Global Stats)
 
 ---
 

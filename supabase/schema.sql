@@ -84,17 +84,24 @@ begin
 end;
 $$;
 
--- Auto-create tenant + profile saat register
+-- Auto-create tenant + profile saat register (Mandiri Only)
 create or replace function handle_new_user()
 returns trigger language plpgsql security definer as $$
 declare
   v_tenant_id uuid;
   v_user_type text;
 begin
+  -- 1. Cek dulu apakah ini user undangan (invite_token ada di metadata)
+  -- Jika ada invite_token, jangan bikin tenant baru di sini (biar dihandle logic invite)
+  if (new.raw_user_meta_data->>'invite_token') is not null then
+    return new;
+  end if;
+
   v_user_type := coalesce(
     new.raw_user_meta_data->>'user_type', 'broker'
   );
 
+  -- 2. Bikin tenant baru
   insert into tenants(
     business_name,
     owner_name,
@@ -106,6 +113,7 @@ begin
   )
   returning id into v_tenant_id;
 
+  -- 3. Bikin profile owner
   insert into profiles(
     tenant_id,
     auth_user_id,

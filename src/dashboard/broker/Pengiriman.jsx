@@ -116,6 +116,8 @@ export default function Pengiriman() {
                 .from('deliveries')
                 .select(`
                     *,
+                    drivers ( full_name ),
+                    vehicles ( brand, vehicle_plate ),
                     sales!inner (
                         id,
                         is_deleted,

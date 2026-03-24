@@ -230,6 +230,32 @@ export default function TransaksiWizard({ isOpen, onClose }) {
 
       // 3. Insert delivery if enabled
       if (step3Data?.enabled) {
+        // Auto-register manual vehicle if needed
+        let finalVehicleId = step3Data.vehicle_id || null
+        if (!finalVehicleId && step3Data.vehicle_plate) {
+          const { data: newV } = await supabase.from('vehicles').insert({
+            tenant_id: tenant.id,
+            brand: 'Auto-Registered',
+            vehicle_plate: step3Data.vehicle_plate.toUpperCase(),
+            vehicle_type: step3Data.vehicle_type || 'Armada',
+            ownership: 'lainnya',
+            status: 'aktif'
+          }).select('id').single()
+          if (newV) finalVehicleId = newV.id
+        }
+
+        // Auto-register manual driver if needed
+        let finalDriverId = step3Data.driver_id || null
+        if (!finalDriverId && step3Data.driver_name) {
+          const { data: newD } = await supabase.from('drivers').insert({
+            tenant_id: tenant.id,
+            full_name: step3Data.driver_name,
+            phone: step3Data.driver_phone || null,
+            status: 'aktif'
+          }).select('id').single()
+          if (newD) finalDriverId = newD.id
+        }
+
         // DEBUG: Ensure everything is captured correctly
         console.log('--- WIZARD SUBMIT DEBUG ---')
         console.log('Mode:', mode)
@@ -238,8 +264,8 @@ export default function TransaksiWizard({ isOpen, onClose }) {
         const deliveryPayload = {
           tenant_id: tenant.id,
           sale_id: saleId,
-          vehicle_id: step3Data.vehicle_id || null,
-          driver_id: step3Data.driver_id || null,
+          vehicle_id: finalVehicleId,
+          driver_id: finalDriverId,
           vehicle_type: step3Data.vehicle_type || '',
           vehicle_plate: step3Data.vehicle_plate || '',
           driver_name: step3Data.driver_name || '',

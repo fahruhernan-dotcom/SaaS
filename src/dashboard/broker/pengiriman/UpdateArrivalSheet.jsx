@@ -399,13 +399,35 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
 
                 // Only update logistics if they were UNLOCKED and modified
                 if (!vehicleLocked) {
-                    updatePayload.vehicle_id = selectedVehicle?.id || null
+                    let finalVehicleId = selectedVehicle?.id || null
+                    if (!finalVehicleId && vehiclePlate) {
+                        const { data: newV } = await supabase.from('vehicles').insert({
+                            tenant_id: tenant.id,
+                            brand: 'Auto-Registered',
+                            vehicle_plate: vehiclePlate.toUpperCase(),
+                            vehicle_type: vehicleType || 'Armada',
+                            ownership: 'lainnya',
+                            status: 'aktif'
+                        }).select('id').single()
+                        if (newV) finalVehicleId = newV.id
+                    }
+                    updatePayload.vehicle_id = finalVehicleId
                     updatePayload.vehicle_plate = selectedVehicle?.vehicle_plate || vehiclePlate
                     updatePayload.vehicle_type = selectedVehicle?.vehicle_type || vehicleType
                 }
 
                 if (!driverLocked) {
-                    updatePayload.driver_id = selectedDriver?.id || null
+                    let finalDriverId = selectedDriver?.id || null
+                    if (!finalDriverId && driverName) {
+                        const { data: newD } = await supabase.from('drivers').insert({
+                            tenant_id: tenant.id,
+                            full_name: driverName,
+                            phone: driverPhone || null,
+                            status: 'aktif'
+                        }).select('id').single()
+                        if (newD) finalDriverId = newD.id
+                    }
+                    updatePayload.driver_id = finalDriverId
                     updatePayload.driver_name = selectedDriver?.full_name || driverName
                     updatePayload.driver_phone = selectedDriver?.phone || driverPhone
                 }
@@ -436,13 +458,35 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                 }
 
                 if (!vehicleLocked) {
-                    arrivalPayload.vehicleId = selectedVehicle?.id || null
+                    let finalVehicleId = selectedVehicle?.id || null
+                    if (!finalVehicleId && vehiclePlate) {
+                        const { data: newV } = await supabase.from('vehicles').insert({
+                            tenant_id: tenant.id,
+                            brand: 'Auto-Registered',
+                            vehicle_plate: vehiclePlate.toUpperCase(),
+                            vehicle_type: vehicleType || 'Armada',
+                            ownership: 'lainnya',
+                            status: 'aktif'
+                        }).select('id').single()
+                        if (newV) finalVehicleId = newV.id
+                    }
+                    arrivalPayload.vehicleId = finalVehicleId
                     arrivalPayload.vehiclePlate = selectedVehicle?.vehicle_plate || vehiclePlate
                     arrivalPayload.vehicleType = selectedVehicle?.vehicle_type || vehicleType
                 }
 
                 if (!driverLocked) {
-                    arrivalPayload.driverId = selectedDriver?.id || null
+                    let finalDriverId = selectedDriver?.id || null
+                    if (!finalDriverId && driverName) {
+                        const { data: newD } = await supabase.from('drivers').insert({
+                            tenant_id: tenant.id,
+                            full_name: driverName,
+                            phone: driverPhone || null,
+                            status: 'aktif'
+                        }).select('id').single()
+                        if (newD) finalDriverId = newD.id
+                    }
+                    arrivalPayload.driverId = finalDriverId
                     arrivalPayload.driverName = selectedDriver?.full_name || driverName
                     arrivalPayload.driverPhone = selectedDriver?.phone || driverPhone
                 }

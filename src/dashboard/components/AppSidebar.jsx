@@ -18,7 +18,8 @@ import {
   Check,
   Plus,
   Lock,
-  Sparkles
+  Sparkles,
+  Shield
 } from 'lucide-react'
 import {
   Sidebar,
@@ -90,13 +91,16 @@ export default function AppSidebar() {
   const tenantInitials = tenant?.business_name?.slice(0, 2).toUpperCase() || 'TO'
   const userInitials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
 
-  const isOwner = profile?.role === 'owner'
+  const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin'
   const isStaff = profile?.role === 'staff'
   const isViewOnly = profile?.role === 'view_only'
 
   const vertical = tenant?.business_vertical || 'poultry_broker'
   const isPoultry = vertical === 'poultry_broker'
   const isEgg = vertical === 'egg_broker'
+
+  const isSuperadmin = (profile?.role === 'superadmin' || profile?.user_type === 'superadmin') && 
+                      user?.email === 'fahruhernansakti@gmail.com'
 
   const getVerticalInfo = (v) => {
     switch (v) {
@@ -109,6 +113,14 @@ export default function AppSidebar() {
   }
 
   const activeVerticalInfo = getVerticalInfo(vertical)
+
+  const handleGoToAdmin = () => {
+    const adminProfile = profiles?.find(p => p.role === 'superadmin' || p.user_type === 'superadmin')
+    if (adminProfile) {
+      switchTenant(adminProfile.tenant_id)
+      navigate('/admin')
+    }
+  }
 
   const navMain = [
     {
@@ -155,7 +167,7 @@ export default function AppSidebar() {
     ...group,
     items: group.items.filter(item => {
       if (!item.roles) return true // default accessible to all roles
-      return item.roles.includes(profile?.role)
+      return item.roles.includes(profile?.role) || profile?.role === 'superadmin'
     })
   })).filter(group => group.items.length > 0)
 
@@ -168,12 +180,12 @@ export default function AppSidebar() {
     }
   }
 
-  // Calculate Trial Status
+  // Calculate Trial Status (Ignore for Superadmin)
   const trialEndsAt = tenant?.trial_ends_at
-  const isTrialActive = trialEndsAt 
+  const isTrialActive = !isSuperadmin && (trialEndsAt 
     ? new Date(trialEndsAt) > new Date() 
-    : false
-  const daysLeft = trialEndsAt 
+    : false)
+  const daysLeft = !isSuperadmin && trialEndsAt 
     ? Math.max(0, Math.ceil((new Date(trialEndsAt) - new Date()) / (1000 * 60 * 60 * 24))) 
     : 0
 
@@ -350,7 +362,7 @@ export default function AppSidebar() {
               <SidebarMenu>
                 {group.items.map((item) => {
                   const isActive = location.pathname === item.url
-                  const isLocked = item.locked || !isTrialActive
+                  const isLocked = (item.locked || !isTrialActive) && !isSuperadmin
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
@@ -403,17 +415,17 @@ export default function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
+
       </SidebarContent>
 
       <SidebarFooter className="p-2 pb-6">
         <SidebarSeparator className="mb-2" />
-
         {/* Plan info */}
         <div style={{
           margin: '0 4px 8px',
           padding: '10px 12px',
-          background: 'rgba(16,185,129,0.06)',
-          border: '1px solid rgba(16,185,129,0.15)',
+          background: isSuperadmin ? 'rgba(245,158,11,0.06)' : 'rgba(16,185,129,0.06)',
+          border: isSuperadmin ? '1px solid rgba(245,158,11,0.15)' : '1px solid rgba(16,185,129,0.15)',
           borderRadius: '10px',
         }}>
           <div style={{
@@ -425,26 +437,36 @@ export default function AppSidebar() {
               <p style={{
                 fontSize: '10px',
                 fontWeight: 600,
-                color: '#4B6478',
+                color: isSuperadmin ? 'rgba(245,158,11,0.6)' : '#4B6478',
                 textTransform: 'uppercase',
                 letterSpacing: '0.8px',
                 margin: 0
               }}>
-                Plan Aktif
+                {isSuperadmin ? 'Status Akun' : 'Plan Aktif'}
               </p>
               <p style={{
                 fontFamily: 'Sora',
                 fontSize: '13px',
                 fontWeight: 800,
-                color: '#34D399',
-                margin: '2px 0 0'
+                color: isSuperadmin ? '#F59E0B' : '#34D399',
+                margin: '2px 0 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
               }}>
-                {tenant?.plan?.toUpperCase() || 'STARTER'}
+                {isSuperadmin ? (
+                  <>
+                    <Shield size={14} className="text-amber-500" />
+                    PLATFORM ADMIN
+                  </>
+                ) : (
+                  tenant?.plan?.toUpperCase() || 'STARTER'
+                )}
               </p>
             </div>
             
-            {/* Trial badge kalau masih trial */}
-            {isTrialActive && (
+            {/* Trial badge kalau masih trial (Hanya non-superadmin) */}
+            {isTrialActive && !isSuperadmin && (
               <span style={{
                 fontSize: '10px',
                 fontWeight: 700,
@@ -457,10 +479,25 @@ export default function AppSidebar() {
                 Trial {daysLeft}h
               </span>
             )}
+
+            {/* Premium Badge for Superadmin */}
+            {isSuperadmin && (
+              <span style={{
+                fontSize: '9px',
+                fontWeight: 900,
+                background: 'rgba(245,158,11,0.2)',
+                color: '#F59E0B',
+                borderRadius: '4px',
+                padding: '1px 5px',
+                letterSpacing: '1px'
+              }}>
+                PRO
+              </span>
+            )}
           </div>
           
-          {/* Progress bar trial */}
-          {isTrialActive && (
+          {/* Progress bar trial (Hanya non-superadmin) */}
+          {isTrialActive && !isSuperadmin && (
             <div style={{
               marginTop: '8px',
               height: '3px',
@@ -482,8 +519,8 @@ export default function AppSidebar() {
             </div>
           )}
 
-          {/* Mulai Trial button when no trial active */}
-          {!isTrialActive && (
+          {/* Mulai Trial button (Hanya non-superadmin) */}
+          {!isTrialActive && !isSuperadmin && (
             <button
               onClick={async () => {
                 try {
@@ -554,6 +591,7 @@ export default function AppSidebar() {
                         <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
                           profile.role === 'owner' ? 'bg-[#10B981]/10 text-[#10B981]' :
                           profile.role === 'staff' ? 'bg-blue-500/10 text-blue-400' :
+                          profile.role === 'superadmin' ? 'bg-amber-500/10 text-amber-500' :
                           'bg-white/5 text-[#4B6478]'
                         }`}>
                           {profile.role.replace('_', ' ')}
@@ -576,6 +614,17 @@ export default function AppSidebar() {
                   <User size={16} className="text-muted-foreground" />
                   <span className="text-[13px] font-semibold">Akun & Profil</span>
                 </DropdownMenuItem>
+
+                {isSuperadmin && (
+                  <DropdownMenuItem
+                    onClick={handleGoToAdmin}
+                    className="gap-3 rounded-xl p-3 cursor-pointer text-amber-500 hover:bg-amber-500/10 transition-colors focus:bg-amber-500/10"
+                  >
+                    <Shield size={16} />
+                    <span className="text-[13px] font-bold">Admin Panel</span>
+                  </DropdownMenuItem>
+                )}
+
                 <DropdownMenuSeparator className="my-1.5 bg-border" />
                 <DropdownMenuItem
                   onClick={handleLogout}

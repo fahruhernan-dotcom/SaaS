@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 // --- ANIMATIONS ---
 const itemVariants = {
@@ -266,8 +267,34 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onShowLogistics, 
 
                     {/* Details Grid */}
                     <div className="p-6 grid grid-cols-3 gap-6">
-                         <DetailItem icon={Truck} label="Kendaraan" value={`${delivery.vehicle_type || '-'} ${delivery.vehicle_plate || ''}`} />
-                         <DetailItem icon={User} label="Sopir" value={delivery.driver_name || '-'} />
+                         <DetailItem 
+                             icon={Truck} 
+                             label="Kendaraan" 
+                             value={
+                                 <div className="flex flex-col gap-1 items-start">
+                                     <span className="truncate w-full">{delivery.vehicles ? `${delivery.vehicles.brand || ''} ${delivery.vehicles.vehicle_plate || ''}`.trim() : `${delivery.vehicle_type || '-'} ${delivery.vehicle_plate || ''}`.trim()}</span>
+                                     {!delivery.vehicle_id && (
+                                         <Badge className="border-none bg-red-500/10 text-red-400 text-[8px] font-black uppercase px-1.5 py-0 h-4 rounded-md">
+                                             Belum Terdaftar
+                                         </Badge>
+                                     )}
+                                 </div>
+                             } 
+                         />
+                         <DetailItem 
+                             icon={User} 
+                             label="Sopir" 
+                             value={
+                                 <div className="flex flex-col gap-1 items-start">
+                                     <span className="truncate w-full">{delivery.drivers?.full_name || delivery.driver_name || '-'}</span>
+                                     {!delivery.driver_id && (
+                                         <Badge className="border-none bg-red-500/10 text-red-400 text-[8px] font-black uppercase px-1.5 py-0 h-4 rounded-md">
+                                             Belum Terdaftar
+                                         </Badge>
+                                     )}
+                                 </div>
+                             } 
+                         />
                          <DetailItem icon={Package} label="Muatan" value={`${delivery.initial_count} ekor`} />
                     </div>
 

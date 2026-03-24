@@ -62,15 +62,15 @@ export default function LogisticsDetailSheet({ isOpen, onClose, delivery }) {
                                      <Truck size={12} />
                                      <span className="text-[9px] font-black uppercase tracking-widest">Kendaraan</span>
                                  </div>
-                                 <p className="text-sm font-black text-white">{delivery.vehicle_plate || '-'}</p>
-                                 <p className="text-[10px] font-bold text-[#4B6478] uppercase">{delivery.vehicle_type || '-'}</p>
+                                 <p className="text-sm font-black text-white">{delivery.vehicles?.vehicle_plate || delivery.vehicle_plate || '-'}</p>
+                                 <p className="text-[10px] font-bold text-[#4B6478] uppercase">{delivery.vehicles?.brand || delivery.vehicle_type || '-'}</p>
                              </div>
                              <div className="p-4 rounded-2xl bg-[#111C24] border border-white/5 space-y-1">
                                  <div className="flex items-center gap-2 text-[#4B6478] mb-1">
                                      <User size={12} />
                                      <span className="text-[9px] font-black uppercase tracking-widest">Sopir</span>
                                  </div>
-                                 <p className="text-sm font-black text-white uppercase">{delivery.driver_name || '-'}</p>
+                                 <p className="text-sm font-black text-white uppercase">{delivery.drivers?.full_name || delivery.driver_name || '-'}</p>
                                  <div className="flex items-center gap-1.5 mt-1 text-emerald-400 font-black">
                                      <Smartphone size={10} />
                                      <span className="text-[10px] font-bold tabular-nums tracking-widest">{delivery.driver_phone || '-'}</span>
