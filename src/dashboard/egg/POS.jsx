@@ -52,7 +52,7 @@ export default function POS() {
     }).filter(c => c.quantity > 0))
   }
 
-  const subtotal = cart.reduce((acc, c) => acc + (c.price_suggested * c.quantity), 0)
+  const subtotal = cart.reduce((acc, c) => acc + (c.sell_price_per_pack * c.quantity), 0)
 
   const handleSubmit = async () => {
     if (cart.length === 0 || !selectedCustomerId) {
@@ -78,13 +78,14 @@ export default function POS() {
       if (saleError) throw saleError
 
       // 2. Create Sale Items
-      const saleItems = cart.map(c => ({
+      const saleItems = cart.map(item => ({
         tenant_id: tenant.id,
         sale_id: sale.id,
-        inventory_id: c.id,
-        quantity: c.quantity,
-        price_unit: c.price_suggested,
-        total_price: c.price_suggested * c.quantity
+        inventory_id: item.id,
+        qty_pack: item.quantity,
+        price_per_pack: item.sell_price_per_pack,
+        cost_per_pack: item.cost_per_pack,
+        subtotal: item.quantity * item.sell_price_per_pack
       }))
 
       const { error: itemsError } = await supabase
@@ -131,9 +132,9 @@ export default function POS() {
             >
               <div className="flex justify-between items-start relative z-10 text-left">
                 <div>
-                  <h3 className="font-display font-black text-lg text-white group-hover:text-emerald-400 transition-colors">{item.name}</h3>
-                  <p className="text-xl font-black text-emerald-400 mt-1">{formatIDR(item.price_suggested)}</p>
-                  <p className="text-[10px] font-bold text-[#4B6478] uppercase mt-1 tracking-widest">Tersedia: {item.current_stock} {item.unit}</p>
+                  <h3 className="font-display font-black text-lg text-white group-hover:text-emerald-400 transition-colors">{item.product_name}</h3>
+                  <p className="text-xl font-black text-emerald-400 mt-1">{formatIDR(item.sell_price_per_pack)}</p>
+                  <p className="text-[10px] font-bold text-[#4B6478] uppercase mt-1 tracking-widest">Tersedia: {item.current_stock_butir} butir</p>
                 </div>
                 <div className="bg-white/5 p-3 rounded-2xl">
                   <Plus size={20} className="text-[#34D399]" />
@@ -155,7 +156,7 @@ export default function POS() {
               </SelectTrigger>
               <SelectContent className="bg-[#111C24] border-white/10 text-white">
                 {customers?.map(c => (
-                  <SelectItem key={c.id} value={c.id} className="font-bold uppercase text-xs">{c.customer_name}</SelectItem>
+                  <SelectItem key={c.id} value={c.id} className="font-bold uppercase text-xs">{c.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -176,8 +177,8 @@ export default function POS() {
                     className="flex justify-between items-center bg-[#111C24] p-4 rounded-2xl border border-white/5"
                   >
                     <div className="text-left">
-                      <p className="font-black text-sm text-white uppercase">{item.name}</p>
-                      <p className="text-[11px] font-bold text-emerald-400 mt-0.5">{formatIDR(item.price_suggested)}</p>
+                      <p className="font-black text-sm text-white uppercase">{item.product_name}</p>
+                      <p className="text-[11px] font-bold text-emerald-400 mt-0.5">{formatIDR(item.sell_price_per_pack)} / pack</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <button onClick={() => updateQty(item.id, -1)} className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10 text-white"><Minus size={14}/></button>

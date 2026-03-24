@@ -15,6 +15,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
+  SelectSeparator,
 } from '@/components/ui/select'
 import {
   Eye, EyeOff, AlertCircle, Loader2,
@@ -38,7 +41,7 @@ const registerSchema = z.object({
   }),
   // Optional/Conditional fields
   businessName: z.string().optional(),
-  user_type: z.enum(['broker', 'peternak', 'rpa']).optional(),
+  user_type: z.enum(['broker', 'egg_broker', 'peternak', 'rpa', 'cattle_broker', 'commodity_broker']).optional(),
   inviteCode: z.string().optional(),
   mode: z.enum(['mandiri', 'invite']).default('mandiri'),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -120,6 +123,7 @@ export default function Register() {
   const getBusinessPlaceholder = () => {
     switch (selectedType) {
       case 'broker': return "Ex: Broker Jaya Makmur"
+      case 'egg_broker': return "Ex: Berkah Telur Sejahtera"
       case 'peternak': return "Ex: Kandang Pak Budi"
       case 'rpa': return "Ex: RPA Sejahtera"
       default: return "Nama bisnis kamu"
@@ -246,6 +250,7 @@ export default function Register() {
 
       // Skip onboarding and go directly to dashboard
       const dashboardPath = formData.user_type === 'broker' ? '/broker/beranda' : 
+                          formData.user_type === 'egg_broker' ? '/broker/egg_broker/beranda' :
                           formData.user_type === 'peternak' ? '/peternak/beranda' : 
                           '/rpa-buyer/beranda';
                           
@@ -547,9 +552,16 @@ export default function Register() {
                         <SelectValue placeholder="Pilih tipe usahamu" />
                       </SelectTrigger>
                       <SelectContent className="bg-[#111C24] border-white/10 text-[#F1F5F9]">
-                        <SelectItem value="broker">🐔 Broker Ayam</SelectItem>
-                        <SelectItem value="peternak">🏡 Peternak</SelectItem>
-                        <SelectItem value="rpa">🏭 RPA / Rumah Potong</SelectItem>
+                        <SelectGroup>
+                          <SelectLabel className="text-[#4B6478] text-[10px] uppercase tracking-widest px-2 py-2">Broker</SelectLabel>
+                          <SelectItem value="broker">🐔 Broker Ayam <span className="ml-2 text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">Tersedia</span></SelectItem>
+                          <SelectItem value="egg_broker">🥚 Broker Telur <span className="ml-2 text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">Tersedia</span></SelectItem>
+                          <SelectItem value="cattle_broker" disabled>🐄 Broker Sapi <span className="ml-2 text-[10px] text-[#4B6478] font-bold bg-white/5 px-1.5 py-0.5 rounded">Segera Hadir</span></SelectItem>
+                          <SelectItem value="commodity_broker" disabled>🛒 Broker Sembako <span className="ml-2 text-[10px] text-[#4B6478] font-bold bg-white/5 px-1.5 py-0.5 rounded">Segera Hadir</span></SelectItem>
+                        </SelectGroup>
+                        <SelectSeparator className="bg-white/5" />
+                        <SelectItem value="peternak" disabled>🏠 Peternak <span className="ml-2 text-[10px] text-[#4B6478] font-bold bg-white/5 px-1.5 py-0.5 rounded">Segera Hadir</span></SelectItem>
+                        <SelectItem value="rpa" disabled>🏭 RPA / Rumah Potong <span className="ml-2 text-[10px] text-[#4B6478] font-bold bg-white/5 px-1.5 py-0.5 rounded">Segera Hadir</span></SelectItem>
                       </SelectContent>
                     </Select>
                   )}

@@ -146,6 +146,8 @@ export default function Transaksi() {
   const [arrivalNotes, setArrivalNotes] = useState('')
   const [isUpdateArrivalSubmitting, setIsUpdateArrivalSubmitting] = useState(false)
 
+  const [searchQuery, setSearchQuery] = useState('')
+
   // --- DATA FETCHING ---
   const { data: sales, isLoading: loadingSales } = useQuery({
     queryKey: ['sales', tenant?.id],
@@ -424,21 +426,40 @@ export default function Transaksi() {
     >
       {/* TopBar */}
       <header className="px-5 pt-8 pb-4 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 space-y-4">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center gap-4">
             <div>
                 <h1 className="font-display text-2xl font-black text-white tracking-tight uppercase leading-none">Transaksi</h1>
                 <p className="text-[10px] font-bold text-[#4B6478] uppercase mt-1 tracking-widest">{tenant?.business_name || 'BROKER OPS'}</p>
             </div>
-            {canWrite && (
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 flex-1 justify-end">
+                <div className="relative max-w-xs w-full hidden md:block">
+                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4B6478]" />
+                    <Input
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Cari RPA, Kandang, Plat..."
+                        className="pl-9 h-10 w-full bg-[#111C24] border-white/5 rounded-xl font-bold text-xs text-white placeholder:text-[#4B6478]"
+                    />
+                </div>
+                {canWrite && (
                   <Button 
                       onClick={() => setWizardOpen(true)}
-                      className="h-10 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+                      className="h-10 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all shrink-0"
                   >
                       <Plus size={14} className="mr-1" /> JUAL
                   </Button>
-              </div>
-            )}
+                )}
+            </div>
+        </div>
+        {/* Mobile Search */}
+        <div className="md:hidden mt-4 relative w-full">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4B6478]" />
+            <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari RPA, Kandang, Plat..."
+                className="pl-9 h-10 w-full bg-[#111C24] border-white/5 rounded-xl font-bold text-xs text-white placeholder:text-[#4B6478]"
+            />
         </div>
 
         {isViewOnly && (
@@ -520,6 +541,15 @@ export default function Transaksi() {
               >
                 {sales
                   .filter(s => activeTab === 'semua' ? true : s.payment_status === activeTab)
+                  .filter(s => {
+                    if (!searchQuery) return true
+                    const q = searchQuery.toLowerCase()
+                    const rpaName = s.rpa_clients?.rpa_name?.toLowerCase() || ''
+                    const farmName = s.purchases?.farms?.farm_name?.toLowerCase() || ''
+                    const driver = s.deliveries?.driver_name?.toLowerCase() || ''
+                    const plat = s.deliveries?.vehicle_plate?.toLowerCase() || ''
+                    return rpaName.includes(q) || farmName.includes(q) || driver.includes(q) || plat.includes(q)
+                  })
                   .map(sale => (
                    <motion.div key={sale.id} variants={fadeUp}>
                       <UnifiedTransactionCard

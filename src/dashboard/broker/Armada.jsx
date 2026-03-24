@@ -396,17 +396,17 @@ function VehicleCard({ vehicle, isOnRoute, onEdit, onAddExpense }) {
         <Card className="bg-[#111C24] border-white/5 rounded-[32px] overflow-hidden group hover:border-white/10 transition-all">
             <CardContent className="p-6 space-y-5">
                 <div className="flex justify-between items-start">
-                    <h3 className="font-display text-lg font-black tracking-tight text-[#F1F5F9] uppercase">{vehicle.vehicle_plate}</h3>
-                    <div className="flex gap-2">
+                    <div className="space-y-2">
+                        <h3 className="font-display text-xl font-black tracking-tight text-[#F1F5F9] uppercase leading-none">{vehicle.vehicle_plate}</h3>
                         {isOnRoute && (
-                            <Badge className="rounded-lg border-none px-2 py-0.5 text-[9px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-500">
+                            <Badge className="rounded-lg border-none px-2 py-1 text-[9px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-500 w-fit">
                                 Sedang Mengirim
                             </Badge>
                         )}
-                        <Badge className={cn("rounded-lg border-none px-2 py-0.5 text-[9px] font-black uppercase tracking-widest", meta.bg, meta.color)}>
-                            {meta.label}
-                        </Badge>
                     </div>
+                    <Badge className={cn("rounded-lg border-none px-2 py-0.5 text-[10px] font-black uppercase tracking-widest", meta.bg, meta.color)}>
+                        {meta.label}
+                    </Badge>
                 </div>
 
                 {/* Row 2: Type, Brand, Year */}
@@ -483,15 +483,17 @@ function DriverCard({ driver, isOnRoute, onEdit }) {
                         </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start">
-                            <h3 className="font-display font-black text-sm text-white uppercase truncate">{driver.full_name}</h3>
-                            <div className="flex flex-col items-end gap-1">
+                        <div className="flex justify-between items-start gap-2">
+                            <div className="space-y-2 min-w-0">
+                                <h3 className="font-display font-black text-sm text-white uppercase truncate leading-none">{driver.full_name}</h3>
                                 {isOnRoute && (
-                                    <Badge className="rounded-lg border-none px-2 py-0.5 text-[8px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-500">
+                                    <Badge className="rounded-lg border-none px-2 py-1 text-[8px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-500 w-fit">
                                         Sedang Mengirim
                                     </Badge>
                                 )}
-                                <Badge className={cn("rounded-lg border-none px-2 py-0.5 text-[8px] font-black uppercase tracking-widest", meta.bg, meta.color)}>
+                            </div>
+                            <div className="flex shrink-0">
+                                <Badge className={cn("rounded-lg border-none px-2 py-0.5 text-[9px] font-black uppercase tracking-widest", meta.bg, meta.color)}>
                                     {meta.label}
                                 </Badge>
                             </div>

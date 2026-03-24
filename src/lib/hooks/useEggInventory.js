@@ -12,7 +12,7 @@ export function useEggInventory() {
         .select('*')
         .eq('tenant_id', tenant.id)
         .eq('is_deleted', false)
-        .order('name', { ascending: true })
+        .order('product_name', { ascending: true })
       
       if (error) throw error
       return data

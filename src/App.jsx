@@ -39,6 +39,7 @@ import AcceptInvite from './pages/AcceptInvite';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import AboutUs from './pages/AboutUs';
+import OnboardingFlow from './dashboard/pages/OnboardingFlow';
 
 // Components
 import ErrorBoundary from './components/ErrorBoundary';
@@ -66,7 +67,7 @@ function ProtectedRoute({ children, requiredType, requiredVertical }) {
   
   if (!user) return <Navigate to="/login" replace />;
 
-  if (profile && !profile.onboarded && location.pathname !== '/broker/tim' && profile.role === 'owner') {
+  if (profile && !profile.onboarded && !['/broker/tim', '/onboarding'].includes(location.pathname) && profile.role === 'owner') {
     return <Navigate to="/broker/tim" replace />;
   }
 
@@ -79,7 +80,8 @@ function ProtectedRoute({ children, requiredType, requiredVertical }) {
   // Vertical guard
   if (requiredVertical && tenant?.business_vertical && tenant.business_vertical !== requiredVertical) {
     // Redirect to the correct vertical dashboard if mismatched
-    return <Navigate to={`/broker/${tenant.business_vertical}/beranda`} replace />;
+    const path = tenant.business_vertical === 'egg_broker' ? '/egg/beranda' : `/broker/${tenant.business_vertical}/beranda`;
+    return <Navigate to={path} replace />;
   }
 
   return children;
@@ -93,7 +95,8 @@ function RoleGuard({ allowedRoles, children }) {
   if (!profile || !allowedRoles.includes(profile.role)) {
     // If mismatch, go to the vertical-aware beranda
     const vertical = tenant?.business_vertical || 'poultry_broker'
-    return <Navigate to={`/broker/${vertical}/beranda`} replace />;
+    const path = vertical === 'egg_broker' ? '/egg/beranda' : `/broker/${vertical}/beranda`;
+    return <Navigate to={path} replace />;
   }
 
   return children;
@@ -111,7 +114,8 @@ function RoleRedirector() {
   // If broker, point to the vertical-specific beranda
   if (profile.user_type === 'broker') {
     const vertical = tenant?.business_vertical || 'poultry_broker'
-    return <Navigate to={`/broker/${vertical}/beranda`} replace />;
+    const path = vertical === 'egg_broker' ? '/egg/beranda' : `/broker/${vertical}/beranda`;
+    return <Navigate to={path} replace />;
   }
   
   return <Navigate to={`/${role}/beranda`} replace />;
@@ -153,7 +157,13 @@ function App() {
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/tentang-kami" element={<AboutUs />} />
 
-        {/* Onboarding removed - functionality moved to /broker/tim */}
+        <Route path="/onboarding" element={
+          <ProtectedRoute>
+            <ErrorBoundary>
+              <OnboardingFlow />
+            </ErrorBoundary>
+          </ProtectedRoute>
+        } />
 
         {/* Broker routes - Base Redirect */}
         <Route path="/broker" element={<RoleRedirector />} />
@@ -178,42 +188,51 @@ function App() {
         } />
 
         {/* Egg Broker Vertical */}
-        <Route path="/broker/egg_broker/beranda" element={
+        {/* Egg Broker Vertical (Legacy redirects to new /egg paths) */}
+        <Route path="/broker/egg_broker/beranda" element={<Navigate to="/egg/beranda" replace />} />
+        <Route path="/broker/egg_broker/inventori" element={<Navigate to="/egg/inventori" replace />} />
+        <Route path="/broker/egg_broker/pos" element={<Navigate to="/egg/pos" replace />} />
+        <Route path="/broker/egg_broker/suppliers" element={<Navigate to="/egg/suppliers" replace />} />
+        <Route path="/broker/egg_broker/customers" element={<Navigate to="/egg/customers" replace />} />
+        <Route path="/broker/egg_broker/transaksi" element={<Navigate to="/egg/transaksi" replace />} />
+
+        {/* New Egg Broker Vertical Routes */}
+        <Route path="/egg/beranda" element={
           <ProtectedRoute requiredType="broker" requiredVertical="egg_broker">
             <RoleGuard allowedRoles={['owner', 'staff', 'view_only']}>
               <BrokerLayout><EggBeranda /></BrokerLayout>
             </RoleGuard>
           </ProtectedRoute>
         } />
-        <Route path="/broker/egg_broker/inventori" element={
+        <Route path="/egg/inventori" element={
           <ProtectedRoute requiredType="broker" requiredVertical="egg_broker">
             <RoleGuard allowedRoles={['owner', 'staff']}>
               <BrokerLayout><EggInventori /></BrokerLayout>
             </RoleGuard>
           </ProtectedRoute>
         } />
-        <Route path="/broker/egg_broker/pos" element={
+        <Route path="/egg/pos" element={
           <ProtectedRoute requiredType="broker" requiredVertical="egg_broker">
             <RoleGuard allowedRoles={['owner', 'staff']}>
               <BrokerLayout><EggPOS /></BrokerLayout>
             </RoleGuard>
           </ProtectedRoute>
         } />
-        <Route path="/broker/egg_broker/suppliers" element={
+        <Route path="/egg/suppliers" element={
           <ProtectedRoute requiredType="broker" requiredVertical="egg_broker">
             <RoleGuard allowedRoles={['owner', 'staff']}>
               <BrokerLayout><EggSuppliers /></BrokerLayout>
             </RoleGuard>
           </ProtectedRoute>
         } />
-        <Route path="/broker/egg_broker/customers" element={
+        <Route path="/egg/customers" element={
           <ProtectedRoute requiredType="broker" requiredVertical="egg_broker">
             <RoleGuard allowedRoles={['owner', 'staff']}>
               <BrokerLayout><EggCustomers /></BrokerLayout>
             </RoleGuard>
           </ProtectedRoute>
         } />
-        <Route path="/broker/egg_broker/transaksi" element={
+        <Route path="/egg/transaksi" element={
           <ProtectedRoute requiredType="broker" requiredVertical="egg_broker">
             <RoleGuard allowedRoles={['owner', 'staff', 'view_only']}>
               <BrokerLayout><EggTransaksi /></BrokerLayout>

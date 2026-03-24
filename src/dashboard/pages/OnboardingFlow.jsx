@@ -1,27 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Building2, 
-  MapPin, 
-  CheckCircle2, 
-  ArrowRight, 
-  Warehouse, 
-  Building, 
-  ChevronRight,
-  User,
-  Smartphone,
-  Check,
-  Loader2
+  Building2, Check, ChevronLeft, ChevronRight, 
+  Store, Tent, Building, MapPin, Phone, 
+  ArrowRight, Sparkles, ShieldCheck, HeartPulse,
+  Package, ShoppingCart, UserCheck, Briefcase,
+  Warehouse, Loader2, Smartphone, Lock
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../lib/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import AuroraBackground from '../../components/reactbits/AuroraBackground';
 
 export default function OnboardingFlow() {
-  const { user, profile, tenant } = useAuth();
+  const { user, profile, tenant, refetchProfile } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isNewBusiness = searchParams.get('mode') === 'new_business';
+
   const [step, setStep] = useState(0); // Start at Step 0: Choose Role
   const [selectedRole, setSelectedRole] = useState(null);
   const [direction, setDirection] = useState(1); // For slide animation
@@ -47,17 +44,18 @@ export default function OnboardingFlow() {
   const [loading, setLoading] = useState(false);
   const [isFarmAdded, setIsFarmAdded] = useState(false);
   const [isRPAAdded, setIsRPAAdded] = useState(false);
+  const [newTenantId, setNewTenantId] = useState(null);
 
-  // Guard: Skip Step 0 if user_type is already set
+  // Guard: Skip Step 0 if user_type is already set (Only for normal register)
   useEffect(() => {
-    if (profile?.user_type && step === 0) {
+    if (!isNewBusiness && profile?.user_type && step === 0) {
       setStep(1);
     }
-  }, [profile, step]);
+  }, [profile, step, isNewBusiness]);
 
-  // Guard: Redirect non-owners or already onboarded users
+  // Guard: Redirect non-owners or already onboarded users (Only for normal register)
   useEffect(() => {
-    if (!profile) return
+    if (!profile || isNewBusiness) return
 
     // Staff → langsung ke dashboard
     if (profile.role === 'staff') {
@@ -70,20 +68,32 @@ export default function OnboardingFlow() {
       navigate('/broker/beranda', { replace: true })
       return
     }
-  }, [profile, navigate])
+  }, [profile, navigate, isNewBusiness])
 
-  // Sync initial business name from profile/tenant if available
+  // Sync initial business name from profile/tenant if available (Only for normal register)
   useEffect(() => {
-    if (tenant?.business_name) {
+    if (!isNewBusiness && tenant?.business_name) {
       setFormData(prev => ({ ...prev, business_name: tenant.business_name }));
     }
-  }, [tenant]);
+  }, [tenant, isNewBusiness]);
 
-  if (!profile) return (
-    <div className="min-h-screen bg-[#06090F] flex items-center justify-center">
-      <div className="text-[#4B6478] text-sm font-medium animate-pulse">Memuat profil...</div>
-    </div>
-  )
+  if (!profile && !isNewBusiness) {
+    return (
+      <div className="min-h-screen bg-[#06090F] flex items-center justify-center">
+        <div className="text-[#4B6478] text-sm font-medium animate-pulse">Memuat profil...</div>
+      </div>
+    );
+  }
+
+  // Fallback protection: if profile is ever somehow completely falsy and didn't trigger the above
+  if (!user || (!profile && isNewBusiness)) {
+    return (
+      <div className="min-h-screen bg-[#06090F] flex items-center justify-center">
+        <Loader2 className="animate-spin text-emerald-500 mr-2" size={20} />
+        <div className="text-[#4B6478] text-sm font-medium animate-pulse">Menyiapkan form...</div>
+      </div>
+    );
+  }
 
   const nextStep = () => {
     setDirection(1);
@@ -98,34 +108,18 @@ export default function OnboardingFlow() {
   // Step 0: Handle Role Selection (Improve 1 & 2)
   const handleRoleSelection = async (role) => {
     setSelectedRole(role);
-    if (role !== 'broker') {
+    if (!isNewBusiness && !['broker', 'egg_broker'].includes(role)) {
       toast.info(`🚧 Dashboard ${role.toUpperCase()} sedang dalam pengembangan. Kami akan notifikasi kamu begitu siap!`);
-      
-      setLoading(true);
-      try {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ 
-            user_type: role, 
-            business_model_selected: true,
-            onboarded: true 
-          })
-          .eq('auth_user_id', user.id);
-        
-        if (error) throw error;
-        
-        const path = role === 'peternak' ? '/peternak/beranda' : '/rpa-buyer/beranda';
-        navigate(path);
-      } catch (err) {
-        toast.error('Gagal memperbarui profil. ' + err.message);
-      } finally {
-        setLoading(false);
-      }
-      return;
     }
   };
 
   const proceedFromRole = async () => {
+    if (isNewBusiness) {
+      // Just go to next step, tenant creation happens in Step 1
+      nextStep();
+      return;
+    }
+
     setLoading(true);
     try {
       const { error } = await supabase
@@ -145,25 +139,95 @@ export default function OnboardingFlow() {
     }
   };
 
-  // Step 1: Handle Profile Update
+  // Step 1: Handle Profile Update / Tenant Creation
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('tenants')
-        .update({
-          business_name: formData.business_name,
-          phone: formData.phone,
-          location: formData.location,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', profile.tenant_id);
-      
-      if (error) throw error;
-      nextStep();
+      if (isNewBusiness) {
+        // Generate tenant ID client-side to avoid SELECT RLS policy trigger
+        const generatedTenantId = crypto.randomUUID();
+
+        // Create NEW tenant (no .select() to bypass RLS SELECT policy)
+        // trial_ends_at is NOT set — user will start trial manually from sidebar
+        const { error: tenantError } = await supabase
+          .from('tenants')
+          .insert({
+            id: generatedTenantId,
+            business_name: formData.business_name,
+            phone: formData.phone,
+            location: formData.location,
+            business_vertical: selectedRole === 'broker' ? 'poultry_broker' 
+                              : selectedRole === 'egg_broker' ? 'egg_broker' 
+                              : selectedRole,
+            plan: 'starter'
+          });
+        
+        if (tenantError) {
+          if (tenantError.code === '42501') {
+            throw new Error('Izin ditolak (RLS Supabase). Anda tidak diperbolehkan membuat bisnis baru.');
+          }
+          throw tenantError;
+        }
+        
+        setNewTenantId(generatedTenantId);
+
+        // Map selectedRole (business vertical) → valid user_type for profiles table
+        const userTypeMap = { 'broker': 'broker', 'egg_broker': 'broker', 'peternak': 'peternak', 'rpa': 'rpa' };
+        const mappedUserType = userTypeMap[selectedRole] || 'broker';
+
+        // Create NEW profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            auth_user_id: user.id,
+            tenant_id: generatedTenantId,
+            full_name: profile?.full_name || user?.email?.split('@')[0],
+            role: 'owner',
+            user_type: mappedUserType,
+            business_model_selected: true,
+            onboarded: true,
+            phone: formData.phone
+          });
+
+        if (profileError) {
+          if (profileError.code === '42501') {
+            throw new Error('Izin ditolak (RLS Supabase). Profil bisnis baru gagal dibuat.');
+          }
+          throw profileError;
+        }
+
+        // If not broiler broker, redirect now
+        if (selectedRole !== 'broker') {
+          toast.success('Bisnis baru berhasil dibuat!');
+          localStorage.setItem('ternakos_active_tenant_id', generatedTenantId);
+          
+          let path = '/broker/beranda';
+          if (selectedRole === 'egg_broker') path = '/broker/egg_broker/beranda';
+          else if (selectedRole === 'peternak') path = '/peternak/beranda';
+          else if (selectedRole === 'rpa') path = '/rpa-buyer/beranda';
+          
+          navigate(path);
+          return;
+        }
+
+        nextStep();
+      } else {
+        const { error } = await supabase
+          .from('tenants')
+          .update({
+            business_name: formData.business_name,
+            phone: formData.phone,
+            location: formData.location,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', profile.tenant_id);
+        
+        if (error) throw error;
+        nextStep();
+      }
     } catch (err) {
-      toast.error('Gagal menyimpan profil bisnis');
+      toast.error(err.message || 'Gagal menyimpan profil bisnis');
     } finally {
       setLoading(false);
     }
@@ -177,7 +241,7 @@ export default function OnboardingFlow() {
     setLoading(true);
     try {
       const { error } = await supabase.from('farms').insert({
-        tenant_id: profile.tenant_id,
+        tenant_id: isNewBusiness ? newTenantId : profile.tenant_id,
         farm_name: formData.farm_name,
         owner_name: formData.farm_owner,
         phone: formData.farm_phone,
@@ -203,7 +267,7 @@ export default function OnboardingFlow() {
     setLoading(true);
     try {
       const { error } = await supabase.from('rpa_clients').insert({
-        tenant_id: profile.tenant_id,
+        tenant_id: isNewBusiness ? newTenantId : profile.tenant_id,
         rpa_name: formData.rpa_name,
         contact_person: formData.rpa_cp,
         phone: formData.rpa_phone,
@@ -222,12 +286,24 @@ export default function OnboardingFlow() {
   const handleFinish = async () => {
     setLoading(true);
     try {
-      await supabase
-        .from('profiles')
-        .update({ onboarded: true })
-        .eq('auth_user_id', user.id);
+      if (isNewBusiness) {
+        await supabase
+          .from('profiles')
+          .update({ onboarded: true })
+          .eq('tenant_id', newTenantId)
+          .eq('auth_user_id', user.id);
+        
+        // Persist new tenant as active
+        localStorage.setItem('ternakos_active_tenant_id', newTenantId);
+      } else {
+        await supabase
+          .from('profiles')
+          .update({ onboarded: true })
+          .eq('auth_user_id', user.id);
+      }
       
-      toast.success(`🎉 Selamat datang di TernakOS, ${profile?.full_name?.split(' ')[0]}!`);
+      await refetchProfile();
+      toast.success(`🎉 Bisnis ${formData.business_name} siap digunakan!`);
       navigate('/broker/beranda');
     } catch (err) {
       toast.error('Gagal menyelesaikan onboarding');
@@ -254,28 +330,12 @@ export default function OnboardingFlow() {
   };
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      background: '#06090F', 
-      display: 'flex', 
-      flexDirection: 'column',
-      alignItems: 'center',
-      position: 'relative',
-      overflow: 'hidden'
-    }}>
-      {step === 0 && <AuroraBackground />}
+    <div className="min-h-screen bg-[#06090F] flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden">
+      {step === 0 && <AuroraBackground style={{ position: 'absolute', inset: 0, minHeight: '100%', zIndex: 0 }} />}
 
-      <div style={{ 
-        width: '100%', 
-        maxWidth: '480px', 
-        padding: '24px 20px', 
-        zIndex: 10,
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh'
-      }}>
+      <div className="w-full max-w-md flex flex-col items-center gap-8 z-10 relative">
         {/* Header Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: step === 0 ? '40px' : '24px' }}>
+        <div className="flex items-center gap-2">
           <div style={{ width: '32px', height: '32px', background: '#10B981', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Warehouse size={18} color="white" />
           </div>
@@ -292,9 +352,9 @@ export default function OnboardingFlow() {
               animate="center"
               exit="exit"
               transition={{ duration: 0.3 }}
-              style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
+              className="w-full flex flex-col gap-6"
             >
-              <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+              <div className="text-center">
                 <h1 style={{ fontFamily: 'Sora', fontSize: '22px', fontWeight: 800, color: '#F1F5F9', marginBottom: '8px' }}>
                   Kamu berbisnis sebagai apa?
                 </h1>
@@ -303,40 +363,86 @@ export default function OnboardingFlow() {
                 </p>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <RoleCard 
-                  icon="🤝" 
-                  title="Broker / Pedagang"
-                  desc="Beli ayam dari kandang, jual ke RPA atau pasar. Kelola margin, piutang, dan pengiriman."
-                  badge="Tersedia"
-                  badgeColor="#10B981"
-                  loading={loading && selectedRole === 'broker'}
-                  selected={selectedRole === 'broker'}
-                  onClick={() => handleRoleSelection('broker')}
-                />
-                <RoleCard 
-                  icon="🏚️" 
-                  title="Peternak"
-                  desc="Pelihara ayam di kandang, pantau FCR, deplesi, dan estimasi panen. Catat biaya produksi."
-                  badge="Segera Hadir"
-                  badgeColor="#F59E0B"
-                  loading={loading && selectedRole === 'peternak'}
-                  disabled={loading}
-                  onClick={() => handleRoleSelection('peternak')}
-                />
-                <RoleCard 
-                  icon="🏭" 
-                  title="RPA / Buyer"
-                  desc="Beli ayam dari broker, kelola order pembelian, dan pantau riwayat transaksi."
-                  badge="Segera Hadir"
-                  badgeColor="#F59E0B"
-                  loading={loading && selectedRole === 'rpa'}
-                  disabled={loading}
-                  onClick={() => handleRoleSelection('rpa')}
-                />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {/* BROKER GROUP */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ 
+                    fontSize: '11px', 
+                    fontWeight: 800, 
+                    color: '#4B6478', 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '0.1em',
+                    marginLeft: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    🏢 Broker
+                    <div style={{ flex: 1, h: '1px', background: 'rgba(255,255,255,0.05)' }} />
+                  </div>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <RoleCard 
+                      icon="🐔" 
+                      title="Broker Ayam"
+                      desc="Beli ayam dari kandang, jual ke RPA atau pasar. Kelola margin dan piutang."
+                      badge="Tersedia"
+                      badgeColor="#10B981"
+                      loading={loading && selectedRole === 'broker'}
+                      selected={selectedRole === 'broker'}
+                      onClick={() => handleRoleSelection('broker')}
+                    />
+                    <RoleCard 
+                      icon="🥚" 
+                      title="Broker Telur"
+                      desc="Kelola stok telur, penjualan, dan piutang pelanggan."
+                      badge="Tersedia"
+                      badgeColor="#10B981"
+                      loading={loading && selectedRole === 'egg_broker'}
+                      selected={selectedRole === 'egg_broker'}
+                      onClick={() => handleRoleSelection('egg_broker')}
+                    />
+                    <RoleCard 
+                      icon="🐄" 
+                      title="Broker Sapi"
+                      desc="Segera hadir untuk manajemen ternak potong dan distribusi daging."
+                      badge="Segera Hadir"
+                      badgeColor="#4B6478"
+                      disabled={true}
+                    />
+                    <RoleCard 
+                      icon="🛒" 
+                      title="Broker Sembako"
+                      desc="Segera hadir untuk distribusi bahan pokok dan komoditas pangan lainnya."
+                      badge="Segera Hadir"
+                      badgeColor="#4B6478"
+                      disabled={true}
+                    />
+                  </div>
+                </div>
+
+                {/* OTHER CATEGORIES */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <RoleCard 
+                    icon="🏚️" 
+                    title="Peternak"
+                    desc="Pelihara ayam di kandang, pantau FCR, deplesi, dan panen. (Segera Hadir)"
+                    badge="Segera Hadir"
+                    badgeColor="#F59E0B"
+                    disabled={true}
+                  />
+                  <RoleCard 
+                    icon="🏭" 
+                    title="RPA / Buyer"
+                    desc="Beli ayam dari broker, kelola order pembelian, dan pantau riwayat. (Segera Hadir)"
+                    badge="Segera Hadir"
+                    badgeColor="#F59E0B"
+                    disabled={true}
+                  />
+                </div>
               </div>
 
-              {selectedRole === 'broker' && (
+              {selectedRole && (
                 <motion.button
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -359,7 +465,7 @@ export default function OnboardingFlow() {
               animate="center"
               exit="exit"
               transition={{ duration: 0.3 }}
-              style={{ flex: 1 }}
+              className="w-full"
             >
               <ProgressIndicator current={step} />
 
@@ -586,43 +692,81 @@ function RoleCard({ icon, title, desc, badge, badgeColor, loading, selected, dis
         border: `1px solid ${selected ? 'rgba(16,185,129,0.5)' : 'rgba(255,255,255,0.09)'}`,
         borderRadius: '20px',
         padding: '24px 20px',
-        cursor: disabled ? 'default' : 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
         display: 'flex',
         alignItems: 'center',
         gap: '16px',
-        opacity: disabled ? 0.65 : 1,
+        opacity: disabled ? 0.5 : 1,
         transition: 'all 0.2s ease',
-        position: 'relative'
+        position: 'relative',
+        overflow: 'hidden'
       }}
     >
+      {/* Lock overlay for disabled cards */}
+      {disabled && (
+        <div style={{
+          position: 'absolute',
+          top: '12px',
+          right: '12px',
+          width: '28px',
+          height: '28px',
+          background: 'rgba(75,100,120,0.15)',
+          borderRadius: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '1px solid rgba(75,100,120,0.2)'
+        }}>
+          <Lock size={14} color="#4B6478" />
+        </div>
+      )}
+
       <div style={{ 
         width: '52px', 
         height: '52px', 
-        background: 'rgba(16,185,129,0.12)', 
+        background: disabled ? 'rgba(75,100,120,0.1)' : 'rgba(16,185,129,0.12)', 
         borderRadius: '14px', 
         fontSize: '24px', 
         display: 'flex', 
         alignItems: 'center', 
-        justifyContent: 'center' 
+        justifyContent: 'center',
+        filter: disabled ? 'grayscale(0.6)' : 'none'
       }}>
         {loading ? <Loader2 size={24} className="animate-spin text-[#10B981]" /> : icon}
       </div>
       <div style={{ flex: 1 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-          <h3 style={{ fontFamily: 'Sora', fontSize: '16px', fontWeight: 700, color: '#F1F5F9' }}>{title}</h3>
-          <span style={{ 
-            fontSize: '10px', 
-            fontWeight: 700, 
-            color: badgeColor, 
-            background: `${badgeColor}15`, 
-            padding: '4px 10px', 
-            borderRadius: '99px',
-            border: `1px solid ${badgeColor}30`
-          }}>
-            {badge}
-          </span>
+          <h3 style={{ fontFamily: 'Sora', fontSize: '16px', fontWeight: 700, color: disabled ? '#4B6478' : '#F1F5F9' }}>{title}</h3>
+            {badge && (
+              <span style={{ 
+                fontSize: '10px', 
+                fontWeight: 700, 
+                color: badgeColor, 
+                background: `${badgeColor}15`, 
+                padding: '4px 10px', 
+                borderRadius: '99px',
+                border: `1px solid ${badgeColor}30`,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                {disabled && <Lock size={9} />}
+                {badge}
+              </span>
+            )}
         </div>
         <p style={{ fontSize: '13px', fontFamily: 'DM Sans', color: '#4B6478', lineHeight: '1.6' }}>{desc}</p>
+        {/* "Mulai Trial" sub-text for available cards */}
+        {!disabled && !selected && (
+          <p style={{ fontSize: '11px', fontFamily: 'DM Sans', color: '#10B981', marginTop: '6px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Sparkles size={12} /> Mulai Trial 14 Hari — Gratis
+          </p>
+        )}
+        {selected && (
+          <p style={{ fontSize: '11px', fontFamily: 'DM Sans', color: '#10B981', marginTop: '6px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Check size={12} /> Dipilih
+          </p>
+        )}
       </div>
     </motion.div>
   );

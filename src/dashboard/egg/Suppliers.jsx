@@ -42,7 +42,7 @@ export default function Suppliers() {
   const filteredSuppliers = useMemo(() => {
     if (!suppliers) return []
     return suppliers.filter(s => 
-      s.supplier_name.toLowerCase().includes(search.toLowerCase())
+      s.name.toLowerCase().includes(search.toLowerCase())
     )
   }, [suppliers, search])
 
@@ -188,11 +188,11 @@ function SupplierCard({ supplier, onEdit }) {
         <div className="flex gap-4 items-center flex-1">
             <Avatar className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
                 <AvatarFallback className="bg-transparent text-[#34D399] font-display font-black text-lg">
-                    {supplier.supplier_name.slice(0, 2).toUpperCase()}
+                    {supplier.name.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
             </Avatar>
             <div className="space-y-1 text-left">
-                <h3 className="font-display font-black text-[#F1F5F9] text-base group-hover:text-emerald-400 transition-colors uppercase tracking-tight">{supplier.supplier_name}</h3>
+                <h3 className="font-display font-black text-[#F1F5F9] text-base group-hover:text-emerald-400 transition-colors uppercase tracking-tight">{supplier.name}</h3>
                 <div className="flex items-center gap-3">
                     <p className="flex items-center gap-1.5 text-[11px] font-bold text-[#4B6478]">
                         <Phone size={10} /> {supplier.phone || 'No Phone'}
@@ -212,7 +212,7 @@ function SupplierCard({ supplier, onEdit }) {
 function SupplierForm({ supplier, onClose, onSave, onDelete }) {
     const [isLoading, setIsLoading] = useState(false)
     const [formData, setFormData] = useState(supplier || {
-        supplier_name: '',
+        name: '',
         phone: '',
         location: '',
         notes: ''
@@ -231,8 +231,8 @@ function SupplierForm({ supplier, onClose, onSave, onDelete }) {
                 <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Nama Supplier *</Label>
                 <Input
                     required
-                    value={formData.supplier_name}
-                    onChange={e => setFormData({...formData, supplier_name: e.target.value})}
+                    value={formData.name}
+                    onChange={e => setFormData({...formData, name: e.target.value})}
                     className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold focus:border-emerald-500/50"
                 />
             </div>

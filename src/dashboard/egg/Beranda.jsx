@@ -17,7 +17,7 @@ export default function EggBeranda() {
   const { data: customers, isLoading: loadingCust } = useEggCustomers()
 
   const stats = useMemo(() => {
-    const totalStok = inventory?.reduce((acc, i) => acc + (i.current_stock || 0), 0) || 0
+    const totalStok = inventory?.reduce((acc, i) => acc + (i.current_stock_butir || 0), 0) || 0
     const totalSales = sales?.length || 0
     const activeCustomers = customers?.length || 0
     const omzet = sales?.reduce((acc, s) => acc + (s.total_amount || 0), 0) || 0
@@ -38,7 +38,7 @@ export default function EggBeranda() {
         </div>
         <div className="flex gap-3">
             <Button 
-                onClick={() => navigate('/broker/egg_broker/pos')}
+                onClick={() => navigate('/egg/pos')}
                 className="bg-[#10B981] hover:bg-emerald-600 h-14 px-8 font-black uppercase tracking-widest text-[11px] rounded-[20px] border-none shadow-[0_8px_24px_rgba(16,185,129,0.2)] gap-3"
             >
                 <Plus size={18} strokeWidth={3} />
@@ -49,7 +49,7 @@ export default function EggBeranda() {
 
       {/* KPI Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPIItem title="Stok Tersedia" value={`${stats.totalStok} kg`} icon={Package} color="text-emerald-400" />
+        <KPIItem title="Stok Tersedia" value={`${stats.totalStok} butir`} icon={Package} color="text-emerald-400" />
         <KPIItem title="Total Transaksi" value={stats.totalSales} icon={ShoppingCart} color="text-blue-400" />
         <KPIItem title="Jumlah Pelanggan" value={stats.activeCustomers} icon={Users} color="text-purple-400" />
         <KPIItem title="Total Omzet" value={formatIDR(stats.omzet)} icon={TrendingUp} color="text-amber-400" />
@@ -64,21 +64,21 @@ export default function EggBeranda() {
             <div className="space-y-4">
                 {loadingInv ? [1,2,3].map(i => <Skeleton key={i} className="h-16 w-full rounded-2xl bg-white/5" />) :
                  inventory?.length === 0 ? <p className="text-xs font-bold text-[#4B6478] italic">Belum ada data inventori</p> :
-                 inventory?.slice(0, 5).map(item => (
-                    <div key={item.id} className="flex justify-between items-center p-4 bg-white/[0.03] rounded-2xl border border-white/5 group hover:border-emerald-500/30 transition-all cursor-pointer" onClick={() => navigate('/broker/egg_broker/inventori')}>
+                  inventory?.slice(0, 5).map(item => (
+                    <div key={item.id} className="flex justify-between items-center p-4 bg-white/[0.03] rounded-2xl border border-white/5 group hover:border-emerald-500/30 transition-all cursor-pointer" onClick={() => navigate('/egg/inventori')}>
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center font-display font-black text-emerald-400 text-sm">{item.name[0]}</div>
-                            <p className="font-black text-white uppercase text-sm">{item.name}</p>
+                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center font-display font-black text-emerald-400 text-sm">{item.product_name?.[0] || '?'}</div>
+                            <p className="font-black text-white uppercase text-sm">{item.product_name}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-lg font-black text-white tabular-nums">{item.current_stock} <span className="text-[10px] text-[#4B6478]">{item.unit || 'kg'}</span></p>
+                            <p className="text-lg font-black text-white tabular-nums">{item.current_stock_butir} <span className="text-[10px] text-[#4B6478]">butir</span></p>
                         </div>
                     </div>
                  ))
                 }
             </div>
             {inventory?.length > 5 && (
-                <Button variant="ghost" className="w-full mt-4 text-[#4B6478] font-black uppercase text-[10px] tracking-widest gap-2" onClick={() => navigate('/broker/egg_broker/inventori')}>
+                <Button variant="ghost" className="w-full mt-4 text-[#4B6478] font-black uppercase text-[10px] tracking-widest gap-2" onClick={() => navigate('/egg/inventori')}>
                     Lihat Semua <ArrowRight size={14} />
                 </Button>
             )}

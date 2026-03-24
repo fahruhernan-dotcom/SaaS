@@ -9,7 +9,7 @@ export function useEggSales() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('egg_sales')
-        .select('*, egg_customers(customer_name), egg_sale_items(*, egg_inventory(name))')
+        .select('*, egg_customers(name), egg_sale_items(*, egg_inventory(product_name))')
         .eq('tenant_id', tenant.id)
         .eq('is_deleted', false)
         .order('created_at', { ascending: false })

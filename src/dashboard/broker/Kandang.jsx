@@ -289,7 +289,13 @@ function FarmSheet({ isOpen, onOpenChange, farm, onUpdate, onDelete }) {
     const { profile } = useAuth()
     const isOwner = profile?.role === 'owner'
     const [mode, setMode] = useState('view')
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
     const queryClient = useQueryClient()
+
+    const handleDelete = () => {
+        if (farm) onDelete(farm.id)
+        setIsDeleteDialogOpen(false)
+    }
 
     // Reset mode to 'view' when opening for an existing farm, 'edit' for new
     React.useEffect(() => {
@@ -363,11 +369,7 @@ function FarmSheet({ isOpen, onOpenChange, farm, onUpdate, onDelete }) {
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => {
-                  if (confirm('Hapus kandang ini? Semua data histori akan hilang.')) {
-                    onDelete(farm.id)
-                  }
-                }}
+                onClick={() => setIsDeleteDialogOpen(true)}
                 className="w-full h-12 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl font-bold uppercase tracking-widest text-[10px]"
               >
                 <Trash2 size={16} className="mr-2" />

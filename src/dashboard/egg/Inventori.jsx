@@ -180,7 +180,7 @@ export default function Inventori() {
 }
 
 function InventoryCard({ item, onEdit }) {
-  const stockColor = item.current_stock < 5 ? 'text-red-400' : 'text-emerald-400'
+  const stockColor = item.current_stock_butir < 5 ? 'text-red-400' : 'text-emerald-400'
   
   return (
     <Card
@@ -189,14 +189,14 @@ function InventoryCard({ item, onEdit }) {
     >
         <div className="flex justify-between items-start relative z-10">
             <div className="space-y-1">
-                <h3 className="font-display font-black text-[#F1F5F9] text-xl uppercase tracking-tight group-hover:text-emerald-400 transition-colors">{item.name}</h3>
-                <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Harga Jual: {formatIDR(item.price_suggested)} / {item.unit || 'kg'}</p>
+                <h3 className="font-display font-black text-[#F1F5F9] text-xl uppercase tracking-tight group-hover:text-emerald-400 transition-colors">{item.product_name}</h3>
+                <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Harga Jual: {formatIDR(item.sell_price_per_pack)} / {item.unit || 'pack'}</p>
             </div>
             <div className="text-right">
                 <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mb-1">Stok Saat Ini</p>
                 <div className="flex items-baseline justify-end gap-1">
-                    <span className={`font-display font-black text-2xl ${stockColor}`}>{item.current_stock}</span>
-                    <span className="text-[10px] font-black text-[#4B6478] uppercase">{item.unit || 'kg'}</span>
+                    <span className={`font-display font-black text-2xl ${stockColor}`}>{item.current_stock_butir}</span>
+                    <span className="text-[10px] font-black text-[#4B6478] uppercase">butir</span>
                 </div>
             </div>
         </div>
@@ -208,7 +208,7 @@ function InventoryCard({ item, onEdit }) {
                 </div>
                 <div>
                     <p className="text-[9px] font-bold text-[#4B6478] uppercase leading-none">HPP Rata-rata</p>
-                    <p className="text-xs font-black text-white mt-0.5">{formatIDR(item.hpp)}</p>
+                    <p className="text-xs font-black text-white mt-0.5">{formatIDR(item.cost_per_pack)}</p>
                 </div>
             </div>
             <ChevronRight size={18} className="text-[#4B6478] group-hover:translate-x-1 transition-transform" />
@@ -225,10 +225,10 @@ function InventoryCard({ item, onEdit }) {
 function InventoryForm({ item, onClose, onSave, onDelete }) {
     const [isLoading, setIsLoading] = useState(false)
     const [formData, setFormData] = useState(item || {
-        name: '',
-        current_stock: 0,
-        hpp: 0,
-        price_suggested: 0,
+        product_name: '',
+        current_stock_butir: 0,
+        cost_per_pack: 0,
+        sell_price_per_pack: 0,
         unit: 'kg',
         notes: ''
     })
@@ -247,8 +247,8 @@ function InventoryForm({ item, onClose, onSave, onDelete }) {
                 <Input
                     required
                     placeholder="Contoh: Grade A / Gajah"
-                    value={formData.name}
-                    onChange={e => setFormData({...formData, name: e.target.value})}
+                    value={formData.product_name}
+                    onChange={e => setFormData({...formData, product_name: e.target.value})}
                     className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold focus:border-emerald-500/50"
                 />
             </div>
@@ -258,8 +258,9 @@ function InventoryForm({ item, onClose, onSave, onDelete }) {
                     <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Stok Awal</Label>
                     <Input
                         type="number"
-                        value={formData.current_stock}
-                        onChange={e => setFormData({...formData, current_stock: parseFloat(e.target.value)})}
+                        placeholder="0"
+                        value={formData.current_stock_butir}
+                        onChange={e => setFormData({...formData, current_stock_butir: parseFloat(e.target.value)})}
                         className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold focus:border-emerald-500/50"
                     />
                 </div>
@@ -278,8 +279,9 @@ function InventoryForm({ item, onClose, onSave, onDelete }) {
                     <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">HPP (Modal)</Label>
                     <Input
                         type="number"
-                        value={formData.hpp}
-                        onChange={e => setFormData({...formData, hpp: parseFloat(e.target.value)})}
+                        placeholder="0"
+                        value={formData.cost_per_pack}
+                        onChange={e => setFormData({...formData, cost_per_pack: parseFloat(e.target.value)})}
                         className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold focus:border-emerald-500/50"
                     />
                 </div>
@@ -287,8 +289,9 @@ function InventoryForm({ item, onClose, onSave, onDelete }) {
                     <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Harga Jual</Label>
                     <Input
                         type="number"
-                        value={formData.price_suggested}
-                        onChange={e => setFormData({...formData, price_suggested: parseFloat(e.target.value)})}
+                        placeholder="0"
+                        value={formData.sell_price_per_pack}
+                        onChange={e => setFormData({...formData, sell_price_per_pack: parseFloat(e.target.value)})}
                         className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold focus:border-emerald-500/50"
                     />
                 </div>

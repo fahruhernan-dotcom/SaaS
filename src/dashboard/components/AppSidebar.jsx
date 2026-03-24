@@ -16,7 +16,9 @@ import {
   LogOut,
   Bell,
   Check,
-  Plus
+  Plus,
+  Lock,
+  Sparkles
 } from 'lucide-react'
 import {
   Sidebar,
@@ -38,25 +40,34 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { useAuth } from '../../lib/hooks/useAuth'
 import { supabase } from '../../lib/supabase'
 import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 export default function AppSidebar() {
-  const { user, profile: authProfile, tenant: authTenant } = useAuth()
+  const { user, profile, profiles, tenant, switchTenant } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const [isAddingBusiness, setIsAddingBusiness] = useState(false)
 
-  const [profiles, setProfiles] = useState([])
   const [activeProfileId, setActiveProfileId] = useState(null)
 
   useEffect(() => {
-    if (authProfile && !activeProfileId) {
-      setActiveProfileId(authProfile.id)
+    if (profile && !activeProfileId) {
+      setActiveProfileId(profile.id)
     }
-  }, [authProfile])
+  }, [profile])
 
   useEffect(() => {
     async function fetchProfiles() {
@@ -67,14 +78,14 @@ export default function AppSidebar() {
         .eq('auth_user_id', user.id)
       
       if (!error && data) {
-        setProfiles(data)
+        // setProfiles(data) // This line is no longer needed as profiles come from useAuth
       }
     }
     fetchProfiles()
   }, [user?.id])
 
-  const profile = profiles.find(p => p.id === activeProfileId) || authProfile
-  const tenant = profile?.tenants || authTenant
+  // const profile = profiles.find(p => p.id === activeProfileId) || authProfile
+  // const tenant = profile?.tenants || authTenant
 
   const tenantInitials = tenant?.business_name?.slice(0, 2).toUpperCase() || 'TO'
   const userInitials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
@@ -86,6 +97,18 @@ export default function AppSidebar() {
   const vertical = tenant?.business_vertical || 'poultry_broker'
   const isPoultry = vertical === 'poultry_broker'
   const isEgg = vertical === 'egg_broker'
+
+  const getVerticalInfo = (v) => {
+    switch (v) {
+      case 'poultry_broker': return { icon: '🐔', label: 'Broker Ayam' }
+      case 'egg_broker': return { icon: '🥚', label: 'Broker Telur' }
+      case 'peternak': return { icon: '🏠', label: 'Peternak' }
+      case 'rpa': return { icon: '🏭', label: 'RPA' }
+      default: return { icon: '🏢', label: 'Bisnis' }
+    }
+  }
+
+  const activeVerticalInfo = getVerticalInfo(vertical)
 
   const navMain = [
     {
@@ -179,20 +202,15 @@ export default function AppSidebar() {
                   size="lg"
                   className="bg-secondary border border-border rounded-xl group-data-[collapsible=icon]:border-none group-data-[collapsible=icon]:bg-transparent hover:bg-white/[0.03] transition-colors"
                 >
-                  <div className="w-7 h-7 rounded-md bg-emerald-500/15 flex items-center justify-center text-[11px] font-display font-extrabold text-emerald-400 flex-shrink-0">
-                    {tenantInitials}
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-base flex-shrink-0 border border-emerald-500/20">
+                    {activeVerticalInfo.icon}
                   </div>
-                  <div className="flex-1 overflow-hidden text-left ml-2">
-                    <p className="text-[13px] font-semibold truncate leading-tight">
+                  <div className="flex-1 overflow-hidden text-left ml-2.5">
+                    <p className="text-[13px] font-bold truncate leading-tight text-foreground">
                       {tenant?.business_name || 'My Business'}
                     </p>
-                    <p style={{
-                      fontSize: '11px',
-                      color: 'hsl(var(--muted-foreground))',
-                      margin: 0,
-                      letterSpacing: '0.3px'
-                    }}>
-                      {isEgg ? 'Broker Telur' : 'Broker Dashboard'}
+                    <p className="text-[10px] text-muted-foreground mt-0.5 font-medium tracking-wide">
+                      {activeVerticalInfo.label}
                     </p>
                   </div>
                   <ChevronsUpDown size={14} className="text-muted-foreground ml-auto" />
@@ -208,41 +226,114 @@ export default function AppSidebar() {
                     Bisnis Anda
                   </p>
                 </div>
-                {profiles.map((p) => {
-                  const isActive = p.id === activeProfileId
-                  return (
-                    <DropdownMenuItem
-                      key={p.id}
-                      onClick={() => {
-                        setActiveProfileId(p.id)
-                        queryClient.invalidateQueries()
-                      }}
-                      className={`gap-3 rounded-lg p-2 cursor-pointer transition-colors focus:bg-accent focus:text-foreground ${
-                        isActive ? 'text-emerald-400 bg-emerald-500/10' : 'hover:bg-accent text-foreground'
-                      }`}
-                    >
-                      <div className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
-                        isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-secondary text-muted-foreground'
-                      }`}>
-                        {p.tenants?.business_name?.slice(0, 2).toUpperCase() || 'TO'}
-                      </div>
-                      <span className="text-[13px] font-medium flex-1 truncate">
-                        {p.tenants?.business_name || 'My Business'}
-                      </span>
-                      {isActive && <Check size={14} className="text-emerald-400 flex-shrink-0" />}
-                    </DropdownMenuItem>
-                  )
-                })}
+                <ScrollArea className={`${profiles.length > 3 ? 'h-64' : 'h-auto'} pr-2`}>
+                  {profiles.map((p) => {
+                    const isActive = p.tenant_id === tenant?.id
+                    return (
+                      <DropdownMenuItem
+                        key={p.id}
+                        onClick={() => {
+                          switchTenant(p.tenant_id)
+                          queryClient.invalidateQueries()
+                          // Force redirect to beranda of the new vertical if needed
+                          navigate(`/broker/${p.tenants.business_vertical}/beranda`)
+                        }}
+                        className={`gap-3 rounded-lg p-2 cursor-pointer transition-colors focus:bg-accent focus:text-foreground mb-1 ${
+                          isActive ? 'text-emerald-400 bg-emerald-500/10' : 'hover:bg-accent text-foreground'
+                        }`}
+                      >
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0 transition-colors ${
+                          isActive ? 'bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]' : 'bg-white/5'
+                        }`}>
+                          {getVerticalInfo(p.tenants?.business_vertical).icon}
+                        </div>
+                        <div className="flex-1 overflow-hidden">
+                          <p className={`text-[13px] truncate leading-tight ${isActive ? 'font-bold' : 'font-medium'}`}>
+                            {p.tenants?.business_name || 'My Business'}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            {getVerticalInfo(p.tenants?.business_vertical).label}
+                          </p>
+                        </div>
+                        {isActive && <Check size={14} className="text-emerald-400 flex-shrink-0" />}
+                      </DropdownMenuItem>
+                    )
+                  })}
+                </ScrollArea>
+
                 <DropdownMenuSeparator className="my-1.5 bg-border" />
-                <DropdownMenuItem
-                  onClick={() => toast.info('Fitur segera hadir')}
-                  className="gap-3 rounded-lg p-2 cursor-pointer text-muted-foreground hover:bg-accent hover:text-foreground transition-colors focus:bg-accent focus:text-foreground"
-                >
-                  <div className="w-6 h-6 rounded flex items-center justify-center bg-white/5 flex-shrink-0">
-                    <Plus size={14} />
-                  </div>
-                  <span className="text-[13px] font-medium">Tambah Bisnis Baru</span>
-                </DropdownMenuItem>
+                
+                <Sheet open={isAddingBusiness} onOpenChange={setIsAddingBusiness}>
+                  <SheetTrigger asChild>
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault()
+                        setIsAddingBusiness(true)
+                      }}
+                      className="gap-3 rounded-lg p-2 cursor-pointer text-muted-foreground hover:bg-accent hover:text-foreground transition-colors focus:bg-accent focus:text-foreground"
+                    >
+                      <div className="w-6 h-6 rounded flex items-center justify-center bg-white/5 flex-shrink-0">
+                        <Plus size={14} />
+                      </div>
+                      <span className="text-[13px] font-medium">Tambah Bisnis Baru</span>
+                    </DropdownMenuItem>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="bg-[#090E14] border-border text-foreground w-[400px]">
+                    <SheetHeader>
+                      <SheetTitle className="font-display font-bold text-xl text-foreground">Multi-Tenant</SheetTitle>
+                      <SheetDescription className="text-muted-foreground">
+                        Kelola banyak bisnis dalam satu akun TernakOS.
+                      </SheetDescription>
+                    </SheetHeader>
+                    
+                    <div className="py-8">
+                      <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-6 mb-6">
+                        <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4 text-emerald-400">
+                          <Building2 size={24} />
+                        </div>
+                        <h3 className="text-lg font-bold mb-2">Setup Bisnis Baru</h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          Anda akan memulai proses onboarding untuk binis baru. Setiap bisnis memiliki data, tim, dan penagihan yang terpisah sepenuhnya.
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div className="flex items-start gap-4">
+                          <Check size={18} className="text-emerald-400 mt-1" />
+                          <div>
+                            <p className="text-sm font-semibold">Data Terisolasi</p>
+                            <p className="text-xs text-muted-foreground">Data stok, transaksi, dan pelanggan tidak akan bercampur.</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-4">
+                          <Check size={18} className="text-emerald-400 mt-1" />
+                          <div>
+                            <p className="text-sm font-semibold">Akses Terpisah</p>
+                            <p className="text-xs text-muted-foreground">Anda bisa mengundang tim yang berbeda untuk tiap bisnis.</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-3">
+                      <button 
+                        onClick={() => {
+                          setIsAddingBusiness(false)
+                          navigate('/onboarding?mode=new_business')
+                        }}
+                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
+                      >
+                        Mulai Setup Bisnis Baru
+                      </button>
+                      <button 
+                        onClick={() => setIsAddingBusiness(false)}
+                        className="w-full bg-white/5 hover:bg-white/10 text-muted-foreground font-semibold py-4 rounded-2xl transition-all"
+                      >
+                        Batal
+                      </button>
+                    </div>
+                  </SheetContent>
+                </Sheet>
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
@@ -259,34 +350,51 @@ export default function AppSidebar() {
               <SidebarMenu>
                 {group.items.map((item) => {
                   const isActive = location.pathname === item.url
+                  const isLocked = item.locked || !isTrialActive
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
-                        asChild
+                        asChild={!isLocked}
                         isActive={isActive}
-                        tooltip={item.title}
+                        tooltip={isLocked ? `${item.title} (Segera Hadir)` : item.title}
                         className={`rounded-xl mb-0.5 transition-all duration-200 ${
-                          isActive 
-                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
-                            : 'hover:bg-white/[0.03] text-foreground'
+                          isLocked
+                            ? 'opacity-40 cursor-not-allowed'
+                            : isActive 
+                              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                              : 'hover:bg-white/[0.03] text-foreground'
                         }`}
-                        style={isActive ? { border: '1px solid rgba(16,185,129,0.20)' } : {}}
+                        style={isActive && !isLocked ? { border: '1px solid rgba(16,185,129,0.20)' } : {}}
                       >
-                        <NavLink to={item.url} className="flex items-center gap-3 w-full">
-                          <item.icon
-                            size={18}
-                            className={isActive ? 'text-emerald-400' : 'text-muted-foreground'}
-                            strokeWidth={isActive ? 2.5 : 2}
-                          />
-                          <span className={`font-body text-[14px] flex-1  ${isActive ? 'font-semibold text-emerald-400' : 'font-medium'}`}>
-                            {item.title}
-                          </span>
-                          {item.badge && (
-                            <span className="text-[9px] font-black bg-amber-500/15 text-amber-500 border border-amber-500/25 rounded-[4px] px-1.5 py-0.5  animate-pulse">
-                              {item.badge}
+                        {isLocked ? (
+                          <div className="flex items-center gap-3 w-full px-2 py-1.5">
+                            <item.icon
+                              size={18}
+                              className="text-muted-foreground"
+                              strokeWidth={2}
+                            />
+                            <span className="font-body text-[14px] flex-1 font-medium text-muted-foreground">
+                              {item.title}
                             </span>
-                          )}
-                        </NavLink>
+                            <Lock size={12} className="text-muted-foreground" />
+                          </div>
+                        ) : (
+                          <NavLink to={item.url} className="flex items-center gap-3 w-full">
+                            <item.icon
+                              size={18}
+                              className={isActive ? 'text-emerald-400' : 'text-muted-foreground'}
+                              strokeWidth={isActive ? 2.5 : 2}
+                            />
+                            <span className={`font-body text-[14px] flex-1  ${isActive ? 'font-semibold text-emerald-400' : 'font-medium'}`}>
+                              {item.title}
+                            </span>
+                            {item.badge && (
+                              <span className="text-[9px] font-black bg-amber-500/15 text-amber-500 border border-amber-500/25 rounded-[4px] px-1.5 py-0.5  animate-pulse">
+                                {item.badge}
+                              </span>
+                            )}
+                          </NavLink>
+                        )}
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   )
@@ -372,6 +480,54 @@ export default function AppSidebar() {
                 transition: 'width 0.3s ease'
               }} />
             </div>
+          )}
+
+          {/* Mulai Trial button when no trial active */}
+          {!isTrialActive && (
+            <button
+              onClick={async () => {
+                try {
+                  const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+                  const { error, count } = await supabase
+                    .from('tenants')
+                    .update({ trial_ends_at: trialEnd })
+                    .eq('id', tenant?.id)
+                  
+                  if (error) throw error
+                  
+                  // Supabase RLS may silently block — detect via refetch
+                  toast.success('🎉 Trial 14 hari dimulai! Memuat ulang...')
+                  
+                  // Refetch auth data then reload
+                  setTimeout(() => window.location.reload(), 500)
+                } catch (err) {
+                  console.error('Trial start error:', err)
+                  toast.error('Gagal memulai trial: ' + (err.message || 'RLS policy mungkin memblokir update'))
+                }
+              }}
+              style={{
+                width: '100%',
+                marginTop: '10px',
+                padding: '8px 12px',
+                background: '#10B981',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '12px',
+                fontWeight: 700,
+                fontFamily: 'Sora',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 12px rgba(16,185,129,0.25)',
+                transition: 'all 0.2s'
+              }}
+            >
+              <Sparkles size={14} />
+              Mulai Trial 14 Hari
+            </button>
           )}
         </div>
 

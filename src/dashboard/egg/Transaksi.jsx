@@ -100,7 +100,7 @@ function SaleCard({ sale, onClick }) {
           <FileText size={20} />
         </div>
         <div className="space-y-0.5">
-          <h4 className="font-black text-white text-sm uppercase leading-none">{sale.egg_customers?.customer_name || 'Pembeli Umum'}</h4>
+          <h4 className="font-black text-white text-sm uppercase leading-none">{sale.egg_customers?.name || 'Pembeli Umum'}</h4>
           <p className="text-[10px] font-bold text-[#4B6478] uppercase racking-widest">{sale.invoice_number}</p>
         </div>
       </div>
@@ -140,7 +140,7 @@ function SaleDetailView({ sale }) {
         
         <div className="pt-4 border-t border-white/5">
           <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Pembeli</p>
-          <p className="font-bold text-white mt-1 uppercase">{sale.egg_customers?.customer_name}</p>
+          <p className="font-bold text-white mt-1 uppercase">{sale.egg_customers?.name}</p>
         </div>
       </div>
 
@@ -150,10 +150,10 @@ function SaleDetailView({ sale }) {
           {sale.egg_sale_items?.map((item) => (
             <div key={item.id} className="flex justify-between items-center py-2 border-b border-white/5">
               <div>
-                <p className="font-black text-sm text-white uppercase">{item.egg_inventory?.name}</p>
-                <p className="text-[10px] font-bold text-[#4B6478] mt-0.5">{item.quantity} kg x {formatIDR(item.price_unit)}</p>
+                <p className="font-black text-sm text-white uppercase">{item.egg_inventory?.product_name}</p>
+                <p className="text-[10px] font-bold text-[#4B6478] mt-0.5">{item.qty_pack} pack x {formatIDR(item.price_per_pack)}</p>
               </div>
-              <p className="font-black text-white text-sm">{formatIDR(item.total_price)}</p>
+              <p className="font-black text-white text-sm">{formatIDR(item.subtotal)}</p>
             </div>
           ))}
         </div>

@@ -15,6 +15,7 @@ import {
   Calendar as CalendarIcon,
   ChevronLeft,
   Truck,
+  Package,
   ArrowRight,
   Eye,
   Wallet

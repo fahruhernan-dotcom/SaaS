@@ -12,7 +12,7 @@ export function useEggSuppliers() {
         .select('*')
         .eq('tenant_id', tenant.id)
         .eq('is_deleted', false)
-        .order('supplier_name', { ascending: true })
+        .order('name', { ascending: true })
       
       if (error) throw error
       return data

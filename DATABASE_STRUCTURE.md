@@ -1,6 +1,6 @@
 # TernakOS — Database Structure
 > Generated from Supabase schema. Gunakan sebagai referensi Antigravity.
-> Last updated: 2026-03-20 (added trigger: auto_resolve_loss_reports)
+> Last updated: 2026-03-24 (Multi-Tenant & Egg Broker Vertical)
 
 ---
 
@@ -220,13 +220,13 @@ payment_settings ← GLOBAL
 ---
 
 ### `profiles`
-> Satu user bisa punya satu profile per tenant
+> Satu user (`auth.users`) bisa punya banyak profile (satu per tenant) untuk mendukung multi-tenancy.
 
 | Kolom | Tipe | Notes |
 |-------|------|-------|
 | `id` | uuid PK | |
 | `tenant_id` | uuid FK → tenants | NOT NULL |
-| `auth_user_id` | uuid FK → auth.users | NOT NULL, UNIQUE |
+| `auth_user_id` | uuid FK → auth.users | NOT NULL (Bisa duplikat antar tenant) |
 | `full_name` | text | nullable |
 | `role` | text | `'owner'` `'staff'` `'superadmin'` `'view_only'` `'sopir'` |
 | `user_type` | text | `'broker'` `'peternak'` `'rpa'` `'superadmin'` |

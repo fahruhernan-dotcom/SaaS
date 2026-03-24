@@ -1,6 +1,6 @@
 # TernakOS — Developer Context
 
-> Last updated: 2026-03-24 (Dashboard redesign & UI refinement) | Use this as reference for all future implementations.
+> Last updated: 2026-03-24 (Multi-Tenant & Egg Broker Vertical) | Use this as reference for all future implementations.
 
 ---
 
@@ -108,7 +108,8 @@
 - `user_type` (`'broker'` | `'peternak'` | `'rpa'` | `'superadmin'`)
 - `onboarded` (boolean), `business_model_selected` (boolean)
 - `is_active` (boolean) — ⚠️ Note: Project is moving to `is_deleted` for soft delete.
-- Queried via: `supabase.from('profiles').select('*, tenants(*)')` in `useAuth`
+- **Multi-Tenant**: Satu `auth_user_id` bisa memiliki banyak `profiles` (satu profile per `tenant_id`).
+- Queried via: `supabase.from('profiles').select('*, tenants(*)')` in `useAuth` which returns an array of all user businesses.
 
 ### Role Based Access Control (RBAC)
 
@@ -132,7 +133,8 @@ const canWrite = ['owner', 'staff'].includes(profile?.role)
   - ✓ Lihat & update status pengiriman yang di-assign.
 
 **Route setelah login:**
-- owner, staff, view_only → `/broker/beranda`
+- owner, staff, view_only (poultry_broker) → `/broker/beranda`
+- owner, staff, view_only (egg_broker) → `/egg/beranda`
 - sopir → `/broker/sopir`
 
 **Guard component**: `RoleGuard` di `App.jsx`
@@ -349,6 +351,16 @@ const canWrite = ['owner', 'staff'].includes(profile?.role)
 | `/rpa-buyer/hutang` | `ComingSoon("Hutang Saya")` |
 | `/rpa-buyer/akun` | `Akun` |
 
+#### Egg Broker Routes (`/egg/*`) — Uses `BrokerLayout`
+| Path | Component |
+|------|-----------|
+| `/egg/beranda` | `EggBeranda` |
+| `/egg/pos` | `EggPOS` |
+| `/egg/inventori` | `EggInventori` |
+| `/egg/suppliers` | `EggSuppliers` |
+| `/egg/customers` | `EggCustomers` |
+| `/egg/transaksi` | `EggTransaksi` |
+
 #### Shared Routes
 | Path | Component |
 |------|-----------|
@@ -372,20 +384,18 @@ const canWrite = ['owner', 'staff'].includes(profile?.role)
 - `SidebarInset` contains `DesktopTopBar` + `<main>` (24px/32px padding, max-w-7xl)
 
 ### `DashboardLayout` (in `App.jsx` — for Peternak/RPA)
-- Same responsive pattern: desktop → `DesktopSidebarLayout`, mobile → `BottomNav`
-
----
-
-## 8. Navigation Components
-
-### `AppSidebar` (Desktop — `src/dashboard/components/AppSidebar.jsx`)
+- Same  ### `AppSidebar` (Desktop — `src/dashboard/components/AppSidebar.jsx`)
 - Logo: `<img src="/logo.png" />` + "TernakOS" + "Broker Dashboard"
-- Tenant selector: shows `tenant.business_name` initials
+- **Tenant Switcher**: 
+  - Mendukung multi-bisnis dengan `switchTenant`.
+  - Icon dinamis sesuai vertikal (🐔 Ayam, 🥚 Telur, 🏠 Peternak, 🏭 RPA).
+  - Tampilan: Nama Bisnis + Label Vertikal di bawahnya.
 - **Nav Groups**:
-  - UTAMA: Beranda, Transaksi, RPA & Piutang, Kandang
-  - OPERASIONAL: Pengiriman, Cash Flow, Armada
-  - ANALISIS: Harga Pasar, Simulator
+  - UTAMA: Beranda, Transaksi/POS, Kandang/Inventori, Tim.
+  - Link dinamis sesuai vertikal aktif (`isPoultry` vs `isEgg`).
 - Active state: emerald-500/10 bg, emerald-400 text, 1px emerald border
+- Footer: Plan info (shows plan name, trial countdown + progress bar), User dropdown (Akun, Logout)
+ emerald border
 - Footer: Plan info (shows plan name, trial countdown + progress bar), User dropdown (Akun, Logout)
 
 ### `BottomNav` (Mobile — `src/dashboard/components/BottomNav.jsx`)
@@ -482,6 +492,14 @@ src/
 │   │
 │   ├── rpa/
 │   │   └── Beranda.jsx             ← RPA buyer dashboard
+│   │
+│   ├── egg/                        ← NEW EGG BROKER PAGES
+│   │   ├── Beranda.jsx             ← Egg dashboard
+│   │   ├── Inventori.jsx           ← Stock & Price management
+│   │   ├── POS.jsx                 ← Point of Sale
+│   │   ├── Suppliers.jsx           ← Egg supplier CRM
+│   │   ├── Customers.jsx           ← Egg customer CRM
+│   │   └── Transaksi.jsx           ← Egg transaction history
 │   │
 │   ├── components/
 │   │   ├── AppSidebar.jsx          ← Desktop sidebar (nav groups, plan widget, user menu)
@@ -748,9 +766,11 @@ const { user, profile, tenant, loading, refetchProfile } = useAuth()
 ```
 
 - `user` — Supabase auth user
-- `profile` — from `profiles` table joined with `tenants(*)`
-- `tenant` — shorthand `profile?.tenants`
+- `profile` — Profile aktif (dari `profiles` table joined dengan `tenants(*)`)
+- `profiles` — Daftar seluruh profile bisnis milik user tersebut
+- `tenant` — Shorthand `profile?.tenants`
 - `loading` — true while fetching session/profile
+- `switchTenant(tenantId)` — Mengganti konteks bisnis aktif & persist ke localStorage
 - `refetchProfile()` — manually re-fetch profile (used after BusinessModelOverlay)
 
 ---

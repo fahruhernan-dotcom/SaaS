@@ -35,7 +35,7 @@ export default function Customers() {
   const filteredCustomers = useMemo(() => {
     if (!customers) return []
     return customers.filter(c => 
-      c.customer_name.toLowerCase().includes(search.toLowerCase())
+      c.name.toLowerCase().includes(search.toLowerCase())
     )
   }, [customers, search])
 
@@ -184,11 +184,11 @@ function CustomerCard({ customer, onEdit }) {
         <div className="flex gap-4 items-center flex-1">
             <Avatar className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
                 <AvatarFallback className="bg-transparent text-[#34D399] font-display font-black text-lg">
-                    {customer.customer_name.slice(0, 2).toUpperCase()}
+                    {customer.name.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
             </Avatar>
             <div className="space-y-1 text-left">
-                <h3 className="font-display font-black text-[#F1F5F9] text-base group-hover:text-emerald-400 transition-colors uppercase tracking-tight">{customer.customer_name}</h3>
+                <h3 className="font-display font-black text-[#F1F5F9] text-base group-hover:text-emerald-400 transition-colors uppercase tracking-tight">{customer.name}</h3>
                 <div className="flex items-center gap-3 text-[11px] font-bold text-[#4B6478]">
                     <p className="flex items-center gap-1.5"><Phone size={10} /> {customer.phone || 'No Phone'}</p>
                     <span className="text-white/10">•</span>
@@ -208,7 +208,7 @@ function CustomerCard({ customer, onEdit }) {
 function CustomerForm({ customer, onClose, onSave, onDelete }) {
     const [isLoading, setIsLoading] = useState(false)
     const [formData, setFormData] = useState(customer || {
-        customer_name: '',
+        name: '',
         phone: '',
         location: ''
     })
@@ -226,8 +226,8 @@ function CustomerForm({ customer, onClose, onSave, onDelete }) {
                 <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Nama Pelanggan / Pembeli *</Label>
                 <Input
                     required
-                    value={formData.customer_name}
-                    onChange={e => setFormData({...formData, customer_name: e.target.value})}
+                    value={formData.name}
+                    onChange={e => setFormData({...formData, name: e.target.value})}
                     className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold focus:border-emerald-500/50"
                 />
             </div>

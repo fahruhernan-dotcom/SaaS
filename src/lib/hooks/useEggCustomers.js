@@ -12,7 +12,7 @@ export function useEggCustomers() {
         .select('*')
         .eq('tenant_id', tenant.id)
         .eq('is_deleted', false)
-        .order('customer_name', { ascending: true })
+        .order('name', { ascending: true })
       
       if (error) throw error
       return data
