@@ -23,7 +23,7 @@ const LandingPage = () => {
       <Features activeRole={activeRole} />
       <HowItWorks activeRole={activeRole} />
       <MarketPrice activeRole={activeRole} />
-      <Pricing />
+      <Pricing activeRole={activeRole} setActiveRole={setActiveRole} />
       <Testimonials />
       <FinalCTA />
       <Footer />

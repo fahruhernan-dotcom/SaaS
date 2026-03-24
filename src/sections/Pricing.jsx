@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import AnimatedContent from '../components/reactbits/AnimatedContent';
 
-const Pricing = () => {
+const Pricing = ({ activeRole, setActiveRole }) => {
   const [isAnnual, setIsAnnual] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
   const switchRef = useRef(null);
@@ -32,19 +32,33 @@ const Pricing = () => {
     }
   };
 
+  const getPrices = (role) => {
+    switch (role) {
+      case 'peternak':
+        return { pro: 499000, biz: 999000, proAnnual: 399000, bizAnnual: 799000 };
+      case 'rpa':
+        return { pro: 699000, biz: 1499000, proAnnual: 559000, bizAnnual: 1199000 };
+      case 'broker':
+      default:
+        return { pro: 999000, biz: 1499000, proAnnual: 799000, bizAnnual: 1199000 };
+    }
+  };
+
+  const currentPrices = getPrices(activeRole);
+
   const plans = [
     {
       name: 'PRO',
-      subtitle: 'Broker',
-      monthlyPrice: 999000,
-      annualPrice: 799000,
-      description: 'Solusi lengkap untuk manajemen operasional broker harian.',
+      subtitle: activeRole === 'broker' ? 'Broker' : activeRole === 'peternak' ? 'Peternak' : 'RPA',
+      monthlyPrice: currentPrices.pro,
+      annualPrice: currentPrices.proAnnual,
+      description: 'Solusi lengkap untuk manajemen operasional harian.',
       features: [
-        'Manajemen transaksi & kandang',
-        'Tracking pengiriman & loss report',
-        'RPA & piutang management',
+        activeRole === 'peternak' ? 'Manajemen kandang & populasi' : 'Manajemen transaksi & operasional',
+        activeRole === 'peternak' ? 'Tracking pakan & mortalitas' : 'Tracking pengiriman & loss report',
+        activeRole === 'peternak' ? 'Prediksi panen & bobot' : 'RPA & piutang management',
         'Cash flow & laporan keuangan',
-        'Armada & tim (maks 3 anggota)',
+        activeRole === 'broker' ? 'Armada & tim (maks 3 anggota)' : 'Manajemen tim & akses',
         'Harga pasar realtime'
       ],
       buttonText: 'Mulai 14 Hari Gratis',
@@ -53,16 +67,16 @@ const Pricing = () => {
     },
     {
       name: 'BUSINESS',
-      subtitle: 'Broker',
-      monthlyPrice: 1499000,
-      annualPrice: 1199000,
+      subtitle: activeRole === 'broker' ? 'Broker' : activeRole === 'peternak' ? 'Peternak' : 'RPA',
+      monthlyPrice: currentPrices.biz,
+      annualPrice: currentPrices.bizAnnual,
       description: 'Optimalkan profit dengan kecerdasan buatan dan analitik mendalam.',
       features: [
         'Semua fitur PRO',
         'TernakBot AI (Grok 4.1 Fast)',
         'Analisis profit otomatis',
         'Deteksi anomali transaksi',
-        'Prediksi panen AI',
+        activeRole === 'peternak' ? 'AI Health Monitor (Beta)' : 'Prediksi panen AI',
         'Laporan PDF/Excel otomatis',
         'Tim unlimited'
       ],
@@ -84,7 +98,7 @@ const Pricing = () => {
         'Kontrak fleksibel'
       ],
       buttonText: 'Hubungi Kami',
-      href: 'https://wa.me/628123456789', // Example WA link
+      href: 'https://wa.me/628123456789',
       isPopular: false
     }
   ];
@@ -121,6 +135,25 @@ const Pricing = () => {
             <p className="text-[#94A3B8] max-w-xl mx-auto mb-12 font-medium">
               Mulai dengan 14 hari gratis tanpa kartu kredit. Upgrade atau downgrade kapan saja sesuai kebutuhan bisnis Anda.
             </p>
+          </AnimatedContent>
+
+          {/* Role Toggle Tabs */}
+          <AnimatedContent direction="vertical" distance={20} delay={0.25} className="flex justify-center mb-10">
+            <div className="inline-flex bg-[#111C24] border border-white/10 p-1.5 rounded-full relative z-20 shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
+              {['broker', 'peternak', 'rpa'].map((role) => (
+                <button
+                  key={role}
+                  onClick={() => setActiveRole(role)}
+                  className={`px-6 md:px-8 py-2.5 rounded-full font-display text-[10px] font-black tracking-[0.2em] uppercase transition-all duration-300 ${
+                    activeRole === role
+                      ? 'bg-emerald-500/10 text-emerald-400 shadow-[0_2px_12px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20'
+                      : 'text-[#4B6478] hover:text-white hover:bg-white/[0.03]'
+                  }`}
+                >
+                  {role}
+                </button>
+              ))}
+            </div>
           </AnimatedContent>
 
           {/* Toggle Switch */}

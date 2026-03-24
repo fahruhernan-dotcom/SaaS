@@ -83,14 +83,29 @@ export default function AppSidebar() {
   const isStaff = profile?.role === 'staff'
   const isViewOnly = profile?.role === 'view_only'
 
+  const vertical = tenant?.business_vertical || 'poultry_broker'
+  const isPoultry = vertical === 'poultry_broker'
+  const isEgg = vertical === 'egg_broker'
+
   const navMain = [
     {
       label: 'UTAMA',
       items: [
-        { title: 'Beranda',    url: '/broker/beranda',   icon: Home },
-        { title: 'Transaksi',  url: '/broker/transaksi', icon: ArrowLeftRight },
-        { title: 'RPA & Piutang', url: '/broker/rpa',   icon: Building2, roles: ['owner', 'staff'] },
-        { title: 'Kandang',    url: '/broker/kandang',   icon: Warehouse, roles: ['owner', 'staff'] },
+        { title: 'Beranda',    url: `/broker/${vertical}/beranda`,   icon: Home },
+        // Poultry specific
+        ...(isPoultry ? [
+          { title: 'Transaksi',  url: '/broker/transaksi', icon: ArrowLeftRight },
+          { title: 'RPA & Piutang', url: '/broker/rpa',   icon: Building2, roles: ['owner', 'staff'] },
+          { title: 'Kandang',    url: '/broker/kandang',   icon: Warehouse, roles: ['owner', 'staff'] },
+        ] : []),
+        // Egg specific
+        ...(isEgg ? [
+          { title: 'POS / Jual', url: '/broker/egg_broker/pos', icon: ArrowLeftRight },
+          { title: 'Inventori & HPP', url: '/broker/egg_broker/inventori', icon: Warehouse, roles: ['owner', 'staff'] },
+          { title: 'Supplier Telur', url: '/broker/egg_broker/suppliers', icon: Building2, roles: ['owner', 'staff'] },
+          { title: 'Pelanggan Telur', url: '/broker/egg_broker/customers', icon: User, roles: ['owner', 'staff'] },
+          { title: 'Riwayat Transaksi', url: '/broker/egg_broker/transaksi', icon: BarChart2, roles: ['owner', 'staff'] },
+        ] : []),
         { title: 'Tim & Akses', url: '/broker/tim',      icon: Users, roles: ['owner'] },
       ]
     },
@@ -102,13 +117,15 @@ export default function AppSidebar() {
         { title: 'Armada',     url: '/broker/armada',    icon: Car, roles: ['owner'] },
       ]
     },
-    {
-      label: 'ANALISIS',
-      items: [
-        { title: 'Harga Pasar', url: '/harga-pasar',    icon: BarChart2 },
-        { title: 'Simulator',   url: '/broker/simulator', icon: Calculator, roles: ['owner'] },
-      ]
-    }
+    ...(isPoultry ? [
+      {
+        label: 'ANALISIS',
+        items: [
+          { title: 'Harga Pasar', url: '/harga-pasar',    icon: BarChart2 },
+          { title: 'Simulator',   url: '/broker/simulator', icon: Calculator, roles: ['owner'] },
+        ]
+      }
+    ] : [])
   ]
 
   const filteredNavMain = navMain.map(group => ({
@@ -141,14 +158,14 @@ export default function AppSidebar() {
     <Sidebar collapsible="offcanvas" style={{ background: '#090E14' }}>
       <SidebarHeader style={{padding: '16px 16px 8px'}}>
         {/* Logo */}
-        <div className="flex items-center gap-2.5 px-1 py-2 cursor-pointer" onClick={() => navigate('/broker/beranda')}>
+        <div className="flex items-center gap-2.5 px-1 py-2 cursor-pointer" onClick={() => navigate(`/broker/${vertical}/beranda`)}>
           <img src="/logo.png" alt="TernakOS Icon" className="w-8 h-8 rounded-lg object-contain flex-shrink-0" />
           <div className="">
             <p className="font-display font-extrabold text-[15px] text-foreground leading-none">
               TernakOS
             </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              Broker Dashboard
+              {isEgg ? 'Broker Telur' : 'Broker Dashboard'}
             </p>
           </div>
         </div>
@@ -175,7 +192,7 @@ export default function AppSidebar() {
                       margin: 0,
                       letterSpacing: '0.3px'
                     }}>
-                      Broker Dashboard
+                      {isEgg ? 'Broker Telur' : 'Broker Dashboard'}
                     </p>
                   </div>
                   <ChevronsUpDown size={14} className="text-muted-foreground ml-auto" />

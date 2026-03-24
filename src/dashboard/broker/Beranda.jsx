@@ -90,17 +90,19 @@ export default function BrokerBeranda() {
       // Fetch 60 days of sales to compare periods (Insight & KPI Trends)
       const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
       
-      const [salesRes, harvestsRes, deliveriesRes, paymentsRes] = await Promise.all([
+      const [salesRes, harvestsRes, deliveriesRes, paymentsRes, unpaidSalesRes] = await Promise.all([
         supabase.from('sales').select('*, purchases(*), rpa_clients(rpa_name)').eq('tenant_id', tenant.id).eq('is_deleted', false).gte('transaction_date', sixtyDaysAgo.split('T')[0]),
         supabase.from('farms').select('*').eq('tenant_id', tenant.id).eq('is_deleted', false).not('harvest_date', 'is', null),
         supabase.from('deliveries').select('*, sales(*)').eq('tenant_id', tenant.id).eq('is_deleted', false).neq('status', 'completed'),
-        supabase.from('payments').select('*').eq('tenant_id', tenant.id)
+        supabase.from('payments').select('*').eq('tenant_id', tenant.id),
+        supabase.from('sales').select('*, rpa_clients(rpa_name)').eq('tenant_id', tenant.id).eq('is_deleted', false).neq('payment_status', 'lunas')
       ])
 
       const sales = salesRes.data || []
       const harvests = harvestsRes.data || []
       const deliveries = deliveriesRes.data || []
       const payments = paymentsRes.data || []
+      const unpaidSales = unpaidSalesRes.data || []
 
       // 1. SMART INSIGHT (W0 vs W1 profit)
       const w0End = new Date()
@@ -145,7 +147,6 @@ export default function BrokerBeranda() {
       })
 
       // KPI 1: TOTAL PIUTANG (Sum remaining amount where not lunas)
-      const unpaidSales = sales.filter(s => s.payment_status !== 'lunas')
       const totalPiutang = unpaidSales.reduce((sum, s) => sum + calcRemainingAmount(s), 0)
       
       const m0Piutang = m0Sales.filter(s => s.payment_status !== 'lunas').reduce((sum, s) => sum + calcRemainingAmount(s), 0)
@@ -378,7 +379,10 @@ function DesktopDashboard({ data, profile, navigate, setWizardOpen, handleTandai
             
             <div className="h-[280px] w-full relative z-10">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartPeriod === 'weekly' ? data?.chart.weekly : data?.chart.monthly}>
+                <AreaChart 
+                  data={chartPeriod === 'weekly' ? data?.chart.weekly : data?.chart.monthly}
+                  margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                >
                   <defs>
                     <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
@@ -392,6 +396,8 @@ function DesktopDashboard({ data, profile, navigate, setWizardOpen, handleTandai
                     tickLine={false}
                     tick={{ fill: '#4B6478', fontSize: 10, fontWeight: 800 }}
                     dy={10}
+                    interval={0}
+                    padding={{ left: 20, right: 20 }}
                   />
                   <RechartsTooltip 
                     content={<CustomChartTooltip />} 

@@ -26,6 +26,15 @@ import Armada from './dashboard/broker/Armada';
 import Tim from './dashboard/broker/Tim';
 import SopirDashboard from './dashboard/broker/SopirDashboard';
 import Invite from './pages/Invite';
+
+// Egg Broker Vertical
+import EggBeranda from './dashboard/egg/Beranda';
+import EggInventori from './dashboard/egg/Inventori';
+import EggPOS from './dashboard/egg/POS';
+import EggTransaksi from './dashboard/egg/Transaksi';
+import EggSuppliers from './dashboard/egg/Suppliers';
+import EggCustomers from './dashboard/egg/Customers';
+
 import AcceptInvite from './pages/AcceptInvite';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
@@ -49,8 +58,8 @@ const ScrollToTop = () => {
   return null;
 };
 
-function ProtectedRoute({ children, requiredType }) {
-  const { user, profile, loading } = useAuth();
+function ProtectedRoute({ children, requiredType, requiredVertical }) {
+  const { user, profile, tenant, loading } = useAuth();
   const location = useLocation();
 
   if (loading) return <LoadingScreen />;
@@ -67,32 +76,44 @@ function ProtectedRoute({ children, requiredType }) {
     return <Navigate to={`/${role}/beranda`} replace />;
   }
 
+  // Vertical guard
+  if (requiredVertical && tenant?.business_vertical && tenant.business_vertical !== requiredVertical) {
+    // Redirect to the correct vertical dashboard if mismatched
+    return <Navigate to={`/broker/${tenant.business_vertical}/beranda`} replace />;
+  }
+
   return children;
 }
 
 function RoleGuard({ allowedRoles, children }) {
-  const { profile, loading } = useAuth();
+  const { profile, tenant, loading } = useAuth();
   
   if (loading) return <LoadingScreen />;
   
   if (!profile || !allowedRoles.includes(profile.role)) {
-    return <Navigate to="/broker/beranda" replace />;
+    // If mismatch, go to the vertical-aware beranda
+    const vertical = tenant?.business_vertical || 'poultry_broker'
+    return <Navigate to={`/broker/${vertical}/beranda`} replace />;
   }
 
   return children;
 }
 
 function RoleRedirector() {
-  const { profile, loading } = useAuth();
+  const { profile, tenant, loading } = useAuth();
   if (loading) return <LoadingScreen />;
   if (!profile) return <Navigate to="/login" replace />;
-  
-  // If no model selected, we just default to broker for now
-  // if (!profile.business_model_selected) return <Navigate to="/broker/beranda" replace />; 
   
   if (profile.role === 'sopir') return <Navigate to="/broker/sopir" replace />;
   
   const role = profile.user_type === 'rpa' ? 'rpa-buyer' : profile.user_type;
+  
+  // If broker, point to the vertical-specific beranda
+  if (profile.user_type === 'broker') {
+    const vertical = tenant?.business_vertical || 'poultry_broker'
+    return <Navigate to={`/broker/${vertical}/beranda`} replace />;
+  }
+  
   return <Navigate to={`/${role}/beranda`} replace />;
 }
 
@@ -134,15 +155,20 @@ function App() {
 
         {/* Onboarding removed - functionality moved to /broker/tim */}
 
-        {/* Broker routes */}
-        <Route path="/broker" element={<Navigate to="/broker/beranda" replace />} />
-        <Route path="/broker/beranda" element={
-          <ProtectedRoute requiredType="broker">
+        {/* Broker routes - Base Redirect */}
+        <Route path="/broker" element={<RoleRedirector />} />
+        
+        {/* Poultry Broker Vertical */}
+        <Route path="/broker/poultry_broker/beranda" element={
+          <ProtectedRoute requiredType="broker" requiredVertical="poultry_broker">
             <RoleGuard allowedRoles={['owner', 'staff', 'view_only']}>
               <BrokerLayout><BrokerBeranda /></BrokerLayout>
             </RoleGuard>
           </ProtectedRoute>
         } />
+        {/* Legacy fallback for poultry */}
+        <Route path="/broker/beranda" element={<RoleRedirector />} />
+        
         <Route path="/broker/transaksi" element={
           <ProtectedRoute requiredType="broker">
             <RoleGuard allowedRoles={['owner', 'staff', 'view_only']}>
@@ -150,6 +176,51 @@ function App() {
             </RoleGuard>
           </ProtectedRoute>
         } />
+
+        {/* Egg Broker Vertical */}
+        <Route path="/broker/egg_broker/beranda" element={
+          <ProtectedRoute requiredType="broker" requiredVertical="egg_broker">
+            <RoleGuard allowedRoles={['owner', 'staff', 'view_only']}>
+              <BrokerLayout><EggBeranda /></BrokerLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        } />
+        <Route path="/broker/egg_broker/inventori" element={
+          <ProtectedRoute requiredType="broker" requiredVertical="egg_broker">
+            <RoleGuard allowedRoles={['owner', 'staff']}>
+              <BrokerLayout><EggInventori /></BrokerLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        } />
+        <Route path="/broker/egg_broker/pos" element={
+          <ProtectedRoute requiredType="broker" requiredVertical="egg_broker">
+            <RoleGuard allowedRoles={['owner', 'staff']}>
+              <BrokerLayout><EggPOS /></BrokerLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        } />
+        <Route path="/broker/egg_broker/suppliers" element={
+          <ProtectedRoute requiredType="broker" requiredVertical="egg_broker">
+            <RoleGuard allowedRoles={['owner', 'staff']}>
+              <BrokerLayout><EggSuppliers /></BrokerLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        } />
+        <Route path="/broker/egg_broker/customers" element={
+          <ProtectedRoute requiredType="broker" requiredVertical="egg_broker">
+            <RoleGuard allowedRoles={['owner', 'staff']}>
+              <BrokerLayout><EggCustomers /></BrokerLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        } />
+        <Route path="/broker/egg_broker/transaksi" element={
+          <ProtectedRoute requiredType="broker" requiredVertical="egg_broker">
+            <RoleGuard allowedRoles={['owner', 'staff', 'view_only']}>
+              <BrokerLayout><EggTransaksi /></BrokerLayout>
+            </RoleGuard>
+          </ProtectedRoute>
+        } />
+
         <Route path="/broker/tim" element={
           <ProtectedRoute requiredType="broker">
             <RoleGuard allowedRoles={['owner']}>

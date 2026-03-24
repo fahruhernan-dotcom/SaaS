@@ -74,6 +74,19 @@ auth.users
         ├── broker_connections (peternak_tenant_id / broker_tenant_id)
         └── rpa_purchase_orders (rpa_tenant_id / broker_tenant_id)
 
+---
+
+### `EGG BROKER` Dependencies
+```
+tenants
+  ├── egg_suppliers
+  ├── egg_customers
+  └── egg_inventory
+        └── egg_sales
+              ├── egg_sale_items
+              └── egg_stock_logs
+```
+
 market_prices   ← GLOBAL, tidak ada tenant_id
 payment_settings ← GLOBAL
 ```
@@ -95,10 +108,114 @@ payment_settings ← GLOBAL
 | `phone` | text | nullable |
 | `location` | text | nullable |
 | `plan` | text | `'starter'` `'pro'` `'business'` |
+| `business_vertical` | text | `'poultry_broker'` (default) \| `'egg_broker'` \| `'peternak'` \| `'rpa'` |
+| `is_hidden_beta` | boolean | default false |
 | `is_active` | boolean | default true |
 | `trial_ends_at` | timestamptz | default now()+14 days |
 | `created_at` | timestamptz | |
 | `updated_at` | timestamptz | |
+
+---
+
+## 🥚 EGG BROKER VERTICAL (Fase 2)
+
+### `egg_suppliers`
+> Daftar supplier pakan/telur untuk broker telur
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `name` | text | NOT NULL |
+| `phone` | text | nullable |
+| `address` | text | nullable |
+| `is_deleted` | boolean | |
+
+---
+
+### `egg_inventory`
+> Stok telur per grade/produk
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `product_name` | text | |
+| `egg_grade` | text | `'hero'` \| `'standard'` \| `'salted'` |
+| `current_stock_butir` | integer | |
+| `cost_per_egg` | integer | (HPP per butir) |
+| `packaging_cost` | integer | |
+| `eggs_per_pack` | integer | default 10 |
+| `sell_price_per_pack` | integer | |
+| `cost_per_pack` | integer | ⚠️ **GENERATED** (`cost_per_egg * eggs_per_pack + packaging_cost`) |
+| `low_stock_threshold` | integer | |
+| `is_deleted` | boolean | |
+
+---
+
+### `egg_customers`
+> Database pembeli telur (CRM)
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `name` | text | |
+| `phone` | text | |
+| `total_spent` | bigint | automated via sales trigger |
+| `total_orders` | integer | automated via sales trigger |
+| `is_deleted` | boolean | |
+
+---
+
+### `egg_sales`
+> Penjualan telur (Header)
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `customer_id` | uuid FK → egg_customers | nullable |
+| `invoice_number` | text | UNIQUE (format `EP-YYYYMMDD-001`) |
+| `customer_name` | text | NOT NULL (denormalized for quick search) |
+| `total_price` | bigint | |
+| `total_cost` | bigint | (total HPP) |
+| `net_profit` | bigint | ⚠️ **GENERATED** (`total_price - total_cost`) |
+| `payment_status` | text | `'pending'` \| `'lunas'` \| `'piutang'` |
+| `fulfillment_status`| text | `'processing'` \| `'on_delivery'` \| `'completed'` |
+| `transaction_date` | date | |
+| `is_deleted` | boolean | |
+
+---
+
+### `egg_sale_items`
+> Item produk dalam satu invoice penjualan
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `sale_id` | uuid FK → egg_sales | |
+| `inventory_id` | uuid FK → egg_inventory | |
+| `qty_pack` | integer | |
+| `price_per_pack` | integer | |
+| `subtotal` | bigint | ⚠️ **GENERATED** (`qty_pack * price_per_pack`) |
+
+---
+
+### `egg_stock_logs`
+> Histori mutasi stok (In/Out/Adj)
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `inventory_id` | uuid FK → egg_inventory | |
+| `sale_id` | uuid FK → egg_sales | nullable |
+| `supplier_id` | uuid FK → egg_suppliers | nullable |
+| `log_type` | text | `'in'` \| `'out'` \| `'adj'` |
+| `qty_butir` | integer | (+/-) |
+| `unit_price` | integer | nullable |
+| `created_by` | uuid FK → profiles | |
 
 ---
 
@@ -752,6 +869,12 @@ tenants.plan:            'starter' | 'pro' | 'business'
 profiles.role:           'owner' | 'staff' | 'superadmin' | 'view_only' | 'sopir'
 profiles.user_type:      'broker' | 'peternak' | 'rpa' | 'superadmin'
 payments.payment_method: 'transfer' | 'cash' | 'giro' | 'qris'
+
+// Egg Broker Vertical
+egg_inventory.egg_grade: 'hero' | 'standard' | 'salted'
+egg_sales.payment_status: 'pending' | 'lunas' | 'piutang'
+egg_sales.fulfillment_status: 'processing' | 'on_delivery' | 'completed'
+egg_stock_logs.log_type: 'in' | 'out' | 'adj'
 ```
 
 ---
