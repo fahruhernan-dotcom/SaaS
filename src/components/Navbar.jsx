@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const Navbar = ({ authPage = false }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -11,8 +12,8 @@ const Navbar = ({ authPage = false }) => {
   const borderBottomColor = useTransform(scrollY, [0, 50], ["rgba(255,255,255,0)", "rgba(255,255,255,0.08)"]);
 
   const navLinks = [
-    { name: 'Fitur', href: '#fitur' },
-    { name: 'Harga', href: '#harga' },
+    { name: 'Fitur', href: '/fitur' },
+    { name: 'Harga', href: '/harga' },
     { name: 'Tentang Kami', href: '/tentang-kami' },
   ];
 
@@ -75,9 +76,9 @@ const Navbar = ({ authPage = false }) => {
             >
               <nav style={{ display: 'flex', alignItems: 'center', gap: '0px', position: 'relative' }}>
                 {navLinks.map((link, i) => (
-                  <a 
+                  <Link
                     key={i}
-                    href={link.href}
+                    to={link.href}
                     style={{
                       position: 'relative',
                       padding: '8px 20px',
@@ -140,7 +141,7 @@ const Navbar = ({ authPage = false }) => {
                       }}
                       transition={{ duration: 0.2, ease: 'easeOut' }}
                     />
-                  </a>
+                  </Link>
                 ))}
               </nav>
             </motion.div>
@@ -272,14 +273,14 @@ const Navbar = ({ authPage = false }) => {
           >
              <div className="flex flex-col gap-6">
                 {navLinks.map((link) => (
-                  <a 
-                    key={link.name} 
-                    href={link.href}
+                  <Link
+                    key={link.name}
+                    to={link.href}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="text-[24px] font-display font-bold text-tx-1"
                   >
                     {link.name}
-                  </a>
+                  </Link>
                 ))}
              </div>
              

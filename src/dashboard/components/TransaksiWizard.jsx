@@ -12,6 +12,7 @@ import WizardStepBeli from './wizard/WizardStepBeli'
 import WizardStepJual from './wizard/WizardStepJual'
 import WizardStepOrder from './wizard/WizardStepOrder'
 import WizardStepPengiriman from './wizard/WizardStepPengiriman'
+import TransaksiSuccessCard from '@/components/ui/TransaksiSuccessCard'
 
 // ─── Progress Indicator ──────────────────────────────────────────────────────
 function ProgressIndicator({ currentStep, steps }) {
@@ -123,6 +124,7 @@ export default function TransaksiWizard({ isOpen, onClose }) {
   const [step2Data, setStep2Data] = useState(null)
   const [step3Data, setStep3Data] = useState({ enabled: false })
   const [submitting, setSubmitting] = useState(false)
+  const [successData, setSuccessData] = useState(null)
 
   const resetWizard = () => {
     setMode(null)
@@ -294,8 +296,21 @@ export default function TransaksiWizard({ isOpen, onClose }) {
       queryClient.invalidateQueries({ queryKey: ['deliveries'] })
       queryClient.invalidateQueries({ queryKey: ['rpa-clients'] })
 
-      toast.success('Transaksi berhasil dicatat!')
-      handleClose()
+      const buyData  = mode === 'buy_first' ? step1Data : step2Data
+      const sellData = mode === 'buy_first' ? step2Data : step1Data
+      const profit   = (sellData?.total_revenue || 0) - (buyData?.total_cost || 0) - finalDeliveryCost
+
+      setSuccessData({
+        type: 'lengkap',
+        farmName:        buyData?.farm_name  || null,
+        rpaName:         sellData?.rpa_name  || null,
+        quantity:        buyData?.quantity   || 0,
+        totalWeight:     buyData?.total_weight_kg || 0,
+        buyPrice:        buyData?.total_cost || 0,
+        sellPrice:       sellData?.total_revenue || 0,
+        netProfit:       profit,
+        transactionDate: buyData?.transaction_date || null,
+      })
     } catch (err) {
       toast.error('Gagal: ' + err.message)
     } finally {
@@ -353,6 +368,7 @@ export default function TransaksiWizard({ isOpen, onClose }) {
   }
 
   return (
+    <>
     <Sheet open={isOpen} onOpenChange={handleClose}>
       <SheetContent
         side={isDesktop ? 'right' : 'bottom'}
@@ -401,5 +417,12 @@ export default function TransaksiWizard({ isOpen, onClose }) {
         </div>
       </SheetContent>
     </Sheet>
+
+    <TransaksiSuccessCard
+      isOpen={!!successData}
+      onClose={() => { setSuccessData(null); handleClose() }}
+      data={successData}
+    />
+    </>
   )
 }

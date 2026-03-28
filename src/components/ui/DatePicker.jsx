@@ -9,13 +9,14 @@ import {
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-export function DatePicker({ value, onChange, placeholder, className }) {
+export function DatePicker({ id, value, onChange, placeholder, className }) {
   const dateValue = value ? (value instanceof Date ? value : new Date(value)) : null
 
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
+          id={id}
           variant="outline"
           className={cn(
             "h-14 w-full rounded-2xl bg-[#111C24] border-white/5 px-4 flex items-center justify-start gap-3 hover:bg-white/5 hover:border-white/10 transition-all",

@@ -18,6 +18,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { formatIDR } from '@/lib/format'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import { cn } from '@/lib/utils'
 
 export default function POS() {
   const { tenant } = useAuth()
@@ -107,18 +109,20 @@ export default function POS() {
     }
   }
 
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+
   if (showSuccess) {
     return <SuccessView invoice={lastInvoice} onReset={() => setShowSuccess(false)} />
   }
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-[#06090F] pt-2 lg:pt-0">
+    <div className={cn("flex flex-col lg:flex-row bg-[#06090F] min-h-screen", isDesktop ? "h-screen" : "pb-24")}>
       {/* Left: Product Selection */}
-      <div className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6">
+      <div className={cn("flex-1 overflow-y-auto space-y-6", isDesktop ? "p-8" : "p-5 pt-10")}>
         <header className="flex justify-between items-center text-left">
           <div>
-            <h2 className="text-2xl font-black text-white uppercase tracking-tight">Catat Penjualan</h2>
-            <p className="text-[11px] font-bold text-[#4B6478] uppercase mt-0.5 tracking-wider">Pilih grade telur dari stok</p>
+            <h2 className={cn("font-black text-white uppercase tracking-tight", isDesktop ? "text-2xl" : "text-xl")}>Catat Penjualan</h2>
+            <p className={cn("font-bold text-[#4B6478] uppercase mt-0.5 tracking-wider", isDesktop ? "text-[11px]" : "text-[10px]")}>Pilih grade telur dari stok</p>
           </div>
         </header>
 
@@ -128,16 +132,19 @@ export default function POS() {
             <Card 
               key={item.id}
               onClick={() => addToCart(item)}
-              className="bg-[#111C24] border-white/5 p-5 rounded-[24px] cursor-pointer hover:border-emerald-500/30 transition-all active:scale-[0.98] group relative overflow-hidden"
+              className={cn(
+                "bg-[#111C24] border-white/5 rounded-[24px] cursor-pointer hover:border-emerald-500/30 transition-all active:scale-[0.98] group relative overflow-hidden",
+                isDesktop ? "p-5" : "p-4"
+              )}
             >
               <div className="flex justify-between items-start relative z-10 text-left">
                 <div>
-                  <h3 className="font-display font-black text-lg text-white group-hover:text-emerald-400 transition-colors">{item.product_name}</h3>
-                  <p className="text-xl font-black text-emerald-400 mt-1">{formatIDR(item.sell_price_per_pack)}</p>
-                  <p className="text-[10px] font-bold text-[#4B6478] uppercase mt-1 tracking-widest">Tersedia: {item.current_stock_butir} butir</p>
+                  <h3 className={cn("font-display font-black text-white group-hover:text-emerald-400 transition-colors", isDesktop ? "text-lg" : "text-[15px]")}>{item.product_name}</h3>
+                  <p className={cn("font-black text-emerald-400 mt-1", isDesktop ? "text-xl" : "text-lg")}>{formatIDR(item.sell_price_per_pack)}</p>
+                  <p className={cn("font-bold text-[#4B6478] uppercase mt-1 tracking-widest", isDesktop ? "text-[10px]" : "text-[11px]")}>Tersedia: {item.current_stock_butir} butir</p>
                 </div>
                 <div className="bg-white/5 p-3 rounded-2xl">
-                  <Plus size={20} className="text-[#34D399]" />
+                  <Plus size={isDesktop ? 20 : 22} className="text-[#34D399]" />
                 </div>
               </div>
             </Card>
@@ -146,24 +153,24 @@ export default function POS() {
       </div>
 
       {/* Right: Checkout Sidebar */}
-      <div className="w-full lg:w-[400px] bg-[#0C1319] border-l border-white/5 flex flex-col h-full lg:h-screen">
-        <div className="p-6 flex-1 overflow-y-auto space-y-8">
+      <div className={cn("bg-[#0C1319] border-white/5 flex flex-col", isDesktop ? "w-[400px] border-l h-screen" : "w-full border-t")}>
+        <div className={cn("flex-1 overflow-y-auto space-y-8", isDesktop ? "p-6" : "p-5")}>
           <div className="space-y-4 text-left">
-            <h3 className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Data Pembeli</h3>
+            <h3 className={cn("font-black text-[#4B6478] uppercase tracking-[0.2em]", isDesktop ? "text-[10px]" : "text-[11px]")}>Data Pembeli</h3>
             <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
-              <SelectTrigger className="bg-[#111C24] border-white/10 h-14 rounded-2xl text-white font-bold">
+              <SelectTrigger className="bg-[#111C24] border-white/10 h-14 rounded-2xl text-white font-bold text-base">
                 <SelectValue placeholder="Pilih Pembeli" />
               </SelectTrigger>
               <SelectContent className="bg-[#111C24] border-white/10 text-white">
                 {customers?.map(c => (
-                  <SelectItem key={c.id} value={c.id} className="font-bold uppercase text-xs">{c.name}</SelectItem>
+                  <SelectItem key={c.id} value={c.id} className="font-bold uppercase text-sm">{c.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-4 text-left">
-            <h3 className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Item Pesanan ({cart.length})</h3>
+            <h3 className={cn("font-black text-[#4B6478] uppercase tracking-[0.2em]", isDesktop ? "text-[10px]" : "text-[11px]")}>Item Pesanan ({cart.length})</h3>
             <div className="space-y-3">
               <AnimatePresence>
                 {cart.length === 0 ? (
@@ -177,8 +184,8 @@ export default function POS() {
                     className="flex justify-between items-center bg-[#111C24] p-4 rounded-2xl border border-white/5"
                   >
                     <div className="text-left">
-                      <p className="font-black text-sm text-white uppercase">{item.product_name}</p>
-                      <p className="text-[11px] font-bold text-emerald-400 mt-0.5">{formatIDR(item.sell_price_per_pack)} / pack</p>
+                      <p className={cn("font-black text-white uppercase", isDesktop ? "text-sm" : "text-[13px]")}>{item.product_name}</p>
+                      <p className={cn("font-bold text-emerald-400 mt-0.5", isDesktop ? "text-[11px]" : "text-[10px]")}>{formatIDR(item.sell_price_per_pack)} / pack</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <button onClick={() => updateQty(item.id, -1)} className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10 text-white"><Minus size={14}/></button>
@@ -192,36 +199,35 @@ export default function POS() {
           </div>
 
           <div className="space-y-4 text-left">
-            <h3 className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Metode Pembayaran</h3>
+            <h3 className={cn("font-black text-[#4B6478] uppercase tracking-[0.2em]", isDesktop ? "text-[10px]" : "text-[11px]")}>Metode Pembayaran</h3>
             <div className="grid grid-cols-2 gap-3">
               <button 
                 onClick={() => setPaymentStatus('lunas')}
-                className={`h-20 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all ${paymentStatus === 'lunas' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400' : 'bg-[#111C24] border-white/5 text-[#4B6478] hover:border-white/20'}`}
+                className={`h-22 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all active:scale-[0.98] ${paymentStatus === 'lunas' ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400' : 'bg-[#111C24] border-white/5 text-[#4B6478] hover:border-white/20'}`}
               >
-                <Banknote size={20} />
-                <span className="text-[10px] font-black uppercase">Lunas (Cash)</span>
+                <Banknote size={isDesktop ? 20 : 24} />
+                <span className={cn("font-black uppercase text-center px-2", isDesktop ? "text-[10px]" : "text-[9px]")}>Lunas (Cash)</span>
               </button>
               <button 
                 onClick={() => setPaymentStatus('piutang')}
-                className={`h-20 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all ${paymentStatus === 'piutang' ? 'bg-amber-500/10 border-amber-500 text-amber-400' : 'bg-[#111C24] border-white/5 text-[#4B6478] hover:border-white/20'}`}
+                className={`h-22 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all active:scale-[0.98] ${paymentStatus === 'piutang' ? 'bg-amber-500/10 border-amber-500 text-amber-400' : 'bg-[#111C24] border-white/5 text-[#4B6478] hover:border-white/20'}`}
               >
-                <Clock size={20} />
-                <span className="text-[10px] font-black uppercase">Piutang / TOP</span>
+                <Clock size={isDesktop ? 20 : 24} />
+                <span className={cn("font-black uppercase text-center px-2", isDesktop ? "text-[10px]" : "text-[9px]")}>Piutang / TOP</span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Total & Checkout */}
-        <div className="p-6 bg-[#06090F] border-t border-white/5 space-y-4">
+        <div className={cn("bg-[#06090F] border-t border-white/5 space-y-4", isDesktop ? "p-6" : "p-5 pb-8")}>
           <div className="flex justify-between items-end">
-            <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest">Total Bayar</p>
-            <p className="font-display text-3xl font-black text-white leading-none tracking-tighter">{formatIDR(subtotal)}</p>
+            <p className={cn("font-bold text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-[11px]" : "text-[10px]")}>Total Bayar</p>
+            <p className={cn("font-display font-black text-white leading-none tracking-tighter", isDesktop ? "text-3xl" : "text-[28px]")}>{formatIDR(subtotal)}</p>
           </div>
           <Button 
             onClick={handleSubmit}
             disabled={isSubmitting || cart.length === 0 || !selectedCustomerId}
-            className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 rounded-2xl font-black uppercase tracking-widest text-sm shadow-[0_8px_32px_rgba(16,185,129,0.3)] border-none"
+            className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 rounded-2xl font-black uppercase tracking-widest text-sm shadow-[0_8px_32px_rgba(16,185,129,0.3)] border-none active:scale-95 transition-all"
           >
             {isSubmitting ? <Loader2 className="animate-spin" /> : 'Selesaikan Transaksi'}
           </Button>
@@ -231,24 +237,25 @@ export default function POS() {
   )
 }
 
-function SuccessView({ invoice, onReset }) {
+ function SuccessView({ invoice, onReset }) {
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   return (
-    <div className="min-h-screen bg-[#06090F] flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[#06090F] flex items-center justify-center p-6 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.05)_0%,transparent_100%)]">
       <motion.div 
-        initial={{ scale: 0.9, opacity: 0 }}
+        initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="max-w-[400px] w-full bg-[#0C1319] border border-white/5 rounded-[32px] p-10 text-center space-y-6 shadow-2xl"
+        className={cn("w-full bg-[#0C1319] border border-white/5 rounded-[40px] text-center space-y-6 shadow-2xl overflow-hidden relative", isDesktop ? "max-w-[440px] p-10" : "max-w-full p-8")}
       >
-        <div className="w-20 h-20 bg-emerald-500/20 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 size={40} className="text-[#34D399]" />
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4 relative z-10" style={{ width: isDesktop ? 80 : 72, height: isDesktop ? 80 : 72 }}>
+          <CheckCircle2 size={isDesktop ? 40 : 36} className="text-[#34D399]" />
         </div>
-        <div className="space-y-2">
-          <h2 className="text-2xl font-black text-white uppercase tracking-tight">Transaksi Berhasil!</h2>
-          <p className="text-sm font-bold text-[#4B6478] uppercase tracking-widest">Invoice: {invoice}</p>
+        <div className="space-y-3 relative z-10">
+          <h2 className={cn("font-black text-white uppercase tracking-tight", isDesktop ? "text-2xl" : "text-xl")}>Transaksi Berhasil!</h2>
+          <p className={cn("font-bold text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-xs" : "text-[10px]")}>Invoice: {invoice}</p>
         </div>
-        <div className="pt-4 space-y-3">
-          <Button className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 rounded-2xl font-black uppercase tracking-widest text-[11px] border-none">Cetak Struk</Button>
-          <Button variant="ghost" onClick={onReset} className="w-full text-[#4B6478] font-bold hover:text-white uppercase text-[11px]">Kembali ke POS</Button>
+        <div className="pt-4 space-y-3 relative z-10">
+          <Button className="w-full h-15 bg-emerald-500 hover:bg-emerald-600 rounded-[20px] font-black uppercase tracking-widest text-[11px] border-none shadow-[0_8px_24px_rgba(16,185,129,0.2)]">Cetak Struk</Button>
+          <Button variant="ghost" onClick={onReset} className="w-full h-12 text-[#4B6478] font-bold hover:text-white uppercase text-[11px]">Kembali ke POS</Button>
         </div>
       </motion.div>
     </div>

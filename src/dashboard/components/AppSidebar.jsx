@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { 
-  Home, 
-  ArrowLeftRight, 
-  Building2, 
-  Warehouse, 
-  Truck, 
-  Wallet, 
-  Car, 
-  BarChart2, 
+import {
+  Home,
+  ArrowLeftRight,
+  Building2,
+  Warehouse,
+  Truck,
+  Wallet,
+  Car,
+  BarChart2,
   Calculator,
   ChevronsUpDown,
+  ChevronDown,
   User,
   Users,
   LogOut,
@@ -19,7 +21,9 @@ import {
   Plus,
   Lock,
   Sparkles,
-  Shield
+  Shield,
+  ShoppingCart,
+  Package,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -54,6 +58,8 @@ import { supabase } from '../../lib/supabase'
 import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { usePeternakFarms } from '../../lib/hooks/usePeternakData'
+import { useTheme } from '../../lib/hooks/useTheme'
 
 export default function AppSidebar() {
   const { user, profile, profiles, tenant, switchTenant } = useAuth()
@@ -61,6 +67,31 @@ export default function AppSidebar() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [isAddingBusiness, setIsAddingBusiness] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [expandedFarms, setExpandedFarms] = useState({})
+  const userDropdownRef = useRef(null)
+
+  // Farms for peternak multi-kandang sidebar
+  const { data: peternakFarms = [] } = usePeternakFarms()
+
+  const toggleFarm = (farmId) =>
+    setExpandedFarms(prev => ({ ...prev, [farmId]: !prev[farmId] }))
+
+  // Auto-expand the farm section matching the current URL
+  useEffect(() => {
+    const match = location.pathname.match(/^\/peternak\/kandang\/([^/]+)/)
+    if (match) {
+      const activeFarmId = match[1]
+      setExpandedFarms(prev => prev[activeFarmId] ? prev : { ...prev, [activeFarmId]: true })
+    }
+  }, [location.pathname])
+
+  const hasActiveTrial = profiles?.some(p => {
+    const t = p.tenants
+    return t?.plan === 'starter' && t?.is_active && new Date(t?.trial_ends_at) > new Date()
+  })
+  const hasPaidPlan = profiles?.some(p => ['pro', 'business'].includes(p.tenants?.plan))
+  const canAddBusiness = !hasActiveTrial || hasPaidPlan
 
   const [activeProfileId, setActiveProfileId] = useState(null)
 
@@ -95,9 +126,37 @@ export default function AppSidebar() {
   const isStaff = profile?.role === 'staff'
   const isViewOnly = profile?.role === 'view_only'
 
+  const { accentColor } = useTheme()
+
   const vertical = tenant?.business_vertical || 'poultry_broker'
-  const isPoultry = vertical === 'poultry_broker'
-  const isEgg = vertical === 'egg_broker'
+  const isPoultry  = vertical === 'poultry_broker'
+  const isEgg      = vertical === 'egg_broker'
+  const isPeternak = vertical === 'peternak'
+  const isRPA      = vertical === 'rpa'
+  const isSembako  = vertical === 'sembako_broker'
+
+  const getBerandaPath = (v) => {
+    switch (v) {
+      case 'poultry_broker': return '/broker/poultry_broker/beranda'
+      case 'egg_broker':     return '/egg/beranda'
+      case 'peternak':       return '/peternak/beranda'
+      case 'rpa':            return '/rpa-buyer/beranda'
+      case 'sembako_broker': return '/broker/sembako/beranda'
+      default:               return '/broker/poultry_broker/beranda'
+    }
+  }
+
+  const getAkunPath = (v) => {
+    switch (v) {
+      case 'peternak':       return '/peternak/akun'
+      case 'rpa':            return '/rpa-buyer/akun'
+      case 'sembako_broker': return '/broker/sembako/akun'
+      default:               return '/broker/akun'
+    }
+  }
+
+  const berandaPath = getBerandaPath(vertical)
+  const akunPath    = getAkunPath(vertical)
 
   const isSuperadmin = (profile?.role === 'superadmin' || profile?.user_type === 'superadmin') && 
                       user?.email === 'fahruhernansakti@gmail.com'
@@ -105,10 +164,11 @@ export default function AppSidebar() {
   const getVerticalInfo = (v) => {
     switch (v) {
       case 'poultry_broker': return { icon: '🐔', label: 'Broker Ayam' }
-      case 'egg_broker': return { icon: '🥚', label: 'Broker Telur' }
-      case 'peternak': return { icon: '🏠', label: 'Peternak' }
-      case 'rpa': return { icon: '🏭', label: 'RPA' }
-      default: return { icon: '🏢', label: 'Bisnis' }
+      case 'egg_broker':     return { icon: '🥚', label: 'Broker Telur' }
+      case 'peternak':       return { icon: '🏠', label: 'Peternak' }
+      case 'rpa':            return { icon: '🏭', label: 'RPA' }
+      case 'sembako_broker': return { icon: '🛒', label: 'Distributor Sembako' }
+      default:               return { icon: '🏢', label: 'Bisnis' }
     }
   }
 
@@ -123,44 +183,89 @@ export default function AppSidebar() {
   }
 
   const navMain = [
+    // ── UTAMA ──────────────────────────────────────────────
     {
       label: 'UTAMA',
       items: [
-        { title: 'Beranda',    url: `/broker/${vertical}/beranda`,   icon: Home },
-        // Poultry specific
+        { title: 'Beranda', url: berandaPath, icon: Home },
+
+        // Broker Ayam
         ...(isPoultry ? [
-          { title: 'Transaksi',  url: '/broker/transaksi', icon: ArrowLeftRight },
-          { title: 'RPA & Piutang', url: '/broker/rpa',   icon: Building2, roles: ['owner', 'staff'] },
-          { title: 'Kandang',    url: '/broker/kandang',   icon: Warehouse, roles: ['owner', 'staff'] },
+          { title: 'Transaksi',     url: '/broker/transaksi', icon: ArrowLeftRight },
+          { title: 'RPA & Piutang', url: '/broker/rpa',       icon: Building2, roles: ['owner', 'staff'] },
+          { title: 'Kandang',       url: '/broker/kandang',   icon: Warehouse,  roles: ['owner', 'staff'] },
+          { title: 'Tim & Akses',   url: '/broker/tim',       icon: Users,      roles: ['owner'] },
         ] : []),
-        // Egg specific
+
+        // Broker Telur
         ...(isEgg ? [
-          { title: 'POS / Jual', url: '/broker/egg_broker/pos', icon: ArrowLeftRight },
-          { title: 'Inventori & HPP', url: '/broker/egg_broker/inventori', icon: Warehouse, roles: ['owner', 'staff'] },
-          { title: 'Supplier Telur', url: '/broker/egg_broker/suppliers', icon: Building2, roles: ['owner', 'staff'] },
-          { title: 'Pelanggan Telur', url: '/broker/egg_broker/customers', icon: User, roles: ['owner', 'staff'] },
-          { title: 'Riwayat Transaksi', url: '/broker/egg_broker/transaksi', icon: BarChart2, roles: ['owner', 'staff'] },
+          { title: 'POS / Jual',        url: '/egg/pos',        icon: ArrowLeftRight },
+          { title: 'Inventori & HPP',   url: '/egg/inventori',  icon: Warehouse,  roles: ['owner', 'staff'] },
+          { title: 'Supplier Telur',    url: '/egg/suppliers',  icon: Building2,  roles: ['owner', 'staff'] },
+          { title: 'Pelanggan Telur',   url: '/egg/customers',  icon: User,       roles: ['owner', 'staff'] },
+          { title: 'Riwayat Transaksi', url: '/egg/transaksi',  icon: BarChart2,  roles: ['owner', 'staff'] },
         ] : []),
-        { title: 'Tim & Akses', url: '/broker/tim',      icon: Users, roles: ['owner'] },
+
+        // Peternak — global links (farm-specific sections rendered separately below)
+        ...(isPeternak ? [
+          { title: 'Riwayat Siklus', url: '/peternak/siklus',   icon: BarChart2  },
+          { title: 'Stok Pakan',     url: '/peternak/pakan',    icon: Warehouse  },
+          { title: 'Laporan',        url: '/peternak/laporan',  icon: BarChart2  },
+        ] : []),
+
+        // RPA
+        ...(isRPA ? [
+          { title: 'Order',      url: '/rpa-buyer/order',      icon: ArrowLeftRight },
+          { title: 'Hutang',     url: '/rpa-buyer/hutang',     icon: Wallet },
+          { title: 'Distribusi', url: '/rpa-buyer/distribusi', icon: Truck },
+          { title: 'Laporan',    url: '/rpa-buyer/laporan',    icon: BarChart2, roles: ['owner'] },
+        ] : []),
+
+        // Sembako Broker
+        ...(isSembako ? [
+          { title: 'Penjualan', url: '/broker/sembako/penjualan', icon: ShoppingCart },
+          { title: 'Gudang',    url: '/broker/sembako/gudang',    icon: Warehouse },
+          { title: 'Produk',    url: '/broker/sembako/produk',    icon: Package,   roles: ['owner', 'staff'] },
+          { title: 'Pegawai',   url: '/broker/sembako/pegawai',   icon: Users,     roles: ['owner'] },
+        ] : []),
       ]
     },
-    {
+
+    // ── OPERASIONAL — Sembako ───────────────────────────────
+    ...(isSembako ? [{
+      label: 'LAPORAN & AKUN',
+      items: [
+        { title: 'Laporan',      url: '/broker/sembako/laporan', icon: BarChart2, roles: ['owner'] },
+        { title: 'Akun & Profil', url: '/broker/sembako/akun',   icon: User },
+      ]
+    }] : []),
+
+    // ── OPERASIONAL (broker only) ───────────────────────────
+    ...(isPoultry ? [{
       label: 'OPERASIONAL',
       items: [
-        { title: 'Pengiriman', url: '/broker/pengiriman', icon: Truck, roles: ['owner', 'staff'] },
-        { title: 'Cash Flow',  url: '/broker/cashflow',  icon: Wallet, roles: ['owner'] },
-        { title: 'Armada',     url: '/broker/armada',    icon: Car, roles: ['owner'] },
+        { title: 'Pengiriman', url: '/broker/pengiriman', icon: Truck,       roles: ['owner', 'staff'] },
+        { title: 'Cash Flow',  url: '/broker/cashflow',  icon: Wallet,      roles: ['owner'] },
+        { title: 'Armada',     url: '/broker/armada',    icon: Car,         roles: ['owner'] },
+        { title: 'Simulator',  url: '/broker/simulator', icon: Calculator,  roles: ['owner'] },
+      ]
+    }] : []),
+
+    ...(isEgg ? [{
+      label: 'OPERASIONAL',
+      items: [
+        { title: 'Cash Flow', url: '/broker/cashflow', icon: Wallet, roles: ['owner'] },
+      ]
+    }] : []),
+
+    // ── SHARED (semua vertical) ─────────────────────────────
+    {
+      label: 'LAINNYA',
+      items: [
+        { title: 'Harga Pasar',     url: '/harga-pasar', icon: BarChart2 },
+        { title: 'TernakOS Market', url: '/market',      icon: Building2 },
       ]
     },
-    ...(isPoultry ? [
-      {
-        label: 'ANALISIS',
-        items: [
-          { title: 'Harga Pasar', url: '/harga-pasar',    icon: BarChart2 },
-          { title: 'Simulator',   url: '/broker/simulator', icon: Calculator, roles: ['owner'] },
-        ]
-      }
-    ] : [])
   ]
 
   const filteredNavMain = navMain.map(group => ({
@@ -170,6 +275,17 @@ export default function AppSidebar() {
       return item.roles.includes(profile?.role) || profile?.role === 'superadmin'
     })
   })).filter(group => group.items.length > 0)
+
+  useEffect(() => {
+    if (!dropdownOpen) return
+    function handleClickOutside(e) {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [dropdownOpen])
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut()
@@ -193,14 +309,14 @@ export default function AppSidebar() {
     <Sidebar collapsible="offcanvas" style={{ background: '#090E14' }}>
       <SidebarHeader style={{padding: '16px 16px 8px'}}>
         {/* Logo */}
-        <div className="flex items-center gap-2.5 px-1 py-2 cursor-pointer" onClick={() => navigate(`/broker/${vertical}/beranda`)}>
+        <div className="flex items-center gap-2.5 px-1 py-2 cursor-pointer" onClick={() => navigate(berandaPath)}>
           <img src="/logo.png" alt="TernakOS Icon" className="w-8 h-8 rounded-lg object-contain flex-shrink-0" />
           <div className="">
             <p className="font-display font-extrabold text-[15px] text-foreground leading-none">
               TernakOS
             </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">
-              {isEgg ? 'Broker Telur' : 'Broker Dashboard'}
+              {activeVerticalInfo.label}
             </p>
           </div>
         </div>
@@ -245,10 +361,17 @@ export default function AppSidebar() {
                       <DropdownMenuItem
                         key={p.id}
                         onClick={() => {
+                          const targetVertical = p.tenants?.business_vertical
+                          const targetPath = getBerandaPath(targetVertical)
+                          
+                          // 1. Switch tenant state
                           switchTenant(p.tenant_id)
-                          queryClient.invalidateQueries()
-                          // Force redirect to beranda of the new vertical if needed
-                          navigate(`/broker/${p.tenants.business_vertical}/beranda`)
+                          
+                          // 2. Clear all cache to prevent stale queries with new tenant ID
+                          queryClient.clear()
+                          
+                          // 3. Navigate to the correct vertical dashboard
+                          navigate(targetPath)
                         }}
                         className={`gap-3 rounded-lg p-2 cursor-pointer transition-colors focus:bg-accent focus:text-foreground mb-1 ${
                           isActive ? 'text-emerald-400 bg-emerald-500/10' : 'hover:bg-accent text-foreground'
@@ -280,14 +403,18 @@ export default function AppSidebar() {
                     <DropdownMenuItem
                       onSelect={(e) => {
                         e.preventDefault()
-                        setIsAddingBusiness(true)
+                        if (canAddBusiness) setIsAddingBusiness(true)
                       }}
-                      className="gap-3 rounded-lg p-2 cursor-pointer text-muted-foreground hover:bg-accent hover:text-foreground transition-colors focus:bg-accent focus:text-foreground"
+                      className={`gap-3 rounded-lg p-2 text-muted-foreground transition-colors ${canAddBusiness ? 'cursor-pointer hover:bg-accent hover:text-foreground focus:bg-accent focus:text-foreground' : 'opacity-50 cursor-not-allowed'}`}
+                      title={!canAddBusiness ? 'Upgrade ke PRO untuk tambah bisnis' : undefined}
                     >
                       <div className="w-6 h-6 rounded flex items-center justify-center bg-white/5 flex-shrink-0">
-                        <Plus size={14} />
+                        {canAddBusiness ? <Plus size={14} /> : <Lock size={14} />}
                       </div>
-                      <span className="text-[13px] font-medium">Tambah Bisnis Baru</span>
+                      <span className="text-[13px] font-medium flex-1">Tambah Bisnis Baru</span>
+                      {!canAddBusiness && (
+                        <span className="text-[9px] font-black text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full uppercase tracking-widest">PRO</span>
+                      )}
                     </DropdownMenuItem>
                   </SheetTrigger>
                   <SheetContent side="right" className="bg-[#090E14] border-border text-foreground w-[400px]">
@@ -328,15 +455,24 @@ export default function AppSidebar() {
                     </div>
                     
                     <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-3">
-                      <button 
-                        onClick={() => {
-                          setIsAddingBusiness(false)
-                          navigate('/onboarding?mode=new_business')
-                        }}
-                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
-                      >
-                        Mulai Setup Bisnis Baru
-                      </button>
+                      {canAddBusiness ? (
+                        <button
+                          onClick={() => {
+                            setIsAddingBusiness(false)
+                            navigate('/onboarding?mode=new_business')
+                          }}
+                          className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
+                        >
+                          Mulai Setup Bisnis Baru
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => { setIsAddingBusiness(false); navigate(akunPath) }}
+                          className="w-full bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/15 text-amber-400 font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2"
+                        >
+                          <Lock size={16} /> Upgrade ke PRO
+                        </button>
+                      )}
                       <button 
                         onClick={() => setIsAddingBusiness(false)}
                         className="w-full bg-white/5 hover:bg-white/10 text-muted-foreground font-semibold py-4 rounded-2xl transition-all"
@@ -415,6 +551,116 @@ export default function AppSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
         ))}
+
+        {/* ── Peternak: per-farm collapsible sections ── */}
+        {isPeternak && peternakFarms.length > 0 && (
+          <>
+            <SidebarSeparator className="my-1" />
+            {peternakFarms.map((farm) => {
+              const isOpen    = expandedFarms[farm.id] ?? false
+              const farmBase  = `/peternak/kandang/${farm.id}`
+              const isOnFarm  = location.pathname.startsWith(farmBase)
+              const LIVESTOCK = { ayam_broiler: '🐔', ayam_petelur: '🥚', domba: '🐑', kambing: '🐐', sapi: '🐄' }
+              const emoji     = LIVESTOCK[farm.livestock_type] ?? '🏚'
+
+              const farmColor = accentColor || '#7C3AED'
+              return (
+                <SidebarGroup key={farm.id} className="py-0.5">
+                  {/* Farm header — click to expand */}
+                  <button
+                    onClick={() => toggleFarm(farm.id)}
+                    style={isOnFarm ? {
+                      background: `${farmColor}18`,
+                      border: `1px solid ${farmColor}33`,
+                    } : {}}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl mb-0.5 transition-colors text-left cursor-pointer border-none ${
+                      isOnFarm ? '' : 'bg-transparent hover:bg-white/[0.03]'
+                    }`}
+                  >
+                    <span className="text-base flex-shrink-0">{emoji}</span>
+                    <span
+                      className="font-['Sora'] text-[13px] font-bold flex-1 truncate"
+                      style={{ color: isOnFarm ? farmColor : undefined }}
+                    >
+                      {farm.farm_name}
+                    </span>
+                    <ChevronDown
+                      size={13}
+                      className={`text-muted-foreground transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+
+                  {/* Collapsible farm sub-items */}
+                  {isOpen && (
+                    <SidebarGroupContent>
+                      <SidebarMenu className="pl-2">
+                        {[
+                          { title: 'Dashboard',    url: `${farmBase}/beranda`, icon: Home         },
+                          { title: 'Siklus',       url: `${farmBase}/siklus`,  icon: BarChart2    },
+                          { title: 'Input Harian', url: `${farmBase}/input`,   icon: ArrowLeftRight },
+                          { title: 'Pakan',        url: `${farmBase}/pakan`,   icon: Warehouse    },
+                        ].map((item) => {
+                          const isActive = location.pathname === item.url || location.pathname.startsWith(item.url + '?')
+                          return (
+                            <SidebarMenuItem key={item.title}>
+                              <SidebarMenuButton
+                                asChild
+                                isActive={isActive}
+                                className={`rounded-xl mb-0.5 transition-all ${
+                                  isActive ? '' : 'hover:bg-white/[0.03] text-foreground'
+                                }`}
+                                style={isActive ? {
+                                  background: `${farmColor}18`,
+                                  border: `1px solid ${farmColor}33`,
+                                } : {}}
+                              >
+                                <NavLink to={item.url} className="flex items-center gap-3 w-full">
+                                  <item.icon
+                                    size={16}
+                                    style={{ color: isActive ? farmColor : undefined }}
+                                    className={isActive ? '' : 'text-muted-foreground'}
+                                    strokeWidth={isActive ? 2.5 : 2}
+                                  />
+                                  <span
+                                    className={`font-body text-[13px] flex-1 ${isActive ? 'font-semibold' : 'font-medium'}`}
+                                    style={{ color: isActive ? farmColor : undefined }}
+                                  >
+                                    {item.title}
+                                  </span>
+                                </NavLink>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          )
+                        })}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  )}
+                </SidebarGroup>
+              )
+            })}
+          </>
+        )}
+
+        {/* ── Quick Actions (fills bottom space) ── */}
+        <div className="mt-auto px-1 pb-2 space-y-0.5">
+          <SidebarSeparator className="mb-2 mt-3" />
+          {isSuperadmin && (
+            <button
+              onClick={handleGoToAdmin}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-amber-400 hover:bg-amber-500/10 transition-colors border-none cursor-pointer bg-transparent text-left"
+            >
+              <Shield size={14} className="shrink-0" />
+              <span className="text-[13px] font-bold">Admin Panel</span>
+            </button>
+          )}
+          <button
+            onClick={() => navigate('/onboarding?mode=new_business')}
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[#64748B] hover:bg-white/[0.04] hover:text-[#94A3B8] transition-colors border-none cursor-pointer bg-transparent text-left"
+          >
+            <Building2 size={14} className="shrink-0" />
+            <span className="text-[13px]">Ganti Model Bisnis</span>
+          </button>
+        </div>
 
       </SidebarContent>
 
@@ -568,75 +814,101 @@ export default function AppSidebar() {
           )}
         </div>
 
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton
-                  size="lg"
-                  className="rounded-xl hover:bg-white/[0.03]  "
-                >
-                  <div className="w-8 h-8 rounded-full bg-emerald-500/15 border-2 border-emerald-500/25 flex items-center justify-center font-display font-extrabold text-[12px] text-emerald-400 flex-shrink-0 uppercase">
+        {/* ── Custom user dropdown ── */}
+        <div className="relative" ref={userDropdownRef}>
+          <AnimatePresence>
+            {dropdownOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
+                className="absolute bottom-full left-0 right-0 mb-2 bg-[#162230] border border-white/10 rounded-2xl overflow-hidden shadow-xl shadow-black/40 z-50"
+              >
+                {/* User info header */}
+                <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/8">
+                  <div className="w-9 h-9 rounded-full bg-emerald-500/15 border-2 border-emerald-500/25 flex items-center justify-center font-display font-extrabold text-[12px] text-emerald-400 flex-shrink-0 uppercase">
                     {userInitials}
                   </div>
-                  <div className="flex-1 overflow-hidden  text-left ml-2">
-                    <p className="text-[13px] font-semibold truncate leading-tight">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-[#F1F5F9] truncate leading-tight">
                       {profile?.full_name || 'User'}
                     </p>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <p className="text-[11px] text-muted-foreground truncate font-medium">
-                        {user?.email}
-                      </p>
-                      {profile?.role && (
-                        <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
-                          profile.role === 'owner' ? 'bg-[#10B981]/10 text-[#10B981]' :
-                          profile.role === 'staff' ? 'bg-blue-500/10 text-blue-400' :
-                          profile.role === 'superadmin' ? 'bg-amber-500/10 text-amber-500' :
-                          'bg-white/5 text-[#4B6478]'
-                        }`}>
-                          {profile.role.replace('_', ' ')}
-                        </span>
-                      )}
-                    </div>
+                    <p className="text-[11px] text-[#4B6478] truncate">{user?.email}</p>
                   </div>
-                  <ChevronsUpDown size={14} className="text-muted-foreground  ml-auto" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                side="top"
-                align="start"
-                className="w-56 bg-popover border border-border rounded-2xl p-1.5 shadow-2xl"
-              >
-                <DropdownMenuItem
-                  onClick={() => navigate('/broker/akun')}
-                  className="gap-3 rounded-xl p-3 cursor-pointer hover:bg-white/5 transition-colors focus:bg-white/5 focus:text-foreground"
-                >
-                  <User size={16} className="text-muted-foreground" />
-                  <span className="text-[13px] font-semibold">Akun & Profil</span>
-                </DropdownMenuItem>
+                  {profile?.role && (
+                    <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shrink-0 ${
+                      profile.role === 'superadmin' ? 'bg-amber-500/10 text-amber-500' :
+                      profile.role === 'owner'      ? 'bg-[#10B981]/10 text-[#10B981]' :
+                      profile.role === 'staff'      ? 'bg-blue-500/10 text-blue-400' :
+                      'bg-white/5 text-[#4B6478]'
+                    }`}>
+                      {profile.role.replace('_', ' ')}
+                    </span>
+                  )}
+                </div>
 
-                {isSuperadmin && (
-                  <DropdownMenuItem
-                    onClick={handleGoToAdmin}
-                    className="gap-3 rounded-xl p-3 cursor-pointer text-amber-500 hover:bg-amber-500/10 transition-colors focus:bg-amber-500/10"
+                {/* Menu items */}
+                <div className="py-1.5">
+                  {[
+                    { icon: User,      label: 'Profil Akun',   onClick: () => { navigate(akunPath); setDropdownOpen(false) } },
+                    { icon: Building2, label: 'Kelola Bisnis', onClick: () => { navigate('/onboarding?mode=new_business'); setDropdownOpen(false) } },
+                    { icon: Bell,      label: 'Notifikasi',    onClick: () => { navigate(akunPath + '#notif'); setDropdownOpen(false) } },
+                  ].map(({ icon: Icon, label, onClick }) => (
+                    <button
+                      key={label}
+                      onClick={onClick}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#94A3B8] hover:text-white hover:bg-white/5 cursor-pointer transition-colors"
+                    >
+                      <Icon size={16} className="shrink-0" />
+                      <span>{label}</span>
+                    </button>
+                  ))}
+
+                  {isSuperadmin && (
+                    <>
+                      <div className="h-px bg-white/8 mx-2 my-1" />
+                      <button
+                        onClick={() => { handleGoToAdmin(); setDropdownOpen(false) }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-amber-400 hover:bg-amber-500/10 cursor-pointer transition-colors"
+                      >
+                        <Shield size={16} className="shrink-0" />
+                        <span className="font-bold">Admin Panel</span>
+                      </button>
+                    </>
+                  )}
+
+                  <div className="h-px bg-white/8 mx-2 my-1" />
+
+                  <button
+                    onClick={() => { handleLogout(); setDropdownOpen(false) }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 cursor-pointer transition-colors"
                   >
-                    <Shield size={16} />
-                    <span className="text-[13px] font-bold">Admin Panel</span>
-                  </DropdownMenuItem>
-                )}
+                    <LogOut size={16} className="shrink-0" />
+                    <span className="font-bold">Keluar</span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-                <DropdownMenuSeparator className="my-1.5 bg-border" />
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="gap-3 rounded-xl p-3 cursor-pointer text-destructive hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive transition-colors"
-                >
-                  <LogOut size={16} />
-                  <span className="text-[13px] font-bold">Keluar</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
+          {/* Trigger button */}
+          <button
+            onClick={() => setDropdownOpen(prev => !prev)}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-white/[0.03] transition-colors"
+          >
+            <div className="w-8 h-8 rounded-full bg-emerald-500/15 border-2 border-emerald-500/25 flex items-center justify-center font-display font-extrabold text-[12px] text-emerald-400 flex-shrink-0 uppercase">
+              {userInitials}
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-[13px] font-semibold truncate leading-tight text-foreground">
+                {profile?.full_name || 'User'}
+              </p>
+              <p className="text-[11px] text-muted-foreground truncate">{user?.email}</p>
+            </div>
+            <ChevronsUpDown size={14} className="text-muted-foreground shrink-0" />
+          </button>
+        </div>
       </SidebarFooter>
     </Sidebar>
   )

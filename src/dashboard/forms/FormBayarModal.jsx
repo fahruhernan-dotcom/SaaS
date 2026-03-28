@@ -89,8 +89,8 @@ export default function FormBayarModal({ isOpen, onClose, rpa }) {
         </div>
 
         <div>
-          <label style={labelStyle}>Jumlah Pembayaran (Rp)</label>
-          <input type="number" {...register('payment_amount', { valueAsNumber: true })} style={inputStyle} />
+          <label htmlFor="payment_amount" style={labelStyle}>Jumlah Pembayaran (Rp)</label>
+          <input id="payment_amount" type="number" {...register('payment_amount', { valueAsNumber: true })} style={inputStyle} />
           {errors.payment_amount && <p style={errorStyle}>{errors.payment_amount.message}</p>}
         </div>
 

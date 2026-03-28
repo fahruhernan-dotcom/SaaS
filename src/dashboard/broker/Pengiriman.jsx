@@ -1,14 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-    Truck, Package, AlertTriangle, CheckCircle2, 
-    Plus, Search, Filter, ChevronRight, 
-    Clock, MapPin, User, Smartphone, 
+import {
+    Truck, Package, AlertTriangle, CheckCircle2,
+    Plus, Search, Filter, ChevronRight,
+    Clock, MapPin, User, Smartphone,
     TrendingDown, AlertCircle, Info, Calendar,
     ArrowRightLeft, MoreHorizontal, Check, Lock, Unlock,
     ChevronDown, ChevronsUpDown, Trash2,
-    Pencil, PencilLine, Printer, X
+    Pencil, PencilLine, Printer, X, FileText
 } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { id } from 'date-fns/locale'
@@ -29,6 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet'
 import DeliveryCard from '@/dashboard/broker/pengiriman/DeliveryCard'
+import InvoicePreviewModal from '@/components/invoice/InvoicePreviewModal'
 import LossCard, { LossSummary } from '@/dashboard/broker/pengiriman/LossCard'
 import UpdateArrivalSheet from '@/dashboard/broker/pengiriman/UpdateArrivalSheet'
 import CreateLossSheet from '@/dashboard/broker/pengiriman/CreateLossSheet'
@@ -78,7 +79,7 @@ const itemVariants = {
 
 export default function Pengiriman() {
     const isDesktop = useMediaQuery('(min-width: 1024px)')
-    const { tenant } = useAuth()
+    const { tenant, profile } = useAuth()
     const queryClient = useQueryClient()
     const [activeTab, setActiveTab] = useState('pengiriman')
     const [deliveryFilter, setDeliveryFilter] = useState('semua')
@@ -95,6 +96,9 @@ export default function Pengiriman() {
 
     // --- EDIT ARRIVAL DATA STATE ---
     const [confirmEditArrivalDelivery, setConfirmEditArrivalDelivery] = useState(null)
+
+    // --- INVOICE MODAL ---
+    const [invoiceModal, setInvoiceModal] = useState({ open: false, delivery: null })
 
     const location = useLocation()
 
@@ -317,9 +321,9 @@ export default function Pengiriman() {
                                     className="space-y-4"
                                 >
                                     {filteredDeliveries.map((delivery) => (
-                                        <DeliveryCard 
-                                            key={delivery.id} 
-                                            delivery={delivery} 
+                                        <DeliveryCard
+                                            key={delivery.id}
+                                            delivery={delivery}
                                             onUpdateTiba={(d) => {
                                                 setSelectedDelivery(d)
                                                 setIsUpdateArrivalOpen(true)
@@ -329,6 +333,7 @@ export default function Pengiriman() {
                                                 setIsLogisticsDetailOpen(true)
                                             }}
                                             onEditArrival={(d) => setConfirmEditArrivalDelivery(d)}
+                                            onPrintSuratJalan={(d) => setInvoiceModal({ open: true, delivery: d })}
                                         />
                                     ))}
                                 </motion.div>
@@ -424,6 +429,20 @@ export default function Pengiriman() {
                     setSelectedLogisticsDetail(null)
                 }}
                 delivery={selectedLogisticsDetail}
+            />
+
+            <InvoicePreviewModal
+                type="delivery"
+                isOpen={invoiceModal.open}
+                onClose={() => setInvoiceModal({ open: false, delivery: null })}
+                data={invoiceModal.delivery ? {
+                    tenant,
+                    delivery:   invoiceModal.delivery,
+                    sale:       invoiceModal.delivery.sales,
+                    farm:       invoiceModal.delivery.sales?.purchases?.farms,
+                    rpa:        invoiceModal.delivery.sales?.rpa_clients,
+                    generatedBy: profile?.full_name,
+                } : null}
             />
 
             <AlertDialog open={!!confirmEditArrivalDelivery} onOpenChange={() => setConfirmEditArrivalDelivery(null)}>

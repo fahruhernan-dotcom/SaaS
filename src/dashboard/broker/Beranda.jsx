@@ -246,7 +246,7 @@ export default function BrokerBeranda() {
     }
   }
 
-  if (isLoading) return <LoadingState />
+  if (isLoading || !tenant?.id) return <LoadingState />
 
   const data = dashboardData
 
@@ -480,12 +480,12 @@ function MobileDashboard({ data, profile, navigate, setWizardOpen, chartPeriod, 
     <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="flex flex-col min-h-full bg-[#06090F] text-foreground pb-24">
       <header className="px-5 pt-8 pb-6 flex justify-between items-start">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4B6478] mb-1">TernakOS Broker</p>
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-[#4B6478] mb-1.5">TernakOS Broker</p>
           <h1 className="font-display text-2xl font-black text-[#F1F5F9] leading-tight flex items-center gap-2">
             Halo, {firstName} <span className="text-xl">👋</span>
           </h1>
           {data?.insight && (
-            <p className="text-[11px] font-display font-medium text-[#34D399] mt-2 leading-relaxed">
+            <p className="text-xs font-display font-medium text-[#34D399] mt-2 leading-relaxed">
               {data.insight.text}
             </p>
           )}
@@ -519,7 +519,7 @@ function MobileDashboard({ data, profile, navigate, setWizardOpen, chartPeriod, 
         <div className="bg-gradient-to-br from-[#10B981] to-[#059669] rounded-[28px] p-6 text-white shadow-xl shadow-emerald-500/20 relative overflow-hidden active:scale-[0.98] transition-all" onClick={() => setWizardOpen(true)}>
           <div className="flex justify-between items-center relative z-10">
             <div>
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-70 mb-1">Profit {chartPeriod === 'weekly' ? 'Minggu Ini' : 'Bulan Ini'}</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] opacity-70 mb-1.5">Profit {chartPeriod === 'weekly' ? 'Minggu Ini' : 'Bulan Ini'}</p>
               <h2 className="text-2xl font-display font-black tabular-nums">
                 {chartPeriod === 'weekly' ? formatIDRShort(data?.chart.totalNetProfitWeekly) : formatIDRShort(data?.chart.totalNetProfitMonthly)}
               </h2>
@@ -535,10 +535,10 @@ function MobileDashboard({ data, profile, navigate, setWizardOpen, chartPeriod, 
       <section className="px-5 mb-8">
         <div className="bg-[#0C1319] border border-white/5 rounded-[28px] p-5">
           <div className="flex justify-between items-center mb-4">
-             <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-[#4B6478]">Grafik Profit</h3>
+             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#4B6478]">Grafik Profit</h3>
              <div className="flex bg-black/30 p-0.5 rounded-lg border border-white/5 scale-90 origin-right">
-                <button onClick={() => setChartPeriod('weekly')} className={cn("px-3 py-1 text-[9px] font-black uppercase rounded-md", chartPeriod === 'weekly' ? "bg-emerald-500 text-white" : "text-[#4B6478]")}>W</button>
-                <button onClick={() => setChartPeriod('monthly')} className={cn("px-3 py-1 text-[9px] font-black uppercase rounded-md ml-0.5", chartPeriod === 'monthly' ? "bg-emerald-500 text-white" : "text-[#4B6478]")}>M</button>
+                <button onClick={() => setChartPeriod('weekly')} className={cn("px-3 py-1 text-xs font-black uppercase rounded-md", chartPeriod === 'weekly' ? "bg-emerald-500 text-white" : "text-[#4B6478]")}>W</button>
+                <button onClick={() => setChartPeriod('monthly')} className={cn("px-3 py-1 text-xs font-black uppercase rounded-md ml-0.5", chartPeriod === 'monthly' ? "bg-emerald-500 text-white" : "text-[#4B6478]")}>M</button>
              </div>
           </div>
           <div className="h-[180px] w-full">
@@ -569,14 +569,14 @@ function MobileDashboard({ data, profile, navigate, setWizardOpen, chartPeriod, 
 
       <section className="px-5 mt-8 mb-4">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-[#4B6478]">Piutang RPA</h3>
-          <Button variant="link" size="sm" className="text-[10px] font-black uppercase text-emerald-400 p-0 h-auto" onClick={() => navigate('/broker/rpa')}>Lihat Semua</Button>
+          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#4B6478]">Piutang RPA</h3>
+          <Button variant="link" size="sm" className="text-xs font-black uppercase text-emerald-400 p-0 h-auto" onClick={() => navigate('/broker/rpa')}>Lihat Semua</Button>
         </div>
         <div className="space-y-2.5">
           {data?.rpaWithDebt.map(rpa => (
             <div key={rpa.id} className="p-3.5 bg-[#111C24] border border-white/5 rounded-2xl flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/5 flex items-center justify-center font-black text-emerald-400 text-[10px]">{rpa.rpa_name[0]}</div>
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/5 flex items-center justify-center font-black text-emerald-400 text-xs">{rpa.rpa_name[0]}</div>
                 <p className="text-sm font-bold text-[#F1F5F9]">{rpa.rpa_name}</p>
               </div>
               <p className="text-sm font-black text-red-400 tabular-nums">{formatIDRShort(rpa.total_outstanding)}</p>
@@ -600,13 +600,14 @@ function KPICardNew({ label, value, sub, icon: Icon, onClick, trend, small, comp
       onClick={onClick}
     >
       <div className={cn("flex justify-between items-start", compact ? "mb-1" : "mb-2")}>
-        <div className="flex items-center gap-2 text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]">
-          {Icon && <Icon size={small || compact ? 12 : 14} className="opacity-50" />}
+        <div className={cn("flex items-center gap-2 font-black text-[#4B6478] uppercase tracking-[0.2em]", small ? "text-xs" : "text-[10px]")}>
+          {Icon && <Icon size={small || compact ? 14 : 14} className="opacity-50" />}
           {label}
         </div>
         {trend !== undefined && (
           <div className={cn(
-            "text-[10px] font-black tabular-nums py-0.5 px-2 rounded-lg",
+            "font-black tabular-nums py-0.5 px-2 rounded-lg",
+            small ? "text-xs" : "text-[10px]",
             trend >= 0 ? "bg-[#10B981]/10 text-[#10B981]" : "bg-red-500/10 text-red-500"
           )}>
             {trend >= 0 ? '↑' : '↓'} {Math.abs(trend).toFixed(0)}%
@@ -616,7 +617,7 @@ function KPICardNew({ label, value, sub, icon: Icon, onClick, trend, small, comp
       <div className={cn("font-display font-black tracking-tight tabular-nums", compact ? "text-xl" : small ? "text-xl" : "text-3xl")}>
         {value}
       </div>
-      {sub && !compact && <p className="text-[11px] text-[#4B6478] font-bold mt-1 uppercase tracking-wider">{sub}</p>}
+      {sub && !compact && <p className={cn("text-[#4B6478] font-bold mt-1 uppercase tracking-wider", small ? "text-xs" : "text-[11px]")}>{sub}</p>}
     </Card>
   )
 }
@@ -698,6 +699,7 @@ function AgendaSection({ data, selectedDate, setSelectedDate, currentMonth, setC
           selectedDate={selectedDate}
           setSelectedDate={setSelectedDate}
           events={data?.events}
+          isDesktop={isDesktop}
         />
 
         <div className="mt-8">
@@ -707,7 +709,8 @@ function AgendaSection({ data, selectedDate, setSelectedDate, currentMonth, setC
                    key={tab}
                    onClick={() => setAgendaFilter(tab)}
                    className={cn(
-                     "px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border",
+                     "px-4 py-1.5 rounded-xl font-black uppercase tracking-widest whitespace-nowrap transition-all border",
+                     isDesktop ? "text-[10px]" : "text-xs",
                      agendaFilter === tab ? "bg-emerald-500 border-emerald-500 text-white shadow-lg" : "bg-black/20 border-white/5 text-[#4B6478] hover:border-white/10"
                    )}
                  >
@@ -717,18 +720,18 @@ function AgendaSection({ data, selectedDate, setSelectedDate, currentMonth, setC
            </div>
 
            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4 md:mt-6 overflow-x-auto no-scrollbar md:grid">
-              <AgendaMiniStat label="PIUTANG" value={formatIDRShort(stats.piutang)} color="text-red-400" />
-              <AgendaMiniStat label="PANEN" value={stats.panen} color="text-emerald-400" />
-              <AgendaMiniStat label="PENGIRIMAN" value={stats.krm} color="text-amber-400" />
-              <AgendaMiniStat label="PEMBAYARAN" value={stats.bayar} color="text-indigo-400" />
+              <AgendaMiniStat label="PIUTANG" value={formatIDRShort(stats.piutang)} color="text-red-400" isDesktop={isDesktop} />
+              <AgendaMiniStat label="PANEN" value={stats.panen} color="text-emerald-400" isDesktop={isDesktop} />
+              <AgendaMiniStat label="PENGIRIMAN" value={stats.krm} color="text-amber-400" isDesktop={isDesktop} />
+              <AgendaMiniStat label="PEMBAYARAN" value={stats.bayar} color="text-indigo-400" isDesktop={isDesktop} />
            </div>
 
            <div className="space-y-3 mt-8">
               {filteredEvents.length > 0 ? (
-                filteredEvents.map((event, idx) => <EventItem key={idx} event={event} />)
+                filteredEvents.map((event, idx) => <EventItem key={idx} event={event} isDesktop={isDesktop} />)
               ) : (
                 <div className="py-12 text-center">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Tidak ada agenda hari ini</p>
+                  <p className={cn("font-black uppercase tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Tidak ada agenda hari ini</p>
                 </div>
               )}
            </div>
@@ -738,7 +741,7 @@ function AgendaSection({ data, selectedDate, setSelectedDate, currentMonth, setC
   )
 }
 
-function CalendarHeatmap({ currentMonth, selectedDate, setSelectedDate, events }) {
+function CalendarHeatmap({ currentMonth, selectedDate, setSelectedDate, events, isDesktop }) {
   const days = useMemo(() => {
     const start = startOfWeek(startOfMonth(currentMonth))
     const end = endOfWeek(endOfMonth(currentMonth))
@@ -763,7 +766,7 @@ function CalendarHeatmap({ currentMonth, selectedDate, setSelectedDate, events }
     <div className="space-y-2">
       <div className="grid grid-cols-7 gap-1">
         {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map(d => (
-          <div key={d} className="text-[10px] font-black text-[#4B6478] text-center pb-2">{d}</div>
+          <div key={d} className={cn("font-black text-[#4B6478] text-center pb-2", isDesktop ? "text-[10px]" : "text-xs")}>{d}</div>
         ))}
         {days.map((day, i) => {
           const dayStr = format(day, 'yyyy-MM-dd')
@@ -791,7 +794,8 @@ function CalendarHeatmap({ currentMonth, selectedDate, setSelectedDate, events }
               style={{ background: isCurrentMonth ? bgColor : 'transparent' }}
             >
               <span className={cn(
-                "text-[12px] font-black",
+                "font-black",
+                isDesktop ? "text-[12px]" : "text-xs",
                 count >= 3 && isCurrentMonth ? "text-white" : isCurrentMonth ? "text-[#F1F5F9]" : "text-[#4B6478]"
               )}>
                 {format(day, 'd')}
@@ -811,16 +815,16 @@ function CalendarHeatmap({ currentMonth, selectedDate, setSelectedDate, events }
   )
 }
 
-function AgendaMiniStat({ label, value, color }) {
+function AgendaMiniStat({ label, value, color, isDesktop }) {
   return (
     <div className="bg-black/20 border border-white/5 p-3 rounded-2xl flex flex-col gap-1 min-w-[100px]">
-       <p className="text-[8px] font-black text-[#4B6478] uppercase tracking-widest">{label}</p>
-       <p className={cn("text-[13px] font-black tabular-nums", color)}>{value}</p>
+       <p className={cn("font-black text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-[8px]" : "text-[10px]")}>{label}</p>
+       <p className={cn("font-black tabular-nums", color, isDesktop ? "text-[13px]" : "text-sm")}>{value}</p>
     </div>
   )
 }
 
-function EventItem({ event }) {
+function EventItem({ event, isDesktop }) {
   const Icon = event.icon
   const diff = differenceInDays(new Date(event.date), new Date())
   
@@ -835,10 +839,10 @@ function EventItem({ event }) {
        </div>
        <div className="flex-1 min-w-0">
           <div className="flex justify-between items-start gap-2">
-             <h4 className="text-[13px] font-bold text-[#F1F5F9] truncate">{event.type === 'Piutang' ? event.rpa_clients?.rpa_name : event.farm_name || 'Event Sesuai Jadwal'}</h4>
-             <Badge className={cn("text-[8px] font-black uppercase tracking-tighter border-none px-2 h-5", urgency.color)}>{urgency.label}</Badge>
+             <h4 className={cn("font-bold text-[#F1F5F9] truncate", isDesktop ? "text-[13px]" : "text-sm")}>{event.type === 'Piutang' ? event.rpa_clients?.rpa_name : event.farm_name || 'Event Sesuai Jadwal'}</h4>
+             <Badge className={cn("font-black uppercase tracking-tighter border-none px-2 h-5", urgency.color, isDesktop ? "text-[8px]" : "text-[10px]")}>{urgency.label}</Badge>
           </div>
-          <p className="text-[11px] text-[#4B6478] font-medium mt-0.5">
+          <p className={cn("text-[#4B6478] font-medium mt-0.5", isDesktop ? "text-[11px]" : "text-xs")}>
              {formatDate(event.date)} {event.total_revenue ? `· ${formatIDRShort(event.total_revenue)}` : ''}
           </p>
        </div>

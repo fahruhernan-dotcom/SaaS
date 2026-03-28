@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Search, Phone, MapPin, ChevronRight, CheckCircle2, Building2, User, Star, Trash2 } from 'lucide-react'
+import { Plus, Search, Phone, MapPin, ChevronRight, CheckCircle2, Building2, User, Star, Trash2, Lock, Unlock } from 'lucide-react'
 import { useRPA } from '@/lib/hooks/useRPA'
 import { useSales } from '@/lib/hooks/useSales'
 import { 
@@ -30,6 +30,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import { cn } from '@/lib/utils'
 
 const staggerContainer = {
   hidden: {},
@@ -40,11 +42,12 @@ const fadeUp = {
   hidden: { opacity: 0, y: 16 },
   visible: { 
     opacity: 1, y: 0,
-    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } 
+    transition: { duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] } 
   }
 }
 
 export default function RPA() {
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const { tenant } = useAuth()
   const { data: rpas, isLoading } = useRPA()
   const { data: allSales, isLoading: loadingSales } = useSales()
@@ -86,20 +89,20 @@ export default function RPA() {
     <motion.div 
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.2 }}
         className="bg-[#06090F] min-h-screen pb-24"
     >
       {/* TopBar */}
-      <header className="px-5 pt-8 pb-4 border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 flex flex-col gap-1">
+      <header className={cn("px-5 pb-4 border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 flex flex-col gap-1", isDesktop ? "pt-8" : "pt-10")}>
         <div className="flex justify-between items-center text-left">
             <div>
-                <h1 className="font-display text-2xl font-black text-white tracking-tight leading-none uppercase">RPA & Piutang</h1>
-                <p className="text-[11px] font-bold text-[#4B6478] uppercase mt-1">{rpas?.length || 0} pembeli terdaftar</p>
+                <h1 className={cn("font-display font-black text-white tracking-tight leading-none uppercase", isDesktop ? "text-2xl" : "text-xl")}>RPA & Piutang</h1>
+                <p className={cn("font-bold text-[#4B6478] uppercase mt-1", isDesktop ? "text-[11px]" : "text-[10px]")}>{rpas?.length || 0} pembeli terdaftar</p>
             </div>
             <Button 
                 size="sm" 
                 onClick={() => { setEditingRPA(null); setOpenModal(true); }}
-                className="bg-[#10B981] hover:bg-[#0D9668] text-white font-black uppercase text-[10px] tracking-widest rounded-xl h-10 px-4 gap-2 border-none shadow-[0_4px_12px_rgba(16,185,129,0.2)]"
+                className={cn("bg-[#10B981] hover:bg-[#0D9668] text-white font-black uppercase tracking-widest rounded-xl px-4 gap-2 border-none shadow-[0_4px_12px_rgba(16,185,129,0.2)] h-10 transition-all active:scale-95", isDesktop ? "text-[10px]" : "text-xs")}
             >
                 <Plus size={16} />
                 Tambah
@@ -115,9 +118,9 @@ export default function RPA() {
             className="mx-5 mt-4 p-5 bg-red-400/[0.04] border border-red-400/10 rounded-3xl space-y-1 relative overflow-hidden"
         >
             <div className="relative z-10">
-                <p className="text-[10px] font-black text-red-400 uppercase tracking-widest leading-none mb-1 text-left">Total Piutang Aktif</p>
-                <p className="font-display text-3xl font-black text-red-500 tracking-tighter text-left">{formatIDR(totalPiutang)}</p>
-                <p className="text-[11px] font-black text-red-400/50 uppercase tracking-wider text-left">dari {activeCount} RPA</p>
+                <p className={cn("font-black text-red-400 uppercase tracking-widest leading-none mb-1 text-left", isDesktop ? "text-[10px]" : "text-[11px]")}>Total Piutang Aktif</p>
+                <p className={cn("font-display font-black text-red-500 tracking-tighter text-left", isDesktop ? "text-3xl" : "text-2xl")}>{formatIDR(totalPiutang)}</p>
+                <p className={cn("font-black text-red-400/50 uppercase tracking-wider text-left", isDesktop ? "text-[11px]" : "text-xs")}>dari {activeCount} RPA</p>
             </div>
             <div className="absolute -right-4 -bottom-4 text-red-500/5 rotate-12">
                 <Building2 size={80} />
@@ -132,14 +135,14 @@ export default function RPA() {
             placeholder="Cari nama RPA..." 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="bg-[#111C24] border-white/10 h-13 pl-12 rounded-2xl focus:border-emerald-500/50 transition-all font-bold text-white text-[15px]"
+            className={cn("bg-[#111C24] border-white/10 h-13 pl-12 rounded-2xl focus:border-emerald-500/50 transition-all font-bold text-white", isDesktop ? "text-[15px]" : "text-base")}
         />
       </div>
 
       {/* RPA List */}
       <div className="mt-6 px-5 space-y-3">
         {isLoading || loadingSales ? (
-          <LoadingList />
+          <LoadingList isDesktop={isDesktop} />
         ) : filteredRpas.length === 0 ? (
           <EmptyState 
             icon={Building2} 
@@ -147,7 +150,7 @@ export default function RPA() {
             description="Tambahkan pembeli pertamamu untuk mulai mencatat penjualan dan melacak piutang." 
             action={
                 <Button 
-                    className="bg-[#10B981] hover:bg-emerald-600 h-11 px-6 font-black uppercase tracking-widest text-[10px] rounded-xl border-none" 
+                    className={cn("bg-[#10B981] hover:bg-emerald-600 h-11 px-6 font-black uppercase tracking-widest rounded-xl border-none transition-all active:scale-95", isDesktop ? "text-[10px]" : "text-xs")} 
                     onClick={() => setOpenModal(true)}
                 >
                     Tambah RPA Pertama
@@ -155,16 +158,17 @@ export default function RPA() {
             }
           />
         ) : (
-          <motion.div 
+          <motion.div
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
-            className="space-y-3"
+            className={isDesktop ? "space-y-3" : "space-y-2"}
           >
             {filteredRpas.map((rpa) => (
               <motion.div key={rpa.id} variants={fadeUp}>
                 <RPACard 
                     rpa={rpa} 
+                    isDesktop={isDesktop}
                     onClick={() => navigate(`/broker/rpa/${rpa.id}`)} 
                     onEdit={handleEdit}
                 />
@@ -178,7 +182,7 @@ export default function RPA() {
       <Sheet open={openModal} onOpenChange={setOpenModal}>
         <SheetContent 
           side="right" 
-          className="bg-[#0C1319] border-l border-white/8 w-full sm:max-w-[480px] p-8 overflow-y-auto"
+          className="bg-[#0C1319] border-l border-white/8 w-full sm:max-w-[480px] p-6 overflow-y-auto"
         >
           <SheetHeader className="mb-8">
             <SheetTitle className="font-display text-2xl font-black text-white uppercase tracking-tight text-left">
@@ -189,9 +193,24 @@ export default function RPA() {
 
           <RPAForm 
             rpa={editingRPA} 
+            isDesktop={isDesktop}
             onClose={() => setOpenModal(false)} 
             tenantId={tenant?.id} 
-            onSuccess={() => {
+            onSubmit={async (data) => {
+                const action = editingRPA ? 'update' : 'insert'
+                const { error } = await (editingRPA ? 
+                    supabase.from('rpa_clients').update(data).eq('id', editingRPA.id) : 
+                    supabase.from('rpa_clients').insert({ ...data, tenant_id: tenant?.id })
+                )
+                if (error) throw error
+                toast.success(editingRPA ? 'RPA diperbarui' : 'RPA ditambahkan')
+                queryClient.invalidateQueries({ queryKey: ['rpa-clients', tenant?.id] })
+                setOpenModal(false)
+            }}
+            onDelete={async (id) => {
+                const { error } = await supabase.from('rpa_clients').delete().eq('id', id)
+                if (error) throw error
+                toast.success('RPA dihapus')
                 queryClient.invalidateQueries({ queryKey: ['rpa-clients', tenant?.id] })
                 setOpenModal(false)
             }}
@@ -202,75 +221,165 @@ export default function RPA() {
   )
 }
 
-const BuyerTypeBadge = ({ type }) => (
-  <span style={{
-    fontSize: '9px',
-    fontWeight: 800,
-    padding: '2px 8px',
-    borderRadius: '99px',
-    background: 'rgba(255,255,255,0.06)',
-    border: '1px solid rgba(255,255,255,0.10)',
-    color: '#94A3B8',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em'
-  }}>
-    {formatBuyerType(type)}
-  </span>
-)
+const SHORT_BUYER_LABELS = {
+  rpa: 'RPA',
+  pedagang_pasar: 'Pasar',
+  restoran: 'Resto',
+  pengepul: 'Pengepul',
+  supermarket: 'Supermarket',
+  lainnya: 'Lainnya',
+}
 
-function RPACard({ rpa, onClick, onEdit }) {
+const PaymentStatusBadge = ({ outstanding }) => {
+  if (outstanding <= 0) {
+    return (
+      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md text-emerald-400 bg-emerald-500/10 whitespace-nowrap">
+        Lunas
+      </span>
+    )
+  }
   return (
-    <div
+    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md text-red-400 bg-red-500/10 whitespace-nowrap">
+      Belum Lunas
+    </span>
+  )
+}
+
+function RPACard({ rpa, isDesktop, onClick, onEdit }) {
+  const initials = rpa.rpa_name.slice(0, 2).toUpperCase()
+
+  // ── Desktop layout (unchanged) ──────────────────────────────────────────────
+  if (isDesktop) {
+    return (
+      <div
         onClick={onClick}
         className="bg-[#111C24] border border-white/5 rounded-3xl p-4 flex justify-between items-center cursor-pointer hover:border-white/10 transition-all shadow-sm group active:scale-[0.98]"
-    >
+      >
         <div className="flex gap-4 items-center flex-1">
-            <Avatar className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
-                <AvatarFallback className="bg-transparent text-[#34D399] font-display font-black text-lg">
-                    {rpa.rpa_name.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-            </Avatar>
-            <div className="space-y-1 text-left">
-                <div className="flex items-center gap-2">
-                    <h3 className="font-display font-black text-[#F1F5F9] text-base group-hover:text-emerald-400 transition-colors uppercase tracking-tight">{rpa.rpa_name}</h3>
-                    <BuyerTypeBadge type={rpa.buyer_type} />
-                </div>
-                <div className="flex items-center gap-3">
-                    <a 
-                        href={`tel:${rpa.phone}`} 
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex items-center gap-1.5 text-[11px] font-bold text-[#4B6478] hover:text-[#34D399] transition-colors"
-                    >
-                        <Phone size={10} /> {rpa.phone}
-                    </a>
-                    <span className="text-white/10">•</span>
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#4B6478]">
-                        <MapPin size={10} /> {rpa.location || 'N/A'}
-                    </div>
-                </div>
+          <Avatar className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
+            <AvatarFallback className="bg-transparent text-[#34D399] font-display font-black text-lg">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="space-y-1 text-left">
+            <div className="flex items-center gap-2">
+              <h3 className="font-display font-black text-[#F1F5F9] group-hover:text-emerald-400 transition-colors uppercase tracking-tight text-base">
+                {rpa.rpa_name}
+              </h3>
+              <span style={{
+                fontSize: '9px', fontWeight: 800, padding: '2px 8px',
+                borderRadius: '99px', background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.10)', color: '#94A3B8',
+                textTransform: 'uppercase', letterSpacing: '0.05em',
+              }}>
+                {formatBuyerType(rpa.buyer_type)}
+              </span>
             </div>
+            <div className="flex items-center gap-3">
+              <a
+                href={`tel:${rpa.phone}`}
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1.5 font-bold text-[#4B6478] hover:text-[#34D399] transition-colors min-h-[24px] text-[11px]"
+              >
+                <Phone size={12} className="text-emerald-500/40" /> {rpa.phone}
+              </a>
+              <span className="text-white/10">•</span>
+              <div className="flex items-center gap-1.5 font-bold text-[#4B6478] text-[11px]">
+                <MapPin size={12} className="text-emerald-500/40" /> {rpa.location || 'N/A'}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="text-right flex items-center gap-1.5">
+          <div className="space-y-0.5">
+            {rpa.calculated_outstanding > 0 ? (
+              <>
+                <p className="font-black text-red-400 uppercase tracking-widest leading-none text-right text-[10px]">Piutang</p>
+                <p className="font-display font-black text-red-500 tabular-nums leading-none mt-1 text-right text-base">
+                  {formatIDRShort(rpa.calculated_outstanding)}
+                </p>
+              </>
+            ) : (
+              <div className="flex items-center gap-1 text-[#34D399] font-black uppercase tracking-wider text-[11px]">
+                <CheckCircle2 size={13} strokeWidth={3} /> Lunas
+              </div>
+            )}
+          </div>
+          <ChevronRight size={16} className="text-[#4B6478] group-hover:translate-x-1 transition-transform ml-1" />
+        </div>
+      </div>
+    )
+  }
+
+  // ── Mobile layout ───────────────────────────────────────────────────────────
+  return (
+    <div
+      onClick={onClick}
+      className="bg-[#111C24] rounded-2xl border border-white/8 active:bg-white/5 transition-colors cursor-pointer"
+    >
+      <div className="flex items-center gap-3 p-4 min-h-[80px]">
+        {/* Avatar */}
+        <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex-shrink-0 flex items-center justify-center">
+          <span className="text-emerald-400 font-bold text-sm font-display">{initials}</span>
         </div>
 
-        <div className="text-right flex items-center gap-1.5">
-            <div className="space-y-0.5">
-                {rpa.calculated_outstanding > 0 ? (
-                    <>
-                        <p className="text-[10px] font-black text-red-400 uppercase tracking-widest leading-none text-right">Piutang</p>
-                        <p className="font-display font-black text-red-500 tabular-nums leading-none mt-1 text-right">{formatIDRShort(rpa.calculated_outstanding)}</p>
-                    </>
-                ) : (
-                    <div className="flex items-center gap-1 text-[#34D399] font-black text-[11px] uppercase tracking-wider">
-                        <CheckCircle2 size={13} strokeWidth={3} /> Lunas
-                    </div>
-                )}
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          {/* Row 1: Name + type badge */}
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm font-semibold text-white truncate">
+              {rpa.rpa_name}
+            </span>
+            <span className="flex-shrink-0 text-[10px] font-medium bg-white/10 text-[#94A3B8] rounded-md px-1.5 py-0.5 whitespace-nowrap">
+              {SHORT_BUYER_LABELS[rpa.buyer_type] || formatBuyerType(rpa.buyer_type)}
+            </span>
+          </div>
+
+          {/* Row 2: Phone + location */}
+          <div className="flex items-center gap-2 text-xs text-[#4B6478]">
+            {rpa.phone && (
+              <a
+                href={`tel:${rpa.phone}`}
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 truncate hover:text-emerald-400 transition-colors"
+              >
+                <Phone className="w-3 h-3 flex-shrink-0" />
+                <span className="truncate">{rpa.phone}</span>
+              </a>
+            )}
+            {rpa.location && (
+              <>
+                <span className="flex-shrink-0">•</span>
+                <span className="flex items-center gap-1 truncate">
+                  <MapPin className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">{rpa.location}</span>
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Row 3: Piutang (only if > 0) */}
+          {rpa.calculated_outstanding > 0 && (
+            <div className="mt-1.5 pt-1.5 border-t border-white/5 flex items-center justify-between">
+              <span className="text-[11px] text-[#4B6478]">Piutang</span>
+              <span className="text-[11px] font-semibold text-red-400">
+                {formatIDRShort(rpa.calculated_outstanding)}
+              </span>
             </div>
-            <ChevronRight size={16} className="text-[#4B6478] group-hover:translate-x-1 transition-transform ml-1" />
+          )}
         </div>
+
+        {/* Status + Arrow */}
+        <div className="flex-shrink-0 flex flex-col items-end gap-1.5">
+          <PaymentStatusBadge outstanding={rpa.calculated_outstanding} />
+          <ChevronRight className="w-4 h-4 text-white/20" />
+        </div>
+      </div>
     </div>
   )
 }
 
-function RPAForm({ rpa, onClose, tenantId, onSubmit, onDelete }) {
+function RPAForm({ rpa, isDesktop, onClose, onSubmit, onDelete }) {
     const { profile } = useAuth()
     const isOwner = profile?.role === 'owner'
     const [isLoading, setIsLoading] = useState(false)
@@ -293,7 +402,7 @@ function RPAForm({ rpa, onClose, tenantId, onSubmit, onDelete }) {
             await onSubmit(formData)
             onClose()
         } catch (err) {
-            // Error handling is done in onSubmit, but keep this for local state management
+            // Error handling is done in onSubmit
         } finally {
             setIsLoading(false)
         }
@@ -302,20 +411,20 @@ function RPAForm({ rpa, onClose, tenantId, onSubmit, onDelete }) {
     return (
         <form onSubmit={handleSubmit} className="space-y-6 pb-12">
             <div className="space-y-2">
-                <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Nama RPA / Pembeli *</Label>
+                <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Nama RPA / Pembeli *</Label>
                 <Input
                     required
                     value={formData.rpa_name}
                     onChange={e => setFormData({...formData, rpa_name: e.target.value})}
-                    className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold"
+                    className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white text-base"
                 />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Tipe Pembeli</Label>
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Tipe Pembeli</Label>
                     <Select value={formData.buyer_type} onValueChange={val => setFormData({...formData, buyer_type: val})}>
-                        <SelectTrigger className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold">
+                        <SelectTrigger className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white uppercase text-xs">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#111C24] border-white/10 text-white">
@@ -328,31 +437,31 @@ function RPAForm({ rpa, onClose, tenantId, onSubmit, onDelete }) {
                     </Select>
                 </div>
                 <div className="space-y-2">
-                    <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">No HP *</Label>
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>No HP *</Label>
                     <Input
                         required
                         type="tel"
                         value={formData.phone}
                         onChange={e => setFormData({...formData, phone: e.target.value})}
-                        className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold"
+                        className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white text-base"
                     />
                 </div>
             </div>
 
             <div className="space-y-2">
-                <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Lokasi / Alamat</Label>
+                <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Lokasi / Alamat</Label>
                 <Input
                     value={formData.location}
                     onChange={e => setFormData({...formData, location: e.target.value})}
-                    className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold"
+                    className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white text-base"
                 />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Syarat Bayar</Label>
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Syarat Bayar</Label>
                     <Select value={formData.payment_terms} onValueChange={val => setFormData({...formData, payment_terms: val})}>
-                        <SelectTrigger className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold">
+                        <SelectTrigger className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white uppercase text-xs">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#111C24] border-white/10 text-white">
@@ -365,13 +474,13 @@ function RPAForm({ rpa, onClose, tenantId, onSubmit, onDelete }) {
                     </Select>
                 </div>
                 <div className="space-y-2">
-                    <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Reliabilitas</Label>
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Reliabilitas</Label>
                     <div className="flex gap-2 h-12 items-center">
                         {[1,2,3,4,5].map(s => (
                             <Star
                                 key={s}
-                                size={20}
-                                className={`cursor-pointer transition-all ${s <= formData.reliability_score ? 'fill-amber-400 text-amber-400' : 'text-[#4B6478]'}`}
+                                size={22}
+                                className={cn("cursor-pointer transition-all", s <= formData.reliability_score ? 'fill-amber-400 text-amber-400' : 'text-[#4B6478]')}
                                 onClick={() => setFormData({...formData, reliability_score: s})}
                             />
                         ))}
@@ -380,11 +489,11 @@ function RPAForm({ rpa, onClose, tenantId, onSubmit, onDelete }) {
             </div>
 
             <div className="space-y-2">
-                <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Catatan</Label>
+                <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Catatan</Label>
                 <Textarea
                     value={formData.notes}
                     onChange={e => setFormData({...formData, notes: e.target.value})}
-                    className="bg-[#111C24] border-white/10 rounded-xl min-h-[80px]"
+                    className="bg-[#111C24] border-white/10 rounded-xl min-h-[80px] font-bold text-white text-base p-4"
                 />
             </div>
 
@@ -399,14 +508,14 @@ function RPAForm({ rpa, onClose, tenantId, onSubmit, onDelete }) {
                                 onDelete(rpa.id)
                             }
                         }}
-                        className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/5 text-[#F87171] hover:bg-red-500/10 transition-all"
+                        className="w-14 h-14 rounded-2xl bg-white/[0.03] border border-white/5 text-[#F87171] hover:bg-red-500/10 transition-all active:scale-95"
                     >
-                        <Trash2 size={20} />
+                        <Trash2 size={22} />
                     </Button>
                 )}
                 <Button
                     type="submit"
-                    className="flex-1 h-14 rounded-2xl bg-[#10B981] hover:bg-[#0D9668] text-base font-black border-none shadow-lg uppercase tracking-widest text-xs"
+                    className={cn("flex-1 h-14 rounded-2xl bg-[#10B981] hover:bg-[#0D9668] font-black border-none shadow-lg shadow-emerald-500/10 uppercase tracking-widest transition-all active:scale-95", isDesktop ? "text-xs" : "text-sm")}
                     disabled={isLoading}
                 >
                     {isLoading ? 'Menyimpan...' : (rpa ? 'Simpan Perubahan' : 'Tambah RPA Baru')}
@@ -416,7 +525,7 @@ function RPAForm({ rpa, onClose, tenantId, onSubmit, onDelete }) {
     )
 }
 
-function LoadingList() {
+function LoadingList({ isDesktop }) {
   return (
     <div className="space-y-3">
         <Skeleton className="h-[48px] w-full rounded-2xl bg-secondary/10 mb-6" />

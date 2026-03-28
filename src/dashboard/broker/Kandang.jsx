@@ -45,12 +45,13 @@ const fadeUp = {
   hidden: { opacity: 0, y: 16 },
   visible: { 
     opacity: 1, y: 0,
-    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } 
+    transition: { duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] } 
   }
 }
 
 export default function Kandang() {
   const { tenant } = useAuth()
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const { data: farms, isLoading } = useFarms()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('Semua') // 'Semua' | 'READY' | 'GROWING' | 'EMPTY'
@@ -93,7 +94,7 @@ export default function Kandang() {
         <div className="flex justify-between items-center">
             <div className="text-left">
                 <h1 className="font-display text-2xl font-black text-white tracking-tight uppercase">Kandang</h1>
-                <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mt-1">{safeNumber(totalEkor).toLocaleString('id-ID')} ekor tersedia</p>
+                <p className={cn("font-black text-[#4B6478] uppercase tracking-widest mt-1", isDesktop ? "text-[10px]" : "text-xs")}>{safeNumber(totalEkor).toLocaleString('id-ID')} ekor tersedia</p>
             </div>
             <Button 
                 size="sm" 
@@ -123,11 +124,13 @@ export default function Kandang() {
               <button
                 key={t}
                 onClick={() => setFilter(t)}
-                className={`flex-shrink-0 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${
+                className={cn(
+                    "flex-shrink-0 px-5 py-2 rounded-full font-black uppercase tracking-widest transition-all border",
+                    isDesktop ? "text-[10px]" : "text-xs",
                     (filter === t || (filter === 'Semua' && t === 'Semua')) 
                     ? 'bg-secondary/10 border-emerald-500/30 text-emerald-400 shadow-[0_4px_12px_rgba(16,185,129,0.1)]' 
                     : 'bg-white/[0.03] border-white/5 text-[#4B6478] hover:border-white/10'
-                }`}
+                )}
               >
                 {t === 'Ready' ? 'Siap Panen' : t === 'Growing' ? 'Tumbuh' : t === 'Empty' ? 'Kosong' : t}
               </button>
@@ -181,8 +184,8 @@ export default function Kandang() {
 function SummaryPill({ label, value, color }) {
     return (
         <div className={`px-5 py-3 rounded-[22px] ${color} flex flex-col items-start gap-1 border border-white/5 min-w-[124px] text-left`}>
-            <span className="text-[9px] font-black uppercase tracking-[0.15em] opacity-60 leading-none">{label}</span>
-            <span className="text-[14px] font-black tracking-tight leading-none tabular-nums">{value}</span>
+            <span className="text-xs font-black uppercase tracking-[0.15em] opacity-60 leading-none">{label}</span>
+            <span className="text-base font-black tracking-tight leading-none tabular-nums">{value}</span>
         </div>
     )
 }
@@ -198,7 +201,7 @@ function FarmCard({ farm, onEdit }) {
         <div className="flex justify-between items-start">
             <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
-                    <h3 className="font-display font-black text-[#F1F5F9] text-[18px] tracking-tight group-hover:text-emerald-400 transition-colors uppercase leading-none">{farm.farm_name}</h3>
+                    <h3 className="font-display font-black text-[#F1F5F9] text-[18px] lg:text-[18px] tracking-tight group-hover:text-emerald-400 transition-colors uppercase leading-none">{farm.farm_name}</h3>
                 </div>
                 {farm.quality_rating > 0 && (
                     <div className="flex gap-0.5">
@@ -211,7 +214,7 @@ function FarmCard({ farm, onEdit }) {
             <StatusBadge status={farm.status} />
         </div>
 
-        <div className="flex items-center gap-1.5 text-[11px] font-black text-[#4B6478] uppercase tracking-wider">
+        <div className="flex items-center gap-1.5 text-xs font-black text-[#4B6478] uppercase tracking-wider">
             <span className="text-[#F1F5F9]">{farm.owner_name}</span>
             <span className="text-white/10">•</span>
             <div className="flex items-center gap-1">
@@ -221,11 +224,11 @@ function FarmCard({ farm, onEdit }) {
 
         <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 grid grid-cols-2 gap-4">
             <div className="space-y-1">
-                <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest leading-none">Stok Tersedia</p>
+                <p className="text-xs font-black text-[#4B6478] uppercase tracking-widest leading-none">Stok Tersedia</p>
                 <p className="font-display font-black text-[#F1F5F9] text-base leading-none tabular-nums mt-1">{safeNumber(farm.available_stock).toLocaleString('id-ID')} ekor</p>
             </div>
             <div className="space-y-1 text-right">
-                <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest leading-none">Rata-rata Bobot</p>
+                <p className="text-xs font-black text-[#4B6478] uppercase tracking-widest leading-none">Rata-rata Bobot</p>
                 <p className="font-display font-black text-[#F1F5F9] text-base leading-none tabular-nums mt-1">{farm.avg_weight_kg ? formatWeight(farm.avg_weight_kg) : '-'}</p>
             </div>
         </div>
@@ -242,18 +245,18 @@ function FarmCard({ farm, onEdit }) {
 function StatusBadge({ status, className }) {
     switch(status) {
         case 'ready': 
-            return <Badge className={cn("bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-black text-[9px] px-3 h-6 uppercase tracking-wider", className)}>SIAP PANEN</Badge>
+            return <Badge className={cn("bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-black text-xs px-3 h-6 uppercase tracking-wider", className)}>SIAP PANEN</Badge>
         case 'growing':
-            return <Badge className={cn("bg-amber-500/10 text-amber-500 border border-amber-500/20 font-black text-[9px] px-3 h-6 uppercase tracking-wider", className)}>TUMBUH</Badge>
+            return <Badge className={cn("bg-amber-500/10 text-amber-500 border border-amber-500/20 font-black text-xs px-3 h-6 uppercase tracking-wider", className)}>TUMBUH</Badge>
         default:
-            return <Badge className={cn("bg-secondary/10 text-[#4B6478] border border-white/5 font-black text-[9px] px-3 h-6 uppercase tracking-wider", className)}>KOSONG</Badge>
+            return <Badge className={cn("bg-secondary/10 text-[#4B6478] border border-white/5 font-black text-xs px-3 h-6 uppercase tracking-wider", className)}>KOSONG</Badge>
     }
 }
 
 function HarvestPill({ days, date }) {
     if (days <= 0) {
         return (
-            <div className="flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full text-[10px] font-black text-red-500 uppercase tracking-wide">
+            <div className="flex items-center gap-2 px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full text-xs font-black text-red-500 uppercase tracking-wide">
                 <AlertTriangle size={12} strokeWidth={3} />
                 TERLEWAT {Math.abs(days)} HARI
             </div>
@@ -261,7 +264,7 @@ function HarvestPill({ days, date }) {
     }
     if (days <= 3) {
         return (
-            <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-black text-emerald-400 animate-pulse uppercase tracking-wide">
+            <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-xs font-black text-emerald-400 animate-pulse uppercase tracking-wide">
                 <Clock size={12} strokeWidth={3} />
                 PANEN DALAM {days} HARI!
             </div>
@@ -269,14 +272,14 @@ function HarvestPill({ days, date }) {
     }
     if (days <= 7) {
         return (
-            <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full text-[10px] font-black text-amber-500 uppercase tracking-wide">
+            <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full text-xs font-black text-amber-500 uppercase tracking-wide">
                 <Clock size={12} strokeWidth={3} />
                 {days} HARI LAGI
             </div>
         )
     }
     return (
-        <div className="flex items-center gap-2 text-[10px] font-black text-[#4B6478] uppercase tracking-widest">
+        <div className="flex items-center gap-2 text-xs font-black text-[#4B6478] uppercase tracking-widest">
             <Calendar size={12} />
             {formatDate(date)}
         </div>
@@ -285,16 +288,26 @@ function HarvestPill({ days, date }) {
 
 // --- SHEET: FARM DETAIL & EDIT ---
 
-function FarmSheet({ isOpen, onOpenChange, farm, onUpdate, onDelete }) {
+function FarmSheet({ isOpen, onClose, farm, tenantId }) {
     const { profile } = useAuth()
     const isOwner = profile?.role === 'owner'
     const [mode, setMode] = useState('view')
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
     const queryClient = useQueryClient()
 
-    const handleDelete = () => {
-        if (farm) onDelete(farm.id)
-        setIsDeleteDialogOpen(false)
+    const handleDelete = async () => {
+        if (!farm) return
+        try {
+            const { error } = await supabase.from('farms').update({ is_deleted: true }).eq('id', farm.id)
+            if (error) throw error
+            toast.success('Kandang dihapus')
+            queryClient.invalidateQueries(['farms'])
+            onClose()
+        } catch (err) {
+            toast.error('❌ ' + err.message)
+        } finally {
+            setIsDeleteDialogOpen(false)
+        }
     }
 
     // Reset mode to 'view' when opening for an existing farm, 'edit' for new
@@ -305,7 +318,7 @@ function FarmSheet({ isOpen, onOpenChange, farm, onUpdate, onDelete }) {
     }, [isOpen, farm])
 
     return (
-        <Sheet open={isOpen} onOpenChange={onOpenChange}>
+        <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <SheetContent side="right" className="sm:max-w-md bg-[#0C1319] border-white/10 p-0 overflow-y-auto">
                 {mode === 'view' ? (
                     <div className="flex flex-col h-full">
@@ -338,11 +351,11 @@ function FarmSheet({ isOpen, onOpenChange, farm, onUpdate, onDelete }) {
 
                                 <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5">
                                     <div className="space-y-1">
-                                        <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Stok Ayam</p>
+                                        <p className="text-xs font-black text-[#4B6478] uppercase tracking-widest">Stok Ayam</p>
                                         <p className="text-white font-black text-lg">{formatEkor(farm?.available_stock)}</p>
                                     </div>
                                     <div className="space-y-1 text-right">
-                                        <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Rata-rata Bobot</p>
+                                        <p className="text-xs font-black text-[#4B6478] uppercase tracking-widest">Rata-rata Bobot</p>
                                         <p className="text-white font-black text-lg">{farm?.avg_weight_kg ? `${farm.avg_weight_kg} kg` : '-'}</p>
                                     </div>
                                 </div>
@@ -384,18 +397,18 @@ function FarmSheet({ isOpen, onOpenChange, farm, onUpdate, onDelete }) {
                             <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">
                                 {farm ? 'Edit Kandang' : 'Tambah Kandang'}
                             </SheetTitle>
-                            <SheetDescription className="text-[#4B6478] font-bold uppercase text-[10px] tracking-widest mt-1">
+                            <SheetDescription className={cn("text-[#4B6478] font-bold uppercase tracking-widest mt-1", isDesktop ? "text-[10px]" : "text-[11px]")}>
                                 {farm ? 'Sesuaikan data stok dan status' : 'Daftarkan kandang baru ke sistem'}
                             </SheetDescription>
                         </SheetHeader>
 
-                        <FarmForm 
-                            farm={farm} 
-                            tenantId={tenantId} 
+                        <FarmForm
+                            farm={farm}
+                            tenantId={tenantId}
                             onSuccess={() => {
                                 queryClient.invalidateQueries(['farms'])
-                                if (!farm) onClose() // Close if new
-                                else setMode('view') // Return to view if edit
+                                if (!farm) onClose()
+                                else setMode('view')
                             }}
                             onCancel={() => farm ? setMode('view') : onClose()}
                             isSheet
@@ -418,7 +431,7 @@ function FarmSheet({ isOpen, onOpenChange, farm, onUpdate, onDelete }) {
 function DetailRow({ label, value, className }) {
     return (
         <div className="flex flex-col gap-1 border-b border-white/5 pb-3">
-            <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">{label}</span>
+            <span className="text-xs font-black text-[#4B6478] uppercase tracking-widest">{label}</span>
             <span className={cn("text-white text-sm font-bold", className)}>{value || '-'}</span>
         </div>
     )
@@ -476,54 +489,54 @@ function FarmForm({ farm, tenantId, onSuccess, onCancel, isSheet }) {
     return (
         <form onSubmit={handleSubmit} className="space-y-6 pb-12 text-left">
             <div className="space-y-2">
-                <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Nama Kandang *</Label>
+                <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Nama Kandang *</Label>
                 <Input 
                     required placeholder="Kandang Pak Harto"
                     value={formData.farm_name} 
                     onChange={e => setFormData({...formData, farm_name: e.target.value})}
-                    className="bg-[#111C24] border-white/10 h-14 font-black rounded-2xl pl-5 placeholder:text-[#4B6478] placeholder:font-bold"
+                    className={cn("bg-[#111C24] border-white/10 h-14 font-black rounded-2xl pl-5 placeholder:text-[#4B6478] placeholder:font-bold", !isDesktop && "text-base")}
                 />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Nama Pemilik *</Label>
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Nama Pemilik *</Label>
                     <Input 
                         required
                         value={formData.owner_name} 
                         onChange={e => setFormData({...formData, owner_name: e.target.value})}
-                        className="bg-[#111C24] border-white/10 h-14 font-black rounded-2xl"
+                        className={cn("bg-[#111C24] border-white/10 h-14 font-black rounded-2xl", !isDesktop && "text-base")}
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">No HP</Label>
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>No HP</Label>
                     <Input 
                         type="tel"
                         value={formData.phone} 
                         onChange={e => setFormData({...formData, phone: e.target.value})}
-                        className="bg-[#111C24] border-white/10 h-14 font-black rounded-2xl"
+                        className={cn("bg-[#111C24] border-white/10 h-14 font-black rounded-2xl", !isDesktop && "text-base")}
                     />
                 </div>
             </div>
 
             <div className="space-y-2">
-                <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Lokasi</Label>
+                <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Lokasi</Label>
                 <div className="relative">
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[#4B6478]" size={18} />
                     <Input 
                         placeholder="Boyolali, Jawa Tengah"
                         value={formData.location} 
                         onChange={e => setFormData({...formData, location: e.target.value})}
-                        className="bg-[#111C24] border-white/10 h-14 font-black rounded-2xl pl-12"
+                        className={cn("bg-[#111C24] border-white/10 h-14 font-black rounded-2xl pl-12", !isDesktop && "text-base")}
                     />
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Jenis Ayam</Label>
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Jenis Ayam</Label>
                     <Select value={formData.chicken_type} onValueChange={val => setFormData({...formData, chicken_type: val})}>
-                        <SelectTrigger className="bg-[#111C24] border-white/10 h-14 font-black rounded-2xl uppercase tracking-widest text-[10px] px-5">
+                        <SelectTrigger className={cn("bg-[#111C24] border-white/10 h-14 font-black rounded-2xl uppercase tracking-widest px-5", isDesktop ? "text-[10px]" : "text-xs")}>
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#111C24] border-white/10 text-white">
@@ -534,9 +547,9 @@ function FarmForm({ farm, tenantId, onSuccess, onCancel, isSheet }) {
                     </Select>
                 </div>
                 <div className="space-y-2">
-                    <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Status</Label>
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Status</Label>
                     <Select value={formData.status} onValueChange={val => setFormData({...formData, status: val})}>
-                        <SelectTrigger className="bg-[#111C24] border-white/10 h-14 font-black rounded-2xl uppercase tracking-widest text-[10px] px-5">
+                        <SelectTrigger className={cn("bg-[#111C24] border-white/10 h-14 font-black rounded-2xl uppercase tracking-widest px-5", isDesktop ? "text-[10px]" : "text-xs")}>
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#111C24] border-white/10 text-white">
@@ -551,20 +564,20 @@ function FarmForm({ farm, tenantId, onSuccess, onCancel, isSheet }) {
             {formData.status !== 'empty' && (
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Stok Ayam (Ekor)</Label>
+                        <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Stok Ayam (Ekor)</Label>
                         <InputNumber 
                             value={formData.available_stock} 
                             onChange={v => setFormData({...formData, available_stock: v})}
-                            className="bg-[#111C24] border-white/10 h-14 font-black rounded-2xl tabular-nums"
+                            className={cn("bg-[#111C24] border-white/10 h-14 font-black rounded-2xl tabular-nums", !isDesktop && "text-base")}
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Bobot Rata-rata (kg)</Label>
+                        <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Bobot Rata-rata (kg)</Label>
                         <InputNumber 
                             step={0.01}
                             value={formData.avg_weight_kg} 
                             onChange={v => setFormData({...formData, avg_weight_kg: v})}
-                            className="bg-[#111C24] border-white/10 h-14 font-black rounded-2xl tabular-nums"
+                            className={cn("bg-[#111C24] border-white/10 h-14 font-black rounded-2xl tabular-nums", !isDesktop && "text-base")}
                         />
                     </div>
                 </div>
@@ -572,7 +585,7 @@ function FarmForm({ farm, tenantId, onSuccess, onCancel, isSheet }) {
 
             {(formData.status === 'ready' || formData.status === 'growing') && (
                 <div className="space-y-2">
-                    <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Estimasi Panen</Label>
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Estimasi Panen</Label>
                     <DatePicker 
                         value={formData.harvest_date} 
                         onChange={date => setFormData({...formData, harvest_date: date})}
@@ -583,15 +596,15 @@ function FarmForm({ farm, tenantId, onSuccess, onCancel, isSheet }) {
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Kapasitas (Ekor)</Label>
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Kapasitas (Ekor)</Label>
                     <InputNumber 
                         value={formData.capacity} 
                         onChange={v => setFormData({...formData, capacity: v})}
-                        className="bg-[#111C24] border-white/10 h-14 rounded-2xl tabular-nums"
+                        className={cn("bg-[#111C24] border-white/10 h-14 rounded-2xl tabular-nums", !isDesktop && "text-base font-black")}
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Rating Kualitas</Label>
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Rating Kualitas</Label>
                     <div className="flex gap-3 h-14 items-center pl-1">
                         {[1,2,3,4,5].map(s => (
                             <Star 

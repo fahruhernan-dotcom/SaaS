@@ -9,6 +9,7 @@ import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { formatIDR } from '@/lib/format'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -24,6 +25,7 @@ const itemVariants = {
 }
 
 function SummaryPill({ label, sub, color }) {
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
     const colors = {
         red: "bg-red-500/10 text-red-400 border-red-500/10",
         amber: "bg-amber-500/10 text-amber-500 border-amber-500/10",
@@ -32,13 +34,14 @@ function SummaryPill({ label, sub, color }) {
 
     return (
         <div className={cn("px-4 py-2 rounded-xl border flex flex-col transition-all hover:scale-105", colors[color])}>
-            <span className="text-xs font-black uppercase tracking-tight">{label}</span>
-            <span className="text-[8px] font-bold opacity-60 uppercase tracking-widest leading-none mt-1">{sub}</span>
+            <span className={cn("font-black uppercase tracking-tight", isDesktop ? "text-xs" : "text-sm")}>{label}</span>
+            <span className={cn("font-bold opacity-60 uppercase tracking-widest leading-none mt-1", isDesktop ? "text-[8px]" : "text-[11px]")}>{sub}</span>
         </div>
     )
 }
 
 export function LossSummary({ lossReports }) {
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
     const monthStats = useMemo(() => {
         const thisMonth = lossReports.filter(l => format(new Date(l.report_date), 'yyyy-MM') === format(new Date(), 'yyyy-MM'))
         // Only sum losses that are NOT mortality
@@ -60,7 +63,7 @@ export function LossSummary({ lossReports }) {
             </div>
             <div className="relative z-10 space-y-6">
                 <div>
-                   <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.25em] mb-2">Kerugian Bulan Ini</p>
+                   <p className={cn("font-black text-[#4B6478] uppercase tracking-[0.25em] mb-2", isDesktop ? "text-[10px]" : "text-xs")}>Kerugian Bulan Ini</p>
                    <h3 className="font-display text-2xl font-black text-red-400 uppercase tracking-tight">
                        {formatIDR(monthStats.total)}
                    </h3>
@@ -75,7 +78,7 @@ export function LossSummary({ lossReports }) {
                 {/* Warning if loss > 2% (mock check) */}
                 <div className="flex items-start gap-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 mt-2">
                     <AlertTriangle className="text-red-400 mt-0.5" size={16} />
-                    <p className="text-[10px] font-bold text-red-300 uppercase leading-relaxed tracking-wider">
+                    <p className={cn("font-bold text-red-300 uppercase leading-relaxed tracking-wider", isDesktop ? "text-[10px]" : "text-xs")}>
                         Loss rate berada di angka cukup tinggi. Periksa kembali efisiensi armada dan penanganan di farm.
                     </p>
                 </div>
@@ -85,6 +88,7 @@ export function LossSummary({ lossReports }) {
 }
 
 export default function LossCard({ entry, onResolve, isResolving }) {
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
     if (!entry?.mortality && !entry?.shrinkage) return null
 
     // Robust property access with multiple fallbacks to prevent TypeError
@@ -121,17 +125,17 @@ export default function LossCard({ entry, onResolve, isResolving }) {
                 <div className="p-6 pb-4 flex justify-between items-start">
                     <div className="space-y-1">
                         <h4 className="font-display font-black text-white text-base uppercase tracking-tight truncate max-w-[250px]">{rpaName}</h4>
-                        <div className="flex items-center gap-2 text-[10px] font-black text-[#4B6478] uppercase tracking-widest">
+                        <div className={cn("flex items-center gap-2 font-black text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-[10px]" : "text-xs")}>
                             <Calendar size={10} />
                             {format(new Date(entry.report_date || new Date()), 'dd MMMM yyyy', { locale: id })}
                         </div>
                     </div>
                     {isAllResolved ? (
-                         <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-black text-[9px] px-3 py-1 rounded-xl uppercase tracking-widest flex gap-1.5 whitespace-nowrap">
+                         <Badge className={cn("bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-black px-3 py-1 rounded-xl uppercase tracking-widest flex gap-1.5 whitespace-nowrap", isDesktop ? "text-[9px]" : "text-xs")}>
                              <Check size={10} strokeWidth={4} /> Selesai
                          </Badge>
                     ) : (
-                        <Badge className="bg-red-500/10 text-red-500 border border-red-500/20 font-black text-[9px] px-3 py-1 rounded-xl uppercase tracking-widest whitespace-nowrap">
+                        <Badge className={cn("bg-red-500/10 text-red-500 border border-red-500/20 font-black px-3 py-1 rounded-xl uppercase tracking-widest whitespace-nowrap", isDesktop ? "text-[9px]" : "text-xs")}>
                             Belum Selesai
                         </Badge>
                     )}
@@ -141,12 +145,12 @@ export default function LossCard({ entry, onResolve, isResolving }) {
                 <div className="px-6 py-3 bg-white/[0.02] border-y border-white/5 flex items-center gap-4">
                      <div className="flex items-center gap-2">
                          <User size={12} className="text-[#4B6478]" />
-                         <span className="text-[10px] font-black text-[#94A3B8] uppercase">{driverName}</span>
+                         <span className={cn("font-black text-[#94A3B8] uppercase", isDesktop ? "text-[10px]" : "text-xs")}>{driverName}</span>
                      </div>
                      <div className="w-1 h-1 rounded-full bg-white/10" />
                      <div className="flex items-center gap-2">
                          <Truck size={12} className="text-[#4B6478]" />
-                         <span className="text-[10px] font-black text-[#94A3B8] uppercase">{vehiclePlate}</span>
+                         <span className={cn("font-black text-[#94A3B8] uppercase", isDesktop ? "text-[10px]" : "text-xs")}>{vehiclePlate}</span>
                      </div>
                 </div>
 
@@ -156,15 +160,15 @@ export default function LossCard({ entry, onResolve, isResolving }) {
                     <div className="p-6 space-y-3">
                         <div className="flex items-center gap-2">
                              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                             <span className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Mortalitas</span>
+                             <span className={cn("font-black uppercase tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Mortalitas</span>
                         </div>
                         {entry.mortality ? (
                             <div className="space-y-1">
-                                <p className="text-lg font-black text-red-400">{entry.mortality.chicken_count} <span className="text-[10px] uppercase ml-1">Ekor</span></p>
-                                <p className="text-[9px] font-bold text-red-400/40 uppercase leading-tight">Rp 0 — TIDAK MEMPENGARUHI REVENUE</p>
+                                <p className="text-lg font-black text-red-400">{entry.mortality.chicken_count} <span className={cn("uppercase ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Ekor</span></p>
+                                <p className={cn("font-bold text-red-400/40 uppercase leading-tight", isDesktop ? "text-[9px]" : "text-[11px]")}>Rp 0 — TIDAK MEMPENGARUHI REVENUE</p>
                             </div>
                         ) : (
-                            <p className="text-[10px] font-bold text-white/5 uppercase italic">Tidak ada</p>
+                            <p className={cn("font-bold text-white/5 uppercase italic", isDesktop ? "text-[10px]" : "text-xs")}>Tidak ada</p>
                         )}
                     </div>
 
@@ -172,15 +176,15 @@ export default function LossCard({ entry, onResolve, isResolving }) {
                     <div className="p-6 space-y-3">
                         <div className="flex items-center gap-2">
                              <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                             <span className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Susut Berat</span>
+                             <span className={cn("font-black uppercase tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Susut Berat</span>
                         </div>
                         {entry.shrinkage ? (
                             <div className="space-y-1">
-                                <p className="text-lg font-black text-amber-500">{entry.shrinkage.weight_loss_kg.toFixed(1)} <span className="text-[10px] uppercase ml-1">Kg</span></p>
-                                <p className="text-[11px] font-bold text-amber-500/60 uppercase">Loss: {formatIDR(entry.shrinkage.financial_loss)}</p>
+                                <p className="text-lg font-black text-amber-500">{entry.shrinkage.weight_loss_kg.toFixed(1)} <span className={cn("uppercase ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Kg</span></p>
+                                <p className={cn("font-bold text-amber-500/60 uppercase", isDesktop ? "text-[11px]" : "text-xs")}>Loss: {formatIDR(entry.shrinkage.financial_loss)}</p>
                             </div>
                         ) : (
-                            <p className="text-[10px] font-bold text-white/5 uppercase italic">Tidak ada</p>
+                            <p className={cn("font-bold text-white/5 uppercase italic", isDesktop ? "text-[10px]" : "text-xs")}>Tidak ada</p>
                         )}
                     </div>
                 </div>
@@ -188,7 +192,7 @@ export default function LossCard({ entry, onResolve, isResolving }) {
                 {/* Footer: Total Loss + Resolve Action */}
                 <div className="p-4 px-6 bg-white/[0.03] border-t border-white/5 flex justify-between items-center">
                     <div className="flex flex-col">
-                        <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Total Kerugian</span>
+                        <span className={cn("font-black text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-[9px]" : "text-xs")}>Total Kerugian</span>
                         <span className="text-base font-black text-red-400 leading-tight">{formatIDR(totalFinancialLoss)}</span>
                     </div>
                     {!isAllResolved && (
@@ -196,7 +200,7 @@ export default function LossCard({ entry, onResolve, isResolving }) {
                             size="sm"
                             disabled={isResolving}
                             onClick={onResolve}
-                            className="bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl px-4 h-10 shadow-lg shadow-emerald-500/10 active:scale-95 transition-all"
+                            className={cn("bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest rounded-xl px-4 h-10 shadow-lg shadow-emerald-500/10 active:scale-95 transition-all", isDesktop ? "text-[10px]" : "text-[11px]")}
                         >
                             {isResolving ? 'PROSES...' : 'Tandai Selesai'}
                         </Button>

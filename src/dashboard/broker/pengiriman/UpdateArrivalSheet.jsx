@@ -9,6 +9,7 @@ import {
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { toast } from 'sonner'
@@ -31,6 +32,7 @@ import {
 } from '@/components/ui/alert-dialog'
 
 export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
     const { tenant } = useAuth()
     const queryClient = useQueryClient()
     const [isLoading, setIsLoading] = useState(false)
@@ -374,6 +376,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
 
     const handleUpdate = async (e) => {
         if (e && e.preventDefault) e.preventDefault()
+        if (isLoading) return
         const arrivedCount = tibaCount
         const arrivedWeightKg = tibaKg
         console.log('SUBMIT DIPANGGIL', { arrivedCount, arrivedWeightKg })
@@ -580,21 +583,21 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
             <SheetContent side="right" className="w-full md:w-[520px] bg-[#0C1319] border-l border-white/8 p-8 overflow-y-auto">
                 <SheetHeader className="mb-8">
                     <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">CATAT KEDATANGAN</SheetTitle>
-                    <SheetDescription className="text-[#4B6478] font-bold uppercase text-[10px] tracking-widest mt-1">Konfirmasi jumlah dan berat tiba di lokasi buyer</SheetDescription>
+                    <SheetDescription className={cn("text-[#4B6478] font-bold uppercase tracking-widest mt-1", isDesktop ? "text-[10px]" : "text-xs")}>Konfirmasi jumlah dan berat tiba di lokasi buyer</SheetDescription>
                 </SheetHeader>
 
                 <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 mb-6">
-                     <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-[0.2em] text-[#4B6478] mb-1 px-1">
+                     <div className={cn("flex justify-between items-center font-black uppercase tracking-[0.2em] text-[#4B6478] mb-1 px-1", isDesktop ? "text-[10px]" : "text-xs")}>
                          <span>Target Pengiriman</span>
                      </div>
                      <div className="bg-[#111C24] p-4 rounded-xl border border-white/5 flex justify-between items-center">
                          <div>
-                             <p className="text-[9px] font-black text-[#4B6478] uppercase mb-1">Kiriman Dari</p>
+                             <p className={cn("font-black text-[#4B6478] uppercase mb-1", isDesktop ? "text-[9px]" : "text-xs")}>Kiriman Dari</p>
                              <p className="text-xs font-black text-white">{delivery.sales?.purchases?.farms?.farm_name || '-'}</p>
                          </div>
                          <ArrowRightLeft className="text-[#4B6478]" size={16} />
                          <div className="text-right">
-                             <p className="text-[9px] font-black text-[#4B6478] uppercase mb-1">Target Tiba</p>
+                             <p className={cn("font-black text-[#4B6478] uppercase mb-1", isDesktop ? "text-[9px]" : "text-xs")}>Target Tiba</p>
                              <p className="text-xs font-black text-white uppercase">
                                  {formatEkor(delivery.initial_count)} / {formatWeight(delivery.initial_weight_kg)}
                              </p>
@@ -602,11 +605,11 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                      </div>
                 </div>
 
-                <form onSubmit={handleUpdate} className="space-y-6 pb-20">
+                <form className="space-y-6 pb-20">
                     {/* ROW 2: Ekor Tiba & Ekor Mati */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Ekor Tiba *</Label>
+                            <Label className={cn("font-black uppercase tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Ekor Tiba *</Label>
                             <InputNumber 
                                 value={arrivedQty} 
                                 onChange={handleArrivedChange}
@@ -615,7 +618,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Ekor Mati</Label>
+                            <Label className={cn("font-black uppercase tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Ekor Mati</Label>
                             <InputNumber 
                                 value={mortalityQty} 
                                 onChange={handleMortalityChange}
@@ -628,13 +631,14 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     {/* ROW 3: Berat Tiba Full Width */}
                     <div className="space-y-2">
                          <div className="flex justify-between items-center mb-1">
-                             <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Berat Tiba *</Label>
+                             <Label className={cn("font-black uppercase tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Berat Tiba *</Label>
                              <div className="flex bg-[#111C24] p-0.5 rounded-lg border border-white/5">
                                  <button
                                      type="button"
                                      onClick={() => setInputMode('manual')}
                                      className={cn(
-                                         "px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all",
+                                         "px-3 py-1 rounded-md font-black uppercase tracking-widest transition-all",
+                                         isDesktop ? "text-[9px]" : "text-[11px]",
                                          inputMode === 'manual' ? "bg-emerald-500 text-white shadow-lg" : "text-[#4B6478] hover:text-white"
                                      )}
                                  >
@@ -644,7 +648,8 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                      type="button"
                                      onClick={() => setInputMode('scale')}
                                      className={cn(
-                                         "px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all",
+                                         "px-3 py-1 rounded-md font-black uppercase tracking-widest transition-all",
+                                         isDesktop ? "text-[9px]" : "text-[11px]",
                                          inputMode === 'scale' ? "bg-emerald-500 text-white shadow-lg" : "text-[#4B6478] hover:text-white"
                                      )}
                                  >
@@ -721,7 +726,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                      </div>
                                  </div>
                              ) : (
-                                 <div className="h-[50px] flex items-center px-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[9px] font-black text-emerald-500 uppercase tracking-widest">
+                                 <div className={cn("h-[50px] flex items-center px-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 font-black text-emerald-500 uppercase tracking-widest", isDesktop ? "text-[9px]" : "text-xs")}>
                                      Mode Timbangan Aktif
                                  </div>
                              )}
@@ -733,7 +738,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                         <div className="space-y-4 pt-2">
                             {/* List Timbangan */}
                             <div className="rounded-xl border border-white/5 bg-[#111C24] overflow-hidden">
-                                <div className="p-3 bg-white/[0.02] border-b border-white/5 grid grid-cols-[30px_1fr_60px] gap-2 items-center text-[9px] font-black uppercase tracking-widest text-[#4B6478]">
+                                <div className={cn("p-3 bg-white/[0.02] border-b border-white/5 grid grid-cols-[30px_1fr_60px] gap-2 items-center font-black uppercase tracking-widest text-[#4B6478]", isDesktop ? "text-[9px]" : "text-xs")}>
                                     <span>No</span>
                                     <span>Kita (kg)</span>
                                     <span className="text-right">Action</span>
@@ -741,20 +746,20 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                 
                                 <div className="max-h-[300px] overflow-y-auto">
                                     {scaleEntries.length === 0 ? (
-                                        <div className="p-8 text-center text-[#4B6478] text-[10px] uppercase font-bold italic">
+                                        <div className={cn("p-8 text-center text-[#4B6478] uppercase font-bold italic", isDesktop ? "text-[10px]" : "text-xs")}>
                                             Belum ada data timbangan
                                         </div>
                                     ) : (
                                         scaleEntries.map((e, index) => (
                                             <div key={e.id} className="p-3 border-b border-white/5 grid grid-cols-[30px_1fr_60px] gap-2 items-center transition-all group relative">
-                                                <span className="text-[10px] font-black text-[#4B6478]">{index + 1}</span>
+                                                <span className={cn("font-black text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>{index + 1}</span>
                                                 
                                                 {editingScaleId === e.id ? (
                                                     <>
                                                         <InputNumber 
                                                             value={editScaleForm.weightKita}
                                                             onChange={(v) => setEditScaleForm({ ...editScaleForm, weightKita: v })}
-                                                            className="text-white h-7 bg-[#0C1319] border-emerald-500/50 text-[10px] text-emerald-400 font-black p-1"
+                                                            className={cn("text-white h-7 bg-[#0C1319] border-emerald-500/50 text-emerald-400 font-black p-1", isDesktop ? "text-[10px]" : "text-xs")}
                                                             onKeyDown={(evt) => evt.key === 'Enter' && (evt.preventDefault(), handleSaveEdit())}
                                                         />
                                                         <div className="flex justify-end gap-1">
@@ -808,14 +813,14 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                 <div className="p-5 rounded-2xl bg-[#111C24] border border-white/5 space-y-4 relative overflow-hidden group/card shadow-2xl">
                                     <div className="grid grid-cols-2 gap-4 relative z-10">
                                         <div>
-                                            <p className="text-[9px] font-black text-[#4B6478] uppercase mb-1">Total Timbangan Kita</p>
+                                            <p className={cn("font-black text-[#4B6478] uppercase mb-1", isDesktop ? "text-[9px]" : "text-xs")}>Total Timbangan Kita</p>
                                             <p className="text-xl font-black text-emerald-400 tabular-nums">
                                                 {totalScaleKita.toLocaleString('id-ID', { minimumFractionDigits: 2 })}
-                                                <span className="text-[10px] ml-1 opacity-60">kg</span>
+                                                <span className={cn("ml-1 opacity-60", isDesktop ? "text-[10px]" : "text-xs")}>kg</span>
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-[9px] font-black text-[#4B6478] uppercase mb-1">Kurang Dari Kirim</p>
+                                            <p className={cn("font-black text-[#4B6478] uppercase mb-1", isDesktop ? "text-[9px]" : "text-xs")}>Kurang Dari Kirim</p>
                                             {selisihKg === 0 ? (
                                                 <p className="text-xl font-black text-emerald-400">Pas ✓</p>
                                             ) : (
@@ -824,7 +829,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                                     selisihKg > 0 ? "text-amber-500" : "text-red-400"
                                                 )}>
                                                     {selisihKg > 0 ? `- ${selisihKg.toFixed(2)}` : `+ ${Math.abs(selisihKg).toFixed(2)}`}
-                                                    <span className="text-[10px] ml-1 opacity-60">kg</span>
+                                                    <span className={cn("ml-1 opacity-60", isDesktop ? "text-[10px]" : "text-xs")}>kg</span>
                                                 </p>
                                             )}
                                         </div>
@@ -838,7 +843,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                                setUnitTiba('kg')
                                                toast.success('Total timbangan berhasil dipakai sebagai berat tiba')
                                             }}
-                                            className="flex-1 h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-emerald-500/20 group/btn"
+                                            className={cn("flex-1 h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-emerald-500/20 group/btn", isDesktop ? "text-[11px]" : "text-xs")}
                                         >
                                             <Check size={14} className="mr-2 group-hover/btn:scale-125 transition-transform" />
                                             PAKAI TOTAL INI
@@ -859,30 +864,30 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
 
                     {/* ROW 4: Ringkasan 2x2 */}
                     <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 space-y-3">
-                        <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-[#4B6478] px-1">
+                        <div className={cn("flex justify-between items-center font-black uppercase tracking-widest text-[#4B6478] px-1", isDesktop ? "text-[10px]" : "text-xs")}>
                             <span>Ringkasan Kedatangan</span>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                             <div className="bg-[#111C24] p-3 rounded-xl border border-white/5">
-                                <p className="text-[9px] font-black text-[#4B6478] uppercase mb-1">Susut Berat</p>
+                                <p className={cn("font-black text-[#4B6478] uppercase mb-1", isDesktop ? "text-[9px]" : "text-xs")}>Susut Berat</p>
                                 <p className={cn("text-sm font-black tabular-nums", susutKg > 0 ? "text-amber-400" : "text-emerald-400")}>
-                                    {formatWeight(susutKg)} <span className="text-[10px] opacity-60">({susutPct}%)</span>
+                                    {formatWeight(susutKg)} <span className={cn("opacity-60", isDesktop ? "text-[10px]" : "text-xs")}>({susutPct}%)</span>
                                 </p>
                             </div>
                             <div className="bg-[#111C24] p-3 rounded-xl border border-white/5">
-                                <p className="text-[9px] font-black text-[#4B6478] uppercase mb-1">Mati di Jalan</p>
+                                <p className={cn("font-black text-[#4B6478] uppercase mb-1", isDesktop ? "text-[9px]" : "text-xs")}>Mati di Jalan</p>
                                 <p className={cn("text-sm font-black tabular-nums", matiEkor > 0 ? "text-red-400" : "text-emerald-400")}>
-                                    {matiEkor} <span className="text-[10px] opacity-60">ekor</span>
+                                    {matiEkor} <span className={cn("opacity-60", isDesktop ? "text-[10px]" : "text-xs")}>ekor</span>
                                 </p>
                             </div>
                             <div className="bg-[#111C24] p-3 rounded-xl border border-white/5">
-                                <p className="text-[9px] font-black text-[#4B6478] uppercase mb-1">Ekor Dikirim</p>
+                                <p className={cn("font-black text-[#4B6478] uppercase mb-1", isDesktop ? "text-[9px]" : "text-xs")}>Ekor Dikirim</p>
                                 <p className="text-sm font-black text-white tabular-nums">
-                                    {delivery.initial_count} <span className="text-[10px] opacity-60">ekor</span>
+                                    {delivery.initial_count} <span className={cn("opacity-60", isDesktop ? "text-[10px]" : "text-xs")}>ekor</span>
                                 </p>
                             </div>
                             <div className="bg-[#111C24] p-3 rounded-xl border border-white/5">
-                                <p className="text-[9px] font-black text-[#4B6478] uppercase mb-1">Berat Dikirim</p>
+                                <p className={cn("font-black text-[#4B6478] uppercase mb-1", isDesktop ? "text-[9px]" : "text-xs")}>Berat Dikirim</p>
                                 <p className="text-sm font-black text-white tabular-nums">
                                     {formatWeight(initialKg)}
                                 </p>
@@ -891,7 +896,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     </div>
 
                     {matiEkor > 0 && (
-                      <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-[10px] font-black text-red-400 uppercase tracking-widest">
+                      <div className={cn("p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 font-black text-red-400 uppercase tracking-widest", isDesktop ? "text-[10px]" : "text-xs")}>
                          <AlertCircle size={14} className="shrink-0" />
                          <span>Loss report akan dibuat otomatis untuk {matiEkor} ekor</span>
                       </div>
@@ -899,12 +904,12 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
 
                     {/* ROW 5: Detail Pengiriman */}
                     <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 space-y-4">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Detail Pengiriman</Label>
+                        <Label className={cn("font-black uppercase tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Detail Pengiriman</Label>
                         
                         <div className="space-y-4">
                             {/* KENDARAAN */}
                             <div className="space-y-2">
-                                <Label className="text-[9px] font-black uppercase text-[#4B6478] tracking-widest ml-1 text-emerald-500">Kendaraan *</Label>
+                                <Label className={cn("font-black uppercase text-[#4B6478] tracking-widest ml-1 text-emerald-500", isDesktop ? "text-[9px]" : "text-xs")}>Kendaraan *</Label>
                                 {delivery?.vehicle_plate && vehicleLocked ? (
                                     <div 
                                         className="w-full h-14 px-4 rounded-xl bg-[#111C24] border border-white/5 flex justify-between items-center opacity-75 group transition-all"
@@ -913,7 +918,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                             <Lock size={12} className="text-[#4B6478]" />
                                             <div className="flex flex-col">
                                                 <span className="text-xs font-black uppercase text-white">{delivery.vehicle_plate}</span>
-                                                <span className="text-[10px] font-bold uppercase text-[#4B6478]">{delivery.vehicle_type || 'ARMADA'}</span>
+                                                <span className={cn("font-bold uppercase text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>{delivery.vehicle_type || 'ARMADA'}</span>
                                             </div>
                                         </div>
                                         <Button 
@@ -934,7 +939,8 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                                 type="button" 
                                                 onClick={() => { setVehicleManual(false); setSelectedVehicle(null) }}
                                                 className={cn(
-                                                    "flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                                                    "flex-1 py-2 rounded-lg font-black uppercase tracking-widest transition-all",
+                                                    isDesktop ? "text-[9px]" : "text-xs",
                                                     !vehicleManual ? "bg-emerald-500 text-white shadow-lg" : "text-[#4B6478] hover:text-white"
                                                 )}
                                             >Armada</button>
@@ -942,7 +948,8 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                                 type="button" 
                                                 onClick={() => { setVehicleManual(true); setSelectedVehicle(null) }}
                                                 className={cn(
-                                                    "flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                                                    "flex-1 py-2 rounded-lg font-black uppercase tracking-widest transition-all",
+                                                    isDesktop ? "text-[9px]" : "text-xs",
                                                     vehicleManual ? "bg-emerald-500 text-white shadow-lg" : "text-[#4B6478] hover:text-white"
                                                 )}
                                             >Manual</button>
@@ -1010,7 +1017,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                                         setVehicleManual(true)
                                                     }
                                                 }}
-                                                className="text-[9px] font-black uppercase text-amber-500 hover:text-amber-400 mt-1 flex items-center gap-1.5 transition-colors"
+                                                className={cn("font-black uppercase text-amber-500 hover:text-amber-400 mt-1 flex items-center gap-1.5 transition-colors", isDesktop ? "text-[9px]" : "text-xs")}
                                             >
                                                 <Lock size={10} />
                                                 Batal Ganti
@@ -1022,7 +1029,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
 
                             {/* SOPIR */}
                             <div className="space-y-2">
-                                <Label className="text-[9px] font-black uppercase text-[#4B6478] tracking-widest ml-1 text-emerald-500">Sopir *</Label>
+                                <Label className={cn("font-black uppercase text-[#4B6478] tracking-widest ml-1 text-emerald-500", isDesktop ? "text-[9px]" : "text-xs")}>Sopir *</Label>
                                 {delivery?.driver_name && driverLocked ? (
                                     <div 
                                         className="w-full h-14 px-4 rounded-xl bg-[#111C24] border border-white/5 flex justify-between items-center opacity-75 group transition-all"
@@ -1031,7 +1038,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                             <Lock size={12} className="text-[#4B6478]" />
                                             <div className="flex flex-col">
                                                 <span className="text-xs font-black uppercase text-white">{delivery.driver_name}</span>
-                                                <span className="text-[10px] font-bold uppercase text-[#4B6478]">{delivery.driver_phone || 'TANPA HP'}</span>
+                                                <span className={cn("font-bold uppercase text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>{delivery.driver_phone || 'TANPA HP'}</span>
                                             </div>
                                         </div>
                                         <Button 
@@ -1052,7 +1059,8 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                                 type="button" 
                                                 onClick={() => { setDriverManual(false); setSelectedDriver(null) }}
                                                 className={cn(
-                                                    "flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                                                    "flex-1 py-2 rounded-lg font-black uppercase tracking-widest transition-all",
+                                                    isDesktop ? "text-[9px]" : "text-xs",
                                                     !driverManual ? "bg-emerald-500 text-white shadow-lg" : "text-[#4B6478] hover:text-white"
                                                 )}
                                             >Terdaftar</button>
@@ -1060,7 +1068,8 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                                 type="button" 
                                                 onClick={() => { setDriverManual(true); setSelectedDriver(null) }}
                                                 className={cn(
-                                                    "flex-1 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                                                    "flex-1 py-2 rounded-lg font-black uppercase tracking-widest transition-all",
+                                                    isDesktop ? "text-[9px]" : "text-xs",
                                                     driverManual ? "bg-emerald-500 text-white shadow-lg" : "text-[#4B6478] hover:text-white"
                                                 )}
                                             >Manual</button>
@@ -1077,7 +1086,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                                 <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 bg-[#0C1319] border-white/10" align="start">
                                                     <Command className="bg-transparent">
                                                         <CommandInput placeholder="Cari nama..." className="h-10 border-none font-bold text-xs" />
-                                                        <CommandEmpty className="py-6 text-center text-[10px] uppercase font-black text-[#4B6478]">Sopir tidak ditemukan</CommandEmpty>
+                                                        <CommandEmpty className={cn("py-6 text-center uppercase font-black text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Sopir tidak ditemukan</CommandEmpty>
                                                         <CommandGroup className="max-h-64 overflow-y-auto">
                                                             {drivers.map(d => (
                                                                 <CommandItem 
@@ -1087,7 +1096,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                                                 >
                                                                     <div className="flex flex-col">
                                                                         <span className="text-xs font-black uppercase text-white">{d.full_name}</span>
-                                                                        <span className="text-[10px] font-bold uppercase text-[#4B6478]">{d.phone || 'TANPA HP'}</span>
+                                                                        <span className={cn("font-bold uppercase text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>{d.phone || 'TANPA HP'}</span>
                                                                     </div>
                                                                     {selectedDriver?.id === d.id && <Check size={14} className="text-emerald-500" />}
                                                                 </CommandItem>
@@ -1128,7 +1137,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                                         setDriverManual(true)
                                                     }
                                                 }}
-                                                className="text-[9px] font-black uppercase text-amber-500 hover:text-amber-400 mt-1 flex items-center gap-1.5 transition-colors"
+                                                className={cn("font-black uppercase text-amber-500 hover:text-amber-400 mt-1 flex items-center gap-1.5 transition-colors", isDesktop ? "text-[9px]" : "text-xs")}
                                             >
                                                 <Lock size={10} />
                                                 Batal Ganti
@@ -1148,10 +1157,10 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter className="mt-6 gap-3">
-                                        <AlertDialogCancel className="h-12 rounded-xl bg-[#111C24] border-white/5 text-[#4B6478] font-black uppercase text-[10px] hover:bg-white/5 hover:text-white transition-all">Batal</AlertDialogCancel>
+                                        <AlertDialogCancel className={cn("h-12 rounded-xl bg-[#111C24] border-white/5 text-[#4B6478] font-black uppercase hover:bg-white/5 hover:text-white transition-all", isDesktop ? "text-[10px]" : "text-xs")}>Batal</AlertDialogCancel>
                                         <AlertDialogAction 
                                             onClick={() => { setVehicleLocked(false); setShowVehicleConfirm(false) }}
-                                            className="h-12 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-white font-black uppercase text-[10px] shadow-lg shadow-amber-500/20 transition-all"
+                                            className={cn("h-12 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-white font-black uppercase shadow-lg shadow-amber-500/20 transition-all", isDesktop ? "text-[10px]" : "text-xs")}
                                         >Ya, Ganti</AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
@@ -1166,10 +1175,10 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter className="mt-6 gap-3">
-                                        <AlertDialogCancel className="h-12 rounded-xl bg-[#111C24] border-white/5 text-[#4B6478] font-black uppercase text-[10px] hover:bg-white/5 hover:text-white transition-all">Batal</AlertDialogCancel>
+                                        <AlertDialogCancel className={cn("h-12 rounded-xl bg-[#111C24] border-white/5 text-[#4B6478] font-black uppercase hover:bg-white/5 hover:text-white transition-all", isDesktop ? "text-[10px]" : "text-xs")}>Batal</AlertDialogCancel>
                                         <AlertDialogAction 
                                             onClick={() => { setDriverLocked(false); setShowDriverConfirm(false) }}
-                                            className="h-12 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-white font-black uppercase text-[10px] shadow-lg shadow-amber-500/20 transition-all"
+                                            className={cn("h-12 rounded-xl bg-[#F59E0B] hover:bg-[#D97706] text-white font-black uppercase shadow-lg shadow-amber-500/20 transition-all", isDesktop ? "text-[10px]" : "text-xs")}
                                         >Ya, Ganti</AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
@@ -1179,7 +1188,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
 
                     {/* ROW 6: Catatan */}
                     <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Catatan</Label>
+                        <Label className={cn("font-black uppercase tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Catatan</Label>
                         <Textarea 
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}

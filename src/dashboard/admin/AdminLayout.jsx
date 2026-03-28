@@ -21,28 +21,49 @@ function AdminSidebar() {
     const location = useLocation()
 
     const handleBackToDashboard = async () => {
-        // Ambil semua tenant milik user ini
-        const { data } = await supabase
-            .from('profiles')
-            .select('tenant_id, tenants(id, business_name, business_vertical)')
-            .eq('auth_user_id', user.id)
-        
-        // Ambil tenant pertama yang punya data (selain superadmin jika ada, tapi user minta first one)
-        const firstTenant = data?.[0]?.tenants
-        if (!firstTenant) {
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('tenant_id, tenants(id, business_name, business_vertical)')
+                .eq('auth_user_id', user.id)
+
+            if (error || !data?.length) {
+                navigate('/broker/poultry_broker/beranda')
+                return
+            }
+
+            // Ambil tenant pertama yang punya data tenants
+            const target = data.find(p => p.tenants)?.tenants
+
+            if (!target) {
+                navigate('/broker/poultry_broker/beranda')
+                return
+            }
+
+            // Set localStorage dulu
+            localStorage.setItem('ternakos_active_tenant_id', target.id)
+
+            // Switch tenant context
+            switchTenant(target.id)
+
+            // Tunggu sebentar agar state update
+            await new Promise(resolve => setTimeout(resolve, 100))
+
+            // Navigate sesuai vertikal
+            const v = target.business_vertical
+            if (v === 'egg_broker') {
+                navigate('/egg/beranda')
+            } else if (v === 'peternak') {
+                navigate('/peternak/beranda')
+            } else if (v === 'rpa') {
+                navigate('/rpa-buyer/beranda')
+            } else {
+                navigate('/broker/poultry_broker/beranda')
+            }
+        } catch (err) {
+            console.error('Back to dashboard error:', err)
             navigate('/broker/poultry_broker/beranda')
-            return
         }
-
-        // Switch context ke tenant tersebut
-        switchTenant(firstTenant.id)
-
-        // Navigate sesuai vertikal
-        const v = firstTenant.business_vertical
-        if (v === 'egg_broker') navigate('/egg/egg_broker/beranda')
-        else if (v === 'peternak') navigate('/peternak/beranda')
-        else if (v === 'rpa') navigate('/rpa-buyer/beranda')
-        else navigate('/broker/poultry_broker/beranda')
     }
 
     const handleLogout = async () => {

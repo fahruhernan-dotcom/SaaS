@@ -1,13 +1,20 @@
 import { useQuery } from '@tanstack/react-query'
+import { useAuth } from './useAuth'
 import { supabase } from '../supabase'
 import { calcNetProfit, calcRemainingAmount } from '@/lib/format'
 
 export function useDashboardStats(tenantId) {
+  const { tenant } = useAuth()
+  const vertical = tenant?.business_vertical
+
   return useQuery({
     queryKey: ['dashboard-stats', tenantId],
     queryFn: async () => {
       if (!tenantId) return null
       
+      const isBroker = ['broker', 'poultry_broker', 'egg_broker'].includes(vertical)
+      if (!isBroker) return null
+
       const today = new Date().toISOString().split('T')[0]
       const sevenDaysAgo = new Date(Date.now() - 6*24*60*60*1000)
                            .toISOString().split('T')[0]

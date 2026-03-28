@@ -65,7 +65,26 @@ export default function Login() {
         }
         return
       }
-      
+
+      // Cek profile ada sebelum redirect — cegah login loop
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, role, user_type, onboarded, business_model_selected, tenant_id')
+        .eq('auth_user_id', data.user.id)
+        .single()
+
+      if (!profile) {
+        // Profile belum ada (trigger delay atau belum setup) — arahkan ke onboarding
+        navigate('/onboarding')
+        toast.info('Yuk lengkapi profil bisnismu dulu!')
+        return
+      }
+
+      if (!profile.onboarded) {
+        navigate('/onboarding')
+        return
+      }
+
       navigate('/broker/beranda')
       toast.success('Selamat datang kembali!')
       

@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 import { toast } from 'sonner'
@@ -52,8 +51,9 @@ export const useAllInvoices = () => {
         .from('subscription_invoices')
         .select(`
           id, invoice_number, amount, plan, billing_period,
-          billing_months, status, transfer_proof_url,
-          confirmed_by, confirmed_at, created_at,
+          billing_months, status, payment_proof_url, payment_method,
+          xendit_invoice_id, xendit_payment_url,
+          confirmed_by, confirmed_at, paid_at, notes, created_at,
           tenants(id, business_name, business_vertical)
         `)
         .order('created_at', { ascending: false })
@@ -66,24 +66,30 @@ export const useAllInvoices = () => {
 export const useConfirmInvoice = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ invoiceId, tenantId, plan, billingMonths }) => {
-      // 1. Update invoice status → paid, confirmed_at
+    mutationFn: async ({ invoiceId, tenantId, plan, billingMonths, notes }) => {
+      const { data: { user } } = await supabase.auth.getUser()
+      const now = new Date().toISOString()
+
+      // 1. Update invoice status → paid
       const { error: invoiceErr } = await supabase
         .from('subscription_invoices')
         .update({
           status: 'paid',
-          confirmed_at: new Date().toISOString()
+          confirmed_at: now,
+          paid_at: now,
+          confirmed_by: user?.id,
+          ...(notes ? { notes } : {})
         })
         .eq('id', invoiceId)
       if (invoiceErr) throw invoiceErr
 
-      // 2. Update tenant plan
-      // Calculate new trial_ends_at
+      // 2. Update tenant plan + kandang_limit
       const trialEndsAt = new Date()
       trialEndsAt.setMonth(trialEndsAt.getMonth() + billingMonths)
+      const kandangLimit = plan === 'starter' ? 1 : plan === 'pro' ? 2 : 99
       const { error: tenantErr } = await supabase
         .from('tenants')
-        .update({ plan, trial_ends_at: trialEndsAt.toISOString() })
+        .update({ plan, trial_ends_at: trialEndsAt.toISOString(), kandang_limit: kandangLimit })
         .eq('id', tenantId)
       if (tenantErr) throw tenantErr
     },
@@ -105,10 +111,114 @@ export const usePaymentSettings = () => {
       const { data, error } = await supabase
         .from('payment_settings')
         .select('*')
-        .eq('is_active', true)
+        .order('created_at', { ascending: false })
       if (error) throw error
       return data
     }
+  })
+}
+
+export const useDeletePaymentSetting = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id) => {
+      const { error } = await supabase
+        .from('payment_settings')
+        .delete()
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['payment-settings'])
+      toast.success('Rekening dihapus')
+    },
+    onError: (error) => {
+      toast.error('Gagal hapus rekening: ' + error.message)
+    }
+  })
+}
+
+export const useCreateInvoice = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ tenantId, plan, billingMonths, amount, notes }) => {
+      const timestamp = Date.now().toString(36).toUpperCase()
+      const random = crypto.getRandomValues(new Uint8Array(4))
+        .reduce((str, b) => str + b.toString(16).padStart(2, '0'), '')
+        .toUpperCase().substring(0, 4)
+      const invoiceNumber = `INV-${timestamp}-${random}`
+
+      const { error } = await supabase
+        .from('subscription_invoices')
+        .insert({
+          tenant_id: tenantId,
+          invoice_number: invoiceNumber,
+          plan,
+          billing_months: billingMonths,
+          amount,
+          notes: notes || null,
+          status: 'pending',
+          payment_method: 'manual'
+        })
+      if (error) throw error
+      return invoiceNumber
+    },
+    onSuccess: (invoiceNumber) => {
+      queryClient.invalidateQueries(['admin-invoices'])
+      toast.success(`Invoice ${invoiceNumber} berhasil dibuat`)
+    },
+    onError: (error) => {
+      toast.error('Gagal buat invoice: ' + error.message)
+    }
+  })
+}
+
+export const useXenditConfig = () => useQuery({
+  queryKey: ['xendit-config'],
+  queryFn: async () => {
+    const { data } = await supabase
+      .from('payment_settings')
+      .select('*')
+      .eq('bank_name', 'xendit_config')
+      .single()
+    return data || null
+  }
+})
+
+export const useSaveXenditConfig = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ api_key, webhook_token, callback_url, is_production }) => {
+      const payload = {
+        bank_name: 'xendit_config',
+        account_number: api_key,
+        account_name: JSON.stringify({ webhook_token, callback_url, is_production }),
+        is_active: true
+      }
+      const existing = await supabase
+        .from('payment_settings')
+        .select('id')
+        .eq('bank_name', 'xendit_config')
+        .single()
+      if (existing.data?.id) {
+        const { error } = await supabase
+          .from('payment_settings')
+          .update(payload)
+          .eq('id', existing.data.id)
+        if (error) throw error
+      } else {
+        const { error } = await supabase
+          .from('payment_settings')
+          .insert(payload)
+        if (error) throw error
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['xendit-config'])
+      queryClient.invalidateQueries(['payment-settings'])
+      toast.success('Xendit config berhasil disimpan')
+    },
+    onError: () => toast.error('Gagal menyimpan Xendit config')
   })
 }
 
@@ -131,186 +241,229 @@ export const useUpsertPaymentSetting = () => {
   })
 }
 
-// --- Admin Phase 5: Pricing & Discounts (LocalStorage Implementation) ---
+// --- Admin Phase 5: Pricing & Discounts (Supabase DB) ---
 
-// Custom event-based bus for reactivity
-const pricingBus = new Set()
-const invalidatePricing = () => pricingBus.forEach(fn => fn())
-
-const discountBus = new Set()
-const invalidateDiscounts = () => discountBus.forEach(fn => fn())
-
-export const usePricingConfig = () => {
-  const [data, setData] = useState(null)
-  
-  const load = () => {
-    const DEFAULT_PRICING = {
-      broker:   { pro: 999000,  business: 1499000 },
-      peternak: { pro: 499000,  business: 999000  },
-      rpa:      { pro: 699000,  business: 1499000 }
-    }
-    const saved = localStorage.getItem('ternakos_pricing_config')
-    setData(saved ? JSON.parse(saved) : DEFAULT_PRICING)
+export const usePricingConfig = () => useQuery({
+  queryKey: ['pricing-plans'],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('pricing_plans')
+      .select('*')
+      .order('role')
+      .order('plan')
+    if (error) throw error
+    // Transform to { broker: { pro: { price, originalPrice, id }, business: {...} }, ... }
+    return data.reduce((acc, row) => {
+      if (!acc[row.role]) acc[row.role] = {}
+      acc[row.role][row.plan] = {
+        price: row.price,
+        originalPrice: row.original_price,
+        id: row.id
+      }
+      return acc
+    }, {})
   }
-
-  useEffect(() => {
-    load()
-    pricingBus.add(load)
-    return () => pricingBus.delete(load)
-  }, [])
-
-  return { data, isLoading: data === null }
-}
+})
 
 export const useUpdatePricing = () => {
-  return {
-    mutate: (payload) => {
-      localStorage.setItem('ternakos_pricing_config', JSON.stringify(payload))
-      invalidatePricing()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ role, plan, price, originalPrice }) => {
+      const { error } = await supabase
+        .from('pricing_plans')
+        .update({ price, original_price: originalPrice, updated_at: new Date().toISOString() })
+        .eq('role', role)
+        .eq('plan', plan)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['pricing-plans'])
       toast.success('Harga berhasil diupdate')
-    }
-  }
+    },
+    onError: () => toast.error('Gagal update harga')
+  })
 }
 
-export const useDiscountCodes = () => {
-  const [data, setData] = useState(null)
-  
-  const load = () => {
-    const saved = localStorage.getItem('ternakos_discount_codes')
-    setData(saved ? JSON.parse(saved) : [])
+export const useDiscountCodes = () => useQuery({
+  queryKey: ['discount-codes'],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('discount_codes')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data
   }
-
-  useEffect(() => {
-    load()
-    discountBus.add(load)
-    return () => discountBus.delete(load)
-  }, [])
-
-  return { data, isLoading: data === null }
-}
+})
 
 export const useCreateDiscountCode = () => {
-  return {
-    mutate: (payload) => {
-      const saved = localStorage.getItem('ternakos_discount_codes')
-      const current = saved ? JSON.parse(saved) : []
-      const newList = [{
-        ...payload,
-        id: crypto.randomUUID(),
-        created_at: new Date().toISOString(),
-        usage_count: 0,
-        is_active: true
-      }, ...current]
-      localStorage.setItem('ternakos_discount_codes', JSON.stringify(newList))
-      invalidateDiscounts()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload) => {
+      const { error } = await supabase
+        .from('discount_codes')
+        .insert(payload)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['discount-codes'])
       toast.success('Kode diskon berhasil dibuat')
-    }
-  }
+    },
+    onError: (err) => toast.error('Gagal membuat kode: ' + err.message)
+  })
 }
 
 export const useToggleDiscountCode = () => {
-  return {
-    mutate: (codeId) => {
-      const saved = localStorage.getItem('ternakos_discount_codes')
-      const current = saved ? JSON.parse(saved) : []
-      const newList = current.map(c => 
-        c.id === codeId ? { ...c, is_active: !c.is_active } : c
-      )
-      localStorage.setItem('ternakos_discount_codes', JSON.stringify(newList))
-      invalidateDiscounts()
-      toast.success('Status voucher diupdate')
-    }
-  }
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, is_active }) => {
+      const { error } = await supabase
+        .from('discount_codes')
+        .update({ is_active })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries(['discount-codes'])
+  })
 }
 
 export const useDeleteDiscountCode = () => {
-  return {
-    mutate: (codeId) => {
-      const saved = localStorage.getItem('ternakos_discount_codes')
-      const current = saved ? JSON.parse(saved) : []
-      const newList = current.filter(c => c.id !== codeId)
-      localStorage.setItem('ternakos_discount_codes', JSON.stringify(newList))
-      invalidateDiscounts()
-      toast.success('Voucher berhasil dihapus')
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id) => {
+      const { error } = await supabase
+        .from('discount_codes')
+        .delete()
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['discount-codes'])
+      toast.success('Kode diskon dihapus')
     }
-  }
+  })
 }
 
-export const useGlobalStats = () => {
-  return useQuery({
-    queryKey: ['admin-global-stats'],
-    queryFn: async () => {
-      // Fetch parallel semua data yang dibutuhkan
-      const [tenantsRes, invoicesRes] = await Promise.all([
-        supabase.from('tenants').select(`
-          id, business_name, plan, is_active, trial_ends_at, created_at, business_vertical,
-          profiles(id, is_active, last_seen_at)
-        `),
-        supabase.from('subscription_invoices').select(`
-          id, invoice_number, amount, status, confirmed_at, created_at,
-          tenants(business_name)
-        `)
-      ])
-      if (tenantsRes.error) throw tenantsRes.error
-      if (invoicesRes.error) throw invoicesRes.error
+// --- Plan Configs (plan_configs table) ---
 
-      const tenants = tenantsRes.data
-      const invoices = invoicesRes.data
-      const now = new Date()
-      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
-      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+export const usePlanConfigs = () => useQuery({
+  queryKey: ['plan-configs'],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('plan_configs')
+      .select('*')
+    if (error) throw error
+    // Transform array → object keyed by config_key
+    return data.reduce((acc, row) => {
+      acc[row.config_key] = row.config_value
+      return acc
+    }, {})
+  }
+})
 
+export const useUpdatePlanConfig = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ config_key, config_value }) => {
+      const { error } = await supabase
+        .from('plan_configs')
+        .upsert(
+          { config_key, config_value, updated_at: new Date().toISOString() },
+          { onConflict: 'config_key' }
+        )
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['plan-configs'] })
+      toast.success('Konfigurasi berhasil disimpan')
+    },
+    onError: () => toast.error('Gagal menyimpan konfigurasi')
+  })
+}
+
+export const useGlobalStats = () => useQuery({
+  queryKey: ['admin-global-stats'],
+  refetchInterval: 60_000,
+  queryFn: async () => {
+    const [tenantsRes, invoicesRes] = await Promise.all([
+      supabase.from('tenants').select(`
+        id, business_name, plan, is_active, trial_ends_at, created_at, business_vertical,
+        profiles(id, is_active, last_seen_at, role)
+      `),
+      supabase.from('subscription_invoices').select(
+        'id, invoice_number, amount, status, confirmed_at, created_at, tenant_id, plan, billing_months, tenants(business_name)'
+      )
+    ])
+    if (tenantsRes.error) throw tenantsRes.error
+    if (invoicesRes.error) throw invoicesRes.error
+
+    const tenants  = tenantsRes.data  || []
+    const invoices = invoicesRes.data || []
+    const now           = new Date()
+    const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000)
+    const sevenDaysAgo  = new Date(now - 7  * 24 * 60 * 60 * 1000)
+
+    // Growth chart — last 6 calendar months (monthly new registrations)
+    const monthLabels = Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(now)
+      d.setMonth(d.getMonth() - (5 - i))
       return {
-        tenants: {
-          total: tenants.length,
-          active: tenants.filter(t => t.is_active).length,
-          pro: tenants.filter(t => t.plan === 'pro' && t.is_active).length,
-          business: tenants.filter(t => t.plan === 'business' && t.is_active).length,
-          starter: tenants.filter(t => t.plan === 'starter' && t.is_active).length,
-          trialExpiringSoon: tenants.filter(t => {
+        key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+        label: d.toLocaleString('id-ID', { month: 'short' })
+      }
+    })
+    const growthData = monthLabels.map(({ key, label }) => ({
+      month: label,
+      count: tenants.filter(t => {
+        const d = new Date(t.created_at)
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` === key
+      }).length
+    }))
+
+    return {
+      tenants: {
+        total:        tenants.length,
+        active:       tenants.filter(t => t.is_active).length,
+        pro:          tenants.filter(t => t.plan === 'pro'      && t.is_active).length,
+        business:     tenants.filter(t => t.plan === 'business' && t.is_active).length,
+        starter:      tenants.filter(t => t.plan === 'starter'  && t.is_active).length,
+        newThisMonth: tenants.filter(t => new Date(t.created_at) > thirtyDaysAgo).length,
+        trialExpiringSoon: tenants
+          .filter(t => {
             if (!t.trial_ends_at) return false
             const diff = new Date(t.trial_ends_at) - now
             return diff > 0 && diff < 7 * 24 * 60 * 60 * 1000
-          }).length,
-          newThisMonth: tenants.filter(t =>
-            new Date(t.created_at) > thirtyDaysAgo
-          ).length,
-          byVertical: {
-            poultry_broker: tenants.filter(t => t.business_vertical === 'poultry_broker').length,
-            egg_broker: tenants.filter(t => t.business_vertical === 'egg_broker').length,
-            peternak: tenants.filter(t => t.business_vertical === 'peternak').length,
-            rpa: tenants.filter(t => t.business_vertical === 'rpa').length,
-          },
-          listExpiring: tenants.filter(t => {
-             if (!t.trial_ends_at) return false
-             const diff = new Date(t.trial_ends_at) - now
-             return diff > 0 && diff < 7 * 24 * 60 * 60 * 1000
-          }).sort((a, b) => new Date(a.trial_ends_at) - new Date(b.trial_ends_at))
+          })
+          .sort((a, b) => new Date(a.trial_ends_at) - new Date(b.trial_ends_at)),
+        byVertical: {
+          poultry_broker: tenants.filter(t => t.business_vertical === 'poultry_broker').length,
+          egg_broker:     tenants.filter(t => t.business_vertical === 'egg_broker').length,
+          peternak:       tenants.filter(t => t.business_vertical === 'peternak').length,
+          rpa:            tenants.filter(t => t.business_vertical === 'rpa').length,
         },
-        users: {
-          total: tenants.reduce((sum, t) => sum + (t.profiles?.length || 0), 0),
-          activeThisWeek: tenants.reduce((sum, t) => {
-            return sum + (t.profiles || []).filter(p =>
-              p.last_seen_at && new Date(p.last_seen_at) > sevenDaysAgo
-            ).length
-          }, 0)
-        },
-        revenue: {
-          total: invoices.filter(i => i.status === 'paid')
-            .reduce((sum, i) => sum + i.amount, 0),
-          thisMonth: invoices.filter(i =>
-            i.status === 'paid' && new Date(i.confirmed_at) > thirtyDaysAgo
-          ).reduce((sum, i) => sum + i.amount, 0),
-          pending: invoices.filter(i => i.status === 'pending')
-            .reduce((sum, i) => sum + i.amount, 0),
-          pendingCount: invoices.filter(i => i.status === 'pending').length,
-          recentPending: invoices.filter(i => i.status === 'pending')
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-            .slice(0, 5)
-        },
-        raw: { tenants, invoices }
+        growthData
+      },
+      users: {
+        total: tenants.reduce((sum, t) => sum + (t.profiles?.length || 0), 0),
+        activeThisWeek: tenants.reduce((sum, t) => {
+          return sum + (t.profiles || []).filter(p =>
+            p.last_seen_at && new Date(p.last_seen_at) > sevenDaysAgo
+          ).length
+        }, 0)
+      },
+      revenue: {
+        total:         invoices.filter(i => i.status === 'paid')
+                         .reduce((sum, i) => sum + (i.amount || 0), 0),
+        thisMonth:     invoices
+                         .filter(i => i.status === 'paid' && i.paid_at && new Date(i.paid_at) > thirtyDaysAgo)
+                         .reduce((sum, i) => sum + (i.amount || 0), 0),
+        pendingAmount: invoices.filter(i => i.status === 'pending')
+                         .reduce((sum, i) => sum + (i.amount || 0), 0),
+        pendingList:   invoices
+                         .filter(i => i.status === 'pending')
+                         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                         .slice(0, 5)
       }
-    },
-    refetchInterval: 60_000
-  })
-}
+    }
+  }
+})

@@ -57,7 +57,18 @@ create table profiles (
 create or replace function my_tenant_id()
 returns uuid language sql security definer stable as $$
   select tenant_id from profiles
-  where auth_user_id = auth.uid() limit 1;
+  where auth_user_id = auth.uid() 
+  order by created_at desc -- at least be deterministic, but still bad for multi-tenant
+  limit 1;
+$$;
+
+create or replace function is_my_tenant(tid uuid)
+returns boolean language sql security definer stable as $$
+  select exists(
+    select 1 from profiles
+    where auth_user_id = auth.uid()
+    and tenant_id = tid
+  );
 $$;
 
 create or replace function my_user_type()
@@ -701,10 +712,10 @@ alter table subscription_invoices enable row level security;
 -- ── CORE ─────────────────────────────────────────────────────
 
 create policy "tenant_select" on tenants for select
-  using (id = my_tenant_id() or is_superadmin());
+  using (is_my_tenant(id) or is_superadmin());
 
 create policy "tenant_update" on tenants for update
-  using (id = my_tenant_id() or is_superadmin());
+  using (is_my_tenant(id) or is_superadmin());
 
 create policy "profile_all" on profiles for all
   using (auth_user_id = auth.uid() or is_superadmin());
@@ -712,88 +723,88 @@ create policy "profile_all" on profiles for all
 -- ── BROKER TABLES ────────────────────────────────────────────
 
 create policy "farms_all" on farms for all
-  using (tenant_id = my_tenant_id() or is_superadmin())
-  with check (tenant_id = my_tenant_id());
+  using (is_my_tenant(tenant_id) or is_superadmin())
+  with check (is_my_tenant(tenant_id) or is_superadmin());
 
 create policy "rpa_all" on rpa_clients for all
-  using (tenant_id = my_tenant_id() or is_superadmin())
-  with check (tenant_id = my_tenant_id());
+  using (is_my_tenant(tenant_id) or is_superadmin())
+  with check (is_my_tenant(tenant_id) or is_superadmin());
 
 create policy "batches_all" on chicken_batches for all
-  using (tenant_id = my_tenant_id() or is_superadmin())
-  with check (tenant_id = my_tenant_id());
+  using (is_my_tenant(tenant_id) or is_superadmin())
+  with check (is_my_tenant(tenant_id) or is_superadmin());
 
 create policy "orders_all" on orders for all
-  using (tenant_id = my_tenant_id() or is_superadmin())
-  with check (tenant_id = my_tenant_id());
+  using (is_my_tenant(tenant_id) or is_superadmin())
+  with check (is_my_tenant(tenant_id) or is_superadmin());
 
 create policy "purchases_all" on purchases for all
-  using (tenant_id = my_tenant_id() or is_superadmin())
-  with check (tenant_id = my_tenant_id());
+  using (is_my_tenant(tenant_id) or is_superadmin())
+  with check (is_my_tenant(tenant_id) or is_superadmin());
 
 create policy "sales_all" on sales for all
-  using (tenant_id = my_tenant_id() or is_superadmin())
-  with check (tenant_id = my_tenant_id());
+  using (is_my_tenant(tenant_id) or is_superadmin())
+  with check (is_my_tenant(tenant_id) or is_superadmin());
 
 create policy "payments_all" on payments for all
-  using (tenant_id = my_tenant_id() or is_superadmin())
-  with check (tenant_id = my_tenant_id());
+  using (is_my_tenant(tenant_id) or is_superadmin())
+  with check (is_my_tenant(tenant_id) or is_superadmin());
 
 create policy "deliveries_all" on deliveries for all
-  using (tenant_id = my_tenant_id() or is_superadmin())
-  with check (tenant_id = my_tenant_id());
+  using (is_my_tenant(tenant_id) or is_superadmin())
+  with check (is_my_tenant(tenant_id) or is_superadmin());
 
 create policy "loss_all" on loss_reports for all
-  using (tenant_id = my_tenant_id() or is_superadmin())
-  with check (tenant_id = my_tenant_id());
+  using (is_my_tenant(tenant_id) or is_superadmin())
+  with check (is_my_tenant(tenant_id) or is_superadmin());
 
 create policy "expenses_all" on extra_expenses for all
-  using (tenant_id = my_tenant_id() or is_superadmin())
-  with check (tenant_id = my_tenant_id());
+  using (is_my_tenant(tenant_id) or is_superadmin())
+  with check (is_my_tenant(tenant_id) or is_superadmin());
 
 -- ── PETERNAK TABLES ──────────────────────────────────────────
 
 create policy "peternak_farms_all" on peternak_farms for all
-  using (tenant_id = my_tenant_id() or is_superadmin())
-  with check (tenant_id = my_tenant_id());
+  using (is_my_tenant(tenant_id) or is_superadmin())
+  with check (is_my_tenant(tenant_id) or is_superadmin());
 
 create policy "cycles_all" on breeding_cycles for all
-  using (tenant_id = my_tenant_id() or is_superadmin())
-  with check (tenant_id = my_tenant_id());
+  using (is_my_tenant(tenant_id) or is_superadmin())
+  with check (is_my_tenant(tenant_id) or is_superadmin());
 
 create policy "daily_records_all" on daily_records for all
-  using (tenant_id = my_tenant_id() or is_superadmin())
-  with check (tenant_id = my_tenant_id());
+  using (is_my_tenant(tenant_id) or is_superadmin())
+  with check (is_my_tenant(tenant_id) or is_superadmin());
 
 create policy "feed_stocks_all" on feed_stocks for all
-  using (tenant_id = my_tenant_id() or is_superadmin())
-  with check (tenant_id = my_tenant_id());
+  using (is_my_tenant(tenant_id) or is_superadmin())
+  with check (is_my_tenant(tenant_id) or is_superadmin());
 
 -- Broker connections: kedua pihak bisa lihat
 create policy "connections_select" on broker_connections for select
   using (
-    peternak_tenant_id = my_tenant_id() or
-    broker_tenant_id = my_tenant_id() or
+    is_my_tenant(peternak_tenant_id) or
+    is_my_tenant(broker_tenant_id) or
     is_superadmin()
   );
 
 create policy "connections_insert" on broker_connections for insert
   with check (
-    peternak_tenant_id = my_tenant_id() or
-    broker_tenant_id = my_tenant_id()
+    is_my_tenant(peternak_tenant_id) or
+    is_my_tenant(broker_tenant_id)
   );
 
 create policy "connections_update" on broker_connections for update
   using (
-    peternak_tenant_id = my_tenant_id() or
-    broker_tenant_id = my_tenant_id() or
+    is_my_tenant(peternak_tenant_id) or
+    is_my_tenant(broker_tenant_id) or
     is_superadmin()
   );
 
 -- Stock listings: broker yang connected bisa lihat
 create policy "listings_select" on stock_listings for select
   using (
-    peternak_tenant_id = my_tenant_id() or
+    is_my_tenant(peternak_tenant_id) or
     visible_to = 'public' or
     is_superadmin() or
     (
@@ -801,33 +812,33 @@ create policy "listings_select" on stock_listings for select
       exists(
         select 1 from broker_connections
         where peternak_tenant_id = stock_listings.peternak_tenant_id
-        and broker_tenant_id = my_tenant_id()
+        and is_my_tenant(broker_tenant_id)
         and status = 'active'
       )
     )
   );
 
 create policy "listings_write" on stock_listings for all
-  using (peternak_tenant_id = my_tenant_id() or is_superadmin())
-  with check (peternak_tenant_id = my_tenant_id());
+  using (is_my_tenant(peternak_tenant_id) or is_superadmin())
+  with check (is_my_tenant(peternak_tenant_id));
 
 -- ── RPA TABLES ───────────────────────────────────────────────
 
 create policy "rpa_profiles_all" on rpa_profiles for all
-  using (tenant_id = my_tenant_id() or is_superadmin())
-  with check (tenant_id = my_tenant_id());
+  using (is_my_tenant(tenant_id) or is_superadmin())
+  with check (is_my_tenant(tenant_id) or is_superadmin());
 
 create policy "rpa_orders_all" on rpa_purchase_orders for all
   using (
-    rpa_tenant_id = my_tenant_id() or
-    broker_tenant_id = my_tenant_id() or
+    is_my_tenant(rpa_tenant_id) or
+    is_my_tenant(broker_tenant_id) or
     is_superadmin()
   );
 
 create policy "rpa_payments_all" on rpa_payments for all
   using (
-    rpa_tenant_id = my_tenant_id() or
-    broker_tenant_id = my_tenant_id() or
+    is_my_tenant(rpa_tenant_id) or
+    is_my_tenant(broker_tenant_id) or
     is_superadmin()
   );
 
@@ -840,8 +851,8 @@ create policy "market_update" on market_prices for update using (true);
 -- ── NOTIFICATIONS ────────────────────────────────────────────
 
 create policy "notif_all" on notifications for all
-  using (tenant_id = my_tenant_id() or is_superadmin())
-  with check (tenant_id = my_tenant_id());
+  using (is_my_tenant(tenant_id) or is_superadmin())
+  with check (is_my_tenant(tenant_id) or is_superadmin());
 
 -- ── BILLING ──────────────────────────────────────────────────
 

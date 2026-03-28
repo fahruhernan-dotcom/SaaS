@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { useForm, Controller } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { supabase } from '@/lib/supabase'
@@ -9,16 +9,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  SelectGroup,
-  SelectLabel,
-  SelectSeparator,
-} from '@/components/ui/select'
 import {
   Eye, EyeOff, AlertCircle, Loader2,
   TrendingUp, Truck, BarChart2, Clock
@@ -37,33 +27,15 @@ const registerSchema = z.object({
   password: z.string().min(8, 'Password minimal 8 karakter'),
   confirmPassword: z.string(),
   agreedToTerms: z.literal(true, {
-    errorMap: () => ({ message: 'Kamu harus menyetujui syarat & ketentuan untuk melanjutkan.' }),
+    message: 'Kamu harus menyetujui syarat & ketentuan untuk melanjutkan.',
   }),
-  // Optional/Conditional fields
-  businessName: z.string().optional(),
-  user_type: z.enum(['broker', 'egg_broker', 'peternak', 'rpa', 'cattle_broker', 'commodity_broker']).optional(),
   inviteCode: z.string().optional(),
   mode: z.enum(['mandiri', 'invite']).default('mandiri'),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Konfirmasi password tidak cocok',
   path: ['confirmPassword'],
 }).superRefine((data, ctx) => {
-  if (data.mode === 'mandiri') {
-    if (!data.businessName || data.businessName.length < 2) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Nama bisnis wajib diisi',
-        path: ['businessName'],
-      });
-    }
-    if (!data.user_type) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Pilih model bisnis',
-        path: ['user_type'],
-      });
-    }
-  } else if (data.mode === 'invite') {
+  if (data.mode === 'invite') {
     if (!data.inviteCode || data.inviteCode.length !== 6) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -94,16 +66,12 @@ export default function Register() {
   const {
     register,
     handleSubmit,
-    control,
-    watch,
     setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       fullName: '',
-      businessName: '',
-      user_type: undefined,
       inviteCode: '',
       email: '',
       password: '',
@@ -117,18 +85,6 @@ export default function Register() {
   React.useEffect(() => {
     setValue('mode', mode)
   }, [mode, setValue])
-
-  // Improve 5: Dynamic Placeholder
-  const selectedType = watch('user_type')
-  const getBusinessPlaceholder = () => {
-    switch (selectedType) {
-      case 'broker': return "Ex: Broker Jaya Makmur"
-      case 'egg_broker': return "Ex: Berkah Telur Sejahtera"
-      case 'peternak': return "Ex: Kandang Pak Budi"
-      case 'rpa': return "Ex: RPA Sejahtera"
-      default: return "Nama bisnis kamu"
-    }
-  }
 
   // Improve 1 & 4: Google Loading & Error Handling
   const handleGoogleSignIn = async () => {
@@ -230,33 +186,45 @@ export default function Register() {
 
     setIsLoading(true)
     setAuthError('')
-    
+
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data: authData, error } = await supabase.auth.signUp({
         email: formData.email.trim(),
         password: formData.password,
         options: {
-          data: {
-            full_name: formData.fullName,
-            business_name: formData.businessName,
-            user_type: formData.user_type,
-            onboarded: true,
-            business_model_selected: true
-          }
+          data: { full_name: formData.fullName }
         }
       })
-      
+
       if (error) throw error;
 
-      // Skip onboarding and go directly to dashboard
-      const dashboardPath = formData.user_type === 'broker' ? '/broker/beranda' : 
-                          formData.user_type === 'egg_broker' ? '/broker/egg_broker/beranda' :
-                          formData.user_type === 'peternak' ? '/peternak/beranda' : 
-                          '/rpa-buyer/beranda';
-                          
-      navigate(dashboardPath)
-      toast.success('Akun berhasil dibuat! Selamat datang di TernakOS.')
-      
+      // Tunggu trigger handle_new_user() jalan di DB
+      await new Promise(resolve => setTimeout(resolve, 1500))
+
+      // Verifikasi profile terbuat oleh trigger
+      const { data: profileCheck } = await supabase
+        .from('profiles')
+        .select('id, onboarded, tenant_id')
+        .eq('auth_user_id', authData.user.id)
+        .single()
+
+      if (!profileCheck) {
+        toast.error(
+          'Akun dibuat tapi setup gagal. ' +
+          'Coba login — jika masih error, hubungi support.',
+          { duration: 6000 }
+        )
+        return
+      }
+
+      // Trigger berhasil — navigate sesuai status onboarding
+      if (profileCheck.onboarded) {
+        navigate('/broker/beranda')
+      } else {
+        navigate('/onboarding')
+      }
+      toast.success('Akun berhasil dibuat! Yuk lengkapi profil bisnis kamu.')
+
     } catch (err) {
       setAuthError(err.message)
     } finally {
@@ -433,7 +401,7 @@ export default function Register() {
           </div>
           
           <h1 style={{ fontFamily: 'Sora', fontSize: '26px', fontWeight: 800, color: '#F1F5F9', margin: '0 0 8px', letterSpacing: '-0.3px' }}>Buat akun baru</h1>
-          <p style={{ fontSize: '14px', color: '#4B6478', margin: '0 0 32px', lineHeight: 1.6 }}>Lengkapi data di bawah untuk memulai trial gratis 14 hari</p>
+          <p style={{ fontSize: '14px', color: '#4B6478', margin: '0 0 32px', lineHeight: 1.6 }}>14 hari gratis, tanpa kartu kredit.</p>
 
           <Button
             type="button"
@@ -497,20 +465,6 @@ export default function Register() {
               {errors.fullName && <p className="text-xs text-red-400 mt-1 ml-1">{errors.fullName.message}</p>}
             </div>
 
-            {/* Nama Bisnis (Mandiri only) */}
-            {mode === 'mandiri' && (
-              <div className="space-y-1.5">
-                <Label style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', marginLeft: '4px' }}>Nama Bisnis</Label>
-                <Input
-                  placeholder={getBusinessPlaceholder()}
-                  {...register('businessName')}
-                  style={{ background: '#111C24', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', padding: '13px 14px', color: '#F1F5F9' }}
-                  className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 h-12"
-                />
-                {errors.businessName && <p className="text-xs text-red-400 mt-1 ml-1">{errors.businessName.message}</p>}
-              </div>
-            )}
-
             {/* Kode Undangan (Invite only) */}
             {mode === 'invite' && (
               <div className="space-y-1.5">
@@ -536,37 +490,6 @@ export default function Register() {
                   className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 h-12"
                 />
                 {errors.inviteCode && <p className="text-xs text-red-400 mt-1 ml-1">{errors.inviteCode.message}</p>}
-              </div>
-            )}
-
-            {/* Model Bisnis Dropdown (Mandiri only) */}
-            {mode === 'mandiri' && (
-              <div className="space-y-1.5">
-                <Label style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', marginLeft: '4px' }}>Model Bisnis</Label>
-                <Controller
-                  name="user_type"
-                  control={control}
-                  render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <SelectTrigger className="h-12 bg-[#111C24] border-white/10 rounded-xl text-[#F1F5F9] focus:ring-emerald-500/20">
-                        <SelectValue placeholder="Pilih tipe usahamu" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#111C24] border-white/10 text-[#F1F5F9]">
-                        <SelectGroup>
-                          <SelectLabel className="text-[#4B6478] text-[10px] uppercase tracking-widest px-2 py-2">Broker</SelectLabel>
-                          <SelectItem value="broker">🐔 Broker Ayam <span className="ml-2 text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">Tersedia</span></SelectItem>
-                          <SelectItem value="egg_broker">🥚 Broker Telur <span className="ml-2 text-[10px] text-emerald-500 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded">Tersedia</span></SelectItem>
-                          <SelectItem value="cattle_broker" disabled>🐄 Broker Sapi <span className="ml-2 text-[10px] text-[#4B6478] font-bold bg-white/5 px-1.5 py-0.5 rounded">Segera Hadir</span></SelectItem>
-                          <SelectItem value="commodity_broker" disabled>🛒 Broker Sembako <span className="ml-2 text-[10px] text-[#4B6478] font-bold bg-white/5 px-1.5 py-0.5 rounded">Segera Hadir</span></SelectItem>
-                        </SelectGroup>
-                        <SelectSeparator className="bg-white/5" />
-                        <SelectItem value="peternak" disabled>🏠 Peternak <span className="ml-2 text-[10px] text-[#4B6478] font-bold bg-white/5 px-1.5 py-0.5 rounded">Segera Hadir</span></SelectItem>
-                        <SelectItem value="rpa" disabled>🏭 RPA / Rumah Potong <span className="ml-2 text-[10px] text-[#4B6478] font-bold bg-white/5 px-1.5 py-0.5 rounded">Segera Hadir</span></SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.user_type && <p className="text-xs text-red-400 mt-1 ml-1">{errors.user_type.message}</p>}
               </div>
             )}
 
@@ -662,7 +585,7 @@ export default function Register() {
               {isLoading ? (
                 <><Loader2 size={16} className="animate-spin mr-2" />
                   Memproses...</>
-              ) : (mode === 'mandiri' ? 'Daftar Gratis' : 'Bergabung ke Tim')}
+              ) : (mode === 'mandiri' ? 'Daftar Gratis →' : 'Bergabung ke Tim')}
             </Button>
           </form>
           

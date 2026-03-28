@@ -1,59 +1,54 @@
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, MoreVertical } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { ArrowLeft, Search, User } from 'lucide-react'
+import NotificationBell from './NotificationBell'
+import { Button } from '@/components/ui/button'
 
-export default function TopBar({ title, subtitle, showBack = false, rightAction }) {
+export default function TopBar({ title, subtitle, showBack = false, rightAction, showBell = true }) {
   const navigate = useNavigate()
 
   return (
-    <div style={{
-      position: 'sticky',
-      top: 0,
-      zIndex: 50,
-      background: 'rgba(6,9,15,0.92)',
-      backdropFilter: 'blur(20px)',
-      borderBottom: '1px solid rgba(255,255,255,0.06)',
-      padding: '14px 20px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      minHeight: '60px',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <motion.header 
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.2 }}
+      className="px-5 lg:px-6 pt-10 lg:pt-4 pb-4 lg:pb-5 flex items-center justify-between sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-50 border-b border-white/5 min-h-[60px] lg:min-h-[64px]"
+    >
+      <div className="flex items-center gap-4">
         {showBack && (
-          <motion.button
-            whileTap={{ scale: 0.9 }}
+          <Button 
+            variant="ghost" 
+            size="icon" 
             onClick={() => navigate(-1)}
-            style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '10px',
-              width: '36px', height: '36px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer',
-            }}
+            className="w-10 h-10 lg:w-9 lg:h-9 rounded-xl lg:rounded-lg bg-white/5 border border-white/10 text-white active:scale-95 transition-transform"
           >
-            <ArrowLeft size={18} color="#94A3B8" />
-          </motion.button>
+            <ArrowLeft size={20} className="lg:w-4 lg:h-4" />
+          </Button>
         )}
-        <div>
-          <div style={{
-            fontFamily: 'Sora',
-            fontSize: '16px',
-            fontWeight: 700,
-            color: '#F1F5F9',
-            lineHeight: 1.2,
-          }}>
-            {title}
-          </div>
+        <div className="text-left">
+          <h1 className="font-display text-lg lg:text-xl font-black text-white tracking-tight uppercase leading-none">{title}</h1>
           {subtitle && (
-            <div style={{ fontSize: '12px', color: '#4B6478', marginTop: '2px' }}>
-              {subtitle}
-            </div>
+            <p className="text-[10px] lg:text-xs font-bold text-[#4B6478] uppercase mt-1 lg:mt-1.5 tracking-widest">{subtitle}</p>
           )}
         </div>
       </div>
-      {rightAction && rightAction}
-    </div>
+      
+      <div className="flex items-center gap-3">
+        {rightAction}
+        {showBell && <NotificationBell />}
+        {!rightAction && !showBell && (
+            <div className="flex items-center gap-2 lg:gap-3">
+                <Button variant="ghost" size="icon" className="w-10 h-10 lg:w-9 lg:h-9 rounded-xl lg:rounded-lg bg-white/5 border border-white/10 text-[#4B6478]">
+                    <Search size={18} className="lg:w-4 lg:h-4" />
+                </Button>
+                <div className="w-10 h-10 lg:w-9 lg:h-9 rounded-xl lg:rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                    <User size={18} className="text-emerald-400 lg:w-4 lg:h-4" />
+                </div>
+            </div>
+        )}
+      </div>
+    </motion.header>
   )
 }
+
+

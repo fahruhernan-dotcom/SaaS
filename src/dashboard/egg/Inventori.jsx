@@ -21,6 +21,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import { cn } from '@/lib/utils'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -38,6 +40,7 @@ export default function Inventori() {
   const [editingItem, setEditingItem] = useState(null)
   
   const queryClient = useQueryClient()
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   const filteredInventory = useMemo(() => {
     if (!inventory) return []
@@ -98,7 +101,7 @@ export default function Inventori() {
         transition={{ duration: 0.3 }}
         className="bg-[#06090F] min-h-screen pb-24"
     >
-      <header className="px-5 pt-8 pb-4 border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 flex flex-col gap-1 text-left">
+      <header className={cn("px-5 pb-4 border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 flex flex-col gap-1 text-left", isDesktop ? "pt-8" : "pt-10")}>
         <div className="flex justify-between items-center">
             <div>
                 <h1 className="font-display text-2xl font-black text-white tracking-tight leading-none uppercase">Inventori & HPP</h1>
@@ -157,22 +160,24 @@ export default function Inventori() {
 
       <Sheet open={openModal} onOpenChange={setOpenModal}>
         <SheetContent 
-          side="right" 
-          className="bg-[#0C1319] border-l border-white/8 w-full sm:max-w-[480px] p-8 overflow-y-auto"
+          side={isDesktop ? "right" : "bottom"} 
+          className={cn("bg-[#0C1319] border-white/8 p-0 overflow-y-auto", isDesktop ? "w-full sm:max-w-[480px] border-l" : "h-[85vh] rounded-t-[40px] border-t")}
         >
-          <SheetHeader className="mb-8">
-            <SheetTitle className="font-display text-2xl font-black text-white uppercase tracking-tight text-left">
-              {editingItem ? "EDIT GRADE" : "TAMBAH GRADE"}
-            </SheetTitle>
-            <SheetDescription className="sr-only">Form Inventori</SheetDescription>
-          </SheetHeader>
+          <div className={isDesktop ? "p-8" : "p-6 pt-10"}>
+            <SheetHeader className="mb-8">
+                <SheetTitle className="font-display text-2xl font-black text-white uppercase tracking-tight text-left">
+                {editingItem ? "EDIT GRADE" : "TAMBAH GRADE"}
+                </SheetTitle>
+                <SheetDescription className="sr-only">Form Inventori</SheetDescription>
+            </SheetHeader>
 
-          <InventoryForm 
-            item={editingItem} 
-            onClose={() => setOpenModal(false)} 
-            onSave={handleSave}
-            onDelete={handleDelete}
-          />
+            <InventoryForm 
+                item={editingItem} 
+                onClose={() => setOpenModal(false)} 
+                onSave={handleSave}
+                onDelete={handleDelete}
+            />
+          </div>
         </SheetContent>
       </Sheet>
     </motion.div>
@@ -180,6 +185,7 @@ export default function Inventori() {
 }
 
 function InventoryCard({ item, onEdit }) {
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const stockColor = item.current_stock_butir < 5 ? 'text-red-400' : 'text-emerald-400'
   
   return (
@@ -187,16 +193,16 @@ function InventoryCard({ item, onEdit }) {
         onClick={onEdit}
         className="bg-[#111C24] border-white/5 rounded-[24px] p-5 cursor-pointer hover:border-white/10 transition-all active:scale-[0.98] relative overflow-hidden group"
     >
-        <div className="flex justify-between items-start relative z-10">
-            <div className="space-y-1">
-                <h3 className="font-display font-black text-[#F1F5F9] text-xl uppercase tracking-tight group-hover:text-emerald-400 transition-colors">{item.product_name}</h3>
-                <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Harga Jual: {formatIDR(item.sell_price_per_pack)} / {item.unit || 'pack'}</p>
+        <div className="flex justify-between items-start relative z-10 text-left">
+            <div className="space-y-1.5">
+                <h3 className={cn("font-display font-black text-[#F1F5F9] uppercase tracking-tight group-hover:text-emerald-400 transition-colors leading-none", isDesktop ? "text-xl" : "text-lg")}>{item.product_name}</h3>
+                <p className={cn("font-black text-[#4B6478] uppercase tracking-widest leading-none", isDesktop ? "text-[10px]" : "text-[11px]")}>Harga Jual: {formatIDR(item.sell_price_per_pack)} / {item.unit || 'pack'}</p>
             </div>
             <div className="text-right">
-                <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mb-1">Stok Saat Ini</p>
+                <p className={cn("font-black text-[#4B6478] uppercase tracking-widest mb-1 leading-none", isDesktop ? "text-[10px]" : "text-[11px]")}>Stok Saat Ini</p>
                 <div className="flex items-baseline justify-end gap-1">
-                    <span className={`font-display font-black text-2xl ${stockColor}`}>{item.current_stock_butir}</span>
-                    <span className="text-[10px] font-black text-[#4B6478] uppercase">butir</span>
+                    <span className={cn("font-display font-black", stockColor, isDesktop ? "text-2xl" : "text-xl")}>{item.current_stock_butir}</span>
+                    <span className={cn("font-black text-[#4B6478] uppercase", isDesktop ? "text-[10px]" : "text-[11px]")}>butir</span>
                 </div>
             </div>
         </div>
@@ -204,14 +210,14 @@ function InventoryCard({ item, onEdit }) {
         <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center relative z-10">
             <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-white/5 rounded-lg">
-                    <Calculator size={14} className="text-[#4B6478]" />
+                    <Calculator size={isDesktop ? 14 : 16} className="text-[#4B6478]" />
                 </div>
-                <div>
-                    <p className="text-[9px] font-bold text-[#4B6478] uppercase leading-none">HPP Rata-rata</p>
-                    <p className="text-xs font-black text-white mt-0.5">{formatIDR(item.cost_per_pack)}</p>
+                <div className="text-left">
+                    <p className={cn("font-bold text-[#4B6478] uppercase leading-none", isDesktop ? "text-[9px]" : "text-[10px]")}>HPP Rata-rata</p>
+                    <p className={cn("font-black text-white mt-1", isDesktop ? "text-xs" : "text-sm")}>{formatIDR(item.cost_per_pack)}</p>
                 </div>
             </div>
-            <ChevronRight size={18} className="text-[#4B6478] group-hover:translate-x-1 transition-transform" />
+            <ChevronRight size={isDesktop ? 18 : 20} className="text-[#4B6478] group-hover:translate-x-1 transition-transform" />
         </div>
 
         {/* Decorative background icon */}
@@ -223,6 +229,7 @@ function InventoryCard({ item, onEdit }) {
 }
 
 function InventoryForm({ item, onClose, onSave, onDelete }) {
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
     const [isLoading, setIsLoading] = useState(false)
     const [formData, setFormData] = useState(item || {
         product_name: '',
@@ -241,68 +248,68 @@ function InventoryForm({ item, onClose, onSave, onDelete }) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6 pb-12">
+        <form onSubmit={handleSubmit} className="space-y-6 pb-12 text-left">
             <div className="space-y-2">
-                <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Nama / Grade Telur *</Label>
+                <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Nama / Grade Telur *</Label>
                 <Input
                     required
                     placeholder="Contoh: Grade A / Gajah"
                     value={formData.product_name}
                     onChange={e => setFormData({...formData, product_name: e.target.value})}
-                    className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold focus:border-emerald-500/50"
+                    className="bg-[#111C24] border-white/10 rounded-xl h-14 font-bold focus:border-emerald-500/50 text-base text-white uppercase placeholder:text-white/10"
                 />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Stok Awal</Label>
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Stok Awal</Label>
                     <Input
                         type="number"
                         placeholder="0"
                         value={formData.current_stock_butir}
                         onChange={e => setFormData({...formData, current_stock_butir: parseFloat(e.target.value)})}
-                        className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold focus:border-emerald-500/50"
+                        className="bg-[#111C24] border-white/10 rounded-xl h-14 font-bold focus:border-emerald-500/50 text-base text-white"
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Satuan</Label>
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Satuan</Label>
                     <Input
                         value={formData.unit}
                         onChange={e => setFormData({...formData, unit: e.target.value})}
-                        className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold focus:border-emerald-500/50"
+                        className="bg-[#111C24] border-white/10 rounded-xl h-14 font-bold focus:border-emerald-500/50 text-base text-white uppercase placeholder:text-white/10"
                     />
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">HPP (Modal)</Label>
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>HPP (Modal)</Label>
                     <Input
                         type="number"
                         placeholder="0"
                         value={formData.cost_per_pack}
                         onChange={e => setFormData({...formData, cost_per_pack: parseFloat(e.target.value)})}
-                        className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold focus:border-emerald-500/50"
+                        className="bg-[#111C24] border-white/10 rounded-xl h-14 font-bold focus:border-emerald-500/50 text-base text-white"
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Harga Jual</Label>
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Harga Jual</Label>
                     <Input
                         type="number"
                         placeholder="0"
                         value={formData.sell_price_per_pack}
                         onChange={e => setFormData({...formData, sell_price_per_pack: parseFloat(e.target.value)})}
-                        className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold focus:border-emerald-500/50"
+                        className="bg-[#111C24] border-white/10 rounded-xl h-14 font-bold focus:border-emerald-500/50 text-base text-white"
                     />
                 </div>
             </div>
 
             <div className="space-y-2">
-                <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Catatan</Label>
+                <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Catatan</Label>
                 <Textarea
                     value={formData.notes}
                     onChange={e => setFormData({...formData, notes: e.target.value})}
-                    className="bg-[#111C24] border-white/10 rounded-xl min-h-[100px] focus:border-emerald-500/50"
+                    className="bg-[#111C24] border-white/10 rounded-2xl min-h-[100px] focus:border-emerald-500/50 text-base text-white placeholder:text-white/10"
                 />
             </div>
 

@@ -1,28 +1,32 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  ChevronRight, 
+import {
+  ChevronRight,
   X,
   Truck,
   Wallet,
   BarChart2,
+  BarChart3,
   Car,
   Calculator,
   User,
+  Users,
   Package,
   RefreshCw,
   ClipboardList,
   ShoppingCart,
   CreditCard,
-  History
+  History,
+  Store,
 } from 'lucide-react'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { getBusinessModel } from '../../lib/businessModel'
+import ThemePicker from '../../components/ui/ThemePicker'
 
 const ICON_MAP = {
-  Truck, Wallet, BarChart2, Car, Calculator, User,
-  Package, RefreshCw, ClipboardList, ShoppingCart, CreditCard, History
+  Truck, Wallet, BarChart2, BarChart3, Car, Calculator, User, Users,
+  Package, RefreshCw, ClipboardList, ShoppingCart, CreditCard, History, Store,
 }
 
 export default function DrawerLainnya({ isOpen, onClose, userType }) {
@@ -81,6 +85,11 @@ export default function DrawerLainnya({ isOpen, onClose, userType }) {
                 <button onClick={onClose} className="p-2 bg-muted/5 rounded-full text-muted-foreground">
                   <X size={20} />
                 </button>
+              </div>
+
+              {/* Theme Picker */}
+              <div className="mb-6 p-4 bg-background/50 border border-border/5 rounded-2xl">
+                <ThemePicker />
               </div>
 
               {/* Menu List */}

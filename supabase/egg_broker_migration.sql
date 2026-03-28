@@ -151,12 +151,12 @@ ALTER TABLE egg_sale_items  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE egg_stock_logs  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE egg_customers   ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "egg_suppliers_tenant_isolation" ON egg_suppliers FOR ALL USING (tenant_id = (SELECT tenant_id FROM profiles WHERE auth_user_id = auth.uid() LIMIT 1));
-CREATE POLICY "egg_inventory_tenant_isolation" ON egg_inventory FOR ALL USING (tenant_id = (SELECT tenant_id FROM profiles WHERE auth_user_id = auth.uid() LIMIT 1));
-CREATE POLICY "egg_sales_tenant_isolation" ON egg_sales FOR ALL USING (tenant_id = (SELECT tenant_id FROM profiles WHERE auth_user_id = auth.uid() LIMIT 1));
-CREATE POLICY "egg_sale_items_tenant_isolation" ON egg_sale_items FOR ALL USING (sale_id IN (SELECT id FROM egg_sales WHERE tenant_id = (SELECT tenant_id FROM profiles WHERE auth_user_id = auth.uid() LIMIT 1)));
-CREATE POLICY "egg_stock_logs_tenant_isolation" ON egg_stock_logs FOR ALL USING (tenant_id = (SELECT tenant_id FROM profiles WHERE auth_user_id = auth.uid() LIMIT 1));
-CREATE POLICY "egg_customers_tenant_isolation" ON egg_customers FOR ALL USING (tenant_id = (SELECT tenant_id FROM profiles WHERE auth_user_id = auth.uid() LIMIT 1));
+CREATE POLICY "egg_suppliers_tenant_isolation" ON egg_suppliers FOR ALL USING (is_my_tenant(tenant_id));
+CREATE POLICY "egg_inventory_tenant_isolation" ON egg_inventory FOR ALL USING (is_my_tenant(tenant_id));
+CREATE POLICY "egg_sales_tenant_isolation" ON egg_sales FOR ALL USING (is_my_tenant(tenant_id));
+CREATE POLICY "egg_sale_items_tenant_isolation" ON egg_sale_items FOR ALL USING (exists (select 1 from egg_sales where id = egg_sale_items.sale_id and is_my_tenant(tenant_id)));
+CREATE POLICY "egg_stock_logs_tenant_isolation" ON egg_stock_logs FOR ALL USING (is_my_tenant(tenant_id));
+CREATE POLICY "egg_customers_tenant_isolation" ON egg_customers FOR ALL USING (is_my_tenant(tenant_id));
 
 -- ------------------------------------------------------------
 -- 10. FUNCTIONS & TRIGGERS

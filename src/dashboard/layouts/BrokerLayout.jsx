@@ -4,9 +4,11 @@ import { useMediaQuery } from '../../lib/hooks/useMediaQuery'
 import DesktopSidebarLayout from './DesktopSidebarLayout'
 import { useAuth } from '../../lib/hooks/useAuth'
 import BusinessModelOverlay from '../components/BusinessModelOverlay'
+import { useNotificationGenerator } from '../../lib/hooks/useNotifications'
 
 export default function BrokerLayout({ children }) {
   const { profile, loading, refetchProfile } = useAuth()
+  useNotificationGenerator()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   const isSuperadmin = profile?.role === 'superadmin'

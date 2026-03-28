@@ -66,6 +66,8 @@ const TimePicker = ({ value, onChange, label }) => {
         <Clock size={15} color="hsl(var(--muted-foreground))" style={{flexShrink: 0}} />
         
         <input
+          id="time-hour"
+          name="time-hour"
           type="number"
           min={0} max={23}
           value={hour}
@@ -76,6 +78,8 @@ const TimePicker = ({ value, onChange, label }) => {
         <span className="text-lg font-bold text-muted-foreground mb-0.5">:</span>
         
         <input
+          id="time-minute"
+          name="time-minute"
           type="number"
           min={0} max={59}
           value={minute}
@@ -426,8 +430,8 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
               </Popover>
             ) : (
               <div className="grid grid-cols-2 gap-2">
-                <input type="text" placeholder="Jenis Mobil" value={step3Data.vehicle_type || ''} onChange={e => update('vehicle_type', e.target.value)} className={S.input} />
-                <input type="text" placeholder="Plat Nomor" value={step3Data.vehicle_plate || ''} onChange={e => update('vehicle_plate', e.target.value.toUpperCase())} className={S.input} />
+                <input id="vehicle_type" name="vehicle_type" type="text" placeholder="Jenis Mobil" value={step3Data.vehicle_type || ''} onChange={e => update('vehicle_type', e.target.value)} className={S.input} />
+                <input id="vehicle_plate" name="vehicle_plate" type="text" placeholder="Plat Nomor" value={step3Data.vehicle_plate || ''} onChange={e => update('vehicle_plate', e.target.value.toUpperCase())} className={S.input} />
               </div>
             )}
 
@@ -558,8 +562,8 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2">
-                <input type="text" placeholder="Nama sopir" value={step3Data.driver_name || ''} onChange={e => update('driver_name', e.target.value)} className={S.input} />
-                <input type="text" placeholder="No HP" value={step3Data.driver_phone || ''} onChange={e => update('driver_phone', e.target.value)} className={S.input} />
+                <input id="driver_name" name="driver_name" type="text" placeholder="Nama sopir" value={step3Data.driver_name || ''} onChange={e => update('driver_name', e.target.value)} className={S.input} />
+                <input id="driver_phone" name="driver_phone" type="text" placeholder="No HP" value={step3Data.driver_phone || ''} onChange={e => update('driver_phone', e.target.value)} className={S.input} />
               </div>
             )}
 

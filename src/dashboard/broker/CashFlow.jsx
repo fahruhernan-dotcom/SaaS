@@ -155,9 +155,9 @@ export default function CashFlow() {
                     <Button 
                         size="sm"
                         onClick={() => setIsCreateExpenseOpen(true)}
-                        className="h-9 px-4 rounded-xl bg-red-500 hover:bg-red-600 text-white font-black text-[10px] uppercase tracking-widest"
+                        className="h-10 px-4 rounded-xl bg-red-500 hover:bg-red-600 text-white font-black text-xs uppercase tracking-widest transition-all active:scale-95"
                     >
-                        <Plus size={14} strokeWidth={3} className="mr-1.5" /> Catat
+                        <Plus size={16} strokeWidth={3} className="mr-1.5" /> Catat
                     </Button>
                 </header>
             )}
@@ -212,6 +212,7 @@ export default function CashFlow() {
                     <SummaryCard 
                         label="TOTAL PEMASUKAN" 
                         value={summary.totalPemasukan} 
+                        isDesktop={isDesktop}
                         icon={TrendingUp} 
                         color="emerald" 
                         sub={`${sales.length} transaksi jual`}
@@ -219,6 +220,7 @@ export default function CashFlow() {
                     <SummaryCard 
                         label="TOTAL PENGELUARAN" 
                         value={summary.totalKeluar} 
+                        isDesktop={isDesktop}
                         icon={TrendingDown} 
                         color="red" 
                         sub="modal + pengiriman + extra"
@@ -226,6 +228,7 @@ export default function CashFlow() {
                     <SummaryCard 
                         label="NET CASH FLOW" 
                         value={summary.netCashFlow} 
+                        isDesktop={isDesktop}
                         icon={Wallet} 
                         color={summary.netCashFlow >= 0 ? "emerald" : "red"} 
                         sub={`Margin: ${summary.marginPct}%`}
@@ -236,13 +239,13 @@ export default function CashFlow() {
 
                 {/* --- SECTION 3: LINE CHART SALDO --- */}
                 <Card className="bg-[#111C24] border-white/5 rounded-[32px] overflow-hidden shadow-2xl">
-                    <CardHeader className="p-8 pb-0">
+                    <CardHeader className={isDesktop ? "p-8 pb-0" : "p-6 pb-0"}>
                         <div className="flex justify-between items-center">
                             <div>
-                                <CardTitle className="font-display text-lg font-black uppercase tracking-tight">Saldo Kumulatif</CardTitle>
-                                <CardDescription className="text-[#4B6478] font-bold text-[10px] uppercase tracking-widest mt-1">Estimasi kas berjalan periode ini</CardDescription>
+                                <CardTitle className={cn("font-display font-black uppercase tracking-tight", isDesktop ? "text-lg" : "text-base")}>Saldo Kumulatif</CardTitle>
+                                <CardDescription className={cn("text-[#4B6478] font-bold uppercase tracking-widest mt-1", isDesktop ? "text-[10px]" : "text-[11px]")}>Estimasi kas berjalan periode ini</CardDescription>
                             </div>
-                            <Badge variant="outline" className="h-8 rounded-xl border-white/10 bg-white/5 text-[9px] font-black uppercase tracking-widest px-3">
+                            <Badge variant="outline" className={cn("rounded-xl border-white/10 bg-white/5 font-black uppercase tracking-widest px-3", isDesktop ? "h-8 text-[9px]" : "h-9 text-[10px]")}>
                                 {format(dateRange.start, 'dd MMM')} - {format(dateRange.end, 'dd MMM')}
                             </Badge>
                         </div>
@@ -459,11 +462,12 @@ export default function CashFlow() {
 
 // --- SUB-COMPONENTS ---
 
-function SummaryCard({ label, value, icon: Icon, color, sub, className, highlight }) {
+function SummaryCard({ label, value, icon: Icon, color, sub, className, highlight, isDesktop }) {
     const isEmerald = color === 'emerald'
     return (
         <Card className={cn(
-            "bg-[#111C24] rounded-[28px] p-6 shadow-xl relative overflow-hidden group transition-all hover:translate-y-[-2px]",
+            "bg-[#111C24] rounded-[28px] shadow-xl relative overflow-hidden group transition-all hover:translate-y-[-2px]",
+            isDesktop ? "p-6" : "p-5",
             highlight && (isEmerald ? "border-emerald-500/20" : "border-red-500/20"),
             !highlight && "border-white/5",
             className
@@ -474,24 +478,26 @@ function SummaryCard({ label, value, icon: Icon, color, sub, className, highligh
             )}>
                 <Icon size={100} strokeWidth={1.5} />
             </div>
-            <div className="space-y-4 relative z-10">
+            <div className="space-y-4 relative z-10 text-left">
                 <div className="flex items-center gap-3">
                     <div className={cn(
-                        "p-2.5 rounded-xl border",
+                        "rounded-xl border",
+                        isDesktop ? "p-2.5" : "p-2",
                         isEmerald ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-red-500/10 border-red-500/20 text-red-400"
                     )}>
-                        <Icon size={18} strokeWidth={2.5} />
+                        <Icon size={isDesktop ? 18 : 20} strokeWidth={2.5} />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4B6478]">{label}</span>
+                    <span className={cn("font-black uppercase tracking-[0.2em] text-[#4B6478]", isDesktop ? "text-[10px]" : "text-[11px]")}>{label}</span>
                 </div>
                 <div>
                     <h3 className={cn(
-                        "text-xl font-display font-black tracking-tight flex items-baseline gap-1.5",
+                        "font-display font-black tracking-tight flex items-baseline gap-1.5 leading-none",
+                        isDesktop ? "text-xl" : "text-[22px]",
                         isEmerald ? "text-[#34D399]" : "text-[#F87171]"
                     )}>
                         {formatIDR(value || 0)}
                     </h3>
-                    <p className="text-[9px] font-bold text-[#4B6478] uppercase mt-1 tracking-widest">{sub}</p>
+                    <p className={cn("font-bold text-[#4B6478] uppercase mt-1 tracking-widest", isDesktop ? "text-[9px]" : "text-[10px]")}>{sub}</p>
                 </div>
             </div>
         </Card>
@@ -544,6 +550,7 @@ function TransactionList({ transactions }) {
 }
 
 function TransactionRow({ tx }) {
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
     const meta = {
         jual:      { icon: TrendingUp,   color: '#34D399', bg: 'rgba(52,211,153,0.1)' },
         beli:      { icon: ShoppingCart, color: '#60A5FA', bg: 'rgba(96,165,250,0.1)' },
@@ -555,33 +562,34 @@ function TransactionRow({ tx }) {
     const { icon: Icon, color, bg } = meta[tx.category] || meta.extra
 
     return (
-        <div className="p-6 flex items-center justify-between hover:bg-white/[0.02] transition-all group">
+        <div className="p-6 flex items-center justify-between hover:bg-white/[0.02] transition-all group active:bg-white/[0.04]">
             <div className="flex items-center gap-4 flex-1 min-w-0">
                 <div 
-                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border border-white/5"
+                    className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 border border-white/5"
                     style={{ background: bg, color }}
                 >
-                    <Icon size={18} strokeWidth={2.5} />
+                    <Icon size={isDesktop ? 18 : 20} strokeWidth={2.5} />
                 </div>
-                <div className="flex-1 min-w-0 space-y-1">
-                    <p className="font-bold text-[13px] text-white truncate group-hover:text-emerald-400 transition-colors uppercase tracking-tight">
+                <div className="flex-1 min-w-0 space-y-1 text-left">
+                    <p className={cn("font-bold text-white truncate group-hover:text-emerald-400 transition-colors uppercase tracking-tight", isDesktop ? "text-[13px]" : "text-sm")}>
                         {tx.label}
                     </p>
                     <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest tabular-nums">
+                        <span className={cn("font-black text-[#4B6478] uppercase tracking-widest tabular-nums", isDesktop ? "text-[10px]" : "text-[11px]")}>
                             {format(new Date(tx.date), 'dd MMM yyyy', { locale: id })}
                         </span>
                          {tx.payment_status && (
                              <span className={cn(
-                                 "text-[8px] font-black uppercase tracking-[0.15em] px-1.5 py-0.5 rounded border",
+                                 "font-black uppercase tracking-[0.15em] px-1.5 py-0.5 rounded border",
+                                 isDesktop ? "text-[8px]" : "text-[9px]",
                                  tx.payment_status === 'lunas' ? "text-emerald-400 border-emerald-400/20 bg-emerald-400/5" : "text-amber-500 border-amber-500/20 bg-amber-500/5"
                              )}>
                                  {formatPaymentStatus(tx.payment_status)}
                              </span>
                         )}
                          {tx.category === 'jual' && safeNum(tx.delivery_cost) > 0 && (
-                             <span className="text-[9px] font-bold text-amber-500/60 uppercase tracking-widest">
-                                 Termasuk Biaya Kirim {formatIDRShort(tx.delivery_cost)}
+                             <span className={cn("font-bold text-amber-500/60 uppercase tracking-widest", isDesktop ? "text-[9px]" : "text-[10px]")}>
+                                 +{formatIDRShort(tx.delivery_cost)} Kirim
                              </span>
                          )}
                     </div>
@@ -589,12 +597,13 @@ function TransactionRow({ tx }) {
             </div>
             <div className="text-right pl-4">
                 <p className={cn(
-                    "text-sm font-black tabular-nums tracking-tight",
+                    "font-black tabular-nums tracking-tight",
+                    isDesktop ? "text-sm" : "text-base",
                     tx.type === 'in' ? "text-emerald-400" : "text-red-400"
                 )}>
                     {tx.type === 'in' ? '+' : '-'}{formatIDR(safeNum(tx.amount)).replace('Rp', '')}
                 </p>
-                <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mt-0.5">IDR</p>
+                <p className={cn("font-black text-[#4B6478] uppercase tracking-widest mt-0.5", isDesktop ? "text-[9px]" : "text-[10px]")}>IDR</p>
             </div>
         </div>
     )
@@ -668,12 +677,12 @@ function CreateExtraExpenseSheet({ isOpen, onClose }) {
                 <form onSubmit={handleCreate} className="space-y-6 pb-20">
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Kategori *</Label>
+                            <Label className={cn("font-black uppercase tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Kategori *</Label>
                             <Select name="category" required defaultValue="Tenaga Kerja">
                                 <SelectTrigger className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase text-white shadow-inner">
                                     <SelectValue placeholder="PILIH KATEGORI" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#111C24] border-white/10">
+                                <SelectContent className="bg-[#111C24] border-white/10 text-white">
                                     <SelectItem value="tenaga_kerja" className="text-xs font-black uppercase hover:bg-white/5">👷 Tenaga Kerja</SelectItem>
                                     <SelectItem value="sewa" className="text-xs font-black uppercase hover:bg-white/5">🏠 Sewa</SelectItem>
                                     <SelectItem value="administrasi" className="text-xs font-black uppercase hover:bg-white/5">📋 Administrasi</SelectItem>
@@ -684,17 +693,17 @@ function CreateExtraExpenseSheet({ isOpen, onClose }) {
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Keterangan *</Label>
-                            <Input required name="description" placeholder="Cth: Upah kuli muat 3 orang" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase placeholder:text-white/10" />
+                            <Label className={cn("font-black uppercase tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Keterangan *</Label>
+                            <Input required name="description" placeholder="Cth: Upah kuli muat 3 orang" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-bold text-base text-white uppercase placeholder:text-white/10" />
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Nominal Rp *</Label>
-                                <Input required name="amount" type="number" placeholder="150000" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs" />
+                                <Label className={cn("font-black uppercase tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Nominal Rp *</Label>
+                                <Input required name="amount" type="number" placeholder="150000" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-bold text-base text-white" />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Tanggal *</Label>
+                                <Label className={cn("font-black uppercase tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Tanggal *</Label>
                                 <DatePicker 
                                     value={expenseDate}
                                     onChange={setExpenseDate}
@@ -705,8 +714,8 @@ function CreateExtraExpenseSheet({ isOpen, onClose }) {
                         </div>
 
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Catatan Tambahan</Label>
-                            <Textarea name="notes" placeholder="Tulis catatan jika diperlukan..." className="rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase p-4 min-h-[100px]" />
+                            <Label className={cn("font-black uppercase tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Catatan Tambahan</Label>
+                            <Textarea name="notes" placeholder="Tulis catatan jika diperlukan..." className="rounded-2xl bg-[#111C24] border-white/5 font-bold text-base p-4 min-h-[100px] text-white" />
                         </div>
                     </div>
 

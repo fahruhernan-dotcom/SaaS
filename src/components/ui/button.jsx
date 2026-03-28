@@ -9,7 +9,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default: "relative overflow-hidden group bg-primary text-primary-foreground hover:bg-primary/90",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
@@ -33,13 +33,27 @@ const buttonVariants = cva(
   }
 )
 
-const Button = React.forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
+const Button = React.forwardRef(({ className, variant, size, asChild = false, children, ...props }, ref) => {
   const Comp = asChild ? Slot : "button"
+  const isDefault = !variant || variant === 'default'
   return (
     <Comp
       className={cn(buttonVariants({ variant, size, className }))}
       ref={ref}
-      {...props} />
+      {...props}
+    >
+      {asChild ? children : (
+        <>
+          {isDefault && (
+            <span
+              aria-hidden="true"
+              className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-transparent via-white/15 to-transparent group-hover:translate-x-[100%] transition-transform duration-500 pointer-events-none"
+            />
+          )}
+          {children}
+        </>
+      )}
+    </Comp>
   );
 })
 Button.displayName = "Button"

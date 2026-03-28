@@ -6,8 +6,9 @@ import {
   Plus, Search, Filter, ChevronRight,
   Clock, MapPin, User, Smartphone, History,
   TrendingDown, TrendingUp, AlertCircle, Info, Calendar,
-  Loader2, Eye, Trash2, Pencil, ArrowRightLeft
+  Loader2, Eye, Trash2, Pencil, ArrowRightLeft, FileText, Receipt
 } from 'lucide-react'
+import InvoicePreviewModal from '@/components/invoice/InvoicePreviewModal'
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { supabase } from '@/lib/supabase'
@@ -58,7 +59,7 @@ const fadeUp = {
   hidden: { opacity: 0, y: 16 },
   visible: {
     opacity: 1, y: 0,
-    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }
+    transition: { duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }
   }
 }
 
@@ -116,6 +117,7 @@ export default function Transaksi() {
   const { tenant, profile } = useAuth()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   
   const isOwner = profile?.role === 'owner'
   const isViewOnly = profile?.role === 'view_only'
@@ -429,7 +431,7 @@ export default function Transaksi() {
         <div className="flex justify-between items-center gap-4">
             <div>
                 <h1 className="font-display text-2xl font-black text-white tracking-tight uppercase leading-none">Transaksi</h1>
-                <p className="text-[10px] font-bold text-[#4B6478] uppercase mt-1 tracking-widest">{tenant?.business_name || 'BROKER OPS'}</p>
+                <p className={cn("font-bold text-[#4B6478] uppercase mt-1 tracking-widest", isDesktop ? "text-[10px]" : "text-xs")}>{tenant?.business_name || 'BROKER OPS'}</p>
             </div>
             <div className="flex items-center gap-3 flex-1 justify-end">
                 <div className="relative max-w-xs w-full hidden md:block">
@@ -475,15 +477,15 @@ export default function Transaksi() {
       {/* Summary Strip */}
       <div className="bg-emerald-500/[0.04] border-b border-white/5 px-5 py-3.5 flex justify-between items-center overflow-x-auto no-scrollbar">
         <div className="space-y-0.5 min-w-[100px] text-left">
-          <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-[0.15em] leading-none mb-1">Total Jual</p>
+          <p className={cn("font-black text-[#4B6478] uppercase tracking-[0.15em] leading-none mb-1", isDesktop ? "text-[9px]" : "text-xs")}>Total Jual</p>
           <p className="font-display text-[13px] font-black text-emerald-400 tabular-nums">{formatIDR(totalSalesVal)}</p>
         </div>
         <div className="space-y-0.5 min-w-[100px] text-center px-4 border-x border-white/5">
-          <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-[0.15em] leading-none mb-1">Modal Produk</p>
+          <p className={cn("font-black text-[#4B6478] uppercase tracking-[0.15em] leading-none mb-1", isDesktop ? "text-[9px]" : "text-xs")}>Modal Produk</p>
           <p className="font-display text-[13px] font-black text-[#F1F5F9] tabular-nums">{formatIDR(totalModalVal)}</p>
         </div>
         <div className="space-y-0.5 min-w-[100px] text-right">
-          <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-[0.15em] leading-none mb-1">Net Margin</p>
+          <p className={cn("font-black text-[#4B6478] uppercase tracking-[0.15em] leading-none mb-1", isDesktop ? "text-[9px]" : "text-xs")}>Net Margin</p>
           <p className={`font-display text-[13px] font-black tabular-nums ${netProfitVal >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
             {netProfitVal >= 0 ? '+' : '−'}{formatIDR(Math.abs(netProfitVal))}
           </p>
@@ -496,25 +498,25 @@ export default function Transaksi() {
           <TabsList className="w-full bg-[#111C24] border border-white/5 h-12 p-1 rounded-2xl">
             <TabsTrigger
               value="semua"
-              className="flex-1 rounded-xl font-black text-[10px] h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]"
+              className={cn("flex-1 rounded-xl font-black h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}
             >
               Semua
             </TabsTrigger>
             <TabsTrigger
               value="lunas"
-              className="flex-1 rounded-xl font-black text-[10px] h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]"
+              className={cn("flex-1 rounded-xl font-black h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}
             >
               Lunas
             </TabsTrigger>
             <TabsTrigger
               value="belum_lunas"
-              className="flex-1 rounded-xl font-black text-[10px] h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]"
+              className={cn("flex-1 rounded-xl font-black h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}
             >
               Belum Lunas
             </TabsTrigger>
             <TabsTrigger
               value="sebagian"
-              className="flex-1 rounded-xl font-black text-[10px] h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]"
+              className={cn("flex-1 rounded-xl font-black h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}
             >
               Sebagian
             </TabsTrigger>
@@ -1092,6 +1094,7 @@ export default function Transaksi() {
 function UnifiedTransactionCard({ sale, onOpenAuditSheet }) {
   const { profile } = useAuth()
   const isOwner = profile?.role === 'owner'
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   // Calculations
   const totalRevenue = Number(sale.total_revenue || 0)
   const totalModal = Number(sale.purchases?.total_cost || 0)
@@ -1147,7 +1150,8 @@ function UnifiedTransactionCard({ sale, onOpenAuditSheet }) {
           </div>
           <div className="flex items-center gap-3">
             <Badge className={cn(
-              "rounded-full h-6 px-3 border-none font-black text-[10px] uppercase tracking-wider",
+              "rounded-full h-6 px-3 border-none font-black uppercase tracking-wider",
+              isDesktop ? "text-[10px]" : "text-xs",
               sale.payment_status === 'lunas' ? 'bg-emerald-500/10 text-emerald-400' : 
               sale.payment_status === 'sebagian' ? 'bg-amber-500/10 text-amber-500' : 
               'bg-red-500/10 text-red-500'
@@ -1161,9 +1165,9 @@ function UnifiedTransactionCard({ sale, onOpenAuditSheet }) {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '5px',
-                  fontSize: '10px',
+                  fontSize: isDesktop ? '10px' : '12px',
                   fontWeight: 900,
-                  padding: '3px 12px',
+                  padding: isDesktop ? '3px 12px' : '4px 14px',
                   borderRadius: '99px',
                   background: badge.bg,
                   border: `1px solid ${badge.border}`,
@@ -1182,35 +1186,35 @@ function UnifiedTransactionCard({ sale, onOpenAuditSheet }) {
         <div className="grid grid-cols-[1fr_1fr_1.6fr] gap-4">
           {/* Kolom 1: PEMBELIAN */}
           <div className="space-y-2 text-left border-r border-white/8 pr-4">
-            <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Pembelian</p>
+            <p className={cn("font-black text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-[10px]" : "text-xs")}>Pembelian</p>
             <p className="font-display text-[22px] font-bold text-[#F1F5F9] tabular-nums leading-none">
               {(safeNum(sale.purchases?.total_weight_kg) / 1000).toFixed(2)} <span className="text-xs font-normal text-[#94A3B8] ml-0.5">ton</span>
             </p>
             <div className="space-y-1">
-              <p className="text-[11px] font-medium text-[#94A3B8]">
+              <p className={cn("font-medium text-[#94A3B8]", isDesktop ? "text-[11px]" : "text-xs")}>
                 {formatEkor(sale.purchases?.quantity)} · {formatIDRShort(sale.purchases?.price_per_kg)}/kg
               </p>
-              {isOwner && <p className="text-[11px] font-medium text-[#4B6478]">Modal: {formatIDR(totalModal)}</p>}
+              {isOwner && <p className={cn("font-medium text-[#4B6478]", isDesktop ? "text-[11px]" : "text-xs")}>Modal: {formatIDR(totalModal)}</p>}
             </div>
           </div>
 
           {/* Kolom 2: PENJUALAN */}
           <div className="space-y-2 text-left border-r border-white/8 pr-4">
-            <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Penjualan</p>
+            <p className={cn("font-black text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-[10px]" : "text-xs")}>Penjualan</p>
             <p className="font-display text-[22px] font-bold text-[#F1F5F9] tabular-nums leading-none">
               {(totalWeightJual / 1000).toFixed(2)} <span className="text-xs font-normal text-[#94A3B8] ml-0.5">ton</span>
             </p>
             <div className="space-y-1">
-              <p className="text-[11px] font-medium text-[#94A3B8]">
+              <p className={cn("font-medium text-[#94A3B8]", isDesktop ? "text-[11px]" : "text-xs")}>
                 {formatEkor(sale.quantity)} · {formatIDRShort(sale.price_per_kg)}/kg
               </p>
-              <p className="text-[11px] font-medium text-[#4B6478]">Pendapatan: {formatIDR(totalRevenue)}</p>
+              <p className={cn("font-medium text-[#4B6478]", isDesktop ? "text-[11px]" : "text-xs")}>Pendapatan: {formatIDR(totalRevenue)}</p>
             </div>
           </div>
 
           {/* Kolom 3: PENGIRIMAN */}
           <div className="space-y-3 text-left">
-            <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Pengiriman</p>
+            <p className={cn("font-black text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-[10px]" : "text-xs")}>Pengiriman</p>
             
             <div className="grid grid-cols-1 gap-y-3">
               {/* Row 1: Shrinkage Info */}
@@ -1316,6 +1320,7 @@ function UnifiedTransactionCard({ sale, onOpenAuditSheet }) {
 function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelete }) {
   const queryClient = useQueryClient()
   const { tenant, profile } = useAuth()
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const isOwner = profile?.role === 'owner'
   const isViewOnly = profile?.role === 'view_only'
   const canWrite = profile?.role === 'owner' || profile?.role === 'staff'
@@ -1331,6 +1336,7 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
   })
   const [isUpdating, setIsUpdating] = useState(false)
   const [isPaymentOpen, setIsPaymentOpen] = useState(false)
+  const [invoiceModal, setInvoiceModal] = useState({ open: false, type: null })
 
   // Sync editData when data changes or entering edit mode
   React.useEffect(() => {
@@ -1424,7 +1430,8 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
                   {isLoading ? <Skeleton className="h-4 w-24" /> : formatDate(isEditing ? editData.transaction_date : data?.transaction_date)}
                 </div>
                 {!isLoading && !isEditing && (
-                  <Badge className={`rounded-full h-5 px-2 border-none font-black text-[8px] uppercase tracking-wider
+                  <Badge className={`rounded-full h-5 px-2 border-none font-black uppercase tracking-wider
+                    ${isDesktop ? "text-[8px]" : "text-[10px]"}
                     ${data?.payment_status === 'lunas' ? 'bg-emerald-500/10 text-emerald-400' : 
                       data?.payment_status === 'sebagian' ? 'bg-amber-500/10 text-amber-500' : 
                       'bg-red-500/10 text-red-500'}`}
@@ -1451,21 +1458,21 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
               <div className="space-y-3">
                 <div className="bg-emerald-500/[0.03] border border-emerald-500/10 rounded-2xl p-4 grid grid-cols-4 gap-2">
                   <div className="text-center space-y-1">
-                    <p className="text-[8px] font-black text-[#4B6478] uppercase tracking-[0.15em]">Pendapatan</p>
+                    <p className={cn("font-black text-[#4B6478] uppercase tracking-[0.15em]", isDesktop ? "text-[8px]" : "text-[11px]")}>Pendapatan</p>
                     <p className="font-display text-sm font-black text-white tabular-nums">{formatIDR(totalRevenue)}</p>
                   </div>
                   <div className="text-center space-y-1 border-l border-white/5">
-                    <p className="text-[8px] font-black text-[#4B6478] uppercase tracking-[0.15em]">Modal (HPP)</p>
+                    <p className={cn("font-black text-[#4B6478] uppercase tracking-[0.15em]", isDesktop ? "text-[8px]" : "text-[11px]")}>Modal (HPP)</p>
                     <p className="font-display text-sm font-black text-white tabular-nums">{formatIDR(purchase?.total_cost)}</p>
                   </div>
                   <div className="text-center space-y-1 border-l border-white/5">
-                    <p className="text-[8px] font-black text-[#4B6478] uppercase tracking-[0.15em]">Biaya Kirim</p>
+                    <p className={cn("font-black text-[#4B6478] uppercase tracking-[0.15em]", isDesktop ? "text-[8px]" : "text-[11px]")}>Biaya Kirim</p>
                     <p className="font-display text-sm font-black text-white tabular-nums">{formatIDR(data?.delivery_cost)}</p>
                   </div>
                   <div className="text-center space-y-1 border-l border-white/5">
-                    <p className="text-[8px] font-black text-amber-500 uppercase tracking-[0.15em]">Susut Berat</p>
+                    <p className={cn("font-black text-amber-500 uppercase tracking-[0.15em]", isDesktop ? "text-[8px]" : "text-[11px]")}>Susut Berat</p>
                     <p className="font-display text-sm font-black text-amber-500 tabular-nums">-{formatKg(susutWeight)}</p>
-                    <p className="text-[7px] font-medium text-[#4B6478] leading-tight">Reflected in revenue</p>
+                    <p className={cn("font-medium text-[#4B6478] leading-tight", isDesktop ? "text-[7px]" : "text-[10px]")}>Reflected in revenue</p>
                   </div>
                 </div>
 
@@ -1722,17 +1729,35 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
                 </Button>
               )}
               <div className="grid grid-cols-2 gap-3">
-                <Button 
+                <Button
                   onClick={() => setIsEditing(true)}
                   variant="outline" className="h-12 border-white/10 bg-white/5 text-white font-black text-xs uppercase tracking-widest rounded-xl"
                 >
                   <Pencil size={14} className="mr-2" /> Edit
                 </Button>
-                <Button 
+                <Button
                   onClick={onDelete}
                   className="h-12 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-black text-xs uppercase tracking-widest rounded-xl"
                 >
                   <Trash2 size={14} className="mr-2" /> Hapus
+                </Button>
+              </div>
+
+              {/* Invoice buttons */}
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <Button
+                  onClick={() => setInvoiceModal({ open: true, type: 'sale' })}
+                  variant="outline"
+                  className="h-11 border-white/10 bg-white/[0.03] text-[#94A3B8] font-semibold text-xs uppercase tracking-widest rounded-xl hover:bg-white/[0.06]"
+                >
+                  <FileText size={14} className="mr-2" /> Invoice Jual
+                </Button>
+                <Button
+                  onClick={() => setInvoiceModal({ open: true, type: 'purchase' })}
+                  variant="outline"
+                  className="h-11 border-white/10 bg-white/[0.03] text-[#94A3B8] font-semibold text-xs uppercase tracking-widest rounded-xl hover:bg-white/[0.06]"
+                >
+                  <Receipt size={14} className="mr-2" /> Bukti Beli
                 </Button>
               </div>
             </>
@@ -1742,10 +1767,27 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
       </Sheet>
 
       {data && (
-        <FormPaymentSheet 
-          isOpen={isPaymentOpen} 
-          onClose={() => setIsPaymentOpen(false)} 
-          sale={data} 
+        <FormPaymentSheet
+          isOpen={isPaymentOpen}
+          onClose={() => setIsPaymentOpen(false)}
+          sale={data}
+        />
+      )}
+
+      {data && invoiceModal.open && (
+        <InvoicePreviewModal
+          type={invoiceModal.type}
+          isOpen={invoiceModal.open}
+          onClose={() => setInvoiceModal({ open: false, type: null })}
+          data={{
+            tenant:      { business_name: tenant?.business_name, phone: tenant?.phone, location: tenant?.location },
+            sale:        data,
+            rpa:         data.rpa_clients,
+            farm:        data.purchases?.farms,
+            delivery:    data.deliveries?.[0],
+            purchase:    data.purchases,
+            generatedBy: profile?.full_name || '',
+          }}
         />
       )}
     </>

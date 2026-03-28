@@ -34,6 +34,6 @@ export function useFarms() {
       if (error) throw error
       return data
     },
-    enabled: !!tenant?.id
+    enabled: !!tenant?.id && ['broker', 'poultry_broker', 'egg_broker'].includes(tenant?.business_vertical)
   })
 }

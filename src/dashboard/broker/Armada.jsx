@@ -98,7 +98,7 @@ export default function Armada() {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('vehicles')
-                .select('*, deliveries(id, created_at)')
+                .select('*, deliveries(id, created_at, is_deleted)')
                 .eq('tenant_id', tenant?.id)
                 .eq('is_deleted', false)
                 .order('created_at', { ascending: false })
@@ -196,13 +196,13 @@ export default function Armada() {
                          <div className="relative group">
                             <Button 
                                 size="sm"
-                                className="h-9 w-9 p-0 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white"
+                                className="h-10 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest transition-all active:scale-95"
                                 onClick={() => {
                                     setEditingVehicle(null)
                                     setIsVehicleSheetOpen(true)
                                 }}
                             >
-                                <Plus size={18} strokeWidth={3} />
+                                <Plus size={18} strokeWidth={3} className="mr-1.5" /> Tambah
                             </Button>
                          </div>
                     </div>
@@ -434,6 +434,7 @@ export default function Armada() {
 // --- COMPONENTS ---
 
 function SummaryPill({ label, count, color }) {
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
     const colors = {
         emerald: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
         amber: "bg-amber-500/10 border-amber-500/20 text-amber-400",
@@ -442,21 +443,24 @@ function SummaryPill({ label, count, color }) {
     }
     return (
         <div className={cn(
-            "px-5 py-2.5 rounded-2xl border text-[10px] font-black uppercase tracking-widest flex items-center gap-3 whitespace-nowrap",
+            "rounded-2xl border font-black uppercase tracking-widest flex items-center gap-3 whitespace-nowrap",
+            isDesktop ? "px-5 py-2.5 text-[10px]" : "px-4 py-3 text-[11px]",
             colors[color] || colors.default
         )}>
             <span>{label}</span>
-            <span className="text-xs bg-white/5 px-2 py-0.5 rounded-lg border border-white/5 text-white">{(count || 0).toLocaleString('id-ID')}</span>
+            <span className={cn("bg-white/5 px-2 py-0.5 rounded-lg border border-white/5 text-white", isDesktop ? "text-xs" : "text-sm")}>{(count || 0).toLocaleString('id-ID')}</span>
         </div>
     )
 }
 
 function FilterChip({ label, active, onClick }) {
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
     return (
         <button 
             onClick={onClick}
             className={cn(
-                "px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
+                "rounded-xl font-black uppercase tracking-widest transition-all",
+                isDesktop ? "px-5 py-2 text-[9px]" : "px-6 py-2.5 text-[11px]",
                 active ? "bg-white text-black" : "bg-white/5 text-[#4B6478] hover:bg-white/10"
             )}
         >
@@ -480,37 +484,37 @@ function VehicleCard({ vehicle, isOnRoute, onEdit, onAddExpense, onClickCard }) 
             onClick={onClickCard}
             className="block h-full outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-[32px]"
         >
-        <Card className="h-full bg-[#111C24] border-white/5 rounded-[32px] overflow-hidden group hover:border-emerald-500/30 transition-all cursor-pointer">
-            <CardContent className="p-6 space-y-5">
+        <Card className="h-full bg-[#111C24] border-white/5 rounded-[32px] overflow-hidden group hover:border-emerald-500/30 transition-all cursor-pointer active:scale-[0.98]">
+            <CardContent className={isDesktop ? "p-6 space-y-5" : "p-5 space-y-6"}>
                 <div className="flex justify-between items-start">
                     <div className="space-y-2">
-                        <h3 className="font-display text-xl font-black tracking-tight text-[#F1F5F9] uppercase leading-none">{vehicle.vehicle_plate}</h3>
+                        <h3 className={cn("font-display font-black tracking-tight text-[#F1F5F9] uppercase leading-none", isDesktop ? "text-xl" : "text-[22px]")}>{vehicle.vehicle_plate}</h3>
                         {isOnRoute && (
-                            <Badge className="rounded-lg border-none px-2 py-1 text-[9px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-500 w-fit">
+                            <Badge className={cn("rounded-lg border-none px-2 py-1 font-black uppercase tracking-widest bg-amber-500/10 text-amber-500 w-fit", isDesktop ? "text-[9px]" : "text-[10px]")}>
                                 Sedang Mengirim
                             </Badge>
                         )}
                     </div>
-                    <Badge className={cn("rounded-lg border-none px-2 py-0.5 text-[10px] font-black uppercase tracking-widest", meta.bg, meta.color)}>
+                    <Badge className={cn("rounded-lg border-none px-2 py-0.5 font-black uppercase tracking-widest", isDesktop ? "text-[10px]" : "text-[11px]", meta.bg, meta.color)}>
                         {meta.label}
                     </Badge>
                 </div>
 
                 {/* Row 2: Type, Brand, Year */}
-                <p className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider flex items-center gap-1.5">
+                <p className={cn("font-bold text-[#94A3B8] uppercase tracking-wider flex items-center gap-1.5", isDesktop ? "text-xs" : "text-sm")}>
                     <span className="capitalize">{vehicle.vehicle_type}</span>
                     {vehicle.brand && <><span>·</span> {vehicle.brand}</>}
                     {vehicle.year && <><span>·</span> {vehicle.year}</>}
                 </p>
 
                 {/* Row 3: Ownership & Capacity */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                        {vehicle.ownership === 'milik_sendiri' && <Badge variant="outline" className="text-[8px] font-black uppercase border-white/10 text-[#4B6478]">Milik Sendiri</Badge>}
-                        {vehicle.ownership === 'sewa' && <Badge variant="outline" className="text-[8px] font-black uppercase border-amber-500/20 text-amber-500 bg-amber-500/5">Sewa · {formatIDR(vehicle.rental_cost)}/trip</Badge>}
-                        {vehicle.ownership === 'pinjaman' && <Badge variant="outline" className="text-[8px] font-black uppercase border-blue-500/20 text-blue-500 bg-blue-500/5">Pinjaman: {vehicle.rental_owner}</Badge>}
+                        {vehicle.ownership === 'milik_sendiri' && <Badge variant="outline" className={cn("font-black uppercase border-white/10 text-[#4B6478]", isDesktop ? "text-[8px]" : "text-[10px]")}>Milik Sendiri</Badge>}
+                        {vehicle.ownership === 'sewa' && <Badge variant="outline" className={cn("font-black uppercase border-amber-500/20 text-amber-500 bg-amber-500/5", isDesktop ? "text-[8px]" : "text-[10px]")}>Sewa · {formatIDRShort(vehicle.rental_cost)}/trip</Badge>}
+                        {vehicle.ownership === 'pinjaman' && <Badge variant="outline" className={cn("font-black uppercase border-blue-500/20 text-blue-500 bg-blue-500/5", isDesktop ? "text-[8px]" : "text-[10px]")}>Pinjaman: {vehicle.rental_owner}</Badge>}
                     </div>
-                    <p className="text-[11px] font-bold text-[#4B6478] flex items-center gap-1.5">
+                    <p className={cn("font-bold text-[#4B6478] flex items-center gap-1.5", isDesktop ? "text-[11px]" : "text-xs")}>
                         {vehicle.capacity_ekor && <span>{safeNumber(vehicle.capacity_ekor).toLocaleString('id-ID')} Ekor</span>}
                         {vehicle.capacity_ekor && vehicle.capacity_kg && <span>·</span>}
                         {vehicle.capacity_kg && <span>{safeNumber(vehicle.capacity_kg).toLocaleString('id-ID')} Kg</span>}
@@ -518,8 +522,8 @@ function VehicleCard({ vehicle, isOnRoute, onEdit, onAddExpense, onClickCard }) 
                 </div>
 
                 {/* Row 4: Stats */}
-                <div className="pt-2 border-t border-white/5 flex items-center gap-2 text-[10px] font-black text-[#4B6478] uppercase tracking-widest">
-                    <Clock size={12} />
+                <div className={cn("pt-2 border-t border-white/5 flex items-center gap-2 font-black text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-[10px]" : "text-[11px]")}>
+                    <Clock size={isDesktop ? 12 : 14} />
                     <span>Total {safeNumber(vehicle.deliveries?.filter(d => !d.is_deleted)?.length).toLocaleString('id-ID')} Pengiriman</span>
                 </div>
 
@@ -529,17 +533,17 @@ function VehicleCard({ vehicle, isOnRoute, onEdit, onAddExpense, onClickCard }) 
                         variant="outline" 
                         size="sm" 
                         onClick={(e) => { e.stopPropagation(); onAddExpense(); }}
-                        className="flex-1 h-9 rounded-xl border-white/5 bg-white/[0.02] text-[9px] font-black uppercase tracking-widest hover:bg-white/5 hover:text-white"
+                        className={cn("flex-1 rounded-xl border-white/5 bg-white/[0.02] font-black uppercase tracking-widest hover:bg-white/5 hover:text-white", isDesktop ? "h-9 text-[9px]" : "h-11 text-[11px]")}
                     >
-                         <DollarSign size={12} className="mr-1.5 text-red-400" /> Catat Biaya
+                         <DollarSign size={14} className="mr-1.5 text-red-400" /> Biaya
                     </Button>
                     <Button 
                         variant="outline" 
                         size="sm" 
                         onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                        className="w-12 h-9 rounded-xl border-white/5 bg-white/[0.02] text-[#4B6478] hover:text-white hover:bg-white/5"
+                        className={cn("rounded-xl border-white/5 bg-white/[0.02] text-[#4B6478] hover:text-white hover:bg-white/5", isDesktop ? "w-12 h-9" : "w-14 h-11")}
                     >
-                        <Edit2 size={14} />
+                        <Edit2 size={16} />
                     </Button>
                 </div>
             </CardContent>
@@ -567,43 +571,43 @@ function DriverCard({ driver, isOnRoute, onEdit, onClickCard }) {
             onClick={onClickCard}
             className="block h-full outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 rounded-[32px]"
         >
-        <Card className="h-full bg-[#111C24] border-white/5 rounded-[32px] overflow-hidden group hover:border-emerald-500/30 transition-all cursor-pointer">
-            <CardContent className="p-6 space-y-5">
+        <Card className="h-full bg-[#111C24] border-white/5 rounded-[32px] overflow-hidden group hover:border-emerald-500/30 transition-all cursor-pointer active:scale-[0.98]">
+            <CardContent className={isDesktop ? "p-6 space-y-5" : "p-5 space-y-6"}>
                 {/* Row 1: Identity */}
                 <div className="flex items-center gap-4">
-                    <Avatar className="h-12 w-12 rounded-[18px] border border-white/5 bg-emerald-500/10">
+                    <Avatar className={cn("rounded-[18px] border border-white/5 bg-emerald-500/10", isDesktop ? "h-12 w-12" : "h-14 w-14")}>
                         <AvatarFallback className="bg-transparent text-emerald-400 font-display font-black text-sm uppercase">
                             {driver.full_name.substring(0, 2)}
                         </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 text-left">
                         <div className="flex justify-between items-start gap-2">
-                            <div className="space-y-2 min-w-0">
-                                <h3 className="font-display font-black text-sm text-white uppercase truncate leading-none">{driver.full_name}</h3>
+                            <div className="space-y-1.5 min-w-0">
+                                <h3 className={cn("font-display font-black text-white uppercase truncate leading-none", isDesktop ? "text-sm" : "text-[15px]")}>{driver.full_name}</h3>
                                 {isOnRoute && (
-                                    <Badge className="rounded-lg border-none px-2 py-1 text-[8px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-500 w-fit">
+                                    <Badge className={cn("rounded-lg border-none px-2 py-1 font-black uppercase tracking-widest bg-amber-500/10 text-amber-500 w-fit", isDesktop ? "text-[8px]" : "text-[9px]")}>
                                         Sedang Mengirim
                                     </Badge>
                                 )}
                             </div>
                             <div className="flex shrink-0">
-                                <Badge className={cn("rounded-lg border-none px-2 py-0.5 text-[9px] font-black uppercase tracking-widest", meta.bg, meta.color)}>
+                                <Badge className={cn("rounded-lg border-none px-2 py-0.5 font-black uppercase tracking-widest", isDesktop ? "text-[9px]" : "text-[10px]", meta.bg, meta.color)}>
                                     {meta.label}
                                 </Badge>
                             </div>
                         </div>
-                        <a href={`tel:${driver.phone}`} className="flex items-center gap-1.5 mt-1 text-[#4B6478] hover:text-white transition-colors">
-                            <Phone size={11} />
-                            <span className="text-[11px] font-bold">{driver.phone}</span>
+                        <a href={`tel:${driver.phone}`} className="flex items-center gap-1.5 mt-1.5 text-[#4B6478] hover:text-white transition-colors">
+                            <Phone size={isDesktop ? 11 : 13} />
+                            <span className={cn("font-bold", isDesktop ? "text-[11px]" : "text-xs")}>{driver.phone}</span>
                         </a>
                     </div>
                 </div>
 
                 {/* Row 2: SIM Info */}
-                <div className="space-y-2">
-                    <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest flex items-center gap-2">
-                        <CreditCard size={12} className="text-blue-400/50" />
-                        SIM {driver.sim_type} · NO. {driver.sim_number || '—'}
+                <div className="space-y-3">
+                    <p className={cn("font-black text-[#4B6478] uppercase tracking-widest flex items-center gap-2", isDesktop ? "text-[10px]" : "text-[11px]")}>
+                        <CreditCard size={isDesktop ? 12 : 14} className="text-blue-400/50" />
+                        SIM {driver.sim_type} · {driver.sim_number || '—'}
                     </p>
                     
                     {expiryDays !== null && (
@@ -614,7 +618,7 @@ function DriverCard({ driver, isOnRoute, onEdit, onClickCard }) {
                             "bg-emerald-500/5 border-emerald-500/10 text-emerald-500/50"
                         )}>
                             {isExpired ? <X size={12} strokeWidth={3} /> : isSoonExpiry ? <AlertCircle size={12} strokeWidth={3} /> : <CheckCircle2 size={12} />}
-                            <span className="text-[9px] font-black uppercase tracking-tight">
+                            <span className={cn("font-black uppercase tracking-tight", isDesktop ? "text-[9px]" : "text-[10px]")}>
                                 {isExpired ? 'SIM Kadaluarsa!' : isSoonExpiry ? `Masa berlaku sisa ${expiryDays} hari` : `Berlaku s/d ${format(new Date(driver.sim_expires_at), 'dd MMM yyyy')}`}
                             </span>
                         </div>
@@ -622,14 +626,14 @@ function DriverCard({ driver, isOnRoute, onEdit, onClickCard }) {
                 </div>
 
                 {/* Row 3: Stats */}
-                <div className="pt-2 border-t border-white/5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-black text-[#4B6478] uppercase tracking-widest">
+                <div className={cn("pt-2 border-t border-white/5 flex flex-wrap items-center gap-x-4 gap-y-1 font-black text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-[10px]" : "text-[11px]")}>
                     <div className="flex items-center gap-1.5">
-                        <DollarSign size={12} />
-                        <span>{formatIDR(driver.wage_per_trip)}/Trip</span>
+                        <DollarSign size={isDesktop ? 12 : 14} />
+                        <span>{formatIDRShort(driver.wage_per_trip)}/Trip</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                        <Truck size={12} />
-                        <span>{safeNumber(driver.deliveries?.filter(d => !d.is_deleted)?.length).toLocaleString('id-ID')} Pengiriman</span>
+                        <Truck size={isDesktop ? 12 : 14} />
+                        <span>{safeNumber(driver.deliveries?.filter(d => !d.is_deleted)?.length).toLocaleString('id-ID')} Trip</span>
                     </div>
                 </div>
 
@@ -638,7 +642,7 @@ function DriverCard({ driver, isOnRoute, onEdit, onClickCard }) {
                     variant="outline" 
                     size="sm" 
                     onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                    className="w-full h-10 rounded-xl border-white/5 bg-white/[0.02] text-[9px] font-black uppercase tracking-widest hover:bg-white/5 gap-2 hover:text-white"
+                    className={cn("w-full rounded-xl border-white/5 bg-white/[0.02] font-black uppercase tracking-widest hover:bg-white/5 gap-2 hover:text-white", isDesktop ? "h-10 text-[9px]" : "h-12 text-[11px]")}
                 >
                     <Edit2 size={12} /> Edit Profil Sopir
                 </Button>
@@ -735,8 +739,8 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
-            <SheetContent side="right" className="w-full sm:max-w-[520px] bg-[#0C1319] border-l border-white/8 p-0 overflow-y-auto">
-                <div className="p-8 space-y-8">
+            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 overflow-y-auto", isDesktop ? "w-full sm:max-w-[520px] border-l" : "h-[90vh] rounded-t-[40px] border-t")}>
+                <div className={isDesktop ? "p-8 space-y-8" : "p-6 pt-10 space-y-6"}>
                     <SheetHeader className="text-left">
                     <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">
                         {editingData ? 'Edit Kendaraan' : 'Tambah Kendaraan'}
@@ -749,12 +753,12 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pb-20">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Jenis Kendaraan *</Label>
+                            <Label className={cn("font-black uppercase tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Jenis Kendaraan *</Label>
                             <Select onValueChange={(v) => setValue('vehicle_type', v)} value={watch('vehicle_type')}>
                                 <SelectTrigger className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase text-white shadow-inner">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-[#111C24] border-white/10">
+                                <SelectContent className="bg-[#111C24] border-white/10 text-white">
                                     <SelectItem value="truk" className="text-xs font-black uppercase">🚚 Truk</SelectItem>
                                     <SelectItem value="pickup" className="text-xs font-black uppercase">🛻 Pickup</SelectItem>
                                     <SelectItem value="l300" className="text-xs font-black uppercase">📦 L300</SelectItem>
@@ -765,11 +769,11 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
                         </div>
 
                         <div className="space-y-2">
-                             <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Plat Nomor *</Label>
+                             <Label className={cn("font-black uppercase tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Plat Nomor *</Label>
                              <Input 
                                 {...register('vehicle_plate')} 
                                 placeholder="B 1234 ABC" 
-                                className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase placeholder:text-white/10" 
+                                className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-bold text-base text-white uppercase placeholder:text-white/10" 
                             />
                             {errors.vehicle_plate && <p className="text-[9px] text-red-400 font-black uppercase mt-1 ml-1">{errors.vehicle_plate.message}</p>}
                         </div>
@@ -987,8 +991,8 @@ function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
-            <SheetContent side="right" className="w-full sm:max-w-[520px] bg-[#0C1319] border-l border-white/8 p-0 overflow-y-auto">
-                <div className="p-8 space-y-8">
+            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 overflow-y-auto", isDesktop ? "w-full sm:max-w-[520px] border-l" : "h-[90vh] rounded-t-[40px] border-t")}>
+                <div className={isDesktop ? "p-8 space-y-8" : "p-6 pt-10 space-y-6"}>
                     <SheetHeader className="text-left">
                     <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">
                         {editingData ? 'Edit Sopir' : 'Tambah Sopir'}
@@ -1001,13 +1005,13 @@ function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pb-20">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                             <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Nama Lengkap *</Label>
-                             <Input {...register('full_name')} placeholder="PAK AHMAD FAUZI" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase" />
+                             <Label className={cn("font-black uppercase tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Nama Lengkap *</Label>
+                             <Input {...register('full_name')} placeholder="PAK AHMAD FAUZI" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-bold text-base text-white uppercase placeholder:text-white/10" />
                              {errors.full_name && <p className="text-[9px] text-red-500 font-black uppercase">{errors.full_name.message}</p>}
                         </div>
                         <div className="space-y-2">
-                             <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">No. WhatsApp / HP *</Label>
-                             <Input {...register('phone')} type="tel" placeholder="08123456789" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs" />
+                             <Label className={cn("font-black uppercase tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>No. WhatsApp / HP *</Label>
+                             <Input {...register('phone')} type="tel" placeholder="08123456789" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-bold text-base text-white placeholder:text-white/10" />
                              {errors.phone && <p className="text-[9px] text-red-500 font-black uppercase">{errors.phone.message}</p>}
                         </div>
                     </div>
@@ -1146,8 +1150,8 @@ function ExpenseSheet({ isOpen, onClose, vehicle, tenantId }) {
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
-            <SheetContent side="right" className="w-full sm:max-w-[520px] bg-[#0C1319] border-l border-white/8 p-0 overflow-y-auto">
-                <div className="p-8 space-y-8">
+            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 overflow-y-auto", isDesktop ? "w-full sm:max-w-[520px] border-l" : "h-[80vh] rounded-t-[40px] border-t")}>
+                <div className={isDesktop ? "p-8 space-y-8" : "p-6 pt-10 space-y-6"}>
                     <SheetHeader className="text-left">
                     <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">
                         Catat Biaya — {vehicle?.vehicle_plate}
@@ -1271,7 +1275,7 @@ function VehicleDetailSheet({ vehicle, onClose }) {
 
     return (
         <Sheet open={!!vehicle} onOpenChange={onClose}>
-            <SheetContent side="right" className="w-full sm:max-w-[520px] bg-[#0C1319] border-l border-white/8 p-0 flex flex-col">
+            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 flex flex-col", isDesktop ? "w-full sm:max-w-[520px] border-l" : "h-[90vh] rounded-t-[40px] border-t")}>
                 <div className="p-6 border-b border-white/5">
                     <SheetHeader className="text-left">
                         <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight leading-none mb-1" style={{ color: vehicle?.isUnregistered ? '#EF4444' : 'white' }}>
@@ -1358,12 +1362,13 @@ function DriverDetailSheet({ driver, onClose }) {
     const { data: deliveries = [], isLoading: loadDel } = useQuery({
         queryKey: ['driver-deliveries', driver?.id],
         queryFn: async () => {
-            let query = supabase.from('deliveries').select('*, vehicles(vehicle_plate, brand)')
+            let query = supabase.from('deliveries').select('*, vehicles(vehicle_plate, brand), sales!inner(id, is_deleted)')
             if (driver?.isUnregistered) {
                 query = query.is('driver_id', null).eq('is_deleted', false)
             } else {
                 query = query.eq('driver_id', driver?.id).eq('is_deleted', false)
             }
+            query = query.eq('sales.is_deleted', false)
             const { data } = await query.order('created_at', { ascending: false })
             return data || []
         },
@@ -1372,7 +1377,7 @@ function DriverDetailSheet({ driver, onClose }) {
 
     return (
         <Sheet open={!!driver} onOpenChange={onClose}>
-            <SheetContent side="right" className="w-full sm:max-w-[520px] bg-[#0C1319] border-l border-white/8 p-0 flex flex-col">
+            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 flex flex-col", isDesktop ? "w-full sm:max-w-[520px] border-l" : "h-[90vh] rounded-t-[40px] border-t")}>
                 <div className="p-6 border-b border-white/5 flex gap-4 items-center">
                     <Avatar className="h-14 w-14 rounded-[20px] border border-white/5 shrink-0" style={{ backgroundColor: driver?.isUnregistered ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)' }}>
                         <AvatarFallback className="bg-transparent font-display font-black text-lg uppercase" style={{ color: driver?.isUnregistered ? '#EF4444' : '#34D399' }}>

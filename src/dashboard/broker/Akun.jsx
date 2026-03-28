@@ -396,13 +396,40 @@ function ProfileForm({ profile, onSuccess }) {
 }
 
 function RecycleBinSection({ tenantId }) {
+    const { tenant } = useAuth()
+    const vertical = tenant?.business_vertical
+    const isBroker = ['broker', 'poultry_broker', 'egg_broker'].includes(vertical)
+    
+    // Define tabs based on vertical
+    const tabs = isBroker ? [
+        { id: 'transaksi', label: 'Trans' },
+        { id: 'kandang', label: 'Kandang' },
+        { id: 'rpa', label: 'RPA' },
+        { id: 'pengiriman', label: 'Kirim' }
+    ] : [
+        { id: 'peternak_farms', label: 'Farm' },
+        { id: 'breeding_cycles', label: 'Siklus' }
+    ]
+
     const [isOpen, setIsOpen] = useState(false)
-    const [activeTab, setActiveTab] = useState('transaksi')
+    const [activeTab, setActiveTab] = useState(tabs[0].id)
     const queryClient = useQueryClient()
 
     const { data: deletedData, isLoading, refetch } = useQuery({
         queryKey: ['recycle-bin', tenantId, activeTab],
         queryFn: async () => {
+            if (!isBroker) {
+                // For Peternak, fetch peternak-specific tables
+                if (activeTab === 'peternak_farms') {
+                    const { data } = await supabase.from('peternak_farms').select('*').eq('tenant_id', tenantId).eq('is_deleted', true).order('updated_at', { ascending: false })
+                    return data || []
+                } else if (activeTab === 'breeding_cycles') {
+                    const { data } = await supabase.from('breeding_cycles').select('*').eq('tenant_id', tenantId).eq('is_deleted', true).order('updated_at', { ascending: false })
+                    return data || []
+                }
+                return []
+            }
+
             if (activeTab === 'transaksi') {
                 const { data } = await supabase.from('sales').select('*, rpa_clients(rpa_name)').eq('tenant_id', tenantId).eq('is_deleted', true).order('updated_at', { ascending: false })
                 return data || []
@@ -429,6 +456,10 @@ function RecycleBinSection({ tenantId }) {
                 await supabase.from('deliveries').update({ is_deleted: false }).eq('sale_id', item.id)
             } else if (type === 'kandang') {
                 await supabase.from('farms').update({ is_deleted: false }).eq('id', item.id)
+            } else if (type === 'peternak_farms') {
+                await supabase.from('peternak_farms').update({ is_deleted: false }).eq('id', item.id)
+            } else if (type === 'breeding_cycles') {
+                await supabase.from('breeding_cycles').update({ is_deleted: false }).eq('id', item.id)
             } else if (type === 'rpa') {
                 await supabase.from('rpa_clients').update({ is_deleted: false }).eq('id', item.id)
             } else if (type === 'pengiriman') {
@@ -495,11 +526,16 @@ function RecycleBinSection({ tenantId }) {
                             </div>
 
                             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                                <TabsList className="bg-secondary/10 p-1 h-12 rounded-xl grid grid-cols-4 gap-1 mb-6">
-                                    <TabsTrigger value="transaksi" className="rounded-lg text-[10px] font-black uppercase tracking-wider data-[state=active]:bg-emerald-500 data-[state=active]:text-white">Trans</TabsTrigger>
-                                    <TabsTrigger value="kandang" className="rounded-lg text-[10px] font-black uppercase tracking-wider data-[state=active]:bg-emerald-500 data-[state=active]:text-white">Kandang</TabsTrigger>
-                                    <TabsTrigger value="rpa" className="rounded-lg text-[10px] font-black uppercase tracking-wider data-[state=active]:bg-emerald-500 data-[state=active]:text-white">RPA</TabsTrigger>
-                                    <TabsTrigger value="pengiriman" className="rounded-lg text-[10px] font-black uppercase tracking-wider data-[state=active]:bg-emerald-500 data-[state=active]:text-white">Kirim</TabsTrigger>
+                                <TabsList className={cn("bg-secondary/10 p-1 h-12 rounded-xl grid gap-1 mb-6", isBroker ? "grid-cols-4" : "grid-cols-2")}>
+                                    {tabs.map(tab => (
+                                        <TabsTrigger 
+                                            key={tab.id}
+                                            value={tab.id} 
+                                            className="rounded-lg text-[10px] font-black uppercase tracking-wider data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
+                                        >
+                                            {tab.label}
+                                        </TabsTrigger>
+                                    ))}
                                 </TabsList>
 
                                 <div className="min-h-[200px]">
@@ -542,6 +578,8 @@ function RecycleItem({ item, type, onRestore, onDelete }) {
     const getTitle = () => {
         if (type === 'transaksi') return item.rpa_clients?.rpa_name || 'Transaksi Tanpa Nama'
         if (type === 'kandang') return item.farm_name
+        if (type === 'peternak_farms') return item.farm_name
+        if (type === 'breeding_cycles') return `Siklus #${item.cycle_number}`
         if (type === 'rpa') return item.rpa_name
         if (type === 'pengiriman') return item.sales?.rpa_clients?.rpa_name || 'Pengiriman Tanpa Tujuan'
         return 'Item'
@@ -550,6 +588,8 @@ function RecycleItem({ item, type, onRestore, onDelete }) {
     const getSub = () => {
         if (type === 'transaksi') return `${formatDate(item.transaction_date)} • ${formatIDR(item.total_revenue)}`
         if (type === 'kandang') return `${item.owner_name} • ${item.location}`
+        if (type === 'peternak_farms') return `${item.location} • Kapasitas: ${item.capacity}`
+        if (type === 'breeding_cycles') return `${formatDate(item.start_date)} • ${item.status}`
         if (type === 'rpa') return `${item.buyer_type} • ${item.city}`
         if (type === 'pengiriman') return `${formatDate(item.created_at)} • ${item.status}`
         return ''
@@ -557,7 +597,8 @@ function RecycleItem({ item, type, onRestore, onDelete }) {
 
     const getIcon = () => {
         if (type === 'transaksi') return History
-        if (type === 'kandang') return Warehouse
+        if (type === 'kandang' || type === 'peternak_farms') return Warehouse
+        if (type === 'breeding_cycles') return Truck
         if (type === 'rpa') return Factory
         if (type === 'pengiriman') return Truck
         return Trash2

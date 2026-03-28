@@ -7,7 +7,8 @@ import Features from '../sections/Features';
 import HowItWorks from '../sections/HowItWorks';
 import MarketPrice from '../sections/MarketPrice';
 import Pricing from '../sections/Pricing';
-import Testimonials from '../sections/Testimonials';
+import TestimonialsNew from '../sections/TestimonialsNew';
+import BeforeAfter from '../sections/BeforeAfter';
 import FinalCTA from '../sections/FinalCTA';
 import Footer from '../components/Footer';
 
@@ -20,11 +21,12 @@ const LandingPage = () => {
       <Hero />
       <StatsBar />
       <PainPoints activeRole={activeRole} setActiveRole={setActiveRole} />
+      <BeforeAfter activeRole={activeRole} />
       <Features activeRole={activeRole} />
       <HowItWorks activeRole={activeRole} />
       <MarketPrice activeRole={activeRole} />
       <Pricing activeRole={activeRole} setActiveRole={setActiveRole} />
-      <Testimonials />
+      <TestimonialsNew />
       <FinalCTA />
       <Footer />
     </div>

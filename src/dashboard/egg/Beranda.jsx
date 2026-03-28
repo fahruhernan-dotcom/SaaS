@@ -9,6 +9,8 @@ import { useEggSales } from '@/lib/hooks/useEggSales'
 import { useEggCustomers } from '@/lib/hooks/useEggCustomers'
 import { formatIDR } from '@/lib/format'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import { cn } from '@/lib/utils'
 
 export default function EggBeranda() {
   const navigate = useNavigate()
@@ -25,16 +27,18 @@ export default function EggBeranda() {
     return { totalStok, totalSales, activeCustomers, omzet }
   }, [inventory, sales, customers])
 
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+
   return (
-    <div className="p-6 lg:p-10 space-y-10 bg-[#06090F] min-h-screen pb-24 text-left">
+    <div className={cn("bg-[#06090F] min-h-screen pb-24 text-left", isDesktop ? "p-10 space-y-10" : "p-5 pt-10 space-y-8")}>
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col lg:flex-row lg:items-center justify-between gap-6"
       >
         <div>
-          <h2 className="text-4xl font-black text-white uppercase tracking-tighter leading-none">Dashboard Broker Telur</h2>
-          <p className="text-xs font-bold text-[#4B6478] uppercase mt-2 tracking-[0.2em]">Ringkasan operasional Hero Farm</p>
+          <h2 className={cn("font-black text-white uppercase tracking-tighter leading-none", isDesktop ? "text-4xl" : "text-2xl")}>Dashboard Broker Telur</h2>
+          <p className={cn("font-bold text-[#4B6478] uppercase mt-2 tracking-[0.2em]", isDesktop ? "text-xs" : "text-[10px]")}>Ringkasan operasional Hero Farm</p>
         </div>
         <div className="flex gap-3">
             <Button 
@@ -57,9 +61,9 @@ export default function EggBeranda() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content: Stock Summary */}
-        <Card className="lg:col-span-2 p-8 bg-[#111C24] border-white/5 rounded-[32px] relative overflow-hidden">
-            <h3 className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                <Package size={14} /> Status Inventori Per Grade
+        <Card className={cn("bg-[#111C24] border-white/5 rounded-[32px] relative overflow-hidden", isDesktop ? "lg:col-span-2 p-8" : "p-6")}>
+            <h3 className={cn("font-black text-[#4B6478] uppercase tracking-[0.2em] mb-6 flex items-center gap-2", isDesktop ? "text-[10px]" : "text-[11px]")}>
+                <Package size={isDesktop ? 14 : 16} /> Status Inventori Per Grade
             </h3>
             <div className="space-y-4">
                 {loadingInv ? [1,2,3].map(i => <Skeleton key={i} className="h-16 w-full rounded-2xl bg-white/5" />) :
@@ -71,7 +75,7 @@ export default function EggBeranda() {
                             <p className="font-black text-white uppercase text-sm">{item.product_name}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-lg font-black text-white tabular-nums">{item.current_stock_butir} <span className="text-[10px] text-[#4B6478]">butir</span></p>
+                            <p className={cn("font-black text-white tabular-nums", isDesktop ? "text-lg" : "text-base")}>{item.current_stock_butir} <span className={cn("text-[#4B6478]", isDesktop ? "text-[10px]" : "text-[11px]")}>butir</span></p>
                         </div>
                     </div>
                  ))
@@ -86,8 +90,8 @@ export default function EggBeranda() {
         </Card>
 
         {/* Sidebar: Navigation Links */}
-        <Card className="p-8 bg-[#111C24] border-white/5 rounded-[32px] space-y-6">
-            <h3 className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-2">Navigasi Cepat</h3>
+        <Card className={cn("bg-[#111C24] border-white/5 rounded-[32px] space-y-6", isDesktop ? "p-8" : "p-6")}>
+            <h3 className={cn("font-black text-[#4B6478] uppercase tracking-[0.2em] mb-2", isDesktop ? "text-[10px]" : "text-[11px]")}>Navigasi Cepat</h3>
             <NavCard 
                 title="Supplier" 
                 desc="Atur pakan & stok masuk" 
@@ -116,34 +120,39 @@ export default function EggBeranda() {
 }
 
 function KPIItem({ title, value, icon: Icon, color }) {
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
     return (
-        <Card className="p-6 bg-[#111C24] border-white/5 rounded-[28px] space-y-3 relative overflow-hidden group">
-            <div className={`w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center ${color}`}>
-                <Icon size={20} />
+        <Card className={cn("bg-[#111C24] border-white/5 rounded-[28px] space-y-3 relative overflow-hidden group", isDesktop ? "p-6" : "p-5")}>
+            <div className={cn("rounded-xl bg-white/5 flex items-center justify-center", color, isDesktop ? "w-10 h-10" : "w-11 h-11")}>
+                <Icon size={isDesktop ? 20 : 22} />
             </div>
             <div>
-                <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest leading-none mb-1 text-left">{title}</p>
-                <p className="font-display font-black text-xl text-white tracking-tight leading-none text-left">{value}</p>
+                <p className={cn("font-black text-[#4B6478] uppercase tracking-widest leading-none mb-1 text-left", isDesktop ? "text-[10px]" : "text-[11px]")}>{title}</p>
+                <p className={cn("font-display font-black text-white tracking-tight leading-none text-left", isDesktop ? "text-xl" : "text-[17px]")}>{value}</p>
             </div>
-            <div className="absolute -right-2 -bottom-2 text-white/[0.02] group-hover:text-white/[0.04] transition-colors"><Icon size={48} /></div>
+            <div className="absolute -right-2 -bottom-2 text-white/[0.02] group-hover:text-white/[0.04] transition-colors"><Icon size={isDesktop ? 48 : 56} /></div>
         </Card>
     )
 }
 
 function NavCard({ title, desc, icon: Icon, onClick, color }) {
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
     return (
         <div 
             onClick={onClick}
-            className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] hover:border-white/10 transition-all cursor-pointer group flex items-center gap-4 text-left"
+            className={cn(
+                "rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] hover:border-white/10 transition-all cursor-pointer group flex items-center text-left active:scale-[0.98]",
+                isDesktop ? "p-4 gap-4" : "p-5 gap-5"
+            )}
         >
-            <div className={`w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center ${color}`}>
-                <Icon size={22} />
+            <div className={cn("rounded-xl bg-white/5 flex items-center justify-center shrink-0", color, isDesktop ? "w-12 h-12" : "w-14 h-14")}>
+                <Icon size={isDesktop ? 22 : 26} />
             </div>
             <div className="flex-1">
-                <p className="font-black text-white uppercase text-xs tracking-tight group-hover:text-emerald-400 transition-colors">{title}</p>
-                <p className="text-[10px] font-bold text-[#4B6478] leading-none mt-1">{desc}</p>
+                <p className={cn("font-black text-white uppercase tracking-tight group-hover:text-emerald-400 transition-colors", isDesktop ? "text-xs" : "text-sm")}>{title}</p>
+                <p className={cn("font-bold text-[#4B6478] leading-none mt-1.5", isDesktop ? "text-[10px]" : "text-xs")}>{desc}</p>
             </div>
-            <ChevronRight size={14} className="text-[#4B6478] group-hover:translate-x-1 transition-all" />
+            <ChevronRight size={isDesktop ? 14 : 18} className="text-[#4B6478] group-hover:translate-x-1 transition-all" />
         </div>
     )
 }

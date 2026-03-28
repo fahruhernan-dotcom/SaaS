@@ -1,15 +1,13 @@
 import React from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { 
-  SidebarTrigger 
+import {
+  SidebarTrigger
 } from '@/components/ui/sidebar'
-import { 
-  ChevronRight, 
-  Bell, 
+import {
+  ChevronRight,
   BarChart2,
-  TrendingUp,
-  ArrowRight
 } from 'lucide-react'
+import NotificationBell from './NotificationBell'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { formatIDRShort } from '@/lib/format'
@@ -121,12 +119,6 @@ export default function DesktopTopBar() {
       <div className="flex-1" />
       
       <div className="flex items-center gap-3">
-        {/* Live indicator */}
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/5 border border-emerald-500/10 rounded-full group hover:border-emerald-500/30 transition-all cursor-default">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
-          <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Live</span>
-        </div>
-        
         {/* Harga pasar quick info */}
         <button
           onClick={() => navigate('/harga-pasar')}
@@ -149,10 +141,7 @@ export default function DesktopTopBar() {
         </button>
         
         {/* Notification bell */}
-        <button className="w-9 h-9 flex items-center justify-center rounded-xl border border-border bg-transparent hover:bg-secondary/10 transition-all text-muted-foreground relative group">
-          <Bell size={15} />
-          <div className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-background" />
-        </button>
+        <NotificationBell />
       </div>
     </header>
   )

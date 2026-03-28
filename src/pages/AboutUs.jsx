@@ -1,41 +1,37 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import {
-  Eye,
-  Target,
-  CheckCircle,
-  Shield,
-  Zap,
-  Lock,
-  ArrowRight,
-  ChevronRight,
-  TrendingUp,
-  Home,
-  Building2,
-  ShieldCheck,
-  Users,
-  Code,
-  Banknote,
-  Heart,
-  MapPin,
-  Calendar,
-  Rocket
+  Eye, Target, CheckCircle, Shield, Zap, ArrowRight, Heart, Rocket, Calendar,
+  Handshake, Bird, Factory, FileX, BarChart2, TrendingDown, Wrench, Check,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import SplineScene from '../components/SplineScene';
-
-// Reactbits Components
 import ShinyText from '../components/reactbits/ShinyText';
 import BlurText from '../components/reactbits/BlurText';
 import AnimatedContent from '../components/reactbits/AnimatedContent';
 import Particles from '../components/reactbits/Particles';
 import CountUp from '../components/reactbits/CountUp';
-import TiltedCard from '../components/reactbits/TiltedCard';
-
-// Styles
 import '../components/reactbits/ShinyText.css';
+
+// ─── Animation helper ─────────────────────────────────────────────────────────
+
+function FadeUp({ children, delay = 0, className }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-80px' }}
+      transition={{ duration: 0.5, ease: 'easeOut', delay }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AboutUs() {
   return (
@@ -43,7 +39,10 @@ export default function AboutUs() {
       <Navbar />
 
       <main className="w-full">
-        {/* SECTION HERO */}
+
+        {/* ══════════════════════════════════════════════
+            SECTION HERO — LOCKED: DO NOT MODIFY
+        ══════════════════════════════════════════════ */}
         <section
           className="relative px-5 md:px-10 lg:px-20 h-[600px] md:h-[750px] lg:h-[800px] flex items-center overflow-hidden"
           style={{ background: '#06090F' }}
@@ -148,177 +147,192 @@ export default function AboutUs() {
           </div>
         </section>
 
-        {/* SECTION STATISTIK */}
-        <section className="py-24 border-white/5 bg-[#080D13] overflow-hidden">
-          <div className="max-w-7xl mx-auto px-6">
-            <AnimatedContent stagger staggerDelay={0.15} distance={15}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[
-                  { val: <CountUp to={500} suffix="+" duration={2} />, label: 'Pengguna Aktif', sub: 'broker & peternak se-Indonesia' },
-                  { val: <CountUp to={10000} suffix="+" duration={2.5} separator="." />, label: 'Transaksi Tercatat', sub: 'senilai miliaran rupiah' },
-                  { val: 'Rp 50M+', label: 'Nilai Bisnis Dikelola', sub: 'per bulan rata-rata' },
-                  { val: '3', label: 'Role Bisnis', sub: 'Broker, Peternak, RPA' },
-                ].map((stat, i) => (
-                  <div
-                    key={i}
-                    className="bg-[#0C1319] border border-white/8 rounded-3xl p-8 text-center hover:border-emerald-500/30 transition-all duration-500 group"
-                  >
-                    <div className="font-display text-4xl font-bold text-[#10B981] mb-2 group-hover:scale-110 transition-transform duration-300">
-                      {stat.val}
-                    </div>
-                    <div className="text-[#F1F5F9] font-bold text-lg mb-2">{stat.label}</div>
-                    <div className="text-[#4B6478] text-sm leading-relaxed">{stat.sub}</div>
+        {/* ══════════════════════════════════════════════
+            SECTION: STATS BAR
+        ══════════════════════════════════════════════ */}
+        <section className="bg-[#0C1319] border-y border-white/8 py-12">
+          <div className="max-w-5xl mx-auto px-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              {[
+                { countTo: 500,   suffix: '+',  sep: '',  label: 'Pengguna Aktif' },
+                { countTo: 10000, suffix: '+',  sep: '.', label: 'Transaksi Tercatat' },
+                { raw: 'Rp 50M+',               label: 'Nilai Transaksi' },
+                { raw: '3',                      label: 'Vertikal Bisnis' },
+              ].map((stat, i) => (
+                <FadeUp key={i} delay={i * 0.1} className={`text-center ${i < 3 ? 'md:border-r border-white/8' : ''}`}>
+                  <div className="font-display text-3xl font-black text-white mb-1">
+                    {stat.raw
+                      ? stat.raw
+                      : <CountUp to={stat.countTo} suffix={stat.suffix} duration={2} separator={stat.sep} />
+                    }
                   </div>
-                ))}
-              </div>
-            </AnimatedContent>
+                  <div className="text-[11px] uppercase tracking-widest text-[#4B6478] mt-1">{stat.label}</div>
+                </FadeUp>
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* SECTION A — Dibangun untuk Siapa */}
-        <section className="py-24 bg-[#06090F] w-full">
-          <div className="max-w-5xl mx-auto px-6">
-            <div className="text-center mb-16">
-              <h2 className="text-emerald-500 font-bold tracking-widest uppercase text-sm mb-4">PERSONA KAMI</h2>
-              <h3 className="text-3xl md:text-5xl font-black text-white mb-6 font-display">Dibangun untuk Siapa?</h3>
-              <p className="text-[#94A3B8] text-lg max-w-2xl mx-auto">Satu platform, tiga peran — masing-masing dengan kebutuhan yang kami pahami dari dalam.</p>
-            </div>
+        {/* ══════════════════════════════════════════════
+            SECTION: DIBANGUN UNTUK SIAPA
+        ══════════════════════════════════════════════ */}
+        <section className="py-24 bg-[#06090F]">
+          <div className="max-w-6xl mx-auto px-6">
 
-            <AnimatedContent stagger staggerDelay={0.1} distance={20}>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {[
-                  {
-                    icon: <TrendingUp />,
-                    title: 'Broker Ayam',
-                    badge: 'Fase 1 — Aktif',
-                    badgeStyle: 'bg-[#10B981]/10 text-[#10B981]',
-                    color: 'text-[#10B981]',
-                    pains: [
-                      'Transaksi beli-jual masih dicatat manual di buku atau WhatsApp',
-                      'Tidak tahu persis berapa profit bersih setelah susut dan biaya kirim',
-                      'Piutang RPA menumpuk tanpa reminder otomatis',
-                      'Harga pasar bergantung info dari mulut ke mulut',
-                    ],
-                    solution: 'TernakOS mencatat semua transaksi, menghitung profit real, dan memberi visibilitas penuh atas bisnis kamu.'
-                  },
-                  {
-                    icon: <Home />,
-                    title: 'Peternak',
-                    badge: 'Fase 2 — Segera',
-                    badgeStyle: 'bg-purple-500/10 text-purple-400',
-                    color: 'text-[#7C3AED]',
-                    pains: [
-                      'Pencatatan pertumbuhan ayam masih manual atau tidak dicatat sama sekali',
-                      'Tidak ada data historis untuk prediksi panen berikutnya',
-                      'Sulit menunjukkan performa kandang kepada calon pembeli',
-                      'Harga jual ditentukan broker — peternak tidak punya leverage',
-                    ],
-                    solution: 'TernakOS memberi peternak data pertumbuhan, prediksi panen, dan akses langsung ke harga pasar yang transparan.'
-                  },
-                  {
-                    icon: <Building2 />,
-                    title: 'RPA / Rumah Potong',
-                    badge: 'Fase 3 — Direncanakan',
-                    badgeStyle: 'bg-[#F59E0B]/10 text-[#F59E0B]',
-                    color: 'text-[#F59E0B]',
-                    pains: [
-                      'Sulit tracking hutang ke banyak broker sekaligus',
-                      'Tidak ada sistem purchase order yang terintegrasi',
-                      'Harga beli bergantung negosiasi manual tiap transaksi',
-                    ],
-                    solution: 'TernakOS menghubungkan RPA langsung ke ekosistem broker dengan transparansi harga dan manajemen pembayaran terintegrasi.'
-                  }
-                ].map((card, i) => (
-                  <div
-                    key={i}
-                    className="bg-[#0C1319] border border-white/8 rounded-3xl p-8 space-y-6 hover:border-white/20 transition-all group h-full flex flex-col"
-                  >
-                    <div className={`w-14 h-14 rounded-2xl bg-white/[0.03] flex items-center justify-center ${card.color}`}>
-                      {React.cloneElement(card.icon, { size: 28 })}
+            <FadeUp className="text-center mb-16">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#10B981] mb-5">
+                UNTUK SIAPA
+              </p>
+              <h2 className="font-display text-4xl font-bold text-white leading-tight">
+                Dibangun untuk pelaku industri nyata.
+              </h2>
+            </FadeUp>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                {
+                  Icon: Handshake,
+                  iconCls: 'text-emerald-400',
+                  iconBg: 'bg-emerald-500/10',
+                  badge: 'BROKER',
+                  badgeCls: 'bg-emerald-500/10 text-emerald-400',
+                  hoverBorder: 'hover:border-emerald-500/30',
+                  title: 'Broker Ayam',
+                  pain: 'Beli dari kandang, jual ke RPA — semua tercatat rapi.',
+                  features: [
+                    'Piutang RPA dengan alert jatuh tempo',
+                    'Margin per transaksi real-time',
+                    'Laporan cashflow & susut otomatis',
+                  ],
+                },
+                {
+                  Icon: Bird,
+                  iconCls: 'text-purple-400',
+                  iconBg: 'bg-purple-500/10',
+                  badge: 'PETERNAK',
+                  badgeCls: 'bg-purple-500/10 text-purple-400',
+                  hoverBorder: 'hover:border-purple-500/30',
+                  title: 'Peternak',
+                  pain: 'Pantau FCR, deplesi, siklus, dan panen dalam satu dashboard.',
+                  features: [
+                    'FCR & IP Score otomatis tiap input harian',
+                    'Estimasi panen berbasis data pertumbuhan nyata',
+                    'Breakdown biaya lengkap per siklus',
+                  ],
+                },
+                {
+                  Icon: Factory,
+                  iconCls: 'text-amber-400',
+                  iconBg: 'bg-amber-500/10',
+                  badge: 'RPA / BUYER',
+                  badgeCls: 'bg-amber-500/10 text-amber-400',
+                  hoverBorder: 'hover:border-amber-500/30',
+                  title: 'RPA & Distributor',
+                  pain: 'Kelola order, hutang, dan distribusi produk jadi.',
+                  features: [
+                    'Hutang ke broker tercatat transparan kedua pihak',
+                    'Laporan margin per produk & customer otomatis',
+                    'Dashboard profitabilitas per SKU realtime',
+                  ],
+                },
+              ].map(({ Icon, iconCls, iconBg, badge, badgeCls, hoverBorder, title, pain, features }, i) => (
+                <FadeUp key={i} delay={i * 0.1}>
+                  <div className={`bg-[#0C1319] rounded-3xl p-8 border border-white/8 ${hoverBorder} transition-all duration-300 h-full flex flex-col`}>
+                    <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center mb-5 shrink-0`}>
+                      <Icon size={20} className={iconCls} />
                     </div>
-                    <div className="space-y-2">
-                      <div className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${card.badgeStyle}`}>
-                        {card.badge}
-                      </div>
-                      <h4 className="text-2xl font-black text-white font-display">{card.title}</h4>
-                    </div>
-                    <ul className="space-y-3 flex-1">
-                      {card.pains.map((pain, j) => (
-                        <li key={j} className="flex gap-3 text-sm text-[#4B6478] leading-relaxed italic">
-                          <span className="text-red-400 opacity-50">•</span> "{pain}"
+                    <span className={`inline-block text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-4 self-start ${badgeCls}`}>
+                      {badge}
+                    </span>
+                    <h3 className="font-display text-xl font-bold text-white mb-3">{title}</h3>
+                    <p className="text-[#94A3B8] text-sm leading-relaxed mb-6">{pain}</p>
+                    <ul className="space-y-2 mt-auto">
+                      {features.map((f, j) => (
+                        <li key={j} className="flex items-start gap-2 text-sm text-[#94A3B8]">
+                          <Check size={13} className="text-emerald-400 shrink-0 mt-0.5" />
+                          {f}
                         </li>
                       ))}
                     </ul>
-                    <div className="pt-4 mt-auto border-t border-white/5">
-                      <p className="text-[#94A3B8] text-sm leading-relaxed font-medium">
-                        {card.solution}
-                      </p>
-                    </div>
                   </div>
-                ))}
-              </div>
-            </AnimatedContent>
-          </div>
-        </section>
-
-        {/* SECTION CERITA */}
-        <section className="py-24 bg-[#080D13] w-full">
-          <div className="max-w-5xl mx-auto px-6">
-            <div className="grid md:grid-cols-2 gap-16 items-center">
-              <motion.div
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="space-y-8"
-              >
-                <div className="space-y-4">
-                  <h2 className="text-emerald-500 font-bold tracking-widest uppercase text-sm">KENAPA TERNAKOS ADA</h2>
-                  <h3 className="text-3xl md:text-4xl font-black text-white leading-tight font-display">
-                    Dibangun dari Dua Dunia
-                  </h3>
-                </div>
-
-                <div className="text-[#94A3B8] space-y-6 leading-relaxed text-lg">
-                  <p>
-                    "Saya bukan sekadar developer yang membuat aplikasi untuk industri yang tidak saya kenal. Saya adalah peternak — yang juga keebetulan bisa coding."
-                  </p>
-                  <p>
-                    Setelah lulus dari Fakultas Peternakan Universitas Sebelas Maret, saya melihat satu masalah yang terus berulang: pelaku bisnis peternakan Indonesia bekerja keras setiap hari, tapi dengan sistem yang tidak berkembang selama puluhan tahun.
-                  </p>
-                  <p>
-                    Dengan latar belakang di peternakan sekaligus pengalaman sebagai Automation Engineer dan Full-Stack Developer, saya tahu persis bedanya bobot kirim dan bobot tiba, kenapa susut berat itu penting, dan bagaimana alur uang bergerak dari kandang ke meja potong.
-                  </p>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                className="relative"
-              >
-                <div className="absolute inset-0 bg-emerald-500/20 blur-3xl opacity-20 -z-10" />
-                <div className="bg-[#0C1319] border border-[#10B981]/20 rounded-3xl p-10 relative overflow-hidden group">
-                  <div className="absolute top-0 right-0 p-8 transform translate-x-4 -translate-y-4 opacity-5 group-hover:translate-x-0 group-hover:-translate-y-0 transition-transform">
-                    <div className="text-8xl font-serif">“</div>
-                  </div>
-                  <p className="italic text-xl md:text-2xl text-[#F1F5F9] leading-relaxed mb-8 relative z-10">
-                    "Saya melihat peternak menyepelekan pendataan — padahal itu aset terpenting untuk scaling bisnis. Kesalahan kecil yang dibiarkan akan tumbuh menjadi kerugian besar di kemudian hari."
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-1 rounded-full bg-emerald-500" />
-                    <div>
-                      <div className="text-[#F1F5F9] font-bold">Fahrurosadi Hernan Sakti</div>
-                      <div className="text-emerald-500 text-sm font-semibold uppercase tracking-wider">Founder TernakOS</div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
+                </FadeUp>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* SECTION FOUNDER */}
+        {/* ══════════════════════════════════════════════
+            SECTION: ASAL USUL
+        ══════════════════════════════════════════════ */}
+        <section id="cerita" className="py-24 bg-[#080D13]">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="grid md:grid-cols-5 gap-12 md:gap-16 items-start">
+
+              {/* KIRI — Narasi */}
+              <div className="md:col-span-3">
+                <FadeUp>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-[#10B981] mb-5">
+                    ASAL USUL
+                  </p>
+                  <h2 className="font-display text-4xl font-bold text-white leading-tight mb-8">
+                    Dibangun dari dua dunia.
+                  </h2>
+                </FadeUp>
+
+                <div className="space-y-5 mb-10">
+                  {[
+                    'TernakOS lahir bukan dari rapat boardroom atau riset pasar. Lahir karena pendirinya — peternak sekaligus developer — capek melihat kawan-kawan peternak kehilangan margin karena sistem pencatatan yang tertinggal puluhan tahun.',
+                    'Di industri dengan margin tipis, satu kesalahan pencatatan bisa mengubah untung menjadi rugi. Kami tahu persis rasanya — bukan dari statistik, tapi dari pengalaman kehilangan uang karena catatan yang tidak akurat.',
+                    'Jadi kami membangun yang kami butuhkan sendiri. Lalu kami sadari ribuan peternak dan broker di Indonesia menghadapi masalah yang sama.',
+                  ].map((p, i) => (
+                    <FadeUp key={i} delay={0.1 + i * 0.1}>
+                      <p className="text-[#94A3B8] leading-relaxed">{p}</p>
+                    </FadeUp>
+                  ))}
+                </div>
+
+                <div className="space-y-4">
+                  {[
+                    { Icon: FileX,        text: 'Catat di kertas, hilang besok' },
+                    { Icon: BarChart2,    text: 'Excel berantakan, susah analisis' },
+                    { Icon: TrendingDown, text: 'Margin tipis karena tidak terpantau' },
+                  ].map(({ Icon, text }, i) => (
+                    <FadeUp key={i} delay={0.4 + i * 0.08}>
+                      <div className="flex items-center gap-3">
+                        <Icon size={16} className="text-[#10B981] shrink-0" />
+                        <span className="text-[#94A3B8] text-sm">{text}</span>
+                      </div>
+                    </FadeUp>
+                  ))}
+                </div>
+              </div>
+
+              {/* KANAN — Quote card */}
+              <FadeUp delay={0.25} className="md:col-span-2">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-emerald-500/3 rounded-3xl blur-xl pointer-events-none" />
+                  <div className="relative bg-[#0C1319] rounded-3xl p-8 border border-white/8">
+                    <p
+                      className="font-display text-8xl text-emerald-500/15 leading-none select-none mb-2"
+                      aria-hidden="true"
+                    >
+                      "
+                    </p>
+                    <p className="font-display text-lg font-medium text-white leading-relaxed">
+                      Satu kesalahan pencatatan bisa mengubah untung menjadi rugi. Kami tahu persis rasanya.
+                    </p>
+                    <p className="text-sm text-[#4B6478] mt-4">— Fahrurosadi, Founder TernakOS</p>
+                  </div>
+                </div>
+              </FadeUp>
+
+            </div>
+          </div>
+        </section>
+
+        {/* ══════════════════════════════════════════════
+            SECTION FOUNDER — LOCKED: DO NOT MODIFY
+        ══════════════════════════════════════════════ */}
         <section className="py-24 bg-[#06090F] w-full">
           <div className="max-w-5xl mx-auto px-6">
             <div className="flex flex-col md:flex-row gap-10 md:gap-16 items-start">
@@ -409,230 +423,270 @@ export default function AboutUs() {
           </div>
         </section>
 
-        {/* SECTION VISI MISI */}
-        <section className="py-24 bg-[#080D13] w-full">
-          <div className="max-w-5xl mx-auto px-6">
-            <div className="grid md:grid-cols-2 gap-8">
-              <motion.div
-                whileHover={{ y: -5 }}
-                className="bg-[#0C1319] border border-white/8 rounded-3xl p-10 space-y-6"
-              >
-                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                  <Eye size={28} />
-                </div>
-                <h3 className="text-2xl font-black text-white font-display">Visi</h3>
-                <p className="text-lg text-[#94A3B8] leading-relaxed">
-                  Menjadi ekosistem digital peternakan terpercaya di Indonesia — tempat setiap peternak, broker, dan mitra bisnis terhubung, bertumbuh, dan bersaing secara adil berdasarkan data yang nyata.
-                </p>
-              </motion.div>
+        {/* ══════════════════════════════════════════════
+            SECTION: VISI & MISI
+        ══════════════════════════════════════════════ */}
+        <section className="py-24 bg-[#080D13]">
+          <div className="max-w-6xl mx-auto px-6">
 
-              <motion.div
-                whileHover={{ y: -5 }}
-                className="bg-[#0C1319] border border-white/8 rounded-3xl p-10 space-y-6"
-              >
-                <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                  <Target size={28} />
-                </div>
-                <h3 className="text-2xl font-black text-white font-display">Misi</h3>
-                <ul className="space-y-4">
-                  {[
-                    "Mendigitalisasi seluruh rantai bisnis peternakan dalam satu platform yang mudah digunakan siapapun",
-                    "Mewujudkan transparansi harga pasar dari transaksi nyata, bukan spekulasi atau monopoli",
-                    "Membangun fondasi data agar setiap pelaku usaha bisa mengambil keputusan berdasarkan fakta",
-                  ].map((item, i) => (
-                    <li key={i} className="flex gap-4">
-                      <CheckCircle className="text-emerald-500 shrink-0 mt-1" size={18} />
-                      <span className="text-[#94A3B8] leading-relaxed">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            </div>
-          </div>
-        </section>
+            <FadeUp className="text-center mb-16">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#10B981] mb-5">
+                ARAH KAMI
+              </p>
+              <h2 className="font-display text-4xl font-bold text-white leading-tight">
+                Visi &amp; Misi
+              </h2>
+            </FadeUp>
 
-        {/* SECTION NILAI-NILAI */}
-        <section className="py-24 bg-[#06090F] w-full">
-          <div className="max-w-7xl mx-auto px-6 text-center">
-            <h2 className="text-emerald-500 font-bold tracking-widest uppercase text-sm mb-4">PRINSIP KAMI</h2>
-            <h3 className="text-3xl md:text-5xl font-black text-white mb-16 font-display">Nilai yang Kami Pegang</h3>
-
-            <AnimatedContent stagger staggerDelay={0.1} distance={20}>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                {[
-                  { icon: <Eye />, title: 'Transparansi', desc: 'Harga pasar bersumber dari transaksi nyata, terbuka untuk semua.' },
-                  { icon: <Shield />, title: 'Kepercayaan', desc: 'Data bisnis kamu aman, terisolasi penuh, dan tidak pernah dijual.' },
-                  { icon: <Zap />, title: 'Efisiensi', desc: 'Otomatisasi proses yang selama ini memakan waktu dan energi.' },
-                  { icon: <Target />, title: 'Efektivitas', desc: 'Fitur dirancang dari pengalaman lapangan nyata, bukan asumsi.' },
-                  { icon: <Lock />, title: 'Keamanan', desc: 'Enkripsi end-to-end dengan Row Level Security ketat.' },
-                  { icon: <Rocket />, title: 'Inovasi', desc: 'Terus berkembang mengikuti kebutuhan nyata industri peternakan.' },
-                ].map((val, i) => (
-                  <TiltedCard
-                    key={i}
-                    imageSrc="" // Component supports text-only via children
-                    altText={val.title}
-                    captionText=""
-                    containerClassName="h-full"
-                    showTooltip={false}
-                    rotateAmplitude={8}
-                    scaleOnHover={1.03}
-                  >
-                    <div className="bg-[#0C1319] border border-white/8 rounded-3xl p-8 space-y-4 h-full flex flex-col items-center">
-                      <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                        {React.cloneElement(val.icon, { size: 24 })}
-                      </div>
-                      <h4 className="text-lg font-bold text-white font-display text-center">{val.title}</h4>
-                      <p className="text-sm text-[#4B6478] leading-relaxed text-center flex-1">{val.desc}</p>
-                    </div>
-                  </TiltedCard>
-                ))}
-              </div>
-            </AnimatedContent>
-          </div>
-        </section>
-
-        {/* SECTION B — Transparansi Kami */}
-        <section className="py-24 bg-[#080D13] w-full">
-          <div className="max-w-5xl mx-auto px-6">
-            <div className="text-center mb-16">
-              <h2 className="text-emerald-500 font-bold tracking-widest uppercase text-sm mb-4">KEJUJURAN KAMI</h2>
-              <h3 className="text-3xl md:text-5xl font-black text-white font-display">Kami percaya pada kejujuran — termasuk tentang diri kami sendiri.</h3>
-            </div>
-
-            <div className="bg-[#0C1319] border border-white/8 rounded-3xl p-8 md:p-12">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                {[
-                  { icon: <ShieldCheck />, text: 'Harga pasar kami 100% dari transaksi nyata user, bukan scraping atau estimasi' },
-                  { icon: <Users />, text: 'Kami masih early-stage — tapi setiap fitur diuji langsung oleh peternak dan broker aktif' },
-                  { icon: <Code />, text: 'Dibangun solo oleh founder yang juga peternak — bukan tim besar dengan asumsi teoritis' },
-                  { icon: <Banknote />, text: 'Bootstrap & independent — tidak ada investor yang mendikte arah produk kami' },
-                  { icon: <Lock />, text: 'Data bisnis kamu tidak pernah dan tidak akan pernah dijual ke pihak manapun' },
-                  { icon: <Heart />, text: 'Kami membangun ini karena kami bagian dari industri ini — bukan sekadar bisnis' },
-                ].map((item, i) => (
-                  <div key={i} className="flex gap-4 items-start">
-                    <div className="text-emerald-500 w-5 h-5 shrink-0 mt-1">
-                      {React.cloneElement(item.icon, { size: 20 })}
-                    </div>
-                    <p className="text-[#94A3B8] text-sm leading-relaxed">{item.text}</p>
+            <div className="grid md:grid-cols-2 gap-6">
+              <FadeUp delay={0.1}>
+                <div className="bg-[#0C1319] rounded-3xl p-8 border border-white/8 border-l-2 border-l-emerald-500 h-full flex flex-col">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-5 shrink-0">
+                    <Eye size={20} className="text-emerald-400" />
                   </div>
-                ))}
-              </div>
+                  <h3 className="font-display text-xl font-bold text-white mb-4">Visi</h3>
+                  <p className="text-[#94A3B8] leading-relaxed">
+                    Menjadi ekosistem digital peternakan terpercaya di Indonesia — tempat setiap peternak, broker, dan mitra bisnis terhubung, bertumbuh, dan bersaing secara adil berdasarkan data yang nyata.
+                  </p>
+                </div>
+              </FadeUp>
+
+              <FadeUp delay={0.2}>
+                <div className="bg-[#0C1319] rounded-3xl p-8 border border-white/8 h-full flex flex-col">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-5 shrink-0">
+                    <Target size={20} className="text-emerald-400" />
+                  </div>
+                  <h3 className="font-display text-xl font-bold text-white mb-4">Misi</h3>
+                  <ul className="space-y-4">
+                    {[
+                      'Mendigitalisasi seluruh rantai bisnis peternakan dalam satu platform yang mudah digunakan siapapun',
+                      'Mewujudkan transparansi harga pasar dari transaksi nyata, bukan spekulasi atau monopoli',
+                      'Membangun fondasi data agar setiap pelaku usaha bisa mengambil keputusan berdasarkan fakta',
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-start gap-3">
+                        <CheckCircle size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                        <span className="text-[#94A3B8] text-sm leading-relaxed">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </FadeUp>
             </div>
           </div>
         </section>
 
-        {/* SECTION ROADMAP */}
-        <section className="pt-24 pb-12 bg-[#06090F] w-full mb-12">
-          <div className="max-w-5xl mx-auto px-6">
-            <div className="text-center mb-20">
-              <h2 className="text-emerald-500 font-bold tracking-widest uppercase text-sm mb-4">MASA DEPAN</h2>
-              <h3 className="text-3xl md:text-5xl font-black text-white font-display tracking-tight">Roadmap Pengembangan</h3>
+        {/* ══════════════════════════════════════════════
+            SECTION: NILAI YANG KAMI PEGANG
+        ══════════════════════════════════════════════ */}
+        <section className="py-24 bg-[#06090F]">
+          <div className="max-w-4xl mx-auto px-6">
+
+            <FadeUp className="text-center mb-4">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#10B981] mb-5">
+                NILAI YANG KAMI PEGANG
+              </p>
+              <h2 className="font-display text-4xl font-bold text-white leading-tight">
+                Prinsip yang membentuk produk kami.
+              </h2>
+            </FadeUp>
+
+            <div>
+              {[
+                { num: '01', Icon: Eye,    title: 'Transparansi', body: 'Kami bangun fitur yang membuat semua angka terlihat jelas — bukan tersembunyi di balik rumus Excel.' },
+                { num: '02', Icon: Wrench, title: 'Pragmatisme',  body: 'Fitur yang kami bangun berdasarkan kebutuhan nyata di lapangan, bukan asumsi dari ruang rapat.' },
+                { num: '03', Icon: Zap,    title: 'Keberanian',   body: 'Industri ini sudah terlalu lama stagnan. Kami berani mendorong perubahan meski tidak populer.' },
+                { num: '04', Icon: Shield, title: 'Kejujuran',    body: 'Termasuk jujur soal keterbatasan kami sendiri. Kami masih berkembang, dan kami tidak menyembunyikannya.' },
+                { num: '05', Icon: Heart,  title: 'Keberpihakan', body: 'Berpihak pada peternak kecil dan broker independen — mereka yang selama ini tidak punya akses ke tools yang layak.' },
+                { num: '06', Icon: Rocket, title: 'Inovasi',      body: 'Terus berkembang bersama industri. Setiap fitur baru lahir dari feedback pengguna nyata di lapangan.' },
+              ].map(({ num, Icon, title, body }, i) => (
+                <FadeUp key={i} delay={i * 0.06}>
+                  <div className={`flex items-start gap-6 md:gap-10 py-10 ${i < 5 ? 'border-b border-white/5' : ''}`}>
+                    <span
+                      className="font-display text-6xl md:text-7xl font-black text-white/5 leading-none shrink-0 select-none w-16 text-right"
+                      aria-hidden="true"
+                    >
+                      {num}
+                    </span>
+                    <div className="flex items-start gap-4 flex-1">
+                      <div className="bg-emerald-500/10 rounded-xl p-2 shrink-0 mt-0.5">
+                        <Icon size={24} className="text-emerald-400" />
+                      </div>
+                      <div>
+                        <h3 className="font-display text-xl font-bold text-white mb-2">{title}</h3>
+                        <p className="text-[#94A3B8] leading-relaxed">{body}</p>
+                      </div>
+                    </div>
+                  </div>
+                </FadeUp>
+              ))}
             </div>
+          </div>
+        </section>
 
-            <AnimatedContent stagger staggerDelay={0.2} distance={20}>
-              <div className="space-y-0 relative border-l-2 border-white/5 ml-4 md:ml-0 md:pl-0">
-                {[
-                  {
-                    time: '2026 Q1',
-                    status: 'selesai',
-                    title: 'Broker Dashboard',
-                    desc: 'Landing page, auth, transaksi, RPA & piutang, pengiriman, cash flow, armada, simulator, harga pasar, tim & akses'
-                  },
-                  {
-                    time: '2026 Q2',
-                    status: 'ongoing',
-                    title: 'Peternak Dashboard',
-                    desc: 'Manajemen siklus budidaya, pencatatan harian, listing stok, performansi kandang realtime'
-                  },
-                  {
-                    time: '2026 Q3',
-                    status: 'planned',
-                    title: 'RPA Dashboard',
-                    desc: 'Order management, pembayaran antar tenant, koneksi broker-RPA, tracking supply chain permanen'
-                  },
-                  {
-                    time: '2026 Q4',
-                    status: 'planned',
-                    title: 'TernakBot AI',
-                    desc: 'Analisis profit otomatis, deteksi anomali budidaya, prediksi panen akurat, laporan bisnis otomatis'
-                  },
-                ].map((item, i) => (
-                  <div key={i} className="relative pl-12 pb-16 last:pb-0">
-                    <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 z-10 ${item.status === 'selesai' ? 'bg-emerald-500 border-emerald-500' :
-                        item.status === 'ongoing' ? 'bg-[#F59E0B] border-[#F59E0B] animate-pulse' :
-                          'bg-[#111C24] border-white/20'
-                      }`} />
+        {/* ══════════════════════════════════════════════
+            SECTION: KEJUJURAN CALLOUT
+        ══════════════════════════════════════════════ */}
+        <section className="py-24 bg-[#080D13]">
+          <div className="max-w-4xl mx-auto px-6">
+            <FadeUp>
+              <div className="bg-[#0C1319] rounded-3xl p-12 md:p-16 border border-white/8 text-center">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-[#10B981] mb-6">
+                  KEJUJURAN KAMI
+                </p>
+                <h2 className="font-display text-4xl md:text-5xl font-bold text-white leading-tight mb-12">
+                  Kami percaya pada kejujuran —<br />termasuk tentang diri kami sendiri.
+                </h2>
 
-                    <div className={`bg-[#0C1319] border rounded-3xl p-8 hover:bg-white/[0.02] transition-all duration-500 group ${item.status === 'selesai' ? 'border-emerald-500/20' :
-                        item.status === 'ongoing' ? 'border-[#F59E0B]/20' :
-                          'border-white/5'
-                      }`}>
-                      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-left">
+                  {[
+                    'Harga pasar kami 100% dari transaksi nyata user, bukan scraping atau estimasi',
+                    'Kami masih early-stage — tapi setiap fitur diuji langsung oleh peternak dan broker aktif',
+                    'Dibangun solo oleh founder yang juga peternak — bukan tim besar dengan asumsi teoritis',
+                    'Bootstrap & independent — tidak ada investor yang mendikte arah produk kami',
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <CheckCircle size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                      <p className="text-[#94A3B8] text-sm leading-relaxed">{item}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </FadeUp>
+          </div>
+        </section>
+
+        {/* ══════════════════════════════════════════════
+            SECTION: ROADMAP
+        ══════════════════════════════════════════════ */}
+        <section className="py-24 bg-[#06090F]">
+          <div className="max-w-5xl mx-auto px-6">
+
+            <FadeUp className="text-center mb-20">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#10B981] mb-5">
+                ROADMAP
+              </p>
+              <h2 className="font-display text-4xl font-bold text-white leading-tight">
+                Roadmap Pengembangan
+              </h2>
+            </FadeUp>
+
+            <div className="space-y-0 relative border-l-2 border-white/5 ml-4 md:ml-0">
+              {[
+                {
+                  time: '2026 Q1',
+                  status: 'selesai',
+                  title: 'Broker Dashboard',
+                  desc: 'Landing page, auth, transaksi, RPA & piutang, pengiriman, cash flow, armada, simulator, harga pasar, tim & akses',
+                },
+                {
+                  time: '2026 Q2',
+                  status: 'ongoing',
+                  title: 'Peternak Dashboard',
+                  desc: 'Manajemen siklus budidaya, pencatatan harian, listing stok, performansi kandang realtime',
+                },
+                {
+                  time: '2026 Q3',
+                  status: 'planned',
+                  title: 'RPA Dashboard',
+                  desc: 'Order management, pembayaran antar tenant, koneksi broker-RPA, tracking supply chain permanen',
+                },
+                {
+                  time: '2026 Q4',
+                  status: 'planned',
+                  title: 'TernakBot AI',
+                  desc: 'Analisis profit otomatis, deteksi anomali budidaya, prediksi panen akurat, laporan bisnis otomatis',
+                },
+              ].map((item, i) => (
+                <FadeUp key={i} delay={i * 0.1}>
+                  <div className="relative pl-12 pb-14 last:pb-0">
+                    <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 z-10 ${
+                      item.status === 'selesai' ? 'bg-emerald-500 border-emerald-500' :
+                      item.status === 'ongoing' ? 'bg-[#F59E0B] border-[#F59E0B] animate-pulse' :
+                      'bg-[#111C24] border-white/20'
+                    }`} />
+
+                    <div className={`bg-[#0C1319] border rounded-3xl p-8 transition-all duration-300 ${
+                      item.status === 'selesai' ? 'border-emerald-500/20' :
+                      item.status === 'ongoing' ? 'border-amber-500/20' :
+                      'border-white/5'
+                    }`}>
+                      <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
                         <div className="flex items-center gap-3">
-                          <span className={`text-[10px] font-black px-3 py-1 rounded-full ${item.status === 'selesai' ? 'bg-emerald-500/10 text-emerald-500' :
-                              item.status === 'ongoing' ? 'bg-[#F59E0B]/10 text-[#F59E0B]' :
-                                'bg-white/5 text-[#4B6478]'
-                            }`}>{item.time}</span>
-                          <h4 className="text-xl font-black text-white font-display group-hover:text-emerald-400 transition-colors uppercase tracking-tight">{item.title}</h4>
+                          <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${
+                            item.status === 'selesai' ? 'bg-emerald-500/10 text-emerald-400' :
+                            item.status === 'ongoing' ? 'bg-amber-500/10 text-amber-400' :
+                            'bg-white/5 text-[#4B6478]'
+                          }`}>{item.time}</span>
+                          <h4 className="font-display text-xl font-bold text-white uppercase tracking-tight">{item.title}</h4>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div>
                           {item.status === 'selesai' && (
-                            <span className="flex items-center gap-1.5 text-[10px] font-black text-[#10B981] bg-[#10B981]/10 px-3 py-1 rounded-full uppercase tracking-widest">
+                            <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full uppercase tracking-widest">
                               <CheckCircle size={10} /> Rilis
                             </span>
                           )}
                           {item.status === 'ongoing' && (
-                            <span className="flex items-center gap-1.5 text-[10px] font-black text-[#F59E0B] bg-[#F59E0B]/10 px-3 py-1 rounded-full uppercase tracking-widest animate-pulse">
+                            <span className="flex items-center gap-1.5 text-[10px] font-bold text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full uppercase tracking-widest animate-pulse">
                               <Calendar size={10} /> In Progress
                             </span>
                           )}
                           {item.status === 'planned' && (
-                            <span className="flex items-center gap-1.5 text-[10px] font-black text-[#4B6478] bg-white/5 px-3 py-1 rounded-full uppercase tracking-widest">
+                            <span className="flex items-center gap-1.5 text-[10px] font-bold text-[#4B6478] bg-white/5 px-3 py-1 rounded-full uppercase tracking-widest">
                               <Rocket size={10} /> Planned
                             </span>
                           )}
                         </div>
                       </div>
-                      <p className="text-[#94A3B8] text-sm md:text-base leading-relaxed">{item.desc}</p>
+                      <p className="text-[#94A3B8] text-sm leading-relaxed">{item.desc}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            </AnimatedContent>
-          </div>
-        </section>
-
-        {/* SECTION CTA */}
-        <section className="py-12 relative overflow-hidden w-full bg-[#06090F]">
-          <div className="max-w-5xl mx-auto px-6 relative z-10 py-12 md:py-20">
-            <div className="bg-black/40 backdrop-blur-xl border border-white/10 rounded-[40px] p-12 md:p-20 text-center relative overflow-hidden shadow-2xl">
-              <div className="relative z-10 space-y-10">
-                <div className="flex justify-center">
-                  <ShinyText
-                    text="Siap bergabung dengan ekosistem peternakan modern?"
-                    disabled={false}
-                    speed={3}
-                    className="text-3xl font-black text-white font-display leading-tight text-wrap-balance"
-                  />
-                </div>
-
-                <p className="text-white/60 text-lg md:text-xl font-medium max-w-2xl mx-auto">
-                  Digitalisasi bisnis kamu sekarang. Trial 14 hari gratis tanpa perlu kartu kredit.
-                </p>
-
-                <div className="pt-4 flex justify-center">
-                  <Link
-                    to="/register"
-                    className="group relative inline-flex items-center gap-3 px-12 py-6 bg-[#10B981] text-white font-black rounded-2xl transition-all duration-300 transform hover:scale-105 hover:bg-[#34D399] shadow-[0_8px_32px_rgba(16,185,129,0.35)] hover:shadow-[0_8px_40px_rgba(16,185,129,0.5)] text-lg"
-                  >
-                    Mulai Gratis Sekarang
-                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                </div>
-              </div>
+                </FadeUp>
+              ))}
             </div>
           </div>
         </section>
+
+        {/* ══════════════════════════════════════════════
+            SECTION: CTA BOTTOM
+        ══════════════════════════════════════════════ */}
+        <section className="py-24 bg-[#080D13]">
+          <div className="max-w-4xl mx-auto px-6">
+            <FadeUp>
+              <div className="relative rounded-3xl p-12 md:p-16 text-center border border-emerald-500/20 overflow-hidden">
+                {/* Gradient background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none rounded-3xl" />
+                {/* Glow */}
+                <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-80 h-40 bg-emerald-500/10 blur-3xl pointer-events-none" />
+
+                <div className="relative z-10">
+                  <h2 className="font-display text-4xl font-bold text-white leading-tight mb-4">
+                    Siap bergabung dengan ekosistem<br />peternakan modern?
+                  </h2>
+                  <p className="text-[#94A3B8] text-lg mb-10">
+                    Daftar dan coba gratis. Trial 14 hari, tidak perlu kartu kredit.
+                  </p>
+
+                  <div className="flex flex-wrap items-center justify-center gap-4">
+                    <Link
+                      to="/register"
+                      className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-all shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_4px_28px_rgba(16,185,129,0.45)]"
+                    >
+                      Mulai Coba Sekarang
+                      <ArrowRight size={18} />
+                    </Link>
+                    <a
+                      href="/#fitur"
+                      className="px-8 py-4 border border-white/20 hover:border-white/40 text-white font-bold rounded-xl transition-colors"
+                    >
+                      Lihat Fitur
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </FadeUp>
+          </div>
+        </section>
+
       </main>
 
       <Footer />

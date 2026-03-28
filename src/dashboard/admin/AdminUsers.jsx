@@ -60,7 +60,7 @@ export default function AdminUsers() {
     if (!tenants) return []
     
     return tenants.filter(t => {
-      const matchesSearch = t.business_name.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesSearch = (t.business_name || '').toLowerCase().includes(searchQuery.toLowerCase())
       
       const isTrial = t.trial_ends_at && new Date(t.trial_ends_at) > new Date()
       
@@ -177,9 +177,9 @@ export default function AdminUsers() {
                         {getVerticalIcon(t.business_vertical)}
                       </div>
                       <div>
-                        <p className="text-[13px] font-bold text-white leading-tight">{t.business_name}</p>
+                        <p className="text-[13px] font-bold text-white leading-tight">{t.business_name || '(Tanpa Nama)'}</p>
                         <p className="text-[10px] font-bold text-[#4B6478] uppercase mt-1 tracking-wider">
-                          {t.business_vertical.replace('_', ' ')}
+                          {(t.business_vertical || '').replace('_', ' ') || '-'}
                         </p>
                       </div>
                     </div>
@@ -188,14 +188,18 @@ export default function AdminUsers() {
                     <PlanBadge plan={t.plan} />
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <TrialDisplay date={t.trial_ends_at} />
+                    <TrialDisplay date={t.trial_ends_at} plan={t.plan} />
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className="text-[13px] font-bold text-white">{t.profiles?.length || 0}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-[12px] text-white font-medium">{format(new Date(t.created_at), 'dd MMM yyyy')}</p>
-                    <p className="text-[10px] text-[#4B6478] font-medium mt-0.5">{format(new Date(t.created_at), 'HH:mm')}</p>
+                    <p className="text-[12px] text-white font-medium">
+                      {t.created_at ? format(new Date(t.created_at), 'dd MMM yyyy') : '-'}
+                    </p>
+                    <p className="text-[10px] text-[#4B6478] font-medium mt-0.5">
+                      {t.created_at ? format(new Date(t.created_at), 'HH:mm') : '-'}
+                    </p>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex justify-center">
@@ -253,10 +257,10 @@ export default function AdminUsers() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <SheetTitle className="text-xl font-black text-white uppercase tracking-tight">
-                          {selectedTenant.business_name}
+                          {selectedTenant.business_name || '(Tanpa Nama)'}
                         </SheetTitle>
                         <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
-                          {selectedTenant.business_vertical.replace('_', ' ')}
+                          {(selectedTenant.business_vertical || '').replace('_', ' ') || '-'}
                         </Badge>
                       </div>
                       <SheetDescription className="text-[11px] font-bold text-[#4B6478] uppercase mt-1 tracking-widest">
@@ -288,9 +292,16 @@ export default function AdminUsers() {
                       {/* Plan Dropdown */}
                       <div className="space-y-2">
                         <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Paket Langganan</label>
-                        <Select 
-                          value={selectedTenant.plan} 
-                          onValueChange={(val) => updateTenant.mutate({ tenantId: selectedTenant.id, updates: { plan: val } })}
+                        <Select
+                          value={selectedTenant.plan}
+                          onValueChange={(val) => {
+                            const kandangLimit = val === 'starter' ? 1 : val === 'pro' ? 2 : 99
+                            updateTenant.mutate({
+                              tenantId: selectedTenant.id,
+                              updates: { plan: val, kandang_limit: kandangLimit }
+                            })
+                            setSelectedTenant({ ...selectedTenant, plan: val })
+                          }}
                         >
                           <SelectTrigger className="bg-black/40 border-white/10 h-10 rounded-xl text-sm">
                             <SelectValue placeholder="Pilih paket" />
@@ -363,7 +374,7 @@ export default function AdminUsers() {
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <p className="text-[12px] font-bold text-white truncate">{p.full_name}</p>
+                              <p className="text-[12px] font-bold text-white truncate">{p.full_name || '-'}</p>
                               <RoleBadge role={p.role} />
                             </div>
                             <p className="text-[10px] text-[#4B6478] font-bold uppercase mt-0.5 tracking-tighter">
@@ -453,19 +464,19 @@ function RoleBadge({ role }) {
   
   return (
     <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border leading-none ${styles[role] || styles.view_only}`}>
-      {role?.replace('_', ' ')}
+      {(role || '').replace('_', ' ') || '-'}
     </span>
   )
 }
 
-function TrialDisplay({ date }) {
-  if (!date) return <span className="text-[#4B6478] text-[13px]">—</span>
+function TrialDisplay({ date, plan }) {
+  if (plan !== 'starter' || !date) return <span className="text-[#4B6478] text-[13px]">—</span>
   
   const end = new Date(date)
   const now = new Date()
   const days = Math.ceil((end - now) / (1000 * 60 * 60 * 24))
   
-  if (days <= 0) return <span className="text-red-400 text-[11px] font-bold uppercase tracking-wider">Expired</span>
+  if (days <= 0) return <span className="text-[#4B6478] text-[13px]">—</span>
   
   return (
     <div className="flex flex-col items-center">

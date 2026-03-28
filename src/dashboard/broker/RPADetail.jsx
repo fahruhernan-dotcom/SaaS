@@ -34,6 +34,7 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import EmptyState from '@/components/EmptyState'
+import InvoicePreviewModal from '@/components/invoice/InvoicePreviewModal'
 import {
   Sheet,
   SheetContent,
@@ -669,13 +670,13 @@ export default function RPADetail() {
             </div>
 
             <TabsContent value="semua" className="space-y-3 mt-0">
-                <SaleList sales={rpaSales} canPayFunc={canPay} onPay={(s) => { setSelectedSale(s); setOpenModal('bayar'); }} />
+                <SaleList sales={rpaSales} rpa={rpa} canPayFunc={canPay} onPay={(s) => { setSelectedSale(s); setOpenModal('bayar'); }} />
             </TabsContent>
             <TabsContent value="unpaid" className="space-y-3 mt-0">
-                <SaleList sales={rpaSales.filter(s => calcRemainingAmount(s) > 0)} canPayFunc={canPay} onPay={(s) => { setSelectedSale(s); setOpenModal('bayar'); }} />
+                <SaleList sales={rpaSales.filter(s => calcRemainingAmount(s) > 0)} rpa={rpa} canPayFunc={canPay} onPay={(s) => { setSelectedSale(s); setOpenModal('bayar'); }} />
             </TabsContent>
             <TabsContent value="paid" className="space-y-3 mt-0">
-                <SaleList sales={rpaSales.filter(s => calcRemainingAmount(s) <= 0)} canPayFunc={canPay} />
+                <SaleList sales={rpaSales.filter(s => calcRemainingAmount(s) <= 0)} rpa={rpa} canPayFunc={canPay} />
             </TabsContent>
         </Tabs>
       </div>
@@ -810,7 +811,7 @@ function InfoItem({ label, value }) {
     )
 }
 
-function SaleList({ sales, onPay, canPayFunc }) {
+function SaleList({ sales, rpa, onPay, canPayFunc }) {
     const { tenant } = useAuth()
     const queryClient = useQueryClient()
 
@@ -932,7 +933,7 @@ function SaleList({ sales, onPay, canPayFunc }) {
                             )}
                         </div>
                         
-                        <PaymentHistory saleId={sale.id} />
+                        <PaymentHistory saleId={sale.id} sale={sale} rpa={rpa} />
                     </Card>
                 </motion.div>
             ))}
@@ -940,11 +941,14 @@ function SaleList({ sales, onPay, canPayFunc }) {
     )
 }
 
-function PaymentHistory({ saleId }) {
+function PaymentHistory({ saleId, sale, rpa }) {
+    const { tenant, profile } = useAuth()
+    const [invoiceModal, setInvoiceModal] = useState({ open: false, payment: null })
+
     const { data: payments } = useQuery({
         queryKey: ['payments', saleId],
         queryFn: async () => {
-            const { data } = await supabase.from('payments').select('id, amount, payment_method, payment_date').eq('sale_id', saleId).order('payment_date', { ascending: false })
+            const { data } = await supabase.from('payments').select('id, amount, payment_method, payment_date, notes').eq('sale_id', saleId).order('payment_date', { ascending: false })
             return data || []
         }
     })
@@ -955,14 +959,36 @@ function PaymentHistory({ saleId }) {
         <div className="pt-3 border-t border-white/5 space-y-2">
             <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-[0.1em] pl-1 text-left">Riwayat Cicilan</p>
             {payments.map(p => (
-                <div key={p.id} className="flex justify-between items-center text-[11px] bg-secondary/5 p-2 rounded-xl">
-                    <div className="flex items-center gap-2">
-                        <span className="text-[#4B6478] font-bold">{formatDate(p.payment_date)}</span>
-                        <Badge variant="outline" className="h-4 text-[8px] font-black border-white/5 text-[#4B6478] uppercase px-1.5">{p.payment_method}</Badge>
+                <div key={p.id} className="flex justify-between items-center text-[11px] bg-secondary/5 px-2 py-1.5 rounded-xl gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-[#4B6478] font-bold shrink-0">{formatDate(p.payment_date)}</span>
+                        <Badge variant="outline" className="h-4 text-[8px] font-black border-white/5 text-[#4B6478] uppercase px-1.5 shrink-0">{p.payment_method}</Badge>
                     </div>
-                    <span className="text-[#F1F5F9] font-black tabular-nums">{formatIDR(p.amount)}</span>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-[#F1F5F9] font-black tabular-nums">{formatIDR(p.amount)}</span>
+                        <button
+                            onClick={() => setInvoiceModal({ open: true, payment: p })}
+                            className="text-[#4B6478] hover:text-emerald-400 transition-colors"
+                            title="Cetak Kwitansi"
+                        >
+                            <Receipt size={13} />
+                        </button>
+                    </div>
                 </div>
             ))}
+
+            <InvoicePreviewModal
+                type="payment_receipt"
+                isOpen={invoiceModal.open}
+                onClose={() => setInvoiceModal({ open: false, payment: null })}
+                data={invoiceModal.payment ? {
+                    tenant,
+                    payment:     invoiceModal.payment,
+                    sale,
+                    rpa,
+                    generatedBy: profile?.full_name,
+                } : null}
+            />
         </div>
     )
 }

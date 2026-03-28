@@ -67,8 +67,8 @@ export default function FormBeliModal({ isOpen, onClose }) {
         
         {/* Pilih Kandang */}
         <div>
-          <label style={labelStyle}>Kandang Rekanan</label>
-          <select {...register('farm_id')} style={inputStyle}>
+          <label htmlFor="farm_id" style={labelStyle}>Kandang Rekanan</label>
+          <select id="farm_id" {...register('farm_id')} style={inputStyle}>
             <option value="">-- Pilih Kandang --</option>
             {farms?.map(f => (
               <option key={f.id} value={f.id}>{f.farm_name} ({f.status})</option>
@@ -79,26 +79,26 @@ export default function FormBeliModal({ isOpen, onClose }) {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <div>
-            <label style={labelStyle}>Jumlah Ekor</label>
-            <input type="number" {...register('total_birds', { valueAsNumber: true })} placeholder="0" style={inputStyle} />
+            <label htmlFor="total_birds" style={labelStyle}>Jumlah Ekor</label>
+            <input id="total_birds" type="number" {...register('total_birds', { valueAsNumber: true })} placeholder="0" style={inputStyle} />
             {errors.total_birds && <p style={errorStyle}>{errors.total_birds.message}</p>}
           </div>
           <div>
-            <label style={labelStyle}>Rata-rata (kg)</label>
-            <input type="number" step="0.01" {...register('avg_weight', { valueAsNumber: true })} placeholder="0.00" style={inputStyle} />
+            <label htmlFor="avg_weight" style={labelStyle}>Rata-rata (kg)</label>
+            <input id="avg_weight" type="number" step="0.01" {...register('avg_weight', { valueAsNumber: true })} placeholder="0.00" style={inputStyle} />
             {errors.avg_weight && <p style={errorStyle}>{errors.avg_weight.message}</p>}
           </div>
         </div>
 
         <div>
-          <label style={labelStyle}>Harga Beli (Rp/kg)</label>
-          <input type="number" {...register('price_per_kg', { valueAsNumber: true })} placeholder="22000" style={inputStyle} />
+          <label htmlFor="price_per_kg" style={labelStyle}>Harga Beli (Rp/kg)</label>
+          <input id="price_per_kg" type="number" {...register('price_per_kg', { valueAsNumber: true })} placeholder="22000" style={inputStyle} />
           {errors.price_per_kg && <p style={errorStyle}>{errors.price_per_kg.message}</p>}
         </div>
 
         <div>
-          <label style={labelStyle}>Biaya Transport & Operasional (Rp)</label>
-          <input type="number" {...register('transport_cost', { valueAsNumber: true })} placeholder="0" style={inputStyle} />
+          <label htmlFor="transport_cost" style={labelStyle}>Biaya Transport & Operasional (Rp)</label>
+          <input id="transport_cost" type="number" {...register('transport_cost', { valueAsNumber: true })} placeholder="0" style={inputStyle} />
         </div>
 
         <div>

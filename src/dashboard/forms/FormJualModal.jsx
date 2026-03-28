@@ -86,8 +86,8 @@ export default function FormJualModal({ isOpen, onClose }) {
         
         {/* Pilih RPA */}
         <div>
-          <label style={labelStyle}>RPA Pembeli</label>
-          <select {...register('rpa_id')} style={inputStyle}>
+          <label htmlFor="rpa_id" style={labelStyle}>RPA Pembeli</label>
+          <select id="rpa_id" {...register('rpa_id')} style={inputStyle}>
             <option value="">-- Pilih RPA --</option>
             {rpas?.map(r => (
               <option key={r.id} value={r.id}>{r.rpa_name} (Hutang: {formatIDR(r.total_outstanding)})</option>
@@ -98,8 +98,8 @@ export default function FormJualModal({ isOpen, onClose }) {
 
         {/* Sumber Pembelian */}
         <div>
-          <label style={labelStyle}>Sumber Pembelian (Stok)</label>
-          <select {...register('purchase_id')} style={inputStyle}>
+          <label htmlFor="purchase_id" style={labelStyle}>Sumber Pembelian (Stok)</label>
+          <select id="purchase_id" {...register('purchase_id')} style={inputStyle}>
             <option value="">-- Pilih Stok --</option>
             {purchases?.map(p => (
               <option key={p.id} value={p.id}>{p.farms?.farm_name} · {p.transaction_date} · {p.total_birds} ekor</option>
@@ -110,23 +110,23 @@ export default function FormJualModal({ isOpen, onClose }) {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <div>
-            <label style={labelStyle}>Jumlah Ekor</label>
-            <input type="number" {...register('total_birds', { valueAsNumber: true })} placeholder="0" style={inputStyle} />
+            <label htmlFor="jual_total_birds" style={labelStyle}>Jumlah Ekor</label>
+            <input id="jual_total_birds" type="number" {...register('total_birds', { valueAsNumber: true })} placeholder="0" style={inputStyle} />
           </div>
           <div>
-            <label style={labelStyle}>Rata-rata (kg)</label>
-            <input type="number" step="0.01" {...register('avg_weight', { valueAsNumber: true })} placeholder="0.00" style={inputStyle} />
+            <label htmlFor="jual_avg_weight" style={labelStyle}>Rata-rata (kg)</label>
+            <input id="jual_avg_weight" type="number" step="0.01" {...register('avg_weight', { valueAsNumber: true })} placeholder="0.00" style={inputStyle} />
           </div>
         </div>
 
         <div>
-          <label style={labelStyle}>Harga Jual (Rp/kg)</label>
-          <input type="number" {...register('price_per_kg', { valueAsNumber: true })} placeholder="24000" style={inputStyle} />
+          <label htmlFor="jual_price_per_kg" style={labelStyle}>Harga Jual (Rp/kg)</label>
+          <input id="jual_price_per_kg" type="number" {...register('price_per_kg', { valueAsNumber: true })} placeholder="24000" style={inputStyle} />
         </div>
 
         <div>
-          <label style={labelStyle}>Ongkos Kirim / Susut (Rp)</label>
-          <input type="number" {...register('shipping_cost', { valueAsNumber: true })} placeholder="0" style={inputStyle} />
+          <label htmlFor="shipping_cost" style={labelStyle}>Ongkos Kirim / Susut (Rp)</label>
+          <input id="shipping_cost" type="number" {...register('shipping_cost', { valueAsNumber: true })} placeholder="0" style={inputStyle} />
         </div>
 
         <div style={{ padding: '12px', background: '#0C1319', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
@@ -157,8 +157,8 @@ export default function FormJualModal({ isOpen, onClose }) {
           
           {watched.payment_status === 'sebagian' && (
             <div style={{ marginTop: '16px' }}>
-              <label style={labelStyle}>Sudah Dibayar (Rp)</label>
-              <input type="number" {...register('paid_amount', { valueAsNumber: true })} style={inputStyle} />
+              <label htmlFor="paid_amount" style={labelStyle}>Sudah Dibayar (Rp)</label>
+              <input id="paid_amount" type="number" {...register('paid_amount', { valueAsNumber: true })} style={inputStyle} />
             </div>
           )}
           

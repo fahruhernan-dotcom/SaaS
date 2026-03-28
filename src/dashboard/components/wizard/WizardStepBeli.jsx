@@ -86,7 +86,7 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
   const totalCost = safeNum(totalWeight) * safeNum(price)
 
   const handleQuickAddFarm = async () => {
-    if (!newFarm.farm_name || !newFarm.owner_name) return
+    if (!newFarm.farm_name || !newFarm.owner_name || !tenant?.id) return
     
     const { data, error } = await supabase
       .from('farms')
@@ -255,7 +255,16 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
                 <label style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>No HP</label>
-                <Input type="tel" placeholder="081..." value={newFarm.phone} onChange={e => setNewFarm(p => ({ ...p, phone: e.target.value }))} className="h-9 bg-black/20" />
+                <Input 
+                  type="tel" 
+                  placeholder="081..." 
+                  value={newFarm.phone} 
+                  onChange={e => {
+                    const val = e.target.value.replace(/[^0-9+]/g, '')
+                    setNewFarm(p => ({ ...p, phone: val }))
+                  }} 
+                  className="h-9 bg-black/20" 
+                />
               </div>
               <div className="space-y-1">
                 <label style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Lokasi</label>
