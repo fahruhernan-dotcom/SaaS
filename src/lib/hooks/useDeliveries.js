@@ -9,10 +9,12 @@ export function useDeliveries(statusFilter = null) {
         .from('deliveries')
         .select(`
           *,
+          drivers(full_name, phone),
+          vehicles(brand, vehicle_plate, vehicle_type),
           sales(
             total_revenue,
             net_revenue,
-            total_weight,
+            price_per_kg,
             rpa_clients(rpa_name),
             purchases(farms(farm_name))
           )

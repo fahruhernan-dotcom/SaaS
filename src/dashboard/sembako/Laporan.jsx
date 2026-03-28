@@ -21,8 +21,9 @@ const C = {
 }
 const sInput = {
   background: C.input, border: `1px solid ${C.border}`, borderRadius: '10px',
-  padding: '10px 12px', color: C.text, fontSize: '13px', fontWeight: 600,
+  padding: '10px 12px', color: C.text, fontSize: '16px', fontWeight: 600,
   outline: 'none', appearance: 'none', WebkitAppearance: 'none',
+  minHeight: '44px',
 }
 
 function SelectWrap({ children, style }) {
@@ -78,11 +79,11 @@ export default function SembakoLaporan() {
           <h1 style={{ fontSize: isDesktop ? '28px' : '22px', fontWeight: 900, color: C.text, fontFamily: 'DM Sans' }}>
             Laporan Bisnis
           </h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <Calendar size={14} color={C.muted} />
-            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ ...sInput, width: '140px' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap', width: isDesktop ? 'auto' : '100%' }}>
+            <Calendar size={14} color={C.muted} style={{ flexShrink: 0 }} />
+            <input id="start-date" name="start_date" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ ...sInput, flex: 1, minWidth: 0 }} />
             <span style={{ color: C.muted, fontSize: '12px', fontWeight: 700 }}>—</span>
-            <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ ...sInput, width: '140px' }} />
+            <input id="end-date" name="end_date" type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ ...sInput, flex: 1, minWidth: 0 }} />
           </div>
         </div>
 
@@ -342,7 +343,7 @@ function ExpensePie({ expenseByCategory, summary: s, isDesktop }) {
     <div style={{ background: C.card, borderRadius: '16px', padding: '20px', border: `1px solid ${C.border}`, marginTop: '24px' }}>
       <p style={{ fontSize: '11px', fontWeight: 800, color: C.accent, letterSpacing: '0.1em', marginBottom: '14px' }}>BREAKDOWN PENGELUARAN</p>
       <div style={{ display: 'grid', gridTemplateColumns: isDesktop ? '1fr 1fr' : '1fr', gap: '20px', alignItems: 'center' }}>
-        <div style={{ height: '240px' }}>
+        <div style={{ height: '240px', width: '100%', overflow: 'hidden' }}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} innerRadius={45} paddingAngle={2} strokeWidth={0}>

@@ -257,7 +257,8 @@ export default function CashFlow() {
                                 <span className="text-[10px] font-black uppercase tracking-widest">Memproses data...</span>
                             </div>
                         ) : chartData.some(d => d.saldo !== 0) ? (
-                            <ResponsiveContainer width="100%" height="100%">
+                            <div className="w-full h-full overflow-hidden">
+                                <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="saldoGrad" x1="0" y1="0" x2="0" y2="1">
@@ -299,6 +300,7 @@ export default function CashFlow() {
                                     <ReferenceLine y={0} stroke="rgba(255,255,255,0.15)" strokeDasharray="3 3" />
                                 </LineChart>
                             </ResponsiveContainer>
+                            </div>
                         ) : (
                             <div className="w-full h-full flex flex-col items-center justify-center text-center space-y-4">
                                 <div className="p-6 rounded-[32px] bg-emerald-500/5 border border-emerald-500/10 text-emerald-500/30">
@@ -323,7 +325,7 @@ export default function CashFlow() {
                                 "flex items-center gap-8",
                                 !isDesktop && "flex-col"
                             )}>
-                                <div className="relative w-[180px] h-[180px] flex-shrink-0">
+                                <div className="relative w-[180px] h-[180px] flex-shrink-0 overflow-hidden">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>
                                             <Pie
@@ -697,7 +699,7 @@ function CreateExtraExpenseSheet({ isOpen, onClose }) {
                             <Input required name="description" placeholder="Cth: Upah kuli muat 3 orang" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-bold text-base text-white uppercase placeholder:text-white/10" />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label className={cn("font-black uppercase tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Nominal Rp *</Label>
                                 <Input required name="amount" type="number" placeholder="150000" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-bold text-base text-white" />

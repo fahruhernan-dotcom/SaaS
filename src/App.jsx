@@ -25,6 +25,8 @@ import RPADistribusi from './dashboard/rpa/Distribusi'
 import RPADistribusiDetail from './dashboard/rpa/DistribusiDetail'
 import RPALaporanMargin from './dashboard/rpa/LaporanMargin'
 import RPAAkun from './dashboard/rpa/Akun';
+import AppSidebar from './dashboard/components/AppSidebar';
+import { Menu } from 'lucide-react';
 
 import Transaksi from './dashboard/broker/Transaksi';
 import RPA from './dashboard/broker/RPA';
@@ -39,6 +41,7 @@ import CashFlow from './dashboard/broker/CashFlow';
 import Armada from './dashboard/broker/Armada';
 import Tim from './dashboard/broker/Tim';
 import SopirDashboard from './dashboard/broker/SopirDashboard';
+import { BrokerPageRouter } from './dashboard/broker/BrokerRouter';
 
 
 // Egg Broker Vertical
@@ -84,7 +87,6 @@ import AdminPricing from './dashboard/admin/AdminPricing';
 // ── Vertical-aware beranda path ───────────────────────────────────────────────
 function getVerticalBeranda(vertical) {
   if (vertical === 'egg_broker')     return '/egg/beranda'
-  if (vertical === 'sembako_broker') return '/broker/sembako/beranda'
   return `/broker/${vertical || 'poultry_broker'}/beranda`
 }
 
@@ -181,6 +183,7 @@ function RoleRedirector() {
 function DashboardLayout({ children }) {
   useNotificationGenerator()
   const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
   if (isDesktop) {
     return <DesktopSidebarLayout>{children}</DesktopSidebarLayout>;
@@ -188,6 +191,15 @@ function DashboardLayout({ children }) {
 
   return (
     <div className="bg-background min-h-screen max-w-[480px] mx-auto relative pb-[80px] shadow-2xl overflow-x-hidden">
+      <button
+        className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-[#0C1319] border border-white/10 rounded-xl flex items-center justify-center shadow-lg"
+        onClick={() => setSidebarOpen(true)}
+      >
+        <Menu className="w-5 h-5 text-[#94A3B8]" />
+      </button>
+
+      <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
       {children}
       <BottomNav />
     </div>
@@ -246,21 +258,36 @@ function App() {
         <Route path="/broker" element={<RoleRedirector />} />
         <Route path="/broker/beranda" element={<RoleRedirector />} />
 
-        {/* Poultry Broker Vertical */}
-        <Route path="/broker/poultry_broker/beranda" element={
-          <ProtectedRoute requiredType="broker" requiredVertical="poultry_broker">
-            <RoleGuard allowedRoles={['owner', 'staff', 'view_only']}>
-              <BrokerLayout><BrokerBeranda /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        {/* Legacy fallback for poultry */}
-        <Route path="/broker/beranda" element={<RoleRedirector />} />
-        
-        <Route path="/broker/transaksi" element={
+        {/* Dynamic Broker Routing */}
+        <Route path="/broker/:brokerType" element={<BrokerLayout />}>
+          <Route path="beranda"    element={<BrokerPageRouter page="beranda" />} />
+          <Route path="transaksi"  element={<BrokerPageRouter page="transaksi" />} />
+          <Route path="kandang"    element={<BrokerPageRouter page="kandang" />} />
+          <Route path="pengiriman" element={<BrokerPageRouter page="pengiriman" />} />
+          <Route path="rpa"        element={<BrokerPageRouter page="rpa" />} />
+          <Route path="rpa/:id"    element={<BrokerPageRouter page="rpa-detail" />} />
+          <Route path="cash-flow"  element={<BrokerPageRouter page="cash-flow" />} />
+          <Route path="cashflow"   element={<Navigate to="../cash-flow" replace />} />
+          <Route path="armada"     element={<BrokerPageRouter page="armada" />} />
+          <Route path="simulator"  element={<BrokerPageRouter page="simulator" />} />
+          <Route path="tim"        element={<BrokerPageRouter page="tim" />} />
+          <Route path="akun"       element={<BrokerPageRouter page="akun" />} />
+          
+          {/* Sembako Exclusive Routes mapped through router */}
+          <Route path="pos"        element={<BrokerPageRouter page="pos" />} />
+          <Route path="penjualan"  element={<BrokerPageRouter page="penjualan" />} />
+          <Route path="gudang"     element={<BrokerPageRouter page="gudang" />} />
+          <Route path="produk"     element={<BrokerPageRouter page="produk" />} />
+          <Route path="inventori"  element={<BrokerPageRouter page="inventori" />} />
+          <Route path="karyawan"   element={<BrokerPageRouter page="karyawan" />} />
+          <Route path="pegawai"    element={<Navigate to="../karyawan" replace />} />
+          <Route path="laporan"    element={<BrokerPageRouter page="laporan" />} />
+        </Route>
+
+        <Route path="/broker/:brokerType/sopir" element={
           <ProtectedRoute requiredType="broker">
-            <RoleGuard allowedRoles={['owner', 'staff', 'view_only']}>
-              <BrokerLayout><Transaksi /></BrokerLayout>
+            <RoleGuard allowedRoles={['sopir']}>
+              <BrokerPageRouter page="sopir" />
             </RoleGuard>
           </ProtectedRoute>
         } />
@@ -318,129 +345,7 @@ function App() {
           </ProtectedRoute>
         } />
 
-        {/* Sembako Broker Vertical */}
-        <Route path="/broker/sembako/beranda" element={
-          <ProtectedRoute requiredType="broker" requiredVertical="sembako_broker">
-            <RoleGuard allowedRoles={['owner', 'staff', 'view_only']}>
-              <BrokerLayout><SembakoBeranda /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/broker/sembako/penjualan" element={
-          <ProtectedRoute requiredType="broker" requiredVertical="sembako_broker">
-            <RoleGuard allowedRoles={['owner', 'staff']}>
-              <BrokerLayout><SembakoPenjualan /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/broker/sembako/gudang" element={
-          <ProtectedRoute requiredType="broker" requiredVertical="sembako_broker">
-            <RoleGuard allowedRoles={['owner', 'staff']}>
-              <BrokerLayout><SembakoGudang /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/broker/sembako/produk" element={
-          <ProtectedRoute requiredType="broker" requiredVertical="sembako_broker">
-            <RoleGuard allowedRoles={['owner', 'staff']}>
-              <BrokerLayout><SembakoProduk /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/broker/sembako/pegawai" element={
-          <ProtectedRoute requiredType="broker" requiredVertical="sembako_broker">
-            <RoleGuard allowedRoles={['owner']}>
-              <BrokerLayout><SembakoPegawai /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/broker/sembako/laporan" element={
-          <ProtectedRoute requiredType="broker" requiredVertical="sembako_broker">
-            <RoleGuard allowedRoles={['owner', 'staff', 'view_only']}>
-              <BrokerLayout><SembakoLaporan /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/broker/sembako/akun" element={
-          <ProtectedRoute requiredType="broker" requiredVertical="sembako_broker">
-            <BrokerLayout><Akun /></BrokerLayout>
-          </ProtectedRoute>
-        } />
-        {/* Legacy redirect for sembako_broker vertical */}
-        <Route path="/broker/sembako_broker/beranda" element={<Navigate to="/broker/sembako/beranda" replace />} />
-
-        <Route path="/broker/tim" element={
-          <ProtectedRoute requiredType="broker">
-            <RoleGuard allowedRoles={['owner']}>
-              <BrokerLayout><Tim /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/broker/rpa" element={
-          <ProtectedRoute requiredType="broker">
-            <RoleGuard allowedRoles={['owner', 'staff']}>
-              <BrokerLayout><RPA /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/broker/rpa/:id" element={
-          <ProtectedRoute requiredType="broker">
-            <RoleGuard allowedRoles={['owner', 'staff']}>
-              <BrokerLayout>
-                <ErrorBoundary>
-                  <RPADetail />
-                </ErrorBoundary>
-              </BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/broker/kandang" element={
-          <ProtectedRoute requiredType="broker">
-            <RoleGuard allowedRoles={['owner', 'staff']}>
-              <BrokerLayout><Kandang /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/broker/pengiriman" element={
-          <ProtectedRoute requiredType="broker">
-            <RoleGuard allowedRoles={['owner', 'staff']}>
-              <BrokerLayout><Pengiriman /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/broker/cashflow" element={
-          <ProtectedRoute requiredType="broker">
-            <RoleGuard allowedRoles={['owner']}>
-              <BrokerLayout><CashFlow /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/broker/armada" element={
-          <ProtectedRoute requiredType="broker">
-            <RoleGuard allowedRoles={['owner']}>
-              <BrokerLayout><Armada /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/broker/simulator" element={
-          <ProtectedRoute requiredType="broker">
-            <RoleGuard allowedRoles={['owner']}>
-              <BrokerLayout><Simulator /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/broker/akun" element={
-          <ProtectedRoute requiredType="broker">
-            <BrokerLayout><Akun /></BrokerLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/broker/sopir" element={
-          <ProtectedRoute requiredType="broker">
-            <RoleGuard allowedRoles={['sopir']}>
-              <SopirDashboard />
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
+        {/* Legacy fallback for staff */}
         <Route path="/broker/staff" element={<Navigate to="/broker/beranda" replace />} />
 
         {/* Peternak routes */}

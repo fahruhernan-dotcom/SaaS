@@ -30,7 +30,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/lib/hooks/useAuth'
+import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import EmptyState from '@/components/EmptyState'
@@ -447,10 +447,18 @@ function EditRPAForm({ rpa, onSuccess, onDelete }) {
 
 export default function RPADetail() {
   const { id } = useParams()
-  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { tenant, profile } = useAuth()
   const isOwner = profile?.role === 'owner'
+  
+  const _navigate = useNavigate()
+  const brokerBase = getBrokerBasePath(tenant)
+  const navigate = (path, options) => {
+    if (typeof path === 'string' && path.startsWith('/broker/') && !path.startsWith(brokerBase)) {
+      return _navigate(path.replace('/broker', brokerBase), options)
+    }
+    return _navigate(path, options)
+  }
 
   // Queries
   const { data: rpa, isLoading: loadingRpa } = useQuery({

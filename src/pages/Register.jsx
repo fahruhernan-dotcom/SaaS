@@ -14,6 +14,7 @@ import {
   TrendingUp, Truck, BarChart2, Clock
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { getBrokerBasePath } from '../lib/hooks/useAuth'
 
 // Reactbits Components
 import BlurText from '@/components/reactbits/BlurText'
@@ -138,7 +139,7 @@ export default function Register() {
       // 2. Ambil tenant terpisah untuk toast success saja
       const { data: tenantData } = await supabase
         .from('tenants')
-        .select('business_name')
+        .select('business_name, sub_type')
         .eq('id', invite.tenant_id)
         .single()
 
@@ -171,7 +172,7 @@ export default function Register() {
       await supabase.auth.refreshSession()
 
       // Navigate ke dashboard
-      navigate('/broker/beranda')
+      navigate(getBrokerBasePath({ sub_type: tenantData?.sub_type }) + '/beranda')
     } catch (err) {
       setAuthError(err.message)
     } finally {
@@ -204,9 +205,9 @@ export default function Register() {
       // Verifikasi profile terbuat oleh trigger
       const { data: profileCheck } = await supabase
         .from('profiles')
-        .select('id, onboarded, tenant_id')
+        .select('*, tenants(sub_type)')
         .eq('auth_user_id', authData.user.id)
-        .single()
+        .maybeSingle()
 
       if (!profileCheck) {
         toast.error(
@@ -219,7 +220,7 @@ export default function Register() {
 
       // Trigger berhasil — navigate sesuai status onboarding
       if (profileCheck.onboarded) {
-        navigate('/broker/beranda')
+        navigate(getBrokerBasePath({ sub_type: profileCheck.tenants?.sub_type }) + '/beranda')
       } else {
         navigate('/onboarding')
       }

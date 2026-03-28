@@ -134,7 +134,7 @@ export default function AcceptInvite() {
         .eq('tenant_id', invitation.tenant_id)
         .eq('role', 'owner')
         .limit(1)
-        .single();
+        .maybeSingle();
 
       const userType = ownerProfile?.user_type || 'broker';
       const rolePath = userType === 'rpa' ? 'rpa-buyer' : userType;
@@ -171,7 +171,7 @@ export default function AcceptInvite() {
         .from('profiles')
         .select('tenant_id, role')
         .eq('auth_user_id', user.id)
-        .single();
+        .maybeSingle();
 
       // 2a. Block owner accounts from being hijacked
       if (existingProfile?.role === 'owner') {
@@ -196,7 +196,7 @@ export default function AcceptInvite() {
           .eq('tenant_id', invitation.tenant_id)
           .eq('role', 'owner')
           .limit(1)
-          .single();
+          .maybeSingle();
 
         const userType = ownerProfile?.user_type || 'broker';
         toast.success('Kamu sudah terdaftar di tim ini!');
@@ -212,7 +212,7 @@ export default function AcceptInvite() {
           .eq('tenant_id', invitation.tenant_id)
           .eq('role', 'owner')
           .limit(1)
-          .single();
+          .maybeSingle();
 
         const userType = ownerProfile?.user_type || 'broker';
 

@@ -11,6 +11,7 @@ import {
   TrendingUp, Truck, BarChart2, Clock, Shield, Users, Zap
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { getBrokerBasePath } from '../lib/hooks/useAuth'
 
 // Reactbits Components
 import BlurText from '@/components/reactbits/BlurText'
@@ -69,9 +70,9 @@ export default function Login() {
       // Cek profile ada sebelum redirect — cegah login loop
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, role, user_type, onboarded, business_model_selected, tenant_id')
+        .select('*, tenants(sub_type)')
         .eq('auth_user_id', data.user.id)
-        .single()
+        .maybeSingle()
 
       if (!profile) {
         // Profile belum ada (trigger delay atau belum setup) — arahkan ke onboarding
@@ -85,7 +86,7 @@ export default function Login() {
         return
       }
 
-      navigate('/broker/beranda')
+      navigate(getBrokerBasePath({ sub_type: profile.tenants?.sub_type }) + '/beranda')
       toast.success('Selamat datang kembali!')
       
     } catch (err) {

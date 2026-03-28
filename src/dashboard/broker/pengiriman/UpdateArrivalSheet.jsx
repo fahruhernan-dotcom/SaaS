@@ -39,6 +39,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
     const [arrivedQty, setArrivedQty] = useState('')
     const [mortalityQty, setMortalityQty] = useState(0)
     const [notes, setNotes] = useState('')
+    const [loadTime, setLoadTime] = useState('')
     const { updateTiba } = useUpdateDelivery()
 
     // Unit Selector State
@@ -122,6 +123,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
             setArrivedQty(isEdit ? currentArrived : delivery.initial_count)
             setMortalityQty(isEdit ? currentMortality : 0)
             setNotes(isEdit ? (delivery.notes || '') : '')
+            setLoadTime(delivery.load_time ? format(new Date(delivery.load_time), 'HH:mm') : '')
             
             // Initial Weight & Unit
             const kg = safeNum(isEdit ? delivery.arrived_weight_kg : delivery.initial_weight_kg)
@@ -388,6 +390,14 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
         }
 
         setIsLoading(true)
+
+        let formattedLoadTime = null
+        if (loadTime) {
+            const baseDate = delivery.created_at ? new Date(delivery.created_at) : new Date()
+            const [hh, mm] = loadTime.split(':')
+            baseDate.setHours(parseInt(hh), parseInt(mm), 0, 0)
+            formattedLoadTime = baseDate.toISOString()
+        }
         
         try {
             console.log('Step 1: update deliveries')
@@ -398,6 +408,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     arrived_weight_kg: tibaKg,
                     mortality_count: matiEkor > 0 ? matiEkor : 0,
                     notes: notes,
+                    load_time: formattedLoadTime,
                 }
 
                 // Only update logistics if they were UNLOCKED and modified
@@ -458,6 +469,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     arrivedCount: arrivedQty,
                     arrivedWeight: tibaKg,
                     notes: notes,
+                    loadTime: formattedLoadTime,
                 }
 
                 if (!vehicleLocked) {
@@ -606,6 +618,16 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                 </div>
 
                 <form className="space-y-6 pb-20">
+                    <div className="space-y-2">
+                        <Label className={cn("font-black uppercase tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Jam Muat</Label>
+                        <Input 
+                            type="time" 
+                            value={loadTime} 
+                            onChange={(e) => setLoadTime(e.target.value)}
+                            className="text-white h-14 rounded-2xl bg-[#111C24] border-white/5 font-black uppercase text-center"
+                        />
+                    </div>
+
                     {/* ROW 2: Ekor Tiba & Ekor Mati */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">

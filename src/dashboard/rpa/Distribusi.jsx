@@ -8,6 +8,13 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { InputRupiah } from '@/components/ui/InputRupiah'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import TopBar from '../components/TopBar'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { addDays, parseISO, format, isAfter } from 'date-fns'
@@ -79,14 +86,29 @@ const emptyItem = () => ({
 })
 
 const inputBase = (hasError) => ({
-  width: '100%', padding: '9px 11px',
-  background: 'rgba(255,255,255,0.05)',
+  width: '100%',
+  height: '48px', // h-12
+  padding: '0 16px',
+  background: '#111C24',
   border: `1px solid ${hasError ? '#EF4444' : 'rgba(255,255,255,0.1)'}`,
-  borderRadius: '10px', color: '#F1F5F9', fontSize: '13px', outline: 'none',
+  borderRadius: '12px', // rounded-xl
+  color: '#FFFFFF',
+  fontSize: '16px', // text-base
+  outline: 'none',
   fontFamily: 'inherit',
+  transition: 'all 0.2s',
 })
 
-const labelStyle = { fontSize: '12px', color: '#94A3B8', display: 'block', marginBottom: '5px' }
+const labelStyle = {
+  fontSize: '11px',
+  fontWeight: '900',
+  textTransform: 'uppercase',
+  letterSpacing: '0.1em',
+  color: '#4B6478',
+  fontFamily: 'Sora, sans-serif',
+  display: 'block',
+  marginBottom: '6px',
+}
 const srOnly = { position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', opacity: 0 }
 
 // ─── StatusBadge ──────────────────────────────────────────────────────────────
@@ -308,38 +330,45 @@ function CreateInvoiceSheet({ open, onClose, customers, products }) {
     <Sheet open={open} onOpenChange={v => { if (!v) onClose() }}>
       <SheetContent
         side={isDesktop ? 'right' : 'bottom'}
+        className="p-0 border-none bg-[#0D1117] flex flex-col"
         style={{
-          background: '#0D1117', border: 'none',
-          ...(isDesktop ? { width: '520px', maxWidth: '100vw', overflowY: 'auto' } : { maxHeight: '95vh', borderRadius: '20px 20px 0 0', overflowY: 'auto' }),
+          ...(isDesktop ? { width: '520px', maxWidth: '100vw' } : { maxHeight: 'calc(100dvh - 64px)', borderRadius: '20px 20px 0 0' }),
         }}
       >
-        <SheetHeader style={{ padding: '20px 20px 0' }}>
-          <SheetTitle style={{ color: '#F1F5F9', fontFamily: 'Sora', fontSize: '18px' }}>
-            Buat Invoice Baru
+        <div className="sticky top-0 bg-[#0C1319] z-20 px-5 pt-5 pb-4 border-b border-white/10 flex items-center justify-between">
+          <SheetTitle className="text-base font-bold text-white font-display">
+            {isEdit ? 'Edit Invoice' : 'Buat Invoice Baru'}
           </SheetTitle>
-        </SheetHeader>
+          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center active:bg-white/10">
+            <X className="w-4 h-4 text-[#4B6478]" />
+          </button>
+        </div>
 
-        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="flex-1 overflow-y-auto p-5 pb-10 flex flex-col gap-6">
 
-          {/* Customer Select */}
           <div>
             <label htmlFor="inv-customer" style={labelStyle}>
-              Toko / Pelanggan <span style={{ color: '#EF4444' }}>*</span>
+              TOKO / PELANGGAN <span style={{ color: '#EF4444' }}>*</span>
             </label>
-            <select
-              id="inv-customer"
-              name="customer_id"
+            <Select
               value={form.customer_id}
-              onChange={e => handleCustomerChange(e.target.value)}
-              style={{ ...inputBase(!!errors.customer_id), padding: '10px 12px' }}
+              onValueChange={handleCustomerChange}
             >
-              <option value="" style={{ background: '#0D1117' }}>Pilih toko...</option>
-              {customers.map(c => (
-                <option key={c.id} value={c.id} style={{ background: '#0D1117' }}>
-                  {c.customer_name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger style={inputBase(!!errors.customer_id)}>
+                <SelectValue placeholder="— Pilih toko —" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#162230] border border-white/10 rounded-xl">
+                {customers.map(c => (
+                  <SelectItem
+                    key={c.id}
+                    value={c.id}
+                    className="text-white hover:bg-white/5 focus:bg-white/5 rounded-lg"
+                  >
+                    {c.customer_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {customers.length === 0 && (
               <p style={{ fontSize: '12px', color: '#F59E0B', marginTop: '4px' }}>
                 Belum ada toko. Tambah toko di tab "Toko & Produk" terlebih dahulu.
@@ -361,23 +390,24 @@ function CreateInvoiceSheet({ open, onClose, customers, products }) {
             )}
           </div>
 
-          {/* Dates */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label style={labelStyle}>Tanggal Invoice <span style={{ color: '#EF4444' }}>*</span></label>
+              <label style={labelStyle}>TANGGAL INVOICE <span style={{ color: '#EF4444' }}>*</span></label>
               <DatePicker
                 value={form.transaction_date}
                 onChange={handleDateChange}
                 placeholder="Pilih tanggal"
+                className="h-12 text-base"
               />
               {errors.transaction_date && <p style={{ fontSize: '11px', color: '#EF4444', marginTop: '3px' }}>{errors.transaction_date}</p>}
             </div>
             <div>
-              <label style={labelStyle}>Jatuh Tempo</label>
+              <label style={labelStyle}>JATUH TEMPO</label>
               <DatePicker
                 value={form.due_date}
                 onChange={v => setForm(prev => ({ ...prev, due_date: v }))}
                 placeholder="Otomatis"
+                className="h-12 text-base"
               />
             </div>
           </div>
@@ -406,38 +436,28 @@ function CreateInvoiceSheet({ open, onClose, customers, products }) {
                     {/* Row 1: Product name + X */}
                     <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                       <div style={{ flex: 1 }}>
-                        <label htmlFor={`pname-${item._id}`} style={labelStyle}>Produk</label>
-                        {products.length > 0 ? (
-                          <select
-                            id={`pname-${item._id}`}
-                            name={`product-select-${idx}`}
-                            value={item.product_id}
-                            onChange={e => {
-                              const val = e.target.value
-                              if (val === '__manual__') {
-                                updateItem(item._id, 'product_id', '')
-                              } else {
-                                handleItemProductSelect(item._id, val)
-                              }
-                            }}
-                            style={{ ...inputBase(false), fontSize: '13px' }}
-                          >
-                            <option value="" style={{ background: '#0D1117' }}>Ketik manual...</option>
+                        <label htmlFor={`pname-${item._id}`} style={labelStyle}>PRODUK</label>
+                        <Select
+                          value={item.product_id}
+                          onValueChange={val => handleItemProductSelect(item._id, val)}
+                        >
+                          <SelectTrigger style={inputBase(false)}>
+                            <SelectValue placeholder="— Pilih produk —" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[#162230] border border-white/10 rounded-xl">
+                            <SelectItem value="__manual__" className="text-[#4B6478]">Ketik manual...</SelectItem>
                             {products.map(p => (
-                              <option key={p.id} value={p.id} style={{ background: '#0D1117' }}>{p.product_name}</option>
+                              <SelectItem key={p.id} value={p.id} className="text-white hover:bg-white/5 rounded-lg">
+                                <div className="flex items-center justify-between w-full gap-3">
+                                  <span>{p.product_name}</span>
+                                  <span className="text-[11px] text-[#4B6478]">
+                                    HPP: {fmt(p.cost_price)}
+                                  </span>
+                                </div>
+                              </SelectItem>
                             ))}
-                          </select>
-                        ) : (
-                          <input
-                            id={`pname-${item._id}`}
-                            name={`product_name_${idx}`}
-                            type="text"
-                            value={item.product_name}
-                            onChange={e => updateItem(item._id, 'product_name', e.target.value)}
-                            placeholder="Nama produk"
-                            style={inputBase(false)}
-                          />
-                        )}
+                          </SelectContent>
+                        </Select>
                         {/* Editable name when product selected */}
                         {item.product_id && (
                           <input
@@ -567,7 +587,7 @@ function CreateInvoiceSheet({ open, onClose, customers, products }) {
 
           {/* Notes */}
           <div>
-            <label htmlFor="inv-notes" style={labelStyle}>Catatan (opsional)</label>
+            <label htmlFor="inv-notes" style={labelStyle}>CATATAN (OPSIONAL)</label>
             <textarea
               id="inv-notes"
               name="notes"
@@ -575,30 +595,25 @@ function CreateInvoiceSheet({ open, onClose, customers, products }) {
               onChange={e => setForm(prev => ({ ...prev, notes: e.target.value }))}
               rows={2}
               placeholder="Catatan tambahan..."
-              style={{ ...inputBase(false), resize: 'none' }}
+              style={{ ...inputBase(false), height: 'auto', minHeight: '80px', padding: '12px 16px', resize: 'none' }}
             />
           </div>
+        </div>
 
+        <div className="sticky bottom-0 bg-[#0C1319] px-5 pt-3 pb-[calc(16px+env(safe-area-inset-bottom))] border-t border-white/10 z-20">
           <button
             type="button"
             onClick={handleSubmit}
             disabled={createInvoice.isPending}
-            style={{
-              padding: '13px', borderRadius: '12px',
-              background: createInvoice.isPending ? 'rgba(245,158,11,0.4)' : '#F59E0B',
-              border: 'none', color: '#0D1117', fontWeight: 700,
-              fontSize: '15px', cursor: createInvoice.isPending ? 'not-allowed' : 'pointer',
-            }}
+            className="w-full h-12 bg-emerald-500 rounded-xl font-bold text-white text-sm shadow-[0_8px_24px_rgba(16,185,129,0.25)] active:scale-[0.97] transition-transform disabled:opacity-50"
           >
-            {createInvoice.isPending ? 'Menyimpan...' : 'Buat Invoice'}
+            {createInvoice.isPending ? 'Menyimpan...' : 'Simpan Invoice'}
           </button>
         </div>
       </SheetContent>
     </Sheet>
   )
 }
-
-// ─── RecordPaymentSheet ───────────────────────────────────────────────────────
 
 function RecordPaymentSheet({ invoice, onClose }) {
   const recordPayment = useRecordCustomerPayment()
@@ -609,6 +624,12 @@ function RecordPaymentSheet({ invoice, onClose }) {
   const [refNo, setRefNo] = useState('')
   const [payDate, setPayDate] = useState(new Date().toISOString().slice(0, 10))
   const [notes, setNotes] = useState('')
+
+  useEffect(() => {
+    if (invoice) {
+      setAmount(invoice.remaining_amount ?? (invoice.total_amount - invoice.paid_amount))
+    }
+  }, [invoice])
 
   if (!invoice) return null
 
@@ -632,15 +653,19 @@ function RecordPaymentSheet({ invoice, onClose }) {
     <Sheet open={!!invoice} onOpenChange={v => { if (!v) onClose() }}>
       <SheetContent
         side="bottom"
-        style={{ background: '#0D1117', border: 'none', maxHeight: '92vh', borderRadius: '20px 20px 0 0', overflowY: 'auto' }}
+        className="p-0 border-none bg-[#0D1117] flex flex-col"
+        style={{ maxHeight: 'calc(100dvh - 64px)', borderRadius: '20px 20px 0 0' }}
       >
-        <SheetHeader style={{ padding: '20px 20px 0' }}>
-          <SheetTitle style={{ color: '#F1F5F9', fontFamily: 'Sora', fontSize: '18px' }}>
+        <div className="sticky top-0 bg-[#0C1319] z-20 px-5 pt-5 pb-4 border-b border-white/10 flex items-center justify-between">
+          <SheetTitle className="text-base font-bold text-white font-display">
             Catat Pembayaran
           </SheetTitle>
-        </SheetHeader>
+          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center active:bg-white/10">
+            <X className="w-4 h-4 text-[#4B6478]" />
+          </button>
+        </div>
 
-        <div style={{ padding: '16px 20px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div className="flex-1 overflow-y-auto p-5 pb-10 flex flex-col gap-5">
           {/* Invoice info */}
           <div style={{
             padding: '12px', background: 'rgba(245,158,11,0.05)',
@@ -650,36 +675,26 @@ function RecordPaymentSheet({ invoice, onClose }) {
             <div style={{ fontSize: '14px', fontWeight: 600, color: '#F1F5F9', marginTop: '2px' }}>
               {invoice.customer_name ?? invoice.rpa_customers?.customer_name}
             </div>
-            <div style={{ fontSize: '12px', color: '#4B6478', marginTop: '2px' }}>
+            <div style={{ fontSize: '12px', color: '#4B6478', marginTop: '4px' }}>
               Sisa tagihan: <span style={{ color: '#F59E0B', fontWeight: 700 }}>{fmt(remaining)}</span>
             </div>
           </div>
 
-          {/* Amount */}
           <div>
-            <label htmlFor="pay-amount" style={labelStyle}>
-              Jumlah Bayar <span style={{ color: '#EF4444' }}>*</span>
-            </label>
-            <InputRupiah
-              id="pay-amount"
-              name="amount"
-              value={amount}
-              onChange={setAmount}
-              placeholder="0"
-            />
+            <label htmlFor="pay-amount" style={labelStyle}>JUMLAH BAYAR <span style={{ color: '#EF4444' }}>*</span></label>
+            <InputRupiah id="pay-amount" name="amount" value={amount} onChange={setAmount} placeholder="0" />
           </div>
 
-          {/* Payment method pills */}
           <div>
-            <label style={labelStyle}>Metode Pembayaran</label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+            <label style={labelStyle}>METODE PEMBAYARAN</label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {PAYMENT_METHODS.map(m => (
                 <button
                   key={m.value}
                   type="button"
                   onClick={() => setMethod(m.value)}
                   style={{
-                    padding: '8px 4px', borderRadius: '8px',
+                    padding: '10px 4px', borderRadius: '10px',
                     border: `1px solid ${method === m.value ? '#F59E0B' : 'rgba(255,255,255,0.08)'}`,
                     background: method === m.value ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.03)',
                     color: method === m.value ? '#F59E0B' : '#64748B',
@@ -692,48 +707,37 @@ function RecordPaymentSheet({ invoice, onClose }) {
             </div>
           </div>
 
-          {/* Ref + Date */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <label htmlFor="pay-ref" style={labelStyle}>No. Bukti (opsional)</label>
-              <input
-                id="pay-ref"
-                name="reference_no"
-                type="text"
-                value={refNo}
-                onChange={e => setRefNo(e.target.value)}
-                placeholder="Ref transfer, nota"
-                style={inputBase(false)}
-              />
+              <label htmlFor="pay-ref" style={labelStyle}>NO. BUKTI (OPSIONAL)</label>
+              <input id="pay-ref" name="reference_no" type="text" value={refNo}
+                onChange={e => setRefNo(e.target.value)} placeholder="Ref transfer, nota"
+                style={inputBase(false)} />
             </div>
             <div>
-              <label style={labelStyle}>Tanggal Bayar</label>
-              <DatePicker value={payDate} onChange={setPayDate} />
+              <label style={labelStyle}>TANGGAL BAYAR</label>
+              <DatePicker value={payDate} onChange={setPayDate} className="h-12 text-base" />
             </div>
           </div>
 
-          {/* Preview after pay */}
           <div style={{
-            padding: '10px 12px', background: 'rgba(52,211,153,0.05)',
-            border: '1px solid rgba(52,211,153,0.15)', borderRadius: '10px',
+            padding: '12px 16px', background: 'rgba(52,211,153,0.05)',
+            border: '1px solid rgba(52,211,153,0.15)', borderRadius: '12px',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}>
-            <span style={{ fontSize: '13px', color: '#94A3B8' }}>Sisa setelah bayar</span>
-            <span style={{ fontSize: '14px', fontWeight: 700, color: afterPay === 0 ? '#34D399' : '#F59E0B' }}>
+            <span style={{ fontSize: '14px', color: '#94A3B8' }}>Sisa setelah bayar</span>
+            <span style={{ fontSize: '16px', fontWeight: 700, color: afterPay === 0 ? '#34D399' : '#F59E0B' }}>
               {afterPay === 0 ? 'LUNAS 🎉' : fmt(afterPay)}
             </span>
           </div>
+        </div>
 
+        <div className="sticky bottom-0 bg-[#0C1319] px-5 pt-3 pb-[calc(16px+env(safe-area-inset-bottom))] border-t border-white/10 z-20">
           <button
             type="button"
             onClick={handleSubmit}
             disabled={recordPayment.isPending || !amount || Number(amount) <= 0}
-            style={{
-              padding: '13px', borderRadius: '12px',
-              background: recordPayment.isPending ? 'rgba(245,158,11,0.4)' : '#F59E0B',
-              border: 'none', color: '#0D1117', fontWeight: 700,
-              fontSize: '15px', cursor: recordPayment.isPending ? 'not-allowed' : 'pointer',
-            }}
+            className="w-full h-12 bg-emerald-500 rounded-xl font-bold text-white text-sm shadow-[0_8px_24px_rgba(16,185,129,0.25)] active:scale-[0.97] transition-transform disabled:opacity-50"
           >
             {recordPayment.isPending ? 'Menyimpan...' : 'Konfirmasi Pembayaran'}
           </button>
@@ -742,8 +746,6 @@ function RecordPaymentSheet({ invoice, onClose }) {
     </Sheet>
   )
 }
-
-// ─── CustomerFormSheet ────────────────────────────────────────────────────────
 
 function CustomerFormSheet({ open, customer, onClose }) {
   const createCustomer = useCreateCustomer()
@@ -786,34 +788,42 @@ function CustomerFormSheet({ open, customer, onClose }) {
     <Sheet open={open} onOpenChange={v => { if (!v) onClose() }}>
       <SheetContent
         side="bottom"
-        style={{ background: '#0D1117', border: 'none', maxHeight: '92vh', borderRadius: '20px 20px 0 0', overflowY: 'auto' }}
+        className="p-0 border-none bg-[#0D1117] flex flex-col"
+        style={{ maxHeight: 'calc(100dvh - 64px)', borderRadius: '20px 20px 0 0' }}
       >
-        <SheetHeader style={{ padding: '20px 20px 0' }}>
-          <SheetTitle style={{ color: '#F1F5F9', fontFamily: 'Sora', fontSize: '18px' }}>
+        <div className="sticky top-0 bg-[#0C1319] z-20 px-5 pt-5 pb-4 border-b border-white/10 flex items-center justify-between">
+          <SheetTitle className="text-base font-bold text-white font-display">
             {isEdit ? 'Edit Toko' : 'Tambah Toko'}
           </SheetTitle>
-        </SheetHeader>
+          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center active:bg-white/10">
+            <X className="w-4 h-4 text-[#4B6478]" />
+          </button>
+        </div>
 
-        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div className="flex-1 overflow-y-auto p-5 pb-10 flex flex-col gap-6">
           <div>
-            <label htmlFor="cust-name" style={labelStyle}>Nama Toko <span style={{ color: '#EF4444' }}>*</span></label>
+            <label htmlFor="cust-name" style={labelStyle}>NAMA TOKO <span style={{ color: '#EF4444' }}>*</span></label>
             <input id="cust-name" name="customer_name" type="text" value={form.customer_name}
               onChange={e => set('customer_name', e.target.value)} placeholder="Toko Maju Jaya"
               style={inputBase(!form.customer_name)} />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <label htmlFor="cust-type" style={labelStyle}>Tipe Pelanggan</label>
-              <select id="cust-type" name="customer_type" value={form.customer_type}
-                onChange={e => set('customer_type', e.target.value)} style={inputBase(false)}>
-                {CUSTOMER_TYPES.map(t => (
-                  <option key={t.value} value={t.value} style={{ background: '#0D1117' }}>{t.label}</option>
-                ))}
-              </select>
+              <label htmlFor="cust-type" style={labelStyle}>TIPE PELANGGAN</label>
+              <Select value={form.customer_type} onValueChange={v => set('customer_type', v)}>
+                <SelectTrigger style={inputBase(false)}>
+                  <SelectValue placeholder="Pilih tipe" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#162230] border border-white/10 rounded-xl">
+                  {CUSTOMER_TYPES.map(t => (
+                    <SelectItem key={t.value} value={t.value} className="text-white hover:bg-white/5 rounded-lg">{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label htmlFor="cust-phone" style={labelStyle}>No. Telepon</label>
+              <label htmlFor="cust-phone" style={labelStyle}>NO. TELEPON</label>
               <input id="cust-phone" name="phone" type="tel" value={form.phone}
                 onChange={e => set('phone', e.target.value)} placeholder="0812..."
                 style={inputBase(false)} />
@@ -821,60 +831,55 @@ function CustomerFormSheet({ open, customer, onClose }) {
           </div>
 
           <div>
-            <label htmlFor="cust-address" style={labelStyle}>Alamat</label>
-            <input id="cust-address" name="address" type="text" value={form.address}
-              onChange={e => set('address', e.target.value)} placeholder="Jl. ..."
-              style={inputBase(false)} />
+            <label htmlFor="cust-address" style={labelStyle}>ALAMAT LENGKAP</label>
+            <textarea id="cust-address" name="address" value={form.address}
+              onChange={e => set('address', e.target.value)} placeholder="Jl. Anggrek No. 12..."
+              style={{ ...inputBase(false), height: 'auto', minHeight: '80px', padding: '12px 16px', resize: 'none' }} />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <label htmlFor="cust-terms" style={labelStyle}>Tempo Bayar (hari)</label>
+              <label htmlFor="cust-terms" style={labelStyle}>TEMPO BAYAR (HARI)</label>
               <input id="cust-terms" name="payment_terms" type="number" min="0" value={form.payment_terms}
                 onChange={e => set('payment_terms', e.target.value)} placeholder="14"
                 style={inputBase(false)} />
             </div>
             <div>
-              <label htmlFor="cust-limit" style={labelStyle}>Credit Limit (Rp)</label>
+              <label htmlFor="cust-limit" style={labelStyle}>CREDIT LIMIT (RP)</label>
               <InputRupiah id="cust-limit" name="credit_limit" value={form.credit_limit}
                 onChange={v => set('credit_limit', v)} placeholder="0" />
             </div>
           </div>
 
           <div>
-            <label style={labelStyle}>Reliabilitas (1-5 bintang)</label>
-            <div style={{ display: 'flex', gap: '6px' }}>
+            <label style={labelStyle}>RELIABILITAS (1-5 BINTANG)</label>
+            <div style={{ display: 'flex', gap: '8px' }}>
               {[1, 2, 3, 4, 5].map(n => (
                 <button key={n} type="button" onClick={() => set('reliability', n)}
                   style={{
-                    width: '36px', height: '36px', borderRadius: '8px',
+                    width: '44px', height: '44px', borderRadius: '12px',
                     border: `1px solid ${n <= form.reliability ? 'rgba(245,158,11,0.4)' : 'rgba(255,255,255,0.08)'}`,
                     background: n <= form.reliability ? 'rgba(245,158,11,0.1)' : 'transparent',
-                    color: n <= form.reliability ? '#F59E0B' : '#4B6478',
-                    cursor: 'pointer', fontSize: '18px',
+                    color: n <= form.reliability ? '#F59E0B' : '#334155',
+                    cursor: 'pointer', fontSize: '20px',
                   }}>
-                  ★
+                  {n <= form.reliability ? '★' : '☆'}
                 </button>
               ))}
             </div>
           </div>
+        </div>
 
+        <div className="sticky bottom-0 bg-[#0C1319] px-5 pt-3 pb-[calc(16px+env(safe-area-inset-bottom))] border-t border-white/10 z-20">
           <button type="button" onClick={handleSubmit} disabled={isPending}
-            style={{
-              padding: '13px', borderRadius: '12px',
-              background: isPending ? 'rgba(245,158,11,0.4)' : '#F59E0B',
-              border: 'none', color: '#0D1117', fontWeight: 700, fontSize: '15px',
-              cursor: isPending ? 'not-allowed' : 'pointer',
-            }}>
-            {isPending ? 'Menyimpan...' : isEdit ? 'Simpan Perubahan' : 'Tambah Toko'}
+            className="w-full h-12 bg-emerald-500 rounded-xl font-bold text-white text-sm shadow-[0_8px_24px_rgba(16,185,129,0.25)] active:scale-[0.97] transition-transform disabled:opacity-50">
+            {isPending ? 'Menyimpan...' : isEdit ? 'Simpan Toko' : 'Tambah Toko'}
           </button>
         </div>
       </SheetContent>
     </Sheet>
   )
 }
-
-// ─── ProductFormSheet ─────────────────────────────────────────────────────────
 
 function ProductFormSheet({ open, onClose }) {
   const createProduct = useCreateProduct()
@@ -898,62 +903,77 @@ function ProductFormSheet({ open, onClose }) {
     })
   }
 
+  const margin = form.sell_price && form.cost_price
+    ? ((Number(form.sell_price) - Number(form.cost_price)) / Number(form.sell_price) * 100).toFixed(1)
+    : null
+
   return (
     <Sheet open={open} onOpenChange={v => { if (!v) onClose() }}>
       <SheetContent
         side="bottom"
-        style={{ background: '#0D1117', border: 'none', maxHeight: '80vh', borderRadius: '20px 20px 0 0', overflowY: 'auto' }}
+        className="p-0 border-none bg-[#0D1117] flex flex-col"
+        style={{ maxHeight: 'calc(100dvh - 64px)', borderRadius: '20px 20px 0 0' }}
       >
-        <SheetHeader style={{ padding: '20px 20px 0' }}>
-          <SheetTitle style={{ color: '#F1F5F9', fontFamily: 'Sora', fontSize: '18px' }}>Tambah Produk</SheetTitle>
-        </SheetHeader>
-        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div className="sticky top-0 bg-[#0C1319] z-20 px-5 pt-5 pb-4 border-b border-white/10 flex items-center justify-between">
+          <SheetTitle className="text-base font-bold text-white font-display">
+            Tambah Produk
+          </SheetTitle>
+          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center active:bg-white/10">
+            <X className="w-4 h-4 text-[#4B6478]" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5 pb-10 flex flex-col gap-6">
           <div>
-            <label htmlFor="prod-name" style={labelStyle}>Nama Produk <span style={{ color: '#EF4444' }}>*</span></label>
+            <label htmlFor="prod-name" style={labelStyle}>NAMA PRODUK <span style={{ color: '#EF4444' }}>*</span></label>
             <input id="prod-name" name="product_name" type="text" value={form.product_name}
               onChange={e => set('product_name', e.target.value)} placeholder="Karkas Broiler"
               style={inputBase(!form.product_name)} />
           </div>
+
           <div>
-            <label htmlFor="prod-type" style={labelStyle}>Jenis Produk</label>
-            <select id="prod-type" name="product_type" value={form.product_type}
-              onChange={e => set('product_type', e.target.value)} style={inputBase(false)}>
-              {PRODUCT_TYPES.map(t => (
-                <option key={t.value} value={t.value} style={{ background: '#0D1117' }}>{t.label}</option>
-              ))}
-            </select>
+            <label htmlFor="prod-type" style={labelStyle}>JENIS PRODUK</label>
+            <Select value={form.product_type} onValueChange={v => set('product_type', v)}>
+              <SelectTrigger style={inputBase(false)}>
+                <SelectValue placeholder="Pilih jenis" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#162230] border border-white/10 rounded-xl">
+                {PRODUCT_TYPES.map(t => (
+                  <SelectItem key={t.value} value={t.value} className="text-white hover:bg-white/5 rounded-lg">{t.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <label htmlFor="prod-sell" style={labelStyle}>Harga Jual/kg</label>
+              <label htmlFor="prod-sell" style={labelStyle}>HARGA JUAL/KG</label>
               <InputRupiah id="prod-sell" name="sell_price" value={form.sell_price}
                 onChange={v => set('sell_price', v)} placeholder="35.000" />
             </div>
             <div>
-              <label htmlFor="prod-cost" style={labelStyle}>HPP/kg</label>
+              <label htmlFor="prod-cost" style={labelStyle}>HPP/KG</label>
               <InputRupiah id="prod-cost" name="cost_price" value={form.cost_price}
                 onChange={v => set('cost_price', v)} placeholder="28.000" />
             </div>
           </div>
-          {form.sell_price && form.cost_price && (
+
+          {margin && (
             <div style={{
-              padding: '10px 12px', background: 'rgba(52,211,153,0.05)',
-              border: '1px solid rgba(52,211,153,0.1)', borderRadius: '10px',
-              fontSize: '13px', color: '#94A3B8',
+              padding: '12px 16px', background: 'rgba(52,211,153,0.05)',
+              border: '1px solid rgba(52,211,153,0.15)', borderRadius: '12px',
+              fontSize: '14px', color: '#94A3B8',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
-              Margin:{' '}
-              <span style={{ color: '#34D399', fontWeight: 700 }}>
-                {((Number(form.sell_price) - Number(form.cost_price)) / Number(form.sell_price) * 100).toFixed(1)}%
-              </span>
+              <span>Estimasi Margin</span>
+              <span style={{ color: '#34D399', fontWeight: 700 }}>{margin}%</span>
             </div>
           )}
+        </div>
+
+        <div className="sticky bottom-0 bg-[#0C1319] px-5 pt-3 pb-[calc(16px+env(safe-area-inset-bottom))] border-t border-white/10 z-20">
           <button type="button" onClick={handleSubmit} disabled={createProduct.isPending}
-            style={{
-              padding: '13px', borderRadius: '12px',
-              background: createProduct.isPending ? 'rgba(245,158,11,0.4)' : '#F59E0B',
-              border: 'none', color: '#0D1117', fontWeight: 700, fontSize: '15px',
-              cursor: createProduct.isPending ? 'not-allowed' : 'pointer',
-            }}>
+            className="w-full h-12 bg-emerald-500 rounded-xl font-bold text-white text-sm shadow-[0_8px_24px_rgba(16,185,129,0.25)] active:scale-[0.97] transition-transform disabled:opacity-50">
             {createProduct.isPending ? 'Menyimpan...' : 'Tambah Produk'}
           </button>
         </div>

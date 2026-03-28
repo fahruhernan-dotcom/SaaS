@@ -243,10 +243,12 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
             
             {/* Nama RPA */}
             <div>
-              <label style={{ fontSize: '11px', color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', marginBottom: 6 }}>
+              <label htmlFor="new_rpa_name" style={{ fontSize: '11px', color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', marginBottom: 6 }}>
                 Nama RPA / Pembeli *
               </label>
               <Input
+                id="new_rpa_name"
+                name="new_rpa_name"
                 placeholder="RPA Prima Jaya"
                 value={newRPA.rpa_name}
                 onChange={e => setNewRPA(p => ({ ...p, rpa_name: e.target.value }))}
@@ -258,10 +260,12 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
             {/* HP + Payment Terms */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <div>
-                <label style={{ fontSize: '11px', color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', marginBottom: 6 }}>
+                <label htmlFor="new_rpa_phone" style={{ fontSize: '11px', color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', marginBottom: 6 }}>
                   No HP
                 </label>
                 <Input
+                  id="new_rpa_phone"
+                  name="new_rpa_phone"
                   type="tel"
                   placeholder="081..."
                   value={newRPA.phone}
@@ -361,7 +365,7 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
       {/* Harga Jual */}
       <div className="space-y-1.5">
         <div className="flex justify-between items-center">
-          <label style={S.label}>Harga Jual (Rp/kg) *</label>
+          <label htmlFor="price_per_kg_jual" style={S.label}>Harga Jual (Rp/kg) *</label>
           {marketPrice && (
             <button type="button" onClick={() => setPricePerKg(marketPrice)}
               className="text-[10px] text-emerald-400 font-black uppercase tracking-wider hover:underline">
@@ -369,7 +373,7 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
             </button>
           )}
         </div>
-        <InputRupiah value={pricePerKg} onChange={setPricePerKg} placeholder="20.500" className={S.input + ' text-lg font-bold text-white'} />
+        <InputRupiah id="price_per_kg_jual" name="price_per_kg_jual" value={pricePerKg} onChange={setPricePerKg} placeholder="20.500" className={S.input + ' text-lg font-bold text-white'} />
 
         {pricePerKg > 0 && buyPricePerKg > 0 && (
           <div className={`flex items-center gap-1.5 text-[11px] font-black uppercase mt-1 ${pricePerKg >= buyPricePerKg ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -403,8 +407,8 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
       {/* Conditional: partial payment */}
       {paymentStatus === 'sebagian' && (
         <div className="space-y-1.5">
-          <label style={S.label}>Sudah Dibayar</label>
-          <InputRupiah value={paidAmount} onChange={setPaidAmount} placeholder="0" className={S.input} />
+          <label htmlFor="paid_amount" style={S.label}>Sudah Dibayar</label>
+          <InputRupiah id="paid_amount" name="paid_amount" value={paidAmount} onChange={setPaidAmount} placeholder="0" className={S.input} />
         </div>
       )}
 
@@ -424,8 +428,8 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
 
       {/* Catatan */}
       <div className="space-y-1.5">
-        <label style={S.label}>Catatan (Opsional)</label>
-        <Textarea className="bg-[#111C24] border-white/10 rounded-xl min-h-[72px] text-sm" placeholder="Catatan tambahan..." value={notes} onChange={e => setNotes(e.target.value)} />
+        <label htmlFor="jual_notes" style={S.label}>Catatan (Opsional)</label>
+        <Textarea id="jual_notes" name="jual_notes" className="bg-[#111C24] border-white/10 rounded-xl min-h-[72px] text-sm" placeholder="Catatan tambahan..." value={notes} onChange={e => setNotes(e.target.value)} />
       </div>
 
       {/* Profit Preview */}

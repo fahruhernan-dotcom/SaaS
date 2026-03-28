@@ -27,7 +27,7 @@ export const useSembakoStockBatches = (productId) => useQuery({
       .eq('product_id', productId)
       .eq('is_deleted', false)
       .gt('qty_sisa', 0)
-      .order('purchase_date', { ascending: true }) // FIFO
+      .order('created_at', { ascending: true }) // FIFO
     if (error) throw error
     return data
   }
@@ -159,7 +159,7 @@ export const useSembakoAllBatches = (productId) => useQuery({
       .from('sembako_stock_batches')
       .select('*, sembako_suppliers(supplier_name), sembako_products(product_name, unit)')
       .eq('is_deleted', false)
-      .order('purchase_date', { ascending: false })
+      .order('created_at', { ascending: false })
     if (productId) q = q.eq('product_id', productId)
     const { data, error } = await q
     if (error) throw error
@@ -300,7 +300,7 @@ export const useCreateSembakoSale = () => {
           .eq('product_id', item.product_id)
           .eq('is_deleted', false)
           .gt('qty_sisa', 0)
-          .order('purchase_date', { ascending: true }) // FIFO
+          .order('created_at', { ascending: true }) // FIFO
 
         for (const batch of (batches || [])) {
           if (qtyToDeduct <= 0) break

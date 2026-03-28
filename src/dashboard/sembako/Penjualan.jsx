@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useLocation } from 'react-router-dom'
 import {
   Search, Plus, CreditCard, TrendingUp, CheckCircle2, AlertTriangle,
   FileText, ChevronDown, X, Truck, Store, Package, Star, Phone, MapPin,
@@ -16,8 +17,9 @@ import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { formatIDR } from '@/lib/format'
 import TopBar from '@/dashboard/components/TopBar'
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle,
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from '@/components/ui/sheet'
+import { DatePicker } from '@/components/ui/DatePicker'
 
 // ── Palette (matches Beranda.jsx) ───────────────────────────────────────────
 const C = {
@@ -47,8 +49,9 @@ const CUSTOMER_TYPES = [
 // ── Shared UI Primitives ────────────────────────────────────────────────────
 const sInput = {
   background: C.input, border: `1px solid ${C.border}`, borderRadius: '10px',
-  padding: '10px 12px', color: C.text, fontSize: '13px', fontWeight: 600,
+  padding: '10px 12px', color: C.text, fontSize: '16px', fontWeight: 600,
   outline: 'none', width: '100%', appearance: 'none', WebkitAppearance: 'none',
+  minHeight: '44px',
 }
 
 function SelectWrap({ children, style }) {
@@ -87,7 +90,21 @@ function InputRupiah({ value, onChange, placeholder, style }) {
 // ── MAIN ────────────────────────────────────────────────────────────────────
 export default function SembakoPenjualan() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const location = useLocation()
   const [tab, setTab] = useState('invoice')
+  const [openCreate, setOpenCreate] = useState(false)
+
+  // Handle FAB action from BottomNav (?action=new)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('action') === 'new') {
+      setTab('invoice')
+      setOpenCreate(true)
+      // Optional: clear param if you don't want it to re-open on refresh
+      // window.history.replaceState({}, '', location.pathname)
+    }
+  }, [location.search])
+
   const TABS = [
     { id: 'invoice', label: 'Invoice' },
     { id: 'toko', label: 'Toko & Supplier' },
@@ -117,7 +134,7 @@ export default function SembakoPenjualan() {
           ))}
         </div>
 
-        {tab === 'invoice' && <TabInvoice isDesktop={isDesktop} />}
+        {tab === 'invoice' && <TabInvoice isDesktop={isDesktop} openCreate={openCreate} setOpenCreate={setOpenCreate} />}
         {tab === 'toko' && <TabTokoSupplier isDesktop={isDesktop} />}
         {tab === 'pengiriman' && <TabPengiriman isDesktop={isDesktop} />}
       </div>
@@ -128,11 +145,10 @@ export default function SembakoPenjualan() {
 // ═══════════════════════════════════════════════════════════════════════════
 // TAB 1: INVOICE
 // ═══════════════════════════════════════════════════════════════════════════
-function TabInvoice({ isDesktop }) {
+function TabInvoice({ isDesktop, openCreate, setOpenCreate }) {
   const { data: sales = [], isLoading } = useSembakoSales()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
-  const [openCreate, setOpenCreate] = useState(false)
   const [payTarget, setPayTarget] = useState(null)
   const PER_PAGE = 20
   const now = new Date()
@@ -220,9 +236,9 @@ function InvoiceRow({ sale, now, onPay }) {
       border: `1px solid ${overdue ? 'rgba(239,68,68,0.3)' : C.border}`,
       display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap',
     }}>
-      <div style={{ flex: 1, minWidth: '120px' }}>
-        <p style={{ fontSize: '13px', fontWeight: 700, color: C.text }}>{name}</p>
-        <p style={{ fontSize: '10px', color: C.muted, marginTop: '2px' }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: '13px', fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</p>
+        <p style={{ fontSize: '10px', color: C.muted, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {sale.invoice_number} · {fmtDate(sale.transaction_date)}
         </p>
       </div>
@@ -328,15 +344,18 @@ function SheetCreateInvoice({ open, onClose }) {
 
   return (
     <Sheet open={open} onOpenChange={v => !v && onClose()}>
-      <SheetContent side="right" style={{ background: C.bg, borderLeft: `1px solid ${C.border}`, width: '100%', maxWidth: '520px', overflowY: 'auto', padding: '24px' }}>
-        <SheetHeader><SheetTitle style={{ color: C.text, fontWeight: 900, fontSize: '18px' }}>Buat Invoice Baru</SheetTitle></SheetHeader>
+      <SheetContent side="right" style={{ background: C.bg, borderLeft: `1px solid ${C.border}`, width: '100%', maxWidth: '520px', overflowY: 'auto', overflowX: 'hidden', padding: '24px' }}>
+        <SheetHeader>
+          <SheetTitle style={{ color: C.text, fontWeight: 900, fontSize: '18px' }}>Buat Invoice Baru</SheetTitle>
+          <SheetDescription className="sr-only">Form untuk membuat invoice penjualan sembako baru.</SheetDescription>
+        </SheetHeader>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '20px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '20px', paddingBottom: '120px' }}>
           {/* Customer Select */}
           <div>
             <p style={sLabel}>TOKO / CUSTOMER</p>
             <SelectWrap>
-              <select value={custId} onChange={e => e.target.value === '__new__' ? setShowAddCust(true) : handleSelectCustomer(e.target.value)} style={{ ...sInput, paddingRight: 32 }}>
+              <select id="invoice-customer" name="customer" value={custId} onChange={e => e.target.value === '__new__' ? setShowAddCust(true) : handleSelectCustomer(e.target.value)} style={{ ...sInput, paddingRight: 32 }}>
                 <option value="">— Pilih toko —</option>
                 {customers.map(c => <option key={c.id} value={c.id}>{c.customer_name}</option>)}
                 <option value="__new__">+ Tambah Toko Baru</option>
@@ -355,8 +374,8 @@ function SheetCreateInvoice({ open, onClose }) {
             <div style={{ background: C.card, borderRadius: '12px', padding: '14px', border: `1px solid ${C.borderAm}` }}>
               <p style={{ ...sLabel, color: C.amber }}>TAMBAH TOKO BARU</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <input style={sInput} placeholder="Nama toko" value={newCust.customer_name} onChange={e => setNewCust({ ...newCust, customer_name: e.target.value })} />
-                <input style={sInput} placeholder="No HP" value={newCust.phone || ''} onChange={e => setNewCust({ ...newCust, phone: e.target.value.replace(/[^0-9+]/g, '') })} />
+                <input id="new-cust-name" name="customer_name" style={sInput} placeholder="Nama toko" value={newCust.customer_name} onChange={e => setNewCust({ ...newCust, customer_name: e.target.value })} />
+                <input id="new-cust-phone" name="phone" style={sInput} placeholder="No HP" value={newCust.phone || ''} onChange={e => setNewCust({ ...newCust, phone: e.target.value.replace(/[^0-9+]/g, '') })} />
                 <SelectWrap>
                   <select value={newCust.payment_terms} onChange={e => setNewCust({ ...newCust, payment_terms: e.target.value })} style={{ ...sInput, paddingRight: 32 }}>
                     {Object.entries(PAYMENT_TERMS_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -371,14 +390,14 @@ function SheetCreateInvoice({ open, onClose }) {
           )}
 
           {/* Dates */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            <div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <p style={sLabel}>TANGGAL</p>
-              <input type="date" value={txnDate} onChange={e => setTxnDate(e.target.value)} style={sInput} />
+              <DatePicker value={txnDate} onChange={setTxnDate} placeholder="Pilih tanggal" />
             </div>
-            <div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <p style={sLabel}>JATUH TEMPO</p>
-              <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} style={sInput} />
+              <DatePicker value={dueDate || ''} onChange={setDueDate} placeholder="Pilih jatuh tempo (opsional)" />
             </div>
           </div>
 
@@ -393,7 +412,7 @@ function SheetCreateInvoice({ open, onClose }) {
                   <div key={idx} style={{ background: C.card, borderRadius: '10px', padding: '12px', border: `1px solid ${overStock ? 'rgba(239,68,68,0.4)' : C.border}` }}>
                     <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                       <SelectWrap style={{ flex: 2 }}>
-                        <select value={item.product_id} onChange={e => handleItemChange(idx, 'product_id', e.target.value)} style={{ ...sInput, paddingRight: 32 }}>
+                        <select id={`prod-${idx}`} name={`product-${idx}`} value={item.product_id} onChange={e => handleItemChange(idx, 'product_id', e.target.value)} style={{ ...sInput, paddingRight: 32 }}>
                           <option value="">Pilih produk</option>
                           {products.map(p => <option key={p.id} value={p.id}>{p.product_name} ({p.current_stock} {p.unit})</option>)}
                         </select>
@@ -404,18 +423,20 @@ function SheetCreateInvoice({ open, onClose }) {
                         </button>
                       )}
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
-                      <div>
-                        <p style={{ ...sLabel, fontSize: '9px' }}>QTY ({item.unit})</p>
-                        <input type="number" min={0} value={item.quantity || ''} onChange={e => handleItemChange(idx, 'quantity', parseFloat(e.target.value) || 0)} style={sInput} />
-                      </div>
-                      <div>
-                        <p style={{ ...sLabel, fontSize: '9px' }}>HARGA/UNIT</p>
-                        <InputRupiah value={item.price_per_unit} onChange={v => handleItemChange(idx, 'price_per_unit', v)} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        <div>
+                          <p style={{ ...sLabel, fontSize: '9px' }}>QTY ({item.unit})</p>
+                          <input id={`qty-${idx}`} name={`quantity-${idx}`} type="number" min={0} value={item.quantity || ''} onChange={e => handleItemChange(idx, 'quantity', parseFloat(e.target.value) || 0)} style={{...sInput, width: '100%'}} />
+                        </div>
+                        <div>
+                          <p style={{ ...sLabel, fontSize: '9px' }}>HARGA/UNIT</p>
+                          <InputRupiah value={item.price_per_unit} onChange={v => handleItemChange(idx, 'price_per_unit', v)} />
+                        </div>
                       </div>
                       <div>
                         <p style={{ ...sLabel, fontSize: '9px' }}>HPP/UNIT</p>
-                        <input style={{ ...sInput, opacity: 0.6 }} value={formatIDR(item.cogs_per_unit)} readOnly />
+                        <input style={{ ...sInput, opacity: 0.6, width: '100%' }} value={formatIDR(item.cogs_per_unit)} readOnly />
                       </div>
                     </div>
                     {overStock && <p style={{ fontSize: '10px', color: C.red, marginTop: '4px', fontWeight: 700 }}>⚠ Stok hanya {prod.current_stock} {prod.unit}</p>}
@@ -432,7 +453,7 @@ function SheetCreateInvoice({ open, onClose }) {
           </div>
 
           {/* Extra costs */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div><p style={sLabel}>BIAYA PENGIRIMAN</p><InputRupiah value={deliveryCost} onChange={setDeliveryCost} /></div>
             <div><p style={sLabel}>BIAYA LAIN-LAIN</p><InputRupiah value={otherCost} onChange={setOtherCost} /></div>
           </div>
@@ -478,10 +499,13 @@ function SheetPayment({ sale, onClose }) {
 
   return (
     <Sheet open={!!sale} onOpenChange={v => !v && onClose()}>
-      <SheetContent side="right" style={{ background: C.bg, borderLeft: `1px solid ${C.border}`, width: '100%', maxWidth: '420px', padding: '24px' }}>
-        <SheetHeader><SheetTitle style={{ color: C.text, fontWeight: 900 }}>Catat Pembayaran</SheetTitle></SheetHeader>
+      <SheetContent side="right" style={{ background: C.bg, borderLeft: `1px solid ${C.border}`, width: '100%', maxWidth: '420px', padding: '24px', overflowY: 'auto' }}>
+        <SheetHeader>
+          <SheetTitle style={{ color: C.text, fontWeight: 900 }}>Catat Pembayaran</SheetTitle>
+          <SheetDescription className="sr-only">Form untuk mencatat pembayaran invoice sembako.</SheetDescription>
+        </SheetHeader>
         {sale && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '20px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '20px', paddingBottom: '100px' }}>
             <div style={{ background: C.card, borderRadius: '10px', padding: '12px', border: `1px solid ${C.border}` }}>
               <p style={{ fontSize: '12px', fontWeight: 700, color: C.text }}>{sale.invoice_number}</p>
               <p style={{ fontSize: '11px', color: C.muted }}>{sale.customer_name} · Total: {formatIDR(sale.total_amount)}</p>
@@ -579,8 +603,11 @@ function TokoSection({ isDesktop }) {
       {/* CRUD Sheet */}
       <Sheet open={editing !== null} onOpenChange={v => !v && setEditing(null)}>
         <SheetContent side="right" style={{ background: C.bg, borderLeft: `1px solid ${C.border}`, maxWidth: '420px', width: '100%', padding: '24px', overflowY: 'auto' }}>
-          <SheetHeader><SheetTitle style={{ color: C.text, fontWeight: 900 }}>{editing === 'new' ? 'Tambah Toko' : 'Edit Toko'}</SheetTitle></SheetHeader>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+          <SheetHeader>
+            <SheetTitle style={{ color: C.text, fontWeight: 900 }}>{editing === 'new' ? 'Tambah Toko' : 'Edit Toko'}</SheetTitle>
+            <SheetDescription className="sr-only">Form untuk mengelola data toko/customer sembako.</SheetDescription>
+          </SheetHeader>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px', paddingBottom: '100px' }}>
             <div><p style={sLabel}>NAMA TOKO</p><input style={sInput} value={form.customer_name || ''} onChange={e => setForm({ ...form, customer_name: e.target.value })} /></div>
             <div><p style={sLabel}>TIPE</p>
               <SelectWrap>
@@ -662,9 +689,12 @@ function SupplierSection({ isDesktop }) {
       </div>
 
       <Sheet open={editing !== null} onOpenChange={v => !v && setEditing(null)}>
-        <SheetContent side="right" style={{ background: C.bg, borderLeft: `1px solid ${C.border}`, maxWidth: '420px', width: '100%', padding: '24px' }}>
-          <SheetHeader><SheetTitle style={{ color: C.text, fontWeight: 900 }}>{editing === 'new' ? 'Tambah Supplier' : 'Edit Supplier'}</SheetTitle></SheetHeader>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+        <SheetContent side="right" style={{ background: C.bg, borderLeft: `1px solid ${C.border}`, maxWidth: '420px', width: '100%', padding: '24px', overflowY: 'auto' }}>
+          <SheetHeader>
+            <SheetTitle style={{ color: C.text, fontWeight: 900 }}>{editing === 'new' ? 'Tambah Supplier' : 'Edit Supplier'}</SheetTitle>
+            <SheetDescription className="sr-only">Form untuk mengelola data supplier sembako.</SheetDescription>
+          </SheetHeader>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px', paddingBottom: '100px' }}>
             <div><p style={sLabel}>NAMA SUPPLIER</p><input style={sInput} value={form.supplier_name || ''} onChange={e => setForm({ ...form, supplier_name: e.target.value })} /></div>
             <div><p style={sLabel}>NO HP</p><input style={sInput} value={form.phone || ''} onChange={e => setForm({ ...form, phone: e.target.value.replace(/[^0-9+]/g, '') })} /></div>
             <div><p style={sLabel}>ALAMAT</p><input style={sInput} value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
@@ -745,8 +775,11 @@ function TabPengiriman({ isDesktop }) {
       {/* Add Trip Sheet */}
       <Sheet open={openAdd} onOpenChange={v => !v && setOpenAdd(false)}>
         <SheetContent side="right" style={{ background: C.bg, borderLeft: `1px solid ${C.border}`, maxWidth: '420px', width: '100%', padding: '24px', overflowY: 'auto' }}>
-          <SheetHeader><SheetTitle style={{ color: C.text, fontWeight: 900 }}>Tambah Trip</SheetTitle></SheetHeader>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+          <SheetHeader>
+            <SheetTitle style={{ color: C.text, fontWeight: 900 }}>Tambah Trip</SheetTitle>
+            <SheetDescription className="sr-only">Form untuk menambah jadwal pengiriman sembako.</SheetDescription>
+          </SheetHeader>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px', paddingBottom: '100px' }}>
             <div><p style={sLabel}>INVOICE (OPSIONAL)</p>
               <SelectWrap>
                 <select style={{ ...sInput, paddingRight: 32 }} value={form.sale_id} onChange={e => setForm({ ...form, sale_id: e.target.value })}>

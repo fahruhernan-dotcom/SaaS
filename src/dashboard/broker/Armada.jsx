@@ -470,6 +470,7 @@ function FilterChip({ label, active, onClick }) {
 }
 
 function VehicleCard({ vehicle, isOnRoute, onEdit, onAddExpense, onClickCard }) {
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
     const statusMeta = {
         aktif:    { label: 'Aktif',    color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
         servis:   { label: 'Servis',   color: 'text-amber-400',   bg: 'bg-amber-500/10' },
@@ -553,6 +554,7 @@ function VehicleCard({ vehicle, isOnRoute, onEdit, onAddExpense, onClickCard }) 
 }
 
 function DriverCard({ driver, isOnRoute, onEdit, onClickCard }) {
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
     const statusMeta = {
         aktif:    { label: 'Aktif',    color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
         cuti:     { label: 'Cuti',     color: 'text-amber-400',   bg: 'bg-amber-500/10' },
@@ -675,6 +677,7 @@ function EmptyState({ icon: Icon, title, description, buttonText, onClick }) {
 // --- SHEET: VEHICLE ---
 
 function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
     const queryClient = useQueryClient()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -917,6 +920,7 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
 // --- SHEET: DRIVER ---
 
 function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
     const queryClient = useQueryClient()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -1116,6 +1120,7 @@ function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
 // --- SHEET: EXPENSE ---
 
 function ExpenseSheet({ isOpen, onClose, vehicle, tenantId }) {
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
     const queryClient = useQueryClient()
     const [isSubmitting, setIsSubmitting] = useState(false)
     
@@ -1242,6 +1247,7 @@ function DeleteConfirm({ isOpen, onClose, onConfirm, title, desc }) {
 
 // --- SHEET: VEHICLE DETAIL ---
 function VehicleDetailSheet({ vehicle, onClose }) {
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
     const [tab, setTab] = useState('pengiriman')
 
     const { data: deliveries = [], isLoading: loadDel } = useQuery({
@@ -1359,6 +1365,7 @@ function VehicleDetailSheet({ vehicle, onClose }) {
 
 // --- SHEET: DRIVER DETAIL ---
 function DriverDetailSheet({ driver, onClose }) {
+    const isDesktop = useMediaQuery('(min-width: 1024px)')
     const { data: deliveries = [], isLoading: loadDel } = useQuery({
         queryKey: ['driver-deliveries', driver?.id],
         queryFn: async () => {

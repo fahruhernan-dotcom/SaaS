@@ -154,7 +154,6 @@ export const useNotificationGenerator = () => {
         .from('feed_stocks')
         .select('*, peternak_farms(id, farm_name)')
         .eq('tenant_id', tenant.id)
-        .eq('is_deleted', false)
         .order('feed_type', { ascending: true })
 
       const lowStocks = allStocks?.filter(s => s.quantity_kg < 100) || []

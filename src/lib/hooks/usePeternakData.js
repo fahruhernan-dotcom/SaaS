@@ -319,7 +319,6 @@ export function useFeedStocks() {
         .from('feed_stocks')
         .select('*, peternak_farms(id, farm_name)')
         .eq('tenant_id', tenant.id)
-        .eq('is_deleted', false)
         .order('feed_type', { ascending: true })
       if (error) throw error
       return data ?? []
@@ -344,7 +343,6 @@ export const useUpsertFeedStock = () => {
         .eq('tenant_id', tenant.id)
         .eq('peternak_farm_id', peternak_farm_id)
         .eq('feed_type', feed_type)
-        .eq('is_deleted', false)
         .maybeSingle()
 
       if (existing) {

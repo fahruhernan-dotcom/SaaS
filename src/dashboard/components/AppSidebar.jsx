@@ -53,23 +53,27 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { useAuth } from '../../lib/hooks/useAuth'
+import { useAuth, getBrokerBasePath } from '../../lib/hooks/useAuth'
 import { supabase } from '../../lib/supabase'
 import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { usePeternakFarms } from '../../lib/hooks/usePeternakData'
 import { useTheme } from '../../lib/hooks/useTheme'
+import { useMediaQuery } from '../../lib/hooks/useMediaQuery'
 
-export default function AppSidebar() {
+export default function AppSidebar({ open, onClose }) {
   const { user, profile, profiles, tenant, switchTenant } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [isAddingBusiness, setIsAddingBusiness] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [mobileSwitcherOpen, setMobileSwitcherOpen] = useState(false)
   const [expandedFarms, setExpandedFarms] = useState({})
   const userDropdownRef = useRef(null)
+  
+  const isDesktop = useMediaQuery('(min-width: 768px)')
 
   // Farms for peternak multi-kandang sidebar
   const { data: peternakFarms = [] } = usePeternakFarms()
@@ -135,14 +139,16 @@ export default function AppSidebar() {
   const isRPA      = vertical === 'rpa'
   const isSembako  = vertical === 'sembako_broker'
 
+  const brokerBase = getBrokerBasePath(tenant)
+
   const getBerandaPath = (v) => {
     switch (v) {
-      case 'poultry_broker': return '/broker/poultry_broker/beranda'
+      case 'poultry_broker': return `${brokerBase}/beranda`
       case 'egg_broker':     return '/egg/beranda'
       case 'peternak':       return '/peternak/beranda'
       case 'rpa':            return '/rpa-buyer/beranda'
-      case 'sembako_broker': return '/broker/sembako/beranda'
-      default:               return '/broker/poultry_broker/beranda'
+      case 'sembako_broker': return `${brokerBase}/beranda`
+      default:               return `${brokerBase}/beranda`
     }
   }
 
@@ -150,8 +156,8 @@ export default function AppSidebar() {
     switch (v) {
       case 'peternak':       return '/peternak/akun'
       case 'rpa':            return '/rpa-buyer/akun'
-      case 'sembako_broker': return '/broker/sembako/akun'
-      default:               return '/broker/akun'
+      case 'sembako_broker': return `${brokerBase}/akun`
+      default:               return `${brokerBase}/akun`
     }
   }
 
@@ -191,10 +197,10 @@ export default function AppSidebar() {
 
         // Broker Ayam
         ...(isPoultry ? [
-          { title: 'Transaksi',     url: '/broker/transaksi', icon: ArrowLeftRight },
-          { title: 'RPA & Piutang', url: '/broker/rpa',       icon: Building2, roles: ['owner', 'staff'] },
-          { title: 'Kandang',       url: '/broker/kandang',   icon: Warehouse,  roles: ['owner', 'staff'] },
-          { title: 'Tim & Akses',   url: '/broker/tim',       icon: Users,      roles: ['owner'] },
+          { title: 'Transaksi',     url: `${brokerBase}/transaksi`, icon: ArrowLeftRight },
+          { title: 'RPA & Piutang', url: `${brokerBase}/rpa`,       icon: Building2, roles: ['owner', 'staff'] },
+          { title: 'Kandang',       url: `${brokerBase}/kandang`,   icon: Warehouse,  roles: ['owner', 'staff'] },
+          { title: 'Tim & Akses',   url: `${brokerBase}/tim`,       icon: Users,      roles: ['owner'] },
         ] : []),
 
         // Broker Telur
@@ -223,10 +229,11 @@ export default function AppSidebar() {
 
         // Sembako Broker
         ...(isSembako ? [
-          { title: 'Penjualan', url: '/broker/sembako/penjualan', icon: ShoppingCart },
-          { title: 'Gudang',    url: '/broker/sembako/gudang',    icon: Warehouse },
-          { title: 'Produk',    url: '/broker/sembako/produk',    icon: Package,   roles: ['owner', 'staff'] },
-          { title: 'Pegawai',   url: '/broker/sembako/pegawai',   icon: Users,     roles: ['owner'] },
+          { title: 'POS / Jual',      url: `${brokerBase}/pos`,       icon: ShoppingCart },
+          { title: 'Penjualan',       url: `${brokerBase}/penjualan`, icon: ArrowLeftRight },
+          { title: 'Gudang',          url: `${brokerBase}/gudang`,    icon: Warehouse },
+          { title: 'Inventori & HPP', url: `${brokerBase}/produk`,    icon: Package,   roles: ['owner', 'staff'] },
+          { title: 'Karyawan',        url: `${brokerBase}/karyawan`,  icon: Users,     roles: ['owner'] },
         ] : []),
       ]
     },
@@ -235,8 +242,9 @@ export default function AppSidebar() {
     ...(isSembako ? [{
       label: 'LAPORAN & AKUN',
       items: [
-        { title: 'Laporan',      url: '/broker/sembako/laporan', icon: BarChart2, roles: ['owner'] },
-        { title: 'Akun & Profil', url: '/broker/sembako/akun',   icon: User },
+        { title: 'Laporan',      url: `${brokerBase}/laporan`, icon: BarChart2, roles: ['owner'] },
+        { title: 'Tim & Akses',  url: `${brokerBase}/tim`,     icon: Shield,   roles: ['owner'] },
+        { title: 'Akun & Profil', url: `${brokerBase}/akun`,    icon: User },
       ]
     }] : []),
 
@@ -244,10 +252,10 @@ export default function AppSidebar() {
     ...(isPoultry ? [{
       label: 'OPERASIONAL',
       items: [
-        { title: 'Pengiriman', url: '/broker/pengiriman', icon: Truck,       roles: ['owner', 'staff'] },
-        { title: 'Cash Flow',  url: '/broker/cashflow',  icon: Wallet,      roles: ['owner'] },
-        { title: 'Armada',     url: '/broker/armada',    icon: Car,         roles: ['owner'] },
-        { title: 'Simulator',  url: '/broker/simulator', icon: Calculator,  roles: ['owner'] },
+        { title: 'Pengiriman', url: `${brokerBase}/pengiriman`, icon: Truck,       roles: ['owner', 'staff'] },
+        { title: 'Cash Flow',  url: `${brokerBase}/cashflow`,  icon: Wallet,      roles: ['owner'] },
+        { title: 'Armada',     url: `${brokerBase}/armada`,    icon: Car,         roles: ['owner'] },
+        { title: 'Simulator',  url: `${brokerBase}/simulator`, icon: Calculator,  roles: ['owner'] },
       ]
     }] : []),
 
@@ -305,8 +313,8 @@ export default function AppSidebar() {
     ? Math.max(0, Math.ceil((new Date(trialEndsAt) - new Date()) / (1000 * 60 * 60 * 24))) 
     : 0
 
-  return (
-    <Sidebar collapsible="offcanvas" style={{ background: '#090E14' }}>
+  const sidebarContent = (
+    <>
       <SidebarHeader style={{padding: '16px 16px 8px'}}>
         {/* Logo */}
         <div className="flex items-center gap-2.5 px-1 py-2 cursor-pointer" onClick={() => navigate(berandaPath)}>
@@ -653,9 +661,10 @@ export default function AppSidebar() {
               <span className="text-[13px] font-bold">Admin Panel</span>
             </button>
           )}
+          
           <button
-            onClick={() => navigate('/onboarding?mode=new_business')}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[#64748B] hover:bg-white/[0.04] hover:text-[#94A3B8] transition-colors border-none cursor-pointer bg-transparent text-left"
+            onClick={() => setMobileSwitcherOpen(true)}
+            className="md:hidden w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-[#64748B] hover:bg-white/[0.04] hover:text-[#94A3B8] transition-colors border-none cursor-pointer bg-transparent text-left"
           >
             <Building2 size={14} className="shrink-0" />
             <span className="text-[13px]">Ganti Model Bisnis</span>
@@ -910,6 +919,108 @@ export default function AppSidebar() {
           </button>
         </div>
       </SidebarFooter>
-    </Sidebar>
+    </>
+  )
+
+  const renderMobileSwitcher = () => {
+    return (
+      <Sheet open={mobileSwitcherOpen} onOpenChange={setMobileSwitcherOpen}>
+        <SheetContent side="bottom" className="bg-[#0C1319] border-t border-border rounded-t-2xl p-4 z-[9999]">
+          <SheetHeader className="text-left mb-4">
+            <SheetTitle className="text-foreground text-lg font-bold">Ganti Model Bisnis</SheetTitle>
+            <SheetDescription className="text-muted-foreground text-xs">
+              Pilih bisnis Anda untuk beralih ruang kerja.
+            </SheetDescription>
+          </SheetHeader>
+          
+          <ScrollArea className="max-h-[50vh] mb-4">
+            <div className="flex flex-col gap-2">
+              {profiles.map((p) => {
+                const isActive = p.tenant_id === tenant?.id
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => {
+                      const targetVertical = p.tenants?.business_vertical
+                      const targetPath = getBerandaPath(targetVertical)
+                      switchTenant(p.tenant_id)
+                      queryClient.clear()
+                      setMobileSwitcherOpen(false)
+                      if (!isDesktop) onClose?.()
+                      navigate(targetPath)
+                    }}
+                    className={`w-full flex items-center gap-3 rounded-xl p-3 cursor-pointer transition-colors text-left ${
+                      isActive ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-white/5 border border-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0 transition-colors ${
+                      isActive ? 'bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]' : 'bg-[#090E14]'
+                    }`}>
+                      {getVerticalInfo(p.tenants?.business_vertical).icon}
+                    </div>
+                    <div className="flex-1 overflow-hidden">
+                      <p className={`text-[14px] truncate leading-tight ${isActive ? 'font-bold text-emerald-400' : 'font-semibold text-foreground'}`}>
+                        {p.tenants?.business_name || 'My Business'}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        {getVerticalInfo(p.tenants?.business_vertical).label}
+                      </p>
+                    </div>
+                    {isActive && <Check size={18} className="text-emerald-400 flex-shrink-0" />}
+                  </button>
+                )
+              })}
+            </div>
+          </ScrollArea>
+          
+          <button
+            onClick={() => {
+              setMobileSwitcherOpen(false)
+              if (canAddBusiness) {
+                navigate('/onboarding?mode=new_business')
+                if (!isDesktop) onClose?.()
+              } else {
+                toast.error('Upgrade ke prabayar untuk tambah bisnis baru')
+              }
+            }}
+            disabled={!canAddBusiness}
+            className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold transition-all ${
+              canAddBusiness ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' : 'bg-white/5 text-muted-foreground cursor-not-allowed opacity-50'
+            }`}
+          >
+            {canAddBusiness ? <Plus size={16} /> : <Lock size={16} />}
+            <span>Tambah Bisnis Baru</span>
+          </button>
+        </SheetContent>
+      </Sheet>
+    )
+  }
+
+  if (!isDesktop) {
+    return (
+      <>
+        <Sheet open={open} onOpenChange={(val) => !val && onClose?.()}>
+          <SheetContent side="left" className="p-0 border-r border-[#1e293b] w-[280px]" style={{ background: '#090E14' }}>
+            <SidebarProvider defaultOpen={true}>
+              <Sidebar collapsible="none" className="border-none bg-transparent" style={{ width: '100%', height: '100%' }}>
+                <div style={{ paddingBottom: '32px', height: '100%', overflowY: 'auto' }}>
+                  {sidebarContent}
+                </div>
+              </Sidebar>
+            </SidebarProvider>
+          </SheetContent>
+        </Sheet>
+        {renderMobileSwitcher()}
+      </>
+    )
+  }
+
+  return (
+    <>
+      <Sidebar collapsible="offcanvas" style={{ background: '#090E14' }}>
+        {sidebarContent}
+      </Sidebar>
+      {renderMobileSwitcher()}
+    </>
   )
 }

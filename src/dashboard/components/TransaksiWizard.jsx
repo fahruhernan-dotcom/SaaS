@@ -311,6 +311,11 @@ export default function TransaksiWizard({ isOpen, onClose }) {
         netProfit:       profit,
         transactionDate: buyData?.transaction_date || null,
       })
+      
+      // Auto-close wizard after 2 seconds
+      setTimeout(() => {
+        handleClose()
+      }, 2000)
     } catch (err) {
       toast.error('Gagal: ' + err.message)
     } finally {

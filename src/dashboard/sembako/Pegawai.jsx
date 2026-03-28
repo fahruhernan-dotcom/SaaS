@@ -12,7 +12,7 @@ import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { formatIDR } from '@/lib/format'
 import TopBar from '@/dashboard/components/TopBar'
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle,
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from '@/components/ui/sheet'
 
 // ── Palette ─────────────────────────────────────────────────────────────────
@@ -24,8 +24,9 @@ const C = {
 }
 const sInput = {
   background: C.input, border: `1px solid ${C.border}`, borderRadius: '10px',
-  padding: '10px 12px', color: C.text, fontSize: '13px', fontWeight: 600,
+  padding: '10px 12px', color: C.text, fontSize: '16px', fontWeight: 600,
   outline: 'none', width: '100%', appearance: 'none', WebkitAppearance: 'none',
+  minHeight: '44px',
 }
 
 function SelectWrap({ children, style }) {
@@ -38,8 +39,8 @@ function SelectWrap({ children, style }) {
 }
 const sBtn = (p) => ({
   background: p ? C.accent : 'transparent', border: p ? 'none' : `1px solid ${C.border}`,
-  color: p ? '#fff' : C.text, borderRadius: '10px', padding: '10px 18px',
-  fontWeight: 700, fontSize: '13px', cursor: 'pointer',
+  color: p ? '#fff' : C.text, borderRadius: '10px', padding: '12px 18px',
+  fontWeight: 700, fontSize: '14px', cursor: 'pointer', minHeight: '44px',
 })
 const sLabel = { fontSize: '11px', color: C.muted, fontWeight: 700, letterSpacing: '0.06em', marginBottom: '4px' }
 
@@ -186,19 +187,22 @@ function TabPegawai({ isDesktop }) {
       {/* CRUD Sheet */}
       <Sheet open={editing !== null} onOpenChange={v => !v && setEditing(null)}>
         <SheetContent side="right" style={{ background: C.bg, borderLeft: `1px solid ${C.border}`, maxWidth: '420px', width: '100%', padding: '24px', overflowY: 'auto' }}>
-          <SheetHeader><SheetTitle style={{ color: C.text, fontWeight: 900 }}>{editing === 'new' ? 'Tambah Pegawai' : 'Edit Pegawai'}</SheetTitle></SheetHeader>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-            <div><p style={sLabel}>NAMA</p><input style={sInput} value={form.full_name || ''} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
+          <SheetHeader>
+            <SheetTitle style={{ color: C.text, fontWeight: 900 }}>{editing === 'new' ? 'Tambah Pegawai' : 'Edit Pegawai'}</SheetTitle>
+            <SheetDescription className="sr-only">Form untuk mengelola data pegawai sembako.</SheetDescription>
+          </SheetHeader>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px', paddingBottom: '100px' }}>
+            <div><p style={sLabel}>NAMA</p><input id="emp-name" name="full_name" style={sInput} value={form.full_name || ''} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
             <div><p style={sLabel}>ROLE</p>
               <SelectWrap>
-                <select style={{ ...sInput, paddingRight: 32 }} value={form.role || 'gudang'} onChange={e => setForm({ ...form, role: e.target.value })}>
+                <select id="emp-role" name="role" style={{ ...sInput, paddingRight: 32 }} value={form.role || 'gudang'} onChange={e => setForm({ ...form, role: e.target.value })}>
                   {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </SelectWrap>
             </div>
-            <div><p style={sLabel}>NO HP</p><input style={sInput} value={form.phone || ''} onChange={e => setForm({ ...form, phone: e.target.value.replace(/[^0-9+]/g, '') })} /></div>
-            <div><p style={sLabel}>ALAMAT</p><input style={sInput} value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
-            <div><p style={sLabel}>TANGGAL MASUK</p><input type="date" style={sInput} value={form.join_date || ''} onChange={e => setForm({ ...form, join_date: e.target.value })} /></div>
+            <div><p style={sLabel}>NO HP</p><input id="emp-phone" name="phone" style={sInput} value={form.phone || ''} onChange={e => setForm({ ...form, phone: e.target.value.replace(/[^0-9+]/g, '') })} /></div>
+            <div><p style={sLabel}>ALAMAT</p><input id="emp-addr" name="address" style={sInput} value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
+            <div><p style={sLabel}>TANGGAL MASUK</p><input id="emp-join" name="join_date" type="date" style={sInput} value={form.join_date || ''} onChange={e => setForm({ ...form, join_date: e.target.value })} /></div>
             <div><p style={sLabel}>TIPE GAJI</p>
               <SelectWrap>
                 <select style={{ ...sInput, paddingRight: 32 }} value={form.salary_type || 'bulanan'} onChange={e => setForm({ ...form, salary_type: e.target.value })}>
@@ -515,7 +519,9 @@ function TabPayroll({ isDesktop }) {
               return (
                 <div key={p.id} style={{ background: C.card, borderRadius: '12px', padding: '12px', border: `1px solid ${C.border}` }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: C.text }}>{p.sembako_employees?.full_name || '-'}</span>
+                    <div style={{ flex: 1, minWidth: 0, paddingRight: '8px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: C.text, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.sembako_employees?.full_name || '-'}</span>
+                    </div>
                     <span style={{
                       fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px',
                       background: isPending ? 'rgba(245,158,11,0.12)' : 'rgba(52,211,153,0.12)',

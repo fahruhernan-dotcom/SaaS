@@ -1,12 +1,12 @@
 import React, { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CreditCard, TrendingUp, Package, Receipt,
   AlertTriangle, Plus, ChevronRight, Menu, X, Shield,
   BarChart2, User, ShoppingCart, Warehouse, Users,
 } from 'lucide-react'
-import { useAuth } from '@/lib/hooks/useAuth'
+import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useSembakoDashboardStats, useSembakoSales, useSembakoEmployees } from '@/lib/hooks/useSembakoData'
 import { formatIDR } from '@/lib/format'
@@ -77,7 +77,7 @@ function SembakoMobileBar({ onHamburger, profile }) {
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <NotificationBell />
         <button
-          onClick={() => navigate('/broker/sembako/akun')}
+          onClick={() => navigate(`${brokerBase}/akun`)}
           style={{
             width: 34, height: 34, borderRadius: 10,
             background: 'rgba(234,88,12,0.12)',
@@ -95,55 +95,62 @@ function SembakoMobileBar({ onHamburger, profile }) {
 }
 
 // ── Hamburger Drawer ───────────────────────────────────────────────────────────
-const DRAWER_SECTIONS = [
-  {
-    label: 'OPERASIONAL',
-    items: [
-      { label: 'Dashboard',         icon: BarChart2,     path: '/broker/sembako/beranda'   },
-      { label: 'Manajemen Produk',  icon: Package,       path: '/broker/sembako/produk'    },
-    ],
-  },
-  {
-    label: 'TRANSAKSI',
-    items: [
-      { label: 'Penjualan',         icon: ShoppingCart,  path: '/broker/sembako/penjualan' },
-      { label: 'Gudang & Stok',     icon: Warehouse,     path: '/broker/sembako/gudang'    },
-    ],
-  },
-  {
-    label: 'MANAJEMEN',
-    items: [
-      { label: 'Pegawai',           icon: Users,         path: '/broker/sembako/pegawai'   },
-      { label: 'Laporan',           icon: BarChart2,     path: '/broker/sembako/laporan'   },
-      { label: 'Akun & Profil',     icon: User,          path: '/broker/sembako/akun'      },
-    ],
-  },
-]
-
-const VERTICAL_BERANDA = {
-  sembako_broker:  '/broker/sembako/beranda',
-  poultry_broker:  '/broker/beranda',
-  egg_broker:      '/egg/beranda',
-  peternak:        '/peternak/beranda',
-  rpa:             '/rpa-buyer/beranda',
-}
-const VERTICAL_ICON = {
-  sembako_broker: '🛒', poultry_broker: '🤝', egg_broker: '🥚',
-  peternak: '🏚️', rpa: '🏭',
-}
-
 function HamburgerDrawer({ open, onClose, tenant, profile, profiles, switchTenant }) {
   const navigate = useNavigate()
+  const location = useLocation()
+  const brokerBase = getBrokerBasePath(tenant)
   const bizName = tenant?.business_name || 'Sembako'
   const isSuperadmin = profile?.role === 'superadmin' || profile?.user_type === 'superadmin'
   const [showSwitcher, setShowSwitcher] = useState(false)
+
+  const VERTICAL_BERANDA = {
+    sembako_broker:  `${brokerBase}/beranda`,
+    poultry_broker:  `${brokerBase}/beranda`,
+    egg_broker:      '/egg/beranda',
+    peternak:        '/peternak/beranda',
+    rpa:             '/rpa-buyer/beranda',
+  }
+  const VERTICAL_ICON = {
+    sembako_broker: '🛒', poultry_broker: '🤝', egg_broker: '🥚',
+    peternak: '🏚️', rpa: '🏭',
+  }
+
+  const DRAWER_SECTIONS = [
+    {
+      label: 'OPERASIONAL',
+      items: [
+        { label: 'Dashboard',         icon: BarChart2,     path: `${brokerBase}/beranda`   },
+        { label: 'Manajemen Produk',  icon: Package,       path: `${brokerBase}/produk`    },
+      ],
+    },
+    {
+      label: 'TRANSAKSI',
+      items: [
+        { label: 'Penjualan',         icon: ShoppingCart,  path: `${brokerBase}/penjualan` },
+        { label: 'Gudang & Stok',     icon: Warehouse,     path: `${brokerBase}/gudang`    },
+      ],
+    },
+    {
+      label: 'MANAJEMEN',
+      items: [
+        { label: 'Pegawai',           icon: Users,         path: `${brokerBase}/karyawan`  },
+        { label: 'Laporan',           icon: BarChart2,     path: `${brokerBase}/laporan`   },
+        { label: 'Akun & Profil',     icon: User,          path: `${brokerBase}/akun`      },
+      ],
+    },
+  ]
 
   const go = (path) => { onClose(); setShowSwitcher(false); navigate(path) }
 
   const handleSwitch = (p) => {
     switchTenant(p.tenant_id)
     const vertical = p.tenants?.business_vertical || 'poultry_broker'
-    go(VERTICAL_BERANDA[vertical] || '/broker/beranda')
+    if (vertical.includes('broker')) {
+      const targetBase = `/broker/${vertical}`
+      go(`${targetBase}/beranda`)
+    } else {
+      go(VERTICAL_BERANDA[vertical] || '/broker/beranda')
+    }
   }
 
   return (
@@ -493,7 +500,7 @@ function DesktopBeranda({ stats, sales, employees, navigate, name, salesLoading 
           </p>
         </div>
         <button
-          onClick={() => navigate('/broker/sembako/penjualan')}
+          onClick={() => navigate(`${brokerBase}/penjualan`)}
           style={{
             background: '#EA580C', color: '#fff', border: 'none', borderRadius: '12px',
             padding: '0 20px', height: '40px', fontWeight: 700, fontSize: '13px',
@@ -529,7 +536,7 @@ function DesktopBeranda({ stats, sales, employees, navigate, name, salesLoading 
                   <p style={{ fontSize: '13px', fontWeight: 700, color: C.text }}>{p.product_name}</p>
                   <p style={{ fontSize: '11px', color: C.muted, marginTop: '2px' }}>Sisa: {p.current_stock} {p.unit || ''} · Min: {p.min_stock_alert}</p>
                 </div>
-                <button onClick={() => navigate(`/broker/sembako/gudang?action=tambah&product=${p.id}`)}
+                <button onClick={() => navigate(`${brokerBase}/gudang?action=tambah&product=${p.id}`)}
                   style={{ background: 'rgba(234,88,12,0.15)', border: `1px solid rgba(234,88,12,0.3)`, color: C.accent, borderRadius: '8px', padding: '5px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>
                   Tambah Stok
                 </button>
@@ -544,7 +551,7 @@ function DesktopBeranda({ stats, sales, employees, navigate, name, salesLoading 
         <div style={{ background: C.card, borderRadius: '16px', padding: '16px', border: `1px solid ${C.border}` }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
             <span style={{ fontSize: '11px', fontWeight: 800, color: C.accent, letterSpacing: '0.1em' }}>INVOICE TERBARU</span>
-            <button onClick={() => navigate('/broker/sembako/penjualan')}
+            <button onClick={() => navigate(`${brokerBase}/penjualan`)}
               style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', color: C.muted, fontSize: '11px', fontWeight: 600 }}>
               Lihat semua <ChevronRight size={12} />
             </button>
@@ -675,7 +682,7 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
         {/* Quick actions row */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
           <button
-            onClick={() => navigate('/broker/sembako/penjualan')}
+            onClick={() => navigate(`${brokerBase}/penjualan`)}
             style={{
               flex: 1, height: '42px', borderRadius: '12px',
               background: C.accent, border: 'none', cursor: 'pointer',
@@ -687,7 +694,7 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
             <Plus size={15} /> Catat Penjualan
           </button>
           <button
-            onClick={() => navigate('/broker/sembako/gudang')}
+            onClick={() => navigate(`${brokerBase}/gudang`)}
             style={{
               height: '42px', width: '42px', borderRadius: '12px',
               background: 'rgba(234,88,12,0.1)',
@@ -726,7 +733,7 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
                   </p>
                 </div>
                 <button
-                  onClick={() => navigate(`/broker/sembako/gudang?action=tambah&product=${p.id}`)}
+                  onClick={() => navigate(`${brokerBase}/gudang?action=tambah&product=${p.id}`)}
                   style={{
                     background: 'rgba(234,88,12,0.15)', border: `1px solid rgba(234,88,12,0.3)`,
                     color: C.accent, borderRadius: '7px', padding: '4px 9px',
@@ -751,7 +758,7 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
               INVOICE TERBARU
             </span>
             <button
-              onClick={() => navigate('/broker/sembako/penjualan')}
+              onClick={() => navigate(`${brokerBase}/penjualan`)}
               style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px', color: C.muted, fontSize: '11px', fontWeight: 600 }}
             >
               Lihat semua <ChevronRight size={11} />
@@ -794,9 +801,17 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
 
 // ── Root ───────────────────────────────────────────────────────────────────────
 export default function SembakoBeranda() {
-  const navigate   = useNavigate()
+  const _navigate   = useNavigate()
   const { profile, tenant, profiles, switchTenant } = useAuth()
   const isDesktop  = useMediaQuery('(min-width: 1024px)')
+  
+  const brokerBase = getBrokerBasePath(tenant)
+  const navigate = (path, options) => {
+    if (typeof path === 'string' && path.startsWith('/broker/sembako')) {
+      return _navigate(path.replace('/broker/sembako', brokerBase), options)
+    }
+    return _navigate(path, options)
+  }
 
   const { data: stats,    isLoading: statsLoading }  = useSembakoDashboardStats()
   const { data: sales = [], isLoading: salesLoading } = useSembakoSales()

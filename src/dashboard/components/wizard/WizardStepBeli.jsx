@@ -43,7 +43,7 @@ const S = {
 export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dari Kandang Mana?', orderData }) {
   const { tenant } = useAuth()
   const queryClient = useQueryClient()
-  const [inputMode, setInputMode] = useState('ekor')
+  const [inputMode, setInputMode] = useState('berat')
   const [totalWeightInput, setTotalWeightInput] = useState('')
   const [weightUnit, setWeightUnit] = useState('kg')
   const [unitOpen, setUnitOpen] = useState(false)
@@ -244,18 +244,20 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
             </p>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <label style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Nama Kandang *</label>
-                <Input placeholder="Farm A" value={newFarm.farm_name} onChange={e => setNewFarm(p => ({ ...p, farm_name: e.target.value }))} className="h-9 bg-black/20" />
+                <label htmlFor="new_farm_name" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Nama Kandang *</label>
+                <Input id="new_farm_name" name="new_farm_name" placeholder="Farm A" value={newFarm.farm_name} onChange={e => setNewFarm(p => ({ ...p, farm_name: e.target.value }))} className="h-9 bg-black/20" />
               </div>
               <div className="space-y-1">
-                <label style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Nama Pemilik *</label>
-                <Input placeholder="Pak Budi" value={newFarm.owner_name} onChange={e => setNewFarm(p => ({ ...p, owner_name: e.target.value }))} className="h-9 bg-black/20" />
+                <label htmlFor="new_farm_owner" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Nama Pemilik *</label>
+                <Input id="new_farm_owner" name="new_farm_owner" placeholder="Pak Budi" value={newFarm.owner_name} onChange={e => setNewFarm(p => ({ ...p, owner_name: e.target.value }))} className="h-9 bg-black/20" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <label style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>No HP</label>
+                <label htmlFor="new_farm_phone" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>No HP</label>
                 <Input 
+                  id="new_farm_phone"
+                  name="new_farm_phone"
                   type="tel" 
                   placeholder="081..." 
                   value={newFarm.phone} 
@@ -267,8 +269,8 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
                 />
               </div>
               <div className="space-y-1">
-                <label style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Lokasi</label>
-                <Input placeholder="Boyolali" value={newFarm.location} onChange={e => setNewFarm(p => ({ ...p, location: e.target.value }))} className="h-9 bg-black/20" />
+                <label htmlFor="new_farm_location" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Lokasi</label>
+                <Input id="new_farm_location" name="new_farm_location" placeholder="Boyolali" value={newFarm.location} onChange={e => setNewFarm(p => ({ ...p, location: e.target.value }))} className="h-9 bg-black/20" />
               </div>
             </div>
             <div className="flex gap-2 mt-1">
@@ -282,11 +284,11 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
       {/* Mode Toggle + Quantity */}
       <div className="space-y-3">
         <div className="flex gap-1.5">
-          {['ekor', 'berat'].map(m => (
+          {['berat', 'ekor'].map(m => (
             <button key={m} type="button" onClick={() => setInputMode(m)}
               className={`flex-1 p-2 rounded-lg border text-[11px] font-black uppercase tracking-widest transition-all ${inputMode === m ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400' : 'border-white/5 bg-white/[0.02] text-[#4B6478]'}`}
             >
-              {m === 'ekor' ? 'Per Ekor' : 'Per Berat'}
+              {m === 'berat' ? 'Per Berat' : 'Per Ekor'}
             </button>
           ))}
         </div>
@@ -294,22 +296,24 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
         {inputMode === 'ekor' ? (
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label style={S.label}>Jumlah Ekor *</label>
-              <InputNumber placeholder="500" step={1} min={1} value={watch('quantity')} onChange={(val) => setValue('quantity', val, { shouldValidate: true })} />
+              <label htmlFor="quantity" style={S.label}>Jumlah Ekor *</label>
+              <InputNumber id="quantity" name="quantity" placeholder="500" step={1} min={1} value={watch('quantity')} onChange={(val) => setValue('quantity', val, { shouldValidate: true })} />
               {errors.quantity && <p className="text-[10px] text-red-500 font-bold">{errors.quantity.message}</p>}
             </div>
             <div className="space-y-1.5">
-              <label style={S.label}>Bobot/ekor (kg) *</label>
-              <InputNumber step={0.01} min={0.1} placeholder="1.85" value={watch('avg_weight_kg')} onChange={(val) => setValue('avg_weight_kg', val, { shouldValidate: true })} />
+              <label htmlFor="avg_weight_kg_ekor" style={S.label}>Bobot/ekor (kg) *</label>
+              <InputNumber id="avg_weight_kg_ekor" name="avg_weight_kg" step={0.01} min={0.1} placeholder="1.85" value={watch('avg_weight_kg')} onChange={(val) => setValue('avg_weight_kg', val, { shouldValidate: true })} />
               {errors.avg_weight_kg && <p className="text-[10px] text-red-500 font-bold">{errors.avg_weight_kg.message}</p>}
             </div>
           </div>
         ) : (
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <label style={S.label}>Total Berat *</label>
+              <label htmlFor="total_weight_input" style={S.label}>Total Berat *</label>
               <div className="grid grid-cols-[1fr,100px] gap-2">
                 <InputNumber
+                  id="total_weight_input"
+                  name="total_weight_input"
                   step={weightUnit === 'kg' ? 100 : 0.1}
                   min={0}
                   placeholder="0"
@@ -409,8 +413,10 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
               </div>
             </div>
             <div className="space-y-1.5">
-              <label style={S.label}>Bobot Rata-rata (kg/ekor)</label>
+              <label htmlFor="avg_weight_kg_berat" style={S.label}>Bobot Rata-rata (kg/ekor)</label>
               <InputNumber
+                id="avg_weight_kg_berat"
+                name="avg_weight_kg"
                 step={0.01}
                 min={0.1}
                 placeholder="1.85"
@@ -432,8 +438,8 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
 
       {/* Harga Beli */}
       <div className="space-y-1.5">
-        <label style={S.label}>Harga Beli (Rp/kg) *</label>
-        <InputRupiah value={watch('price_per_kg')} onChange={(val) => setValue('price_per_kg', val)} placeholder="19.800" className={S.input + ' text-lg font-bold text-white'} />
+        <label htmlFor="price_per_kg" style={S.label}>Harga Beli (Rp/kg) *</label>
+        <InputRupiah id="price_per_kg" name="price_per_kg" value={watch('price_per_kg')} onChange={(val) => setValue('price_per_kg', val)} placeholder="19.800" className={S.input + ' text-lg font-bold text-white'} />
         {errors.price_per_kg && <p className="text-[10px] text-red-500 font-bold">Harga wajib diisi</p>}
       </div>
 
@@ -445,8 +451,8 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
 
       {/* Catatan */}
       <div className="space-y-1.5">
-        <label style={S.label}>Catatan (Opsional)</label>
-        <Textarea className="bg-[#111C24] border-white/10 rounded-xl min-h-[72px] text-sm" placeholder="Tambah keterangan..." {...register('notes')} />
+        <label htmlFor="notes" style={S.label}>Catatan (Opsional)</label>
+        <Textarea id="notes" name="notes" className="bg-[#111C24] border-white/10 rounded-xl min-h-[72px] text-sm" placeholder="Tambah keterangan..." {...register('notes')} />
       </div>
 
       {/* Ringkasan */}

@@ -23,7 +23,7 @@ import {
   Store,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useAuth } from '../../lib/hooks/useAuth'
+import { useAuth, getBrokerBasePath } from '../../lib/hooks/useAuth'
 import { getBusinessModel, BUSINESS_MODELS } from '../../lib/businessModel'
 import { useTheme } from '../../lib/hooks/useTheme'
 import DrawerLainnya from './DrawerLainnya'
@@ -182,18 +182,36 @@ export default function BottomNav() {
   const color = accentColor || model?.color || '#10B981'
 
   // Override tabs & fabPath when inside a per-farm route
-  const allTabs = isPeternakFarm
-    ? [
+  let allTabs = []
+  if (isPeternakFarm) {
+    allTabs = [
         { path: `/peternak/kandang/${currentFarmId}/beranda`, icon: 'Home',         label: 'Kandang'  },
         { path: `/peternak/kandang/${currentFarmId}/siklus`,  icon: 'RefreshCw',    label: 'Siklus'   },
         { path: `/peternak/kandang/${currentFarmId}/pakan`,   icon: 'Package',      label: 'Pakan'    },
         { path: '/peternak/beranda',                          icon: 'MoreHorizontal', label: 'Overview' },
-      ]
-    : model.bottomNav
+    ]
+  } else {
+    // Dynamically adjust paths for Broker (poultry_broker, egg_broker, etc that use base broker layout)
+    const isBrokerUser = profile?.user_type === 'broker';
+    const brokerBase = getBrokerBasePath(tenant);
+    allTabs = (model.bottomNav || []).map(tab => {
+        if (isBrokerUser && tab.path.startsWith('/broker/') && !tab.path.startsWith(brokerBase)) {
+          return { ...tab, path: tab.path.replace('/broker/', brokerBase + '/') }
+        }
+        return tab;
+    })
+  }
 
-  const fabPath = isPeternakFarm
-    ? `/peternak/kandang/${currentFarmId}/input`
-    : (model.fabPath || null)
+  let fabPath = null
+  if (isPeternakFarm) {
+    fabPath = `/peternak/kandang/${currentFarmId}/input`
+  } else if (model.fabPath) {
+    fabPath = model.fabPath
+    const brokerBase = getBrokerBasePath(tenant);
+    if (profile?.user_type === 'broker' && fabPath.startsWith('/broker/') && !fabPath.startsWith(brokerBase)) {
+      fabPath = fabPath.replace('/broker/', brokerBase + '/')
+    }
+  }
 
   // Role-based filtering
   const tabs = allTabs.filter(tab => {

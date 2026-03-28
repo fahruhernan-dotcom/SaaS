@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/lib/hooks/useAuth'
+import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -33,7 +33,14 @@ const schema = z.object({
 export default function FormBeliModal({ onClose }) {
   const { tenant } = useAuth()
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
+  const _navigate = useNavigate()
+  const brokerBase = getBrokerBasePath(tenant)
+  const navigate = (path, options) => {
+    if (typeof path === 'string' && path.startsWith('/broker/') && !path.startsWith(brokerBase)) {
+      return _navigate(path.replace('/broker', brokerBase), options)
+    }
+    return _navigate(path, options)
+  }
   const [isLoading, setIsLoading] = useState(false)
   const [inputMode, setInputMode] = useState('ekor') // 'ekor' | 'berat'
   const [totalWeightInput, setTotalWeightInput] = useState('')

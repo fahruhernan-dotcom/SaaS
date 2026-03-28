@@ -4,6 +4,18 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  overscroll-behavior-x: none;
+}
+
+#root {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 /* ===== Landing Page Section Utilities ===== */
 .section-padding {
   padding: 5rem clamp(1.25rem, 5vw, 5rem);

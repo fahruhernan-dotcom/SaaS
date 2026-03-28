@@ -115,7 +115,7 @@ function ListingCard({ listing }) {
       className="bg-[#111C24] rounded-2xl p-5 border border-white/8 hover:border-emerald-500/30 transition-all flex flex-col gap-3"
     >
       {/* Top badges */}
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-1 flex-wrap">
         <TypeBadge type={listing.listing_type} />
         {listing.chicken_type && (
           <span className="text-[10px] font-semibold text-[#4B6478] bg-white/5 px-2 py-0.5 rounded-full capitalize">
@@ -199,7 +199,7 @@ function MyListingRow({ listing, onClose, onDelete }) {
     <div className="flex items-center gap-3 py-3 border-b border-white/5 last:border-0">
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-[#F1F5F9] truncate">{listing.title}</p>
-        <div className="flex items-center gap-2 mt-0.5">
+        <div className="flex items-center gap-1 flex-wrap mt-0.5">
           <TypeBadge type={listing.listing_type} />
           <span
             className="text-[10px] font-semibold px-2 py-0.5 rounded-full"

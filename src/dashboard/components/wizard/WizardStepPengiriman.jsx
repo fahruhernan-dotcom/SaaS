@@ -152,6 +152,9 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
     enabled: !!tenant?.id && !!step3Data.enabled
   })
 
+  const shouldRenderNewDriverForm = driverMode === 'manual' || (driverMode === 'driver' && drivers?.length === 0) || showQuickAddDriver;
+  const shouldRenderNewVehicleForm = vehicleMode === 'manual' || (vehicleMode === 'armada' && vehicles?.length === 0) || showQuickAddVehicle;
+
   const buyData = mode === 'buy_first' ? step1Data : step2Data
   const sellData = mode === 'buy_first' ? step2Data : step1Data
 
@@ -175,8 +178,8 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
         return
       }
     } else {
-      if (!step3Data.vehicle_plate || !step3Data.vehicle_type) {
-        toast.error("Pilih atau isi data kendaraan terlebih dahulu")
+      if (!step3Data.vehicle_id) {
+        toast.error("Simpan data kendaraan baru terlebih dahulu (Klik SIMPAN & PILIH)")
         return
       }
     }
@@ -188,8 +191,8 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
         return
       }
     } else {
-      if (!step3Data.driver_name) {
-        toast.error("Pilih atau isi data sopir terlebih dahulu")
+      if (!step3Data.driver_id) {
+        toast.error("Simpan data sopir baru terlebih dahulu (Klik SIMPAN & PILIH)")
         return
       }
     }
@@ -223,6 +226,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
       update('vehicle_type', data.vehicle_type)
       update('vehicle_plate', data.vehicle_plate)
       setShowQuickAddVehicle(false)
+      setVehicleMode('armada')
       setNewVehicle({ brand: '', vehicle_plate: '' })
       toast.success(`✅ Kendaraan ${data.vehicle_plate} ditambahkan!`)
     }
@@ -252,6 +256,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
       update('driver_name', data.full_name)
       update('driver_phone', data.phone)
       setShowQuickAddDriver(false)
+      setDriverMode('driver')
       setNewDriver({ full_name: '', phone: '' })
       toast.success(`✅ Sopir ${data.full_name} ditambahkan!`)
     }
@@ -373,10 +378,10 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
               ))}
             </div>
 
-            {vehicleMode === 'armada' ? (
+            {vehicleMode === 'armada' && vehicles?.length > 0 ? (
               <Popover open={openVehicle} onOpenChange={setOpenVehicle}>
                 <PopoverTrigger asChild>
-                  <button type="button" style={{
+                  <button id="vehicle_trigger" type="button" style={{
                     width: '100%', padding: '13px 14px', background: 'hsl(var(--input))', border: '1px solid hsl(var(--border))', borderRadius: '10px',
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontSize: '16px',
                     color: step3Data.vehicle_id ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', textAlign: 'left'
@@ -401,6 +406,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                             update('vehicle_type', v.vehicle_type)
                             update('vehicle_plate', v.vehicle_plate)
                             setOpenVehicle(false)
+                            setShowQuickAddVehicle(false)
                           }}
                           className="cursor-pointer py-3 px-4 border-b border-white/5 last:border-none focus:bg-white/5"
                         >
@@ -428,14 +434,9 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                   </Command>
                 </PopoverContent>
               </Popover>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                <input id="vehicle_type" name="vehicle_type" type="text" placeholder="Jenis Mobil" value={step3Data.vehicle_type || ''} onChange={e => update('vehicle_type', e.target.value)} className={S.input} />
-                <input id="vehicle_plate" name="vehicle_plate" type="text" placeholder="Plat Nomor" value={step3Data.vehicle_plate || ''} onChange={e => update('vehicle_plate', e.target.value.toUpperCase())} className={S.input} />
-              </div>
-            )}
+            ) : null}
 
-            {showQuickAddVehicle && (
+            {shouldRenderNewVehicleForm && (
               <div style={{
                 marginTop: 8,
                 padding: '14px',
@@ -451,12 +452,12 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-1">
-                    <label style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Nama Kendaraan *</label>
-                    <Input placeholder="Truk Canter" value={newVehicle.brand} onChange={e => setNewVehicle(p => ({ ...p, brand: e.target.value }))} className="h-9 bg-black/20" />
+                    <label htmlFor="new_vehicle_brand" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Nama Kendaraan *</label>
+                    <Input id="new_vehicle_brand" name="new_vehicle_brand" placeholder="Truk Canter" value={newVehicle.brand} onChange={e => setNewVehicle(p => ({ ...p, brand: e.target.value }))} className="h-9 bg-black/20" />
                   </div>
                   <div className="space-y-1">
-                    <label style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Plat Nomor *</label>
-                    <Input placeholder="B 1234 ABC" value={newVehicle.vehicle_plate} onChange={e => setNewVehicle(p => ({ ...p, vehicle_plate: e.target.value.toUpperCase() }))} className="h-9 bg-black/20 uppercase" />
+                    <label htmlFor="new_vehicle_plate" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Plat Nomor *</label>
+                    <Input id="new_vehicle_plate" name="new_vehicle_plate" placeholder="B 1234 ABC" value={newVehicle.vehicle_plate} onChange={e => setNewVehicle(p => ({ ...p, vehicle_plate: e.target.value.toUpperCase() }))} className="h-9 bg-black/20 uppercase" />
                   </div>
                 </div>
                 <div className="flex gap-2 mt-1">
@@ -494,11 +495,11 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
               ))}
             </div>
 
-            {driverMode === 'driver' ? (
+            {driverMode === 'driver' && drivers?.length > 0 ? (
               <div>
                 <Popover open={openDriver} onOpenChange={setOpenDriver}>
                   <PopoverTrigger asChild>
-                    <button type="button" style={{
+                    <button id="driver_trigger" type="button" style={{
                       width: '100%', padding: '13px 14px', background: 'hsl(var(--input))', border: '1px solid hsl(var(--border))', borderRadius: '10px',
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontSize: '16px',
                       color: step3Data.driver_id ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', textAlign: 'left'
@@ -523,6 +524,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                               update('driver_name', d.full_name)
                               update('driver_phone', d.phone)
                               setOpenDriver(false)
+                              setShowQuickAddDriver(false)
                             }}
                             className="cursor-pointer py-3 px-4 border-b border-white/5 last:border-none focus:bg-white/5"
                           >
@@ -554,20 +556,15 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                     </PopoverContent>
                   </Popover>
                 
-                {step3Data.driver_id && selectedDriver?.wage_per_trip && (
+                {step3Data.driver_id && selectedDriver?.wage_per_trip !== null && selectedDriver?.wage_per_trip !== undefined && (
                   <p className="text-[10px] text-emerald-400 mt-1.5 font-black uppercase italic tracking-wider">
                     Estimasi Upah: {formatIDR(selectedDriver.wage_per_trip)}
                   </p>
                 )}
               </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                <input id="driver_name" name="driver_name" type="text" placeholder="Nama sopir" value={step3Data.driver_name || ''} onChange={e => update('driver_name', e.target.value)} className={S.input} />
-                <input id="driver_phone" name="driver_phone" type="text" placeholder="No HP" value={step3Data.driver_phone || ''} onChange={e => update('driver_phone', e.target.value)} className={S.input} />
-              </div>
-            )}
+            ) : null}
 
-            {showQuickAddDriver && (
+            {shouldRenderNewDriverForm && (
                 <div style={{
                   marginTop: 8,
                   padding: '14px',
@@ -583,12 +580,12 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <label style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Nama Sopir *</label>
-                      <Input placeholder="Pak Ahmad" value={newDriver.full_name} onChange={e => setNewDriver(p => ({ ...p, full_name: e.target.value }))} className="h-9 bg-black/20" />
+                      <label htmlFor="new_driver_name" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Nama Sopir *</label>
+                      <Input id="new_driver_name" name="new_driver_name" placeholder="Pak Ahmad" value={newDriver.full_name} onChange={e => setNewDriver(p => ({ ...p, full_name: e.target.value }))} className="h-9 bg-black/20" />
                     </div>
                     <div className="space-y-1">
-                      <label style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>No HP</label>
-                      <Input placeholder="081..." value={newDriver.phone} onChange={e => setNewDriver(p => ({ ...p, phone: e.target.value }))} className="h-9 bg-black/20" />
+                      <label htmlFor="new_driver_phone" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>No HP</label>
+                      <Input id="new_driver_phone" name="new_driver_phone" placeholder="081..." value={newDriver.phone} onChange={e => setNewDriver(p => ({ ...p, phone: e.target.value }))} className="h-9 bg-black/20" />
                     </div>
                   </div>
                   <div className="flex gap-2 mt-1">
@@ -617,8 +614,8 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
 
           {/* TOTAL BIAYA PENGIRIMAN */}
           <div className="space-y-1.5">
-            <label style={S.label}>Total Biaya Pengiriman *</label>
-            <InputRupiah value={step3Data.delivery_cost || 0} onChange={v => update('delivery_cost', v)} placeholder="0" className="bg-[#111C24] border-emerald-500/20 h-14 rounded-2xl text-xl font-bold text-white shadow-inner" />
+            <label htmlFor="delivery_cost" style={S.label}>Total Biaya Pengiriman *</label>
+            <InputRupiah id="delivery_cost" name="delivery_cost" value={step3Data.delivery_cost || 0} onChange={v => update('delivery_cost', v)} placeholder="0" className="bg-[#111C24] border-emerald-500/20 h-14 rounded-2xl text-xl font-bold text-white shadow-inner" />
             <p className="text-[10px] text-[#4B6478] font-bold uppercase mt-1 italic">
               Termasuk solar, uang makan, portal, dll.
             </p>
@@ -626,8 +623,8 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
 
           {/* Catatan */}
           <div className="space-y-1.5">
-            <label style={S.label}>Catatan Pengiriman</label>
-            <textarea value={step3Data.notes || ''} onChange={e => update('notes', e.target.value)}
+            <label htmlFor="delivery_notes" style={S.label}>Catatan Pengiriman</label>
+            <textarea id="delivery_notes" name="delivery_notes" value={step3Data.notes || ''} onChange={e => update('notes', e.target.value)}
               className="w-full bg-[#111C24] border border-white/10 rounded-xl p-4 text-[#F1F5F9] text-sm min-h-[80px] outline-none resize-none placeholder:text-[#4B6478]"
               placeholder="Tambahkan keterangan rute, kondisi ayam, dll..." />
           </div>

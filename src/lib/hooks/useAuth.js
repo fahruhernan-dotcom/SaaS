@@ -84,3 +84,8 @@ export function useAuth() {
     refetchProfile: () => user && fetchAllProfiles(user.id)
   }
 }
+
+export const getBrokerBasePath = (tenant) => {
+  const subType = tenant?.sub_type || 'poultry_broker'
+  return `/broker/${subType}`
+}

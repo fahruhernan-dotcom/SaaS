@@ -14,7 +14,7 @@ export default function TopBar({ title, subtitle, showBack = false, rightAction,
       transition={{ duration: 0.2 }}
       className="px-5 lg:px-6 pt-10 lg:pt-4 pb-4 lg:pb-5 flex items-center justify-between sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-50 border-b border-white/5 min-h-[60px] lg:min-h-[64px]"
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-1 min-w-0">
         {showBack && (
           <Button 
             variant="ghost" 
@@ -25,10 +25,10 @@ export default function TopBar({ title, subtitle, showBack = false, rightAction,
             <ArrowLeft size={20} className="lg:w-4 lg:h-4" />
           </Button>
         )}
-        <div className="text-left">
-          <h1 className="font-display text-lg lg:text-xl font-black text-white tracking-tight uppercase leading-none">{title}</h1>
+        <div className="text-left flex-1 min-w-0">
+          <h1 className="font-display text-lg lg:text-xl font-black text-white tracking-tight uppercase leading-none truncate">{title}</h1>
           {subtitle && (
-            <p className="text-[10px] lg:text-xs font-bold text-[#4B6478] uppercase mt-1 lg:mt-1.5 tracking-widest">{subtitle}</p>
+            <p className="text-[10px] lg:text-xs font-bold text-[#4B6478] uppercase mt-1 lg:mt-1.5 tracking-widest truncate">{subtitle}</p>
           )}
         </div>
       </div>

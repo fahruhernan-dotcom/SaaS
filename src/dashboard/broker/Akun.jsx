@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import { differenceInDays, isAfter } from 'date-fns'
 import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/lib/hooks/useAuth'
+import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { toast } from 'sonner'
@@ -50,7 +50,16 @@ const fadeUp = {
 export default function Akun() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const { profile, user, tenant, refetchProfile } = useAuth()
-  const navigate = useNavigate()
+  
+  const _navigate = useNavigate()
+  const brokerBase = getBrokerBasePath(tenant)
+  const navigate = (path, options) => {
+    if (typeof path === 'string' && path.startsWith('/broker/') && !path.startsWith(brokerBase)) {
+      return _navigate(path.replace('/broker', brokerBase), options)
+    }
+    return _navigate(path, options)
+  }
+  
   const queryClient = useQueryClient()
   const [openEditProfile, setOpenEditProfile] = useState(false)
   

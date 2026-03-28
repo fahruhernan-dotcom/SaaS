@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Truck, Package, AlertTriangle, CheckCircle2,
@@ -117,7 +117,23 @@ export default function Transaksi() {
   const { tenant, profile } = useAuth()
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const location = useLocation()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+
+  React.useEffect(() => {
+    // Initial check (in case of direct deep link)
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('action') === 'new') {
+      setWizardOpen(true)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('action') === 'new') {
+      setWizardOpen(true)
+    }
+  }, [location.search])
   
   const isOwner = profile?.role === 'owner'
   const isViewOnly = profile?.role === 'view_only'
@@ -1129,21 +1145,21 @@ function UnifiedTransactionCard({ sale, onOpenAuditSheet }) {
     >
       <div className="p-5 space-y-6">
         {/* HEADER */}
-        <div className="flex justify-between items-center text-left">
-          <div className="flex items-center gap-3">
+        <div className="flex justify-between items-start mb-4 gap-2">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
             <div className={cn(
               "w-[34px] h-[34px] rounded-xl flex items-center justify-center font-black text-lg border-2",
               isLoss ? "bg-red-500/10 border-red-500/40 text-red-500" : "bg-emerald-500/10 border-emerald-500/40 text-emerald-400"
             )}>
               {initialRpa}
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h3 className="font-display font-bold text-sm text-[#F1F5F9] leading-none uppercase tracking-tight flex items-center gap-2">
-                <span>{farmName}</span>
-                <ChevronRight size={14} className="text-[#4B6478]" />
-                <span>{rpaName}</span>
+                <span className="truncate block">{farmName}</span>
+                <ChevronRight size={14} className="text-[#4B6478] flex-shrink-0" />
+                <span className="truncate block">{rpaName}</span>
               </h3>
-              <p className="text-xs font-medium text-[#4B6478] mt-1.5 tabular-nums">
+              <p className="text-xs font-medium text-[#4B6478] mt-1.5 tabular-nums truncate">
                 {formatDate(sale.transaction_date)} {sale.due_date ? ` · Tempo: ${formatDate(sale.due_date)}` : ' · COD'}
               </p>
             </div>
@@ -1185,7 +1201,7 @@ function UnifiedTransactionCard({ sale, onOpenAuditSheet }) {
         {/* MIDDLE - 3 COLUMNS */}
         <div className="grid grid-cols-[1fr_1fr_1.6fr] gap-4">
           {/* Kolom 1: PEMBELIAN */}
-          <div className="space-y-2 text-left border-r border-white/8 pr-4">
+          <div className="space-y-2 text-left border-r border-white/8 pr-4 min-w-0">
             <p className={cn("font-black text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-[10px]" : "text-xs")}>Pembelian</p>
             <p className="font-display text-[22px] font-bold text-[#F1F5F9] tabular-nums leading-none">
               {(safeNum(sale.purchases?.total_weight_kg) / 1000).toFixed(2)} <span className="text-xs font-normal text-[#94A3B8] ml-0.5">ton</span>
@@ -1199,7 +1215,7 @@ function UnifiedTransactionCard({ sale, onOpenAuditSheet }) {
           </div>
 
           {/* Kolom 2: PENJUALAN */}
-          <div className="space-y-2 text-left border-r border-white/8 pr-4">
+          <div className="space-y-2 text-left border-r border-white/8 pr-4 min-w-0">
             <p className={cn("font-black text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-[10px]" : "text-xs")}>Penjualan</p>
             <p className="font-display text-[22px] font-bold text-[#F1F5F9] tabular-nums leading-none">
               {(totalWeightJual / 1000).toFixed(2)} <span className="text-xs font-normal text-[#94A3B8] ml-0.5">ton</span>
@@ -1213,7 +1229,7 @@ function UnifiedTransactionCard({ sale, onOpenAuditSheet }) {
           </div>
 
           {/* Kolom 3: PENGIRIMAN */}
-          <div className="space-y-3 text-left">
+          <div className="space-y-3 text-left min-w-0">
             <p className={cn("font-black text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-[10px]" : "text-xs")}>Pengiriman</p>
             
             <div className="grid grid-cols-1 gap-y-3">
@@ -1456,7 +1472,7 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
             <>
               {/* SECTION 1: RINGKASAN PROFIT */}
               <div className="space-y-3">
-                <div className="bg-emerald-500/[0.03] border border-emerald-500/10 rounded-2xl p-4 grid grid-cols-4 gap-2">
+                <div className="bg-emerald-500/[0.03] border border-emerald-500/10 rounded-2xl p-4 grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-2">
                   <div className="text-center space-y-1">
                     <p className={cn("font-black text-[#4B6478] uppercase tracking-[0.15em]", isDesktop ? "text-[8px]" : "text-[11px]")}>Pendapatan</p>
                     <p className="font-display text-sm font-black text-white tabular-nums">{formatIDR(totalRevenue)}</p>

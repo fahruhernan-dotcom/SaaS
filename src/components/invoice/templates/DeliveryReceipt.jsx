@@ -197,16 +197,18 @@ function formatTime(val) {
 //   generatedBy: string
 
 export function DeliveryReceipt({ tenant, delivery, sale, farm, rpa, invoiceNumber, generatedBy }) {
+  const isArrived    = ['arrived', 'completed'].includes(delivery?.status)
   const initCount    = Number(delivery?.initial_count || 0)
-  const arrivedCount = Number(delivery?.arrived_count || 0)
-  const mortality    = Number(delivery?.mortality_count || initCount - arrivedCount || 0)
+  const arrivedCount = isArrived ? Number(delivery?.arrived_count || 0) : null
   const initWeight   = Number(delivery?.initial_weight_kg || 0)
-  const arrivedWeight = Number(delivery?.arrived_weight_kg || 0)
-  const shrinkage    = Number(delivery?.shrinkage_kg || initWeight - arrivedWeight || 0)
+  const arrivedWeight = isArrived ? Number(delivery?.arrived_weight_kg || 0) : null
+
+  const mortality    = isArrived ? Number(delivery?.mortality_count || initCount - arrivedCount || 0) : null
+  const shrinkage    = isArrived ? Number(delivery?.shrinkage_kg || initWeight - arrivedWeight || 0) : null
   const pricePerKg   = Number(sale?.price_per_kg || 0)
 
-  const shrinkagePct = initWeight > 0 ? (shrinkage / initWeight) * 100 : 0
-  const revenueAktual   = arrivedWeight * pricePerKg
+  const shrinkagePct = (isArrived && initWeight > 0) ? (shrinkage / initWeight) * 100 : 0
+  const revenueAktual   = isArrived ? arrivedWeight * pricePerKg : 0
   const revenueEstimasi = initWeight * pricePerKg
   const selisihFinancial = revenueEstimasi - revenueAktual
 
@@ -258,12 +260,12 @@ export function DeliveryReceipt({ tenant, delivery, sale, farm, rpa, invoiceNumb
           <View style={s.tableRow}>
             <Text style={[s.td, s.colDesc]}>Jumlah Ayam (ekor)</Text>
             <Text style={[s.td, s.colAwal]}>{initCount.toLocaleString('id-ID')}</Text>
-            <Text style={[s.td, s.colTiba]}>{arrivedCount.toLocaleString('id-ID')}</Text>
-            <Text style={[s.td, s.colSelisih, { color: mortality > 0 ? C.warn : C.ok }]}>
-              {mortality > 0 ? `-${mortality}` : '0'}
+            <Text style={[s.td, s.colTiba]}>{isArrived ? arrivedCount.toLocaleString('id-ID') : '-'}</Text>
+            <Text style={[s.td, s.colSelisih, { color: mortality > 0 ? C.warn : C.text }]}>
+              {isArrived ? (mortality > 0 ? `-${mortality}` : '0') : '-'}
             </Text>
-            <Text style={[s.td, s.colKet, { color: mortality > 0 ? C.warn : C.ok }]}>
-              {mortality > 0 ? 'Ada kematian' : 'OK'}
+            <Text style={[s.td, s.colKet, { color: mortality > 0 ? C.warn : C.text }]}>
+              {isArrived ? (mortality > 0 ? 'Ada kematian' : 'OK') : '-'}
             </Text>
           </View>
 
@@ -271,12 +273,12 @@ export function DeliveryReceipt({ tenant, delivery, sale, farm, rpa, invoiceNumb
           <View style={[s.tableRow, s.tableRowAlt]}>
             <Text style={[s.td, s.colDesc]}>Berat (kg)</Text>
             <Text style={[s.td, s.colAwal]}>{initWeight.toFixed(2)}</Text>
-            <Text style={[s.td, s.colTiba]}>{arrivedWeight.toFixed(2)}</Text>
-            <Text style={[s.td, s.colSelisih, { color: shrinkage > 0 ? C.warn : C.ok }]}>
-              {shrinkage > 0 ? `-${shrinkage.toFixed(2)}` : '0.00'}
+            <Text style={[s.td, s.colTiba]}>{isArrived ? arrivedWeight.toFixed(2) : '-'}</Text>
+            <Text style={[s.td, s.colSelisih, { color: shrinkage > 0 ? C.warn : C.text }]}>
+              {isArrived ? (shrinkage > 0 ? `-${shrinkage.toFixed(2)}` : '0.00') : '-'}
             </Text>
-            <Text style={[s.td, s.colKet, { color: shrinkagePct > 2 ? C.warn : C.ok }]}>
-              {shrinkage > 0 ? `${shrinkagePct.toFixed(1)}%` : 'OK'}
+            <Text style={[s.td, s.colKet, { color: shrinkagePct > 2 ? C.warn : C.text }]}>
+              {isArrived ? (shrinkage > 0 ? `${shrinkagePct.toFixed(1)}%` : 'OK') : '-'}
             </Text>
           </View>
         </View>
@@ -294,6 +296,10 @@ export function DeliveryReceipt({ tenant, delivery, sale, farm, rpa, invoiceNumb
               <Text style={s.infoValue}>
                 {[delivery?.vehicle_type, delivery?.vehicle_plate].filter(Boolean).join(' · ') || '-'}
               </Text>
+            </View>
+            <View style={s.infoItem}>
+              <Text style={s.infoLabel}>Jam Muat</Text>
+              <Text style={s.infoValue}>{formatTime(delivery?.load_time)}</Text>
             </View>
             <View style={s.infoItem}>
               <Text style={s.infoLabel}>Waktu Berangkat</Text>
@@ -317,7 +323,7 @@ export function DeliveryReceipt({ tenant, delivery, sale, farm, rpa, invoiceNumb
         </View>
 
         {/* FINANCIAL SUMMARY (jika ada harga) */}
-        {pricePerKg > 0 && (
+        {(pricePerKg > 0 && isArrived) && (
           <View style={s.summarySection}>
             <View style={s.summaryBox}>
               <View style={s.summaryRow}>

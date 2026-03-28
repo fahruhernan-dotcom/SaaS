@@ -200,8 +200,8 @@ function FarmCard({ farm, onEdit }) {
     >
         <div className="flex justify-between items-start">
             <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                    <h3 className="font-display font-black text-[#F1F5F9] text-[18px] lg:text-[18px] tracking-tight group-hover:text-emerald-400 transition-colors uppercase leading-none">{farm.farm_name}</h3>
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <h3 className="font-display font-black text-[#F1F5F9] text-[18px] lg:text-[18px] tracking-tight group-hover:text-emerald-400 transition-colors uppercase leading-none line-clamp-1">{farm.farm_name}</h3>
                 </div>
                 {farm.quality_rating > 0 && (
                     <div className="flex gap-0.5">
@@ -214,11 +214,12 @@ function FarmCard({ farm, onEdit }) {
             <StatusBadge status={farm.status} />
         </div>
 
-        <div className="flex items-center gap-1.5 text-xs font-black text-[#4B6478] uppercase tracking-wider">
-            <span className="text-[#F1F5F9]">{farm.owner_name}</span>
-            <span className="text-white/10">•</span>
-            <div className="flex items-center gap-1">
-                <MapPin size={11} strokeWidth={2.5} /> {farm.location || 'N/A'}
+        <div className="flex items-center gap-1.5 text-xs font-black text-[#4B6478] uppercase tracking-wider min-w-0">
+            <span className="text-[#F1F5F9] whitespace-nowrap flex-shrink-0">{farm.owner_name}</span>
+            <span className="text-white/10 flex-shrink-0">•</span>
+            <div className="flex items-center gap-1 flex-1 min-w-0 text-xs">
+                <MapPin size={11} strokeWidth={2.5} className="flex-shrink-0" /> 
+                <span className="truncate">{farm.location || 'N/A'}</span>
             </div>
         </div>
 

@@ -110,7 +110,7 @@ function TambahStokSheet({ preselectedProductId, products, suppliers, onClose })
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <form onSubmit={handleSubmit} style={{ padding: '0 20px 100px', display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Produk */}
           <SField label="Produk *">
             <SelectWrap>
@@ -275,9 +275,10 @@ function SField({ label, children }) {
 const inputSt = {
   width: '100%', background: 'rgba(255,255,255,0.04)',
   border: `1px solid ${BORDER}`, borderRadius: 10,
-  padding: '10px 14px', color: TEXT_PRI, fontSize: 14,
+  padding: '10px 14px', color: TEXT_PRI, fontSize: 16,
   fontFamily: 'DM Sans', outline: 'none', boxSizing: 'border-box',
   appearance: 'none', WebkitAppearance: 'none',
+  minHeight: '44px',
 }
 
 function SelectWrap({ children, style }) {
@@ -348,9 +349,9 @@ function StokSaatIni({ products, onTambah }) {
               onClick={() => setExpanded(isOpen ? null : product.id)}
               style={{ width: '100%', display: 'flex', alignItems: 'center', padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer', gap: 12 }}
             >
-              <div style={{ flex: 1, textAlign: 'left' }}>
+              <div style={{ flex: 1, textAlign: 'left', minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                  <span style={{ fontFamily: 'Sora', fontSize: 14, fontWeight: 700, color: TEXT_PRI }}>{product.product_name}</span>
+                  <span style={{ fontFamily: 'Sora', fontSize: 14, fontWeight: 700, color: TEXT_PRI, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{product.product_name}</span>
                   {isLow && <span style={{ fontSize: 10, background: 'rgba(248,113,113,0.15)', color: '#F87171', padding: '1px 8px', borderRadius: 20, fontFamily: 'DM Sans', fontWeight: 600 }}>Menipis</span>}
                 </div>
                 <span style={{ fontSize: 13, color: isLow ? '#F87171' : ACCENT, fontFamily: 'DM Sans', fontWeight: 600 }}>
@@ -432,8 +433,8 @@ function RiwayatMasuk() {
       )}
       {batches.map(batch => (
         <div key={batch.id} style={{ marginBottom: 8, background: BG_CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <div style={{ fontFamily: 'Sora', fontSize: 13, fontWeight: 700, color: TEXT_PRI, marginBottom: 2 }}>
+          <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
+            <div style={{ fontFamily: 'Sora', fontSize: 13, fontWeight: 700, color: TEXT_PRI, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {batch.sembako_products?.product_name || '-'}
             </div>
             <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'DM Sans' }}>{batch.batch_code}</div>
@@ -470,8 +471,8 @@ function RiwayatKeluar() {
     <div>
       {stockOuts.map(s => (
         <div key={s.id} style={{ marginBottom: 8, background: BG_CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '12px 14px', display: 'flex', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontFamily: 'Sora', fontSize: 13, fontWeight: 700, color: TEXT_PRI, marginBottom: 2 }}>
+          <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
+            <div style={{ fontFamily: 'Sora', fontSize: 13, fontWeight: 700, color: TEXT_PRI, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {s.sembako_products?.product_name || '-'}
             </div>
             <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'DM Sans' }}>

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Check, Sparkles, Loader2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Lock } from 'lucide-react'
+import { getBrokerBasePath } from '../../../lib/hooks/useAuth'
 
 // ── Shared Styles ─────────────────────────────────────────────────────────────
 
@@ -284,7 +285,7 @@ export function BlockedScreen({ profiles }) {
             </div>
           </div>
         )}
-        <button onClick={() => navigate('/broker/akun')} style={primaryBtnStyle}>
+        <button onClick={() => navigate(getBrokerBasePath(trialProfile?.tenants) + '/akun')} style={primaryBtnStyle}>
           Upgrade ke PRO <ArrowRight size={18} />
         </button>
         <button onClick={() => navigate(-1)} style={secondaryBtnStyle}>

@@ -13,7 +13,8 @@ export function useUpdateDelivery() {
     notes,
     driverId = null,
     driverName = null,
-    driverPhone = null
+    driverPhone = null,
+    loadTime = null
   }) => {
     // 1. Fetch current delivery data for calculations
     const { data: delivery, error: fetchError } = await supabase
@@ -39,7 +40,8 @@ export function useUpdateDelivery() {
         notes:             notes || null,
         driver_id:         driverId || null,
         driver_name:       driverName || null,
-        driver_phone:      driverPhone || null
+        driver_phone:      driverPhone || null,
+        load_time:         loadTime || null
       })
       .eq('id', deliveryId)
     

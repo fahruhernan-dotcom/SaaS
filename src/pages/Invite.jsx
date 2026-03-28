@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle2, XCircle, Building2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -22,7 +22,7 @@ export default function Invite() {
         setLoading(true);
         const { data, error } = await supabase
           .from('team_invitations')
-          .select('*, tenants(business_name)')
+          .select('*, tenants(business_name, sub_type)')
           .eq('token', token)
           .single();
 
@@ -82,7 +82,7 @@ export default function Invite() {
       if (inviteError) throw inviteError;
 
       toast.success('Berhasil bergabung ke tim!');
-      navigate('/broker/beranda');
+      navigate(getBrokerBasePath({ sub_type: inviteData.tenants?.sub_type }) + '/beranda');
       
     } catch (err) {
       console.error(err);

@@ -109,34 +109,36 @@ export default function WizardStepOrder({ onNext, onBack }) {
         {inputMode === 'ekor' ? (
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label style={S.label}>Jumlah Ekor *</label>
-              <InputNumber placeholder="500" value={quantity} onChange={setQuantity} step={1} min={1} />
+              <label htmlFor="order_quantity" style={S.label}>Jumlah Ekor *</label>
+              <InputNumber id="order_quantity" name="order_quantity" placeholder="500" value={quantity} onChange={setQuantity} step={1} min={1} />
             </div>
             <div className="space-y-1.5">
-              <label style={S.label}>Bobot/ekor (kg)</label>
-              <InputNumber step={0.01} min={0.1} placeholder="1.85" value={avgWeight} onChange={setAvgWeight} />
+              <label htmlFor="order_avg_weight" style={S.label}>Bobot/ekor (kg)</label>
+              <InputNumber id="order_avg_weight" name="order_avg_weight" step={0.01} min={0.1} placeholder="1.85" value={avgWeight} onChange={setAvgWeight} />
             </div>
           </div>
         ) : (
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <label style={S.label}>Total Berat *</label>
+              <label htmlFor="order_total_weight" style={S.label}>Total Berat *</label>
               <div className="flex gap-2">
                 <InputNumber
+                  id="order_total_weight"
+                  name="order_total_weight"
                   step={weightUnit === 'kg' ? 100 : 0.1}
                   min={0}
                   placeholder="3000"
                   value={totalWeightInput}
                   onChange={setTotalWeightInput}
                 />
-                <select value={weightUnit} onChange={e => setWeightUnit(e.target.value)} className="bg-[#111C24] border border-white/10 h-12 rounded-xl px-4 text-sm text-foreground font-bold outline-none">
+                <select id="order_weight_unit" name="order_weight_unit" value={weightUnit} onChange={e => setWeightUnit(e.target.value)} className="bg-[#111C24] border border-white/10 h-12 rounded-xl px-4 text-sm text-foreground font-bold outline-none">
                   <option value="kg">kg</option><option value="ton">ton</option><option value="rit">rit</option>
                 </select>
               </div>
             </div>
             <div className="space-y-1.5">
-              <label style={S.label}>Bobot Rata-rata (kg/ekor)</label>
-              <InputNumber step={0.01} min={0.1} placeholder="1.85" value={avgWeight} onChange={setAvgWeight} />
+              <label htmlFor="order_avg_weight_berat" style={S.label}>Bobot Rata-rata (kg/ekor)</label>
+              <InputNumber id="order_avg_weight_berat" name="order_avg_weight_berat" step={0.01} min={0.1} placeholder="1.85" value={avgWeight} onChange={setAvgWeight} />
             </div>
           </div>
         )}
@@ -144,14 +146,14 @@ export default function WizardStepOrder({ onNext, onBack }) {
 
       {/* Harga Jual Target */}
       <div className="space-y-1.5">
-        <label style={S.label}>Harga Jual Target (Rp/kg) *</label>
-        <InputRupiah value={pricePerKg} onChange={setPricePerKg} placeholder="20.500" className={S.input + ' text-lg font-bold'} />
+        <label htmlFor="target_price" style={S.label}>Harga Jual Target (Rp/kg) *</label>
+        <InputRupiah id="target_price" name="target_price" value={pricePerKg} onChange={setPricePerKg} placeholder="20.500" className={S.input + ' text-lg font-bold'} />
       </div>
 
       {/* Biaya Pengiriman */}
       <div className="space-y-1.5">
-        <label style={S.label}>Biaya Pengiriman</label>
-        <InputRupiah value={deliveryCost} onChange={setDeliveryCost} placeholder="0" className={S.input} />
+        <label htmlFor="order_delivery_cost" style={S.label}>Biaya Pengiriman</label>
+        <InputRupiah id="order_delivery_cost" name="order_delivery_cost" value={deliveryCost} onChange={setDeliveryCost} placeholder="0" className={S.input} />
       </div>
 
       {/* Status Pembayaran */}
@@ -168,8 +170,8 @@ export default function WizardStepOrder({ onNext, onBack }) {
 
       {paymentStatus === 'sebagian' && (
         <div className="space-y-1.5">
-          <label style={S.label}>Sudah Dibayar</label>
-          <InputRupiah value={paidAmount} onChange={setPaidAmount} placeholder="0" className={S.input} />
+          <label htmlFor="order_paid_amount" style={S.label}>Sudah Dibayar</label>
+          <InputRupiah id="order_paid_amount" name="order_paid_amount" value={paidAmount} onChange={setPaidAmount} placeholder="0" className={S.input} />
         </div>
       )}
       {paymentStatus !== 'lunas' && (
@@ -185,8 +187,8 @@ export default function WizardStepOrder({ onNext, onBack }) {
       </div>
 
       <div className="space-y-1.5">
-        <label style={S.label}>Catatan (Opsional)</label>
-        <textarea value={notes} onChange={e => setNotes(e.target.value)} className="w-full bg-[#111C24] border border-white/10 rounded-xl p-3 text-[#F1F5F9] text-sm min-h-[72px] outline-none resize-none placeholder:text-muted-foreground" placeholder="Catatan..." />
+        <label htmlFor="order_notes" style={S.label}>Catatan (Opsional)</label>
+        <textarea id="order_notes" name="order_notes" value={notes} onChange={e => setNotes(e.target.value)} className="w-full bg-[#111C24] border border-white/10 rounded-xl p-3 text-[#F1F5F9] text-sm min-h-[72px] outline-none resize-none placeholder:text-muted-foreground" placeholder="Catatan..." />
       </div>
 
       <div className="flex gap-3 pt-2">

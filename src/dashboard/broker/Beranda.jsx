@@ -8,17 +8,11 @@ import {
   ChevronRight,
   BarChart2,
   Clock,
-  CheckCircle,
-  Plus,
-  ArrowUpRight,
-  ArrowDownLeft,
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  Truck,
-  Package,
-  ArrowRight,
-  Eye,
-  Wallet
+  Wallet,
+  Scissors,
+  CircleCheck,
+  Beef,
+  CalendarX
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -31,7 +25,7 @@ import {
   ResponsiveContainer
 } from 'recharts'
 import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/lib/hooks/useAuth'
+import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import {
   formatIDR,
@@ -49,6 +43,10 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Sheet,
+  SheetContent,
+} from "@/components/ui/sheet"
 import TransaksiWizard from '../components/TransaksiWizard'
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, format, isToday, isWithinInterval, addDays, differenceInDays } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
@@ -69,7 +67,14 @@ const fadeUp = {
 export default function BrokerBeranda() {
   const { profile, tenant } = useAuth()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
-  const navigate = useNavigate()
+  const _navigate = useNavigate()
+  const brokerBase = getBrokerBasePath(tenant)
+  const navigate = (path, options) => {
+    if (typeof path === 'string' && path.startsWith('/broker/') && !path.startsWith(brokerBase)) {
+      return _navigate(path.replace('/broker', brokerBase), options)
+    }
+    return _navigate(path, options)
+  }
   const queryClient = useQueryClient()
 
   // --- LOCAL STATES ---
@@ -93,9 +98,9 @@ export default function BrokerBeranda() {
       
       const [salesRes, harvestsRes, deliveriesRes, paymentsRes, unpaidSalesRes] = await Promise.all([
         supabase.from('sales').select('*, purchases(*), rpa_clients(rpa_name)').eq('tenant_id', tenant.id).eq('is_deleted', false).gte('transaction_date', sixtyDaysAgo.split('T')[0]),
-        supabase.from('farms').select('*').eq('tenant_id', tenant.id).eq('is_deleted', false).not('harvest_date', 'is', null),
-        supabase.from('deliveries').select('*, sales(*)').eq('tenant_id', tenant.id).eq('is_deleted', false).neq('status', 'completed'),
-        supabase.from('payments').select('*').eq('tenant_id', tenant.id),
+        supabase.from('chicken_batches').select('*, farms(farm_name)').eq('tenant_id', tenant.id).eq('is_deleted', false).not('estimated_harvest_date', 'is', null),
+        supabase.from('deliveries').select('*, sales(*, rpa_clients(rpa_name))').eq('tenant_id', tenant.id).eq('is_deleted', false).neq('status', 'completed'),
+        supabase.from('payments').select('*, sales(*, rpa_clients(rpa_name))').eq('tenant_id', tenant.id),
         supabase.from('sales').select('*, rpa_clients(rpa_name)').eq('tenant_id', tenant.id).eq('is_deleted', false).neq('payment_status', 'lunas')
       ])
 
@@ -378,7 +383,7 @@ function DesktopDashboard({ data, profile, navigate, setWizardOpen, handleTandai
               </div>
             </div>
             
-            <div className="h-[280px] w-full relative z-10">
+            <div className="h-[280px] w-full relative z-10 overflow-hidden">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart 
                   data={chartPeriod === 'weekly' ? data?.chart.weekly : data?.chart.monthly}
@@ -541,7 +546,7 @@ function MobileDashboard({ data, profile, navigate, setWizardOpen, chartPeriod, 
                 <button onClick={() => setChartPeriod('monthly')} className={cn("px-3 py-1 text-xs font-black uppercase rounded-md ml-0.5", chartPeriod === 'monthly' ? "bg-emerald-500 text-white" : "text-[#4B6478]")}>M</button>
              </div>
           </div>
-          <div className="h-[180px] w-full">
+          <div className="h-[180px] w-full overflow-hidden">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartPeriod === 'weekly' ? data?.chart.weekly : data?.chart.monthly}>
                 <XAxis dataKey="name" hide />
@@ -655,13 +660,18 @@ function CustomChartTooltip({ active, payload }) {
 }
 
 function AgendaSection({ data, selectedDate, setSelectedDate, currentMonth, setCurrentMonth, agendaFilter, setAgendaFilter, isDesktop }) {
+  const [selectedEvent, setSelectedEvent] = useState(null)
+  const { tenant } = useAuth()
+  const brokerBase = getBrokerBasePath(tenant)
+  const navigate = useNavigate()
+
   const filteredEvents = useMemo(() => {
     if (!data?.events) return []
     const all = [
-      ...data.events.harvests.map(e => ({ ...e, type: 'Panen', date: e.harvest_date, icon: Truck, color: '#10B981', dot: 'bg-[#10B981]' })),
-      ...data.events.dues.map(e => ({ ...e, type: 'Piutang', date: e.due_date, icon: AlertCircle, color: '#F87171', dot: 'bg-[#F87171]' })),
-      ...data.events.deliveries.map(e => ({ ...e, type: 'Pengiriman', date: format(new Date(e.created_at), 'yyyy-MM-dd'), icon: Package, color: '#F59E0B', dot: 'bg-[#F59E0B]' })),
-      ...data.events.payments.map(e => ({ ...e, type: 'Pembayaran', date: e.payment_date, icon: Wallet, color: '#818CF8', dot: 'bg-[#818CF8]' }))
+      ...data.events.harvests.map(e => ({ ...e, type: 'Panen', date: e.estimated_harvest_date, icon: Scissors, color: '#10B981', dot: 'bg-[#10B981]' })),
+      ...data.events.dues.map(e => ({ ...e, type: 'Piutang', date: e.due_date, icon: Wallet, color: '#F87171', dot: 'bg-[#F87171]' })),
+      ...data.events.deliveries.map(e => ({ ...e, type: 'Pengiriman', date: format(new Date(e.created_at), 'yyyy-MM-dd'), icon: Truck, color: '#F59E0B', dot: 'bg-[#F59E0B]' })),
+      ...data.events.payments.map(e => ({ ...e, type: 'Pembayaran', date: e.payment_date, icon: CircleCheck, color: '#10B981', dot: 'bg-[#10B981]' }))
     ]
     
     let result = all.filter(e => isSameDay(new Date(e.date), selectedDate))
@@ -674,12 +684,12 @@ function AgendaSection({ data, selectedDate, setSelectedDate, currentMonth, setC
   const stats = useMemo(() => {
      if(!data?.events) return { piutang: 0, panen: 0, krm: 0, bayar: 0 }
      const mStr = format(currentMonth, 'yyyy-MM')
-     return {
-        piutang: data.events.dues.filter(e => e.due_date.startsWith(mStr)).reduce((sum, e) => sum + calcRemainingAmount(e), 0),
-        panen: data.events.harvests.filter(e => e.harvest_date.startsWith(mStr)).length,
-        krm: data.events.deliveries.length,
-        bayar: data.events.payments.filter(e => e.payment_date.startsWith(mStr)).length
-     }
+      return {
+         piutang: data.events.dues.filter(e => e.due_date?.startsWith(mStr)).reduce((sum, e) => sum + calcRemainingAmount(e), 0),
+         panen: data.events.harvests.filter(e => e.estimated_harvest_date?.startsWith(mStr)).length,
+         krm: data.events.deliveries.length,
+         bayar: data.events.payments.filter(e => e.payment_date?.startsWith(mStr)).length
+      }
   }, [data, currentMonth])
 
   return (
@@ -719,25 +729,209 @@ function AgendaSection({ data, selectedDate, setSelectedDate, currentMonth, setC
               ))}
            </div>
 
-           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4 md:mt-6 overflow-x-auto no-scrollbar md:grid">
-              <AgendaMiniStat label="PIUTANG" value={formatIDRShort(stats.piutang)} color="text-red-400" isDesktop={isDesktop} />
-              <AgendaMiniStat label="PANEN" value={stats.panen} color="text-emerald-400" isDesktop={isDesktop} />
-              <AgendaMiniStat label="PENGIRIMAN" value={stats.krm} color="text-amber-400" isDesktop={isDesktop} />
-              <AgendaMiniStat label="PEMBAYARAN" value={stats.bayar} color="text-indigo-400" isDesktop={isDesktop} />
+           <div className="grid grid-cols-2 gap-2 mt-4">
+              {/* Card Piutang */}
+              <div className="bg-[#111C24] rounded-xl p-3 border border-white/5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] font-display mb-1">Piutang</p>
+                <p className="text-[#F1F5F9] font-display font-bold text-sm">
+                  {formatIDRShort(stats.piutang)}
+                </p>
+              </div>
+              {/* Card Panen */}
+              <div className="bg-[#111C24] rounded-xl p-3 border border-white/5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] font-display mb-1">Panen</p>
+                <p className="text-emerald-400 font-display font-bold text-sm">
+                  {stats.panen}
+                </p>
+              </div>
+              {/* Card Pengiriman */}
+              <div className="bg-[#111C24] rounded-xl p-3 border border-white/5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] font-display mb-1">Pengiriman</p>
+                <p className="text-amber-400 font-display font-bold text-sm">
+                  {stats.krm}
+                </p>
+              </div>
+              {/* Card Pembayaran */}
+              <div className="bg-[#111C24] rounded-xl p-3 border border-white/5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] font-display mb-1">Pembayaran</p>
+                <p className="text-purple-400 font-display font-bold text-sm">
+                  {stats.bayar}
+                </p>
+              </div>
            </div>
 
            <div className="space-y-3 mt-8">
               {filteredEvents.length > 0 ? (
-                filteredEvents.map((event, idx) => <EventItem key={idx} event={event} isDesktop={isDesktop} />)
+                filteredEvents.map((event, idx) => (
+                  <EventItem key={idx} event={event} isDesktop={isDesktop} onClick={() => setSelectedEvent(event)} />
+                ))
               ) : (
-                <div className="py-12 text-center">
-                  <p className={cn("font-black uppercase tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Tidak ada agenda hari ini</p>
+                <div className="text-center py-8">
+                  <CalendarX className="w-10 h-10 text-[#4B6478] mx-auto mb-2" />
+                  <p className="text-[#4B6478] text-sm italic">
+                    Tidak ada agenda di tanggal ini
+                  </p>
                 </div>
               )}
            </div>
         </div>
       </div>
+
+      <EventDetailSheet 
+        selectedEvent={selectedEvent} 
+        onClose={() => setSelectedEvent(null)} 
+        brokerBase={brokerBase}
+        navigate={navigate}
+      />
     </Card>
+  )
+}
+
+const DetailRow = ({ label, value, valueClass = 'text-[#F1F5F9]' }) => (
+  <div className="flex items-center justify-between py-2 border-b border-white/5">
+    <span className="text-[#4B6478] text-sm">{label}</span>
+    <span className={`text-sm font-semibold ${valueClass}`}>{value}</span>
+  </div>
+)
+
+function EventDetailSheet({ selectedEvent, onClose, brokerBase, navigate }) {
+  if (!selectedEvent) return null
+
+  const renderContent = () => {
+    switch (selectedEvent.type) {
+      case 'Piutang':
+        return (
+          <>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center">
+                <Wallet className="w-6 h-6 text-red-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478] font-display">Piutang Jatuh Tempo</p>
+                <h3 className="text-[#F1F5F9] font-display font-bold text-lg">
+                  {selectedEvent.rpa_clients?.rpa_name || 'RPA'}
+                </h3>
+              </div>
+              <span className="ml-auto text-[10px] font-black px-2 py-1 rounded-lg bg-red-500/10 text-red-400 uppercase">
+                Mendesak
+              </span>
+            </div>
+            
+            <div className="space-y-3">
+              <DetailRow label="Sisa Tagihan" 
+                value={formatIDR(calcRemainingAmount(selectedEvent))} 
+                valueClass="text-red-400 font-bold" />
+              <DetailRow label="Total Transaksi" 
+                value={formatIDR(selectedEvent.total_revenue)} />
+              <DetailRow label="Jatuh Tempo" 
+                value={format(new Date(selectedEvent.date), 'dd MMM yyyy', { locale: idLocale })} />
+              <DetailRow label="Status" 
+                value={selectedEvent.payment_status?.replace('_', ' ').toUpperCase()} />
+            </div>
+            
+            <button 
+              onClick={() => { onClose(); navigate(`${brokerBase}/rpa`) }}
+              className="w-full mt-6 h-12 bg-emerald-500 rounded-xl font-display font-black text-sm text-white shadow-[0_8px_24px_rgba(16,185,129,0.25)] active:scale-95 transition-all">
+              Lihat Detail RPA →
+            </button>
+          </>
+        )
+      case 'Pengiriman':
+        return (
+          <>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+                <Truck className="w-6 h-6 text-amber-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478] font-display">Detail Pengiriman</p>
+                <h3 className="text-[#F1F5F9] font-display font-bold text-lg">
+                  {selectedEvent.sales?.rpa_clients?.rpa_name || 'RPA'}
+                </h3>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <DetailRow label="Sopir" value={selectedEvent.driver_name || '-'} />
+              <DetailRow label="Armada" value={selectedEvent.vehicle_reg_number || '-'} />
+              <DetailRow label="Jumlah Ekor" value={`${selectedEvent.initial_count} ekor`} />
+              <DetailRow label="Status" value={selectedEvent.status?.toUpperCase()} valueClass="text-amber-400" />
+            </div>
+            
+            <button 
+              onClick={() => { onClose(); navigate(`${brokerBase}/pengiriman`) }}
+              className="w-full mt-6 h-12 bg-emerald-500 rounded-xl font-display font-black text-sm text-white shadow-[0_8px_24px_rgba(16,185,129,0.25)] active:scale-95 transition-all">
+              Lihat Pengiriman →
+            </button>
+          </>
+        )
+      case 'Panen':
+        return (
+          <>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+                <Scissors className="w-6 h-6 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478] font-display">Jadwal Panen</p>
+                <h3 className="text-[#F1F5F9] font-display font-bold text-lg">
+                  {selectedEvent.farms?.farm_name || 'Kandang'}
+                </h3>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <DetailRow label="Estimasi Ekor" value={`${selectedEvent.current_count} ekor`} />
+              <DetailRow label="Tanggal Panen" value={format(new Date(selectedEvent.date), 'dd MMM yyyy', { locale: idLocale })} />
+              <DetailRow label="Lokasi" value={selectedEvent.farms?.location || '-'} />
+            </div>
+            
+            <button 
+              onClick={() => { onClose(); navigate(`${brokerBase}/kandang`) }}
+              className="w-full mt-6 h-12 bg-emerald-500 rounded-xl font-display font-black text-sm text-white shadow-[0_8px_24px_rgba(16,185,129,0.25)] active:scale-95 transition-all">
+              Lihat Siklus →
+            </button>
+          </>
+        )
+      case 'Pembayaran':
+        return (
+          <>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+                <CircleCheck className="w-6 h-6 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478] font-display">Pembayaran Diterima</p>
+                <h3 className="text-[#F1F5F9] font-display font-bold text-lg">
+                  {selectedEvent.sales?.rpa_clients?.rpa_name || 'RPA'}
+                </h3>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <DetailRow label="Jumlah Bayar" value={formatIDR(selectedEvent.amount)} valueClass="text-emerald-400 font-bold" />
+              <DetailRow label="Tanggal" value={format(new Date(selectedEvent.date), 'dd MMM yyyy', { locale: idLocale })} />
+            </div>
+            
+            <button 
+              onClick={() => { onClose(); navigate(`${brokerBase}/transaksi`) }}
+              className="w-full mt-6 h-12 bg-emerald-500 rounded-xl font-display font-black text-sm text-white shadow-[0_8px_24px_rgba(16,185,129,0.25)] active:scale-95 transition-all">
+              Lihat Transaksi →
+            </button>
+          </>
+        )
+      default:
+        return null
+    }
+  }
+
+  return (
+    <Sheet open={!!selectedEvent} onOpenChange={onClose}>
+      <SheetContent side="bottom" className="bg-[#0C1319] border-t border-white/5 rounded-t-[32px] p-8 max-h-[85vh] outline-none">
+        <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-8" />
+        {renderContent()}
+      </SheetContent>
+    </Sheet>
   )
 }
 
@@ -755,7 +949,7 @@ function CalendarHeatmap({ currentMonth, selectedDate, setSelectedDate, events, 
       if (!counts[d]) counts[d] = 0
       counts[d]++
     }
-    events.harvests.forEach(h => add(h.harvest_date))
+    events.harvests.forEach(h => add(h.estimated_harvest_date))
     events.dues.forEach(s => add(s.due_date))
     events.deliveries.forEach(d => add(format(new Date(d.created_at), 'yyyy-MM-dd')))
     events.payments.forEach(p => add(p.payment_date))
@@ -802,7 +996,7 @@ function CalendarHeatmap({ currentMonth, selectedDate, setSelectedDate, events, 
               </span>
               
               <div className="absolute bottom-1.5 flex gap-0.5">
-                 {events?.harvests.some(e => e.harvest_date === dayStr) && <div className="w-1 h-1 rounded-full bg-[#10B981]" />}
+                 {events?.harvests.some(e => e.estimated_harvest_date === dayStr) && <div className="w-1 h-1 rounded-full bg-[#10B981]" />}
                  {events?.dues.some(e => e.due_date === dayStr) && <div className="w-1 h-1 rounded-full bg-[#F87171]" />}
                  {events?.deliveries.some(e => format(new Date(e.created_at), 'yyyy-MM-dd') === dayStr) && <div className="w-1 h-1 rounded-full bg-[#F59E0B]" />}
                  {events?.payments.some(e => e.payment_date === dayStr) && <div className="w-1 h-1 rounded-full bg-[#818CF8]" />}
@@ -815,35 +1009,61 @@ function CalendarHeatmap({ currentMonth, selectedDate, setSelectedDate, events, 
   )
 }
 
-function AgendaMiniStat({ label, value, color, isDesktop }) {
-  return (
-    <div className="bg-black/20 border border-white/5 p-3 rounded-2xl flex flex-col gap-1 min-w-[100px]">
-       <p className={cn("font-black text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-[8px]" : "text-[10px]")}>{label}</p>
-       <p className={cn("font-black tabular-nums", color, isDesktop ? "text-[13px]" : "text-sm")}>{value}</p>
-    </div>
-  )
-}
+// Redundant AgendaMiniStat removed
 
-function EventItem({ event, isDesktop }) {
+function EventItem({ event, isDesktop, onClick }) {
   const Icon = event.icon
   const diff = differenceInDays(new Date(event.date), new Date())
+  const isPast = diff < 0
+  const isTodayDate = isSameDay(new Date(event.date), new Date())
   
-  let urgency = { label: 'Terjadwal', color: 'bg-indigo-500/10 text-indigo-400' }
-  if (diff <= 2) urgency = { label: 'Mendesak', color: 'bg-red-500/10 text-red-400' }
-  else if (diff <= 7) urgency = { label: 'Segera', color: 'bg-amber-500/10 text-amber-400' }
+  let urgency = { label: 'Terjadwal', color: 'bg-slate-500/10 text-slate-400' }
+  
+  if (isPast) {
+    urgency = { label: 'MENDESAK', color: 'bg-red-500/10 text-red-400' }
+  } else if (isTodayDate) {
+    urgency = { label: 'HARI INI', color: 'bg-amber-500/10 text-amber-400' }
+  } else {
+    urgency = { label: `${diff} Hari Lagi`, color: 'bg-slate-500/10 text-slate-400' }
+  }
+
+  // Override specific badges
+  if (event.type === 'Panen') urgency = { label: 'PANEN', color: 'bg-emerald-500/10 text-emerald-400' }
+  if (event.type === 'Pengiriman') urgency = { label: 'PENGIRIMAN', color: 'bg-blue-500/10 text-blue-400' }
+  if (event.type === 'Pembayaran') urgency = { label: 'LUNAS', color: 'bg-emerald-500/10 text-emerald-400' }
+
+  let title = event.type
+  let subtitle = formatDate(event.date)
+
+  if (event.type === 'Piutang') {
+    title = 'Piutang Jatuh Tempo'
+    subtitle = `${event.rpa_clients?.rpa_name || 'RPA'} • ${formatIDRShort(calcRemainingAmount(event))}`
+  } else if (event.type === 'Panen') {
+    title = 'Jadwal Panen'
+    subtitle = `${event.farms?.farm_name || 'Kandang'} • Est. ${event.current_count || 0} ekor`
+  } else if (event.type === 'Pengiriman') {
+    title = `Pengiriman ke ${event.sales?.rpa_clients?.rpa_name || 'RPA'}`
+    subtitle = `${event.initial_count || 0} ekor • ${event.driver_name || '-'}`
+  } else if (event.type === 'Pembayaran') {
+    title = 'Pembayaran Diterima'
+    subtitle = `${event.sales?.rpa_clients?.rpa_name || 'RPA'} • ${formatIDRShort(event.amount)}`
+  }
 
   return (
-    <div className="p-4 bg-black/30 border border-white/5 rounded-2xl flex items-center gap-4 group hover:border-emerald-500/20 transition-all">
+    <div 
+      onClick={onClick}
+      className="p-4 bg-black/30 border border-white/5 rounded-2xl flex items-center gap-4 group hover:border-emerald-500/20 active:scale-[0.98] transition-all cursor-pointer"
+    >
        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${event.color}15`, color: event.color }}>
           <Icon size={18} />
        </div>
        <div className="flex-1 min-w-0">
           <div className="flex justify-between items-start gap-2">
-             <h4 className={cn("font-bold text-[#F1F5F9] truncate", isDesktop ? "text-[13px]" : "text-sm")}>{event.type === 'Piutang' ? event.rpa_clients?.rpa_name : event.farm_name || 'Event Sesuai Jadwal'}</h4>
-             <Badge className={cn("font-black uppercase tracking-tighter border-none px-2 h-5", urgency.color, isDesktop ? "text-[8px]" : "text-[10px]")}>{urgency.label}</Badge>
+             <h4 className={cn("font-bold text-[#F1F5F9] truncate", isDesktop ? "text-[13px]" : "text-sm")}>{title}</h4>
+             <Badge className={cn("font-black uppercase tracking-tighter border-none px-2 h-5 shrink-0", urgency.color, isDesktop ? "text-[8px]" : "text-[10px]")}>{urgency.label}</Badge>
           </div>
-          <p className={cn("text-[#4B6478] font-medium mt-0.5", isDesktop ? "text-[11px]" : "text-xs")}>
-             {formatDate(event.date)} {event.total_revenue ? `· ${formatIDRShort(event.total_revenue)}` : ''}
+          <p className={cn("text-[#4B6478] font-medium mt-0.5 truncate", isDesktop ? "text-[11px]" : "text-xs")}>
+             {subtitle}
           </p>
        </div>
     </div>

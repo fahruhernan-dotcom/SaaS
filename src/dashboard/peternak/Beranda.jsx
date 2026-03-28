@@ -9,7 +9,7 @@ import { LineChart, Line, ResponsiveContainer, Tooltip, YAxis } from 'recharts'
 import { useAuth } from '../../lib/hooks/useAuth'
 import { useQueryClient } from '@tanstack/react-query'
 import { formatIDRShort } from '../../lib/format'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import SetupFarm from './SetupFarm'
 import FarmCard from './components/FarmCard'
@@ -83,7 +83,16 @@ function getGreeting() {
 export default function PeternakBeranda() {
   const { profile, tenant } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const queryClient = useQueryClient()
+
+  // Handle FAB action from BottomNav (?action=tambah-kandang)
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('action') === 'tambah-kandang') {
+      setShowSetupWizard(true)
+    }
+  }, [location.search])
   const [showSetupWizard, setShowSetupWizard] = useState(false)
 
   const { data: farms, isLoading: farmsLoading } = usePeternakFarms()

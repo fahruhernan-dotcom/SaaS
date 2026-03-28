@@ -276,8 +276,8 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onShowLogistics, 
                              icon={Truck} 
                              label="Kendaraan" 
                              value={
-                                 <div className="flex flex-col gap-1 items-start">
-                                     <span className="truncate w-full">{delivery.vehicles ? `${delivery.vehicles.brand || ''} ${delivery.vehicles.vehicle_plate || ''}`.trim() : `${delivery.vehicle_type || '-'} ${delivery.vehicle_plate || ''}`.trim()}</span>
+                                 <div className="flex flex-col gap-1 items-start w-full min-w-0">
+                                     <span className="truncate w-full block">{delivery.vehicles ? `${delivery.vehicles.brand || ''} ${delivery.vehicles.vehicle_plate || ''}`.trim() : `${delivery.vehicle_type || '-'} ${delivery.vehicle_plate || ''}`.trim()}</span>
                                      {!delivery.vehicle_id && (
                                          <Badge className={cn("border-none bg-red-500/10 text-red-400 font-black uppercase px-1.5 py-0 h-4 rounded-md", isDesktop ? "text-[8px]" : "text-[11px]")}>
                                              Belum Terdaftar
@@ -290,8 +290,8 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onShowLogistics, 
                              icon={User} 
                              label="Sopir" 
                              value={
-                                 <div className="flex flex-col gap-1 items-start">
-                                     <span className="truncate w-full">{delivery.drivers?.full_name || delivery.driver_name || '-'}</span>
+                                 <div className="flex flex-col gap-1 items-start w-full min-w-0">
+                                     <span className="truncate w-full block">{delivery.drivers?.full_name || delivery.driver_name || '-'}</span>
                                      {!delivery.driver_id && (
                                          <Badge className={cn("border-none bg-red-500/10 text-red-400 font-black uppercase px-1.5 py-0 h-4 rounded-md", isDesktop ? "text-[8px]" : "text-[11px]")}>
                                              Belum Terdaftar
@@ -338,55 +338,59 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onShowLogistics, 
                     )}
 
                     {/* Actions */}
-                    <div className="p-3 bg-white/[0.03] border-t border-white/5">
-                        {delivery.status === 'on_route' ? (
-                            <Button 
-                                onClick={() => onUpdateTiba(delivery)}
-                                className={cn("w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/10 gap-2", isDesktop ? "text-[11px]" : "text-xs")}
-                            >
-                                <CheckCircle2 size={16} /> Catat Tiba
-                            </Button>
-                        ) : delivery.status === 'arrived' ? (
-                            <Button 
-                                variant="outline"
-                                className={cn("w-full h-12 border-white/10 bg-secondary/20 hover:bg-secondary/30 text-white font-black uppercase tracking-widest rounded-xl", isDesktop ? "text-[11px]" : "text-xs")}
-                            >
-                                Selesaikan Pengiriman
-                            </Button>
-                        ) : delivery.status === 'completed' ? (
-                            <div className="space-y-2">
-                                <div className="grid grid-cols-2 gap-2">
+                    <div className="p-3 bg-white/[0.03] border-t border-white/5 space-y-2">
+                        {/* Primary Action Button */}
+                        <div className="flex gap-2 w-full">
+                            {delivery.status === 'on_route' ? (
+                                <Button 
+                                    onClick={() => onUpdateTiba(delivery)}
+                                    className={cn("flex-1 h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/10 gap-2", isDesktop ? "text-[11px]" : "text-xs")}
+                                >
+                                    <CheckCircle2 size={16} /> Catat Tiba
+                                </Button>
+                            ) : delivery.status === 'arrived' ? (
+                                <Button 
+                                    variant="outline"
+                                    className={cn("flex-1 h-12 border-white/10 bg-secondary/20 hover:bg-secondary/30 text-white font-black uppercase tracking-widest rounded-xl", isDesktop ? "text-[11px]" : "text-xs")}
+                                >
+                                    Selesaikan Pengiriman
+                                </Button>
+                            ) : delivery.status === 'completed' ? (
+                                <>
                                     <Button
                                         variant="outline"
                                         onClick={() => onEditArrival(delivery)}
-                                        className={cn("h-10 text-emerald-400 border-emerald-500/10 hover:bg-emerald-500/5 font-black uppercase tracking-widest gap-2", isDesktop ? "text-[10px]" : "text-[11px]")}
+                                        className={cn("flex-1 h-10 text-emerald-400 border-emerald-500/10 hover:bg-emerald-500/5 font-black uppercase tracking-widest gap-2", isDesktop ? "text-[10px]" : "text-[11px]")}
                                     >
                                         <Pencil size={12} /> Edit Kedatangan
                                     </Button>
                                     <Button
                                         variant="ghost"
                                         onClick={() => onShowLogistics(delivery)}
-                                        className={cn("h-10 text-[#4B6478] hover:text-white font-black uppercase tracking-widest", isDesktop ? "text-[10px]" : "text-[11px]")}
+                                        className={cn("flex-1 h-10 text-[#4B6478] hover:text-white font-black uppercase tracking-widest", isDesktop ? "text-[10px]" : "text-[11px]")}
                                     >
                                         Lihat Detail Logistik
                                     </Button>
-                                </div>
-                                {onPrintSuratJalan && (
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => onPrintSuratJalan(delivery)}
-                                        className={cn("w-full h-10 border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 text-blue-400 font-black uppercase tracking-widest gap-2", isDesktop ? "text-[10px]" : "text-[11px]")}
-                                    >
-                                        <FileText size={12} /> Cetak Surat Jalan
-                                    </Button>
-                                )}
-                            </div>
-                        ) : (
-                            <Button 
+                                </>
+                            ) : (
+                                <Button 
+                                    variant="outline"
+                                    className={cn("flex-1 h-12 border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-400 font-black uppercase tracking-widest rounded-xl gap-2", isDesktop ? "text-[11px]" : "text-xs")}
+                                >
+                                    <Clock size={16} /> Update Status
+                                </Button>
+                            )}
+                        </div>
+                        
+                        {/* Print Action - Available as long as departure started */}
+                        {onPrintSuratJalan && (
+                            <Button
                                 variant="outline"
-                                className={cn("w-full h-12 border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-400 font-black uppercase tracking-widest rounded-xl gap-2", isDesktop ? "text-[11px]" : "text-xs")}
+                                onClick={() => onPrintSuratJalan(delivery)}
+                                disabled={delivery.status === 'pending' || delivery.status === 'preparing' || !delivery.departure_time}
+                                className={cn("w-full h-10 border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 text-blue-400 font-black uppercase tracking-widest gap-2 disabled:bg-white/5 disabled:border-white/5 disabled:text-[#4B6478]", isDesktop ? "text-[10px]" : "text-[11px]")}
                             >
-                                <Clock size={16} /> Update Status
+                                <FileText size={12} /> Cetak Surat Jalan
                             </Button>
                         )}
                     </div>
