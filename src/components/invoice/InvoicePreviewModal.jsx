@@ -19,7 +19,7 @@ import { generateInvoiceNumber } from '@/lib/invoice/invoiceUtils'
 
 function buildDocument({ type, invoiceNumber, data }) {
   const {
-    tenant, sale, rpa, farm, delivery, purchase, payment,
+    tenant, sale, rpa, farm, delivery, purchase, payment, payments,
     cycle, broker_name, total_ekor, total_berat, price_per_kg,
     invoice, customer, items, showProfit,
     generatedBy,
@@ -35,6 +35,7 @@ function buildDocument({ type, invoiceNumber, data }) {
         delivery={delivery}
         invoiceNumber={invoiceNumber}
         generatedBy={generatedBy}
+        payments={payments}
       />
     )
   }

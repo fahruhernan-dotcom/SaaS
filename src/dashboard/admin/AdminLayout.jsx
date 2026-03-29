@@ -56,7 +56,7 @@ function AdminSidebar() {
             } else if (v === 'peternak') {
                 navigate('/peternak/beranda')
             } else if (v === 'rpa') {
-                navigate('/rpa-buyer/beranda')
+                navigate('/rumah_potong/rpa/beranda')
             } else {
                 navigate('/broker/poultry_broker/beranda')
             }

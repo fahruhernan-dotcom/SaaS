@@ -189,12 +189,24 @@ export const useSembakoStockOut = (productId) => useQuery({
 // ── MUTATION HOOKS ────────────────────────────────────────────────────────────
 
 async function getTenantId() {
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = await supabase
+  // Selalu prioritaskan tenant yang sedang aktif di UI
+  const activeTenantId = localStorage.getItem('ternakos_active_tenant_id')
+  if (activeTenantId) return activeTenantId
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) throw new Error('User not authenticated')
+
+  const { data: profiles, error } = await supabase
     .from('profiles')
     .select('tenant_id')
     .eq('auth_user_id', user.id)
-    .single()
+    .limit(1)
+
+  if (error) throw error
+  if (!profiles || profiles.length === 0) throw new Error('Profil tidak ditemukan. Pastikan Anda sudah terdaftar dengan benar.')
+  const profile = profiles[0]
+  if (!profile.tenant_id) throw new Error('Tenant ID tidak ditemukan pada profil Anda.')
+
   return profile.tenant_id
 }
 

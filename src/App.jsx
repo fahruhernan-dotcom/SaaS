@@ -9,72 +9,36 @@ import Register from './pages/Register';
 import CheckEmail from './pages/CheckEmail';
 import LoadingScreen from './components/LoadingScreen';
 
-// Dashboard pages
-import BrokerBeranda from './dashboard/broker/Beranda';
-import PeternakBeranda from './dashboard/peternak/Beranda';
-import PeternakFarmBeranda from './dashboard/peternak/FarmBeranda';
-import PeternakSiklus from './dashboard/peternak/Siklus';
-import PeternakInputHarian from './dashboard/peternak/InputHarian';
-import PeternakAnakKandang from './dashboard/peternak/AnakKandang';
-import PeternakLaporanSiklus from './dashboard/peternak/LaporanSiklus';
-import PeternakPakan from './dashboard/peternak/Pakan';
-import RPABeranda from './dashboard/rpa/Beranda'
-import RPAOrder from './dashboard/rpa/Order'
-import RPAHutang from './dashboard/rpa/Hutang'
-import RPADistribusi from './dashboard/rpa/Distribusi'
-import RPADistribusiDetail from './dashboard/rpa/DistribusiDetail'
-import RPALaporanMargin from './dashboard/rpa/LaporanMargin'
-import RPAAkun from './dashboard/rpa/Akun';
-import AppSidebar from './dashboard/components/AppSidebar';
+import { PeternakPageRouter } from './dashboard/peternak/PeternakRouter';
+import PeternakLayout from './dashboard/_shared/layouts/PeternakLayout';
+
+
+import AppSidebar from './dashboard/_shared/components/AppSidebar';
 import { Menu } from 'lucide-react';
 
-import Transaksi from './dashboard/broker/Transaksi';
-import RPA from './dashboard/broker/RPA';
-import RPADetail from './dashboard/broker/RPADetail';
-import Kandang from './dashboard/broker/Kandang';
-import Simulator from './dashboard/broker/Simulator';
-import Akun from './dashboard/broker/Akun';
 // Dashboard pages
-import HargaPasar from './dashboard/pages/HargaPasar';
-import Pengiriman from './dashboard/broker/Pengiriman';
-import CashFlow from './dashboard/broker/CashFlow';
-import Armada from './dashboard/broker/Armada';
-import Tim from './dashboard/broker/Tim';
-import SopirDashboard from './dashboard/broker/SopirDashboard';
-import { BrokerPageRouter } from './dashboard/broker/BrokerRouter';
+import HargaPasar from './dashboard/_shared/pages/HargaPasar';
+import { BrokerPageRouter } from './dashboard/broker/_shared/BrokerRouter';
+import { RPPageRouter } from './dashboard/rumah_potong/RPPageRouter';
+import RumahPotongLayout from './dashboard/_shared/layouts/RumahPotongLayout';
 
 
 // Egg Broker Vertical
-import EggBeranda from './dashboard/egg/Beranda';
-
-// Sembako Broker Vertical
-import SembakoBeranda from './dashboard/sembako/Beranda';
-import SembakoPenjualan from './dashboard/sembako/Penjualan';
-import SembakoPegawai from './dashboard/sembako/Pegawai';
-import SembakoLaporan from './dashboard/sembako/Laporan';
-import SembakoProduk from './dashboard/sembako/Produk';
-import SembakoGudang from './dashboard/sembako/Gudang';
-import EggInventori from './dashboard/egg/Inventori';
-import EggPOS from './dashboard/egg/POS';
-import EggTransaksi from './dashboard/egg/Transaksi';
-import EggSuppliers from './dashboard/egg/Suppliers';
-import EggCustomers from './dashboard/egg/Customers';
-
 import AcceptInvite from './pages/AcceptInvite';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import AboutUs from './pages/AboutUs';
 import FiturPage from './pages/FiturPage';
 import HargaPage from './pages/HargaPage';
-import OnboardingFlow from './dashboard/pages/onboarding/OnboardingFlow';
-import Market from './dashboard/pages/Market';
+import OnboardingFlow from './dashboard/_shared/pages/OnboardingFlow';
+import Market from './dashboard/_shared/pages/Market';
 
 // Components
 import ErrorBoundary from './components/ErrorBoundary';
-import BottomNav from './dashboard/components/BottomNav';
+import BottomNav from './dashboard/_shared/components/BottomNav';
 
-import BrokerLayout from './dashboard/layouts/BrokerLayout';
-import DesktopSidebarLayout from './dashboard/layouts/DesktopSidebarLayout';
+import BrokerLayout from './dashboard/_shared/layouts/BrokerLayout';
+import DesktopSidebarLayout from './dashboard/_shared/layouts/DesktopSidebarLayout';
 import { useMediaQuery } from './lib/hooks/useMediaQuery';
 
 // Admin
@@ -85,9 +49,16 @@ import AdminSubscriptions from './dashboard/admin/AdminSubscriptions';
 import AdminPricing from './dashboard/admin/AdminPricing';
 
 // ── Vertical-aware beranda path ───────────────────────────────────────────────
-function getVerticalBeranda(vertical) {
-  if (vertical === 'egg_broker')     return '/egg/beranda'
-  return `/broker/${vertical || 'poultry_broker'}/beranda`
+function getVerticalBeranda(vertical, subType) {
+  if (vertical === 'rumah_potong') {
+    const rpType = subType?.startsWith('rpa') ? 'rpa' : 'rph'
+    return `/rumah_potong/${rpType}/beranda`
+  }
+  if (vertical === 'peternak') {
+    return `/peternak/${subType || 'peternak_broiler'}/beranda`
+  }
+  // All broker types use subType as param
+  return `/broker/${subType || 'broker_ayam'}/beranda`
 }
 
 // ── ComingSoon placeholder for unbuilt sembako pages ─────────────────────────
@@ -130,13 +101,13 @@ function ProtectedRoute({ children, requiredType, requiredVertical }) {
 
   // Role guard (only check if business model is selected)
   if (profile?.business_model_selected && requiredType && profile.user_type !== requiredType) {
-    const role = profile.user_type === 'rpa' ? 'rpa-buyer' : profile.user_type;
+    const role = profile.user_type === 'rumah_potong' ? 'rpa-buyer' : profile.user_type;
     return <Navigate to={`/${role}/beranda`} replace />;
   }
 
   // Vertical guard
   if (requiredVertical && tenant?.business_vertical && tenant.business_vertical !== requiredVertical) {
-    return <Navigate to={getVerticalBeranda(tenant.business_vertical)} replace />;
+    return <Navigate to={getVerticalBeranda(tenant.business_vertical, tenant.sub_type)} replace />;
   }
 
   return children;
@@ -151,7 +122,7 @@ function RoleGuard({ allowedRoles, children }) {
   if (profile?.role === 'superadmin') return children;
   
   if (!profile || !allowedRoles.includes(profile.role)) {
-    return <Navigate to={getVerticalBeranda(tenant?.business_vertical)} replace />;
+    return <Navigate to={getVerticalBeranda(tenant?.business_vertical, tenant?.sub_type)} replace />;
   }
 
   return children;
@@ -159,6 +130,7 @@ function RoleGuard({ allowedRoles, children }) {
 
 function RoleRedirector() {
   const { user, profile, tenant, loading } = useAuth();
+  const location = useLocation();
   if (loading) return <LoadingScreen />;
   
   // Superadmin redirects to /admin only if not explicitly on a business path
@@ -168,13 +140,16 @@ function RoleRedirector() {
 
   if (!profile) return <Navigate to="/login" replace />;
   
-  if (profile.role === 'sopir') return <Navigate to="/broker/sopir" replace />;
+  if (profile.role === 'sopir') {
+    const subType = tenant?.sub_type || 'broker_ayam'
+    return <Navigate to={`/broker/${subType}/sopir`} replace />;
+  }
   
-  const role = profile.user_type === 'rpa' ? 'rpa-buyer' : profile.user_type;
+  const role = profile.user_type === 'rumah_potong' ? 'rumah_potong' : profile.user_type;
   
-  // If broker, point to the vertical-specific beranda
-  if (profile.user_type === 'broker') {
-    return <Navigate to={getVerticalBeranda(tenant?.business_vertical)} replace />;
+  // If broker/rumah_potong, point to the vertical-specific beranda
+  if (profile.user_type === 'broker' || profile.user_type === 'rumah_potong') {
+    return <Navigate to={getVerticalBeranda(tenant?.business_vertical, tenant?.sub_type)} replace />;
   }
   
   return <Navigate to={`/${role}/beranda`} replace />;
@@ -207,7 +182,7 @@ function DashboardLayout({ children }) {
 }
 
 function AdminRoute({ children }) {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, tenant, loading } = useAuth();
 
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
@@ -216,7 +191,7 @@ function AdminRoute({ children }) {
                       user?.email === 'fahruhernansakti@gmail.com';
   
   if (!isSuperAdmin) {
-    return <Navigate to={getVerticalBeranda(profile?.tenants?.business_vertical)} replace />;
+    return <Navigate to={getVerticalBeranda(tenant?.business_vertical, tenant?.sub_type)} replace />;
   }
 
   return children;
@@ -282,6 +257,10 @@ function App() {
           <Route path="karyawan"   element={<BrokerPageRouter page="karyawan" />} />
           <Route path="pegawai"    element={<Navigate to="../karyawan" replace />} />
           <Route path="laporan"    element={<BrokerPageRouter page="laporan" />} />
+
+          {/* New Egg Broker Specific Sub-routes */}
+          <Route path="suppliers"  element={<BrokerPageRouter page="suppliers" />} />
+          <Route path="customers"  element={<BrokerPageRouter page="customers" />} />
         </Route>
 
         <Route path="/broker/:brokerType/sopir" element={
@@ -292,170 +271,52 @@ function App() {
           </ProtectedRoute>
         } />
 
-        {/* Egg Broker Vertical */}
-        {/* Egg Broker Vertical (Legacy redirects to new /egg paths) */}
-        <Route path="/broker/egg_broker/beranda" element={<Navigate to="/egg/beranda" replace />} />
-        <Route path="/broker/egg_broker/inventori" element={<Navigate to="/egg/inventori" replace />} />
-        <Route path="/broker/egg_broker/pos" element={<Navigate to="/egg/pos" replace />} />
-        <Route path="/broker/egg_broker/suppliers" element={<Navigate to="/egg/suppliers" replace />} />
-        <Route path="/broker/egg_broker/customers" element={<Navigate to="/egg/customers" replace />} />
-        <Route path="/broker/egg_broker/transaksi" element={<Navigate to="/egg/transaksi" replace />} />
-
-        {/* New Egg Broker Vertical Routes */}
-        <Route path="/egg/beranda" element={
-          <ProtectedRoute requiredType="broker" requiredVertical="egg_broker">
-            <RoleGuard allowedRoles={['owner', 'staff', 'view_only']}>
-              <BrokerLayout><EggBeranda /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/egg/inventori" element={
-          <ProtectedRoute requiredType="broker" requiredVertical="egg_broker">
-            <RoleGuard allowedRoles={['owner', 'staff']}>
-              <BrokerLayout><EggInventori /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/egg/pos" element={
-          <ProtectedRoute requiredType="broker" requiredVertical="egg_broker">
-            <RoleGuard allowedRoles={['owner', 'staff']}>
-              <BrokerLayout><EggPOS /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/egg/suppliers" element={
-          <ProtectedRoute requiredType="broker" requiredVertical="egg_broker">
-            <RoleGuard allowedRoles={['owner', 'staff']}>
-              <BrokerLayout><EggSuppliers /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/egg/customers" element={
-          <ProtectedRoute requiredType="broker" requiredVertical="egg_broker">
-            <RoleGuard allowedRoles={['owner', 'staff']}>
-              <BrokerLayout><EggCustomers /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-        <Route path="/egg/transaksi" element={
-          <ProtectedRoute requiredType="broker" requiredVertical="egg_broker">
-            <RoleGuard allowedRoles={['owner', 'staff', 'view_only']}>
-              <BrokerLayout><EggTransaksi /></BrokerLayout>
-            </RoleGuard>
-          </ProtectedRoute>
-        } />
-
         {/* Legacy fallback for staff */}
         <Route path="/broker/staff" element={<Navigate to="/broker/beranda" replace />} />
 
         {/* Peternak routes */}
-        <Route path="/peternak" element={<Navigate to="/peternak/beranda" replace />} />
-        <Route path="/peternak/beranda" element={
+        <Route path="/peternak" element={<RoleRedirector />} />
+        <Route path="/peternak/:peternakType" element={
           <ProtectedRoute requiredType="peternak" requiredVertical="peternak">
-            <DashboardLayout><PeternakBeranda /></DashboardLayout>
+            <PeternakLayout />
           </ProtectedRoute>
-        } />
-        <Route path="/peternak/siklus" element={
-          <ProtectedRoute requiredType="peternak" requiredVertical="peternak">
-            <DashboardLayout><PeternakSiklus /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/peternak/input" element={
-          <ProtectedRoute requiredType="peternak" requiredVertical="peternak">
-            <DashboardLayout><PeternakInputHarian /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/peternak/anak-kandang" element={
-          <ProtectedRoute requiredType="peternak" requiredVertical="peternak">
-            <DashboardLayout><PeternakAnakKandang /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/peternak/laporan" element={
-          <ProtectedRoute requiredType="peternak" requiredVertical="peternak">
-            <DashboardLayout><PeternakLaporanSiklus /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/peternak/laporan/:cycleId" element={
-          <ProtectedRoute requiredType="peternak" requiredVertical="peternak">
-            <DashboardLayout><PeternakLaporanSiklus /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/peternak/pakan" element={
-          <ProtectedRoute requiredType="peternak" requiredVertical="peternak">
-            <DashboardLayout><PeternakPakan /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/peternak/akun" element={
-          <ProtectedRoute requiredType="peternak" requiredVertical="peternak">
-            <DashboardLayout><Akun /></DashboardLayout>
-          </ProtectedRoute>
-        } />
+        }>
+          <Route path="beranda"       element={<PeternakPageRouter page="beranda" />} />
+          <Route path="siklus"        element={<PeternakPageRouter page="siklus" />} />
+          <Route path="input-harian"  element={<PeternakPageRouter page="input-harian" />} />
+          <Route path="input"         element={<Navigate to="../input-harian" replace />} />
+          <Route path="pakan"         element={<PeternakPageRouter page="stok-pakan" />} />
+          <Route path="stok-pakan"    element={<Navigate to="../pakan" replace />} />
+          <Route path="laporan"       element={<PeternakPageRouter page="laporan" />} />
+          <Route path="laporan/:cycleId" element={<PeternakPageRouter page="laporan" />} />
+          <Route path="akun"          element={<PeternakPageRouter page="akun" />} />
+          <Route path="tim"           element={<PeternakPageRouter page="tim" />} />
+          <Route path="harga-pasar"   element={<PeternakPageRouter page="harga-pasar" />} />
+          
+          {/* Per-farm routes (Level 2) */}
+          <Route path="kandang/:farmId" element={<Navigate to="beranda" replace />} />
+          <Route path="kandang/:farmId/beranda" element={<PeternakPageRouter page="farm-beranda" />} />
+          <Route path="kandang/:farmId/siklus"  element={<PeternakPageRouter page="siklus" />} />
+          <Route path="kandang/:farmId/input"   element={<PeternakPageRouter page="input-harian" />} />
+          <Route path="kandang/:farmId/laporan" element={<PeternakPageRouter page="laporan" />} />
+        </Route>
 
-        {/* Peternak per-farm routes (Level 2) */}
-        <Route path="/peternak/kandang/:farmId" element={<Navigate to="beranda" replace />} />
-        <Route path="/peternak/kandang/:farmId/beranda" element={
-          <ProtectedRoute requiredType="peternak" requiredVertical="peternak">
-            <DashboardLayout><PeternakFarmBeranda /></DashboardLayout>
+        <Route path="/rpa-buyer" element={<Navigate to="/rumah_potong/rpa/beranda" replace />} />
+        
+        {/* Rumah Potong (RPA/RPH) routes */}
+        <Route path="/rumah_potong/:rpType" element={
+          <ProtectedRoute requiredType="rumah_potong" requiredVertical="rumah_potong">
+            <RumahPotongLayout />
           </ProtectedRoute>
-        } />
-        <Route path="/peternak/kandang/:farmId/siklus" element={
-          <ProtectedRoute requiredType="peternak" requiredVertical="peternak">
-            <DashboardLayout><PeternakSiklus /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/peternak/kandang/:farmId/input" element={
-          <ProtectedRoute requiredType="peternak" requiredVertical="peternak">
-            <DashboardLayout><PeternakInputHarian /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/peternak/kandang/:farmId/pakan" element={
-          <ProtectedRoute requiredType="peternak" requiredVertical="peternak">
-            <DashboardLayout><PeternakPakan /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/peternak/kandang/:farmId/laporan" element={
-          <ProtectedRoute requiredType="peternak" requiredVertical="peternak">
-            <DashboardLayout><PeternakLaporanSiklus /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-
-        {/* RPA routes */}
-        <Route path="/rpa-buyer" element={<Navigate to="/rpa-buyer/beranda" replace />} />
-        <Route path="/rpa-buyer/beranda" element={
-          <ProtectedRoute requiredType="rpa" requiredVertical="rpa">
-            <DashboardLayout><RPABeranda /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/rpa-buyer/order" element={
-          <ProtectedRoute requiredType="rpa">
-            <DashboardLayout><RPAOrder /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/rpa-buyer/hutang" element={
-          <ProtectedRoute requiredType="rpa">
-            <DashboardLayout><RPAHutang /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/rpa-buyer/distribusi" element={
-          <ProtectedRoute requiredType="rpa">
-            <DashboardLayout><RPADistribusi /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/rpa-buyer/distribusi/:customerId" element={
-          <ProtectedRoute requiredType="rpa">
-            <DashboardLayout><RPADistribusiDetail /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/rpa-buyer/laporan" element={
-          <ProtectedRoute requiredType="rpa">
-            <DashboardLayout><RPALaporanMargin /></DashboardLayout>
-          </ProtectedRoute>
-        } />
-        <Route path="/rpa-buyer/akun" element={
-          <ProtectedRoute requiredType="rpa">
-            <DashboardLayout><RPAAkun /></DashboardLayout>
-          </ProtectedRoute>
-        } />
+        }>
+          <Route path="beranda"    element={<RPPageRouter page="beranda" />} />
+          <Route path="order"      element={<RPPageRouter page="order" />} />
+          <Route path="hutang"     element={<RPPageRouter page="hutang" />} />
+          <Route path="distribusi" element={<RPPageRouter page="distribusi" />} />
+          <Route path="distribusi/:customerId" element={<RPPageRouter page="distribusi-detail" />} />
+          <Route path="laporan"    element={<RPPageRouter page="laporan" />} />
+          <Route path="akun"       element={<RPPageRouter page="akun" />} />
+        </Route>
 
         {/* Market — accessible all roles */}
         <Route path="/market" element={

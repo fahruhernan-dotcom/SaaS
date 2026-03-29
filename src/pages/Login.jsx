@@ -68,24 +68,50 @@ export default function Login() {
       }
 
       // Cek profile ada sebelum redirect — cegah login loop
-      const { data: profile } = await supabase
+      // Gunakan select() biasa karena user bisa punya banyak profile (multi-tenant)
+      const { data: profiles } = await supabase
         .from('profiles')
-        .select('*, tenants(sub_type)')
+        .select('*, tenants(sub_type, business_vertical)')
         .eq('auth_user_id', data.user.id)
-        .maybeSingle()
 
-      if (!profile) {
+      if (!profiles || profiles.length === 0) {
         // Profile belum ada (trigger delay atau belum setup) — arahkan ke onboarding
         navigate('/onboarding')
         toast.info('Yuk lengkapi profil bisnismu dulu!')
         return
       }
 
+      // Pilih profile terbaik: prefer yang sudah onboarded, lalu yang punya tenant
+      const profile = profiles.find(p => p.onboarded) || profiles[0]
+
       if (!profile.onboarded) {
         navigate('/onboarding')
         return
       }
 
+      // Superadmin → admin panel
+      if (profile.role === 'superadmin' || profile.user_type === 'superadmin') {
+        navigate('/admin')
+        toast.success('Selamat datang kembali, Admin!')
+        return
+      }
+
+      // Peternak
+      if (profile.user_type === 'peternak') {
+        navigate(`/peternak/${profile.tenants?.sub_type || 'peternak_broiler'}/beranda`)
+        toast.success('Selamat datang kembali!')
+        return
+      }
+
+      // Rumah Potong
+      if (profile.user_type === 'rumah_potong') {
+        const rpType = profile.tenants?.sub_type?.startsWith('rpa') ? 'rpa' : 'rph'
+        navigate(`/rumah_potong/${rpType}/beranda`)
+        toast.success('Selamat datang kembali!')
+        return
+      }
+
+      // Broker (default)
       navigate(getBrokerBasePath({ sub_type: profile.tenants?.sub_type }) + '/beranda')
       toast.success('Selamat datang kembali!')
       
@@ -288,7 +314,7 @@ export default function Login() {
             <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} className="space-y-4">
               {/* Email field */}
               <div className="space-y-1.5">
-                <Label style={{
+                <Label htmlFor="email" style={{
                   fontSize: '13px',
                   fontWeight: 500,
                   color: '#94A3B8',
@@ -298,6 +324,8 @@ export default function Login() {
                   Email
                 </Label>
                 <Input
+                  id="email"
+                  name="email"
                   type="text"
                   placeholder="nama@email.com atau nama"
                   value={email}
@@ -320,7 +348,7 @@ export default function Login() {
               {/* Password field */}
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center ml-1 pr-1">
-                  <Label style={{
+                  <Label htmlFor="password" style={{
                     fontSize: '13px',
                     fontWeight: 500,
                     color: '#94A3B8'
@@ -345,11 +373,13 @@ export default function Login() {
                 </div>
                 
                 <div className="relative">
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
                     style={{
                       background: '#111C24',
                       border: '1px solid rgba(255,255,255,0.09)',

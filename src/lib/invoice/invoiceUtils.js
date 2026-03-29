@@ -31,13 +31,19 @@ export const formatRupiahPDF = (n) => {
 
 // ── Tanggal Indonesia ─────────────────────────────────────────────────────────
 
-export const formatDatePDF = (val) => {
+export const formatDatePDF = (val, showDay = false) => {
   if (!val) return '-'
   const d = new Date(val)
   if (isNaN(d.getTime())) return '-'
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
                   'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
-  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
+  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+  
+  const dateParts = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
+  if (showDay) {
+    return `${days[d.getDay()]}, ${dateParts}`
+  }
+  return dateParts
 }
 
 // ── Terbilang Rupiah ──────────────────────────────────────────────────────────

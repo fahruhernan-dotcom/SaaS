@@ -1,6 +1,6 @@
 # TernakOS — Developer Context
 
-> Last updated: 2026-03-28 (Sembako vertical full implementation: 6 pages + DB tables + useSembakoData hooks; Peternak multi-kandang Level-2 routes + FarmContextBar; businessModel.js sembako_broker entry + nav cleanup; BottomNav priority fix; useTheme + ThemePicker; NotificationBell neutral palette; form input audit — SelectWrap pattern di semua select sembako; SetupFarm wizard; FarmCard component) | Use this as reference for all future implementations.
+> Last updated: 2026-03-29 (Multi-vertical routing architecture; Peternak sub-role restructure; RPA to Rumah Potong migration; App.jsx import sanitization; getXBasePath helpers; Mobile nav patterns; Poultry Broker Sheet migration to right-panel; CashFlow Keseluruhan filter + O(N) optimization; Sembako RLS enforcement; DatePicker locale bug fix; Sembako date filter calendar boundaries) | Use this as reference for all future implementations.
 
 ---
 
@@ -160,8 +160,8 @@ const canWrite = ['owner', 'staff'].includes(profile?.role)
 
 ### `tenants`
 - `id`, `business_name`, `plan` (`'starter'` | `'pro'` | `'business'`), `is_active`, `trial_ends_at`
-- `business_vertical` (`'poultry_broker'` | `'egg_broker'` | `'peternak'` | `'rpa'`)
-- `sub_type`: text — sub-role spesifik (`'broker_ayam'` | `'broker_telur'` | `'distributor_daging'` | `'peternak_broiler'` | `'peternak_layer'` | `'rpa_ayam'` | `'rph'`)
+- `business_vertical` (`'poultry_broker'` | `'egg_broker'` | `'peternak'` | `'rumah_potong'` | `'sembako_broker'`) — ⚠️ `'rpa'` sudah dimigrate ke `'rumah_potong'`.
+- `sub_type`: text **NOT NULL** — sub-role spesifik (e.g., `'broker_ayam'`, `'peternak_broiler'`, `'rpa'`). Wajib diisi saat onboarding.
 - `chicken_types`: text[] — jenis ayam yang diperdagangkan/diternak
 - `animal_types`: text[] — jenis hewan ternak
 - `area_operasi`: text — area operasi bisnis
@@ -467,7 +467,37 @@ const canWrite = ['owner', 'staff'].includes(profile?.role)
 
 ---
 
-## 7. Layout System
+## 7. Routing Architecture (Multi-Vertical)
+
+Pola routing terstandarisasi: `/{role}/{sub_type}/{page}`
+
+| Role URL        | business_vertical | Sub-type URL          | sub_type            |
+|----------------|-------------------|-----------------------|---------------------|
+| /broker        | poultry_broker    | /broker/poultry_broker| broker_ayam         |
+| /broker        | egg_broker        | /broker/egg_broker    | broker_telur        |
+| /broker        | sembako_broker    | /broker/sembako_broker| distributor_sembako |
+| /peternak      | peternak          | /peternak/peternak_broiler | peternak_broiler |
+| /peternak      | peternak          | /peternak/peternak_layer   | peternak_layer   |
+| /peternak      | peternak          | /peternak/peternak_sapi    | peternak_sapi    |
+| /peternak      | peternak          | /peternak/peternak_domba   | peternak_domba   |
+| /peternak      | peternak          | /peternak/peternak_kambing | peternak_kambing |
+| /peternak      | peternak          | /peternak/peternak_babi    | peternak_babi (🔒)|
+| /rumah_potong  | rumah_potong      | /rumah_potong/rpa     | rpa                 |
+| /rumah_potong  | rumah_potong      | /rumah_potong/rph     | rph                 |
+
+**Router terpusat per role:**
+- `BrokerRouter.jsx`   → `src/dashboard/broker/_shared/BrokerRouter.jsx`
+- `PeternakRouter.jsx` → `src/dashboard/peternak/PeternakRouter.jsx`
+- `RPPageRouter.jsx`   → `src/dashboard/rumah_potong/RPPageRouter.jsx`
+
+**Helper function (wajib dipakai untuk semua navigate):**
+- `getBrokerBasePath(tenant)`      → `/broker/${sub_type}`
+- `getPeternakBasePath(tenant)`    → `/peternak/${sub_type}`
+- `getRPBasePath(tenant)`          → `/rumah_potong/${sub_type}`
+
+---
+
+## 8. Layout System
 
 ### `BrokerLayout` (`src/dashboard/layouts/BrokerLayout.jsx`)
 - Detects desktop via `useMediaQuery('(min-width: 1024px)')`
@@ -577,8 +607,18 @@ const model = (tenant?.business_vertical && BUSINESS_MODELS[tenant.business_vert
 **`SUB_TYPE_LABELS`** — label tampilan per sub_type.
 
 **Status per sub-type**:
-- ✅ AKTIF: `broker_ayam`, `broker_telur`, `distributor_daging`, `distributor_sembako`, `peternak_broiler`, `peternak_layer`, `rpa_ayam`
-- 🚧 SEGERA: `broker_sapi`, `broker_sembako`, `peternak_kampung`, `peternak_pejantan`, `peternak_sapi`, `peternak_kambing`, `peternak_domba`, `peternak_babi`, `rph`
+
+| Sub-role | Status | Dashboard |
+| :--- | :--- | :--- |
+| `peternak_broiler` | ✅ Aktif | Full |
+| `peternak_layer` | 🚧 Placeholder | - |
+| `peternak_sapi` | 🚧 Placeholder | - |
+| `peternak_domba` | 🚧 Placeholder | - |
+| `peternak_kambing` | 🚧 Placeholder | - |
+| `peternak_babi` | 🔒 Coming Soon | - |
+
+- **Broker**: ✅ `broker_ayam`, `broker_telur`, `distributor_daging`, `distributor_sembako` | 🚧 `broker_sapi`
+- **RPA**: ✅ `rpa` | 🚧 `rph`
 
 **New sub_type: `distributor_sembako`**:
 - `user_type` = `'broker'`, `business_vertical` = `'sembako_broker'`
@@ -589,7 +629,22 @@ const model = (tenant?.business_vertical && BUSINESS_MODELS[tenant.business_vert
 
 ---
 
-## 10. File Structure (Complete)
+## 10. Mobile Navigation Pattern
+
+Pattern wajib di semua role dashboard:
+
+1. **BottomNav**: 5 icon utama per role (dynamic from `businessModel.js`).
+2. **Hamburger button**: Pojok kiri atas, hanya mobile (`md:hidden`).
+   - Toggle `AppSidebar` sebagai Sheet/Drawer.
+3. **Business Switcher Mobile**:
+   - Sheet bottom dengan list bisnis user.
+   - Klik bisnis → `queryClient.clear()` + navigate ke basePath baru.
+   - Tombol "+ Tambah Bisnis Baru" di bawah list.
+4. **"Ganti Model Bisnis"**: Menu item HANYA tampil di mobile (`md:hidden`).
+
+---
+
+## 11. File Structure (Updated)
 
 ```
 src/
@@ -649,72 +704,29 @@ src/
 │                                      usePlanConfigs, useUpdatePlanConfig
 │
 ├── dashboard/
-│   ├── broker/                     ← 🤝 BROKER VERTICAL (Poultry)
-│   │   │                              Route: /broker/poultry_broker/* (ProtectedRoute requiredVertical="poultry_broker")
-│   │   │                              /broker/beranda → RoleRedirector (bukan komponen ini)
-│   │   ├── Beranda.jsx             ← /broker/poultry_broker/beranda — KPI cards, 7-day profit chart, piutang list
-│   │   ├── Transaksi.jsx           ← /broker/transaksi — Transaction history: Purchases + Sales, SaleAuditSheet
-│   │   ├── RPA.jsx                 ← /broker/rpa — RPA client list, search, CRUD
-│   │   ├── RPADetail.jsx           ← /broker/rpa/:id — RPA detail: agreements, transactions, outstanding
-│   │   ├── Kandang.jsx             ← /broker/kandang — Farm CRUD: add/edit/delete farm
-│   │   ├── Pengiriman.jsx          ← /broker/pengiriman — Delivery management orchestrator
-│   │   ├── pengiriman/             ← Sub-components pengiriman
-│   │   │   ├── DeliveryCard.jsx    ← List item delivery
-│   │   │   ├── UpdateArrivalSheet.jsx ← Arrival + timbangan (7-row layout, bidirectional sync)
-│   │   │   ├── LogisticsDetailSheet.jsx ← Read-only logistics history
-│   │   │   ├── LossCard.jsx        ← Card per delivery for loss report
-│   │   │   ├── CreateLossSheet.jsx ← Create manual loss form
-│   │   │   └── Common.jsx          ← Shared small UI components
-│   │   ├── CashFlow.jsx            ← /broker/cashflow — Cash flow chart + breakdown + expense form
-│   │   ├── Armada.jsx              ← /broker/armada — Vehicle + driver CRUD, SIM expiry alerts
-│   │   ├── Simulator.jsx           ← /broker/simulator — Margin profit simulator
-│   │   ├── Tim.jsx                 ← /broker/tim — Team & member management (kode undangan 6 digit)
-│   │   ├── SopirDashboard.jsx      ← /broker/sopir — Sopir: lihat & update status pengiriman assigned
-│   │   └── Akun.jsx                ← /broker/akun — Profile, plan info, Recycle Bin, logout
-│   │
-│   ├── egg/                        ← 🥚 BROKER VERTICAL (Egg Broker)
-│   │   │                              Route: /egg/* (ProtectedRoute requiredVertical="egg_broker")
-│   │   ├── Beranda.jsx             ← /egg/beranda — KPI stok, penjualan, piutang
-│   │   ├── Inventori.jsx           ← /egg/inventori — Stock & Price management per grade
-│   │   ├── POS.jsx                 ← /egg/pos — Point of Sale: buat invoice + stock keluar
-│   │   ├── Suppliers.jsx           ← /egg/suppliers — Egg supplier CRM
-│   │   ├── Customers.jsx           ← /egg/customers — Egg customer CRM
-│   │   └── Transaksi.jsx           ← /egg/transaksi — Transaction history + search
-│   │
-│   ├── peternak/                   ← 🏠 PETERNAK VERTICAL
-│   │   │                              Route: /peternak/* (ProtectedRoute requiredType="peternak")
-│   │   │                              Level-2 farm routes: /peternak/kandang/:farmId/*
-│   │   ├── Beranda.jsx             ← /peternak/beranda — KPI aktif, alerts, FarmCard grid, SetupFarm trigger
-│   │   ├── SetupFarm.jsx           ← overlay fullscreen — 3-step wizard: pilih ternak, model bisnis, detail kandang+mitra
-│   │   ├── Siklus.jsx              ← /peternak/siklus + /peternak/kandang/:farmId/siklus — List siklus filter Aktif/Selesai
-│   │   ├── InputHarian.jsx         ← /peternak/input + /peternak/kandang/:farmId/input — Timeline + quick input, FarmContextBar di Level-2
-│   │   ├── AnakKandang.jsx         ← /peternak/anak-kandang — CRUD worker + riwayat pembayaran
-│   │   ├── LaporanSiklus.jsx       ← /peternak/laporan/:cycleId — FCR, IP Score, charts, cost breakdown
-│   │   ├── Pakan.jsx               ← /peternak/pakan + /peternak/kandang/:farmId/pakan — Stok pakan per farm, farmId filter, FarmContextBar di Level-2
-│   │   └── components/             ← Sub-components peternak (tidak punya route sendiri)
-│   │       ├── FarmCard.jsx        ← Card kandang di Beranda (livestock badge, model bisnis badge, cycle pill, CTA Mulai/Lihat Siklus)
-│   │       ├── FarmContextBar.jsx  ← Sticky bar di Level-2 — nama farm + tombol back ke Overview
-│   │       ├── SiklusSheet.jsx     ← Sheet bottom — form mulai siklus baru (chick in, DOC, biaya)
-│   │       └── InputHarianSheet.jsx ← Sheet bottom — form input harian: mort, pakan, berat, FCR live
-│   │
-│   ├── sembako/                    ← 🛒 SEMBAKO VERTICAL (Distributor Sembako)
-│   │   │                              Route: /broker/sembako/* (business_vertical='sembako_broker')
-│   │   ├── Beranda.jsx             ← /broker/sembako/beranda — Mobile-first: KPI, HamburgerDrawer, business switcher drop-up, ThemePicker
-│   │   ├── Produk.jsx              ← /broker/sembako/produk — CRUD produk: nama, kategori (combobox), satuan (SelectWrap), harga jual/beli, alert stok
-│   │   ├── Gudang.jsx              ← /broker/sembako/gudang — Stok per produk, batch masuk (FIFO), riwayat keluar, TambahStokSheet bottom modal
-│   │   ├── Penjualan.jsx           ← /broker/sembako/penjualan — Invoice CRUD + multi-item, pelanggan CRM, supplier CRM, pengiriman, pembayaran
-│   │   ├── Pegawai.jsx             ← /broker/sembako/pegawai — CRUD pegawai: role, tipe gaji (harian/bulanan/borongan/komisi/campuran), payroll
-│   │   └── Laporan.jsx             ← /broker/sembako/laporan — Laporan finansial: profit, piutang, distribusi (PieChart recharts), filter status
-│   │
-│   ├── rpa/                        ← 🏭 RPA VERTICAL (lengkap)
-│   │   │                              Route: /rpa-buyer/* (ProtectedRoute requiredType="rpa")
-│   │   ├── Beranda.jsx             ← /rpa-buyer/beranda — KPI order, hutang, distribusi
-│   │   ├── Order.jsx               ← /rpa-buyer/order — Order management ke broker
-│   │   ├── Hutang.jsx              ← /rpa-buyer/hutang — Hutang ke supplier/broker
-│   │   ├── Distribusi.jsx          ← /rpa-buyer/distribusi — Customer distribusi list
-│   │   ├── DistribusiDetail.jsx    ← /rpa-buyer/distribusi/:customerId — Detail transaksi customer
-│   │   ├── LaporanMargin.jsx       ← /rpa-buyer/laporan — Laporan margin & profitabilitas
-│   │   └── Akun.jsx                ← /rpa-buyer/akun — Profile & settings RPA
+├── admin/
+├── broker/
+│   ├── poultry_broker/    ← broker ayam (full dashboard)
+│   ├── egg_broker/        ← broker telur (full dashboard)
+│   ├── sembako_broker/    ← sembako (full dashboard)
+│   └── _shared/           ← BrokerRouter.jsx + komponen shared
+├── peternak/
+│   ├── broiler/           ← full dashboard
+│   ├── layer/             ← placeholder
+│   ├── sapi/              ← placeholder
+│   ├── domba/             ← placeholder
+│   ├── kambing/           ← placeholder
+│   ├── babi/              ← coming soon (locked)
+│   └── PeternakRouter.jsx
+├── rumah_potong/
+│   ├── rpa/               ← full dashboard (koleksi komponen RPA)
+│   ├── rph/               ← placeholder
+│   └── RPPageRouter.jsx
+└── _shared/
+    ├── components/
+    ├── forms/
+    ├── layouts/
+    └── pages/
 │   │
 │   ├── components/
 │   │   ├── AppSidebar.jsx          ← Desktop sidebar (nav groups, plan widget, user menu, ThemePicker, Quick Actions)
@@ -1022,6 +1034,20 @@ Located: `src/lib/hooks/useCashFlow.js`
 }
 ```
 
+### CashFlow.jsx — Period Filters
+
+Filter tersedia di `CashFlow.jsx` (UI layer, bukan hook):
+| Filter | Logika |
+|--------|--------|
+| `Hari Ini` | `startOfDay(today)` .. `endOfDay(today)` |
+| `Minggu Ini` | `startOfWeek(today)` .. `endOfWeek(today)` |
+| `Bulan Ini` | `startOfMonth(today)` .. `endOfMonth(today)` |
+| `Bulan Lalu` | `startOfMonth(subMonths(today,1))` .. `endOfMonth(subMonths(today,1))` |
+| `Keseluruhan` | Tanggal transaksi pertama .. hari ini (deteksi auto dari data aktual) |
+| `Custom` | `customRange.from` .. `customRange.to` (DatePicker) |
+
+⚠️ **`Keseluruhan` Performance Note**: Karena rentang bisa mencakup bertahun-tahun, grafik harian Recharts di-render dengan O(N) map dictionary (`salesByDate`, `expensesByDate`) bukan nested `.filter()` iteration, untuk menghindari freeze UI pada dataset besar.
+
 ---
 
 ## 16. `useAuth` Hook
@@ -1102,7 +1128,7 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 
 ## 20. Known Rules & Gotchas
 
-1. **NEVER insert generated columns**: `total_modal`, `net_revenue`, `remaining_amount`
+1. **NEVER insert generated columns**: `total_modal`, `net_revenue`, `remaining_amount`, `gross_profit`, `net_profit`, `shrinkage_kg`, `broker_margin`, `total_cost` (sembako_stock_batches), `total_pay` (sembako_payroll)
 2. **`formatDate` must be the safe version** from `lib/format.js`
 3. **ESLint is strict** — `useEffect` with setState triggers error; prefer derived values
 4. **Tailwind `font-body` string must NOT have extra quotes**
@@ -1179,9 +1205,48 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 64. **Sembako `useSembakoData.js`** — Semua hook tersedia di `@/lib/hooks/useSembakoData`. Gunakan `useAuth()` untuk `tenant?.id`. QueryKey pattern: `['sembako-products', tenantId]`, `['sembako-sales', tenantId]`, dll. Setiap hook filter by `tenant_id` dan `is_deleted = false` (kecuali tabel tanpa is_deleted).
 65. **HamburgerDrawer sembako** — Mobile only. Berisi: ThemePicker, menu shortcut, bottom actions (Admin Panel jika superadmin, Ganti Model Bisnis yang toggle business switcher drop-up). Drop-up "Ganti Model Bisnis" menampilkan daftar `profiles` dari `useAuth()`, bukan navigate ke onboarding baru.
 
+66. **Routing**: SELALU gunakan helper `getXBasePath(tenant)` untuk navigate.
+67. **Vertikal RPA**: Kode `'rpa'` sudah ditinggalkan → gunakan `'rumah_potong'`.
+68. **sub_type NOT NULL**: Wajib ada sebelum insert tenant/onboarding baru.
+69. **Redirect Login**: Redirect ke `/{role}/{sub_type}/beranda`.
+70. **Business Switcher**: Wajib panggil `queryClient.clear()` dulu sebelum navigate.
+71. **Anti-Hardcode**: JANGAN hardcode path seperti `'/broker/beranda'` atau `'/peternak/beranda'` — harus ada sub_type-nya.
+72. **Poultry Broker Sheet pattern**: Semua `SheetContent` di modul Poultry Broker (`Beranda.jsx`, `Transaksi.jsx`, `CashFlow.jsx`, `CreateLossSheet.jsx`) WAJIB menggunakan `side="right"`, BUKAN `side="bottom"`. Bottom sheet dianggap anti-pattern pada konteks desktop.
+73. **`CreateExtraExpenseSheet` scope**: Komponen ini adalah sub-komponen dalam `CashFlow.jsx`. Ia **wajib** memiliki `const isDesktop = useMediaQuery('(min-width: 1024px)')` sendiri di dalam scope-nya — tidak bisa mewarisi dari komponen induk.
+74. **`DatePicker.jsx` — locale import conflict**: Saat import locale `id` dari `date-fns/locale`, WAJIB rename menjadi `idLocale` atau nama lain untuk menghindari konflik dengan prop `id` pada komponen. Gagal melakukan ini akan menyebabkan `TypeError` fatal.
+75. **Sembako RLS enforcement**: `sembako_sales` dan `sembako_payments` memiliki RLS policy `tenant_isolation_*` berdasarkan `profiles.tenant_id`. Setiap INSERT/SELECT HARUS lolos policy ini. Jika `403 Forbidden`: cek policy via Supabase Dashboard → Authentication → Policies.
+76. **Sembako date filter — calendar-exact**: Filter `Minggu Ini` dan `Bulan Ini` di `Laporan.jsx` (Sembako) menggunakan `startOfWeek`/`endOfWeek` dan `startOfMonth`/`endOfMonth` dari `date-fns` — BUKAN rolling window `-7` atau `-30` hari.
+
 ---
 
-## 21. RBAC System
+## 21. Roadmap
+
+### SELESAI
+- **Routing Multi-Vertical**: Dinamis (broker, peternak, rumah_potong) dengan pola `/{role}/{sub_type}/*`.
+- **Vertical Routers**: `BrokerRouter`, `PeternakRouter`, `RPPageRouter` terpusat.
+- **Sembako Integration**: 6 halaman full dashboard terintegrasi ke `/broker/sembako_broker`.
+- **Folder Restructure**: Hierarki `role → sub_role` (broiler, layer, rpa, rph, etc.).
+- **DB Migration**: `business_vertical` `'rpa'` → `'rumah_potong'`.
+- **Schema Stability**: `sub_type` NOT NULL constraint di `tenants`.
+- **Placeholders**: Dashboard sapi, domba, kambing, dan RPH.
+
+### SEDANG DIKERJAKAN
+- **Broker Dashboard Bug Fixes**: Ongoing UI stabilization.
+- **Agenda Event**: Detail sheet untuk cards di beranda.
+- **Mobile Nav**: Hamburger menu + standardized business switcher.
+
+### BELUM DIMULAI
+- **Peternak Full Dashboard**: Sapi, domba, kambing, layer.
+- **RPH Full Dashboard**.
+- **Peternak Babi**: Coming soon (locked status).
+- **TernakBot AI**: Grok 4.1 Fast integration.
+- **Exports**: PDF/Excel generator.
+- **Realtime Notifs**: Bell panel updates & system alerts.
+- **Upgrade Flow**: In-app payment for Pro/Business plans.
+
+---
+
+## 22. RBAC System
 
 **`profiles.role` enum**: `owner`, `staff`, `view_only`, `sopir`.
 - `owner`: Full access, can manage team, billing.
@@ -1399,6 +1464,37 @@ Peternak PRO: 2 kandang + 1 jenis ternak included. Add-on: +Rp 99.000/bln per je
 ---
 
 ## 28. Recent Major Updates
+
+### Updates 2026-03-29
+
+**Poultry Broker — Sheet Migration (Bottom → Right):**
+- Semua `SheetContent` dialog di Poultry Broker yang sebelumnya menggunakan `side="bottom"` direfaktor menjadi `side="right"` (panel samping kanan).
+- File yang diupdate: `Beranda.jsx` (EventDetailSheet), `Transaksi.jsx`, `CashFlow.jsx`, `CreateLossSheet.jsx`.
+- Ini menjadi pola standar wajib untuk semua fitur desktop di modul Broker.
+
+**CashFlow.jsx — Bugfix, Polish & Filter Enhancement:**
+- Fixed `ReferenceError: isDesktop is not defined` pada komponen `CreateExtraExpenseSheet` — ditambahkan scope `useMediaQuery` lokal.
+- Polished Recharts `Tooltip` di chart "Breakdown Biaya" untuk tampilan dark mode: `contentStyle` + `itemStyle` ditambahkan langsung ke props Tooltip.
+- Fixed text wrapping pada legend breakdown list: `truncate` + `flex-shrink-0` applied.
+- Ditambahkan filter `Keseluruhan` (All-Time) ke deretan period filter.
+- Optimasi performa: chart data generation dari O(N²) nested `.filter()` diubah menjadi O(N) dictionary map (`salesByDate`, `expensesByDate`).
+
+**Sembako — DatePicker Locale Bug Fix:**
+- Fixed fatal `TypeError` di `DatePicker.jsx` — import locale `id` dari `date-fns/locale` di-rename menjadi `idLocale` untuk mencegah shadowing prop `id` komponen.
+
+**Sembako — Calendar-Exact Date Filters:**
+- Filter di `Laporan.jsx` (Sembako) menggunakan logika kalender murni (`startOfMonth`, `endOfMonth`, `startOfWeek`, `endOfWeek`), bukan rolling window.
+- Ditambahkan opsi `Keseluruhan` (All-Time) pada filter laporan.
+
+**Sembako — Payment Pre-fill UX:**
+- `SheetPayment` di `Penjualan.jsx` kini auto-pre fill field `amount` dengan `sale.remaining_amount`, mengurangi human error saat pencatatan pembayaran.
+
+**Sembako — RLS Policy Enforcement:**
+- Ditambahkan RLS policy `tenant_isolation_sembako_sales` dan `tenant_isolation_sembako_payments` ke masing-masing tabel untuk mencegah `403 Forbidden` pada INSERT.
+- Root cause: policy INSERT tidak ada / salah konfigurasi di Supabase Dashboard.
+
+**Sembako — Routing Cleanup:**
+- Duplikasi route `/broker/sembako/pos` dihapus dari `AppSidebar.jsx` dan `businessModel.js`. Sembako hanya menggunakan `/penjualan`.
 
 ### Updates 2026-03-28
 
@@ -1704,4 +1800,4 @@ function normalizeWA(raw) {
 
 ---
 
-*Last updated: 2026-03-28 — Form input audit (SelectWrap pattern 17 selects sembako); BottomNav priority fix; useTheme + ThemePicker; NotificationBell neutral palette; HamburgerDrawer; Peternak Level-2 routes + FarmContextBar; SetupFarm wizard + FarmCard; businessModel.js sembako_broker + distributor_sembako*
+*Last updated: 2026-03-29 — Poultry Broker Sheet migration (bottom→right); CashFlow CreateExtraExpenseSheet crash fix; CashFlow Recharts dark tooltip + truncation fix; CashFlow Keseluruhan filter + O(N) chart optimization; Sembako DatePicker locale crash fix; Sembako calendar-exact date filters; Sembako payment pre-fill UX; Sembako RLS policy enforcement; Sembako routing deduplication (/pos removed)*

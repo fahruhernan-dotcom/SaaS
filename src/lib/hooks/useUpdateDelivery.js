@@ -6,16 +6,21 @@ import { safeNum } from '../format'
 export function useUpdateDelivery() {
   const queryClient = useQueryClient()
   
-  const updateTiba = async ({
-    deliveryId,
-    arrivedCount,
-    arrivedWeight,
-    notes,
-    driverId = null,
-    driverName = null,
-    driverPhone = null,
-    loadTime = null
-  }) => {
+  const updateTiba = async (payload) => {
+    const {
+      deliveryId,
+      arrivedCount,
+      arrivedWeight,
+      notes,
+      loadTime,
+      driverId,
+      driverName,
+      driverPhone,
+      vehicleId,
+      vehiclePlate,
+      vehicleType
+    } = payload
+
     // 1. Fetch current delivery data for calculations
     const { data: delivery, error: fetchError } = await supabase
       .from('deliveries')
@@ -26,23 +31,30 @@ export function useUpdateDelivery() {
     if (fetchError) throw fetchError
     
     const mortality = safeNum(delivery.initial_count) - safeNum(arrivedCount)
-    const shrinkage = safeNum(delivery.initial_weight_kg) - safeNum(arrivedWeight)
+    
+    // Construct dynamic update object to avoid wiping out existing data
+    const updateData = {
+      arrived_count:     safeNum(arrivedCount),
+      arrived_weight_kg: safeNum(arrivedWeight),
+      mortality_count:   mortality,
+      arrival_time:      format(new Date(), "yyyy-MM-dd'T'HH:mm:ssxxx"),
+      status:            'completed',
+      notes:             notes || null
+    }
+
+    // Only update these if they were provided in payload
+    if (loadTime !== undefined)     updateData.load_time = loadTime
+    if (driverId !== undefined)     updateData.driver_id = driverId
+    if (driverName !== undefined)   updateData.driver_name = driverName
+    if (driverPhone !== undefined)  updateData.driver_phone = driverPhone
+    if (vehicleId !== undefined)    updateData.vehicle_id = vehicleId
+    if (vehiclePlate !== undefined) updateData.vehicle_plate = vehiclePlate
+    if (vehicleType !== undefined)  updateData.vehicle_type = vehicleType
     
     // 2. Update delivery status
     const { error: updateError } = await supabase
       .from('deliveries')
-      .update({
-        arrived_count:     safeNum(arrivedCount),
-        arrived_weight_kg: safeNum(arrivedWeight),
-        mortality_count:   mortality,
-        arrival_time:      format(new Date(), "yyyy-MM-dd'T'HH:mm:ssxxx"),
-        status:            'completed',
-        notes:             notes || null,
-        driver_id:         driverId || null,
-        driver_name:       driverName || null,
-        driver_phone:      driverPhone || null,
-        load_time:         loadTime || null
-      })
+      .update(updateData)
       .eq('id', deliveryId)
     
     if (updateError) throw updateError

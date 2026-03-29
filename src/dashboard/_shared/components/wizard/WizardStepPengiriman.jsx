@@ -1,0 +1,569 @@
+import React, { useState, useEffect, useRef } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/lib/hooks/useAuth'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { ChevronLeft, Loader2, Truck, Clock, ChevronsUpDown, Check, Plus, ChevronUp, ChevronDown, User } from 'lucide-react'
+import { InputRupiah } from '@/components/ui/InputRupiah'
+import { Input } from '@/components/ui/input'
+import { formatIDR, safeNum } from '@/lib/format'
+import { Card } from '@/components/ui/card'
+import { toast } from 'sonner'
+import {
+  Popover, PopoverContent, PopoverTrigger
+} from '@/components/ui/popover'
+import {
+  Command, CommandEmpty, CommandGroup,
+  CommandInput, CommandItem, CommandSeparator
+} from '@/components/ui/command'
+import { Badge } from '@/components/ui/badge'
+import { differenceInDays, parseISO, format } from 'date-fns'
+import { TimePicker } from '@/components/ui/TimePicker'
+
+const S = {
+  label: { fontSize: 11, fontWeight: 700, color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: 6, fontFamily: 'Sora' },
+  input: 'w-full bg-[#111C24] border border-white/10 h-12 rounded-xl px-3 text-[#F1F5F9] font-bold outline-none placeholder:text-muted-foreground',
+}
+
+
+
+export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3Data, setStep3Data, onSubmit, onBack, submitting }) {
+  const { tenant } = useAuth()
+  const queryClient = useQueryClient()
+  const [vehicleMode, setVehicleMode] = useState('armada')
+  const [driverMode, setDriverMode] = useState('driver')
+  const [openVehicle, setOpenVehicle] = useState(false)
+  const [openDriver, setOpenDriver] = useState(false)
+
+  // Quick Add State (Ensure they are false by default)
+  const [showQuickAddVehicle, setShowQuickAddVehicle] = useState(false)
+  const [newVehicle, setNewVehicle] = useState({ brand: '', vehicle_plate: '' })
+  const [showQuickAddDriver, setShowQuickAddDriver] = useState(false)
+  const [newDriver, setNewDriver] = useState({ full_name: '', phone: '' })
+  const [isAdding, setIsAdding] = useState(false)
+
+  const { data: vehicles } = useQuery({
+    queryKey: ['vehicles-active', tenant?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from('vehicles').select('*').eq('tenant_id', tenant.id).eq('status', 'aktif').eq('is_deleted', false).order('vehicle_plate')
+      return data || []
+    },
+    enabled: !!tenant?.id && !!step3Data.enabled
+  })
+
+  const { data: drivers } = useQuery({
+    queryKey: ['drivers-active', tenant?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from('drivers').select('*').eq('tenant_id', tenant.id).eq('status', 'aktif').eq('is_deleted', false).order('full_name')
+      return data || []
+    },
+    enabled: !!tenant?.id && !!step3Data.enabled
+  })
+
+  const shouldRenderNewDriverForm = driverMode === 'manual' || (driverMode === 'driver' && drivers?.length === 0) || showQuickAddDriver;
+  const shouldRenderNewVehicleForm = vehicleMode === 'manual' || (vehicleMode === 'armada' && vehicles?.length === 0) || showQuickAddVehicle;
+
+  const buyData = mode === 'buy_first' ? step1Data : step2Data
+  const sellData = mode === 'buy_first' ? step2Data : step1Data
+
+  const farmName = buyData?.farm_name || '—'
+  const rpaName = sellData?.rpa_name || '—'
+  const totalWeightKg = safeNum(buyData?.total_weight_kg)
+  const qty = safeNum(buyData?.quantity)
+  const totalRevenue = safeNum(sellData?.total_revenue)
+  const totalModal = safeNum(buyData?.total_modal)
+  
+  const deliveryCost = safeNum(step3Data.delivery_cost)
+  const profitBersih = totalRevenue - totalModal - deliveryCost
+
+  const update = (key, val) => setStep3Data(prev => ({ ...prev, [key]: val }))
+  
+  const handlePreSubmit = () => {
+    // 1. Validasi Kendaraan
+    if (vehicleMode === 'armada') {
+      if (!step3Data.vehicle_id) {
+        toast.error("Pilih atau isi data kendaraan terlebih dahulu")
+        return
+      }
+    } else {
+      if (!step3Data.vehicle_id) {
+        toast.error("Simpan data kendaraan baru terlebih dahulu (Klik SIMPAN & PILIH)")
+        return
+      }
+    }
+
+    // 2. Validasi Sopir
+    if (driverMode === 'driver') {
+      if (!step3Data.driver_id) {
+        toast.error("Pilih atau isi data sopir terlebih dahulu")
+        return
+      }
+    } else {
+      if (!step3Data.driver_id) {
+        toast.error("Simpan data sopir baru terlebih dahulu (Klik SIMPAN & PILIH)")
+        return
+      }
+    }
+    
+    // Semua valid, panggil onSubmit
+    onSubmit()
+  }
+
+  const handleQuickAddVehicle = async () => {
+    if (!newVehicle.brand || !newVehicle.vehicle_plate) return
+    setIsAdding(true)
+    
+    const { data, error } = await supabase
+      .from('vehicles')
+      .insert({
+        tenant_id: tenant?.id,
+        brand: newVehicle.brand,
+        vehicle_plate: newVehicle.vehicle_plate.toUpperCase(),
+        vehicle_type: 'truk',
+        ownership: 'milik_sendiri',
+        status: 'aktif'
+      })
+      .select()
+      .single()
+    
+    if (error) {
+      toast.error('Gagal tambah kendaraan: ' + error.message)
+    } else {
+      queryClient.invalidateQueries({ queryKey: ['vehicles-active', tenant?.id] })
+      update('vehicle_id', data.id)
+      update('vehicle_type', data.vehicle_type)
+      update('vehicle_plate', data.vehicle_plate)
+      setShowQuickAddVehicle(false)
+      setVehicleMode('armada')
+      setNewVehicle({ brand: '', vehicle_plate: '' })
+      toast.success(`✅ Kendaraan ${data.vehicle_plate} ditambahkan!`)
+    }
+    setIsAdding(false)
+  }
+
+  const handleQuickAddDriver = async () => {
+    if (!newDriver.full_name) return
+    setIsAdding(true)
+    
+    const { data, error } = await supabase
+      .from('drivers')
+      .insert({
+        tenant_id: tenant?.id,
+        full_name: newDriver.full_name,
+        phone: newDriver.phone || null,
+        status: 'aktif'
+      })
+      .select()
+      .single()
+    
+    if (error) {
+      toast.error('Gagal tambah sopir: ' + error.message)
+    } else {
+      queryClient.invalidateQueries({ queryKey: ['drivers-active', tenant?.id] })
+      update('driver_id', data.id)
+      update('driver_name', data.full_name)
+      update('driver_phone', data.phone)
+      setShowQuickAddDriver(false)
+      setDriverMode('driver')
+      setNewDriver({ full_name: '', phone: '' })
+      toast.success(`✅ Sopir ${data.full_name} ditambahkan!`)
+    }
+    setIsAdding(false)
+  }
+
+  const vehicleLabel = (v) => {
+    const parts = []
+    if (v.brand) parts.push(v.brand)
+    if (v.capacity_ekor) parts.push(`cap ${safeNum(v.capacity_ekor).toLocaleString('id-ID')} ekor`)
+    return parts.join(' · ')
+  }
+
+  const driverSubLabel = (d) => {
+    const hp = d.phone || 'Tidak ada HP'
+    const expiry = d.sim_expires_at ? parseISO(d.sim_expires_at) : null
+    let statusBadge = null
+    
+    if (expiry) {
+      const daysLeft = differenceInDays(expiry, new Date())
+      if (daysLeft < 30) {
+        statusBadge = (
+          <Badge variant="outline" className={`ml-1.5 py-0 px-1 text-[9px] font-black uppercase ${daysLeft < 0 ? 'border-red-500/50 bg-red-500/10 text-red-400' : 'border-amber-500/50 bg-amber-500/10 text-amber-400'}`}>
+            {daysLeft < 0 ? 'SIM Mati' : `SIM -${daysLeft} Hari`}
+          </Badge>
+        )
+      }
+    }
+    
+    return { hp, statusBadge }
+  }
+
+  const selectedVehicle = vehicles?.find(v => v.id === step3Data.vehicle_id)
+  const selectedDriver = drivers?.find(d => d.id === step3Data.driver_id)
+
+  return (
+    <div className="flex flex-col h-full min-h-0 relative">
+      <div className="flex-1 space-y-5 px-5 pb-24 overflow-y-auto">
+      <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">Step 3 — Detail Pengiriman</p>
+      
+      {/* Summary Card Update */}
+      <Card className="bg-[#111C24] border-white/5 rounded-2xl p-5 overflow-hidden relative">
+        <div className="absolute top-0 right-0 p-4 opacity-5">
+          <Truck size={80} />
+        </div>
+        <div className="relative z-10 space-y-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-1">Rute Transaksi</p>
+              <h4 className="text-base font-black text-white">{farmName} <span className="text-[#4B6478] mx-1">→</span> {rpaName}</h4>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-1">Volume</p>
+              <p className="text-sm font-bold text-white">{safeNum(qty).toLocaleString('id-ID')} ekor · {safeNum(totalWeightKg).toFixed(1)} kg</p>
+            </div>
+          </div>
+          
+          <Separator className="bg-white/5" />
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.1em] mb-1">Pendapatan</p>
+              <p className="text-sm font-bold text-emerald-400">{formatIDR(totalRevenue)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.1em] mb-1">Total Biaya (Modal + Kirim)</p>
+              <p className="text-sm font-bold text-red-400">{formatIDR(safeNum(totalModal) + safeNum(deliveryCost))}</p>
+            </div>
+          </div>
+
+          <div className="pt-2 flex justify-between items-center border-t border-white/5 mt-2">
+            <span className="text-xs font-black text-[#4B6478] uppercase tracking-widest">Estimasi Profit Bersih</span>
+            <span className={`text-xl font-black tabular-nums ${profitBersih >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+              {profitBersih >= 0 ? '+' : ''}{formatIDR(profitBersih)}
+            </span>
+          </div>
+        </div>
+      </Card>
+
+      {/* Toggle Catat Pengiriman */}
+      <div className="flex items-center justify-between p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl">
+        <div>
+          <p className="text-[13px] font-black text-emerald-400 uppercase tracking-wider">Lengkapi Detail Pengiriman?</p>
+          <p className="text-[11px] text-[#4B6478] font-medium mt-0.5">Wajib jika ingin cetak Surat Jalan</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => update('enabled', !step3Data.enabled)}
+          style={{
+            width: 44, height: 24, borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s', border: 'none',
+            background: step3Data.enabled ? '#10B981' : 'rgba(255,255,255,0.1)',
+            position: 'relative', flexShrink: 0
+          }}
+        >
+          <span style={{
+            position: 'absolute', top: 3, left: step3Data.enabled ? 23 : 3,
+            width: 18, height: 18, borderRadius: '50%', background: 'white', transition: 'left 0.2s',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+          }} />
+        </button>
+      </div>
+
+      {step3Data.enabled && (
+        <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
+          {/* Kendaraan */}
+          <div className="space-y-2.5">
+            <label style={S.label}>Pilih Kendaraan *</label>
+            <div className="flex gap-1.5 mb-2">
+              {['armada', 'manual'].map(m => (
+                <button key={m} type="button" 
+                  onClick={() => {
+                    setVehicleMode(m)
+                    if (m === 'manual') {
+                      update('vehicle_id', null)
+                    }
+                  }}
+                  className={`flex-1 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${vehicleMode === m ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400' : 'border-white/5 bg-white/[0.02] text-[#4B6478]'}`}
+                >{m === 'armada' ? 'Armada Sendiri' : 'Input Manual'}</button>
+              ))}
+            </div>
+
+            {vehicleMode === 'armada' && vehicles?.length > 0 ? (
+              <Popover open={openVehicle} onOpenChange={setOpenVehicle}>
+                <PopoverTrigger asChild>
+                  <button id="vehicle_trigger" type="button" style={{
+                    width: '100%', padding: '13px 14px', background: 'hsl(var(--input))', border: '1px solid hsl(var(--border))', borderRadius: '10px',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontSize: '16px',
+                    color: step3Data.vehicle_id ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', textAlign: 'left'
+                  }}>
+                    <span className="truncate">
+                      {selectedVehicle ? `${selectedVehicle.vehicle_plate} · ${selectedVehicle.vehicle_type}` : 'Pilih kendaraan armada'}
+                    </span>
+                    <ChevronsUpDown size={14} className="ml-2 flex-shrink-0 text-muted-foreground" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 border-white/5 bg-[#111C24]" style={{ width: 'var(--radix-popover-trigger-width)' }} align="start">
+                  <Command className="bg-transparent">
+                    <CommandInput placeholder="Cari plat/jenis..." className="h-10 border-none" />
+                    <CommandEmpty>Kendaraan tidak ditemukan</CommandEmpty>
+                    <CommandGroup className="max-h-64 overflow-y-auto">
+                      {vehicles?.map(v => (
+                        <CommandItem
+                          key={v.id}
+                          value={v.vehicle_plate + ' ' + v.vehicle_type}
+                          onSelect={() => {
+                            update('vehicle_id', v.id)
+                            update('vehicle_type', v.vehicle_type)
+                            update('vehicle_plate', v.vehicle_plate)
+                            setOpenVehicle(false)
+                            setShowQuickAddVehicle(false)
+                          }}
+                          className="cursor-pointer py-3 px-4 border-b border-white/5 last:border-none focus:bg-white/5"
+                        >
+                          <div className="flex-1">
+                            <p className="text-sm font-bold text-white">{v.vehicle_plate} · {v.vehicle_type}</p>
+                            <p className="text-[11px] text-[#4B6478] font-medium mt-0.5">{vehicleLabel(v)}</p>
+                          </div>
+                          {step3Data.vehicle_id === v.id && <Check size={14} className="text-emerald-400 ml-2" />}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                    <CommandSeparator className="bg-white/5" />
+                    <CommandGroup>
+                      <CommandItem
+                        onSelect={() => {
+                          setOpenVehicle(false)
+                          setShowQuickAddVehicle(true)
+                        }}
+                        className="cursor-pointer py-3 px-4 text-emerald-400 focus:bg-emerald-400/5"
+                      >
+                        <Plus size={14} className="mr-2" />
+                        <span className="text-xs font-black uppercase tracking-widest">Tambah Kendaraan Baru</span>
+                      </CommandItem>
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            ) : null}
+
+            {shouldRenderNewVehicleForm && (
+              <div style={{
+                marginTop: 8,
+                padding: '14px',
+                background: 'rgba(16,185,129,0.06)',
+                border: '1px solid rgba(16,185,129,0.20)',
+                borderRadius: '12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10
+              }}>
+                <p style={{ fontSize: '11px', fontWeight: 900, color: '#34D399', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+                  Kendaraan Baru
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <label htmlFor="new_vehicle_brand" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Nama Kendaraan *</label>
+                    <Input id="new_vehicle_brand" name="new_vehicle_brand" placeholder="Truk Canter" value={newVehicle.brand} onChange={e => setNewVehicle(p => ({ ...p, brand: e.target.value }))} className="h-9 bg-black/20" />
+                  </div>
+                  <div className="space-y-1">
+                    <label htmlFor="new_vehicle_plate" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Plat Nomor *</label>
+                    <Input id="new_vehicle_plate" name="new_vehicle_plate" placeholder="B 1234 ABC" value={newVehicle.vehicle_plate} onChange={e => setNewVehicle(p => ({ ...p, vehicle_plate: e.target.value.toUpperCase() }))} className="h-9 bg-black/20 uppercase" />
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-1">
+                  <Button type="button" onClick={handleQuickAddVehicle} disabled={isAdding || !newVehicle.brand || !newVehicle.vehicle_plate} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] h-9 rounded-lg">
+                    {isAdding ? 'PROSES...' : 'SIMPAN & PILIH'}
+                  </Button>
+                  <Button type="button" variant="ghost" 
+                    onClick={() => {
+                      setShowQuickAddVehicle(false)
+                      setNewVehicle({ brand: '', vehicle_plate: '' })
+                    }} 
+                    className="px-3 text-muted-foreground font-bold text-[11px] h-9"
+                  >
+                    BATAL
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Sopir */}
+          <div className="space-y-2.5">
+            <label style={S.label}>Pilih Sopir *</label>
+            <div className="flex gap-1.5 mb-2">
+              {['driver', 'manual'].map(m => (
+                <button key={m} type="button" 
+                  onClick={() => {
+                    setDriverMode(m)
+                    if (m === 'manual') {
+                      update('driver_id', null)
+                    }
+                  }}
+                  className={`flex-1 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${driverMode === m ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400' : 'border-white/5 bg-white/[0.02] text-[#4B6478]'}`}
+                >{m === 'driver' ? 'Sopir Terdaftar' : 'Input Manual'}</button>
+              ))}
+            </div>
+
+            {driverMode === 'driver' && drivers?.length > 0 ? (
+              <div>
+                <Popover open={openDriver} onOpenChange={setOpenDriver}>
+                  <PopoverTrigger asChild>
+                    <button id="driver_trigger" type="button" style={{
+                      width: '100%', padding: '13px 14px', background: 'hsl(var(--input))', border: '1px solid hsl(var(--border))', borderRadius: '10px',
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontSize: '16px',
+                      color: step3Data.driver_id ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', textAlign: 'left'
+                    }}>
+                      <span className="truncate">
+                        {selectedDriver ? selectedDriver.full_name : 'Pilih sopir terdaftar'}
+                      </span>
+                      <ChevronsUpDown size={14} className="ml-2 flex-shrink-0 text-muted-foreground" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-0 border-white/5 bg-[#111C24]" style={{ width: 'var(--radix-popover-trigger-width)' }} align="start">
+                    <Command className="bg-transparent">
+                      <CommandInput placeholder="Cari nama sopir..." className="h-10 border-none" />
+                      <CommandEmpty>Sopir tidak ditemukan</CommandEmpty>
+                      <CommandGroup className="max-h-64 overflow-y-auto">
+                        {drivers?.map(d => (
+                          <CommandItem
+                            key={d.id}
+                            value={d.full_name}
+                            onSelect={() => {
+                              update('driver_id', d.id)
+                              update('driver_name', d.full_name)
+                              update('driver_phone', d.phone)
+                              setOpenDriver(false)
+                              setShowQuickAddDriver(false)
+                            }}
+                            className="cursor-pointer py-3 px-4 border-b border-white/5 last:border-none focus:bg-white/5"
+                          >
+                            <div className="flex-1">
+                              <p className="text-sm font-bold text-white">{d.full_name}</p>
+                              <div className="flex items-center mt-0.5">
+                                <p className="text-[11px] text-[#4B6478] font-medium">{driverSubLabel(d).hp}</p>
+                                {driverSubLabel(d).statusBadge}
+                              </div>
+                            </div>
+                            {step3Data.driver_id === d.id && <Check size={14} className="text-emerald-400 ml-2" />}
+                          </CommandItem>
+                        ))}
+                        </CommandGroup>
+                        <CommandSeparator className="bg-white/5" />
+                        <CommandGroup>
+                          <CommandItem
+                            onSelect={() => {
+                              setOpenDriver(false)
+                              setShowQuickAddDriver(true)
+                            }}
+                            className="cursor-pointer py-3 px-4 text-emerald-400 focus:bg-emerald-400/5"
+                          >
+                            <Plus size={14} className="mr-2" />
+                            <span className="text-xs font-black uppercase tracking-widest">Tambah Sopir Baru</span>
+                          </CommandItem>
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                
+                {step3Data.driver_id && selectedDriver?.wage_per_trip !== null && selectedDriver?.wage_per_trip !== undefined && (
+                  <p className="text-[10px] text-emerald-400 mt-1.5 font-black uppercase italic tracking-wider">
+                    Estimasi Upah: {formatIDR(selectedDriver.wage_per_trip)}
+                  </p>
+                )}
+              </div>
+            ) : null}
+
+            {shouldRenderNewDriverForm && (
+                <div style={{
+                  marginTop: 8,
+                  padding: '14px',
+                  background: 'rgba(16,185,129,0.06)',
+                  border: '1px solid rgba(16,185,129,0.20)',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10
+                }}>
+                  <p style={{ fontSize: '11px', fontWeight: 900, color: '#34D399', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+                    Sopir Baru
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label htmlFor="new_driver_name" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Nama Sopir *</label>
+                      <Input id="new_driver_name" name="new_driver_name" placeholder="Pak Ahmad" value={newDriver.full_name} onChange={e => setNewDriver(p => ({ ...p, full_name: e.target.value }))} className="h-9 bg-black/20" />
+                    </div>
+                    <div className="space-y-1">
+                      <label htmlFor="new_driver_phone" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>No HP</label>
+                      <Input id="new_driver_phone" name="new_driver_phone" placeholder="081..." value={newDriver.phone} onChange={e => setNewDriver(p => ({ ...p, phone: e.target.value }))} className="h-9 bg-black/20" />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-1">
+                    <Button type="button" onClick={handleQuickAddDriver} disabled={isAdding || !newDriver.full_name} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] h-9 rounded-lg">
+                      {isAdding ? 'PROSES...' : 'SIMPAN & PILIH'}
+                    </Button>
+                    <Button type="button" variant="ghost" 
+                      onClick={() => {
+                        setShowQuickAddDriver(false)
+                        setNewDriver({ full_name: '', phone: '' })
+                      }} 
+                      className="px-3 text-muted-foreground font-bold text-[11px] h-9"
+                    >
+                      BATAL
+                    </Button>
+                  </div>
+                </div>
+              )}
+          </div>
+
+          {/* Times with Custom TimePicker */}
+          <div className="grid grid-cols-2 gap-3">
+            <TimePicker label="Jam Muat" value={step3Data.load_time} onChange={val => update('load_time', val)} />
+            <TimePicker label="Jam Berangkat" value={step3Data.departure_time} onChange={val => update('departure_time', val)} />
+          </div>
+
+          {/* TOTAL BIAYA PENGIRIMAN */}
+          <div className="space-y-1.5">
+            <label htmlFor="delivery_cost" style={S.label}>Total Biaya Pengiriman *</label>
+            <InputRupiah id="delivery_cost" name="delivery_cost" value={step3Data.delivery_cost || 0} onChange={v => update('delivery_cost', v)} placeholder="0" className="bg-[#111C24] border-emerald-500/20 h-14 rounded-2xl text-xl font-bold text-white shadow-inner" />
+            <p className="text-[10px] text-[#4B6478] font-bold uppercase mt-1 italic">
+              Termasuk solar, uang makan, portal, dll.
+            </p>
+          </div>
+
+          {/* Catatan */}
+          <div className="space-y-1.5">
+            <label htmlFor="delivery_notes" style={S.label}>Catatan Pengiriman</label>
+            <textarea id="delivery_notes" name="delivery_notes" value={step3Data.notes || ''} onChange={e => update('notes', e.target.value)}
+              className="w-full bg-[#111C24] border border-white/10 rounded-xl p-4 text-[#F1F5F9] text-sm min-h-[80px] outline-none resize-none placeholder:text-[#4B6478]"
+              placeholder="Tambahkan keterangan rute, kondisi ayam, dll..." />
+          </div>
+        </div>
+      )}
+
+      </div>
+      
+      {/* Buttons — Sticky Footer */}
+      <div className="sticky bottom-0 z-10 bg-[#0C1319] border-t border-white/10 p-4 px-5 space-y-4">
+        <button type="button" onClick={handlePreSubmit} disabled={submitting}
+          className="w-full h-14 rounded-2xl font-black text-sm tracking-[0.15em] text-white flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
+          style={{ background: '#10B981', boxShadow: '0 12px 24px -8px rgba(16,185,129,0.4)', opacity: submitting ? 0.7 : 1 }}
+        >
+          {submitting ? <><Loader2 size={20} className="animate-spin" /> MENYIMPAN...</> : <><Truck size={20} /> SIMPAN TRANSAKSI</>}
+        </button>
+        
+        <div className="flex items-center gap-4">
+          <Button type="button" variant="ghost" onClick={onBack} className="gap-2 text-[#4B6478] hover:text-white font-bold h-12 rounded-xl flex-1 border border-white/5">
+            <ChevronLeft size={18} /> KEMBALI
+          </Button>
+          {!step3Data.enabled && (
+             <button type="button" onClick={handlePreSubmit} disabled={submitting}
+              className="flex-1 text-[11px] text-[#4B6478] font-black uppercase tracking-widest hover:text-emerald-400 transition-colors"
+            >
+              Lewati & Simpan
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}

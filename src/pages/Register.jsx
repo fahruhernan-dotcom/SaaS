@@ -456,8 +456,10 @@ export default function Register() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Nama Lengkap */}
             <div className="space-y-1.5">
-              <Label style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', marginLeft: '4px' }}>Nama Lengkap</Label>
+              <Label htmlFor="fullName" style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', marginLeft: '4px' }}>Nama Lengkap</Label>
               <Input
+                id="fullName"
+                name="fullName"
                 placeholder="Budi Santoso"
                 {...register('fullName')}
                 style={{ background: '#111C24', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', padding: '13px 14px', color: '#F1F5F9' }}
@@ -469,8 +471,10 @@ export default function Register() {
             {/* Kode Undangan (Invite only) */}
             {mode === 'invite' && (
               <div className="space-y-1.5">
-                <Label style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', marginLeft: '4px' }}>Kode Undangan</Label>
+                <Label htmlFor="inviteCode" style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', marginLeft: '4px' }}>Kode Undangan</Label>
                 <Input
+                  id="inviteCode"
+                  name="inviteCode"
                   placeholder="Contoh: A3K9FZ"
                   maxLength={6}
                   {...register('inviteCode')}
@@ -496,8 +500,10 @@ export default function Register() {
 
             {/* Email */}
             <div className="space-y-1.5">
-              <Label style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', marginLeft: '4px' }}>Email</Label>
+              <Label htmlFor="email" style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', marginLeft: '4px' }}>Email</Label>
               <Input
+                id="email"
+                name="email"
                 type="email"
                 placeholder="Email"
                 {...register('email')}
@@ -510,9 +516,11 @@ export default function Register() {
             {/* Password */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', marginLeft: '4px' }}>Password</Label>
+                <Label htmlFor="password" style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', marginLeft: '4px' }}>Password</Label>
                 <div className="relative">
                   <Input
+                    id="password"
+                    name="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Password"
                     {...register('password')}
@@ -523,9 +531,11 @@ export default function Register() {
                 {errors.password && <p className="text-xs text-red-400 mt-1 ml-1">{errors.password.message}</p>}
               </div>
               <div className="space-y-1.5">
-                <Label style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', marginLeft: '4px' }}>Konfirmasi</Label>
+                <Label htmlFor="confirmPassword" style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', marginLeft: '4px' }}>Konfirmasi</Label>
                 <div className="relative">
                   <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Konfirmasi Password"
                     {...register('confirmPassword')}

@@ -86,6 +86,6 @@ export function useAuth() {
 }
 
 export const getBrokerBasePath = (tenant) => {
-  const subType = tenant?.sub_type || 'poultry_broker'
+  const subType = tenant?.sub_type || 'broker_ayam'
   return `/broker/${subType}`
 }

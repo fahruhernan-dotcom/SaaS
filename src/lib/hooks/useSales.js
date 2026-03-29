@@ -24,7 +24,8 @@ export function useSales() {
           rpa_id,
           rpa_clients(rpa_name), 
           purchases(total_cost, price_per_kg, farm_id, farms(farm_name)),
-          deliveries(status, initial_weight_kg, arrived_weight_kg)
+          deliveries(status, initial_weight_kg, arrived_weight_kg),
+          payments(id, amount, payment_date, payment_method, notes)
         `)
         .eq('tenant_id', tenant.id)
         .eq('is_deleted', false)

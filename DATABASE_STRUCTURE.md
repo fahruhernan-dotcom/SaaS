@@ -1,6 +1,6 @@
 # TernakOS — Database Structure
 > Generated from Supabase schema. Gunakan sebagai referensi Antigravity.
-> Last updated: 2026-03-28 (sembako vertical full implementation: sembako_products, sembako_suppliers, sembako_customers, sembako_stock_batches, sembako_stock_out, sembako_sales, sembako_sale_items, sembako_payments, sembako_employees, sembako_payroll, sembako_deliveries, sembako_expenses — dependency map, FK reference, generated columns, enum values, fase implementasi all updated)
+> Last updated: 2026-03-29 (Peternak sub-role structure; RPA vertical migration to rumah_potong; sub_type NOT NULL constraint; standardized routing pattern; business switcher stale query fix; Sembako RLS policy enforcement; sembako_products unit enum expansion; DatePicker locale fix; CashFlow Keseluruhan filter; Sheet migration right-panel pattern)
 
 ---
 
@@ -29,6 +29,8 @@
 
 ✅ ALWAYS filter: .eq('is_deleted', false) (Except for `payments`, `team_invitations`, `rpa_customer_payments`, `plan_configs`)
 ✅ ALL enum values are LOWERCASE
+✅ sub_type NOT NULL di tenants — wajib diisi saat insert
+✅ business_vertical 'rpa' sudah TIDAK VALID → gunakan 'rumah_potong'
 ```
 
 ---
@@ -124,11 +126,11 @@ discount_codes   ← GLOBAL, tidak ada tenant_id
 ```
 tenants
   ├── sembako_products
-  │     └── sembako_stock_batches (product_id)
-  │           └── sembako_stock_out (batch_id, product_id)
+  │     └── sembako_stock_batches (product_id, supplier_id)
+  │           └── sembako_stock_out (batch_id, product_id, sale_id)
   ├── sembako_suppliers (referenced by sembako_stock_batches.supplier_id)
   ├── sembako_customers
-  │     └── sembako_sales (customer_id)
+  │     └── sembako_sales (tenant_id, customer_id)
   │           ├── sembako_sale_items (sale_id)
   │           └── sembako_payments (sale_id, customer_id)
   ├── sembako_employees
@@ -154,8 +156,8 @@ tenants
 | `phone` | text | nullable |
 | `location` | text | nullable |
 | `plan` | text | `'starter'` `'pro'` `'business'` |
-| `business_vertical` | text | `'poultry_broker'` (default) \| `'egg_broker'` \| `'peternak'` \| `'rpa'` \| `'sembako_broker'` |
-| `sub_type` | text | `'broker_ayam'` \| `'broker_telur'` \| `'distributor_daging'` \| `'peternak_broiler'` \| `'peternak_layer'` \| `'rpa_ayam'` \| `'rph'` |
+| `business_vertical` | text | `'poultry_broker'` \| `'egg_broker'` \| `'peternak'` \| `'rumah_potong'` \| `'sembako_broker'` |
+| `sub_type` | text NOT NULL | `'broker_ayam'` \| `'broker_telur'` \| `'distributor_daging'` \| `'distributor_sembako'` \| `'peternak_broiler'` \| `'peternak_layer'` \| `'peternak_sapi'` \| `'peternak_domba'` \| `'peternak_kambing'` \| `'peternak_babi'` (coming soon) \| `'rpa'` \| `'rph'` |
 | `kandang_limit` | integer | default 1 — batas kandang aktif (starter=1, pro=2, business=99) |
 | `chicken_types` | text[] | nullable — jenis ayam yang diperdagangkan/diternak |
 | `animal_types` | text[] | nullable — jenis hewan ternak lainnya |
@@ -1140,7 +1142,8 @@ Hasil di-transform ke `{ broker: { pro: { price, originalPrice, id }, business: 
 
 ## 🛒 SEMBAKO VERTICAL (Fase 4)
 > Distributor sembako — manajemen produk, stok FIFO, penjualan kredit, pegawai & penggajian.
-> Semua tabel prefix `sembako_`. Semua pakai `tenant_id`. Filter `is_deleted: false` kecuali `sembako_payroll`, `sembako_payments`, `sembako_stock_out`.
+> Semua tabel prefix `sembako_`. Semua pakai `tenant_id`. Filter `is_deleted: false` kecuali `sembako_payroll`, `sembako_payments`, `sembako_stock_out`, `sembako_deliveries`.
+> ⚠️ **RLS**: `sembako_sales` dan `sembako_payments` diproteksi dengan policy `tenant_isolation_*` berdasarkan `profiles.tenant_id`. Pastikan policy aktif sebelum melakukan INSERT.
 
 ### `sembako_products`
 > Katalog produk sembako
@@ -1150,8 +1153,8 @@ Hasil di-transform ke `{ broker: { pro: { price, originalPrice, id }, business: 
 | `id` | uuid PK | |
 | `tenant_id` | uuid FK → tenants | |
 | `product_name` | text | NOT NULL |
-| `category` | text | `'beras'` \| `'minyak'` \| `'gula'` \| `'tepung'` \| `'lainnya'` |
-| `unit` | text | `'kg'` \| `'liter'` \| `'pcs'` \| `'karung'` |
+| `category` | text | `'beras'` \| `'minyak'` \| `'gula'` \| `'tepung'` \| `'lainnya'` \| `'rokok'` \| `'sabun_deterjen'` \| `'pasta_gigi_sikat'` \| `'susu'` |
+| `unit` | text | `'kg'` \| `'liter'` \| `'pcs'` \| `'karung'` \| `'karton'` \| `'sak'` \| `'lusin'` \| `'slop'` \| `'ton'` \| `'gram'` |
 | `sell_price` | integer | harga jual per unit |
 | `avg_buy_price` | integer | HPP rata-rata (auto-update trigger) |
 | `current_stock` | numeric | stok tersedia (auto-update dari batch trigger) |
@@ -1265,6 +1268,7 @@ Hasil di-transform ke `{ broker: { pro: { price, originalPrice, id }, business: 
 | `created_at` | timestamptz | |
 
 > ⚠️ JANGAN INSERT `gross_profit`, `net_profit`, `remaining_amount` (generated columns).
+> ⚠️ **RLS**: Memiliki policy `tenant_isolation_sembako_sales` yang di-enforce berdasarkan `profiles.tenant_id`. Tanpa policy ini aktif di Supabase, semua INSERT akan `403 Forbidden`.
 
 ---
 
@@ -1285,6 +1289,7 @@ Hasil di-transform ke `{ broker: { pro: { price, originalPrice, id }, business: 
 | `cogs_total` | integer | **GENERATED** — `quantity × cogs_per_unit` |
 
 > ⚠️ JANGAN INSERT `subtotal`, `cogs_total` (generated columns).
+> ⚠️ **RLS**: Memiliki policy `tenant_isolation_sembako_sale_items` berdasarkan `sale_id` yang terikat dengan `profiles.tenant_id`.
 
 ---
 
@@ -1305,6 +1310,8 @@ Hasil di-transform ke `{ broker: { pro: { price, originalPrice, id }, business: 
 | `created_at` | timestamptz | |
 
 > Tidak pakai `is_deleted`. Setelah insert, update `sembako_sales.paid_amount` + `payment_status` manual.
+> ⚠️ **RLS**: Memiliki policy `tenant_isolation_sembako_payments` yang di-enforce berdasarkan `profiles.tenant_id`. Tanpa policy ini aktif, INSERT akan `403 Forbidden`.
+> ⚠️ **UX**: `SheetPayment` di `Penjualan.jsx` auto-pre-fill field `amount` dengan `sale.remaining_amount` via `useEffect`.
 
 ---
 
@@ -1643,8 +1650,8 @@ rpa_customer_payments.payment_method: 'cash' | 'transfer' | 'qris' | 'giro'
 plan_configs.config_key:  'kandang_limit' | 'addon_pricing' | 'trial_config' | 'annual_discount' | 'team_limit'
 
 // Sembako Vertical
-sembako_products.category:        'beras' | 'minyak' | 'gula' | 'tepung' | 'lainnya'
-sembako_products.unit:             'kg' | 'liter' | 'pcs' | 'karung'
+sembako_products.category:        'beras' | 'minyak' | 'gula' | 'tepung' | 'lainnya' | 'rokok' | 'sabun_deterjen' | 'pasta_gigi_sikat' | 'susu'
+sembako_products.unit:             'kg' | 'liter' | 'pcs' | 'karung' | 'karton' | 'sak' | 'lusin' | 'slop' | 'ton' | 'gram'
 sembako_customers.customer_type:  'warung' | 'toko' | 'agen' | 'supermarket'
 sembako_customers.payment_terms:  'cash' | 'net3' | 'net7' | 'net14' | 'net30'
 sembako_sales.payment_status:     'belum_lunas' | 'sebagian' | 'lunas'
@@ -1672,10 +1679,20 @@ sembako_stock_out.reason:          'sale' | 'expired' | 'adjustment'
 | sopir | ❌ | ❌ | ❌ | ✅ (own only) | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ### Route per role setelah login:
-- owner → `/broker/beranda`
-- staff → `/broker/beranda`
-- view_only → `/broker/beranda`
-- sopir → `/broker/sopir`
+
+| business_vertical | sub_type           | Route setelah login                      |
+|-------------------|--------------------|------------------------------------------|
+| poultry_broker    | broker_ayam        | /broker/poultry_broker/beranda           |
+| egg_broker        | broker_telur       | /broker/egg_broker/beranda               |
+| sembako_broker    | distributor_sembako| /broker/sembako_broker/beranda           |
+| peternak          | peternak_broiler   | /peternak/peternak_broiler/beranda       |
+| peternak          | peternak_layer     | /peternak/peternak_layer/beranda         |
+| peternak          | peternak_sapi      | /peternak/peternak_sapi/beranda          |
+| peternak          | peternak_domba     | /peternak/peternak_domba/beranda         |
+| peternak          | peternak_kambing   | /peternak/peternak_kambing/beranda       |
+| rumah_potong      | rpa                | /rumah_potong/rpa/beranda                |
+| rumah_potong      | rph                | /rumah_potong/rph/beranda                |
+| -                 | superadmin         | /admin                                   |
 
 ### Komponen guard:
 - `RoleGuard` di `App.jsx` wraps route sensitif
@@ -1784,34 +1801,19 @@ Gunakan data `RPA UD Jaya` dan `RPA Jaya Abadi` sebagai benchmark:
 
 ---
 
-## 📊 FASE IMPLEMENTASI
-
-| Tabel | Fase | Status |
-|-------|------|--------|
-| tenants, profiles, farms, purchases, sales | Fase 1 | ✅ Active |
-| deliveries, loss_reports, payments | Fase 1 | ✅ Active |
-| rpa_clients, vehicles, drivers | Fase 1 | ✅ Active |
-| vehicle_expenses, extra_expenses | Fase 1 | ✅ Active |
-| market_prices, chicken_batches, orders | Fase 1 | ✅ Active |
-| team_invitations, notifications | Fase 1 | ✅ Active |
-| subscription_invoices, payment_settings | Fase 1 | ✅ Active |
-| pricing_plans, discount_codes | Fase 1 (Admin Phase 5) | ✅ Active |
-| peternak_farms, breeding_cycles, daily_records | Fase 2 | ✅ Active |
-| cycle_expenses, harvest_records, farm_workers, worker_payments | Fase 2 | ✅ Active |
-| feed_stocks | Fase 2 | ✅ Active |
-| market_listings | Fase 1 (Multi-Role Market) | ✅ Active |
-| broker_profiles, peternak_profiles | Fase 2/3 | ✅ Active |
-| rpa_products, rpa_customers | Fase 3 | ✅ Active |
-| rpa_invoices, rpa_invoice_items | Fase 3 | ✅ Active |
-| rpa_customer_payments | Fase 3 | ✅ Active |
-| plan_configs | Fase 1 (Admin Phase 6) | ✅ Active |
-| stock_listings, broker_connections | Fase 2/3 | 🚧 Planned |
-| rpa_profiles, rpa_purchase_orders, rpa_payments | Fase 3 | 🚧 Planned |
-| sembako_products, sembako_suppliers, sembako_customers | Fase 4 | ✅ Active |
-| sembako_stock_batches, sembako_stock_out | Fase 4 | ✅ Active |
-| sembako_sales, sembako_sale_items, sembako_payments | Fase 4 | ✅ Active |
-| sembako_employees, sembako_payroll | Fase 4 | ✅ Active |
-| sembako_deliveries, sembako_expenses | Fase 4 | ✅ Active |
+| Vertical          | Sub-role           | Status Dashboard |
+|-------------------|--------------------|-----------------|
+| poultry_broker    | broker_ayam        | ✅ Full          |
+| egg_broker        | broker_telur       | ✅ Full          |
+| sembako_broker    | distributor_sembako| ✅ Full          |
+| peternak          | peternak_broiler   | ✅ Full          |
+| peternak          | peternak_layer     | 🚧 Placeholder   |
+| peternak          | peternak_sapi      | 🚧 Placeholder   |
+| peternak          | peternak_domba     | 🚧 Placeholder   |
+| peternak          | peternak_kambing   | 🚧 Placeholder   |
+| peternak          | peternak_babi      | 🔒 Coming Soon   |
+| rumah_potong      | rpa                | ✅ Full          |
+| rumah_potong      | rph                | 🚧 Placeholder   |
 
 ---
 
@@ -1845,6 +1847,70 @@ Gunakan data `RPA UD Jaya` dan `RPA Jaya Abadi` sebagai benchmark:
 
 ## 🚨 KNOWN ISSUES & FIXES
 
+### Sembako — 403 Forbidden saat INSERT sales/payments
+- **Masalah**: INSERT ke `sembako_sales` atau `sembako_payments` gagal dengan `403 Forbidden` (RLS policy violation).
+- **Root Cause**: Policy `tenant_isolation_*` belum dibuat atau salah konfigurasi.
+- **Fix SQL**:
+  ```sql
+  -- sembako_sales
+  CREATE POLICY "tenant_isolation_sembako_sales" ON sembako_sales
+    USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE auth_user_id = auth.uid()))
+    WITH CHECK (tenant_id IN (SELECT tenant_id FROM profiles WHERE auth_user_id = auth.uid()));
+  
+  -- sembako_payments
+  CREATE POLICY "tenant_isolation_sembako_payments" ON sembako_payments
+    USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE auth_user_id = auth.uid()))
+    WITH CHECK (tenant_id IN (SELECT tenant_id FROM profiles WHERE auth_user_id = auth.uid()));
+  ```
+- **Status**: Fixed 2026-03-29
+
+### Sembako — 400 Bad Request saat query sembako_stock_batches / sembako_stock_out
+- **Masalah**: Supabase mengembalikan `400 Bad Request (Could not find a relationship)` saat PostgREST mencoba join `sembako_stock_batches` atau `sembako_stock_out`.
+- **Root Cause**: Foreign Key constraint (`product_id`, `batch_id`, `sale_id`) belum ada di database.
+- **Fix SQL**:
+  ```sql
+  -- FK untuk sembako_stock_batches
+  ALTER TABLE sembako_stock_batches
+    ADD COLUMN IF NOT EXISTS is_deleted boolean DEFAULT false,
+    ADD CONSTRAINT fk_ssb_product FOREIGN KEY (product_id) REFERENCES sembako_products(id),
+    ADD CONSTRAINT fk_ssb_supplier FOREIGN KEY (supplier_id) REFERENCES sembako_suppliers(id);
+  
+  -- FK untuk sembako_stock_out
+  ALTER TABLE sembako_stock_out
+    ADD CONSTRAINT fk_sso_product FOREIGN KEY (product_id) REFERENCES sembako_products(id),
+    ADD CONSTRAINT fk_sso_batch FOREIGN KEY (batch_id) REFERENCES sembako_stock_batches(id),
+    ADD CONSTRAINT fk_sso_sale FOREIGN KEY (sale_id) REFERENCES sembako_sales(id);
+  ```
+- **Status**: Fixed 2026-03-29
+
+### DatePicker.jsx — Fatal TypeError (locale shadowing)
+- **Masalah**: `DatePicker.jsx` crash dengan `Uncaught TypeError` saat digunakan di dalam modal.
+- **Root Cause**: Import locale `id` dari `date-fns/locale` di-shadow oleh prop `id` milik komponen itu sendiri.
+- **Fix**: `import { id as idLocale } from 'date-fns/locale'` — rename import.
+- **Status**: Fixed 2026-03-29
+
+### CashFlow.jsx — ReferenceError: isDesktop is not defined
+- **Masalah**: Membuka `CreateExtraExpenseSheet` menyebabkan crash dengan `ReferenceError: isDesktop is not defined`.
+- **Root Cause**: `isDesktop` di-declare di scope induk `CashFlow`, tapi `CreateExtraExpenseSheet` adalah komponen terpisah dan tidak bisa mewarisi variable tersebut.
+- **Fix**: Tambahkan `const isDesktop = useMediaQuery('(min-width: 1024px)')` di dalam body komponen `CreateExtraExpenseSheet`.
+- **Status**: Fixed 2026-03-29
+
+### Sembako — getTenantId Mengambil Tenant Salah
+- **Masalah**: Mutation di `useSembakoData.js` mengambil `tenant_id` dari profile pertama user (bisa `broker_ayam`), bukan dari tenant sembako aktif.
+- **Root Cause**: `.limit(1)` mengambil row tertua, bukan tenant aktif saat ini.
+- **Fix**: Gunakan `localStorage.getItem('ternakos_active_tenant_id')` sebagai prioritas utama, sama dengan pattern di `useAuth()`.
+- **Status**: Fixed 2026-03-29
+
+### Business Switcher Stale Query
+- **Masalah**: Ganti tenant → query vertical lama masih firing (e.g. broker query di sembako)
+- **Fix**: `queryClient.clear()` dipanggil sebelum navigate ke tenant baru di Switcher.
+- **Status**: Fixed 2026-03-29
+
+### Routing Inkonsistensi sub_type
+- **Masalah**: Beberapa logic `navigate()` atau link hardcode tanpa sub_type (e.g. `/broker/beranda`).
+- **Fix**: Semua navigasi dashboard wajib menggunakan helper `getXBasePath(tenant)` dari `lib/businessModel.js`.
+- **Status**: Fixed 2026-03-29
+
 ### Infinite Recursion — tenant_update RLS
 - **Masalah**: WITH CHECK yang query `tenants` dari dalam policy `tenants`
 - **Gejala**: 500 Internal Server Error saat PATCH tenants
@@ -1874,4 +1940,4 @@ Gunakan data `RPA UD Jaya` dan `RPA Jaya Abadi` sebagai benchmark:
 
 ---
 
-*TernakOS Database Structure — updated 2026-03-28*
+*TernakOS Database Structure — updated 2026-03-29 — Sembako RLS enforcement; sembako_stock FK constraints; DatePicker locale fix; CashFlow isDesktop scope fix; sembako getTenantId activeLocalStorage fix; sembako_products unit+category enum expansion; Poultry Broker Sheet right-panel pattern*

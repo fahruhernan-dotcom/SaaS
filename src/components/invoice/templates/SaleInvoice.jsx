@@ -95,7 +95,7 @@ const s = StyleSheet.create({
 
   // Summary
   summarySection: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 24 },
-  summaryBox: { width: '45%' },
+  summaryBox: { width: '55%' },
   summaryRow: {
     flexDirection:     'row',
     justifyContent:    'space-between',
@@ -110,6 +110,7 @@ const s = StyleSheet.create({
   totalRow: {
     flexDirection:   'row',
     justifyContent:  'space-between',
+    alignItems:      'center',
     paddingTop:      8,
     paddingBottom:   8,
     paddingLeft:     10,
@@ -118,8 +119,8 @@ const s = StyleSheet.create({
     borderRadius:    4,
     marginTop:       4,
   },
-  totalLabel: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: '#FFFFFF' },
-  totalVal:   { fontSize: 11, fontFamily: 'Helvetica-Bold', color: '#FFFFFF' },
+  totalLabel: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#FFFFFF', flex: 1 },
+  totalVal:   { fontSize: 11, fontFamily: 'Helvetica-Bold', color: '#FFFFFF', textAlign: 'right' },
 
   // Terbilang
   terbilangBox: {
@@ -189,7 +190,8 @@ const s = StyleSheet.create({
 //   invoiceNumber: string
 //   generatedBy: string
 
-export function SaleInvoice({ tenant, sale, rpa, farm, delivery, invoiceNumber, generatedBy }) {
+export function SaleInvoice({ tenant, sale, rpa, farm, delivery, invoiceNumber, generatedBy, payments = [] }) {
+  const allPayments = payments.length > 0 ? payments : (sale?.payments || [])
   const remaining = (Number(sale?.total_revenue) || 0) - (Number(sale?.paid_amount) || 0)
 
   const statusColors = {
@@ -279,16 +281,7 @@ export function SaleInvoice({ tenant, sale, rpa, farm, delivery, invoiceNumber, 
             <Text style={[s.td, s.col5]}>{formatRupiahPDF(sale?.total_revenue)}</Text>
           </View>
 
-          {/* Biaya pengiriman (jika ada) */}
-          {Number(sale?.delivery_cost) > 0 && (
-            <View style={[s.tableRow, s.tableRowAlt]}>
-              <Text style={[s.td, s.col1]}>Biaya Pengiriman</Text>
-              <Text style={[s.td, s.col2]}>-</Text>
-              <Text style={[s.td, s.col3]}>-</Text>
-              <Text style={[s.td, s.col4]}>-</Text>
-              <Text style={[s.td, s.col5]}>{formatRupiahPDF(sale.delivery_cost)}</Text>
-            </View>
-          )}
+          {/* Biaya pengiriman removed as borne by broker */}
         </View>
 
         {/* SUMMARY */}
@@ -298,12 +291,7 @@ export function SaleInvoice({ tenant, sale, rpa, farm, delivery, invoiceNumber, 
               <Text style={s.summaryLabel}>Subtotal</Text>
               <Text style={s.summaryVal}>{formatRupiahPDF(sale?.total_revenue)}</Text>
             </View>
-            {Number(sale?.delivery_cost) > 0 && (
-              <View style={s.summaryRow}>
-                <Text style={s.summaryLabel}>Biaya Kirim</Text>
-                <Text style={s.summaryVal}>{formatRupiahPDF(sale.delivery_cost)}</Text>
-              </View>
-            )}
+            {/* Biaya pengiriman summary removed as borne by broker */}
             {Number(sale?.paid_amount) > 0 && (
               <View style={s.summaryRow}>
                 <Text style={s.summaryLabel}>Sudah Dibayar</Text>
@@ -314,12 +302,31 @@ export function SaleInvoice({ tenant, sale, rpa, farm, delivery, invoiceNumber, 
             )}
             <View style={s.totalRow}>
               <Text style={s.totalLabel}>
-                {sale?.payment_status === 'lunas' ? 'TOTAL' : 'SISA TAGIHAN'}
+                {sale?.payment_status === 'lunas' ? 'TOTAL' : 'SISA TAGIHAN (HUTANG)'}
               </Text>
               <Text style={s.totalVal}>{formatRupiahPDF(totalFinal)}</Text>
             </View>
           </View>
         </View>
+
+        {/* RIWAYAT PEMBAYARAN (jika ada) */}
+        {allPayments.length > 0 && (
+          <View style={{ marginBottom: 20 }}>
+            <Text style={[s.partyLabel, { marginBottom: 8 }]}>RIWAYAT PEMBAYARAN / CICILAN</Text>
+            <View style={[s.tableHeader, { backgroundColor: '#F3F4F6' }]}>
+              <Text style={[s.thText, { color: '#4B6478', width: '40%' }]}>Tgl & Hari</Text>
+              <Text style={[s.thText, { color: '#4B6478', width: '30%' }]}>Metode</Text>
+              <Text style={[s.thText, { color: '#4B6478', width: '30%', textAlign: 'right' }]}>Jumlah</Text>
+            </View>
+            {allPayments.map((p, i) => (
+              <View key={i} style={[s.tableRow, { borderBottomColor: '#F3F4F6' }]}>
+                <Text style={[s.td, { width: '40%' }]}>{formatDatePDF(p.payment_date, true)}</Text>
+                <Text style={[s.td, { width: '30%', textTransform: 'uppercase' }]}>{p.payment_method}</Text>
+                <Text style={[s.td, { width: '30%', textAlign: 'right', fontFamily: 'Helvetica-Bold' }]}>{formatRupiahPDF(p.amount)}</Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* TERBILANG */}
         <View style={s.terbilangBox}>

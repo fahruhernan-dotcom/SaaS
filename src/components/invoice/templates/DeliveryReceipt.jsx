@@ -313,12 +313,7 @@ export function DeliveryReceipt({ tenant, delivery, sale, farm, rpa, invoiceNumb
               <Text style={s.infoLabel}>Durasi</Text>
               <Text style={s.infoValue}>{durasi(delivery?.departure_time, delivery?.arrival_time)}</Text>
             </View>
-            {Number(delivery?.delivery_cost) > 0 && (
-              <View style={s.infoItem}>
-                <Text style={s.infoLabel}>Biaya Kirim</Text>
-                <Text style={s.infoValue}>{formatRupiahPDF(delivery.delivery_cost)}</Text>
-              </View>
-            )}
+
           </View>
         </View>
 

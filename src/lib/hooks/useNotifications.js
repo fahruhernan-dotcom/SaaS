@@ -141,7 +141,7 @@ export const useNotificationGenerator = () => {
               'Trial kamu berakhir dalam ' +
               daysLeft +
               ' hari. Upgrade sekarang untuk tidak kehilangan akses.',
-            action_url: profile?.user_type === 'peternak' ? '/peternak/akun' : profile?.user_type === 'rpa' ? '/rpa-buyer/akun' : '/broker/akun',
+            action_url: profile?.user_type === 'peternak' ? '/peternak/akun' : profile?.user_type === 'rumah_potong' ? `/rumah_potong/${profile?.sub_type?.startsWith('rpa') ? 'rpa' : 'rph'}/akun` : '/broker/akun',
             metadata: { ref_id: tenant.id, days_left: daysLeft },
           })
         }
