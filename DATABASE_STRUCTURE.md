@@ -1,6 +1,6 @@
 # TernakOS — Database Structure
 > Generated from Supabase schema. Gunakan sebagai referensi Antigravity.
-> Last updated: 2026-03-29 (Peternak sub-role structure; RPA vertical migration to rumah_potong; sub_type NOT NULL constraint; standardized routing pattern; business switcher stale query fix; Sembako RLS policy enforcement; sembako_products unit enum expansion; DatePicker locale fix; CashFlow Keseluruhan filter; Sheet migration right-panel pattern)
+> Last updated: 2026-03-29 (Peternak sub-role structure; RPA vertical migration to rumah_potong; sub_type NOT NULL constraint; standardized routing pattern; business switcher stale query fix; Sembako RLS policy enforcement; sembako_products unit enum expansion; DatePicker locale fix; CashFlow Keseluruhan filter; Sheet migration right-panel pattern; Persistent Edge Function rate limiting; Broker Connections feature implementation; RPC logic for atomic view_count increment; broker_connections deprecated columns tagged)
 
 ---
 
@@ -27,10 +27,11 @@
    sembako_sale_items.cogs_total
    sembako_payroll.total_pay
 
-✅ ALWAYS filter: .eq('is_deleted', false) (Except for `payments`, `team_invitations`, `rpa_customer_payments`, `plan_configs`)
-✅ ALL enum values are LOWERCASE
-✅ sub_type NOT NULL di tenants — wajib diisi saat insert
-✅ business_vertical 'rpa' sudah TIDAK VALID → gunakan 'rumah_potong'
+❌ NEVER use `broker_connections.peternak_tenant_id` (deprecated)
+❌ NEVER use `broker_connections.broker_tenant_id` (deprecated)
+✅ broker_connections: pakai `requester_tenant_id` + `target_tenant_id`
+✅ market_listings `view_count`: pakai RPC, bukan `.update()` langsung
+⚠️ broker_connections tidak punya `is_deleted` — delete langsung jika cancel
 ```
 
 ---
@@ -98,7 +99,7 @@ auth.users
         │     └── rpa_invoices (tenant_id, customer_id)
         │           ├── rpa_invoice_items     (invoice_id)
         │           └── rpa_customer_payments (tenant_id, invoice_id, customer_id)
-        ├── broker_connections (peternak_tenant_id / broker_tenant_id)
+        ├── broker_connections (requester_tenant_id / target_tenant_id)
         └── rpa_purchase_orders (rpa_tenant_id / broker_tenant_id)
 
 plan_configs ← GLOBAL, tidak ada tenant_id
@@ -846,15 +847,24 @@ tenants
 
 ---
 
-### `broker_connections` *(Fase 2/3)*
-> Relasi koneksi antara peternak ↔ broker
+### `broker_connections`
+> Relasi koneksi antara peternak ↔ broker via Market
 
 | Kolom | Tipe | Notes |
 |-------|------|-------|
 | `id` | uuid PK | |
-| `peternak_tenant_id` | uuid FK → tenants | |
-| `broker_tenant_id` | uuid FK → tenants | |
-| `status` | text | `'pending'` `'active'` `'blocked'` |
+| `requester_tenant_id` | uuid FK → tenants | |
+| `requester_type` | text | business_vertical requester |
+| `target_tenant_id` | uuid FK → tenants | |
+| `target_type` | text | business_vertical target |
+| `status` | text | `'pending'` \| `'active'` \| `'rejected'` \| `'blocked'` |
+| `message` | text | nullable |
+| `rejected_reason` | text | nullable |
+| `responded_at` | timestamptz | nullable |
+| `created_at` | timestamptz | |
+
+⚠️ **Tanpa is_deleted**: Delete langsung jika cancel.  
+⚠️ **Unique Constraint**: `(requester_tenant_id, target_tenant_id)`
 
 ---
 
@@ -1431,6 +1441,75 @@ Hasil di-transform ke `{ broker: { pro: { price, originalPrice, id }, business: 
 **Diinsert via**: `WaitlistSheet` di `Step1SubTipe.jsx` saat user klik kartu disabled
 **Non-blocking**: insert di dalam try/catch — gagal tidak memblokir UX
 
+---
+
+### `invite_rate_limits`
+> Persistent rate limiting untuk Edge Function `verify-invite-code`
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `ip_address` | text | UNIQUE — IP user sebagai key |
+| `attempt_count` | integer | jumlah percobaan dalam window |
+| `first_attempt_at` | timestamptz | start of 15-minute window |
+| `locked_until` | timestamptz | expiry waktu lockout (30 menit jika count >= 5) |
+| `last_attempt_at` | timestamptz | updated on every attempt |
+
+**GLOBAL** — tidak ada `tenant_id`, tidak ada `is_deleted`
+**Tujuan**: Mencegah brute-force kode undangan 6 digit. Record dihapus jika kode valid.
+
+---
+
+### `market_listings`
+> Iklan stok/permintaan di TernakOS Market
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `listing_type` | text | `'stok_ayam'` \| `'penawaran_broker'` \| `'permintaan_rpa'` |
+| `chicken_type` | text | |
+| `quantity_ekor` | integer | |
+| `weight_kg` | numeric | |
+| `price_per_kg` | integer | |
+| `title` | text | |
+| `description` | text | |
+| `location` | text | |
+| `contact_name` | text | |
+| `contact_wa` | text | |
+| `status` | text | `'active'` \| `'closed'` \| `'expired'` |
+| `view_count` | integer | default 0 — **pakai RPC increment** |
+| `expires_at` | timestamptz | |
+| `is_deleted` | boolean | |
+
+---
+
+### `broker_connections`
+> Koneksi dua arah Broker ↔ Peternak, di-initiate dari Market
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `requester_tenant_id` | uuid FK → tenants | NOT NULL — siapa yang request |
+| `requester_type` | text | business_vertical requester |
+| `target_tenant_id` | uuid FK → tenants | NOT NULL — siapa yang di-request |
+| `target_type` | text | business_vertical target |
+| `status` | text | `'pending'` \| `'active'` \| `'rejected'` \| `'blocked'` |
+| `message` | text | nullable — pesan opsional saat request |
+| `rejected_reason` | text | nullable — alasan tolak |
+| `requested_at` | timestamptz | default now() |
+| `responded_at` | timestamptz | nullable — kapan di-respond |
+| `connected_at` | timestamptz | nullable (legacy) |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
+
+⚠️ DEPRECATED columns (masih ada di DB, jangan dipakai di kode baru):
+  - `peternak_tenant_id` ← gunakan `requester_tenant_id`/`target_tenant_id`
+  - `broker_tenant_id`   ← gunakan `requester_tenant_id`/`target_tenant_id`
+
+⚠️ UNIQUE constraint: `(requester_tenant_id, target_tenant_id)`
+⚠️ Tidak ada `is_deleted` — `useCancelConnection()` pakai `.delete()` langsung
+
 **Config keys & value shape**:
 - `kandang_limit`: `{ starter: 1, pro: 2, business: 99 }`
 - `addon_pricing`: `{ price_per_addon: 99000, max_addons: 2 }`
@@ -1487,8 +1566,8 @@ Hasil di-transform ke `{ broker: { pro: { price, originalPrice, id }, business: 
 | daily_records | cycle_id | breeding_cycles.id |
 | stock_listings | peternak_tenant_id | tenants.id |
 | stock_listings | cycle_id | breeding_cycles.id |
-| broker_connections | peternak_tenant_id | tenants.id |
-| broker_connections | broker_tenant_id | tenants.id |
+| broker_connections | requester_tenant_id | tenants.id |
+| broker_connections | target_tenant_id | tenants.id |
 | rpa_profiles | tenant_id | tenants.id |
 | rpa_purchase_orders | rpa_tenant_id | tenants.id |
 | rpa_purchase_orders | broker_tenant_id | tenants.id |
@@ -1555,6 +1634,8 @@ Hasil di-transform ke `{ broker: { pro: { price, originalPrice, id }, business: 
 | `sembako_payments` | Tidak ada kolom `is_deleted` — jangan filter |
 | `sembako_stock_out` | Tidak ada kolom `is_deleted` — jangan filter |
 | `sembako_deliveries` | Tidak ada kolom `is_deleted` — jangan filter |
+| `invite_rate_limits` | Tidak ada kolom `is_deleted` — jangan filter |
+| `broker_connections` | Tidak ada kolom `is_deleted` — jangan filter |
 
 ---
 
@@ -1770,6 +1851,24 @@ supabase.auth.signUp({
 
 ---
 
+## ⚡ SUPABASE RPC FUNCTIONS
+
+### `increment_listing_view`
+**Purpose**: Atomic increment for `market_listings.view_count` to avoid race conditions.
+**SQL**:
+```sql
+CREATE OR REPLACE FUNCTION increment_listing_view(row_id UUID)
+RETURNS void AS $$
+BEGIN
+  UPDATE market_listings
+  SET view_count = view_count + 1
+  WHERE id = row_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
+---
+
 ---
 
 ## 💰 STANDARD FORMULA
@@ -1785,6 +1884,28 @@ export const calcNetProfit = (sale) => {
   return revenue - totalCost - transportCost - otherCost - deliveryCost
   // CATATAN: shrinkage TIDAK dikurangi lagi karena total_revenue
   // sudah pakai bobot tiba (susut sudah tercermin otomatis)
+}
+
+// PETERNAK — Net Profit per Siklus:
+export const calcPeternakNetProfit = (cycle) => {
+  const revenue = Number(cycle?.harvestRevenue) || 0
+  const expenses = Number(cycle?.cycleExpenses) || 0
+  const doc = Number(cycle?.docCost) || 0
+  const feed = Number(cycle?.feedCost) || 0
+  const worker = Number(cycle?.workerCost) || 0
+  return revenue - expenses - doc - feed - worker
+}
+
+// PETERNAK — Feed Conversion Ratio:
+export const calcFCR = (feedKg, harvestKg) => {
+  if (!harvestKg || harvestKg === 0) return 0
+  return Number((feedKg / harvestKg).toFixed(2))
+}
+
+// PETERNAK — Indeks Performa:
+export const calcIndeksPerforma = (survivalRate, avgWeight, ageDays, fcr) => {
+  if (!ageDays || !fcr || ageDays === 0 || fcr === 0) return 0
+  return Number(((survivalRate * avgWeight * 100) / (fcr * ageDays)).toFixed(0))
 }
 ```
 
@@ -1803,16 +1924,16 @@ Gunakan data `RPA UD Jaya` dan `RPA Jaya Abadi` sebagai benchmark:
 
 | Vertical          | Sub-role           | Status Dashboard |
 |-------------------|--------------------|-----------------|
-| poultry_broker    | broker_ayam        | ✅ Full          |
+| poultry_broker    | broker_ayam        | ✅ Full (Sheet migration ✅) |
 | egg_broker        | broker_telur       | ✅ Full          |
-| sembako_broker    | distributor_sembako| ✅ Full          |
-| peternak          | peternak_broiler   | ✅ Full          |
-| peternak          | peternak_layer     | 🚧 Placeholder   |
+| sembako_broker    | distributor_sembako| ✅ Full (RLS ✅) |
+| peternak          | peternak_broiler   | ✅ Full (Setup Wizard ✅) |
+| peternak          | peternak_layer     | ✅ Full (Wizard ✅) |
 | peternak          | peternak_sapi      | 🚧 Placeholder   |
 | peternak          | peternak_domba     | 🚧 Placeholder   |
 | peternak          | peternak_kambing   | 🚧 Placeholder   |
 | peternak          | peternak_babi      | 🔒 Coming Soon   |
-| rumah_potong      | rpa                | ✅ Full          |
+| rumah_potong      | rpa                | ✅ Full (RPH sub ✅) |
 | rumah_potong      | rph                | 🚧 Placeholder   |
 
 ---
@@ -1938,6 +2059,22 @@ Gunakan data `RPA UD Jaya` dan `RPA Jaya Abadi` sebagai benchmark:
   ⚠️ JANGAN include kolom `confirmed_at` (generated column — akan error).
 - **Status**: Workaround tersedia
 
+### broker_connections kolom deprecated
+- **Masalah**: Kolom `peternak_tenant_id` dan `broker_tenant_id` sudah tidak digunakan tapi masih ada di DB.
+- **Root Cause**: Migrasi ke pola `requester` & `target` untuk mendukung koneksi multi-arah.
+- **Fix**: Data sudah dimigrate ke `requester_tenant_id` dan `target_tenant_id`. Kode React wajib pakai kolom baru.
+- **Status**: Resolved 2026-03-29
+
+### market_listings view_count race condition
+- **Masalah**: Update view_count via `.update()` di frontend sering menimpa data satu sama lain.
+- **Fix**: Menggunakan RPC `increment_listing_view(id)` untuk update atomic di sisi server.
+- **Status**: Fixed 2026-03-29
+
+### Register profile null pada pendaftaran
+- **Masalah**: Latensi trigger Supabase menyebabkan profile belum siap saat redirect ke beranda.
+- **Fix**: Implementasi `waitForProfile()` retry polling (8x) dengan progressive backoff di `Register.jsx`.
+- **Status**: Fixed 2026-03-29
+
 ---
 
-*TernakOS Database Structure — updated 2026-03-29 — Sembako RLS enforcement; sembako_stock FK constraints; DatePicker locale fix; CashFlow isDesktop scope fix; sembako getTenantId activeLocalStorage fix; sembako_products unit+category enum expansion; Poultry Broker Sheet right-panel pattern*
+*TernakOS Database Structure — updated 2026-03-29 — Broker Connections migration; market_listings RPC view_count; Register retry polling fix; Sembako RLS enforcement; sembako_stock FK constraints; DatePicker locale fix; CashFlow isDesktop scope fix; Poultry Broker Sheet right-panel pattern*

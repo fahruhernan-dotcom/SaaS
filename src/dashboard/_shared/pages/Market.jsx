@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   MessageCircle, Plus, Search, X, ChevronDown, ChevronUp,
-  MapPin, Package, Clock, Store, AlertCircle
+  MapPin, Package, Clock, Store, AlertCircle,
+  UserPlus, Check, RefreshCw
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -11,6 +12,11 @@ import {
   useMarketListings, useMyListings, useCreateListing,
   useCloseListing, useDeleteListing
 } from '@/lib/hooks/useMarket'
+import {
+  useConnectionStatus, useRequestConnection,
+  useRespondConnection, useCancelConnection,
+  useMyConnections
+} from '@/lib/hooks/useBrokerConnections'
 import { formatDistanceToNow } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
 
@@ -85,11 +91,119 @@ function TypeBadge({ type }) {
   )
 }
 
+// ─── Connection Button ────────────────────────────────────────────────────────
+
+function ConnectionButton({ connection, amRequester, onRequest, onRespond, onCancel }) {
+  if (!connection) {
+    return (
+      <button
+        onClick={onRequest}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg
+          bg-emerald-500/10 border border-emerald-500/20
+          text-emerald-400 text-xs font-display font-black
+          hover:bg-emerald-500/20 transition-colors"
+      >
+        <UserPlus className="w-3.5 h-3.5" />
+        Ajak Kerjasama
+      </button>
+    )
+  }
+
+  if (connection.status === 'active') {
+    return (
+      <span className="flex items-center gap-1 px-3 py-1.5 rounded-lg
+        bg-emerald-500/10 text-emerald-400 text-xs font-display font-black">
+        <Check className="w-3.5 h-3.5" />
+        Mitra
+      </span>
+    )
+  }
+
+  if (connection.status === 'pending' && amRequester) {
+    return (
+      <button
+        onClick={onCancel}
+        className="flex items-center gap-1 px-3 py-1.5 rounded-lg
+          bg-amber-500/10 border border-amber-500/20
+          text-amber-400 text-xs font-display font-black
+          hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20
+          transition-colors group"
+      >
+        <Clock className="w-3.5 h-3.5 group-hover:hidden" />
+        <X className="w-3.5 h-3.5 hidden group-hover:block" />
+        <span className="group-hover:hidden">Menunggu</span>
+        <span className="hidden group-hover:block">Batalkan</span>
+      </button>
+    )
+  }
+
+  if (connection.status === 'pending' && !amRequester) {
+    return (
+      <div className="flex gap-1">
+        <button
+          onClick={() => onRespond('active')}
+          className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10
+            text-emerald-400 text-xs font-display font-black
+            hover:bg-emerald-500/20 transition-colors"
+        >
+          Terima
+        </button>
+        <button
+          onClick={() => onRespond('rejected')}
+          className="px-2.5 py-1.5 rounded-lg bg-red-500/10
+            text-red-400 text-xs font-display font-black
+            hover:bg-red-500/20 transition-colors"
+        >
+          Tolak
+        </button>
+      </div>
+    )
+  }
+
+  if (connection.status === 'rejected') {
+    return (
+      <button
+        onClick={onRequest}
+        className="flex items-center gap-1 px-3 py-1.5 rounded-lg
+          bg-[#111C24] border border-white/10
+          text-[#94A3B8] text-xs font-display font-black
+          hover:border-emerald-500/30 hover:text-emerald-400
+          transition-colors"
+      >
+        <RefreshCw className="w-3.5 h-3.5" />
+        Request Ulang
+      </button>
+    )
+  }
+
+  if (connection.status === 'blocked') {
+    return (
+      <span className="px-3 py-1.5 rounded-lg bg-[#111C24]
+        text-[#4B6478] text-xs font-display font-black cursor-not-allowed">
+        Diblokir
+      </span>
+    )
+  }
+
+  return null
+}
+
 // ─── Listing Card ─────────────────────────────────────────────────────────────
 
 function ListingCard({ listing }) {
+  const { tenant } = useAuth()
+  const isOwnListing = listing.tenant_id === tenant?.id
+
+  const { data: connection } = useConnectionStatus(
+    isOwnListing ? null : listing.tenant_id
+  )
+  const { mutate: requestConnection } = useRequestConnection()
+  const { mutate: respondConnection } = useRespondConnection()
+  const { mutate: cancelConnection }  = useCancelConnection()
+
+  const amRequester = connection?.requester_tenant_id === tenant?.id
+
   async function handleContact() {
-    // Increment view_count optimistically
     supabase.from('market_listings')
       .update({ view_count: (listing.view_count || 0) + 1 })
       .eq('id', listing.id)
@@ -164,7 +278,7 @@ function ListingCard({ listing }) {
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-1 border-t border-white/5 mt-auto">
+      <div className="flex items-center justify-between pt-1 border-t border-white/5 mt-auto gap-2">
         <div className="min-w-0">
           <p className="text-xs text-[#F1F5F9] font-semibold truncate">
             {listing.tenants?.business_name ?? listing.contact_name ?? '—'}
@@ -174,18 +288,32 @@ function ListingCard({ listing }) {
             <p className="text-[10px] text-[#4B6478]">{timeAgo(listing.created_at)}</p>
           </div>
         </div>
-        <button
-          onClick={handleContact}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors shrink-0 ml-3"
-          style={{
-            background: 'rgba(37,211,102,0.08)',
-            border: '1px solid rgba(37,211,102,0.25)',
-            color: '#25D366'
-          }}
-        >
-          <MessageCircle size={13} />
-          WA
-        </button>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {!isOwnListing && (
+            <ConnectionButton
+              connection={connection}
+              amRequester={amRequester}
+              onRequest={() => requestConnection({
+                targetTenantId: listing.tenant_id,
+                targetType: listing.listing_type,
+              })}
+              onRespond={(status) => respondConnection({ connectionId: connection.id, status })}
+              onCancel={() => cancelConnection(connection.id)}
+            />
+          )}
+          <button
+            onClick={handleContact}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors"
+            style={{
+              background: 'rgba(37,211,102,0.08)',
+              border: '1px solid rgba(37,211,102,0.25)',
+              color: '#25D366'
+            }}
+          >
+            <MessageCircle size={13} />
+            WA
+          </button>
+        </div>
       </div>
     </motion.div>
   )
@@ -642,13 +770,19 @@ export default function Market() {
 
   const { data: listings = [], isLoading } = useMarketListings(filters)
   const { data: myListings = [] } = useMyListings()
+  const { data: connections = [] } = useMyConnections()
   const closeListing  = useCloseListing()
   const deleteListing = useDeleteListing()
+
+  const { tenant } = useAuth()
 
   // Stats
   const totalActive   = listings.length
   const stokAyam      = listings.filter(l => l.listing_type === 'stok_ayam').length
   const permintaan    = listings.filter(l => l.listing_type === 'permintaan_rpa').length
+  const pendingIncoming = connections.filter(c =>
+    c.target_tenant_id === tenant?.id && c.status === 'pending'
+  ).length
 
   return (
     <div className="p-4 md:p-6 space-y-5 max-w-6xl mx-auto pb-24">
@@ -658,6 +792,12 @@ export default function Market() {
           <div className="flex items-center gap-2 mb-1">
             <Store size={20} className="text-emerald-400" />
             <h1 className="font-display font-black text-xl text-[#F1F5F9]">TernakOS Market</h1>
+            {pendingIncoming > 0 && (
+              <span className="w-5 h-5 rounded-full bg-red-500
+                text-white text-[10px] font-black flex items-center justify-center">
+                {pendingIncoming}
+              </span>
+            )}
           </div>
           <p className="text-xs text-[#4B6478] leading-relaxed max-w-sm">
             Temukan stok ayam, penawaran broker, dan permintaan buyer dalam satu platform.

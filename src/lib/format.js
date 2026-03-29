@@ -192,3 +192,66 @@ export const calcNetProfit = (sale) => {
 export const calcRemainingAmount = (sale) => {
   return (Number(sale?.total_revenue) || 0) - (Number(sale?.paid_amount) || 0)
 }
+
+/**
+ * Kalkulasi net profit per siklus ternak (Peternak)
+ * @param {Object} cycle - breeding_cycle object dengan relasi
+ * @returns {number} net profit dalam rupiah
+ */
+export const calcPeternakNetProfit = (cycle) => {
+  // PENDAPATAN
+  const harvestRevenue = (cycle?.harvest_records || []).reduce((sum, h) => {
+    return sum + (Number(h.total_revenue) || 0)
+  }, 0)
+  
+  // BIAYA PRODUKSI
+  const cycleExpenses = (cycle?.cycle_expenses || []).reduce((sum, e) => {
+    return sum + (Number(e.amount) || 0)
+  }, 0)
+  
+  // BIAYA DOC (dari purchase/awal siklus)
+  const docCost = Number(cycle?.doc_cost) || 0
+  
+  // BIAYA PAKAN
+  const feedCost = Number(cycle?.total_feed_cost) || 0
+  
+  // BIAYA TENAGA KERJA
+  const workerCost = (cycle?.worker_payments || []).reduce((sum, w) => {
+    return sum + (Number(w.amount) || 0)
+  }, 0)
+  
+  return harvestRevenue - cycleExpenses - docCost - feedCost - workerCost
+}
+
+/**
+ * Kalkulasi FCR (Feed Conversion Ratio) per siklus
+ * @param {Object} cycle - breeding_cycle object
+ * @returns {number} FCR value (lower = better, ideal < 1.6)
+ */
+export const calcFCR = (cycle) => {
+  const totalFeedKg = Number(cycle?.total_feed_consumed_kg) || 0
+  const totalHarvestKg = (cycle?.harvest_records || []).reduce((sum, h) => {
+    return sum + (Number(h.total_weight_kg) || 0)
+  }, 0)
+  
+  if (totalHarvestKg === 0) return 0
+  return Number((totalFeedKg / totalHarvestKg).toFixed(2))
+}
+
+/**
+ * Kalkulasi IP (Indeks Performa) per siklus
+ * @param {Object} cycle - breeding_cycle object
+ * @returns {number} IP value (higher = better, ideal > 300)
+ */
+export const calcIndeksPerforma = (cycle) => {
+  const docCount = Number(cycle?.doc_count) || 0
+  if (docCount === 0) return 0
+  
+  const survivalRate = ((docCount - (cycle?.total_mortality || 0)) / docCount) * 100
+  const avgWeight = Number(cycle?.avg_harvest_weight_kg) || 0
+  const agedays = Number(cycle?.age_days) || 1
+  const fcr = calcFCR(cycle)
+  
+  if (fcr === 0) return 0
+  return Number(((survivalRate * avgWeight * 100) / (fcr * agedays)).toFixed(1))
+}

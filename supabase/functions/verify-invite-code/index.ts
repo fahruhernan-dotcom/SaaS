@@ -6,68 +6,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// In-memory rate limit store (resets on cold start)
-// Key: IP address, Value: { count, firstAttempt, lockedUntil }
-const rateLimitStore = new Map<string, {
-  count: number
-  firstAttempt: number
-  lockedUntil: number | null
-}>()
-
-const MAX_ATTEMPTS = 5
-const WINDOW_MS = 15 * 60 * 1000      // 15 menit
-const LOCKOUT_MS = 30 * 60 * 1000     // lockout 30 menit setelah 5 gagal
-
-function getClientIP(req: Request): string {
-  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-    || req.headers.get('x-real-ip')
-    || 'unknown'
-}
-
-function checkRateLimit(ip: string): { allowed: boolean; retryAfter?: number } {
-  const now = Date.now()
-  const record = rateLimitStore.get(ip)
-
-  if (!record) {
-    rateLimitStore.set(ip, { count: 1, firstAttempt: now, lockedUntil: null })
-    return { allowed: true }
-  }
-
-  // Cek apakah masih locked out
-  if (record.lockedUntil && now < record.lockedUntil) {
-    return { allowed: false, retryAfter: Math.ceil((record.lockedUntil - now) / 1000) }
-  }
-
-  // Reset jika window sudah lewat
-  if (now - record.firstAttempt > WINDOW_MS) {
-    rateLimitStore.set(ip, { count: 1, firstAttempt: now, lockedUntil: null })
-    return { allowed: true }
-  }
-
-  // Increment count
-  record.count += 1
-
-  // Lock jika melebihi batas
-  if (record.count > MAX_ATTEMPTS) {
-    record.lockedUntil = now + LOCKOUT_MS
-    rateLimitStore.set(ip, record)
-    return { allowed: false, retryAfter: Math.ceil(LOCKOUT_MS / 1000) }
-  }
-
-  rateLimitStore.set(ip, record)
-  return { allowed: true }
-}
-
-function resetRateLimit(ip: string) {
-  rateLimitStore.delete(ip)
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  const ip = getClientIP(req)
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    || req.headers.get('x-real-ip')
+    || 'unknown'
 
   try {
     const { code } = await req.json()
@@ -88,12 +34,27 @@ serve(async (req) => {
       )
     }
 
-    // Rate limit check
-    const { allowed, retryAfter } = checkRateLimit(ip)
-    if (!allowed) {
+    // Initialize Supabase client
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    )
+
+    // 1. Check persistent rate limit from DB
+    const { data: limitRecord } = await supabase
+      .from('invite_rate_limits')
+      .select('*')
+      .eq('ip_address', ip)
+      .maybeSingle()
+
+    const now = new Date()
+
+    // 1a. Check if currently locked
+    if (limitRecord?.locked_until && new Date(limitRecord.locked_until) > now) {
+      const retryAfter = Math.ceil((new Date(limitRecord.locked_until).getTime() - now.getTime()) / 1000)
       return new Response(
         JSON.stringify({
-          error: `Terlalu banyak percobaan. Coba lagi dalam ${Math.ceil(retryAfter! / 60)} menit.`,
+          error: `Terlalu banyak percobaan. Coba lagi dalam ${Math.ceil(retryAfter / 60)} menit.`,
           retryAfter
         }),
         {
@@ -107,13 +68,53 @@ serve(async (req) => {
       )
     }
 
-    // Query DB dengan service role (bypass RLS untuk lookup token)
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    )
+    // 1b. Window check: reset if more than 15 minutes since first attempt
+    const WINDOW_MS = 15 * 60 * 1000
+    const windowExpired = limitRecord && (now.getTime() - new Date(limitRecord.first_attempt_at).getTime()) > WINDOW_MS
 
-    const now = new Date().toISOString()
+    if (!limitRecord || windowExpired) {
+      // New or reset record
+      await supabase.from('invite_rate_limits').upsert({
+        ip_address: ip,
+        attempt_count: 1,
+        first_attempt_at: now.toISOString(),
+        locked_until: null,
+        last_attempt_at: now.toISOString()
+      }, { onConflict: 'ip_address' })
+    } else {
+      // Increment attempt
+      const newCount = (limitRecord.attempt_count || 0) + 1
+      const shouldLock = newCount >= 5
+      const LOCKOUT_MS = 30 * 60 * 1000
+
+      await supabase.from('invite_rate_limits').update({
+        attempt_count: newCount,
+        last_attempt_at: now.toISOString(),
+        locked_until: shouldLock 
+          ? new Date(now.getTime() + LOCKOUT_MS).toISOString() 
+          : null
+      }).eq('ip_address', ip)
+
+      if (shouldLock) {
+        const retryAfter = Math.ceil(LOCKOUT_MS / 1000)
+        return new Response(
+          JSON.stringify({
+            error: `Terlalu banyak percobaan. Coba lagi dalam ${Math.ceil(retryAfter / 60)} menit.`,
+            retryAfter
+          }),
+          {
+            status: 429,
+            headers: {
+              ...corsHeaders,
+              'Content-Type': 'application/json',
+              'Retry-After': String(retryAfter)
+            }
+          }
+        )
+      }
+    }
+
+    // 2. Query Invitation (bypass RLS)
     const { data: invitation, error } = await supabase
       .from('team_invitations')
       .select('id, tenant_id, role, email, token, status, expires_at, tenants(business_name, plan)')
@@ -122,7 +123,7 @@ serve(async (req) => {
       .single()
 
     if (error || !invitation) {
-      // Kode tidak ditemukan — rate limit tetap jalan (count naik)
+      // Kode tidak ditemukan — rate limit sudah naik di DB
       return new Response(
         JSON.stringify({ error: 'Kode undangan tidak valid atau sudah kadaluarsa' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -130,15 +131,15 @@ serve(async (req) => {
     }
 
     // Cek expires_at manual
-    if (new Date(invitation.expires_at) < new Date(now)) {
+    if (new Date(invitation.expires_at) < now) {
       return new Response(
         JSON.stringify({ error: 'Kode undangan sudah kadaluarsa' }),
         { status: 410, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Kode valid — reset rate limit untuk IP ini
-    resetRateLimit(ip)
+    // Kode valid — reset (delete) rate limit untuk IP ini
+    await supabase.from('invite_rate_limits').delete().eq('ip_address', ip)
 
     // Return invitation data (tanpa expose raw token lagi)
     return new Response(

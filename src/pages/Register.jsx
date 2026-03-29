@@ -56,6 +56,25 @@ const GoogleIcon = () => (
   </svg>
 )
 
+// Helper function for registration reliability
+const waitForProfile = async (authUserId, maxRetries = 8, interval = 600) => {
+  for (let i = 0; i < maxRetries; i++) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*, tenants(*)')
+      .eq('auth_user_id', authUserId)
+      .maybeSingle()
+    
+    if (data) return data
+    
+    // Wait before retry (progressive backoff)
+    await new Promise(resolve => 
+      setTimeout(resolve, interval * (i + 1))
+    )
+  }
+  return null // max retries exceeded
+}
+
 export default function Register() {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
@@ -165,14 +184,20 @@ export default function Register() {
       // 4. Toast sukses + redirect (Trigger DB sudah handle profile & invitation status)
       toast.success('Berhasil bergabung ke ' + businessName)
 
-      // Tunggu sebentar agar trigger DB selesai + session refresh
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // Polling for profile creation (progressive backoff)
+      const profile = await waitForProfile(authData?.user?.id || (await supabase.auth.getUser()).data.user?.id)
 
-      // Force refresh session
+      if (!profile) {
+        toast.error('Gagal membuat profil tim. Coba login secara manual.')
+        await supabase.auth.signOut()
+        return
+      }
+
+      // Force refresh session to pick up new tenant claims
       await supabase.auth.refreshSession()
 
       // Navigate ke dashboard
-      navigate(getBrokerBasePath({ sub_type: tenantData?.sub_type }) + '/beranda')
+      navigate(getBrokerBasePath({ sub_type: profile.tenants?.sub_type }) + '/beranda')
     } catch (err) {
       setAuthError(err.message)
     } finally {
@@ -199,22 +224,16 @@ export default function Register() {
 
       if (error) throw error;
 
-      // Tunggu trigger handle_new_user() jalan di DB
-      await new Promise(resolve => setTimeout(resolve, 1500))
-
-      // Verifikasi profile terbuat oleh trigger
-      const { data: profileCheck } = await supabase
-        .from('profiles')
-        .select('*, tenants(sub_type)')
-        .eq('auth_user_id', authData.user.id)
-        .maybeSingle()
+      // Polling for profile creation (progressive backoff)
+      const profileCheck = await waitForProfile(authData.user.id)
 
       if (!profileCheck) {
         toast.error(
-          'Akun dibuat tapi setup gagal. ' +
+          'Akun dibuat tapi profil tidak ditemukan. ' +
           'Coba login — jika masih error, hubungi support.',
           { duration: 6000 }
         )
+        await supabase.auth.signOut()
         return
       }
 

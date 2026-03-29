@@ -395,8 +395,22 @@ export default function AppSidebar({ open, onClose }) {
                           // 1. Switch tenant state
                           switchTenant(p.tenant_id)
                           
-                          // 2. Clear all cache to prevent stale queries with new tenant ID
-                          queryClient.clear()
+                          // 2. Clear ONLY tenant-specific cache (preserve global data like market-prices)
+                          queryClient.invalidateQueries({
+                            predicate: (query) => {
+                              const key = query.queryKey
+                              const globalKeys = [
+                                'market-prices',
+                                'harga-pasar',
+                                'market-listings',
+                                'pricing-plans',
+                                'discount-codes',
+                              ]
+                              return !globalKeys.some(gk => 
+                                Array.isArray(key) && key[0] === gk
+                              )
+                            }
+                          })
                           
                           // 3. Navigate to the correct vertical dashboard
                           navigate(targetPath)
@@ -964,7 +978,14 @@ export default function AppSidebar({ open, onClose }) {
                       const targetVertical = p.tenants?.business_vertical
                       const targetPath = getBerandaPath(targetVertical)
                       switchTenant(p.tenant_id)
-                      queryClient.clear()
+                      // Clear ONLY tenant-specific cache
+                      queryClient.invalidateQueries({
+                        predicate: (query) => {
+                          const key = query.queryKey
+                          const globalKeys = ['market-prices', 'harga-pasar', 'market-listings', 'pricing-plans', 'discount-codes']
+                          return !globalKeys.some(gk => Array.isArray(key) && key[0] === gk)
+                        }
+                      })
                       setMobileSwitcherOpen(false)
                       if (!isDesktop) onClose?.()
                       navigate(targetPath)

@@ -1,6 +1,6 @@
 # TernakOS — Developer Context
 
-> Last updated: 2026-03-29 (Multi-vertical routing architecture; Peternak sub-role restructure; RPA to Rumah Potong migration; App.jsx import sanitization; getXBasePath helpers; Mobile nav patterns; Poultry Broker Sheet migration to right-panel; CashFlow Keseluruhan filter + O(N) optimization; Sembako RLS enforcement; DatePicker locale bug fix; Sembako date filter calendar boundaries) | Use this as reference for all future implementations.
+> Last updated: 2026-03-29 (Multi-vertical routing architecture; Peternak sub-role restructure; RPA to Rumah Potong migration; App.jsx import sanitization; getXBasePath helpers; Mobile nav patterns; Poultry Broker Sheet migration to right-panel; CashFlow Keseluruhan filter + O(N) optimization; Sembako RLS enforcement; DatePicker locale bug fix; Sembako date filter calendar boundaries; Broker Connections feature; Register retry polling fix; Business switcher performance optimization; invite_rate_limits persistent storage) | Use this as reference for all future implementations.
 
 ---
 
@@ -898,6 +898,33 @@ src/
 | `calcShrinkage(initialKg, arrivedKg)` | Shrinkage kg + % | `{ kg, percent }` |
 | `calcNetProfit(sale)` | Standard Net Profit (using revenue - costs) | |
 | `calcRemainingAmount(sale)` | Standard Remaining Debt (revenue - paid) | |
+| `calcPeternakNetProfit(cycle)` | Net Profit per Siklus Peternak | |
+| `calcFCR(cycle)` | Feed Conversion Ratio (ideal < 1.6) | |
+| `calcIndeksPerforma(cycle)` | Indeks Performa (ideal > 300) | |
+
+// PETERNAK — Net Profit per Siklus:
+calcPeternakNetProfit(cycle)
+// = harvestRevenue - cycleExpenses - docCost - feedCost - workerCost
+
+// PETERNAK — Feed Conversion Ratio:
+calcFCR(cycle)
+// = totalFeedKg / totalHarvestKg (lower = better, ideal < 1.6)
+
+// PETERNAK — Indeks Performa:
+calcIndeksPerforma(cycle)
+// = (survivalRate × avgWeight × 100) / (FCR × ageDays)
+// higher = better, ideal > 300
+
+Import:
+```js
+import { 
+  calcNetProfit,        // Broker
+  calcRemainingAmount,  // Broker
+  calcPeternakNetProfit, // Peternak
+  calcFCR,              // Peternak
+  calcIndeksPerforma    // Peternak
+} from '@/lib/format'
+```
 
 ### Label Maps (also in `lib/format.js`)
 
@@ -1122,6 +1149,45 @@ Pre-built Framer Motion variants:
 10. `FinalCTA` — final conversion CTA
 11. `Footer` — links, social media
 
+---
+
+## 20. broker_connections — Koneksi Broker ↔ Peternak
+
+### Konsep
+Fitur koneksi dua arah antara Broker dan Peternak.
+Di-initiate dari TernakOS Market saat melihat listing orang lain.
+
+### Status Flow
+  `pending`  → menunggu konfirmasi target
+  `active`   → koneksi berjalan (mitra)
+  `rejected` → ditolak, requester BISA request ulang
+  `blocked`  → diblokir permanen, tidak bisa request ulang
+
+⚠️ PERBEDAAN rejected vs blocked:
+- rejected → bisa request ulang (tombol "Request Ulang")
+- blocked  → permanen, tidak ada aksi dari requester
+
+### Kolom Penting
+  `requester_tenant_id` — siapa yang initiate (FK → tenants)
+  `requester_type`      — business_vertical requester
+  `target_tenant_id`    — siapa yang di-request (FK → tenants)
+  `target_type`         — business_vertical target
+  
+⚠️ Kolom LAMA (deprecated, jangan dipakai):
+  `peternak_tenant_id`  ← JANGAN PAKAI
+  `broker_tenant_id`    ← JANGAN PAKAI
+
+### Hooks (src/lib/hooks/useBrokerConnections.js)
+  `useMyConnections()`              — semua koneksi tenant aktif
+  `useConnectionStatus(targetId)`  — status koneksi dengan tenant tertentu
+  `useRequestConnection()`         — request koneksi baru
+  `useRespondConnection()`         — accept/reject/block
+  `useCancelConnection()`          — cancel request pending (oleh requester)
+
+### UI — Market.jsx
+  `ConnectionButton` component — tampil di setiap listing card
+  Badge pending count — di header Market jika ada request masuk
+
 Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `AnimatedContent`, `Particles`, `ShinyText`, `TiltedCard`, `Magnet`, `ClickSpark`.
 
 ---
@@ -1129,7 +1195,16 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 ## 20. Known Rules & Gotchas
 
 1. **NEVER insert generated columns**: `total_modal`, `net_revenue`, `remaining_amount`, `gross_profit`, `net_profit`, `shrinkage_kg`, `broker_margin`, `total_cost` (sembako_stock_batches), `total_pay` (sembako_payroll)
-2. **`formatDate` must be the safe version** from `lib/format.js`
+2. **broker_connections**: pakai `requester_tenant_id` + `target_tenant_id` (bukan `peternak_tenant_id`/`broker_tenant_id` lama)
+3. **calcPeternakNetProfit()**: wajib untuk semua kalkulasi profit peternak
+4. **calcFCR() + calcIndeksPerforma()**: tersedia di `@/lib/format`
+5. **market_listings view_count**: pakai RPC `increment_listing_view()` — JANGAN pakai `.update({ view_count: listing.view_count + 1 })`
+6. **Register**: pakai `waitForProfile()` retry polling, bukan `setTimeout 1500ms`
+7. **Business switcher**: `invalidateQueries` spesifik, bukan `queryClient.clear()`
+8. **Rate limit invite code**: tersimpan di tabel `invite_rate_limits` (DB), bukan in-memory Map
+9. **JANGAN hardcode broker_connections** dengan `peternak_tenant_id`/`broker_tenant_id`
+10. **JANGAN increment view_count** dengan read-then-write dari frontend
+11. **`formatDate` must be the safe version** from `lib/format.js`
 3. **ESLint is strict** — `useEffect` with setState triggers error; prefer derived values
 4. **Tailwind `font-body` string must NOT have extra quotes**
 5. **Database Naming**: `market_prices` pakai `price_date` bukan `date`.
@@ -1229,6 +1304,13 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 - **DB Migration**: `business_vertical` `'rpa'` → `'rumah_potong'`.
 - **Schema Stability**: `sub_type` NOT NULL constraint di `tenants`.
 - **Placeholders**: Dashboard sapi, domba, kambing, dan RPH.
+- **Formula Peternak**: `calcPeternakNetProfit()`, `calcFCR()`, `calcIndeksPerforma()` ✅.
+- **Broker Connections**: Full implementation (hooks + UI di Market) ✅.
+- **Race Condition Fix**: `market_listings` view_count atomic update via RPC ✅.
+- **Registration Reliability**: Retry polling `waitForProfile()` ✅.
+- **Business Switcher Performance**: Invalidate spesifik ✅.
+- **Rate Limit Invite Code**: Persistent table `invite_rate_limits` ✅.
+- **DB Alter Table**: New columns & RLS for `broker_connections` ✅.
 
 ### SEDANG DIKERJAKAN
 - **Broker Dashboard Bug Fixes**: Ongoing UI stabilization.
@@ -1398,7 +1480,8 @@ Flow kalkulasi yang benar:
 - **Purpose**: Scrape harga ayam broiler dari chickin.id untuk region Jawa Tengah/DIY.
 - **Logic**: Cek duplikat hari ini (`market_prices.source = 'auto_scraper'`) sebelum insert. Parse HTML tabel, ambil `<2.0 kg` weight class, hitung rata-rata. Insert ke `market_prices` dengan `buyer_price = avg_farm_gate + 2500`.
 - **Deploy**: `supabase functions deploy fetch-harga --no-verify-jwt`
-- **Env vars**: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (auto-injected di Supabase hosted).
+| fetch-harga | ✅ Active | |
+| verify-invite-code | ✅ Updated | Rate limit pindah ke tabel `invite_rate_limits` |
 
 ### Edge Function — `supabase/functions/verify-invite-code/index.ts`
 - **Trigger**: HTTP POST dari `AcceptInvite.jsx` via `supabase.functions.invoke('verify-invite-code', { body: { code } })`.
@@ -1407,7 +1490,33 @@ Flow kalkulasi yang benar:
 - **Logic**: Sanitize kode (uppercase alphanumeric 4–12 char) → cek rate limit → query `team_invitations` dengan service role key (bypass RLS) → return invitation + tenant data. On success: reset rate limit counter untuk IP tersebut.
 - **Response codes**: `200` (valid), `400` (format salah), `404` (tidak ditemukan), `410` (expired), `429` (rate limited).
 - **Deploy**: `supabase functions deploy verify-invite-code --no-verify-jwt`
-- **⚠️ Note**: Rate limit store in-memory — direset saat cold start. Untuk produksi enterprise, bisa diganti Redis/DB.
+- **Deploy**: `supabase functions deploy verify-invite-code --no-verify-jwt`
+- **⚠️ Note**: Rate limit store moved to persistent DB table `invite_rate_limits` since 2026-03-29.
+
+| Function | Status | Notes |
+|----------|--------|-------|
+| fetch-harga | ✅ Active | Auto-scraping daily price |
+| verify-invite-code | ✅ Updated | Persistent rate limit via DB |
+
+---
+
+## 31. Known Issues
+
+### broker_connections kolom deprecated
+- Kolom lama: `peternak_tenant_id`, `broker_tenant_id` — masih ada di DB tapi jangan dipakai di kode baru.
+- Kolom baru: `requester_tenant_id`, `target_tenant_id`.
+- Data lama sudah dimigrate ke kolom baru.
+- **Status**: Resolved 2026-03-29.
+
+### market_listings view_count race condition
+- Masalah: Concurrent access can cause loss of view counts.
+- Fix: pakai RPC `increment_listing_view()` — atomic SQL update.
+- **Status**: Fixed 2026-03-29.
+
+### Register profile null pada pendaftaran
+- Masalah: Trigger `handle_new_user` delay causing "profile not found" error.
+- Fix: retry polling `waitForProfile()` max 8x, progressive backoff.
+- **Status**: Fixed 2026-03-29.
 
 ---
 
