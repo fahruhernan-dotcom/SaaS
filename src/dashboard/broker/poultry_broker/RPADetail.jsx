@@ -55,6 +55,10 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Loader2 } from 'lucide-react'
 import { InputNumber } from '@/components/ui/InputNumber'
+import { z } from 'zod'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { RPAForm } from './RPA'
 
 const staggerContainer = {
   hidden: {},
@@ -69,382 +73,6 @@ const fadeUp = {
   }
 }
 
-function EditRPAForm({ rpa, onSuccess, onDelete }) {
-  const { tenant, profile } = useAuth()
-  const isOwner = profile?.role === 'owner'
-  const tenantId = tenant?.id
-  const queryClient = useQueryClient()
-  
-  const PAYMENT_OPTIONS = [
-    { value: 'cash',  label: 'Cash' },
-    { value: 'net3',  label: 'NET 3 Hari' },
-    { value: 'net7',  label: 'NET 7 Hari' },
-    { value: 'net14', label: 'NET 14 Hari' },
-    { value: 'net30', label: 'NET 30 Hari' },
-  ]
-
-  const BUYER_TYPE_OPTIONS = [
-    { value: 'rpa',            label: 'RPA (Rumah Potong Ayam)' },
-    { value: 'pedagang_pasar', label: 'Pedagang Pasar' },
-    { value: 'restoran',       label: 'Restoran' },
-    { value: 'pengepul',       label: 'Pengepul' },
-    { value: 'supermarket',    label: 'Supermarket' },
-    { value: 'lainnya',        label: 'Lainnya' },
-  ]
-
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [rating, setRating] = useState(
-    rpa?.reliability_score || 0
-  )
-  const [paymentTerm, setPaymentTerm] = useState(
-    rpa?.payment_terms || 'cash'
-  )
-  const [buyerType, setBuyerType] = useState(
-    rpa?.buyer_type || 'rpa'
-  )
-  const [openPayment, setOpenPayment] = useState(false)
-  const [openBuyerType, setOpenBuyerType] = useState(false)
-  
-  const [formData, setFormData] = useState({
-    rpa_name:              rpa?.rpa_name || '',
-    contact_person:        rpa?.contact_person || '',
-    phone:                 rpa?.phone || '',
-    location:              rpa?.location || '',
-    credit_limit:          rpa?.credit_limit || 0,
-    preferred_chicken_size: rpa?.preferred_chicken_size || '',
-    avg_volume_per_order:  rpa?.avg_volume_per_order || 0,
-    notes:                 rpa?.notes || '',
-  })
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!formData.rpa_name || !formData.phone) {
-      toast.error('Nama RPA dan No HP wajib diisi')
-      return
-    }
-    setIsSubmitting(true)
-    try {
-      const { error } = await supabase
-        .from('rpa_clients')
-        .update({
-          rpa_name:              formData.rpa_name,
-          buyer_type:            buyerType,
-          contact_person:        formData.contact_person || null,
-          phone:                 formData.phone,
-          location:              formData.location || null,
-          payment_terms:         paymentTerm,
-          credit_limit:          Number(formData.credit_limit) || 0,
-          preferred_chicken_size: formData.preferred_chicken_size || null,
-          avg_volume_per_order:  Number(formData.avg_volume_per_order) || null,
-          reliability_score:     rating || null,
-          notes:                 formData.notes || null
-        })
-        .eq('id', rpa.id)
-        .eq('tenant_id', tenantId)
-      
-      if (error) throw error
-      onSuccess()
-    } catch (err) {
-      toast.error('Gagal: ' + err.message)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  // Helper render custom dropdown
-  const CustomDropdown = ({
-    open, setOpen, value, options, onChange
-  }) => {
-    const current = options.find(o => o.value === value)
-    return (
-      <div style={{position:'relative'}}>
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          style={{
-            width:'100%', padding:'13px 14px',
-            background:'hsl(var(--input))',
-            border:'1px solid hsl(var(--border))',
-            borderRadius:'10px',
-            fontSize:'14px', fontWeight:500,
-            color:'hsl(var(--foreground))',
-            cursor:'pointer', height:'50px',
-            display:'flex', justifyContent:'space-between',
-            alignItems:'center'
-          }}
-        >
-          <span>{current?.label}</span>
-          <ChevronDown size={14}
-            color="hsl(var(--muted-foreground))"
-            style={{
-              transform: open ? 'rotate(180deg)' : 'none',
-              transition: 'transform 0.15s'
-            }}
-          />
-        </button>
-        {open && (
-          <>
-            <div
-              style={{position:'fixed',inset:0,zIndex:40}}
-              onClick={() => setOpen(false)}
-            />
-            <div style={{
-              position:'absolute', top:'calc(100% + 4px)',
-              left:0, right:0, zIndex:50,
-              background:'hsl(var(--popover))',
-              border:'1px solid hsl(var(--border))',
-              borderRadius:'10px', overflow:'hidden',
-              boxShadow:'0 8px 24px rgba(0,0,0,0.4)'
-            }}>
-              {options.map((opt, i) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => {
-                    onChange(opt.value)
-                    setOpen(false)
-                  }}
-                  style={{
-                    width:'100%', padding:'11px 14px',
-                    background: value === opt.value
-                      ? 'rgba(16,185,129,0.10)' : 'transparent',
-                    border:'none',
-                    borderBottom: i < options.length - 1
-                      ? '1px solid hsl(var(--border))' : 'none',
-                    color: value === opt.value
-                      ? '#34D399' : 'hsl(var(--foreground))',
-                    fontSize:'14px',
-                    fontWeight: value === opt.value ? 700 : 400,
-                    cursor:'pointer', textAlign:'left',
-                    display:'flex', justifyContent:'space-between',
-                    alignItems:'center'
-                  }}
-                >
-                  <span>{opt.label}</span>
-                  {value === opt.value && (
-                    <Check size={13} color="#34D399" />
-                  )}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-    )
-  }
-
-  return (
-    <form id="edit-rpa-form" onSubmit={handleSubmit}
-          style={{display:'flex', flexDirection:'column', gap:16}}>
-      
-      {/* Nama RPA */}
-      <div>
-        <label style={{fontSize:'11px',color:'#4B6478',
-          textTransform:'uppercase',letterSpacing:'0.8px',
-          display:'block',marginBottom:6}}>
-          Nama RPA *
-        </label>
-        <Input value={formData.rpa_name}
-          onChange={e => setFormData(p=>({
-            ...p, rpa_name: e.target.value
-          }))}
-          style={{fontSize:'16px'}}
-          placeholder="RPA Prima Jaya"
-        />
-      </div>
-      
-      {/* Tipe Buyer */}
-      <div>
-        <label style={{fontSize:'11px',color:'#4B6478',
-          textTransform:'uppercase',letterSpacing:'0.8px',
-          display:'block',marginBottom:6}}>
-          Tipe Buyer
-        </label>
-        <CustomDropdown
-          open={openBuyerType}
-          setOpen={setOpenBuyerType}
-          value={buyerType}
-          options={BUYER_TYPE_OPTIONS}
-          onChange={setBuyerType}
-        />
-      </div>
-      
-      {/* Contact Person + HP */}
-      <div style={{display:'grid',
-                   gridTemplateColumns:'1fr 1fr',gap:10}}>
-        <div>
-          <label style={{fontSize:'11px',color:'#4B6478',
-            textTransform:'uppercase',letterSpacing:'0.8px',
-            display:'block',marginBottom:6}}>
-            Contact Person
-          </label>
-          <Input value={formData.contact_person}
-            onChange={e => setFormData(p=>({
-              ...p, contact_person: e.target.value
-            }))}
-            style={{fontSize:'16px'}}
-            placeholder="Pak Budi"
-          />
-        </div>
-        <div>
-          <label style={{fontSize:'11px',color:'#4B6478',
-            textTransform:'uppercase',letterSpacing:'0.8px',
-            display:'block',marginBottom:6}}>
-            No HP *
-          </label>
-          <Input type="tel" value={formData.phone}
-            onChange={e => setFormData(p=>({
-              ...p, phone: e.target.value
-            }))}
-            style={{fontSize:'16px'}}
-            placeholder="0812..."
-          />
-        </div>
-      </div>
-      
-      {/* Lokasi */}
-      <div>
-        <label style={{fontSize:'11px',color:'#4B6478',
-          textTransform:'uppercase',letterSpacing:'0.8px',
-          display:'block',marginBottom:6}}>
-          Lokasi
-        </label>
-        <Input value={formData.location}
-          onChange={e => setFormData(p=>({
-            ...p, location: e.target.value
-          }))}
-          style={{fontSize:'16px'}}
-          placeholder="Boyolali, Jawa Tengah"
-        />
-      </div>
-      
-      {/* Syarat Bayar + Limit Kredit */}
-      <div style={{display:'grid',
-                   gridTemplateColumns:'1fr 1fr',gap:10}}>
-        <div>
-          <label style={{fontSize:'11px',color:'#4B6478',
-            textTransform:'uppercase',letterSpacing:'0.8px',
-            display:'block',marginBottom:6}}>
-            Syarat Bayar
-          </label>
-          <CustomDropdown
-            open={openPayment}
-            setOpen={setOpenPayment}
-            value={paymentTerm}
-            options={PAYMENT_OPTIONS}
-            onChange={setPaymentTerm}
-          />
-        </div>
-        <div>
-          <label style={{fontSize:'11px',color:'#4B6478',
-            textTransform:'uppercase',letterSpacing:'0.8px',
-            display:'block',marginBottom:6}}>
-            Limit Kredit
-          </label>
-          <InputRupiah
-            value={formData.credit_limit}
-            onChange={v => setFormData(p=>({
-              ...p, credit_limit: v
-            }))}
-            placeholder="0"
-          />
-        </div>
-      </div>
-      
-      {/* Rating Bintang */}
-      <div>
-        <label style={{fontSize:'11px',color:'#4B6478',
-          textTransform:'uppercase',letterSpacing:'0.8px',
-          display:'block',marginBottom:8}}>
-          Rating Reliabilitas
-        </label>
-        <div style={{display:'flex',gap:6}}>
-          {[1,2,3,4,5].map(star => (
-            <button
-              key={star}
-              type="button"
-              onClick={() => setRating(
-                rating === star ? 0 : star
-              )}
-              style={{
-                background:'none', border:'none',
-                cursor:'pointer', padding:'2px',
-                fontSize:'26px',
-                color: star <= rating
-                  ? '#F59E0B'
-                  : 'rgba(255,255,255,0.15)',
-                transition:'color 0.1s, transform 0.1s',
-                transform: star <= rating
-                  ? 'scale(1.1)' : 'scale(1)'
-              }}
-            >★</button>
-          ))}
-        </div>
-        {rating > 0 && (
-          <p style={{fontSize:'12px',color:'#F59E0B',
-                     marginTop:4}}>
-            {['','Sangat Buruk','Buruk','Cukup',
-              'Baik','Sangat Baik'][rating]}
-          </p>
-        )}
-      </div>
-      
-      {/* Catatan */}
-      <div>
-        <label style={{fontSize:'11px',color:'#4B6478',
-          textTransform:'uppercase',letterSpacing:'0.8px',
-          display:'block',marginBottom:6}}>
-          Catatan
-        </label>
-        <Textarea
-          value={formData.notes}
-          onChange={e => setFormData(p=>({
-            ...p, notes: e.target.value
-          }))}
-          placeholder="Catatan tambahan..."
-          style={{fontSize:'16px', minHeight:'80px'}}
-        />
-      </div>
-      
-      {/* Submit */}
-      <div style={{display:'flex', gap:10, marginTop:10}}>
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          style={{
-            flex:1, height:'46px',
-            background:'#10B981', border:'none',
-            borderRadius:'10px', color:'white',
-            fontFamily:'DM Sans', fontSize:'15px',
-            fontWeight:700,
-            opacity: isSubmitting ? 0.7 : 1
-          }}
-        >
-          {isSubmitting
-            ? 'Menyimpan...'
-            : 'Simpan Perubahan'}
-        </Button>
-        {isOwner && (
-          <Button
-            type="button"
-            onClick={onDelete}
-            style={{
-              width: '46px',
-              height: '46px',
-              background: 'rgba(248,113,113,0.08)',
-              border: '1px solid rgba(248,113,113,0.20)',
-              borderRadius: '10px',
-              color: '#F87171',
-              flexShrink: 0
-            }}
-          >
-            <Trash2 size={16} />
-          </Button>
-        )}
-      </div>
-    </form>
-  )
-}
 
 export default function RPADetail() {
   const { id } = useParams()
@@ -746,17 +374,17 @@ export default function RPADetail() {
             overflowY: 'auto',
             padding: '20px 24px'
           }}>
-            <EditRPAForm
+            <RPAForm
               rpa={rpa}
-              onSuccess={() => {
-                setShowEdit(false)
-                queryClient.invalidateQueries({
-                  queryKey: ['rpa-detail', id]
-                })
-                queryClient.invalidateQueries({
-                  queryKey: ['rpa-clients']
-                })
+              isDesktop={true}
+              onClose={() => setShowEdit(false)}
+              onSubmit={async (data) => {
+                const { error } = await supabase.from('rpa_clients').update(data).eq('id', id)
+                if (error) throw error
+                queryClient.invalidateQueries({ queryKey: ['rpa-detail', id] })
+                queryClient.invalidateQueries({ queryKey: ['rpa-clients'] })
                 toast.success('Data RPA diperbarui!')
+                setShowEdit(false)
               }}
               onDelete={() => setShowDeleteRPA(true)}
             />
@@ -1047,24 +675,34 @@ function FormPaymentModal({ sale, onClose }) {
         return totalJual - safeNum(sale.paid_amount)
     }, [sale])
     
-    const [amount, setAmount] = useState(currentRemaining)
-    const [method, setMethod] = useState('transfer')
     const queryClient = useQueryClient()
     const { tenant } = useAuth()
 
+    const paymentSchema = z.object({
+        amount: z.coerce.number({ invalid_type_error: 'Nominal tidak valid' })
+                 .min(1, 'Jumlah bayar minimal Rp 1')
+                 .max(currentRemaining, `Maksimal pelunasan Rp ${currentRemaining.toLocaleString('id-ID')}`),
+        method: z.string().default('transfer')
+    })
+
+    const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
+        resolver: zodResolver(paymentSchema),
+        defaultValues: { amount: currentRemaining, method: 'transfer' }
+    })
+
+    const amount = watch('amount')
+    const method = watch('method')
     const remaining = currentRemaining - safeNumber(amount)
     const isFull = safeNumber(amount) >= currentRemaining
 
-    const handleSubmit = async (e) => {
-        e.preventDefault()
-        if (safeNumber(amount) <= 0) return toast.error('Jumlah tidak valid')
+    const onFormSubmit = async (data) => {
         setIsLoading(true)
         try {
             const { error } = await supabase.from('payments').insert({
                 tenant_id: tenant.id,
                 sale_id: sale.id,
-                amount: safeNumber(amount),
-                payment_method: method,
+                amount: safeNumber(data.amount),
+                payment_method: data.method,
                 payment_date: new Date().toISOString().split('T')[0]
             })
             if (error) throw error
@@ -1081,7 +719,7 @@ function FormPaymentModal({ sale, onClose }) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6 pb-12">
+        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6 pb-12">
             <div className="text-center space-y-1">
                 <p className="text-[10px] font-black text-red-400 uppercase tracking-widest leading-none mb-1">Sisa Hutang</p>
                 <p className="font-display text-4xl font-black text-red-500 tracking-tight tabular-nums">{formatIDR(currentRemaining)}</p>
@@ -1094,22 +732,23 @@ function FormPaymentModal({ sale, onClose }) {
                 <div className="relative">
                     <InputRupiah 
                         value={amount}
-                        onChange={setAmount}
+                        onChange={(val) => setValue('amount', val, { shouldValidate: true })}
                         placeholder="50.000.000"
                         className="bg-[#111C24] border-white/10 h-16 text-2xl font-black text-white rounded-2xl"
                     />
                 </div>
+                {errors.amount && <p className="text-[10px] text-red-500 font-black uppercase mt-1 leading-tight">{errors.amount.message}</p>}
             </div>
 
             <div className="space-y-2 text-left">
                 <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Metode Bayar</Label>
-                <Select value={method} onValueChange={setMethod}>
-                    <SelectTrigger className="bg-[#111C24] border-white/10 h-14 font-black rounded-2xl uppercase tracking-widest text-xs px-4">
+                <Select value={method} onValueChange={(val) => setValue('method', val)}>
+                    <SelectTrigger className="bg-[#111C24] border-white/10 h-14 font-black rounded-2xl uppercase tracking-widest text-xs px-4 focus:ring-emerald-500/20">
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#111C24] border-white/10 text-white">
                         {['transfer', 'cash', 'giro', 'qris'].map(m => (
-                            <SelectItem key={m} value={m} className="font-bold uppercase tracking-widest text-[10px]">{m}</SelectItem>
+                            <SelectItem key={m} value={m} className="font-bold uppercase tracking-widest text-[10px] hover:bg-white/5">{m}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
@@ -1121,13 +760,13 @@ function FormPaymentModal({ sale, onClose }) {
                    <p className="font-black text-[#F1F5F9] tabular-nums">{formatIDR(currentRemaining - safeNumber(amount))}</p>
                 </div>
                 {isFull && (
-                    <Badge className="bg-emerald-500/20 text-emerald-400 font-black text-[9px] h-6 uppercase tracking-wider border-emerald-500/30">AKAN LUNAS ✓</Badge>
+                    <Badge className="bg-emerald-500/20 text-emerald-400 font-black text-[9px] h-6 uppercase tracking-wider border-emerald-500/30 font-display">AKAN LUNAS ✓</Badge>
                 )}
             </div>
 
             <Button 
                 type="submit" 
-                className="w-full h-16 rounded-2xl bg-[#10B981] hover:bg-emerald-600 text-sm font-black border-none shadow-lg uppercase tracking-[0.2em]"
+                className="w-full h-16 rounded-2xl bg-[#10B981] hover:bg-[#0D9668] text-sm font-black border-none shadow-[0_4px_20px_rgba(16,185,129,0.2)] uppercase tracking-[0.2em] transition-all active:scale-95"
                 disabled={isLoading}
             >
                 {isLoading ? 'Menyimpan...' : 'Konfirmasi Pembayaran'}

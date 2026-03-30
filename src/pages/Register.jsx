@@ -23,24 +23,33 @@ import AnimatedContent from '@/components/reactbits/AnimatedContent'
 import Particles from '@/components/reactbits/Particles'
 
 const registerSchema = z.object({
-  fullName: z.string().min(2, 'Nama minimal 2 karakter'),
-  email: z.string().email('Format email tidak valid'),
-  password: z.string().min(8, 'Password minimal 8 karakter'),
+  fullName: z.string()
+    .min(2, 'Nama lengkap minimal 2 karakter')
+    .max(100, 'Nama terlalu panjang')
+    .trim(),
+  email: z.string()
+    .email('Format email tidak valid. Gunakan contoh@email.com')
+    .toLowerCase()
+    .trim(),
+  password: z.string()
+    .min(8, 'Password minimal 8 karakter agar akunmu aman')
+    .max(100, 'Password terlalu panjang'),
   confirmPassword: z.string(),
   agreedToTerms: z.literal(true, {
-    message: 'Kamu harus menyetujui syarat & ketentuan untuk melanjutkan.',
+    errorMap: () => ({ message: 'Kamu harus menyetujui syarat & ketentuan untuk melanjutkan.' }),
   }),
   inviteCode: z.string().optional(),
   mode: z.enum(['mandiri', 'invite']).default('mandiri'),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: 'Konfirmasi password tidak cocok',
+  message: 'Konfirmasi password tidak cocok dengan password di atas',
   path: ['confirmPassword'],
 }).superRefine((data, ctx) => {
   if (data.mode === 'invite') {
-    if (!data.inviteCode || data.inviteCode.length !== 6) {
+    const code = data.inviteCode?.trim() || ''
+    if (!code || code.length !== 6) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Kode harus 6 karakter',
+        message: 'Kode undangan harus terdiri dari 6 karakter',
         path: ['inviteCode'],
       });
     }

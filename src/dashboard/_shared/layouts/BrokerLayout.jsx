@@ -10,12 +10,10 @@ import BusinessModelOverlay from '../components/BusinessModelOverlay'
 import { useNotificationGenerator } from '@/lib/hooks/useNotifications'
 
 export default function BrokerLayout() {
-  const { profile, loading, refetchProfile } = useAuth()
+  const { profile, loading, isSuperadmin, refetchProfile } = useAuth()
   useNotificationGenerator()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [sidebarOpen, setSidebarOpen] = useState(false)
-
-  const isSuperadmin = profile?.role === 'superadmin'
 
   if (loading) return null
 

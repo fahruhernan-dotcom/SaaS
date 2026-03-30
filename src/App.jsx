@@ -47,6 +47,7 @@ import AdminBeranda from './dashboard/admin/AdminBeranda';
 import AdminUsers from './dashboard/admin/AdminUsers';
 import AdminSubscriptions from './dashboard/admin/AdminSubscriptions';
 import AdminPricing from './dashboard/admin/AdminPricing';
+import AdminActivity from './dashboard/admin/AdminActivity';
 
 // ── Vertical-aware beranda path ───────────────────────────────────────────────
 function getVerticalBeranda(vertical, subType) {
@@ -182,15 +183,12 @@ function DashboardLayout({ children }) {
 }
 
 function AdminRoute({ children }) {
-  const { user, profile, tenant, loading } = useAuth();
+  const { user, isSuperadmin, tenant, loading } = useAuth();
 
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
   
-  const isSuperAdmin = (profile?.role === 'superadmin' || profile?.user_type === 'superadmin') && 
-                      user?.email === 'fahruhernansakti@gmail.com';
-  
-  if (!isSuperAdmin) {
+  if (!isSuperadmin) {
     return <Navigate to={getVerticalBeranda(tenant?.business_vertical, tenant?.sub_type)} replace />;
   }
 
@@ -361,6 +359,11 @@ function App() {
         <Route path="/admin/pricing" element={
           <AdminRoute>
             <AdminLayout><AdminPricing /></AdminLayout>
+          </AdminRoute>
+        } />
+        <Route path="/admin/activity" element={
+          <AdminRoute>
+            <AdminLayout><AdminActivity /></AdminLayout>
           </AdminRoute>
         } />
 

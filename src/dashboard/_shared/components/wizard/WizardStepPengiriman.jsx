@@ -1,32 +1,37 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ChevronLeft, Loader2, Truck, Clock, ChevronsUpDown, Check, Plus, ChevronUp, ChevronDown, User } from 'lucide-react'
+import { ChevronLeft, Loader2, Truck, ChevronsUpDown, Check, Plus } from 'lucide-react'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { Input } from '@/components/ui/input'
 import { formatIDR, safeNum } from '@/lib/format'
 import { Card } from '@/components/ui/card'
 import { toast } from 'sonner'
-import {
-  Popover, PopoverContent, PopoverTrigger
-} from '@/components/ui/popover'
-import {
-  Command, CommandEmpty, CommandGroup,
-  CommandInput, CommandItem, CommandSeparator
-} from '@/components/ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandSeparator } from '@/components/ui/command'
 import { Badge } from '@/components/ui/badge'
-import { differenceInDays, parseISO, format } from 'date-fns'
+import { differenceInDays, parseISO } from 'date-fns'
 import { TimePicker } from '@/components/ui/TimePicker'
+
+const pengirimanSchema = z.object({
+  vehicle_id: z.string().nullable().optional(),
+  driver_id: z.string().nullable().optional(),
+  delivery_cost: z.number({ invalid_type_error: 'Biaya pengiriman harus berupa angka' }).optional().nullable(),
+  load_time: z.string().optional().nullable(),
+  departure_time: z.string().optional().nullable(),
+  notes: z.string().trim().max(500, 'Catatan terlalu panjang (max 500 karakter)').optional()
+})
 
 const S = {
   label: { fontSize: 11, fontWeight: 700, color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: 6, fontFamily: 'Sora' },
   input: 'w-full bg-[#111C24] border border-white/10 h-12 rounded-xl px-3 text-[#F1F5F9] font-bold outline-none placeholder:text-muted-foreground',
 }
-
-
 
 export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3Data, setStep3Data, onSubmit, onBack, submitting }) {
   const { tenant } = useAuth()
@@ -36,12 +41,30 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
   const [openVehicle, setOpenVehicle] = useState(false)
   const [openDriver, setOpenDriver] = useState(false)
 
-  // Quick Add State (Ensure they are false by default)
   const [showQuickAddVehicle, setShowQuickAddVehicle] = useState(false)
   const [newVehicle, setNewVehicle] = useState({ brand: '', vehicle_plate: '' })
   const [showQuickAddDriver, setShowQuickAddDriver] = useState(false)
   const [newDriver, setNewDriver] = useState({ full_name: '', phone: '' })
   const [isAdding, setIsAdding] = useState(false)
+
+  const { formState: { errors }, watch, setValue, register, trigger } = useForm({
+    resolver: zodResolver(pengirimanSchema),
+    defaultValues: {
+      vehicle_id: step3Data.vehicle_id || null,
+      driver_id: step3Data.driver_id || null,
+      delivery_cost: step3Data.delivery_cost || 0,
+      load_time: step3Data.load_time || null,
+      departure_time: step3Data.departure_time || null,
+      notes: step3Data.notes || ''
+    }
+  })
+
+  const formValues = watch()
+  
+  // Sync form values to parent state automatically
+  useEffect(() => {
+    setStep3Data(prev => ({ ...prev, ...formValues }))
+  }, [formValues, setStep3Data])
 
   const { data: vehicles } = useQuery({
     queryKey: ['vehicles-active', tenant?.id],
@@ -74,39 +97,34 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
   const totalRevenue = safeNum(sellData?.total_revenue)
   const totalModal = safeNum(buyData?.total_modal)
   
-  const deliveryCost = safeNum(step3Data.delivery_cost)
+  const deliveryCost = safeNum(formValues.delivery_cost)
   const profitBersih = totalRevenue - totalModal - deliveryCost
 
-  const update = (key, val) => setStep3Data(prev => ({ ...prev, [key]: val }))
-  
-  const handlePreSubmit = () => {
-    // 1. Validasi Kendaraan
-    if (vehicleMode === 'armada') {
-      if (!step3Data.vehicle_id) {
+  const handlePreSubmit = async () => {
+    if (step3Data.enabled) {
+      // Manual Validation for required Quick Add vs Select
+      if (vehicleMode === 'armada' && !formValues.vehicle_id) {
         toast.error("Pilih atau isi data kendaraan terlebih dahulu")
         return
       }
-    } else {
-      if (!step3Data.vehicle_id) {
+      if (vehicleMode === 'manual' && !formValues.vehicle_id) {
         toast.error("Simpan data kendaraan baru terlebih dahulu (Klik SIMPAN & PILIH)")
         return
       }
-    }
-
-    // 2. Validasi Sopir
-    if (driverMode === 'driver') {
-      if (!step3Data.driver_id) {
+      if (driverMode === 'driver' && !formValues.driver_id) {
         toast.error("Pilih atau isi data sopir terlebih dahulu")
         return
       }
-    } else {
-      if (!step3Data.driver_id) {
+      if (driverMode === 'manual' && !formValues.driver_id) {
         toast.error("Simpan data sopir baru terlebih dahulu (Klik SIMPAN & PILIH)")
         return
       }
+
+      // Trigger Zod validation
+      const isValid = await trigger()
+      if (!isValid) return
     }
     
-    // Semua valid, panggil onSubmit
     onSubmit()
   }
 
@@ -131,9 +149,8 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
       toast.error('Gagal tambah kendaraan: ' + error.message)
     } else {
       queryClient.invalidateQueries({ queryKey: ['vehicles-active', tenant?.id] })
-      update('vehicle_id', data.id)
-      update('vehicle_type', data.vehicle_type)
-      update('vehicle_plate', data.vehicle_plate)
+      setValue('vehicle_id', data.id)
+      setStep3Data(p => ({ ...p, vehicle_type: data.vehicle_type, vehicle_plate: data.vehicle_plate }))
       setShowQuickAddVehicle(false)
       setVehicleMode('armada')
       setNewVehicle({ brand: '', vehicle_plate: '' })
@@ -161,9 +178,8 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
       toast.error('Gagal tambah sopir: ' + error.message)
     } else {
       queryClient.invalidateQueries({ queryKey: ['drivers-active', tenant?.id] })
-      update('driver_id', data.id)
-      update('driver_name', data.full_name)
-      update('driver_phone', data.phone)
+      setValue('driver_id', data.id)
+      setStep3Data(p => ({ ...p, driver_name: data.full_name, driver_phone: data.phone }))
       setShowQuickAddDriver(false)
       setDriverMode('driver')
       setNewDriver({ full_name: '', phone: '' })
@@ -194,12 +210,11 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
         )
       }
     }
-    
     return { hp, statusBadge }
   }
 
-  const selectedVehicle = vehicles?.find(v => v.id === step3Data.vehicle_id)
-  const selectedDriver = drivers?.find(d => d.id === step3Data.driver_id)
+  const selectedVehicle = vehicles?.find(v => v.id === formValues.vehicle_id)
+  const selectedDriver = drivers?.find(d => d.id === formValues.driver_id)
 
   return (
     <div className="flex flex-col h-full min-h-0 relative">
@@ -253,7 +268,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
         </div>
         <button
           type="button"
-          onClick={() => update('enabled', !step3Data.enabled)}
+          onClick={() => setStep3Data(p => ({ ...p, enabled: !p.enabled }))}
           style={{
             width: 44, height: 24, borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s', border: 'none',
             background: step3Data.enabled ? '#10B981' : 'rgba(255,255,255,0.1)',
@@ -278,9 +293,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                 <button key={m} type="button" 
                   onClick={() => {
                     setVehicleMode(m)
-                    if (m === 'manual') {
-                      update('vehicle_id', null)
-                    }
+                    if (m === 'manual') setValue('vehicle_id', null, { shouldValidate: true })
                   }}
                   className={`flex-1 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${vehicleMode === m ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400' : 'border-white/5 bg-white/[0.02] text-[#4B6478]'}`}
                 >{m === 'armada' ? 'Armada Sendiri' : 'Input Manual'}</button>
@@ -293,7 +306,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                   <button id="vehicle_trigger" type="button" style={{
                     width: '100%', padding: '13px 14px', background: 'hsl(var(--input))', border: '1px solid hsl(var(--border))', borderRadius: '10px',
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontSize: '16px',
-                    color: step3Data.vehicle_id ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', textAlign: 'left'
+                    color: formValues.vehicle_id ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', textAlign: 'left'
                   }}>
                     <span className="truncate">
                       {selectedVehicle ? `${selectedVehicle.vehicle_plate} · ${selectedVehicle.vehicle_type}` : 'Pilih kendaraan armada'}
@@ -311,9 +324,8 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                           key={v.id}
                           value={v.vehicle_plate + ' ' + v.vehicle_type}
                           onSelect={() => {
-                            update('vehicle_id', v.id)
-                            update('vehicle_type', v.vehicle_type)
-                            update('vehicle_plate', v.vehicle_plate)
+                            setValue('vehicle_id', v.id, { shouldValidate: true })
+                            setStep3Data(p => ({ ...p, vehicle_type: v.vehicle_type, vehicle_plate: v.vehicle_plate }))
                             setOpenVehicle(false)
                             setShowQuickAddVehicle(false)
                           }}
@@ -323,7 +335,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                             <p className="text-sm font-bold text-white">{v.vehicle_plate} · {v.vehicle_type}</p>
                             <p className="text-[11px] text-[#4B6478] font-medium mt-0.5">{vehicleLabel(v)}</p>
                           </div>
-                          {step3Data.vehicle_id === v.id && <Check size={14} className="text-emerald-400 ml-2" />}
+                          {formValues.vehicle_id === v.id && <Check size={14} className="text-emerald-400 ml-2" />}
                         </CommandItem>
                       ))}
                     </CommandGroup>
@@ -385,6 +397,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                 </div>
               </div>
             )}
+            {errors.vehicle_id && <p className="text-[10px] text-red-500 font-bold">{errors.vehicle_id.message}</p>}
           </div>
 
           {/* Sopir */}
@@ -395,9 +408,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                 <button key={m} type="button" 
                   onClick={() => {
                     setDriverMode(m)
-                    if (m === 'manual') {
-                      update('driver_id', null)
-                    }
+                    if (m === 'manual') setValue('driver_id', null, { shouldValidate: true })
                   }}
                   className={`flex-1 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${driverMode === m ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400' : 'border-white/5 bg-white/[0.02] text-[#4B6478]'}`}
                 >{m === 'driver' ? 'Sopir Terdaftar' : 'Input Manual'}</button>
@@ -411,7 +422,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                     <button id="driver_trigger" type="button" style={{
                       width: '100%', padding: '13px 14px', background: 'hsl(var(--input))', border: '1px solid hsl(var(--border))', borderRadius: '10px',
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontSize: '16px',
-                      color: step3Data.driver_id ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', textAlign: 'left'
+                      color: formValues.driver_id ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', textAlign: 'left'
                     }}>
                       <span className="truncate">
                         {selectedDriver ? selectedDriver.full_name : 'Pilih sopir terdaftar'}
@@ -429,9 +440,8 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                             key={d.id}
                             value={d.full_name}
                             onSelect={() => {
-                              update('driver_id', d.id)
-                              update('driver_name', d.full_name)
-                              update('driver_phone', d.phone)
+                              setValue('driver_id', d.id, { shouldValidate: true })
+                              setStep3Data(p => ({ ...p, driver_name: d.full_name, driver_phone: d.phone }))
                               setOpenDriver(false)
                               setShowQuickAddDriver(false)
                             }}
@@ -444,7 +454,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                                 {driverSubLabel(d).statusBadge}
                               </div>
                             </div>
-                            {step3Data.driver_id === d.id && <Check size={14} className="text-emerald-400 ml-2" />}
+                            {formValues.driver_id === d.id && <Check size={14} className="text-emerald-400 ml-2" />}
                           </CommandItem>
                         ))}
                         </CommandGroup>
@@ -465,7 +475,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                     </PopoverContent>
                   </Popover>
                 
-                {step3Data.driver_id && selectedDriver?.wage_per_trip !== null && selectedDriver?.wage_per_trip !== undefined && (
+                {formValues.driver_id && selectedDriver?.wage_per_trip !== null && selectedDriver?.wage_per_trip !== undefined && (
                   <p className="text-[10px] text-emerald-400 mt-1.5 font-black uppercase italic tracking-wider">
                     Estimasi Upah: {formatIDR(selectedDriver.wage_per_trip)}
                   </p>
@@ -513,29 +523,30 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                   </div>
                 </div>
               )}
+              {errors.driver_id && <p className="text-[10px] text-red-500 font-bold">{errors.driver_id.message}</p>}
           </div>
 
           {/* Times with Custom TimePicker */}
           <div className="grid grid-cols-2 gap-3">
-            <TimePicker label="Jam Muat" value={step3Data.load_time} onChange={val => update('load_time', val)} />
-            <TimePicker label="Jam Berangkat" value={step3Data.departure_time} onChange={val => update('departure_time', val)} />
+            <TimePicker label="Jam Muat" value={formValues.load_time} onChange={val => setValue('load_time', val, { shouldValidate: true })} />
+            <TimePicker label="Jam Berangkat" value={formValues.departure_time} onChange={val => setValue('departure_time', val, { shouldValidate: true })} />
           </div>
 
           {/* TOTAL BIAYA PENGIRIMAN */}
           <div className="space-y-1.5">
             <label htmlFor="delivery_cost" style={S.label}>Total Biaya Pengiriman *</label>
-            <InputRupiah id="delivery_cost" name="delivery_cost" value={step3Data.delivery_cost || 0} onChange={v => update('delivery_cost', v)} placeholder="0" className="bg-[#111C24] border-emerald-500/20 h-14 rounded-2xl text-xl font-bold text-white shadow-inner" />
+            <InputRupiah id="delivery_cost" name="delivery_cost" value={formValues.delivery_cost || 0} onChange={v => setValue('delivery_cost', v, { shouldValidate: true })} placeholder="0" className="bg-[#111C24] border-emerald-500/20 h-14 rounded-2xl text-xl font-bold text-white shadow-inner" />
             <p className="text-[10px] text-[#4B6478] font-bold uppercase mt-1 italic">
               Termasuk solar, uang makan, portal, dll.
             </p>
+            {errors.delivery_cost && <p className="text-[10px] text-red-500 font-bold">{errors.delivery_cost.message}</p>}
           </div>
 
           {/* Catatan */}
           <div className="space-y-1.5">
-            <label htmlFor="delivery_notes" style={S.label}>Catatan Pengiriman</label>
-            <textarea id="delivery_notes" name="delivery_notes" value={step3Data.notes || ''} onChange={e => update('notes', e.target.value)}
-              className="w-full bg-[#111C24] border border-white/10 rounded-xl p-4 text-[#F1F5F9] text-sm min-h-[80px] outline-none resize-none placeholder:text-[#4B6478]"
-              placeholder="Tambahkan keterangan rute, kondisi ayam, dll..." />
+            <label htmlFor="notes" style={S.label}>Catatan Pengiriman</label>
+            <textarea id="notes" name="notes" className="w-full bg-[#111C24] border border-white/10 rounded-xl p-4 text-[#F1F5F9] text-sm min-h-[80px] outline-none resize-none placeholder:text-[#4B6478]" placeholder="Tambahkan keterangan rute, kondisi ayam, dll..." {...register('notes')} />
+            {errors.notes && <p className="text-[10px] text-red-500 font-bold">{errors.notes.message}</p>}
           </div>
         </div>
       )}

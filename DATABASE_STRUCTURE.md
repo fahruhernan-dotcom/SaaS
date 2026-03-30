@@ -1,6 +1,6 @@
 # TernakOS — Database Structure
 > Generated from Supabase schema. Gunakan sebagai referensi Antigravity.
-> Last updated: 2026-03-29 (Peternak sub-role structure; RPA vertical migration to rumah_potong; sub_type NOT NULL constraint; standardized routing pattern; business switcher stale query fix; Sembako RLS policy enforcement; sembako_products unit enum expansion; DatePicker locale fix; CashFlow Keseluruhan filter; Sheet migration right-panel pattern; Persistent Edge Function rate limiting; Broker Connections feature implementation; RPC logic for atomic view_count increment; broker_connections deprecated columns tagged)
+> Last updated: 2026-03-30 (Superadmin Dashboard Hardening: Phase 5 complete; InputRupiah financial integrity standard; pricing_plans & discount_codes tables documented; payment_settings xendit_config; maybeSingle fix for 406 errors; Lucide icons standard; Peternak sub-role structure; RPA vertical migration to rumah_potong; sub_type NOT NULL constraint; standardized routing pattern; business switcher stale query fix; Sembako RLS policy enforcement; sembako_products unit enum expansion; DatePicker locale fix; CashFlow Keseluruhan filter)
 
 ---
 
@@ -31,6 +31,7 @@
 ❌ NEVER use `broker_connections.broker_tenant_id` (deprecated)
 ✅ broker_connections: pakai `requester_tenant_id` + `target_tenant_id`
 ✅ market_listings `view_count`: pakai RPC, bukan `.update()` langsung
+✅ Admin UI: Gunakan Lucide icons (Bird, Egg, Home, Factory), JANGAN emoji.
 ⚠️ broker_connections tidak punya `is_deleted` — delete langsung jika cancel
 ```
 
@@ -1408,6 +1409,37 @@ Hasil di-transform ke `{ broker: { pro: { price, originalPrice, id }, business: 
 ---
 
 ## ⚙️ GLOBAL CONFIG
+
+### `pricing_plans`
+> Tabel master untuk paket langganan ( Starter, Pro, Business )
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `name` | text | `'starter'` \| `'pro'` \| `'business'` |
+| `monthly_price` | integer | Harga per bulan |
+| `annual_price` | integer | Harga per tahun |
+| `features` | jsonb | List fitur |
+| `updated_at` | timestamptz | |
+
+---
+
+### `discount_codes`
+> Tabel voucher / kode diskon (Global)
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `code` | text | UNIQUE, UPPERCASE |
+| `discount_type`| text | `'fixed'` \| `'percent'` |
+| `discount_value`| integer | |
+| `min_purchase` | integer | |
+| `max_uses` | integer | nullable |
+| `used_count` | integer | |
+| `expires_at` | timestamptz | |
+| `is_active` | boolean | default true |
+
+---
 
 ### `plan_configs`
 > Key-value store untuk semua konfigurasi plan yang bisa diubah admin

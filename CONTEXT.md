@@ -1,6 +1,6 @@
 # TernakOS — Developer Context
 
-> Last updated: 2026-03-29 (Multi-vertical routing architecture; Peternak sub-role restructure; RPA to Rumah Potong migration; App.jsx import sanitization; getXBasePath helpers; Mobile nav patterns; Poultry Broker Sheet migration to right-panel; CashFlow Keseluruhan filter + O(N) optimization; Sembako RLS enforcement; DatePicker locale bug fix; Sembako date filter calendar boundaries; Broker Connections feature; Register retry polling fix; Business switcher performance optimization; invite_rate_limits persistent storage) | Use this as reference for all future implementations.
+> Last updated: 2026-03-30 (Superadmin Dashboard Hardening: Phase 5 complete; InputRupiah financial integrity standard; Zod validation for pricing; Admin sidebar premium polish with indicator glow; Lucide icons standard for business verticals; maybeSingle fix for 406 Xendit config errors; Global save pattern in Admin Pricing; Multi-vertical routing architecture; Peternak sub-role restructure; RPA to Rumah Potong migration; App.jsx import sanitization; getXBasePath helpers; Mobile nav patterns; Poultry Broker Sheet migration to right-panel; CashFlow Keseluruhan filter + O(N) optimization; Sembako RLS enforcement) | Use this as reference for all future implementations.
 
 ---
 
@@ -104,6 +104,9 @@
 > **Primary Source of Truth**: Selalu rujuk ke [DATABASE_STRUCTURE.md](file:///d:/Dokumen/02_Kerja_Profesional/Ternak%20OS/DATABASE_STRUCTURE.md) untuk struktur tabel, enum, dan dependency map yang paling update.
 
 > **Rule**: Use `.select()` only columns that exist. **NEVER insert GENERATED columns.**
+> **SQL Migration Rule**: Selalu gunakan `DROP POLICY IF EXISTS "Exact Name" ON table;` sebelum `CREATE POLICY "Exact Name"` untuk memastikan idempotensi.
+> **Naming Rule**: Gunakan **Sentence Case** untuk nama policy (contoh: `"Public Read Pricing Plans"`).
+> **Safety Rule**: **JANGAN PERNAH** menggunakan `DROP ... CASCADE` (terutama pada FUNCTION) karena dapat menghapus policy RLS secara tidak sengaja.
 
 ### `profiles`
 - `id`, `tenant_id`, `auth_user_id`, `full_name`, `role` (`'owner'` | `'staff'` | `'superadmin'` | `'view_only'` | `'sopir'`)
@@ -136,14 +139,18 @@ const canWrite = ['owner', 'staff'].includes(profile?.role)
 
 **Akses per role:**
 - **owner**: Semua fitur.
-- **staff**: Beranda, Transaksi, Kandang, Pengiriman, RPA, Harga Pasar.
+- **Staff**: Beranda, Transaksi, Kandang, Pengiriman, RPA, Harga Pasar.
   - ✗ Tidak bisa: Cash Flow, Armada, Tim & Akses, Simulator.
   - ✗ Tidak bisa: Hapus data, edit data sensitif.
-- **view_only**: Beranda, Transaksi, Harga Pasar (semua read-only).
+- **View Only**: Beranda, Transaksi, Harga Pasar (semua read-only).
   - ✗ Tidak ada tombol tambah/edit/hapus.
   - ✓ Tampilkan banner "View Only" di setiap halaman.
-- **sopir**: Hanya `/broker/sopir`.
+- **Sopir**: Hanya `/broker/sopir`.
   - ✓ Lihat & update status pengiriman yang di-assign.
+- **Superadmin**: Akses penuh ke `/admin`.
+  - ✓ Management Tenant, Invoices, Pricing, Vouchers.
+  - ✓ Standardized icons for business verticals (Bird, Egg, Home, Factory).
+  - ✓ Enforced financial integrity via `InputRupiah` and `Zod`.
 
 **Route setelah login:**
 - owner, staff, view_only (poultry_broker) → `/broker/poultry_broker/beranda`
@@ -510,11 +517,13 @@ Pola routing terstandarisasi: `/{role}/{sub_type}/{page}`
 - `SidebarInset` contains `DesktopTopBar` + `<main>` (24px/32px padding, max-w-7xl)
 
 ### `DashboardLayout` (in `App.jsx` — for Peternak/RPA)
-- Same  ### `AppSidebar` (Desktop — `src/dashboard/components/AppSidebar.jsx`)
+- Same as `BrokerLayout` but uses `DashboardSidebar`
+
+### `AppSidebar` (Desktop — `src/dashboard/components/AppSidebar.jsx`)
 - Logo: `<img src="/logo.png" />` + "TernakOS" + "Broker Dashboard"
 - **Tenant Switcher**: 
   - Mendukung multi-bisnis dengan `switchTenant`.
-  - Icon dinamis sesuai vertikal (🐔 Ayam, 🥚 Telur, 🏠 Peternak, 🏭 RPA).
+  - Icon dinamis (Lucide) sesuai vertikal (Bird 🐔, Egg 🥚, Home 🏠, Factory 🏭).
   - Tampilan: Nama Bisnis + Label Vertikal di bawahnya.
 - **Nav Groups**:
   - UTAMA: Beranda, Transaksi/POS, Kandang/Inventori, Tim.
@@ -524,8 +533,6 @@ Pola routing terstandarisasi: `/{role}/{sub_type}/{page}`
   - Superadmin bypass role-based filters (`isOwner` = true).
   - Hide trial widget for superadmin, replaced with **🛡️ PLATFORM ADMIN** gold badge.
 - Footer: Plan info (shows plan name, trial countdown + progress bar for users), User dropdown (Akun, Admin Panel, Logout)
- emerald border
-- Footer: Plan info (shows plan name, trial countdown + progress bar), User dropdown (Akun, Logout)
 
 ### `BottomNav` (Mobile — `src/dashboard/components/BottomNav.jsx`)
 - Dynamic tabs from `getBusinessModel(profile.user_type).bottomNav`
@@ -1205,6 +1212,7 @@ Uses `reactbits/` components for effects: `AuroraBackground`, `BlurText`, `Anima
 9. **JANGAN hardcode broker_connections** dengan `peternak_tenant_id`/`broker_tenant_id`
 10. **JANGAN increment view_count** dengan read-then-write dari frontend
 11. **`formatDate` must be the safe version** from `lib/format.js`
+12. 🚨 **NEVER USE `DROP FUNCTION ... CASCADE`**: When updating Supabase helper functions (like `get_my_tenant_id`), ALWAYS use `CREATE OR REPLACE FUNCTION`. Using `DROP FUNCTION ... CASCADE` will silently and instantly delete ALL dependent RLS policies across the entire database, causing massive `new row violates row-level security policy` errors and shutting down the tenant isolation.
 3. **ESLint is strict** — `useEffect` with setState triggers error; prefer derived values
 4. **Tailwind `font-body` string must NOT have extra quotes**
 5. **Database Naming**: `market_prices` pakai `price_date` bukan `date`.
@@ -1580,6 +1588,16 @@ Peternak PRO: 2 kandang + 1 jenis ternak included. Add-on: +Rp 99.000/bln per je
 - Semua `SheetContent` dialog di Poultry Broker yang sebelumnya menggunakan `side="bottom"` direfaktor menjadi `side="right"` (panel samping kanan).
 - File yang diupdate: `Beranda.jsx` (EventDetailSheet), `Transaksi.jsx`, `CashFlow.jsx`, `CreateLossSheet.jsx`.
 - Ini menjadi pola standar wajib untuk semua fitur desktop di modul Broker.
+
+**Frontend UI/UX Input Standardization (Phase 3):**
+- `CashFlow.jsx`: Mengganti input Nominal Pengeluaran Ekstra menggunakan komponen `<InputRupiah>` murni dengan binding via `setValue` dan sinkronisasi Zod.
+- `Armada.jsx`: Merefaktor `VehicleSheet`, `DriverSheet`, dan `ExpenseSheet` agar menggunakan komponen `<InputRupiah>` (untuk Biaya Sewa, Upah Supir, Biaya Operasional) dan `<InputNumber>` (untuk Kapasitas Ekor/Kg).
+- **Zod Resolvers**: Menulis konstrain pelokalan bahasa Indonesia yang ketat pada `vehicleSchema`, `driverSchema`, dan `expenseSchema` (misal peringatan jika nominal > Rp 0).
+
+**Frontend Validasi Finansial Piutang & Pembeli RPA (Phase 4):**
+- `RPA.jsx`: Form Tambah RPA dimigrasikan sepenuhnya ke `react-hook-form` + `zod` (`rpaSchema`). Field Limit Kredit menggunakan `<InputRupiah>`. Mengekstrak `RPAForm` ke _module-level export_.
+- `RPADetail.jsx`: Membasmi _Technical Debt_ (inline-styles ratusan baris) dengan menghapus komponen kuno `EditRPAForm` dan mendaur ulang `<RPAForm />` yang dimuat dari `RPA.jsx`. 
+- `RPADetail.jsx`: Mengamankan `FormPaymentModal` dengan `<InputRupiah>`, `paymentSchema` via Zod, memastikan pelunasan piutang tidak bisa minus atau melebihi Sisa Hutang.
 
 **CashFlow.jsx — Bugfix, Polish & Filter Enhancement:**
 - Fixed `ReferenceError: isDesktop is not defined` pada komponen `CreateExtraExpenseSheet` — ditambahkan scope `useMediaQuery` lokal.

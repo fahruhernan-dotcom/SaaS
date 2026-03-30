@@ -32,6 +32,21 @@ import {
 } from "@/components/ui/sheet"
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { cn } from '@/lib/utils'
+import { z } from 'zod'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { InputRupiah } from '@/components/ui/InputRupiah'
+
+export const rpaSchema = z.object({
+    rpa_name: z.string().min(2, 'Nama RPA minimal 2 karakter'),
+    buyer_type: z.string().default('rpa'),
+    phone: z.string().min(8, 'Nomor HP minimal 8 digit'),
+    location: z.string().optional(),
+    payment_terms: z.string().default('cash'),
+    credit_limit: z.union([z.string(), z.number()]).optional(),
+    reliability_score: z.number().min(1).max(5).default(5),
+    notes: z.string().optional()
+})
 
 const staggerContainer = {
     hidden: {},
@@ -387,28 +402,29 @@ function RPACard({ rpa, isDesktop, onClick, onEdit }) {
     )
 }
 
-function RPAForm({ rpa, isDesktop, onClose, onSubmit, onDelete }) {
+export function RPAForm({ rpa, isDesktop, onClose, onSubmit, onDelete }) {
     const { profile } = useAuth()
     const isOwner = profile?.role === 'owner'
     const [isLoading, setIsLoading] = useState(false)
-    const [formData, setFormData] = useState(rpa || {
-        rpa_name: '',
-        buyer_type: 'rpa',
-        contact_person: '',
-        phone: '',
-        location: '',
-        payment_terms: 'cash',
-        credit_limit: 0,
-        reliability_score: 5,
-        notes: ''
+    
+    const { register, handleSubmit, watch, setValue, control, formState: { errors } } = useForm({
+        resolver: zodResolver(rpaSchema),
+        defaultValues: rpa || {
+            rpa_name: '',
+            buyer_type: 'rpa',
+            phone: '',
+            location: '',
+            payment_terms: 'cash',
+            credit_limit: 0,
+            reliability_score: 5,
+            notes: ''
+        }
     })
 
-    const handleSubmit = async (e) => {
-        e.preventDefault()
+    const onFormSubmit = async (data) => {
         setIsLoading(true)
         try {
-            await onSubmit(formData)
-            onClose()
+            await onSubmit(data)
         } catch (err) {
             // Error handling is done in onSubmit
         } finally {
@@ -417,22 +433,22 @@ function RPAForm({ rpa, isDesktop, onClose, onSubmit, onDelete }) {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6 pb-12">
+        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6 pb-12">
             <div className="space-y-2">
                 <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Nama RPA / Pembeli *</Label>
                 <Input
-                    required
-                    value={formData.rpa_name}
-                    onChange={e => setFormData({ ...formData, rpa_name: e.target.value })}
-                    className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white text-base"
+                    {...register('rpa_name')}
+                    placeholder="Contoh: RPA Prima Jaya"
+                    className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white text-base focus:border-emerald-500/50"
                 />
+                {errors.rpa_name && <p className="text-[9px] text-red-500 font-black uppercase ml-1 mt-1">{errors.rpa_name.message}</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Tipe Pembeli</Label>
-                    <Select value={formData.buyer_type} onValueChange={val => setFormData({ ...formData, buyer_type: val })}>
-                        <SelectTrigger className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white uppercase text-xs">
+                    <Select value={watch('buyer_type')} onValueChange={val => setValue('buyer_type', val)}>
+                        <SelectTrigger className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white uppercase text-xs focus:ring-emerald-500/20">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#111C24] border-white/10 text-white">
@@ -447,29 +463,29 @@ function RPAForm({ rpa, isDesktop, onClose, onSubmit, onDelete }) {
                 <div className="space-y-2">
                     <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>No HP *</Label>
                     <Input
-                        required
                         type="tel"
-                        value={formData.phone}
-                        onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                        className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white text-base"
+                        {...register('phone')}
+                        placeholder="0812..."
+                        className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white text-base focus:border-emerald-500/50"
                     />
+                    {errors.phone && <p className="text-[9px] text-red-500 font-black uppercase ml-1 mt-1">{errors.phone.message}</p>}
                 </div>
             </div>
 
             <div className="space-y-2">
                 <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Lokasi / Alamat</Label>
                 <Input
-                    value={formData.location}
-                    onChange={e => setFormData({ ...formData, location: e.target.value })}
-                    className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white text-base"
+                    {...register('location')}
+                    placeholder="Contoh: Boyolali, Jawa Tengah"
+                    className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white text-base focus:border-emerald-500/50"
                 />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Syarat Bayar</Label>
-                    <Select value={formData.payment_terms} onValueChange={val => setFormData({ ...formData, payment_terms: val })}>
-                        <SelectTrigger className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white uppercase text-xs">
+                    <Select value={watch('payment_terms')} onValueChange={val => setValue('payment_terms', val)}>
+                        <SelectTrigger className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white uppercase text-xs focus:ring-emerald-500/20">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#111C24] border-white/10 text-white">
@@ -482,14 +498,26 @@ function RPAForm({ rpa, isDesktop, onClose, onSubmit, onDelete }) {
                     </Select>
                 </div>
                 <div className="space-y-2">
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Limit Kredit Rp</Label>
+                    <InputRupiah 
+                        value={watch('credit_limit')}
+                        onChange={val => setValue('credit_limit', val)}
+                        placeholder="Contoh: 50000000"
+                        className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white text-base focus:border-emerald-500/50"
+                    />
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
                     <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Reliabilitas</Label>
                     <div className="flex gap-2 h-12 items-center">
                         {[1, 2, 3, 4, 5].map(s => (
                             <Star
                                 key={s}
                                 size={22}
-                                className={cn("cursor-pointer transition-all", s <= formData.reliability_score ? 'fill-amber-400 text-amber-400' : 'text-[#4B6478]')}
-                                onClick={() => setFormData({ ...formData, reliability_score: s })}
+                                className={cn("cursor-pointer transition-all", s <= watch('reliability_score') ? 'fill-amber-400 text-amber-400 scale-110' : 'text-[#4B6478]')}
+                                onClick={() => setValue('reliability_score', s)}
                             />
                         ))}
                     </div>
@@ -499,9 +527,9 @@ function RPAForm({ rpa, isDesktop, onClose, onSubmit, onDelete }) {
             <div className="space-y-2">
                 <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Catatan</Label>
                 <Textarea
-                    value={formData.notes}
-                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                    className="bg-[#111C24] border-white/10 rounded-xl min-h-[80px] font-bold text-white text-base p-4"
+                    {...register('notes')}
+                    placeholder="Tulis catatan jika diperlukan..."
+                    className="bg-[#111C24] border-white/10 rounded-xl min-h-[80px] font-bold text-white text-base p-4 focus:border-emerald-500/50"
                 />
             </div>
 

@@ -79,7 +79,7 @@ function LoadingSkeleton() {
 // ── Main Component ────────────────────────────────────────────
 
 export default function AdminBeranda() {
-  const navigate    = useNavigate()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { data: stats, isLoading, isError } = useGlobalStats()
   const updateTenant = useAdminUpdateTenant()
@@ -118,13 +118,13 @@ export default function AdminBeranda() {
 
   // ── Derived data ──
   const pieData = [
-    { name: 'Starter',  value: stats.tenants.starter,  color: '#4B6478' },
-    { name: 'Pro',      value: stats.tenants.pro,      color: '#10B981' },
+    { name: 'Starter', value: stats.tenants.starter, color: '#4B6478' },
+    { name: 'Pro', value: stats.tenants.pro, color: '#10B981' },
     { name: 'Business', value: stats.tenants.business, color: '#F59E0B' },
   ]
 
-  const pendingCount    = stats.revenue.pendingList.length
-  const expiringCount   = stats.tenants.trialExpiringSoon.length
+  const pendingCount = stats.revenue.pendingList.length
+  const expiringCount = stats.tenants.trialExpiringSoon.length
 
   return (
     <motion.div
@@ -134,7 +134,7 @@ export default function AdminBeranda() {
     >
 
       {/* ── SECTION A — Header ───────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sticky top-0 z-20 bg-[#080C10]/80 backdrop-blur-md py-2 -mx-2 px-2 rounded-xl">
         <div>
           <h1 className="font-display text-2xl font-bold text-white uppercase tracking-tight">
             OVERVIEW
@@ -143,11 +143,21 @@ export default function AdminBeranda() {
             Platform health & business metrics
           </p>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 self-start sm:self-auto">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
-            AUTO REFRESH 60s
-          </span>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => queryClient.invalidateQueries(['admin-global-stats'])}
+            className="h-9 rounded-xl border-white/10 text-white/40 hover:text-white hover:bg-white/5 text-[10px] font-black uppercase tracking-widest px-4"
+          >
+            <RefreshCw size={13} className="mr-2" /> Sync Data
+          </Button>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+              LIVE
+            </span>
+          </div>
         </div>
       </div>
 
@@ -227,11 +237,11 @@ export default function AdminBeranda() {
             PERTUMBUHAN TENANT — 6 BULAN
           </p>
           <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={stats.tenants.growthData} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
+            <AreaChart data={stats.tenants.growthData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="emeraldGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%"   stopColor="rgba(16,185,129,0.2)" />
-                  <stop offset="100%" stopColor="rgba(16,185,129,0)"   />
+                  <stop offset="0%" stopColor="rgba(16,185,129,0.2)" />
+                  <stop offset="100%" stopColor="rgba(16,185,129,0)" />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
@@ -312,7 +322,7 @@ export default function AdminBeranda() {
         </Card>
       </div>
 
-      {/* ── SECTION D — Lists ────────────────────────────────── */}
+      {/* ── SECTION D — Actionable Queues ────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* Trial Akan Habis */}
@@ -321,46 +331,46 @@ export default function AdminBeranda() {
             <p className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em]">
               TRIAL AKAN HABIS
             </p>
-            {expiringCount > 0 && (
+            {expiringCount > 0 ? (
               <Badge className="bg-red-500/10 text-red-400 border-red-500/20 text-[9px] font-black uppercase">
                 {expiringCount} tenant
               </Badge>
+            ) : (
+              <CheckCircle size={14} className="text-emerald-500/40" />
             )}
           </div>
 
-          <div className="space-y-2 max-h-[260px] overflow-y-auto">
+          <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
             {stats.tenants.trialExpiringSoon.length > 0 ? (
               stats.tenants.trialExpiringSoon.map(t => {
                 const daysLeft = Math.ceil((new Date(t.trial_ends_at) - new Date()) / (1000 * 60 * 60 * 24))
-                const urgency  = daysLeft <= 3 ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                               : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                const urgency = daysLeft <= 3 ? 'text-red-400' : 'text-amber-400'
                 return (
                   <div
                     key={t.id}
-                    className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all"
+                    className="flex items-center justify-between p-3 rounded-xl bg-white/[0.01] border border-white/5 hover:border-white/10 transition-all"
                   >
                     <div>
                       <p className="text-[12px] font-bold text-white leading-tight">{t.business_name}</p>
-                      <Badge className={`mt-1 text-[8px] font-black uppercase px-1.5 ${urgency}`}>
-                        {daysLeft} hari lagi
-                      </Badge>
+                      <p className={`text-[9px] font-black uppercase mt-1 tracking-wider ${urgency}`}>
+                        Expires in {daysLeft} days
+                      </p>
                     </div>
                     <Button
                       size="sm"
                       variant="outline"
                       disabled={updateTenant.isPending}
                       onClick={() => handleExtendTrial(t.id)}
-                      className="h-7 rounded-lg border-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase tracking-widest px-3 hover:bg-emerald-500 hover:text-white shrink-0 ml-3"
+                      className="h-7 rounded-lg border-white/10 text-white/40 text-[9px] font-black uppercase tracking-widest px-3 hover:bg-emerald-500 hover:text-white"
                     >
-                      Extend 14hr
+                      Extend
                     </Button>
                   </div>
                 )
               })
             ) : (
-              <div className="text-center py-8 flex flex-col items-center gap-2 opacity-40">
-                <CheckCircle size={28} className="text-emerald-400" />
-                <p className="text-[11px] font-bold uppercase tracking-widest">Tidak ada trial akan berakhir</p>
+              <div className="text-center py-6 flex flex-col items-center gap-2 opacity-30">
+                <p className="text-[10px] font-bold uppercase tracking-widest">Antrian Bersih</p>
               </div>
             )}
           </div>
@@ -370,49 +380,50 @@ export default function AdminBeranda() {
         <Card className="bg-[#111C24] border-white/8 rounded-2xl p-5 shadow-xl space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em]">
-              INVOICE MENUNGGU KONFIRMASI
+              PENDING INVOICES
             </p>
-            {pendingCount > 0 && (
+            {pendingCount > 0 ? (
               <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 text-[9px] font-black uppercase">
                 {pendingCount} pending
               </Badge>
+            ) : (
+              <CheckCircle size={14} className="text-emerald-500/40" />
             )}
           </div>
 
-          <div className="space-y-2 max-h-[260px] overflow-y-auto">
+          <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
             {stats.revenue.pendingList.length > 0 ? (
               stats.revenue.pendingList.map(inv => (
                 <div
                   key={inv.id}
-                  className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all"
+                  className="flex items-center justify-between p-3 rounded-xl bg-white/[0.01] border border-white/5 hover:border-white/10 transition-all"
                 >
                   <div className="min-w-0">
-                    <p className="text-emerald-400 font-mono text-sm font-bold leading-tight">
-                      #{inv.invoice_number}
+                    <p className="text-emerald-400 font-mono text-xs font-bold leading-tight uppercase">
+                      #{inv.invoice_number?.substring(0, 8)}
                     </p>
-                    <p className="text-[#4B6478] text-xs font-bold uppercase mt-0.5 truncate">
+                    <p className="text-[#4B6478] text-[10px] font-bold uppercase mt-0.5 truncate">
                       {inv.tenants?.business_name}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0 ml-3">
-                    <p className="font-display text-[13px] font-black text-white">
+                  <div className="flex items-center gap-3 shrink-0 ml-3">
+                    <p className="font-display text-[12px] font-black text-white">
                       {formatIDR(inv.amount)}
                     </p>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => navigate('/admin/subscriptions')}
-                      className="h-7 rounded-lg border-amber-500/20 text-amber-400 text-[9px] font-black uppercase tracking-widest px-3 hover:bg-amber-500 hover:text-white"
+                      className="h-7 w-7 p-0 rounded-lg border-white/10 text-[#4B6478] hover:text-amber-400 transition-colors"
                     >
-                      → Konfirmasi
+                      <ChevronRight size={14} />
                     </Button>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="text-center py-8 flex flex-col items-center gap-2 opacity-40">
-                <CheckCircle size={28} className="text-emerald-400" />
-                <p className="text-[11px] font-bold uppercase tracking-widest">Semua invoice terkonfirmasi ✓</p>
+              <div className="text-center py-6 flex flex-col items-center gap-2 opacity-30">
+                <p className="text-[10px] font-bold uppercase tracking-widest">Semua Lunas</p>
               </div>
             )}
           </div>
@@ -421,10 +432,10 @@ export default function AdminBeranda() {
 
       {/* ── SECTION E — Distribusi Vertikal ──────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <VerticalCard label="Broker Ayam"  value={stats.tenants.byVertical.poultry_broker} icon={Bird}    color="emerald" />
-        <VerticalCard label="Broker Telur" value={stats.tenants.byVertical.egg_broker}     icon={Egg}     color="blue"    />
-        <VerticalCard label="Peternak"     value={stats.tenants.byVertical.peternak}        icon={Home}    color="purple"  />
-        <VerticalCard label="RPA"          value={stats.tenants.byVertical.rpa}             icon={Factory} color="amber"   />
+        <VerticalCard label="Broker Ayam" value={stats.tenants.byVertical.poultry_broker} icon={Bird} color="emerald" />
+        <VerticalCard label="Broker Telur" value={stats.tenants.byVertical.egg_broker} icon={Egg} color="blue" />
+        <VerticalCard label="Peternak" value={stats.tenants.byVertical.peternak} icon={Home} color="purple" />
+        <VerticalCard label="RPA" value={stats.tenants.byVertical.rpa} icon={Factory} color="amber" />
       </div>
     </motion.div>
   )
@@ -458,9 +469,9 @@ function KPICard({ label, value, sub, icon: Icon, iconColor, valueColor = 'text-
 function VerticalCard({ label, value, icon: Icon, color }) {
   const themes = {
     emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    blue:    'bg-blue-500/10    text-blue-400    border-blue-500/20',
-    purple:  'bg-purple-500/10  text-purple-400  border-purple-500/20',
-    amber:   'bg-amber-500/10   text-amber-400   border-amber-500/20',
+    blue: 'bg-blue-500/10    text-blue-400    border-blue-500/20',
+    purple: 'bg-purple-500/10  text-purple-400  border-purple-500/20',
+    amber: 'bg-amber-500/10   text-amber-400   border-amber-500/20',
   }
   return (
     <div className="bg-[#111C24] rounded-xl p-4 border border-white/8 flex items-center gap-3 hover:border-white/15 transition-all">

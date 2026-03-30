@@ -27,12 +27,12 @@ import {
 } from '@/components/ui/popover'
 
 const schema = z.object({
-  farm_id: z.string().min(1, 'Pilih kandang'),
-  quantity: z.number().min(1, 'Min 1 ekor'),
-  avg_weight_kg: z.number().min(0.1, 'Min 0.1 kg'),
-  price_per_kg: z.number().min(1000),
-  transaction_date: z.string().min(1),
-  notes: z.string().optional()
+  farm_id: z.string().min(1, 'Pilih kandang terlebih dahulu'),
+  quantity: z.number({ invalid_type_error: 'Jumlah ekor harus berupa angka' }).min(1, 'Minimal 1 ekor'),
+  avg_weight_kg: z.number({ invalid_type_error: 'Bobot harus berupa angka' }).min(0.1, 'Minimal 0.1 kg'),
+  price_per_kg: z.number({ invalid_type_error: 'Harga harus berupa angka' }).min(1000, 'Harga minimal Rp 1.000'),
+  transaction_date: z.string().min(1, 'Pilih tanggal transaksi'),
+  notes: z.string().trim().max(500, 'Catatan terlalu panjang (max 500 karakter)').optional()
 })
 
 const S = {
@@ -439,8 +439,8 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
       {/* Harga Beli */}
       <div className="space-y-1.5">
         <label htmlFor="price_per_kg" style={S.label}>Harga Beli (Rp/kg) *</label>
-        <InputRupiah id="price_per_kg" name="price_per_kg" value={watch('price_per_kg')} onChange={(val) => setValue('price_per_kg', val)} placeholder="19.800" className={S.input + ' text-lg font-bold text-white'} />
-        {errors.price_per_kg && <p className="text-[10px] text-red-500 font-bold">Harga wajib diisi</p>}
+        <InputRupiah id="price_per_kg" name="price_per_kg" value={watch('price_per_kg')} onChange={(val) => setValue('price_per_kg', val, { shouldValidate: true })} placeholder="19.800" className={S.input + ' text-lg font-bold text-white'} />
+        {errors.price_per_kg && <p className="text-[10px] text-red-500 font-bold">{errors.price_per_kg.message}</p>}
       </div>
 
       {/* Tanggal */}

@@ -98,12 +98,12 @@ function SembakoMobileBar({ onHamburger, profile, brokerBase }) {
 }
 
 // ── Hamburger Drawer ───────────────────────────────────────────────────────────
-function HamburgerDrawer({ open, onClose, tenant, profile, profiles, switchTenant }) {
+function HamburgerDrawer({ open, onClose, tenant, profiles }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { profile, isSuperadmin, switchTenant } = useAuth()
   const brokerBase = getBrokerBasePath(tenant)
   const bizName = tenant?.business_name || 'Sembako'
-  const isSuperadmin = profile?.role === 'superadmin' || profile?.user_type === 'superadmin'
   const [showSwitcher, setShowSwitcher] = useState(false)
 
   const VERTICAL_BERANDA = {

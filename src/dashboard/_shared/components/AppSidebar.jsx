@@ -63,7 +63,7 @@ import { useTheme } from '@/lib/hooks/useTheme'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 
 export default function AppSidebar({ open, onClose }) {
-  const { user, profile, profiles, tenant, switchTenant } = useAuth()
+  const { user, profile, profiles, tenant, isSuperadmin, switchTenant, loading } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -176,9 +176,6 @@ export default function AppSidebar({ open, onClose }) {
 
   const berandaPath = getBerandaPath(vertical)
   const akunPath    = getAkunPath(vertical)
-
-  const isSuperadmin = (profile?.role === 'superadmin' || profile?.user_type === 'superadmin') && 
-                      user?.email === 'fahruhernansakti@gmail.com'
 
   const getVerticalInfo = (v) => {
     switch (v) {

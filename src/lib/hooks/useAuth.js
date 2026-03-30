@@ -74,11 +74,14 @@ export function useAuth() {
     return false
   }
 
+  const isSuperadmin = profiles.some(p => p.role === 'superadmin' || p.user_type === 'superadmin')
+  
   return { 
     user, 
     profile, 
     profiles,
     tenant: profile?.tenants, 
+    isSuperadmin,
     loading,
     switchTenant,
     refetchProfile: () => user && fetchAllProfiles(user.id)

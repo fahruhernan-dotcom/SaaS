@@ -180,7 +180,7 @@ export const useXenditConfig = () => useQuery({
       .from('payment_settings')
       .select('*')
       .eq('bank_name', 'xendit_config')
-      .single()
+      .maybeSingle()
     return data || null
   }
 })
@@ -467,3 +467,43 @@ export const useGlobalStats = () => useQuery({
     }
   }
 })
+export const useAuditLogs = (filters = {}) => {
+  return useQuery({
+    queryKey: ['admin-audit-logs', filters],
+    queryFn: async () => {
+      let query = supabase
+        .from('global_audit_logs')
+        .select(`
+          *,
+          actor:profiles(full_name, role),
+          tenant:tenants(business_name)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(100)
+
+      if (filters.tenantId) query = query.eq('tenant_id', filters.tenantId)
+      if (filters.action) query = query.eq('action', filters.action)
+      if (filters.entityType) query = query.eq('entity_type', filters.entityType)
+
+      const { data, error } = await query
+      if (error) throw error
+      return data
+    }
+  })
+}
+
+export const useAllUsers = () => {
+  return useQuery({
+    queryKey: ['admin-all-users'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*, tenants(id, business_name, business_vertical)')
+        .order('created_at', { ascending: false })
+        .limit(200)
+      
+      if (error) throw error
+      return data
+    }
+  })
+}

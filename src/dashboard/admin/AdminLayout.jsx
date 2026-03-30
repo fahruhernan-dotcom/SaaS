@@ -1,7 +1,7 @@
 import React from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Home, Users, CreditCard, Tag, LogOut, Shield, ArrowLeft } from 'lucide-react'
+import { Home, Users, CreditCard, Tag, LogOut, Shield, ArrowLeft, Activity, Bird, Egg, Building2, Factory } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { supabase } from '@/lib/supabase'
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
     { label: 'Users & Tenant', icon: Users, path: '/admin/users' },
     { label: 'Subscriptions', icon: CreditCard, path: '/admin/subscriptions' },
     { label: 'Pricing', icon: Tag, path: '/admin/pricing' },
+    { label: 'Activity Log', icon: Activity, path: '/admin/activity' },
 ]
 
 // --- Desktop Sidebar ---
@@ -97,21 +98,28 @@ function AdminSidebar() {
                             key={item.path}
                             to={item.path}
                             className={cn(
-                                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[12px] font-bold uppercase tracking-wider transition-all group relative",
+                                "flex items-center gap-3 px-4 py-3 rounded-xl text-[12px] font-black uppercase tracking-[0.15em] transition-all group relative overflow-hidden",
                                 isActive
-                                    ? "bg-emerald-500/10 text-emerald-400"
-                                    : "text-[#4B6478] hover:text-white hover:bg-white/5"
+                                    ? "bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent text-emerald-400"
+                                    : "text-[#4B6478] hover:text-white hover:bg-white/[0.03]"
                             )}
                         >
                             {isActive && (
                                 <motion.div
                                     layoutId="admin-nav-active"
-                                    className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-emerald-500 rounded-r-full"
+                                    className="absolute left-[-12px] top-1/2 -translate-y-1/2 w-[4px] h-10 bg-emerald-500 rounded-r-full shadow-[4px_0_20px_rgba(16,185,129,0.6)] z-20"
                                     transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                                 />
                             )}
-                            <item.icon size={16} strokeWidth={2.5} className={cn(isActive ? 'text-emerald-400' : 'text-[#4B6478] group-hover:text-white')} />
-                            <span>{item.label}</span>
+                            <item.icon
+                                size={18}
+                                strokeWidth={isActive ? 3 : 2}
+                                className={cn(
+                                    "transition-all duration-300",
+                                    isActive ? 'scale-110 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'opacity-50 group-hover:opacity-100'
+                                )}
+                            />
+                            <span className="relative z-10">{item.label}</span>
                         </NavLink>
                     )
                 })}
@@ -158,7 +166,7 @@ function AdminBottomNav() {
 
     return (
         <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0C1319]/95 backdrop-blur-xl border-t border-white/8 max-w-[480px] mx-auto">
-            <div className="grid grid-cols-4 h-16">
+            <div className="grid grid-cols-5 h-16">
                 {NAV_ITEMS.map(item => {
                     const isActive = item.path === '/admin'
                         ? location.pathname === '/admin'

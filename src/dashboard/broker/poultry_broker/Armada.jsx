@@ -47,13 +47,13 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 
 // --- SCHEMAS ---
 const vehicleSchema = z.object({
-    vehicle_type: z.enum(['truk', 'pickup', 'l300', 'motor', 'lainnya']),
-    vehicle_plate: z.string().min(3).toUpperCase(),
+    vehicle_type: z.enum(['truk', 'pickup', 'l300', 'motor', 'lainnya'], { required_error: 'Pilih jenis kendaraan' }),
+    vehicle_plate: z.string().min(3, 'Plat nomor tidak valid').toUpperCase(),
     brand: z.string().optional(),
     year: z.string().optional(),
     capacity_ekor: z.union([z.string(), z.number()]).optional(),
     capacity_kg: z.union([z.string(), z.number()]).optional(),
-    ownership: z.enum(['milik_sendiri', 'sewa', 'pinjaman', 'cicilan', 'lainnya']),
+    ownership: z.enum(['milik_sendiri', 'sewa', 'pinjaman', 'cicilan', 'lainnya'], { required_error: 'Pilih status kepemilikan' }),
     rental_cost: z.union([z.string(), z.number()]).optional(),
     rental_owner: z.string().optional(),
     status: z.enum(['aktif', 'nonaktif', 'servis']),
@@ -62,13 +62,13 @@ const vehicleSchema = z.object({
 })
 
 const driverSchema = z.object({
-    full_name: z.string().min(2),
-    phone: z.string().min(8),
+    full_name: z.string().min(2, 'Nama minimal 2 karakter'),
+    phone: z.string().min(8, 'Nomor HP minimal 8 karakter'),
     sim_number: z.string().optional(),
     sim_type: z.enum(['A', 'B1', 'B2', 'C']).default('B1'),
     sim_expires_at: z.string().optional(),
     status: z.enum(['aktif', 'nonaktif', 'cuti']),
-    wage_per_trip: z.string().default('0'),
+    wage_per_trip: z.union([z.string(), z.number()]).default('0'),
     address: z.string().optional(),
     notes: z.string().optional()
 })
@@ -78,7 +78,7 @@ const expenseSchema = z.object({
     amount: z.union([z.string(), z.number()]).refine(val => {
         if (typeof val === 'string') return val.length > 0;
         return val > 0;
-    }, { message: "Nominal harus diisi" }),
+    }, { message: "Nominal pengeluaran harus lebih besar dari Rp 0" }),
     description: z.string().optional(),
     expense_date: z.string().default(format(new Date(), 'yyyy-MM-dd'))
 })
@@ -812,10 +812,11 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
                                 <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Biaya Sewa / Trip Rp</Label>
                                 <InputRupiah 
                                     value={watch('rental_cost')} 
-                                    onChange={(v) => setValue('rental_cost', v)} 
+                                    onChange={(v) => setValue('rental_cost', v, { shouldValidate: true })} 
                                     placeholder="150000" 
                                     className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase" 
                                 />
+                                {errors.rental_cost && <p className="text-[9px] text-red-500 font-black uppercase mt-1">{errors.rental_cost.message}</p>}
                             </div>
                         )}
 
@@ -832,20 +833,22 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
                              <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Cap. Ekor</Label>
                              <InputNumber 
                                 value={watch('capacity_ekor')} 
-                                onChange={(v) => setValue('capacity_ekor', v)} 
+                                onChange={(v) => setValue('capacity_ekor', v, { shouldValidate: true })} 
                                 placeholder="500" 
                                 className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase" 
                              />
+                             {errors.capacity_ekor && <p className="text-[9px] text-red-500 font-black uppercase mt-1">{errors.capacity_ekor.message}</p>}
                         </div>
                         <div className="space-y-2">
                              <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Cap. Kg</Label>
                              <InputNumber 
                                 value={watch('capacity_kg')} 
-                                onChange={(v) => setValue('capacity_kg', v)} 
+                                onChange={(v) => setValue('capacity_kg', v, { shouldValidate: true })} 
                                 step={0.1} 
                                 placeholder="800" 
                                 className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase" 
                              />
+                             {errors.capacity_kg && <p className="text-[9px] text-red-500 font-black uppercase mt-1">{errors.capacity_kg.message}</p>}
                         </div>
                     </div>
 
@@ -1059,10 +1062,11 @@ function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
                              <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Upah Per Trip Rp</Label>
                              <InputRupiah 
                                 value={watch('wage_per_trip')} 
-                                onChange={(v) => setValue('wage_per_trip', v)} 
+                                onChange={(v) => setValue('wage_per_trip', v, { shouldValidate: true })} 
                                 placeholder="150000" 
                                 className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase" 
                              />
+                             {errors.wage_per_trip && <p className="text-[9px] text-red-500 font-black uppercase mt-1">{errors.wage_per_trip.message}</p>}
                         </div>
                         <div className="space-y-2">
                              <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Status Sopir</Label>
@@ -1124,7 +1128,7 @@ function ExpenseSheet({ isOpen, onClose, vehicle, tenantId }) {
     const queryClient = useQueryClient()
     const [isSubmitting, setIsSubmitting] = useState(false)
     
-    const { register, handleSubmit, setValue, reset, watch, control } = useForm({
+    const { register, handleSubmit, setValue, reset, watch, control, formState: { errors } } = useForm({
         resolver: zodResolver(expenseSchema)
     })
 
@@ -1187,10 +1191,11 @@ function ExpenseSheet({ isOpen, onClose, vehicle, tenantId }) {
                              <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Nominal Rp *</Label>
                              <InputRupiah 
                                 value={watch('amount')} 
-                                onChange={(v) => setValue('amount', v)} 
+                                onChange={(v) => setValue('amount', v, { shouldValidate: true })} 
                                 placeholder="500000" 
                                 className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs" 
                              />
+                             {errors.amount && <p className="text-[9px] text-red-500 font-black uppercase mt-1">{errors.amount.message}</p>}
                         </div>
                     </div>
 

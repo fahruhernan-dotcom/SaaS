@@ -165,7 +165,7 @@ function CenterFAB({ color, onClick }) {
 
 // ── Root component ─────────────────────────────────────────────────────────────
 export default function BottomNav() {
-  const { user, profile, profiles, tenant, switchTenant } = useAuth()
+  const { user, profile, profiles, tenant, isSuperadmin, switchTenant } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -231,9 +231,6 @@ export default function BottomNav() {
     return true
   })
 
-  const isSuperadmin =
-    (profile?.role === 'superadmin' || profile?.user_type === 'superadmin') &&
-    user?.email === 'fahruhernansakti@gmail.com'
 
   const finalTabs = isSuperadmin
     ? [...tabs, { label: 'Admin', icon: 'Shield', path: '/admin' }]

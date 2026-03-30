@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
@@ -22,6 +24,32 @@ import {
   Popover, PopoverContent, PopoverTrigger
 } from '@/components/ui/popover'
 
+const saleSchema = z.object({
+  rpa_id: z.string().min(1, 'Pilih pembeli RPA terlebih dahulu'),
+  price_per_kg: z.number({ invalid_type_error: 'Harga jual harus berupa angka' }).min(1000, 'Harga minimal Rp 1.000'),
+  payment_status: z.enum(['lunas', 'belum_lunas', 'sebagian']),
+  paid_amount: z.number().min(0, 'Jumlah bayar minimal 0'),
+  transaction_date: z.string().min(1, 'Pilih tanggal penjualan'),
+  due_date: z.string().optional().nullable(),
+  notes: z.string().trim().max(500, 'Catatan terlalu panjang (max 500 karakter)').optional()
+}).refine((data) => {
+  if (data.payment_status === 'sebagian' && (data.paid_amount || 0) <= 0) {
+    return false
+  }
+  return true
+}, {
+  message: 'Masukkan jumlah yang sudah dibayar',
+  path: ['paid_amount']
+}).refine((data) => {
+  if (data.payment_status !== 'lunas' && !data.due_date) {
+    return false
+  }
+  return true
+}, {
+  message: 'Pilih tanggal jatuh tempo',
+  path: ['due_date']
+})
+
 const S = {
   label: { fontSize: 11, fontWeight: 700, color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: 6, fontFamily: 'Sora' },
   input: 'bg-[#111C24] border-white/10 h-12 rounded-xl text-[#F1F5F9]',
@@ -36,17 +64,28 @@ const PAYMENT_OPTIONS = [
 export default function WizardStepJual({ step1Data, onNext, onBack }) {
   const { tenant } = useAuth()
   const queryClient = useQueryClient()
-  const [rpaId, setRpaId] = useState('')
-  const [pricePerKg, setPricePerKg] = useState('')
-  const [paymentStatus, setPaymentStatus] = useState('lunas')
-  const [paidAmount, setPaidAmount] = useState(0)
-  const [dueDate, setDueDate] = useState('')
-  const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split('T')[0])
-  const [notes, setNotes] = useState('')
   const [openRPA, setOpenRPA] = useState(false)
   const [showQuickAddRPA, setShowQuickAddRPA] = useState(false)
   const [openPaymentTerms, setOpenPaymentTerms] = useState(false)
   const [newRPA, setNewRPA] = useState({ rpa_name: '', phone: '', payment_terms: 'cash' })
+
+  const { formState: { errors }, watch, setValue, handleSubmit, register } = useForm({
+    resolver: zodResolver(saleSchema),
+    defaultValues: {
+      payment_status: 'lunas',
+      paid_amount: 0,
+      transaction_date: new Date().toISOString().split('T')[0],
+      notes: ''
+    }
+  })
+
+  const rpaId = watch('rpa_id')
+  const pricePerKg = watch('price_per_kg')
+  const paymentStatus = watch('payment_status')
+  const paidAmount = watch('paid_amount')
+  const dueDate = watch('due_date')
+  const transactionDate = watch('transaction_date')
+  const notes = watch('notes')
 
   const { data: rpaClients } = useQuery({
     queryKey: ['rpa-clients-active-simple', tenant?.id],
@@ -77,9 +116,6 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
   const totalRevenue = safeNum(totalWeightKg) * safeNum(pricePerKg)
   const profit = safeNum(totalRevenue) - safeNum(totalModal)
   const marginPerKg = safeNum(totalWeightKg) > 0 ? safeNum(profit) / safeNum(totalWeightKg) : 0
-  const roi = safeNum(totalModal) > 0 ? (safeNum(profit) / safeNum(totalModal)) * 100 : 0
-
-  const isValid = rpaId && pricePerKg > 0 && transactionDate
 
   const handleQuickAddRPA = async () => {
     if (!newRPA.rpa_name) return
@@ -104,36 +140,34 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
     }
     
     queryClient.invalidateQueries({ queryKey: ['rpa-clients-active-simple'] })
-    setRpaId(data.id)
+    setValue('rpa_id', data.id, { shouldValidate: true })
     setShowQuickAddRPA(false)
     setNewRPA({ rpa_name: '', phone: '', payment_terms: 'cash' })
     toast.success(`✅ RPA ${data.rpa_name} ditambahkan!`)
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (!isValid) return
+  const onSubmit = (values) => {
     onNext({
-      rpa_id: rpaId,
+      rpa_id: values.rpa_id,
       rpa_name: selectedRPA?.rpa_name,
       quantity: qty,
       avg_weight_kg: avgWeightKg,
       total_weight_kg: totalWeightKg,
-      price_per_kg: Number(pricePerKg),
+      price_per_kg: values.price_per_kg,
       total_revenue: safeNum(totalRevenue),
       delivery_cost: 0,
-      payment_status: paymentStatus,
-      paid_amount: paymentStatus === 'lunas' ? totalRevenue : (Number(paidAmount) || 0),
-      transaction_date: transactionDate,
-      due_date: paymentStatus !== 'lunas' ? dueDate : null,
-      notes: notes || null,
+      payment_status: values.payment_status,
+      paid_amount: values.payment_status === 'lunas' ? totalRevenue : (values.paid_amount || 0),
+      transaction_date: values.transaction_date,
+      due_date: values.payment_status !== 'lunas' ? values.due_date : null,
+      notes: values.notes || null,
       profit,
       net_revenue: totalRevenue,
     })
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col h-full min-h-0 relative">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full min-h-0 relative">
       <div className="flex-1 space-y-5 px-5 pb-24 overflow-y-auto">
       <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">Step 2 — Jual ke Siapa?</p>
 
@@ -188,7 +222,7 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
                     key={r.id}
                     value={r.rpa_name}
                     onSelect={() => {
-                      setRpaId(r.id)
+                      setValue('rpa_id', r.id, { shouldValidate: true })
                       setOpenRPA(false)
                     }}
                     className="cursor-pointer py-3 px-4 border-b border-white/5 last:border-none focus:bg-white/5"
@@ -224,6 +258,7 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
             </Command>
           </PopoverContent>
         </Popover>
+        {errors.rpa_id && <p className="text-[10px] text-red-500 font-bold">{errors.rpa_id.message}</p>}
 
         {/* Quick Add RPA */}
         {showQuickAddRPA && (
@@ -367,13 +402,14 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
         <div className="flex justify-between items-center">
           <label htmlFor="price_per_kg_jual" style={S.label}>Harga Jual (Rp/kg) *</label>
           {marketPrice && (
-            <button type="button" onClick={() => setPricePerKg(marketPrice)}
+            <button type="button" onClick={() => setValue('price_per_kg', marketPrice, { shouldValidate: true })}
               className="text-[10px] text-emerald-400 font-black uppercase tracking-wider hover:underline">
               Pakai harga pasar: {safeNum(marketPrice).toLocaleString('id-ID')} →
             </button>
           )}
         </div>
-        <InputRupiah id="price_per_kg_jual" name="price_per_kg_jual" value={pricePerKg} onChange={setPricePerKg} placeholder="20.500" className={S.input + ' text-lg font-bold text-white'} />
+        <InputRupiah id="price_per_kg_jual" name="price_per_kg_jual" value={pricePerKg} onChange={(val) => setValue('price_per_kg', val, { shouldValidate: true })} placeholder="20.500" className={S.input + ' text-lg font-bold text-white'} />
+        {errors.price_per_kg && <p className="text-[10px] text-red-500 font-bold">{errors.price_per_kg.message}</p>}
 
         {pricePerKg > 0 && buyPricePerKg > 0 && (
           <div className={`flex items-center gap-1.5 text-[11px] font-black uppercase mt-1 ${pricePerKg >= buyPricePerKg ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -390,7 +426,7 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
         <label style={S.label}>Status Pembayaran *</label>
         <div className="flex gap-2">
           {PAYMENT_OPTIONS.map(opt => (
-            <button key={opt.value} type="button" onClick={() => setPaymentStatus(opt.value)}
+            <button key={opt.value} type="button" onClick={() => setValue('payment_status', opt.value, { shouldValidate: true })}
               className={`flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${paymentStatus === opt.value ? 'ring-2 ring-emerald-500/50 bg-emerald-500/10 text-emerald-400' : 'bg-[#111C24] border border-white/5 text-[#4B6478]'}`}
               style={{
                 color: paymentStatus === opt.value ? opt.color : undefined,
@@ -408,7 +444,8 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
       {paymentStatus === 'sebagian' && (
         <div className="space-y-1.5">
           <label htmlFor="paid_amount" style={S.label}>Sudah Dibayar</label>
-          <InputRupiah id="paid_amount" name="paid_amount" value={paidAmount} onChange={setPaidAmount} placeholder="0" className={S.input} />
+          <InputRupiah id="paid_amount" name="paid_amount" value={paidAmount} onChange={(val) => setValue('paid_amount', val, { shouldValidate: true })} placeholder="0" className={S.input} />
+          {errors.paid_amount && <p className="text-[10px] text-red-500 font-bold">{errors.paid_amount.message}</p>}
         </div>
       )}
 
@@ -416,20 +453,22 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
       {paymentStatus !== 'lunas' && (
         <div className="space-y-1.5">
           <label style={S.label}>Jatuh Tempo</label>
-          <DatePicker value={dueDate} onChange={setDueDate} placeholder="Pilih jatuh tempo" />
+          <DatePicker value={dueDate} onChange={(val) => setValue('due_date', val, { shouldValidate: true })} placeholder="Pilih jatuh tempo" />
+          {errors.due_date && <p className="text-[10px] text-red-500 font-bold">{errors.due_date.message}</p>}
         </div>
       )}
 
       {/* Tanggal */}
       <div className="space-y-1.5">
         <label style={S.label}>Tanggal Jual</label>
-        <DatePicker value={transactionDate} onChange={setTransactionDate} placeholder="Pilih tanggal" />
+        <DatePicker value={transactionDate} onChange={(val) => setValue('transaction_date', val, { shouldValidate: true })} placeholder="Pilih tanggal" />
       </div>
 
       {/* Catatan */}
       <div className="space-y-1.5">
         <label htmlFor="jual_notes" style={S.label}>Catatan (Opsional)</label>
-        <Textarea id="jual_notes" name="jual_notes" className="bg-[#111C24] border-white/10 rounded-xl min-h-[72px] text-sm" placeholder="Catatan tambahan..." value={notes} onChange={e => setNotes(e.target.value)} />
+        <Textarea id="jual_notes" name="jual_notes" className="bg-[#111C24] border-white/10 rounded-xl min-h-[72px] text-sm" placeholder="Catatan tambahan..." {...register('notes')} />
+        {errors.notes && <p className="text-[10px] text-red-500 font-bold">{errors.notes.message}</p>}
       </div>
 
       {/* Profit Preview */}
@@ -460,7 +499,7 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
         <Button type="button" variant="ghost" onClick={onBack} className="gap-2 text-[#4B6478] hover:text-white font-bold h-12 rounded-xl">
           <ChevronLeft size={18} /> KEMBALI
         </Button>
-        <Button type="submit" disabled={!isValid} className="flex-1 h-14 rounded-2xl font-black text-sm tracking-widest shadow-lg shadow-emerald-500/20" style={{ background: '#10B981', color: 'white' }}>
+        <Button type="submit" className="flex-1 h-14 rounded-2xl font-black text-sm tracking-widest shadow-lg shadow-emerald-500/20" style={{ background: '#10B981', color: 'white' }}>
           LANJUT KE PENGIRIMAN →
         </Button>
       </div>

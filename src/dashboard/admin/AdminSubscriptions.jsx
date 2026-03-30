@@ -6,7 +6,8 @@ import {
   CheckCircle2, XCircle, Clock, Check, ChevronRight,
   ExternalLink, Globe, AlertCircle, AlertTriangle, Zap,
   Plus, Edit2, Trash2, Download, FileText, X, CalendarDays,
-  Eye, EyeOff, Copy, Wifi, WifiOff
+  Eye, EyeOff, Copy, Wifi, WifiOff,
+  Bird, Egg, Home, Factory, Building2
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
@@ -95,7 +96,7 @@ export default function AdminSubscriptions() {
       const bizName = inv.tenants?.business_name || ''
       const invNum = inv.invoice_number || ''
       const matchesSearch = bizName.toLowerCase().includes(invoiceSearch.toLowerCase()) ||
-                            invNum.toLowerCase().includes(invoiceSearch.toLowerCase())
+        invNum.toLowerCase().includes(invoiceSearch.toLowerCase())
       let matchesTab = true
       if (invoiceTab === 'Pending') matchesTab = inv.status === 'pending'
       else if (invoiceTab === 'Paid') matchesTab = inv.status === 'paid'
@@ -233,7 +234,7 @@ export default function AdminSubscriptions() {
       className="space-y-6"
     >
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-20 bg-[#080C10]/80 backdrop-blur-md py-2 -mx-2 px-2 rounded-xl">
         <div>
           <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight">
             Subscriptions & Invoices
@@ -244,7 +245,7 @@ export default function AdminSubscriptions() {
         </div>
         <Button
           onClick={() => setIsGenerateOpen(true)}
-          className="bg-emerald-500 hover:bg-emerald-600 rounded-xl h-10 px-5 text-[11px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 shrink-0"
+          className="bg-emerald-500 hover:bg-emerald-600 rounded-xl h-11 px-6 text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/20 shrink-0 transition-all active:scale-95"
         >
           <Plus size={16} className="mr-2" /> Generate Invoice Manual
         </Button>
@@ -415,10 +416,25 @@ export default function AdminSubscriptions() {
                   ))}
                   {filteredInvoices.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="px-6 py-16 text-center text-[#4B6478]">
-                        <div className="flex flex-col items-center gap-2 opacity-30">
-                          <History size={48} />
-                          <p className="text-[11px] font-bold uppercase tracking-[0.2em] mt-2">Belum ada riwayat invoice</p>
+                      <td colSpan={7} className="px-6 py-24 text-center">
+                        <div className="flex flex-col items-center justify-center space-y-4 max-w-sm mx-auto">
+                          <div className="w-20 h-20 rounded-3xl bg-white/[0.03] border border-white/5 flex items-center justify-center relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <History size={32} className="text-[#4B6478] group-hover:text-emerald-400 transition-colors" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-[13px] font-black text-white uppercase tracking-widest">Belum ada riwayat invoice</p>
+                            <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-widest leading-loose">
+                              Data transaksi atau tagihan tenant akan muncul di sini setelah dibuat.
+                            </p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            onClick={() => setIsGenerateOpen(true)}
+                            className="h-9 rounded-xl border-white/10 text-white/40 hover:text-white hover:bg-white/5 text-[10px] font-black uppercase tracking-widest"
+                          >
+                            Generate Pertama
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -459,11 +475,10 @@ export default function AdminSubscriptions() {
                         <button
                           key={p}
                           onClick={() => setCurrentPage(p)}
-                          className={`h-8 min-w-[32px] px-2 rounded-lg border text-sm font-bold transition-all ${
-                            currentPage === p
+                          className={`h-8 min-w-[32px] px-2 rounded-lg border text-sm font-bold transition-all ${currentPage === p
                               ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400'
                               : 'bg-[#111C24] border-white/10 text-[#4B6478] hover:bg-white/5'
-                          }`}
+                            }`}
                         >
                           {p}
                         </button>
@@ -501,13 +516,13 @@ export default function AdminSubscriptions() {
             {isLoadingBanks
               ? [1, 2, 3].map(i => <BankSkeleton key={i} />)
               : bankAccounts?.map(bank => (
-                  <BankCard
-                    key={bank.id}
-                    bank={bank}
-                    onEdit={() => { setEditingBank(bank); setIsBankModalOpen(true) }}
-                    onDelete={() => handleDeleteBank(bank)}
-                  />
-                ))
+                <BankCard
+                  key={bank.id}
+                  bank={bank}
+                  onEdit={() => { setEditingBank(bank); setIsBankModalOpen(true) }}
+                  onDelete={() => handleDeleteBank(bank)}
+                />
+              ))
             }
           </div>
         </TabsContent>
@@ -807,13 +822,12 @@ export default function AdminSubscriptions() {
                       key={p}
                       type="button"
                       onClick={() => setGenForm(f => ({ ...f, plan: p }))}
-                      className={`h-12 rounded-xl font-black uppercase text-[12px] tracking-widest border transition-all ${
-                        genForm.plan === p
+                      className={`h-12 rounded-xl font-black uppercase text-[12px] tracking-widest border transition-all ${genForm.plan === p
                           ? p === 'pro'
                             ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
                             : 'bg-amber-500/20 border-amber-500 text-amber-400'
                           : 'bg-white/5 border-white/10 text-[#4B6478] hover:bg-white/10'
-                      }`}
+                        }`}
                     >
                       {p === 'pro' ? '⭐ PRO' : '👑 BUSINESS'}
                     </button>
@@ -830,11 +844,10 @@ export default function AdminSubscriptions() {
                       key={m}
                       type="button"
                       onClick={() => setGenForm(f => ({ ...f, billingMonths: m }))}
-                      className={`h-12 rounded-xl font-black text-[13px] border transition-all ${
-                        genForm.billingMonths === m
+                      className={`h-12 rounded-xl font-black text-[13px] border transition-all ${genForm.billingMonths === m
                           ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
                           : 'bg-white/5 border-white/10 text-[#4B6478] hover:bg-white/10'
-                      }`}
+                        }`}
                     >
                       {m}
                       <span className="block text-[9px] uppercase tracking-widest font-bold opacity-60">{m === 1 ? 'bln' : 'bln'}</span>
@@ -1089,9 +1102,8 @@ function BankCard({ bank, onEdit, onDelete }) {
   return (
     <motion.div
       layout
-      className={`bg-[#111C24] border rounded-[24px] p-6 relative overflow-hidden group transition-all shadow-xl ${
-        bank.is_active ? 'border-white/8 hover:border-emerald-500/30' : 'border-white/5 opacity-60 hover:opacity-80'
-      }`}
+      className={`bg-[#111C24] border rounded-[24px] p-6 relative overflow-hidden group transition-all shadow-xl ${bank.is_active ? 'border-white/8 hover:border-emerald-500/30' : 'border-white/5 opacity-60 hover:opacity-80'
+        }`}
     >
       <div className="absolute -right-4 -bottom-4 opacity-[0.02] -rotate-12">
         <CreditCard size={100} />
@@ -1176,7 +1188,7 @@ function XenditConfigTab() {
     setWebhookToken(savedMeta.webhook_token || '')
     setCallbackUrl(savedMeta.callback_url || '')
     setIsProduction(savedMeta.is_production ?? false)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [xenditConfig?.id])
 
   const webhookEndpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/xendit-webhook`
@@ -1220,11 +1232,10 @@ function XenditConfigTab() {
                 <button
                   type="button"
                   onClick={() => setIsProduction(false)}
-                  className={`h-11 rounded-xl font-black uppercase text-[11px] tracking-widest border transition-all flex items-center justify-center gap-2 ${
-                    !isProduction
+                  className={`h-11 rounded-xl font-black uppercase text-[11px] tracking-widest border transition-all flex items-center justify-center gap-2 ${!isProduction
                       ? 'bg-amber-500/15 border-amber-500/60 text-amber-400'
                       : 'bg-white/5 border-white/10 text-[#4B6478] hover:bg-white/10'
-                  }`}
+                    }`}
                 >
                   <span className={`w-2 h-2 rounded-full ${!isProduction ? 'bg-amber-400' : 'bg-[#4B6478]'}`} />
                   Sandbox
@@ -1232,11 +1243,10 @@ function XenditConfigTab() {
                 <button
                   type="button"
                   onClick={() => setIsProduction(true)}
-                  className={`h-11 rounded-xl font-black uppercase text-[11px] tracking-widest border transition-all flex items-center justify-center gap-2 ${
-                    isProduction
+                  className={`h-11 rounded-xl font-black uppercase text-[11px] tracking-widest border transition-all flex items-center justify-center gap-2 ${isProduction
                       ? 'bg-emerald-500/15 border-emerald-500/60 text-emerald-400'
                       : 'bg-white/5 border-white/10 text-[#4B6478] hover:bg-white/10'
-                  }`}
+                    }`}
                 >
                   <span className={`w-2 h-2 rounded-full ${isProduction ? 'bg-emerald-400' : 'bg-[#4B6478]'}`} />
                   Production
@@ -1341,11 +1351,10 @@ function XenditConfigTab() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-wider">Mode</p>
-                  <Badge className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 ${
-                    savedMeta.is_production
+                  <Badge className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 ${savedMeta.is_production
                       ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                       : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                  }`}>
+                    }`}>
                     {savedMeta.is_production ? 'Production' : 'Sandbox'}
                   </Badge>
                 </div>
@@ -1425,10 +1434,10 @@ function BankSkeleton() {
 
 function getVerticalIcon(v) {
   switch (v) {
-    case 'poultry_broker': return '🐔'
-    case 'egg_broker': return '🥚'
-    case 'peternak': return '🏠'
-    case 'rpa': return '🏭'
-    default: return '🏢'
+    case 'poultry_broker': return <Bird size={18} />
+    case 'egg_broker': return <Egg size={18} />
+    case 'peternak': return <Home size={18} />
+    case 'rpa': return <Factory size={18} />
+    default: return <Building2 size={18} />
   }
 }
