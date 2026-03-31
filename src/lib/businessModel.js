@@ -1,5 +1,5 @@
 export const BUSINESS_MODELS = {
-  sembako_broker: {
+  distributor_sembako: {
     label: 'Distributor Sembako',
     icon: '🛒',
     color: '#EA580C',
@@ -10,17 +10,21 @@ export const BUSINESS_MODELS = {
     fabLabel: 'Catat Penjualan',
     bottomNav: [
       { path: '/broker/distributor_sembako/beranda',   icon: 'Home',         label: 'Beranda'   },
-      { path: '/broker/distributor_sembako/penjualan',       icon: 'ArrowLeftRight', label: 'Penjualan' },
+      { path: '/broker/distributor_sembako/penjualan', icon: 'ArrowLeftRight', label: 'Penjualan' },
       { path: '/broker/distributor_sembako/gudang',    icon: 'Package',      label: 'Gudang'    },
       { path: '/broker/distributor_sembako/produk',    icon: 'LayoutGrid',   label: 'Produk'    },
     ],
     drawerMenu: [
-      { path: '/broker/distributor_sembako/produk',   icon: 'Package',   label: 'Manajemen Produk' },
-      { path: '/broker/distributor_sembako/karyawan', icon: 'Users',     label: 'Karyawan'         },
-      { path: '/broker/distributor_sembako/laporan',  icon: 'BarChart2', label: 'Laporan'          },
-      { path: '/broker/distributor_sembako/akun',     icon: 'User',      label: 'Akun & Profil'    },
+      { path: '/broker/distributor_sembako/produk',        icon: 'Package',   label: 'Manajemen Produk' },
+      { path: '/broker/distributor_sembako/toko-supplier', icon: 'Store',     label: 'Toko & Supplier'  },
+      { path: '/broker/distributor_sembako/pengiriman',    icon: 'Truck',     label: 'Pengiriman'       },
+      { path: '/broker/distributor_sembako/karyawan',      icon: 'Users',     label: 'Karyawan'         },
+      { path: '/broker/distributor_sembako/laporan',       icon: 'BarChart2', label: 'Laporan'          },
+      { path: '/broker/distributor_sembako/akun',          icon: 'User',      label: 'Akun & Profil'    },
     ],
   },
+  // Legacy alias for Sembako
+  sembako_broker: null, // assigned below
   
   egg_broker: {
     label: 'Broker Telur',
@@ -190,7 +194,7 @@ export const SUB_TYPE_TO_VERTICAL = {
   broker_ayam:           'poultry_broker',
   broker_telur:          'egg_broker',
   distributor_daging:    'poultry_broker',
-  distributor_sembako:   'sembako_broker',
+  distributor_sembako:   'distributor_sembako',
   peternak_broiler:      'peternak',
   peternak_layer:        'peternak',
   rpa_ayam:              'rumah_potong',
@@ -206,4 +210,33 @@ export const SUB_TYPE_LABELS = {
   peternak_layer:        'Peternak Ayam Layer',
   rpa_ayam:              'RPA — Rumah Potong Ayam',
   rph:                   'RPH — Rumah Potong Hewan',
+}
+// Add legacy alias to BUSINESS_MODELS
+BUSINESS_MODELS.sembako_broker = BUSINESS_MODELS.distributor_sembako;
+SUB_TYPE_TO_VERTICAL.sembako_broker = 'distributor_sembako';
+
+/**
+ * Standardized helper for multi-vertical routing
+ * Usage: navigate(`${getXBasePath(tenant)}/penjualan`)
+ */
+export function getXBasePath(tenant) {
+  if (!tenant) return '/broker/broker_ayam'
+  
+  const subType = tenant.sub_type || 'broker_ayam'
+  
+  // Mapping based on Section 7 of CONTEXT.md
+  if (['poultry_broker', 'egg_broker', 'sembako_broker', 'broker', 'distributor_sembako'].includes(tenant.business_vertical) || 
+      ['broker_ayam', 'broker_telur', 'distributor_daging', 'distributor_sembako'].includes(subType)) {
+    return `/broker/${subType}`
+  }
+  
+  if (tenant.business_vertical === 'peternak' || subType.startsWith('peternak_')) {
+    return `/peternak/${subType}`
+  }
+  
+  if (tenant.business_vertical === 'rumah_potong' || ['rpa', 'rph', 'rpa_ayam'].includes(subType)) {
+    return `/rumah_potong/${subType}`
+  }
+
+  return `/broker/${subType}`
 }

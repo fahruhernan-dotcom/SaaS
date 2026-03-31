@@ -75,6 +75,8 @@ function ProductSheet({ product, onClose }) {
     min_stock_alert: product?.min_stock_alert || '',
     notes:           product?.notes           || '',
     is_active:       product?.is_active       ?? true,
+    secondary_unit:  product?.secondary_unit   || '',
+    conversion_rate: product?.conversion_rate  || '',
   })
   const [catOpen, setCatOpen] = useState(false)
 
@@ -208,15 +210,45 @@ function ProductSheet({ product, onClose }) {
           </Field>
 
           {/* Unit */}
-          <Field label="Satuan">
-            <CustomSelect
-              id="product-unit"
-              value={form.unit}
-              onChange={val => set('unit', val)}
-              options={UNITS.map(u => ({ value: u, label: u }))}
-              placeholder="Pilih satuan"
-            />
-          </Field>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <Field label="Satuan Utama">
+              <CustomSelect
+                id="product-unit"
+                value={form.unit}
+                onChange={val => set('unit', val)}
+                options={UNITS.map(u => ({ value: u, label: u }))}
+                placeholder="Pilih"
+              />
+            </Field>
+            <Field label="Satuan Grosir (Ops)">
+              <CustomSelect
+                id="product-sec-unit"
+                value={form.secondary_unit}
+                onChange={val => set('secondary_unit', val)}
+                options={['', ...UNITS].map(u => ({ value: u, label: u || 'Tidak ada' }))}
+                placeholder="Tanpa Grosir"
+              />
+            </Field>
+          </div>
+
+          {/* Conversion Rate */}
+          {form.secondary_unit && (
+            <Field label={`Isi per ${form.secondary_unit} (Konversi ke ${form.unit})`}>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="number"
+                  value={form.conversion_rate}
+                  onChange={e => set('conversion_rate', e.target.value)}
+                  placeholder="Contoh: 24 (artinya 1 Karton = 24 Pcs)"
+                  style={{ ...inputStyle, paddingLeft: 44 }}
+                />
+                <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: ACCENT, fontWeight: 800 }}>1x</span>
+              </div>
+              <p style={{ fontSize: 10, color: TEXT_SEC, marginTop: 4, fontStyle: 'italic' }}>
+                * Berguna agar saat jual "{form.secondary_unit}", stok terpotong otomatis sebanyak {form.conversion_rate || '...'} "{form.unit}".
+              </p>
+            </Field>
+          )}
 
           {/* Harga jual + beli — 2 col */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>

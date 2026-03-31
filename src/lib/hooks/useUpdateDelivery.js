@@ -38,7 +38,7 @@ export function useUpdateDelivery() {
       arrived_weight_kg: safeNum(arrivedWeight),
       mortality_count:   mortality,
       arrival_time:      format(new Date(), "yyyy-MM-dd'T'HH:mm:ssxxx"),
-      status:            'completed',
+      status:            'arrived',
       notes:             notes || null
     }
 

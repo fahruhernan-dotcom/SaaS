@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
-import { X, ChevronLeft, Check, Loader2 } from 'lucide-react'
+import { X, ChevronLeft, Check, Loader2, Clock } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
@@ -301,21 +301,20 @@ export default function TransaksiWizard({ isOpen, onClose }) {
       const profit   = (sellData?.total_revenue || 0) - (buyData?.total_cost || 0) - finalDeliveryCost
 
       setSuccessData({
-        type: 'lengkap',
+        type: 'recorded',
         farmName:        buyData?.farm_name  || null,
         rpaName:         sellData?.rpa_name  || null,
+        rpaPhone:        sellData?.rpa_phone || null,
         quantity:        buyData?.quantity   || 0,
         totalWeight:     buyData?.total_weight_kg || 0,
         buyPrice:        buyData?.total_cost || 0,
         sellPrice:       sellData?.total_revenue || 0,
         netProfit:       profit,
         transactionDate: buyData?.transaction_date || null,
+        tenant:          tenant,
       })
       
-      // Auto-close wizard after 2 seconds
-      setTimeout(() => {
-        handleClose()
-      }, 2000)
+      // Removed auto-close timeout to allow user to click WhatsApp button
     } catch (err) {
       toast.error('Gagal: ' + err.message)
     } finally {

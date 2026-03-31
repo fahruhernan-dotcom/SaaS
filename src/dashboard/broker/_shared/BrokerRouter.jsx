@@ -22,6 +22,9 @@ import SembakoPegawai from '../sembako_broker/Pegawai'
 import SembakoLaporan from '../sembako_broker/Laporan'
 import SembakoProduk from '../sembako_broker/Produk'
 import SembakoGudang from '../sembako_broker/Gudang'
+import SembakoTokoSupplier from '../sembako_broker/TokoSupplier'
+import SembakoTokoSupplierDetail from '../sembako_broker/TokoSupplierDetail'
+import SembakoPengiriman from '../sembako_broker/Pengiriman'
 
 // Egg Broker pages
 import EggBeranda from '../egg_broker/Beranda'
@@ -80,6 +83,9 @@ export function BrokerPageRouter({ page }) {
       produk: <SembakoProduk />,
       inventori: <SembakoProduk />,
       gudang: <SembakoGudang />,
+      'toko-supplier': <SembakoTokoSupplier />,
+      'toko-supplier-detail': <SembakoTokoSupplierDetail />,
+      pengiriman: <SembakoPengiriman />,
       karyawan: <SembakoPegawai />,
       laporan: <SembakoLaporan />,
       akun: <Akun />,

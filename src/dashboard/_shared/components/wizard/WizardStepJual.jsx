@@ -150,6 +150,7 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
     onNext({
       rpa_id: values.rpa_id,
       rpa_name: selectedRPA?.rpa_name,
+      rpa_phone: selectedRPA?.phone,
       quantity: qty,
       avg_weight_kg: avgWeightKg,
       total_weight_kg: totalWeightKg,

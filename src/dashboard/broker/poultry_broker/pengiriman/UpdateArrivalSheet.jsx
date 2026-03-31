@@ -415,7 +415,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
         
         try {
             console.log('Step 1: update deliveries')
-            if (delivery.status === 'completed') {
+            if (delivery.status === 'arrived' || delivery.status === 'completed') {
                 // Direct UPDATE for existing delivery
                 const updatePayload = {
                     arrived_count: tibaCount,
@@ -474,7 +474,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     .update({ total_revenue: newTotalRevenue })
                     .eq('id', delivery.sale_id)
 
-                toast.success('Data kedatangan berhasil diperbarui')
+                toast.success('Data kedatangan berhasil diperbarui. Menunggu audit Owner.')
             } else {
                 // Standard arrival via hook (hook now handles sales update)
                 const arrivalPayload = {
@@ -520,7 +520,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                 }
 
                 await updateTiba(arrivalPayload)
-                toast.success('Kedatangan berhasil dicatat!')
+                toast.success('Kedatangan berhasil dicatat! Menunggu audit Owner.')
             }
 
             // Explicit sync variables already declared at top

@@ -38,6 +38,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { InputRupiah } from '@/components/ui/InputRupiah'
+import { DatePicker } from '@/components/ui/DatePicker'
 import { formatIDR, formatDate } from '@/lib/format'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -314,25 +315,20 @@ export default function AdminSubscriptions() {
                 />
               </div>
               <div className="flex items-center gap-1.5">
-                <CalendarDays size={14} className="text-[#4B6478] shrink-0" />
-                <input
-                  type="date"
+                <DatePicker
                   id="dateFrom"
-                  name="dateFrom"
                   value={dateFrom}
-                  max={today}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  className="h-10 w-36 bg-[#111C24] border border-white/10 rounded-xl px-3 text-sm text-white/70 focus:border-emerald-500/50 focus:outline-none transition-all [color-scheme:dark]"
+                  onChange={setDateFrom}
+                  placeholder="Mulai..."
+                  className="!h-10 !w-[130px] !rounded-xl bg-[#111C24] border-white/10 text-white/70 px-3 text-xs"
                 />
                 <span className="text-[#4B6478] text-xs font-bold">—</span>
-                <input
-                  type="date"
+                <DatePicker
                   id="dateTo"
-                  name="dateTo"
                   value={dateTo}
-                  max={today}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="h-10 w-36 bg-[#111C24] border border-white/10 rounded-xl px-3 text-sm text-white/70 focus:border-emerald-500/50 focus:outline-none transition-all [color-scheme:dark]"
+                  onChange={setDateTo}
+                  placeholder="Sampai..."
+                  className="!h-10 !w-[130px] !rounded-xl bg-[#111C24] border-white/10 text-white/70 px-3 text-xs"
                 />
                 {(dateFrom || dateTo) && (
                   <button

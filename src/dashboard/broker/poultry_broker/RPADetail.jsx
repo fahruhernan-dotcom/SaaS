@@ -7,9 +7,11 @@ import {
   Calendar, Info, AlertCircle, Trash2, Edit,
   Wallet,
   Receipt,
+  Smartphone,
   ChevronDown,
   Check
 } from 'lucide-react'
+import { formatEkor, formatKg } from '@/lib/format'
 import { useRPA } from '@/lib/hooks/useRPA'
 import { useSales } from '@/lib/hooks/useSales'
 import { 
@@ -461,6 +463,52 @@ function SaleList({ sales, rpa, onPay, canPayFunc }) {
         />
     )
 
+    const generateWAMessage = (sale, tenantInfo) => {
+        if (!sale) return ''
+        
+        const rpaName = sale.rpa_clients?.rpa_name || rpa?.rpa_name || 'RPA'
+        const farmName = sale.purchases?.farms?.farm_name || 'Kandang'
+        const dateStr = formatDate(sale.transaction_date)
+        const qty = formatEkor(sale.quantity)
+        const weight = formatWeight(sale.total_weight_kg)
+        const price = formatIDR(sale.price_per_kg)
+        const total = formatIDR(calcTotalJual(sale, sale.deliveries?.[0]))
+        const status = formatPaymentStatus(sale.payment_status)?.toUpperCase() || 'PENDING'
+        const remaining = calcRemainingAmount(sale)
+        
+        let msg = `*STRUK PENJUALAN - ${tenantInfo?.business_name || 'BROKER'}*\n`
+        msg += `--------------------------------\n`
+        msg += `*Kepada:* ${rpaName}\n`
+        msg += `*Sumber:* ${farmName}\n`
+        msg += `*Tanggal:* ${dateStr}\n`
+        msg += `--------------------------------\n`
+        msg += `*Rincian Barang:*\n`
+        msg += `Qty: ${qty}\n`
+        msg += `Berat: ${weight}\n`
+        msg += `Harga: ${price}/kg\n`
+        msg += `--------------------------------\n`
+        msg += `*TOTAL TAGIHAN: ${total}*\n`
+        msg += `*STATUS:* ${status}\n`
+        
+        if (remaining > 0) {
+            msg += `*SISA PIUTANG: ${formatIDR(remaining)}*\n`
+        }
+        
+        msg += `--------------------------------\n`
+        msg += `_Terima kasih atas kerja samanya._\n`
+        msg += `_Dikirim via TernakOS_`
+        
+        return encodeURIComponent(msg)
+    }
+
+    const handleSendWA = (sale) => {
+        const phone = sale.rpa_clients?.phone || rpa?.phone || ''
+        const cleanPhone = phone.replace(/[^0-9]/g, '')
+        const finalPhone = cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone
+        const message = generateWAMessage(sale, tenant)
+        window.open(`https://wa.me/${finalPhone}?text=${message}`, '_blank')
+    }
+
     return (
         <motion.div 
             variants={staggerContainer}
@@ -522,6 +570,15 @@ function SaleList({ sales, rpa, onPay, canPayFunc }) {
                                     className="h-8 border-white/10 bg-white/[0.03] text-[#94A3B8] font-black text-[9px] uppercase tracking-widest rounded-lg px-3 hover:bg-white/[0.06]"
                                 >
                                     <Receipt size={12} className="mr-1.5" /> Cetak
+                                </Button>
+
+                                <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    onClick={() => handleSendWA(sale)}
+                                    className="h-8 border-emerald-500/20 bg-emerald-500/5 text-emerald-400 font-black text-[9px] uppercase tracking-widest rounded-lg px-3 hover:bg-emerald-500/10"
+                                >
+                                    <Smartphone size={12} className="mr-1.5" /> WA
                                 </Button>
 
                                 {sale.payment_status !== 'lunas' && (

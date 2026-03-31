@@ -68,7 +68,7 @@ export default function AdminUsers() {
   const filteredTenants = useMemo(() => {
     if (!tenants) return []
 
-    return tenants.filter(t => {
+    const filtered = tenants.filter(t => {
       const ownerName = t.profiles?.find(p => p.role === 'owner')?.full_name || ''
       const matchesSearch = (t.business_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         ownerName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -82,6 +82,13 @@ export default function AdminUsers() {
       else if (activeTab === 'Trial') matchesTab = isTrial
 
       return matchesSearch && matchesTab
+    })
+
+    // Sort alphabetically by Business Name
+    return filtered.sort((a, b) => {
+      const nameA = (a.business_name || '').toLowerCase()
+      const nameB = (b.business_name || '').toLowerCase()
+      return nameA.localeCompare(nameB)
     })
   }, [tenants, searchQuery, activeTab])
 
@@ -212,6 +219,9 @@ export default function AdminUsers() {
         <div className="relative w-full lg:w-72">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4B6478]" size={16} />
           <Input
+            id="search-user-tenant"
+            name="search-user-tenant"
+            aria-label="Cari nama bisnis atau user"
             placeholder={viewMode === 'tenants' ? "Cari nama bisnis..." : "Cari user atau bisnis..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -282,6 +292,9 @@ export default function AdminUsers() {
                     <td className="px-6 py-4 text-center">
                       <div className="flex justify-center">
                         <Switch
+                          id={`status-toggle-${t.id}`}
+                          name={`status-toggle-${t.id}`}
+                          aria-label={`Ubah status aktif untuk bisnis ${t.business_name || 'Tanpa Nama'}`}
                           checked={t.is_active}
                           onCheckedChange={(val) => handleUpdateStatus(t.id, val)}
                           className="data-[state=checked]:bg-emerald-500"
@@ -372,7 +385,7 @@ export default function AdminUsers() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-1.5">
-                          {Array.from(new Set(u.profiles.map(p => p.role))).map(role => (
+                          {Array.from(new Set(u.profiles.map(p => p.user_type === 'superadmin' ? 'superadmin' : p.role))).map(role => (
                             <RoleBadge key={role} role={role} />
                           ))}
                         </div>
@@ -487,7 +500,7 @@ export default function AdminUsers() {
                                   {p.tenants?.business_name || 'Tanpa Nama'}
                                 </p>
                                 <div className="flex items-center gap-2 mt-0.5">
-                                  <RoleBadge role={p.role} />
+                                  <RoleBadge role={p.user_type === 'superadmin' ? 'superadmin' : p.role} />
                                   <span className="text-[10px] font-bold text-[#4B6478] uppercase">
                                     {(p.tenants?.business_vertical || '').replace('_', ' ')}
                                   </span>
@@ -677,7 +690,7 @@ export default function AdminUsers() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="text-[12px] font-bold text-white truncate">{p.full_name || '-'}</p>
-                              <RoleBadge role={p.role} />
+                              <RoleBadge role={p.user_type === 'superadmin' ? 'superadmin' : p.role} />
                             </div>
                             <p className="text-[10px] text-[#4B6478] font-bold uppercase mt-0.5 tracking-tighter">
                               Aktif {p.last_seen_at ? formatDistanceToNow(new Date(p.last_seen_at), { addSuffix: true, locale: localeId }) : 'Baru-baru ini'}
@@ -769,6 +782,7 @@ function PlanBadge({ plan }) {
 
 function RoleBadge({ role }) {
   const styles = {
+    superadmin: "bg-white/10 text-white border-white/20 shadow-[0_0_10px_rgba(255,255,255,0.1)]",
     owner: "bg-emerald-500/5 text-emerald-400/80 border-emerald-500/10",
     staff: "bg-blue-500/5 text-blue-400/80 border-blue-500/10",
     view_only: "bg-white/5 text-slate-400 border-white/10",

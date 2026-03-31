@@ -6,7 +6,9 @@ import {
   Plus, Search, Filter, ChevronRight,
   Clock, MapPin, User, Smartphone, History,
   TrendingDown, TrendingUp, AlertCircle, Info, Calendar,
-  Loader2, Eye, Trash2, Pencil, ArrowRightLeft, FileText, Receipt
+  ArrowRightLeft, MoreHorizontal, Check, Lock, Unlock,
+  ChevronDown, ChevronsUpDown, Trash2, Loader2, Eye, Receipt,
+  Pencil, PencilLine, Printer, X, FileText, CheckCircle
 } from 'lucide-react'
 import InvoicePreviewModal from '@/components/invoice/InvoicePreviewModal'
 import { format, isSameDay, isSameWeek, isSameMonth, parseISO } from 'date-fns'
@@ -141,6 +143,11 @@ export default function Transaksi() {
 
   // --- STATES ---
   const [activeTab, setActiveTab] = useState('semua')
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // --- FINAL SUCCESS STATE ---
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false)
+  const [finalSuccessData, setFinalSuccessData] = useState(null)
   const [wizardOpen, setWizardOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -164,46 +171,40 @@ export default function Transaksi() {
   const [arrivalNotes, setArrivalNotes] = useState('')
   const [isUpdateArrivalSubmitting, setIsUpdateArrivalSubmitting] = useState(false)
 
-  const [searchQuery, setSearchQuery] = useState('')
   const [timeFilter, setTimeFilter] = useState('keseluruhan') // 'hari_ini', 'minggu_ini', 'bulan_ini', 'keseluruhan'
 
   // --- DATA FETCHING ---
-  const { data: sales, isLoading: loadingSales } = useQuery({
+  const { data: sales = [], isLoading: isLoadingSales, refetch: refetchSales } = useQuery({
     queryKey: ['sales', tenant?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sales')
         .select(`
           *,
-          rpa_clients(rpa_name),
-          purchases(
-            total_cost, transport_cost, other_cost, 
-            total_weight_kg, quantity, price_per_kg,
-            farms(farm_name)
+          rpa_clients ( rpa_name, phone ),
+          purchases ( 
+            *,
+            farms ( farm_name, location ) 
           ),
-          deliveries(
-            status,
-            shrinkage_kg,
-            arrived_weight_kg,
-            initial_weight_kg,
-            delivery_cost,
-            vehicle_id,
-            vehicle_plate,
-            vehicle_type,
-            driver_name,
-            vehicles(brand)
+          deliveries ( 
+            *,
+            vehicles ( brand, vehicle_plate ),
+            drivers ( full_name )
           ),
-          payments(id, amount, payment_date, payment_method, notes)
+          payments ( * )
         `)
-        .eq('tenant_id', tenant.id)
+        .eq('tenant_id', tenant?.id)
         .eq('is_deleted', false)
         .order('transaction_date', { ascending: false })
-      
       if (error) throw error
       return data
     },
     enabled: !!tenant?.id
   })
+
+  const pendingAuditCount = React.useMemo(() => {
+    return sales.filter(s => s.deliveries?.[0]?.status === 'arrived').length
+  }, [sales])
 
   const { data: saleDetail, isLoading: loadingDetail } = useQuery({
     queryKey: ['sales', selectedSaleId],
@@ -212,7 +213,7 @@ export default function Transaksi() {
         .from('sales')
         .select(`
           *,
-          rpa_clients(rpa_name),
+          rpa_clients(rpa_name, phone),
           purchases(
             total_cost, transport_cost, other_cost,
             quantity, avg_weight_kg, total_weight_kg,
@@ -431,6 +432,55 @@ export default function Transaksi() {
     }
   }
 
+  const handleFinalizeSale = async (targetSale) => {
+    if (!targetSale?.deliveries?.[0]?.id) return
+    
+    const delivery = targetSale.deliveries[0]
+    setIsUpdating(true)
+    
+    try {
+      // 1. Update delivery status to completed
+      const { error } = await supabase
+        .from('deliveries')
+        .update({ status: 'completed' })
+        .eq('id', delivery.id)
+      
+      if (error) throw error
+
+      // 2. Prepare data for Success Card
+      const sellData = targetSale
+      const buyData = targetSale.purchases
+      const profit = calcNetProfit(sellData)
+
+      setFinalSuccessData({
+        type: 'lengkap',
+        farmName:        buyData?.farms?.farm_name || null,
+        rpaName:         sellData?.rpa_clients?.rpa_name || null,
+        rpaPhone:        sellData?.rpa_clients?.phone || null,
+        quantity:        delivery.arrived_count || sellData.quantity || 0,
+        totalWeight:     delivery.arrived_weight_kg || sellData.total_weight_kg || 0,
+        buyPrice:        buyData?.total_cost || 0,
+        sellPrice:       sellData?.total_revenue || 0,
+        netProfit:       profit,
+        transactionDate: sellData.transaction_date || null,
+        tenant:          tenant,
+      })
+
+      setIsSuccessOpen(true)
+      setShowAuditSheet(false)
+      
+      queryClient.invalidateQueries({ queryKey: ['sales', tenant.id] })
+      queryClient.invalidateQueries({ queryKey: ['broker-stats', tenant.id] })
+      toast.success('Transaksi berhasil diselesaikan & di-audit')
+      
+    } catch (err) {
+      console.error('Finalize error:', err)
+      toast.error('Gagal menyelesaikan transaksi: ' + err.message)
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
   // Correct consolidated filtering logic
   const filteredSales = React.useMemo(() => {
     if (!sales) return []
@@ -472,6 +522,53 @@ export default function Transaksi() {
   const totalSalesVal = filteredSales?.reduce((acc, s) => acc + (Number(s.total_revenue) || 0), 0) || 0
   const totalModalVal = filteredSales?.reduce((acc, s) => acc + (Number(s.purchases?.total_cost) || 0), 0) || 0
   const netProfitVal = filteredSales?.reduce((acc, s) => acc + calcNetProfit(s), 0) || 0
+
+  // --- WA MESSAGE GENERATOR ---
+  const generateWAMessage = (sale, tenantInfo) => {
+    if (!sale) return ''
+    
+    const rpaName = sale.rpa_clients?.rpa_name || 'RPA'
+    const farmName = sale.purchases?.farms?.farm_name || 'Kandang'
+    const dateStr = formatDate(sale.transaction_date)
+    const qty = formatEkor(sale.quantity)
+    const weight = formatKg(sale.total_weight_kg)
+    const price = formatIDR(sale.price_per_kg)
+    const total = formatIDR(sale.total_revenue)
+    const status = formatPaymentStatus(sale.payment_status)?.toUpperCase() || 'PENDING'
+    const remaining = calcRemainingAmount(sale)
+    
+    let msg = `*STRUK PENJUALAN - ${tenantInfo?.business_name || 'BROKER'}*\n`
+    msg += `--------------------------------\n`
+    msg += `*Kepada:* ${rpaName}\n`
+    msg += `*Sumber:* ${farmName}\n`
+    msg += `*Tanggal:* ${dateStr}\n`
+    msg += `--------------------------------\n`
+    msg += `*Rincian Barang:*\n`
+    msg += `Qty: ${qty}\n`
+    msg += `Berat: ${weight}\n`
+    msg += `Harga: ${price}/kg\n`
+    msg += `--------------------------------\n`
+    msg += `*TOTAL TAGIHAN: ${total}*\n`
+    msg += `*STATUS:* ${status}\n`
+    
+    if (remaining > 0) {
+      msg += `*SISA PIUTANG: ${formatIDR(remaining)}*\n`
+    }
+    
+    msg += `--------------------------------\n`
+    msg += `_Terima kasih atas kerja samanya._\n`
+    msg += `_Dikirim via TernakOS_`
+    
+    return encodeURIComponent(msg)
+  }
+
+  const handleSendWA = (sale) => {
+    const phone = sale.rpa_clients?.phone || ''
+    const cleanPhone = phone.replace(/[^0-9]/g, '')
+    const finalPhone = cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone
+    const message = generateWAMessage(sale, tenant)
+    window.open(`https://wa.me/${finalPhone}?text=${message}`, '_blank')
+  }
 
   return (
     <motion.div
@@ -568,6 +665,26 @@ export default function Transaksi() {
           </p>
         </div>
       </div>
+      
+      {/* AUDIT NOTIFICATION */}
+      {pendingAuditCount > 0 && isOwner && (
+        <div className="px-5 mt-4">
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex justify-between items-center animate-pulse">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-500">
+                <AlertCircle size={20} />
+              </div>
+              <div>
+                <p className="text-[11px] font-black text-amber-500 uppercase tracking-widest leading-none mb-1">Audit Menunggu</p>
+                <p className="text-[10px] font-bold text-amber-500/70 uppercase">Ada {pendingAuditCount} transaksi timbangan tiba</p>
+              </div>
+            </div>
+            <Badge className="bg-amber-500 text-white font-black text-[10px] border-none px-3 py-1 rounded-full shadow-lg shadow-amber-500/20">
+              AUDIT
+            </Badge>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs defaultValue="semua" className="mt-4" onValueChange={setActiveTab}>
@@ -1215,22 +1332,21 @@ function UnifiedTransactionCard({ sale, onOpenAuditSheet }) {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Badge 
-              className={cn(
-                "rounded-full h-6 px-3 border-none font-black uppercase tracking-wider",
-                isDesktop ? "text-[10px]" : "text-xs",
+            <div className="flex items-center gap-2">
+              <Badge className={cn(
+                "rounded-full h-5 px-2 border-none font-black text-[8px] uppercase tracking-wider",
                 sale.payment_status === 'lunas' ? 'bg-emerald-500/10 text-emerald-400' : 
                 sale.payment_status === 'sebagian' ? 'bg-amber-500/10 text-amber-500' : 
-                'animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]'
+                'bg-red-500/10 text-red-500'
+              )}>
+                {formatPaymentStatus(sale.payment_status)?.toUpperCase() || 'BELUM LUNAS'}
+              </Badge>
+              {delivery?.status === 'arrived' && (
+                <Badge className="bg-purple-500 text-white border-none font-black text-[8px] px-2 h-5 rounded-full animate-pulse text-center">
+                  TIBA/AUDIT
+                </Badge>
               )}
-              style={sale.payment_status === 'belum_lunas' || !sale.payment_status ? {
-                backgroundColor: '#EF4444',
-                color: '#FFFFFF',
-                border: 'none'
-              } : {}}
-            >
-              {formatPaymentStatus(sale.payment_status)?.toUpperCase() ?? 'BELUM LUNAS'}
-            </Badge>
+            </div>
             {(() => {
               const badge = getDeliveryBadge(delivery)
               return (
@@ -1471,6 +1587,9 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
   const susutWeight = safeNum(delivery?.shrinkage_kg)
   const paramPricePerKg = isEditing ? Number(editData.price_per_kg || 0) : safeNum(data?.price_per_kg)
   const susutLoss = susutWeight * paramPricePerKg
+  const shrinkagePercent = delivery?.initial_weight_kg > 0 
+    ? (safeNum(delivery.shrinkage_kg) / delivery.initial_weight_kg) * 100 
+    : 0
   
   // Use calcNetProfit for consistency
   const profit = isEditing 
@@ -1527,6 +1646,18 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
             </div>
           ) : (
             <>
+              {/* SECTION 0: AUDIT WARNINGS */}
+              {!isEditing && delivery?.status === 'arrived' && shrinkagePercent >= 6 && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex gap-3 animate-pulse mb-6">
+                  <AlertTriangle className="text-red-500 shrink-0" size={20} />
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-black text-red-500 uppercase tracking-widest">Peringatan Susut Tinggi!</p>
+                    <p className="text-[10px] font-bold text-red-400/80 uppercase leading-relaxed">
+                      Susut mencapai {shrinkagePercent.toFixed(1)}%. Mohon cek ulang timbangan buyer atau tanyakan ke sopir sebelum menyelesaikan.
+                    </p>
+                  </div>
+                </div>
+              )}
               {/* SECTION 1: RINGKASAN PROFIT */}
               <div className="space-y-3">
                 <div className="bg-emerald-500/[0.03] border border-emerald-500/10 rounded-2xl p-4 grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-2">
@@ -1558,13 +1689,31 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
                   </div>
                 )}
 
-                {!isEditing && canWrite && (
-                  <Button
-                    onClick={() => setIsEditing(true)}
-                    className="w-full h-12 bg-white/5 border border-white/10 rounded-2xl text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
-                  >
-                    Edit Transaksi
-                  </Button>
+                {!isEditing && (
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => handleSendWA(data)}
+                      className="flex-1 h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+                    >
+                      <Smartphone size={16} className="mr-2" /> Kirim WA
+                    </Button>
+                    {delivery?.status === 'arrived' && isOwner && (
+                      <Button
+                        onClick={() => handleFinalizeSale(data)}
+                        className="flex-[1.5] h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.1em] rounded-2xl shadow-xl shadow-emerald-500/30 flex items-center justify-center gap-2"
+                      >
+                        <CheckCircle size={16} /> Selesaikan Transaksi
+                      </Button>
+                    )}
+                    {canWrite && delivery?.status !== 'arrived' && (
+                      <Button
+                        onClick={() => setIsEditing(true)}
+                        className="flex-1 h-12 bg-white/5 border border-white/10 rounded-2xl text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+                      >
+                        Edit Transaksi
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -1864,6 +2013,14 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
           }}
         />
       )}
+      <TransaksiSuccessCard
+        isOpen={isSuccessOpen}
+        onClose={() => {
+          setIsSuccessOpen(false)
+          setFinalSuccessData(null)
+        }}
+        data={finalSuccessData}
+      />
     </>
   )
 }

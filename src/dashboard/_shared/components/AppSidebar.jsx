@@ -24,6 +24,7 @@ import {
   Shield,
   ShoppingCart,
   Package,
+  Store,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -137,7 +138,7 @@ export default function AppSidebar({ open, onClose }) {
   const isEgg      = vertical === 'egg_broker'
   const isPeternak = vertical === 'peternak'
   const isRPA      = vertical === 'rumah_potong'
-  const isSembako  = vertical === 'sembako_broker'
+  const isSembako  = ['distributor_sembako', 'sembako_broker'].includes(vertical)
 
   const brokerBase = getBrokerBasePath(tenant)
   const peternakBase = `/peternak/${profile?.sub_type || 'peternak_broiler'}`
@@ -154,6 +155,7 @@ export default function AppSidebar({ open, onClose }) {
         const rpType = t?.sub_type?.startsWith('rpa') ? 'rpa' : 'rph'
         return `/rumah_potong/${rpType}/beranda`
       }
+      case 'distributor_sembako':
       case 'sembako_broker': return `${bBase}/beranda`
       default:               return `${bBase}/beranda`
     }
@@ -169,6 +171,7 @@ export default function AppSidebar({ open, onClose }) {
         const rpType = t?.sub_type?.startsWith('rpa') ? 'rpa' : 'rph'
         return `/rumah_potong/${rpType}/akun`
       }
+      case 'distributor_sembako':
       case 'sembako_broker': return `${bBase}/akun`
       default:               return `${bBase}/akun`
     }
@@ -183,6 +186,7 @@ export default function AppSidebar({ open, onClose }) {
       case 'egg_broker':     return { icon: '🥚', label: 'Broker Telur' }
       case 'peternak':       return { icon: '🏠', label: 'Peternak' }
       case 'rpa':            return { icon: '🏭', label: 'RPA' }
+      case 'distributor_sembako':
       case 'sembako_broker': return { icon: '🛒', label: 'Distributor Sembako' }
       default:               return { icon: '🏢', label: 'Bisnis' }
     }
@@ -245,10 +249,12 @@ export default function AppSidebar({ open, onClose }) {
 
         // Sembako Broker
         ...(isSembako ? [
-          { title: 'Penjualan',       url: `${brokerBase}/penjualan`, icon: ArrowLeftRight },
-          { title: 'Gudang',          url: `${brokerBase}/gudang`,    icon: Warehouse },
-          { title: 'Inventori & HPP', url: `${brokerBase}/produk`,    icon: Package,   roles: ['owner', 'staff'] },
-          { title: 'Karyawan',        url: `${brokerBase}/karyawan`,  icon: Users,     roles: ['owner'] },
+          { title: 'Penjualan',       url: `${brokerBase}/penjualan`,     icon: ArrowLeftRight },
+          { title: 'Toko & Supplier', url: `${brokerBase}/toko-supplier`, icon: Store },
+          { title: 'Pengiriman',      url: `${brokerBase}/pengiriman`,    icon: Truck },
+          { title: 'Gudang',          url: `${brokerBase}/gudang`,        icon: Warehouse },
+          { title: 'Inventori & HPP', url: `${brokerBase}/produk`,        icon: Package,   roles: ['owner', 'staff'] },
+          { title: 'Karyawan',        url: `${brokerBase}/karyawan`,      icon: Users,     roles: ['owner'] },
         ] : []),
       ]
     },

@@ -122,10 +122,12 @@ export default function WizardStepOrder({ onNext, onBack }) {
 
   const onSubmit = (values) => {
     const finalQty = values.inputMode === 'berat' ? Math.round(totalWeightKg / (safeNum(values.avg_weight_kg) || 1.85)) : safeNum(values.quantity)
-    
+    const selectedRPA = rpaClients?.find(r => r.id === values.rpa_id)
+      
     onNext({
       rpa_id: values.rpa_id,
-      rpa_name: rpaClients?.find(r => r.id === values.rpa_id)?.rpa_name,
+      rpa_name: selectedRPA?.rpa_name,
+      rpa_phone: selectedRPA?.phone,
       quantity: finalQty,
       avg_weight_kg: safeNum(values.avg_weight_kg) || 1.85,
       total_weight_kg: totalWeightKg,

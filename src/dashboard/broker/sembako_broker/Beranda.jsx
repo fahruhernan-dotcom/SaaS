@@ -3,10 +3,11 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CreditCard, TrendingUp, Package, Receipt,
-  AlertTriangle, Plus, ChevronRight, Menu, X, Shield,
-  BarChart2, User, ShoppingCart, Warehouse, Users,
+  BarChart2, User, ShoppingCart, Warehouse, Users, Clock,
+  Plus, Menu, X, Shield, AlertTriangle, ChevronRight
 } from 'lucide-react'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
+import { getXBasePath } from '@/lib/businessModel'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useSembakoDashboardStats, useSembakoSales, useSembakoEmployees } from '@/lib/hooks/useSembakoData'
 import { formatIDR } from '@/lib/format'
@@ -107,14 +108,14 @@ function HamburgerDrawer({ open, onClose, tenant, profiles }) {
   const [showSwitcher, setShowSwitcher] = useState(false)
 
   const VERTICAL_BERANDA = {
-    sembako_broker:  '/broker/distributor_sembako/beranda',
+    distributor_sembako:  '/broker/distributor_sembako/beranda',
     poultry_broker:  '/broker/broker_ayam/beranda',
     egg_broker:      '/broker/broker_telur/beranda',
     peternak:        '/peternak/peternak_broiler/beranda',
     rpa:             '/rumah_potong/rpa/beranda',
   }
   const VERTICAL_ICON = {
-    sembako_broker: '🛒', poultry_broker: '🤝', egg_broker: '🥚',
+    distributor_sembako: '🛒', poultry_broker: '🤝', egg_broker: '🥚',
     peternak: '🏚️', rpa: '🏭',
   }
 
@@ -566,6 +567,8 @@ function ProfitChart({ sales, isDesktop }) {
 
 // ── Desktop version (unchanged layout, just cleaner) ──────────────────────────
 function DesktopBeranda({ stats, sales, employees, navigate, name, salesLoading }) {
+  const { tenant } = useAuth()
+  const brokerBase = getXBasePath(tenant)
   const now = new Date()
   const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000)
   const recentSales = useMemo(() => sales.slice(0, 5), [sales])
@@ -588,7 +591,7 @@ function DesktopBeranda({ stats, sales, employees, navigate, name, salesLoading 
           </p>
         </div>
         <button
-          onClick={() => navigate(`${brokerBase}/penjualan`)}
+          onClick={() => navigate(`${brokerBase}/penjualan?action=new`)}
           style={{
             background: '#EA580C', color: '#fff', border: 'none', borderRadius: '12px',
             padding: '0 20px', height: '40px', fontWeight: 700, fontSize: '13px',
@@ -636,6 +639,9 @@ function DesktopBeranda({ stats, sales, employees, navigate, name, salesLoading 
         </motion.div>
       )}
 
+      {/* Collection Reminders (Owner Pro) */}
+      <CollectionReminders sales={sales} navigate={navigate} brokerBase={brokerBase} />
+
       {/* 2-col */}
       <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '16px' }}>
         <div style={{ background: C.card, borderRadius: '16px', padding: '16px', border: `1px solid ${C.border}` }}>
@@ -671,8 +677,57 @@ function DesktopBeranda({ stats, sales, employees, navigate, name, salesLoading 
   )
 }
 
+function CollectionReminders({ sales, navigate, brokerBase }) {
+  const now = new Date()
+  const reminders = useMemo(() => {
+    return sales
+      .filter(s => s.payment_status !== 'lunas' && s.due_date && !s.is_deleted)
+      .map(s => {
+        const due = new Date(s.due_date)
+        const diff = Math.ceil((due - now) / (1000 * 60 * 60 * 24))
+        return { ...s, daysDiff: diff }
+      })
+      .filter(s => s.daysDiff <= 3) // Today, overdue, or next 3 days
+      .sort((a, b) => a.daysDiff - b.daysDiff)
+      .slice(0, 5)
+  }, [sales])
+
+  if (reminders.length === 0) return null
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+      style={{ background: 'rgba(239,68,68,0.04)', border: `1px solid rgba(239,68,68,0.15)`, borderRadius: '16px', padding: '16px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+        <Clock size={16} color="#EF4444" />
+        <span style={{ fontSize: '11px', fontWeight: 800, color: '#EF4444', letterSpacing: '0.1em' }}>PENAGIHAN JATUH TEMPO</span>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
+        {reminders.map(s => (
+          <div key={s.id} style={{ background: C.card, borderRadius: '12px', padding: '12px', border: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+             <div>
+               <p style={{ fontSize: '13px', fontWeight: 800, color: C.text }}>{s.sembako_customers?.customer_name || s.customer_name}</p>
+               <p style={{ fontSize: '11px', color: s.daysDiff < 0 ? '#EF4444' : '#F59E0B', fontWeight: 700 }}>
+                 {s.daysDiff < 0 ? `Telat ${Math.abs(s.daysDiff)} hari` : s.daysDiff === 0 ? 'Jatuh tempo HARI INI' : `H-${s.daysDiff} Jatuh tempo`}
+               </p>
+             </div>
+             <div style={{ textAlign: 'right' }}>
+               <p style={{ fontSize: '14px', fontWeight: 900, color: C.text }}>{formatIDR(s.remaining_amount)}</p>
+               <button 
+                onClick={() => navigate(`${brokerBase}/penjualan`)}
+                style={{ fontSize: '10px', color: C.accent, fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                  Detail <ChevronRight size={10} inline="true" />
+               </button>
+             </div>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  )
+}
+
 // ── Mobile version ────────────────────────────────────────────────────────────
 function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, profile, tenant, profiles, switchTenant }) {
+  const brokerBase = getXBasePath(tenant)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   const now = new Date()
@@ -774,7 +829,7 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
         {/* Quick actions row */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
           <button
-            onClick={() => navigate(`${brokerBase}/penjualan`)}
+            onClick={() => navigate(`${brokerBase}/penjualan?action=new`)}
             style={{
               flex: 1, height: '42px', borderRadius: '12px',
               background: C.accent, border: 'none', cursor: 'pointer',
@@ -893,17 +948,9 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
 
 // ── Root ───────────────────────────────────────────────────────────────────────
 export default function SembakoBeranda() {
-  const _navigate   = useNavigate()
+  const navigate    = useNavigate()
   const { profile, tenant, profiles, switchTenant } = useAuth()
   const isDesktop  = useMediaQuery('(min-width: 1024px)')
-  
-  const brokerBase = getBrokerBasePath(tenant)
-  const navigate = (path, options) => {
-    if (typeof path === 'string' && path.startsWith('/broker')) {
-      return _navigate(path.replace('/broker', brokerBase), options)
-    }
-    return _navigate(path, options)
-  }
 
   const { data: stats,    isLoading: statsLoading }  = useSembakoDashboardStats()
   const { data: sales = [], isLoading: salesLoading } = useSembakoSales()

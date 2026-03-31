@@ -248,8 +248,11 @@ function App() {
           
           {/* Sembako Exclusive Routes mapped through router */}
           <Route path="pos"        element={<BrokerPageRouter page="pos" />} />
-          <Route path="penjualan"  element={<BrokerPageRouter page="penjualan" />} />
-          <Route path="gudang"     element={<BrokerPageRouter page="gudang" />} />
+          <Route path="penjualan"      element={<BrokerPageRouter page="penjualan" />} />
+          <Route path="toko-supplier" element={<BrokerPageRouter page="toko-supplier" />} />
+          <Route path="toko-supplier/:type/:id" element={<BrokerPageRouter page="toko-supplier-detail" />} />
+          <Route path="pengiriman"    element={<BrokerPageRouter page="pengiriman" />} />
+          <Route path="gudang"        element={<BrokerPageRouter page="gudang" />} />
           <Route path="produk"     element={<BrokerPageRouter page="produk" />} />
           <Route path="inventori"  element={<BrokerPageRouter page="inventori" />} />
           <Route path="karyawan"   element={<BrokerPageRouter page="karyawan" />} />

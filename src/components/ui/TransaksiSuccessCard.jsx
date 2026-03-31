@@ -1,5 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { formatDate } from '@/lib/format'
+import { formatDate, formatIDR, formatEkor } from '@/lib/format'
+import { Smartphone } from 'lucide-react'
+import { formatPaymentStatus, calcRemainingAmount } from '@/lib/format'
 
 // ─── Animated check circle ────────────────────────────────────────────────────
 
@@ -58,6 +60,34 @@ function formatKg(num) {
   return n >= 1000 ? `${(n / 1000).toFixed(2)} ton` : `${n.toFixed(1)} kg`
 }
 
+const generateWAMessage = (data) => {
+  if (!data) return ''
+  
+  const { farmName, rpaName, quantity, totalWeight, sellPrice, transactionDate, tenant } = data
+  const dateStr = formatDate(transactionDate)
+  const qty = formatEkor(quantity)
+  const weight = formatKg(totalWeight)
+  const total = formatIDR(sellPrice)
+  
+  let msg = `*STRUK PENJUALAN - ${tenant?.business_name || 'BROKER'}*\n`
+  msg += `--------------------------------\n`
+  msg += `*Kepada:* ${rpaName || 'RPA'}\n`
+  msg += `*Sumber:* ${farmName || 'Kandang'}\n`
+  msg += `*Tanggal:* ${dateStr}\n`
+  msg += `--------------------------------\n`
+  msg += `*Rincian Barang:*\n`
+  msg += `Qty: ${qty}\n`
+  msg += `Berat: ${weight}\n`
+  msg += `Harga Jual Total: ${total}\n`
+  msg += `--------------------------------\n`
+  msg += `*TOTAL TAGIHAN: ${total}*\n`
+  msg += `--------------------------------\n`
+  msg += `_Terima kasih atas kerja samanya._\n`
+  msg += `_Dikirim via TernakOS_`
+  
+  return encodeURIComponent(msg)
+}
+
 // ─── TransaksiSuccessCard ─────────────────────────────────────────────────────
 
 /**
@@ -82,6 +112,7 @@ export default function TransaksiSuccessCard({ isOpen, onClose, onDetail, data }
   } = data
 
   const profitColor = netProfit > 0 ? '#10B981' : netProfit < 0 ? '#F87171' : '#94A3B8'
+  const isRecorded = data.type === 'recorded'
 
   return (
     <AnimatePresence>
@@ -119,7 +150,7 @@ export default function TransaksiSuccessCard({ isOpen, onClose, onDetail, data }
               {/* Title */}
               <div className="text-center mb-6">
                 <h3 className="font-display text-xl font-black text-white mb-1">
-                  Transaksi Berhasil!
+                  {isRecorded ? 'Pesanan Dicatat!' : 'Transaksi Berhasil!'}
                 </h3>
                 {transactionDate && (
                   <p className="text-[#4B6478] text-sm">
@@ -191,12 +222,26 @@ export default function TransaksiSuccessCard({ isOpen, onClose, onDetail, data }
                 )}
                 <button
                   onClick={onClose}
-                  className="flex-1 py-3 rounded-2xl bg-[#10B981] hover:bg-[#34D399] text-white text-sm font-bold transition-colors"
-                  style={{ boxShadow: '0 4px 16px rgba(16,185,129,0.25)' }}
+                  className="flex-1 py-3 rounded-2xl bg-white/5 border border-white/10 text-white text-sm font-bold transition-colors"
                 >
                   Tutup
                 </button>
               </div>
+
+              {/* WA Link - Hidden if only recorded */}
+              {!isRecorded && (
+                <button
+                  onClick={() => {
+                    const phone = data.rpaPhone || ''
+                    const cleanPhone = phone.replace(/[^0-9]/g, '')
+                    const finalPhone = cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone
+                    window.open(`https://wa.me/${finalPhone}?text=${generateWAMessage(data)}`, '_blank')
+                  }}
+                  className="w-full mt-3 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-black uppercase tracking-widest transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+                >
+                  <Smartphone size={18} /> Kirim Invoice WA
+                </button>
+              )}
             </motion.div>
           </motion.div>
         </>

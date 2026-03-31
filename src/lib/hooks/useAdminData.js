@@ -444,12 +444,12 @@ export const useGlobalStats = () => useQuery({
         growthData
       },
       users: {
-        total: tenants.reduce((sum, t) => sum + (t.profiles?.length || 0), 0),
-        activeThisWeek: tenants.reduce((sum, t) => {
-          return sum + (t.profiles || []).filter(p =>
-            p.last_seen_at && new Date(p.last_seen_at) > sevenDaysAgo
-          ).length
-        }, 0)
+        total: new Set(tenants.flatMap(t => (t.profiles || []).map(p => p.id))).size,
+        activeThisWeek: new Set(
+          tenants.flatMap(t => t.profiles || [])
+            .filter(p => p.last_seen_at && new Date(p.last_seen_at) > sevenDaysAgo)
+            .map(p => p.id)
+        ).size
       },
       revenue: {
         total:         invoices.filter(i => i.status === 'paid')

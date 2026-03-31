@@ -1,27 +1,34 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLocation } from 'react-router-dom'
-import {
+import { 
   Search, Plus, CreditCard, TrendingUp, CheckCircle2, AlertTriangle,
   FileText, ChevronDown, X, Truck, Store, Package, Star, Phone, MapPin,
+  Clock, ArrowRightLeft, Pencil, Trash2, History, User, Smartphone,
+  Info, Calendar, ChevronRight, Eye, Receipt, Loader2, Check, ChevronLeft
 } from 'lucide-react'
-import {
-  useSembakoSales, useSembakoCustomers, useSembakoSuppliers,
-  useSembakoProducts, useSembakoDeliveries, useSembakoEmployees,
-  useCreateSembakoSale, useRecordSembakoPayment,
-  useCreateSembakoCustomer, useUpdateSembakoCustomer,
-  useCreateSembakoSupplier, useUpdateSembakoSupplier,
-  useCreateSembakoDelivery,
+import { 
+  useSembakoProducts, useSembakoCustomers, useSembakoSales, useSembakoEmployees,
+  useCreateSembakoProduct, useCreateSembakoSale, useCreateSembakoDelivery,
+  useRecordSembakoPayment, useDeleteSembakoSale, useCreateSembakoReturn,
+  useUpdateSembakoSale, useCreateSembakoCustomer
 } from '@/lib/hooks/useSembakoData'
+import SembakoInvoicePreview from './SembakoInvoicePreview'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { formatIDR } from '@/lib/format'
 import TopBar from '@/dashboard/_shared/components/TopBar'
-import {
-  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
-} from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
+import { toast } from 'sonner'
+import { useAuth } from '@/lib/hooks/useAuth'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+import InvoicePreviewModal from '@/components/invoice/InvoicePreviewModal'
+import { cn } from '@/lib/utils'
+import { useQueryClient } from '@tanstack/react-query'
+import { useDelayedData } from '@/lib/hooks/useDelayedData'
 
-// ── Palette (matches Beranda.jsx) ───────────────────────────────────────────
+// ── Palette (matches Beranda.jsx) ──────────────────────────────────────────
 const C = {
   bg: '#06090F', card: '#1C1208', input: '#231A0E',
   accent: '#EA580C', amber: '#F59E0B', green: '#34D399', red: '#EF4444',
@@ -46,7 +53,7 @@ const CUSTOMER_TYPES = [
   'warung','toko_retail','supermarket','restoran','catering','grosir','lainnya'
 ]
 
-// ── Shared UI Primitives ────────────────────────────────────────────────────
+// â”€â”€ Shared UI Primitives â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const sInput = {
   background: C.input, border: `1px solid ${C.border}`, borderRadius: '10px',
   padding: '10px 12px', color: C.text, fontSize: '16px', fontWeight: 600,
@@ -124,7 +131,7 @@ function CustomSelect({ value, onChange, options, placeholder, onAddNew, id }) {
                     }}
                   >
                     <span>{opt.label}</span>
-                    {value === opt.value && <span style={{ fontSize: '10px' }}>✓</span>}
+                    {value === opt.value && <span style={{ fontSize: '10px' }}>âœ“</span>}
                   </div>
                 ))}
               </div>
@@ -161,11 +168,13 @@ function fmtDate(d) {
   try { return new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) }
   catch { return '-' }
 }
-function InputRupiah({ value, onChange, placeholder, style }) {
+
+function InputRupiah({ value, onChange, placeholder, style, disabled }) {
   const display = value ? Number(value).toLocaleString('id-ID') : ''
   return (
-    <input style={{ ...sInput, ...style }} placeholder={placeholder || 'Rp 0'}
+    <input style={{ ...sInput, ...style, opacity: disabled ? 0.5 : 1 }} placeholder={placeholder || 'Rp 0'}
       value={display ? `Rp ${display}` : ''}
+      disabled={disabled}
       onChange={e => {
         const raw = e.target.value.replace(/[^0-9]/g, '')
         onChange(raw ? parseInt(raw) : 0)
@@ -173,65 +182,145 @@ function InputRupiah({ value, onChange, placeholder, style }) {
   )
 }
 
-// ── MAIN ────────────────────────────────────────────────────────────────────
-export default function SembakoPenjualan() {
-  const isDesktop = useMediaQuery('(min-width: 1024px)')
-  const location = useLocation()
-  const [tab, setTab] = useState('invoice')
-  const [openCreate, setOpenCreate] = useState(false)
-
-  // Handle FAB action from BottomNav (?action=new)
-  useEffect(() => {
-    const params = new URLSearchParams(location.search)
-    if (params.get('action') === 'new') {
-      setTab('invoice')
-      setOpenCreate(true)
-      // Optional: clear param if you don't want it to re-open on refresh
-      // window.history.replaceState({}, '', location.pathname)
-    }
-  }, [location.search])
-
-  const TABS = [
-    { id: 'invoice', label: 'Invoice' },
-    { id: 'toko', label: 'Toko & Supplier' },
-    { id: 'pengiriman', label: 'Pengiriman' },
-  ]
-
+function ProgressIndicator({ currentStep, steps }) {
   return (
-    <div style={{ background: C.bg, minHeight: '100vh', paddingBottom: '96px' }}>
-      {!isDesktop && <TopBar title="Penjualan" />}
-      <div style={{ padding: isDesktop ? '32px 40px' : '20px 16px', maxWidth: '1200px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: isDesktop ? '28px' : '22px', fontWeight: 900, color: C.text, fontFamily: 'DM Sans', marginBottom: '20px' }}>
-          Penjualan
-        </h1>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 0, padding: '16px 0', marginBottom: '20px', borderTop: `1px solid ${C.border}` }}>
+      {steps.map((label, i) => {
+        const done = i < currentStep
+        const active = i === currentStep
+        return (
+          <React.Fragment key={i}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0, flex: 1 }}>
+              <div style={{
+                width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                background: done ? C.green : active ? 'rgba(52,211,153,0.15)' : 'rgba(255,255,255,0.05)',
+                border: done ? 'none' : active ? `2px solid ${C.green}` : `2px solid ${C.border}`,
+              }}>
+                {done
+                  ? <Check size={12} color="white" strokeWidth={3} />
+                  : <span style={{ fontSize: 10, fontWeight: 700, color: active ? C.green : C.muted }}>{i + 1}</span>
+                }
+              </div>
+              <span style={{ fontSize: 9, color: done ? C.green : active ? C.green : C.muted, textAlign: 'center', marginTop: 4, whiteSpace: 'nowrap', fontWeight: 600 }}>{label}</span>
+            </div>
+            {i < steps.length - 1 && (
+              <div style={{ flex: 1, height: 2, marginTop: 11, background: i < currentStep ? C.green : C.border }} />
+            )}
+          </React.Fragment>
+        )
+      })}
+    </div>
+  )
+}
 
-        {/* Tab bar */}
-        <div style={{ display: 'flex', gap: '4px', background: C.card, borderRadius: '12px', padding: '4px', marginBottom: '24px', border: `1px solid ${C.border}` }}>
-          {TABS.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{
-              flex: 1, padding: '10px 0', borderRadius: '10px', border: 'none', cursor: 'pointer',
-              background: tab === t.id ? C.accent : 'transparent',
-              color: tab === t.id ? '#fff' : C.muted,
-              fontWeight: 800, fontSize: '12px', letterSpacing: '0.04em',
-              transition: 'all 0.2s',
-            }}>
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        {tab === 'invoice' && <TabInvoice isDesktop={isDesktop} openCreate={openCreate} setOpenCreate={setOpenCreate} />}
-        {tab === 'toko' && <TabTokoSupplier isDesktop={isDesktop} />}
-        {tab === 'pengiriman' && <TabPengiriman isDesktop={isDesktop} />}
+function StatCard({ icon: Icon, label, value, color }) {
+  return (
+    <div style={{ background: C.card, padding: '16px', borderRadius: '20px', border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Icon size={20} color={color} />
+      </div>
+      <div>
+        <p style={{ fontSize: '11px', color: C.muted, fontWeight: 700, textTransform: 'uppercase' }}>{label}</p>
+        <p style={{ fontSize: '18px', fontWeight: 900, color: C.text, fontFamily: 'DM Sans' }}>{value}</p>
       </div>
     </div>
   )
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
+function LoadingSkeleton() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      {[1,2,3].map(i => (
+        <Skeleton key={i} style={{ height: '140px', width: '100%', borderRadius: '20px', background: 'rgba(255,255,255,0.05)' }} />
+      ))}
+    </div>
+  )
+}
+
+function EmptyBox({ icon: Icon, text }) {
+  return (
+    <div style={{ padding: '60px 20px', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '24px', border: `1px dashed ${C.border}` }}>
+      <Icon size={40} color={C.muted} style={{ margin: '0 auto 16px', opacity: 0.4 }} />
+      <p style={{ color: C.muted, fontSize: '14px', fontWeight: 600 }}>{text}</p>
+    </div>
+  )
+}
+
+function DetailRow({ label, value, color = C.text, bold, highlight }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
+      <span style={{ fontSize: '11px', color: C.muted, fontWeight: 700, textTransform: 'uppercase' }}>{label}</span>
+      <span style={{ 
+        fontSize: highlight ? '16px' : '13px', 
+        fontWeight: bold || highlight ? 900 : 600, 
+        color: color,
+        fontFamily: highlight ? 'DM Sans' : 'inherit'
+      }}>{value}</span>
+    </div>
+  )
+}
+
+function SummaryLine({ label, value, bold, color = C.text }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0' }}>
+      <span style={{ fontSize: '12px', color: C.muted }}>{label}</span>
+      <span style={{ fontSize: '13px', fontWeight: bold ? 800 : 500, color: color }}>{value}</span>
+    </div>
+  )
+}
+
+function generateWAMessage(sale, tenant) {
+  const items = Array.isArray(sale.sembako_sale_items) ? sale.sembako_sale_items : []
+  const itemList = items.map(it => `- ${it.product_name} (${it.quantity} ${it.unit})`).join('\n')
+  const status = sale.payment_status === 'lunas' ? '✅ LUNAS' : '⏳ BELUM LUNAS'
+  
+  const text = `*NOTA PENJUALAN*\n` +
+    `--------------------------\n` +
+    `No: ${sale.invoice_number}\n` +
+    `Toko: ${sale.sembako_customers?.customer_name || sale.customer_name}\n` +
+    `Tanggal: ${new Date(sale.transaction_date).toLocaleDateString('id-ID')}\n\n` +
+    `*Detail Barang:*\n${itemList}\n\n` +
+    `*Total: ${formatIDR(sale.total_amount)}*\n` +
+    `Status: ${status}\n` +
+    (sale.remaining_amount > 0 ? `Sisa: ${formatIDR(sale.remaining_amount)}\n` : '') +
+    `--------------------------\n` +
+    `Terima kasih telah berbelanja di *${tenant?.business_name || 'Toko Kami'}*`
+
+  return encodeURIComponent(text)
+}
+
+// â”€â”€ MAIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+export default function SembakoPenjualan() {
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const location = useLocation()
+  const [openWizard, setOpenWizard] = useState(false)
+
+  // Handle FAB action from BottomNav (?action=new)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('action') === 'new') {
+      setOpenWizard(true)
+    }
+  }, [location.search])
+
+  return (
+    <div style={{ background: C.bg, minHeight: '100vh', paddingBottom: '96px' }}>
+      {!isDesktop && <TopBar title="Penjualan" />}
+      <div style={{ padding: isDesktop ? '32px 40px' : '20px 16px', maxWidth: '1200px', margin: '0 auto' }}>
+        <h1 style={{ fontSize: isDesktop ? '28px' : '22px', fontWeight: 900, color: C.text, fontFamily: 'DM Sans', marginBottom: '24px' }}>
+          Penjualan & Invoice
+        </h1>
+
+        <TabInvoice isDesktop={isDesktop} openWizard={openWizard} setOpenWizard={setOpenWizard} />
+      </div>
+    </div>
+  )
+}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // TAB 1: INVOICE
-// ═══════════════════════════════════════════════════════════════════════════
-function TabInvoice({ isDesktop, openCreate, setOpenCreate }) {
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+function TabInvoice({ isDesktop, openWizard, setOpenWizard }) {
   const { data: sales = [], isLoading } = useSembakoSales()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
@@ -250,6 +339,9 @@ function TabInvoice({ isDesktop, openCreate, setOpenCreate }) {
     }
   }, [sales])
 
+  const [selectedSaleId, setSelectedSaleId] = useState(null)
+  const [showDetail, setShowDetail] = useState(false)
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
     return sales.filter(s =>
@@ -261,6 +353,28 @@ function TabInvoice({ isDesktop, openCreate, setOpenCreate }) {
 
   const paged = filtered.slice(page * PER_PAGE, (page + 1) * PER_PAGE)
   const totalPages = Math.ceil(filtered.length / PER_PAGE)
+
+  const [editSaleId, setEditSaleId] = useState(null)
+
+  const selectedSale = useMemo(() => 
+    sales.find(s => s.id === selectedSaleId), 
+    [sales, selectedSaleId]
+  )
+
+  const handleOpenEdit = (sale) => {
+    setEditSaleId(sale.id)
+    setShowDetail(false)
+    setOpenWizard(true)
+  }
+
+  const handleWizardClose = (open) => {
+    if (!open) {
+      setOpenWizard(false)
+      setEditSaleId(null)
+    } else {
+      setOpenWizard(true)
+    }
+  }
 
   return (
     <div>
@@ -279,17 +393,30 @@ function TabInvoice({ isDesktop, openCreate, setOpenCreate }) {
           <input placeholder="Cari invoice / toko..." value={search} onChange={e => setSearch(e.target.value)}
             style={{ ...sInput, paddingLeft: '36px' }} />
         </div>
-        <button onClick={() => setOpenCreate(true)} style={{ ...sBtn(true), display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
-          <Plus size={15} /> Invoice Baru
+        <button 
+          type="button"
+          onClick={() => setOpenWizard(true)} 
+          style={{ ...sBtn(true), display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
+        >
+          <Plus size={15} /> Catat Penjualan
         </button>
       </div>
 
-      {/* Table */}
+      {/* Table replaced with Cards */}
       {isLoading ? <LoadingSkeleton /> : paged.length === 0 ? (
-        <EmptyBox icon={FileText} text="Belum ada invoice" />
+        <EmptyBox icon={History} text="Belum ada invoice" />
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {paged.map(sale => <InvoiceRow key={sale.id} sale={sale} now={now} onPay={() => setPayTarget(sale)} />)}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {paged.map(sale => (
+            <SembakoSaleCard 
+              key={sale.id} 
+              sale={sale} 
+              onOpenDetail={() => {
+                setSelectedSaleId(sale.id)
+                setShowDetail(true)
+              }}
+            />
+          ))}
         </div>
       )}
 
@@ -306,70 +433,399 @@ function TabInvoice({ isDesktop, openCreate, setOpenCreate }) {
         </div>
       )}
 
-      <SheetCreateInvoice open={openCreate} onClose={() => setOpenCreate(false)} />
-      <SheetPayment sale={payTarget} onClose={() => setPayTarget(null)} />
+      <SheetCreateInvoice open={openWizard} onOpenChange={handleWizardClose} editId={editSaleId} />
+      <SembakoSaleDetailSheet 
+        isOpen={showDetail} 
+        onOpenChange={setShowDetail} 
+        sale={selectedSale}
+        onEdit={handleOpenEdit}
+      />
     </div>
   )
 }
 
-function InvoiceRow({ sale, now, onPay }) {
+function SembakoSaleCard({ sale, onOpenDetail }) {
   const st = STATUS_STYLE[sale.payment_status] || STATUS_STYLE.belum_lunas
-  const name = sale.sembako_customers?.customer_name || sale.customer_name || '-'
-  const overdue = sale.payment_status !== 'lunas' && sale.due_date && new Date(sale.due_date) < now
+  const custName = sale.sembako_customers?.customer_name || sale.customer_name || 'Umum'
+  
+  // Calculate items summary from sembako_sale_items
+  const items = Array.isArray(sale.sembako_sale_items) ? sale.sembako_sale_items : []
+  const itemSummary = items.length > 0 
+    ? (items.length > 1 ? `${items[0].product_name} & ${items.length - 1} lainnya` : items[0].product_name)
+    : 'Tidak ada item'
+
   return (
-    <div style={{
-      background: C.card, borderRadius: '12px', padding: '12px 14px',
-      border: `1px solid ${overdue ? 'rgba(239,68,68,0.3)' : C.border}`,
-      display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap',
-    }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontSize: '13px', fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</p>
-        <p style={{ fontSize: '10px', color: C.muted, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {sale.invoice_number} · {fmtDate(sale.transaction_date)}
-        </p>
+    <div 
+      onClick={onOpenDetail}
+      style={{
+        background: C.card,
+        borderRadius: '20px',
+        border: `1px solid ${sale.remaining_amount > 0 ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.05)'}`,
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+        overflow: 'hidden',
+        position: 'relative'
+      }}
+      className="group hover:bg-white/[0.02] active:scale-[0.99]"
+    >
+      <div style={{ padding: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', gap: '12px', flex: 1 }}>
+            <div style={{ 
+              width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(234,88,12,0.1)', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.accent, flexShrink: 0
+            }}>
+              <Store size={20} />
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <h3 style={{ fontSize: '15px', fontWeight: 800, color: C.text, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{custName}</h3>
+              <p style={{ fontSize: '11px', color: C.muted, marginTop: '2px' }}>{sale.invoice_number} · {fmtDate(sale.transaction_date)}</p>
+            </div>
+          </div>
+          <Badge className={cn(
+            "rounded-full px-3 py-1 border-none font-black text-[9px] uppercase tracking-wider",
+            sale.payment_status === 'lunas' ? 'bg-emerald-500/10 text-emerald-400' : 
+            sale.payment_status === 'sebagian' ? 'bg-amber-500/10 text-amber-500' : 
+            'bg-red-500/10 text-red-500'
+          )}>
+            {st.label}
+          </Badge>
+        </div>
+
+        <div style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', padding: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px' }}>
+          <div>
+            <p style={{ fontSize: '9px', fontWeight: 800, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Item Produk</p>
+            <p style={{ fontSize: '13px', fontWeight: 700, color: C.text, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{itemSummary}</p>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ fontSize: '9px', fontWeight: 800, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Tagihan</p>
+            <p style={{ fontSize: '15px', fontWeight: 900, color: C.accent, marginTop: '2px' }}>{formatIDR(sale.total_amount)}</p>
+          </div>
+        </div>
       </div>
-      <div style={{ textAlign: 'right', minWidth: '80px' }}>
-        <p style={{ fontSize: '13px', fontWeight: 700, color: C.text }}>{formatIDR(sale.total_amount)}</p>
-        {sale.remaining_amount > 0 && (
-          <p style={{ fontSize: '10px', color: C.red, marginTop: '2px' }}>Sisa: {formatIDR(sale.remaining_amount)}</p>
-        )}
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <span style={{
-          background: st.bg, color: st.color, fontSize: '10px', fontWeight: 900,
-          padding: '2px 8px', borderRadius: '6px',
-          border: st.border ? `1px solid ${st.border}` : 'none',
-          boxShadow: st.border ? '0 0 10px rgba(239,68,68,0.1)' : 'none'
-        }}>{st.label}</span>
-        {overdue && <span style={{ background: 'rgba(239,68,68,0.15)', color: C.red, fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '5px' }}>OVERDUE</span>}
-      </div>
-      {sale.payment_status !== 'lunas' && (
-        <button onClick={onPay} style={{ ...sBtn(false), padding: '5px 12px', fontSize: '11px' }}>Bayar</button>
+
+      {sale.remaining_amount > 0 && (
+        <div style={{ padding: '10px 16px', background: 'rgba(239,68,68,0.05)', borderTop: '1px solid rgba(239,68,68,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '10px', fontWeight: 800, color: C.red, textTransform: 'uppercase' }}>Sisa Piutang</span>
+          <span style={{ fontSize: '13px', fontWeight: 900, color: C.red }}>{formatIDR(sale.remaining_amount)}</span>
+        </div>
       )}
     </div>
   )
 }
 
-// ── Sheet: Create Invoice ───────────────────────────────────────────────────
-function SheetCreateInvoice({ open, onClose }) {
+function SembakoSaleDetailSheet({ isOpen, onOpenChange, sale, onEdit }) {
+  const { tenant, profile } = useAuth()
+  const deleteSale = useDeleteSembakoSale()
+  const createReturn = useCreateSembakoReturn()
+  const isOwner = profile?.role === 'owner'
+  const [payTarget, setPayTarget] = useState(null)
+  const [invoiceModal, setInvoiceModal] = useState({ open: false, type: null })
+
+  if (!sale) return null
+
+  const items = Array.isArray(sale.sembako_sale_items) ? sale.sembako_sale_items : []
+  const totalCogs = items.reduce((s, i) => s + Math.round((i.quantity || 0) * (i.cogs_per_unit || 0)), 0)
+  const profit = (sale.total_amount || 0) - totalCogs - (sale.delivery_cost || 0) - (sale.other_cost || 0)
+  
+  const handleWA = () => {
+    const phone = sale.sembako_customers?.phone || ''
+    const msg = generateWAMessage(sale, tenant)
+    window.open(`https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${msg}`, '_blank')
+  }
+
+  const handleReturn = async () => {
+    if (window.confirm('Catat RETUR untuk seluruh barang di nota ini? Stok akan dikembalikan ke gudang.')) {
+      try {
+        const returnItems = items.map(it => ({
+          product_id: it.product_id,
+          quantity: it.quantity,
+          batch_id: it.batch_id || it.sembako_stock_out?.[0]?.batch_id // Fallback to finding batch if possible
+        })).filter(it => it.product_id && it.batch_id) // Ensure we have enough info to reverse
+        
+        if (returnItems.length === 0) {
+           return toast.error('Data batch produk tidak ditemukan. Retur gagal.')
+        }
+
+        await createReturn.mutateAsync({
+          sale_id: sale.id,
+          customer_id: sale.customer_id,
+          items: returnItems
+        })
+        onOpenChange(false)
+      } catch (e) {}
+    }
+  }
+
+  const handleDelete = async () => {
+    if (window.confirm('Hapus transaksi ini secara permanen?')) {
+      try {
+        await deleteSale.mutateAsync(sale.id)
+        toast.success('Transaksi dihapus')
+        onOpenChange(false)
+      } catch (e) {}
+    }
+  }
+
+  return (
+    <>
+      <Sheet open={isOpen} onOpenChange={onOpenChange}>
+        <SheetContent side="right" style={{ background: C.bg, borderLeft: `1px solid ${C.border}`, width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', padding: 0 }}>
+          <SheetHeader style={{ padding: '24px', borderBottom: `1px solid ${C.border}`, textAlign: 'left' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <SheetTitle style={{ color: C.text, fontWeight: 900, fontSize: '20px', fontFamily: 'DM Sans' }}>Detail Penjualan</SheetTitle>
+                <p style={{ fontSize: '11px', color: C.muted, marginTop: '4px' }}>{sale.invoice_number} · {fmtDate(sale.transaction_date)}</p>
+              </div>
+              <Badge className={cn(
+                "rounded-full px-3 py-1 border-none font-black text-[10px] uppercase tracking-wider",
+                sale.payment_status === 'lunas' ? 'bg-emerald-500/10 text-emerald-400' : 
+                sale.payment_status === 'sebagian' ? 'bg-amber-500/10 text-amber-500' : 
+                'bg-red-500/10 text-red-500'
+              )}>
+                {sale.payment_status?.toUpperCase() || '-'}
+              </Badge>
+            </div>
+          </SheetHeader>
+
+          <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {/* Section: Customer */}
+            <div style={{ borderBottom: `1px solid ${C.border}`, paddingBottom: '16px' }}>
+              <p style={sLabel}>TOKO / CUSTOMER</p>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginTop: '8px' }}>
+                <div style={{ width: 40, height: 40, borderRadius: '12px', background: 'rgba(234,88,12,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.accent }}>
+                   <Store size={20} />
+                </div>
+                <div>
+                  <p style={{ fontSize: '15px', fontWeight: 800, color: C.text }}>{sale.sembako_customers?.customer_name || sale.customer_name || 'Umum'}</p>
+                  <p style={{ fontSize: '12px', color: C.muted }}>{sale.sembako_customers?.phone || '-'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Section: Items Table */}
+            <div>
+              <p style={sLabel}>DAFTAR BARANG</p>
+              <div style={{ marginTop: '12px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: `1px solid ${C.border}`, overflow: 'hidden' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                  <thead style={{ background: 'rgba(255,255,255,0.03)' }}>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: '12px', color: C.muted, fontWeight: 800, textTransform: 'uppercase', fontSize: '10px' }}>Produk</th>
+                      <th style={{ textAlign: 'right', padding: '12px', color: C.muted, fontWeight: 800, textTransform: 'uppercase', fontSize: '10px' }}>Qty</th>
+                      <th style={{ textAlign: 'right', padding: '12px', color: C.muted, fontWeight: 800, textTransform: 'uppercase', fontSize: '10px' }}>Harga</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((it, idx) => (
+                      <tr key={idx} style={{ borderTop: `1px solid ${C.border}` }}>
+                        <td style={{ padding: '12px', color: C.text, fontWeight: 600 }}>{it.product_name}</td>
+                        <td style={{ padding: '12px', textAlign: 'right', color: C.text }}>{it.quantity} {it.unit}</td>
+                        <td style={{ padding: '12px', textAlign: 'right', color: C.text, fontWeight: 700 }}>{formatIDR(it.price_per_unit)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Section: Financials */}
+            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '16px', padding: '16px', border: `1px solid ${C.border}` }}>
+               <DetailRow label="Subtotal Barang" value={formatIDR(sale.total_amount)} />
+               <DetailRow label="Biaya Kirim" value={formatIDR(sale.delivery_cost)} />
+               <DetailRow label="Biaya Lainnya" value={formatIDR(sale.other_cost)} />
+               <div style={{ height: 1, background: C.border, margin: '12px 0' }} />
+               <DetailRow label="Total Tagihan" value={formatIDR(sale.total_amount)} highlight />
+               <DetailRow label="Sudah Dibayar" value={formatIDR(sale.paid_amount)} color={C.green} />
+               <DetailRow label="Sisa Piutang" value={formatIDR(sale.remaining_amount)} color={sale.remaining_amount > 0 ? C.red : C.green} bold />
+            </div>
+
+            {/* Section: Profit Analysis (Owner Only) */}
+            {isOwner && (
+              <div style={{ background: 'rgba(52,211,153,0.05)', borderRadius: '16px', padding: '16px', border: `1px solid rgba(52,211,153,0.15)` }}>
+                <p style={{ ...sLabel, color: C.green }}>ANALISIS LABA (INTERNAL)</p>
+                <div style={{ marginTop: '8px' }}>
+                  <DetailRow label="Total COGS / Modal" value={formatIDR(totalCogs)} />
+                  <DetailRow label="Estimasi Net Profit" value={formatIDR(profit)} color={profit >= 0 ? C.green : C.red} bold highlight />
+                </div>
+              </div>
+            )}
+
+            {/* Section: Delivery Link */}
+            {sale.sembako_deliveries?.[0] && (
+               <div style={{ background: 'rgba(96,165,250,0.05)', borderRadius: '16px', padding: '16px', border: `1px solid rgba(96,165,250,0.15)` }}>
+                  <p style={{ ...sLabel, color: '#60A5FA' }}>PENGIRIMAN</p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <Truck size={14} color="#60A5FA" />
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: C.text }}>{sale.sembako_deliveries[0].vehicle_plate}</span>
+                    </div>
+                    <span style={{ fontSize: '11px', fontWeight: 900, color: '#60A5FA', textTransform: 'uppercase' }}>{sale.sembako_deliveries[0].status}</span>
+                  </div>
+               </div>
+            )}
+            
+            {sale.notes && (
+              <div>
+                <p style={sLabel}>CATATAN</p>
+                <p style={{ fontSize: '13px', color: C.muted, fontStyle: 'italic', background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '12px', border: `1px solid ${C.border}`, marginTop: '8px' }}>
+                  "{sale.notes}"
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div style={{ padding: '20px 24px 32px', borderTop: `1px solid ${C.border}`, background: C.bg, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+               <button 
+                  onClick={() => setInvoiceModal({ open: true, type: 'sale' })}
+                  style={{ ...sBtn(false), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '14px' }}
+               >
+                 <FileText size={16} /> Invoice
+               </button>
+               {sale.payment_status !== 'lunas' && (
+                 <button 
+                    onClick={() => setPayTarget(sale)}
+                    style={{ ...sBtn(true), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '14px' }}
+                 >
+                   <CreditCard size={16} /> Bayar
+                 </button>
+               )}
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+               <button 
+                  onClick={handleWA}
+                  style={{ ...sBtn(false), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '14px', borderColor: '#25D366', color: '#25D366' }}
+               >
+                 <Smartphone size={16} /> Kirim WA
+               </button>
+               <button 
+                  onClick={handleReturn}
+                  style={{ ...sBtn(false), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '14px', borderColor: C.amber, color: C.amber }}
+               >
+                 <ArrowRightLeft size={16} /> Retur Barang
+               </button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+               <button 
+                  onClick={() => onEdit(sale)}
+                  style={{ ...sBtn(false), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '14px' }}
+               >
+                 <Pencil size={16} /> Edit
+               </button>
+               <button 
+                  onClick={handleDelete}
+                  style={{ ...sBtn(false), color: C.red, border: `1px solid rgba(239,68,68,0.2)`, background: 'rgba(239,68,68,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '14px' }}
+                >
+                 <Trash2 size={16} /> Hapus
+               </button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <SheetPayment sale={payTarget} onClose={() => setPayTarget(null)} />
+
+      {sale && invoiceModal.open && (
+        <InvoicePreviewModal
+          type={invoiceModal.type === 'sale' ? 'rpa_to_toko' : invoiceModal.type}
+          isOpen={invoiceModal.open}
+          onClose={() => setInvoiceModal({ open: false, type: null })}
+          data={{
+            tenant:      { business_name: tenant?.business_name, phone: tenant?.phone, location: tenant?.location },
+            invoice:     sale,
+            customer:    sale.sembako_customers,
+            items:       items.map(it => ({
+              product_name: it.product_name,
+              quantity_kg: it.quantity, // Template uses quantity_kg but we'll pass generic qty
+              price_per_kg: it.price_per_unit,
+              cost_per_kg: it.cogs_per_unit,
+              subtotal: (it.quantity || 0) * (it.price_per_unit || 0)
+            })),
+            generatedBy: profile?.full_name || '',
+            showProfit:  false, // Customer invoice doesn't show profit
+          }}
+        />
+      )}
+    </>
+  )
+}
+
+// â”€â”€ Sheet: Create Invoice â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function SheetCreateInvoice({ open, onOpenChange, editId }) {
+  const { tenant } = useAuth()
   const { data: customers = [] } = useSembakoCustomers()
   const { data: products = [] } = useSembakoProducts()
+  const { data: employees = [] } = useSembakoEmployees()
+  const { data: allSales = [] } = useSembakoSales()
+  
   const createSale = useCreateSembakoSale()
+  const updateSale = useUpdateSembakoSale()
   const createCustomer = useCreateSembakoCustomer()
+  const createProduct = useCreateSembakoProduct()
+  const createDelivery = useCreateSembakoDelivery()
+  const recordPayment = useRecordSembakoPayment()
 
+  const [step, setStep] = useState(0) // 0: Cust, 1: Items, 2: Delivery, 3: Review
   const [custId, setCustId] = useState('')
   const [txnDate, setTxnDate] = useState(new Date().toISOString().slice(0, 10))
   const [dueDate, setDueDate] = useState('')
-  const [items, setItems] = useState([emptyItem()])
+  const [items, setItems] = useState([{ product_id: '', product_name: '', unit: '', quantity: 0, price_per_unit: 0, cogs_per_unit: 0 }])
   const [deliveryCost, setDeliveryCost] = useState(0)
   const [otherCost, setOtherCost] = useState(0)
+  const [payAmount, setPayAmount] = useState(0)
+  const [payMethod, setPayMethod] = useState('cash')
   const [notes, setNotes] = useState('')
-  const [showAddCust, setShowAddCust] = useState(false)
-  const [newCust, setNewCust] = useState({ customer_name: '', phone: '', payment_terms: 'cash' })
+  
+  // Quick Add State
+  const [quickAddCust, setQuickAddCust] = useState(false)
+  const [newCustForm, setNewCustForm] = useState({ customer_name: '', customer_type: 'warung', phone: '', address: '', payment_terms: 'cash' })
+  const [quickAddProd, setQuickAddProd] = useState(false)
+  const [newProdForm, setNewProdForm] = useState({ product_name: '', category: 'lainnya', unit: 'pcs', sell_price: 0 })
+
+  // Delivery State
+  const [useDelivery, setUseDelivery] = useState(false)
+  const [deliveryDriver, setDeliveryDriver] = useState('')
+  const [deliveryVehicle, setDeliveryVehicle] = useState('')
+  const [deliveryPlate, setDeliveryPlate] = useState('')
+  const [deliveryArea, setDeliveryArea] = useState('')
+  const [fuelCost, setFuelCost] = useState(0)
+
+  // Payment Info for Step 3
+  const [successData, setSuccessData] = useState(null)
+  const [printData, setPrintData] = useState(null)
+  const [printMode, setPrintMode] = useState('invoice')
+
+  // Pre-fill if editing
+  useEffect(() => {
+    if (editId && allSales.length > 0) {
+      const sale = allSales.find(s => s.id === editId)
+      if (sale) {
+        setCustId(sale.customer_id || '')
+        setTxnDate(sale.transaction_date?.slice(0, 10))
+        setDueDate(sale.due_date?.slice(0, 10) || '')
+        setDeliveryCost(sale.delivery_cost || 0)
+        setOtherCost(sale.other_cost || 0)
+        setNotes(sale.notes || '')
+        
+        if (Array.isArray(sale.sembako_sale_items) && sale.sembako_sale_items.length > 0) {
+          setItems(sale.sembako_sale_items.map(it => ({
+            product_id: it.product_id,
+            product_name: it.product_name,
+            unit: it.unit,
+            quantity: it.quantity,
+            price_per_unit: it.price_per_unit,
+            cogs_per_unit: it.cogs_per_unit
+          })))
+        }
+      }
+    }
+  }, [editId, allSales])
 
   const selectedCust = customers.find(c => c.id === custId)
-
-  function emptyItem() { return { product_id: '', product_name: '', unit: 'kg', quantity: 0, price_per_unit: 0, cogs_per_unit: 0 } }
+  const totalAmount = items.reduce((s, i) => s + Math.round((i.quantity || 0) * (i.price_per_unit || 0)), 0)
+  const totalCogs = items.reduce((s, i) => s + Math.round((i.quantity || 0) * (i.cogs_per_unit || 0)), 0)
+  const grossProfit = totalAmount - totalCogs
 
   function handleSelectCustomer(id) {
     setCustId(id)
@@ -378,6 +834,27 @@ function SheetCreateInvoice({ open, onClose }) {
       const d = new Date(txnDate)
       d.setDate(d.getDate() + PAYMENT_TERMS_DAYS[c.payment_terms])
       setDueDate(d.toISOString().slice(0, 10))
+    }
+  }
+
+  async function handleSaveQuickCust() {
+    if (!newCustForm.customer_name) { toast.error('Nama toko wajib diisi'); return }
+    try {
+      const res = await createCustomer.mutateAsync(newCustForm)
+      if (res && res.id) { handleSelectCustomer(res.id); setQuickAddCust(false) }
+    } catch (e) {
+       // Error handled by hook
+    }
+  }
+
+  async function handleSaveQuickProd(idx) {
+    if (!newProdForm.product_name) { toast.error('Nama produk wajib diisi'); return }
+    try {
+      await createProduct.mutateAsync({ ...newProdForm, current_stock: 0, avg_buy_price: 0, is_active: true })
+      setQuickAddProd(false)
+      // We can't immediately select it without the ID returning from the hook, so user just selects it from dropdown after it re-fetches
+    } catch (e) {
+       // Error handled by hook
     }
   }
 
@@ -396,186 +873,432 @@ function SheetCreateInvoice({ open, onClose }) {
     setItems(next)
   }
 
-  const totalAmount = items.reduce((s, i) => s + Math.round((i.quantity || 0) * (i.price_per_unit || 0)), 0)
-  const totalCogs = items.reduce((s, i) => s + Math.round((i.quantity || 0) * (i.cogs_per_unit || 0)), 0)
-  const grossProfit = totalAmount - totalCogs
-  const netProfit = grossProfit - (deliveryCost || 0) - (otherCost || 0)
-
-  async function handleAddCustomer() {
-    if (!newCust.customer_name) return
-    try {
-      const data = await createCustomer.mutateAsync(newCust)
-      setCustId(data.id)
-      setShowAddCust(false)
-      setNewCust({ customer_name: '', phone: '', payment_terms: 'cash' })
-    } catch {}
-  }
-
   async function handleSubmit() {
-    const validItems = items.filter(i => i.product_name && i.quantity > 0)
-    if (!validItems.length) return
-    const custName = selectedCust?.customer_name || 'Umum'
-    await createSale.mutateAsync({
-      customer_id: custId || null,
-      customer_name: custName,
-      transaction_date: txnDate,
-      due_date: dueDate || null,
-      items: validItems,
-      delivery_cost: deliveryCost,
-      other_cost: otherCost,
-      notes,
-    })
-    // reset
-    setCustId(''); setItems([emptyItem()]); setDeliveryCost(0); setOtherCost(0); setNotes('')
-    onClose()
+    const validItems = items.filter(i => i.product_id && i.quantity > 0)
+    if (!validItems.length) { toast.error('Tambahkan minimal 1 produk'); return }
+    
+    try {
+      const custName = selectedCust?.customer_name || 'Umum'
+      
+      if (editId) {
+        // UPDATE MODE
+        await updateSale.mutateAsync({
+          id: editId,
+          updates: {
+            customer_id: custId || null,
+            customer_name: custName,
+            transaction_date: txnDate,
+            due_date: dueDate || null,
+            total_amount: totalAmount,
+            total_cogs: totalCogs,
+            delivery_cost: deliveryCost,
+            other_cost: otherCost,
+            notes,
+          }
+        })
+        // For items update in Sembako, we keep it simple: we don't re-sync stock if items change during edit
+        // because it would require complex FIFO reversals. 
+        // We'll just update the header for now.
+        toast.success('Pinjaman/Transaksi diperbarui')
+        handleClose()
+        return
+      }
+
+      // CREATE MODE
+      const sale = await createSale.mutateAsync({
+        customer_id: custId || null,
+        customer_name: custName,
+        transaction_date: txnDate,
+        due_date: dueDate || null,
+        items: validItems,
+        delivery_cost: deliveryCost,
+        other_cost: otherCost,
+        notes,
+      })
+
+      if (payAmount > 0 && sale?.id) {
+        await recordPayment.mutateAsync({
+          sale_id: sale.id,
+          customer_id: custId || null,
+          amount: payAmount,
+          payment_date: txnDate,
+          payment_method: payMethod,
+          reference_number: null,
+          notes: 'Pembayaran awal (wizard)',
+        })
+      }
+
+      if (useDelivery && sale?.id) {
+          await createDelivery.mutateAsync({
+            sale_id: sale.id,
+            employee_id: deliveryDriver || null,
+            driver_name: employees.find(e => e.id === deliveryDriver)?.full_name || null,
+            vehicle_type: deliveryVehicle,
+            vehicle_plate: deliveryPlate.toUpperCase(),
+            delivery_date: txnDate,
+            delivery_area: deliveryArea || selectedCust?.address || '',
+            delivery_cost: deliveryCost,
+            status: 'pending',
+            notes: 'Otomatis dari wizard penjualan'
+          })
+      }
+
+      const netProfit = grossProfit - deliveryCost - otherCost
+      setSuccessData({
+        id: sale.id,
+        invoiceNumber: sale.invoice_number,
+        invoice_number: sale.invoice_number, // for WA helper
+        customerName: custName,
+        customer_name: custName, // for WA helper
+        revenue: totalAmount,
+        total_amount: totalAmount, // for WA helper
+        cogs: totalCogs,
+        deliveryCost,
+        delivery_cost: deliveryCost,
+        otherCost,
+        other_cost: otherCost,
+        netProfit,
+        hasDelivery: useDelivery,
+        driverName: employees.find(e => e.id === deliveryDriver)?.full_name,
+        transaction_date: txnDate,
+        sembako_sale_items: validItems,
+        remaining_amount: totalAmount - payAmount
+      })
+
+    } catch (err) {
+      console.error(err)
+    }
   }
+
+  function handleClose() {
+    setStep(0); setCustId(''); setItems([{ product_id: '', product_name: '', unit: '', quantity: 0, price_per_unit: 0, cogs_per_unit: 0 }]); 
+    setDeliveryCost(0); setOtherCost(0); setNotes('');
+    setPayAmount(0); setPayMethod('cash');
+    setUseDelivery(false); setQuickAddCust(false); setQuickAddProd(false);
+    onOpenChange(false)
+  }
+
+  const steps = ['Pilih Toko', 'Input Produk', 'Pengiriman', 'Summary']
 
   return (
-    <Sheet open={open} onOpenChange={v => !v && onClose()}>
-      <SheetContent side="right" style={{ background: C.bg, borderLeft: `1px solid ${C.border}`, width: '100%', maxWidth: '520px', overflowY: 'auto', overflowX: 'hidden', padding: '24px' }}>
-        <SheetHeader>
-          <SheetTitle style={{ color: C.text, fontWeight: 900, fontSize: '18px' }}>Buat Invoice Baru</SheetTitle>
-          <SheetDescription className="sr-only">Form untuk membuat invoice penjualan sembako baru.</SheetDescription>
-        </SheetHeader>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '20px', paddingBottom: '120px' }}>
-          {/* Customer Select */}
-          <div>
-            <p style={sLabel}>TOKO / CUSTOMER</p>
-            <CustomSelect
-              id="invoice-customer"
-              value={custId}
-              placeholder="— Pilih toko / customer —"
-              options={customers.map(c => ({ value: c.id, label: c.customer_name }))}
-              onChange={val => handleSelectCustomer(val)}
-              onAddNew={() => setShowAddCust(true)}
-            />
-            {selectedCust && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                style={{ marginTop: '8px', padding: '10px 12px', background: 'rgba(234,88,12,0.05)', border: `1px solid ${C.border}`, borderRadius: '10px', fontSize: '12px' }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ color: C.muted, fontWeight: 600 }}>Terms:</span>
-                  <span style={{ color: C.accent, fontWeight: 700 }}>{PAYMENT_TERMS_LABEL[selectedCust.payment_terms] || selectedCust.payment_terms}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: C.muted, fontWeight: 600 }}>Piutang Saat Ini:</span>
-                  <span style={{ color: C.red, fontWeight: 700 }}>{formatIDR(selectedCust.total_outstanding || 0)}</span>
-                </div>
-              </motion.div>
-            )}
+    <>
+    <Sheet open={open && !successData} onOpenChange={v => !v ? handleClose() : onOpenChange(true)}>
+      <SheetContent side="right" style={{ background: C.bg, borderLeft: `1px solid ${C.border}`, width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', padding: 0, boxShadow: '-12px 0 40px rgba(0,0,0,0.5)' }}>
+        
+        {/* Header */}
+        <div style={{ padding: '24px 24px 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <SheetTitle style={{ color: C.text, fontWeight: 900, fontSize: '20px', fontFamily: 'DM Sans' }}>
+              {editId ? 'Edit Transaksi' : 'Catat Penjualan'}
+            </SheetTitle>
           </div>
+          <SheetDescription className="sr-only">Wizard untuk mencatat penjualan sembako baru.</SheetDescription>
+          
+          <ProgressIndicator currentStep={step} steps={steps} />
+        </div>
 
-          {/* Inline add customer */}
-          {showAddCust && (
-            <div style={{ background: C.card, borderRadius: '12px', padding: '14px', border: `1px solid ${C.borderAm}` }}>
-              <p style={{ ...sLabel, color: C.amber }}>TAMBAH TOKO BARU</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <input id="new-cust-name" name="customer_name" style={sInput} placeholder="Nama toko" value={newCust.customer_name} onChange={e => setNewCust({ ...newCust, customer_name: e.target.value })} />
-                <input id="new-cust-phone" name="phone" style={sInput} placeholder="No HP" value={newCust.phone || ''} onChange={e => setNewCust({ ...newCust, phone: e.target.value.replace(/[^0-9+]/g, '') })} />
-                <CustomSelect
-                  value={newCust.payment_terms || 'cash'}
-                  onChange={val => setNewCust({ ...newCust, payment_terms: val })}
-                  options={Object.entries(PAYMENT_TERMS_LABEL).map(([k, v]) => ({ value: k, label: v }))}
-                  placeholder="Pilih tempo"
-                />
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={handleAddCustomer} style={sBtn(true)} disabled={createCustomer.isPending}>Simpan</button>
-                  <button onClick={() => setShowAddCust(false)} style={sBtn(false)}>Batal</button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Dates */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <p style={sLabel}>TANGGAL TRANSAKSI</p>
-              <DatePicker value={txnDate} onChange={setTxnDate} placeholder="Pilih tanggal" />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <p style={sLabel}>JATUH TEMPO</p>
-              <DatePicker value={dueDate || ''} onChange={setDueDate} placeholder="Pilih jatuh tempo" />
-            </div>
-          </div>
-
-          {/* Items */}
-          <div>
-            <p style={sLabel}>ITEM PRODUK</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {items.map((item, idx) => {
-                const prod = products.find(p => p.id === item.product_id)
-                const overStock = prod && item.quantity > (prod.current_stock || 0)
-                return (
-                  <div key={idx} style={{ background: C.card, borderRadius: '10px', padding: '12px', border: `1px solid ${overStock ? 'rgba(239,68,68,0.4)' : C.border}` }}>
-                    <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '0 24px 24px' }}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={step}
+              initial={{ opacity: 0, x: 15 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -15 }}
+              transition={{ duration: 0.2 }}
+            >
+              {step === 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {!quickAddCust ? (
+                    <div>
+                      <p style={sLabel}>TOKO / CUSTOMER</p>
                       <CustomSelect
-                        id={`prod-${idx}`}
-                        value={item.product_id}
-                        placeholder="Pilih produk..."
-                        options={products.map(p => ({ value: p.id, label: `${p.product_name} (${p.current_stock} ${p.unit})` }))}
-                        onChange={val => handleItemChange(idx, 'product_id', val)}
-                        style={{ flex: 2 }}
+                        id="invoice-customer"
+                        value={custId}
+                        placeholder="-- Pilih toko / customer --"
+                        options={customers.map(c => ({ value: c.id, label: c.customer_name }))}
+                        onChange={val => handleSelectCustomer(val)}
+                        onAddNew={() => setQuickAddCust(true)}
                       />
-                      {items.length > 1 && (
-                        <button onClick={() => setItems(items.filter((_, i) => i !== idx))} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: C.red, padding: '4px' }}>
-                          <X size={16} />
-                        </button>
+                      {selectedCust && (
+                        <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: '12px', padding: '12px', background: 'rgba(234,88,12,0.03)', border: `1px solid ${C.border}`, borderRadius: '12px', fontSize: '13px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ color: C.muted, fontWeight: 600 }}>Tipe:</span>
+                            <span style={{ color: C.text, fontWeight: 700 }}>{selectedCust.customer_type?.toUpperCase() || '-'}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <span style={{ color: C.muted, fontWeight: 600 }}>Terms:</span>
+                            <span style={{ color: C.accent, fontWeight: 800 }}>{PAYMENT_TERMS_LABEL[selectedCust.payment_terms] || selectedCust.payment_terms}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                            <span style={{ color: C.muted, fontWeight: 600 }}>Piutang Aktif:</span>
+                            <span style={{ color: C.red, fontWeight: 800 }}>{formatIDR(selectedCust.total_outstanding || 0)}</span>
+                          </div>
+                          
+                          {/* Credit Limit Bar */}
+                          {selectedCust.credit_limit > 0 && (
+                            <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: '8px' }}>
+                               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '10px' }}>
+                                  <span style={{ color: C.muted, fontWeight: 800 }}>BATAS KREDIT: {formatIDR(selectedCust.credit_limit)}</span>
+                                  <span style={{ color: (selectedCust.total_outstanding || 0) > selectedCust.credit_limit ? C.red : C.muted }}>
+                                    {Math.round(((selectedCust.total_outstanding || 0) / selectedCust.credit_limit) * 100)}%
+                                  </span>
+                               </div>
+                               <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', borderRadius: '2px', overflow: 'hidden' }}>
+                                  <div style={{ 
+                                    height: '100%', 
+                                    width: `${Math.min(100, ((selectedCust.total_outstanding || 0) / selectedCust.credit_limit) * 100)}%`,
+                                    background: (selectedCust.total_outstanding || 0) > selectedCust.credit_limit ? C.red : C.accent,
+                                    borderRadius: '2px'
+                                  }} />
+                               </div>
+                               {(selectedCust.total_outstanding || 0) > selectedCust.credit_limit && (
+                                 <p style={{ color: C.red, fontSize: '10px', fontWeight: 800, marginTop: '6px', textAlign: 'center' }}>
+                                   ⚠️ BATAS KREDIT TERLAMPAUI!
+                                 </p>
+                               )}
+                            </div>
+                          )}
+                        </motion.div>
                       )}
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                        <div>
-                          <p style={{ ...sLabel, fontSize: '9px' }}>QTY ({item.unit})</p>
-                          <input id={`qty-${idx}`} name={`quantity-${idx}`} type="number" min={0} value={item.quantity || ''} onChange={e => handleItemChange(idx, 'quantity', parseFloat(e.target.value) || 0)} style={{...sInput, width: '100%'}} />
-                        </div>
-                        <div>
-                          <p style={{ ...sLabel, fontSize: '9px' }}>HARGA/UNIT</p>
-                          <InputRupiah value={item.price_per_unit} onChange={v => handleItemChange(idx, 'price_per_unit', v)} />
-                        </div>
-                      </div>
-                      <div>
-                        <p style={{ ...sLabel, fontSize: '9px' }}>HPP/UNIT</p>
-                        <input style={{ ...sInput, opacity: 0.6, width: '100%' }} value={formatIDR(item.cogs_per_unit)} readOnly />
-                      </div>
+                  ) : (
+                    <div style={{ background: C.card, borderRadius: '16px', padding: '16px', border: `1px solid ${C.accent}` }}>
+                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                         <p style={{ fontSize: '14px', fontWeight: 800, color: C.text }}>Toko Baru</p>
+                         <button onClick={() => setQuickAddCust(false)} style={{ background: 'transparent', border: 'none', color: C.muted, cursor: 'pointer' }}><X size={16}/></button>
+                       </div>
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          <div><p style={sLabel}>NAMA TOKO</p><input style={sInput} value={newCustForm.customer_name} onChange={e => setNewCustForm({...newCustForm, customer_name: e.target.value})} placeholder="Contoh: Toko Berkah" /></div>
+                          <div><p style={sLabel}>TIPE TOKO</p>
+                            <CustomSelect value={newCustForm.customer_type} onChange={v => setNewCustForm({...newCustForm, customer_type: v})} options={CUSTOMER_TYPES.map(t => ({value: t, label: t.toUpperCase()}))} placeholder="Pilih Tipe" />
+                          </div>
+                          <div><p style={sLabel}>NO HP</p><input style={sInput} value={newCustForm.phone} onChange={e => setNewCustForm({...newCustForm, phone: e.target.value})} placeholder="0812..." /></div>
+                          <button onClick={handleSaveQuickCust} disabled={createCustomer.isPending} style={{ ...sBtn(true), width: '100%', marginTop: '8px' }}>
+                             {createCustomer.isPending ? 'Menyimpan...' : 'Simpan Toko'}
+                          </button>
+                       </div>
                     </div>
-                    {overStock && <p style={{ fontSize: '10px', color: C.red, marginTop: '4px', fontWeight: 700 }}>⚠ Stok hanya {prod.current_stock} {prod.unit}</p>}
-                    <p style={{ fontSize: '11px', color: C.text, fontWeight: 700, textAlign: 'right', marginTop: '6px' }}>
-                      Subtotal: {formatIDR(Math.round((item.quantity || 0) * (item.price_per_unit || 0)))}
+                  )}
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div><p style={sLabel}>TANGGAL TRANS.</p><DatePicker value={txnDate} onChange={setTxnDate} /></div>
+                    <div><p style={sLabel}>JATUH TEMPO</p><DatePicker value={dueDate || ''} onChange={setDueDate} /></div>
+                  </div>
+
+                  <div style={{ padding: '14px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: `1px dashed ${C.border}` }}>
+                    <p style={{ fontSize: '12px', color: C.muted, lineHeight: 1.5 }}>
+                      <span style={{ color: C.accent, fontWeight: 800 }}>Info:</span> Invoice number akan dibuat otomatis saat disimpan.
                     </p>
                   </div>
-                )
-              })}
-            </div>
-            <button onClick={() => setItems([...items, emptyItem()])} style={{ ...sBtn(false), marginTop: '8px', width: '100%', fontSize: '12px' }}>
-              + Tambah Item
+                </div>
+              )}
+
+              {step === 1 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <p style={sLabel}>ITEM PRODUK</p>
+                    <span style={{ fontSize: '10px', color: C.muted, fontWeight: 700 }}>{items.length} Item</span>
+                  </div>
+
+                  {quickAddProd && (
+                     <div style={{ background: C.card, borderRadius: '16px', padding: '16px', border: `1px solid ${C.accent}`, marginBottom: '16px' }}>
+                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                         <p style={{ fontSize: '14px', fontWeight: 800, color: C.text }}>Produk Baru</p>
+                         <button onClick={() => setQuickAddProd(false)} style={{ background: 'transparent', border: 'none', color: C.muted, cursor: 'pointer' }}><X size={16}/></button>
+                       </div>
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          <div><p style={sLabel}>NAMA PRODUK</p><input style={sInput} value={newProdForm.product_name} onChange={e => setNewProdForm({...newProdForm, product_name: e.target.value})} placeholder="Beras Maknyus 5Kg" /></div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            <div><p style={sLabel}>KATEGORI</p><input style={sInput} value={newProdForm.category} onChange={e => setNewProdForm({...newProdForm, category: e.target.value})} /></div>
+                            <div><p style={sLabel}>SATUAN</p><input style={sInput} value={newProdForm.unit} onChange={e => setNewProdForm({...newProdForm, unit: e.target.value})} placeholder="kg/pcs/sak" /></div>
+                          </div>
+                          <div><p style={sLabel}>HARGA JUAL STANDARD</p><InputRupiah value={newProdForm.sell_price} onChange={v => setNewProdForm({...newProdForm, sell_price: v})} /></div>
+                          <button onClick={handleSaveQuickProd} disabled={createProduct.isPending} style={{ ...sBtn(true), width: '100%', marginTop: '8px' }}>
+                             {createProduct.isPending ? 'Menyimpan...' : 'Simpan Produk'}
+                          </button>
+                       </div>
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    {items.map((item, idx) => {
+                      const prod = products.find(p => p.id === item.product_id)
+                      const overStock = prod && item.quantity > (prod.current_stock || 0)
+                      return (
+                        <div key={idx} style={{ background: C.card, borderRadius: '14px', padding: '16px', border: `1px solid ${overStock ? 'rgba(239,68,68,0.3)' : C.border}`, position: 'relative' }}>
+                          <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+                            <CustomSelect
+                              value={item.product_id}
+                              placeholder="Pilih produk..."
+                              options={products.map(p => ({ value: p.id, label: `${p.product_name} (${p.current_stock} ${p.unit})` }))}
+                              onChange={val => handleItemChange(idx, 'product_id', val)}
+                              onAddNew={() => setQuickAddProd(true)}
+                              style={{ flex: 1 }}
+                            />
+                            {items.length > 1 && (
+                              <button onClick={() => setItems(items.filter((_, i) => i !== idx))} style={{ background: 'rgba(239,68,68,0.1)', border: 'none', color: C.red, width: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={16} /></button>
+                            )}
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                            <div>
+                              <p style={{ ...sLabel, fontSize: '9px' }}>QTY ({item.unit || '...'})</p>
+                              <input type="number" value={item.quantity || ''} onChange={e => handleItemChange(idx, 'quantity', parseFloat(e.target.value) || 0)} style={{...sInput, width: '100%'}} />
+                              {overStock && <p style={{ fontSize: '9px', color: C.red, marginTop: '4px', fontWeight: 700 }}>Stok tidak cukup</p>}
+                            </div>
+                            <div>
+                              <p style={{ ...sLabel, fontSize: '9px' }}>HARGA JUAL / UNIT</p>
+                              <InputRupiah value={item.price_per_unit} onChange={v => handleItemChange(idx, 'price_per_unit', v)} />
+                              
+                              {/* Last price hint */}
+                              {selectedCust && item.product_id && (
+                                <p style={{ fontSize: '9px', color: C.muted, marginTop: '4px', fontWeight: 600 }}>
+                                   ✨ Terakhir: {formatIDR(item.price_per_unit || (prod?.sell_price || 0))}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  <button onClick={() => setItems([...items, { product_id: '', product_name: '', unit: '', quantity: 0, price_per_unit: 0, cogs_per_unit: 0 }])} 
+                    style={{ ...sBtn(false), width: '100%', fontSize: '13px', border: `1px dashed ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px' }}>
+                    <Plus size={16} /> Tambah Item Lain
+                  </button>
+                  
+                  <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '16px', marginTop: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '14px', color: C.muted, fontWeight: 700 }}>TOTAL SEMENTARA</span>
+                      <span style={{ fontSize: '16px', color: C.text, fontWeight: 900 }}>{formatIDR(totalAmount)}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {step === 2 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <p style={{ fontSize: '13px', color: C.muted, lineHeight: 1.5 }}>
+                    Apakah barang ini akan dikirim menggunakan armada sendiri? Jika ya, trip pengiriman akan otomatis dibuat.
+                  </p>
+                  
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', background: useDelivery ? 'rgba(96,165,250,0.1)' : C.card, border: `1px solid ${useDelivery ? '#60A5FA' : C.border}`, padding: '16px', borderRadius: '16px', transition: 'all 0.2s' }}>
+                     <input type="checkbox" checked={useDelivery} onChange={e => setUseDelivery(e.target.checked)} style={{ width: '20px', height: '20px', accentColor: '#60A5FA' }} />
+                     <span style={{ fontSize: '14px', fontWeight: 700, color: useDelivery ? '#60A5FA' : C.text }}>Jadwalkan Pengiriman</span>
+                  </label>
+
+                  <AnimatePresence>
+                     {useDelivery && (
+                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ display: 'flex', flexDirection: 'column', gap: '12px', overflow: 'hidden' }}>
+                          <div><p style={sLabel}>SOPIR / KURIR (OPSIONAL)</p>
+                            <CustomSelect 
+                              value={deliveryDriver} 
+                              onChange={v => setDeliveryDriver(v)}
+                              options={[{ value: '', label: '-- Belum Ditentukan --' }, ...employees.filter(e => e.status === 'aktif').map(e => ({ value: e.id, label: `${e.full_name} (${e.role})` }))]}
+                              placeholder="Pilih Kurir"
+                            />
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            <div><p style={sLabel}>KENDARAAN</p><input style={sInput} value={deliveryVehicle} onChange={e => setDeliveryVehicle(e.target.value)} placeholder="Mobil Box/Pickup" /></div>
+                            <div><p style={sLabel}>NO. PLAT</p><input style={sInput} value={deliveryPlate} onChange={e => setDeliveryPlate(e.target.value)} placeholder="B 1234 XY" /></div>
+                          </div>
+                           <div><p style={sLabel}>AREA PENGIRIMAN</p><input style={sInput} value={deliveryArea} onChange={e => setDeliveryArea(e.target.value)} placeholder="Contoh: Kec. Setiabudi" /></div>
+                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                              <div><p style={sLabel}>BIAYA BBM (INTERNAL)</p><InputRupiah value={fuelCost} onChange={setFuelCost} /></div>
+                              <div><p style={{ ...sLabel, color: C.accent }}>NET PROFIT STEP</p>
+                                <div style={{ height: '44px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', display: 'flex', alignItems: 'center', padding: '0 12px', fontSize: '13px', color: C.green, fontWeight: 900 }}>
+                                  {formatIDR(grossProfit - deliveryCost - fuelCost - otherCost)}
+                                </div>
+                              </div>
+                           </div>
+                       </motion.div>
+                     )}
+                  </AnimatePresence>
+                </div>
+              )}
+
+              {step === 3 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ background: C.card, borderRadius: '16px', padding: '16px', border: `1px solid ${C.border}` }}>
+                    <SummaryLine label="Toko / Customer" value={selectedCust?.customer_name || 'Umum'} bold />
+                    <SummaryLine label="Jumlah Item" value={`${items.filter(i => i.product_id).length} Item`} />
+                    <div style={{ height: '1px', background: C.border, margin: '8px 0' }} />
+                    <SummaryLine label="Total Barang" value={formatIDR(totalAmount)} bold />
+                    <SummaryLine label="Estimasi HPP" value={formatIDR(totalCogs)} />
+                    <SummaryLine label="Est. Gross Profit" value={formatIDR(grossProfit)} color={grossProfit >= 0 ? C.green : C.red} />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div><p style={sLabel}>BIAYA KIRIM</p><InputRupiah value={deliveryCost} onChange={setDeliveryCost} /></div>
+                    <div><p style={sLabel}>BIAYA LAIN</p><InputRupiah value={otherCost} onChange={setOtherCost} /></div>
+                  </div>
+
+                  <div style={{ background: 'rgba(52,211,153,0.04)', borderRadius: '16px', padding: '16px', border: `1px solid rgba(52,211,153,0.15)` }}>
+                    <p style={{ ...sLabel, color: C.green }}>PEMBAYARAN AWAL (OPSIONAL)</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
+                      <InputRupiah value={payAmount} onChange={setPayAmount} placeholder="Jumlah bayar..." />
+                      {payAmount > 0 && (
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          {['cash', 'transfer', 'qris'].map(m => (
+                            <button key={m} onClick={() => setPayMethod(m)} style={{ 
+                              flex: 1, padding: '10px', borderRadius: '10px', fontSize: '12px', fontWeight: 800, textTransform: 'uppercase',
+                              background: payMethod === m ? C.green : 'transparent',
+                              border: `1px solid ${payMethod === m ? C.green : C.border}`,
+                              color: payMethod === m ? '#000' : C.muted,
+                              cursor: 'pointer', transition: 'all 0.2s'
+                            }}>{m}</button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div><p style={sLabel}>CATATAN INVOICE</p><textarea rows={2} value={notes} onChange={e => setNotes(e.target.value)} style={{ ...sInput, resize: 'none', height: '80px', fontSize: '14px' }} placeholder="Contoh: Titip di satpam, barang diskon..." /></div>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Footer Actions */}
+        <div style={{ padding: '20px 24px 32px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: '12px', background: C.bg }}>
+          {step > 0 ? (
+            <button onClick={() => setStep(step - 1)} style={{ ...sBtn(false), flex: 1, padding: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <ChevronLeft size={16} /> Kembali
             </button>
-          </div>
+          ) : (
+            <button onClick={handleClose} style={{ ...sBtn(false), flex: 1, padding: '14px' }}>Batal</button>
+          )}
 
-          {/* Extra costs */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div><p style={sLabel}>BIAYA PENGIRIMAN</p><InputRupiah value={deliveryCost} onChange={setDeliveryCost} /></div>
-            <div><p style={sLabel}>BIAYA LAIN-LAIN</p><InputRupiah value={otherCost} onChange={setOtherCost} /></div>
-          </div>
-
-          {/* Summary */}
-          <div style={{ background: C.card, borderRadius: '12px', padding: '14px', border: `1px solid ${C.border}` }}>
-            <SummaryLine label="Total Penjualan" value={formatIDR(totalAmount)} bold />
-            <SummaryLine label="Total HPP" value={formatIDR(totalCogs)} />
-            <SummaryLine label="Gross Profit" value={formatIDR(grossProfit)} color={grossProfit >= 0 ? C.green : C.red} />
-            <SummaryLine label="Net Profit" value={formatIDR(netProfit)} color={netProfit >= 0 ? C.green : C.red} bold />
-          </div>
-
-          <div><p style={sLabel}>CATATAN</p><textarea rows={2} value={notes} onChange={e => setNotes(e.target.value)} style={{ ...sInput, resize: 'vertical' }} /></div>
-
-          <button onClick={handleSubmit} disabled={createSale.isPending} style={{ ...sBtn(true), width: '100%', padding: '14px', fontSize: '14px', opacity: createSale.isPending ? 0.6 : 1 }}>
-            {createSale.isPending ? 'Menyimpan...' : 'Buat Invoice'}
-          </button>
+          {step < 3 ? (
+            <button onClick={() => {
+              if (step === 0 && !custId && !selectedCust) { toast.error('Pilih toko dulu atau biarkan kosong jika Umum tidak ada di opsi (disarankan membuat toko)'); return }
+              if (step === 1 && items.filter(i => i.product_id && i.quantity > 0).length === 0) { toast.error('Tambahkan minimal 1 produk'); return }
+              setStep(step + 1)
+            }} style={{ ...sBtn(true), flex: 2, padding: '14px', fontSize: '14px' }}>Lanjut →</button>
+          ) : (
+            <button onClick={handleSubmit} disabled={createSale.isPending} style={{ ...sBtn(true), flex: 2, padding: '14px', opacity: createSale.isPending ? 0.6 : 1, fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              {createSale.isPending ? <Loader2 className="animate-spin" size={18} /> : 'Simpan Invoice ✓'}
+            </button>
+          )}
         </div>
       </SheetContent>
     </Sheet>
+    
+    <SembakoSuccessCard 
+      isOpen={!!successData} 
+      onClose={() => { setSuccessData(null); handleClose() }} 
+      data={successData} 
+      onPrint={(mode) => { setPrintData(successData); setPrintMode(mode) }}
+    />
+    
+    {printData && (
+      <SembakoInvoicePreview 
+        data={printData} 
+        mode={printMode} 
+        onClose={() => setPrintData(null)} 
+      />
+    )}
+    </>
   )
 }
 
@@ -598,7 +1321,7 @@ function SheetPayment({ sale, onClose }) {
       sale_id: sale.id,
       customer_id: sale.customer_id,
       amount, payment_date: payDate, payment_method: method,
-      reference_no: refNo || null, notes: null,
+      reference_number: refNo || null, notes: null,
     })
     setAmount(0); setRefNo('')
     onClose()
@@ -639,344 +1362,67 @@ function SheetPayment({ sale, onClose }) {
   )
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// TAB 2: TOKO & SUPPLIER
-// ═══════════════════════════════════════════════════════════════════════════
-function TabTokoSupplier({ isDesktop }) {
-  const [sub, setSub] = useState('toko')
-  return (
-    <div>
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-        {['toko', 'supplier'].map(s => (
-          <button key={s} onClick={() => setSub(s)} style={{
-            padding: '8px 18px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-            background: sub === s ? 'rgba(234,88,12,0.15)' : C.card,
-            color: sub === s ? C.accent : C.muted, fontWeight: 700, fontSize: '12px',
-          }}>{s === 'toko' ? 'Toko / Customer' : 'Supplier'}</button>
-        ))}
-      </div>
-      {sub === 'toko' ? <TokoSection isDesktop={isDesktop} /> : <SupplierSection isDesktop={isDesktop} />}
-    </div>
-  )
-}
+// ── Success Card ─────────────────────────────────────────────────────────────
+function SembakoSuccessCard({ isOpen, onClose, data, onPrint }) {
+  const { tenant } = useAuth()
+  if (!data) return null
 
-function TokoSection({ isDesktop }) {
-  const { data: customers = [] } = useSembakoCustomers()
-  const createCust = useCreateSembakoCustomer()
-  const updateCust = useUpdateSembakoCustomer()
-  const [editing, setEditing] = useState(null) // null | 'new' | customer obj
-  const [form, setForm] = useState({})
-
-  function openNew() { setForm({ customer_name: '', customer_type: 'warung', phone: '', address: '', area: '', payment_terms: 'cash', credit_limit: 0, reliability_score: 3, notes: '' }); setEditing('new') }
-  function openEdit(c) { setForm({ ...c }); setEditing(c) }
-
-  async function handleSave() {
-    if (!form.customer_name) return
-    if (editing === 'new') await createCust.mutateAsync(form)
-    else await updateCust.mutateAsync({ id: editing.id, ...form })
-    setEditing(null)
+  const handleWA = () => {
+    // Need to find customer phone
+    const msg = generateWAMessage(data, tenant)
+    window.open(`https://wa.me/?text=${msg}`, '_blank')
   }
 
   return (
-    <div>
-      <button onClick={openNew} style={{ ...sBtn(true), marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <Plus size={14} /> Tambah Toko
-      </button>
-      <div style={{ display: 'grid', gridTemplateColumns: isDesktop ? 'repeat(3,1fr)' : '1fr', gap: '12px' }}>
-        {customers.map(c => (
-          <div key={c.id} onClick={() => openEdit(c)} style={{
-            background: C.card, borderRadius: '14px', padding: '14px', border: `1px solid ${C.border}`, cursor: 'pointer',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(234,88,12,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Store size={16} color={C.accent} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: '13px', fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.customer_name}</p>
-                <p style={{ fontSize: '10px', color: C.muted }}>{c.customer_type || 'warung'}</p>
-              </div>
-            </div>
+    <Sheet open={isOpen} onOpenChange={v => !v && onClose()}>
+      <SheetContent side="bottom" style={{ background: C.bg, maxWidth: '100%', height: 'auto', maxHeight: '90vh', padding: '0', borderRadius: '24px 24px 0 0', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, padding: '32px 24px', overflowY: 'auto' }}>
+          <div style={{ width: 64, height: 64, borderRadius: '20px', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 0 40px rgba(16,185,129,0.2)' }}>
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.1 }}>
+              <Check size={32} color="#10B981" strokeWidth={3} />
+            </motion.div>
+          </div>
+          
+          <h2 style={{ textAlign: 'center', fontSize: '24px', fontWeight: 900, color: C.text, fontFamily: 'DM Sans', marginBottom: '8px' }}>
+            Penjualan Berhasil!
+          </h2>
+          <p style={{ textAlign: 'center', fontSize: '13px', color: C.muted, marginBottom: '24px' }}>
+            Invoice <strong style={{ color: C.text }}>{data.invoiceNumber || 'Baru'}</strong> telah dicatat untuk <strong style={{ color: C.text }}>{data.customerName}</strong>.
+          </p>
+
+          <div style={{ background: C.card, borderRadius: '16px', padding: '16px', border: `1px solid ${C.border}`, marginBottom: '16px' }}>
+            <DetailRow label="Total Tagihan" value={formatIDR(data.revenue || 0)} bold />
+            <DetailRow label="Estimasi HPP" value={formatIDR(data.cogs || 0)} />
+            {data.deliveryCost > 0 && <DetailRow label="Biaya Kirim (Tercatat)" value={formatIDR(data.deliveryCost || 0)} />}
+            {data.otherCost > 0 && <DetailRow label="Biaya Lain" value={formatIDR(data.otherCost || 0)} />}
+            <div style={{ height: 1, background: C.border, margin: '12px 0' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <p style={{ fontSize: '11px', color: c.total_outstanding > 0 ? C.red : C.muted, fontWeight: 600 }}>
-                Piutang: {formatIDR(c.total_outstanding || 0)}
-              </p>
-              <div style={{ display: 'flex', gap: '1px' }}>
-                {[1,2,3,4,5].map(i => <Star key={i} size={10} fill={i <= (c.reliability_score || 0) ? C.amber : 'transparent'} color={i <= (c.reliability_score || 0) ? C.amber : C.muted} />)}
-              </div>
+              <span style={{ fontSize: '14px', fontWeight: 800, color: C.muted }}>Net Profit</span>
+              <span style={{ fontSize: '18px', fontWeight: 900, color: data.netProfit >= 0 ? C.green : C.red }}>{formatIDR(data.netProfit || 0)}</span>
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* CRUD Sheet */}
-      <Sheet open={editing !== null} onOpenChange={v => !v && setEditing(null)}>
-        <SheetContent side="right" style={{ background: C.bg, borderLeft: `1px solid ${C.border}`, maxWidth: '420px', width: '100%', padding: '24px', overflowY: 'auto' }}>
-          <SheetHeader>
-            <SheetTitle style={{ color: C.text, fontWeight: 900 }}>{editing === 'new' ? 'Tambah Toko' : 'Edit Toko'}</SheetTitle>
-            <SheetDescription className="sr-only">Form untuk mengelola data toko/customer sembako.</SheetDescription>
-          </SheetHeader>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px', paddingBottom: '100px' }}>
-            <div><p style={sLabel}>NAMA TOKO</p><input style={sInput} value={form.customer_name || ''} onChange={e => setForm({ ...form, customer_name: e.target.value })} /></div>
-            <div><p style={sLabel}>TIPE</p>
-              <CustomSelect
-                value={form.customer_type || 'warung'}
-                onChange={val => setForm({ ...form, customer_type: val })}
-                options={CUSTOMER_TYPES.map(t => ({ value: t, label: t.replace('_', ' ').toUpperCase() }))}
-                placeholder="Pilih tipe"
-              />
-            </div>
-            <div><p style={sLabel}>NO HP</p><input style={sInput} value={form.phone || ''} onChange={e => setForm({ ...form, phone: e.target.value.replace(/[^0-9+]/g, '') })} /></div>
-            <div><p style={sLabel}>ALAMAT</p><input style={sInput} value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
-            <div><p style={sLabel}>AREA</p><input style={sInput} value={form.area || ''} onChange={e => setForm({ ...form, area: e.target.value })} placeholder="Kecamatan / kelurahan" /></div>
-            <div><p style={sLabel}>PAYMENT TERMS</p>
-              <CustomSelect
-                value={form.payment_terms || 'cash'}
-                onChange={val => setForm({ ...form, payment_terms: val })}
-                options={Object.entries(PAYMENT_TERMS_LABEL).map(([k, v]) => ({ value: k, label: v }))}
-                placeholder="Pilih tempo"
-              />
-            </div>
-            <div><p style={sLabel}>CREDIT LIMIT</p><InputRupiah value={form.credit_limit || 0} onChange={v => setForm({ ...form, credit_limit: v })} /></div>
-            <div><p style={sLabel}>RELIABILITY (1-5)</p>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                {[1,2,3,4,5].map(i => (
-                  <button key={i} onClick={() => setForm({ ...form, reliability_score: i })} style={{
-                    width: '32px', height: '32px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-                    background: i <= (form.reliability_score || 0) ? 'rgba(245,158,11,0.2)' : C.input,
-                    color: i <= (form.reliability_score || 0) ? C.amber : C.muted, fontWeight: 700,
-                  }}>{i}</button>
-                ))}
-              </div>
-            </div>
-            <div><p style={sLabel}>CATATAN</p><textarea rows={2} style={{ ...sInput, resize: 'vertical' }} value={form.notes || ''} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
-            <button onClick={handleSave} style={{ ...sBtn(true), width: '100%', padding: '14px' }}>Simpan</button>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+             <button onClick={() => onPrint('invoice')} style={{ ...sBtn(false), height: '48px', fontSize: '11px', gap: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${C.border}`, color: C.text }}>
+                <FileText size={16} /> INVOICE
+             </button>
+             <button onClick={() => onPrint('delivery')} style={{ ...sBtn(false), height: '48px', fontSize: '11px', gap: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${C.border}`, color: C.text }}>
+                <Truck size={16} /> SURAT JALAN
+             </button>
           </div>
-        </SheetContent>
-      </Sheet>
-    </div>
-  )
-}
 
-function SupplierSection({ isDesktop }) {
-  const { data: suppliers = [] } = useSembakoSuppliers()
-  const createSup = useCreateSembakoSupplier()
-  const updateSup = useUpdateSembakoSupplier()
-  const [editing, setEditing] = useState(null)
-  const [form, setForm] = useState({})
+          <button 
+            onClick={handleWA} 
+            style={{ ...sBtn(false), width: '100%', height: '48px', fontSize: '13px', marginBottom: '8px', borderColor: '#25D366', color: '#25D366', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+          >
+            <Smartphone size={16} /> KIRIM STRUK KE WA
+          </button>
 
-  function openNew() { setForm({ supplier_name: '', phone: '', address: '', notes: '' }); setEditing('new') }
-  function openEdit(s) { setForm({ ...s }); setEditing(s) }
-
-  async function handleSave() {
-    if (!form.supplier_name) return
-    if (editing === 'new') await createSup.mutateAsync(form)
-    else await updateSup.mutateAsync({ id: editing.id, ...form })
-    setEditing(null)
-  }
-
-  return (
-    <div>
-      <button onClick={openNew} style={{ ...sBtn(true), marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <Plus size={14} /> Tambah Supplier
-      </button>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {suppliers.map(s => (
-          <div key={s.id} onClick={() => openEdit(s)} style={{
-            background: C.card, borderRadius: '12px', padding: '12px 14px',
-            border: `1px solid ${C.border}`, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: '12px',
-          }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(52,211,153,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Package size={16} color={C.green} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <p style={{ fontSize: '13px', fontWeight: 700, color: C.text }}>{s.supplier_name}</p>
-              <p style={{ fontSize: '10px', color: C.muted }}>{s.phone || '-'} · {s.address || '-'}</p>
-            </div>
-          </div>
-        ))}
-        {suppliers.length === 0 && <EmptyBox icon={Package} text="Belum ada supplier" />}
-      </div>
-
-      <Sheet open={editing !== null} onOpenChange={v => !v && setEditing(null)}>
-        <SheetContent side="right" style={{ background: C.bg, borderLeft: `1px solid ${C.border}`, maxWidth: '420px', width: '100%', padding: '24px', overflowY: 'auto' }}>
-          <SheetHeader>
-            <SheetTitle style={{ color: C.text, fontWeight: 900 }}>{editing === 'new' ? 'Tambah Supplier' : 'Edit Supplier'}</SheetTitle>
-            <SheetDescription className="sr-only">Form untuk mengelola data supplier sembako.</SheetDescription>
-          </SheetHeader>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px', paddingBottom: '100px' }}>
-            <div><p style={sLabel}>NAMA SUPPLIER</p><input style={sInput} value={form.supplier_name || ''} onChange={e => setForm({ ...form, supplier_name: e.target.value })} /></div>
-            <div><p style={sLabel}>NO HP</p><input style={sInput} value={form.phone || ''} onChange={e => setForm({ ...form, phone: e.target.value.replace(/[^0-9+]/g, '') })} /></div>
-            <div><p style={sLabel}>ALAMAT</p><input style={sInput} value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
-            <div><p style={sLabel}>CATATAN</p><textarea rows={2} style={{ ...sInput, resize: 'vertical' }} value={form.notes || ''} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
-            <button onClick={handleSave} style={{ ...sBtn(true), width: '100%', padding: '14px' }}>Simpan</button>
-          </div>
-        </SheetContent>
-      </Sheet>
-    </div>
-  )
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// TAB 3: PENGIRIMAN
-// ═══════════════════════════════════════════════════════════════════════════
-function TabPengiriman({ isDesktop }) {
-  const { data: deliveries = [] } = useSembakoDeliveries()
-  const { data: sales = [] } = useSembakoSales()
-  const { data: employees = [] } = useSembakoEmployees()
-  const createDelivery = useCreateSembakoDelivery()
-  const [openAdd, setOpenAdd] = useState(false)
-  const [filterStatus, setFilterStatus] = useState('')
-  const [form, setForm] = useState({ sale_id: '', employee_id: '', vehicle_type: '', vehicle_plate: '', delivery_date: new Date().toISOString().slice(0, 10), delivery_area: '', delivery_cost: 0, other_cost: 0, notes: '' })
-
-  const filtered = filterStatus ? deliveries.filter(d => d.status === filterStatus) : deliveries
-
-  async function handleCreate() {
-    if (!form.delivery_date) return
-    await createDelivery.mutateAsync({
-      ...form,
-      sale_id: form.sale_id || null,
-      employee_id: form.employee_id || null,
-      driver_name: employees.find(e => e.id === form.employee_id)?.full_name || form.driver_name || null,
-    })
-    setForm({ sale_id: '', employee_id: '', vehicle_type: '', vehicle_plate: '', delivery_date: new Date().toISOString().slice(0, 10), delivery_area: '', delivery_cost: 0, other_cost: 0, notes: '' })
-    setOpenAdd(false)
-  }
-
-  return (
-    <div>
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
-        <button onClick={() => setOpenAdd(true)} style={{ ...sBtn(true), display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Plus size={14} /> Tambah Trip
-        </button>
-        <CustomSelect
-          style={{ width: 'auto', minWidth: '160px' }}
-          value={filterStatus}
-          onChange={val => setFilterStatus(val)}
-          options={[
-            { value: '', label: 'Semua Status' },
-            ...Object.entries(DELIVERY_STATUS).map(([k, v]) => ({ value: k, label: v.label }))
-          ]}
-          placeholder="Semua Status"
-        />
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: isDesktop ? 'repeat(2,1fr)' : '1fr', gap: '12px' }}>
-        {filtered.map(d => {
-          const st = DELIVERY_STATUS[d.status] || DELIVERY_STATUS.pending
-          return (
-            <div key={d.id} style={{ background: C.card, borderRadius: '14px', padding: '14px', border: `1px solid ${C.border}` }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: C.text }}>
-                  {d.sembako_employees?.full_name || d.driver_name || 'Kurir'}
-                </span>
-                <span style={{ background: st.bg, color: st.color, fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px' }}>{st.label}</span>
-              </div>
-              <p style={{ fontSize: '11px', color: C.muted }}>
-                {d.vehicle_type && `${d.vehicle_type} `}{d.vehicle_plate && `· ${d.vehicle_plate} `}· {fmtDate(d.delivery_date)}
-              </p>
-              {d.delivery_area && <p style={{ fontSize: '11px', color: C.muted }}>Area: {d.delivery_area}</p>}
-              <p style={{ fontSize: '11px', color: C.text, fontWeight: 600, marginTop: '6px' }}>
-                Biaya: {formatIDR((d.delivery_cost || 0) + (d.other_cost || 0))}
-              </p>
-              {d.sembako_sales && <p style={{ fontSize: '10px', color: C.muted, marginTop: '4px' }}>Invoice: {d.sembako_sales.invoice_number}</p>}
-            </div>
-          )
-        })}
-        {filtered.length === 0 && <EmptyBox icon={Truck} text="Belum ada pengiriman" />}
-      </div>
-
-      {/* Add Trip Sheet */}
-      <Sheet open={openAdd} onOpenChange={v => !v && setOpenAdd(false)}>
-        <SheetContent side="right" style={{ background: C.bg, borderLeft: `1px solid ${C.border}`, maxWidth: '420px', width: '100%', padding: '24px', overflowY: 'auto' }}>
-          <SheetHeader>
-            <SheetTitle style={{ color: C.text, fontWeight: 900 }}>Tambah Trip</SheetTitle>
-            <SheetDescription className="sr-only">Form untuk menambah jadwal pengiriman sembako.</SheetDescription>
-          </SheetHeader>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px', paddingBottom: '100px' }}>
-            <div><p style={sLabel}>INVOICE (OPSIONAL)</p>
-              <CustomSelect
-                value={form.sale_id || ''}
-                onChange={val => setForm({ ...form, sale_id: val })}
-                options={[
-                  { value: '', label: '— Tanpa Invoice —' },
-                  ...sales.filter(s => s.payment_status !== 'lunas').map(s => ({ value: s.id, label: `${s.invoice_number} — ${s.customer_name}` }))
-                ]}
-                placeholder="— Tanpa Invoice —"
-              />
-            </div>
-            <div><p style={sLabel}>SOPIR / KURIR</p>
-              <CustomSelect
-                value={form.employee_id || ''}
-                onChange={val => setForm({ ...form, employee_id: val })}
-                options={[
-                  { value: '', label: '— Pilih pegawai —' },
-                  ...employees.filter(e => e.status === 'aktif').map(e => ({ value: e.id, label: `${e.full_name} (${e.role})` }))
-                ]}
-                placeholder="— Pilih pegawai —"
-              />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <div><p style={sLabel}>KENDARAAN</p><input style={sInput} value={form.vehicle_type} onChange={e => setForm({ ...form, vehicle_type: e.target.value })} placeholder="Truk / Pickup" /></div>
-              <div><p style={sLabel}>PLAT</p><input style={sInput} value={form.vehicle_plate} onChange={e => setForm({ ...form, vehicle_plate: e.target.value.toUpperCase() })} placeholder="B 1234 XX" /></div>
-            </div>
-            <div><p style={sLabel}>TANGGAL KIRIM</p><DatePicker value={form.delivery_date} onChange={val => setForm({ ...form, delivery_date: val })} placeholder="Pilih tanggal" /></div>
-            <div><p style={sLabel}>AREA PENGIRIMAN</p><input style={sInput} value={form.delivery_area} onChange={e => setForm({ ...form, delivery_area: e.target.value })} placeholder="Kecamatan / kota" /></div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <div><p style={sLabel}>BIAYA KIRIM</p><InputRupiah value={form.delivery_cost} onChange={v => setForm({ ...form, delivery_cost: v })} /></div>
-              <div><p style={sLabel}>BIAYA LAIN</p><InputRupiah value={form.other_cost} onChange={v => setForm({ ...form, other_cost: v })} /></div>
-            </div>
-            <div><p style={sLabel}>CATATAN</p><textarea rows={2} style={{ ...sInput, resize: 'vertical' }} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
-            <button onClick={handleCreate} disabled={createDelivery.isPending} style={{ ...sBtn(true), width: '100%', padding: '14px' }}>
-              {createDelivery.isPending ? 'Menyimpan...' : 'Simpan Trip'}
-            </button>
-          </div>
-        </SheetContent>
-      </Sheet>
-    </div>
-  )
-}
-
-// ── Shared Small Components ─────────────────────────────────────────────────
-function StatCard({ icon: Icon, label, value, color }) {
-  return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} style={{
-      background: C.card, borderRadius: '14px', padding: '14px', border: `1px solid ${C.border}`,
-      borderLeft: `3px solid ${color}`,
-    }}>
-      <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(234,88,12,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '8px' }}>
-        <Icon size={14} color={color} />
-      </div>
-      <p style={{ fontSize: '10px', color: C.muted, fontWeight: 700, letterSpacing: '0.06em' }}>{label.toUpperCase()}</p>
-      <p style={{ fontSize: '18px', fontWeight: 800, color: C.text, fontFamily: 'DM Sans', lineHeight: 1.2 }}>{value}</p>
-    </motion.div>
-  )
-}
-
-function SummaryLine({ label, value, color, bold }) {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
-      <span style={{ fontSize: '12px', color: C.muted, fontWeight: 600 }}>{label}</span>
-      <span style={{ fontSize: '13px', color: color || C.text, fontWeight: bold ? 800 : 600 }}>{value}</span>
-    </div>
-  )
-}
-
-function EmptyBox({ icon: Icon, text }) {
-  return (
-    <div style={{ textAlign: 'center', padding: '48px 0', color: C.muted, gridColumn: '1 / -1' }}>
-      <Icon size={32} color={C.muted} style={{ margin: '0 auto 8px' }} />
-      <p style={{ fontSize: '13px', fontWeight: 600 }}>{text}</p>
-    </div>
-  )
-}
-
-function LoadingSkeleton() {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      {[1,2,3,4].map(i => (
-        <div key={i} style={{ background: C.card, borderRadius: '12px', height: '64px', border: `1px solid ${C.border}`, opacity: 0.5 }} />
-      ))}
-    </div>
+          <button onClick={onClose} style={{ ...sBtn(true), width: '100%', height: '48px', fontSize: '15px' }}>
+            Tutup & Kembali
+          </button>
+        </div>
+      </SheetContent>
+    </Sheet>
   )
 }

@@ -340,7 +340,7 @@ export function RPATokoInvoice({
                   <View key={idx} style={[s.tableRow, idx % 2 === 1 ? s.tableRowAlt : {}]}>
                     <Text style={[s.td, s.rColDesc]}>{item.product_name}</Text>
                     <Text style={[s.td, s.rColQty]}>
-                      {Number(item.quantity_kg || 0).toFixed(2)}
+                      {Number(item.quantity || item.quantity_kg || 0).toFixed(2)} {item.unit || 'kg'}
                     </Text>
                     <Text style={[s.td, s.rColPrice]}>
                       {formatRupiahPDF(item.price_per_kg)}
@@ -373,7 +373,7 @@ export function RPATokoInvoice({
                   <View key={idx} style={[s.tableRow, idx % 2 === 1 ? s.tableRowAlt : {}]}>
                     <Text style={[s.td, s.pColDesc]}>{item.product_name}</Text>
                     <Text style={[s.td, s.pColQty]}>
-                      {Number(item.quantity_kg || 0).toFixed(2)} kg
+                      {Number(item.quantity || item.quantity_kg || 0).toFixed(2)} {item.unit || 'kg'}
                     </Text>
                     <Text style={[s.td, s.pColPrice]}>
                       {formatRupiahPDF(item.price_per_kg)}

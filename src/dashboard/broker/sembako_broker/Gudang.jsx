@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { Plus, ChevronDown, ChevronUp, X, Search, Package } from 'lucide-react'
+import { Plus, ChevronDown, ChevronUp, X, Search, Package, ArrowRightLeft, History } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import {
@@ -9,6 +9,7 @@ import {
   useSembakoStockOut,
   useAddStockBatch,
   useCreateSembakoSupplier,
+  useAdjustBatchStock,
 } from '@/lib/hooks/useSembakoData'
 import { useSearchParams } from 'react-router-dom'
 import { DatePicker } from '@/components/ui/DatePicker'
@@ -24,6 +25,7 @@ const BORDER   = 'rgba(234,88,12,0.15)'
 
 const fmt = (n) => new Intl.NumberFormat('id-ID').format(Math.round(n || 0))
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'
+const fmtTime = (d) => d ? new Date(d).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : ''
 
 function genBatchCode() {
   const now = new Date()
@@ -341,7 +343,7 @@ function CustomSelect({ value, onChange, options, placeholder, id, style }) {
 
 // ── Tab: Stok Saat Ini ────────────────────────────────────────────────────────
 
-function StokSaatIni({ products, onTambah }) {
+function StokSaatIni({ products, onTambah, onAdjust, onShowHistory }) {
   const [expanded, setExpanded] = useState(null)
   const [search,   setSearch]   = useState('')
 
@@ -442,21 +444,38 @@ function StokSaatIni({ products, onTambah }) {
                               <div style={{ fontSize: 11, color: '#4B5563', fontFamily: 'DM Sans' }}>{batch.sembako_suppliers.supplier_name}</div>
                             )}
                           </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontFamily: 'Sora', fontSize: 13, fontWeight: 700, color: TEXT_PRI }}>{fmt(batch.qty_sisa)} {product.unit}</div>
-                            <div style={{ fontSize: 11, color: TEXT_SEC, fontFamily: 'DM Sans' }}>@ Rp {fmt(batch.buy_price)}</div>
+                          <div className="flex items-center gap-4">
+                             <div style={{ textAlign: 'right' }}>
+                               <div style={{ fontFamily: 'Sora', fontSize: 13, fontWeight: 700, color: TEXT_PRI }}>{fmt(batch.qty_sisa)} {product.unit}</div>
+                               <div style={{ fontSize: 11, color: TEXT_SEC, fontFamily: 'DM Sans' }}>@ Rp {fmt(batch.buy_price)}</div>
+                             </div>
+                             <button
+                               onClick={(e) => { e.stopPropagation(); onAdjust(batch, product) }}
+                               className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500 hover:bg-orange-500 hover:text-white transition-all"
+                             >
+                                <ArrowRightLeft size={14} />
+                             </button>
                           </div>
                         </div>
                       ))
                     )}
                     {/* Quick add stok */}
-                    <button
-                      type="button"
-                      onClick={() => onTambah(product.id)}
-                      style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(234,88,12,0.08)', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '7px 14px', color: ACCENT, fontFamily: 'DM Sans', fontSize: 12, cursor: 'pointer' }}
-                    >
-                      <Plus size={14} /> Tambah Stok Produk Ini
-                    </button>
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        type="button"
+                        onClick={() => onTambah(product.id)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(234,88,12,0.08)', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '7px 14px', color: ACCENT, fontFamily: 'DM Sans', fontSize: 12, cursor: 'pointer' }}
+                      >
+                        <Plus size={14} /> Stok Masuk
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onShowHistory(product)}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '7px 14px', color: '#94A3B8', fontFamily: 'DM Sans', fontSize: 12, cursor: 'pointer' }}
+                      >
+                        <History size={14} /> Kartu Stok
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -577,10 +596,23 @@ export default function Gudang() {
   const [activeTab,        setActiveTab]        = useState(0)
   const [showTambahSheet,  setShowTambahSheet]  = useState(!!preProductId)
   const [tambahProductId,  setTambahProductId]  = useState(preProductId)
+  
+  const [showAdjustSheet, setShowAdjustSheet] = useState(false)
+  const [selectedBatch, setSelectedBatch] = useState(null)
+  const [selectedProduct, setSelectedProduct] = useState(null)
+  
+  const [showHistorySheet, setShowHistorySheet] = useState(false)
+  const [historyProduct, setHistoryProduct] = useState(null)
 
   const openTambah = (productId = null) => {
     setTambahProductId(productId)
     setShowTambahSheet(true)
+  }
+
+  const openAdjust = (batch, product) => {
+    setSelectedBatch(batch)
+    setSelectedProduct(product)
+    setShowAdjustSheet(true)
   }
 
   // Summary stats
@@ -641,13 +673,18 @@ export default function Gudang() {
       {/* Tab content */}
       <div style={{ padding: '14px 16px 0' }}>
         {activeTab === 0 && (
-          <StokSaatIni products={products} onTambah={openTambah} />
+          <StokSaatIni 
+            products={products} 
+            onTambah={openTambah} 
+            onAdjust={openAdjust} 
+            onShowHistory={p => { setHistoryProduct(p); setShowHistorySheet(true) }} 
+          />
         )}
         {activeTab === 1 && <RiwayatMasuk />}
         {activeTab === 2 && <RiwayatKeluar />}
       </div>
 
-      {/* Sheet */}
+      {/* Sheet Stok Masuk */}
       <AnimatePresence>
         {showTambahSheet && (
           <TambahStokSheet
@@ -658,7 +695,243 @@ export default function Gudang() {
           />
         )}
       </AnimatePresence>
+
+      {/* Sheet Adjust Stok (Owner Only) */}
+      <AnimatePresence>
+        {showAdjustSheet && (
+          <AdjustStokSheet
+            batch={selectedBatch}
+            product={selectedProduct}
+            onClose={() => { setShowAdjustSheet(false); setSelectedBatch(null); setSelectedProduct(null) }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sheet Kartu Stok (Unified Log) */}
+      <AnimatePresence>
+        {showHistorySheet && (
+          <KartuStokSheet
+            product={historyProduct}
+            onClose={() => { setShowHistorySheet(false); setHistoryProduct(null) }}
+          />
+        )}
+      </AnimatePresence>
     </div>
+  )
+}
+
+function KartuStokSheet({ product, onClose }) {
+  const { data: batches = [] } = useSembakoAllBatches()
+  const { data: stockOuts = [] } = useSembakoStockOut()
+
+  const movements = useMemo(() => {
+    if (!product) return []
+    
+    const logs = []
+    
+    // 1. Stock In (Batches)
+    batches.filter(b => b.product_id === product.id).forEach(b => {
+      logs.push({
+        id: `in-${b.id}`,
+        date: b.purchase_date || b.created_at,
+        type: 'IN',
+        qty: b.qty_masuk,
+        ref: b.batch_code,
+        notes: b.sembako_suppliers?.supplier_name || 'Stok Masuk',
+        color: 'text-emerald-500'
+      })
+    })
+    
+    // 2. Stock Out (Sales & Adjustments)
+    stockOuts.filter(s => s.product_id === product.id).forEach(s => {
+      logs.push({
+        id: `out-${s.id}`,
+        date: s.created_at,
+        type: s.reason === 'adjustment' ? 'ADJ' : 'OUT',
+        qty: -s.qty_out,
+        ref: s.sembako_sales?.invoice_number || s.sembako_stock_batches?.batch_code,
+        notes: s.notes || (s.reason === 'adjustment' ? 'Penyesuaian' : 'Penjualan'),
+        color: s.reason === 'adjustment' ? 'text-orange-500' : 'text-red-500'
+      })
+    })
+
+    return logs.sort((a, b) => new Date(b.date) - new Date(a.date))
+  }, [product, batches, stockOuts])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        style={{ background: '#0A0F14', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: '540px', padding: '0 0 32px', borderTop: `1px solid ${BORDER}`, height: '85vh', display: 'flex', flexDirection: 'column' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ textAlign: 'center', padding: '12px 0' }}>
+           <div style={{ width: 40, height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2, margin: '0 auto' }} />
+        </div>
+        
+        <div style={{ padding: '4px 20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+           <div className="flex items-center gap-3">
+              <div>
+                <h2 className="font-display font-black text-white uppercase text-lg leading-none">Kartu Stok</h2>
+                <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mt-1">{product?.product_name}</p>
+              </div>
+           </div>
+           <button onClick={onClose} className="p-2 rounded-lg bg-white/5 text-[#4B6478]">
+              <X size={20} />
+           </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 space-y-3 pb-20">
+           {movements.length === 0 ? (
+             <p className="text-center py-20 text-[#4B6478] font-bold text-xs uppercase">Belum ada riwayat pergerakan</p>
+           ) : (
+             movements.map(m => (
+               <div key={m.id} className="bg-white/5 border border-white/5 rounded-2xl p-4 flex justify-between items-center">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                       <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-full bg-white/10 uppercase tracking-widest", m.color)}>
+                         {m.type}
+                       </span>
+                       <span className="text-[10px] font-bold text-[#4B6478] uppercase">{fmtDate(m.date)}</span>
+                    </div>
+                    <p className="text-sm font-black text-white leading-tight uppercase">{m.ref}</p>
+                    <p className="text-[11px] font-bold text-[#4B6478] uppercase truncate max-w-[200px]">{m.notes}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className={cn("font-display text-lg font-black tabular-nums", m.color)}>
+                       {m.qty > 0 ? '+' : ''}{m.qty}
+                    </p>
+                    <p className="text-[10px] font-black text-[#4B6478] uppercase">{product?.unit}</p>
+                  </div>
+               </div>
+             ))
+           )}
+        </div>
+      </motion.div>
+    </motion.div>
+  )
+}
+
+function AdjustStokSheet({ batch, product, onClose }) {
+  const adjustMut = useAdjustBatchStock()
+  const [qtyChange, setQtyChange] = useState('')
+  const [reason, setReason] = useState('broken') // 'broken' | 'lost' | 'found' | 'other'
+  const [notes, setNotes] = useState('')
+
+  const handleAdjust = async (e) => {
+    e.preventDefault()
+    const change = Number(qtyChange)
+    if (isNaN(change) || change === 0) return toast.error('Jumlah perubahan tidak boleh 0')
+    
+    // Logic: If 'broken' or 'lost', we expect a negative number or we auto-negate it
+    const finalChange = (reason === 'broken' || reason === 'lost') ? -Math.abs(change) : change
+
+    await adjustMut.mutateAsync({
+      batch_id: batch.id,
+      qty_change: finalChange,
+      reason,
+      notes
+    })
+    onClose()
+  }
+
+  const isLoading = adjustMut.isPending
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        style={{ background: '#100A03', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: '540px', padding: '0 0 32px', borderTop: `2px solid ${ACCENT}`, maxHeight: '92vh', overflowY: 'auto' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ textAlign: 'center', padding: '12px 0' }}>
+           <div style={{ width: 40, height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2, margin: '0 auto' }} />
+        </div>
+        
+        <div style={{ padding: '4px 20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+           <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500">
+                <ArrowRightLeft size={20} />
+              </div>
+              <div>
+                <h2 className="font-display font-black text-white uppercase text-lg leading-none">Otoritas Penyesuaian</h2>
+                <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest mt-1">Hanya untuk Owner</p>
+              </div>
+           </div>
+           <button onClick={onClose} className="p-2 rounded-lg bg-white/5 text-[#4B6478] hover:bg-white/10">
+              <X size={20} />
+           </button>
+        </div>
+
+        <form onSubmit={handleAdjust} style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+           <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-1">
+              <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">{product.product_name}</p>
+              <p className="text-sm font-black text-white uppercase tracking-tight">Batch: {batch.batch_code}</p>
+              <p className="text-xs font-bold text-orange-400">Stok Digital Saat Ini: {batch.qty_sisa} {product.unit}</p>
+           </div>
+
+           <SField label="Aksi">
+              <div className="grid grid-cols-2 gap-2">
+                 {[
+                   { id: 'broken', label: 'RUSAK (-)', color: 'text-red-400', bg: 'bg-red-500/10' },
+                   { id: 'lost', label: 'HILANG (-)', color: 'text-red-400', bg: 'bg-red-500/10' },
+                   { id: 'found', label: 'TEMUAN (+)', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+                   { id: 'other', label: 'LAINNYA', color: 'text-blue-400', bg: 'bg-blue-500/10' }
+                 ].map(opt => (
+                   <button
+                     key={opt.id} type="button"
+                     onClick={() => setReason(opt.id)}
+                     className={cn(
+                       "h-12 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all",
+                       reason === opt.id ? "border-orange-500 bg-orange-500/20 text-white shadow-lg" : "border-white/5 bg-white/5 text-[#4B6478]"
+                     )}
+                   >
+                     {opt.label}
+                   </button>
+                 ))}
+              </div>
+           </SField>
+
+           <SField label={`Jumlah Fisik yang di-Adjust (${product.unit})`}>
+              <input
+                type="number" step="0.01"
+                value={qtyChange}
+                onChange={e => setQtyChange(e.target.value)}
+                placeholder="0"
+                style={inputSt}
+                autoFocus
+              />
+           </SField>
+
+           <SField label="Keterangan / Alasan">
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                placeholder="Contoh: Pecah saat pemindahan atau salah hitung awal"
+                style={{ ...inputSt, minHeight: 80, fontSize: 13, padding: 12 }}
+              />
+           </SField>
+
+           <div className="pt-4">
+              <button
+                type="submit"
+                disabled={isLoading || !qtyChange}
+                className="w-full h-14 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-black uppercase tracking-[0.2em] shadow-xl shadow-orange-950/40 transition-all active:scale-95 disabled:opacity-50"
+              >
+                {isLoading ? 'MEMPROSES...' : 'SIMPAN PENYESUAIAN'}
+              </button>
+           </div>
+        </form>
+      </motion.div>
+    </motion.div>
   )
 }
 
