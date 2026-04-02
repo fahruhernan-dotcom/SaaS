@@ -5,7 +5,7 @@ import {
     Clock, MapPin, User,
     Pencil, Check, FileText, AlertTriangle
 } from 'lucide-react'
-import { format, parseISO } from 'date-fns'
+import { format, parseISO, isAfter } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { safeNum, formatWeight, formatEkor, formatIDR } from '@/lib/format'
@@ -232,7 +232,22 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onComplete, onSho
         completed: { label: 'Selesai',   bg: 'rgba(255,255,255,0.06)', color: '#4B6478' }
     }
 
-    const meta = statusMeta[delivery.status] || statusMeta.preparing
+    const [currentTime, setCurrentTime] = useState(new Date())
+
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 60000)
+        return () => clearInterval(timer)
+    }, [])
+
+    let effectiveStatus = delivery.status
+    if (effectiveStatus === 'on_route' && delivery.load_time) {
+        const loadTime = parseISO(delivery.load_time)
+        if (isAfter(loadTime, currentTime)) {
+            effectiveStatus = 'preparing'
+        }
+    }
+
+    const meta = statusMeta[effectiveStatus] || statusMeta.preparing
     const farmName = delivery.sales?.purchases?.farms?.farm_name || 'Farm Unknown'
     const rpaName = delivery.sales?.rpa_clients?.rpa_name || 'Buyer Unknown'
 

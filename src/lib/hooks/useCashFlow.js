@@ -69,7 +69,7 @@ export const useCashFlow = (period = 'week') => {
     queryFn: async () => {
       const { from, to } = getPeriodRange(period)
       
-      const [paymentsRes, purchasesRes, deliveriesRes, extrasRes, salesRes, lossRes] = await Promise.all([
+      const [paymentsRes, purchasesRes, deliveriesRes, extrasRes, salesRes, lossRes, vehicleExpensesRes] = await Promise.all([
         // 1. CASH IN — real payments received
         supabase
           .from('payments')
@@ -133,17 +133,39 @@ export const useCashFlow = (period = 'week') => {
           .eq('tenant_id', tenant.id)
           .eq('is_deleted', false)
           .gte('report_date', from)
-          .lte('report_date', to)
+          .lte('report_date', to),
+          
+        // 7. VEHICLE EXPENSES
+        supabase
+          .from('vehicle_expenses')
+          .select('amount, expense_date, expense_type, description')
+          .eq('tenant_id', tenant.id)
+          .gte('expense_date', from)
+          .lte('expense_date', to)
       ])
 
       const payments = paymentsRes.data || []
       const purchases = purchasesRes.data || []
       const deliveries = deliveriesRes.data || []
-      const extras = extrasRes.data || []
+      const rawExtras = extrasRes.data || []
       const unpaidSales = salesRes.data || []
       const losses = lossRes.data || []
+      
+      const vehicleExpenses = vehicleExpensesRes?.data || []
 
-      // 7. ALL SALES in period (for transaction list & total margin calc)
+      // Gabungkan extra expenses umum dengan biaya armada
+      const extras = [
+        ...rawExtras,
+        ...vehicleExpenses.map(v => ({
+            amount: v.amount,
+            expense_date: v.expense_date,
+            category: 'Lainnya',
+            description: `Armada (${v.expense_type}): ${v.description || ''}`,
+            source: 'vehicle_expenses'
+        }))
+      ]
+
+      // 8. ALL SALES in period (for transaction list & total margin calc)
       const { data: sales } = await supabase
         .from('sales')
         .select(`

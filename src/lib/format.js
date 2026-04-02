@@ -96,9 +96,7 @@ export const formatRelative = (dateValue, fallback = '-') => {
 
 export const formatWeight = (kg) => {
   const num = safeNum(kg)
-  if (num >= 1000)
-    return (num / 1000).toFixed(2).replace('.', ',') + ' ton'
-  return num.toFixed(1).replace('.', ',') + ' kg'
+  return num.toLocaleString('id-ID', { maximumFractionDigits: 2 }) + ' kg'
 }
 
 export const formatKg = (n) => formatWeight(n)

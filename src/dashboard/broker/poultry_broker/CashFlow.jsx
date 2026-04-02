@@ -132,8 +132,10 @@ export default function CashFlow() {
             case 'lastMonth':
                 const lastMonth = subMonths(today, 1)
                 return { start: startOfMonth(lastMonth), end: endOfMonth(lastMonth) }
-            case 'all':
-                return { start: new Date(2023, 0, 1), end: endOfMonth(today) }
+            case 'all': {
+                const earliest = tenant?.created_at ? parseISO(tenant.created_at) : new Date(today.getFullYear(), 0, 1)
+                return { start: earliest, end: endOfMonth(today) }
+            }
             case 'custom':
                 return { start: customRange.from, end: customRange.to }
             default:
@@ -335,35 +337,83 @@ export default function CashFlow() {
 
     // --- TRANSACTION LIST MERGING ---
     const allTransactions = useMemo(() => {
-        const list = [
-            ...sales.map(s => ({ 
+        const list = []
+
+        sales.forEach(s => {
+            // Main Sale Revenue Log
+            list.push({ 
                 ...s, 
                 _type: 'sale', 
                 _date: s.transaction_date, 
                 _farm: s.purchases?.farms?.farm_name || 'Kandang',
                 _kg: s.deliveries?.[0]?.arrived_weight_kg || s.total_weight_kg || 0,
                 _profit: calcNetProfit(s)
-            })),
-            ...purchases.map(p => ({ 
+            })
+            // Distinct Delivery Cost Log for Sales
+            const delivCost = Number(s.deliveries?.[0]?.delivery_cost || s.delivery_cost || 0)
+            if (delivCost > 0) {
+                list.push({
+                    _type: 'extra',
+                    _date: s.transaction_date,
+                    amount: delivCost,
+                    category: 'Ongkir Penjualan',
+                    description: `Ongkir Kirim ke RPA ${s.rpa_clients?.rpa_name || ''}`.trim(),
+                    rpaName: s.rpa_clients?.rpa_name
+                })
+            }
+        })
+
+        purchases.forEach(p => {
+            // Main Purchase Cost
+            list.push({ 
                 ...p, 
                 _type: 'purchase', 
                 _date: p.transaction_date,
                 _farm: p.farms?.farm_name || 'Kandang'
-            })),
-            ...payments.map(py => ({
+            })
+            // Distinct Transport Cost Log for Purchases
+            const transport = Number(p.transport_cost || 0)
+            if (transport > 0) {
+                list.push({
+                    _type: 'extra',
+                    _date: p.transaction_date,
+                    amount: transport,
+                    category: 'Ongkir Beli',
+                    description: `Mobilisasi dari Kandang ${p.farms?.farm_name || ''}`.trim()
+                })
+            }
+            // Distinct Other Cost Log for Purchases
+            const other = Number(p.other_cost || 0)
+            if (other > 0) {
+                list.push({
+                    _type: 'extra',
+                    _date: p.transaction_date,
+                    amount: other,
+                    category: 'Ekstra Beli',
+                    description: `Biaya Extra ambil dari ${p.farms?.farm_name || 'Kandang'}`.trim()
+                })
+            }
+        })
+
+        payments.forEach(py => {
+            list.push({
                 ...py,
                 _type: 'payment',
                 _date: py.payment_date,
                 _rpa: py.sales?.rpa_clients?.rpa_name || 'Buyer',
                 _saleDate: py.sales?.transaction_date
-            })),
-            ...extras.map(e => ({ 
+            })
+        })
+
+        extras.forEach(e => {
+            list.push({ 
                 ...e, 
                 _type: 'extra', 
                 _date: e.expense_date
-            }))
-        ].sort((a, b) => new Date(b._date) - new Date(a._date))
-        return list
+            })
+        })
+
+        return list.sort((a, b) => new Date(b._date) - new Date(a._date))
     }, [sales, purchases, payments, extras])
 
     const filteredTransactions = useMemo(() => {
@@ -940,7 +990,7 @@ function SummaryCard({ label, value, icon: Icon, color, sub, className, highligh
                         isWhite && "text-white",
                         isSlate && "text-[#4B6478]"
                     )}>
-                        {isKg ? `${value} kg` : isRupiahOnly ? `Rp ${value}` : formatIDR(value || 0)}
+                        {isKg ? `${value} kg` : formatIDR(value || 0)}
                     </h3>
                     <p className={cn("font-bold text-[#4B6478] uppercase mt-1.5 tracking-widest", isDesktop ? "text-[8px]" : "text-[9px]")}>
                         {sub}

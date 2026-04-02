@@ -115,6 +115,16 @@ function SummaryChip({ label, value, color }) {
 function DeliveryCard({ delivery }) {
   const isArrived = delivery.status === 'completed' || delivery.status === 'arrived';
 
+  const statusMap = {
+    preparing: { label: 'Persiapan', color: '#94A3B8', bg: 'rgba(255,255,255,0.06)' },
+    loading: { label: 'Daftar Muat', color: '#FBBF24', bg: 'rgba(251,191,36,0.15)' },
+    on_route: { label: 'Di Jalan', color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
+    arrived: { label: 'Tiba', color: '#93C5FD', bg: 'rgba(96,165,250,0.15)' },
+    completed: { label: 'Selesai', color: '#10B981', bg: 'rgba(16,185,129,0.15)' },
+  };
+
+  const meta = statusMap[delivery.status] || statusMap.preparing;
+
   return (
     <motion.div
       whileTap={{ scale: 0.98 }}
@@ -135,7 +145,7 @@ function DeliveryCard({ delivery }) {
             borderRadius: '14px',
             background: 'rgba(255,255,255,0.03)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: delivery.status === 'on_route' ? '#F59E0B' : '#10B981'
+            color: meta.color
           }}>
             <Truck size={22} />
           </div>
@@ -149,18 +159,18 @@ function DeliveryCard({ delivery }) {
           borderRadius: '6px',
           fontSize: '10px',
           fontWeight: 800,
-          background: delivery.status === 'on_route' ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)',
-          color: delivery.status === 'on_route' ? '#F59E0B' : '#10B981',
+          background: meta.bg,
+          color: meta.color,
           textTransform: 'uppercase'
         }}>
-          {delivery.status.replace('_', ' ')}
+          {meta.label}
         </div>
       </div>
 
       {/* Timeline Visual */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '10px 0' }}>
-        <TimelinePoint label="Muat" active={true} />
-        <div style={{ flex: 1, height: '2px', background: '#10B981' }} />
+        <TimelinePoint label="Muat" active={delivery.status !== 'preparing' && !!delivery.load_time} />
+        <div style={{ flex: 1, height: '2px', background: (delivery.status !== 'preparing' && !!delivery.load_time) ? '#10B981' : 'rgba(255,255,255,0.05)' }} />
         <TimelinePoint label="Jalan" active={delivery.status === 'on_route' || isArrived} pulse={delivery.status === 'on_route'} />
         <div style={{ flex: 1, height: '2px', background: isArrived ? '#10B981' : 'rgba(255,255,255,0.05)' }} />
         <TimelinePoint label="Sampai" active={isArrived} />
@@ -169,15 +179,31 @@ function DeliveryCard({ delivery }) {
       <div style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '12px', padding: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
           <MapPin size={14} color="#4B6478" />
-          <span style={{ fontSize: '12px', color: '#F1F5F9' }}>
+          <span style={{ fontSize: '10px', fontWeight: 800, color: '#4B6478', textTransform: 'uppercase', tracking: '0.05em' }}>Rute: </span>
+          <span style={{ fontSize: '12px', color: '#F1F5F9', fontWeight: 600 }}>
             {delivery.sales?.purchases?.farms?.farm_name} → {delivery.sales?.rpa_clients?.rpa_name}
           </span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Clock size={14} color="#4B6478" />
-            <span style={{ fontSize: '12px', color: '#94A3B8' }}>{new Date(delivery.departure_time || delivery.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            <div style={{ color: '#FBBF24' }}><Clock size={14} /></div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '9px', fontWeight: 900, color: '#4B6478', textTransform: 'uppercase' }}>Muat</span>
+                <span style={{ fontSize: '12px', color: '#F1F5F9', fontWeight: 700 }}>
+                 {delivery.load_time ? new Date(delivery.load_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                </span>
+            </div>
           </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ color: '#3B82F6' }}><Truck size={14} /></div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '9px', fontWeight: 900, color: '#4B6478', textTransform: 'uppercase' }}>Berangkat</span>
+                <span style={{ fontSize: '12px', color: '#F1F5F9', fontWeight: 700 }}>
+                  {delivery.departure_time ? new Date(delivery.departure_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                </span>
+            </div>
+          </div>
+          
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Phone size={14} color="#4B6478" />
             <span style={{ fontSize: '12px', color: '#94A3B8' }}>{delivery.driver_phone || '-'}</span>

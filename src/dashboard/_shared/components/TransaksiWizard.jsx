@@ -277,7 +277,7 @@ export default function TransaksiWizard({ isOpen, onClose }) {
           load_time: step3Data.load_time || null,
           departure_time: step3Data.departure_time || null,
           delivery_cost: finalDeliveryCost,
-          status: 'on_route',
+          status: 'preparing',
           notes: step3Data.notes || null
         }
 

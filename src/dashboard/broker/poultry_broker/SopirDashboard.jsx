@@ -6,7 +6,7 @@ import {
   Phone, ChevronRight, LogOut,
   Navigation, CheckCircle, Save, X
 } from 'lucide-react'
-import { format } from 'date-fns'
+import { format, isAfter, parseISO } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
@@ -188,7 +188,16 @@ function DeliveryCard({ delivery, onUpdateStatus, onTiba }) {
     completed: { label: 'Selesai',   color: 'bg-gray-500',   icon: CheckCircle2 }
   }
 
-  const { label, color, icon: Icon } = statusConfig[delivery.status] || statusConfig.preparing
+  let effectiveStatus = delivery.status
+  if (effectiveStatus === 'on_route' && delivery.load_time) {
+    const now = new Date()
+    const loadTime = parseISO(delivery.load_time)
+    if (isAfter(loadTime, now)) {
+      effectiveStatus = 'preparing'
+    }
+  }
+
+  const { label, color, icon: Icon } = statusConfig[effectiveStatus] || statusConfig.preparing
 
   return (
     <Card className="bg-[#111C24] border-white/5 rounded-[32px] overflow-hidden shadow-xl">
@@ -229,6 +238,28 @@ function DeliveryCard({ delivery, onUpdateStatus, onTiba }) {
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Tujuan (Buyer)</p>
                 <h5 className="font-bold text-sm text-white truncate">{delivery.sales?.rpa_clients?.rpa_name || 'Buyer'}</h5>
+              </div>
+            </div>
+
+            {/* Jam Jadwal */}
+            <div className="grid grid-cols-2 gap-4 pt-2">
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
+                <p className="text-[9px] font-black uppercase tracking-widest text-amber-500/70 mb-1">Jadwal Muat</p>
+                <div className="flex items-center gap-2">
+                  <Clock size={14} className="text-amber-500" />
+                  <span className="text-sm font-black text-white tabular-nums">
+                    {delivery.load_time ? new Date(delivery.load_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                  </span>
+                </div>
+              </div>
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/5">
+                <p className="text-[9px] font-black uppercase tracking-widest text-blue-500/70 mb-1">Jadwal Jalan</p>
+                <div className="flex items-center gap-2">
+                  <Navigation size={14} className="text-blue-500" />
+                  <span className="text-sm font-black text-white tabular-nums">
+                    {delivery.departure_time ? new Date(delivery.departure_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
