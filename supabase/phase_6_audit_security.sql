@@ -62,7 +62,9 @@ CREATE POLICY "Admin Write Plan Configs" ON plan_configs
 
 -- 4. Audit Trigger Function
 CREATE OR REPLACE FUNCTION log_audit_action()
-RETURNS trigger AS $$
+RETURNS trigger
+SET search_path = public
+AS $$
 DECLARE
     v_actor_id uuid;
 BEGIN

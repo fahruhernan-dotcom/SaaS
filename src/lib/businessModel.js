@@ -93,7 +93,6 @@ export const BUSINESS_MODELS = {
       drawerMenu: [
         { path: '/peternak/peternak_broiler/pakan',   icon: 'Package',    label: 'Stok & Pakan'    },
         { path: '/market',           icon: 'Store',      label: 'TernakOS Market' },
-        { path: '/harga-pasar',     icon: 'BarChart2',  label: 'Harga Pasar'     },
         { path: '/peternak/peternak_broiler/akun',    icon: 'User',       label: 'Akun & Profil'   },
       ]
     },
@@ -109,7 +108,6 @@ export const BUSINESS_MODELS = {
       ],
       drawerMenu: [
         { path: '/market',           icon: 'Store',      label: 'TernakOS Market' },
-        { path: '/harga-pasar',     icon: 'BarChart2',  label: 'Harga Pasar'     },
         { path: '/peternak/peternak_layer/akun',    icon: 'User',       label: 'Akun & Profil'   },
       ]
     }
@@ -135,7 +133,6 @@ export const BUSINESS_MODELS = {
         { path: '/rumah_potong/rpa/distribusi', icon: 'Store',      label: 'Distribusi & Invoice' },
         { path: '/rumah_potong/rpa/laporan',    icon: 'BarChart2',  label: 'Laporan Margin'       },
         { path: '/market',               icon: 'Store',      label: 'TernakOS Market'      },
-        { path: '/harga-pasar',         icon: 'BarChart2',  label: 'Harga Pasar'          },
         { path: '/rumah_potong/rpa/akun',       icon: 'User',       label: 'Akun & Profil'        },
       ]
     },
@@ -152,7 +149,6 @@ export const BUSINESS_MODELS = {
       drawerMenu: [
         { path: '/rumah_potong/rph/beranda',    icon: 'Home',         label: 'Beranda'   },
         { path: '/market',               icon: 'Store',      label: 'TernakOS Market'      },
-        { path: '/harga-pasar',         icon: 'BarChart2',  label: 'Harga Pasar'          },
         { path: '/rumah_potong/rph/akun',       icon: 'User',       label: 'Akun & Profil'        },
       ]
     }

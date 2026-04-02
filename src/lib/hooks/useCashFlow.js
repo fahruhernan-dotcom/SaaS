@@ -78,6 +78,7 @@ export const useCashFlow = (period = 'week') => {
             sales(id, transaction_date, total_revenue, rpa_clients(rpa_name))
           `)
           .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
           .gte('payment_date', from)
           .lte('payment_date', to)
           .order('payment_date', { ascending: false }),

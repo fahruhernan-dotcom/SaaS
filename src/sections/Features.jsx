@@ -1,9 +1,10 @@
+import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CountUp from '../components/reactbits/CountUp';
 import AnimatedContent from '../components/reactbits/AnimatedContent';
 
 const Features = ({ activeRole }) => {
-  const content = {
+  const content = useMemo(() => ({
     broker: {
       block1: {
         badge: "TRANSAKSI & PROFIT",
@@ -99,7 +100,7 @@ const Features = ({ activeRole }) => {
         }
       }
     }
-  };
+  }), []);
 
   const active = content[activeRole];
 

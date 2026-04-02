@@ -132,26 +132,28 @@ export default function DesktopTopBar() {
       <div className="flex-1" />
       
       <div className="flex items-center gap-3">
-        {/* Harga pasar quick info */}
-        <button
-          onClick={() => navigate('/harga-pasar')}
-          className="flex items-center gap-3 px-3.5 py-1.5 bg-secondary border border-border rounded-xl hover:border-white/20 transition-all group"
-        >
-          <BarChart2 size={13} className="text-emerald-400 group-hover:scale-110 transition-transform" />
-          <div className="flex items-center gap-1.5 text-[11px] font-body">
-            <span className="text-muted-foreground">Beli</span>
-            <span className="font-bold text-emerald-400 tabular-nums">
-              Rp {marketPrice?.farm_gate_price?.toLocaleString('id-ID') || '--'}
-            </span>
-          </div>
-          <div className="w-px h-3 bg-border mx-1" />
-          <div className="flex items-center gap-1.5 text-[11px] font-body">
-            <span className="text-muted-foreground">Jual</span>
-            <span className="font-bold text-foreground tabular-nums">
-              Rp {marketPrice?.buyer_price?.toLocaleString('id-ID') || '--'}
-            </span>
-          </div>
-        </button>
+        {/* Harga pasar quick info - Only for Broker Ayam */}
+        {(tenant?.sub_type === 'broker_ayam' || tenant?.business_vertical === 'poultry_broker') && (
+          <button
+            onClick={() => navigate('/harga-pasar')}
+            className="flex items-center gap-3 px-3.5 py-1.5 bg-secondary border border-border rounded-xl hover:border-white/20 transition-all group"
+          >
+            <BarChart2 size={13} className="text-emerald-400 group-hover:scale-110 transition-transform" />
+            <div className="flex items-center gap-1.5 text-[11px] font-body">
+              <span className="text-muted-foreground">Beli</span>
+              <span className="font-bold text-emerald-400 tabular-nums">
+                Rp {marketPrice?.farm_gate_price?.toLocaleString('id-ID') || '--'}
+              </span>
+            </div>
+            <div className="w-px h-3 bg-border mx-1" />
+            <div className="flex items-center gap-1.5 text-[11px] font-body">
+              <span className="text-muted-foreground">Jual</span>
+              <span className="font-bold text-foreground tabular-nums">
+                Rp {marketPrice?.buyer_price?.toLocaleString('id-ID') || '--'}
+              </span>
+            </div>
+          </button>
+        )}
         
         {/* Notification bell */}
         <NotificationBell />

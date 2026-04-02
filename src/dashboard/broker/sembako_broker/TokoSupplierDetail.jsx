@@ -278,8 +278,9 @@ export default function SembakoTokoSupplierDetail() {
 
       <Sheet open={openModal === 'edit'} onOpenChange={(v) => !v && setOpenModal(null)}>
         <SheetContent side="right" className="bg-[#06090F] border-white/5 text-left p-6">
-           <SheetHeader className="mb-6">
+           <SheetHeader className="mb-6 text-left">
              <SheetTitle className="font-display font-black text-white uppercase text-xl text-left">Edit Data</SheetTitle>
+             <SheetDescription className="sr-only">Form untuk memperbarui profil customer atau supplier sembako.</SheetDescription>
            </SheetHeader>
            {/* Form Edit reuse common logic */}
         </SheetContent>

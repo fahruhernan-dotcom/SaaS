@@ -40,6 +40,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import TransaksiWizard from '@/dashboard/_shared/components/TransaksiWizard'
+import TransaksiSuccessCard from '@/components/ui/TransaksiSuccessCard'
 import EmptyState from '@/components/EmptyState'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
@@ -570,6 +571,25 @@ export default function Transaksi() {
     window.open(`https://wa.me/${finalPhone}?text=${message}`, '_blank')
   }
 
+  const handleWizardClose = React.useCallback(() => setWizardOpen(false), [])
+  const handleWizardOpen = React.useCallback(() => setWizardOpen(true), [])
+
+  const handleDeliveryClose = React.useCallback(() => setShowUpdateDelivery(false), [])
+
+  const handleDeleteDialogChange = React.useCallback((o) => {
+    if (!o) {
+      setShowDeleteDialog(false)
+      setDeleteTarget(null)
+    }
+  }, [])
+
+  const handleDeleteSaleDialogChange = React.useCallback((o) => {
+    if (!o) {
+      setShowDeleteSaleDialog(false)
+      setDeleteTargetSale(null)
+    }
+  }, [])
+
   return (
     <motion.div
         initial={{ opacity: 0, y: 12 }}
@@ -596,7 +616,7 @@ export default function Transaksi() {
                 </div>
                 {canWrite && (
                   <Button 
-                      onClick={() => setWizardOpen(true)}
+                      onClick={handleWizardOpen}
                       className="h-10 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all shrink-0"
                   >
                       <Plus size={14} className="mr-1" /> JUAL
@@ -719,7 +739,7 @@ export default function Transaksi() {
 
         <TabsContent value={activeTab} className="px-5 mt-4 outline-none">
           <AnimatePresence mode="wait">
-            {loadingSales ? (
+            {isLoadingSales ? (
               <LoadingList />
             ) : !filteredSales.length ? (
               <EmptyState
@@ -753,10 +773,10 @@ export default function Transaksi() {
       </Tabs>
 
       {/* Modals */}
-      <TransaksiWizard isOpen={wizardOpen} onClose={() => setWizardOpen(false)} />
+      <TransaksiWizard isOpen={wizardOpen} onClose={handleWizardClose} />
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={(o) => { if (!o) { setShowDeleteDialog(false); setDeleteTarget(null) } }}>
+      <AlertDialog open={showDeleteDialog} onOpenChange={handleDeleteDialogChange}>
         <AlertDialogContent style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 16, maxWidth: 400 }}>
           <AlertDialogHeader>
             <AlertDialogTitle style={{ fontFamily: 'Sora', fontSize: 17, fontWeight: 700, color: 'hsl(var(--foreground))' }}>
@@ -1227,7 +1247,7 @@ export default function Transaksi() {
       />
 
       {/* Delete Sale Confirmation */}
-      <AlertDialog open={showDeleteSaleDialog} onOpenChange={(o) => { if (!o) { setShowDeleteSaleDialog(false); setDeleteTargetSale(null) } }}>
+      <AlertDialog open={showDeleteSaleDialog} onOpenChange={handleDeleteSaleDialogChange}>
         <AlertDialogContent style={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 16, maxWidth: 400 }}>
           <AlertDialogHeader>
             <AlertDialogTitle style={{ fontFamily: 'Sora', fontSize: 17, fontWeight: 700, color: 'hsl(var(--foreground))' }}>
@@ -1526,6 +1546,8 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
   const [isUpdating, setIsUpdating] = useState(false)
   const [isPaymentOpen, setIsPaymentOpen] = useState(false)
   const [invoiceModal, setInvoiceModal] = useState({ open: false, type: null })
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false)
+  const [finalSuccessData, setFinalSuccessData] = useState(null)
 
   // Sync editData when data changes or entering edit mode
   React.useEffect(() => {
@@ -1539,6 +1561,11 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
       })
     }
   }, [data, isEditing])
+
+  const handleSheetOpenChange = (open) => {
+    onOpenChange(open)
+    if (!open) setIsEditing(false)
+  }
 
   if (!saleId) return null
 
@@ -1602,12 +1629,10 @@ function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, onDelet
 
   const isOverdue = data?.due_date && new Date(data.due_date) < new Date() && data?.payment_status !== 'lunas'
 
+
   return (
     <>
-      <Sheet open={isOpen} onOpenChange={(open) => {
-        onOpenChange(open)
-        if (!open) setIsEditing(false)
-      }}>
+      <Sheet open={isOpen} onOpenChange={handleSheetOpenChange}>
         <SheetContent side="right" className="bg-[#0C1319] border-white/10 w-full sm:max-w-[480px] p-0 flex flex-col p-0">
         <SheetHeader className="p-6 border-b border-white/5 shrink-0 text-left">
           <div className="flex justify-between items-start">
@@ -2103,7 +2128,7 @@ function FormPaymentSheet({ isOpen, onClose, sale }) {
       if (err2) throw err2
 
       toast.success('Pembayaran berhasil dicatat')
-      queryClient.invalidateQueries({ queryKey: ['sales', tenant.id] })
+      queryClient.invalidateQueries({ queryKey: ['sales', tenant?.id] })
       queryClient.invalidateQueries({ queryKey: ['broker-stats'] })
       queryClient.invalidateQueries({ queryKey: ['cashflow'] })
       onClose()
@@ -2147,7 +2172,7 @@ function FormPaymentSheet({ isOpen, onClose, sale }) {
 
               <div className="space-y-2 text-left">
                 <Label className="text-[11px] font-bold text-[#4B6478] uppercase ml-1">Metode Bayar *</Label>
-                <Select value={method} onValueChange={setMethod}>
+                <Select value={method} onValueChange={(val) => setMethod(val)}>
                   <SelectTrigger className="h-12 bg-[#111C24] border-white/5 rounded-xl font-bold uppercase">
                     <SelectValue />
                   </SelectTrigger>

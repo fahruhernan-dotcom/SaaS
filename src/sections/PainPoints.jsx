@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Calculator, AlertCircle, Phone, 
   Activity, Calendar, Package,
@@ -12,7 +12,7 @@ import TiltedCard from '../components/reactbits/TiltedCard';
 
 const PainPoints = ({ activeRole, setActiveRole }) => {
 
-  const content = {
+  const content = useMemo(() => ({
     broker: {
       title: "Kenapa Broker Masih Struggle di Era Digital?",
       points: [
@@ -136,7 +136,7 @@ const PainPoints = ({ activeRole, setActiveRole }) => {
         }
       ]
     }
-  };
+  }), []);
 
   const activeContent = content[activeRole];
 

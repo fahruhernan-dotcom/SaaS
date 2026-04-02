@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react'
+import { cn } from '@/lib/utils'
 import { Plus, ChevronDown, ChevronUp, X, Search, Package, ArrowRightLeft, History } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
@@ -564,10 +565,55 @@ function RiwayatKeluar() {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+function SkeletonBox({ w = '100%', h = 16, r = 8, mb = 0, opacity = 1 }) {
+  return (
+    <div style={{
+      width: w, height: h, borderRadius: r,
+      background: 'linear-gradient(90deg, rgba(234,88,12,0.07) 0%, rgba(234,88,12,0.13) 50%, rgba(234,88,12,0.07) 100%)',
+      backgroundSize: '200% 100%',
+      animation: 'shimmer 1.4s infinite',
+      marginBottom: mb, opacity,
+    }} />
+  )
+}
+
 function LoadingRow() {
   return (
-    <div style={{ textAlign: 'center', padding: '40px 0' }}>
-      <p style={{ fontFamily: 'DM Sans', color: TEXT_SEC }}>Memuat...</p>
+    <div>
+      <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
+      {[1,2,3].map(i => (
+        <div key={i} style={{ background: BG_CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '14px', marginBottom: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ flex: 1 }}>
+              <SkeletonBox w="55%" h={14} r={6} mb={8} />
+              <SkeletonBox w="35%" h={12} r={6} />
+            </div>
+            <SkeletonBox w={48} h={12} r={6} />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ProductSkeleton() {
+  return (
+    <div>
+      <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
+      {[1,2,3,4].map(i => (
+        <div key={i} style={{ background: BG_CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '14px 14px', marginBottom: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ flex: 1 }}>
+              <SkeletonBox w={`${45 + i * 8}%`} h={14} r={6} mb={8} />
+              <SkeletonBox w="28%" h={12} r={6} />
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <SkeletonBox w={40} h={12} r={6} mb={6} />
+              <SkeletonBox w={16} h={16} r={4} />
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
@@ -590,7 +636,7 @@ export default function Gudang() {
   const [searchParams] = useSearchParams()
   const preProductId   = searchParams.get('product') || null
 
-  const { data: products  = [] } = useSembakoProducts()
+  const { data: products  = [], isLoading: productsLoading } = useSembakoProducts()
   const { data: suppliers = [] } = useSembakoSuppliers()
 
   const [activeTab,        setActiveTab]        = useState(0)
@@ -673,12 +719,14 @@ export default function Gudang() {
       {/* Tab content */}
       <div style={{ padding: '14px 16px 0' }}>
         {activeTab === 0 && (
-          <StokSaatIni 
-            products={products} 
-            onTambah={openTambah} 
-            onAdjust={openAdjust} 
-            onShowHistory={p => { setHistoryProduct(p); setShowHistorySheet(true) }} 
-          />
+          productsLoading
+            ? <ProductSkeleton />
+            : <StokSaatIni
+                products={products}
+                onTambah={openTambah}
+                onAdjust={openAdjust}
+                onShowHistory={p => { setHistoryProduct(p); setShowHistorySheet(true) }}
+              />
         )}
         {activeTab === 1 && <RiwayatMasuk />}
         {activeTab === 2 && <RiwayatKeluar />}

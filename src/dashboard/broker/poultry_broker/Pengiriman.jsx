@@ -29,6 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet'
 import DeliveryCard from '@/dashboard/broker/poultry_broker/pengiriman/DeliveryCard'
+import TransaksiSuccessCard from '@/components/ui/TransaksiSuccessCard'
 import InvoicePreviewModal from '@/components/invoice/InvoicePreviewModal'
 import LossCard, { LossSummary } from '@/dashboard/broker/poultry_broker/pengiriman/LossCard'
 import UpdateArrivalSheet from '@/dashboard/broker/poultry_broker/pengiriman/UpdateArrivalSheet'
@@ -100,6 +101,47 @@ export default function Pengiriman() {
     // --- INVOICE MODAL ---
     const [invoiceModal, setInvoiceModal] = useState({ open: false, delivery: null })
 
+    // --- SUCCESS CARD ---
+    const [successData, setSuccessData] = useState(null)
+
+    const handleCompleteDelivery = async (delivery) => {
+        try {
+            const { error } = await supabase
+                .from('deliveries')
+                .update({ status: 'completed' })
+                .eq('id', delivery.id)
+            if (error) throw error
+            queryClient.invalidateQueries({ queryKey: ['deliveries'] })
+            queryClient.invalidateQueries({ queryKey: ['deliveries', tenant.id] })
+            queryClient.invalidateQueries({ queryKey: ['sales'] })
+            queryClient.invalidateQueries({ queryKey: ['broker-stats'] })
+
+            const sale = delivery.sales
+            const purchase = sale?.purchases
+            const totalRevenue  = safeNum(sale?.total_revenue)
+            const totalModal    = safeNum(purchase?.total_cost)
+            const transportCost = safeNum(purchase?.transport_cost)
+            const otherCost     = safeNum(purchase?.other_cost)
+            const deliveryCost  = safeNum(delivery.delivery_cost) || safeNum(sale?.delivery_cost)
+
+            setSuccessData({
+                type:            'lengkap',
+                farmName:        purchase?.farms?.farm_name || null,
+                rpaName:         sale?.rpa_clients?.rpa_name || null,
+                rpaPhone:        sale?.rpa_clients?.phone || null,
+                quantity:        delivery.arrived_count || delivery.initial_count || 0,
+                totalWeight:     delivery.arrived_weight_kg || delivery.initial_weight_kg || 0,
+                buyPrice:        totalModal,
+                sellPrice:       totalRevenue,
+                netProfit:       totalRevenue - totalModal - transportCost - otherCost - deliveryCost,
+                transactionDate: sale?.transaction_date || null,
+                tenant,
+            })
+        } catch (err) {
+            toast.error('Gagal menyelesaikan pengiriman: ' + err.message)
+        }
+    }
+
     const location = useLocation()
 
     useEffect(() => {
@@ -129,8 +171,15 @@ export default function Pengiriman() {
                         quantity,
                         total_weight_kg,
                         price_per_kg,
-                        rpa_clients ( rpa_name ),
-                        purchases ( farms ( farm_name ) )
+                        delivery_cost,
+                        rpa_clients ( rpa_name, phone ),
+                        purchases (
+                            total_cost,
+                            transport_cost,
+                            other_cost,
+                            price_per_kg,
+                            farms ( farm_name )
+                        )
                     )
                 `)
                 .eq('tenant_id', tenant?.id)
@@ -328,6 +377,7 @@ export default function Pengiriman() {
                                                 setSelectedDelivery(d)
                                                 setIsUpdateArrivalOpen(true)
                                             }}
+                                            onComplete={handleCompleteDelivery}
                                             onShowLogistics={(d) => {
                                                 setSelectedLogisticsDetail(d)
                                                 setIsLogisticsDetailOpen(true)
@@ -469,6 +519,12 @@ export default function Pengiriman() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            <TransaksiSuccessCard
+                isOpen={!!successData}
+                onClose={() => setSuccessData(null)}
+                data={successData}
+            />
         </motion.div>
     )
 }

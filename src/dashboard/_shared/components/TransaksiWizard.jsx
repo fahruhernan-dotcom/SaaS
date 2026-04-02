@@ -134,10 +134,10 @@ export default function TransaksiWizard({ isOpen, onClose }) {
     setStep3Data({ enabled: false })
   }
 
-  const handleClose = () => {
+  const handleClose = React.useCallback(() => {
     resetWizard()
     onClose()
-  }
+  }, [onClose])
 
   const steps = mode === 'buy_first'
     ? ['Pembelian', 'Penjualan', 'Pengiriman']
@@ -313,8 +313,6 @@ export default function TransaksiWizard({ isOpen, onClose }) {
         transactionDate: buyData?.transaction_date || null,
         tenant:          tenant,
       })
-      
-      // Removed auto-close timeout to allow user to click WhatsApp button
     } catch (err) {
       toast.error('Gagal: ' + err.message)
     } finally {
@@ -373,7 +371,7 @@ export default function TransaksiWizard({ isOpen, onClose }) {
 
   return (
     <>
-    <Sheet open={isOpen} onOpenChange={handleClose}>
+    <Sheet open={isOpen && !successData} onOpenChange={handleClose}>
       <SheetContent
         side={isDesktop ? 'right' : 'bottom'}
         style={{

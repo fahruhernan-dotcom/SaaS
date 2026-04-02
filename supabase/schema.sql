@@ -55,7 +55,9 @@ create table profiles (
 -- ============================================================
 
 create or replace function my_tenant_id()
-returns uuid language sql security definer stable as $$
+returns uuid language sql security definer stable 
+set search_path = public
+as $$
   select tenant_id from profiles
   where auth_user_id = auth.uid() 
   order by created_at desc -- at least be deterministic, but still bad for multi-tenant
@@ -63,7 +65,9 @@ returns uuid language sql security definer stable as $$
 $$;
 
 create or replace function is_my_tenant(tid uuid)
-returns boolean language sql security definer stable as $$
+returns boolean language sql security definer stable 
+set search_path = public
+as $$
   select exists(
     select 1 from profiles
     where auth_user_id = auth.uid()
@@ -72,13 +76,17 @@ returns boolean language sql security definer stable as $$
 $$;
 
 create or replace function my_user_type()
-returns text language sql security definer stable as $$
+returns text language sql security definer stable 
+set search_path = public
+as $$
   select user_type from profiles
   where auth_user_id = auth.uid() limit 1;
 $$;
 
 create or replace function is_superadmin()
-returns boolean language sql security definer stable as $$
+returns boolean language sql security definer stable 
+set search_path = public
+as $$
   select exists(
     select 1 from profiles
     where auth_user_id = auth.uid()
@@ -88,7 +96,9 @@ $$;
 
 -- Auto updated_at
 create or replace function set_updated_at()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql
+set search_path = public
+as $$
 begin
   new.updated_at = now();
   return new;
@@ -97,7 +107,9 @@ $$;
 
 -- Auto-create tenant + profile saat register (Mandiri Only)
 create or replace function handle_new_user()
-returns trigger language plpgsql security definer as $$
+returns trigger language plpgsql security definer
+set search_path = public
+as $$
 declare
   v_tenant_id uuid;
   v_user_type text;
@@ -913,7 +925,9 @@ create trigger upd_invoices before update on subscription_invoices
 -- setiap ada perubahan di tabel sales
 
 create or replace function sync_rpa_outstanding()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql
+set search_path = public
+as $$
 declare
   v_rpa_id uuid;
   v_tenant_id uuid;
@@ -951,7 +965,9 @@ create trigger t_sync_outstanding
 -- Setiap payment insert → update paid_amount di sale
 
 create or replace function sync_sale_payment()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql
+set search_path = public
+as $$
 declare
   v_total_paid bigint;
   v_sale       sales%rowtype;
@@ -983,7 +999,9 @@ create trigger t_sync_payment
 -- Setiap purchase/sale baru → update harga pasar anonim
 
 create or replace function record_market_price()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql
+set search_path = public
+as $$
 declare
   v_date   date := new.transaction_date;
   v_region text := 'nasional';
@@ -1044,7 +1062,9 @@ create trigger t_market_from_sale
 -- ── UPDATE FARM LAST TRANSACTION ─────────────────────────────
 
 create or replace function update_farm_last_transaction()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql
+set search_path = public
+as $$
 begin
   update farms set
     last_transaction_date = new.transaction_date
@@ -1061,7 +1081,9 @@ create trigger t_farm_last_txn
 -- Setiap daily_record insert → recalculate cycle stats
 
 create or replace function update_cycle_summary()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql
+set search_path = public
+as $$
 declare
   v_cycle breeding_cycles%rowtype;
   v_total_feed decimal;
@@ -1105,7 +1127,9 @@ create trigger t_cycle_summary
 -- ── AUTO INVOICE NUMBER ───────────────────────────────────────
 
 create or replace function generate_invoice_number()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql
+set search_path = public
+as $$
 begin
   if new.invoice_number is null then
     new.invoice_number := 'INV-' ||

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -182,7 +182,7 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
       {/* RPA Client Combobox */}
       <div className="space-y-1.5">
         <label style={S.label}>Pilih RPA Buyer *</label>
-        <Popover open={openRPA} onOpenChange={setOpenRPA}>
+        <Popover open={openRPA} onOpenChange={(open) => setOpenRPA(open)}>
           <PopoverTrigger asChild>
             <button type="button" style={{
               width: '100%',

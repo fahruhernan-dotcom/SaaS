@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CreditCard, TrendingUp, Package, Receipt,
@@ -7,7 +7,6 @@ import {
   Plus, Menu, X, Shield, AlertTriangle, ChevronRight
 } from 'lucide-react'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
-import { getXBasePath } from '@/lib/businessModel'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useSembakoDashboardStats, useSembakoSales, useSembakoEmployees } from '@/lib/hooks/useSembakoData'
 import { formatIDR } from '@/lib/format'
@@ -567,13 +566,13 @@ function ProfitChart({ sales, isDesktop }) {
 
 // ── Desktop version (unchanged layout, just cleaner) ──────────────────────────
 function DesktopBeranda({ stats, sales, employees, navigate, name, salesLoading }) {
-  const { tenant } = useAuth()
-  const brokerBase = getXBasePath(tenant)
+  const { brokerType } = useParams()
+  const brokerBase = `/broker/${brokerType}`
   const now = new Date()
   const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000)
   const recentSales = useMemo(() => sales.slice(0, 5), [sales])
   const invoiceThisMonth = sales.filter(s => new Date(s.transaction_date) > thirtyDaysAgo).length
-  const activeEmployees  = employees.filter(e => e.is_active !== false).length
+  const activeEmployees  = employees.filter(e => e.status === 'aktif').length
   const lowStock  = stats?.stok?.lowStock || []
   const overdue   = stats?.penjualan?.overdueCount || 0
   const totalExp  = (stats?.pengeluaran?.totalExpenseThisMonth || 0) + (stats?.pengeluaran?.totalPayrollThisMonth || 0)
@@ -727,14 +726,15 @@ function CollectionReminders({ sales, navigate, brokerBase }) {
 
 // ── Mobile version ────────────────────────────────────────────────────────────
 function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, profile, tenant, profiles, switchTenant }) {
-  const brokerBase = getXBasePath(tenant)
+  const { brokerType } = useParams()
+  const brokerBase = `/broker/${brokerType}`
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   const now = new Date()
   const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000)
   const recentSales      = useMemo(() => sales.slice(0, 5), [sales])
   const invoiceThisMonth = sales.filter(s => new Date(s.transaction_date) > thirtyDaysAgo).length
-  const activeEmployees  = employees.filter(e => e.is_active !== false).length
+  const activeEmployees  = employees.filter(e => e.status === 'aktif').length
   const lowStock  = stats?.stok?.lowStock || []
   const overdue   = stats?.penjualan?.overdueCount || 0
   const totalExp  = (stats?.pengeluaran?.totalExpenseThisMonth || 0) + (stats?.pengeluaran?.totalPayrollThisMonth || 0)

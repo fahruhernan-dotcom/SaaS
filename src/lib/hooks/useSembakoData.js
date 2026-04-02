@@ -1,190 +1,298 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 import { toast } from 'sonner'
+import { useAuth } from './useAuth'
 
 // ── READ HOOKS ────────────────────────────────────────────────────────────────
 
-export const useSembakoProducts = () => useQuery({
-  queryKey: ['sembako-products'],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from('sembako_products')
-      .select('*')
-      .eq('is_deleted', false)
-      .order('product_name')
-    if (error) throw error
-    return data
-  }
-})
+const STALE_5M = 5 * 60 * 1000
 
-export const useSembakoStockBatches = (productId) => useQuery({
-  queryKey: ['sembako-batches', productId],
-  enabled: !!productId,
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from('sembako_stock_batches')
-      .select('*, sembako_suppliers(supplier_name)')
-      .eq('product_id', productId)
-      .eq('is_deleted', false)
-      .gt('qty_sisa', 0)
-      .order('created_at', { ascending: true }) // FIFO
-    if (error) throw error
-    return data
-  }
-})
+export const useSembakoProducts = () => {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sembako-products', tenant?.id],
+    enabled: !!tenant?.id,
+    staleTime: STALE_5M,
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('sembako_products')
+          .select('*')
+          .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
+          .order('product_name')
+        if (error) throw error
+        return data
+      } catch (e) {
+        console.error('[useSembakoProducts] Error:', e)
+        return []
+      }
+    }
+  })
+}
 
-export const useSembakoCustomers = () => useQuery({
-  queryKey: ['sembako-customers'],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from('sembako_customers')
-      .select('*')
-      .eq('is_deleted', false)
-      .order('customer_name')
-    if (error) throw error
-    return data
-  }
-})
+export const useSembakoStockBatches = (productId) => {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sembako-batches', tenant?.id, productId],
+    enabled: !!productId && !!tenant?.id,
+    staleTime: STALE_5M,
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('sembako_stock_batches')
+          .select('*, sembako_suppliers(supplier_name)')
+          .eq('tenant_id', tenant.id)
+          .eq('product_id', productId)
+          .eq('is_deleted', false)
+          .gt('qty_sisa', 0)
+          .order('created_at', { ascending: true }) // FIFO
+        if (error) throw error
+        return data
+      } catch (e) {
+        console.error(`[useSembakoStockBatches] Error for product ${productId}:`, e)
+        return []
+      }
+    }
+  })
+}
 
-export const useSembakoSuppliers = () => useQuery({
-  queryKey: ['sembako-suppliers'],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from('sembako_suppliers')
-      .select('*')
-      .eq('is_deleted', false)
-      .order('supplier_name')
-    if (error) throw error
-    return data
-  }
-})
+export const useSembakoCustomers = () => {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sembako-customers', tenant?.id],
+    enabled: !!tenant?.id,
+    staleTime: STALE_5M,
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('sembako_customers')
+          .select('*')
+          .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
+          .order('customer_name')
+        if (error) throw error
+        return data
+      } catch (e) {
+        console.error('[useSembakoCustomers] Error:', e)
+        return []
+      }
+    }
+  })
+}
 
-export const useSembakoSales = () => useQuery({
-  queryKey: ['sembako-sales'],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from('sembako_sales')
-      .select('*, sembako_customers(customer_name, customer_type, phone), sembako_sale_items(*)')
-      .eq('is_deleted', false)
-      .order('transaction_date', { ascending: false })
-    if (error) throw error
-    return data
-  }
-})
+export const useSembakoSuppliers = () => {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sembako-suppliers', tenant?.id],
+    enabled: !!tenant?.id,
+    staleTime: STALE_5M,
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('sembako_suppliers')
+          .select('*')
+          .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
+          .order('supplier_name')
+        if (error) throw error
+        return data
+      } catch (e) {
+        console.error('[useSembakoSuppliers] Error:', e)
+        return []
+      }
+    }
+  })
+}
 
-export const useSembakoEmployees = () => useQuery({
-  queryKey: ['sembako-employees'],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from('sembako_employees')
-      .select('*')
-      .eq('is_deleted', false)
-      .order('full_name')
-    if (error) throw error
-    return data
-  }
-})
+export const useSembakoSales = () => {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sembako-sales', tenant?.id],
+    enabled: !!tenant?.id,
+    staleTime: STALE_5M,
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('sembako_sales')
+          .select('*, sembako_customers(customer_name, customer_type, phone), sembako_sale_items(*), sembako_deliveries(id, status)')
+          .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
+          .order('transaction_date', { ascending: false })
+        if (error) throw error
+        return data
+      } catch (e) {
+        console.error('[useSembakoSales] Error:', e)
+        return []
+      }
+    }
+  })
+}
 
-export const useSembakoDashboardStats = () => useQuery({
-  queryKey: ['sembako-dashboard-stats'],
-  queryFn: async () => {
-    const [productsRes, salesRes, customersRes, expensesRes, payrollRes] =
-      await Promise.all([
-        supabase.from('sembako_products')
-          .select('id, product_name, current_stock, avg_buy_price, sell_price, min_stock_alert')
-          .eq('is_deleted', false).eq('is_active', true),
-        supabase.from('sembako_sales')
-          .select('id, total_amount, total_cogs, net_profit, payment_status, remaining_amount, transaction_date, due_date')
-          .eq('is_deleted', false),
-        supabase.from('sembako_customers')
-          .select('id, total_outstanding')
-          .eq('is_deleted', false),
-        supabase.from('sembako_expenses')
-          .select('amount, expense_date, category')
-          .eq('is_deleted', false),
-        supabase.from('sembako_payroll')
-          .select('total_pay, period_date, payment_status'),
-      ])
+export const useSembakoEmployees = () => {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sembako-employees', tenant?.id],
+    enabled: !!tenant?.id,
+    staleTime: STALE_5M,
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('sembako_employees')
+          .select('*')
+          .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
+          .order('full_name')
+        if (error) throw error
+        return data
+      } catch (e) {
+        console.error('[useSembakoEmployees] Error:', e)
+        return []
+      }
+    }
+  })
+}
 
-    const products  = productsRes.data  || []
-    const sales     = salesRes.data     || []
-    const customers = customersRes.data || []
-    const expenses  = expensesRes.data  || []
-    const payroll   = payrollRes.data   || []
-    const now = new Date()
-    const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000)
+export const useSembakoDashboardStats = () => {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sembako-dashboard-stats', tenant?.id],
+    enabled: !!tenant?.id,
+    staleTime: STALE_5M,
+    queryFn: async () => {
+      try {
+        const [productsRes, salesRes, expensesRes, payrollRes] =
+          await Promise.all([
+            supabase.from('sembako_products')
+              .select('id, product_name, current_stock, avg_buy_price, sell_price, min_stock_alert')
+              .eq('tenant_id', tenant.id)
+              .eq('is_deleted', false).eq('is_active', true),
+            supabase.from('sembako_sales')
+              .select('id, total_amount, total_cogs, net_profit, payment_status, remaining_amount, transaction_date, due_date')
+              .eq('tenant_id', tenant.id)
+              .eq('is_deleted', false),
+            supabase.from('sembako_expenses')
+              .select('amount, expense_date, category')
+              .eq('tenant_id', tenant.id)
+              .eq('is_deleted', false),
+            supabase.from('sembako_payroll')
+              .select('total_pay, period_date, payment_status')
+              .eq('tenant_id', tenant.id)
+              .eq('is_deleted', false),
+          ])
 
-    return {
-      stok: {
-        totalProduk: products.length,
-        lowStock: products.filter(p =>
-          p.min_stock_alert > 0 && p.current_stock <= p.min_stock_alert
-        ),
-        nilaiStok: products.reduce((s, p) =>
-          s + (p.current_stock * p.avg_buy_price), 0
-        ),
-      },
-      penjualan: {
-        totalRevenue: sales.reduce((s, i) => s + (i.total_amount || 0), 0),
-        revenueThisMonth: sales
-          .filter(s => new Date(s.transaction_date) > thirtyDaysAgo)
-          .reduce((s, i) => s + (i.total_amount || 0), 0),
-        netProfitThisMonth: sales
-          .filter(s => new Date(s.transaction_date) > thirtyDaysAgo)
-          .reduce((s, i) => s + (i.net_profit || 0), 0),
-        totalOutstanding: customers
-          .reduce((s, c) => s + (c.total_outstanding || 0), 0),
-        overdueCount: sales.filter(s =>
-          s.payment_status !== 'lunas' && s.due_date && new Date(s.due_date) < now
-        ).length,
-      },
-      pengeluaran: {
-        totalExpenseThisMonth: expenses
-          .filter(e => new Date(e.expense_date) > thirtyDaysAgo)
-          .reduce((s, e) => s + (e.amount || 0), 0),
-        totalPayrollThisMonth: payroll
-          .filter(p => new Date(p.period_date) > thirtyDaysAgo)
-          .reduce((s, p) => s + (p.total_pay || 0), 0),
-      },
+        // Log errors if any, but continue if possible
+        if (productsRes.error) console.error('Sembako Stats (Products):', productsRes.error)
+        if (salesRes.error) console.error('Sembako Stats (Sales):', salesRes.error)
+        if (expensesRes.error) console.error('Sembako Stats (Expenses):', expensesRes.error)
+        if (payrollRes.error) console.error('Sembako Stats (Payroll):', payrollRes.error)
+
+      const products  = productsRes.data  || []
+      const sales     = salesRes.data     || []
+      const expenses  = expensesRes.data  || []
+      const payroll   = payrollRes.data   || []
+      const now = new Date()
+      const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000)
+
+      return {
+        stok: {
+          totalProduk: products.length,
+          lowStock: products.filter(p =>
+            p.min_stock_alert > 0 && p.current_stock <= p.min_stock_alert
+          ),
+          nilaiStok: products.reduce((s, p) =>
+            s + (p.current_stock * p.avg_buy_price), 0
+          ),
+        },
+        penjualan: {
+          totalRevenue: sales.reduce((s, i) => s + (i.total_amount || 0), 0),
+          revenueThisMonth: sales
+            .filter(s => new Date(s.transaction_date) > thirtyDaysAgo)
+            .reduce((s, i) => s + (i.total_amount || 0), 0),
+          netProfitThisMonth: sales
+            .filter(s => new Date(s.transaction_date) > thirtyDaysAgo)
+            .reduce((s, i) => s + (i.net_profit || 0), 0),
+          totalOutstanding: sales
+            .reduce((s, i) => s + (i.remaining_amount || 0), 0),
+          overdueCount: sales.filter(s =>
+            s.payment_status !== 'lunas' && s.due_date && new Date(s.due_date) < now
+          ).length,
+        },
+        pengeluaran: {
+          totalExpenseThisMonth: expenses
+            .filter(e => new Date(e.expense_date) > thirtyDaysAgo)
+            .reduce((s, e) => s + (e.amount || 0), 0),
+          totalPayrollThisMonth: payroll
+            .filter(p => new Date(p.period_date) > thirtyDaysAgo)
+            .reduce((s, p) => s + (p.total_pay || 0), 0),
+        },
+      }
+    } catch (err) {
+      console.error('Critical Error in useSembakoDashboardStats:', err)
+      return {
+        stok: { totalProduk: 0, lowStock: [], nilaiStok: 0 },
+        penjualan: { totalRevenue: 0, revenueThisMonth: 0, netProfitThisMonth: 0, totalOutstanding: 0, overdueCount: 0 },
+        pengeluaran: { totalExpenseThisMonth: 0, totalPayrollThisMonth: 0 },
+      }
     }
   }
-})
+  })
+}
 
 // useSembakoAllBatches — semua batch (termasuk habis), untuk riwayat masuk
 // Opsional: filter by productId
-export const useSembakoAllBatches = (productId) => useQuery({
-  queryKey: ['sembako-all-batches', productId ?? 'all'],
-  queryFn: async () => {
-    let q = supabase
-      .from('sembako_stock_batches')
-      .select('*, sembako_suppliers(supplier_name), sembako_products(product_name, unit)')
-      .eq('is_deleted', false)
-      .order('created_at', { ascending: false })
-    if (productId) q = q.eq('product_id', productId)
-    const { data, error } = await q
-    if (error) throw error
-    return data
-  }
-})
+export const useSembakoAllBatches = (productId) => {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sembako-all-batches', tenant?.id, productId ?? 'all'],
+    enabled: !!tenant?.id,
+    staleTime: STALE_5M,
+    queryFn: async () => {
+      try {
+        let q = supabase
+          .from('sembako_stock_batches')
+          .select('*, sembako_suppliers(supplier_name), sembako_products(product_name, unit)')
+          .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
+          .order('created_at', { ascending: false })
+        if (productId) q = q.eq('product_id', productId)
+        const { data, error } = await q
+        if (error) throw error
+        return data
+      } catch (e) {
+        console.error('[useSembakoAllBatches] Error:', e)
+        return []
+      }
+    }
+  })
+}
 
 // useSembakoStockOut — riwayat pengurangan stok (FIFO)
-export const useSembakoStockOut = (productId) => useQuery({
-  queryKey: ['sembako-stock-out', productId ?? 'all'],
-  queryFn: async () => {
-    let q = supabase
-      .from('sembako_stock_out')
-      .select('*, sembako_products(product_name, unit), sembako_stock_batches(batch_code), sembako_sales(invoice_number, customer_name)')
-      .order('created_at', { ascending: false })
-    if (productId) q = q.eq('product_id', productId)
-    const { data, error } = await q
-    if (error) {
-      // Tabel mungkin belum ada di fase awal
-      console.warn('sembako_stock_out:', error.message)
-      return []
+export const useSembakoStockOut = (productId) => {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sembako-stock-out', tenant?.id, productId ?? 'all'],
+    enabled: !!tenant?.id,
+    staleTime: STALE_5M,
+    queryFn: async () => {
+      try {
+        let q = supabase
+          .from('sembako_stock_out')
+          .select('*, sembako_products(product_name, unit), sembako_stock_batches(batch_code), sembako_sales(invoice_number, customer_name)')
+          .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
+          .order('created_at', { ascending: false })
+        if (productId) q = q.eq('product_id', productId)
+        const { data, error } = await q
+        if (error) throw error
+        return data
+      } catch (e) {
+        console.error('[useSembakoStockOut] Error:', e)
+        return []
+      }
     }
-    return data
-  }
-})
+  })
+}
 
 // ── MUTATION HOOKS ────────────────────────────────────────────────────────────
 
@@ -302,13 +410,13 @@ export const useCreateSembakoSale = () => {
         .from('sembako_sale_items').insert(itemsToInsert)
       if (itemErr) throw itemErr
 
-      // FIFO: kurangi qty_sisa di batches
+      // FIFO: kurangi qty_sisa di batches + catat di sembako_stock_out untuk reversal
       for (const item of items) {
         if (!item.product_id) continue
         let qtyToDeduct = item.quantity
         const { data: batches } = await supabase
           .from('sembako_stock_batches')
-          .select('id, qty_sisa')
+          .select('id, qty_sisa, buy_price')
           .eq('product_id', item.product_id)
           .eq('is_deleted', false)
           .gt('qty_sisa', 0)
@@ -320,6 +428,16 @@ export const useCreateSembakoSale = () => {
           await supabase.from('sembako_stock_batches')
             .update({ qty_sisa: batch.qty_sisa - deduct })
             .eq('id', batch.id)
+          // Catat stock_out agar delete sale bisa restore stok (FIFO reversal)
+          await supabase.from('sembako_stock_out').insert({
+            tenant_id,
+            product_id: item.product_id,
+            batch_id: batch.id,
+            sale_id: sale.id,
+            qty_keluar: deduct,
+            buy_price: batch.buy_price || 0,
+            reason: 'sale',
+          })
           qtyToDeduct -= deduct
         }
       }
@@ -435,13 +553,19 @@ export const useSoftDeleteSembakoProduct = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (id) => {
-      const { error } = await supabase.from('sembako_products')
+      const { error: errProduct } = await supabase.from('sembako_products')
         .update({ is_deleted: true })
         .eq('id', id)
-      if (error) throw error
+      if (errProduct) throw errProduct
+      // Hapus juga semua batch stok yang terkait
+      const { error: errBatch } = await supabase.from('sembako_stock_batches')
+        .update({ is_deleted: true })
+        .eq('product_id', id)
+      if (errBatch) throw errBatch
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-products'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-all-batches'] })
       queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
       toast.success('Produk dihapus')
     },
@@ -470,29 +594,93 @@ export const useCreateSembakoSupplier = () => {
 
 // ── NEW HOOKS (Phase 3) ──────────────────────────────────────────────────────
 
-export const useSembakoDeliveries = () => useQuery({
-  queryKey: ['sembako-deliveries'],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from('sembako_deliveries')
-      .select('*, sembako_employees(full_name), sembako_sales(invoice_number, customer_name)')
-      .order('delivery_date', { ascending: false })
-    if (error) { console.warn('sembako_deliveries:', error.message); return [] }
-    return data
-  }
-})
+export const useSembakoDeliveries = () => {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sembako-deliveries', tenant?.id],
+    enabled: !!tenant?.id,
+    staleTime: STALE_5M,
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('sembako_deliveries')
+          .select(`
+            *,
+            sembako_employees(id, full_name, role, phone),
+            sembako_sales(
+              id, invoice_number, total_amount, payment_status, transaction_date, customer_name,
+              sembako_customers(id, customer_name, phone, address),
+              sembako_sale_items(id, product_name, quantity, unit)
+            )
+          `)
+          .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
+          .order('created_at', { ascending: false })
+        if (error) throw error
+        return data
+      } catch (e) {
+        console.error('[useSembakoDeliveries] Error:', e)
+        return []
+      }
+    }
+  })
+}
 
-export const useSembakoPayrolls = () => useQuery({
-  queryKey: ['sembako-payroll'],
-  queryFn: async () => {
-    const { data, error } = await supabase
-      .from('sembako_payroll')
-      .select('*, sembako_employees(full_name, role, salary_type)')
-      .order('period_date', { ascending: false })
-    if (error) { console.warn('sembako_payroll:', error.message); return [] }
-    return data
-  }
-})
+export const useSembakoSalesPendingDelivery = () => {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sembako-sales-pending-delivery', tenant?.id],
+    enabled: !!tenant?.id,
+    staleTime: STALE_5M,
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('sembako_sales')
+          .select(`
+            id, invoice_number, transaction_date, total_amount, payment_status, customer_name,
+            sembako_customers(id, customer_name, address, phone),
+            sembako_sale_items(id, product_name, quantity, unit),
+            sembako_deliveries(id, status, is_deleted)
+          `)
+          .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
+          .order('transaction_date', { ascending: false })
+        if (error) throw error
+        return (data || []).filter(sale => {
+          const activeDeliveries = (sale.sembako_deliveries || []).filter(d => !d.is_deleted)
+          return activeDeliveries.length === 0
+        })
+      } catch (e) {
+        console.error('[useSembakoSalesPendingDelivery] Error:', e)
+        return []
+      }
+    }
+  })
+}
+
+export const useSembakoPayrolls = () => {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sembako-payroll', tenant?.id],
+    enabled: !!tenant?.id,
+    staleTime: STALE_5M,
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('sembako_payroll')
+          .select('*, sembako_employees(full_name, role, salary_type)')
+          .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
+          .order('period_date', { ascending: false })
+        if (error) throw error
+        return data
+      } catch (e) {
+        console.error('[useSembakoPayrolls] Error:', e)
+        return []
+      }
+    }
+  })
+}
 
 export const useCreateSembakoCustomer = () => {
   const queryClient = useQueryClient()
@@ -529,6 +717,23 @@ export const useUpdateSembakoCustomer = () => {
   })
 }
 
+export const useDeleteSembakoCustomer = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id) => {
+      const { error } = await supabase.from('sembako_customers')
+        .update({ is_deleted: true }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sembako-customers'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
+      toast.success('Toko berhasil dihapus')
+    },
+    onError: (err) => toast.error('Gagal: ' + err.message),
+  })
+}
+
 export const useUpdateSembakoSupplier = () => {
   const queryClient = useQueryClient()
   return useMutation({
@@ -540,6 +745,22 @@ export const useUpdateSembakoSupplier = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-suppliers'] })
       toast.success('Supplier berhasil diperbarui')
+    },
+    onError: (err) => toast.error('Gagal: ' + err.message),
+  })
+}
+
+export const useDeleteSembakoSupplier = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id) => {
+      const { error } = await supabase.from('sembako_suppliers')
+        .update({ is_deleted: true }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sembako-suppliers'] })
+      toast.success('Supplier berhasil dihapus')
     },
     onError: (err) => toast.error('Gagal: ' + err.message),
   })
@@ -572,7 +793,29 @@ export const useCreateSembakoDelivery = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-deliveries'] })
-      toast.success('Pengiriman berhasil dicatat')
+      queryClient.invalidateQueries({ queryKey: ['sembako-sales-pending-delivery'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
+      toast.success('Trip berhasil dicatat')
+    },
+    onError: (err) => toast.error('Gagal: ' + err.message),
+  })
+}
+
+export const useCompleteSembakoDelivery = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (deliveryId) => {
+      const { error } = await supabase
+        .from('sembako_deliveries')
+        .update({ status: 'delivered' })
+        .eq('id', deliveryId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sembako-deliveries'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-sales-pending-delivery'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
+      toast.success('Pengiriman ditandai selesai')
     },
     onError: (err) => toast.error('Gagal: ' + err.message),
   })
@@ -601,129 +844,169 @@ export const useMarkPayrollPaid = () => {
 export const useSembakoCustomerInvoices = (customerId) => useQuery({
   queryKey: ['sembako-customer-invoices', customerId],
   enabled: !!customerId,
+  staleTime: STALE_5M,
   queryFn: async () => {
-    const { data, error } = await supabase
-      .from('sembako_sales')
-      .select('*, sembako_sale_items(*)')
-      .eq('customer_id', customerId)
-      .eq('is_deleted', false)
-      .order('transaction_date', { ascending: false })
-    if (error) throw error
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('sembako_sales')
+        .select('*, sembako_sale_items(*)')
+        .eq('customer_id', customerId)
+        .eq('is_deleted', false)
+        .order('transaction_date', { ascending: false })
+      if (error) throw error
+      return data
+    } catch (e) {
+      console.error(`[useSembakoCustomerInvoices] Error for customer ${customerId}:`, e)
+      return []
+    }
   }
 })
 
 export const useSembakoCustomerPayments = (customerId) => useQuery({
   queryKey: ['sembako-customer-payments', customerId],
   enabled: !!customerId,
+  staleTime: STALE_5M,
   queryFn: async () => {
-    const { data, error } = await supabase
-      .from('sembako_payments')
-      .select('*, sembako_sales(invoice_number)')
-      .eq('customer_id', customerId)
-      .order('payment_date', { ascending: false })
-    if (error) throw error
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('sembako_payments')
+        .select('*, sembako_sales!inner(invoice_number, is_deleted)')
+        .eq('customer_id', customerId)
+        .eq('sembako_sales.is_deleted', false)
+        .order('payment_date', { ascending: false })
+      if (error) throw error
+      return data
+    } catch (e) {
+      console.error(`[useSembakoCustomerPayments] Error for customer ${customerId}:`, e)
+      return []
+    }
   }
 })
 
 export const useSembakoSupplierInvoices = (supplierId) => useQuery({
   queryKey: ['sembako-supplier-invoices', supplierId],
   enabled: !!supplierId,
+  staleTime: STALE_5M,
   queryFn: async () => {
-    const { data, error } = await supabase
-      .from('sembako_stock_batches')
-      .select('*, sembako_products(product_name, unit)')
-      .eq('supplier_id', supplierId)
-      .eq('is_deleted', false)
-      .order('purchase_date', { ascending: false })
-    if (error) throw error
-    return data
+    try {
+      const { data, error } = await supabase
+        .from('sembako_stock_batches')
+        .select('*, sembako_products(product_name, unit)')
+        .eq('supplier_id', supplierId)
+        .eq('is_deleted', false)
+        .order('purchase_date', { ascending: false })
+      if (error) throw error
+      return data
+    } catch (e) {
+      console.error(`[useSembakoSupplierInvoices] Error for supplier ${supplierId}:`, e)
+      return []
+    }
   }
 })
 
 // ── LAPORAN (Phase 4) ────────────────────────────────────────────────────────
 
-export const useSembakoLaporan = (startDate, endDate) => useQuery({
-  queryKey: ['sembako-laporan', startDate, endDate],
-  enabled: !!startDate && !!endDate,
-  queryFn: async () => {
-    const [salesRes, expensesRes, payrollRes, batchesRes] = await Promise.all([
-      supabase.from('sembako_sales')
-        .select('*, sembako_sale_items(*), sembako_customers(customer_name, customer_type)')
-        .eq('is_deleted', false)
-        .gte('transaction_date', startDate)
-        .lte('transaction_date', endDate),
-      supabase.from('sembako_expenses')
-        .select('*').eq('is_deleted', false)
-        .gte('expense_date', startDate).lte('expense_date', endDate),
-      supabase.from('sembako_payroll')
-        .select('*, sembako_employees(full_name, role)')
-        .gte('period_date', startDate).lte('period_date', endDate),
-      supabase.from('sembako_stock_batches')
-        .select('*, sembako_products(product_name, category)')
-        .eq('is_deleted', false)
-        .gte('purchase_date', startDate).lte('purchase_date', endDate),
-    ])
+export const useSembakoLaporan = (startDate, endDate) => {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sembako-laporan', tenant?.id, startDate, endDate],
+    enabled: !!startDate && !!endDate && !!tenant?.id,
+    staleTime: STALE_5M,
+    queryFn: async () => {
+    try {
+      const [salesRes, expensesRes, payrollRes, batchesRes] = await Promise.all([
+        supabase.from('sembako_sales')
+          .select('*, sembako_sale_items(*), sembako_customers(customer_name, customer_type)')
+          .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
+          .gte('transaction_date', startDate)
+          .lte('transaction_date', endDate),
+        supabase.from('sembako_expenses')
+          .select('*').eq('tenant_id', tenant.id).eq('is_deleted', false)
+          .gte('expense_date', startDate).lte('expense_date', endDate),
+        supabase.from('sembako_payroll')
+          .select('*, sembako_employees(full_name, role)')
+          .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
+          .gte('period_date', startDate).lte('period_date', endDate),
+        supabase.from('sembako_stock_batches')
+          .select('*, sembako_products(product_name, category)')
+          .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
+          .gte('purchase_date', startDate).lte('purchase_date', endDate),
+      ])
 
-    const sales    = salesRes.data    || []
-    const expenses = expensesRes.data || []
-    const payroll  = payrollRes.data  || []
-    const batches  = batchesRes.data  || []
+      if (salesRes.error) console.error('Sembako Report (Sales):', salesRes.error)
+      if (expensesRes.error) console.error('Sembako Report (Expenses):', expensesRes.error)
+      if (payrollRes.error) console.error('Sembako Report (Payroll):', payrollRes.error)
+      if (batchesRes.error) console.error('Sembako Report (Batches):', batchesRes.error)
 
-    const totalRevenue      = sales.reduce((s, i) => s + (i.total_amount || 0), 0)
-    const totalCOGS         = sales.reduce((s, i) => s + (i.total_cogs || 0), 0)
-    const totalDeliveryCost = sales.reduce((s, i) => s + (i.delivery_cost || 0), 0)
-    const totalOtherCost    = sales.reduce((s, i) => s + (i.other_cost || 0), 0)
-    const totalExpenses     = expenses.reduce((s, e) => s + (e.amount || 0), 0)
-    const totalPayroll      = payroll.reduce((s, p) => s + (p.total_pay || 0), 0)
-    const grossProfit       = totalRevenue - totalCOGS
-    const netProfit         = grossProfit - totalDeliveryCost - totalOtherCost - totalExpenses - totalPayroll
-    const grossMarginPct    = totalRevenue > 0 ? (grossProfit / totalRevenue * 100).toFixed(1) : 0
-    const netMarginPct      = totalRevenue > 0 ? (netProfit / totalRevenue * 100).toFixed(1) : 0
+      const sales    = salesRes.data    || []
+      const expenses = expensesRes.data || []
+      const payroll  = payrollRes.data  || []
+      const batches  = batchesRes.data  || []
 
-    // Group by product
-    const byProduct = {}
-    sales.forEach(sale => {
-      ;(sale.sembako_sale_items || []).forEach(item => {
-        const key = item.product_name || 'Lainnya'
-        if (!byProduct[key]) byProduct[key] = { revenue: 0, cogs: 0, qty: 0, unit: item.unit }
-        byProduct[key].revenue += item.subtotal || 0
-        byProduct[key].cogs   += item.cogs_total || 0
-        byProduct[key].qty    += item.quantity || 0
+      const totalRevenue      = sales.reduce((s, i) => s + (i.total_amount || 0), 0)
+      const totalCOGS         = sales.reduce((s, i) => s + (i.total_cogs || 0), 0)
+      const totalDeliveryCost = sales.reduce((s, i) => s + (i.delivery_cost || 0), 0)
+      const totalOtherCost    = sales.reduce((s, i) => s + (i.other_cost || 0), 0)
+      const totalExpenses     = expenses.reduce((s, e) => s + (e.amount || 0), 0)
+      const totalPayroll      = payroll.reduce((s, p) => s + (p.total_pay || 0), 0)
+      const grossProfit       = totalRevenue - totalCOGS
+      const netProfit         = grossProfit - totalDeliveryCost - totalOtherCost - totalExpenses - totalPayroll
+      const grossMarginPct    = totalRevenue > 0 ? (grossProfit / totalRevenue * 100).toFixed(1) : 0
+      const netMarginPct      = totalRevenue > 0 ? (netProfit / totalRevenue * 100).toFixed(1) : 0
+
+      // Group by product
+      const byProduct = {}
+      sales.forEach(sale => {
+        ;(sale.sembako_sale_items || []).forEach(item => {
+          const key = item.product_name || 'Lainnya'
+          if (!byProduct[key]) byProduct[key] = { revenue: 0, cogs: 0, qty: 0, unit: item.unit }
+          byProduct[key].revenue += item.subtotal || 0
+          byProduct[key].cogs   += item.cogs_total || 0
+          byProduct[key].qty    += item.quantity || 0
+        })
       })
-    })
 
-    // Group by customer
-    const byCustomer = {}
-    sales.forEach(sale => {
-      const key = sale.customer_name || 'Umum'
-      if (!byCustomer[key]) byCustomer[key] = { revenue: 0, profit: 0, count: 0, type: sale.sembako_customers?.customer_type }
-      byCustomer[key].revenue += sale.total_amount || 0
-      byCustomer[key].profit  += sale.net_profit || 0
-      byCustomer[key].count++
-    })
+      // Group by customer
+      const byCustomer = {}
+      sales.forEach(sale => {
+        const key = sale.customer_name || 'Umum'
+        if (!byCustomer[key]) byCustomer[key] = { revenue: 0, profit: 0, count: 0, type: sale.sembako_customers?.customer_type }
+        byCustomer[key].revenue += sale.total_amount || 0
+        byCustomer[key].profit  += sale.net_profit || 0
+        byCustomer[key].count++
+      })
 
-    // Expense breakdown
-    const expenseByCategory = {}
-    expenses.forEach(e => {
-      const cat = e.category || 'lainnya'
-      if (!expenseByCategory[cat]) expenseByCategory[cat] = 0
-      expenseByCategory[cat] += e.amount || 0
-    })
+      // Expense breakdown
+      const expenseByCategory = {}
+      expenses.forEach(e => {
+        const cat = e.category || 'lainnya'
+        if (!expenseByCategory[cat]) expenseByCategory[cat] = 0
+        expenseByCategory[cat] += e.amount || 0
+      })
 
-    return {
-      summary: {
-        totalRevenue, totalCOGS, grossProfit, grossMarginPct,
-        totalDeliveryCost, totalOtherCost, totalExpenses, totalPayroll,
-        netProfit, netMarginPct,
-        totalStockPurchase: batches.reduce((s, b) => s + (b.total_cost || 0), 0),
-      },
-      byProduct, byCustomer, expenseByCategory,
-      sales, expenses, payroll,
+      return {
+        summary: {
+          totalRevenue, totalCOGS, grossProfit, grossMarginPct,
+          totalDeliveryCost, totalOtherCost, totalExpenses, totalPayroll,
+          netProfit, netMarginPct,
+          totalStockPurchase: batches.reduce((s, b) => s + (b.total_cost || 0), 0),
+        },
+        byProduct, byCustomer, expenseByCategory,
+        sales, expenses, payroll,
+      }
+    } catch (err) {
+      console.error('Critical Error in useSembakoLaporan:', err)
+      return {
+        summary: { totalRevenue: 0, totalCOGS: 0, grossProfit: 0, grossMarginPct: 0, totalDeliveryCost: 0, totalOtherCost: 0, totalExpenses: 0, totalPayroll: 0, netProfit: 0, netMarginPct: 0, totalStockPurchase: 0 },
+        byProduct: {}, byCustomer: {}, expenseByCategory: {},
+        sales: [], expenses: [], payroll: []
+      }
     }
   }
-})
+})}
 export const useDeleteSembakoSale = () => {
   const queryClient = useQueryClient()
   return useMutation({
@@ -731,7 +1014,7 @@ export const useDeleteSembakoSale = () => {
       // 1. Ambil semua data stok keluar terkait sale ini untuk reversal
       const { data: stockOuts } = await supabase
         .from('sembako_stock_out')
-        .select('batch_id, qty_out')
+        .select('batch_id, qty_keluar')
         .eq('sale_id', id)
 
       // 2. Kembalikan qty ke batch asli (FIFO Reversal)
@@ -747,7 +1030,7 @@ export const useDeleteSembakoSale = () => {
           if (batch) {
             await supabase
               .from('sembako_stock_batches')
-              .update({ qty_sisa: (batch.qty_sisa || 0) + record.qty_out })
+              .update({ qty_sisa: (batch.qty_sisa || 0) + record.qty_keluar })
               .eq('id', record.batch_id)
           }
         }
@@ -759,12 +1042,20 @@ export const useDeleteSembakoSale = () => {
         .update({ is_deleted: true })
         .eq('id', id)
       if (error) throw error
+
+      // 4. Hard delete related payments (sembako_payments has NO is_deleted column)
+      await supabase.from('sembako_payments')
+        .delete()
+        .eq('sale_id', id)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
       queryClient.invalidateQueries({ queryKey: ['sembako-products'] })
       queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
       queryClient.invalidateQueries({ queryKey: ['sembako-all-batches'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-customers'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-customer-payments'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-customer-invoices'] })
       toast.success('Transaksi dihapus & Stok dikembalikan')
     },
     onError: (err) => toast.error('Gagal: ' + err.message),
@@ -791,17 +1082,21 @@ export const useUpdateSembakoSale = () => {
 export const useSembakoSupplierPayments = (supplierId) => useQuery({
   queryKey: ['sembako-supplier-payments', supplierId],
   enabled: !!supplierId,
+  staleTime: STALE_5M,
   queryFn: async () => {
-    const { data, error } = await supabase
-      .from('sembako_supplier_payments')
-      .select('*')
-      .eq('supplier_id', supplierId)
-      .order('payment_date', { ascending: false })
-    if (error) {
-      console.warn('sembako_supplier_payments table may not exist yet:', error.message)
+    try {
+      const { data, error } = await supabase
+        .from('sembako_supplier_payments')
+        .select('*')
+        .eq('supplier_id', supplierId)
+        .eq('is_deleted', false)
+        .order('payment_date', { ascending: false })
+      if (error) throw error
+      return data
+    } catch (e) {
+      console.error(`[useSembakoSupplierPayments] Error for supplier ${supplierId}:`, e)
       return []
     }
-    return data
   }
 })
 
@@ -898,7 +1193,7 @@ export const useAdjustBatchStock = () => {
             tenant_id,
             product_id: batch.product_id,
             batch_id: batch_id,
-            qty_out: Math.abs(qty_change),
+            qty_keluar: Math.abs(qty_change),
             reason: reason || 'adjustment',
             notes: notes || 'Penyesuaian Stok'
           })

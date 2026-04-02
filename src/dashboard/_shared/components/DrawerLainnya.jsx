@@ -30,7 +30,7 @@ const ICON_MAP = {
 }
 
 export default function DrawerLainnya({ isOpen, onClose, userType }) {
-  const { profile } = useAuth()
+  const { profile, tenant } = useAuth()
   const navigate = useNavigate()
   const model = getBusinessModel(userType, profile?.sub_type)
 
@@ -39,6 +39,11 @@ export default function DrawerLainnya({ isOpen, onClose, userType }) {
   const isViewOnly = profile?.role === 'view_only'
 
   const filteredMenu = model.drawerMenu.filter(item => {
+    // Global restriction for Harga Pasar
+    if (item.label === 'Harga Pasar') {
+      return (tenant?.sub_type === 'broker_ayam' || tenant?.business_vertical === 'poultry_broker')
+    }
+
     if (userType !== 'broker') return true // only apply to broker
     
     if (isOwner) return true

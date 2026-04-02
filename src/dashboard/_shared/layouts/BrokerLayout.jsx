@@ -8,9 +8,33 @@ import { Menu } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import BusinessModelOverlay from '../components/BusinessModelOverlay'
 import { useNotificationGenerator } from '@/lib/hooks/useNotifications'
+import {
+  useSembakoDashboardStats, useSembakoSales, useSembakoProducts,
+  useSembakoAllBatches, useSembakoSuppliers, useSembakoCustomers,
+  useSembakoEmployees, useSembakoDeliveries, useSembakoSalesPendingDelivery,
+  useSembakoStockOut,
+} from '@/lib/hooks/useSembakoData'
+
+// Prefetch semua query sembako sekaligus saat layout mount.
+// Karena refetchOnMount:false + staleTime:5m di queryClient global,
+// data yang sudah di-cache tidak akan di-fetch ulang saat user ganti menu.
+// Refetch hanya terjadi setelah mutasi (invalidateQueries) atau setelah 5 menit.
+function SembakoPrefetcher() {
+  useSembakoDashboardStats()
+  useSembakoSales()
+  useSembakoProducts()
+  useSembakoAllBatches()
+  useSembakoSuppliers()
+  useSembakoCustomers()
+  useSembakoEmployees()
+  useSembakoDeliveries()
+  useSembakoSalesPendingDelivery()
+  useSembakoStockOut()
+  return null
+}
 
 export default function BrokerLayout() {
-  const { profile, loading, isSuperadmin, refetchProfile } = useAuth()
+  const { profile, tenant, loading, isSuperadmin, refetchProfile } = useAuth()
   useNotificationGenerator()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -21,6 +45,8 @@ export default function BrokerLayout() {
   if (!isSuperadmin && !profile?.business_model_selected) {
     return <BusinessModelOverlay profile={profile} onComplete={refetchProfile} />
   }
+
+  const isSembako = tenant?.sub_type === 'distributor_sembako'
 
   const renderContent = () => {
     if (!isDesktop) {
@@ -55,6 +81,7 @@ export default function BrokerLayout() {
 
   return (
     <>
+      {isSembako && <SembakoPrefetcher />}
       {renderContent()}
     </>
   )

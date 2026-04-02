@@ -90,6 +90,7 @@ function ProductSheet({ product, onClose }) {
       sell_price:      form.sell_price      ? Number(String(form.sell_price).replace(/\D/g, ''))      : null,
       avg_buy_price:   form.avg_buy_price   ? Number(String(form.avg_buy_price).replace(/\D/g, ''))   : null,
       min_stock_alert: form.min_stock_alert ? Number(String(form.min_stock_alert).replace(/\D/g, '')) : null,
+      conversion_rate: form.conversion_rate ? Number(form.conversion_rate) : null,
     }
     if (isEdit) {
       await updateMut.mutateAsync({ id: product.id, ...payload })

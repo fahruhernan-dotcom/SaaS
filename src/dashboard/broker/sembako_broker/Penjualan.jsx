@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { 
   Search, Plus, CreditCard, TrendingUp, CheckCircle2, AlertTriangle,
   FileText, ChevronDown, X, Truck, Store, Package, Star, Phone, MapPin,
@@ -52,6 +52,8 @@ const DELIVERY_STATUS = {
 const CUSTOMER_TYPES = [
   'warung','toko_retail','supermarket','restoran','catering','grosir','lainnya'
 ]
+const CUSTOMER_TYPE_OPTIONS = CUSTOMER_TYPES.map(t => ({ value: t, label: t.toUpperCase() }))
+const PAYMENT_METHOD_OPTIONS = ['cash','transfer','qris','giro','cek'].map(m => ({ value: m, label: m.toUpperCase() }))
 
 // â”€â”€ Shared UI Primitives â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const sInput = {
@@ -131,7 +133,7 @@ function CustomSelect({ value, onChange, options, placeholder, onAddNew, id }) {
                     }}
                   >
                     <span>{opt.label}</span>
-                    {value === opt.value && <span style={{ fontSize: '10px' }}>âœ“</span>}
+                    {value === opt.value && <Check size={14} />}
                   </div>
                 ))}
               </div>
@@ -270,19 +272,19 @@ function SummaryLine({ label, value, bold, color = C.text }) {
 }
 
 function generateWAMessage(sale, tenant) {
-  const items = Array.isArray(sale.sembako_sale_items) ? sale.sembako_sale_items : []
-  const itemList = items.map(it => `- ${it.product_name} (${it.quantity} ${it.unit})`).join('\n')
-  const status = sale.payment_status === 'lunas' ? '✅ LUNAS' : '⏳ BELUM LUNAS'
+  const items = Array.isArray(sale.sembako_sale_items) ? sale.sembako_sale_items : (sale.items || [])
+  const itemList = items.map(it => `- ${it.product_name || it.name} (${it.quantity || it.quantity_kg} ${it.unit || 'pcs'})`).join('\n')
+  const status = sale.payment_status === 'lunas' ? '[LUNAS]' : '[BELUM LUNAS]'
   
   const text = `*NOTA PENJUALAN*\n` +
     `--------------------------\n` +
-    `No: ${sale.invoice_number}\n` +
-    `Toko: ${sale.sembako_customers?.customer_name || sale.customer_name}\n` +
-    `Tanggal: ${new Date(sale.transaction_date).toLocaleDateString('id-ID')}\n\n` +
+    `No: ${sale.invoice_number || sale.invoiceNumber || '-'}\n` +
+    `Toko: ${sale.sembako_customers?.customer_name || sale.customer_name || sale.customerName || '-'}\n` +
+    `Tanggal: ${new Date(sale.transaction_date || new Date()).toLocaleDateString('id-ID')}\n\n` +
     `*Detail Barang:*\n${itemList}\n\n` +
-    `*Total: ${formatIDR(sale.total_amount)}*\n` +
+    `*Total: ${formatIDR(sale.total_amount || sale.revenue)}*\n` +
     `Status: ${status}\n` +
-    (sale.remaining_amount > 0 ? `Sisa: ${formatIDR(sale.remaining_amount)}\n` : '') +
+    ((sale.remaining_amount > 0 || sale.payment_status !== 'lunas') ? `Sisa Tagihan: ${formatIDR(sale.remaining_amount || (sale.total_amount || sale.revenue))}\n` : '') +
     `--------------------------\n` +
     `Terima kasih telah berbelanja di *${tenant?.business_name || 'Toko Kami'}*`
 
@@ -361,20 +363,20 @@ function TabInvoice({ isDesktop, openWizard, setOpenWizard }) {
     [sales, selectedSaleId]
   )
 
-  const handleOpenEdit = (sale) => {
+  const handleOpenEdit = useCallback((sale) => {
     setEditSaleId(sale.id)
     setShowDetail(false)
     setOpenWizard(true)
-  }
+  }, [])
 
-  const handleWizardClose = (open) => {
+  const handleWizardClose = useCallback((open) => {
     if (!open) {
       setOpenWizard(false)
       setEditSaleId(null)
     } else {
       setOpenWizard(true)
     }
-  }
+  }, [])
 
   return (
     <div>
@@ -445,14 +447,35 @@ function TabInvoice({ isDesktop, openWizard, setOpenWizard }) {
 }
 
 function SembakoSaleCard({ sale, onOpenDetail }) {
+  const navigate = useNavigate()
+  const location = useLocation()
   const st = STATUS_STYLE[sale.payment_status] || STATUS_STYLE.belum_lunas
   const custName = sale.sembako_customers?.customer_name || sale.customer_name || 'Umum'
-  
+
   // Calculate items summary from sembako_sale_items
   const items = Array.isArray(sale.sembako_sale_items) ? sale.sembako_sale_items : []
-  const itemSummary = items.length > 0 
+  const itemSummary = items.length > 0
     ? (items.length > 1 ? `${items[0].product_name} & ${items.length - 1} lainnya` : items[0].product_name)
     : 'Tidak ada item'
+
+  // Delivery status dari sembako_deliveries
+  const deliveries = Array.isArray(sale.sembako_deliveries) ? sale.sembako_deliveries : []
+  const hasDelivered = deliveries.some(d => d.status === 'delivered')
+  const hasPartial = deliveries.length > 0 && !hasDelivered
+  const noDelivery = deliveries.length === 0
+
+  const deliveryBadge = hasDelivered
+    ? { label: 'Sudah Dikirim', bg: 'rgba(52,211,153,0.10)', color: '#34D399' }
+    : hasPartial
+    ? { label: 'Sebagian Dikirim', bg: 'rgba(96,165,250,0.10)', color: '#60A5FA' }
+    : { label: 'Belum Dikirim', bg: 'rgba(245,158,11,0.10)', color: '#F59E0B' }
+
+  function handleAturPengiriman(e) {
+    e.stopPropagation()
+    // Navigate ke pengiriman dengan saleId agar sheet auto-open
+    const base = location.pathname.replace('/penjualan', '/pengiriman')
+    navigate(`${base}?saleId=${sale.id}`)
+  }
 
   return (
     <div 
@@ -510,6 +533,39 @@ function SembakoSaleCard({ sale, onOpenDetail }) {
           <span style={{ fontSize: '13px', fontWeight: 900, color: C.red }}>{formatIDR(sale.remaining_amount)}</span>
         </div>
       )}
+
+      {/* Delivery status footer */}
+      <div style={{
+        padding: '10px 16px', borderTop: `1px solid rgba(255,255,255,0.04)`,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Truck size={11} color={deliveryBadge.color} />
+          <span style={{
+            fontSize: '10px', fontWeight: 800, color: deliveryBadge.color,
+            background: deliveryBadge.bg, padding: '2px 8px', borderRadius: '5px',
+          }}>
+            {deliveryBadge.label}
+          </span>
+          {hasPartial && (
+            <span style={{ fontSize: '10px', color: '#60A5FA' }}>
+              {deliveries.length} pengiriman
+            </span>
+          )}
+        </div>
+        {!hasDelivered && (
+          <button
+            onClick={handleAturPengiriman}
+            style={{
+              background: 'transparent', border: `1px solid ${C.border}`,
+              color: C.muted, borderRadius: '6px', padding: '4px 10px',
+              fontSize: '10px', fontWeight: 700, cursor: 'pointer',
+            }}
+          >
+            Atur Pengiriman
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -572,6 +628,7 @@ function SembakoSaleDetailSheet({ isOpen, onOpenChange, sale, onEdit }) {
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
         <SheetContent side="right" style={{ background: C.bg, borderLeft: `1px solid ${C.border}`, width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', padding: 0 }}>
           <SheetHeader style={{ padding: '24px', borderBottom: `1px solid ${C.border}`, textAlign: 'left' }}>
+            <SheetDescription className="sr-only">Detail rincian transaksi penjualan sembako</SheetDescription>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <SheetTitle style={{ color: C.text, fontWeight: 900, fontSize: '20px', fontFamily: 'DM Sans' }}>Detail Penjualan</SheetTitle>
@@ -754,8 +811,8 @@ function SembakoSaleDetailSheet({ isOpen, onOpenChange, sale, onEdit }) {
 // â”€â”€ Sheet: Create Invoice â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function SheetCreateInvoice({ open, onOpenChange, editId }) {
   const { tenant } = useAuth()
-  const { data: customers = [] } = useSembakoCustomers()
-  const { data: products = [] } = useSembakoProducts()
+  const { data: customers = [], isLoading: customersLoading } = useSembakoCustomers()
+  const { data: products = [], isLoading: productsLoading } = useSembakoProducts()
   const { data: employees = [] } = useSembakoEmployees()
   const { data: allSales = [] } = useSembakoSales()
   
@@ -795,32 +852,58 @@ function SheetCreateInvoice({ open, onOpenChange, editId }) {
   const [successData, setSuccessData] = useState(null)
   const [printData, setPrintData] = useState(null)
   const [printMode, setPrintMode] = useState('invoice')
+  const lastPrefillKeyRef = useRef(null)
+
+  // Memoized options — prevents Radix ref-composition re-render loop
+  const customerOptions = useMemo(() =>
+    customers.map(c => ({ value: c.id, label: c.customer_name })),
+    [customers]
+  )
+  const productOptions = useMemo(() =>
+    products.map(p => ({ value: p.id, label: `${p.product_name} (${p.current_stock} ${p.unit})` })),
+    [products]
+  )
+  const employeeOptions = useMemo(() =>
+    [{ value: '', label: '-- Belum Ditentukan --' }, ...employees.filter(e => e.status === 'aktif').map(e => ({ value: e.id, label: `${e.full_name} (${e.role})` }))],
+    [employees]
+  )
+
+  const editSale = useMemo(() => {
+    if (!editId) return null
+    return allSales.find(s => s.id === editId) || null
+  }, [allSales, editId])
 
   // Pre-fill if editing
   useEffect(() => {
-    if (editId && allSales.length > 0) {
-      const sale = allSales.find(s => s.id === editId)
-      if (sale) {
-        setCustId(sale.customer_id || '')
-        setTxnDate(sale.transaction_date?.slice(0, 10))
-        setDueDate(sale.due_date?.slice(0, 10) || '')
-        setDeliveryCost(sale.delivery_cost || 0)
-        setOtherCost(sale.other_cost || 0)
-        setNotes(sale.notes || '')
-        
-        if (Array.isArray(sale.sembako_sale_items) && sale.sembako_sale_items.length > 0) {
-          setItems(sale.sembako_sale_items.map(it => ({
-            product_id: it.product_id,
-            product_name: it.product_name,
-            unit: it.unit,
-            quantity: it.quantity,
-            price_per_unit: it.price_per_unit,
-            cogs_per_unit: it.cogs_per_unit
-          })))
-        }
-      }
+    if (!open || !editSale) {
+      if (!open) lastPrefillKeyRef.current = null
+      return
     }
-  }, [editId, allSales])
+
+    const prefillKey = `${editSale.id}:${editSale.updated_at || editSale.transaction_date || ''}`
+    if (lastPrefillKeyRef.current === prefillKey) return
+    lastPrefillKeyRef.current = prefillKey
+
+    setCustId(editSale.customer_id || '')
+    setTxnDate(editSale.transaction_date?.slice(0, 10) || new Date().toISOString().slice(0, 10))
+    setDueDate(editSale.due_date?.slice(0, 10) || '')
+    setDeliveryCost(editSale.delivery_cost || 0)
+    setOtherCost(editSale.other_cost || 0)
+    setNotes(editSale.notes || '')
+
+    if (Array.isArray(editSale.sembako_sale_items) && editSale.sembako_sale_items.length > 0) {
+      setItems(editSale.sembako_sale_items.map(it => ({
+        product_id: it.product_id,
+        product_name: it.product_name,
+        unit: it.unit,
+        quantity: it.quantity,
+        price_per_unit: it.price_per_unit,
+        cogs_per_unit: it.cogs_per_unit
+      })))
+    } else {
+      setItems([{ product_id: '', product_name: '', unit: '', quantity: 0, price_per_unit: 0, cogs_per_unit: 0 }])
+    }
+  }, [open, editSale])
 
   const selectedCust = customers.find(c => c.id === custId)
   const totalAmount = items.reduce((s, i) => s + Math.round((i.quantity || 0) * (i.price_per_unit || 0)), 0)
@@ -970,19 +1053,26 @@ function SheetCreateInvoice({ open, onOpenChange, editId }) {
     }
   }
 
-  function handleClose() {
+  const handleClose = useCallback(() => {
+    lastPrefillKeyRef.current = null
     setStep(0); setCustId(''); setItems([{ product_id: '', product_name: '', unit: '', quantity: 0, price_per_unit: 0, cogs_per_unit: 0 }]); 
     setDeliveryCost(0); setOtherCost(0); setNotes('');
     setPayAmount(0); setPayMethod('cash');
     setUseDelivery(false); setQuickAddCust(false); setQuickAddProd(false);
     onOpenChange(false)
-  }
+  }, [onOpenChange])
+
+  const handleSheetOpenChange = useCallback((v) => {
+    if (!v) handleClose()
+    else onOpenChange(true)
+  }, [handleClose, onOpenChange])
 
   const steps = ['Pilih Toko', 'Input Produk', 'Pengiriman', 'Summary']
 
   return (
     <>
-    <Sheet open={open && !successData} onOpenChange={v => !v ? handleClose() : onOpenChange(true)}>
+      <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+    <Sheet open={open && !successData} onOpenChange={handleSheetOpenChange}>
       <SheetContent side="right" style={{ background: C.bg, borderLeft: `1px solid ${C.border}`, width: '100%', maxWidth: '480px', display: 'flex', flexDirection: 'column', padding: 0, boxShadow: '-12px 0 40px rgba(0,0,0,0.5)' }}>
         
         {/* Header */}
@@ -1011,14 +1101,18 @@ function SheetCreateInvoice({ open, onOpenChange, editId }) {
                   {!quickAddCust ? (
                     <div>
                       <p style={sLabel}>TOKO / CUSTOMER</p>
+                      {customersLoading ? (
+                        <div style={{ height: 48, borderRadius: 12, background: 'rgba(234,88,12,0.07)', animation: 'shimmer 1.4s infinite', backgroundSize: '200% 100%', backgroundImage: 'linear-gradient(90deg,rgba(234,88,12,0.07) 0%,rgba(234,88,12,0.13) 50%,rgba(234,88,12,0.07) 100%)' }} />
+                      ) : (
                       <CustomSelect
                         id="invoice-customer"
                         value={custId}
                         placeholder="-- Pilih toko / customer --"
-                        options={customers.map(c => ({ value: c.id, label: c.customer_name }))}
+                        options={customerOptions}
                         onChange={val => handleSelectCustomer(val)}
                         onAddNew={() => setQuickAddCust(true)}
                       />
+                      )}
                       {selectedCust && (
                         <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: '12px', padding: '12px', background: 'rgba(234,88,12,0.03)', border: `1px solid ${C.border}`, borderRadius: '12px', fontSize: '13px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
@@ -1070,7 +1164,7 @@ function SheetCreateInvoice({ open, onOpenChange, editId }) {
                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                           <div><p style={sLabel}>NAMA TOKO</p><input style={sInput} value={newCustForm.customer_name} onChange={e => setNewCustForm({...newCustForm, customer_name: e.target.value})} placeholder="Contoh: Toko Berkah" /></div>
                           <div><p style={sLabel}>TIPE TOKO</p>
-                            <CustomSelect value={newCustForm.customer_type} onChange={v => setNewCustForm({...newCustForm, customer_type: v})} options={CUSTOMER_TYPES.map(t => ({value: t, label: t.toUpperCase()}))} placeholder="Pilih Tipe" />
+                            <CustomSelect value={newCustForm.customer_type} onChange={v => setNewCustForm({...newCustForm, customer_type: v})} options={CUSTOMER_TYPE_OPTIONS} placeholder="Pilih Tipe" />
                           </div>
                           <div><p style={sLabel}>NO HP</p><input style={sInput} value={newCustForm.phone} onChange={e => setNewCustForm({...newCustForm, phone: e.target.value})} placeholder="0812..." /></div>
                           <button onClick={handleSaveQuickCust} disabled={createCustomer.isPending} style={{ ...sBtn(true), width: '100%', marginTop: '8px' }}>
@@ -1097,8 +1191,18 @@ function SheetCreateInvoice({ open, onOpenChange, editId }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <p style={sLabel}>ITEM PRODUK</p>
-                    <span style={{ fontSize: '10px', color: C.muted, fontWeight: 700 }}>{items.length} Item</span>
+                    {productsLoading
+                      ? <span style={{ fontSize: '10px', color: C.accent, fontWeight: 700 }}>Memuat produk...</span>
+                      : <span style={{ fontSize: '10px', color: C.muted, fontWeight: 700 }}>{items.length} Item</span>
+                    }
                   </div>
+                  {productsLoading && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {[1,2].map(i => (
+                        <div key={i} style={{ height: 90, borderRadius: 14, background: 'rgba(234,88,12,0.07)', backgroundImage: 'linear-gradient(90deg,rgba(234,88,12,0.07) 0%,rgba(234,88,12,0.13) 50%,rgba(234,88,12,0.07) 100%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+                      ))}
+                    </div>
+                  )}
 
                   {quickAddProd && (
                      <div style={{ background: C.card, borderRadius: '16px', padding: '16px', border: `1px solid ${C.accent}`, marginBottom: '16px' }}>
@@ -1130,7 +1234,7 @@ function SheetCreateInvoice({ open, onOpenChange, editId }) {
                             <CustomSelect
                               value={item.product_id}
                               placeholder="Pilih produk..."
-                              options={products.map(p => ({ value: p.id, label: `${p.product_name} (${p.current_stock} ${p.unit})` }))}
+                              options={productOptions}
                               onChange={val => handleItemChange(idx, 'product_id', val)}
                               onAddNew={() => setQuickAddProd(true)}
                               style={{ flex: 1 }}
@@ -1193,7 +1297,7 @@ function SheetCreateInvoice({ open, onOpenChange, editId }) {
                             <CustomSelect 
                               value={deliveryDriver} 
                               onChange={v => setDeliveryDriver(v)}
-                              options={[{ value: '', label: '-- Belum Ditentukan --' }, ...employees.filter(e => e.status === 'aktif').map(e => ({ value: e.id, label: `${e.full_name} (${e.role})` }))]}
+                              options={employeeOptions}
                               placeholder="Pilih Kurir"
                             />
                           </div>
@@ -1306,6 +1410,7 @@ function SheetCreateInvoice({ open, onOpenChange, editId }) {
 function SheetPayment({ sale, onClose }) {
   const recordPayment = useRecordSembakoPayment()
   const [amount, setAmount] = useState(0)
+  const handleSheetClose = useCallback((v) => { if (!v) onClose() }, [onClose])
 
   useEffect(() => {
     if (sale?.remaining_amount) setAmount(sale.remaining_amount)
@@ -1328,7 +1433,7 @@ function SheetPayment({ sale, onClose }) {
   }
 
   return (
-    <Sheet open={!!sale} onOpenChange={v => !v && onClose()}>
+    <Sheet open={!!sale} onOpenChange={handleSheetClose}>
       <SheetContent side="right" style={{ background: C.bg, borderLeft: `1px solid ${C.border}`, width: '100%', maxWidth: '420px', padding: '24px', overflowY: 'auto' }}>
         <SheetHeader>
           <SheetTitle style={{ color: C.text, fontWeight: 900 }}>Catat Pembayaran</SheetTitle>
@@ -1346,7 +1451,7 @@ function SheetPayment({ sale, onClose }) {
               <CustomSelect
                 value={method || 'cash'}
                 onChange={val => setMethod(val)}
-                options={['cash','transfer','qris','giro','cek'].map(m => ({ value: m, label: m.toUpperCase() }))}
+                options={PAYMENT_METHOD_OPTIONS}
                 placeholder="Pilih metode"
               />
             </div>
@@ -1365,6 +1470,7 @@ function SheetPayment({ sale, onClose }) {
 // ── Success Card ─────────────────────────────────────────────────────────────
 function SembakoSuccessCard({ isOpen, onClose, data, onPrint }) {
   const { tenant } = useAuth()
+  const handleSheetClose = useCallback((v) => { if (!v) onClose() }, [onClose])
   if (!data) return null
 
   const handleWA = () => {
@@ -1374,14 +1480,24 @@ function SembakoSuccessCard({ isOpen, onClose, data, onPrint }) {
   }
 
   return (
-    <Sheet open={isOpen} onOpenChange={v => !v && onClose()}>
+    <Sheet open={isOpen} onOpenChange={handleSheetClose}>
       <SheetContent side="bottom" style={{ background: C.bg, maxWidth: '100%', height: 'auto', maxHeight: '90vh', padding: '0', borderRadius: '24px 24px 0 0', display: 'flex', flexDirection: 'column' }}>
+        <SheetHeader className="sr-only">
+          <SheetTitle>Penjualan Berhasil</SheetTitle>
+          <SheetDescription>Ringkasan transaksi penjualan sembako yang baru saja disimpan.</SheetDescription>
+        </SheetHeader>
         <div style={{ flex: 1, padding: '32px 24px', overflowY: 'auto' }}>
-          <div style={{ width: 64, height: 64, borderRadius: '20px', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 0 40px rgba(16,185,129,0.2)' }}>
-            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.1 }}>
-              <Check size={32} color="#10B981" strokeWidth={3} />
-            </motion.div>
-          </div>
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }} 
+            animate={{ scale: 1, opacity: 1 }} 
+            transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+            style={{ width: 80, height: 80, borderRadius: '24px', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 0 40px rgba(16,185,129,0.2)' }}
+          >
+            <motion.svg width="40" height="40" viewBox="0 0 50 50">
+              <motion.circle cx="25" cy="25" r="22" fill="none" stroke="#10B981" strokeWidth="4" initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }} transition={{ duration: 0.5, ease: "easeOut" }} />
+              <motion.path d="M 14 26 L 22 34 L 38 16" fill="transparent" stroke="#10B981" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.4, delay: 0.3, ease: "easeOut" }} />
+            </motion.svg>
+          </motion.div>
           
           <h2 style={{ textAlign: 'center', fontSize: '24px', fontWeight: 900, color: C.text, fontFamily: 'DM Sans', marginBottom: '8px' }}>
             Penjualan Berhasil!

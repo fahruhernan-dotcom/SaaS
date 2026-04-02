@@ -31,6 +31,7 @@ export function useUpdateDelivery() {
     if (fetchError) throw fetchError
     
     const mortality = safeNum(delivery.initial_count) - safeNum(arrivedCount)
+    const shrinkage = safeNum(delivery.initial_weight_kg) - safeNum(arrivedWeight)
     
     // Construct dynamic update object to avoid wiping out existing data
     const updateData = {
@@ -100,10 +101,10 @@ export function useUpdateDelivery() {
     
     // 4. Invalidate all relevant queries
     await queryClient.invalidateQueries({ queryKey: ['sales'] })
-    await queryClient.invalidateQueries({ queryKey: ['sales', saleData.tenant_id] })
+    if (saleData) await queryClient.invalidateQueries({ queryKey: ['sales', saleData.tenant_id] })
     await queryClient.invalidateQueries({ queryKey: ['deliveries'] })
-    await queryClient.invalidateQueries({ queryKey: ['deliveries', saleData.tenant_id] })
-    await queryClient.refetchQueries({ queryKey: ['sales', saleData.tenant_id] })
+    if (saleData) await queryClient.invalidateQueries({ queryKey: ['deliveries', saleData.tenant_id] })
+    if (saleData) await queryClient.refetchQueries({ queryKey: ['sales', saleData.tenant_id] })
     await queryClient.invalidateQueries({ queryKey: ['broker-stats'] })
     await queryClient.invalidateQueries({ queryKey: ['loss-reports'] })
     

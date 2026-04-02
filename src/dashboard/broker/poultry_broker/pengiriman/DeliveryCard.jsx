@@ -3,15 +3,21 @@ import { motion } from 'framer-motion'
 import {
     Truck, Package, CheckCircle2,
     Clock, MapPin, User,
-    Pencil, Check, FileText
+    Pencil, Check, FileText, AlertTriangle
 } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import { safeNum, formatWeight, formatEkor, formatIDR } from '@/lib/format'
 
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel,
+    AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+    AlertDialogHeader, AlertDialogTitle
+} from '@/components/ui/alert-dialog'
 
 // --- ANIMATIONS ---
 const itemVariants = {
@@ -215,8 +221,9 @@ function Timeline({ delivery }) {
     )
 }
 
-export default function DeliveryCard({ delivery, onUpdateTiba, onShowLogistics, onEditArrival, onPrintSuratJalan }) {
+export default function DeliveryCard({ delivery, onUpdateTiba, onComplete, onShowLogistics, onEditArrival, onPrintSuratJalan }) {
     const isDesktop = useMediaQuery('(min-width: 1024px)')
+    const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
     const statusMeta = {
         preparing: { label: 'Persiapan', bg: 'rgba(255,255,255,0.06)', color: '#94A3B8' },
         loading:   { label: 'Muat',      bg: 'rgba(251,191,36,0.12)',  color: '#FBBF24' },
@@ -230,6 +237,7 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onShowLogistics, 
     const rpaName = delivery.sales?.rpa_clients?.rpa_name || 'Buyer Unknown'
 
     return (
+        <>
         <motion.div variants={itemVariants}>
             <Card className="bg-[#111C24] border-white/5 rounded-[28px] overflow-hidden shadow-xl hover:border-white/10 transition-all group">
                 <CardContent className="p-0">
@@ -349,12 +357,18 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onShowLogistics, 
                                     <CheckCircle2 size={16} /> Catat Tiba
                                 </Button>
                             ) : delivery.status === 'arrived' ? (
-                                <Button 
-                                    variant="outline"
-                                    className={cn("flex-1 h-12 border-white/10 bg-secondary/20 hover:bg-secondary/30 text-white font-black uppercase tracking-widest rounded-xl", isDesktop ? "text-[11px]" : "text-xs")}
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCompleteConfirm(true)}
+                                    className={cn("flex-1 h-12 rounded-xl font-black uppercase tracking-widest text-white flex items-center justify-center gap-2 active:scale-95 transition-all", isDesktop ? "text-[11px]" : "text-xs")}
+                                    style={{
+                                        background: 'linear-gradient(135deg, #10B981 0%, #F59E0B 100%)',
+                                        boxShadow: '0 4px 16px -4px rgba(245,158,11,0.4), 0 2px 8px -2px rgba(16,185,129,0.3)',
+                                    }}
                                 >
+                                    <CheckCircle2 size={15} />
                                     Selesaikan Pengiriman
-                                </Button>
+                                </button>
                             ) : delivery.status === 'completed' ? (
                                 <>
                                     <Button
@@ -397,6 +411,61 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onShowLogistics, 
                 </CardContent>
             </Card>
         </motion.div>
+
+        <AlertDialog open={showCompleteConfirm} onOpenChange={setShowCompleteConfirm}>
+            <AlertDialogContent className="bg-[#0C1319] border border-white/10 rounded-2xl max-w-sm">
+                <AlertDialogHeader>
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(245,158,11,0.15))' }}>
+                            <CheckCircle2 size={20} style={{ color: '#F59E0B' }} />
+                        </div>
+                        <AlertDialogTitle className="text-white font-black text-base uppercase tracking-wide">Selesaikan Pengiriman?</AlertDialogTitle>
+                    </div>
+                    <AlertDialogDescription asChild>
+                        <div className="space-y-3">
+                            <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4 space-y-2.5 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-[#4B6478] font-bold uppercase text-[11px] tracking-wider">Ekor Tiba</span>
+                                    <span className="text-white font-black">{formatEkor(delivery.arrived_count ?? delivery.initial_count)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-[#4B6478] font-bold uppercase text-[11px] tracking-wider">Berat Tiba</span>
+                                    <span className="text-white font-black">{formatWeight(delivery.arrived_weight_kg ?? delivery.initial_weight_kg)}</span>
+                                </div>
+                                {safeNum(delivery.shrinkage_kg) > 0 && (
+                                    <div className="flex justify-between">
+                                        <span className="text-amber-400 font-bold uppercase text-[11px] tracking-wider">Susut</span>
+                                        <span className="text-amber-400 font-black">-{formatWeight(delivery.shrinkage_kg)}</span>
+                                    </div>
+                                )}
+                                {safeNum(delivery.mortality_count) > 0 && (
+                                    <div className="flex justify-between">
+                                        <span className="text-red-400 font-bold uppercase text-[11px] tracking-wider">Mati</span>
+                                        <span className="text-red-400 font-black">{delivery.mortality_count} ekor</span>
+                                    </div>
+                                )}
+                            </div>
+                            <p className="text-[#4B6478] text-[11px] font-bold uppercase tracking-wider">
+                                Setelah diselesaikan, status pengiriman tidak dapat diubah kembali ke "Tiba".
+                            </p>
+                        </div>
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="gap-2 mt-2">
+                    <AlertDialogCancel className="flex-1 h-11 bg-white/5 border-white/10 text-white font-black uppercase text-xs tracking-wider hover:bg-white/10">
+                        Cek Lagi
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                        onClick={() => onComplete?.(delivery)}
+                        className="flex-1 h-11 font-black uppercase text-xs tracking-wider text-white border-0"
+                        style={{ background: 'linear-gradient(135deg, #10B981 0%, #F59E0B 100%)' }}
+                    >
+                        Ya, Selesaikan
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        </>
     )
 }
 

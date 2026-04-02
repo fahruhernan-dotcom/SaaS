@@ -326,9 +326,9 @@ export function RPATokoInvoice({
             <>
               <View style={s.tableHeader}>
                 <Text style={[s.thText, s.rColDesc]}>Produk</Text>
-                <Text style={[s.thText, s.rColQty]}>Qty (kg)</Text>
-                <Text style={[s.thText, s.rColPrice]}>Harga/kg</Text>
-                <Text style={[s.thText, s.rColHPP]}>HPP/kg</Text>
+                <Text style={[s.thText, s.rColQty]}>Jumlah</Text>
+                <Text style={[s.thText, s.rColPrice]}>Harga / Unit</Text>
+                <Text style={[s.thText, s.rColHPP]}>HPP / Unit</Text>
                 <Text style={[s.thText, s.rColSubtotal]}>Subtotal</Text>
                 <Text style={[s.thText, s.rColMargin]}>Margin</Text>
               </View>
@@ -336,11 +336,12 @@ export function RPATokoInvoice({
                 const itemSubtotal = Number(item.subtotal ?? Math.round((item.quantity_kg || 0) * (item.price_per_kg || 0)))
                 const itemCost     = Math.round((item.quantity_kg || 0) * (item.cost_per_kg || 0))
                 const itemMargin   = itemSubtotal - itemCost
+                const unit         = item.unit || 'pcs'
                 return (
                   <View key={idx} style={[s.tableRow, idx % 2 === 1 ? s.tableRowAlt : {}]}>
                     <Text style={[s.td, s.rColDesc]}>{item.product_name}</Text>
                     <Text style={[s.td, s.rColQty]}>
-                      {Number(item.quantity || item.quantity_kg || 0).toFixed(2)} {item.unit || 'kg'}
+                      {Number(item.quantity || item.quantity_kg || 0).toFixed(2)} {unit}
                     </Text>
                     <Text style={[s.td, s.rColPrice]}>
                       {formatRupiahPDF(item.price_per_kg)}
@@ -363,17 +364,18 @@ export function RPATokoInvoice({
             <>
               <View style={s.tableHeader}>
                 <Text style={[s.thText, s.pColDesc]}>Produk</Text>
-                <Text style={[s.thText, s.pColQty]}>Qty (kg)</Text>
-                <Text style={[s.thText, s.pColPrice]}>Harga/kg</Text>
+                <Text style={[s.thText, s.pColQty]}>Jumlah</Text>
+                <Text style={[s.thText, s.pColPrice]}>Harga / Unit</Text>
                 <Text style={[s.thText, s.pColSubtotal]}>Subtotal</Text>
               </View>
               {items.map((item, idx) => {
                 const itemSubtotal = Number(item.subtotal ?? Math.round((item.quantity_kg || 0) * (item.price_per_kg || 0)))
+                const unit         = item.unit || 'pcs'
                 return (
                   <View key={idx} style={[s.tableRow, idx % 2 === 1 ? s.tableRowAlt : {}]}>
                     <Text style={[s.td, s.pColDesc]}>{item.product_name}</Text>
                     <Text style={[s.td, s.pColQty]}>
-                      {Number(item.quantity || item.quantity_kg || 0).toFixed(2)} {item.unit || 'kg'}
+                      {Number(item.quantity || item.quantity_kg || 0).toFixed(2)} {unit}
                     </Text>
                     <Text style={[s.td, s.pColPrice]}>
                       {formatRupiahPDF(item.price_per_kg)}
@@ -466,7 +468,7 @@ export function RPATokoInvoice({
             <Text style={{ fontSize: 9, color: C.muted, marginBottom: 4 }}>Hormat kami,</Text>
             <View style={s.sigLine} />
             <Text style={s.sigName}>{generatedBy || tenant?.business_name || '-'}</Text>
-            <Text style={s.sigLabel}>RPA / Penjual</Text>
+            <Text style={s.sigLabel}>Pihak Kedai / Penjual</Text>
           </View>
           <View style={s.sigBox}>
             <Text style={{ fontSize: 9, color: C.muted, marginBottom: 4 }}>Diterima oleh,</Text>
@@ -474,7 +476,7 @@ export function RPATokoInvoice({
             <Text style={s.sigName}>
               {customer?.customer_name || invoice?.customer_name || '________________'}
             </Text>
-            <Text style={s.sigLabel}>Pembeli / Toko</Text>
+            <Text style={s.sigLabel}>Pihak Pembeli</Text>
           </View>
         </View>
 

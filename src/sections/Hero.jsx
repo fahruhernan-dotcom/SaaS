@@ -1,4 +1,4 @@
-import React from 'react';
+    import React from 'react';
 import { motion } from 'framer-motion';
 import BlurText from '../components/reactbits/BlurText';
 import ShinyText from '../components/reactbits/ShinyText';

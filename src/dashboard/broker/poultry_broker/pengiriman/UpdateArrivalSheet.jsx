@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { motion, AnimatePresence } from 'framer-motion'
 import {
     Truck, ArrowRightLeft,
     Plus, Check, X, Pencil, PencilLine, Trash2,
@@ -24,8 +23,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command'
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel,
     AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -36,11 +33,13 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
     const isDesktop = useMediaQuery('(min-width: 1024px)')
     const { tenant } = useAuth()
     const queryClient = useQueryClient()
+    const [legacyShippingSelectors] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [arrivedQty, setArrivedQty] = useState('')
     const [mortalityQty, setMortalityQty] = useState(0)
     const [notes, setNotes] = useState('')
     const [loadTime, setLoadTime] = useState('')
+    const [loadTimeLocked, setLoadTimeLocked] = useState(true)
     const { updateTiba } = useUpdateDelivery()
 
     // Unit Selector State
@@ -52,6 +51,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
     const [selectedDriver, setSelectedDriver] = useState(null)
     const [driverManual, setDriverManual] = useState(false)
     const [driverOpen, setDriverOpen] = useState(false)
+    const [driverSearch, setDriverSearch] = useState('')
     const [driverName, setDriverName] = useState('')
     const [driverPhone, setDriverPhone] = useState('')
     const [driverLocked, setDriverLocked] = useState(true)
@@ -68,6 +68,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
     const [selectedVehicle, setSelectedVehicle] = useState(null)
     const [vehicleManual, setVehicleManual] = useState(false)
     const [vehicleOpen, setVehicleOpen] = useState(false)
+    const [vehicleSearch, setVehicleSearch] = useState('')
     const [vehiclePlate, setVehiclePlate] = useState('')
     const [vehicleType, setVehicleType] = useState('')
     const [vehicleLocked, setVehicleLocked] = useState(true)
@@ -113,6 +114,44 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
 
     const beratTibaKg = toKg(beratTiba, unitTiba)
 
+    const filteredVehicles = useMemo(() => {
+        const keyword = vehicleSearch.trim().toLowerCase()
+        if (!keyword) return vehicles
+        return vehicles.filter((vehicle) =>
+            `${vehicle.vehicle_plate || ''} ${vehicle.vehicle_type || ''}`.toLowerCase().includes(keyword)
+        )
+    }, [vehicleSearch, vehicles])
+
+    const filteredDrivers = useMemo(() => {
+        const keyword = driverSearch.trim().toLowerCase()
+        if (!keyword) return drivers
+        return drivers.filter((driver) =>
+            `${driver.full_name || ''} ${driver.phone || ''}`.toLowerCase().includes(keyword)
+        )
+    }, [driverSearch, drivers])
+
+    const handleToggleVehicleOpen = () => {
+        setDriverOpen(false)
+        setVehicleOpen((prev) => !prev)
+    }
+
+    const handleToggleDriverOpen = () => {
+        setVehicleOpen(false)
+        setDriverOpen((prev) => !prev)
+    }
+
+    const handleSelectVehicle = (vehicle) => {
+        setSelectedVehicle(vehicle)
+        setVehicleOpen(false)
+        setVehicleSearch('')
+    }
+
+    const handleSelectDriver = (driver) => {
+        setSelectedDriver(driver)
+        setDriverOpen(false)
+        setDriverSearch('')
+    }
+
     useEffect(() => {
         if (delivery && isOpen) {
             const isEdit = delivery.status === 'completed'
@@ -157,6 +196,11 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
             // Lock Logic: Lock only if data already exists
             setVehicleLocked(!!delivery.vehicle_plate)
             setDriverLocked(!!delivery.driver_name)
+            setLoadTimeLocked(!!delivery.load_time)
+            setVehicleOpen(false)
+            setDriverOpen(false)
+            setVehicleSearch('')
+            setDriverSearch('')
         }
     }, [delivery, isOpen])
 
@@ -165,21 +209,29 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
         if (delivery?.driver_id && drivers.length > 0) {
             const matched = drivers.find(d => d.id === delivery.driver_id)
             if (matched) {
-                setSelectedDriver(matched)
-                setDriverManual(false)
+                if (selectedDriver?.id !== matched.id) {
+                    setSelectedDriver(matched)
+                }
+                if (driverManual) {
+                    setDriverManual(false)
+                }
             }
         }
-    }, [drivers, delivery])
+    }, [drivers, delivery, driverManual, selectedDriver?.id])
 
     useEffect(() => {
         if (delivery?.vehicle_id && vehicles.length > 0) {
             const matched = vehicles.find(v => v.id === delivery.vehicle_id)
             if (matched) {
-                setSelectedVehicle(matched)
-                setVehicleManual(false)
+                if (selectedVehicle?.id !== matched.id) {
+                    setSelectedVehicle(matched)
+                }
+                if (vehicleManual) {
+                    setVehicleManual(false)
+                }
             }
         }
-    }, [vehicles, delivery])
+    }, [vehicles, delivery, selectedVehicle?.id, vehicleManual])
     
     const initialKg = safeNum(delivery?.initial_weight_kg)
     const initialCount = safeNum(delivery?.initial_count)
@@ -197,7 +249,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
         setArrivedQty(Math.max(0, initialCount - num))
     }
 
-    const tibaKg = beratTibaKg
+    const tibaKg = inputMode === 'scale' ? totalScaleKita : beratTibaKg
     const tibaCount = safeNum(arrivedQty)
     const matiEkor = safeNum(mortalityQty)
     const susutKg = initialKg - tibaKg
@@ -631,12 +683,46 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                 </div>
 
                 <form className="space-y-6 pb-20">
-                    <div className="space-y-4">
-                        <TimePicker 
-                            label="Jam Muat"
-                            value={loadTime} 
-                            onChange={(val) => setLoadTime(val)}
-                        />
+                    <div className="space-y-2">
+                        <Label className={cn("font-black uppercase text-[#4B6478] tracking-widest ml-1", isDesktop ? "text-[9px]" : "text-xs")}>Jam Muat</Label>
+                        {delivery?.load_time && loadTimeLocked ? (
+                            <div className="w-full h-14 px-4 rounded-xl bg-[#111C24] border border-white/5 flex justify-between items-center opacity-75">
+                                <div className="flex items-center gap-3">
+                                    <Lock size={12} className="text-[#4B6478]" />
+                                    <span className="text-sm font-black text-white">{loadTime}</span>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 rounded-lg hover:bg-white/5 text-[#4B6478] hover:text-amber-500"
+                                    onClick={() => setLoadTimeLocked(false)}
+                                    title="Ubah jam muat"
+                                >
+                                    <Unlock size={14} />
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <TimePicker
+                                    value={loadTime}
+                                    onChange={(val) => setLoadTime(val)}
+                                    className="flex-1"
+                                />
+                                {delivery?.load_time && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 rounded-lg hover:bg-white/5 text-[#4B6478] hover:text-emerald-400"
+                                        onClick={() => setLoadTimeLocked(true)}
+                                        title="Kunci jam muat"
+                                    >
+                                        <Lock size={14} />
+                                    </Button>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* ROW 2: Ekor Tiba & Ekor Mati */}
@@ -970,7 +1056,12 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                         <div className="flex gap-1.5 mb-1 bg-[#111C24] p-0.5 rounded-xl border border-white/5">
                                             <button 
                                                 type="button" 
-                                                onClick={() => { setVehicleManual(false); setSelectedVehicle(null) }}
+                                                onClick={() => {
+                                                    setVehicleManual(false)
+                                                    setSelectedVehicle(null)
+                                                    setVehicleOpen(false)
+                                                    setVehicleSearch('')
+                                                }}
                                                 className={cn(
                                                     "flex-1 py-2 rounded-lg font-black uppercase tracking-widest transition-all",
                                                     isDesktop ? "text-[9px]" : "text-xs",
@@ -979,7 +1070,12 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                             >Armada</button>
                                             <button 
                                                 type="button" 
-                                                onClick={() => { setVehicleManual(true); setSelectedVehicle(null) }}
+                                                onClick={() => {
+                                                    setVehicleManual(true)
+                                                    setSelectedVehicle(null)
+                                                    setVehicleOpen(false)
+                                                    setVehicleSearch('')
+                                                }}
                                                 className={cn(
                                                     "flex-1 py-2 rounded-lg font-black uppercase tracking-widest transition-all",
                                                     isDesktop ? "text-[9px]" : "text-xs",
@@ -989,6 +1085,65 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                         </div>
 
                                         {!vehicleManual ? (
+                                            <div style={{ position: 'relative' }}>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleToggleVehicleOpen}
+                                                    className="w-full h-12 px-4 rounded-xl bg-[#111C24] border border-white/5 flex justify-between items-center text-xs font-black text-white hover:border-white/20 transition-all uppercase"
+                                                >
+                                                    <span>{selectedVehicle ? `${selectedVehicle.vehicle_plate} · ${selectedVehicle.vehicle_type}` : 'PILIH KENDARAAN'}</span>
+                                                    <ChevronsUpDown size={14} className="opacity-50" />
+                                                </button>
+
+                                                {vehicleOpen && (
+                                                    <>
+                                                        <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setVehicleOpen(false)} />
+                                                        <div
+                                                            style={{
+                                                                position: 'absolute',
+                                                                top: 'calc(100% + 4px)',
+                                                                left: 0,
+                                                                right: 0,
+                                                                zIndex: 50
+                                                            }}
+                                                            className="overflow-hidden rounded-xl border border-white/10 bg-[#0C1319] shadow-2xl"
+                                                        >
+                                                            <div className="border-b border-white/5 p-2">
+                                                                <Input
+                                                                    value={vehicleSearch}
+                                                                    onChange={(e) => setVehicleSearch(e.target.value.toUpperCase())}
+                                                                    placeholder="CARI PLAT..."
+                                                                    className="h-10 bg-[#111C24] border-white/10 text-xs font-black text-white uppercase"
+                                                                />
+                                                            </div>
+
+                                                            <div className="max-h-64 overflow-y-auto p-1">
+                                                                {filteredVehicles.length === 0 ? (
+                                                                    <div className="py-6 text-center text-[10px] uppercase font-black text-[#4B6478]">
+                                                                        Kendaraan tidak ditemukan
+                                                                    </div>
+                                                                ) : (
+                                                                    filteredVehicles.map((vehicle) => (
+                                                                        <button
+                                                                            key={vehicle.id}
+                                                                            type="button"
+                                                                            onClick={() => handleSelectVehicle(vehicle)}
+                                                                            className="flex w-full items-center justify-between rounded-lg border-b border-white/5 p-3 text-left hover:bg-white/5 last:border-0"
+                                                                        >
+                                                                            <div className="flex flex-col">
+                                                                                <span className="text-xs font-black uppercase text-white">{vehicle.vehicle_plate}</span>
+                                                                                <span className="text-[10px] font-bold uppercase text-[#4B6478]">{vehicle.vehicle_type}</span>
+                                                                            </div>
+                                                                            {selectedVehicle?.id === vehicle.id && <Check size={14} className="text-emerald-500" />}
+                                                                        </button>
+                                                                    ))
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                )}
+
+                                                {legacyShippingSelectors && (
                                             <Popover open={vehicleOpen} onOpenChange={setVehicleOpen}>
                                                 <PopoverTrigger asChild>
                                                     <button type="button" className="w-full h-12 px-4 rounded-xl bg-[#111C24] border border-white/5 flex justify-between items-center text-xs font-black text-white hover:border-white/20 transition-all uppercase">
@@ -1018,6 +1173,8 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                                     </Command>
                                                 </PopoverContent>
                                             </Popover>
+                                                )}
+                                            </div>
                                         ) : (
                                             <div className="grid grid-cols-2 gap-2">
                                                 <Input 
@@ -1040,6 +1197,8 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                                 type="button"
                                                 onClick={() => {
                                                     setVehicleLocked(true)
+                                                    setVehicleOpen(false)
+                                                    setVehicleSearch('')
                                                     if (delivery.vehicle_id) {
                                                         const matched = vehicles.find(v => v.id === delivery.vehicle_id)
                                                         setSelectedVehicle(matched || null)
@@ -1090,7 +1249,12 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                         <div className="flex gap-1.5 mb-1 bg-[#111C24] p-0.5 rounded-xl border border-white/5">
                                             <button 
                                                 type="button" 
-                                                onClick={() => { setDriverManual(false); setSelectedDriver(null) }}
+                                                onClick={() => {
+                                                    setDriverManual(false)
+                                                    setSelectedDriver(null)
+                                                    setDriverOpen(false)
+                                                    setDriverSearch('')
+                                                }}
                                                 className={cn(
                                                     "flex-1 py-2 rounded-lg font-black uppercase tracking-widest transition-all",
                                                     isDesktop ? "text-[9px]" : "text-xs",
@@ -1099,7 +1263,12 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                             >Terdaftar</button>
                                             <button 
                                                 type="button" 
-                                                onClick={() => { setDriverManual(true); setSelectedDriver(null) }}
+                                                onClick={() => {
+                                                    setDriverManual(true)
+                                                    setSelectedDriver(null)
+                                                    setDriverOpen(false)
+                                                    setDriverSearch('')
+                                                }}
                                                 className={cn(
                                                     "flex-1 py-2 rounded-lg font-black uppercase tracking-widest transition-all",
                                                     isDesktop ? "text-[9px]" : "text-xs",
@@ -1109,6 +1278,65 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                         </div>
 
                                         {!driverManual ? (
+                                            <div style={{ position: 'relative' }}>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleToggleDriverOpen}
+                                                    className="w-full h-12 px-4 rounded-xl bg-[#111C24] border border-white/5 flex justify-between items-center text-xs font-black text-white hover:border-white/20 transition-all uppercase"
+                                                >
+                                                    <span>{selectedDriver ? `${selectedDriver.full_name} · ${selectedDriver.phone || '-'}` : 'PILIH SOPIR'}</span>
+                                                    <ChevronsUpDown size={14} className="opacity-50" />
+                                                </button>
+
+                                                {driverOpen && (
+                                                    <>
+                                                        <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setDriverOpen(false)} />
+                                                        <div
+                                                            style={{
+                                                                position: 'absolute',
+                                                                top: 'calc(100% + 4px)',
+                                                                left: 0,
+                                                                right: 0,
+                                                                zIndex: 50
+                                                            }}
+                                                            className="overflow-hidden rounded-xl border border-white/10 bg-[#0C1319] shadow-2xl"
+                                                        >
+                                                            <div className="border-b border-white/5 p-2">
+                                                                <Input
+                                                                    value={driverSearch}
+                                                                    onChange={(e) => setDriverSearch(e.target.value.toUpperCase())}
+                                                                    placeholder="CARI NAMA..."
+                                                                    className="h-10 bg-[#111C24] border-white/10 text-xs font-black text-white uppercase"
+                                                                />
+                                                            </div>
+
+                                                            <div className="max-h-64 overflow-y-auto p-1">
+                                                                {filteredDrivers.length === 0 ? (
+                                                                    <div className={cn("py-6 text-center uppercase font-black text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>
+                                                                        Sopir tidak ditemukan
+                                                                    </div>
+                                                                ) : (
+                                                                    filteredDrivers.map((driver) => (
+                                                                        <button
+                                                                            key={driver.id}
+                                                                            type="button"
+                                                                            onClick={() => handleSelectDriver(driver)}
+                                                                            className="flex w-full items-center justify-between rounded-lg border-b border-white/5 p-3 text-left hover:bg-white/5 last:border-0"
+                                                                        >
+                                                                            <div className="flex flex-col">
+                                                                                <span className="text-xs font-black uppercase text-white">{driver.full_name}</span>
+                                                                                <span className={cn("font-bold uppercase text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>{driver.phone || 'TANPA HP'}</span>
+                                                                            </div>
+                                                                            {selectedDriver?.id === driver.id && <Check size={14} className="text-emerald-500" />}
+                                                                        </button>
+                                                                    ))
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                )}
+
+                                                {legacyShippingSelectors && (
                                             <Popover open={driverOpen} onOpenChange={setDriverOpen}>
                                                 <PopoverTrigger asChild>
                                                     <button type="button" className="w-full h-12 px-4 rounded-xl bg-[#111C24] border border-white/5 flex justify-between items-center text-xs font-black text-white hover:border-white/20 transition-all uppercase">
@@ -1138,6 +1366,8 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                                     </Command>
                                                 </PopoverContent>
                                             </Popover>
+                                                )}
+                                            </div>
                                         ) : (
                                             <div className="grid grid-cols-2 gap-2">
                                                 <Input 
@@ -1160,6 +1390,8 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                                 type="button"
                                                 onClick={() => {
                                                     setDriverLocked(true)
+                                                    setDriverOpen(false)
+                                                    setDriverSearch('')
                                                     if (delivery.driver_id) {
                                                         const matched = drivers.find(d => d.id === delivery.driver_id)
                                                         setSelectedDriver(matched || null)
@@ -1231,14 +1463,30 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     </div>
 
                     {/* ROW 7: Submit */}
-                    <Button 
+                    <button
                         type="button"
                         onClick={handleUpdate}
                         disabled={isLoading}
-                        className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-[24px] shadow-xl shadow-emerald-500/20 active:scale-95 transition-all mt-4"
+                        className="w-full h-16 rounded-[24px] font-black text-sm uppercase tracking-[0.2em] text-white active:scale-95 transition-all mt-4 disabled:opacity-60 disabled:pointer-events-none flex items-center justify-center gap-3"
+                        style={{
+                            background: isLoading
+                                ? 'linear-gradient(135deg, #10B981, #F59E0B)'
+                                : 'linear-gradient(135deg, #10B981 0%, #F59E0B 100%)',
+                            boxShadow: '0 8px 32px -8px rgba(245,158,11,0.5), 0 4px 16px -4px rgba(16,185,129,0.4)',
+                        }}
                     >
-                        {isLoading ? 'MENYIMPAN...' : 'SIMPAN KEDATANGAN'}
-                    </Button>
+                        {isLoading ? (
+                            <>
+                                <svg className="animate-spin" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                                MENYIMPAN...
+                            </>
+                        ) : (
+                            <>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+                                SELESAI PENGIRIMAN
+                            </>
+                        )}
+                    </button>
                 </form>
             </SheetContent>
         </Sheet>

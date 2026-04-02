@@ -106,7 +106,7 @@ export default function SembakoInvoicePreview({ data, mode = 'invoice', onClose 
                  </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                 {(data.items || []).map((item, idx) => (
+                 {(data.items || data.sembako_sale_items || []).map((item, idx) => (
                     <tr key={idx} className="border-b border-slate-100 last:border-b-0">
                        <td className="py-4 text-xs font-bold text-slate-400">{idx + 1}</td>
                        <td className="py-4">
@@ -143,12 +143,6 @@ export default function SembakoInvoicePreview({ data, mode = 'invoice', onClose 
                    <span className="font-bold text-slate-500 uppercase">Subtotal</span>
                    <span className="font-black text-slate-900">{formatIDR(data.revenue || data.total_amount)}</span>
                 </div>
-                {data.deliveryCost > 0 && (
-                  <div className="flex justify-between items-center text-xs">
-                     <span className="font-bold text-slate-500 uppercase">Biaya Kirim</span>
-                     <span className="font-black text-slate-900">{formatIDR(data.deliveryCost)}</span>
-                  </div>
-                )}
                 {data.otherCost > 0 && (
                   <div className="flex justify-between items-center text-xs">
                      <span className="font-bold text-slate-500 uppercase">Biaya Lain</span>
@@ -157,7 +151,7 @@ export default function SembakoInvoicePreview({ data, mode = 'invoice', onClose 
                 )}
                 <div className="flex justify-between items-center pt-2 border-t border-slate-200">
                    <span className="text-sm font-black text-slate-900 uppercase">TOTAL AKHIR</span>
-                   <span className="text-lg font-black text-slate-900">{formatIDR((data.revenue || data.total_amount) + (data.deliveryCost || 0) + (data.otherCost || 0))}</span>
+                   <span className="text-lg font-black text-slate-900">{formatIDR((data.revenue || data.total_amount) + (data.otherCost || 0))}</span>
                 </div>
              </div>
           </div>

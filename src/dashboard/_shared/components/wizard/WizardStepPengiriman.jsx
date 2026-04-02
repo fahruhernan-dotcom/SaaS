@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -60,11 +60,14 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
   })
 
   const formValues = watch()
-  
-  // Sync form values to parent state automatically
+
+  // Sync form values to parent state via subscription (avoids infinite loop)
   useEffect(() => {
-    setStep3Data(prev => ({ ...prev, ...formValues }))
-  }, [formValues, setStep3Data])
+    const subscription = watch((values) => {
+      setStep3Data(prev => ({ ...prev, ...values }))
+    })
+    return () => subscription.unsubscribe()
+  }, [watch, setStep3Data])
 
   const { data: vehicles } = useQuery({
     queryKey: ['vehicles-active', tenant?.id],
@@ -417,7 +420,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
 
             {driverMode === 'driver' && drivers?.length > 0 ? (
               <div>
-                <Popover open={openDriver} onOpenChange={setOpenDriver}>
+                <Popover open={openDriver} onOpenChange={(open) => setOpenDriver(open)}>
                   <PopoverTrigger asChild>
                     <button id="driver_trigger" type="button" style={{
                       width: '100%', padding: '13px 14px', background: 'hsl(var(--input))', border: '1px solid hsl(var(--border))', borderRadius: '10px',

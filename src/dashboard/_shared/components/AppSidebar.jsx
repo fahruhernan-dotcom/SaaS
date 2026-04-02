@@ -52,7 +52,6 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet"
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
@@ -71,6 +70,7 @@ export default function AppSidebar({ open, onClose }) {
   const [isAddingBusiness, setIsAddingBusiness] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [mobileSwitcherOpen, setMobileSwitcherOpen] = useState(false)
+  const [tenantMenuOpen, setTenantMenuOpen] = useState(false)
   const [expandedFarms, setExpandedFarms] = useState({})
   const userDropdownRef = useRef(null)
   
@@ -291,7 +291,9 @@ export default function AppSidebar({ open, onClose }) {
     {
       label: 'LAINNYA',
       items: [
-        { title: 'Harga Pasar',     url: '/harga-pasar', icon: BarChart2 },
+        ...((tenant?.sub_type === 'broker_ayam' || tenant?.business_vertical === 'poultry_broker') ? [
+          { title: 'Harga Pasar',     url: '/harga-pasar', icon: BarChart2 },
+        ] : []),
         { title: 'TernakOS Market', url: '/market',      icon: Building2 },
       ]
     },
@@ -355,7 +357,7 @@ export default function AppSidebar({ open, onClose }) {
         {/* Tenant selector */}
         <SidebarMenu className="mt-2">
           <SidebarMenuItem>
-            <DropdownMenu>
+            <DropdownMenu open={tenantMenuOpen} onOpenChange={setTenantMenuOpen}>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
@@ -442,93 +444,93 @@ export default function AppSidebar({ open, onClose }) {
                 </ScrollArea>
 
                 <DropdownMenuSeparator className="my-1.5 bg-border" />
-                
-                <Sheet open={isAddingBusiness} onOpenChange={setIsAddingBusiness}>
-                  <SheetTrigger asChild>
-                    <DropdownMenuItem
-                      onSelect={(e) => {
-                        e.preventDefault()
-                        if (canAddBusiness) setIsAddingBusiness(true)
-                      }}
-                      className={`gap-3 rounded-lg p-2 text-muted-foreground transition-colors ${canAddBusiness ? 'cursor-pointer hover:bg-accent hover:text-foreground focus:bg-accent focus:text-foreground' : 'opacity-50 cursor-not-allowed'}`}
-                      title={!canAddBusiness ? 'Upgrade ke PRO untuk tambah bisnis' : undefined}
-                    >
-                      <div className="w-6 h-6 rounded flex items-center justify-center bg-white/5 flex-shrink-0">
-                        {canAddBusiness ? <Plus size={14} /> : <Lock size={14} />}
-                      </div>
-                      <span className="text-[13px] font-medium flex-1">Tambah Bisnis Baru</span>
-                      {!canAddBusiness && (
-                        <span className="text-[9px] font-black text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full uppercase tracking-widest">PRO</span>
-                      )}
-                    </DropdownMenuItem>
-                  </SheetTrigger>
-                  <SheetContent side="right" className="bg-[#090E14] border-border text-foreground w-[400px]">
-                    <SheetHeader>
-                      <SheetTitle className="font-display font-bold text-xl text-foreground">Multi-Tenant</SheetTitle>
-                      <SheetDescription className="text-muted-foreground">
-                        Kelola banyak bisnis dalam satu akun TernakOS.
-                      </SheetDescription>
-                    </SheetHeader>
-                    
-                    <div className="py-8">
-                      <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-6 mb-6">
-                        <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4 text-emerald-400">
-                          <Building2 size={24} />
-                        </div>
-                        <h3 className="text-lg font-bold mb-2">Setup Bisnis Baru</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">
-                          Anda akan memulai proses onboarding untuk binis baru. Setiap bisnis memiliki data, tim, dan penagihan yang terpisah sepenuhnya.
-                        </p>
-                      </div>
-                      
-                      <div className="space-y-4">
-                        <div className="flex items-start gap-4">
-                          <Check size={18} className="text-emerald-400 mt-1" />
-                          <div>
-                            <p className="text-sm font-semibold">Data Terisolasi</p>
-                            <p className="text-xs text-muted-foreground">Data stok, transaksi, dan pelanggan tidak akan bercampur.</p>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-4">
-                          <Check size={18} className="text-emerald-400 mt-1" />
-                          <div>
-                            <p className="text-sm font-semibold">Akses Terpisah</p>
-                            <p className="text-xs text-muted-foreground">Anda bisa mengundang tim yang berbeda untuk tiap bisnis.</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-3">
-                      {canAddBusiness ? (
-                        <button
-                          onClick={() => {
-                            setIsAddingBusiness(false)
-                            navigate('/onboarding?mode=new_business')
-                          }}
-                          className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
-                        >
-                          Mulai Setup Bisnis Baru
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => { setIsAddingBusiness(false); navigate(akunPath) }}
-                          className="w-full bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/15 text-amber-400 font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2"
-                        >
-                          <Lock size={16} /> Upgrade ke PRO
-                        </button>
-                      )}
-                      <button 
-                        onClick={() => setIsAddingBusiness(false)}
-                        className="w-full bg-white/5 hover:bg-white/10 text-muted-foreground font-semibold py-4 rounded-2xl transition-all"
-                      >
-                        Batal
-                      </button>
-                    </div>
-                  </SheetContent>
-                </Sheet>
+
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setTenantMenuOpen(false)
+                    if (!canAddBusiness) return
+                    window.setTimeout(() => setIsAddingBusiness(true), 0)
+                  }}
+                  className={`gap-3 rounded-lg p-2 text-muted-foreground transition-colors ${canAddBusiness ? 'cursor-pointer hover:bg-accent hover:text-foreground focus:bg-accent focus:text-foreground' : 'opacity-50 cursor-not-allowed'}`}
+                  title={!canAddBusiness ? 'Upgrade ke PRO untuk tambah bisnis' : undefined}
+                >
+                  <div className="w-6 h-6 rounded flex items-center justify-center bg-white/5 flex-shrink-0">
+                    {canAddBusiness ? <Plus size={14} /> : <Lock size={14} />}
+                  </div>
+                  <span className="text-[13px] font-medium flex-1">Tambah Bisnis Baru</span>
+                  {!canAddBusiness && (
+                    <span className="text-[9px] font-black text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full uppercase tracking-widest">PRO</span>
+                  )}
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            <Sheet open={isAddingBusiness} onOpenChange={setIsAddingBusiness}>
+              <SheetContent side="right" className="bg-[#090E14] border-border text-foreground w-[400px]">
+                <SheetHeader>
+                  <SheetTitle className="font-display font-bold text-xl text-foreground">Multi-Tenant</SheetTitle>
+                  <SheetDescription className="text-muted-foreground">
+                    Kelola banyak bisnis dalam satu akun TernakOS.
+                  </SheetDescription>
+                </SheetHeader>
+
+                <div className="py-8">
+                  <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-6 mb-6">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4 text-emerald-400">
+                      <Building2 size={24} />
+                    </div>
+                    <h3 className="text-lg font-bold mb-2">Setup Bisnis Baru</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Anda akan memulai proses onboarding untuk binis baru. Setiap bisnis memiliki data, tim, dan penagihan yang terpisah sepenuhnya.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-4">
+                      <Check size={18} className="text-emerald-400 mt-1" />
+                      <div>
+                        <p className="text-sm font-semibold">Data Terisolasi</p>
+                        <p className="text-xs text-muted-foreground">Data stok, transaksi, dan pelanggan tidak akan bercampur.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-4">
+                      <Check size={18} className="text-emerald-400 mt-1" />
+                      <div>
+                        <p className="text-sm font-semibold">Akses Terpisah</p>
+                        <p className="text-xs text-muted-foreground">Anda bisa mengundang tim yang berbeda untuk tiap bisnis.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-3">
+                  {canAddBusiness ? (
+                    <button
+                      onClick={() => {
+                        setIsAddingBusiness(false)
+                        navigate('/onboarding?mode=new_business')
+                      }}
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
+                    >
+                      Mulai Setup Bisnis Baru
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { setIsAddingBusiness(false); navigate(akunPath) }}
+                      className="w-full bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/15 text-amber-400 font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2"
+                    >
+                      <Lock size={16} /> Upgrade ke PRO
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setIsAddingBusiness(false)}
+                    className="w-full bg-white/5 hover:bg-white/10 text-muted-foreground font-semibold py-4 rounded-2xl transition-all"
+                  >
+                    Batal
+                  </button>
+                </div>
+              </SheetContent>
+            </Sheet>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

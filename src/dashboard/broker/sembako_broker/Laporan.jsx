@@ -152,7 +152,7 @@ export default function SembakoLaporan() {
     }
   }
 
-  const { data, isLoading } = useSembakoLaporan(startDate, endDate)
+  const { data, isLoading, isFetching } = useSembakoLaporan(startDate, endDate)
 
   const s = data?.summary || {}
 
@@ -203,6 +203,17 @@ export default function SembakoLaporan() {
         {isLoading ? <LoadingSkeleton /> : !data ? (
           <p style={{ color: C.muted, textAlign: 'center', padding: '60px 0' }}>Pilih rentang tanggal untuk melihat laporan</p>
         ) : (
+          <div style={{ position: 'relative' }}>
+            {/* Overlay saat ganti periode / refetch */}
+            {isFetching && !isLoading && (
+              <div style={{ position: 'absolute', inset: 0, zIndex: 10, background: 'rgba(6,9,15,0.55)', borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(2px)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#1C1208', border: '1px solid rgba(234,88,12,0.2)', borderRadius: 12, padding: '10px 20px' }}>
+                  <div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(234,88,12,0.3)', borderTopColor: '#EA580C', animation: 'spin 0.7s linear infinite' }} />
+                  <span style={{ fontFamily: 'DM Sans', fontSize: 13, color: '#FEF3C7', fontWeight: 600 }}>Memuat data...</span>
+                </div>
+              </div>
+            )}
+            <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
           <>
             {/* SECTION A — KPI Summary */}
             <div style={{ display: 'grid', gridTemplateColumns: isDesktop ? 'repeat(4,1fr)' : 'repeat(2,1fr)', gap: '12px', marginBottom: '24px' }}>
@@ -235,6 +246,7 @@ export default function SembakoLaporan() {
             {/* SECTION E — Invoice Table (Collapsible) */}
             <InvoiceCollapsible sales={data.sales} />
           </>
+          </div>
         )}
       </div>
     </div>

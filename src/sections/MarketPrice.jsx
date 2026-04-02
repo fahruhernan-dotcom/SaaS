@@ -1,10 +1,11 @@
+import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import CountUp from '../components/reactbits/CountUp';
 import AnimatedContent from '../components/reactbits/AnimatedContent';
 
 const MarketPrice = ({ activeRole }) => {
-  const content = {
+  const content = useMemo(() => ({
     broker: {
       title: <>Data Harga Pasar yang <br/><span className="text-emerald-400">Selalu Up-to-Date</span></>,
       desc: "Setiap kali broker mencatat transaksi, harga secara otomatis masuk ke sistem. Kamu tahu rata-rata harga pasar hari ini — bahkan sebelum mulai negosiasi.",
@@ -32,7 +33,7 @@ const MarketPrice = ({ activeRole }) => {
         'Deteksi harga anomali dari broker'
       ]
     }
-  };
+  }), []);
 
   const active = content[activeRole] || content.broker;
 

@@ -2,7 +2,9 @@
 -- This uses dynamic JSON extraction to safely access fields that might not exist on every table.
 
 CREATE OR REPLACE FUNCTION log_audit_action()
-RETURNS trigger AS $$
+RETURNS trigger
+SET search_path = public
+AS $$
 DECLARE
     v_actor_id uuid;
     v_record jsonb;

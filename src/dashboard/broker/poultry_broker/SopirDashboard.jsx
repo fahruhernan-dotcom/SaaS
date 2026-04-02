@@ -101,6 +101,9 @@ export default function SopirDashboard() {
     navigate('/login')
   }
 
+  const handleCloseUpdateSheet = React.useCallback(() => setIsUpdateSheetOpen(false), [])
+  const handleUpdateSuccess = React.useCallback(() => queryClient.invalidateQueries(['my-deliveries']), [queryClient])
+
   // --- RENDER ---
   return (
     <div className="bg-[#06090F] min-h-screen text-[#F1F5F9] font-body relative">
@@ -168,9 +171,9 @@ export default function SopirDashboard() {
 
       <UpdateTibaSheet 
         isOpen={isUpdateSheetOpen}
-        onClose={() => setIsUpdateSheetOpen(false)}
+        onClose={handleCloseUpdateSheet}
         delivery={selectedDelivery}
-        onSuccess={() => queryClient.invalidateQueries(['my-deliveries'])}
+        onSuccess={handleUpdateSuccess}
       />
     </div>
   )

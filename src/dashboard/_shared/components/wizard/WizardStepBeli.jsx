@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -162,7 +162,7 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
       {/* Kandang Combobox */}
       <div className="space-y-1.5">
         <label style={S.label}>Pilih Kandang *</label>
-        <Popover open={openKandang} onOpenChange={setOpenKandang}>
+        <Popover open={openKandang} onOpenChange={(open) => setOpenKandang(open)}>
           <PopoverTrigger asChild>
             <button type="button" style={{
               width: '100%',
@@ -376,16 +376,16 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
                         boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
                       }}>
                         {['kg', 'ton', 'rit'].map(unit => (
-                          <button
-                            key={unit}
-                            type="button"
-                            onClick={() => {
-                              setWeightUnit(unit)
-                              setUnitOpen(false)
-                              const mult = unit === 'ton' ? 1000 : unit === 'rit' ? 5000 : 1
-                              const kg = (parseFloat(totalWeightInput) || 0) * mult
-                              setValue('quantity', Math.round(kg / (parseFloat(watch('avg_weight_kg')) || 1.85)))
-                            }}
+                            <button
+                              key={unit}
+                              type="button"
+                              onClick={() => {
+                                setWeightUnit(unit)
+                                setUnitOpen(false)
+                                const mult = unit === 'ton' ? 1000 : unit === 'rit' ? 5000 : 1
+                                const kg = (parseFloat(totalWeightInput) || 0) * mult
+                                setValue('quantity', Math.round(kg / (parseFloat(watch('avg_weight_kg')) || 1.85)))
+                              }}
                             style={{
                               width: '100%',
                               padding: '11px 14px',

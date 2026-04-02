@@ -2,11 +2,11 @@ import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Plus, ChevronDown, Store, Package, Star, X, Search,
+  Plus, ChevronDown, ChevronRight, Store, Package, Star, X, Search,
   TrendingDown, TrendingUp, Filter, Phone, MapPin
 } from 'lucide-react'
 import {
-  useSembakoCustomers, useSembakoSuppliers,
+  useSembakoCustomers, useSembakoSuppliers, useSembakoSales,
   useCreateSembakoCustomer, useUpdateSembakoCustomer,
   useCreateSembakoSupplier, useUpdateSembakoSupplier,
   useSembakoAllBatches
@@ -21,6 +21,14 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 
 // ── Palette Sembako ──────────────────────────────────────────────────────────
@@ -50,11 +58,13 @@ export default function SembakoTokoSupplier() {
   const { data: customers = [], isLoading: loadCust } = useSembakoCustomers()
   const { data: suppliers = [], isLoading: loadSup } = useSembakoSuppliers()
   const { data: allBatches = [] } = useSembakoAllBatches()
+  const { data: sales = [] } = useSembakoSales()
 
-  // Totals
+  // Totals — compute from sales.remaining_amount (generated column, always accurate)
+  // instead of customers.total_outstanding (stale cached column from DB trigger)
   const totalPiutang = useMemo(() => 
-    customers.reduce((acc, c) => acc + (c.total_outstanding || 0), 0)
-  , [customers])
+    sales.reduce((acc, s) => acc + (s.remaining_amount || 0), 0)
+  , [sales])
 
   const totalHutang = useMemo(() => 
     allBatches.reduce((acc, b) => acc + (b.total_cost || 0), 0) // Static total purchases as proxy
@@ -279,8 +289,9 @@ function SupplierActions() {
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="right" className="bg-[#06090F] border-white/5 p-6 text-left">
-          <SheetHeader className="mb-8">
+          <SheetHeader className="mb-8 text-left">
             <SheetTitle className="font-display font-black text-2xl text-white uppercase tracking-tight text-left">Tambah Supplier</SheetTitle>
+            <SheetDescription className="sr-only">Form untuk mendaftarkan supplier sembako baru.</SheetDescription>
           </SheetHeader>
           <div className="space-y-6 pb-20">
              <div className="space-y-2">

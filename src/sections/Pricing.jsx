@@ -1,9 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ChevronDown, Sparkles, TrendingUp, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import NumberFlow from '@number-flow/react';
+import AnimatedPrice from '../components/AnimatedPrice';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -23,7 +23,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
   const [openFaq, setOpenFaq] = useState(null);
   const switchRef = useRef(null);
 
-  const handleToggle = (checked) => {
+  const handleToggle = useCallback((checked) => {
     setIsAnnual(checked);
     if (checked) {
       const rect = switchRef.current?.getBoundingClientRect();
@@ -39,7 +39,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
         });
       }
     }
-  };
+  }, []);
 
   const getPrices = (role) => {
     switch (role) {
@@ -71,12 +71,12 @@ const Pricing = ({ activeRole, setActiveRole }) => {
     }
   };
 
-  const currentPrices = getPrices(activeRole);
+  const currentPrices = useMemo(() => getPrices(activeRole), [activeRole]);
 
   const formatRupiah = (n) =>
     new Intl.NumberFormat('id-ID').format(n);
 
-  const plans = [
+  const plans = useMemo(() => [
     {
       name: 'PRO',
       subtitle: activeRole === 'broker' ? 'Broker' : activeRole === 'peternak' ? 'Peternak' : 'RPA',
@@ -139,7 +139,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
       isPopular: false,
       isSocial: false,
     },
-  ];
+  ], [activeRole, currentPrices]);
 
   const faqs = [
     { q: 'Bisa cancel kapan saja?', a: 'Tentu. Tidak ada kontrak panjang. Anda bisa berhenti berlangganan kapan saja.' },
@@ -292,10 +292,8 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                       {/* Actual price with animated number */}
                       <div className="flex items-baseline gap-1 h-10">
                         <span className="text-lg font-black text-white tracking-tight mr-0.5">Rp</span>
-                        <NumberFlow
-                          key={`${isAnnual}-${activeRole}`}
+                        <AnimatedPrice
                           value={isAnnual ? plan.annualPrice : plan.monthlyPrice}
-                          format={{ style: 'decimal', useGrouping: true }}
                           className="text-4xl font-black text-white tabular-nums tracking-tighter"
                         />
                         <span className="text-[#4B6478] text-[10px] font-black uppercase tracking-widest ml-1">/Bln</span>
