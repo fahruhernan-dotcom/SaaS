@@ -300,17 +300,7 @@ export default function Register() {
         />
 
         <Link to="/" className="absolute top-8 left-12 flex items-center gap-[10px] z-50 hover:opacity-80 transition-opacity">
-          <div style={{
-            width: 36, height: 36,
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, #10B981, #059669)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '18px'
-          }}>
-            🐔
-          </div>
+          <img src="/logo.png" alt="TernakOS" style={{ width: 36, height: 36, borderRadius: '10px', objectFit: 'cover' }} />
           <span style={{
             fontFamily: 'Sora',
             fontSize: '20px',
@@ -417,38 +407,47 @@ export default function Register() {
       </motion.div>
 
       {/* RIGHT PANEL - FORM */}
-      <div className="flex-1 flex items-center justify-center p-8 min-h-screen overflow-y-auto">
-        <motion.div 
+      <div className="flex-1 flex items-center justify-center px-5 py-8 md:p-8 min-h-screen overflow-y-auto">
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="w-full max-w-[400px] py-10"
+          className="w-full max-w-[400px] py-6 md:py-10"
         >
           <div className="md:hidden flex items-center justify-center gap-2 mb-8">
-            <span className="text-2xl">🐔</span>
+            <img src="/logo.png" alt="TernakOS" style={{ width: 28, height: 28, borderRadius: '8px', objectFit: 'cover' }} />
             <span style={{ fontFamily:'Sora', fontWeight:800, fontSize:'18px', color:'#F1F5F9' }}>TernakOS</span>
           </div>
           
           <h1 style={{ fontFamily: 'Sora', fontSize: '26px', fontWeight: 800, color: '#F1F5F9', margin: '0 0 8px', letterSpacing: '-0.3px' }}>Buat akun baru</h1>
           <p style={{ fontSize: '14px', color: '#4B6478', margin: '0 0 32px', lineHeight: 1.6 }}>14 hari gratis, tanpa kartu kredit.</p>
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleGoogleSignIn}
-            disabled={googleLoading || isLoading}
-            className={`w-full h-12 border-white/15 bg-transparent text-[#F1F5F9] font-semibold rounded-xl hover:border-white/30 hover:bg-white/5 transition-all flex items-center justify-center p-0 ${
-              (googleLoading || isLoading) ? 'opacity-60 cursor-not-allowed' : ''
-            }`}
-          >
-            {googleLoading ? (
-              <Loader2 size={18} className="animate-spin text-[#F1F5F9]" />
-            ) : (
-              <>
-                <GoogleIcon /> Daftar dengan Google
-              </>
-            )}
-          </Button>
+          <div className="relative">
+            <Button
+              type="button"
+              variant="outline"
+              disabled
+              className="w-full h-12 border-white/8 bg-transparent text-[#4B6478] font-semibold rounded-xl flex items-center justify-center p-0 opacity-50 cursor-not-allowed"
+            >
+              <GoogleIcon /> Daftar dengan Google
+            </Button>
+            <span style={{
+              position: 'absolute',
+              top: '50%',
+              right: '14px',
+              transform: 'translateY(-50%)',
+              background: 'rgba(251,191,36,0.12)',
+              border: '1px solid rgba(251,191,36,0.25)',
+              color: '#FBBF24',
+              fontSize: '10px',
+              fontWeight: 700,
+              letterSpacing: '0.05em',
+              padding: '2px 8px',
+              borderRadius: '6px',
+            }}>
+              SEGERA
+            </span>
+          </div>
 
           <div className="flex items-center gap-3 my-6">
             <Separator className="flex-1 bg-white/5" />

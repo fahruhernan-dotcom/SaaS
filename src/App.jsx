@@ -24,7 +24,8 @@ import RumahPotongLayout from './dashboard/_shared/layouts/RumahPotongLayout';
 
 
 // Egg Broker Vertical
-import AcceptInvite from './pages/AcceptInvite';
+import AcceptInvite from './pages/AcceptInvite'
+import AuthCallback from './pages/AuthCallback';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import AboutUs from './pages/AboutUs';
@@ -218,6 +219,7 @@ function App() {
         <Route path="/fitur" element={<FiturPage />} />
         <Route path="/harga" element={<HargaPage />} />
         <Route path="/check-email" element={<CheckEmail />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
 
         <Route path="/onboarding" element={
           <ProtectedRoute>

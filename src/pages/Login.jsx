@@ -31,7 +31,7 @@ export default function Login() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + '/dashboard'
+          redirectTo: window.location.origin + '/auth/callback'
         }
       })
       if (error) throw error
@@ -130,17 +130,12 @@ export default function Login() {
     <div className="flex min-h-screen bg-[#06090F] overflow-x-hidden">
       {/* LOGO (Absolute Positioned) */}
       <Link to="/" className="absolute top-8 left-12 flex items-center gap-2 z-50 group cursor-pointer">
-        <div style={{
-          width: 36, height: 36,
-          borderRadius: '10px',
-          background: 'linear-gradient(135deg, #10B981, #059669)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '18px'
-        }} className="group-hover:scale-105 transition-transform">
-          🐔
-        </div>
+        <img
+          src="/logo.png"
+          alt="TernakOS"
+          style={{ width: 36, height: 36, borderRadius: '10px', objectFit: 'cover' }}
+          className="group-hover:scale-105 transition-transform"
+        />
         <span style={{
           fontFamily: 'Sora',
           fontSize: '20px',
@@ -261,7 +256,7 @@ export default function Login() {
           <div className="w-full bg-[#0C1319] border border-white/8 rounded-2xl p-8">
             {/* HEADER (Mobile Logo) */}
             <Link to="/" className="md:hidden flex items-center justify-center gap-2 mb-8 group">
-              <span className="text-2xl group-hover:scale-110 transition-transform">🐔</span>
+              <img src="/logo.png" alt="TernakOS" style={{ width: 28, height: 28, borderRadius: '8px', objectFit: 'cover' }} className="group-hover:scale-110 transition-transform" />
               <span style={{
                 fontFamily:'Sora', fontWeight:800,
                 fontSize:'18px', color:'#F1F5F9'
@@ -275,35 +270,54 @@ export default function Login() {
               Masukkan email dan password kamu untuk masuk
             </p>
 
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleGoogleSignIn}
-              style={{
-                width: '100%',
-                height: '50px',
-                background: 'transparent',
-                border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: '12px',
-                color: '#F1F5F9',
-                fontFamily: 'Sora',
-                fontSize: '15px',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-              className="hover:bg-white/5 transition-colors mb-6"
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18">
-                <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"/>
-                <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-                <path fill="#FBBC05" d="M3.964 10.71a5.41 5.41 0 0 1 0-3.42V4.958H.957a8.993 8.993 0 0 0 0 8.084l3.007-2.332z"/>
-                <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
-              </svg>
-              Masuk dengan Google
-            </Button>
+            <div className="relative mb-6">
+              <Button
+                type="button"
+                variant="outline"
+                disabled
+                style={{
+                  width: '100%',
+                  height: '50px',
+                  background: 'transparent',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '12px',
+                  color: '#4B6478',
+                  fontFamily: 'Sora',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  cursor: 'not-allowed',
+                  opacity: 0.5
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" style={{ opacity: 0.4 }}>
+                  <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"/>
+                  <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+                  <path fill="#FBBC05" d="M3.964 10.71a5.41 5.41 0 0 1 0-3.42V4.958H.957a8.993 8.993 0 0 0 0 8.084l3.007-2.332z"/>
+                  <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+                </svg>
+                Masuk dengan Google
+              </Button>
+              <span style={{
+                position: 'absolute',
+                top: '50%',
+                right: '14px',
+                transform: 'translateY(-50%)',
+                background: 'rgba(251,191,36,0.12)',
+                border: '1px solid rgba(251,191,36,0.25)',
+                color: '#FBBF24',
+                fontSize: '10px',
+                fontWeight: 700,
+                letterSpacing: '0.05em',
+                padding: '2px 8px',
+                borderRadius: '6px',
+              }}>
+                SEGERA
+              </span>
+            </div>
 
             <div className="flex items-center gap-3 mb-6">
               <Separator className="flex-1 bg-white/5" />
