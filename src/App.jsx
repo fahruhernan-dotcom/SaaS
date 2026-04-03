@@ -7,6 +7,8 @@ import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import CheckEmail from './pages/CheckEmail';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import LoadingScreen from './components/LoadingScreen';
 
 import { PeternakPageRouter } from './dashboard/peternak/PeternakRouter';
@@ -79,6 +81,29 @@ const ScrollToTop = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
+  return null;
+};
+
+// Detect Supabase auth tokens in URL hash (from email confirmation/reset links)
+// and redirect to /auth/callback for proper handling
+const AuthHashRedirect = () => {
+  const location = useLocation();
+  
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash) return;
+    
+    // Supabase email confirmation/reset redirects with hash params like:
+    // /#access_token=xxx&refresh_token=xxx&type=signup
+    // /#access_token=xxx&type=recovery
+    const hasAuthToken = hash.includes('access_token=') || hash.includes('type=recovery') || hash.includes('type=signup');
+    
+    if (hasAuthToken && location.pathname !== '/auth/callback') {
+      // Move the hash to /auth/callback so AuthCallback component handles it
+      window.location.replace('/auth/callback' + hash);
+    }
+  }, [location]);
+  
   return null;
 };
 
@@ -202,6 +227,7 @@ function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <AuthHashRedirect />
       
       <AnimatePresence mode="wait">
         {loading && <LoadingScreen key="loading-screen" />}
@@ -219,6 +245,8 @@ function App() {
         <Route path="/fitur" element={<FiturPage />} />
         <Route path="/harga" element={<HargaPage />} />
         <Route path="/check-email" element={<CheckEmail />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/upgrade" element={
           <ProtectedRoute>

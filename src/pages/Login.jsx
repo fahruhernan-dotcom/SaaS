@@ -274,7 +274,7 @@ export default function Login() {
               <Button
                 type="button"
                 variant="outline"
-                disabled
+                onClick={handleGoogleSignIn}
                 style={{
                   width: '100%',
                   height: '44px',
@@ -288,12 +288,11 @@ export default function Login() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px',
-                  cursor: 'not-allowed',
-                  opacity: 0.5
+                  gap: '8px'
                 }}
+                className="hover:bg-white/5 transition-colors"
               >
-                <svg width="16" height="16" viewBox="0 0 18 18" style={{ opacity: 0.4 }}>
+                <svg width="16" height="16" viewBox="0 0 18 18">
                   <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"/>
                   <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
                   <path fill="#FBBC05" d="M3.964 10.71a5.41 5.41 0 0 1 0-3.42V4.958H.957a8.993 8.993 0 0 0 0 8.084l3.007-2.332z"/>
@@ -301,22 +300,6 @@ export default function Login() {
                 </svg>
                 Masuk dengan Google
               </Button>
-              <span style={{
-                position: 'absolute',
-                top: '50%',
-                right: '14px',
-                transform: 'translateY(-50%)',
-                background: 'rgba(251,191,36,0.12)',
-                border: '1px solid rgba(251,191,36,0.25)',
-                color: '#FBBF24',
-                fontSize: '10px',
-                fontWeight: 700,
-                letterSpacing: '0.05em',
-                padding: '2px 8px',
-                borderRadius: '6px',
-              }}>
-                SEGERA
-              </span>
             </div>
 
             <div className="flex items-center gap-3 mb-6">

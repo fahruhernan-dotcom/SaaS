@@ -11,10 +11,11 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import {
   Eye, EyeOff, AlertCircle, Loader2,
-  TrendingUp, Truck, BarChart2, Clock
+  TrendingUp, Truck, BarChart2, Clock, ShieldAlert
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getBrokerBasePath } from '../lib/hooks/useAuth'
+import { useAntiSpam } from '@/lib/hooks/useAntiSpam'
 
 // Reactbits Components
 import BlurText from '@/components/reactbits/BlurText'
@@ -91,6 +92,15 @@ export default function Register() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [authError, setAuthError] = useState('')
   const [mode, setMode] = useState('mandiri')
+
+  const {
+    cooldown, isLocked, lockoutRemaining,
+    gate, onSubmitted, HoneypotField, isBlocked
+  } = useAntiSpam('signup', {
+    cooldownSeconds: 30,
+    maxAttempts: 3,
+    lockoutMinutes: 15
+  })
 
   const {
     register,
@@ -215,6 +225,13 @@ export default function Register() {
   }
 
   const onSubmit = async (formData) => {
+    // Anti-spam gate
+    const check = gate()
+    if (!check.allowed) {
+      setAuthError(check.reason)
+      return
+    }
+
     if (mode === 'invite') {
       return handleInviteRegister(formData)
     }
@@ -234,6 +251,7 @@ export default function Register() {
       if (error) throw error;
 
       // Arahkan ke halaman konfirmasi email — user belum terautentikasi sampai klik link
+      onSubmitted() // start cooldown + record attempt
       navigate('/check-email', { state: { email: formData.email.trim() } })
       toast.success('Akun dibuat! Cek email kamu untuk konfirmasi.')
 
@@ -409,27 +427,11 @@ export default function Register() {
             <Button
               type="button"
               variant="outline"
-              disabled
-              className="w-full h-[44px] border-white/8 bg-transparent text-[#4B6478] font-semibold rounded-xl flex items-center justify-center p-0 opacity-50 cursor-not-allowed text-sm"
+              onClick={handleGoogleSignIn}
+              className="w-full h-[44px] border-white/8 bg-transparent text-[#4B6478] font-semibold rounded-xl flex items-center justify-center p-0 hover:bg-white/5 transition-colors text-sm"
             >
               <GoogleIcon /> Daftar dengan Google
             </Button>
-            <span style={{
-              position: 'absolute',
-              top: '50%',
-              right: '14px',
-              transform: 'translateY(-50%)',
-              background: 'rgba(251,191,36,0.12)',
-              border: '1px solid rgba(251,191,36,0.25)',
-              color: '#FBBF24',
-              fontSize: '10px',
-              fontWeight: 700,
-              letterSpacing: '0.05em',
-              padding: '2px 8px',
-              borderRadius: '6px',
-            }}>
-              SEGERA
-            </span>
           </div>
 
           <div className="flex items-center gap-3 my-6">
@@ -463,7 +465,30 @@ export default function Register() {
             </button>
           </div>
 
+          {/* Lockout Warning */}
+          {isLocked && (
+            <div style={{
+              padding: '12px 14px',
+              background: 'rgba(251,191,36,0.08)',
+              border: '1px solid rgba(251,191,36,0.20)',
+              borderRadius: '10px',
+              fontSize: '13px',
+              color: '#FBBF24',
+              display: 'flex',
+              gap: '8px',
+              alignItems: 'center',
+              marginBottom: '16px'
+            }}>
+              <ShieldAlert size={16} className="shrink-0" />
+              <span>
+                Terlalu banyak percobaan. Coba lagi dalam <strong>{Math.ceil(lockoutRemaining / 60)}m</strong>
+              </span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Honeypot — invisible to humans */}
+            <HoneypotField />
             {/* Nama Lengkap */}
             <div className="space-y-1.5">
               <Label htmlFor="fullName" style={{ fontSize: '13px', fontWeight: 500, color: '#94A3B8', marginLeft: '4px' }}>Nama Lengkap</Label>
@@ -587,7 +612,7 @@ export default function Register() {
             
             <Button
               type="submit"
-              disabled={isLoading || googleLoading}
+              disabled={isLoading || googleLoading || isBlocked}
               style={{
                 width: '100%',
                 height: '44px',
@@ -601,11 +626,13 @@ export default function Register() {
                 boxShadow: '0 4px 20px rgba(16,185,129,0.25)',
                 marginTop: '8px'
               }}
-              className={`hover:bg-emerald-600 transition-colors ${(isLoading || googleLoading) ? 'opacity-60 cursor-not-allowed' : ''}`}
+              className={`hover:bg-emerald-600 transition-colors ${(isLoading || googleLoading || isBlocked) ? 'opacity-60 cursor-not-allowed' : ''}`}
             >
               {isLoading ? (
                 <><Loader2 size={16} className="animate-spin mr-2" />
                   Memproses...</>
+              ) : cooldown > 0 ? (
+                `Tunggu ${cooldown}s`
               ) : (mode === 'mandiri' ? 'Daftar Gratis →' : 'Bergabung ke Tim')}
             </Button>
           </form>
