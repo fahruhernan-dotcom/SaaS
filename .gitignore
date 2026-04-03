@@ -24,6 +24,10 @@ dist-ssr
 *.sw?
 .env
 
+# Ignored common extensions
+*.txt
+*.sql
+
 # Project Documentation
 CONTEXT.md
 DATABASE_STRUCTURE.md

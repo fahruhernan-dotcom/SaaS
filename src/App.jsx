@@ -96,9 +96,11 @@ const AuthHashRedirect = () => {
     // Supabase email confirmation/reset redirects with hash params like:
     // /#access_token=xxx&refresh_token=xxx&type=signup
     // /#access_token=xxx&type=recovery
+    // Detect auth tokens OR auth errors in hash
     const hasAuthToken = hash.includes('access_token=') || hash.includes('type=recovery') || hash.includes('type=signup');
+    const hasAuthError = hash.includes('error=') || hash.includes('error_code=');
     
-    if (hasAuthToken && location.pathname !== '/auth/callback') {
+    if ((hasAuthToken || hasAuthError) && location.pathname !== '/auth/callback') {
       // Move the hash to /auth/callback so AuthCallback component handles it
       window.location.replace('/auth/callback' + hash);
     }
