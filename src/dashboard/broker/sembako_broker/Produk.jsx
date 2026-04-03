@@ -8,15 +8,11 @@ import {
   useUpdateSembakoProduct,
   useSoftDeleteSembakoProduct,
 } from '@/lib/hooks/useSembakoData'
+import { C } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const ACCENT   = '#EA580C'
-const BG_CARD  = '#1C1208'
-const BG_PAGE  = '#06090F'
-const TEXT_PRI = '#FEF3C7'
 const TEXT_SEC = '#A8764A'
-const BORDER   = 'rgba(234,88,12,0.15)'
 
 const CATEGORIES = [
   'Beras', 'Gula', 'Minyak Goreng', 'Tepung', 'Telur',
@@ -115,7 +111,7 @@ function ProductSheet({ product, onClose }) {
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-        style={{ background: '#100A03', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: '540px', padding: '0 0 32px', borderTop: `1px solid ${BORDER}`, maxHeight: '92vh', overflowY: 'auto' }}
+        style={{ background: '#100A03', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: '540px', padding: '0 0 32px', borderTop: `1px solid ${C.border}`, maxHeight: '92vh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Handle */}
@@ -125,7 +121,7 @@ function ProductSheet({ product, onClose }) {
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 20px 16px' }}>
-          <h2 style={{ fontFamily: 'Sora', fontSize: 17, fontWeight: 700, color: TEXT_PRI, margin: 0 }}>
+          <h2 style={{ fontFamily: 'Sora', fontSize: 17, fontWeight: 700, color: C.text, margin: 0 }}>
             {isEdit ? 'Edit Produk' : 'Tambah Produk'}
           </h2>
           <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -176,7 +172,7 @@ function ProductSheet({ product, onClose }) {
                     exit={{ opacity: 0, y: -4 }}
                     style={{
                       position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
-                      background: '#1C1208', border: `1px solid ${BORDER}`, borderRadius: 12,
+                      background: '#1C1208', border: `1px solid ${C.border}`, borderRadius: 12,
                       marginTop: 6, overflow: 'hidden', boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
                       maxHeight: '180px', overflowY: 'auto'
                     }}
@@ -190,7 +186,7 @@ function ProductSheet({ product, onClose }) {
                           style={{
                             display: 'block', width: '100%', padding: '12px 14px', border: 'none',
                             background: form.category === c ? 'rgba(234,88,12,0.1)' : 'transparent',
-                            color: form.category === c ? ACCENT : TEXT_PRI,
+                            color: form.category === c ? C.accent : C.text,
                             fontSize: 14, fontFamily: 'DM Sans', textAlign: 'left', cursor: 'pointer',
                             transition: 'background 0.2s',
                             borderBottom: `1px solid rgba(255,255,255,0.03)`
@@ -243,7 +239,7 @@ function ProductSheet({ product, onClose }) {
                   placeholder="Contoh: 24 (artinya 1 Karton = 24 Pcs)"
                   style={{ ...inputStyle, paddingLeft: 44 }}
                 />
-                <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: ACCENT, fontWeight: 800 }}>1x</span>
+                <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: C.accent, fontWeight: 800 }}>1x</span>
               </div>
               <p style={{ fontSize: 10, color: TEXT_SEC, marginTop: 4, fontStyle: 'italic' }}>
                 * Berguna agar saat jual "{form.secondary_unit}", stok terpotong otomatis sebanyak {form.conversion_rate || '...'} "{form.unit}".
@@ -304,10 +300,10 @@ function ProductSheet({ product, onClose }) {
             <button
               id="product-active" type="button"
               onClick={() => set('is_active', !form.is_active)}
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: form.is_active ? ACCENT : '#4B5563', display: 'flex' }}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: form.is_active ? C.accent : '#4B5563', display: 'flex' }}
             >
               {form.is_active
-                ? <ToggleRight size={32} color={ACCENT} />
+                ? <ToggleRight size={32} color={C.accent} />
                 : <ToggleLeft  size={32} color="#4B5563" />}
             </button>
           </div>
@@ -320,7 +316,7 @@ function ProductSheet({ product, onClose }) {
               marginTop: 4,
               width: '100%',
               height: 50,
-              background: form.product_name.trim() && !isLoading ? ACCENT : 'rgba(234,88,12,0.3)',
+              background: form.product_name.trim() && !isLoading ? C.accent : 'rgba(234,88,12,0.3)',
               border: 'none', borderRadius: 14,
               color: 'white', fontFamily: 'Sora', fontSize: 15, fontWeight: 700,
               cursor: form.product_name.trim() && !isLoading ? 'pointer' : 'not-allowed',
@@ -363,11 +359,11 @@ function CustomSelect({ value, onChange, options, placeholder, id }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          border: open ? `1px solid ${ACCENT}` : `1px solid ${BORDER}`,
+          border: open ? `1px solid ${C.accent}` : `1px solid ${C.border}`,
           transition: 'all 0.2s'
         }}
       >
-        <span style={{ color: value ? TEXT_PRI : TEXT_SEC, fontSize: '14px' }}>
+        <span style={{ color: value ? C.text : TEXT_SEC, fontSize: '14px' }}>
           {selected ? selected.label : placeholder}
         </span>
         <ChevronDown size={16} color={TEXT_SEC} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
@@ -386,7 +382,7 @@ function CustomSelect({ value, onChange, options, placeholder, id }) {
               exit={{ opacity: 0, y: -8, scale: 0.95 }}
               style={{
                 position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '8px',
-                background: '#130C06', border: `1px solid ${BORDER}`, borderRadius: '14px',
+                background: '#130C06', border: `1px solid ${C.border}`, borderRadius: '14px',
                 zIndex: 999, overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
                 backdropFilter: 'blur(10px)',
               }}
@@ -397,7 +393,7 @@ function CustomSelect({ value, onChange, options, placeholder, id }) {
                     key={opt.value}
                     onClick={() => { onChange(opt.value); setOpen(false) }}
                     style={{
-                      padding: '12px 16px', fontSize: '14px', color: value === opt.value ? ACCENT : TEXT_PRI,
+                      padding: '12px 16px', fontSize: '14px', color: value === opt.value ? C.accent : C.text,
                       background: value === opt.value ? 'rgba(234,88,12,0.1)' : 'transparent',
                       cursor: 'pointer', transition: 'all 0.2s',
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -421,10 +417,10 @@ function CustomSelect({ value, onChange, options, placeholder, id }) {
 const inputStyle = {
   width: '100%',
   background: 'rgba(255,255,255,0.04)',
-  border: `1px solid ${BORDER}`,
+  border: `1px solid ${C.border}`,
   borderRadius: 10,
   padding: '10px 14px',
-  color: TEXT_PRI,
+  color: C.text,
   fontSize: 14,
   fontFamily: 'DM Sans',
   outline: 'none',
@@ -450,8 +446,8 @@ function ProductCard({ product, onEdit, onDelete }) {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       style={{
-        background: BG_CARD,
-        border: `1px solid ${BORDER}`,
+        background: C.card,
+        border: `1px solid ${C.border}`,
         borderRadius: 16,
         padding: '14px 14px 12px',
         cursor: 'pointer',
@@ -463,18 +459,18 @@ function ProductCard({ product, onEdit, onDelete }) {
     >
       {/* Badge kategori */}
       {product.category && (
-        <span style={{ fontSize: 10, fontFamily: 'DM Sans', fontWeight: 600, color: ACCENT, background: 'rgba(234,88,12,0.12)', padding: '2px 8px', borderRadius: 20, letterSpacing: '0.03em' }}>
+        <span style={{ fontSize: 10, fontFamily: 'DM Sans', fontWeight: 600, color: C.accent, background: 'rgba(234,88,12,0.12)', padding: '2px 8px', borderRadius: 20, letterSpacing: '0.03em' }}>
           {product.category}
         </span>
       )}
 
       {/* Nama produk */}
-      <p style={{ fontFamily: 'Sora', fontWeight: 700, fontSize: 14, color: TEXT_PRI, margin: '8px 0 4px', lineHeight: 1.3, wordBreak: 'break-word' }}>
+      <p style={{ fontFamily: 'Sora', fontWeight: 700, fontSize: 14, color: C.text, margin: '8px 0 4px', lineHeight: 1.3, wordBreak: 'break-word' }}>
         {product.product_name}
       </p>
 
       {/* Harga jual */}
-      <p style={{ fontFamily: 'DM Sans', fontSize: 13, color: ACCENT, fontWeight: 600, margin: '0 0 10px' }}>
+      <p style={{ fontFamily: 'DM Sans', fontSize: 13, color: C.accent, fontWeight: 600, margin: '0 0 10px' }}>
         Rp {fmt(product.sell_price)} / {product.unit}
       </p>
 
@@ -522,9 +518,9 @@ function ProductCard({ product, onEdit, onDelete }) {
 
 function StatCard({ label, value, sub, color }) {
   return (
-    <div style={{ background: BG_CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '12px 14px' }}>
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: '12px 14px' }}>
       <p style={{ fontSize: 11, color: TEXT_SEC, fontFamily: 'DM Sans', margin: '0 0 4px' }}>{label}</p>
-      <p style={{ fontSize: 18, fontWeight: 800, fontFamily: 'Sora', color: color || TEXT_PRI, margin: 0 }}>{value}</p>
+      <p style={{ fontSize: 18, fontWeight: 800, fontFamily: 'Sora', color: color || C.text, margin: 0 }}>{value}</p>
       {sub && <p style={{ fontSize: 11, color: '#6B7280', fontFamily: 'DM Sans', marginTop: 2 }}>{sub}</p>}
     </div>
   )
@@ -568,22 +564,22 @@ export default function Produk() {
   }
 
   if (isLoading) return (
-    <div style={{ minHeight: '100vh', background: BG_PAGE, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <p style={{ color: TEXT_SEC, fontFamily: 'DM Sans' }}>Memuat produk...</p>
     </div>
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: BG_PAGE, paddingBottom: 80 }}>
+    <div style={{ minHeight: '100vh', background: C.bg, paddingBottom: 80 }}>
       {/* Header */}
       <div style={{ padding: '20px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h1 style={{ fontFamily: 'Sora', fontSize: 20, fontWeight: 800, color: TEXT_PRI, margin: 0 }}>Manajemen Produk</h1>
+          <h1 style={{ fontFamily: 'Sora', fontSize: 20, fontWeight: 800, color: C.text, margin: 0 }}>Manajemen Produk</h1>
           <p style={{ fontFamily: 'DM Sans', fontSize: 13, color: TEXT_SEC, marginTop: 2 }}>{stats.total} produk aktif</p>
         </div>
         <button
           onClick={() => setSheet('new')}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: ACCENT, border: 'none', borderRadius: 12, padding: '10px 16px', color: 'white', fontFamily: 'Sora', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(234,88,12,0.35)' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, background: C.accent, border: 'none', borderRadius: 12, padding: '10px 16px', color: 'white', fontFamily: 'Sora', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(234,88,12,0.35)' }}
         >
           <Plus size={16} /> Tambah
         </button>
@@ -591,9 +587,9 @@ export default function Produk() {
 
       {/* Stats row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, padding: '16px 16px 0' }}>
-        <StatCard label="Total Produk"  value={stats.total}         color={TEXT_PRI} />
+        <StatCard label="Total Produk"  value={stats.total}         color={C.text} />
         <StatCard label="Stok Menipis"  value={stats.lowStock}      color={stats.lowStock > 0 ? '#F87171' : '#34D399'} sub={stats.lowStock > 0 ? 'perlu restock' : 'aman'} />
-        <StatCard label="Nilai Stok"    value={`Rp ${stats.nilaiStok >= 1_000_000 ? (stats.nilaiStok / 1_000_000).toFixed(1) + 'jt' : fmt(stats.nilaiStok)}`} color={ACCENT} />
+        <StatCard label="Nilai Stok"    value={`Rp ${stats.nilaiStok >= 1_000_000 ? (stats.nilaiStok / 1_000_000).toFixed(1) + 'jt' : fmt(stats.nilaiStok)}`} color={C.accent} />
       </div>
 
       {/* Search + filter */}
@@ -606,7 +602,7 @@ export default function Produk() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Cari produk..."
-            style={{ ...inputStyle, paddingLeft: 36, background: BG_CARD }}
+            style={{ ...inputStyle, paddingLeft: 36, background: C.card }}
           />
           {search && (
             <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', cursor: 'pointer' }}>
@@ -622,10 +618,10 @@ export default function Produk() {
               key={cat}
               onClick={() => setCatFilter(cat)}
               style={{
-                flexShrink: 0, background: catFilter === cat ? 'rgba(234,88,12,0.15)' : BG_CARD,
-                border: `1px solid ${catFilter === cat ? 'rgba(234,88,12,0.5)' : BORDER}`,
+                flexShrink: 0, background: catFilter === cat ? 'rgba(234,88,12,0.15)' : C.card,
+                border: `1px solid ${catFilter === cat ? 'rgba(234,88,12,0.5)' : C.border}`,
                 borderRadius: 20, padding: '6px 14px',
-                color: catFilter === cat ? ACCENT : TEXT_SEC,
+                color: catFilter === cat ? C.accent : TEXT_SEC,
                 fontSize: 12, fontFamily: 'DM Sans', fontWeight: catFilter === cat ? 700 : 400,
                 cursor: 'pointer', whiteSpace: 'nowrap',
               }}
@@ -640,9 +636,9 @@ export default function Produk() {
       <div style={{ padding: '10px 16px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
         <button
           onClick={() => setShowInactive(v => !v)}
-          style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: showInactive ? ACCENT : '#6B7280', display: 'flex', alignItems: 'center', gap: 6 }}
+          style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: showInactive ? C.accent : '#6B7280', display: 'flex', alignItems: 'center', gap: 6 }}
         >
-          {showInactive ? <ToggleRight size={20} color={ACCENT} /> : <ToggleLeft size={20} color="#6B7280" />}
+          {showInactive ? <ToggleRight size={20} color={C.accent} /> : <ToggleLeft size={20} color="#6B7280" />}
           <span style={{ fontFamily: 'DM Sans', fontSize: 12 }}>Tampilkan non-aktif</span>
         </button>
       </div>

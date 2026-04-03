@@ -233,26 +233,9 @@ export default function Register() {
 
       if (error) throw error;
 
-      // Polling for profile creation (progressive backoff)
-      const profileCheck = await waitForProfile(authData.user.id)
-
-      if (!profileCheck) {
-        toast.error(
-          'Akun dibuat tapi profil tidak ditemukan. ' +
-          'Coba login — jika masih error, hubungi support.',
-          { duration: 6000 }
-        )
-        await supabase.auth.signOut()
-        return
-      }
-
-      // Trigger berhasil — navigate sesuai status onboarding
-      if (profileCheck.onboarded) {
-        navigate(getBrokerBasePath({ sub_type: profileCheck.tenants?.sub_type }) + '/beranda')
-      } else {
-        navigate('/onboarding')
-      }
-      toast.success('Akun berhasil dibuat! Yuk lengkapi profil bisnis kamu.')
+      // Arahkan ke halaman konfirmasi email — user belum terautentikasi sampai klik link
+      navigate('/check-email', { state: { email: formData.email.trim() } })
+      toast.success('Akun dibuat! Cek email kamu untuk konfirmasi.')
 
     } catch (err) {
       setAuthError(err.message)
@@ -312,7 +295,7 @@ export default function Register() {
           </span>
         </Link>
 
-        <div className="flex flex-col gap-8 relative z-10">
+        <div className="flex flex-col gap-8 relative z-10 pt-20">
           <div className="space-y-4">
             <BlurText
               text="Digitalisasi bisnis ternak lebih cepat, lebih rapi."

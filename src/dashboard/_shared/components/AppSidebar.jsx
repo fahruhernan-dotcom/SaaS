@@ -22,6 +22,7 @@ import {
   Lock,
   Sparkles,
   Shield,
+  CreditCard,
   ShoppingCart,
   Package,
   Store,
@@ -54,6 +55,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
+import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
@@ -327,16 +329,10 @@ export default function AppSidebar({ open, onClose }) {
     }
   }
 
-  // Calculate Account Activity (Active if Paid or in Trial)
-  const isPaidPlan = ['pro', 'business'].includes(tenant?.plan)
-  const trialEndsAt = tenant?.trial_ends_at
-  const isTrialActive = trialEndsAt ? new Date(trialEndsAt) > new Date() : false
-  
-  const isAccountActive = isSuperadmin || isPaidPlan || isTrialActive
-
-  const daysLeft = !isSuperadmin && isTrialActive && trialEndsAt 
-    ? Math.max(0, Math.ceil((new Date(trialEndsAt) - new Date()) / (1000 * 60 * 60 * 24))) 
-    : 0
+  // Subscription status — single source of truth
+  const sub = getSubscriptionStatus(tenant)
+  const isAccountActive = isSuperadmin || sub.status === 'active' || sub.status === 'trial'
+  const daysLeft = isSuperadmin ? 0 : sub.daysLeft
 
   const sidebarContent = (
     <>
@@ -718,103 +714,111 @@ export default function AppSidebar({ open, onClose }) {
         <div style={{
           margin: '0 4px 8px',
           padding: '10px 12px',
-          background: isSuperadmin ? 'rgba(245,158,11,0.06)' : 'rgba(16,185,129,0.06)',
-          border: isSuperadmin ? '1px solid rgba(245,158,11,0.15)' : '1px solid rgba(16,185,129,0.15)',
+          background: isSuperadmin
+            ? 'rgba(245,158,11,0.06)'
+            : sub.status === 'expired'
+            ? 'rgba(248,113,113,0.06)'
+            : sub.isExpiringSoon
+            ? 'rgba(245,158,11,0.06)'
+            : 'rgba(16,185,129,0.06)',
+          border: isSuperadmin
+            ? '1px solid rgba(245,158,11,0.15)'
+            : sub.status === 'expired'
+            ? '1px solid rgba(248,113,113,0.25)'
+            : sub.isExpiringSoon
+            ? '1px solid rgba(245,158,11,0.25)'
+            : '1px solid rgba(16,185,129,0.15)',
           borderRadius: '10px',
         }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <p style={{
-                fontSize: '10px',
-                fontWeight: 600,
+                fontSize: '10px', fontWeight: 600,
                 color: isSuperadmin ? 'rgba(245,158,11,0.6)' : '#4B6478',
-                textTransform: 'uppercase',
-                letterSpacing: '0.8px',
-                margin: 0
+                textTransform: 'uppercase', letterSpacing: '0.8px', margin: 0
               }}>
                 {isSuperadmin ? 'Status Akun' : 'Plan Aktif'}
               </p>
               <p style={{
-                fontFamily: 'Sora',
-                fontSize: '13px',
-                fontWeight: 800,
-                color: isSuperadmin ? '#F59E0B' : '#34D399',
-                margin: '2px 0 0',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
+                fontFamily: 'Sora', fontSize: '13px', fontWeight: 800,
+                color: isSuperadmin ? '#F59E0B' : sub.status === 'expired' ? '#F87171' : '#34D399',
+                margin: '2px 0 0', display: 'flex', alignItems: 'center', gap: '4px'
               }}>
                 {isSuperadmin ? (
-                  <>
-                    <Shield size={14} className="text-amber-500" />
-                    PLATFORM ADMIN
-                  </>
+                  <><Shield size={14} className="text-amber-500" /> PLATFORM ADMIN</>
                 ) : (
                   tenant?.plan?.toUpperCase() || 'STARTER'
                 )}
               </p>
             </div>
-            
-            {/* Trial badge kalau masih trial (Hanya non-superadmin) */}
-            {isTrialActive && !isSuperadmin && (
+
+            {/* Status badge (non-superadmin) */}
+            {!isSuperadmin && sub.status !== 'unknown' && (
               <span style={{
-                fontSize: '10px',
-                fontWeight: 700,
-                background: 'rgba(245,158,11,0.12)',
-                color: '#F59E0B',
-                border: '1px solid rgba(245,158,11,0.20)',
-                borderRadius: '6px',
-                padding: '2px 7px'
+                fontSize: '10px', fontWeight: 700, borderRadius: '6px', padding: '2px 7px',
+                background: sub.status === 'expired'
+                  ? 'rgba(248,113,113,0.15)'
+                  : sub.status === 'trial'
+                  ? 'rgba(245,158,11,0.12)'
+                  : 'rgba(16,185,129,0.12)',
+                color: sub.status === 'expired' ? '#F87171' : sub.status === 'trial' ? '#F59E0B' : '#34D399',
+                border: sub.status === 'expired'
+                  ? '1px solid rgba(248,113,113,0.25)'
+                  : sub.status === 'trial'
+                  ? '1px solid rgba(245,158,11,0.20)'
+                  : '1px solid rgba(16,185,129,0.20)',
               }}>
-                Trial {daysLeft}h
+                {sub.status === 'expired' ? 'Expired' : sub.status === 'trial' ? `Trial ${daysLeft}h` : `${daysLeft}h`}
               </span>
             )}
 
             {/* Premium Badge for Superadmin */}
             {isSuperadmin && (
               <span style={{
-                fontSize: '9px',
-                fontWeight: 900,
-                background: 'rgba(245,158,11,0.2)',
-                color: '#F59E0B',
-                borderRadius: '4px',
-                padding: '1px 5px',
-                letterSpacing: '1px'
+                fontSize: '9px', fontWeight: 900,
+                background: 'rgba(245,158,11,0.2)', color: '#F59E0B',
+                borderRadius: '4px', padding: '1px 5px', letterSpacing: '1px'
               }}>
                 PRO
               </span>
             )}
           </div>
-          
-          {/* Progress bar trial (Hanya non-superadmin) */}
-          {isTrialActive && !isSuperadmin && (
+
+          {/* Progress bar — shown for trial and expiring paid plans */}
+          {!isSuperadmin && (sub.status === 'trial' || (sub.status === 'active' && sub.isExpiringSoon)) && (
             <div style={{
-              marginTop: '8px',
-              height: '3px',
-              background: 'rgba(255,255,255,0.08)',
-              borderRadius: '99px',
-              overflow: 'hidden'
+              marginTop: '8px', height: '3px',
+              background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden'
             }}>
               <div style={{
                 height: '100%',
-                width: `${(daysLeft / 14) * 100}%`,
-                background: daysLeft <= 3 
-                  ? '#F87171' 
-                  : daysLeft <= 7 
-                  ? '#F59E0B' 
-                  : '#10B981',
-                borderRadius: '99px',
-                transition: 'width 0.3s ease'
+                width: `${Math.max(4, (daysLeft / (sub.status === 'trial' ? 14 : 30)) * 100)}%`,
+                background: daysLeft <= 3 ? '#F87171' : daysLeft <= 7 ? '#F59E0B' : '#10B981',
+                borderRadius: '99px', transition: 'width 0.3s ease'
               }} />
             </div>
           )}
 
-          {/* Mulai Trial button (Hanya non-superadmin) */}
-          {!isAccountActive && !isSuperadmin && (
+          {/* Renewal / Upgrade shortcut for expiring or expired paid plans */}
+          {!isSuperadmin && sub.status !== 'unknown' && (sub.status === 'expired' && sub.plan !== 'starter' || sub.isExpiringSoon && sub.status === 'active') && (
+            <button
+              onClick={() => navigate('/upgrade')}
+              style={{
+                width: '100%', marginTop: '10px', padding: '7px 12px',
+                background: sub.status === 'expired' ? 'rgba(248,113,113,0.15)' : 'rgba(245,158,11,0.15)',
+                color: sub.status === 'expired' ? '#F87171' : '#F59E0B',
+                border: sub.status === 'expired' ? '1px solid rgba(248,113,113,0.3)' : '1px solid rgba(245,158,11,0.3)',
+                borderRadius: '8px', fontSize: '11px', fontWeight: 700, fontFamily: 'Sora',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+              }}
+            >
+              <CreditCard size={13} />
+              {sub.status === 'expired' ? 'Perbarui Sekarang' : 'Perpanjang Plan'}
+            </button>
+          )}
+
+          {/* Mulai Trial button — hanya untuk starter yang belum/sudah expired trial */}
+          {!isAccountActive && !isSuperadmin && sub.plan === 'starter' && (
             <button
               onClick={async () => {
                 try {

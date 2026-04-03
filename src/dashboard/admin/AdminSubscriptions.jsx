@@ -40,6 +40,7 @@ import { Switch } from '@/components/ui/switch'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { formatIDR, formatDate } from '@/lib/format'
+import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 
@@ -265,6 +266,27 @@ export default function AdminSubscriptions() {
             className="flex-1 rounded-xl data-[state=active]:bg-emerald-500 data-[state=active]:text-white font-bold uppercase text-[12px] tracking-widest transition-all"
           >
             Rekening Bank
+          </TabsTrigger>
+          <TabsTrigger
+            value="expiring"
+            className="flex-1 rounded-xl data-[state=active]:bg-amber-500 data-[state=active]:text-white font-bold uppercase text-[12px] tracking-widest transition-all"
+          >
+            {(() => {
+              const count = (allTenants ?? []).filter(t => {
+                const s = getSubscriptionStatus(t)
+                return (s.status === 'active' || s.status === 'trial') && s.daysLeft <= 30
+              }).length
+              return (
+                <>
+                  Expiring Plans
+                  {count > 0 && (
+                    <span className="ml-2 w-4 h-4 rounded-full bg-red-500 text-[9px] flex items-center justify-center animate-pulse">
+                      {count}
+                    </span>
+                  )}
+                </>
+              )
+            })()}
           </TabsTrigger>
           <TabsTrigger
             value="xendit"
@@ -521,6 +543,18 @@ export default function AdminSubscriptions() {
               ))
             }
           </div>
+        </TabsContent>
+
+        {/* ─── EXPIRING PLANS TAB ─── */}
+        <TabsContent value="expiring" className="space-y-6 animate-in fade-in duration-300">
+          <ExpiringPlansTab
+            allTenants={allTenants}
+            onRenew={(tenant) => {
+              setGenForm(prev => ({ ...prev, tenantId: tenant.id, plan: tenant.plan === 'starter' ? 'pro' : tenant.plan, billingMonths: 1, discountPct: 0, notes: '' }))
+              setManualPrice(0)
+              setIsGenerateOpen(true)
+            }}
+          />
         </TabsContent>
 
         {/* ─── XENDIT CONFIG TAB ─── */}
@@ -1018,6 +1052,141 @@ export default function AdminSubscriptions() {
         </div>
       )}
     </motion.div>
+  )
+}
+
+// ─── ExpiringPlansTab ─────────────────────────────────────────────────────────
+
+function ExpiringPlansTab({ allTenants, onRenew }) {
+  const [search, setSearch] = useState('')
+
+  const allExpiring = useMemo(() => {
+    if (!allTenants) return []
+    return allTenants
+      .map(t => ({ ...t, _sub: getSubscriptionStatus(t) }))
+      .filter(t => (t._sub.status === 'active' || t._sub.status === 'trial') && t._sub.daysLeft <= 30)
+      .sort((a, b) => a._sub.daysLeft - b._sub.daysLeft)
+  }, [allTenants])
+
+  const expiring = useMemo(() => {
+    if (!search) return allExpiring
+    return allExpiring.filter(t => t.business_name?.toLowerCase().includes(search.toLowerCase()))
+  }, [allExpiring, search])
+
+  const alreadyExpiredCount = useMemo(() => {
+    if (!allTenants) return 0
+    return allTenants.filter(t => getSubscriptionStatus(t).status === 'expired').length
+  }, [allTenants])
+
+  return (
+    <div className="space-y-5">
+      {/* Header row */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.3em] flex items-center gap-2">
+            <AlertTriangle size={14} className="text-amber-400" /> PLAN AKAN BERAKHIR (≤ 30 HARI)
+          </p>
+          {alreadyExpiredCount > 0 && (
+            <p className="text-[10px] font-bold text-red-400/70 mt-1">
+              + {alreadyExpiredCount} tenant sudah expired
+            </p>
+          )}
+        </div>
+        <div className="relative w-full sm:w-64">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4B6478]" size={14} />
+          <Input
+            placeholder="Cari bisnis..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="bg-black/20 border-white/10 h-10 rounded-xl pl-10 text-sm focus:border-amber-500/50 transition-all font-medium"
+          />
+        </div>
+      </div>
+
+      {expiring.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-24 space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+            <CheckCircle2 size={28} className="text-emerald-400" />
+          </div>
+          {search ? (
+            <>
+              <p className="text-[13px] font-black text-white uppercase tracking-widest">Tidak ditemukan</p>
+              <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-widest">
+                Tidak ada tenant yang cocok dengan pencarian "{search}".
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-[13px] font-black text-white uppercase tracking-widest">Semua plan aman</p>
+              <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-widest">
+                Tidak ada tenant dengan plan yang akan berakhir dalam 30 hari ke depan.
+              </p>
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="bg-[#0C1319] rounded-2xl border border-white/8 overflow-hidden shadow-xl">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/5 bg-white/[0.02]">
+                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">Bisnis</th>
+                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Plan</th>
+                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Berakhir</th>
+                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Sisa</th>
+                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {expiring.map((tenant, i) => {
+                  const sub = tenant._sub
+                  const isUrgent = sub.daysLeft <= 7
+                  const expiryStr = sub.expiresAt
+                    ? format(sub.expiresAt, 'd MMM yyyy', { locale: localeId })
+                    : '—'
+                  return (
+                    <tr
+                      key={tenant.id}
+                      className={`border-b border-white/5 hover:bg-white/[0.03] transition-colors ${i % 2 === 1 ? 'bg-white/[0.01]' : ''}`}
+                    >
+                      <td className="px-6 py-4">
+                        <div className="space-y-0.5">
+                          <p className="text-[13px] font-bold text-white truncate max-w-[180px]">{tenant.business_name}</p>
+                          <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-wider">{tenant.business_vertical}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center"><PlanBadge plan={sub.plan} /></td>
+                      <td className="px-6 py-4 text-center">
+                        <p className="text-[12px] font-bold text-white/70">{expiryStr}</p>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider ${
+                          isUrgent
+                            ? 'bg-red-500/15 text-red-400 border border-red-500/30'
+                            : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                        }`}>
+                          {isUrgent && <AlertTriangle size={10} />}
+                          {sub.daysLeft}h lagi
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <Button
+                          size="sm"
+                          onClick={() => onRenew(tenant)}
+                          className="h-8 rounded-lg bg-amber-500 hover:bg-amber-600 text-black text-[10px] font-black uppercase tracking-widest px-3 shadow-md shadow-amber-500/20 transition-all active:scale-95"
+                        >
+                          Buat Invoice Renewal
+                        </Button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 

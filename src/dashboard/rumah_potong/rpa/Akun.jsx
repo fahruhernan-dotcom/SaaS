@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { LogOut, CreditCard, BarChart2, HelpCircle, ChevronRight } from 'lucide-react'
-import { differenceInDays, isAfter } from 'date-fns'
+import { getSubscriptionStatus, getExpiryLabel } from '@/lib/subscriptionUtils'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
@@ -153,11 +153,12 @@ export default function RPAAkun() {
     }
   }
 
-  // Trial info
-  const trialEnds = tenant?.trial_ends_at ? new Date(tenant.trial_ends_at) : null
-  const daysLeft = trialEnds ? differenceInDays(trialEnds, new Date()) : 0
-  const isTrialActive = trialEnds ? isAfter(trialEnds, new Date()) : false
-  const trialProgress = Math.max(0, Math.min(100, (daysLeft / 14) * 100))
+  // Subscription status
+  const sub = getSubscriptionStatus(tenant)
+  const { daysLeft, isExpiringSoon } = sub
+  const maxDays = tenant?.plan === 'starter' ? 14 : 30
+  const subProgress = Math.max(4, Math.min(100, (daysLeft / maxDays) * 100))
+  const expiryLabel = getExpiryLabel(tenant)
 
   const initials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'RP'
 
@@ -241,27 +242,27 @@ export default function RPAAkun() {
                 </div>
               </div>
               <span style={{
-                background: isTrialActive ? 'rgba(245,158,11,0.1)' : 'rgba(52,211,153,0.1)',
-                color: isTrialActive ? '#F59E0B' : '#34D399',
-                border: `1px solid ${isTrialActive ? 'rgba(245,158,11,0.2)' : 'rgba(52,211,153,0.2)'}`,
+                background: sub.status === 'trial' ? 'rgba(245,158,11,0.1)' : sub.status === 'expired' ? 'rgba(248,113,113,0.1)' : 'rgba(52,211,153,0.1)',
+                color: sub.status === 'trial' ? '#F59E0B' : sub.status === 'expired' ? '#F87171' : '#34D399',
+                border: `1px solid ${sub.status === 'trial' ? 'rgba(245,158,11,0.2)' : sub.status === 'expired' ? 'rgba(248,113,113,0.2)' : 'rgba(52,211,153,0.2)'}`,
                 padding: '4px 12px', borderRadius: '8px',
                 fontSize: '10px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em',
               }}>
-                {isTrialActive ? 'TRIAL' : 'AKTIF'}
+                {sub.status === 'trial' ? 'TRIAL' : sub.status === 'expired' ? 'EXPIRED' : 'AKTIF'}
               </span>
             </div>
 
-            {isTrialActive && (
+            {(sub.status === 'trial' || isExpiringSoon) && (
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                   <span style={{ fontSize: '11px', fontWeight: 700, color: daysLeft <= 3 ? '#EF4444' : '#F59E0B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    Berakhir dalam {daysLeft} hari
+                    {expiryLabel}
                   </span>
-                  <span style={{ fontSize: '11px', color: '#4B6478', fontWeight: 700 }}>{Math.round(trialProgress)}%</span>
+                  <span style={{ fontSize: '11px', color: '#4B6478', fontWeight: 700 }}>{Math.round(subProgress)}%</span>
                 </div>
                 <div style={{ height: '6px', background: 'rgba(255,255,255,0.06)', borderRadius: '99px', overflow: 'hidden' }}>
                   <div style={{
-                    height: '100%', width: `${trialProgress}%`,
+                    height: '100%', width: `${subProgress}%`,
                     background: daysLeft <= 3 ? '#EF4444' : '#F59E0B',
                     borderRadius: '99px', transition: 'width 0.5s',
                   }} />
@@ -269,7 +270,7 @@ export default function RPAAkun() {
               </div>
             )}
 
-            <button type="button" style={{
+            <button type="button" onClick={() => navigate('/upgrade')} style={{
               width: '100%', padding: '13px',
               background: '#F59E0B', border: 'none', borderRadius: '14px',
               color: '#0D1117', fontWeight: 900, fontSize: '12px',
@@ -277,7 +278,7 @@ export default function RPAAkun() {
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
             }}>
               <CreditCard size={16} />
-              Upgrade Plan
+              {sub.status === 'active' ? 'Perpanjang Plan' : 'Upgrade Plan'}
             </button>
           </div>
         </div>

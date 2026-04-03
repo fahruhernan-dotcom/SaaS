@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion' // eslint-disable-line no-unused-vars
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
-  Plus, Truck, ChevronDown, User, MapPin,
+  Plus, Truck, User, MapPin,
   CheckCircle, Clock, Navigation,
 } from 'lucide-react'
 import {
@@ -13,58 +13,31 @@ import {
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { formatIDR } from '@/lib/format'
 import TopBar from '@/dashboard/_shared/components/TopBar'
+import { SembakoPageHeader } from '@/dashboard/broker/sembako_broker/components/SembakoPageHeader'
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
+import { Button } from '@/components/ui/button'
+import {
+  C, sInput, sLabel, sBtn, fmtDate, EmptyBox, CustomSelect,
+} from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
 
-// ── Palette ─────────────────────────────────────────────────────────────────
-const C = {
-  bg: '#06090F', card: '#1C1208', input: '#231A0E',
-  accent: '#EA580C', amber: '#F59E0B', green: '#34D399', red: '#EF4444',
-  blue: '#60A5FA',
-  text: '#FEF3C7', muted: '#92400E',
-  border: 'rgba(234,88,12,0.15)', borderAm: 'rgba(245,158,11,0.25)',
-}
-
+// ── Delivery-specific constants ───────────────────────────────────────────────
 const DELIVERY_STATUS = {
-  pending:  { bg: 'rgba(245,158,11,0.12)',  color: '#F59E0B', label: 'Menunggu',          icon: Clock },
-  on_route: { bg: 'rgba(96,165,250,0.12)',  color: '#60A5FA', label: 'Dalam Perjalanan',  icon: Navigation },
-  delivered:{ bg: 'rgba(52,211,153,0.12)',  color: '#34D399', label: 'Selesai',            icon: CheckCircle },
+  pending:   { bg: 'rgba(245,158,11,0.12)',  color: '#F59E0B', label: 'Menunggu',         icon: Clock },
+  on_route:  { bg: 'rgba(96,165,250,0.12)',  color: '#60A5FA', label: 'Dalam Perjalanan', icon: Navigation },
+  delivered: { bg: 'rgba(52,211,153,0.12)',  color: '#34D399', label: 'Selesai',           icon: CheckCircle },
 }
 
 const FILTER_TABS = [
-  { key: '',          label: 'Semua' },
-  { key: 'pending',   label: 'Menunggu' },
-  { key: 'on_route',  label: 'Dalam Perjalanan' },
-  { key: 'delivered', label: 'Selesai' },
+  { id: '',          label: 'Semua' },
+  { id: 'pending',   label: 'Menunggu' },
+  { id: 'on_route',  label: 'Dalam Perjalanan' },
+  { id: 'delivered', label: 'Selesai' },
 ]
 
-// ── Shared UI ────────────────────────────────────────────────────────────────
-const sInput = {
-  background: C.input, border: `1px solid ${C.border}`, borderRadius: '10px',
-  padding: '10px 12px', color: C.text, fontSize: '14px', fontWeight: 600,
-  outline: 'none', width: '100%', appearance: 'none', WebkitAppearance: 'none',
-  minHeight: '44px', colorScheme: 'dark',
-}
-const sLabel = {
-  fontSize: '10px', color: C.muted, fontWeight: 800,
-  letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '5px', display: 'block',
-}
-const sBtn = (primary) => ({
-  background: primary ? C.accent : 'transparent',
-  border: primary ? 'none' : `1px solid ${C.border}`,
-  color: primary ? '#fff' : C.text, borderRadius: '10px',
-  padding: '10px 18px', fontWeight: 700, fontSize: '13px', cursor: 'pointer',
-  transition: 'opacity 0.2s',
-})
-
-function fmtDate(d) {
-  if (!d) return '-'
-  try { return new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) }
-  catch { return '-' }
-}
-
+// ── Local UI ──────────────────────────────────────────────────────────────────
 function StatusBadge({ status }) {
   const st = DELIVERY_STATUS[status] || DELIVERY_STATUS.pending
   return (
@@ -78,81 +51,7 @@ function StatusBadge({ status }) {
   )
 }
 
-function EmptyBox({ icon: Icon, text }) {
-  return (
-    <div style={{ textAlign: 'center', padding: '56px 0', color: C.muted }}>
-      <Icon size={32} color={C.muted} style={{ margin: '0 auto 10px' }} />
-      <p style={{ fontSize: '13px', fontWeight: 600 }}>{text}</p>
-    </div>
-  )
-}
-
-function CustomSelect({ value, onChange, options, placeholder }) {
-  const [open, setOpen] = useState(false)
-  const selected = options.find(o => o.value === value)
-
-  return (
-    <div style={{ position: 'relative', width: '100%' }}>
-      <div
-        onClick={() => setOpen(v => !v)}
-        style={{
-          ...sInput, cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          border: open ? `1px solid ${C.accent}` : `1px solid ${C.border}`,
-          transition: 'border 0.2s',
-        }}
-      >
-        <span style={{ color: value ? C.text : C.muted }}>
-          {selected ? selected.label : placeholder}
-        </span>
-        <ChevronDown size={14} color={C.muted}
-          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }} />
-      </div>
-      <AnimatePresence>
-        {open && (
-          <>
-            <div style={{ position: 'fixed', inset: 0, zIndex: 998 }} onClick={() => setOpen(false)} />
-            <motion.div
-              initial={{ opacity: 0, y: -6, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -6, scale: 0.97 }}
-              transition={{ duration: 0.15 }}
-              style={{
-                position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '6px',
-                background: '#130C06', border: `1px solid ${C.border}`, borderRadius: '12px',
-                zIndex: 999, overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
-              }}
-            >
-              <div style={{ maxHeight: '220px', overflowY: 'auto' }}>
-                {options.length === 0
-                  ? <div style={{ padding: '14px', textAlign: 'center', color: C.muted, fontSize: '13px' }}>Tidak ada pilihan</div>
-                  : options.map(opt => (
-                    <div
-                      key={opt.value}
-                      onClick={() => { onChange(opt.value); setOpen(false) }}
-                      style={{
-                        padding: '11px 16px', fontSize: '13px',
-                        color: value === opt.value ? C.accent : C.text,
-                        background: value === opt.value ? 'rgba(234,88,12,0.1)' : 'transparent',
-                        cursor: 'pointer', transition: 'background 0.15s',
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      }}
-                    >
-                      <span>{opt.label}</span>
-                      {value === opt.value && <CheckCircle size={12} color={C.accent} />}
-                    </div>
-                  ))
-                }
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </div>
-  )
-}
-
-// ── Sale Pending Card ────────────────────────────────────────────────────────
+// ── Sale Pending Card ─────────────────────────────────────────────────────────
 function SalePendingCard({ sale, onBuatDelivery }) {
   const customer = sale.sembako_customers || {}
   const custName = customer.customer_name || sale.customer_name || 'Umum'
@@ -160,8 +59,7 @@ function SalePendingCard({ sale, onBuatDelivery }) {
   const itemSummary = items.length > 0
     ? (items.length > 1 ? `${items[0].product_name} +${items.length - 1} lainnya` : items[0].product_name)
     : '-'
-  const deliveries = sale.sembako_deliveries || []
-  const hasPartial = deliveries.length > 0
+  const hasPartial = (sale.sembako_deliveries || []).length > 0
 
   return (
     <div style={{
@@ -222,10 +120,7 @@ function DeliveryCard({ delivery, onComplete }) {
   const items = sale?.sembako_sale_items || []
 
   return (
-    <div style={{
-      background: C.card, borderRadius: '16px', border: `1px solid ${C.border}`,
-      overflow: 'hidden',
-    }}>
+    <div style={{ background: C.card, borderRadius: '16px', border: `1px solid ${C.border}`, overflow: 'hidden' }}>
       <div
         onClick={() => setExpanded(v => !v)}
         style={{ padding: '14px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '8px' }}
@@ -314,7 +209,7 @@ function DeliveryCard({ delivery, onComplete }) {
   )
 }
 
-// ── TambahTripSheet ──────────────────────────────────────────────────────────
+// ── TambahTripSheet ───────────────────────────────────────────────────────────
 const BLANK_FORM = {
   sale_id: null,
   employee_id: null,
@@ -326,16 +221,11 @@ const BLANK_FORM = {
 
 function TambahTripSheet({ open, onClose, prefillSale, salesPending, employees, customers }) {
   const createDelivery = useCreateSembakoDelivery()
-
-  // MODE A — linked ke sale (dibuka dari SalePendingCard atau ?saleId)
-  // MODE B — trip independent (dibuka dari tombol "+ Tambah Trip")
   const isLinkedMode = !!prefillSale
-  const [destinationMode, setDestinationMode] = useState('customer') // 'customer' | 'manual'
+  const [destinationMode, setDestinationMode] = useState('customer')
   const [linkSale, setLinkSale] = useState(false)
-
   const [form, setForm] = useState(BLANK_FORM)
 
-  // Reset & prefill saat sheet dibuka
   React.useEffect(() => {
     if (open) {
       if (prefillSale) {
@@ -359,16 +249,13 @@ function TambahTripSheet({ open, onClose, prefillSale, salesPending, employees, 
   const employeeOptions = [
     { value: '', label: '— Tanpa sopir / ambil sendiri —' },
     ...employees.filter(e => e.status === 'aktif' && !e.is_deleted).map(e => ({
-      value: e.id,
-      label: `${e.full_name} (${e.role})`,
+      value: e.id, label: `${e.full_name} (${e.role})`,
     })),
   ]
-
   const saleOptions = salesPending.map(s => ({
     value: s.id,
     label: `${s.invoice_number} — ${s.sembako_customers?.customer_name || s.customer_name || 'Umum'}`,
   }))
-
   const customerOptions = [
     { value: '', label: '— Pilih customer —' },
     ...customers.map(c => ({ value: c.id, label: `${c.customer_name} (${c.address || '-'})` })),
@@ -389,10 +276,9 @@ function TambahTripSheet({ open, onClose, prefillSale, salesPending, employees, 
     try {
       await createDelivery.mutateAsync(payload)
       onClose()
-    } catch {}
+    } catch { /* error handled by hook */ }
   }
 
-  // Jika mode linked & sale memiliki customer dengan address, tampilkan destination
   const linkedCustomer = prefillSale?.sembako_customers || {}
   const linkedItems = prefillSale?.sembako_sale_items || []
 
@@ -416,13 +302,10 @@ function TambahTripSheet({ open, onClose, prefillSale, salesPending, employees, 
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '20px', paddingBottom: '80px' }}>
 
-          {/* ─── MODE A: Linked ke sale (dari SalePendingCard) ─── */}
+          {/* MODE A: Linked ke sale */}
           {isLinkedMode && (
             <>
-              <div style={{
-                background: 'rgba(234,88,12,0.06)', borderRadius: '12px', padding: '12px',
-                border: `1px solid ${C.border}`,
-              }}>
+              <div style={{ background: 'rgba(234,88,12,0.06)', borderRadius: '12px', padding: '12px', border: `1px solid ${C.border}` }}>
                 <p style={sLabel}>Invoice Terkait</p>
                 <p style={{ fontSize: '14px', fontWeight: 800, color: C.accent, margin: 0 }}>
                   {prefillSale.invoice_number}
@@ -457,7 +340,7 @@ function TambahTripSheet({ open, onClose, prefillSale, salesPending, employees, 
             </>
           )}
 
-          {/* ─── MODE B: Trip independent ─── */}
+          {/* MODE B: Trip independent */}
           {!isLinkedMode && (
             <>
               <div>
@@ -530,7 +413,6 @@ function TambahTripSheet({ open, onClose, prefillSale, salesPending, employees, 
             </>
           )}
 
-          {/* ─── Sopir ─── */}
           <div>
             <p style={sLabel}>Sopir / Kurir</p>
             <CustomSelect
@@ -541,7 +423,6 @@ function TambahTripSheet({ open, onClose, prefillSale, salesPending, employees, 
             />
           </div>
 
-          {/* ─── Tanggal ─── */}
           <div>
             <p style={sLabel}>Tanggal Berangkat</p>
             <DatePicker
@@ -551,7 +432,6 @@ function TambahTripSheet({ open, onClose, prefillSale, salesPending, employees, 
             />
           </div>
 
-          {/* ─── Biaya Kirim ─── */}
           <div>
             <p style={sLabel}>Biaya Pengiriman (opsional)</p>
             <div style={{ position: 'relative' }}>
@@ -566,7 +446,6 @@ function TambahTripSheet({ open, onClose, prefillSale, salesPending, employees, 
             </div>
           </div>
 
-          {/* ─── Catatan ─── */}
           <div>
             <p style={sLabel}>Catatan (opsional)</p>
             <textarea
@@ -594,7 +473,7 @@ function TambahTripSheet({ open, onClose, prefillSale, salesPending, employees, 
   )
 }
 
-// ── MAIN ─────────────────────────────────────────────────────────────────────
+// ── MAIN ──────────────────────────────────────────────────────────────────────
 export default function SembakoPengiriman() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const location = useLocation()
@@ -610,7 +489,6 @@ export default function SembakoPengiriman() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [prefillSale, setPrefillSale] = useState(null)
 
-  // Handle ?saleId query param — auto-open sheet dengan sale pre-fill
   React.useEffect(() => {
     const params = new URLSearchParams(location.search)
     const saleId = params.get('saleId')
@@ -619,7 +497,6 @@ export default function SembakoPengiriman() {
       if (sale) {
         setPrefillSale(sale)
         setSheetOpen(true)
-        // Bersihkan query param
         navigate(location.pathname, { replace: true })
       }
     }
@@ -630,97 +507,63 @@ export default function SembakoPengiriman() {
     return deliveries.filter(d => d.status === filterTab)
   }, [deliveries, filterTab])
 
-  function openForSale(sale) {
-    setPrefillSale(sale)
-    setSheetOpen(true)
-  }
+  const activeCount = deliveries.filter(d => d.status !== 'delivered').length
 
-  function openIndependent() {
-    setPrefillSale(null)
-    setSheetOpen(true)
-  }
-
-  function closeSheet() {
-    setSheetOpen(false)
-    setPrefillSale(null)
-  }
+  function openForSale(sale) { setPrefillSale(sale); setSheetOpen(true) }
+  function openIndependent() { setPrefillSale(null); setSheetOpen(true) }
+  function closeSheet() { setSheetOpen(false); setPrefillSale(null) }
 
   async function handleComplete(deliveryId) {
     try {
       await completeDelivery.mutateAsync(deliveryId)
-    } catch {}
+    } catch { /* error handled by hook */ }
   }
-
-  const activeCount = deliveries.filter(d => d.status !== 'delivered').length
 
   return (
     <div style={{ background: C.bg, minHeight: '100vh', paddingBottom: '96px' }}>
       {!isDesktop && <TopBar title="Pengiriman" />}
 
-      <div style={{ padding: isDesktop ? '32px 40px' : '20px 16px', maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-          <div>
-            <h1 style={{ fontSize: isDesktop ? '28px' : '22px', fontWeight: 900, color: C.text, fontFamily: 'DM Sans', margin: 0 }}>
-              Pengiriman & Trip
-            </h1>
-            <p style={{ fontSize: '13px', color: C.muted, marginTop: '4px' }}>
-              {activeCount} pengiriman aktif
-            </p>
-          </div>
-          <button
-            onClick={openIndependent}
-            style={{ ...sBtn(true), display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            <Plus size={14} /> Tambah Trip
-          </button>
-        </div>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <SembakoPageHeader
+          title="Pengiriman & Trip"
+          subtitle={`${activeCount} pengiriman aktif`}
+          isDesktop={isDesktop}
+          filters={FILTER_TABS}
+          activeFilter={filterTab}
+          onFilterChange={setFilterTab}
+          actionButton={
+            <Button
+              type="button"
+              onClick={openIndependent}
+              className="h-10 rounded-xl bg-[#EA580C] px-4 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-orange-950/20"
+            >
+              <Plus size={15} className="mr-1" /> Tambah Trip
+            </Button>
+          }
+        />
 
-        {/* ─── SECTION A: Sales Perlu Dikirim ─── */}
-        {!loadingSales && salesPending.length > 0 && (
-          <div style={{ marginBottom: '28px' }}>
-            <p style={{ ...sLabel, fontSize: '11px', marginBottom: '12px', color: C.amber }}>
-              Sales Perlu Dikirim ({salesPending.length})
-            </p>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: isDesktop ? 'repeat(2,1fr)' : '1fr',
-              gap: '10px',
-            }}>
-              {salesPending.map(sale => (
-                <SalePendingCard
-                  key={sale.id}
-                  sale={sale}
-                  onBuatDelivery={() => openForSale(sale)}
-                />
-              ))}
+        <div style={{ padding: isDesktop ? '24px 40px' : '20px 16px' }}>
+          {/* Sales Perlu Dikirim */}
+          {!loadingSales && salesPending.length > 0 && (
+            <div style={{ marginBottom: '28px' }}>
+              <p style={{ ...sLabel, fontSize: '11px', marginBottom: '12px', color: C.amber }}>
+                Sales Perlu Dikirim ({salesPending.length})
+              </p>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isDesktop ? 'repeat(2,1fr)' : '1fr',
+                gap: '10px',
+              }}>
+                {salesPending.map(sale => (
+                  <SalePendingCard
+                    key={sale.id}
+                    sale={sale}
+                    onBuatDelivery={() => openForSale(sale)}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* ─── SECTION B: Semua Trip/Delivery ─── */}
-        <div>
-          {/* Filter tabs */}
-          <div style={{
-            display: 'flex', gap: '6px', marginBottom: '16px',
-            overflowX: 'auto', paddingBottom: '4px',
-          }}>
-            {FILTER_TABS.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setFilterTab(tab.key)}
-                style={{
-                  padding: '7px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-                  fontSize: '12px', fontWeight: 700, whiteSpace: 'nowrap',
-                  background: filterTab === tab.key ? C.accent : 'rgba(255,255,255,0.05)',
-                  color: filterTab === tab.key ? '#fff' : C.muted,
-                  transition: 'all 0.2s',
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          )}
 
           {/* Delivery list */}
           {loadingDeliveries ? (

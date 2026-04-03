@@ -14,19 +14,13 @@ import {
 } from '@/lib/hooks/useSembakoData'
 import { useSearchParams } from 'react-router-dom'
 import { DatePicker } from '@/components/ui/DatePicker'
+import { C, fmtDate } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const ACCENT   = '#EA580C'
-const BG_CARD  = '#1C1208'
-const BG_PAGE  = '#06090F'
-const TEXT_PRI = '#FEF3C7'
 const TEXT_SEC = '#A8764A'
-const BORDER   = 'rgba(234,88,12,0.15)'
 
 const fmt = (n) => new Intl.NumberFormat('id-ID').format(Math.round(n || 0))
-const fmtDate = (d) => d ? new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'
-const fmtTime = (d) => d ? new Date(d).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : ''
 
 function genBatchCode() {
   const now = new Date()
@@ -65,7 +59,7 @@ function TambahStokSheet({ preselectedProductId, products, suppliers, onClose })
       set('supplier_id', sup.id)
       setNewSupplier('')
       setShowAddSup(false)
-    } catch (_) {}
+    } catch { /* ignore */ }
   }
 
   const handleSubmit = async (e) => {
@@ -98,7 +92,7 @@ function TambahStokSheet({ preselectedProductId, products, suppliers, onClose })
       <motion.div
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
         transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-        style={{ background: '#100A03', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: '540px', padding: '0 0 32px', borderTop: `1px solid ${BORDER}`, maxHeight: '92vh', overflowY: 'auto' }}
+        style={{ background: '#100A03', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: '540px', padding: '0 0 32px', borderTop: `1px solid ${C.border}`, maxHeight: '92vh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Handle */}
@@ -108,7 +102,7 @@ function TambahStokSheet({ preselectedProductId, products, suppliers, onClose })
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 20px 16px' }}>
-          <h2 style={{ fontFamily: 'Sora', fontSize: 17, fontWeight: 700, color: TEXT_PRI, margin: 0 }}>Tambah Stok Masuk</h2>
+          <h2 style={{ fontFamily: 'Sora', fontSize: 17, fontWeight: 700, color: C.text, margin: 0 }}>Tambah Stok Masuk</h2>
           <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
             <X size={16} color="#94A3B8" />
           </button>
@@ -147,7 +141,7 @@ function TambahStokSheet({ preselectedProductId, products, suppliers, onClose })
                   style={{ ...inputSt, flex: 1 }}
                 />
                 <button type="button" onClick={handleAddSupplier} disabled={createSup.isPending || !newSupplier.trim()}
-                  style={{ background: ACCENT, border: 'none', borderRadius: 10, padding: '0 14px', color: 'white', fontFamily: 'DM Sans', fontSize: 13, cursor: 'pointer' }}>
+                  style={{ background: C.accent, border: 'none', borderRadius: 10, padding: '0 14px', color: 'white', fontFamily: 'DM Sans', fontSize: 13, cursor: 'pointer' }}>
                   {createSup.isPending ? '...' : 'Tambah'}
                 </button>
                 <button type="button" onClick={() => setShowAddSup(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#6B7280' }}>
@@ -165,7 +159,7 @@ function TambahStokSheet({ preselectedProductId, products, suppliers, onClose })
                   style={{ flex: 1 }}
                 />
                 <button type="button" onClick={() => setShowAddSup(true)}
-                  style={{ background: 'rgba(234,88,12,0.1)', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '0 12px', color: ACCENT, fontSize: 13, fontFamily: 'DM Sans', cursor: 'pointer', flexShrink: 0 }}>
+                  style={{ background: 'rgba(234,88,12,0.1)', border: `1px solid ${C.border}`, borderRadius: 10, padding: '0 12px', color: C.accent, fontSize: 13, fontFamily: 'DM Sans', cursor: 'pointer', flexShrink: 0 }}>
                   + Baru
                 </button>
               </div>
@@ -198,7 +192,7 @@ function TambahStokSheet({ preselectedProductId, products, suppliers, onClose })
           {form.qty_masuk && form.buy_price && (
             <div style={{ background: 'rgba(234,88,12,0.06)', borderRadius: 10, padding: '10px 14px', display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ fontFamily: 'DM Sans', fontSize: 13, color: TEXT_SEC }}>Total nilai</span>
-              <span style={{ fontFamily: 'Sora', fontSize: 14, fontWeight: 700, color: ACCENT }}>
+              <span style={{ fontFamily: 'Sora', fontSize: 14, fontWeight: 700, color: C.accent }}>
                 Rp {fmt(Number(form.qty_masuk) * Number(String(form.buy_price).replace(/\D/g, '')))}
               </span>
             </div>
@@ -239,7 +233,7 @@ function TambahStokSheet({ preselectedProductId, products, suppliers, onClose })
             disabled={!canSubmit || isLoading}
             style={{
               marginTop: 4, width: '100%', height: 50,
-              background: canSubmit && !isLoading ? ACCENT : 'rgba(234,88,12,0.3)',
+              background: canSubmit && !isLoading ? C.accent : 'rgba(234,88,12,0.3)',
               border: 'none', borderRadius: 14, color: 'white',
               fontFamily: 'Sora', fontSize: 15, fontWeight: 700,
               cursor: canSubmit && !isLoading ? 'pointer' : 'not-allowed',
@@ -265,8 +259,8 @@ function SField({ label, children }) {
 
 const inputSt = {
   width: '100%', background: 'rgba(255,255,255,0.04)',
-  border: `1px solid ${BORDER}`, borderRadius: 10,
-  padding: '10px 14px', color: TEXT_PRI, fontSize: 16,
+  border: `1px solid ${C.border}`, borderRadius: 10,
+  padding: '10px 14px', color: C.text, fontSize: 16,
   fontFamily: 'DM Sans', outline: 'none', boxSizing: 'border-box',
   appearance: 'none', WebkitAppearance: 'none',
   minHeight: '44px',
@@ -288,11 +282,11 @@ function CustomSelect({ value, onChange, options, placeholder, id, style }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          border: open ? `1px solid ${ACCENT}` : `1px solid ${BORDER}`,
+          border: open ? `1px solid ${C.accent}` : `1px solid ${C.border}`,
           transition: 'all 0.2s'
         }}
       >
-        <span style={{ color: value ? TEXT_PRI : TEXT_SEC, fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: 8 }}>
+        <span style={{ color: value ? C.text : TEXT_SEC, fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: 8 }}>
           {selected ? selected.label : placeholder}
         </span>
         <ChevronDown size={16} color={TEXT_SEC} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }} />
@@ -311,7 +305,7 @@ function CustomSelect({ value, onChange, options, placeholder, id, style }) {
               exit={{ opacity: 0, y: -8, scale: 0.95 }}
               style={{
                 position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '8px',
-                background: '#130C06', border: `1px solid ${BORDER}`, borderRadius: '14px',
+                background: '#130C06', border: `1px solid ${C.border}`, borderRadius: '14px',
                 zIndex: 999, overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
                 backdropFilter: 'blur(10px)',
               }}
@@ -322,7 +316,7 @@ function CustomSelect({ value, onChange, options, placeholder, id, style }) {
                     key={opt.value}
                     onClick={() => { onChange(opt.value); setOpen(false) }}
                     style={{
-                      padding: '12px 16px', fontSize: '14px', color: value === opt.value ? ACCENT : TEXT_PRI,
+                      padding: '12px 16px', fontSize: '14px', color: value === opt.value ? C.accent : C.text,
                       background: value === opt.value ? 'rgba(234,88,12,0.1)' : 'transparent',
                       cursor: 'pointer', transition: 'all 0.2s',
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -394,7 +388,7 @@ function StokSaatIni({ products, onTambah, onAdjust, onShowHistory }) {
         const isFirst  = batches[0] // FIFO next
 
         return (
-          <div key={product.id} style={{ marginBottom: 8, background: BG_CARD, border: `1px solid ${isLow ? 'rgba(248,113,113,0.3)' : BORDER}`, borderRadius: 14, overflow: 'hidden' }}>
+          <div key={product.id} style={{ marginBottom: 8, background: C.card, border: `1px solid ${isLow ? 'rgba(248,113,113,0.3)' : C.border}`, borderRadius: 14, overflow: 'hidden' }}>
             {/* Row header */}
             <button
               type="button"
@@ -403,10 +397,10 @@ function StokSaatIni({ products, onTambah, onAdjust, onShowHistory }) {
             >
               <div style={{ flex: 1, textAlign: 'left', minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                  <span style={{ fontFamily: 'Sora', fontSize: 14, fontWeight: 700, color: TEXT_PRI, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{product.product_name}</span>
+                  <span style={{ fontFamily: 'Sora', fontSize: 14, fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{product.product_name}</span>
                   {isLow && <span style={{ fontSize: 10, background: 'rgba(248,113,113,0.15)', color: '#F87171', padding: '1px 8px', borderRadius: 20, fontFamily: 'DM Sans', fontWeight: 600 }}>Menipis</span>}
                 </div>
-                <span style={{ fontSize: 13, color: isLow ? '#F87171' : ACCENT, fontFamily: 'DM Sans', fontWeight: 600 }}>
+                <span style={{ fontSize: 13, color: isLow ? '#F87171' : C.accent, fontFamily: 'DM Sans', fontWeight: 600 }}>
                   {fmt(product.current_stock)} {product.unit}
                 </span>
               </div>
@@ -426,7 +420,7 @@ function StokSaatIni({ products, onTambah, onAdjust, onShowHistory }) {
                   transition={{ duration: 0.2 }}
                   style={{ overflow: 'hidden' }}
                 >
-                  <div style={{ borderTop: `1px solid ${BORDER}`, padding: '8px 14px 12px' }}>
+                  <div style={{ borderTop: `1px solid ${C.border}`, padding: '8px 14px 12px' }}>
                     {batches.length === 0 ? (
                       <p style={{ fontSize: 13, color: '#6B7280', fontFamily: 'DM Sans', padding: '8px 0' }}>Tidak ada stok tersisa di batch manapun.</p>
                     ) : (
@@ -435,7 +429,7 @@ function StokSaatIni({ products, onTambah, onAdjust, onShowHistory }) {
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                               <span style={{ fontSize: 11, fontFamily: 'DM Sans', color: '#94A3B8' }}>{batch.batch_code || 'N/A'}</span>
-                              {i === 0 && <span style={{ fontSize: 9, background: 'rgba(234,88,12,0.15)', color: ACCENT, padding: '1px 6px', borderRadius: 10, fontWeight: 700, letterSpacing: '0.04em' }}>FIFO NEXT</span>}
+                              {i === 0 && <span style={{ fontSize: 9, background: 'rgba(234,88,12,0.15)', color: C.accent, padding: '1px 6px', borderRadius: 10, fontWeight: 700, letterSpacing: '0.04em' }}>FIFO NEXT</span>}
                             </div>
                             <div style={{ fontSize: 12, color: '#6B7280', fontFamily: 'DM Sans', marginTop: 2 }}>
                               {fmtDate(batch.purchase_date)}
@@ -447,7 +441,7 @@ function StokSaatIni({ products, onTambah, onAdjust, onShowHistory }) {
                           </div>
                           <div className="flex items-center gap-4">
                              <div style={{ textAlign: 'right' }}>
-                               <div style={{ fontFamily: 'Sora', fontSize: 13, fontWeight: 700, color: TEXT_PRI }}>{fmt(batch.qty_sisa)} {product.unit}</div>
+                               <div style={{ fontFamily: 'Sora', fontSize: 13, fontWeight: 700, color: C.text }}>{fmt(batch.qty_sisa)} {product.unit}</div>
                                <div style={{ fontSize: 11, color: TEXT_SEC, fontFamily: 'DM Sans' }}>@ Rp {fmt(batch.buy_price)}</div>
                              </div>
                              <button
@@ -465,14 +459,14 @@ function StokSaatIni({ products, onTambah, onAdjust, onShowHistory }) {
                       <button
                         type="button"
                         onClick={() => onTambah(product.id)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(234,88,12,0.08)', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '7px 14px', color: ACCENT, fontFamily: 'DM Sans', fontSize: 12, cursor: 'pointer' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(234,88,12,0.08)', border: `1px solid ${C.border}`, borderRadius: 10, padding: '7px 14px', color: C.accent, fontFamily: 'DM Sans', fontSize: 12, cursor: 'pointer' }}
                       >
                         <Plus size={14} /> Stok Masuk
                       </button>
                       <button
                         type="button"
                         onClick={() => onShowHistory(product)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '7px 14px', color: '#94A3B8', fontFamily: 'DM Sans', fontSize: 12, cursor: 'pointer' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.05)', border: `1px solid ${C.border}`, borderRadius: 10, padding: '7px 14px', color: '#94A3B8', fontFamily: 'DM Sans', fontSize: 12, cursor: 'pointer' }}
                       >
                         <History size={14} /> Kartu Stok
                       </button>
@@ -501,9 +495,9 @@ function RiwayatMasuk() {
         <EmptyState label="Belum ada riwayat stok masuk" />
       )}
       {batches.map(batch => (
-        <div key={batch.id} style={{ marginBottom: 8, background: BG_CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div key={batch.id} style={{ marginBottom: 8, background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
-            <div style={{ fontFamily: 'Sora', fontSize: 13, fontWeight: 700, color: TEXT_PRI, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontFamily: 'Sora', fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {batch.sembako_products?.product_name || '-'}
             </div>
             <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'DM Sans' }}>{batch.batch_code}</div>
@@ -513,7 +507,7 @@ function RiwayatMasuk() {
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontFamily: 'Sora', fontSize: 13, fontWeight: 700, color: ACCENT }}>
+            <div style={{ fontFamily: 'Sora', fontSize: 13, fontWeight: 700, color: C.accent }}>
               +{fmt(batch.qty_masuk)} {batch.sembako_products?.unit}
             </div>
             <div style={{ fontSize: 11, color: TEXT_SEC, fontFamily: 'DM Sans' }}>@ Rp {fmt(batch.buy_price)}</div>
@@ -539,9 +533,9 @@ function RiwayatKeluar() {
   return (
     <div>
       {stockOuts.map(s => (
-        <div key={s.id} style={{ marginBottom: 8, background: BG_CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: '12px 14px', display: 'flex', justifyContent: 'space-between' }}>
+        <div key={s.id} style={{ marginBottom: 8, background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: '12px 14px', display: 'flex', justifyContent: 'space-between' }}>
           <div style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
-            <div style={{ fontFamily: 'Sora', fontSize: 13, fontWeight: 700, color: TEXT_PRI, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontFamily: 'Sora', fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {s.sembako_products?.product_name || '-'}
             </div>
             <div style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'DM Sans' }}>
@@ -582,7 +576,7 @@ function LoadingRow() {
     <div>
       <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
       {[1,2,3].map(i => (
-        <div key={i} style={{ background: BG_CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '14px', marginBottom: 8 }}>
+        <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px', marginBottom: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ flex: 1 }}>
               <SkeletonBox w="55%" h={14} r={6} mb={8} />
@@ -601,7 +595,7 @@ function ProductSkeleton() {
     <div>
       <style>{`@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }`}</style>
       {[1,2,3,4].map(i => (
-        <div key={i} style={{ background: BG_CARD, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '14px 14px', marginBottom: 8 }}>
+        <div key={i} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, padding: '14px 14px', marginBottom: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ flex: 1 }}>
               <SkeletonBox w={`${45 + i * 8}%`} h={14} r={6} mb={8} />
@@ -673,18 +667,18 @@ export default function Gudang() {
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: BG_PAGE, paddingBottom: 80 }}>
+    <div style={{ minHeight: '100vh', background: C.bg, paddingBottom: 80 }}>
       {/* Header */}
       <div style={{ padding: '20px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h1 style={{ fontFamily: 'Sora', fontSize: 20, fontWeight: 800, color: TEXT_PRI, margin: 0 }}>Gudang</h1>
+          <h1 style={{ fontFamily: 'Sora', fontSize: 20, fontWeight: 800, color: C.text, margin: 0 }}>Gudang</h1>
           <p style={{ fontFamily: 'DM Sans', fontSize: 13, color: TEXT_SEC, marginTop: 2 }}>
             Stok · {products.filter(p => p.is_active && !p.is_deleted).length} produk
           </p>
         </div>
         <button
           onClick={() => openTambah()}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: ACCENT, border: 'none', borderRadius: 12, padding: '10px 16px', color: 'white', fontFamily: 'Sora', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(234,88,12,0.35)' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, background: C.accent, border: 'none', borderRadius: 12, padding: '10px 16px', color: 'white', fontFamily: 'Sora', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(234,88,12,0.35)' }}
         >
           <Plus size={16} /> Stok Masuk
         </button>
@@ -692,20 +686,20 @@ export default function Gudang() {
 
       {/* Summary chips */}
       <div style={{ display: 'flex', gap: 10, padding: '14px 16px 0', overflowX: 'auto' }}>
-        <Chip label="Nilai Stok" value={`Rp ${totalStokNilai >= 1_000_000 ? (totalStokNilai / 1_000_000).toFixed(1) + 'jt' : new Intl.NumberFormat('id-ID').format(totalStokNilai)}`} color={ACCENT} />
+        <Chip label="Nilai Stok" value={`Rp ${totalStokNilai >= 1_000_000 ? (totalStokNilai / 1_000_000).toFixed(1) + 'jt' : new Intl.NumberFormat('id-ID').format(totalStokNilai)}`} color={C.accent} />
         <Chip label="Stok Menipis" value={`${lowStockCount} produk`} color={lowStockCount > 0 ? '#F87171' : '#34D399'} />
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', padding: '16px 16px 0', gap: 0, borderBottom: `1px solid ${BORDER}`, marginTop: 8 }}>
+      <div style={{ display: 'flex', padding: '16px 16px 0', gap: 0, borderBottom: `1px solid ${C.border}`, marginTop: 8 }}>
         {TABS.map((tab, i) => (
           <button
             key={tab}
             onClick={() => setActiveTab(i)}
             style={{
               flex: 1, background: 'transparent', border: 'none',
-              borderBottom: activeTab === i ? `2px solid ${ACCENT}` : '2px solid transparent',
-              padding: '10px 0', color: activeTab === i ? ACCENT : TEXT_SEC,
+              borderBottom: activeTab === i ? `2px solid ${C.accent}` : '2px solid transparent',
+              padding: '10px 0', color: activeTab === i ? C.accent : TEXT_SEC,
               fontFamily: activeTab === i ? 'Sora' : 'DM Sans',
               fontSize: 13, fontWeight: activeTab === i ? 700 : 400,
               cursor: 'pointer', transition: 'color 0.15s',
@@ -814,7 +808,7 @@ function KartuStokSheet({ product, onClose }) {
     >
       <motion.div
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-        style={{ background: '#0A0F14', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: '540px', padding: '0 0 32px', borderTop: `1px solid ${BORDER}`, height: '85vh', display: 'flex', flexDirection: 'column' }}
+        style={{ background: '#0A0F14', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: '540px', padding: '0 0 32px', borderTop: `1px solid ${C.border}`, height: '85vh', display: 'flex', flexDirection: 'column' }}
         onClick={e => e.stopPropagation()}
       >
         <div style={{ textAlign: 'center', padding: '12px 0' }}>
@@ -897,7 +891,7 @@ function AdjustStokSheet({ batch, product, onClose }) {
     >
       <motion.div
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-        style={{ background: '#100A03', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: '540px', padding: '0 0 32px', borderTop: `2px solid ${ACCENT}`, maxHeight: '92vh', overflowY: 'auto' }}
+        style={{ background: '#100A03', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: '540px', padding: '0 0 32px', borderTop: `2px solid ${C.accent}`, maxHeight: '92vh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}
       >
         <div style={{ textAlign: 'center', padding: '12px 0' }}>
@@ -985,7 +979,7 @@ function AdjustStokSheet({ batch, product, onClose }) {
 
 function Chip({ label, value, color }) {
   return (
-    <div style={{ flexShrink: 0, background: BG_CARD, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
+    <div style={{ flexShrink: 0, background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
       <span style={{ fontFamily: 'DM Sans', fontSize: 11, color: TEXT_SEC }}>{label}</span>
       <span style={{ fontFamily: 'Sora', fontSize: 13, fontWeight: 700, color }}>{value}</span>
     </div>

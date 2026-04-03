@@ -10,7 +10,7 @@ export const useAllTenants = () => {
         .from('tenants')
         .select(`
           id, business_name, business_vertical, plan,
-          is_active, trial_ends_at, created_at,
+          is_active, trial_ends_at, plan_expires_at, created_at,
           profiles(id, full_name, role, user_type, is_active, last_seen_at)
         `)
         .order('created_at', { ascending: false })
@@ -83,13 +83,29 @@ export const useConfirmInvoice = () => {
         .eq('id', invoiceId)
       if (invoiceErr) throw invoiceErr
 
-      // 2. Update tenant plan + kandang_limit
-      const trialEndsAt = new Date()
-      trialEndsAt.setMonth(trialEndsAt.getMonth() + billingMonths)
+      // 2. Update tenant plan + plan_expires_at (support stacking renewal)
+      const { data: currentTenant } = await supabase
+        .from('tenants')
+        .select('plan_expires_at')
+        .eq('id', tenantId)
+        .single()
+
+      // Stacking: kalau plan masih aktif, perpanjang dari tanggal expiry — bukan dari sekarang
+      const baseDate = currentTenant?.plan_expires_at && new Date(currentTenant.plan_expires_at) > new Date()
+        ? new Date(currentTenant.plan_expires_at)
+        : new Date()
+
+      const newExpiry = new Date(baseDate)
+      newExpiry.setMonth(newExpiry.getMonth() + billingMonths)
+
       const kandangLimit = plan === 'starter' ? 1 : plan === 'pro' ? 2 : 99
       const { error: tenantErr } = await supabase
         .from('tenants')
-        .update({ plan, trial_ends_at: trialEndsAt.toISOString(), kandang_limit: kandangLimit })
+        .update({
+          plan,
+          plan_expires_at: newExpiry.toISOString(),
+          kandang_limit: kandangLimit
+        })
         .eq('id', tenantId)
       if (tenantErr) throw tenantErr
     },
@@ -387,7 +403,7 @@ export const useGlobalStats = () => useQuery({
   queryFn: async () => {
     const [tenantsRes, invoicesRes] = await Promise.all([
       supabase.from('tenants').select(`
-        id, business_name, plan, is_active, trial_ends_at, created_at, business_vertical,
+        id, business_name, plan, is_active, trial_ends_at, plan_expires_at, created_at, business_vertical,
         profiles(id, is_active, last_seen_at, role)
       `),
       supabase.from('subscription_invoices').select(
@@ -430,11 +446,24 @@ export const useGlobalStats = () => useQuery({
         newThisMonth: tenants.filter(t => new Date(t.created_at) > thirtyDaysAgo).length,
         trialExpiringSoon: tenants
           .filter(t => {
-            if (!t.trial_ends_at) return false
+            if (t.plan !== 'starter' || !t.trial_ends_at) return false
             const diff = new Date(t.trial_ends_at) - now
             return diff > 0 && diff < 7 * 24 * 60 * 60 * 1000
           })
           .sort((a, b) => new Date(a.trial_ends_at) - new Date(b.trial_ends_at)),
+        planExpiringSoon: tenants
+          .filter(t => {
+            if (!['pro', 'business'].includes(t.plan) || !t.plan_expires_at) return false
+            const diff = new Date(t.plan_expires_at) - now
+            return diff > 0 && diff < 30 * 24 * 60 * 60 * 1000
+          })
+          .sort((a, b) => new Date(a.plan_expires_at) - new Date(b.plan_expires_at)),
+        planAlreadyExpired: tenants
+          .filter(t =>
+            ['pro', 'business'].includes(t.plan) &&
+            t.plan_expires_at &&
+            new Date(t.plan_expires_at) < now
+          ),
         byVertical: {
           poultry_broker: tenants.filter(t => t.business_vertical === 'poultry_broker').length,
           egg_broker:     tenants.filter(t => t.business_vertical === 'egg_broker').length,

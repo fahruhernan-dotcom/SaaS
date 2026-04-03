@@ -127,21 +127,34 @@ export const useNotificationGenerator = () => {
       })
     }
 
-    // 2. Trial akan habis (≤ 7 hari)
-    if (tenant.trial_ends_at) {
-      const trialEnd = new Date(tenant.trial_ends_at)
-      const daysLeft = Math.ceil((trialEnd - today) / (1000 * 60 * 60 * 24))
-      if (daysLeft <= 7 && daysLeft > 0) {
+    // 2. Notifikasi subscription akan habis (kontekstual per plan)
+    const isPaidPlan = tenant.plan === 'pro' || tenant.plan === 'business'
+    const expiryDate = isPaidPlan
+      ? (tenant.plan_expires_at ? new Date(tenant.plan_expires_at) : null)
+      : (tenant.trial_ends_at ? new Date(tenant.trial_ends_at) : null)
+    const threshold = isPaidPlan ? 14 : 7
+
+    if (expiryDate) {
+      const daysLeft = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24))
+      if (daysLeft <= threshold && daysLeft > 0) {
         if (!existingKeys.has('subscription_expires' + tenant.id)) {
+          const title = isPaidPlan
+            ? `Langganan ${tenant.plan === 'pro' ? 'Pro' : 'Business'} Akan Berakhir`
+            : 'Trial Akan Berakhir'
+          const body = isPaidPlan
+            ? `Langganan ${tenant.plan === 'pro' ? 'Pro' : 'Business'} kamu berakhir dalam ${daysLeft} hari. Perbarui sekarang agar akses tidak terputus.`
+            : `Trial kamu berakhir dalam ${daysLeft} hari. Upgrade sekarang untuk tidak kehilangan akses.`
+          const actionUrl = profile?.user_type === 'peternak'
+            ? '/peternak/akun'
+            : profile?.user_type === 'rumah_potong'
+              ? `/rumah_potong/${profile?.sub_type?.startsWith('rpa') ? 'rpa' : 'rph'}/akun`
+              : '/broker/akun'
           await supabase.from('notifications').insert({
             tenant_id: tenant.id,
             type: 'subscription_expires',
-            title: 'Trial Akan Berakhir',
-            body:
-              'Trial kamu berakhir dalam ' +
-              daysLeft +
-              ' hari. Upgrade sekarang untuk tidak kehilangan akses.',
-            action_url: profile?.user_type === 'peternak' ? '/peternak/akun' : profile?.user_type === 'rumah_potong' ? `/rumah_potong/${profile?.sub_type?.startsWith('rpa') ? 'rpa' : 'rph'}/akun` : '/broker/akun',
+            title,
+            body,
+            action_url: actionUrl,
             metadata: { ref_id: tenant.id, days_left: daysLeft },
           })
         }

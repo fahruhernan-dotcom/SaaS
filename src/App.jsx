@@ -32,6 +32,7 @@ import AboutUs from './pages/AboutUs';
 import FiturPage from './pages/FiturPage';
 import HargaPage from './pages/HargaPage';
 import OnboardingFlow from './dashboard/_shared/pages/OnboardingFlow';
+import UpgradePlan from './dashboard/_shared/pages/UpgradePlan';
 import Market from './dashboard/_shared/pages/Market';
 
 // Components
@@ -220,6 +221,11 @@ function App() {
         <Route path="/harga" element={<HargaPage />} />
         <Route path="/check-email" element={<CheckEmail />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/upgrade" element={
+          <ProtectedRoute>
+            <UpgradePlan />
+          </ProtectedRoute>
+        } />
 
         <Route path="/onboarding" element={
           <ProtectedRoute>

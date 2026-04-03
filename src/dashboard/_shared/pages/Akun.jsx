@@ -12,6 +12,7 @@ import {
   Building
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { getSubscriptionStatus, getExpiryLabel } from '@/lib/subscriptionUtils'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -19,6 +20,9 @@ import { toast } from 'sonner'
 export default function Akun() {
   const { profile, user, tenant } = useAuth()
   const navigate = useNavigate()
+
+  const sub = getSubscriptionStatus(tenant)
+  const expiryLabel = getExpiryLabel(tenant)
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut()
@@ -66,14 +70,22 @@ export default function Akun() {
           </div>
           <div style={{ textAlign: 'right' }}>
             <p style={labelStyle}>Status</p>
-            <p style={{ fontSize: '12px', color: '#10B981', fontWeight: 600 }}>Aktif (Trial)</p>
+            <p style={{
+              fontSize: '12px', fontWeight: 600,
+              color: sub.status === 'expired' ? '#F87171' : sub.status === 'trial' ? '#F59E0B' : '#10B981'
+            }}>
+              {sub.status === 'expired' ? 'Expired' : sub.status === 'trial' ? 'Trial Aktif' : `Aktif (${sub.label})`}
+            </p>
           </div>
         </div>
-        <p style={{ fontSize: '11px', color: '#4B6478', marginBottom: '16px' }}>
-          Trial Anda akan berakhir dalam <span style={{ color: '#F87171' }}>24 hari</span>. Upgrade ke Pro untuk fitur tanpa batas.
-        </p>
-        <button style={outlineBtnBlueStyle}>
-          <CreditCard size={16} /> Upgrade Plan
+        {expiryLabel && (
+          <p style={{ fontSize: '11px', color: '#4B6478', marginBottom: '16px' }}>
+            {expiryLabel}
+            {sub.status !== 'active' && ' — Upgrade ke Pro untuk fitur tanpa batas.'}
+          </p>
+        )}
+        <button style={outlineBtnBlueStyle} onClick={() => navigate('/upgrade')}>
+          <CreditCard size={16} /> {sub.status === 'active' ? 'Perpanjang Plan' : 'Upgrade Plan'}
         </button>
       </section>
 

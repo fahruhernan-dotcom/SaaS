@@ -123,8 +123,10 @@ export default function AdminBeranda() {
     { name: 'Business', value: stats.tenants.business, color: '#F59E0B' },
   ]
 
-  const pendingCount = stats.revenue.pendingList.length
-  const expiringCount = stats.tenants.trialExpiringSoon.length
+  const pendingCount      = stats.revenue.pendingList.length
+  const expiringCount     = stats.tenants.trialExpiringSoon.length
+  const planExpiringCount = stats.tenants.planExpiringSoon.length
+  const planExpiredCount  = stats.tenants.planAlreadyExpired.length
 
   return (
     <motion.div
@@ -225,6 +227,38 @@ export default function AdminBeranda() {
           valueColor={expiringCount > 0 ? 'text-red-400' : 'text-white'}
           accentLeft={expiringCount > 0 ? 'border-l-2 border-red-500' : ''}
           pulse={expiringCount > 0}
+        />
+
+        {/* Card 7: Plan Paid Akan Expired */}
+        <KPICard
+          label="Plan Akan Expired"
+          value={planExpiringCount > 0 ? planExpiringCount : planExpiredCount > 0 ? planExpiredCount : '0'}
+          sub={planExpiredCount > 0
+            ? `${planExpiredCount} sudah expired — belum downgrade`
+            : planExpiringCount > 0
+              ? 'Pro/Business dalam 30 hari'
+              : 'Semua plan aktif ✓'
+          }
+          icon={Clock}
+          iconColor={planExpiredCount > 0
+            ? 'text-red-400 bg-red-500/10'
+            : planExpiringCount > 0
+              ? 'text-amber-400 bg-amber-500/10'
+              : 'text-[#4B6478] bg-white/5'
+          }
+          valueColor={planExpiredCount > 0
+            ? 'text-red-400'
+            : planExpiringCount > 0
+              ? 'text-amber-400'
+              : 'text-white'
+          }
+          accentLeft={planExpiredCount > 0
+            ? 'border-l-2 border-red-500'
+            : planExpiringCount > 0
+              ? 'border-l-2 border-amber-500'
+              : ''
+          }
+          pulse={planExpiredCount > 0}
         />
       </div>
 

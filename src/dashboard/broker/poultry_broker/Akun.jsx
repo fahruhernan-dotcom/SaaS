@@ -8,7 +8,7 @@ import {
   Trophy, Star, Crown, Undo2, FileX2, ChevronDown, ChevronUp,
   History, Warehouse, Factory, Truck
 } from 'lucide-react'
-import { differenceInDays, isAfter } from 'date-fns'
+import { getSubscriptionStatus, getExpiryLabel } from '@/lib/subscriptionUtils'
 import { supabase } from '@/lib/supabase'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
@@ -74,11 +74,13 @@ export default function Akun() {
     }
   }
 
-  // Trial Calculation
-  const trialEnds = tenant?.trial_ends_at ? new Date(tenant.trial_ends_at) : null
-  const daysLeft = trialEnds ? differenceInDays(trialEnds, new Date()) : 0
-  const isTrialActive = trialEnds ? isAfter(trialEnds, new Date()) : false
-  const trialProgress = Math.max(0, Math.min(100, (daysLeft / 14) * 100))
+  // Subscription status
+  const sub = getSubscriptionStatus(tenant)
+  const { daysLeft, isExpiringSoon } = sub
+  const isTrialActive = sub.status === 'trial'
+  const maxDays = tenant?.plan === 'starter' ? 14 : 30
+  const subProgress = Math.max(4, Math.min(100, (daysLeft / maxDays) * 100))
+  const expiryLabel = getExpiryLabel(tenant)
 
   const initials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'BR'
 
@@ -144,35 +146,41 @@ export default function Akun() {
                       <h3 className="font-display font-black text-white text-lg tracking-tight uppercase leading-none">{tenant?.plan || 'Starter Free'}</h3>
                       <p className="text-[11px] font-black text-[#4B6478] uppercase tracking-widest">Status Berlangganan</p>
                   </div>
-                  {isTrialActive ? (
-                     <Badge className="bg-amber-500/10 text-amber-500 border border-amber-500/20 font-black text-[9px] px-3 h-6 uppercase tracking-widest">TRIAL</Badge>
+                  {sub.status === 'trial' ? (
+                    <Badge className="bg-amber-500/10 text-amber-500 border border-amber-500/20 font-black text-[9px] px-3 h-6 uppercase tracking-widest">TRIAL</Badge>
+                  ) : sub.status === 'active' ? (
+                    <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-black text-[9px] px-3 h-6 uppercase tracking-widest">AKTIF</Badge>
                   ) : (
-                      <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-black text-[9px] px-3 h-6 uppercase tracking-widest">AKTIF</Badge>
+                    <Badge className="bg-red-500/10 text-red-400 border border-red-500/20 font-black text-[9px] px-3 h-6 uppercase tracking-widest">EXPIRED</Badge>
                   )}
               </div>
 
-              {isTrialActive && (
+              {(sub.status === 'trial' || isExpiringSoon) && (
                   <div className="space-y-3">
                       <div className="flex justify-between items-end">
                           <p className={cn(
                               "text-[11px] font-black uppercase tracking-wider",
                               daysLeft <= 3 ? "text-red-400" : "text-amber-500"
                           )}>
-                              Berakhir dalam {daysLeft} hari
+                              {expiryLabel}
                           </p>
-                          <p className="text-[11px] text-[#4B6478] font-black tabular-nums">{Math.round(trialProgress)}%</p>
+                          <p className="text-[11px] text-[#4B6478] font-black tabular-nums">{Math.round(subProgress)}%</p>
                       </div>
-                      <Progress value={trialProgress} className="h-2 bg-secondary/10 rounded-full overflow-hidden" 
+                      <Progress value={subProgress} className="h-2 bg-secondary/10 rounded-full overflow-hidden"
                           indicatorClassName={cn(
                               "transition-all duration-500",
                               daysLeft <= 3 ? "bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.3)]" : "bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.3)]"
-                          )} 
+                          )}
                       />
                   </div>
               )}
 
-              <Button className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] uppercase tracking-[0.2em] gap-3 rounded-[20px] border-none shadow-[0_8px_30px_rgba(16,185,129,0.15)] active:scale-95 transition-all mt-2">
-                  <CreditCard size={18} strokeWidth={2.5} /> Upgrade Plan
+              <Button
+                onClick={() => navigate('/upgrade')}
+                className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] uppercase tracking-[0.2em] gap-3 rounded-[20px] border-none shadow-[0_8px_30px_rgba(16,185,129,0.15)] active:scale-95 transition-all mt-2"
+              >
+                  <CreditCard size={18} strokeWidth={2.5} />
+                  {sub.status === 'active' ? 'Perpanjang Plan' : 'Upgrade Plan'}
               </Button>
           </Card>
         </motion.div>

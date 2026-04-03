@@ -238,7 +238,7 @@ export default function AdminUsers() {
                 <tr className="border-b border-white/5 bg-white/[0.02]">
                   <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">Bisnis</th>
                   <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Plan</th>
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Trial</th>
+                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Sisa Waktu</th>
                   <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Users</th>
                   <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">Daftar</th>
                   <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Status</th>
@@ -276,7 +276,7 @@ export default function AdminUsers() {
                       <PlanBadge plan={t.plan} />
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <TrialDisplay date={t.trial_ends_at} plan={t.plan} />
+                      <TrialDisplay date={t.trial_ends_at} plan={t.plan} planExpiresAt={t.plan_expires_at} />
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className="text-[13px] font-bold text-white">{t.profiles?.length || 0}</span>
@@ -647,31 +647,58 @@ export default function AdminUsers() {
                     </div>
                   </section>
 
-                  {/* Trial Info */}
+                  {/* Subscription Info */}
                   <section className="space-y-4">
-                    <h3 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em]">STATUS TRIAL</h3>
-                    <div className="bg-white/[0.03] p-5 rounded-2xl border border-white/5 flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-                          <Clock size={18} className="text-amber-400" />
+                    <h3 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em]">STATUS LANGGANAN</h3>
+
+                    {/* Trial (hanya untuk starter) */}
+                    {selectedTenant.plan === 'starter' && (
+                      <div className="bg-white/[0.03] p-5 rounded-2xl border border-white/5 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                            <Clock size={18} className="text-amber-400" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-wider mb-1">Trial Berakhir</p>
+                            <p className="text-[13px] font-bold text-white">
+                              {selectedTenant.trial_ends_at ? format(new Date(selectedTenant.trial_ends_at), 'dd MMMM yyyy', { locale: localeId }) : 'Belum Dimulai'}
+                            </p>
+                            <p className="text-[10px] font-bold uppercase mt-0.5 tracking-wider" style={{ color: selectedTenant.trial_ends_at && new Date(selectedTenant.trial_ends_at) > new Date() ? '#F59E0B' : '#F87171' }}>
+                              {selectedTenant.trial_ends_at && new Date(selectedTenant.trial_ends_at) > new Date() ? 'Masih Aktif' : 'Expired'}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-[13px] font-bold text-white">
-                            {selectedTenant.trial_ends_at ? format(new Date(selectedTenant.trial_ends_at), 'dd MMMM yyyy', { locale: localeId }) : 'Trial Belum Dimulai'}
-                          </p>
-                          <p className="text-[10px] font-bold text-amber-500 uppercase mt-0.5 tracking-wider">
-                            {selectedTenant.trial_ends_at && new Date(selectedTenant.trial_ends_at) > new Date() ? 'Aktif' : 'Expired / Off'}
-                          </p>
+                        <Button
+                          size="sm"
+                          onClick={() => handleExtendTrial(selectedTenant)}
+                          className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest px-4 h-9 shadow-lg shadow-amber-500/20"
+                        >
+                          Extend 14 Hari
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Plan berbayar */}
+                    {(selectedTenant.plan === 'pro' || selectedTenant.plan === 'business') && (
+                      <div className="bg-white/[0.03] p-5 rounded-2xl border border-white/5 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: selectedTenant.plan === 'pro' ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)', border: `1px solid ${selectedTenant.plan === 'pro' ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)'}` }}>
+                            <Clock size={18} style={{ color: selectedTenant.plan === 'pro' ? '#10B981' : '#F59E0B' }} />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-wider mb-1">
+                              {selectedTenant.plan === 'pro' ? 'Pro' : 'Business'} Berakhir
+                            </p>
+                            <p className="text-[13px] font-bold text-white">
+                              {selectedTenant.plan_expires_at ? format(new Date(selectedTenant.plan_expires_at), 'dd MMMM yyyy', { locale: localeId }) : '—'}
+                            </p>
+                            <p className="text-[10px] font-bold uppercase mt-0.5 tracking-wider" style={{ color: selectedTenant.plan_expires_at && new Date(selectedTenant.plan_expires_at) > new Date() ? '#10B981' : '#F87171' }}>
+                              {selectedTenant.plan_expires_at && new Date(selectedTenant.plan_expires_at) > new Date() ? 'Aktif' : 'Expired — Perlu Renewal'}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                      <Button
-                        size="sm"
-                        onClick={() => handleExtendTrial(selectedTenant)}
-                        className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest px-4 h-9 shadow-lg shadow-amber-500/20"
-                      >
-                        Extend 14 Hari
-                      </Button>
-                    </div>
+                    )}
                   </section>
 
                   {/* Members List */}
@@ -796,18 +823,38 @@ function RoleBadge({ role }) {
   )
 }
 
-function TrialDisplay({ date, plan }) {
-  if (plan !== 'starter' || !date) return <span className="text-[#4B6478] text-[13px]">—</span>
-
-  const end = new Date(date)
+function TrialDisplay({ date, plan, planExpiresAt }) {
   const now = new Date()
+
+  // Paid plan — tampilkan sisa waktu dari plan_expires_at
+  if (plan === 'pro' || plan === 'business') {
+    if (!planExpiresAt) return <span className="text-[#4B6478] text-[13px]">—</span>
+    const end = new Date(planExpiresAt)
+    const days = Math.ceil((end - now) / (1000 * 60 * 60 * 24))
+    if (days <= 0) return (
+      <div className="flex flex-col items-center">
+        <span className="text-[13px] font-black text-red-400">Expired</span>
+        <span className="text-[8px] text-red-400/60 font-bold uppercase tracking-tighter mt-0.5">Perlu Renewal</span>
+      </div>
+    )
+    return (
+      <div className="flex flex-col items-center">
+        <span className={`text-[13px] font-black ${days <= 14 ? 'text-amber-400' : 'text-emerald-400'}`}>{days} Hari</span>
+        <span className="text-[8px] text-[#4B6478] font-bold uppercase tracking-tighter mt-0.5">
+          {plan === 'pro' ? 'Sisa Pro' : 'Sisa Business'}
+        </span>
+      </div>
+    )
+  }
+
+  // Starter / trial
+  if (!date) return <span className="text-[#4B6478] text-[13px]">—</span>
+  const end = new Date(date)
   const days = Math.ceil((end - now) / (1000 * 60 * 60 * 24))
-
   if (days <= 0) return <span className="text-[#4B6478] text-[13px]">—</span>
-
   return (
     <div className="flex flex-col items-center">
-      <span className="text-[13px] font-black text-amber-400">{days} Hari</span>
+      <span className={`text-[13px] font-black ${days <= 3 ? 'text-red-400' : 'text-amber-400'}`}>{days} Hari</span>
       <span className="text-[8px] text-[#4B6478] font-bold uppercase tracking-tighter mt-0.5">Sisa Trial</span>
     </div>
   )

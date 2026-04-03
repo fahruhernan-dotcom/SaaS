@@ -1,8 +1,6 @@
 import React, { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Users, Plus, DollarSign, CalendarCheck, Check, Briefcase, Phone, ChevronDown,
-} from 'lucide-react'
+import { motion } from 'framer-motion' // eslint-disable-line no-unused-vars
+import { Users, Plus, DollarSign, CalendarCheck, Check } from 'lucide-react'
 import {
   useSembakoEmployees, useSembakoPayrolls,
   useCreateSembakoEmployee, useUpdateSembakoEmployee,
@@ -15,112 +13,9 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
-
-// ── Palette ─────────────────────────────────────────────────────────────────
-const C = {
-  bg: '#06090F', card: '#1C1208', input: '#231A0E',
-  accent: '#EA580C', amber: '#F59E0B', green: '#34D399', red: '#EF4444',
-  text: '#FEF3C7', muted: '#92400E',
-  border: 'rgba(234,88,12,0.15)',
-}
-const sInput = {
-  background: C.input, border: `1px solid ${C.border}`, borderRadius: '10px',
-  padding: '10px 12px', color: C.text, fontSize: '16px', fontWeight: 600,
-  outline: 'none', width: '100%', appearance: 'none', WebkitAppearance: 'none',
-  minHeight: '44px',
-}
-
-function CustomSelect({ value, onChange, options, placeholder, id, style }) {
-  const [open, setOpen] = useState(false)
-  const selected = options.find(o => o.value === value) || options[0]
-
-  return (
-    <div style={{ position: 'relative', width: '100%', ...style }}>
-      <div
-        id={id}
-        onClick={() => setOpen(!open)}
-        style={{
-          ...sInput,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          border: open ? `1px solid ${C.accent}` : `1px solid ${C.border}`,
-          transition: 'all 0.2s',
-          paddingRight: '12px'
-        }}
-      >
-        <span style={{ color: value ? C.text : C.muted, fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: 8 }}>
-          {selected ? selected.label : placeholder}
-        </span>
-        <ChevronDown size={16} color={C.muted} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }} />
-      </div>
-      <AnimatePresence>
-        {open && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              style={{ position: 'fixed', inset: 0, zIndex: 998, background: 'transparent' }}
-              onClick={() => setOpen(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, y: -8, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.95 }}
-              style={{
-                position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '8px',
-                background: '#130C06', border: `1px solid ${C.border}`, borderRadius: '12px',
-                zIndex: 999, overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
-                backdropFilter: 'blur(10px)',
-              }}
-            >
-              <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                {options.map(opt => (
-                  <div
-                    key={opt.value}
-                    onClick={() => { onChange(opt.value); setOpen(false) }}
-                    style={{
-                      padding: '12px 14px', fontSize: '13px', color: value === opt.value ? C.accent : C.text,
-                      background: value === opt.value ? 'rgba(234,88,12,0.1)' : 'transparent',
-                      cursor: 'pointer', transition: 'all 0.2s',
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      borderBottom: `1px solid rgba(255,255,255,0.03)`
-                    }}
-                  >
-                    <span>{opt.label}</span>
-                    {value === opt.value && <span style={{ fontSize: '10px' }}>✓</span>}
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </div>
-  )
-}
-const sBtn = (p) => ({
-  background: p ? C.accent : 'transparent', border: p ? 'none' : `1px solid ${C.border}`,
-  color: p ? '#fff' : C.text, borderRadius: '10px', padding: '12px 18px',
-  fontWeight: 700, fontSize: '14px', cursor: 'pointer', minHeight: '44px',
-})
-const sLabel = { fontSize: '11px', color: C.muted, fontWeight: 700, letterSpacing: '0.06em', marginBottom: '4px' }
-
-function fmtDate(d) {
-  if (!d) return '-'
-  try { return new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) } catch { return '-' }
-}
-function InputRupiah({ value, onChange, placeholder, style }) {
-  const display = value ? Number(value).toLocaleString('id-ID') : ''
-  return (
-    <input style={{ ...sInput, ...style }} placeholder={placeholder || 'Rp 0'}
-      value={display ? `Rp ${display}` : ''}
-      onChange={e => {
-        const raw = e.target.value.replace(/[^0-9]/g, '')
-        onChange(raw ? parseInt(raw) : 0)
-      }} />
-  )
-}
+import {
+  C, sInput, sBtn, sLabel, fmtDate, InputRupiah, CustomSelect,
+} from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
 
 const SALARY_TYPES = [
   { value: 'harian', label: 'Harian', color: '#60A5FA' },
@@ -321,8 +216,6 @@ function TabPayroll({ isDesktop }) {
   const [workDays, setWorkDays] = useState(0)
   const [tripCount, setTripCount] = useState(0)
   const [salesAmount, setSalesAmount] = useState(0)
-  const [baseAmount, setBaseAmount] = useState(0)
-  const [commissionAmount, setCommissionAmount] = useState(0)
   const [bonus, setBonus] = useState(0)
   const [deduction, setDeduction] = useState(0)
   const [payNotes, setPayNotes] = useState('')
@@ -346,11 +239,7 @@ function TabPayroll({ isDesktop }) {
     return Math.round(salesAmount * selectedEmp.commission_pct / 100)
   }, [selectedEmp, salesAmount])
 
-  // Sync derived values
-  useMemo(() => { setBaseAmount(calcBase) }, [calcBase])
-  useMemo(() => { setCommissionAmount(calcComm) }, [calcComm])
-
-  const totalPay = baseAmount + commissionAmount + bonus - deduction
+  const totalPay = calcBase + calcComm + bonus - deduction
 
   function handleSelectEmp(id) {
     setEmpId(id)
@@ -367,8 +256,8 @@ function TabPayroll({ isDesktop }) {
       work_days: workDays || 0,
       trip_count: tripCount || 0,
       sales_amount: salesAmount || 0,
-      base_amount: baseAmount,
-      commission_amount: commissionAmount,
+      base_amount: calcBase,
+      commission_amount: calcComm,
       bonus, deduction, notes: payNotes,
     })
     setEmpId(''); setWorkDays(0); setTripCount(0); setSalesAmount(0); setBonus(0); setDeduction(0); setPayNotes('')
@@ -486,11 +375,11 @@ function TabPayroll({ isDesktop }) {
             <div style={{ background: C.input, borderRadius: '12px', padding: '14px', border: `1px solid ${C.border}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                 <span style={{ fontSize: '11px', color: C.muted }}>Base</span>
-                <span style={{ fontSize: '12px', color: C.text, fontWeight: 600 }}>{formatIDR(baseAmount)}</span>
+                <span style={{ fontSize: '12px', color: C.text, fontWeight: 600 }}>{formatIDR(calcBase)}</span>
               </div>
-              {commissionAmount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+              {calcComm > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                 <span style={{ fontSize: '11px', color: C.muted }}>Komisi</span>
-                <span style={{ fontSize: '12px', color: C.text, fontWeight: 600 }}>+ {formatIDR(commissionAmount)}</span>
+                <span style={{ fontSize: '12px', color: C.text, fontWeight: 600 }}>+ {formatIDR(calcComm)}</span>
               </div>}
               {bonus > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                 <span style={{ fontSize: '11px', color: C.muted }}>Bonus</span>
