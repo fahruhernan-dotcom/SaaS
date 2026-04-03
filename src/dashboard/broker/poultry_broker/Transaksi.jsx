@@ -248,12 +248,10 @@ export default function Transaksi() {
       queryClient.invalidateQueries({ queryKey: ['purchases', tenant.id] })
       queryClient.invalidateQueries({ queryKey: ['cashflow'] })
       queryClient.invalidateQueries({ queryKey: ['broker-stats', tenant.id] })
-      const { toast } = await import('sonner')
       toast.success('🗑️ Catatan pembelian dihapus')
       setShowDeleteDialog(false)
       setDeleteTarget(null)
     } catch (err) {
-      const { toast } = await import('sonner')
       toast.error('Gagal menghapus: ' + err.message)
     } finally {
       setIsDeleting(false)
@@ -295,7 +293,6 @@ export default function Transaksi() {
       queryClient.invalidateQueries({ queryKey: ['cashflow'] })
       queryClient.invalidateQueries({ queryKey: ['broker-stats', tenant.id] })
 
-      const { toast } = await import('sonner')
       toast.success('🗑️ Transaksi penjualan & data terkait dihapus')
       
       setShowDeleteSaleDialog(false)
@@ -304,7 +301,6 @@ export default function Transaksi() {
       setSelectedSaleId(null)
     } catch (err) {
       console.error('Delete error:', err)
-      const { toast } = await import('sonner')
       toast.error('Gagal menghapus secara menyeluruh: ' + err.message)
     } finally {
       setIsDeletingSale(false)
@@ -344,13 +340,11 @@ export default function Transaksi() {
         queryKey: ['broker-stats', tenant.id]
       })
 
-      const { toast } = await import('sonner')
       toast.success('Pembelian berhasil diperbarui')
       setShowEditPurchase(false)
       setEditTarget(null)
 
     } catch (err) {
-      const { toast } = await import('sonner')
       toast.error('Gagal memperbarui: ' + err.message)
     } finally {
       setIsEditSubmitting(false)

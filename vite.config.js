@@ -32,4 +32,7 @@ export default defineConfig({
       ].join('; '),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 3000,
+  },
 })
