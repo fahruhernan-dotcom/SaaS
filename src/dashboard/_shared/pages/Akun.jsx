@@ -154,9 +154,14 @@ export default function Akun() {
         <LogOut size={18} /> Keluar
       </motion.button>
 
-      <p style={{ textAlign: 'center', fontSize: '10px', color: '#4B6478', marginTop: '32px' }}>
-        TernakOS v1.0.2 • Made with 💚 in Indonesia
-      </p>
+      <div style={{ textAlign: 'center', marginTop: '32px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', fontSize: '10px', color: '#4B6478' }}>
+          <a href="/terms" style={{ color: '#4B6478', textDecoration: 'none' }}>Syarat &amp; Ketentuan</a>
+          <span>·</span>
+          <a href="/privacy" style={{ color: '#4B6478', textDecoration: 'none' }}>Kebijakan Privasi</a>
+        </div>
+        <p style={{ fontSize: '10px', color: '#4B6478' }}>TernakOS v1.0.2 • Made with 💚 in Indonesia</p>
+      </div>
     </div>
   )
 }

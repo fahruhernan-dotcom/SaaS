@@ -452,6 +452,15 @@ export default function RPAAkun() {
             <LogOut size={16} />
             Keluar
           </button>
+
+          <div style={{ textAlign: 'center', marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', fontSize: '10px', color: '#4B6478' }}>
+              <a href="/terms" style={{ color: '#4B6478', textDecoration: 'none' }}>Syarat &amp; Ketentuan</a>
+              <span>·</span>
+              <a href="/privacy" style={{ color: '#4B6478', textDecoration: 'none' }}>Kebijakan Privasi</a>
+            </div>
+            <p style={{ fontSize: '10px', color: '#4B6478' }}>TernakOS • Made with 💚 in Indonesia</p>
+          </div>
         </div>
 
       </div>

@@ -102,9 +102,9 @@ const Footer = () => {
         <div className="border-t border-border-sub pt-[24px] flex flex-col md:flex-row justify-center md:justify-between items-center gap-[8px] md:gap-[16px] text-center">
            <p className="font-body text-[11px] text-tx-3">© {new Date().getFullYear()} TernakOS. All rights reserved.</p>
            <div className="flex items-center gap-[12px] text-[11px] text-tx-3">
-             <a href="#" className="hover:text-tx-1 transition-colors">Privacy Policy</a>
+             <a href="/privacy" className="hover:text-tx-1 transition-colors">Kebijakan Privasi</a>
              <span>·</span>
-             <a href="#" className="hover:text-tx-1 transition-colors">Terms of Service</a>
+             <a href="/terms" className="hover:text-tx-1 transition-colors">Syarat & Ketentuan</a>
            </div>
         </div>
 

@@ -298,8 +298,13 @@ export default function Akun() {
             <RecycleBinSection tenantId={tenant?.id} />
         </motion.div>
 
-        <motion.footer variants={fadeUp} className="text-center pt-6 opacity-40">
-            <p className="text-[9px] text-[#4B6478] font-black uppercase tracking-[0.4em]">
+        <motion.footer variants={fadeUp} className="text-center pt-6 pb-2 space-y-2">
+            <div className="flex items-center justify-center gap-3 text-[10px] text-[#4B6478]">
+                <a href="/terms" className="hover:text-emerald-400 transition-colors">Syarat & Ketentuan</a>
+                <span>·</span>
+                <a href="/privacy" className="hover:text-emerald-400 transition-colors">Kebijakan Privasi</a>
+            </div>
+            <p className="text-[9px] text-[#4B6478] font-black uppercase tracking-[0.4em] opacity-40">
                 TernakOS v2.0.0 • PRO EDITION
             </p>
         </motion.footer>
