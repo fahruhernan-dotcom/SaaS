@@ -84,7 +84,7 @@ export default function BrokerLayout() {
       )
     }
 
-    return <DesktopSidebarLayout><Outlet /></DesktopSidebarLayout>
+    return <DesktopSidebarLayout><Outlet context={{ setSidebarOpen }} /></DesktopSidebarLayout>
   }
 
   return (

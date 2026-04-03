@@ -216,17 +216,27 @@ export default function SembakoTokoSupplier() {
             }
           }}
           actionButton={
-            <div className="flex items-center gap-2">
-              <SegmentSwitch sub={sub} setSub={setSub} />
-              {sub === 'toko' ? <TokoActions compact={isDesktop} /> : <SupplierActions compact={isDesktop} />}
-            </div>
+            isDesktop ? (
+              <div className="flex items-center gap-2">
+                <SegmentSwitch sub={sub} setSub={setSub} />
+                {sub === 'toko' ? <TokoActions compact /> : <SupplierActions compact />}
+              </div>
+            ) : (
+              sub === 'toko' ? <TokoActions compact /> : <SupplierActions compact />
+            )
           }
         />
+
+        {!isDesktop && (
+          <div className="px-5 pt-4">
+            <SegmentSwitch sub={sub} setSub={setSub} />
+          </div>
+        )}
 
         <SembakoSummaryStrip isDesktop={isDesktop} items={summaryItems} />
 
         <div className="space-y-5 px-5 pt-5">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-4">
             {sub === 'toko' ? (
               <>
                 <SembakoStatCard
@@ -249,7 +259,7 @@ export default function SembakoTokoSupplier() {
                   color="red"
                   subLabel="Masih ada sisa piutang"
                 />
-                <div className="rounded-[28px] border border-[#EA580C]/10 bg-[#1C1208] p-5">
+                <div className="col-span-2 xl:col-span-1 rounded-[28px] border border-[#EA580C]/10 bg-[#1C1208] p-4">
                   <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#92400E]">Filter Area</p>
                   <div className="mt-4 flex flex-wrap gap-2">
                     <SembakoFilterPill
@@ -290,7 +300,7 @@ export default function SembakoTokoSupplier() {
                   color="amber"
                   subLabel="Sudah punya histori batch"
                 />
-                <div className="rounded-[28px] border border-[#F59E0B]/10 bg-[#1C1208] p-5">
+                <div className="col-span-2 xl:col-span-1 rounded-[28px] border border-[#F59E0B]/10 bg-[#1C1208] p-4">
                   <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#92400E]">Riwayat Batch</p>
                   <p className="mt-3 font-display text-2xl font-black text-[#F59E0B]">
                     {allBatches.length}

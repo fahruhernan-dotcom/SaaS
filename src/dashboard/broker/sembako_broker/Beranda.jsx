@@ -23,6 +23,50 @@ import {
 import { id as idLocale } from 'date-fns/locale'
 import { C } from './components/sembakoSaleUtils'
 
+// ── Skeleton ────────────────────────────────────────────────────────────────────
+function Skel({ h = '60px', w = '100%', r = '14px' }) {
+  return (
+    <div className="animate-pulse" style={{ background: '#231A0E', borderRadius: r, height: h, width: w }} />
+  )
+}
+
+function BerandaSkeleton({ isDesktop }) {
+  if (isDesktop) {
+    return (
+      <div style={{ padding: '28px 32px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <Skel h="22px" w="160px" r="8px" />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+          {[...Array(4)].map((_, i) => <Skel key={i} h="88px" r="18px" />)}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
+          <Skel h="260px" r="20px" />
+          <Skel h="260px" r="20px" />
+        </div>
+        <Skel h="200px" r="20px" />
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      {/* Mobile top bar */}
+      <div style={{ background: '#0E0905', height: '60px', borderBottom: '1px solid rgba(234,88,12,0.1)' }} />
+      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* Greeting */}
+        <Skel h="20px" w="55%" r="8px" />
+        {/* KPI grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          {[...Array(4)].map((_, i) => <Skel key={i} h="72px" r="14px" />)}
+        </div>
+        {/* Chart */}
+        <Skel h="180px" r="20px" />
+        {/* List rows */}
+        {[...Array(3)].map((_, i) => <Skel key={i} h="78px" r="16px" />)}
+      </div>
+    </div>
+  )
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function fmtDate(d) {
   if (!d) return '-'
@@ -944,12 +988,8 @@ export default function SembakoBeranda() {
 
   if (statsLoading) {
     return (
-      <div style={{ background: C.bg, minHeight: '100vh', padding: '24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '60px' }}>
-          {[...Array(4)].map((_, i) => (
-            <div key={i} style={{ background: C.card, borderRadius: '14px', height: '72px', border: `1px solid ${C.border}`, opacity: 0.5 }} />
-          ))}
-        </div>
+      <div style={{ background: C.bg, minHeight: '100vh' }}>
+        <BerandaSkeleton isDesktop={isDesktop} />
       </div>
     )
   }
