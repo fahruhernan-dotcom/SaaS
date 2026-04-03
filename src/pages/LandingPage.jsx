@@ -12,8 +12,11 @@ import BeforeAfter from '../sections/BeforeAfter';
 import FinalCTA from '../sections/FinalCTA';
 import Footer from '../components/Footer';
 
+import ComparisonTable from '../sections/ComparisonTable';
+import StickyCTA from '../components/StickyCTA';
+
 const LandingPage = () => {
-  const [activeRole, setActiveRole] = useState('broker');
+  const [activeRole, setActiveRole] = useState('peternak');
 
   return (
     <div className="bg-bg-base min-h-screen text-text-primary font-body overflow-x-hidden">
@@ -22,6 +25,7 @@ const LandingPage = () => {
       <StatsBar />
       <PainPoints activeRole={activeRole} setActiveRole={setActiveRole} />
       <BeforeAfter activeRole={activeRole} />
+      <ComparisonTable />
       <Features activeRole={activeRole} />
       <HowItWorks activeRole={activeRole} />
       <MarketPrice activeRole={activeRole} />
@@ -29,6 +33,7 @@ const LandingPage = () => {
       <TestimonialsNew />
       <FinalCTA />
       <Footer />
+      <StickyCTA />
     </div>
   );
 };

@@ -24,7 +24,7 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
-import { getBusinessModel, BUSINESS_MODELS } from '@/lib/businessModel'
+import { getBusinessModel, BUSINESS_MODELS, resolveBusinessVertical } from '@/lib/businessModel'
 import { useTheme } from '@/lib/hooks/useTheme'
 import DrawerLainnya from './DrawerLainnya'
 
@@ -171,23 +171,26 @@ export default function BottomNav() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const { accentColor } = useTheme()
 
+  // Centralized Business Vertical Resolution (SCALABLE ARCHITECTURE)
+  const vertical = resolveBusinessVertical(profile, tenant)
+  const model = BUSINESS_MODELS[vertical] || getBusinessModel(profile?.user_type, profile?.sub_type)
+  
+  // BRANDING: Theme implementation
+  const isSembako = vertical === 'distributor_sembako' || vertical === 'sembako_broker'
+  const color = (isSembako ? '#EA580C' : (accentColor || model?.color || '#10B981'))
+
   // Detect peternak per-farm context (Level 2)
   const farmMatch    = location.pathname.match(/^\/peternak\/kandang\/([^/]+)/)
   const currentFarmId = farmMatch?.[1] ?? null
   const isPeternakFarm = !!currentFarmId
 
-  // Prefer tenant.business_vertical (set on tenant row) over profile sub_type
-  const model = (tenant?.business_vertical && BUSINESS_MODELS[tenant.business_vertical])
-    || getBusinessModel(profile?.user_type, profile?.sub_type)
-  
   const peternakBase = `/peternak/${profile?.sub_type || 'peternak_broiler'}`
-  const color = accentColor || model?.color || '#10B981'
-
+  
   // Override tabs & fabPath when inside a per-farm route
   let allTabs = []
   if (isPeternakFarm) {
     allTabs = [
-        { path: `${peternakBase}/kandang/${currentFarmId}/beranda`, icon: 'Home',         label: 'Kandang'  },
+        { path: `${peternakBase}/kandangs/${currentFarmId}/beranda`, icon: 'Home',         label: 'Kandang'  },
         { path: `${peternakBase}/kandang/${currentFarmId}/siklus`,  icon: 'RefreshCw',    label: 'Siklus'   },
         { path: `${peternakBase}/kandang/${currentFarmId}/pakan`,   icon: 'Package',      label: 'Pakan'    },
         { path: `${peternakBase}/beranda`,                          icon: 'MoreHorizontal', label: 'Overview' },
@@ -196,9 +199,15 @@ export default function BottomNav() {
     // Dynamically adjust paths for Broker (poultry_broker, egg_broker, etc that use base broker layout)
     const isBrokerUser = profile?.user_type === 'broker';
     const brokerBase = getBrokerBasePath(tenant);
+    
     allTabs = (model.bottomNav || []).map(tab => {
+        // If the path already has a vertical segment (e.g. /broker/distributor_sembako/...), use it as is
+        if (tab.path.startsWith('/broker/') && tab.path.split('/').length > 3) {
+          return tab;
+        }
+        
         if (isBrokerUser && tab.path.startsWith('/broker/') && !tab.path.startsWith(brokerBase)) {
-          return { ...tab, path: tab.path.replace('/broker/', brokerBase + '/') }
+           return { ...tab, path: tab.path.replace('/broker/', brokerBase + '/') }
         }
         return tab;
     })
@@ -209,6 +218,7 @@ export default function BottomNav() {
     fabPath = `${peternakBase}/kandang/${currentFarmId}/input`
   } else if (model.fabPath) {
     fabPath = model.fabPath
+    
     const brokerBase = getBrokerBasePath(tenant);
     if (profile?.user_type === 'broker' && fabPath.startsWith('/broker/') && !fabPath.startsWith(brokerBase)) {
       fabPath = fabPath.replace('/broker/', brokerBase + '/')
@@ -225,9 +235,21 @@ export default function BottomNav() {
     const isViewOnly = profile?.role === 'view_only'
 
     if (isOwner) return true
-    if (isStaff)    return ['Beranda', 'Transaksi', 'RPA', 'Akun'].includes(tab.label)
-    if (isViewOnly) return ['Beranda', 'Transaksi', 'Akun'].includes(tab.label)
-    if (profile?.role === 'sopir') return false
+    if (isStaff) {
+      if (isSembako) {
+        return ['Beranda', 'Jual', 'Toko', 'Kirim'].includes(tab.label)
+      }
+      return ['Beranda', 'Transaksi', 'RPA', 'Akun'].includes(tab.label)
+    }
+    if (isViewOnly) {
+      if (isSembako) {
+        return ['Beranda', 'Laporan'].includes(tab.label)
+      }
+      return ['Beranda', 'Transaksi', 'Akun'].includes(tab.label)
+    }
+    if (profile?.role === 'sopir' || profile?.role === 'supir') {
+      return false
+    }
     return true
   })
 
@@ -290,7 +312,7 @@ export default function BottomNav() {
           borderTop: '1px solid rgba(255,255,255,0.07)',
           display: 'flex',
           alignItems: 'stretch',
-          zIndex: 100,
+          zIndex: 3500,
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           overflow: 'visible',
         }}

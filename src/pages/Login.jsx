@@ -105,14 +105,14 @@ export default function Login() {
 
       // Rumah Potong
       if (profile.user_type === 'rumah_potong') {
-        const rpType = profile.tenants?.sub_type?.startsWith('rpa') ? 'rpa' : 'rph'
-        navigate(`/rumah_potong/${rpType}/beranda`)
+        const subType = profile.tenants?.sub_type || 'rpa_ayam'
+        navigate(`/rumah_potong/${subType}/beranda`)
         toast.success('Selamat datang kembali!')
         return
       }
 
       // Broker (default)
-      navigate(getBrokerBasePath({ sub_type: profile.tenants?.sub_type }) + '/beranda')
+      navigate(getBrokerBasePath(profile.tenants) + '/beranda')
       toast.success('Selamat datang kembali!')
       
     } catch (err) {
@@ -181,10 +181,10 @@ export default function Login() {
                 { icon: <Zap className="w-4 h-4 text-[#10B981] mb-2" />, val: "Real-time", label: "Update Harga" },
                 { icon: <Shield className="w-4 h-4 text-[#10B981] mb-2" />, val: "100%", label: "Data Aman" },
               ].map((stat, i) => (
-                <div key={i} className="bg-[#0C1319]/80 border border-white/8 rounded-xl p-4 flex-1 flex flex-col items-start">
+                <div key={i} className="bg-[#0C1319]/80 border border-white/8 rounded-xl p-3 flex-1 flex flex-col items-start transition-colors hover:bg-[#0C1319]">
                   {stat.icon}
-                  <div className="font-display text-lg font-bold text-[#10B981]">{stat.val}</div>
-                  <div className="text-[#94A3B8] text-xs mt-1">{stat.label}</div>
+                  <div className="font-display text-base font-bold text-[#10B981]">{stat.val}</div>
+                  <div className="text-[#94A3B8] text-[10px] mt-0.5 font-medium">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -215,13 +215,13 @@ export default function Login() {
                   desc: "Broker, peternak, dan RPA dalam satu ekosistem terintegrasi." 
                 },
               ].map((item, i) => (
-                <div key={i} className="bg-[#0C1319]/80 border border-white/8 rounded-xl p-4 flex flex-col gap-2">
-                  <div className="w-8 h-8 bg-[#10B981]/10 border border-[#10B981]/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                    {React.cloneElement(item.icon, { size: 16, className: "text-[#10B981]" })}
+                <div key={i} className="bg-[#0C1319]/80 border border-white/8 rounded-xl p-3.5 flex flex-col gap-2 transition-all hover:border-white/12">
+                  <div className="w-7 h-7 bg-[#10B981]/10 border border-[#10B981]/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    {React.cloneElement(item.icon, { size: 14, className: "text-[#10B981]" })}
                   </div>
                   <div>
-                    <h4 className="text-[#F1F5F9] text-sm font-semibold mt-1">{item.title}</h4>
-                    <p className="text-[#4B6478] text-xs leading-relaxed">{item.desc}</p>
+                    <h4 className="text-[#F1F5F9] text-[13px] font-semibold mt-1">{item.title}</h4>
+                    <p className="text-[#4B6478] text-[11px] leading-relaxed font-medium">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -263,10 +263,10 @@ export default function Login() {
               }}>TernakOS</span>
             </Link>
             
-            <h1 className="text-2xl font-bold font-display text-[#F1F5F9] mb-2 tracking-tight">
+            <h1 className="text-xl font-bold font-display text-[#F1F5F9] mb-1 tracking-tight">
               Selamat datang kembali
             </h1>
-            <p className="text-sm text-[#4B6478] mb-8 leading-relaxed">
+            <p className="text-[13px] text-[#4B6478] mb-6 leading-relaxed font-medium">
               Masukkan email dan password kamu untuk masuk
             </p>
 
@@ -277,13 +277,13 @@ export default function Login() {
                 disabled
                 style={{
                   width: '100%',
-                  height: '50px',
+                  height: '44px',
                   background: 'transparent',
                   border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: '12px',
+                  borderRadius: '10px',
                   color: '#4B6478',
                   fontFamily: 'Sora',
-                  fontSize: '15px',
+                  fontSize: '14px',
                   fontWeight: 600,
                   display: 'flex',
                   alignItems: 'center',
@@ -293,7 +293,7 @@ export default function Login() {
                   opacity: 0.5
                 }}
               >
-                <svg width="18" height="18" viewBox="0 0 18 18" style={{ opacity: 0.4 }}>
+                <svg width="16" height="16" viewBox="0 0 18 18" style={{ opacity: 0.4 }}>
                   <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"/>
                   <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
                   <path fill="#FBBC05" d="M3.964 10.71a5.41 5.41 0 0 1 0-3.42V4.958H.957a8.993 8.993 0 0 0 0 8.084l3.007-2.332z"/>
@@ -341,17 +341,17 @@ export default function Login() {
                   id="email"
                   name="email"
                   type="text"
-                  placeholder="nama@email.com atau nama"
+                  placeholder="Email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   style={{
                     background: '#111C24',
                     border: '1px solid rgba(255,255,255,0.09)',
                     borderRadius: '10px',
-                    padding: '13px 14px',
-                    fontSize: '16px',
+                    padding: '10px 14px',
+                    fontSize: '15px',
                     color: '#F1F5F9',
-                    height: '50px',
+                    height: '42px',
                     width: '100%',
                     outline: 'none'
                   }}
@@ -398,10 +398,10 @@ export default function Login() {
                       background: '#111C24',
                       border: '1px solid rgba(255,255,255,0.09)',
                       borderRadius: '10px',
-                      padding: '13px 44px 13px 14px',
-                      fontSize: '16px',
+                      padding: '10px 44px 10px 14px',
+                      fontSize: '15px',
                       color: '#F1F5F9',
-                      height: '50px',
+                      height: '42px',
                       width: '100%',
                       outline: 'none'
                     }}
@@ -453,13 +453,13 @@ export default function Login() {
                 disabled={isLoading || !email || !password}
                 style={{
                   width: '100%',
-                  height: '50px',
+                  height: '44px',
                   background: '#10B981',
                   border: 'none',
-                  borderRadius: '12px',
+                  borderRadius: '10px',
                   color: 'white',
                   fontFamily: 'Sora',
-                  fontSize: '15px',
+                  fontSize: '14px',
                   fontWeight: 700,
                   boxShadow: '0 4px 20px rgba(16,185,129,0.25)',
                   cursor: isLoading || !email || !password
@@ -469,7 +469,7 @@ export default function Login() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  marginTop: '12px'
+                  marginTop: '10px'
                 }}
                 className="hover:bg-emerald-600 transition-colors"
               >
@@ -491,13 +491,13 @@ export default function Login() {
               onClick={() => navigate('/register')}
               style={{
                 width: '100%',
-                height: '50px',
+                height: '44px',
                 background: 'transparent',
                 border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: '12px',
+                borderRadius: '10px',
                 color: '#F1F5F9',
                 fontFamily: 'Sora',
-                fontSize: '15px',
+                fontSize: '14px',
                 fontWeight: 600
               }}
               className="hover:bg-white/5 transition-colors"

@@ -25,6 +25,8 @@ import SembakoGudang from '../sembako_broker/Gudang'
 import SembakoTokoSupplier from '../sembako_broker/TokoSupplier'
 import SembakoTokoSupplierDetail from '../sembako_broker/TokoSupplierDetail'
 import SembakoPengiriman from '../sembako_broker/Pengiriman'
+import SembakoAkun from '../sembako_broker/Akun'
+import SembakoTim from '../sembako_broker/Tim'
 
 // Egg Broker pages
 import EggBeranda from '../egg_broker/Beranda'
@@ -34,8 +36,12 @@ import EggTransaksi from '../egg_broker/Transaksi'
 import EggSuppliers from '../egg_broker/Suppliers'
 import EggCustomers from '../egg_broker/Customers'
 
+import { useAuth } from '@/lib/hooks/useAuth'
+import { resolveBusinessVertical as resolveVertical } from '@/lib/businessModel'
+
 export function BrokerPageRouter({ page }) {
   const { brokerType } = useParams()
+  const { profile, tenant } = useAuth()
   
   const pages = {
     broker_ayam: {
@@ -88,18 +94,27 @@ export function BrokerPageRouter({ page }) {
       pengiriman: <SembakoPengiriman />,
       karyawan: <SembakoPegawai />,
       laporan: <SembakoLaporan />,
-      akun: <Akun />,
-      tim: <Tim />
+      akun: <SembakoAkun />,
+      tim: <SembakoTim />
     }
   }
   
-  // Use brokerType (sub_type) directly or fallback to broker_ayam
-  const resolvedType = pages[brokerType] ? brokerType : 'broker_ayam'
+  // Aliases for sub_types
+  pages.sembako_broker = pages.distributor_sembako
+  pages.poultry_broker = pages.broker_ayam
+  
+  // CENTRALIZED VERTICAL RESOLUTION
+  const vertical = resolveVertical(profile, tenant)
 
-  return pages[resolvedType]?.[page] ?? (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-      <span className="text-4xl">🚧</span>
-      <p className="font-black text-white">Halaman tidak ditemukan</p>
-    </div>
-  )
+  // Determine the best component set based on vertical
+  let resolvedType = pages[vertical] ? vertical : (pages[brokerType] ? brokerType : 'broker_ayam')
+  
+  const componentSet = pages[resolvedType] || pages.broker_ayam
+  const component = componentSet[page]
+  
+  if (!component) {
+    return <Navigate to={`/broker/${brokerType}/beranda`} replace />
+  }
+  
+  return component
 }

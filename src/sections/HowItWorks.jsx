@@ -26,17 +26,17 @@ const HowItWorks = ({ activeRole }) => {
     <section id="cara-kerja" className="bg-[#06090F] section-fade-bottom section-padding">
       <div className="max-w-[1280px] mx-auto overflow-hidden">
         
-        <div className="text-center mb-[60px] lg:mb-[80px]">
-          <AnimatedContent direction="vertical" distance={30} delay={0}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.14)', borderRadius: '99px', padding: '5px 14px', marginBottom: '16px' }}>
-              <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10B981', animation: 'pulse-dot 2s infinite' }}/>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: '#34D399', letterSpacing: '2px', textTransform: 'uppercase' }}>
+        <div className="text-center mb-[40px] md:mb-[50px]">
+          <AnimatedContent direction="vertical" distance={20} delay={0}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.14)', borderRadius: '99px', padding: '4px 12px', marginBottom: '12px' }}>
+              <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#10B981', animation: 'pulse-dot 2s infinite' }}/>
+              <span style={{ fontSize: '10px', fontWeight: 600, color: '#34D399', letterSpacing: '2px', textTransform: 'uppercase' }}>
                 MULAI DALAM MENIT
               </span>
             </div>
           </AnimatedContent>
           <AnimatedContent direction="vertical" distance={40} delay={0.1}>
-            <h2 className="section-h2 mb-[12px]">
+            <h2 className="section-h2 mb-[8px]">
               3 Langkah Menuju Bisnis yang Lebih Rapi
             </h2>
           </AnimatedContent>
@@ -50,12 +50,12 @@ const HowItWorks = ({ activeRole }) => {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
-              className="flex flex-col lg:flex-row gap-[40px] lg:gap-[0px] relative z-10"
+              className="grid grid-cols-3 lg:flex-row gap-2 md:gap-[40px] lg:gap-[0px] relative z-10"
             >
               {steps.map((step, i) => (
                 <div 
                   key={i} 
-                  className="flex-1 flex flex-col items-center text-center relative"
+                  className="flex flex-col items-center text-center relative"
                 >
                   
                   {/* Connector Line (Desktop Only) */}
@@ -73,30 +73,23 @@ const HowItWorks = ({ activeRole }) => {
                   )}
 
                   {/* Step Circle Container */}
-                  <div className="relative mb-6">
-                    {/* Outer Glow Ring */}
-                    <motion.div 
-                      animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.6, 0.3] }}
-                      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                      className="absolute inset-[-8px] rounded-full bg-em-500/10 blur-md"
-                    />
-                    
-                    {/* Circle */}
-                    <div className="w-[88px] h-[88px] rounded-full bg-[#111C24] border border-border-acc flex items-center justify-center relative z-10 group transition-all duration-300 hover:border-em-500/60 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
-                      <span className="font-display text-[28px] font-black text-[#F1F5F9] transition-colors duration-300 group-hover:text-em-400">
+                  <div className="relative mb-3 md:mb-6">
+                    {/* Ring */}
+                    <div className="w-[44px] h-[44px] md:w-[88px] md:h-[88px] rounded-full bg-[#111C24] border border-border-acc flex items-center justify-center relative z-10 group transition-all duration-300 hover:border-em-500/60 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+                      <span className="font-display text-[15px] md:text-[28px] font-black text-[#F1F5F9] transition-colors duration-300 group-hover:text-em-400">
                         {step.num}
                       </span>
                     </div>
                   </div>
                   
-                  <div className="max-w-[280px]">
-                    <p className="font-body text-[11px] font-bold text-em-400 tracking-[1.5px] uppercase mb-[8px]">
+                  <div className="max-w-full">
+                    <p className="hidden md:block font-body text-[10px] font-bold text-em-400 tracking-[1.5px] uppercase mb-[8px]">
                       Langkah {i + 1}
                     </p>
-                    <h3 className="font-display text-[18px] md:text-[20px] font-bold text-[#F1F5F9] mb-[12px]">
+                    <h3 className="font-display text-[10px] md:text-[18px] font-bold text-[#F1F5F9] mb-[10px] leading-tight px-1 uppercase tracking-tight">
                       {step.title}
                     </h3>
-                    <p className="text-[#64748B] text-[14px] leading-[1.6] px-2">
+                    <p className="hidden md:block text-[#64748B] text-sm leading-[1.6] px-4 font-medium">
                       {step.desc}
                     </p>
                   </div>

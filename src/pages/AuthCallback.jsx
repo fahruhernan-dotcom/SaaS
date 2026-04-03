@@ -52,7 +52,7 @@ export default function AuthCallback() {
         return
       }
 
-      navigate(getBrokerBasePath({ sub_type: profile.tenants?.sub_type }) + '/beranda', { replace: true })
+      navigate(getBrokerBasePath(profile.tenants) + '/beranda', { replace: true })
       toast.success('Selamat datang kembali!')
     })
   }, [navigate])

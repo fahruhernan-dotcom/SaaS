@@ -12,9 +12,11 @@ import {
   useCreateSembakoSupplier,
   useAdjustBatchStock,
 } from '@/lib/hooks/useSembakoData'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useOutletContext } from 'react-router-dom'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { C, fmtDate } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
+import { SembakoMobileBar } from './components/SembakoNavigation'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -628,6 +630,8 @@ const TABS = ['Stok Saat Ini', 'Riwayat Masuk', 'Riwayat Keluar']
 
 export default function Gudang() {
   const [searchParams] = useSearchParams()
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const { setSidebarOpen } = useOutletContext()
   const preProductId   = searchParams.get('product') || null
 
   const { data: products  = [], isLoading: productsLoading } = useSembakoProducts()
@@ -669,8 +673,10 @@ export default function Gudang() {
   return (
     <div style={{ minHeight: '100vh', background: C.bg, paddingBottom: 80 }}>
       {/* Header */}
+      {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Gudang" />}
+      
       <div style={{ padding: '20px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
+        <div style={{ display: isDesktop ? 'block' : 'none' }}>
           <h1 style={{ fontFamily: 'Sora', fontSize: 20, fontWeight: 800, color: C.text, margin: 0 }}>Gudang</h1>
           <p style={{ fontFamily: 'DM Sans', fontSize: 13, color: TEXT_SEC, marginTop: 2 }}>
             Stok · {products.filter(p => p.is_active && !p.is_deleted).length} produk
@@ -678,7 +684,13 @@ export default function Gudang() {
         </div>
         <button
           onClick={() => openTambah()}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: C.accent, border: 'none', borderRadius: 12, padding: '10px 16px', color: 'white', fontFamily: 'Sora', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(234,88,12,0.35)' }}
+          style={{ 
+            display: 'flex', alignItems: 'center', gap: 6, background: C.accent, border: 'none', 
+            borderRadius: 12, padding: '10px 16px', color: 'white', fontFamily: 'Sora', 
+            fontSize: 14, fontWeight: 700, cursor: 'pointer', 
+            boxShadow: '0 4px 12px rgba(234,88,12,0.35)',
+            marginLeft: isDesktop ? 0 : 'auto'
+          }}
         >
           <Plus size={16} /> Stok Masuk
         </button>

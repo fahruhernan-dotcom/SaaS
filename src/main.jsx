@@ -5,13 +5,16 @@ import { Toaster } from 'sonner'
 import { queryClient } from './lib/queryClient'
 import './index.css'
 import { TooltipProvider } from './components/ui/tooltip'
+import { NotificationsProvider } from './lib/hooks/useNotifications.jsx'
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <App />
+        <NotificationsProvider>
+          <App />
+        </NotificationsProvider>
       </TooltipProvider>
       <Toaster 
         theme="dark"

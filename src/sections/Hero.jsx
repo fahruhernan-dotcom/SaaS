@@ -1,5 +1,6 @@
-    import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Play } from 'lucide-react';
 import BlurText from '../components/reactbits/BlurText';
 import ShinyText from '../components/reactbits/ShinyText';
 import Magnet from '../components/reactbits/Magnet';
@@ -7,6 +8,7 @@ import ClickSpark from '../components/reactbits/ClickSpark';
 import Particles from '../components/reactbits/Particles';
 
 const Hero = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const isTouchDevice = () => 
     typeof window !== 'undefined' && 
     ('ontouchstart' in window || navigator.maxTouchPoints > 0);
@@ -52,20 +54,20 @@ const Hero = () => {
             initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94], delay: 0 }}
-            className="inline-flex items-center gap-[7px] bg-[rgba(16,185,129,0.08)] border border-[rgba(16,185,129,0.18)] rounded-full py-[5px] pl-[9px] pr-[13px] text-[12px] font-semibold text-em-400 mb-6"
+            className="inline-flex items-center gap-[7px] bg-[rgba(16,185,129,0.08)] border border-[rgba(16,185,129,0.18)] rounded-full py-[5px] pl-[9px] pr-[13px] text-[11px] font-semibold text-em-400 mb-4"
           >
             <div className="w-[7px] h-[7px] bg-em-400 rounded-full animate-pulse-dot"></div>
-            Platform Peternakan #1 di Jawa
+            Solusi Digital Terpadu untuk Broker & Peternak
           </motion.div>
 
           {/* Headline */}
           <div style={{
             fontFamily: "'Sora', sans-serif",
-            fontSize: 'clamp(44px, 10vw, 76px)',
+            fontSize: 'clamp(32px, 8vw, 60px)',
             fontWeight: 800,
-            letterSpacing: '-2.5px',
-            lineHeight: 1.08,
-            marginBottom: '24px',
+            letterSpacing: '-2.2px',
+            lineHeight: 1.05,
+            marginBottom: '16px',
           }}>
             {/* Baris 1-2: BlurText */}
             <BlurText
@@ -140,9 +142,9 @@ const Hero = () => {
             initial={{ opacity: 0, y: 32 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.4 }}
-            className="text-base md:text-lg text-tx-3 leading-relaxed max-w-[500px] mb-8 text-center lg:text-left font-medium"
+            className="text-sm md:text-base text-tx-3 leading-relaxed max-w-[500px] mb-6 text-center lg:text-left font-medium"
           >
-            Mulai Rp 499rb/bulan — <span className="text-em-400">kurang dari Rp 17.000/hari</span>.
+            Mulai Rp 499rb/bulan untuk <span className="text-em-400 font-bold">Peternak</span> — atau Rp 999rb/bulan untuk <span className="text-em-400 font-bold">Broker</span>.
           </motion.p>
 
           {/* CTA Buttons */}
@@ -155,7 +157,7 @@ const Hero = () => {
                 transition: { staggerChildren: 0.08, delayChildren: 0.5 }
               }
             }}
-            className="flex flex-col w-full md:flex-row md:w-auto gap-[10px]"
+            className="flex flex-col w-full md:flex-row md:w-auto gap-[12px]"
           >
             <ClickSpark sparkColor="#10B981" sparkCount={10} sparkRadius={20}>
               <Magnet padding={40} magnetStrength={0.3} disabled={isTouchDevice()}>
@@ -166,23 +168,24 @@ const Hero = () => {
                   }}
                   href="#daftar"
                   whileTap={{ scale: 0.96 }}
-                  className="w-full inline-block text-center px-[24px] py-[15px] font-display text-[15px] font-bold bg-em-500 text-white rounded-[12px] shadow-[0_0_0_1px_rgba(16,185,129,0.2),0_8px_28px_rgba(16,185,129,0.22)] md:w-auto"
+                  className="w-full inline-block text-center px-[28px] py-[16px] font-display text-[15px] font-bold bg-em-500 text-white rounded-[12px] shadow-[0_0_0_1px_rgba(16,185,129,0.2),0_8px_28px_rgba(16,185,129,0.22)] md:w-auto"
                 >
-                  Mulai Gratis Sekarang
+                  Coba Gratis Sekarang
                 </motion.a>
               </Magnet>
             </ClickSpark>
-            <motion.a
+            <motion.button
               variants={{
                 hidden: { opacity: 0, y: 24 },
                 visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
               }}
-              href="#cara-kerja"
+              onClick={() => setIsModalOpen(true)}
               whileTap={{ scale: 0.97 }}
-              className="w-full text-center px-[24px] py-[13px] font-body text-[15px] font-semibold bg-[rgba(255,255,255,0.04)] text-tx-2 border border-border-def rounded-[12px] md:w-auto hover:bg-[rgba(255,255,255,0.08)] transition-colors"
+              className="w-full text-center px-[28px] py-[15px] font-body text-[15px] font-bold bg-white/[0.05] text-white border border-white/20 rounded-[12px] md:w-auto hover:bg-white/10 transition-all flex items-center justify-center gap-2"
             >
-              Lihat Demo →
-            </motion.a>
+              <Play size={16} fill="currentColor" />
+              Video Demo 1 Menit
+            </motion.button>
           </motion.div>
 
           {/* Social Proof */}
@@ -223,7 +226,7 @@ const Hero = () => {
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.8 }}
-            className="hidden lg:block hidden" style={{
+            className="hidden lg:block" style={{
             position: 'absolute',
             left: '-40px',
             top: '30%',
@@ -256,7 +259,7 @@ const Hero = () => {
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 1.0 }}
-            className="hidden lg:block hidden" style={{
+            className="hidden lg:block" style={{
             position: 'absolute',
             right: '-36px',
             bottom: '20%',
@@ -363,6 +366,52 @@ const Hero = () => {
         </motion.div>
 
       </div>
+
+      {/* Video Modal */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-8 bg-black/90 backdrop-blur-sm"
+            onClick={() => setIsModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-5xl aspect-video bg-[#111C24] rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button 
+                className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors"
+                onClick={() => setIsModalOpen(false)}
+              >
+                <X size={20} />
+              </button>
+              
+              {/* Placeholder for Video */}
+              <div className="w-full h-full flex flex-col items-center justify-center bg-bg-2 p-12 text-center">
+                <div className="w-20 h-20 bg-em-500/20 rounded-full flex items-center justify-center mb-6 text-em-400">
+                  <Play size={32} fill="currentColor" />
+                </div>
+                <h3 className="text-2xl font-display font-bold text-white mb-2">Video Demo TernakOS</h3>
+                <p className="text-tx-3 max-w-md mx-auto mb-8">Lihat bagaimana dashboard kami membantu broker & peternak mengelola bisnis lebih efisien.</p>
+                <div className="w-full max-w-lg h-2 bg-white/5 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: "0%" }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                    className="h-full bg-em-500"
+                  />
+                </div>
+                <p className="mt-4 text-[10px] text-tx-3 uppercase tracking-widest">Video Stream Simulator</p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };

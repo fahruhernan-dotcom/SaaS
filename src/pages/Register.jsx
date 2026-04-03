@@ -206,7 +206,7 @@ export default function Register() {
       await supabase.auth.refreshSession()
 
       // Navigate ke dashboard
-      navigate(getBrokerBasePath({ sub_type: profile.tenants?.sub_type }) + '/beranda')
+      navigate(getBrokerBasePath(profile.tenants) + '/beranda')
     } catch (err) {
       setAuthError(err.message)
     } finally {
@@ -320,10 +320,10 @@ export default function Register() {
                 { val: "10.000+", label: "Transaksi Tercatat", sub: "& terus bertambah" },
                 { val: "Rp 50M+", label: "Nilai Dikelola", sub: "per bulan" }
               ].map((stat, i) => (
-                <div key={i} className="bg-[#0C1319]/80 border border-white/8 rounded-xl p-4 flex-1">
-                  <div className="font-display text-xl font-bold text-[#10B981]">{stat.val}</div>
-                  <div className="text-[#F1F5F9] text-xs font-semibold mt-1">{stat.label}</div>
-                  <div className="text-[#4B6478] text-[10px]">{stat.sub}</div>
+                <div key={i} className="bg-[#0C1319]/80 border border-white/8 rounded-xl p-3 flex-1 transition-all hover:border-white/12">
+                  <div className="font-display text-lg font-bold text-[#10B981]">{stat.val}</div>
+                  <div className="text-[#F1F5F9] text-[10px] font-semibold mt-0.5">{stat.label}</div>
+                  <div className="text-[#4B6478] text-[9px]">{stat.sub}</div>
                 </div>
               ))}
             </div>
@@ -354,13 +354,13 @@ export default function Register() {
                   desc: "Pantau semua piutang RPA dan status pembayaran otomatis." 
                 },
               ].map((item, i, arr) => (
-                <div key={i} className={`flex gap-3 items-start py-3 ${i !== arr.length - 1 ? 'border-b border-white/5' : ''}`}>
-                  <div className="w-8 h-8 bg-[#10B981]/10 border border-[#10B981]/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                    {React.cloneElement(item.icon, { size: 16, className: "text-[#10B981]" })}
+                <div key={i} className={`flex gap-3 items-start py-2.5 ${i !== arr.length - 1 ? 'border-b border-white/5' : ''}`}>
+                  <div className="w-7 h-7 bg-[#10B981]/10 border border-[#10B981]/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    {React.cloneElement(item.icon, { size: 14, className: "text-[#10B981]" })}
                   </div>
                   <div>
-                    <h4 className="text-[#F1F5F9] text-sm font-semibold">{item.title}</h4>
-                    <p className="text-[#4B6478] text-xs mt-0.5 leading-relaxed">{item.desc}</p>
+                    <h4 className="text-[#F1F5F9] text-[13px] font-semibold tracking-tight">{item.title}</h4>
+                    <p className="text-[#4B6478] text-[11px] mt-0.5 leading-relaxed font-medium">{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -402,15 +402,15 @@ export default function Register() {
             <span style={{ fontFamily:'Sora', fontWeight:800, fontSize:'18px', color:'#F1F5F9' }}>TernakOS</span>
           </div>
           
-          <h1 style={{ fontFamily: 'Sora', fontSize: '26px', fontWeight: 800, color: '#F1F5F9', margin: '0 0 8px', letterSpacing: '-0.3px' }}>Buat akun baru</h1>
-          <p style={{ fontSize: '14px', color: '#4B6478', margin: '0 0 32px', lineHeight: 1.6 }}>14 hari gratis, tanpa kartu kredit.</p>
+          <h1 style={{ fontFamily: 'Sora', fontSize: '22px', fontWeight: 800, color: '#F1F5F9', margin: '0 0 4px', letterSpacing: '-0.3px' }}>Buat akun baru</h1>
+          <p style={{ fontSize: '13px', color: '#4B6478', margin: '0 0 24px', lineHeight: 1.6, fontWeight: 500 }}>14 hari gratis, tanpa kartu kredit.</p>
 
           <div className="relative">
             <Button
               type="button"
               variant="outline"
               disabled
-              className="w-full h-12 border-white/8 bg-transparent text-[#4B6478] font-semibold rounded-xl flex items-center justify-center p-0 opacity-50 cursor-not-allowed"
+              className="w-full h-[44px] border-white/8 bg-transparent text-[#4B6478] font-semibold rounded-xl flex items-center justify-center p-0 opacity-50 cursor-not-allowed text-sm"
             >
               <GoogleIcon /> Daftar dengan Google
             </Button>
@@ -442,7 +442,7 @@ export default function Register() {
             <button
               type="button"
               onClick={() => setMode('mandiri')}
-              className={`flex-1 py-2.5 text-sm font-semibold transition-all ${
+              className={`flex-1 py-2 text-[13px] font-semibold transition-all ${
                 mode === 'mandiri' 
                   ? 'bg-[#10B981] text-white rounded-lg shadow-lg' 
                   : 'bg-transparent text-[#94A3B8] hover:text-[#F1F5F9]'
@@ -453,7 +453,7 @@ export default function Register() {
             <button
               type="button"
               onClick={() => setMode('invite')}
-              className={`flex-1 py-2.5 text-sm font-semibold transition-all ${
+              className={`flex-1 py-2 text-[13px] font-semibold transition-all ${
                 mode === 'invite' 
                   ? 'bg-[#10B981] text-white rounded-lg shadow-lg' 
                   : 'bg-transparent text-[#94A3B8] hover:text-[#F1F5F9]'
@@ -472,8 +472,8 @@ export default function Register() {
                 name="fullName"
                 placeholder="Budi Santoso"
                 {...register('fullName')}
-                style={{ background: '#111C24', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', padding: '13px 14px', color: '#F1F5F9' }}
-                className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 h-12"
+                style={{ background: '#111C24', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', padding: '10px 14px', color: '#F1F5F9', fontSize: '15px' }}
+                className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 h-[42px]"
               />
               {errors.fullName && <p className="text-xs text-red-400 mt-1 ml-1">{errors.fullName.message}</p>}
             </div>
@@ -502,7 +502,7 @@ export default function Register() {
                     fontWeight: 'bold',
                     letterSpacing: '0.4em'
                   }}
-                  className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 h-12"
+                  className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 h-[44px]"
                 />
                 {errors.inviteCode && <p className="text-xs text-red-400 mt-1 ml-1">{errors.inviteCode.message}</p>}
               </div>
@@ -517,8 +517,8 @@ export default function Register() {
                 type="email"
                 placeholder="Email"
                 {...register('email')}
-                style={{ background: '#111C24', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', padding: '13px 14px', color: '#F1F5F9' }}
-                className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 h-12"
+                style={{ background: '#111C24', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', padding: '10px 14px', color: '#F1F5F9', fontSize: '15px' }}
+                className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 h-[42px]"
               />
               {errors.email && <p className="text-xs text-red-400 mt-1 ml-1">{errors.email.message}</p>}
             </div>
@@ -534,8 +534,8 @@ export default function Register() {
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Password"
                     {...register('password')}
-                    style={{ background: '#111C24', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', padding: '13px 14px', color: '#F1F5F9' }}
-                    className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 h-12"
+                    style={{ background: '#111C24', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', padding: '10px 14px', color: '#F1F5F9', fontSize: '15px' }}
+                    className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 h-[42px]"
                   />
                 </div>
                 {errors.password && <p className="text-xs text-red-400 mt-1 ml-1">{errors.password.message}</p>}
@@ -549,8 +549,8 @@ export default function Register() {
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Konfirmasi Password"
                     {...register('confirmPassword')}
-                    style={{ background: '#111C24', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', padding: '13px 40px 13px 14px', color: '#F1F5F9' }}
-                    className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 h-12"
+                    style={{ background: '#111C24', border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', padding: '10px 40px 10px 14px', color: '#F1F5F9', fontSize: '15px' }}
+                    className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 h-[42px]"
                   />
                   <button
                     type="button"
@@ -590,16 +590,16 @@ export default function Register() {
               disabled={isLoading || googleLoading}
               style={{
                 width: '100%',
-                height: '50px',
+                height: '44px',
                 background: '#10B981',
                 border: 'none',
-                borderRadius: '12px',
+                borderRadius: '10px',
                 color: 'white',
                 fontFamily: 'Sora',
-                fontSize: '15px',
+                fontSize: '14px',
                 fontWeight: 700,
                 boxShadow: '0 4px 20px rgba(16,185,129,0.25)',
-                marginTop: '12px'
+                marginTop: '8px'
               }}
               className={`hover:bg-emerald-600 transition-colors ${(isLoading || googleLoading) ? 'opacity-60 cursor-not-allowed' : ''}`}
             >
@@ -621,13 +621,13 @@ export default function Register() {
             onClick={() => navigate('/login')}
             style={{
               width: '100%',
-              height: '50px',
+              height: '44px',
               background: 'transparent',
               border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: '12px',
+              borderRadius: '10px',
               color: '#F1F5F9',
               fontFamily: 'Sora',
-              fontSize: '15px',
+              fontSize: '14px',
               fontWeight: 600
             }}
             className="hover:bg-white/5 transition-colors"

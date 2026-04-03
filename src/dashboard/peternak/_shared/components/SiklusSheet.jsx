@@ -132,6 +132,7 @@ export default function SiklusSheet({ open, onClose }) {
             <span style={{ fontSize: 24 }}>🐣</span>
             <div>
               <SheetTitle className="text-white font-display font-black text-base">Mulai Siklus Baru</SheetTitle>
+              <SheetDescription className="sr-only">Formulir untuk mencatatkan data siklus baru untuk kandang ternak Anda.</SheetDescription>
               <p className="text-[#4B6478] text-xs mt-0.5">Catat data chick in kandang</p>
             </div>
           </div>

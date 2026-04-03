@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react'
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom'
+import { SembakoMobileBar } from './components/SembakoNavigation'
 import { motion, AnimatePresence } from 'framer-motion' // eslint-disable-line no-unused-vars
-import { useLocation, useNavigate } from 'react-router-dom'
 import {
   Plus, Truck, User, MapPin,
   CheckCircle, Clock, Navigation,
@@ -476,6 +477,7 @@ function TambahTripSheet({ open, onClose, prefillSale, salesPending, employees, 
 // ── MAIN ──────────────────────────────────────────────────────────────────────
 export default function SembakoPengiriman() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const { setSidebarOpen } = useOutletContext()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -521,12 +523,12 @@ export default function SembakoPengiriman() {
 
   return (
     <div style={{ background: C.bg, minHeight: '100vh', paddingBottom: '96px' }}>
-      {!isDesktop && <TopBar title="Pengiriman" />}
+      {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Pengiriman" />}
 
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <SembakoPageHeader
-          title="Pengiriman & Trip"
-          subtitle={`${activeCount} pengiriman aktif`}
+          title={isDesktop ? "Pengiriman & Trip" : ""}
+          subtitle={isDesktop ? `${activeCount} pengiriman aktif` : ""}
           isDesktop={isDesktop}
           filters={FILTER_TABS}
           activeFilter={filterTab}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../supabase'
+import { getXBasePath } from '../businessModel'
 
 export function useAuth() {
   const [user, setUser] = useState(null)
@@ -88,7 +89,6 @@ export function useAuth() {
   }
 }
 
-export const getBrokerBasePath = (tenant) => {
-  const subType = tenant?.sub_type || 'broker_ayam'
-  return `/broker/${subType}`
+export const getBrokerBasePath = (tenant, profile) => {
+  return getXBasePath(tenant, profile)
 }

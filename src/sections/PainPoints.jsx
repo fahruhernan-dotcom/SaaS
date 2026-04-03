@@ -144,11 +144,11 @@ const PainPoints = ({ activeRole, setActiveRole }) => {
     <section className="bg-[#06090F] section-fade-bottom section-padding">
       <div className="max-w-[1280px] mx-auto">
         
-        <div className="text-center mb-[40px] md:mb-[60px]">
+        <div className="text-center mb-[30px] md:mb-[45px]">
           <AnimatedContent direction="vertical" distance={30} delay={0}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.14)', borderRadius: '99px', padding: '5px 14px', marginBottom: '16px' }}>
               <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10B981', animation: 'pulse-dot 2s infinite' }}/>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: '#34D399', letterSpacing: '2px', textTransform: 'uppercase' }}>
+              <span style={{ fontSize: '10px', fontWeight: 600, color: '#34D399', letterSpacing: '2px', textTransform: 'uppercase' }}>
                 MASALAH YANG KAMI SELESAIKAN
               </span>
             </div>
@@ -161,7 +161,7 @@ const PainPoints = ({ activeRole, setActiveRole }) => {
                 <button
                   key={role}
                   onClick={() => setActiveRole(role)}
-                  className={`px-6 md:px-8 py-2 rounded-full font-body text-[11px] font-bold tracking-widest uppercase transition-all duration-300 ${
+                  className={`px-4 sm:px-6 md:px-8 py-2 rounded-full font-body text-[10px] font-bold tracking-widest uppercase transition-all duration-300 ${
                     activeRole === role
                       ? 'bg-[rgba(16,185,129,0.15)] text-[#34D399] shadow-[0_2px_10px_rgba(16,185,129,0.2)]'
                       : 'text-[#4B6478] hover:text-[#F1F5F9] hover:bg-white/[0.02]'
@@ -193,99 +193,38 @@ const PainPoints = ({ activeRole, setActiveRole }) => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6"
+              className="grid grid-cols-3 md:grid-cols-3 gap-1.5 md:gap-6"
             >
               {activeContent.points.map((point, i) => (
-                <TiltedCard
+                <div
                   key={i}
-                  rotateAmplitude={10}
-                  scaleOnHover={1.04}
-                  containerHeight="100%"
+                  className="h-full"
                 >
-                  <div style={{
-                    background: '#111C24',
-                    border: '1px solid rgba(255,255,255,0.09)',
-                    borderRadius: '20px',
-                    padding: '28px',
-                    height: '100%',
-                    position: 'relative',
-                    overflow: 'hidden',
-                    transformStyle: 'preserve-3d',
-                    cursor: 'default',
-                  }}>
+                  <div className="bg-[#111C24] border border-white/10 rounded-lg md:rounded-[24px] p-2 md:p-7 h-full relative overflow-hidden transition-all">
 
                     {/* Ghost number background */}
-                    <span style={{
-                      position: 'absolute',
-                      top: '16px',
-                      right: '20px',
-                      fontSize: '80px',
-                      fontWeight: 900,
-                      fontFamily: 'Sora',
-                      color: 'rgba(16,185,129,0.05)',
-                      lineHeight: 1,
-                      userSelect: 'none',
-                      pointerEvents: 'none',
-                    }}>
+                    <span className="absolute top-1 md:top-4 right-1.5 md:right-5 text-[24px] md:text-[80px] font-black font-display text-emerald-500/5 select-none pointer-events-none leading-none">
                       {String(i + 1).padStart(2, '0')}
                     </span>
 
-                    {/* Top accent line (muncul saat hover via CSS) */}
-                    <div style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: '20%',
-                      right: '20%',
-                      height: '1px',
-                      background: 'linear-gradient(90deg, transparent, rgba(16,185,129,0.5), transparent)',
-                      opacity: 0,
-                      transition: 'opacity 0.3s ease',
-                    }} className="card-top-line" />
-
-                    {/* Badge pill dengan icon */}
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      background: 'rgba(16,185,129,0.08)',
-                      border: '1px solid rgba(16,185,129,0.15)',
-                      borderRadius: '99px',
-                      padding: '4px 12px',
-                      marginBottom: '18px',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      color: '#34D399',
-                      textTransform: 'uppercase',
-                      letterSpacing: '1.5px',
-                    }}>
-                      {point.icon}
+                    {/* Badge pill */}
+                    <div className="inline-flex items-center gap-1 md:gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-1.5 md:px-3 py-0.5 md:py-1 mb-2 md:mb-4 text-[7px] md:text-[11px] font-black text-emerald-400 uppercase tracking-tight md:tracking-widest">
+                      <span className="hidden md:inline">{point.icon}</span>
                       {point.label}
                     </div>
 
                     {/* Title */}
-                    <h3 style={{
-                      fontFamily: 'Sora',
-                      fontSize: '17px',
-                      fontWeight: 700,
-                      color: '#F1F5F9',
-                      marginBottom: '10px',
-                      lineHeight: 1.35,
-                    }}>
+                    <h3 className="font-display text-[10px] md:text-[17px] font-bold text-[#F1F5F9] mb-1 md:mb-3 leading-[1.2] md:leading-[1.4]">
                       {point.title}
                     </h3>
 
                     {/* Description */}
-                    <p style={{
-                      fontSize: '14px',
-                      color: '#64748B',
-                      lineHeight: 1.65,
-                      margin: 0,
-                    }}>
+                    <p className="text-[8.5px] md:text-[14px] text-[#4B6478] md:text-[#64748B] leading-[1.4] md:leading-[1.7] m-0">
                       {point.desc}
                     </p>
 
                   </div>
-                </TiltedCard>
+                </div>
               ))}
             </motion.div>
           </AnimatePresence>

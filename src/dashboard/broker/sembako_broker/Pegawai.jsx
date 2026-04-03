@@ -1,4 +1,6 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState } from 'react'
+import { useNavigate, useOutletContext } from 'react-router-dom'
+import { SembakoMobileBar } from './components/SembakoNavigation'
 import { motion } from 'framer-motion' // eslint-disable-line no-unused-vars
 import { Users, Plus, DollarSign, CalendarCheck, Check } from 'lucide-react'
 import {
@@ -30,13 +32,14 @@ const ROLES = ['gudang', 'sales', 'kurir', 'admin', 'lainnya']
 // ── MAIN ────────────────────────────────────────────────────────────────────
 export default function SembakoPegawai() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const { setSidebarOpen } = useOutletContext()
   const [tab, setTab] = useState('pegawai')
 
   return (
     <div style={{ background: C.bg, minHeight: '100vh', paddingBottom: '96px' }}>
-      {!isDesktop && <TopBar title="Pegawai" />}
+      {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Pegawai" />}
       <div style={{ padding: isDesktop ? '32px 40px' : '20px 16px', maxWidth: '1200px', margin: '0 auto' }}>
-        <h1 style={{ fontSize: isDesktop ? '28px' : '22px', fontWeight: 900, color: C.text, fontFamily: 'DM Sans', marginBottom: '20px' }}>
+        <h1 style={{ display: isDesktop ? 'block' : 'none', fontSize: isDesktop ? '28px' : '22px', fontWeight: 900, color: C.text, fontFamily: 'DM Sans', marginBottom: '20px' }}>
           Pegawai & Payroll
         </h1>
 

@@ -197,6 +197,7 @@ export default function AdminActivity() {
                                 {selectedLog && getActionIcon(selectedLog.action)}
                                 Activity Detail
                             </SheetTitle>
+                            <SheetDescription className="sr-only">Detail log aktivitas audit sistem.</SheetDescription>
                             {selectedLog && (
                                 <Badge variant="outline" className={cn("text-[9px] font-black uppercase py-1", getActionColor(selectedLog.action))}>
                                     {selectedLog.action}

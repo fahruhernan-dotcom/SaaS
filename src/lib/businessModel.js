@@ -1,238 +1,297 @@
-export const BUSINESS_MODELS = {
-  distributor_sembako: {
-    label: 'Distributor Sembako',
-    icon: '🛒',
-    color: '#EA580C',
-    description: 'Distribusi sembako ke toko-toko. Kelola stok, invoice, piutang & gaji pegawai.',
-    basePath: '/broker/distributor_sembako',
-    redirectAfterLogin: '/broker/distributor_sembako/beranda',
-    fabPath: '/broker/distributor_sembako/penjualan?action=new',
-    fabLabel: 'Catat Penjualan',
-    bottomNav: [
-      { path: '/broker/distributor_sembako/beranda',   icon: 'Home',         label: 'Beranda'   },
-      { path: '/broker/distributor_sembako/penjualan', icon: 'ArrowLeftRight', label: 'Penjualan' },
-      { path: '/broker/distributor_sembako/gudang',    icon: 'Package',      label: 'Gudang'    },
-      { path: '/broker/distributor_sembako/produk',    icon: 'LayoutGrid',   label: 'Produk'    },
-    ],
-    drawerMenu: [
-      { path: '/broker/distributor_sembako/produk',        icon: 'Package',   label: 'Manajemen Produk' },
-      { path: '/broker/distributor_sembako/toko-supplier', icon: 'Store',     label: 'Toko & Supplier'  },
-      { path: '/broker/distributor_sembako/pengiriman',    icon: 'Truck',     label: 'Pengiriman'       },
-      { path: '/broker/distributor_sembako/karyawan',      icon: 'Users',     label: 'Karyawan'         },
-      { path: '/broker/distributor_sembako/laporan',       icon: 'BarChart2', label: 'Laporan'          },
-      { path: '/broker/distributor_sembako/akun',          icon: 'User',      label: 'Akun & Profil'    },
-    ],
-  },
-  // Legacy alias for Sembako
-  sembako_broker: null, // assigned below
-  
-  egg_broker: {
-    label: 'Broker Telur',
-    icon: '🥚',
-    color: '#7C3AED',
-    description: 'Beli telur dari peternak, jual ke agen/pasar. Kelola stok tray dan penyusutan.',
-    basePath: '/broker/broker_telur',
-    redirectAfterLogin: '/broker/broker_telur/beranda',
-    fabPath: '/broker/broker_telur/transaksi?action=new',
-    fabLabel: 'Catat Penjualan',
-    bottomNav: [
-      { path: '/broker/broker_telur/beranda',   icon: 'Home',           label: 'Beranda'   },
-      { path: '/broker/broker_telur/pos',       icon: 'ShoppingCart',   label: 'Jual'      },
-      { path: '/broker/broker_telur/inventori', icon: 'Package',        label: 'Stok'      },
-      { path: '/broker/broker_telur/akun',      icon: 'User',           label: 'Akun'      },
-    ],
-    drawerMenu: [
-      { path: '/broker/broker_telur/beranda',   icon: 'Home',           label: 'Dashboard' },
-      { path: '/broker/broker_telur/akun',      icon: 'User',           label: 'Akun & Profil' },
-    ]
-  },
-
-  broker: {
+/**
+ * BUSINESS CATEGORIES
+ * Used for Step 1 of the onboarding overlay
+ */
+export const BUSINESS_CATEGORIES = [
+  {
+    key: 'broker',
     label: 'Broker / Pedagang',
     icon: '🤝',
-    color: '#10B981',
-    description: 'Beli dari kandang, jual ke RPA. Kelola margin, piutang & pengiriman.',
-    basePath: '/broker/broker_ayam',
-    redirectAfterLogin: '/broker/broker_ayam/beranda',
-    fabPath: '/broker/broker_ayam/transaksi?action=new',
-    fabLabel: 'Tambah Transaksi',
-    bottomNav: [
-      { path: '/broker/broker_ayam/beranda',     icon: 'Home',           label: 'Beranda'   },
-      { path: '/broker/broker_ayam/transaksi',   icon: 'ArrowLeftRight', label: 'Transaksi' },
-      { path: '/broker/broker_ayam/rpa',         icon: 'Building2',      label: 'RPA'       },
-      { path: '/broker/broker_ayam/pengiriman',  icon: 'Truck',          label: 'Kirim'     },
-    ],
-    drawerMenu: [
-      { path: '/broker/broker_ayam/pengiriman',  icon: 'Truck',           label: 'Pengiriman & Loss' },
-      { path: '/broker/broker_ayam/cashflow',    icon: 'Wallet',          label: 'Cash Flow'         },
-      { path: '/harga-pasar',                   icon: 'BarChart2',       label: 'Harga Pasar'       },
-      { path: '/broker/broker_ayam/armada',      icon: 'Car',             label: 'Armada & Sopir'    },
-      { path: '/broker/broker_ayam/simulator',   icon: 'Calculator',      label: 'Simulator Margin'  },
-      { path: '/broker/broker_ayam/tim',         icon: 'User',            label: 'Tim & Akses'       },
-      { path: '/market',                         icon: 'Store',           label: 'TernakOS Market'   },
-      { path: '/broker/broker_ayam/akun',        icon: 'User',            label: 'Akun & Profil'     },
-    ]
+    description: 'Jual beli ayam, telur, atau sembako antar pelaku usaha.',
   },
-
-  peternak: {
-    peternak_broiler: {
-      label: 'Peternak Broiler',
-      icon: '🏚️',
-      color: '#7C3AED',
-      description: 'Pelihara ayam broiler, pantau FCR & deplesi, catat biaya produksi per kg.',
-      basePath: '/peternak/peternak_broiler',
-      redirectAfterLogin: '/peternak/peternak_broiler/beranda',
-      fabPath: '/peternak/peternak_broiler/beranda?action=tambah-kandang',
-      fabLabel: 'Tambah Kandang',
-      bottomNav: [
-        { path: '/peternak/peternak_broiler/beranda', icon: 'Home',      label: 'Overview' },
-        { path: '/peternak/peternak_broiler/siklus',  icon: 'RefreshCw', label: 'Siklus'   },
-        { path: '/peternak/peternak_broiler/pakan',   icon: 'Package',   label: 'Pakan'    },
-        { path: '/peternak/peternak_broiler/laporan', icon: 'BarChart2',  label: 'Laporan' },
-      ],
-      drawerMenu: [
-        { path: '/peternak/peternak_broiler/pakan',   icon: 'Package',    label: 'Stok & Pakan'    },
-        { path: '/market',           icon: 'Store',      label: 'TernakOS Market' },
-        { path: '/peternak/peternak_broiler/akun',    icon: 'User',       label: 'Akun & Profil'   },
-      ]
-    },
-    peternak_layer: {
-      label: 'Peternak Layer',
-      icon: '🥚',
-      color: '#7C3AED',
-      description: 'Pelihara ayam petelur, pantau produksi telur harian dan inventori pakan.',
-      basePath: '/peternak/peternak_layer',
-      redirectAfterLogin: '/peternak/peternak_layer/beranda',
-      bottomNav: [
-        { path: '/peternak/peternak_layer/beranda', icon: 'Home',      label: 'Overview' },
-      ],
-      drawerMenu: [
-        { path: '/market',           icon: 'Store',      label: 'TernakOS Market' },
-        { path: '/peternak/peternak_layer/akun',    icon: 'User',       label: 'Akun & Profil'   },
-      ]
-    }
+  {
+    key: 'peternak',
+    label: 'Peternak',
+    icon: '🏚️',
+    description: 'Budidaya ayam broiler atau layer, pantau produksi & biaya.',
   },
-
-  rumah_potong: {
-    rpa: {
-      label: 'RPA (Rumah Potong Ayam)',
-      icon: '🏭',
-      color: '#F59E0B',
-      description: 'Beli ayam dari broker, kelola order dan pantau hutang pembelian.',
-      basePath: '/rumah_potong/rpa',
-      redirectAfterLogin: '/rumah_potong/rpa/beranda',
-      fabPath: '/rumah_potong/rpa/order?action=new',
-      fabLabel: 'Order Baru',
-      bottomNav: [
-        { path: '/rumah_potong/rpa/beranda',    icon: 'Home',         label: 'Beranda'   },
-        { path: '/rumah_potong/rpa/order',      icon: 'ShoppingCart', label: 'Order'     },
-        { path: '/rumah_potong/rpa/hutang',     icon: 'CreditCard',   label: 'Hutang'    },
-        { path: '/rumah_potong/rpa/distribusi', icon: 'Store',        label: 'Distribusi'},
-      ],
-      drawerMenu: [
-        { path: '/rumah_potong/rpa/distribusi', icon: 'Store',      label: 'Distribusi & Invoice' },
-        { path: '/rumah_potong/rpa/laporan',    icon: 'BarChart2',  label: 'Laporan Margin'       },
-        { path: '/market',               icon: 'Store',      label: 'TernakOS Market'      },
-        { path: '/rumah_potong/rpa/akun',       icon: 'User',       label: 'Akun & Profil'        },
-      ]
-    },
-    rph: {
-      label: 'RPH (Rumah Potong Hewan)',
-      icon: '🐄',
-      color: '#F59E0B',
-      description: 'Pemotongan hewan ternak (sapi/kambing). Kelola stok dan distribusi daging.',
-      basePath: '/rumah_potong/rph',
-      redirectAfterLogin: '/rumah_potong/rph/beranda',
-      bottomNav: [
-        { path: '/rumah_potong/rph/beranda',    icon: 'Home',         label: 'Beranda'   },
-      ],
-      drawerMenu: [
-        { path: '/rumah_potong/rph/beranda',    icon: 'Home',         label: 'Beranda'   },
-        { path: '/market',               icon: 'Store',      label: 'TernakOS Market'      },
-        { path: '/rumah_potong/rph/akun',       icon: 'User',       label: 'Akun & Profil'        },
-      ]
-    }
-  }
-}
-
-export function getBusinessModel(userType, subType) {
-  if (userType === 'rumah_potong' && subType) {
-    const rpType = subType.startsWith('rpa') ? 'rpa' : 'rph'
-    return BUSINESS_MODELS.rumah_potong[rpType]
-  }
-
-  if (userType === 'peternak' && subType) {
-    return BUSINESS_MODELS.peternak[subType] || BUSINESS_MODELS.peternak.peternak_broiler
-  }
-  
-  if (subType && BUSINESS_MODELS[SUB_TYPE_TO_VERTICAL[subType]]) {
-    const vertical = SUB_TYPE_TO_VERTICAL[subType]
-    if (vertical === 'rumah_potong' || vertical === 'peternak') {
-       return BUSINESS_MODELS[vertical][subType] || BUSINESS_MODELS[vertical][Object.keys(BUSINESS_MODELS[vertical])[0]]
-    }
-    return BUSINESS_MODELS[vertical]
-  }
-  return BUSINESS_MODELS[userType] || BUSINESS_MODELS.broker
-}
-
-export const SUB_TYPE_TO_USER_TYPE = {
-  broker_ayam:           'broker',
-  broker_telur:          'broker',
-  distributor_daging:    'broker',
-  distributor_sembako:   'broker',
-  peternak_broiler:      'peternak',
-  peternak_layer:        'peternak',
-  rpa_ayam:              'rumah_potong',
-  rph:                   'rumah_potong',
-}
-
-export const SUB_TYPE_TO_VERTICAL = {
-  broker_ayam:           'poultry_broker',
-  broker_telur:          'egg_broker',
-  distributor_daging:    'poultry_broker',
-  distributor_sembako:   'distributor_sembako',
-  peternak_broiler:      'peternak',
-  peternak_layer:        'peternak',
-  rpa_ayam:              'rumah_potong',
-  rph:                   'rumah_potong',
-}
-
-export const SUB_TYPE_LABELS = {
-  broker_ayam:           'Broker Ayam',
-  broker_telur:          'Broker Telur',
-  distributor_daging:    'Distributor Daging',
-  distributor_sembako:   'Distributor Sembako',
-  peternak_broiler:      'Peternak Ayam Broiler',
-  peternak_layer:        'Peternak Ayam Layer',
-  rpa_ayam:              'RPA — Rumah Potong Ayam',
-  rph:                   'RPH — Rumah Potong Hewan',
-}
-// Add legacy alias to BUSINESS_MODELS
-BUSINESS_MODELS.sembako_broker = BUSINESS_MODELS.distributor_sembako;
-SUB_TYPE_TO_VERTICAL.sembako_broker = 'distributor_sembako';
+  {
+    key: 'rumah_potong',
+    label: 'Rumah Potong',
+    icon: '🏭',
+    description: 'Beli & potong ayam atau hewan ternak, kelola distribusi.',
+  },
+]
 
 /**
- * Standardized helper for multi-vertical routing
- * Usage: navigate(`${getXBasePath(tenant)}/penjualan`)
+ * NAV GENERATOR
+ * Dynamically builds bottomNav paths based on the model's base path and sub_type
  */
-export function getXBasePath(tenant) {
-  if (!tenant) return '/broker/broker_ayam'
-  
-  const subType = tenant.sub_type || 'broker_ayam'
-  
-  // Mapping based on Section 7 of CONTEXT.md
-  if (['poultry_broker', 'egg_broker', 'sembako_broker', 'broker', 'distributor_sembako'].includes(tenant.business_vertical) || 
-      ['broker_ayam', 'broker_telur', 'distributor_daging', 'distributor_sembako'].includes(subType)) {
-    return `/broker/${subType}`
+const createNav = (base, subType, items) => {
+  return items.map(item => ({
+    ...item,
+    path: `/${base}/${subType}/${item.slug}`
+  }))
+}
+
+/**
+ * PRIMARY BUSINESS MODELS
+ * These are the master configurations displayed in the UI cards
+ */
+export const BUSINESS_MODELS = {
+  poultry_broker: {
+    key: 'poultry_broker',
+    category: 'broker',
+    name: 'Broker Ayam',
+    label: 'Broker / Pedagang',
+    categoryLabel: 'Broker',
+    icon: '🤝',
+    description: 'Beli dari kandang, jual ke RPA. Kelola margin, piutang & pengiriman.',
+    color: '#10B981',
+    themeColor: 'emerald',
+    user_type: 'broker',
+    sub_type: 'broker_ayam',
+    comingSoon: false,
+    bottomNav: createNav('broker', 'broker_ayam', [
+      { slug: 'beranda',   icon: 'Home',           label: 'Beranda'   },
+      { slug: 'transaksi', icon: 'ArrowLeftRight', label: 'Transaksi' },
+      { slug: 'rpa',       icon: 'Building2',      label: 'RPA'       },
+      { slug: 'pengiriman',icon: 'Truck',           label: 'Kirim'     },
+    ]),
+    drawerMenu: [
+      { path: '/broker/broker_ayam/pengiriman', icon: 'Truck',      label: 'Pengiriman & Loss' },
+      { path: '/broker/broker_ayam/cashflow',   icon: 'Wallet',     label: 'Cash Flow'         },
+      { path: '/harga-pasar',                   icon: 'BarChart2',  label: 'Harga Pasar'       },
+      { path: '/broker/broker_ayam/armada',     icon: 'Car',        label: 'Armada & Sopir'    },
+      { path: '/broker/broker_ayam/simulator',  icon: 'Calculator', label: 'Simulator Margin'  },
+      { path: '/broker/broker_ayam/tim',        icon: 'User',       label: 'Tim & Akses'       },
+      { path: '/market',                        icon: 'Store',      label: 'TernakOS Market'   },
+      { path: '/broker/broker_ayam/akun',       icon: 'User',       label: 'Akun & Profil'     },
+    ],
+    fabPath: '/broker/broker_ayam/transaksi',
+  },
+  distributor_sembako: {
+    key: 'distributor_sembako',
+    category: 'broker',
+    name: 'Distributor Sembako',
+    label: 'Distributor Sembako',
+    categoryLabel: 'Sembako',
+    icon: '🛒',
+    description: 'Distribusi sembako ke toko-toko. Kelola stok, invoice, piutang & gaji pegawai.',
+    color: '#EA580C',
+    themeColor: 'orange',
+    user_type: 'broker',
+    sub_type: 'distributor_sembako',
+    comingSoon: false,
+    bottomNav: createNav('broker', 'distributor_sembako', [
+      { slug: 'beranda',      icon: 'Home',           label: 'Beranda'   },
+      { slug: 'penjualan',    icon: 'ShoppingCart',   label: 'Jual'      },
+      { slug: 'toko-supplier',icon: 'Store',          label: 'Toko'      },
+      { slug: 'pengiriman',   icon: 'Truck',          label: 'Kirim'     },
+    ]),
+    drawerMenu: [
+      { path: '/broker/distributor_sembako/produk',        icon: 'Package',  label: 'Manajemen Produk' },
+      { path: '/broker/distributor_sembako/toko-supplier', icon: 'Store',    label: 'Toko & Supplier'  },
+      { path: '/broker/distributor_sembako/pengiriman',    icon: 'Truck',    label: 'Pengiriman'       },
+      { path: '/broker/distributor_sembako/karyawan',      icon: 'Users',    label: 'Karyawan'         },
+      { path: '/broker/distributor_sembako/laporan',       icon: 'BarChart2',label: 'Laporan'          },
+      { path: '/broker/distributor_sembako/akun',          icon: 'User',     label: 'Akun & Profil'    },
+    ],
+    fabPath: '/broker/distributor_sembako/penjualan',
+  },
+  egg_broker: {
+    key: 'egg_broker',
+    category: 'broker',
+    name: 'Broker Telur',
+    label: 'Broker Telur',
+    categoryLabel: 'Broker',
+    icon: '🥚',
+    description: 'Beli telur dari peternak, jual ke agen/pasar. Kelola stok tray.',
+    color: '#7C3AED',
+    themeColor: 'violet',
+    user_type: 'broker',
+    sub_type: 'broker_telur',
+    comingSoon: false,
+    bottomNav: createNav('broker', 'broker_telur', [
+      { slug: 'beranda',   icon: 'Home',           label: 'Beranda'   },
+      { slug: 'pos',       icon: 'ShoppingCart',   label: 'POS'       },
+      { slug: 'inventori', icon: 'Warehouse',      label: 'Gudang'    },
+      { slug: 'transaksi', icon: 'ArrowLeftRight', label: 'Transaksi' },
+    ]),
+    drawerMenu: [
+      { path: '/broker/broker_telur/beranda', icon: 'Home', label: 'Dashboard'    },
+      { path: '/broker/broker_telur/akun',    icon: 'User', label: 'Akun & Profil'},
+    ],
+    fabPath: '/broker/broker_telur/pos',
+  },
+  peternak: {
+    key: 'peternak',
+    category: 'peternak',
+    name: 'Peternak Broiler',
+    label: 'Peternak Broiler',
+    categoryLabel: 'Peternak',
+    icon: '🐔',
+    description: 'Pelihara ayam broiler, pantau FCR & deplesi, catat biaya produksi per kg.',
+    color: '#10B981',
+    themeColor: 'emerald',
+    user_type: 'peternak',
+    sub_type: 'peternak_broiler',
+    comingSoon: false,
+    bottomNav: createNav('peternak', 'peternak_broiler', [
+      { slug: 'beranda',  icon: 'Home',      label: 'Beranda' },
+      { slug: 'siklus',   icon: 'RefreshCw', label: 'Siklus'  },
+      { slug: 'pakan',    icon: 'Package',   label: 'Pakan'   },
+      { slug: 'akun',     icon: 'User',      label: 'Profil'  },
+    ]),
+    drawerMenu: [
+      { path: '/peternak/peternak_broiler/pakan', icon: 'Package', label: 'Stok & Pakan'    },
+      { path: '/market',                          icon: 'Store',   label: 'TernakOS Market' },
+      { path: '/peternak/peternak_broiler/akun',  icon: 'User',    label: 'Akun & Profil'   },
+    ],
+    fabPath: null,
+  },
+  peternak_layer: {
+    key: 'peternak_layer',
+    category: 'peternak',
+    name: 'Peternak Layer',
+    label: 'Peternak Layer',
+    categoryLabel: 'Peternak',
+    icon: '🥚',
+    description: 'Pelihara ayam petelur, pantau produksi telur harian dan inventori pakan.',
+    color: '#7C3AED',
+    themeColor: 'violet',
+    user_type: 'peternak',
+    sub_type: 'peternak_layer',
+    comingSoon: true,
+    bottomNav: [],
+    drawerMenu: [
+      { path: '/market',                         icon: 'Store', label: 'TernakOS Market' },
+      { path: '/peternak/peternak_layer/akun',   icon: 'User',  label: 'Akun & Profil'  },
+    ],
+    fabPath: null,
+  },
+  rumah_potong_rpa: {
+    key: 'rumah_potong_rpa',
+    category: 'rumah_potong',
+    name: 'RPA (Rumah Potong Ayam)',
+    label: 'RPA (Rumah Potong Ayam)',
+    categoryLabel: 'Industri',
+    icon: '🏭',
+    description: 'Beli ayam dari broker, kelola order dan pantau hutang pembelian.',
+    color: '#F59E0B',
+    themeColor: 'amber',
+    user_type: 'rumah_potong',
+    sub_type: 'rpa_ayam',
+    comingSoon: false,
+    bottomNav: createNav('rumah_potong', 'rpa_ayam', [
+      { slug: 'beranda',   icon: 'Home',           label: 'Beranda'   },
+      { slug: 'transaksi', icon: 'ArrowLeftRight', label: 'Produksi'  },
+      { slug: 'stok',      icon: 'Warehouse',      label: 'Gudang'    },
+      { slug: 'pengiriman',icon: 'Truck',          label: 'Kirim'     },
+    ]),
+    drawerMenu: [
+      { path: '/rumah_potong/rpa_ayam/distribusi', icon: 'Store',    label: 'Distribusi & Invoice' },
+      { path: '/rumah_potong/rpa_ayam/laporan',    icon: 'BarChart2',label: 'Laporan Margin'       },
+      { path: '/market',                           icon: 'Store',    label: 'TernakOS Market'      },
+      { path: '/rumah_potong/rpa_ayam/akun',       icon: 'User',     label: 'Akun & Profil'        },
+    ],
+    fabPath: '/rumah_potong/rpa_ayam/transaksi',
+  },
+  rumah_potong_rph: {
+    key: 'rumah_potong_rph',
+    category: 'rumah_potong',
+    name: 'RPH (Rumah Potong Hewan)',
+    label: 'RPH (Rumah Potong Hewan)',
+    categoryLabel: 'Industri',
+    icon: '🐄',
+    description: 'Pemotongan sapi/kambing. Kelola stok dan distribusi daging.',
+    color: '#F59E0B',
+    themeColor: 'amber',
+    user_type: 'rumah_potong',
+    sub_type: 'rph',
+    comingSoon: true,
+    bottomNav: [],
+    drawerMenu: [
+      { path: '/market',                icon: 'Store', label: 'TernakOS Market' },
+      { path: '/rumah_potong/rph/akun', icon: 'User',  label: 'Akun & Profil'  },
+    ],
+    fabPath: null,
   }
+}
+
+/**
+ * LEGACY ALIASES
+ * Used for resolving old vertical names or sub_types to primary model keys.
+ * Kept separate to prevent duplication in UI card listings.
+ */
+export const VERTICAL_ALIASES = {
+  // Vertical aliases
+  'sembako_broker':    'distributor_sembako',
+  'broker':            'poultry_broker',
   
-  if (tenant.business_vertical === 'peternak' || subType.startsWith('peternak_')) {
-    return `/peternak/${subType}`
-  }
+  // Sub-type aliases
+  'broker_ayam':        'poultry_broker',
+  'broker_telur':       'egg_broker',
+  'distributor_sembako':'distributor_sembako',
+  'distributor_daging': 'poultry_broker',
+  'peternak_broiler':   'peternak',
+  'peternak_layer':     'peternak_layer',
+  'rpa_ayam':           'rumah_potong_rpa',
+  'rph':                'rumah_potong_rph',
+}
+
+/**
+ * PATH GENERATORS
+ */
+export const getXBasePath = (tenant, profile) => {
+  const vertical = resolveBusinessVertical(profile, tenant)
+  const model = BUSINESS_MODELS[vertical]
   
-  if (tenant.business_vertical === 'rumah_potong' || ['rpa', 'rph', 'rpa_ayam'].includes(subType)) {
-    return `/rumah_potong/${subType}`
+  if (!model) return '/broker/broker_ayam'
+
+  const base = model.category === 'peternak' ? 'peternak' 
+             : model.category === 'rumah_potong' ? 'rumah_potong' 
+             : 'broker'
+             
+  return `/${base}/${model.sub_type}`
+}
+
+/**
+ * COMPAT: Maps old (userType, subType) API to the new flat BUSINESS_MODELS
+ */
+export function getBusinessModel(userType, subType) {
+  const profile = { user_type: userType, sub_type: subType }
+  const vertical = resolveBusinessVertical(profile, null)
+  return BUSINESS_MODELS[vertical] || BUSINESS_MODELS.poultry_broker
+}
+
+/**
+ * COMPAT: Legacy sub_type → vertical key mapping (was SUB_TYPE_TO_VERTICAL)
+ */
+export const SUB_TYPE_TO_VERTICAL = VERTICAL_ALIASES
+
+/**
+ * CENTRALIZED RESOLUTION LOGIC
+ */
+export function resolveBusinessVertical(profile, tenant) {
+  // 1. Forced Sembako logic (Highest priority)
+  const isSembakoName = tenant?.business_name?.toLowerCase().includes('sembako') || 
+                       profile?.business_name?.toLowerCase().includes('sembako')
+  if (isSembakoName) return 'distributor_sembako'
+
+  // 2. Direct vertical field check
+  const directVertical = tenant?.business_vertical || profile?.business_vertical
+  if (directVertical) {
+    if (BUSINESS_MODELS[directVertical]) return directVertical
+    if (VERTICAL_ALIASES[directVertical]) return VERTICAL_ALIASES[directVertical]
   }
 
-  return `/broker/${subType}`
+  // 3. Sub-type mapping check
+  const subType = tenant?.sub_type || profile?.sub_type
+  if (subType && VERTICAL_ALIASES[subType]) {
+    return VERTICAL_ALIASES[subType]
+  }
+
+  // 4. Default Fallback
+  return 'poultry_broker'
 }

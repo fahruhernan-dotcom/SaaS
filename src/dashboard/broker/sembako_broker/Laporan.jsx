@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react'
+import { useNavigate, useOutletContext } from 'react-router-dom'
+import { SembakoMobileBar } from './components/SembakoNavigation'
 import { motion } from 'framer-motion' // eslint-disable-line no-unused-vars
 import {
   TrendingUp, TrendingDown, DollarSign, Receipt,
@@ -28,6 +29,7 @@ const STATUS_STYLE = {
 // ── MAIN ────────────────────────────────────────────────────────────────────
 export default function SembakoLaporan() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const { setSidebarOpen } = useOutletContext()
   const now = new Date()
   const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
   const lastOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)
@@ -69,7 +71,7 @@ export default function SembakoLaporan() {
 
   return (
     <div style={{ background: C.bg, minHeight: '100vh', paddingBottom: '96px' }}>
-      {!isDesktop && <TopBar title="Laporan" />}
+      {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Laporan" />}
       <div style={{ padding: isDesktop ? '32px 40px' : '20px 16px', maxWidth: '1200px', margin: '0 auto' }}>
 
         {/* Header + Date picker */}
@@ -78,7 +80,7 @@ export default function SembakoLaporan() {
           alignItems: isDesktop ? 'center' : 'flex-start',
           justifyContent: 'space-between', gap: '16px', marginBottom: '28px',
         }}>
-          <h1 style={{ fontSize: isDesktop ? '28px' : '22px', fontWeight: 900, color: C.text, fontFamily: 'DM Sans' }}>
+          <h1 style={{ display: isDesktop ? 'block' : 'none', fontSize: isDesktop ? '28px' : '22px', fontWeight: 900, color: C.text, fontFamily: 'DM Sans' }}>
             Laporan Bisnis
           </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap', width: isDesktop ? 'auto' : '100%' }}>

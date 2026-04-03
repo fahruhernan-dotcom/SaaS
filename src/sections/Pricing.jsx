@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ChevronDown, Sparkles, TrendingUp, Users } from 'lucide-react';
+import { Check, ChevronDown, Sparkles, TrendingUp, Users, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import AnimatedPrice from '../components/AnimatedPrice';
@@ -155,38 +155,37 @@ const Pricing = ({ activeRole, setActiveRole }) => {
       <div className="absolute bottom-1/4 right-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="max-w-[1280px] mx-auto px-5 relative z-10">
-        <div className="text-center mb-16">
-          <AnimatedContent direction="vertical" distance={30}>
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-6">
-              <Sparkles size={14} className="text-emerald-500" />
-              <span className="text-[11px] font-black text-emerald-500 uppercase tracking-[0.2em]">PRICING PLANS</span>
+        <div className="text-center mb-10">
+          <AnimatedContent direction="vertical" distance={20}>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-3.5">
+              <Sparkles size={12} className="text-emerald-500" />
+              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.2em]">PRICING PLANS</span>
             </div>
           </AnimatedContent>
 
-          <AnimatedContent direction="vertical" distance={40} delay={0.1}>
-            <h2 className="font-display text-4xl md:text-5xl font-black text-white mb-6 uppercase tracking-tight">
+          <AnimatedContent direction="vertical" distance={30} delay={0.1}>
+            <h2 className="font-display text-2xl md:text-3xl font-black text-white mb-3.5 uppercase tracking-tight">
               PILIH PLAN <span className="text-emerald-500">TERBAIKMU</span>
             </h2>
           </AnimatedContent>
 
-          <AnimatedContent direction="vertical" distance={30} delay={0.2}>
-            <p className="text-[#94A3B8] max-w-xl mx-auto mb-12 font-medium">
+          <AnimatedContent direction="vertical" distance={20} delay={0.2}>
+            <p className="text-[#94A3B8] max-w-lg mx-auto mb-8 text-sm font-medium leading-relaxed">
               Mulai dengan 14 hari gratis tanpa kartu kredit. Upgrade atau downgrade kapan saja sesuai kebutuhan bisnis Anda.
             </p>
           </AnimatedContent>
 
           {/* Role Toggle Tabs */}
-          <AnimatedContent direction="vertical" distance={20} delay={0.25} className="flex justify-center mb-10">
+          <AnimatedContent direction="vertical" distance={20} delay={0.25} className="flex justify-center mb-8">
             <div className="inline-flex bg-[#111C24] border border-white/10 p-1.5 rounded-full relative z-20 shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
               {['broker', 'peternak', 'rpa'].map((role) => (
                 <button
                   key={role}
                   onClick={() => setActiveRole(role)}
-                  className={`px-6 md:px-8 py-2.5 rounded-full font-display text-[10px] font-black tracking-[0.2em] uppercase transition-all duration-300 ${
-                    activeRole === role
+                  className={`px-4 sm:px-6 md:px-8 py-2.5 rounded-full font-display text-[10px] font-black tracking-[0.2em] uppercase transition-all duration-300 ${activeRole === role
                       ? 'bg-emerald-500/10 text-emerald-400 shadow-[0_2px_12px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20'
                       : 'text-[#4B6478] hover:text-white hover:bg-white/[0.03]'
-                  }`}
+                    }`}
                 >
                   {role}
                 </button>
@@ -216,45 +215,45 @@ const Pricing = ({ activeRole, setActiveRole }) => {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto items-center">
+        <div className="grid grid-cols-3 md:grid-cols-3 gap-1 md:gap-8 max-w-6xl mx-auto items-center">
           {plans.map((plan, idx) => (
             <motion.div
               key={plan.name}
               initial={{ opacity: 0, y: 20 }}
               whileInView={
                 plan.isPopular
-                  ? { opacity: 1, y: -16, scale: 1 }
-                  : { opacity: 1, y: 0, scale: 0.96 }
+                  ? { opacity: 1, y: -8, scale: 1 }
+                  : { opacity: 1, y: 0, scale: 0.98 }
               }
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: idx * 0.1 }}
               className={cn(
-                'relative p-8 rounded-[32px] border flex flex-col h-full transition-all duration-300',
+                'relative p-2 md:p-8 rounded-xl md:rounded-[32px] border flex flex-col h-full transition-all duration-300',
                 plan.isPopular
-                  ? 'bg-[#0C1319] border-emerald-500 border-2 shadow-[0_32px_64px_-16px_rgba(16,185,129,0.2)] z-10'
+                  ? 'bg-[#0C1319] border-emerald-500 border-[1.5px] md:border-2 shadow-[0_12px_24px_-8px_rgba(16,185,129,0.2)] md:shadow-[0_32px_64px_-16px_rgba(16,185,129,0.2)] z-10'
                   : 'bg-[#0C1319] border-white/8 hover:border-white/20'
               )}
             >
               {/* Popular badge */}
               {plan.isPopular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 whitespace-nowrap">
+                <div className="absolute -top-3 md:-top-4 left-1/2 -translate-x-1/2 px-2 md:px-4 py-0.5 md:py-1 rounded-full bg-emerald-500 text-white text-[7px] md:text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 whitespace-nowrap z-20">
                   Paling Populer
                 </div>
               )}
 
               {/* Card header */}
-              <div className="mb-8">
-                <div className="flex items-start justify-between gap-2 mb-6">
-                  <div className="flex flex-col gap-1">
-                    <span className={cn('text-[10px] font-black uppercase tracking-[0.2em]', plan.isPopular ? 'text-emerald-500' : 'text-[#4B6478]')}>
-                      {plan.subtitle}
+              <div className="mb-3 md:mb-8">
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-1 md:gap-2 mb-2 md:mb-6">
+                  <div className="flex flex-col gap-0.5 md:gap-1">
+                    <span className={cn('text-[7px] md:text-[10px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em]', plan.isPopular ? 'text-emerald-500' : 'text-[#4B6478]')}>
+                      {plan.name === 'ENTERPRISE' ? '' : plan.subtitle}
                     </span>
-                    <h3 className="font-display text-2xl font-black text-white uppercase">{plan.name}</h3>
+                    <h3 className="font-display text-[11px] md:text-2xl font-black text-white uppercase leading-none md:leading-normal">{plan.name}</h3>
                   </div>
 
                   {/* Social proof avatars — BUSINESS only */}
                   {plan.isSocial && (
-                    <div className="flex flex-col items-end gap-1">
+                    <div className="hidden md:flex flex-col items-end gap-1">
                       <div className="flex -space-x-2">
                         {AVATARS.map((av, i) => (
                           <div
@@ -272,119 +271,130 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                 </div>
 
                 {/* Pricing block */}
-                <div className="mb-4">
+                <div className="mb-2 md:mb-4">
                   {plan.price === 'Custom' ? (
-                    <div className="h-12 flex items-center">
-                      <span className="text-4xl font-black text-white uppercase tracking-tight">CUSTOM</span>
+                    <div className="h-6 md:h-12 flex items-center">
+                      <span className="text-xs md:text-4xl font-black text-white uppercase tracking-tight">CUSTOM</span>
                     </div>
                   ) : (
-                    <div className="space-y-1">
+                    <div className="space-y-0.5 md:space-y-1">
                       {/* Anchoring: strikethrough original price */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-[#4B6478] line-through">
-                          Rp {formatRupiah(plan.anchorPrice)}
+                      <div className="flex flex-col md:flex-row md:items-center gap-0 md:gap-2">
+                        <span className="text-[8px] md:text-sm font-bold text-[#4B6478] line-through">
+                          {formatRupiah(plan.anchorPrice)}
                         </span>
-                        <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 text-[9px] font-black uppercase tracking-widest">
+                        <span className="hidden md:inline-block px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 text-[9px] font-black uppercase tracking-widest">
                           Hemat Rp {formatRupiah(plan.savingAmount)}/bln
                         </span>
                       </div>
 
                       {/* Actual price with animated number */}
-                      <div className="flex items-baseline gap-1 h-10">
-                        <span className="text-lg font-black text-white tracking-tight mr-0.5">Rp</span>
+                      <div className="flex items-baseline gap-0.5 md:gap-1 h-6 md:h-10">
+                        <span className="text-[10px] md:text-lg font-black text-white tracking-tight mr-0.5">Rp</span>
                         <AnimatedPrice
                           value={isAnnual ? plan.annualPrice : plan.monthlyPrice}
-                          className="text-4xl font-black text-white tabular-nums tracking-tighter"
+                          className="text-[13px] md:text-4xl font-black text-white tabular-nums tracking-tighter"
                         />
-                        <span className="text-[#4B6478] text-[10px] font-black uppercase tracking-widest ml-1">/Bln</span>
+                        <span className="text-[#4B6478] text-[7px] md:text-[10px] font-black uppercase tracking-widest ml-0.5">/Bln</span>
                       </div>
-
-                      {/* Annual savings badge */}
-                      {isAnnual && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="flex items-center gap-1.5"
-                        >
-                          <TrendingUp size={10} className="text-emerald-500" />
-                          <span className="text-[10px] font-bold text-emerald-500">
-                            Bayar Rp {formatRupiah((isAnnual ? plan.annualPrice : plan.monthlyPrice) * 12)}/tahun
-                          </span>
-                        </motion.div>
-                      )}
                     </div>
                   )}
                 </div>
 
-                {/* Loss aversion warning — BUSINESS, monthly mode */}
+                {/* Annual savings badge */}
+                {isAnnual && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-1.5 mb-2"
+                  >
+                    <TrendingUp size={10} className="text-emerald-500" />
+                    <span className="text-[8px] md:text-[10px] font-bold text-emerald-500">
+                      Bayar Rp {formatRupiah((isAnnual ? plan.annualPrice : plan.monthlyPrice) * 12)}/tahun
+                    </span>
+                  </motion.div>
+                )}
+
+                {/* Savings highlight — BUSINESS, monthly mode (DESKTOP ONLY) */}
                 {plan.isSocial && !isAnnual && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="flex items-start gap-2 px-3 py-2.5 rounded-xl bg-red-500/8 border border-red-500/15 mb-4"
+                    className="hidden md:flex items-start gap-2 px-3 py-2.5 rounded-xl bg-emerald-500/8 border border-emerald-500/15 mb-4"
                   >
-                    <span className="text-red-400 text-xs shrink-0 mt-px">⚠</span>
-                    <span className="text-[11px] font-bold text-red-400 leading-snug">
-                      Bayar bulanan = rugi Rp {formatRupiah(plan.annualLoss)}/tahun dibanding tahunan
+                    <Sparkles size={12} className="text-emerald-400 shrink-0 mt-0.5" />
+                    <span className="text-[11px] font-bold text-emerald-400 leading-snug">
+                      Hemat Rp {formatRupiah(plan.annualLoss)}/tahun dengan beralih ke Plan Tahunan
                     </span>
                   </motion.div>
                 )}
 
-                <p className="text-[#94A3B8] text-sm font-medium leading-relaxed">{plan.description}</p>
+                {/* Subtitle / desc */}
+                <p className="hidden md:block text-[#94A3B8] text-xs leading-relaxed mb-8">
+                  {plan.description}
+                </p>
               </div>
 
               {/* Feature list */}
-              <div className="space-y-3.5 mb-10 flex-grow">
-                {plan.features.map((feature, fidx) => (
-                  <div key={fidx} className="flex items-start gap-3">
+              <div className="flex-1 space-y-1 md:space-y-3.5 mb-4 md:mb-8 min-h-[140px] md:min-h-0">
+                {plan.features.slice(0, 5).map((feature, i) => (
+                  <div key={i} className="flex items-center md:items-start gap-1 md:gap-3 group/feat">
                     <div className={cn(
-                      'mt-0.5 w-5 h-5 rounded-full flex items-center justify-center shrink-0',
-                      feature.highlight
-                        ? 'bg-amber-500/10'
-                        : 'bg-emerald-500/10'
+                      'shrink-0 w-3 h-3 md:w-5 md:h-5 rounded-full flex items-center justify-center transition-colors',
+                      feature.highlight ? 'bg-emerald-500 text-white' : 'bg-emerald-500/10 text-emerald-500'
                     )}>
-                      {feature.highlight ? (
-                        <Sparkles size={10} className="text-amber-400" />
-                      ) : (
-                        <Check size={11} className="text-emerald-500" strokeWidth={3} />
-                      )}
+                      <Check size={8} className="md:w-3 md:h-3" strokeWidth={4} />
                     </div>
                     <span className={cn(
-                      'text-sm font-medium leading-snug',
-                      feature.highlight ? 'text-amber-200/90' : 'text-white/90'
+                      'text-[7px] md:text-[14px] leading-tight md:leading-relaxed transition-colors line-clamp-1 md:line-clamp-none',
+                      feature.highlight ? 'text-white font-bold' : 'text-[#94A3B8] font-medium group-hover/feat:text-white'
                     )}>
                       {feature.text}
                     </span>
                   </div>
                 ))}
+                {/* Mobile more hint */}
+                <div className="md:hidden text-[6px] text-zinc-600 font-bold uppercase tracking-widest pl-4">
+                  + {plan.features.length - 5} Fitur lainnya
+                </div>
               </div>
 
-              {/* CTA Button */}
-              <Button
-                asChild
-                className={cn(
-                  'w-full h-14 rounded-2xl font-black text-xs uppercase tracking-widest transition-all active:scale-95',
-                  plan.isPopular
-                    ? 'bg-emerald-500 hover:bg-[#34D399] text-white shadow-lg shadow-emerald-500/20'
-                    : 'bg-white/5 border border-white/10 text-white hover:bg-emerald-500 hover:border-emerald-500'
-                )}
-              >
-                {plan.href.startsWith('http') ? (
-                  <a href={plan.href} target="_blank" rel="noopener noreferrer">
-                    {plan.buttonText}
-                  </a>
-                ) : (
-                  <Link to={plan.href}>{plan.buttonText}</Link>
-                )}
-              </Button>
+              {/* Card Footer */}
+              <div className="mt-auto space-y-2 md:space-y-4">
+                <Button
+                  asChild
+                  className={cn(
+                    'w-full py-2 md:py-6 h-auto font-display text-[8px] md:text-sm font-black uppercase tracking-widest rounded-lg md:rounded-2xl transition-all duration-300 active:scale-95',
+                    plan.isPopular
+                      ? 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-500/25'
+                      : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
+                  )}
+                >
+                  {plan.href.startsWith('http') ? (
+                    <a href={plan.href} target="_blank" rel="noopener noreferrer">
+                      {plan.buttonText}
+                    </a>
+                  ) : (
+                    <Link to={plan.href}>{plan.buttonText}</Link>
+                  )}
+                </Button>
 
-              {/* Social proof bottom — BUSINESS */}
+                {/* 30-Day Guarantee Label */}
+                <div className="flex items-center justify-center gap-1 opacity-60 md:opacity-100">
+                  <CheckCircle2 size={7} className="md:w-3 md:h-3 text-emerald-500" />
+                  <span className="text-[6px] md:text-[11px] font-bold text-[#4B6478] uppercase tracking-widest leading-none">
+                    Garansi 30 Hari
+                  </span>
+                </div>
+              </div>
+
+              {/* Social proof bottom — BUSINESS (Desktop ONLY) */}
               {plan.isSocial && (
-                <div className="flex items-center justify-center gap-1.5 mt-4">
+                <div className="hidden md:flex items-center justify-center gap-1.5 mt-4">
                   <Users size={11} className="text-[#4B6478]" />
                   <span className="text-[10px] font-bold text-[#4B6478]">
-                    Dipercaya 500+ peternak & broker aktif
+                    Dipercaya 500+ bisnis aktif
                   </span>
                 </div>
               )}
@@ -393,26 +403,26 @@ const Pricing = ({ activeRole, setActiveRole }) => {
         </div>
 
         {/* FAQ Section */}
-        <div className="max-w-2xl mx-auto mt-24">
-          <div className="text-center mb-12">
-            <h3 className="font-display text-2xl font-black text-white uppercase tracking-tight">Pertanyaan Umum</h3>
+        <div className="max-w-xl mx-auto mt-16">
+          <div className="text-center mb-10">
+            <h3 className="font-display text-lg font-black text-white uppercase tracking-[0.15em]">Pertanyaan Umum</h3>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-2">
             {faqs.map((faq, i) => (
               <div
                 key={i}
-                className="rounded-2xl border border-white/5 bg-white/[0.02] overflow-hidden"
+                className="rounded-xl border border-white/5 bg-white/[0.02] overflow-hidden"
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full text-left px-6 py-5 flex justify-between items-center bg-transparent group"
+                  className="w-full text-left px-4 py-3.5 flex justify-between items-center bg-transparent group"
                 >
-                  <span className="font-display text-sm font-bold text-white uppercase tracking-wide group-hover:text-emerald-500 transition-colors">
+                  <span className="font-display text-[13px] font-bold text-white uppercase tracking-wide group-hover:text-emerald-500 transition-colors">
                     {faq.q}
                   </span>
                   <ChevronDown
-                    size={18}
+                    size={16}
                     className={cn(
                       'text-[#4B6478] transition-transform duration-300 shrink-0',
                       openFaq === i && 'rotate-180 text-emerald-500'
@@ -427,7 +437,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3, ease: 'easeInOut' }}
                     >
-                      <div className="px-6 pb-6 text-sm font-medium text-[#94A3B8] leading-relaxed">
+                      <div className="px-4 pb-4 text-[13px] font-medium text-[#94A3B8] leading-relaxed">
                         {faq.a}
                       </div>
                     </motion.div>

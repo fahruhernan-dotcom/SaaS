@@ -101,61 +101,59 @@ const MarketPrice = ({ activeRole }) => {
             direction="horizontal"
             distance={50}
             delay={0.2}
-            className="w-full flex-1 bg-bg-2 border border-border-default rounded-[20px] p-6 lg:p-8 relative overflow-hidden"
+            className="w-full flex-1 bg-bg-2 border border-border-default rounded-[20px] p-4 md:p-8 relative overflow-hidden"
           >
-             <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[radial-gradient(circle,rgba(245,158,11,0.05)_0%,transparent_60%)] pointer-events-none"></div>
+             <div className="absolute top-0 right-0 w-[200px] h-[200px] bg-[radial-gradient(circle,rgba(245,158,11,0.05)_0%,transparent_60%)] pointer-events-none"></div>
 
-             <div className="relative z-10 flex justify-between items-center mb-8 border-b border-border-subtle pb-4">
-                <p className="font-semibold text-text-primary">Harga Broiler — Jawa Tengah</p>
-                <div className="flex items-center gap-1.5 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse-dot"></span>
-                  <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-widest">Live</span>
+             <div className="relative z-10 flex justify-between items-center mb-4 md:mb-8 border-b border-border-subtle pb-3 md:pb-4">
+                <p className="text-[10px] md:text-sm font-semibold text-text-primary uppercase tracking-tight">Harga Broiler — Jateng</p>
+                <div className="flex items-center gap-1 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-dot"></span>
+                  <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-tighter">Live</span>
                 </div>
              </div>
 
-             <div className="grid grid-cols-2 gap-6 mb-8 relative z-10">
+             <div className="grid grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-8 relative z-10">
                <div>
-                  <p className="text-[12px] text-text-muted mb-1 font-medium">Rata-rata Beli Kandang</p>
-                  <div className="flex items-end gap-3">
-                     <p className="font-display text-[28px] font-extrabold text-emerald-400">
+                  <p className="text-[9px] md:text-[12px] text-text-muted mb-0.5 font-medium">Beli Kandang</p>
+                  <div className="flex items-end gap-1.5 md:gap-3">
+                     <p className="font-display text-[18px] md:text-[28px] font-extrabold text-emerald-400 leading-none">
                        <CountUp from={0} to={19800} duration={1.2} separator="." />
                      </p>
                      <motion.div 
                        initial={{ opacity: 0, x: -8 }}
                        whileInView={{ opacity: 1, x: 0 }}
                        viewport={{ once: true }}
-                       transition={{ delay: 0.8 }}
-                       className="flex items-center text-[12px] text-emerald-400 font-bold mb-1.5 gap-0.5"
+                       className="flex items-center text-[9px] md:text-[12px] text-emerald-400 font-bold mb-0.5 gap-0.1"
                      >
-                       <TrendingUp size={14} /> +300
+                       <TrendingUp size={10} /> 300
                      </motion.div>
                   </div>
-                  <p className="text-[11px] text-text-secondary mt-1">per kg / hari ini</p>
+                  <p className="text-[8px] md:text-[11px] text-text-secondary mt-0.5">per kg / hari ini</p>
                </div>
                <div>
-                  <p className="text-[12px] text-text-muted mb-1 font-medium">Rata-rata Jual RPA</p>
-                  <div className="flex items-end gap-3">
-                     <p className="font-display text-[28px] font-extrabold text-text-primary">
+                  <p className="text-[9px] md:text-[12px] text-text-muted mb-0.5 font-medium">Jual RPA</p>
+                  <div className="flex items-end gap-1.5 md:gap-3">
+                     <p className="font-display text-[18px] md:text-[28px] font-extrabold text-text-primary leading-none">
                        <CountUp from={0} to={23200} duration={1.2} separator="." />
                      </p>
                      <motion.div 
                        initial={{ opacity: 0, x: -8 }}
                        whileInView={{ opacity: 1, x: 0 }}
                        viewport={{ once: true }}
-                       transition={{ delay: 0.8 }}
-                       className="flex items-center text-[12px] text-emerald-400 font-bold mb-1.5 gap-0.5"
+                       className="flex items-center text-[9px] md:text-[12px] text-emerald-400 font-bold mb-0.5 gap-0.1"
                      >
-                       <TrendingUp size={14} /> +200
+                       <TrendingUp size={10} /> 200
                      </motion.div>
                   </div>
-                  <p className="text-[11px] text-gold-400 font-semibold mt-1 flex items-center gap-1">
-                    Margin: Rp 3.400/kg
+                  <p className="text-[8px] md:text-[11px] text-gold-400 font-semibold mt-0.5 whitespace-nowrap">
+                    Margin: Rp 3.400
                   </p>
                </div>
              </div>
 
              {/* Chart Mockup */}
-             <div className="h-[120px] relative w-full border-t border-border-subtle pt-6 flex items-end justify-between z-10">
+             <div className="h-[80px] md:h-[120px] relative w-full border-t border-border-subtle pt-4 md:pt-6 flex items-end justify-between z-10">
                 <svg className="absolute inset-0 top-6 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
                    {/* Gradient Fill */}
                    <defs>

@@ -18,6 +18,7 @@ import {
   CreditCard,
   History,
   Store,
+  LayoutGrid,
 } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
@@ -26,7 +27,7 @@ import ThemePicker from '@/components/ui/ThemePicker'
 
 const ICON_MAP = {
   Truck, Wallet, BarChart2, BarChart3, Car, Calculator, User, Users,
-  Package, RefreshCw, ClipboardList, ShoppingCart, CreditCard, History, Store,
+  Package, RefreshCw, ClipboardList, ShoppingCart, CreditCard, History, Store, LayoutGrid,
 }
 
 export default function DrawerLainnya({ isOpen, onClose, userType }) {
@@ -38,7 +39,7 @@ export default function DrawerLainnya({ isOpen, onClose, userType }) {
   const isStaff = profile?.role === 'staff'
   const isViewOnly = profile?.role === 'view_only'
 
-  const filteredMenu = model.drawerMenu.filter(item => {
+  const filteredMenu = (model?.drawerMenu || []).filter(item => {
     // Global restriction for Harga Pasar
     if (item.label === 'Harga Pasar') {
       return (tenant?.sub_type === 'broker_ayam' || tenant?.business_vertical === 'poultry_broker')
@@ -48,13 +49,19 @@ export default function DrawerLainnya({ isOpen, onClose, userType }) {
     
     if (isOwner) return true
     if (isStaff) {
+      if (profile?.sub_type?.includes('sembako') || tenant?.business_vertical === 'distributor_sembako') {
+        return ['Dashboard', 'Manajemen Produk', 'Riwayat Penjualan', 'Gudang & Stok', 'Manajemen Pegawai', 'Laporan Bisnis', 'Akun & Profil'].includes(item.label)
+      }
       return ['Pengiriman & Loss', 'Harga Pasar', 'Akun & Profil'].includes(item.label)
     }
     if (isViewOnly) {
+      if (profile?.sub_type?.includes('sembako') || tenant?.business_vertical === 'distributor_sembako') {
+        return ['Dashboard', 'Laporan Bisnis', 'Akun & Profil'].includes(item.label)
+      }
       return ['Harga Pasar', 'Akun & Profil'].includes(item.label)
     }
-    if (profile?.role === 'sopir') {
-      return false
+    if (profile?.role === 'sopir' || profile?.role === 'supir') {
+      return item.label === 'Akun & Profil'
     }
     return true
   })

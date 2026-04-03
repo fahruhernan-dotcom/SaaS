@@ -141,6 +141,7 @@ export default function InputHarianSheet({ open, onClose, cycle }) {
               <SheetTitle className="text-white font-display font-black text-base">
                 Input Harian — Hari ke-{recordAge}
               </SheetTitle>
+              <SheetDescription className="sr-only">Formulir untuk memasukkan data mortalitas, pakan, dan bobot harian ternak.</SheetDescription>
               <p className="text-[#4B6478] text-xs mt-0.5">🏠 {farmName} · Siklus #{cycle.cycle_number}</p>
             </div>
             <span style={ageBadgeStyle}>Hari ke-{ageToday}</span>

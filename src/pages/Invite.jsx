@@ -82,7 +82,7 @@ export default function Invite() {
       if (inviteError) throw inviteError;
 
       toast.success('Berhasil bergabung ke tim!');
-      navigate(getBrokerBasePath({ sub_type: inviteData.tenants?.sub_type }) + '/beranda');
+      navigate(getBrokerBasePath(inviteData.tenants) + '/beranda');
       
     } catch (err) {
       console.error(err);

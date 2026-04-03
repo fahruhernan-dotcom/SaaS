@@ -1,108 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Lock, ArrowLeft } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-
-// Step 1 — Kategori utama
-const CATEGORIES = [
-  {
-    key: 'broker',
-    label: 'Broker / Pedagang',
-    icon: '🤝',
-    description: 'Jual beli ayam, telur, atau sembako antar pelaku usaha.',
-  },
-  {
-    key: 'peternak',
-    label: 'Peternak',
-    icon: '🏚️',
-    description: 'Budidaya ayam broiler atau layer, pantau produksi & biaya.',
-  },
-  {
-    key: 'rumah_potong',
-    label: 'Rumah Potong',
-    icon: '🏭',
-    description: 'Beli & potong ayam atau hewan ternak, kelola distribusi.',
-  },
-]
-
-// Step 2 — Sub-role per kategori
-const SUB_ROLES = {
-  broker: [
-    {
-      key: 'broker',
-      label: 'Broker / Pedagang Ayam',
-      icon: '🤝',
-      description: 'Beli dari kandang, jual ke RPA. Kelola margin, piutang & pengiriman.',
-      comingSoon: false,
-    },
-    {
-      key: 'egg_broker',
-      label: 'Broker Telur',
-      icon: '🥚',
-      description: 'Beli telur dari peternak, jual ke agen/pasar. Kelola stok tray.',
-      comingSoon: false,
-    },
-    {
-      key: 'distributor_sembako',
-      label: 'Distributor Sembako',
-      icon: '🛒',
-      description: 'Distribusi sembako ke toko-toko. Kelola stok, invoice & piutang.',
-      comingSoon: false,
-    },
-  ],
-  peternak: [
-    {
-      key: 'peternak',
-      label: 'Peternak Broiler',
-      icon: '🐔',
-      description: 'Pelihara ayam broiler, pantau FCR & deplesi, catat biaya produksi per kg.',
-      comingSoon: false,
-    },
-    {
-      key: 'peternak_layer',
-      label: 'Peternak Layer',
-      icon: '🥚',
-      description: 'Pelihara ayam petelur, pantau produksi telur harian dan inventori pakan.',
-      comingSoon: true,
-    },
-  ],
-  rumah_potong: [
-    {
-      key: 'rumah_potong_rpa',
-      label: 'RPA (Rumah Potong Ayam)',
-      icon: '🏭',
-      description: 'Beli ayam dari broker, kelola order dan pantau hutang pembelian.',
-      comingSoon: false,
-    },
-    {
-      key: 'rumah_potong_rph',
-      label: 'RPH (Rumah Potong Hewan)',
-      icon: '🐄',
-      description: 'Pemotongan sapi/kambing. Kelola stok dan distribusi daging.',
-      comingSoon: true,
-    },
-  ],
-}
-
-const KEY_TO_USER_TYPE = {
-  broker:              'broker',
-  egg_broker:          'broker',
-  distributor_sembako: 'broker',
-  peternak:            'peternak',
-  peternak_layer:      'peternak',
-  rumah_potong_rpa:    'rumah_potong',
-  rumah_potong_rph:    'rumah_potong',
-}
-
-const KEY_TO_SUB_TYPE = {
-  broker:              'broker_ayam',
-  egg_broker:          'broker_telur',
-  distributor_sembako: 'distributor_sembako',
-  peternak:            'peternak_broiler',
-  peternak_layer:      'peternak_layer',
-  rumah_potong_rpa:    'rpa_ayam',
-  rumah_potong_rph:    'rph',
-}
+import { BUSINESS_MODELS, BUSINESS_CATEGORIES } from '@/lib/businessModel'
 
 export default function BusinessModelOverlay({ profile, onComplete }) {
   const [step, setStep] = useState(1)
@@ -110,20 +10,26 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
   const [selected, setSelected] = useState(null)
   const [loading, setLoading] = useState(false)
 
+  // Memoize sub-roles based on category for performance
+  const subRoles = useMemo(() => {
+    if (!category) return []
+    return Object.values(BUSINESS_MODELS).filter(m => m.category === category)
+  }, [category])
+
   if (!profile) return null
   if (profile.business_model_selected) return null
 
   const handleConfirm = async () => {
     if (!selected) return
+    const model = BUSINESS_MODELS[selected]
+    if (!model) return
+
     setLoading(true)
     try {
-      const userType = KEY_TO_USER_TYPE[selected]
-      const subType  = KEY_TO_SUB_TYPE[selected]
-
       const { error } = await supabase
         .from('profiles')
         .update({
-          user_type: userType,
+          user_type: model.user_type,
           business_model_selected: true,
           onboarded: true,
         })
@@ -131,10 +37,13 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
 
       if (error) throw error
 
-      if (profile.tenant_id && subType) {
+      if (profile.tenant_id && model.sub_type) {
         await supabase
           .from('tenants')
-          .update({ sub_type: subType })
+          .update({ 
+            sub_type: model.sub_type,
+            business_vertical: model.key
+          })
           .eq('id', profile.tenant_id)
       }
 
@@ -201,7 +110,6 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
             <span style={{ fontFamily: 'Sora', fontWeight: 800, fontSize: '17px', color: '#F1F5F9' }}>TernakOS</span>
           </div>
 
-          {/* Step indicator */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '14px' }}>
             {[1, 2].map((s) => (
               <div key={s} style={{
@@ -237,7 +145,6 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
           </AnimatePresence>
         </div>
 
-        {/* Cards */}
         <AnimatePresence mode="wait">
           {step === 1 ? (
             <motion.div
@@ -247,7 +154,7 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
               exit={{ opacity: 0, x: -20 }}
               style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
             >
-              {CATEGORIES.map((cat) => (
+              {BUSINESS_CATEGORIES.map((cat) => (
                 <CategoryCard key={cat.key} cat={cat} onClick={() => handleCategorySelect(cat.key)} />
               ))}
             </motion.div>
@@ -259,10 +166,16 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
               exit={{ opacity: 0, x: 20 }}
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '50vh', overflowY: 'auto', paddingRight: '2px' }}>
-                {SUB_ROLES[category]?.map((model) => (
+                {subRoles.map((model) => (
                   <ModelCard
                     key={model.key}
-                    model={model}
+                    model={{
+                      key: model.key,
+                      label: model.name,
+                      icon: model.icon,
+                      description: model.description,
+                      comingSoon: model.comingSoon
+                    }}
                     selected={selected === model.key}
                     onClick={() => !model.comingSoon && setSelected(model.key)}
                   />
@@ -299,7 +212,6 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
                 )}
               </AnimatePresence>
 
-              {/* Back button */}
               <button
                 onClick={handleBack}
                 style={{

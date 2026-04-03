@@ -8,7 +8,10 @@ import {
   useUpdateSembakoProduct,
   useSoftDeleteSembakoProduct,
 } from '@/lib/hooks/useSembakoData'
+import { useOutletContext } from 'react-router-dom'
 import { C } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
+import { SembakoMobileBar } from './components/SembakoNavigation'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -529,6 +532,8 @@ function StatCard({ label, value, sub, color }) {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function Produk() {
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const { setSidebarOpen } = useOutletContext()
   const { data: products = [], isLoading } = useSembakoProducts()
   const deleteMut = useSoftDeleteSembakoProduct()
 
@@ -572,14 +577,22 @@ export default function Produk() {
   return (
     <div style={{ minHeight: '100vh', background: C.bg, paddingBottom: 80 }}>
       {/* Header */}
+      {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Produk" />}
+      
       <div style={{ padding: '20px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
+        <div style={{ display: isDesktop ? 'block' : 'none' }}>
           <h1 style={{ fontFamily: 'Sora', fontSize: 20, fontWeight: 800, color: C.text, margin: 0 }}>Manajemen Produk</h1>
           <p style={{ fontFamily: 'DM Sans', fontSize: 13, color: TEXT_SEC, marginTop: 2 }}>{stats.total} produk aktif</p>
         </div>
         <button
           onClick={() => setSheet('new')}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: C.accent, border: 'none', borderRadius: 12, padding: '10px 16px', color: 'white', fontFamily: 'Sora', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(234,88,12,0.35)' }}
+          style={{ 
+            display: 'flex', alignItems: 'center', gap: 6, background: C.accent, border: 'none', 
+            borderRadius: 12, padding: '10px 16px', color: 'white', fontFamily: 'Sora', 
+            fontSize: 14, fontWeight: 700, cursor: 'pointer', 
+            boxShadow: '0 4px 12px rgba(234,88,12,0.35)',
+            marginLeft: isDesktop ? 0 : 'auto'
+          }}
         >
           <Plus size={16} /> Tambah
         </button>

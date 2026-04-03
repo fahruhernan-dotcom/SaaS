@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { useAuth } from './lib/hooks/useAuth';
-import { useNotificationGenerator } from './lib/hooks/useNotifications';
+import { useNotificationGenerator } from '@/lib/hooks/useNotifications.jsx';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -51,17 +51,12 @@ import AdminSubscriptions from './dashboard/admin/AdminSubscriptions';
 import AdminPricing from './dashboard/admin/AdminPricing';
 import AdminActivity from './dashboard/admin/AdminActivity';
 
+import { getXBasePath, resolveBusinessVertical, BUSINESS_MODELS } from './lib/businessModel'
+
 // ── Vertical-aware beranda path ───────────────────────────────────────────────
-function getVerticalBeranda(vertical, subType) {
-  if (vertical === 'rumah_potong') {
-    const rpType = subType?.startsWith('rpa') ? 'rpa' : 'rph'
-    return `/rumah_potong/${rpType}/beranda`
-  }
-  if (vertical === 'peternak') {
-    return `/peternak/${subType || 'peternak_broiler'}/beranda`
-  }
-  // All broker types use subType as param
-  return `/broker/${subType || 'broker_ayam'}/beranda`
+function getVerticalBeranda(tenant, profile) {
+  const base = getXBasePath(tenant, profile)
+  return `${base}/beranda`
 }
 
 // ── ComingSoon placeholder for unbuilt sembako pages ─────────────────────────
@@ -108,9 +103,13 @@ function ProtectedRoute({ children, requiredType, requiredVertical }) {
     return <Navigate to={`/${role}/beranda`} replace />;
   }
 
-  // Vertical guard
-  if (requiredVertical && tenant?.business_vertical && tenant.business_vertical !== requiredVertical) {
-    return <Navigate to={getVerticalBeranda(tenant.business_vertical, tenant.sub_type)} replace />;
+  // Vertical guard — compare model category, not raw business_vertical string
+  if (requiredVertical && tenant?.business_vertical) {
+    const vertical = resolveBusinessVertical(profile, tenant)
+    const model = BUSINESS_MODELS[vertical]
+    if (model && model.category !== requiredVertical) {
+      return <Navigate to={getVerticalBeranda(tenant, profile)} replace />;
+    }
   }
 
   return children;
@@ -125,7 +124,7 @@ function RoleGuard({ allowedRoles, children }) {
   if (profile?.role === 'superadmin') return children;
   
   if (!profile || !allowedRoles.includes(profile.role)) {
-    return <Navigate to={getVerticalBeranda(tenant?.business_vertical, tenant?.sub_type)} replace />;
+    return <Navigate to={getVerticalBeranda(tenant, profile)} replace />;
   }
 
   return children;
@@ -152,7 +151,7 @@ function RoleRedirector() {
   
   // If broker/rumah_potong, point to the vertical-specific beranda
   if (profile.user_type === 'broker' || profile.user_type === 'rumah_potong') {
-    return <Navigate to={getVerticalBeranda(tenant?.business_vertical, tenant?.sub_type)} replace />;
+    return <Navigate to={getVerticalBeranda(tenant, profile)} replace />;
   }
   
   return <Navigate to={`/${role}/beranda`} replace />;
@@ -185,13 +184,13 @@ function DashboardLayout({ children }) {
 }
 
 function AdminRoute({ children }) {
-  const { user, isSuperadmin, tenant, loading } = useAuth();
+  const { user, isSuperadmin, profile, tenant, loading } = useAuth();
 
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
   
   if (!isSuperadmin) {
-    return <Navigate to={getVerticalBeranda(tenant?.business_vertical, tenant?.sub_type)} replace />;
+    return <Navigate to={getVerticalBeranda(tenant, profile)} replace />;
   }
 
   return children;

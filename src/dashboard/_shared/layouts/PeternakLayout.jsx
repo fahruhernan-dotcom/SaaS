@@ -6,7 +6,7 @@ import DesktopSidebarLayout from './DesktopSidebarLayout'
 import AppSidebar from '../components/AppSidebar'
 import { Menu } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { useNotificationGenerator } from '@/lib/hooks/useNotifications'
+import { useNotificationGenerator } from '@/lib/hooks/useNotifications.jsx'
 
 /**
  * Common Layout for Peternak (Broiler/Layer)

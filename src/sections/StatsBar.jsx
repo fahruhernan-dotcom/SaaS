@@ -8,32 +8,32 @@ const StatsBar = () => {
   const isInView = useInView(ref, { once: true, margin: "-10%" });
 
   const stats = [
-    { value: 500, suffix: "+", label: "Broker & Peternak", duration: 1.8 },
-    { value: 50, suffix: "rb+", label: "Transaksi Tercatat", duration: 2 },
-    { value: "Rp 2M+", isShiny: true, label: "Profit Terpantau" },
-    { value: 14, suffix: " hari", label: "Coba Gratis", duration: 1.5 }
+    { value: 500, suffix: "+", label: "Broker & Peternak", duration: 1.5 },
+    { value: 50, suffix: "rb+", label: "Transaksi Tercatat", duration: 1.8 },
+    { value: "Rp 250M+", isShiny: true, label: "Volume Transaksi", duration: 2 },
+    { value: 14, suffix: " Hari", label: "Coba Gratis", duration: 1.2 }
   ];
 
   return (
-    <section className="bg-[#0A0F16]" style={{ padding: '28px clamp(20px, 5vw, 80px)' }} ref={ref}>
+    <section className="bg-[#0A0F16] py-4 md:py-8 px-4 md:px-[80px]" ref={ref}>
       <motion.div 
         className="max-w-[1280px] mx-auto"
         initial={{ opacity: 0 }}
         animate={isInView ? { opacity: 1 } : { opacity: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-[1px]">
+        <div className="grid grid-cols-4 lg:grid-cols-4 gap-1">
           {stats.map((stat, i) => (
-            <div key={i} className="bg-[#0A0F16] text-center p-[20px_12px] flex flex-col justify-center">
+            <div key={i} className="bg-[#0A0F16] text-center p-2 md:p-[20px_12px] flex flex-col justify-center">
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
               >
-                <div style={{display:'flex', alignItems:'baseline', gap:'2px', justifyContent:'center'}}>
-                  <span style={{fontFamily:'Sora', fontSize:'42px', fontWeight:800, color:'#F1F5F9', letterSpacing:'-2px', lineHeight:1}}>
+                <div style={{display:'flex', alignItems:'baseline', gap:'1px', justifyContent:'center'}}>
+                  <span className="font-display font-extrabold text-[#F1F5F9] tracking-tighter leading-none text-[12px] md:text-[32px] lg:text-[42px]">
                     {stat.isShiny ? (
-                      <ShinyText text={stat.value} speed={5} style={{ fontFamily:'Sora', fontSize:'42px', fontWeight:800 }} />
+                      <ShinyText text={stat.value} speed={5} style={{ fontFamily:'Sora', fontSize:'inherit', fontWeight:800 }} />
                     ) : (
                       <CountUp 
                         from={0}
@@ -44,13 +44,23 @@ const StatsBar = () => {
                     )}
                   </span>
                 </div>
-                <div style={{fontSize:'12px', color:'#4B6478', marginTop:'6px', letterSpacing:'0.5px'}}>
+                <div className={`mt-1 md:mt-2 font-bold tracking-tight md:tracking-widest text-[7px] md:text-[11px] ${stat.isShiny ? 'text-emerald-400' : 'text-[#4B6478]'}`}>
                   {stat.label}
                 </div>
               </motion.div>
             </div>
           ))}
         </div>
+        
+        {/* Methodology disclaimer */}
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 0.4 } : { opacity: 0 }}
+          transition={{ delay: 1, duration: 1 }}
+          className="text-center text-[7px] md:text-[10px] text-[#4B6478] mt-4 md:mt-8 uppercase tracking-[0.2em] font-bold"
+        >
+          *Berdasarkan rata-rata data 500+ pengguna aktif sepanjang 2024
+        </motion.p>
       </motion.div>
     </section>
   );

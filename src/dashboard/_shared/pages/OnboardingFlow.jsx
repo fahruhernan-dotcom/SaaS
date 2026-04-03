@@ -19,26 +19,25 @@ export default function OnboardingFlow() {
   const { profile, loading, refetchProfile } = useAuth()
   const navigate = useNavigate()
 
-  if (loading) return <LoadingScreen />
-
-  // Sudah onboarded — redirect ke dashboard yang sesuai
-  if (profile?.onboarded) {
+  // Hooks MUST come before any early returns
+  React.useEffect(() => {
+    if (loading || !profile?.onboarded) return
     if (profile.role === 'superadmin' || profile.user_type === 'superadmin') {
       navigate('/admin', { replace: true })
-      return null
+      return
     }
     if (profile.user_type === 'peternak') {
       navigate(`/peternak/${profile.tenants?.sub_type || 'peternak_broiler'}/beranda`, { replace: true })
-      return null
+      return
     }
     if (profile.user_type === 'rumah_potong') {
-      const rpType = profile.tenants?.sub_type?.startsWith('rpa') ? 'rpa' : 'rph'
-      navigate(`/rumah_potong/${rpType}/beranda`, { replace: true })
-      return null
+      navigate(`/rumah_potong/${profile.tenants?.sub_type || 'rpa_ayam'}/beranda`, { replace: true })
+      return
     }
-    navigate(getBrokerBasePath({ sub_type: profile.tenants?.sub_type }) + '/beranda', { replace: true })
-    return null
-  }
+    navigate(getBrokerBasePath(profile.tenants) + '/beranda', { replace: true })
+  }, [profile, loading, navigate])
+
+  if (loading || profile?.onboarded) return <LoadingScreen />
 
   return (
     <div className="min-h-screen bg-[#06090F]">

@@ -18,11 +18,11 @@ body {
 
 /* ===== Landing Page Section Utilities ===== */
 .section-padding {
-  padding: 5rem clamp(1.25rem, 5vw, 5rem);
+  padding: 2.5rem clamp(1rem, 4vw, 5rem);
 }
 @media (min-width: 768px) {
   .section-padding {
-    padding: 7rem clamp(2.5rem, 5vw, 5rem);
+    padding: 6rem clamp(2rem, 5vw, 5rem);
   }
 }
 
@@ -42,9 +42,9 @@ body {
 
 .section-h2 {
   font-family: 'Sora', sans-serif;
-  font-size: clamp(28px, 5vw, 44px);
+  font-size: clamp(24px, 4.5vw, 38px);
   font-weight: 800;
-  letter-spacing: -1.5px;
+  letter-spacing: -1.2px;
   line-height: 1.15;
   color: #F1F5F9;
 }

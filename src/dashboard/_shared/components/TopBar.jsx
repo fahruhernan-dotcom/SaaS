@@ -1,14 +1,21 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Search, User } from 'lucide-react'
-import NotificationBell from './NotificationBell'
 import { Button } from '@/components/ui/button'
+import { ArrowLeft, Search, User } from 'lucide-react'
+import { useAuth } from '@/lib/hooks/useAuth'
+import { resolveBusinessVertical, BUSINESS_MODELS } from '@/lib/businessModel'
+import NotificationBell from './NotificationBell'
 
 export default function TopBar({ title, subtitle, showBack = false, rightAction, showBell = true }) {
   const navigate = useNavigate()
+  const { profile, tenant } = useAuth()
+  const vertical = resolveBusinessVertical(profile, tenant)
+  const model = BUSINESS_MODELS[vertical]
+  const color = model?.color || '#10B981'
 
   return (
     <motion.header 
+      // ... (keeping previous animation props)
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.2 }}
@@ -20,7 +27,8 @@ export default function TopBar({ title, subtitle, showBack = false, rightAction,
             variant="ghost" 
             size="icon" 
             onClick={() => navigate(-1)}
-            className="w-10 h-10 lg:w-9 lg:h-9 rounded-xl lg:rounded-lg bg-white/5 border border-white/10 text-white active:scale-95 transition-transform"
+            style={{ borderColor: `${color}33`, color: color }}
+            className="w-10 h-10 lg:w-9 lg:h-9 rounded-xl lg:rounded-lg bg-white/5 border active:scale-95 transition-transform"
           >
             <ArrowLeft size={20} className="lg:w-4 lg:h-4" />
           </Button>
@@ -41,8 +49,11 @@ export default function TopBar({ title, subtitle, showBack = false, rightAction,
                 <Button variant="ghost" size="icon" className="w-10 h-10 lg:w-9 lg:h-9 rounded-xl lg:rounded-lg bg-white/5 border border-white/10 text-[#4B6478]">
                     <Search size={18} className="lg:w-4 lg:h-4" />
                 </Button>
-                <div className="w-10 h-10 lg:w-9 lg:h-9 rounded-xl lg:rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                    <User size={18} className="text-emerald-400 lg:w-4 lg:h-4" />
+                <div 
+                  style={{ background: `${color}11`, borderColor: `${color}22` }}
+                  className="w-10 h-10 lg:w-9 lg:h-9 rounded-xl lg:rounded-lg border flex items-center justify-center"
+                >
+                    <User size={18} style={{ color: color }} className="lg:w-4 lg:h-4" />
                 </div>
             </div>
         )}

@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Home, Users, CreditCard, Tag, LogOut, Shield, ArrowLeft, Activity, Bird, Egg, Building2, Factory } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { getXBasePath } from '@/lib/businessModel'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
@@ -25,45 +26,29 @@ function AdminSidebar() {
         try {
             const { data, error } = await supabase
                 .from('profiles')
-                .select('tenant_id, tenants(id, business_name, business_vertical)')
+                .select('tenant_id, tenants(id, sub_type, business_name, business_vertical)')
                 .eq('auth_user_id', user.id)
 
             if (error || !data?.length) {
-                navigate('/broker/poultry_broker/beranda')
+                navigate('/broker/broker_ayam/beranda')
                 return
             }
 
-            // Ambil tenant pertama yang punya data tenants
             const target = data.find(p => p.tenants)?.tenants
 
             if (!target) {
-                navigate('/broker/poultry_broker/beranda')
+                navigate('/broker/broker_ayam/beranda')
                 return
             }
 
-            // Set localStorage dulu
             localStorage.setItem('ternakos_active_tenant_id', target.id)
-
-            // Switch tenant context
             switchTenant(target.id)
-
-            // Tunggu sebentar agar state update
             await new Promise(resolve => setTimeout(resolve, 100))
 
-            // Navigate sesuai vertikal
-            const v = target.business_vertical
-            if (v === 'egg_broker') {
-                navigate('/egg/beranda')
-            } else if (v === 'peternak') {
-                navigate('/peternak/beranda')
-            } else if (v === 'rpa') {
-                navigate('/rumah_potong/rpa/beranda')
-            } else {
-                navigate('/broker/poultry_broker/beranda')
-            }
+            navigate(getXBasePath(target, null) + '/beranda')
         } catch (err) {
             console.error('Back to dashboard error:', err)
-            navigate('/broker/poultry_broker/beranda')
+            navigate('/broker/broker_ayam/beranda')
         }
     }
 

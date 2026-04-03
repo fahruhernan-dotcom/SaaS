@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
+import { SembakoMobileBar } from './components/SembakoNavigation'
 import { motion } from 'framer-motion'
 import {
   ChevronRight,
@@ -72,6 +73,7 @@ const PAYMENT_TERMS = [
 
 export default function SembakoTokoSupplier() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const { setSidebarOpen } = useOutletContext()
   const [sub, setSub] = useState('toko')
   const [search, setSearch] = useState('')
   const [selectedArea, setSelectedArea] = useState('Semua Area')
@@ -183,7 +185,7 @@ export default function SembakoTokoSupplier() {
 
   return (
     <div className="min-h-screen bg-[#06090F] pb-24 text-left">
-      {!isDesktop && <TopBar title="Toko & Supplier" />}
+      {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Toko & Supplier" />}
 
       <div className="mx-auto max-w-7xl">
         <SembakoPageHeader

@@ -39,6 +39,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarSeparator,
+  SidebarProvider,
 } from '@/components/ui/sidebar'
 import {
   DropdownMenu,
@@ -54,6 +55,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { resolveBusinessVertical, BUSINESS_MODELS } from '@/lib/businessModel'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { supabase } from '@/lib/supabase'
@@ -135,7 +137,7 @@ export default function AppSidebar({ open, onClose }) {
 
   const { accentColor } = useTheme()
 
-  const vertical = tenant?.business_vertical || 'poultry_broker'
+  const vertical = resolveBusinessVertical(profile, tenant)
   const isPoultry  = vertical === 'poultry_broker'
   const isEgg      = vertical === 'egg_broker'
   const isPeternak = vertical === 'peternak'
@@ -144,6 +146,8 @@ export default function AppSidebar({ open, onClose }) {
 
   const brokerBase = getBrokerBasePath(tenant)
   const peternakBase = `/peternak/${profile?.sub_type || 'peternak_broiler'}`
+  
+  const color = accentColor || (isSembako ? '#EA580C' : isEgg ? '#7C3AED' : isRPA ? '#F59E0B' : '#10B981')
 
   const getBerandaPath = (v, t = tenant) => {
     const bBase = getBrokerBasePath(t)
@@ -359,7 +363,13 @@ export default function AppSidebar({ open, onClose }) {
                   size="lg"
                   className="bg-secondary border border-border rounded-xl group-data-[collapsible=icon]:border-none group-data-[collapsible=icon]:bg-transparent hover:bg-white/[0.03] transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-base flex-shrink-0 border border-emerald-500/20">
+                  <div 
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0 border"
+                    style={{ 
+                      background: `${color}18`, 
+                      borderColor: `${color}25` 
+                    }}
+                  >
                     {activeVerticalInfo.icon}
                   </div>
                   <div className="flex-1 overflow-hidden text-left ml-2.5">
@@ -417,12 +427,14 @@ export default function AppSidebar({ open, onClose }) {
                           navigate(targetPath)
                         }}
                         className={`gap-3 rounded-lg p-2 cursor-pointer transition-colors focus:bg-accent focus:text-foreground mb-1 ${
-                          isActive ? 'text-emerald-400 bg-emerald-500/10' : 'hover:bg-accent text-foreground'
+                          isActive ? 'bg-opacity-10' : 'hover:bg-accent text-foreground'
                         }`}
+                        style={isActive ? { color: color, background: `${color}18` } : {}}
                       >
-                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0 transition-colors ${
-                          isActive ? 'bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]' : 'bg-white/5'
-                        }`}>
+                        <div 
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0 transition-colors"
+                          style={isActive ? { background: `${color}33`, boxShadow: `0 0 10px ${color}1A` } : { background: 'rgba(255,255,255,0.05)' }}
+                        >
                           {getVerticalInfo(p.tenants?.business_vertical).icon}
                         </div>
                         <div className="flex-1 overflow-hidden">
@@ -433,7 +445,7 @@ export default function AppSidebar({ open, onClose }) {
                             {getVerticalInfo(p.tenants?.business_vertical).label}
                           </p>
                         </div>
-                        {isActive && <Check size={14} className="text-emerald-400 flex-shrink-0" />}
+                         {isActive && <Check size={14} style={{ color: color }} className="flex-shrink-0" />}
                       </DropdownMenuItem>
                     )
                   })}
@@ -552,10 +564,10 @@ export default function AppSidebar({ open, onClose }) {
                           isLocked
                             ? 'opacity-40 cursor-not-allowed'
                             : isActive 
-                              ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                              ? 'bg-opacity-10' 
                               : 'hover:bg-white/[0.03] text-foreground'
                         }`}
-                        style={isActive && !isLocked ? { border: '1px solid rgba(16,185,129,0.20)' } : {}}
+                        style={isActive && !isLocked ? { background: `${color}18`, border: `1px solid ${color}33`, color: color } : {}}
                       >
                         {isLocked ? (
                           <div className="flex items-center gap-3 w-full px-2 py-1.5">
@@ -573,10 +585,11 @@ export default function AppSidebar({ open, onClose }) {
                           <NavLink to={item.url} className="flex items-center gap-3 w-full">
                             <item.icon
                               size={18}
-                              className={isActive ? 'text-emerald-400' : 'text-muted-foreground'}
+                              style={isActive ? { color: color } : {}}
+                              className={!isActive ? 'text-muted-foreground' : ''}
                               strokeWidth={isActive ? 2.5 : 2}
                             />
-                            <span className={`font-body text-[14px] flex-1  ${isActive ? 'font-semibold text-emerald-400' : 'font-medium'}`}>
+                            <span className={`font-body text-[14px] flex-1  ${isActive ? 'font-semibold' : 'font-medium'}`} style={isActive ? { color: color } : {}}>
                               {item.title}
                             </span>
                             {item.badge && (
@@ -1000,23 +1013,25 @@ export default function AppSidebar({ open, onClose }) {
                       navigate(targetPath)
                     }}
                     className={`w-full flex items-center gap-3 rounded-xl p-3 cursor-pointer transition-colors text-left ${
-                      isActive ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-white/5 border border-white/5 hover:bg-white/10'
+                      isActive ? 'border' : 'bg-white/5 border border-white/5 hover:bg-white/10'
                     }`}
+                    style={isActive ? { background: `${color}18`, borderColor: `${color}33` } : {}}
                   >
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0 transition-colors ${
-                      isActive ? 'bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]' : 'bg-[#090E14]'
-                    }`}>
+                    <div 
+                      className="w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0 transition-colors"
+                      style={isActive ? { background: `${color}33`, boxShadow: `0 0 10px ${color}1A` } : { background: '#090E14' }}
+                    >
                       {getVerticalInfo(p.tenants?.business_vertical).icon}
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      <p className={`text-[14px] truncate leading-tight ${isActive ? 'font-bold text-emerald-400' : 'font-semibold text-foreground'}`}>
+                      <p className={`text-[14px] truncate leading-tight ${isActive ? 'font-bold' : 'font-semibold text-foreground'}`} style={isActive ? { color: color } : {}}>
                         {p.tenants?.business_name || 'My Business'}
                       </p>
                       <p className="text-[11px] text-muted-foreground mt-0.5">
                         {getVerticalInfo(p.tenants?.business_vertical).label}
                       </p>
                     </div>
-                    {isActive && <Check size={18} className="text-emerald-400 flex-shrink-0" />}
+                    {isActive && <Check size={18} style={{ color: color }} className="flex-shrink-0" />}
                   </button>
                 )
               })}
@@ -1051,6 +1066,10 @@ export default function AppSidebar({ open, onClose }) {
       <>
         <Sheet open={open} onOpenChange={(val) => !val && onClose?.()}>
           <SheetContent side="left" className="p-0 border-r border-[#1e293b] w-[280px]" style={{ background: '#090E14' }}>
+            <SheetHeader className="sr-only">
+              <SheetTitle>Navigasi Sidebar</SheetTitle>
+              <SheetDescription>Menu navigasi utama aplikasi TernakOS.</SheetDescription>
+            </SheetHeader>
             <SidebarProvider defaultOpen={true}>
               <Sidebar collapsible="none" className="border-none bg-transparent" style={{ width: '100%', height: '100%' }}>
                 <div style={{ paddingBottom: '32px', height: '100%', overflowY: 'auto' }}>

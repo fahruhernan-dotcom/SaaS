@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom'
+import { SembakoMobileBar } from './components/SembakoNavigation'
 import {
   Plus, CreditCard, TrendingUp, CheckCircle2, AlertTriangle,
   History,
@@ -22,6 +23,7 @@ export default function SembakoPenjualan() {
   const location = useLocation()
   const [openWizard, setOpenWizard] = useState(false)
 
+  const { setSidebarOpen } = useOutletContext()
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     if (params.get('action') === 'new') {
@@ -32,7 +34,7 @@ export default function SembakoPenjualan() {
 
   return (
     <div style={{ background: C.bg, minHeight: '100vh', paddingBottom: '96px' }}>
-      {!isDesktop && <TopBar title="Penjualan" />}
+      {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Penjualan" />}
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <TabInvoice isDesktop={isDesktop} openWizard={openWizard} setOpenWizard={setOpenWizard} />
       </div>
