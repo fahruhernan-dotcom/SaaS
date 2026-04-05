@@ -132,12 +132,57 @@ export default function TransaksiWizard({ isOpen, onClose }) {
     setStep1Data(null)
     setStep2Data(null)
     setStep3Data({ enabled: false })
+    localStorage.removeItem(`ternak_os_wizard_draft_${tenant?.id}`)
   }
 
   const handleClose = React.useCallback(() => {
-    resetWizard()
     onClose()
   }, [onClose])
+
+  // --- Draft Persistence ---
+  React.useEffect(() => {
+    if (!isOpen || !tenant?.id || successData) return
+    const draft = {
+      mode,
+      currentStep,
+      step1Data,
+      step2Data,
+      step3Data,
+      updatedAt: new Date().toISOString()
+    }
+    localStorage.setItem(`ternak_os_wizard_draft_${tenant?.id}`, JSON.stringify(draft))
+  }, [mode, currentStep, step1Data, step2Data, step3Data, isOpen, tenant?.id, successData])
+
+  // --- Draft Recovery ---
+  const [hasDraft, setHasDraft] = useState(false)
+  React.useEffect(() => {
+    if (isOpen && tenant?.id && currentStep === 0) {
+      const saved = localStorage.getItem(`ternak_os_wizard_draft_${tenant?.id}`)
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved)
+          if (parsed.mode && parsed.updatedAt) {
+            setHasDraft(true)
+          }
+        } catch (e) {
+          localStorage.removeItem(`ternak_os_wizard_draft_${tenant?.id}`)
+        }
+      }
+    }
+  }, [isOpen, tenant?.id])
+
+  const loadDraft = () => {
+    const saved = localStorage.getItem(`ternak_os_wizard_draft_${tenant?.id}`)
+    if (saved) {
+      const p = JSON.parse(saved)
+      setMode(p.mode)
+      setCurrentStep(p.currentStep || 0)
+      setStep1Data(p.step1Data)
+      setStep2Data(p.step2Data)
+      setStep3Data(p.step3Data || { enabled: false })
+    }
+    setHasDraft(false)
+  }
 
   const steps = mode === 'buy_first'
     ? ['Pembelian', 'Penjualan', 'Pengiriman']
@@ -401,6 +446,25 @@ export default function TransaksiWizard({ isOpen, onClose }) {
         {/* Progress */}
         {currentStep > 0 && mode && (
           <ProgressIndicator currentStep={currentStep - 1} steps={steps} />
+        )}
+
+        {/* Draft Alert */}
+        {hasDraft && currentStep === 0 && (
+          <div className="mx-5 mb-4 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col gap-3">
+             <div className="flex items-start gap-3">
+               <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                 <Clock size={16} className="text-emerald-400" />
+               </div>
+               <div>
+                 <p className="text-sm font-bold text-white leading-tight">Lanjutkan draf sebelumnya?</p>
+                 <p className="text-[11px] text-emerald-400/70 font-medium mt-1">Kamu punya transaksi yang belum selesai dicatat.</p>
+               </div>
+             </div>
+             <div className="flex gap-2">
+               <Button onClick={loadDraft} className="flex-1 h-9 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] rounded-lg">LANJUTKAN</Button>
+               <Button variant="ghost" onClick={() => { localStorage.removeItem(`ternak_os_wizard_draft_${tenant?.id}`); setHasDraft(false) }} className="h-9 px-3 text-[#4B6478] font-bold text-[11px]">MULAI BARU</Button>
+             </div>
+          </div>
         )}
 
         {/* Step Content */}

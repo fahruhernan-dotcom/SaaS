@@ -18,14 +18,81 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Badge } from '@/components/ui/badge'
 import { differenceInDays, parseISO } from 'date-fns'
 import { TimePicker } from '@/components/ui/TimePicker'
+const FIELD_LABELS = {
+  vehicle_id: 'Kendaraan',
+  driver_id: 'Sopir',
+  delivery_cost: 'Biaya Pengiriman',
+  load_time: 'Jam Muat',
+  departure_time: 'Jam Berangkat',
+  notes: 'Catatan'
+}
+
+// NUCLEAR OPTION: Global Zod Mapping to eliminate ALL technical jargon
+z.setErrorMap((issue, ctx) => {
+  if (ctx.defaultError && !ctx.defaultError.includes('Expected') && !ctx.defaultError.includes('Invalid') && !ctx.defaultError.includes('Required')) {
+    return { message: ctx.defaultError }
+  }
+  if (issue.code === z.ZodIssueCode.invalid_type) {
+    if (issue.received === 'undefined' || issue.received === 'null' || (issue.received === 'string' && issue.code === 'too_small')) {
+      return { message: 'Bagian ini wajib diisi' }
+    }
+    return { message: 'Format data tidak valid' }
+  }
+  return { message: ctx.defaultError }
+})
+
+// Helper to add 1 hour spare time to HH:MM format (Harden to handle ISO and avoid NaN)
+const addSpareTime = (timeStr) => {
+  if (!timeStr || typeof timeStr !== 'string') return timeStr
+  
+  let h, m
+  if (timeStr.includes('T')) {
+    // Handle ISO: 2024-01-01T10:00:00+07:00
+    const timePart = timeStr.split('T')[1]
+    const p = timePart.split(':')
+    h = parseInt(p[0])
+    m = parseInt(p[1])
+  } else if (timeStr.includes(':')) {
+    // Handle HH:mm
+    const p = timeStr.split(':')
+    h = parseInt(p[0])
+    m = parseInt(p[1])
+  } else {
+    return timeStr
+  }
+
+  if (isNaN(h) || isNaN(m)) return timeStr
+  
+  const newH = (h + 1) % 24
+  const hh = String(newH).padStart(2, '0')
+  const mm = String(m).padStart(2, '0')
+
+  if (timeStr.includes('T')) {
+    const datePart = timeStr.split('T')[0]
+    return `${datePart}T${hh}:${mm}:00+07:00`
+  }
+  return `${hh}:${mm}`
+}
 
 const pengirimanSchema = z.object({
   vehicle_id: z.string().nullable().optional(),
   driver_id: z.string().nullable().optional(),
-  delivery_cost: z.number({ invalid_type_error: 'Biaya pengiriman harus berupa angka' }).optional().nullable(),
-  load_time: z.string().optional().nullable(),
-  departure_time: z.string().optional().nullable(),
+  delivery_cost: z.coerce.number({ 
+    required_error: 'Masukkan biaya pengiriman',
+    invalid_type_error: 'Biaya pengiriman harus berupa angka' 
+  }).optional().nullable(),
+  load_time: z.string({ 
+    required_error: 'Jam muat wajib diisi',
+    invalid_type_error: 'Jam muat wajib diisi' 
+  }).min(1, 'Jam muat wajib diisi').nullable(),
+  departure_time: z.string({ 
+    required_error: 'Jam berangkat wajib diisi',
+    invalid_type_error: 'Jam berangkat wajib diisi' 
+  }).min(1, 'Jam berangkat wajib diisi').nullable(),
   notes: z.string().trim().max(500, 'Catatan terlalu panjang (max 500 karakter)').optional()
+}).refine(data => data.load_time !== data.departure_time, {
+  message: 'Jam berangkat harus berbeda dengan jam muat',
+  path: ['departure_time']
 })
 
 const S = {
@@ -107,25 +174,38 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
     if (step3Data.enabled) {
       // Manual Validation for required Quick Add vs Select
       if (vehicleMode === 'armada' && !formValues.vehicle_id) {
-        toast.error("Pilih atau isi data kendaraan terlebih dahulu")
+        toast.error("Informasi Belum Lengkap", { description: "Pilih atau isi data kendaraan terlebih dahulu" })
+        const el = document.getElementById('vehicle_trigger')
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
         return
       }
       if (vehicleMode === 'manual' && !formValues.vehicle_id) {
-        toast.error("Simpan data kendaraan baru terlebih dahulu (Klik SIMPAN & PILIH)")
+        toast.error("Informasi Belum Lengkap", { description: "Simpan data kendaraan baru terlebih dahulu (Klik SIMPAN & PILIH)" })
+        const el = document.getElementById('new_vehicle_brand')
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
         return
       }
       if (driverMode === 'driver' && !formValues.driver_id) {
-        toast.error("Pilih atau isi data sopir terlebih dahulu")
+        toast.error("Informasi Belum Lengkap", { description: "Pilih atau isi data sopir terlebih dahulu" })
+        const el = document.getElementById('driver_trigger')
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
         return
       }
       if (driverMode === 'manual' && !formValues.driver_id) {
-        toast.error("Simpan data sopir baru terlebih dahulu (Klik SIMPAN & PILIH)")
+        toast.error("Informasi Belum Lengkap", { description: "Simpan data sopir baru terlebih dahulu (Klik SIMPAN & PILIH)" })
+        const el = document.getElementById('new_driver_name')
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
         return
       }
 
       // Trigger Zod validation
       const isValid = await trigger()
-      if (!isValid) return
+      if (!isValid) {
+        const firstError = Object.keys(errors)[0]
+        const el = document.getElementById(firstError) || document.getElementsByName(firstError)[0]
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        return
+      }
     }
     
     onSubmit()
@@ -307,9 +387,12 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
               <Popover open={openVehicle} onOpenChange={setOpenVehicle}>
                 <PopoverTrigger asChild>
                   <button id="vehicle_trigger" type="button" style={{
-                    width: '100%', padding: '13px 14px', background: 'hsl(var(--input))', border: '1px solid hsl(var(--border))', borderRadius: '10px',
+                    width: '100%', padding: '13px 14px', background: 'hsl(var(--input))', 
+                    border: errors.vehicle_id ? '1px solid #EF4444' : '1px solid hsl(var(--border))', 
+                    borderRadius: '10px',
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontSize: '16px',
-                    color: formValues.vehicle_id ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', textAlign: 'left'
+                    color: formValues.vehicle_id ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', textAlign: 'left',
+                    boxShadow: errors.vehicle_id ? '0 0 0 1px #EF4444' : 'none'
                   }}>
                     <span className="truncate">
                       {selectedVehicle ? `${selectedVehicle.vehicle_plate} · ${selectedVehicle.vehicle_type}` : 'Pilih kendaraan armada'}
@@ -423,9 +506,12 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                 <Popover open={openDriver} onOpenChange={(open) => setOpenDriver(open)}>
                   <PopoverTrigger asChild>
                     <button id="driver_trigger" type="button" style={{
-                      width: '100%', padding: '13px 14px', background: 'hsl(var(--input))', border: '1px solid hsl(var(--border))', borderRadius: '10px',
+                      width: '100%', padding: '13px 14px', background: 'hsl(var(--input))', 
+                      border: errors.driver_id ? '1px solid #EF4444' : '1px solid hsl(var(--border))', 
+                      borderRadius: '10px',
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontSize: '16px',
-                      color: formValues.driver_id ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', textAlign: 'left'
+                      color: formValues.driver_id ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))', textAlign: 'left',
+                      boxShadow: errors.driver_id ? '0 0 0 1px #EF4444' : 'none'
                     }}>
                       <span className="truncate">
                         {selectedDriver ? selectedDriver.full_name : 'Pilih sopir terdaftar'}
@@ -531,14 +617,27 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
 
           {/* Times with Custom TimePicker */}
           <div className="grid grid-cols-2 gap-3">
-            <TimePicker label="Jam Muat" value={formValues.load_time} onChange={val => setValue('load_time', val, { shouldValidate: true })} />
-            <TimePicker label="Jam Berangkat" value={formValues.departure_time} onChange={val => setValue('departure_time', val, { shouldValidate: true })} />
+            <div>
+              <TimePicker label="Jam Muat" value={formValues.load_time} 
+                onChange={val => {
+                  setValue('load_time', val, { shouldValidate: true })
+                  if (val) {
+                    setValue('departure_time', addSpareTime(val), { shouldValidate: true })
+                  }
+                }} 
+              />
+              {errors.load_time && <p className="text-[10px] text-red-500 font-bold mt-1">{errors.load_time.message}</p>}
+            </div>
+            <div>
+              <TimePicker label="Jam Berangkat" value={formValues.departure_time} onChange={val => setValue('departure_time', val, { shouldValidate: true })} />
+              {errors.departure_time && <p className="text-[10px] text-red-500 font-bold mt-1">{errors.departure_time.message}</p>}
+            </div>
           </div>
 
           {/* TOTAL BIAYA PENGIRIMAN */}
           <div className="space-y-1.5">
             <label htmlFor="delivery_cost" style={S.label}>Total Biaya Pengiriman *</label>
-            <InputRupiah id="delivery_cost" name="delivery_cost" value={formValues.delivery_cost || 0} onChange={v => setValue('delivery_cost', v, { shouldValidate: true })} placeholder="0" className="bg-[#111C24] border-emerald-500/20 h-14 rounded-2xl text-xl font-bold text-white shadow-inner" />
+            <InputRupiah id="delivery_cost" name="delivery_cost" value={formValues.delivery_cost || 0} onChange={v => setValue('delivery_cost', v, { shouldValidate: true })} placeholder="0" className={`bg-[#111C24] ${errors.delivery_cost ? 'border-red-500 ring-1 ring-red-500' : 'border-emerald-500/20'} h-14 rounded-2xl text-xl font-bold text-white shadow-inner`} />
             <p className="text-[10px] text-[#4B6478] font-bold uppercase mt-1 italic">
               Termasuk solar, uang makan, portal, dll.
             </p>

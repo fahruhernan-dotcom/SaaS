@@ -1,7 +1,7 @@
 # TernakOS — Database Structure
 > Generated from Supabase schema. Gunakan sebagai referensi Antigravity.
-> Last updated: 2026-04-02 (Financial Transparency session: Fixed weight formatting to pure KG precision without ton abbreviation; Integrated `vehicle_expenses` into CashFlow via Promise.all; Decomposed Sale/Purchase costs into explicit transaction entries (Delivery Cost, Transport Cost, Other Cost) within CashFlow transaction list; Fixed Keseluruhan date filtering logic based on `tenant.created_at`)
-> Previous update: 2026-04-01 v2 (Bug fixes session: Added `secondary_unit`+`conversion_rate` to `sembako_products`...)
+> Last updated: 2026-04-05 v3 (Documentation Overhaul session: Comprehensive synchronization of all verticals — Poultry, Egg, Sembako, RPA, and Logistics. Added missing table schemas for Sembako and Egg modules; Updated Logistics column details; Fixed Poultry `payments` inconsistency (No `is_deleted` column); Documented Bulletproof RLS pattern as mandatory standard.)
+> Previous updates: 2026-04-02 (Financial Transparency), 2026-04-01 (Sembako Unit Conversion & Bulletproof RLS)
 
 ---
 
@@ -116,40 +116,39 @@ plan_configs ← GLOBAL, tidak ada tenant_id
 
 ---
 
-### `EGG BROKER` Dependencies
-```
-tenants
-  ├── egg_suppliers
-  ├── egg_customers
-  └── egg_inventory
-        └── egg_sales
-              ├── egg_sale_items
-              └── egg_stock_logs
-```
+### `Logistics` Tables
+- `vehicles` (tenant_id)
+- `drivers` (tenant_id)
+- `vehicle_expenses` (tenant_id, vehicle_id)
 
-market_prices    ← GLOBAL, tidak ada tenant_id
-payment_settings ← GLOBAL
-pricing_plans    ← GLOBAL, tidak ada tenant_id
-discount_codes   ← GLOBAL, tidak ada tenant_id
-```
+### `Egg Broker` Tables
+- `egg_suppliers` (tenant_id)
+- `egg_customers` (tenant_id)
+- `egg_inventory` (tenant_id)
+- `egg_sales` (tenant_id, customer_id, invoice_number)
+- `egg_sale_items` (sale_id, inventory_id)
+- `egg_stock_logs` (tenant_id, inventory_id, log_type)
 
-### `SEMBAKO` Dependencies
-```
-tenants
-  ├── sembako_products
-  │     └── sembako_stock_batches (product_id, supplier_id)
-  │           └── sembako_stock_out (batch_id, product_id, sale_id)
-  ├── sembako_suppliers (referenced by sembako_stock_batches.supplier_id)
-  ├── sembako_customers
-  │     └── sembako_sales (tenant_id, customer_id)
-  │           ├── sembako_sale_items (sale_id)
-  │           └── sembako_payments (sale_id, customer_id, reference_number, is_deleted)
-  ├── sembako_employees
-  │     ├── sembako_payroll (employee_id)
-  │     └── sembako_deliveries (employee_id)
-  └── sembako_supplier_payments (supplier_id, reference_number, is_deleted)
-  └── sembako_expenses
-```
+### `Sembako Broker` Tables
+- `sembako_products` (tenant_id)
+- `sembako_suppliers` (tenant_id)
+- `sembako_customers` (tenant_id)
+- `sembako_stock_batches` (tenant_id, product_id, supplier_id)
+- `sembako_stock_out` (product_id, batch_id, sale_id)
+- `sembako_sales` (tenant_id, customer_id)
+- `sembako_sale_items` (sale_id, product_id)
+- `sembako_payments` (tenant_id, sale_id, customer_id, reference_number, is_deleted)
+- `sembako_employees` (tenant_id)
+- `sembako_payroll` (tenant_id, employee_id)
+- `sembako_deliveries` (tenant_id, sale_id, employee_id)
+- `sembako_expenses` (tenant_id)
+
+### `System & Billing` Tables
+- `pricing_plans` (GLOBAL)
+- `discount_codes` (GLOBAL)
+- `plan_configs` (GLOBAL)
+- `subscription_invoices` (tenant_id)
+- `global_audit_logs` (tenant_id, user_id)
 
 ---
 
@@ -562,10 +561,9 @@ tenants
 | `payment_method` | text | `'transfer'` `'cash'` `'giro'` `'qris'` |
 | `reference_no` | text | nullable |
 | `notes` | text | nullable |
-| `is_deleted` | boolean | nullable — filter `.eq('is_deleted', false)` saat read |
 | `created_at` | timestamptz | |
 
-✅ `is_deleted` ADA di tabel ini — selalu filter `.eq('is_deleted', false)` saat read.
+⚠️ **PENTING**: Tabel `payments` (Poultry) TIDAK memiliki `is_deleted`. JANGAN memfilter `is_deleted = false` pada tabel ini.
 
 ---
 
@@ -2104,135 +2102,121 @@ Gunakan data `RPA UD Jaya` dan `RPA Jaya Abadi` sebagai benchmark:
 
 ---
 
-## 🚨 KNOWN ISSUES & FIXES
+## 🏬 SEMBAKO VERTICAL TABLES
 
-### Sembako — 403 Forbidden saat INSERT sales/payments
-- **Masalah**: INSERT ke `sembako_sales` atau `sembako_payments` gagal dengan `403 Forbidden` (RLS policy violation).
-- **Root Cause**: Policy `tenant_isolation_*` belum dibuat atau salah konfigurasi.
-- **Fix SQL**:
-  ```sql
-  -- sembako_sales
-  CREATE POLICY "tenant_isolation_sembako_sales" ON sembako_sales
-    USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE auth_user_id = auth.uid()))
-    WITH CHECK (tenant_id IN (SELECT tenant_id FROM profiles WHERE auth_user_id = auth.uid()));
-  
-  -- sembako_payments
-  CREATE POLICY "tenant_isolation_sembako_payments" ON sembako_payments
-    USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE auth_user_id = auth.uid()))
-    WITH CHECK (tenant_id IN (SELECT tenant_id FROM profiles WHERE auth_user_id = auth.uid()));
-  ```
-- **Status**: Fixed 2026-03-29
-
-### Sembako — 400 Bad Request saat query sembako_stock_batches / sembako_stock_out
-- **Masalah**: Supabase mengembalikan `400 Bad Request (Could not find a relationship)` saat PostgREST mencoba join `sembako_stock_batches` atau `sembako_stock_out`.
-- **Root Cause**: Foreign Key constraint (`product_id`, `batch_id`, `sale_id`) belum ada di database.
-- **Fix SQL**:
-  ```sql
-  -- FK untuk sembako_stock_batches
-  ALTER TABLE sembako_stock_batches
-    ADD COLUMN IF NOT EXISTS is_deleted boolean DEFAULT false,
-    ADD CONSTRAINT fk_ssb_product FOREIGN KEY (product_id) REFERENCES sembako_products(id),
-    ADD CONSTRAINT fk_ssb_supplier FOREIGN KEY (supplier_id) REFERENCES sembako_suppliers(id);
-  
-  -- FK untuk sembako_stock_out
-  ALTER TABLE sembako_stock_out
-    ADD CONSTRAINT fk_sso_product FOREIGN KEY (product_id) REFERENCES sembako_products(id),
-    ADD CONSTRAINT fk_sso_batch FOREIGN KEY (batch_id) REFERENCES sembako_stock_batches(id),
-    ADD CONSTRAINT fk_sso_sale FOREIGN KEY (sale_id) REFERENCES sembako_sales(id);
-  ```
-- **Status**: Fixed 2026-03-29
-
-### DatePicker.jsx — Fatal TypeError (locale shadowing)
-- **Masalah**: `DatePicker.jsx` crash dengan `Uncaught TypeError` saat digunakan di dalam modal.
-- **Root Cause**: Import locale `id` dari `date-fns/locale` di-shadow oleh prop `id` milik komponen itu sendiri.
-- **Fix**: `import { id as idLocale } from 'date-fns/locale'` — rename import.
-- **Status**: Fixed 2026-03-29
-
-### CashFlow.jsx — ReferenceError: isDesktop is not defined
-- **Masalah**: Membuka `CreateExtraExpenseSheet` menyebabkan crash dengan `ReferenceError: isDesktop is not defined`.
-- **Root Cause**: `isDesktop` di-declare di scope induk `CashFlow`, tapi `CreateExtraExpenseSheet` adalah komponen terpisah dan tidak bisa mewarisi variable tersebut.
-- **Fix**: Tambahkan `const isDesktop = useMediaQuery('(min-width: 1024px)')` di dalam body komponen `CreateExtraExpenseSheet`.
-- **Status**: Fixed 2026-03-29
-
-### Sembako — getTenantId Mengambil Tenant Salah
-- **Masalah**: Mutation di `useSembakoData.js` mengambil `tenant_id` dari profile pertama user (bisa `broker_ayam`), bukan dari tenant sembako aktif.
-- **Root Cause**: `.limit(1)` mengambil row tertua, bukan tenant aktif saat ini.
-- **Fix**: Gunakan `localStorage.getItem('ternakos_active_tenant_id')` sebagai prioritas utama, sama dengan pattern di `useAuth()`.
-- **Status**: Fixed 2026-03-29
-
-### Business Switcher Stale Query
-- **Masalah**: Ganti tenant → query vertical lama masih firing (e.g. broker query di sembako)
-- **Fix**: `queryClient.clear()` dipanggil sebelum navigate ke tenant baru di Switcher.
-- **Status**: Fixed 2026-03-29
-
-### Sembako — 42501 RLS Violation on stock_batches/payroll/stock_out (Multi-Tenant)
-- **Masalah**: INSERT ke `sembako_stock_batches`, `sembako_payroll`, atau `sembako_stock_out` gagal `42501 (new row violates row-level security policy)` meskipun policy `Tenants Access Policy` sudah ada.
-- **Root Cause**: `get_my_tenant_id()` hanya return tenant pertama (via `LIMIT 1`). User dengan >1 profil (misal Broker Ayam + Distributor Sembako) akan selalu gagal INSERT ke tenant non-primary.
-- **Fix SQL** (`supabase/migrations/20260401_fix_nested_rls.sql`):
-  ```sql
-  DO $$ 
-  BEGIN
-      DROP POLICY IF EXISTS "Inherited Tenant Policy" ON public.sembako_stock_batches;
-      DROP POLICY IF EXISTS "Tenants Access Policy" ON public.sembako_stock_batches;
-      DROP POLICY IF EXISTS "tenant_isolation_sembako_stock_batches" ON public.sembako_stock_batches;
-      CREATE POLICY "tenant_isolation_sembako_stock_batches" ON public.sembako_stock_batches 
-      FOR ALL TO authenticated 
-      USING (tenant_id IN (SELECT tenant_id FROM public.profiles WHERE auth_user_id = auth.uid()))
-      WITH CHECK (tenant_id IN (SELECT tenant_id FROM public.profiles WHERE auth_user_id = auth.uid()));
-      -- (same pattern for sembako_payroll and sembako_stock_out)
-  END $$;
-  ```
-- **Frontend Fix**: Semua READ hooks di `useSembakoData.js` ditambahkan `useAuth()` + `.eq('tenant_id', tenant.id)` untuk isolasi data per bisnis aktif.
-- **Status**: Fixed 2026-04-01
-
-### Routing Inkonsistensi sub_type
-- **Masalah**: Beberapa logic `navigate()` atau link hardcode tanpa sub_type (e.g. `/broker/beranda`).
-- **Fix**: Semua navigasi dashboard wajib menggunakan helper `getXBasePath(tenant)` dari `lib/businessModel.js`.
-- **Status**: Fixed 2026-03-29
-
-### Infinite Recursion — tenant_update RLS
-- **Masalah**: WITH CHECK yang query `tenants` dari dalam policy `tenants`
-- **Gejala**: 500 Internal Server Error saat PATCH tenants
-- **Fix**: Drop + recreate policy tanpa self-referencing WITH CHECK. Security check via Edge Function.
-- **Error code**: `42P17` — handle di frontend dengan `toast.warning` + lanjut (jangan block user)
-- **Status**: Fixed 2026-03-26
-
-### handle_new_user() Trigger Delay
-- **Masalah**: Trigger kadang tidak langsung jalan setelah `signUp()`
-- **Gejala**: Profile null → login loop, atau register silent fail
-- **Fix**: `Register.jsx` await 1500ms setelah `signUp()` lalu query `profiles`. Jika null → toast error actionable, jangan navigate.
-- **Status**: Fixed 2026-03-26
-
-### Login Loop
-- **Masalah**: Profile null → ProtectedRoute → `/onboarding` → `profile` null → redirect `/login` → loop
-- **Fix**: `Login.jsx` query profile setelah `signInWithPassword()`. Jika null → `signOut()` + `setError(...)`.
-- **Status**: Fixed 2026-03-26
-
-### email_confirmed_at Stuck User
-- **Masalah**: User register tapi tidak bisa login karena email belum dikonfirmasi
-- **Fix SQL** (jalankan di Supabase SQL Editor):
-  ```sql
-  UPDATE auth.users SET email_confirmed_at = now() WHERE email = 'user@example.com';
-  ```
-  ⚠️ JANGAN include kolom `confirmed_at` (generated column — akan error).
-- **Status**: Workaround tersedia
-
-### broker_connections kolom deprecated
-- **Masalah**: Kolom `peternak_tenant_id` dan `broker_tenant_id` sudah tidak digunakan tapi masih ada di DB.
-- **Root Cause**: Migrasi ke pola `requester` & `target` untuk mendukung koneksi multi-arah.
-- **Fix**: Data sudah dimigrate ke `requester_tenant_id` dan `target_tenant_id`. Kode React wajib pakai kolom baru.
-- **Status**: Resolved 2026-03-29
-
-### market_listings view_count race condition
-- **Masalah**: Update view_count via `.update()` di frontend sering menimpa data satu sama lain.
-- **Fix**: Menggunakan RPC `increment_listing_view(id)` untuk update atomic di sisi server.
-- **Status**: Fixed 2026-03-29
-
-### Register profile null pada pendaftaran
-- **Masalah**: Latensi trigger Supabase menyebabkan profile belum siap saat redirect ke beranda.
-- **Fix**: Implementasi `waitForProfile()` retry polling (8x) dengan progressive backoff di `Register.jsx`.
-- **Status**: Fixed 2026-03-29
+### `sembako_products`
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `name` | text | NOT NULL |
+| `category` | text | See Enum List |
+| `unit` | text | See Enum List |
+| `secondary_unit` | text | nullable |
+| `conversion_rate` | numeric | nullable |
+| `min_stock` | integer | default 0 |
+| `buy_price` | integer | nullable — default purchase price |
+| `sell_price` | integer | NOT NULL |
+| `is_active` | boolean | default true |
+| `is_deleted` | boolean | default false |
 
 ---
 
-*TernakOS Database Structure — updated 2026-04-01 — Bulletproof RLS for `sembako_stock_batches`, `sembako_payroll`, `sembako_stock_out` (from `get_my_tenant_id()` to `profiles.auth_user_id = auth.uid()` subquery); Frontend tenant isolation for all `useSembakoData.js` hooks; Migration `20260401_fix_nested_rls.sql` documented; Known Issues expanded with multi-tenant 42501 fix*
+### `sembako_stock_batches`
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `product_id` | uuid FK → sembako_products | |
+| `supplier_id` | uuid FK → sembako_suppliers | nullable |
+| `qty_masuk` | numeric | |
+| `qty_sisa` | numeric | current stock in this batch |
+| `buy_price` | integer | cost for this batch |
+| `total_cost` | bigint | ⚠️ **GENERATED** |
+| `batch_code` | text | nullable |
+| `expiry_date` | date | nullable |
+| `receive_date` | date | default now() |
+| `is_deleted` | boolean | default false |
+
+---
+
+### `sembako_sales`
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `customer_id` | uuid FK → sembako_customers | nullable |
+| `invoice_number` | text | UNIQUE |
+| `total_amount` | bigint | |
+| `total_cogs` | bigint | total cost of goods sold |
+| `gross_profit` | bigint | ⚠️ **GENERATED** |
+| `delivery_cost` | integer | |
+| `other_cost` | integer | |
+| `net_profit` | bigint | ⚠️ **GENERATED** |
+| `paid_amount` | bigint | |
+| `remaining_amount` | bigint | ⚠️ **GENERATED** |
+| `payment_status` | text | See Enum List |
+| `transaction_date` | date | |
+| `is_deleted` | boolean | |
+
+---
+
+### `sembako_employees`
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `name` | text | |
+| `role` | text | `'supir'`, `'penjual'`, etc. |
+| `status` | text | `'aktif'`, `'nonaktif'` |
+| `salary_type` | text | `'harian'`, `'bulanan'`, `'komisi'` |
+| `base_salary` | integer | |
+
+---
+
+## 💳 SYSTEM & BILLING TABLES
+
+### `subscription_invoices`
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `invoice_number` | text | |
+| `amount` | integer | |
+| `plan` | text | |
+| `status` | text | `'pending'`, `'paid'`, `'expired'`, `'cancelled'` |
+| `payment_proof_url` | text | manual transfer proof |
+| `xendit_payment_url` | text | automated payment link |
+| `paid_at` | timestamptz | |
+| `confirmed_by` | uuid FK → profiles | |
+
+---
+
+### `pricing_plans`
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `vertical` | text | e.g., `'poultry_broker'` |
+| `plan_name` | text | `'starter'`, `'pro'`, `'business'` |
+| `monthly_price` | integer | |
+| `annual_price` | integer | |
+| `is_active` | boolean | |
+
+---
+
+### `global_audit_logs`
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `actor_profile_id` | uuid FK → profiles | |
+| `tenant_id` | uuid FK → tenants | nullable (global actions) |
+| `action` | text | e.g. `'UPDATE_TRANSACTION'` |
+| `entity_type` | text | |
+| `entity_id` | uuid | |
+| `old_data` | jsonb | |
+| `new_data` | jsonb | |
+| `created_at` | timestamptz | |
+
+---
+
+*TernakOS Database Structure — updated 2026-04-05 v3 — Comprehensive Documentation Overhaul; Added Sembako, Egg, and System table details; Fixed Poultry `payments` soft-delete inconsistency; Bulletproof RLS pattern enforced.*

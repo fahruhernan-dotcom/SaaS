@@ -377,6 +377,10 @@ export default function Pengiriman() {
                                                 setSelectedDelivery(d)
                                                 setIsUpdateArrivalOpen(true)
                                             }}
+                                            onUpdateStatus={(d) => {
+                                                setSelectedDelivery(d)
+                                                setIsUpdateArrivalOpen(true)
+                                            }}
                                             onComplete={handleCompleteDelivery}
                                             onShowLogistics={(d) => {
                                                 setSelectedLogisticsDetail(d)

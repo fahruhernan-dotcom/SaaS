@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { supabase } from '@/lib/supabase'

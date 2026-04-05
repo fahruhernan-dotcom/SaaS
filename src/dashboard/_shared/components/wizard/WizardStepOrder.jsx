@@ -12,20 +12,90 @@ import { InputNumber } from '@/components/ui/InputNumber'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { safeNum } from '@/lib/format'
+import { TrendingDown, AlertCircle } from 'lucide-react'
+
+const FIELD_LABELS = {
+  rpa_id: 'Pembeli RPA',
+  inputMode: 'Mode Input',
+  quantity: 'Jumlah Ekor',
+  avg_weight_kg: 'Rata-rata Berat',
+  total_weight_input: 'Total Berat',
+  weight_unit: 'Satuan Berat',
+  price_per_kg: 'Harga',
+  delivery_cost: 'Biaya Pengiriman',
+  payment_status: 'Status Pembayaran',
+  paid_amount: 'Jumlah Bayar',
+  transaction_date: 'Tanggal Transaksi',
+  due_date: 'Tanggal Jatuh Tempo',
+  notes: 'Catatan'
+}
+
+// NUCLEAR OPTION: Global Zod Mapping to eliminate ALL technical jargon
+z.setErrorMap((issue, ctx) => {
+  // 1. If schema has a specific message, always prioritize it!
+  if (ctx.defaultError && !ctx.defaultError.includes('Expected') && !ctx.defaultError.includes('Invalid') && !ctx.defaultError.includes('Required')) {
+    return { message: ctx.defaultError }
+  }
+  
+  // 2. Generic translation for remaining technical issues
+  if (issue.code === z.ZodIssueCode.invalid_type) {
+    if (issue.received === 'undefined' || issue.received === 'null' || (issue.received === 'string' && issue.code === 'too_small')) {
+      return { message: 'Bagian ini wajib diisi' }
+    }
+    return { message: 'Format data tidak valid' }
+  }
+  if (issue.code === z.ZodIssueCode.invalid_enum_value) {
+    return { message: 'Pilih salah satu opsi di atas' }
+  }
+  return { message: ctx.defaultError }
+})
 
 const orderSchema = z.object({
-  rpa_id: z.string().min(1, 'Pilih pembeli RPA terlebih dahulu'),
-  inputMode: z.enum(['ekor', 'berat']),
-  quantity: z.number({ invalid_type_error: 'Jumlah ekor harus berupa angka' }).optional().nullable(),
-  avg_weight_kg: z.number({ invalid_type_error: 'Bobot harus berupa angka' }).min(0.1, 'Minimal 0.1 kg').optional().nullable(),
-  total_weight_input: z.number({ invalid_type_error: 'Total berat harus berupa angka' }).optional().nullable(),
-  weight_unit: z.enum(['kg', 'ton', 'rit']),
-  price_per_kg: z.number({ invalid_type_error: 'Harga target harus berupa angka' }).min(1000, 'Harga minimal Rp 1.000'),
-  delivery_cost: z.number({ invalid_type_error: 'Biaya kirim harus berupa angka' }).optional().nullable(),
-  payment_status: z.enum(['lunas', 'belum_lunas', 'sebagian']),
-  paid_amount: z.number().optional().nullable(),
-  transaction_date: z.string().min(1, 'Pilih tanggal order'),
-  due_date: z.string().optional().nullable(),
+  rpa_id: z.string({ 
+    required_error: 'Pilih pembeli RPA terlebih dahulu',
+    invalid_type_error: 'Pilih pembeli RPA terlebih dahulu'
+  }).min(1, 'Pilih pembeli RPA terlebih dahulu'),
+  inputMode: z.enum(['ekor', 'berat'], { 
+    required_error: 'Pilih mode input',
+    invalid_type_error: 'Pilih mode input'
+  }),
+  quantity: z.coerce.number({ 
+    required_error: 'Masukkan jumlah ekor',
+    invalid_type_error: 'Jumlah ekor harus berupa angka' 
+  }).optional().nullable(),
+  avg_weight_kg: z.coerce.number({ 
+    required_error: 'Masukkan bobot',
+    invalid_type_error: 'Bobot harus berupa angka' 
+  }).min(0.1, 'Minimal 0.1 kg').optional().nullable(),
+  total_weight_input: z.coerce.number({ 
+    required_error: 'Masukkan total berat',
+    invalid_type_error: 'Total berat harus berupa angka' 
+  }).optional().nullable(),
+  weight_unit: z.enum(['kg', 'ton', 'rit'], { 
+    required_error: 'Pilih satuan berat',
+    invalid_type_error: 'Pilih satuan berat'
+  }),
+  price_per_kg: z.coerce.number({ 
+    required_error: 'Masukkan harga target',
+    invalid_type_error: 'Harga target harus berupa angka' 
+  }).min(1000, 'Harga minimal Rp 1.000'),
+  delivery_cost: z.coerce.number({ 
+    invalid_type_error: 'Biaya kirim harus berupa angka' 
+  }).optional().nullable(),
+  payment_status: z.enum(['lunas', 'belum_lunas', 'sebagian'], { 
+    required_error: 'Pilih status pembayaran',
+    invalid_type_error: 'Pilih status pembayaran'
+  }),
+  paid_amount: z.number({ 
+    invalid_type_error: 'Jumlah bayar harus berupa angka' 
+  }).optional().nullable(),
+  transaction_date: z.string({ 
+    required_error: 'Pilih tanggal order',
+    invalid_type_error: 'Pilih tanggal order'
+  }).min(1, 'Pilih tanggal order'),
+  due_date: z.string({ 
+    invalid_type_error: 'Pilih tanggal jatuh tempo' 
+  }).optional().nullable(),
   notes: z.string().trim().max(500, 'Catatan terlalu panjang (max 500 karakter)').optional()
 }).refine((data) => {
   if (data.inputMode === 'ekor' && (!data.quantity || data.quantity <= 0)) {
@@ -83,7 +153,7 @@ export default function WizardStepOrder({ onNext, onBack }) {
       avg_weight_kg: 1.85,
       weight_unit: 'kg',
       delivery_cost: 0,
-      payment_status: 'lunas',
+      payment_status: 'belum_lunas',
       paid_amount: 0,
       transaction_date: new Date().toISOString().split('T')[0],
       notes: ''
@@ -142,8 +212,26 @@ export default function WizardStepOrder({ onNext, onBack }) {
     })
   }
 
+  const onError = (errors) => {
+    const firstError = Object.keys(errors)[0]
+    const el = document.getElementById(firstError) || document.getElementsByName(firstError)[0]
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      
+      let description = errors[firstError]?.message
+      if (!description || description.includes('expected') || description.toLowerCase().includes('invalid')) {
+        description = `Mohon isi bagian ${FIELD_LABELS[firstError] || firstError} dengan benar`
+      }
+
+      toast.error('Informasi Belum Lengkap', {
+        description,
+        icon: <AlertCircle className="text-red-500" />
+      })
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 px-5 pb-8 flex flex-col h-full min-h-0 relative">
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-5 px-5 pb-8 flex flex-col h-full min-h-0 relative">
       <div className="flex-1 space-y-5 overflow-y-auto pb-4">
         <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">Step 1 — Order dari Siapa?</p>
 
@@ -151,7 +239,7 @@ export default function WizardStepOrder({ onNext, onBack }) {
         <div className="space-y-1.5">
           <label style={S.label}>Pilih RPA Buyer *</label>
           <Select onValueChange={(val) => setValue('rpa_id', val, { shouldValidate: true })} value={rpaId}>
-            <SelectTrigger className={S.input}><SelectValue placeholder="Pilih RPA yang order" /></SelectTrigger>
+            <SelectTrigger id="rpa_id" className={`${S.input} ${errors.rpa_id ? 'border-red-500 ring-2 ring-red-500/20' : ''}`}><SelectValue placeholder="Pilih RPA yang order" /></SelectTrigger>
             <SelectContent className="bg-[#111C24] border-white/10 text-white">
               {rpaClients?.map(r => (
                 <SelectItem key={r.id} value={r.id} className="focus:bg-white/5">
@@ -177,12 +265,12 @@ export default function WizardStepOrder({ onNext, onBack }) {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label htmlFor="quantity" style={S.label}>Jumlah Ekor *</label>
-                <InputNumber id="quantity" name="quantity" placeholder="500" value={quantity} onChange={(val) => setValue('quantity', val, { shouldValidate: true })} step={1} min={1} />
+                <InputNumber id="quantity" name="quantity" placeholder="500" value={quantity} onChange={(val) => setValue('quantity', val, { shouldValidate: true })} step={1} min={1} className={errors.quantity ? 'border-red-500 ring-1 ring-red-500' : ''} />
                 {errors.quantity && <p className="text-[10px] text-red-500 font-bold">{errors.quantity.message}</p>}
               </div>
               <div className="space-y-1.5">
                 <label htmlFor="avg_weight_kg_ekor" style={S.label}>Bobot/ekor (kg)</label>
-                <InputNumber id="avg_weight_kg_ekor" name="avg_weight_kg" step={0.01} min={0.1} placeholder="1.85" value={avgWeight} onChange={(val) => setValue('avg_weight_kg', val, { shouldValidate: true })} />
+                <InputNumber id="avg_weight_kg" name="avg_weight_kg" step={0.01} min={0.1} placeholder="1.85" value={avgWeight} onChange={(val) => setValue('avg_weight_kg', val, { shouldValidate: true })} className={errors.avg_weight_kg ? 'border-red-500 ring-1 ring-red-500' : ''} />
                 {errors.avg_weight_kg && <p className="text-[10px] text-red-500 font-bold">{errors.avg_weight_kg.message}</p>}
               </div>
             </div>
@@ -299,7 +387,7 @@ export default function WizardStepOrder({ onNext, onBack }) {
         {/* Harga Jual Target */}
         <div className="space-y-1.5">
           <label htmlFor="price_per_kg" style={S.label}>Harga Jual Target (Rp/kg) *</label>
-          <InputRupiah id="price_per_kg" name="price_per_kg" value={pricePerKg} onChange={(val) => setValue('price_per_kg', val, { shouldValidate: true })} placeholder="20.500" className={S.input + ' text-lg font-bold'} />
+          <InputRupiah id="price_per_kg" name="price_per_kg" value={pricePerKg} onChange={(val) => setValue('price_per_kg', val, { shouldValidate: true })} placeholder="20.500" className={`${S.input} text-lg font-bold ${errors.price_per_kg ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} />
           {errors.price_per_kg && <p className="text-[10px] text-red-500 font-bold">{errors.price_per_kg.message}</p>}
         </div>
 
@@ -324,21 +412,21 @@ export default function WizardStepOrder({ onNext, onBack }) {
         {paymentStatus === 'sebagian' && (
           <div className="space-y-1.5">
             <label htmlFor="paid_amount" style={S.label}>Sudah Dibayar</label>
-            <InputRupiah id="paid_amount" name="paid_amount" value={paidAmount} onChange={(val) => setValue('paid_amount', val, { shouldValidate: true })} placeholder="0" className={S.input} />
+            <InputRupiah id="paid_amount" name="paid_amount" value={paidAmount} onChange={(val) => setValue('paid_amount', val, { shouldValidate: true })} placeholder="0" className={`${S.input} ${errors.paid_amount ? 'border-red-500 ring-1 ring-red-500' : ''}`} />
             {errors.paid_amount && <p className="text-[10px] text-red-500 font-bold">{errors.paid_amount.message}</p>}
           </div>
         )}
         {paymentStatus !== 'lunas' && (
           <div className="space-y-1.5">
             <label style={S.label}>Jatuh Tempo</label>
-            <DatePicker value={dueDate} onChange={(val) => setValue('due_date', val, { shouldValidate: true })} placeholder="Pilih jatuh tempo" />
+            <DatePicker id="due_date" value={dueDate} onChange={(val) => setValue('due_date', val, { shouldValidate: true })} placeholder="Pilih jatuh tempo" className={errors.due_date ? 'border-red-500 ring-1 ring-red-500' : ''} />
             {errors.due_date && <p className="text-[10px] text-red-500 font-bold">{errors.due_date.message}</p>}
           </div>
         )}
 
         <div className="space-y-1.5">
           <label style={S.label}>Tanggal Order</label>
-          <DatePicker value={transactionDate} onChange={(val) => setValue('transaction_date', val, { shouldValidate: true })} placeholder="Pilih tanggal" />
+          <DatePicker id="transaction_date" value={transactionDate} onChange={(val) => setValue('transaction_date', val, { shouldValidate: true })} placeholder="Pilih tanggal" className={errors.transaction_date ? 'border-red-500 ring-1 ring-red-500' : ''} />
           {errors.transaction_date && <p className="text-[10px] text-red-500 font-bold">{errors.transaction_date.message}</p>}
         </div>
 

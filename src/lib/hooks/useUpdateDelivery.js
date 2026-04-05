@@ -2,9 +2,12 @@ import { useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { supabase } from '../supabase'
 import { safeNum } from '../format'
+import { useAuth } from './useAuth'
+import { getXBasePath } from '../businessModel'
 
 export function useUpdateDelivery() {
   const queryClient = useQueryClient()
+  const { tenant, profile } = useAuth()
   
   const updateTiba = async (payload) => {
     const {
@@ -18,7 +21,9 @@ export function useUpdateDelivery() {
       driverPhone,
       vehicleId,
       vehiclePlate,
-      vehicleType
+      vehicleType,
+      departureTime,
+      status
     } = payload
 
     // 1. Fetch current delivery data for calculations
@@ -35,16 +40,26 @@ export function useUpdateDelivery() {
     
     // Construct dynamic update object to avoid wiping out existing data
     const updateData = {
-      arrived_count:     safeNum(arrivedCount),
-      arrived_weight_kg: safeNum(arrivedWeight),
-      mortality_count:   mortality,
-      arrival_time:      format(new Date(), "yyyy-MM-dd'T'HH:mm:ssxxx"),
-      status:            'arrived',
       notes:             notes || null
     }
 
+    if (status) {
+      updateData.status = status
+    } else {
+      updateData.status = 'arrived'
+    }
+
+    // Arrival Specific Logic
+    if (updateData.status === 'arrived') {
+       updateData.arrived_count =     safeNum(arrivedCount)
+       updateData.arrived_weight_kg = safeNum(arrivedWeight)
+       updateData.mortality_count =   mortality
+       updateData.arrival_time =      format(new Date(), "yyyy-MM-dd'T'HH:mm:ssxxx")
+    }
+
     // Only update these if they were provided in payload
-    if (loadTime !== undefined)     updateData.load_time = loadTime
+    if (loadTime !== undefined)      updateData.load_time = loadTime
+    if (departureTime !== undefined) updateData.departure_time = departureTime
     if (driverId !== undefined)     updateData.driver_id = driverId
     if (driverName !== undefined)   updateData.driver_name = driverName
     if (driverPhone !== undefined)  updateData.driver_phone = driverPhone
@@ -63,7 +78,7 @@ export function useUpdateDelivery() {
     // 3. Update Sales Revenue based on Arrived Weight
     const { data: saleData } = await supabase
       .from('sales')
-      .select('price_per_kg, tenant_id')
+      .select('price_per_kg, tenant_id, rpa_clients(rpa_name)')
       .eq('id', delivery.sale_id)
       .single()
 
@@ -95,6 +110,22 @@ export function useUpdateDelivery() {
           financial_loss: financialLoss,
           description:    `${mortality} ekor mati dalam perjalanan`,
           report_date:    format(new Date(), 'yyyy-MM-dd')
+        })
+      }
+      
+      // 5. Create notification for Broker/Owner to audit
+      if (updateData.status === 'arrived') {
+        const basePath = getXBasePath(tenant, profile)
+        const driverTitle = driverName || 'Sopir'
+        const rpaTitle = saleData.rpa_clients?.rpa_name || 'Buyer'
+        
+        await supabase.from('notifications').insert({
+          tenant_id: tenant.id,
+          type: 'pengiriman_tiba', // Use correct type for Icon rendering
+          title: '🚚 Pengiriman Tiba',
+          body: `Sopir ${driverTitle} telah sampai di ${rpaTitle}. Segera audit data timbangan.`,
+          action_url: `${basePath}/pengiriman`,
+          metadata: { ref_id: deliveryId },
         })
       }
     }

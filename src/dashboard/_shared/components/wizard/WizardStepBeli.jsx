@@ -11,7 +11,36 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { AlertCircle, ChevronLeft, ChevronsUpDown, Check, Plus, ChevronDown } from 'lucide-react'
+import { AlertCircle, ChevronLeft, ChevronsUpDown, Check, Plus, ChevronDown, TrendingDown } from 'lucide-react'
+
+const FIELD_LABELS = {
+  farm_id: 'Kandang',
+  quantity: 'Jumlah Ekor',
+  avg_weight_kg: 'Rata-rata Berat',
+  price_per_kg: 'Harga Beli',
+  transaction_date: 'Tanggal Beli',
+  notes: 'Catatan'
+}
+
+// NUCLEAR OPTION: Global Zod Mapping to eliminate ALL technical jargon
+z.setErrorMap((issue, ctx) => {
+  // 1. If schema has a specific message, always prioritize it!
+  if (ctx.defaultError && !ctx.defaultError.includes('Expected') && !ctx.defaultError.includes('Invalid') && !ctx.defaultError.includes('Required')) {
+    return { message: ctx.defaultError }
+  }
+  
+  // 2. Generic translation for remaining technical issues
+  if (issue.code === z.ZodIssueCode.invalid_type) {
+    if (issue.received === 'undefined' || issue.received === 'null' || (issue.received === 'string' && issue.code === 'too_small')) {
+      return { message: 'Bagian ini wajib diisi' }
+    }
+    return { message: 'Format data tidak valid' }
+  }
+  if (issue.code === z.ZodIssueCode.invalid_enum_value) {
+    return { message: 'Pilih salah satu opsi di atas' }
+  }
+  return { message: ctx.defaultError }
+})
 import { InputNumber } from '@/components/ui/InputNumber'
 import { useNavigate } from 'react-router-dom'
 import { InputRupiah } from '@/components/ui/InputRupiah'
@@ -27,11 +56,26 @@ import {
 } from '@/components/ui/popover'
 
 const schema = z.object({
-  farm_id: z.string().min(1, 'Pilih kandang terlebih dahulu'),
-  quantity: z.number({ invalid_type_error: 'Jumlah ekor harus berupa angka' }).min(1, 'Minimal 1 ekor'),
-  avg_weight_kg: z.number({ invalid_type_error: 'Bobot harus berupa angka' }).min(0.1, 'Minimal 0.1 kg'),
-  price_per_kg: z.number({ invalid_type_error: 'Harga harus berupa angka' }).min(1000, 'Harga minimal Rp 1.000'),
-  transaction_date: z.string().min(1, 'Pilih tanggal transaksi'),
+  farm_id: z.string({ 
+    required_error: 'Pilih kandang terlebih dahulu',
+    invalid_type_error: 'Pilih kandang terlebih dahulu'
+  }).min(1, 'Pilih kandang terlebih dahulu'),
+  quantity: z.coerce.number({ 
+    required_error: 'Masukkan jumlah ekor',
+    invalid_type_error: 'Jumlah ekor harus berupa angka' 
+  }).min(1, 'Minimal 1 ekor'),
+  avg_weight_kg: z.coerce.number({ 
+    required_error: 'Masukkan bobot',
+    invalid_type_error: 'Bobot harus berupa angka' 
+  }).min(0.1, 'Minimal 0.1 kg'),
+  price_per_kg: z.coerce.number({ 
+    required_error: 'Masukkan harga',
+    invalid_type_error: 'Harga harus berupa angka' 
+  }).min(1000, 'Harga minimal Rp 1.000'),
+  transaction_date: z.string({ 
+    required_error: 'Pilih tanggal transaksi',
+    invalid_type_error: 'Pilih tanggal transaksi'
+  }).min(1, 'Pilih tanggal transaksi'),
   notes: z.string().trim().max(500, 'Catatan terlalu panjang (max 500 karakter)').optional()
 })
 
@@ -146,8 +190,26 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
     })
   }
 
+  const onError = (errors) => {
+    const firstError = Object.keys(errors)[0]
+    const el = document.getElementById(firstError) || document.getElementsByName(firstError)[0]
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+      let description = errors[firstError]?.message
+      if (!description || description.includes('expected') || description.toLowerCase().includes('invalid')) {
+        description = `Mohon isi bagian ${FIELD_LABELS[firstError] || firstError} dengan benar`
+      }
+
+      toast.error('Informasi Belum Lengkap', {
+        description,
+        icon: <AlertCircle className="text-red-500" />
+      })
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full min-h-0 relative">
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="flex flex-col h-full min-h-0 relative">
       <div className="flex-1 space-y-5 px-5 pb-24 overflow-y-auto">
       <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">{title}</p>
 
@@ -164,20 +226,23 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
         <label style={S.label}>Pilih Kandang *</label>
         <Popover open={openKandang} onOpenChange={(open) => setOpenKandang(open)}>
           <PopoverTrigger asChild>
-            <button type="button" style={{
-              width: '100%',
-              padding: '13px 14px',
-              background: 'hsl(var(--input))',
-              border: '1px solid hsl(var(--border))',
-              borderRadius: '10px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              cursor: 'pointer',
-              fontSize: '16px',
-              color: farmId ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
-              textAlign: 'left'
-            }}>
+            <button type="button" 
+              id="farm_id"
+              style={{
+                width: '100%',
+                padding: '13px 14px',
+                background: 'hsl(var(--input))',
+                border: errors.farm_id ? '1px solid #ef4444' : '1px solid hsl(var(--border))',
+                borderRadius: '10px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                cursor: 'pointer',
+                fontSize: '16px',
+                color: farmId ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
+                textAlign: 'left',
+                boxShadow: errors.farm_id ? '0 0 0 1px #ef4444' : 'none'
+              }}>
               <span className="truncate">
                 {selectedKandang ? selectedKandang.farm_name : 'Pilih kandang sumber'}
               </span>
@@ -297,12 +362,12 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label htmlFor="quantity" style={S.label}>Jumlah Ekor *</label>
-              <InputNumber id="quantity" name="quantity" placeholder="500" step={1} min={1} value={watch('quantity')} onChange={(val) => setValue('quantity', val, { shouldValidate: true })} />
+              <InputNumber id="quantity" name="quantity" placeholder="500" step={1} min={1} value={watch('quantity')} onChange={(val) => setValue('quantity', val, { shouldValidate: true })} className={errors.quantity ? 'border-red-500 ring-1 ring-red-500' : ''} />
               {errors.quantity && <p className="text-[10px] text-red-500 font-bold">{errors.quantity.message}</p>}
             </div>
             <div className="space-y-1.5">
               <label htmlFor="avg_weight_kg_ekor" style={S.label}>Bobot/ekor (kg) *</label>
-              <InputNumber id="avg_weight_kg_ekor" name="avg_weight_kg" step={0.01} min={0.1} placeholder="1.85" value={watch('avg_weight_kg')} onChange={(val) => setValue('avg_weight_kg', val, { shouldValidate: true })} />
+              <InputNumber id="avg_weight_kg" name="avg_weight_kg" step={0.01} min={0.1} placeholder="1.85" value={watch('avg_weight_kg')} onChange={(val) => setValue('avg_weight_kg', val, { shouldValidate: true })} className={errors.avg_weight_kg ? 'border-red-500 ring-1 ring-red-500' : ''} />
               {errors.avg_weight_kg && <p className="text-[10px] text-red-500 font-bold">{errors.avg_weight_kg.message}</p>}
             </div>
           </div>
@@ -439,14 +504,15 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
       {/* Harga Beli */}
       <div className="space-y-1.5">
         <label htmlFor="price_per_kg" style={S.label}>Harga Beli (Rp/kg) *</label>
-        <InputRupiah id="price_per_kg" name="price_per_kg" value={watch('price_per_kg')} onChange={(val) => setValue('price_per_kg', val, { shouldValidate: true })} placeholder="19.800" className={S.input + ' text-lg font-bold text-white'} />
+        <InputRupiah id="price_per_kg" name="price_per_kg" value={watch('price_per_kg')} onChange={(val) => setValue('price_per_kg', val, { shouldValidate: true })} placeholder="19.800" className={`${S.input} text-lg font-bold text-white ${errors.price_per_kg ? 'border-red-500 ring-1 ring-red-500' : ''}`} />
         {errors.price_per_kg && <p className="text-[10px] text-red-500 font-bold">{errors.price_per_kg.message}</p>}
       </div>
 
       {/* Tanggal */}
       <div className="space-y-1.5">
         <label style={S.label}>Tanggal Transaksi</label>
-        <DatePicker value={watch('transaction_date')} onChange={(val) => setValue('transaction_date', val)} placeholder="Pilih tanggal" />
+        <DatePicker id="transaction_date" value={watch('transaction_date')} onChange={(val) => setValue('transaction_date', val)} placeholder="Pilih tanggal" className={errors.transaction_date ? 'border-red-500 ring-1 ring-red-500' : ''} />
+        {errors.transaction_date && <p className="text-[10px] text-red-500 font-bold">{errors.transaction_date.message}</p>}
       </div>
 
       {/* Catatan */}

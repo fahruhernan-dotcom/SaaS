@@ -40,6 +40,8 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
     const [notes, setNotes] = useState('')
     const [loadTime, setLoadTime] = useState('')
     const [loadTimeLocked, setLoadTimeLocked] = useState(true)
+    const [departureTime, setDepartureTime] = useState('')
+    const [departureTimeLocked, setDepartureTimeLocked] = useState(true)
     const { updateTiba } = useUpdateDelivery()
 
     // Unit Selector State
@@ -164,6 +166,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
             setMortalityQty(isEdit ? currentMortality : 0)
             setNotes(isEdit ? (delivery.notes || '') : '')
             setLoadTime(delivery.load_time ? format(new Date(delivery.load_time), 'HH:mm') : '')
+            setDepartureTime(delivery.departure_time ? format(new Date(delivery.departure_time), 'HH:mm') : '')
             
             // Initial Weight & Unit
             const kg = safeNum(isEdit ? delivery.arrived_weight_kg : delivery.initial_weight_kg)
@@ -197,6 +200,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
             setVehicleLocked(!!delivery.vehicle_plate)
             setDriverLocked(!!delivery.driver_name)
             setLoadTimeLocked(!!delivery.load_time)
+            setDepartureTimeLocked(!!delivery.departure_time)
             setVehicleOpen(false)
             setDriverOpen(false)
             setVehicleSearch('')
@@ -235,6 +239,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
     
     const initialKg = safeNum(delivery?.initial_weight_kg)
     const initialCount = safeNum(delivery?.initial_count)
+    const isArrival = delivery && ['on_route', 'arrived', 'completed'].includes(delivery.status)
 
     // Sync Handlers
     const handleArrivedChange = (val) => {
@@ -436,8 +441,8 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
         const arrivedWeightKg = tibaKg
         console.log('SUBMIT DIPANGGIL', { arrivedCount, arrivedWeightKg })
         
-        // Validation: Berat wajib > 0
-        if (!tibaKg || tibaKg <= 0) {
+        // Validation: Berat wajib > 0 if it has arrived or completed
+        if (isArrival && (!tibaKg || tibaKg <= 0)) {
             toast.error("Berat tiba wajib diisi")
             return
         }
@@ -464,6 +469,14 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
             baseDate.setHours(parseInt(hh), parseInt(mm), 0, 0)
             formattedLoadTime = baseDate.toISOString()
         }
+
+        let formattedDepartureTime = null
+        if (departureTime) {
+            const baseDate = delivery.created_at ? new Date(delivery.created_at) : new Date()
+            const [hh, mm] = departureTime.split(':')
+            baseDate.setHours(parseInt(hh), parseInt(mm), 0, 0)
+            formattedDepartureTime = baseDate.toISOString()
+        }
         
         try {
             console.log('Step 1: update deliveries')
@@ -475,6 +488,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     mortality_count: matiEkor > 0 ? matiEkor : 0,
                     notes: notes,
                     load_time: formattedLoadTime,
+                    departure_time: formattedDepartureTime,
                 }
 
                 if (!vehicleLocked) {
@@ -535,6 +549,16 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     arrivedWeight: tibaKg,
                     notes: notes,
                     loadTime: formattedLoadTime,
+                    departureTime: formattedDepartureTime,
+                }
+                
+                // Logic-aware status transition
+                if (isArrival) {
+                    arrivalPayload.status = 'arrived'
+                } else if (formattedDepartureTime) {
+                    arrivalPayload.status = 'on_route'
+                } else if (formattedLoadTime) {
+                    arrivalPayload.status = 'loading'
                 }
 
                 if (!vehicleLocked) {
@@ -659,8 +683,12 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
         <Sheet open={isOpen} onOpenChange={onClose}>
             <SheetContent side="right" className="w-full md:w-[520px] bg-[#0C1319] border-l border-white/8 p-8 overflow-y-auto">
                 <SheetHeader className="mb-8">
-                    <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">CATAT KEDATANGAN</SheetTitle>
-                    <SheetDescription className={cn("text-[#4B6478] font-bold uppercase tracking-widest mt-1", isDesktop ? "text-[10px]" : "text-xs")}>Konfirmasi jumlah dan berat tiba di lokasi buyer</SheetDescription>
+                    <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">
+                        {isArrival ? "CATAT KEDATANGAN" : "UPDATE LOGISTIK"}
+                    </SheetTitle>
+                    <SheetDescription className={cn("text-[#4B6478] font-bold uppercase tracking-widest mt-1", isDesktop ? "text-[10px]" : "text-xs")}>
+                        {isArrival ? "Konfirmasi jumlah dan berat tiba di lokasi buyer" : "Update data kendaraan, sopir, dan jam perjalanan"}
+                    </SheetDescription>
                 </SheetHeader>
 
                 <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 mb-6">
@@ -683,46 +711,90 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                 </div>
 
                 <form className="space-y-6 pb-20">
-                    <div className="space-y-2">
-                        <Label className={cn("font-black uppercase text-[#4B6478] tracking-widest ml-1", isDesktop ? "text-[9px]" : "text-xs")}>Jam Muat</Label>
-                        {delivery?.load_time && loadTimeLocked ? (
-                            <div className="w-full h-14 px-4 rounded-xl bg-[#111C24] border border-white/5 flex justify-between items-center opacity-75">
-                                <div className="flex items-center gap-3">
-                                    <Lock size={12} className="text-[#4B6478]" />
-                                    <span className="text-sm font-black text-white">{loadTime}</span>
-                                </div>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 rounded-lg hover:bg-white/5 text-[#4B6478] hover:text-amber-500"
-                                    onClick={() => setLoadTimeLocked(false)}
-                                    title="Ubah jam muat"
-                                >
-                                    <Unlock size={14} />
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-2">
-                                <TimePicker
-                                    value={loadTime}
-                                    onChange={(val) => setLoadTime(val)}
-                                    className="flex-1"
-                                />
-                                {delivery?.load_time && (
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label className={cn("font-black uppercase text-[#4B6478] tracking-widest ml-1", isDesktop ? "text-[9px]" : "text-xs")}>Jam Muat</Label>
+                            {delivery?.load_time && loadTimeLocked ? (
+                                <div className="w-full h-14 px-4 rounded-xl bg-[#111C24] border border-white/5 flex justify-between items-center opacity-75">
+                                    <div className="flex items-center gap-3">
+                                        <Lock size={12} className="text-[#4B6478]" />
+                                        <span className="text-sm font-black text-white">{loadTime}</span>
+                                    </div>
                                     <Button
                                         type="button"
                                         variant="ghost"
                                         size="icon"
-                                        className="h-8 w-8 rounded-lg hover:bg-white/5 text-[#4B6478] hover:text-emerald-400"
-                                        onClick={() => setLoadTimeLocked(true)}
-                                        title="Kunci jam muat"
+                                        className="h-8 w-8 rounded-lg hover:bg-white/5 text-[#4B6478] hover:text-amber-500"
+                                        onClick={() => setLoadTimeLocked(false)}
+                                        title="Ubah jam muat"
                                     >
-                                        <Lock size={14} />
+                                        <Unlock size={14} />
                                     </Button>
-                                )}
-                            </div>
-                        )}
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <TimePicker
+                                        value={loadTime}
+                                        onChange={(val) => setLoadTime(val)}
+                                        className="flex-1"
+                                    />
+                                    {delivery?.load_time && (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 rounded-lg hover:bg-white/5 text-[#4B6478] hover:text-emerald-400"
+                                            onClick={() => setLoadTimeLocked(true)}
+                                            title="Kunci jam muat"
+                                        >
+                                            <Lock size={14} />
+                                        </Button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label className={cn("font-black uppercase text-[#4B6478] tracking-widest ml-1", isDesktop ? "text-[9px]" : "text-xs")}>Jam Berangkat</Label>
+                            {delivery?.departure_time && departureTimeLocked ? (
+                                <div className="w-full h-14 px-4 rounded-xl bg-[#111C24] border border-white/5 flex justify-between items-center opacity-75">
+                                    <div className="flex items-center gap-3">
+                                        <Lock size={12} className="text-[#4B6478]" />
+                                        <span className="text-sm font-black text-white">{departureTime}</span>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 rounded-lg hover:bg-white/5 text-[#4B6478] hover:text-amber-500"
+                                        onClick={() => setDepartureTimeLocked(false)}
+                                        title="Ubah jam berangkat"
+                                    >
+                                        <Unlock size={14} />
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <TimePicker
+                                        value={departureTime}
+                                        onChange={(val) => setDepartureTime(val)}
+                                        className="flex-1"
+                                    />
+                                    {delivery?.departure_time && (
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 rounded-lg hover:bg-white/5 text-[#4B6478] hover:text-emerald-400"
+                                            onClick={() => setDepartureTimeLocked(true)}
+                                            title="Kunci jam berangkat"
+                                        >
+                                            <Lock size={14} />
+                                        </Button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* ROW 2: Ekor Tiba & Ekor Mati */}
@@ -1483,7 +1555,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                         ) : (
                             <>
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-                                SELESAI PENGIRIMAN
+                                {isArrival ? "SELESAI PENGIRIMAN" : (departureTime ? "KONFIRMASI PERUBAHAN" : "KONFIRMASI BERANGKAT")}
                             </>
                         )}
                     </button>

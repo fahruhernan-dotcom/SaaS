@@ -138,6 +138,7 @@ export default function RPADetail() {
   const [selectedSale, setSelectedSale] = useState(null)
   const [showEdit, setShowEdit] = useState(false)
   const [showDeleteRPA, setShowDeleteRPA] = useState(false)
+  const [showConfirmAllPaid, setShowConfirmAllPaid] = useState(false)
 
   if (!rpa && !loadingSales && !loadingRpa) return <EmptyState icon={AlertCircle} title="RPA Tidak Ditemukan" description="Data RPA yang Anda cari mungkin telah dihapus." action={<Button onClick={() => navigate('/broker/rpa')}>Kembali ke List</Button>} />
 
@@ -160,7 +161,11 @@ export default function RPADetail() {
       toast.error('Ada transaksi yang pengirimannya belum selesai')
       return
     }
-    if (!confirm(`Tandai semua (${activeSalesCount}) transaksi sebagai lunas?`)) return
+    setShowConfirmAllPaid(true)
+  }
+
+  const proceedMarkAllPaid = async () => {
+    setShowConfirmAllPaid(false)
     try {
         for (const s of unpaidSales) {
             await supabase.from('payments').insert({
@@ -437,6 +442,22 @@ export default function RPADetail() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Confirm Mark All Paid */}
+      <AlertDialog open={showConfirmAllPaid} onOpenChange={setShowConfirmAllPaid}>
+        <AlertDialogContent className="bg-[#111C24] border-white/10 rounded-3xl max-w-[400px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display font-black text-white uppercase tracking-tight">Tandai Masal Lunas?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#4B6478] font-medium leading-relaxed">
+              Kamu akan menandai <strong>{activeSalesCount} transaksi</strong> sebagai lunas sekaligus. Pastikan uang sudah diterima.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-6 gap-2">
+            <AlertDialogCancel className="bg-transparent border-white/5 text-[#4B6478] hover:bg-white/5 h-10 rounded-xl px-6">Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={proceedMarkAllPaid} className="bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest text-[11px] h-10 px-6 rounded-xl border-none">KONFIRMASI LUNAS</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   )
 }
@@ -454,6 +475,31 @@ function SaleList({ sales, rpa, onPay, canPayFunc }) {
     const { tenant, profile } = useAuth()
     const queryClient = useQueryClient()
     const [invoiceModal, setInvoiceModal] = useState({ open: false, data: null, type: 'sale' })
+    const [confirmFullPaid, setConfirmFullPaid] = useState({ open: false, sale: null })
+
+    const handleConfirmFullPaid = async () => {
+        const sale = confirmFullPaid.sale
+        if (!sale) return
+        
+        try {
+            const totalJual = calcTotalJual(sale, sale.deliveries?.[0])
+            const { error } = await supabase.from('payments').insert({
+                tenant_id: sale.tenant_id,
+                sale_id: sale.id,
+                amount: totalJual - safeNum(sale.paid_amount),
+                payment_method: 'cash',
+                notes: 'Pelunasan langsung'
+            })
+            if (error) throw error
+            toast.success('Transaksi dilunasi!')
+            queryClient.invalidateQueries({ queryKey: ['sales', tenant?.id] })
+            queryClient.invalidateQueries({ queryKey: ['rpa-clients', tenant?.id] })
+        } catch (err) {
+            toast.error('Gagal melunasi')
+        } finally {
+            setConfirmFullPaid({ open: false, sale: null })
+        }
+    }
 
     if (sales.length === 0) return (
         <EmptyState 
@@ -608,21 +654,9 @@ function SaleList({ sales, rpa, onPay, canPayFunc }) {
                                                     opacity: canPayFunc(sale) ? 1 : 0.4,
                                                     cursor: canPayFunc(sale) ? 'pointer' : 'not-allowed'
                                                 }}
-                                                onClick={async () => {
+                                                onClick={() => {
                                                     if (!canPayFunc(sale)) return
-                                                    if (!confirm('Tandai lunas sepenuhnya?')) return
-                                                    const totalJual = calcTotalJual(sale, sale.deliveries?.[0])
-                                                    const { error } = await supabase.from('payments').insert({
-                                                        tenant_id: sale.tenant_id,
-                                                        sale_id: sale.id,
-                                                        amount: totalJual - safeNum(sale.paid_amount),
-                                                        payment_method: 'cash',
-                                                        notes: 'Pelunasan langsung'
-                                                    })
-                                                    if (error) return toast.error('Gagal melunasi')
-                                                    toast.success('Transaksi dilunasi!')
-                                                    queryClient.invalidateQueries({ queryKey: ['sales', tenant?.id] })
-                                                    queryClient.invalidateQueries({ queryKey: ['rpa-clients', tenant?.id] })
+                                                    setConfirmFullPaid({ open: true, sale })
                                                 }}
                                             >
                                                 Lunas
@@ -669,6 +703,22 @@ function SaleList({ sales, rpa, onPay, canPayFunc }) {
                     </Card>
                 </motion.div>
             ))}
+
+            {/* Custom Alert for Single Full Payment */}
+            <AlertDialog open={confirmFullPaid.open} onOpenChange={(o) => !o && setConfirmFullPaid({open: false, sale: null})}>
+                <AlertDialogContent className="bg-[#111C24] border-white/10 rounded-3xl max-w-[400px]">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="font-display font-black text-white uppercase tracking-tight">Tandai Lunas Sepenuhnya?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-[#4B6478] font-medium leading-relaxed">
+                            Akan mencatat pembayaran senilai <strong>{formatIDR(calcTotalJual(confirmFullPaid.sale, confirmFullPaid.sale?.deliveries?.[0]) - safeNum(confirmFullPaid.sale?.paid_amount))}</strong> via Cash.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="mt-6 gap-2">
+                        <AlertDialogCancel className="bg-transparent border-white/5 text-[#4B6478] hover:bg-white/5 h-10 rounded-xl px-6">Batal</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleConfirmFullPaid} className="bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest text-[11px] h-10 px-6 rounded-xl border-none">KONFIRMASI LUNAS</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </motion.div>
     )
 }

@@ -330,7 +330,7 @@ function UpdateTibaSheet({ isOpen, onClose, delivery, onSuccess }) {
         arrivedWeight: parseFloat(arrivedWeight),
         notes: notes
       })
-      toast.success('Data pengiriman berhasil diselesaikan')
+      toast.success('Laporan kedatangan berhasil dikirim. Menunggu audit Broker.')
       onSuccess()
       onClose()
     } catch (err) {
@@ -348,10 +348,10 @@ function UpdateTibaSheet({ isOpen, onClose, delivery, onSuccess }) {
           <SheetHeader className="text-left">
             <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight flex items-center gap-3">
               <CheckCircle size={24} className="text-emerald-500" />
-              Laporan Pengiriman
+              Laporkan Kedatangan
             </SheetTitle>
             <SheetDescription className="text-[#4B6478] font-bold uppercase text-[10px] tracking-widest mt-1">
-              Input data akhir pengiriman ayam
+              Kirim data akhir pengiriman untuk diaudit Broker
             </SheetDescription>
           </SheetHeader>
 
@@ -404,7 +404,7 @@ function UpdateTibaSheet({ isOpen, onClose, delivery, onSuccess }) {
               disabled={isSubmitting}
               className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-[24px] shadow-xl shadow-emerald-500/20"
             >
-              {isSubmitting ? 'MENYIMPAN...' : 'SIMPAN & SELESAIKAN'}
+              {isSubmitting ? 'MENGIRIM LAPORAN...' : 'KIRIM LAPORAN KEDATANGAN'}
             </Button>
             <Button 
               type="button" 

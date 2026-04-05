@@ -1,6 +1,6 @@
 # TernakOS — Developer Context
 
-> Last updated: 2026-04-02 v2 (Financial Transparency & Stabilization session: Resolved infinite rendering loops in Poultry Broker via stable handlers; Removed 'isOwner' financial guard in UnifiedTransactionCard to allow granular UI; Format weight isolated to strict Kg precision; Integrated `vehicle_expenses` mapped into Cash Flow 'Lainnya'; Decomposed bulk transaction costs (delivery_cost, transport_cost, other_cost) into transparent individual Cash Flow history rows; Anchor Keseluruhan period dynamic filter to `tenant.created_at`) | Use this as reference for all future implementations.
+> Last updated: 2026-04-05 v3 (Documentation Overhaul session: Synchronized CONTEXT.md and DATABASE_STRUCTURE.md with the live production environment; Documented Universal Broker Architecture (dynamic segments); Updated routing table with all 10+ public and vertical-first routes; Corrected RPA/RPH and Sembako paths; Validated Egg Broker and Sembako Suite as "✅ Full Implementation") | Use this as reference for all future implementations.
 
 ---
 
@@ -24,7 +24,27 @@
 
 ---
 
-## 2. Design System & Tokens
+## 2. Universal Broker Architecture (UBA)
+
+TernakOS uses a **Vertical-First dynamic routing** pattern. All dashboards for Broker, Peternak, and Rumah Potong share a unified layout system but render specialized components based on the URL segment (`:brokerType`, `:peternakType`, `:rpType`).
+
+### Core Pattern
+Role-based routers (`BrokerRouter`, `PeternakRouter`, `RPPageRouter`) act as the entry points. They map logical "pages" (e.g., `pos`, `kandang`) to specific components based on the active vertical.
+
+- **Primary Layouts**: `BrokerLayout`, `PeternakLayout`, `RumahPotongLayout`.
+- **Dynamic Segments**:
+    - `/broker/:brokerType/*` (e.g., `/broker/distributor_sembako/produk`)
+    - `/peternak/:peternakType/*` (e.g., `/peternak/peternak_broiler/siklus`)
+    - `/rumah_potong/:rpType/*` (e.g., `/rumah_potong/rpa/order`)
+
+### Navigation Hooks
+Selalu gunakan helper di `lib/businessModel.js` untuk navigasi antar halaman agar sub-type tetap konsisten:
+- `getVerticalBeranda(tenant, profile)`
+- `getXBasePath(tenant, profile)`
+
+---
+
+## 3. Design System & Tokens
 
 ### Color Palette (Dark-Only Theme)
 
@@ -153,12 +173,15 @@ const canWrite = ['owner', 'staff'].includes(profile?.role)
   - ✓ Enforced financial integrity via `InputRupiah` and `Zod`.
 
 **Route setelah login:**
-- owner, staff, view_only (poultry_broker) → `/broker/poultry_broker/beranda`
-- owner, staff, view_only (egg_broker) → `/egg/beranda`
-- sopir → `/broker/sopir`
+- owner, staff, view_only (poultry_broker) → `/broker/broker_ayam/beranda`
+- owner, staff, view_only (egg_broker) → `/broker/broker_telur/beranda`
+- owner, staff, view_only (sembako_broker) → `/broker/distributor_sembako/beranda`
+- owner, staff, view_only (peternak_broiler) → `/peternak/peternak_broiler/beranda`
+- owner, staff, view_only (rpa) → `/rumah_potong/rpa/beranda`
+- sopir → `/broker/:sub_type/sopir`
 - superadmin → `/admin`
 
-**Guard component**: `RoleGuard` di `App.jsx`
+**Guard components**: `ProtectedRoute`, `RoleGuard`, and `AdminRoute` in `App.jsx`.
 ```jsx
 <RoleGuard allowedRoles={['owner']}>
   <CashFlow />
@@ -384,90 +407,90 @@ const canWrite = ['owner', 'staff'].includes(profile?.role)
 ### Route Groups
 
 #### Public Routes
-| Path | Component |
-|------|-----------|
-| `/` | `LandingPage` |
-| `/login` | `Login` |
-| `/register` | `Register` |
+| Path | Component | Purpose |
+|------|-----------|---------|
+| `/` | `LandingPage` | Home landing |
+| `/login` | `Login` | Sign in |
+| `/register` | `Register` | New account (Step 0) |
+| `/invite` | `AcceptInvite` | Team join via 6-digit code |
+| `/tentang-kami` | `AboutUs` | Company profile & robot 3D |
+| `/fitur` | `FiturPage` | List of features per role |
+| `/harga` | `HargaPage` | Pricing tiers |
+| `/terms` | `TermsPage` | Terms of Service |
+| `/privacy` | `PrivacyPage` | Privacy Policy |
+| `/check-email` | `CheckEmail` | Post-registration notice |
+| `/forgot-password` | `ForgotPassword` | Password recovery |
+| `/reset-password` | `ResetPassword` | Set new password |
+| `/auth/callback` | `AuthCallback` | Supabase auth handler |
 
 #### Onboarding
 | Path | Component | Guard |
 |------|-----------|-------|
 | `/onboarding` | `OnboardingFlow` | `ProtectedRoute` (any role) |
 
-#### Broker Routes (`/broker/*`) — Uses `BrokerLayout`
+#### Broker Routes (`/broker/:brokerType/*`) — Uses `BrokerLayout`
+| Path | Component | Vertical |
+|------|-----------|----------|
+| `beranda` | `BrokerPageRouter` | Any |
+| `transaksi` | `BrokerPageRouter` | Poultry |
+| `kandang` | `BrokerPageRouter` | Poultry |
+| `pengiriman` | `BrokerPageRouter` | Poultry / Sembako |
+| `rpa` | `BrokerPageRouter` | Poultry |
+| `rpa/:id` | `BrokerPageRouter` | Poultry (Detail) |
+| `cash-flow` | `BrokerPageRouter` | Poultry |
+| `armada` | `BrokerPageRouter` | Poultry |
+| `simulator` | `BrokerPageRouter` | Poultry |
+| `tim` | `BrokerPageRouter` | Any |
+| `akun` | `BrokerPageRouter` | Any |
+| `pos` | `BrokerPageRouter` | Egg / Sembako |
+| `penjualan` | `BrokerPageRouter` | Sembako |
+| `toko-supplier` | `BrokerPageRouter` | Sembako |
+| `toko-supplier/:type/:id` | `BrokerPageRouter` | Sembako (Detail) |
+| `gudang` | `BrokerPageRouter` | Sembako |
+| `produk` | `BrokerPageRouter` | Sembako |
+| `inventori` | `BrokerPageRouter` | Egg / Sembako |
+| `karyawan` | `BrokerPageRouter` | Sembako |
+| `laporan` | `BrokerPageRouter` | Sembako |
+| `suppliers` | `BrokerPageRouter` | Egg |
+| `customers` | `BrokerPageRouter` | Egg |
+
+#### Peternak Routes (`/peternak/:peternakType/*`) — Uses `PeternakLayout`
 | Path | Component |
 |------|-----------|
-| `/broker/beranda` | `RoleRedirector` (redirect ke `/broker/poultry_broker/beranda` atau `/egg/beranda`) |
-| `/broker/transaksi` | `Transaksi` |
-| `/broker/rpa` | `RPA` |
-| `/broker/rpa/:id` | `RPADetail` (wrapped in ErrorBoundary) |
-| `/broker/kandang` | `Kandang` |
-| `/broker/pengiriman` | `Pengiriman` |
-| `/broker/cashflow` | `CashFlow` |
-| `/broker/armada` | `Armada` |
-| `/broker/simulator` | `Simulator` |
-| `/broker/akun` | `Akun` |
+| `beranda` | `PeternakPageRouter` |
+| `siklus` | `PeternakPageRouter` |
+| `input-harian` | `PeternakPageRouter` |
+| `pakan` | `PeternakPageRouter` |
+| `laporan` | `PeternakPageRouter` |
+| `laporan/:cycleId` | `PeternakPageRouter` |
+| `akun` | `PeternakPageRouter` |
+| `tim` | `PeternakPageRouter` |
+| `harga-pasar` | `PeternakPageRouter` |
+| `kandang/:farmId/beranda` | `PeternakPageRouter` (Level 2) |
+| `kandang/:farmId/siklus` | `PeternakPageRouter` (Level 2) |
+| `kandang/:farmId/input` | `PeternakPageRouter` (Level 2) |
 
-#### Peternak Routes (`/peternak/*`) — Uses `DashboardLayout`
+#### Rumah Potong (RPA/RPH) Routes (`/rumah_potong/:rpType/*`) — Uses `RumahPotongLayout`
 | Path | Component |
 |------|-----------|
-| `/peternak/beranda` | `PeternakBeranda` — FarmCard grid, SetupFarm overlay jika 0 farms |
-| `/peternak/siklus` | `PeternakSiklus` |
-| `/peternak/input` | `PeternakInputHarian` |
-| `/peternak/anak-kandang` | `PeternakAnakKandang` |
-| `/peternak/laporan/:cycleId` | `PeternakLaporanSiklus` |
-| `/peternak/pakan` | `PeternakPakan` ✅ (feed_stocks, upsert + usage) |
-| `/peternak/akun` | `Akun` |
-| `/peternak/kandang/:farmId/beranda` | `PeternakBeranda` (Level-2, farm scoped) |
-| `/peternak/kandang/:farmId/siklus` | `PeternakSiklus` (Level-2, farmId filter) |
-| `/peternak/kandang/:farmId/input` | `PeternakInputHarian` (Level-2, FarmContextBar) |
-| `/peternak/kandang/:farmId/pakan` | `PeternakPakan` (Level-2, farmId filter + FarmContextBar) |
+| `beranda` | `RPPageRouter` |
+| `order` | `RPPageRouter` |
+| `hutang` | `RPPageRouter` |
+| `distribusi` | `RPPageRouter` |
+| `distribusi/:customerId` | `RPPageRouter` |
+| `laporan` | `RPPageRouter` |
+| `akun` | `RPPageRouter` |
 
-#### Sembako Routes (`/broker/sembako/*`)
-| Path | Component |
-|------|-----------|
-| `/broker/sembako/beranda` | `SembakoBeranda` ✅ |
-| `/broker/sembako/produk` | `SembakoProduk` ✅ |
-| `/broker/sembako/gudang` | `SembakoGudang` ✅ |
-| `/broker/sembako/penjualan` | `SembakoPenjualan` ✅ |
-| `/broker/sembako/pegawai` | `SembakoPegawai` ✅ |
-| `/broker/sembako/laporan` | `SembakoLaporan` ✅ |
-
-#### RPA Buyer Routes (`/rpa-buyer/*`) — Uses `DashboardLayout`
-| Path | Component |
-|------|-----------|
-| `/rpa-buyer/beranda` | `RPABeranda` |
-| `/rpa-buyer/order` | `RPAOrder` ✅ |
-| `/rpa-buyer/hutang` | `RPAHutang` ✅ |
-| `/rpa-buyer/distribusi` | `RPADistribusi` ✅ |
-| `/rpa-buyer/distribusi/:customerId` | `RPADistribusiDetail` ✅ |
-| `/rpa-buyer/laporan` | `RPALaporanMargin` ✅ |
-| `/rpa-buyer/akun` | `RPAAkun` ✅ |
-
-#### Egg Broker Routes (`/egg/*`) — Uses `BrokerLayout`
-| Path | Component |
-|------|-----------|
-| `/egg/beranda` | `EggBeranda` |
-| `/egg/pos` | `EggPOS` |
-| `/egg/inventori` | `EggInventori` |
-| `/egg/suppliers` | `EggSuppliers` |
-| `/egg/customers` | `EggCustomers` |
-| `/egg/transaksi` | `EggTransaksi` |
-
-#### Shared Routes
-| Path | Component |
-|------|-----------|
-| `/market` | `Market` ✅ (ProtectedRoute, semua role — WA-based marketplace) |
-| `/harga-pasar` | `HargaPasar` (ProtectedRoute, any role) |
-
-#### Admin Routes (`/admin/*`) — Uses `AdminLayout`
+#### Shared & Admin Routes
 | Path | Component | Guard |
 |------|-----------|-------|
-| `/admin` | `AdminBeranda` | `AdminRoute` (superadmin + email check) |
+| `/market` | `Market` | `ProtectedRoute` |
+| `/harga-pasar` | `HargaPasar` | `ProtectedRoute` |
+| `/admin` | `AdminBeranda` | `AdminRoute` |
 | `/admin/users` | `AdminUsers` | `AdminRoute` |
 | `/admin/subscriptions` | `AdminSubscriptions` | `AdminRoute` |
 | `/admin/pricing` | `AdminPricing` | `AdminRoute` |
+| `/admin/activity` | `AdminActivity` | `AdminRoute` |
 
 #### Legacy Redirects
 `/home`, `/dashboard`, `/beranda`, `/broker`, `/broker/beranda`, `/akun`, `/transaksi`, `/rpa-dashboard` → all go through `RoleRedirector`

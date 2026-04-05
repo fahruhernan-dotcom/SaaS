@@ -11,7 +11,37 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { ChevronLeft, TrendingUp, TrendingDown, ChevronsUpDown, Check, Plus, ChevronDown } from 'lucide-react'
+import { ChevronLeft, TrendingUp, TrendingDown, ChevronsUpDown, Check, Plus, ChevronDown, AlertCircle } from 'lucide-react'
+
+const FIELD_LABELS = {
+  rpa_id: 'Pembeli RPA',
+  price_per_kg: 'Harga Jual',
+  payment_status: 'Status Pembayaran',
+  paid_amount: 'Jumlah Bayar',
+  transaction_date: 'Tanggal Jual',
+  due_date: 'Tanggal Jatuh Tempo',
+  notes: 'Catatan'
+}
+
+// NUCLEAR OPTION: Global Zod Mapping to eliminate ALL technical jargon
+z.setErrorMap((issue, ctx) => {
+  // 1. If schema has a specific message, always prioritize it!
+  if (ctx.defaultError && !ctx.defaultError.includes('Expected') && !ctx.defaultError.includes('Invalid') && !ctx.defaultError.includes('Required')) {
+    return { message: ctx.defaultError }
+  }
+  
+  // 2. Generic translation for remaining technical issues
+  if (issue.code === z.ZodIssueCode.invalid_type) {
+    if (issue.received === 'undefined' || issue.received === 'null' || (issue.received === 'string' && issue.code === 'too_small')) {
+      return { message: 'Bagian ini wajib diisi' }
+    }
+    return { message: 'Format data tidak valid' }
+  }
+  if (issue.code === z.ZodIssueCode.invalid_enum_value) {
+    return { message: 'Pilih salah satu opsi di atas' }
+  }
+  return { message: ctx.defaultError }
+})
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { formatIDR, safeNum, PAYMENT_TERMS_LABELS, formatIDRShort } from '@/lib/format'
@@ -25,11 +55,26 @@ import {
 } from '@/components/ui/popover'
 
 const saleSchema = z.object({
-  rpa_id: z.string().min(1, 'Pilih pembeli RPA terlebih dahulu'),
-  price_per_kg: z.number({ invalid_type_error: 'Harga jual harus berupa angka' }).min(1000, 'Harga minimal Rp 1.000'),
-  payment_status: z.enum(['lunas', 'belum_lunas', 'sebagian']),
-  paid_amount: z.number().min(0, 'Jumlah bayar minimal 0'),
-  transaction_date: z.string().min(1, 'Pilih tanggal penjualan'),
+  rpa_id: z.string({ 
+    required_error: 'Pilih pembeli RPA terlebih dahulu',
+    invalid_type_error: 'Pilih pembeli RPA terlebih dahulu'
+  }).min(1, 'Pilih pembeli RPA terlebih dahulu'),
+  price_per_kg: z.coerce.number({ 
+    required_error: 'Masukkan harga jual',
+    invalid_type_error: 'Harga jual harus berupa angka' 
+  }).min(1000, 'Harga minimal Rp 1.000'),
+  payment_status: z.enum(['lunas', 'belum_lunas', 'sebagian'], { 
+    required_error: 'Pilih status pembayaran',
+    invalid_type_error: 'Pilih status pembayaran'
+  }),
+  paid_amount: z.coerce.number({ 
+    required_error: 'Masukkan jumlah bayar', 
+    invalid_type_error: 'Jumlah bayar harus berupa angka' 
+  }).min(0, 'Jumlah bayar minimal 0'),
+  transaction_date: z.string({ 
+    required_error: 'Pilih tanggal penjualan',
+    invalid_type_error: 'Pilih tanggal penjualan'
+  }).min(1, 'Pilih tanggal penjualan'),
   due_date: z.string().optional().nullable(),
   notes: z.string().trim().max(500, 'Catatan terlalu panjang (max 500 karakter)').optional()
 }).refine((data) => {
@@ -72,7 +117,7 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
   const { formState: { errors }, watch, setValue, handleSubmit, register } = useForm({
     resolver: zodResolver(saleSchema),
     defaultValues: {
-      payment_status: 'lunas',
+      payment_status: 'belum_lunas',
       paid_amount: 0,
       transaction_date: new Date().toISOString().split('T')[0],
       notes: ''
@@ -167,8 +212,26 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
     })
   }
 
+  const onError = (errors) => {
+    const firstError = Object.keys(errors)[0]
+    const el = document.getElementById(firstError) || document.getElementsByName(firstError)[0]
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+      let description = errors[firstError]?.message
+      if (!description || description.includes('expected') || description.toLowerCase().includes('invalid')) {
+        description = `Mohon isi bagian ${FIELD_LABELS[firstError] || firstError} dengan benar`
+      }
+
+      toast.error('Informasi Belum Lengkap', {
+        description,
+        icon: <AlertCircle className="text-red-500" />
+      })
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full min-h-0 relative">
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="flex flex-col h-full min-h-0 relative">
       <div className="flex-1 space-y-5 px-5 pb-24 overflow-y-auto">
       <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">Step 2 — Jual ke Siapa?</p>
 
@@ -184,20 +247,23 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
         <label style={S.label}>Pilih RPA Buyer *</label>
         <Popover open={openRPA} onOpenChange={(open) => setOpenRPA(open)}>
           <PopoverTrigger asChild>
-            <button type="button" style={{
-              width: '100%',
-              padding: '13px 14px',
-              background: 'hsl(var(--input))',
-              border: '1px solid hsl(var(--border))',
-              borderRadius: '10px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              cursor: 'pointer',
-              fontSize: '16px',
-              color: rpaId ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
-              textAlign: 'left'
-            }}>
+            <button type="button" 
+              id="rpa_id"
+              style={{
+                width: '100%',
+                padding: '13px 14px',
+                background: 'hsl(var(--input))',
+                border: errors.rpa_id ? '1px solid #ef4444' : '1px solid hsl(var(--border))',
+                borderRadius: '10px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                cursor: 'pointer',
+                fontSize: '16px',
+                color: rpaId ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
+                textAlign: 'left',
+                boxShadow: errors.rpa_id ? '0 0 0 1px #ef4444' : 'none'
+              }}>
               <span className="truncate">
                 {selectedRPA ? selectedRPA.rpa_name : 'Pilih pembeli RPA'}
               </span>
@@ -409,7 +475,7 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
             </button>
           )}
         </div>
-        <InputRupiah id="price_per_kg_jual" name="price_per_kg_jual" value={pricePerKg} onChange={(val) => setValue('price_per_kg', val, { shouldValidate: true })} placeholder="20.500" className={S.input + ' text-lg font-bold text-white'} />
+        <InputRupiah id="price_per_kg" name="price_per_kg" value={pricePerKg} onChange={(val) => setValue('price_per_kg', val, { shouldValidate: true })} placeholder="20.500" className={`${S.input} text-lg font-bold text-white ${errors.price_per_kg ? 'border-red-500 ring-1 ring-red-500' : ''}`} />
         {errors.price_per_kg && <p className="text-[10px] text-red-500 font-bold">{errors.price_per_kg.message}</p>}
 
         {pricePerKg > 0 && buyPricePerKg > 0 && (
@@ -454,7 +520,7 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
       {paymentStatus !== 'lunas' && (
         <div className="space-y-1.5">
           <label style={S.label}>Jatuh Tempo</label>
-          <DatePicker value={dueDate} onChange={(val) => setValue('due_date', val, { shouldValidate: true })} placeholder="Pilih jatuh tempo" />
+          <DatePicker id="due_date" value={dueDate} onChange={(val) => setValue('due_date', val, { shouldValidate: true })} placeholder="Pilih jatuh tempo" className={errors.due_date ? 'border-red-500 ring-1 ring-red-500' : ''} />
           {errors.due_date && <p className="text-[10px] text-red-500 font-bold">{errors.due_date.message}</p>}
         </div>
       )}
@@ -462,7 +528,7 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
       {/* Tanggal */}
       <div className="space-y-1.5">
         <label style={S.label}>Tanggal Jual</label>
-        <DatePicker value={transactionDate} onChange={(val) => setValue('transaction_date', val, { shouldValidate: true })} placeholder="Pilih tanggal" />
+        <DatePicker id="transaction_date" value={transactionDate} onChange={(val) => setValue('transaction_date', val, { shouldValidate: true })} placeholder="Pilih tanggal" className={errors.transaction_date ? 'border-red-500 ring-1 ring-red-500' : ''} />
       </div>
 
       {/* Catatan */}

@@ -5,7 +5,7 @@ import {
     Clock, MapPin, User,
     Pencil, Check, FileText, AlertTriangle
 } from 'lucide-react'
-import { format, parseISO, isAfter } from 'date-fns'
+import { format, parseISO, isAfter, differenceInMinutes } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { safeNum, formatWeight, formatEkor, formatIDR } from '@/lib/format'
@@ -41,7 +41,7 @@ function DetailItem({ icon: Icon, label, value }) {
     )
 }
 
-function Timeline({ delivery }) {
+function Timeline({ delivery, status }) {
     const isDesktop = useMediaQuery('(min-width: 1024px)')
     const steps = [
         { key: 'load_time', label: 'Muat', icon: Clock },
@@ -76,7 +76,7 @@ function Timeline({ delivery }) {
                 completed: trackWidth - truckWidth / 2 + 6
             }
             
-            setTruckLeft(positions[delivery.status] ?? -6)
+            setTruckLeft(positions[status] ?? positions[delivery.status] ?? -6)
             
             setIsMoving(true)
             const bounceTimer = setTimeout(() => setIsMoving(false), 500)
@@ -89,7 +89,7 @@ function Timeline({ delivery }) {
             clearTimeout(timer)
             window.removeEventListener('resize', updatePosition)
         }
-    }, [delivery.status])
+    }, [status, delivery.status])
 
     return (
         <div className="relative pt-6">
@@ -221,7 +221,7 @@ function Timeline({ delivery }) {
     )
 }
 
-export default function DeliveryCard({ delivery, onUpdateTiba, onComplete, onShowLogistics, onEditArrival, onPrintSuratJalan }) {
+export default function DeliveryCard({ delivery, onUpdateTiba, onComplete, onShowLogistics, onEditArrival, onPrintSuratJalan, onUpdateStatus }) {
     const isDesktop = useMediaQuery('(min-width: 1024px)')
     const [showCompleteConfirm, setShowCompleteConfirm] = useState(false)
     const statusMeta = {
@@ -240,7 +240,9 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onComplete, onSho
     }, [])
 
     let effectiveStatus = delivery.status
-    if (effectiveStatus === 'on_route' && delivery.load_time) {
+    if (delivery.departure_time && effectiveStatus !== 'completed' && effectiveStatus !== 'arrived') {
+        effectiveStatus = 'on_route'
+    } else if (effectiveStatus === 'on_route' && delivery.load_time) {
         const loadTime = parseISO(delivery.load_time)
         if (isAfter(loadTime, currentTime)) {
             effectiveStatus = 'preparing'
@@ -329,7 +331,7 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onComplete, onSho
                     {/* Timeline (Conditional) */}
                     {(delivery.load_time || delivery.departure_time || delivery.arrival_time) && (
                         <div className="px-6 pb-6 mt-2">
-                             <Timeline delivery={delivery} />
+                             <Timeline delivery={delivery} status={effectiveStatus} />
                         </div>
                     )}
 
@@ -364,12 +366,19 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onComplete, onSho
                     <div className="p-3 bg-white/[0.03] border-t border-white/5 space-y-2">
                         {/* Primary Action Button */}
                         <div className="flex gap-2 w-full">
-                            {delivery.status === 'on_route' ? (
+                            {(!delivery.departure_time && delivery.status !== 'arrived' && delivery.status !== 'completed') ? (
+                                <Button 
+                                    onClick={() => onUpdateStatus?.(delivery)}
+                                    className={cn("flex-1 h-12 border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 text-amber-500 font-black uppercase tracking-widest rounded-xl gap-2 shadow-lg shadow-amber-500/5", isDesktop ? "text-[11px]" : "text-xs")}
+                                >
+                                    <Clock size={16} /> Konfirmasi Berangkat
+                                </Button>
+                            ) : (delivery.status === 'on_route' || (delivery.departure_time && delivery.status !== 'arrived' && delivery.status !== 'completed')) ? (
                                 <Button 
                                     onClick={() => onUpdateTiba(delivery)}
-                                    className={cn("flex-1 h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/10 gap-2", isDesktop ? "text-[11px]" : "text-xs")}
+                                    className={cn("flex-1 h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 gap-2", isDesktop ? "text-[11px]" : "text-xs")}
                                 >
-                                    <CheckCircle2 size={16} /> Catat Tiba
+                                    <CheckCircle2 size={16} /> Catat Kedatangan
                                 </Button>
                             ) : delivery.status === 'arrived' ? (
                                 <button
@@ -378,11 +387,11 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onComplete, onSho
                                     className={cn("flex-1 h-12 rounded-xl font-black uppercase tracking-widest text-white flex items-center justify-center gap-2 active:scale-95 transition-all", isDesktop ? "text-[11px]" : "text-xs")}
                                     style={{
                                         background: 'linear-gradient(135deg, #10B981 0%, #F59E0B 100%)',
-                                        boxShadow: '0 4px 16px -4px rgba(245,158,11,0.4), 0 2px 8px -2px rgba(16,185,129,0.3)',
+                                        boxShadow: '0 8px 16px -4px rgba(245,158,11,0.4), 0 4px 8px -2px rgba(16,185,129,0.3)',
                                     }}
                                 >
                                     <CheckCircle2 size={15} />
-                                    Selesaikan Pengiriman
+                                    Audit & Selesaikan
                                 </button>
                             ) : delivery.status === 'completed' ? (
                                 <>
@@ -404,6 +413,7 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onComplete, onSho
                             ) : (
                                 <Button 
                                     variant="outline"
+                                    onClick={() => onUpdateStatus?.(delivery)}
                                     className={cn("flex-1 h-12 border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-400 font-black uppercase tracking-widest rounded-xl gap-2", isDesktop ? "text-[11px]" : "text-xs")}
                                 >
                                     <Clock size={16} /> Update Status
@@ -416,7 +426,7 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onComplete, onSho
                             <Button
                                 variant="outline"
                                 onClick={() => onPrintSuratJalan(delivery)}
-                                disabled={delivery.status === 'pending' || delivery.status === 'preparing' || !delivery.departure_time}
+                                disabled={delivery.status === 'pending' || (!delivery.departure_time && !delivery.load_time)}
                                 className={cn("w-full h-10 border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 text-blue-400 font-black uppercase tracking-widest gap-2 disabled:bg-white/5 disabled:border-white/5 disabled:text-[#4B6478]", isDesktop ? "text-[10px]" : "text-[11px]")}
                             >
                                 <FileText size={12} /> Cetak Surat Jalan
@@ -438,7 +448,40 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onComplete, onSho
                     </div>
                     <AlertDialogDescription asChild>
                         <div className="space-y-3">
-                            <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4 space-y-2.5 text-sm">
+                            {/* Summary Logistik */}
+                            <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4 space-y-3 text-[11px]">
+                                <div className="flex justify-between items-center pb-2 border-b border-white/5">
+                                    <span className="text-[#4B6478] font-black uppercase tracking-widest">Detail Logistik</span>
+                                    <Truck size={14} className="text-emerald-500/50" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-y-2">
+                                    <span className="text-[#4B6478] font-bold uppercase">Sopir</span>
+                                    <span className="text-white font-black text-right truncate">{delivery.drivers?.full_name || delivery.driver_name || '-'}</span>
+                                    
+                                    <span className="text-[#4B6478] font-bold uppercase">Mobil</span>
+                                    <span className="text-white font-black text-right">{delivery.vehicles?.vehicle_plate || delivery.vehicle_plate || '-'}</span>
+                                    
+                                    <span className="text-[#4B6478] font-bold uppercase">Waktu Tiba</span>
+                                    <span className="text-white font-black text-right">{delivery.arrival_time ? format(parseISO(delivery.arrival_time), 'HH:mm') : '-'}</span>
+                                    
+                                    {delivery.departure_time && delivery.arrival_time && (
+                                        <>
+                                            <span className="text-[#4B6478] font-bold uppercase tracking-tight">Lama Jalan</span>
+                                            <span className="text-emerald-400 font-black text-right">
+                                                {(() => {
+                                                    const diff = differenceInMinutes(parseISO(delivery.arrival_time), parseISO(delivery.departure_time))
+                                                    const hours = Math.floor(diff / 60)
+                                                    const mins = diff % 60
+                                                    return `${hours > 0 ? `${hours}j ` : ''}${mins}m`
+                                                })()}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Summary Hasil Akhir */}
+                            <div className="rounded-xl bg-emerald-500/[0.03] border border-emerald-500/10 p-4 space-y-2.5 text-sm">
                                 <div className="flex justify-between">
                                     <span className="text-[#4B6478] font-bold uppercase text-[11px] tracking-wider">Ekor Tiba</span>
                                     <span className="text-white font-black">{formatEkor(delivery.arrived_count ?? delivery.initial_count)}</span>
