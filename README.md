@@ -1,106 +1,94 @@
 # TernakOS
 
-SaaS multi-tenant untuk industri peternakan Indonesia. Mencakup vertikал Broker Ayam, Egg Broker, Peternak, dan RPA. Dibangun dengan React 19 + Vite, Tailwind CSS v3.4, Supabase, dan Framer Motion.
+SaaS multi-tenant untuk industri peternakan Indonesia. Platform all-in-one yang dirancang untuk mendigitalisasi rantai pasok peternakan, mulai dari peternak mandiri hingga distributor besar.
 
-## 🚀 Fitur Utama
-- **Multi-Tenant & Multi-Vertical**: Broker, Egg Broker, Peternak, RPA dalam satu platform.
-- **100% Bahasa Indonesia**: Antarmuka yang ramah bagi peternak dan pedagang lokal.
-- **Modern & Animatif**: Transisi halus menggunakan Framer Motion.
-- **Responsif**: Dioptimalkan untuk HP Android dan Desktop (adaptive layout).
-- **Real-time Data**: Powered by Supabase Realtime + React Query.
-- **Edge Functions**: Rate limiting, harga scraper, dan validasi kode undangan di server.
+Dibangun dengan **React 19 + Vite**, **Tailwind CSS v3.4**, **Supabase**, dan **Framer Motion**.
 
-## 🛠️ Teknologi
-- **Framework**: React 19.2 (Vite 8.0)
-- **Styling**: Tailwind CSS v3.4 + Shadcn UI
-- **Backend**: Supabase (PostgreSQL + Auth + Storage + Edge Functions)
-- **State**: React Query v5 (@tanstack/react-query)
-- **Animasi**: Framer Motion v12
-- **Charts**: Recharts v2.15
-- **Ikon**: Lucide React v0.577
-- **Notifikasi**: Sonner v2.0
-- **Routing**: React Router v7
+## 🚀 Fitur & Vertikal Utama
 
-## 📦 Cara Menjalankan Secara Lokal
+TernakOS mendukung berbagai peran bisnis dalam ekosistem peternakan melalui sub-aplikasi yang terintegrasi:
 
-1. **Install dependensi**:
-   ```bash
-   npm install
-   ```
+- **Broker Ayam (Poultry Broker)**: Manajemen transaksi ayam hidup, pencatatan kandang, integrasi RPA, dan sistem pengiriman (DO).
+- **Egg Broker**: Sistem POS dan inventori khusus untuk pedagang telur, manajemen supplier, dan piutang pelanggan.
+- **Sembako Broker**: Perluasan sistem untuk komoditas bahan pokok, mendukung transaksi multi-item dan manajemen stok terpusat.
+- **Peternak (Farmer)**: Manajemen siklus pemeliharaan, input harian produksi, pemantauan kesehatan ternak, dan laporan performa (FCR, IP).
+- **Rumah Potong (RPA/RPH)**: Digitalisasi operasional rumah potong ayam/hewan, mulai dari penerimaan barang masuk hingga output karkas/frozen meat.
 
-2. **Buat file `.env.local`** (salin dari `.env.example`):
-   ```env
-   VITE_SUPABASE_URL=https://your-project.supabase.co
-   VITE_SUPABASE_ANON_KEY=your-anon-key
-   ```
+## 🛠️ Stack Teknologi
 
-3. **Jalankan server pengembangan**:
-   ```bash
-   npm run dev
-   ```
+- **Core**: React 19.2 (Vite 8.0)
+- **Styling**: Tailwind CSS v3.4 + Shadcn UI (Modern, responsive, WOW design)
+- **Backend**: Supabase (PostgreSQL, Auth, Storage, Edge Functions)
+- **State Management**: TanStack Query v5 (React Query)
+- **Animation**: Framer Motion v12 (Smooth micro-animations)
+- **Data Visualization**: Recharts v2.15
+- **Icons**: Lucide React
 
-4. **Buka di browser**:
-   Kunjungi [http://localhost:5173](http://localhost:5173)
+## 📦 Persiapan Lokal
 
-## ☁️ Deploy Supabase Edge Functions
+### 1. Prasyarat
+- Node.js (v18+)
+- npm / yarn / pnpm
 
-Pastikan sudah login ke Supabase CLI terlebih dahulu:
+### 2. Instalasi
 ```bash
-supabase login
-supabase link --project-ref your-project-ref
+git clone https://github.com/your-repo/ternakos.git
+cd ternakos
+npm install
 ```
 
-### Deploy semua Edge Functions sekaligus:
+### 3. Konfigurasi Lingkungan
+Buat file `.env` di root direktori dan tambahkan variabel berikut:
+
+```env
+# Supabase Configuration
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+
+# Scraper Settings (Optional for Local)
+VITE_SCRAPER_API_KEY=your-api-key
+```
+
+### 4. Jalankan
+```bash
+npm run dev
+```
+Buka [http://localhost:5173](http://localhost:5173).
+
+## ☁️ Serverless & Automation (Edge Functions)
+
+TernakOS menggunakan Supabase Edge Functions untuk tugas berat dan terjadwal:
+
+- **`fetch-harga`**: Otomasi scraping harga ayam broiler dari berbagai sumber (Chickin, Pinsar) untuk membantu penetapan harga pasar yang akurat.
+- **`verify-invite-code`**: Sistem keamanan berlapis (rate-limited) untuk memverifikasi undangan anggota tim baru.
+
+### Deploy Functions:
 ```bash
 supabase functions deploy fetch-harga --no-verify-jwt
 supabase functions deploy verify-invite-code --no-verify-jwt
 ```
 
-### `fetch-harga`
-Scraper harga ayam broiler otomatis dari chickin.id untuk region Jawa Tengah/DIY.
-- **Trigger**: HTTP GET atau cron scheduler (disarankan 12:00 dan 18:00 WIB)
-- **Output**: Insert ke tabel `market_prices` (`source = 'auto_scraper'`)
-- **Deploy**:
-  ```bash
-  supabase functions deploy fetch-harga --no-verify-jwt
-  ```
+## 📄 Struktur Proyek
 
-### `verify-invite-code`
-Rate-limited endpoint untuk verifikasi kode undangan tim (6 digit).
-- **Rate Limit**: Max 5 percobaan per IP / 15 menit, lockout 30 menit
-- **Dipanggil dari**: `AcceptInvite.jsx` via `supabase.functions.invoke('verify-invite-code', { body: { code } })`
-- **Deploy**:
-  ```bash
-  supabase functions deploy verify-invite-code --no-verify-jwt
-  ```
-
-## 🐍 Python Harga Scraper (Alternatif / Fallback)
-
-Script Python sebagai alternatif jika Edge Function `fetch-harga` tidak tersedia.
-
-```bash
-# Install dependencies
-pip install -r scripts/requirements.txt
-
-# Jalankan scraper
-python scripts/ternakos_harga_scraper.py
+```text
+src/
+├── dashboard/
+│   ├── broker/        # Poultry, Egg, & Sembako Broker logic
+│   ├── peternak/      # Farmer dashboards & daily inputs
+│   ├── rumah_potong/  # RPA/RPH operational screens
+│   ├── admin/         # Superadmin & System settings
+│   └── _shared/       # Reusable components across dashboards
+├── lib/
+│   ├── hooks/         # Shared & vertical-specific React Query hooks
+│   ├── supabase.js    # Supabase client instantiation
+│   └── utils.js       # Helper functions
+├── pages/             # Main routes (Landing, Auth, Static)
+└── sections/          # Components for landing page
 ```
 
-- **Sumber data**: pinsarindonesia.com
-- **Jadwal rekomendasi**: 12:00 dan 18:00 WIB
-- **Output**: Upsert ke tabel `market_prices` via Supabase API
+## 📚 Dokumentasi Lanjutan
 
-## 📄 Struktur Proyek
-- `src/dashboard/broker/`: Vertical Broker Ayam (Transaksi, Kandang, RPA, Pengiriman, dll)
-- `src/dashboard/egg/`: Vertical Egg Broker (POS, Inventori, Suppliers, Customers)
-- `src/dashboard/peternak/`: Vertical Peternak (Beranda, Siklus, Input Harian, Laporan)
-- `src/dashboard/admin/`: Superadmin Panel (Users, Subscriptions, Pricing)
-- `src/lib/hooks/`: React Query hooks per vertical
-- `src/pages/`: Landing page, Auth (Login, Register, AcceptInvite)
-- `src/sections/`: Landing page sections (Hero, Features, Pricing, dll)
-- `supabase/functions/`: Edge Functions (fetch-harga, verify-invite-code)
-- `scripts/`: Python scraper & utility scripts
+Untuk detail teknis lebih mendalam, silakan merujuk ke:
+- [**CONTEXT.md**](CONTEXT.md) — Arsitektur lengkap, design system, dan aturan pengembangan.
+- [**DATABASE_STRUCTURE.md**](DATABASE_STRUCTURE.md) — Kamus data, relasi tabel, dan skema Supabase.
 
-## 📚 Dokumentasi Developer
-- [`CONTEXT.md`](CONTEXT.md) — Stack lengkap, arsitektur, rules, routing, hooks
-- [`DATABASE_STRUCTURE.md`](DATABASE_STRUCTURE.md) — Schema DB lengkap, enum values, FK map, Edge Functions

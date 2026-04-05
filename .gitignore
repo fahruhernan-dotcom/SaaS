@@ -6,6 +6,9 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+*.err
+*.out
+*.tslog
 
 node_modules
 dist
@@ -24,10 +27,29 @@ dist-ssr
 *.sw?
 .env
 
-# Ignored common extensions
+# Temporary and Debug Files
+tmp/
+temp/
+coverage/
+.nyc_output/
+*.log
+*.err
+*.out
+*.tslog
 *.txt
-*.sql
+*.temp.js
+eslint_report.json
 
-# Project Documentation
-CONTEXT.md
-DATABASE_STRUCTURE.md
+# Specific Ignore Cases
+verify_fix.js
+check_db_temp.js
+checkSembako.js
+
+# Exceptions (Do NOT ignore these)
+!README.md
+!CONTEXT.md
+!DATABASE_STRUCTURE.md
+!scripts/requirements.txt
+!.env.example
+
+

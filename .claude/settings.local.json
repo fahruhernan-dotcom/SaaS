@@ -2,7 +2,20 @@
   "permissions": {
     "allow": [
       "Bash(npx eslint:*)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(npm run:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Read(//c/Users/ASUS TUF A15/.claude/**)",
+      "Read(//c/Users/ASUS TUF A15/.claude/skills/**)",
+      "Read(//c/Users/ASUS TUF A15/.claude/projects/d--Dokumen-02-Kerja-Profesional-Ternak-OS/memory/**)",
+      "Bash(mkdir -p \"d:/Dokumen/02_Kerja_Profesional/lightrag\")",
+      "Read(//d/Dokumen/02_Kerja_Profesional/**)",
+      "Bash(pip install:*)",
+      "Bash(python rag.py)",
+      "Bash(python ingest.py)",
+      "Bash(python -c ':*)"
     ]
   }
 }
