@@ -141,6 +141,7 @@ export default function HargaPasarPublic() {
         )
         .eq('is_deleted', false)
         .order('price_date', { ascending: false })
+        .order('source',     { ascending: true })   // 'transaction' sorts before 'manual'/'import'
         .order('region',     { ascending: false })
         .limit(60)
 
@@ -152,18 +153,11 @@ export default function HargaPasarPublic() {
 
   // ── Derived data ───────────────────────────────────────────────────────────
 
-  // Harga terbaru (hari ini atau terakhir tersedia)
-  const latestRow = useMemo(() => {
-    if (!rawPrices?.length) return null
-    return rawPrices[0]
-  }, [rawPrices])
+  // Harga terbaru — setelah dedup, baris pertama sudah terbaik per tanggal
+  const latestRow = useMemo(() => dedupedPrices[0] ?? null, [dedupedPrices])
 
-  // Harga kemarin untuk kalkulasi trend
-  const prevRow = useMemo(() => {
-    if (!rawPrices || rawPrices.length < 2) return null
-    const latestDate = rawPrices[0]?.price_date
-    return rawPrices.find(r => r.price_date < latestDate) ?? null
-  }, [rawPrices])
+  // Harga sebelumnya untuk kalkulasi trend
+  const prevRow = useMemo(() => dedupedPrices[1] ?? null, [dedupedPrices])
 
   // Trend beli
   const buyTrend = useMemo(() => {
@@ -179,34 +173,45 @@ export default function HargaPasarPublic() {
     return { dir: diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat', diff }
   }, [latestRow, prevRow])
 
+  // Deduplicate by date — keep one row per date, preferring source='transaction'
+  const dedupedPrices = useMemo(() => {
+    if (!rawPrices?.length) return []
+    const seen = new Map()
+    for (const row of rawPrices) {
+      const existing = seen.get(row.price_date)
+      if (!existing || row.source === 'transaction') {
+        seen.set(row.price_date, row)
+      }
+    }
+    // Re-sort by date desc (Map insertion order is already date-desc from query)
+    return [...seen.values()].sort((a, b) => b.price_date.localeCompare(a.price_date))
+  }, [rawPrices])
+
   // Data chart — 14 hari terakhir, urut ascending
   const chartData = useMemo(() => {
-    if (!rawPrices?.length) return []
-    return [...rawPrices]
+    if (!dedupedPrices.length) return []
+    return [...dedupedPrices]
       .filter(r => r.avg_buy_price > 0 && r.avg_sell_price > 0)
       .slice(0, 14)
       .reverse()
       .map(r => ({
-        date:      r.price_date,
+        date:         r.price_date,
         'Harga Beli': r.avg_buy_price,
         'Harga Jual': r.avg_sell_price,
         'Margin':     r.broker_margin,
       }))
-  }, [rawPrices])
+  }, [dedupedPrices])
 
-  // Tabel history — 10 baris
-  const tableRows = useMemo(() => {
-    if (!rawPrices?.length) return []
-    return rawPrices.slice(0, 10)
-  }, [rawPrices])
+  // Tabel history — 10 baris (deduped, one per date)
+  const tableRows = useMemo(() => dedupedPrices.slice(0, 10), [dedupedPrices])
 
   // Avg margin 7 hari
   const avgMargin7d = useMemo(() => {
-    if (!rawPrices?.length) return 0
-    const recent = rawPrices.slice(0, 7).filter(r => r.broker_margin > 0)
+    if (!dedupedPrices.length) return 0
+    const recent = dedupedPrices.slice(0, 7).filter(r => r.broker_margin > 0)
     if (!recent.length) return 0
     return Math.round(recent.reduce((s, r) => s + r.broker_margin, 0) / recent.length)
-  }, [rawPrices])
+  }, [dedupedPrices])
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
