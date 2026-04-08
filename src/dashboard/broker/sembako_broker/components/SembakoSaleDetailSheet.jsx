@@ -8,7 +8,7 @@ import { formatIDR } from '@/lib/format'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useDeleteSembakoSale, useCreateSembakoReturn } from '@/lib/hooks/useSembakoData'
 import InvoicePreviewModal from '@/components/invoice/InvoicePreviewModal'
-import { C, sBtn, sLabel, DetailRow, fmtDate, generateWAMessage } from './sembakoSaleUtils'
+import { C, sBtn, sLabel, DetailRow, fmtDate, generateWAMessage, toWaLink } from './sembakoSaleUtils'
 import { SembakoPaymentSheet } from './SembakoPaymentSheet'
 
 export function SembakoSaleDetailSheet({ isOpen, onOpenChange, sale, onEdit }) {
@@ -28,7 +28,7 @@ export function SembakoSaleDetailSheet({ isOpen, onOpenChange, sale, onEdit }) {
   const handleWA = () => {
     const phone = sale.sembako_customers?.phone || ''
     const msg = generateWAMessage(sale, tenant)
-    window.open(`https://wa.me/${phone.replace(/[^0-9]/g, '')}?text=${msg}`, '_blank')
+    window.open(toWaLink(phone, msg), '_blank')
   }
 
   const handleReturn = async () => {

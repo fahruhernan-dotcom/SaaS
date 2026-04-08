@@ -45,6 +45,13 @@ export default function DrawerLainnya({ isOpen, onClose, userType }) {
       return (tenant?.sub_type === 'broker_ayam' || tenant?.business_vertical === 'poultry_broker')
     }
 
+    // Peternak role filtering
+    if (userType === 'peternak') {
+      if (item.label === 'Tim & Akses') return profile?.role === 'owner'
+      if (item.label === 'Stok & Pakan') return profile?.role !== 'view_only'
+      return true
+    }
+
     if (userType !== 'broker') return true // only apply to broker
     
     if (isOwner) return true

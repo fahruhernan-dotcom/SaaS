@@ -4,7 +4,7 @@ import { FileText, Truck, Smartphone } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { formatIDR } from '@/lib/format'
 import { useAuth } from '@/lib/hooks/useAuth'
-import { C, sBtn, DetailRow, generateWAMessage } from './sembakoSaleUtils'
+import { C, sBtn, DetailRow, generateWAMessage, toWaLink } from './sembakoSaleUtils'
 
 export function SembakoSuccessCard({ isOpen, onClose, data, onPrint }) {
   const { tenant } = useAuth()
@@ -13,7 +13,8 @@ export function SembakoSuccessCard({ isOpen, onClose, data, onPrint }) {
 
   const handleWA = () => {
     const msg = generateWAMessage(data, tenant)
-    window.open(`https://wa.me/?text=${msg}`, '_blank')
+    const url = toWaLink(data.customerPhone, msg) || `https://wa.me/?text=${msg}`
+    window.open(url, '_blank')
   }
 
   return (

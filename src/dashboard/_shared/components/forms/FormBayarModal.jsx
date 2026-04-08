@@ -88,17 +88,17 @@ export function FormBayarModal({ isOpen, onClose, sale, onSuccess }) {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="right" className="bg-[#0C1319] border-l border-white/8 w-full sm:max-w-[480px] p-8 overflow-y-auto z-[100]">
-        <SheetHeader className="mb-8">
+      <SheetContent side="right" className="bg-[#0C1319] border-l border-white/8 w-full sm:max-w-[480px] p-6 overflow-y-auto z-[100]">
+        <SheetHeader className="mb-6">
           <SheetTitle className="font-display text-2xl font-black text-white uppercase tracking-tight text-left">
             CATAT PEMBAYARAN
           </SheetTitle>
           <SheetDescription className="sr-only">Form Catat Pembayaran</SheetDescription>
         </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 flex flex-col h-full">
-          <div className="flex-1">
-            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl mb-6 text-left">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl mb-5 text-left">
               <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mb-1">Total Tagihan</p>
               <p className="font-display text-2xl font-black text-white tabular-nums">{formatIDR(totalRevenue)}</p>
               <div className="flex justify-between mt-3 text-xs">
@@ -133,8 +133,8 @@ export function FormBayarModal({ isOpen, onClose, sale, onSuccess }) {
             </div>
           </div>
 
-          <div className="pt-6 mt-auto">
-            <Button 
+          <div className="pt-2">
+            <Button
               type="submit"
               disabled={isLoading}
               className="w-full h-14 bg-[#10B981] hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg"

@@ -26,6 +26,10 @@ import {
   ShoppingCart,
   Package,
   Store,
+  Syringe,
+  RefreshCw,
+  ClipboardList,
+  FileText,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -57,6 +61,7 @@ import {
 } from "@/components/ui/sheet"
 import { resolveBusinessVertical, BUSINESS_MODELS } from '@/lib/businessModel'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
+import { peternakPermissions } from '@/lib/hooks/usePeternakPermissions'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
@@ -76,6 +81,10 @@ export default function AppSidebar({ open, onClose }) {
   const [mobileSwitcherOpen, setMobileSwitcherOpen] = useState(false)
   const [tenantMenuOpen, setTenantMenuOpen] = useState(false)
   const [expandedFarms, setExpandedFarms] = useState({})
+  // Start UTAMA collapsed when already on a per-farm route so kandang sections get focus
+  const [utamaCollapsed, setUtamaCollapsed] = useState(
+    () => /^\/peternak\/[^/]+\/kandang\//.test(location.pathname)
+  )
   const userDropdownRef = useRef(null)
   
   const isDesktop = useMediaQuery('(min-width: 768px)')
@@ -87,11 +96,17 @@ export default function AppSidebar({ open, onClose }) {
     setExpandedFarms(prev => ({ ...prev, [farmId]: !prev[farmId] }))
 
   // Auto-expand the farm section matching the current URL
+  // URL structure: /peternak/:peternakType/kandang/:farmId/...
   useEffect(() => {
-    const match = location.pathname.match(/^\/peternak\/kandang\/([^/]+)/)
+    const match = location.pathname.match(/^\/peternak\/[^/]+\/kandang\/([^/]+)/)
     if (match) {
       const activeFarmId = match[1]
       setExpandedFarms(prev => prev[activeFarmId] ? prev : { ...prev, [activeFarmId]: true })
+      // Collapse UTAMA when entering a farm route
+      setUtamaCollapsed(true)
+    } else if (/^\/peternak\//.test(location.pathname)) {
+      // Expand UTAMA when navigating to a global peternak page (not farm-level)
+      setUtamaCollapsed(false)
     }
   }, [location.pathname])
 
@@ -143,6 +158,9 @@ export default function AppSidebar({ open, onClose }) {
   const isPeternak = vertical === 'peternak'
   const isRPA      = vertical === 'rumah_potong'
   const isSembako  = ['distributor_sembako', 'sembako_broker'].includes(vertical)
+
+  // Peternak permission matrix (null for non-peternak users)
+  const pp = isPeternak ? peternakPermissions(profile?.role) : null
 
   const brokerBase = getBrokerBasePath(tenant)
   const peternakBase = `/peternak/${profile?.sub_type || 'peternak_broiler'}`
@@ -234,10 +252,13 @@ export default function AppSidebar({ open, onClose }) {
 
         // Peternak — global links (farm-specific sections rendered separately below)
         ...(isPeternak ? [
-          { title: 'Riwayat Siklus', url: `${peternakBase}/siklus`,   icon: BarChart2  },
-          { title: 'Stok Pakan',     url: `${peternakBase}/pakan`,    icon: Warehouse  },
-          { title: 'Laporan',        url: `${peternakBase}/laporan`,  icon: BarChart2  },
-        ] : []),
+          { title: 'Semua Siklus',   url: `${peternakBase}/siklus`,        icon: RefreshCw,  show: pp?.canViewSiklus    ?? true },
+          { title: 'Program Vaksin', url: `${peternakBase}/vaksinasi`,      icon: Syringe,    show: pp?.canViewVaksinasi ?? true },
+          { title: 'Laporan Siklus', url: `${peternakBase}/laporan`,        icon: FileText,   show: pp?.canViewLaporan   ?? true },
+          { title: 'Stok Pakan',     url: `${peternakBase}/pakan`,          icon: Warehouse,  show: pp?.canViewPakan     ?? true },
+          { title: 'Anak Kandang',   url: `${peternakBase}/anak-kandang`,   icon: Users,      show: pp?.canViewAnakKandang ?? true },
+          { title: 'Tim & Akses',    url: `${peternakBase}/tim`,            icon: Users,      show: pp?.canViewTim       ?? false },
+        ].filter(item => item.show !== false) : []),
 
         // RPA
         // Rumah Potong
@@ -544,11 +565,33 @@ export default function AppSidebar({ open, onClose }) {
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-2">
-        {filteredNavMain.map((group) => (
+        {filteredNavMain.map((group) => {
+          const isUtama = group.label === 'UTAMA'
+          // Only make UTAMA collapsible for peternak (they have per-farm sections to focus on)
+          const collapsible = isUtama && isPeternak && peternakFarms.length > 0
+          const collapsed   = collapsible && utamaCollapsed
+          return (
           <SidebarGroup key={group.label}>
-            <SidebarGroupLabel className="text-[10px] font-bold tracking-[0.15em] text-muted-foreground px-2 mb-1 ">
-              {group.label}
-            </SidebarGroupLabel>
+            {collapsible ? (
+              <button
+                onClick={() => setUtamaCollapsed(v => !v)}
+                className="w-full flex items-center justify-between px-2 mb-1 bg-transparent border-none cursor-pointer group"
+              >
+                <span className="text-[10px] font-bold tracking-[0.15em] text-muted-foreground group-hover:text-slate-400 transition-colors">
+                  {group.label}
+                </span>
+                <ChevronDown
+                  size={12}
+                  className="text-muted-foreground group-hover:text-slate-400 transition-all duration-200"
+                  style={{ transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}
+                />
+              </button>
+            ) : (
+              <SidebarGroupLabel className="text-[10px] font-bold tracking-[0.15em] text-muted-foreground px-2 mb-1">
+                {group.label}
+              </SidebarGroupLabel>
+            )}
+            {!collapsed && (
             <SidebarGroupContent>
               <SidebarMenu>
                 {group.items.map((item) => {
@@ -605,8 +648,10 @@ export default function AppSidebar({ open, onClose }) {
                 })}
               </SidebarMenu>
             </SidebarGroupContent>
+            )}
           </SidebarGroup>
-        ))}
+          )
+        })}
 
         {/* ── Peternak: per-farm collapsible sections ── */}
         {isPeternak && peternakFarms.length > 0 && (
@@ -651,11 +696,13 @@ export default function AppSidebar({ open, onClose }) {
                     <SidebarGroupContent>
                       <SidebarMenu className="pl-2">
                         {[
-                          { title: 'Dashboard',    url: `${farmBase}/beranda`, icon: Home         },
-                          { title: 'Siklus',       url: `${farmBase}/siklus`,  icon: BarChart2    },
-                          { title: 'Input Harian', url: `${farmBase}/input`,   icon: ArrowLeftRight },
-                          { title: 'Pakan',        url: `${farmBase}/pakan`,   icon: Warehouse    },
-                        ].map((item) => {
+                          { title: 'Dashboard',    url: `${farmBase}/beranda`,       icon: Home,          show: true                       },
+                          { title: 'Siklus',       url: `${farmBase}/siklus`,        icon: RefreshCw,     show: pp?.canViewSiklus   ?? true },
+                          { title: 'Input Harian', url: `${farmBase}/input`,         icon: ClipboardList, show: pp?.canInputHarian  ?? true },
+                          { title: 'Laporan',      url: `${peternakBase}/laporan`,   icon: FileText,      show: pp?.canViewLaporan  ?? true },
+                          { title: 'Pakan',        url: `${farmBase}/pakan`,         icon: Warehouse,     show: pp?.canViewPakan    ?? true },
+                          { title: 'Vaksinasi',    url: `${peternakBase}/vaksinasi`, icon: Syringe,       show: pp?.canViewVaksinasi ?? true },
+                        ].filter(item => item.show !== false).map((item) => {
                           const isActive = location.pathname === item.url || location.pathname.startsWith(item.url + '?')
                           return (
                             <SidebarMenuItem key={item.title}>
@@ -694,6 +741,34 @@ export default function AppSidebar({ open, onClose }) {
                 </SidebarGroup>
               )
             })}
+
+            {/* ── Kandang limit + Add button ── */}
+            {(() => {
+              const kandangLimit  = tenant?.kandang_limit ?? 1
+              const currentCount  = peternakFarms.reduce((s, f) => s + (f.kandang_count || 1), 0)
+              const canAddKandang = currentCount < kandangLimit
+              const limitLabel    = kandangLimit >= 99 ? '∞' : String(kandangLimit)
+              return (
+                <div className="px-3 pt-1 pb-2">
+                  <button
+                    onClick={() => canAddKandang && navigate(`${peternakBase}/beranda`)}
+                    disabled={!canAddKandang}
+                    className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold border transition-colors ${
+                      canAddKandang
+                        ? 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 cursor-pointer bg-transparent'
+                        : 'border-white/10 text-muted-foreground cursor-not-allowed bg-transparent opacity-60'
+                    }`}
+                    title={!canAddKandang ? `Batas kandang plan kamu ${limitLabel} — upgrade untuk tambah lebih` : 'Tambah kandang baru'}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      {canAddKandang ? <Plus size={13} /> : <Lock size={13} />}
+                      Tambah Kandang
+                    </span>
+                    <span className="text-[11px] font-bold opacity-70">{currentCount}/{limitLabel}</span>
+                  </button>
+                </div>
+              )
+            })()}
           </>
         )}
 

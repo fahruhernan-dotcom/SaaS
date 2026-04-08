@@ -1,21 +1,75 @@
 import React, { useState, useMemo } from 'react'
 import {
-  ComposedChart, Bar, Line,
+  ComposedChart, LineChart, Bar, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer,
+  ReferenceLine, ResponsiveContainer,
 } from 'recharts'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { ArrowLeft, Thermometer, Droplets, Plus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
+import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 import { useAllCycles, useDailyRecords, calcCurrentAge, calcFCR, calcIPScore, calcMortalityPct } from '@/lib/hooks/usePeternakData'
 import { formatIDRShort } from '@/lib/format'
+import { InputRupiah } from '@/components/ui/InputRupiah'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
+import { toast } from 'sonner'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const TODAY = new Date().toISOString().split('T')[0]
+
+// Cobb 500 standard bodyweight (gram) by age day
+const COBB500_G = {
+  1: 42, 3: 68, 5: 105, 7: 160, 10: 275, 14: 480,
+  17: 680, 21: 1000, 24: 1280, 28: 1680,
+  30: 1880, 32: 2060, 35: 2360, 38: 2620, 42: 2990,
+}
+
+function getCobb500Kg(ageDays) {
+  const keys = Object.keys(COBB500_G).map(Number).sort((a, b) => a - b)
+  if (ageDays <= keys[0]) return COBB500_G[keys[0]] / 1000
+  if (ageDays >= keys[keys.length - 1]) return COBB500_G[keys[keys.length - 1]] / 1000
+  for (let i = 0; i < keys.length - 1; i++) {
+    if (ageDays >= keys[i] && ageDays <= keys[i + 1]) {
+      const t = (ageDays - keys[i]) / (keys[i + 1] - keys[i])
+      return Number(((COBB500_G[keys[i]] + t * (COBB500_G[keys[i + 1]] - COBB500_G[keys[i]])) / 1000).toFixed(3))
+    }
+  }
+  return null
+}
+
+const LITTER_LABELS = { kering: 'Kering ✅', lembab: 'Lembab ⚠️', basah: 'Basah 🔴' }
+const AMMONIA_LABELS = { tidak_ada: 'Tidak Ada ✅', ringan: 'Ringan 🟡', sedang: 'Sedang ⚠️', kuat: 'Kuat 🔴' }
+const FEED_TYPE_LABELS = { 'BR-1': 'Starter BR-1', 'BR-2': 'Grower BR-2', 'BR-3': 'Finisher BR-3', 'BR-4': 'Finisher BR-4' }
+
+const EXPENSE_TYPES = [
+  { value: 'doc',          label: '🐣 DOC',              color: '#A78BFA' },
+  { value: 'pakan',        label: '🌾 Pakan',            color: '#F59E0B' },
+  { value: 'obat_vaksin',  label: '💊 Obat & Vaksin',   color: '#34D399' },
+  { value: 'listrik_air',  label: '💡 Listrik & Air',    color: '#60A5FA' },
+  { value: 'sewa_kandang', label: '🏠 Sewa Kandang',     color: '#F87171' },
+  { value: 'tenaga_kerja', label: '👷 Tenaga Kerja',     color: '#FB923C' },
+  { value: 'lainnya',      label: '📌 Lainnya',          color: '#94A3B8' },
+]
+
+function expenseLabel(type) {
+  return EXPENSE_TYPES.find(e => e.value === type)?.label ?? type
+}
+function expenseColor(type) {
+  return EXPENSE_TYPES.find(e => e.value === type)?.color ?? '#94A3B8'
+}
+
+// R/C Ratio benchmark
+function rcBenchmark(rc) {
+  if (!rc || rc <= 0) return null
+  if (rc >= 1.5) return { label: 'Excellent', cls: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20', desc: 'Setiap Rp1 biaya menghasilkan Rp'+rc.toFixed(2)+' pendapatan. Sangat menguntungkan.' }
+  if (rc >= 1.2) return { label: 'Baik',      cls: 'text-amber-400 bg-amber-400/10 border-amber-400/20',   desc: 'R/C Ratio baik, usaha menguntungkan di atas standar industri.' }
+  if (rc >= 1.0) return { label: 'Tipis',     cls: 'text-orange-400 bg-orange-400/10 border-orange-400/20', desc: 'Margin keuntungan sangat tipis. Perlu efisiensi biaya atau naikkan harga jual.' }
+  return              { label: 'Rugi',      cls: 'text-red-400 bg-red-400/10 border-red-400/20',     desc: 'Biaya produksi melebihi pendapatan. Lakukan evaluasi menyeluruh.' }
+}
 
 function fmt(dateStr) {
   if (!dateStr) return '—'
@@ -70,6 +124,7 @@ export default function LaporanSiklus() {
   const { cycleId: paramCycleId } = useParams()
   const navigate = useNavigate()
   const { tenant } = useAuth()
+  const p = usePeternakPermissions()
   const { data: allCycles = [], isLoading: cyclesLoading } = useAllCycles()
   const [selectedId, setSelectedId] = useState(null)
 
@@ -164,6 +219,8 @@ function CycleReport({ cycle, tenantId, navigate }) {
   const farmName  = cycle.peternak_farms?.farm_name ?? '—'
   const startDate = cycle.start_date ?? cycle.created_at
   const farmId    = cycle.peternak_farm_id
+  const queryClient = useQueryClient()
+  const [expenseSheetOpen, setExpenseSheetOpen] = useState(false)
 
   // Daily records (ordered asc for table + chart)
   const { data: records = [] } = useDailyRecords(cycle.id)
@@ -241,11 +298,23 @@ function CycleReport({ cycle, tenantId, navigate }) {
     const totalCost     = cycle.total_cost ?? totalExpenses
     const netProfit     = totalRevenue - totalCost
 
+    // Financial analytics
+    const hpp       = totalHarvestKg > 0 && totalCost > 0 ? totalCost / totalHarvestKg : null
+    const rcRatio   = totalCost > 0 && totalRevenue > 0 ? totalRevenue / totalCost : null
+    const bepHarga  = totalHarvestKg > 0 && totalCost > 0 ? totalCost / totalHarvestKg : null
+    // BEP ekor: minimum ekor to cover cost given sell price and avg weight
+    const sellPrice = cycle.sell_price_per_kg ?? null
+    const latestW   = [...records].filter(r => r.avg_weight_kg).sort((a, b) => new Date(b.record_date) - new Date(a.record_date))[0]?.avg_weight_kg ?? null
+    const bepEkor   = sellPrice && latestW && totalCost > 0
+      ? Math.ceil(totalCost / (latestW * sellPrice))
+      : null
+
     return {
       docCount, totalMort, totalFeedKg, mortPct,
       fcrFinal, ipScore, ageDays,
       totalHarvestKg, totalHarvestRev, totalRevenue, totalCost, netProfit,
       totalExpenses, alive: docCount - totalMort,
+      hpp, rcRatio, bepHarga, bepEkor, sellPrice,
     }
   }, [cycle, harvests, expenses, records, startDate])
 
@@ -254,11 +323,44 @@ function CycleReport({ cycle, tenantId, navigate }) {
     () => records.map(r => ({
       label:  `H${r.age_days ?? '?'}`,
       berat:  r.avg_weight_kg ? Number(r.avg_weight_kg.toFixed(3)) : null,
+      cobb:   r.age_days != null ? getCobb500Kg(r.age_days) : null,
       pakan:  r.feed_kg ? Number(parseFloat(r.feed_kg).toFixed(1)) : null,
       mati:   r.mortality_count || 0,
     })),
     [records]
   )
+
+  const hasWeightData = records.some(r => r.avg_weight_kg)
+
+  // Temperature chart (only when data exists)
+  const tempChartData = useMemo(
+    () => records
+      .filter(r => r.temperature_morning || r.temperature_evening)
+      .map(r => ({
+        label: `H${r.age_days ?? '?'}`,
+        pagi:  r.temperature_morning ? Number(r.temperature_morning) : null,
+        sore:  r.temperature_evening ? Number(r.temperature_evening) : null,
+      })),
+    [records]
+  )
+
+  // Environmental summary stats across cycle
+  const envStats = useMemo(() => {
+    const withEnv = records.filter(r => r.litter_condition || r.ammonia_level || r.water_liter)
+    if (!withEnv.length) return null
+    const litCount = { kering: 0, lembab: 0, basah: 0 }
+    const ammCount = { tidak_ada: 0, ringan: 0, sedang: 0, kuat: 0 }
+    let totalWater = 0, waterDays = 0
+    withEnv.forEach(r => {
+      if (r.litter_condition) litCount[r.litter_condition] = (litCount[r.litter_condition] || 0) + 1
+      if (r.ammonia_level) ammCount[r.ammonia_level] = (ammCount[r.ammonia_level] || 0) + 1
+      if (r.water_liter) { totalWater += parseFloat(r.water_liter); waterDays++ }
+    })
+    const dominantLitter = Object.entries(litCount).sort((a, b) => b[1] - a[1])[0]?.[0]
+    const dominantAmmonia = Object.entries(ammCount).sort((a, b) => b[1] - a[1])[0]?.[0]
+    const avgWater = waterDays > 0 ? (totalWater / waterDays).toFixed(0) : null
+    return { litCount, ammCount, dominantLitter, dominantAmmonia, avgWater, totalDays: withEnv.length }
+  }, [records])
 
   // ── Table data with cumulative columns ──
   const tableData = useMemo(() => {
@@ -375,15 +477,56 @@ function CycleReport({ cycle, tenantId, navigate }) {
                   contentStyle={{ background: '#111C24', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 11 }}
                   labelStyle={{ color: '#94A3B8' }}
                   itemStyle={{ padding: '1px 0' }}
+                  formatter={(v, name) => {
+                    const labels = { berat: ['kg', 'Berat Aktual'], cobb: ['kg', 'Cobb 500 Target'], pakan: ['kg', 'Pakan'], mati: ['ekor', 'Kematian'] }
+                    const [unit, label] = labels[name] ?? ['', name]
+                    return [`${v} ${unit}`, label]
+                  }}
                 />
                 <Legend
                   wrapperStyle={{ fontSize: 10, color: '#4B6478', paddingTop: 8 }}
-                  formatter={v => ({ berat: 'Berat Avg (kg)', pakan: 'Pakan (kg)', mati: 'Kematian' }[v] ?? v)}
+                  formatter={v => ({ berat: 'Berat Aktual (kg)', cobb: 'Cobb 500 Target', pakan: 'Pakan (kg)', mati: 'Kematian' }[v] ?? v)}
                 />
-                <Bar    yAxisId="right" dataKey="mati"  fill="#F87171" opacity={0.7} radius={[2, 2, 0, 0]} maxBarSize={18} name="mati" />
+                <Bar   yAxisId="right" dataKey="mati"  fill="#F87171" opacity={0.6} radius={[2, 2, 0, 0]} maxBarSize={18} name="mati" />
+                <Line  yAxisId="left"  dataKey="cobb"  stroke="#34D399" strokeWidth={1.5} strokeDasharray="5 3" dot={false} connectNulls name="cobb" opacity={0.6} />
                 <Line  yAxisId="left"  dataKey="berat" stroke="#A78BFA" strokeWidth={2} dot={{ r: 2, fill: '#7C3AED' }} connectNulls name="berat" />
                 <Line  yAxisId="left"  dataKey="pakan" stroke="#F59E0B" strokeWidth={2} strokeDasharray="4 2" dot={false} connectNulls name="pakan" />
               </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+          {hasWeightData && (
+            <p className="text-[10px] text-[#4B6478] mt-2 ml-1">
+              Garis hijau putus-putus = standar Cobb 500 per hari
+            </p>
+          )}
+        </section>
+      )}
+
+      {/* ── SECTION B2 — Temperature Chart ── */}
+      {tempChartData.length > 1 && (
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <Thermometer size={14} className="text-[#F59E0B]" />
+            <h2 className="font-['Sora'] font-extrabold text-[13px] text-slate-100">Tren Suhu Kandang</h2>
+          </div>
+          <div className="bg-[#0C1319] border border-white/[0.06] rounded-2xl p-4 pt-5">
+            <ResponsiveContainer width="100%" height={160}>
+              <LineChart data={tempChartData} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                <XAxis dataKey="label" tick={{ fill: '#4B6478', fontSize: 9 }} />
+                <YAxis tick={{ fill: '#4B6478', fontSize: 9 }} domain={['auto', 'auto']} unit="°C" />
+                <Tooltip
+                  contentStyle={{ background: '#111C24', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: 11 }}
+                  labelStyle={{ color: '#94A3B8' }}
+                  formatter={(v, name) => [`${v}°C`, name === 'pagi' ? 'Suhu Pagi' : 'Suhu Sore']}
+                />
+                <ReferenceLine y={32} stroke="rgba(248,113,113,0.3)" strokeDasharray="3 3" label={{ value: '32°C max', fill: '#F87171', fontSize: 9, position: 'right' }} />
+                <ReferenceLine y={28} stroke="rgba(52,211,153,0.3)" strokeDasharray="3 3" label={{ value: '28°C min', fill: '#34D399', fontSize: 9, position: 'right' }} />
+                <Line dataKey="pagi" stroke="#60A5FA" strokeWidth={2} dot={{ r: 2 }} connectNulls name="pagi" />
+                <Line dataKey="sore" stroke="#F59E0B" strokeWidth={2} dot={{ r: 2 }} connectNulls name="sore" />
+                <Legend wrapperStyle={{ fontSize: 10, color: '#4B6478', paddingTop: 6 }}
+                  formatter={v => v === 'pagi' ? 'Suhu Pagi' : 'Suhu Sore'} />
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </section>
@@ -444,47 +587,279 @@ function CycleReport({ cycle, tenantId, navigate }) {
         </section>
       )}
 
+      {/* ── SECTION C2 — Catatan Lingkungan ── */}
+      {envStats && (
+        <section>
+          <div className="flex items-center gap-2 mb-3">
+            <Droplets size={14} className="text-[#60A5FA]" />
+            <h2 className="font-['Sora'] font-extrabold text-[13px] text-slate-100">Ringkasan Lingkungan</h2>
+            <span className="text-[10px] text-[#4B6478]">dari {envStats.totalDays} hari input</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            {/* Litter */}
+            <div className="bg-[#111C24] border border-white/[0.08] rounded-2xl p-3.5">
+              <p className="text-[10px] font-extrabold text-[#4B6478] uppercase tracking-widest mb-2">Kondisi Litter</p>
+              {Object.entries(envStats.litCount).map(([k, v]) => v > 0 && (
+                <div key={k} className="flex justify-between items-center mb-1">
+                  <span className="text-[11px] text-slate-300">{LITTER_LABELS[k] ?? k}</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-1.5 rounded-full" style={{
+                      width: `${Math.round((v / envStats.totalDays) * 48)}px`,
+                      background: k === 'kering' ? '#34D399' : k === 'lembab' ? '#F59E0B' : '#F87171',
+                      minWidth: 4,
+                    }} />
+                    <span className="text-[10px] text-[#4B6478] w-7 text-right">{v}x</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Ammonia */}
+            <div className="bg-[#111C24] border border-white/[0.08] rounded-2xl p-3.5">
+              <p className="text-[10px] font-extrabold text-[#4B6478] uppercase tracking-widest mb-2">Kadar Amonia</p>
+              {Object.entries(envStats.ammCount).map(([k, v]) => v > 0 && (
+                <div key={k} className="flex justify-between items-center mb-1">
+                  <span className="text-[11px] text-slate-300">{AMMONIA_LABELS[k]?.split(' ')[0] ?? k}</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-1.5 rounded-full" style={{
+                      width: `${Math.round((v / envStats.totalDays) * 48)}px`,
+                      background: k === 'tidak_ada' ? '#34D399' : k === 'ringan' ? '#A3E635' : k === 'sedang' ? '#F59E0B' : '#F87171',
+                      minWidth: 4,
+                    }} />
+                    <span className="text-[10px] text-[#4B6478] w-7 text-right">{v}x</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Avg water */}
+            {envStats.avgWater && (
+              <div className="bg-[#111C24] border border-white/[0.08] rounded-2xl p-3.5 col-span-2">
+                <p className="text-[10px] font-extrabold text-[#4B6478] uppercase tracking-widest mb-1">Rata-rata Konsumsi Air</p>
+                <p className="font-['Sora'] text-xl font-extrabold text-[#60A5FA]">{envStats.avgWater} <span className="text-sm font-bold text-[#4B6478]">liter/hari</span></p>
+              </div>
+            )}
+          </div>
+
+          {/* Environmental detail table (scrollable) */}
+          {records.some(r => r.temperature_morning || r.litter_condition || r.ammonia_level || r.feed_type) && (
+            <div className="mt-3 bg-[#0C1319] border border-white/[0.08] rounded-2xl overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left" style={{ minWidth: 480 }}>
+                  <thead>
+                    <tr className="bg-[#111C24] border-b border-white/[0.06]">
+                      {['Tgl', 'Umr', 'Suhu Pagi', 'Suhu Sore', 'Air (L)', 'Litter', 'Amonia', 'Pakan'].map(h => (
+                        <th key={h} className="px-3 py-2.5 text-[9px] font-extrabold text-[#4B6478] uppercase tracking-wider whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...records].reverse().filter(r =>
+                      r.temperature_morning || r.temperature_evening || r.litter_condition ||
+                      r.ammonia_level || r.water_liter || r.feed_type
+                    ).map((r, idx, arr) => (
+                      <tr key={r.id ?? r.record_date} className={idx < arr.length - 1 ? 'border-b border-white/[0.04]' : ''}>
+                        <td className="px-3 py-2 text-[10px] text-slate-300 whitespace-nowrap">
+                          {new Date(r.record_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
+                        </td>
+                        <td className="px-3 py-2 text-[10px] text-[#4B6478]">{r.age_days ?? '—'}</td>
+                        <td className="px-3 py-2 text-[10px] text-[#60A5FA] font-bold">
+                          {r.temperature_morning ? `${r.temperature_morning}°C` : '—'}
+                        </td>
+                        <td className="px-3 py-2 text-[10px] text-[#F59E0B] font-bold">
+                          {r.temperature_evening ? `${r.temperature_evening}°C` : '—'}
+                        </td>
+                        <td className="px-3 py-2 text-[10px] text-slate-400">
+                          {r.water_liter ? `${r.water_liter}` : '—'}
+                        </td>
+                        <td className="px-3 py-2 text-[10px]">
+                          {r.litter_condition
+                            ? <span style={{ color: r.litter_condition === 'kering' ? '#34D399' : r.litter_condition === 'lembab' ? '#F59E0B' : '#F87171' }}>
+                                {LITTER_LABELS[r.litter_condition]}
+                              </span>
+                            : <span className="text-[#4B6478]">—</span>}
+                        </td>
+                        <td className="px-3 py-2 text-[10px]">
+                          {r.ammonia_level
+                            ? <span style={{ color: r.ammonia_level === 'tidak_ada' ? '#34D399' : r.ammonia_level === 'ringan' ? '#A3E635' : r.ammonia_level === 'sedang' ? '#F59E0B' : '#F87171' }}>
+                                {AMMONIA_LABELS[r.ammonia_level]}
+                              </span>
+                            : <span className="text-[#4B6478]">—</span>}
+                        </td>
+                        <td className="px-3 py-2 text-[10px] text-[#A78BFA] font-bold">
+                          {r.feed_type ? FEED_TYPE_LABELS[r.feed_type] ?? r.feed_type : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
       {/* ── SECTION D — Analisis Performa ── */}
       <section>
         <h2 className="font-['Sora'] font-extrabold text-[13px] text-slate-100 mb-3">Analisis Performa</h2>
         <div className="flex flex-col gap-2.5">
-          {/* FCR Analysis */}
           <AnalysisCard
             icon="📊"
             title={`FCR ${kpi.fcrFinal ? kpi.fcrFinal.toFixed(2) : '—'}`}
             badge={fcrBench}
             desc={fcrBench?.desc ?? 'Data FCR belum tersedia. Lengkapi catatan harian.'}
           />
-          {/* IP Analysis */}
           <AnalysisCard
             icon="🏆"
             title={`IP Score ${kpi.ipScore ? Math.round(kpi.ipScore) : '—'}`}
             badge={ipBench}
             desc={ipBench?.desc ?? 'IP Score dihitung setelah FCR dan data panen tersedia.'}
           />
-          {/* Profitability */}
-          <div className="bg-[#111C24] border border-white/[0.08] rounded-2xl p-4">
-            <p className="font-bold text-[13px] text-slate-100 mb-3">💰 Profitabilitas</p>
-            <div className="flex flex-col gap-1.5">
-              {expenses.map(e => (
-                <CostRow key={e.description} label={e.description ?? e.expense_type} value={formatIDR(e.total_amount)} />
-              ))}
-              {expenses.length > 0 && <div className="h-px bg-white/[0.06] my-1" />}
-              <CostRow label="Total Biaya" value={formatIDR(kpi.totalCost)} bold />
-              {kpi.totalRevenue > 0 && (
-                <CostRow label="Total Revenue" value={formatIDR(kpi.totalRevenue)} bold valueColor="text-emerald-400" />
-              )}
-              <div className="h-px bg-white/[0.06] my-1" />
-              <CostRow
-                label="Net Profit / Loss"
-                value={kpi.totalRevenue > 0 || kpi.totalCost > 0 ? formatIDR(kpi.netProfit) : '—'}
-                bold large
-                valueColor={kpi.netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}
-              />
-            </div>
-          </div>
         </div>
       </section>
+
+      {/* ── SECTION D2 — Analisis Finansial (owner & manajer only) ── */}
+      {p.canViewKeuangan && <section>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-['Sora'] font-extrabold text-[13px] text-slate-100">Analisis Finansial</h2>
+          {cycle.status === 'active' && p.canInputBiaya && (
+            <button
+              onClick={() => setExpenseSheetOpen(true)}
+              className="flex items-center gap-1 text-[11px] font-bold text-[#A78BFA] bg-[rgba(124,58,237,0.1)] border border-[rgba(124,58,237,0.2)] px-2.5 py-1.5 rounded-lg cursor-pointer"
+            >
+              <Plus size={11} />
+              Tambah Biaya
+            </button>
+          )}
+        </div>
+
+        {/* Expense breakdown */}
+        <div className="bg-[#111C24] border border-white/[0.08] rounded-2xl p-4 mb-2.5">
+          <div className="flex items-center justify-between mb-3">
+            <p className="font-bold text-[13px] text-slate-100">💰 Rincian Biaya Produksi</p>
+            {kpi.totalCost > 0 && kpi.totalHarvestKg > 0 && (
+              <span className="text-[10px] font-bold text-[#4B6478]">
+                HPP: <span className="text-amber-400">{formatIDR(kpi.hpp)}/kg</span>
+              </span>
+            )}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {expenses.length === 0 ? (
+              <p className="text-[11px] text-[#4B6478] py-2 text-center">
+                Belum ada catatan biaya. Tap "Tambah Biaya" untuk mulai.
+              </p>
+            ) : (
+              <>
+                {expenses.map((e, i) => (
+                  <div key={i} className="flex justify-between items-center py-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: expenseColor(e.expense_type) }} />
+                      <span className="text-[12px] text-slate-300">{expenseLabel(e.expense_type)}</span>
+                      {e.description && <span className="text-[10px] text-[#4B6478]">· {e.description}</span>}
+                    </div>
+                    <span className="text-[12px] font-bold text-slate-100 font-['Sora']">{formatIDR(e.total_amount)}</span>
+                  </div>
+                ))}
+                <div className="h-px bg-white/[0.06] my-1" />
+                <CostRow label="Total Biaya" value={formatIDR(kpi.totalCost)} bold />
+              </>
+            )}
+            {kpi.totalRevenue > 0 && (
+              <CostRow label="Total Revenue" value={formatIDR(kpi.totalRevenue)} bold valueColor="text-emerald-400" />
+            )}
+            {(kpi.totalRevenue > 0 || kpi.totalCost > 0) && (
+              <>
+                <div className="h-px bg-white/[0.06] my-1" />
+                <CostRow
+                  label="Net Profit / Loss"
+                  value={formatIDR(kpi.netProfit)}
+                  bold large
+                  valueColor={kpi.netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}
+                />
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Financial metrics grid */}
+        {kpi.totalCost > 0 && (
+          <div className="grid grid-cols-2 gap-2.5">
+            {/* HPP */}
+            {kpi.hpp && kpi.totalHarvestKg > 0 && (
+              <div className="bg-[#111C24] border border-white/[0.08] rounded-2xl p-3.5">
+                <p className="text-[10px] font-extrabold text-[#4B6478] uppercase tracking-widest mb-1.5">HPP / kg</p>
+                <p className="font-['Sora'] text-base font-extrabold text-amber-400">{formatIDR(kpi.hpp)}</p>
+                <p className="text-[10px] text-[#4B6478] mt-1">Harga Pokok Produksi per kg</p>
+                {kpi.sellPrice && (
+                  <p className="text-[10px] mt-1 font-bold" style={{ color: kpi.sellPrice > kpi.hpp ? '#34D399' : '#F87171' }}>
+                    {kpi.sellPrice > kpi.hpp
+                      ? `✅ Margin +${formatIDR(kpi.sellPrice - kpi.hpp)}/kg`
+                      : `🔴 Jual di bawah HPP`}
+                  </p>
+                )}
+              </div>
+            )}
+            {/* R/C Ratio */}
+            {kpi.rcRatio && (
+              <div className="bg-[#111C24] border border-white/[0.08] rounded-2xl p-3.5">
+                <p className="text-[10px] font-extrabold text-[#4B6478] uppercase tracking-widest mb-1.5">R/C Ratio</p>
+                <p className={`font-['Sora'] text-base font-extrabold ${rcBenchmark(kpi.rcRatio)?.cls?.split(' ')[0] ?? 'text-slate-100'}`}>
+                  {kpi.rcRatio.toFixed(2)}
+                </p>
+                {rcBenchmark(kpi.rcRatio) && (
+                  <span className={`inline-block text-[9px] font-extrabold px-2 py-0.5 rounded-full border mt-1 ${rcBenchmark(kpi.rcRatio).cls}`}>
+                    {rcBenchmark(kpi.rcRatio).label}
+                  </span>
+                )}
+                <p className="text-[10px] text-[#4B6478] mt-1">Revenue ÷ Total Biaya</p>
+              </div>
+            )}
+            {/* BEP Harga Jual */}
+            {kpi.bepHarga && kpi.totalHarvestKg > 0 && (
+              <div className="bg-[#111C24] border border-white/[0.08] rounded-2xl p-3.5">
+                <p className="text-[10px] font-extrabold text-[#4B6478] uppercase tracking-widest mb-1.5">BEP Harga Jual</p>
+                <p className="font-['Sora'] text-base font-extrabold text-[#A78BFA]">{formatIDR(kpi.bepHarga)}/kg</p>
+                <p className="text-[10px] text-[#4B6478] mt-1">Harga minimum impas</p>
+              </div>
+            )}
+            {/* BEP Ekor */}
+            {kpi.bepEkor && (
+              <div className="bg-[#111C24] border border-white/[0.08] rounded-2xl p-3.5">
+                <p className="text-[10px] font-extrabold text-[#4B6478] uppercase tracking-widest mb-1.5">BEP Ekor</p>
+                <p className="font-['Sora'] text-base font-extrabold text-[#60A5FA]">
+                  {kpi.bepEkor.toLocaleString('id-ID')} ekor
+                </p>
+                <p className="text-[10px] text-[#4B6478] mt-1">Minimum panen impas</p>
+                {kpi.alive > 0 && (
+                  <p className="text-[10px] mt-1 font-bold" style={{ color: kpi.alive >= kpi.bepEkor ? '#34D399' : '#F87171' }}>
+                    {kpi.alive >= kpi.bepEkor ? `✅ Populasi cukup` : `⚠️ Kurang ${(kpi.bepEkor - kpi.alive).toLocaleString('id-ID')} ekor`}
+                  </p>
+                )}
+              </div>
+            )}
+            {/* R/C description if available */}
+            {kpi.rcRatio && rcBenchmark(kpi.rcRatio) && (
+              <div className="col-span-2 bg-[#0C1319] border border-white/[0.06] rounded-xl px-3 py-2.5">
+                <p className="text-[11px] text-[#4B6478] leading-relaxed">{rcBenchmark(kpi.rcRatio).desc}</p>
+              </div>
+            )}
+          </div>
+        )}
+        {kpi.totalCost === 0 && cycle.status === 'active' && (
+          <div className="bg-[#0C1319] border border-dashed border-white/[0.08] rounded-2xl py-6 text-center">
+            <p className="text-[#4B6478] text-xs">Belum ada data biaya. Tambahkan biaya produksi untuk menghitung HPP, R/C Ratio, dan BEP.</p>
+          </div>
+        )}
+      </section>}
+
+      {/* ── Add Expense Sheet (owner & manajer only) ── */}
+      {p.canInputBiaya && (
+        <AddExpenseSheet
+          open={expenseSheetOpen}
+          onClose={() => setExpenseSheetOpen(false)}
+          cycleId={cycle.id}
+          tenantId={tenantId}
+          onSuccess={() => queryClient.invalidateQueries({ queryKey: ['cycle-expenses', cycle.id] })}
+        />
+      )}
 
       {/* ── SECTION E — Prediksi Panen (active only) ── */}
       {prediction && (
@@ -549,6 +924,122 @@ function CycleReport({ cycle, tenantId, navigate }) {
       </div>
     </div>
   )
+}
+
+// ─── Add Expense Sheet ────────────────────────────────────────────────────────
+
+function AddExpenseSheet({ open, onClose, cycleId, tenantId, onSuccess }) {
+  const [expenseType, setExpenseType] = useState('pakan')
+  const [amount, setAmount] = useState('')
+  const [desc, setDesc] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async () => {
+    if (!amount || Number(amount) <= 0) return toast.error('Jumlah biaya tidak valid')
+    setLoading(true)
+    try {
+      const { error } = await supabase.from('cycle_expenses').insert({
+        tenant_id: tenantId,
+        cycle_id: cycleId,
+        expense_type: expenseType,
+        total_amount: Number(amount),
+        description: desc || null,
+      })
+      if (error) throw error
+      toast.success('Biaya berhasil dicatat')
+      if (onSuccess) onSuccess()
+      setAmount('')
+      setDesc('')
+      onClose()
+    } catch (err) {
+      toast.error('Gagal mencatat biaya')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={v => !v && onClose()}>
+      <SheetContent side="bottom" className="bg-[#0C1319] border-white/8 rounded-t-[24px] max-h-[85vh] overflow-y-auto p-0">
+        <SheetHeader className="px-5 pt-5 pb-4 border-b border-white/5">
+          <SheetTitle className="text-white font-display font-black text-base text-left">Tambah Biaya Produksi</SheetTitle>
+          <SheetDescription className="sr-only">Form tambah biaya siklus</SheetDescription>
+        </SheetHeader>
+        <div style={{ padding: '20px 20px 32px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Expense type grid */}
+          <div>
+            <label style={sheetLabelStyle}>Kategori Biaya *</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {EXPENSE_TYPES.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setExpenseType(opt.value)}
+                  style={{
+                    padding: '10px 12px', textAlign: 'left',
+                    background: expenseType === opt.value ? `${opt.color}18` : 'rgba(255,255,255,0.04)',
+                    border: `1.5px solid ${expenseType === opt.value ? opt.color : 'rgba(255,255,255,0.07)'}`,
+                    borderRadius: 10,
+                    color: expenseType === opt.value ? opt.color : '#4B6478',
+                    fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Amount */}
+          <div>
+            <label style={sheetLabelStyle}>Jumlah Biaya *</label>
+            <InputRupiah value={amount} onChange={setAmount} />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label style={sheetLabelStyle}>Keterangan (opsional)</label>
+            <input
+              type="text"
+              placeholder="cth. Pakan periode 1-15 hari"
+              value={desc}
+              onChange={e => setDesc(e.target.value)}
+              style={sheetInputStyle}
+            />
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            disabled={!amount || loading}
+            style={{
+              width: '100%', padding: 14,
+              background: loading || !amount ? 'rgba(124,58,237,0.4)' : '#7C3AED',
+              border: 'none', borderRadius: 12, color: 'white',
+              fontSize: 15, fontWeight: 800, cursor: loading || !amount ? 'not-allowed' : 'pointer',
+              fontFamily: 'Sora', boxShadow: '0 4px 16px rgba(124,58,237,0.3)', marginTop: 4,
+            }}
+          >
+            {loading ? 'Menyimpan...' : '💾 Simpan Biaya'}
+          </button>
+        </div>
+      </SheetContent>
+    </Sheet>
+  )
+}
+
+const sheetLabelStyle = {
+  display: 'block', fontSize: 10, fontWeight: 800,
+  color: '#4B6478', textTransform: 'uppercase',
+  letterSpacing: '0.1em', marginBottom: 6,
+}
+const sheetInputStyle = {
+  width: '100%', padding: '12px 14px',
+  background: '#111C24', border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 12, color: '#F1F5F9',
+  fontSize: 15, fontFamily: 'DM Sans', outline: 'none',
+  boxSizing: 'border-box',
 }
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────

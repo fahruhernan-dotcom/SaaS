@@ -20,6 +20,7 @@ import SiklusSheet from '../_shared/components/SiklusSheet'
 import InputHarianSheet from '../_shared/components/InputHarianSheet'
 import InvoicePreviewModal from '@/components/invoice/InvoicePreviewModal'
 import { useAuth } from '@/lib/hooks/useAuth'
+import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -86,6 +87,7 @@ export default function SiklusPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { farmId } = useParams()           // present when at /peternak/kandang/:farmId/siklus
   const { tenant, profile } = useAuth()
+  const p = usePeternakPermissions()
   const { data: allCycles = [], isLoading } = useAllCycles()
 
   const peternakBase = `/peternak/${profile?.sub_type || 'peternak_broiler'}`
@@ -102,13 +104,13 @@ export default function SiklusPage() {
   const [closeCycle, setCloseCycle] = useState(null)
   const [invoiceCycle, setInvoiceCycle] = useState(null)
 
-  // Open create sheet when ?action=new in URL
+  // Open create sheet when ?action=new in URL (only if allowed)
   useEffect(() => {
-    if (searchParams.get('action') === 'new') {
+    if (searchParams.get('action') === 'new' && p.canBuatSiklus) {
       setCreateSheetOpen(true)
       setSearchParams({}, { replace: true })
     }
-  }, [searchParams, setSearchParams])
+  }, [searchParams, setSearchParams, p.canBuatSiklus])
 
   // ── Stats ──
   const stats = useMemo(() => {
@@ -159,14 +161,16 @@ export default function SiklusPage() {
           <h1 className="font-['Sora'] font-extrabold text-xl text-slate-100 mb-1">Siklus Pemeliharaan</h1>
           <p className="text-xs text-[#4B6478]">{stats.active} aktif · {stats.total} total</p>
         </div>
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setCreateSheetOpen(true)}
-          className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#7C3AED] border-none rounded-xl text-white text-xs font-extrabold font-['Sora'] shadow-[0_3px_12px_rgba(124,58,237,0.35)] cursor-pointer flex-shrink-0"
-        >
-          <Plus size={13} strokeWidth={2.5} />
-          Siklus Baru
-        </motion.button>
+        {p.canBuatSiklus && (
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setCreateSheetOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#7C3AED] border-none rounded-xl text-white text-xs font-extrabold font-['Sora'] shadow-[0_3px_12px_rgba(124,58,237,0.35)] cursor-pointer flex-shrink-0"
+          >
+            <Plus size={13} strokeWidth={2.5} />
+            Siklus Baru
+          </motion.button>
+        )}
       </header>
 
       {/* ── Stats Bar ── */}
@@ -254,8 +258,9 @@ export default function SiklusPage() {
               <CycleCard
                 key={cycle.id}
                 cycle={cycle}
+                p={p}
                 onInputHarian={() => setInputCycle(cycle)}
-                onDetail={() => navigate(`${peternakBase}/siklus/${cycle.id}`)}
+                onDetail={() => navigate(`${peternakBase}/laporan/${cycle.id}`)}
                 onClose={() => setCloseCycle(cycle)}
                 onLaporan={() => navigate(`${peternakBase}/laporan/${cycle.id}`)}
                 onInvoice={() => setInvoiceCycle(cycle)}
@@ -323,7 +328,7 @@ function StatCard({ label, value, valueColor = 'text-slate-100' }) {
 
 // ─── Cycle Card ───────────────────────────────────────────────────────────────
 
-function CycleCard({ cycle, onInputHarian, onDetail, onClose, onLaporan, onInvoice }) {
+function CycleCard({ cycle, onInputHarian, onDetail, onClose, onLaporan, onInvoice, p }) {
   const farm = cycle.peternak_farms ?? {}
   const age = calcCurrentAge(cycle.start_date)
   const alive = Math.max(0, (cycle.current_count ?? cycle.doc_count ?? 0) - getTotalMortality(cycle))
@@ -421,27 +426,33 @@ function CycleCard({ cycle, onInputHarian, onDetail, onClose, onLaporan, onInvoi
       <div className="flex gap-2 mt-4">
         {cycle.status === 'active' && (
           <>
-            <button
-              className="flex-[2] flex items-center justify-center gap-1.5 py-2.5 bg-[#7C3AED] border-none rounded-xl text-white text-xs font-extrabold font-['Sora'] shadow-[0_2px_8px_rgba(124,58,237,0.3)] cursor-pointer"
-              onClick={onInputHarian}
-            >
-              <ClipboardList size={13} />
-              Input Harian
-            </button>
-            <button
-              className="flex-[2] flex items-center justify-center gap-1.5 py-2.5 bg-[rgba(124,58,237,0.1)] border border-[rgba(124,58,237,0.2)] rounded-xl text-[#A78BFA] text-xs font-bold cursor-pointer"
-              onClick={onDetail}
-            >
-              <BarChart2 size={13} />
-              Detail
-            </button>
-            <button
-              className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-red-500/10 border border-red-500/25 rounded-xl text-red-400 text-xs font-bold cursor-pointer"
-              onClick={onClose}
-            >
-              <Wheat size={12} />
-              Tutup
-            </button>
+            {p?.canInputHarian && (
+              <button
+                className="flex-[2] flex items-center justify-center gap-1.5 py-2.5 bg-[#7C3AED] border-none rounded-xl text-white text-xs font-extrabold font-['Sora'] shadow-[0_2px_8px_rgba(124,58,237,0.3)] cursor-pointer"
+                onClick={onInputHarian}
+              >
+                <ClipboardList size={13} />
+                Input Harian
+              </button>
+            )}
+            {p?.canViewLaporan && (
+              <button
+                className="flex-[2] flex items-center justify-center gap-1.5 py-2.5 bg-[rgba(124,58,237,0.1)] border border-[rgba(124,58,237,0.2)] rounded-xl text-[#A78BFA] text-xs font-bold cursor-pointer"
+                onClick={onDetail}
+              >
+                <BarChart2 size={13} />
+                Detail
+              </button>
+            )}
+            {p?.canTutupSiklus && (
+              <button
+                className="flex-1 flex items-center justify-center gap-1 py-2.5 bg-red-500/10 border border-red-500/25 rounded-xl text-red-400 text-xs font-bold cursor-pointer"
+                onClick={onClose}
+              >
+                <Wheat size={12} />
+                Tutup
+              </button>
+            )}
           </>
         )}
         {cycle.status !== 'active' && (

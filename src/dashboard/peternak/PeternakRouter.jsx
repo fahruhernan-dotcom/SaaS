@@ -10,14 +10,15 @@ import BroilerAnakKandang from './broiler/AnakKandang'
 import BroilerLaporanSiklus from './broiler/LaporanSiklus'
 import BroilerFarmBeranda from './broiler/FarmBeranda'
 import BroilerSetupFarm from './broiler/SetupFarm'
+import BroilerVaksinasi from './broiler/Vaksinasi'
+import BroilerTim from './broiler/Tim'
 
 // Layer pages (placeholder)
 import LayerBeranda from './layer/LayerBeranda'
 
 // Shared pages
 import HargaPasar from '../_shared/pages/HargaPasar'
-import Akun from '../broker/poultry_broker/Akun' // Using poultry broker's Akun for now or shared one
-import Tim from '../broker/poultry_broker/Tim'
+import Akun from '../_shared/pages/Akun'
 
 export function PeternakPageRouter({ page }) {
   const { peternakType } = useParams()
@@ -32,9 +33,10 @@ export function PeternakPageRouter({ page }) {
       'laporan':      <BroilerLaporanSiklus />,
       'farm-beranda': <BroilerFarmBeranda />,
       'setup-farm':   <BroilerSetupFarm />,
+      'vaksinasi':    <BroilerVaksinasi />,
       'harga-pasar':  <HargaPasar />,
       'akun':         <Akun />,
-      'tim':          <Tim />,
+      'tim':          <BroilerTim />,
     },
     peternak_layer: {
       beranda: <LayerBeranda />,

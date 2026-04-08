@@ -48,6 +48,23 @@ export const sBtn = (primary) => ({
 export const sLabel = { fontSize: '11px', color: C.muted, fontWeight: 700, letterSpacing: '0.06em', marginBottom: '4px' }
 
 // ── Utility functions ─────────────────────────────────────────────────────────
+
+/**
+ * Build a wa.me link from a raw phone number.
+ * Handles Indonesian prefix: 08xxx → 628xxx, +62xxx → 62xxx.
+ * @param {string} phone  Raw phone (may contain dashes, spaces, +)
+ * @param {string} [encodedText]  Already-encodeURIComponent'd message
+ * @returns {string|null}  Full wa.me URL or null if phone is empty
+ */
+export function toWaLink(phone, encodedText) {
+  if (!phone) return null
+  const digits = phone.replace(/[^0-9]/g, '')
+  if (!digits) return null
+  const normalized = digits.startsWith('0') ? '62' + digits.slice(1) : digits
+  const base = `https://wa.me/${normalized}`
+  return encodedText ? `${base}?text=${encodedText}` : base
+}
+
 export function fmtDate(d) {
   if (!d) return '-'
   try { return new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) }

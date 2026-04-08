@@ -73,6 +73,8 @@ const driverSchema = z.object({
     notes: z.string().optional()
 })
 
+import { ArmadaSkeleton } from '@/components/ui/BrokerPageSkeleton'
+
 const expenseSchema = z.object({
     expense_type: z.enum(['bbm', 'servis', 'pajak', 'sewa', 'lainnya']),
     amount: z.union([z.string(), z.number()]).refine(val => {
@@ -182,8 +184,10 @@ export default function Armada() {
     const [driverFilter, setDriverFilter] = useState('Semua')
 
     // --- RENDER ---
+    if (isLoadingVehicles || isLoadingDrivers) return <ArmadaSkeleton />
+
     return (
-        <motion.div 
+        <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className={cn("bg-[#06090F] min-h-screen text-[#F1F5F9] pb-24", isDesktop && "pb-10")}

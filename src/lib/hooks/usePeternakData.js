@@ -473,3 +473,41 @@ export const useDeleteCycle = () => {
     onError: (err) => toast.error('Gagal hapus siklus: ' + err.message),
   })
 }
+
+// ─── useVaccinationRecords ────────────────────────────────────────────────────
+// Fetches all vaccination records for a specific cycle.
+
+export function useVaccinationRecords(cycleId) {
+  return useQuery({
+    queryKey: ['vaccination-records', cycleId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('vaccination_records')
+        .select('*')
+        .eq('cycle_id', cycleId)
+        .eq('is_deleted', false)
+        .order('vaccination_date', { ascending: true })
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: !!cycleId,
+  })
+}
+
+// Fetches vaccination records for ALL active cycles (used in Beranda alerts)
+export function useAllActiveVaccinationRecords(cycleIds) {
+  return useQuery({
+    queryKey: ['vaccination-records-active', cycleIds?.join(',')],
+    queryFn: async () => {
+      if (!cycleIds?.length) return []
+      const { data, error } = await supabase
+        .from('vaccination_records')
+        .select('cycle_id, vaccine_name, disease_target, age_days, vaccination_date')
+        .in('cycle_id', cycleIds)
+        .eq('is_deleted', false)
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: !!cycleIds?.length,
+  })
+}

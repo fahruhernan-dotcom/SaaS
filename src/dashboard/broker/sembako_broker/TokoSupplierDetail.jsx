@@ -8,7 +8,8 @@ import {
   Wallet, Receipt, ChevronDown, Check, Plus, Filter,
   TrendingDown, TrendingUp, History
 } from 'lucide-react'
-import { 
+import { toWaLink } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
+import {
   useSembakoCustomers, useSembakoSuppliers,
   useSembakoCustomerInvoices, useSembakoCustomerPayments,
   useSembakoSupplierInvoices, useRecordSembakoPayment,
@@ -171,7 +172,7 @@ export default function SembakoTokoSupplierDetail() {
           
           <div className="mt-6">
             <Button asChild className="w-full bg-[#EA580C] hover:bg-[#D44E0A] h-12 rounded-2xl font-black text-xs uppercase tracking-widest gap-2 shadow-lg shadow-orange-950/20 active:scale-[0.98]">
-              <a href={`https://wa.me/${profileData?.phone?.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer">
+              <a href={toWaLink(profileData?.phone) || '#'} target="_blank" rel="noreferrer">
                 Hubungi via WhatsApp
               </a>
             </Button>

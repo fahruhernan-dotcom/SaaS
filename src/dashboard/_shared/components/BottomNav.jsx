@@ -21,17 +21,20 @@ import {
   Plus,
   LayoutGrid,
   Store,
+  Syringe,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { getBusinessModel, BUSINESS_MODELS, resolveBusinessVertical } from '@/lib/businessModel'
 import { useTheme } from '@/lib/hooks/useTheme'
+import { peternakPermissions } from '@/lib/hooks/usePeternakPermissions'
 import DrawerLainnya from './DrawerLainnya'
 
 const ICON_MAP = {
   Home, ArrowLeftRight, Building2, User, Users, MoreHorizontal,
   RefreshCw, ClipboardList, ShoppingCart, CreditCard, Package,
   Truck, Wallet, Car, BarChart2, Calculator, Shield, LayoutGrid, Store,
+  Syringe,
 }
 
 // ── Single tab button ──────────────────────────────────────────────────────────
@@ -180,7 +183,8 @@ export default function BottomNav() {
   const color = (isSembako ? '#EA580C' : (accentColor || model?.color || '#10B981'))
 
   // Detect peternak per-farm context (Level 2)
-  const farmMatch    = location.pathname.match(/^\/peternak\/kandang\/([^/]+)/)
+  // URL structure: /peternak/:peternakType/kandang/:farmId/...
+  const farmMatch    = location.pathname.match(/^\/peternak\/[^/]+\/kandang\/([^/]+)/)
   const currentFarmId = farmMatch?.[1] ?? null
   const isPeternakFarm = !!currentFarmId
 
@@ -190,10 +194,10 @@ export default function BottomNav() {
   let allTabs = []
   if (isPeternakFarm) {
     allTabs = [
-        { path: `${peternakBase}/kandangs/${currentFarmId}/beranda`, icon: 'Home',         label: 'Kandang'  },
-        { path: `${peternakBase}/kandang/${currentFarmId}/siklus`,  icon: 'RefreshCw',    label: 'Siklus'   },
-        { path: `${peternakBase}/kandang/${currentFarmId}/pakan`,   icon: 'Package',      label: 'Pakan'    },
-        { path: `${peternakBase}/beranda`,                          icon: 'MoreHorizontal', label: 'Overview' },
+        { path: `${peternakBase}/kandang/${currentFarmId}/beranda`,  icon: 'Home',           label: 'Kandang'  },
+        { path: `${peternakBase}/kandang/${currentFarmId}/siklus`,   icon: 'RefreshCw',      label: 'Siklus'   },
+        { path: `${peternakBase}/vaksinasi`,                         icon: 'Syringe',        label: 'Vaksin'   },
+        { path: `${peternakBase}/beranda`,                           icon: 'MoreHorizontal', label: 'Overview' },
     ]
   } else {
     // Dynamically adjust paths for Broker (poultry_broker, egg_broker, etc that use base broker layout)
@@ -226,10 +230,35 @@ export default function BottomNav() {
   }
 
   // Role-based filtering
+  const isPeternakUser = profile?.user_type === 'peternak'
+  const pp = isPeternakUser ? peternakPermissions(profile?.role) : null
+
+  // Hide FAB for peternak roles that can't input
+  if (isPeternakUser && pp && !pp.showFab) {
+    if (isPeternakFarm) fabPath = null
+    else if (model.fabPath?.includes('/peternak/')) fabPath = null
+  }
+
   const tabs = allTabs.filter(tab => {
     if (profile?.role === 'superadmin') return true
+
+    // ── Peternak vertical ─────────────────────────────────────────────────
+    if (isPeternakUser && pp) {
+      // Farm-level tabs
+      if (isPeternakFarm) {
+        if (tab.label === 'Siklus'   && !pp.canViewSiklus)   return false
+        if (tab.label === 'Overview' && !pp.canViewBeranda)  return false
+        return true
+      }
+      // Global peternak tabs
+      if (tab.label === 'Siklus'  && !pp.canViewSiklus)   return false
+      if (tab.label === 'Profil'  && !pp.canViewAkun)     return false
+      return true
+    }
+
     if (profile?.user_type !== 'broker') return true
 
+    // ── Broker vertical ───────────────────────────────────────────────────
     const isOwner    = profile?.role === 'owner'
     const isStaff    = profile?.role === 'staff'
     const isViewOnly = profile?.role === 'view_only'

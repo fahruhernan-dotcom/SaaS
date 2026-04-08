@@ -48,9 +48,12 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
+import { BerandaSkeleton } from '@/components/ui/BrokerPageSkeleton'
 import {
   Sheet,
   SheetContent,
+  SheetTitle,
+  SheetDescription
 } from "@/components/ui/sheet"
 import TransaksiWizard from '@/dashboard/_shared/components/TransaksiWizard'
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, format, isToday, isWithinInterval, addDays, differenceInDays } from 'date-fns'
@@ -256,7 +259,7 @@ export default function BrokerBeranda() {
     }
   }
 
-  if (isLoading || !tenant?.id) return <LoadingState />
+  if (isLoading || !tenant?.id) return <BerandaSkeleton />
 
   const data = dashboardData
 
@@ -936,6 +939,8 @@ function EventDetailSheet({ selectedEvent, onClose, brokerBase, navigate }) {
   return (
     <Sheet open={!!selectedEvent} onOpenChange={onClose}>
       <SheetContent side="right" className="bg-[#0C1319] border-l border-white/5 p-8 h-full outline-none overflow-y-auto w-full sm:max-w-md">
+        <SheetTitle className="sr-only">Event Detail</SheetTitle>
+        <SheetDescription className="sr-only">Details for the selected agenda event</SheetDescription>
         {renderContent()}
       </SheetContent>
     </Sheet>
@@ -1077,24 +1082,6 @@ function EventItem({ event, isDesktop, onClick }) {
   )
 }
 
-function LoadingState() {
-  return (
-    <div className="p-10 bg-[#06090F] min-h-screen space-y-8">
-      <div className="space-y-4">
-        <Skeleton className="h-10 w-64 bg-white/5" />
-        <Skeleton className="h-4 w-48 bg-white/5" />
-      </div>
-      <div className="grid grid-cols-2 gap-6">
-        <Skeleton className="h-32 rounded-[28px] bg-white/5" />
-        <Skeleton className="h-32 rounded-[28px] bg-white/5" />
-      </div>
-      <div className="grid grid-cols-3 gap-8">
-        <Skeleton className="col-span-2 h-96 rounded-[32px] bg-white/5" />
-        <Skeleton className="col-span-1 h-96 rounded-[32px] bg-white/5" />
-      </div>
-    </div>
-  )
-}
 
 function getGreeting() {
   const hour = new Date().getHours()

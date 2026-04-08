@@ -44,11 +44,13 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery }) {
       : { label: 'Belum Dikirim', tone: 'text-amber-400 bg-amber-500/10' }
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onOpenDetail}
+      onKeyDown={(e) => e.key === 'Enter' && onOpenDetail?.()}
       className={cn(
-        'group w-full overflow-hidden rounded-[28px] border bg-[#111C24] text-left shadow-lg transition-all',
+        'group w-full cursor-pointer overflow-hidden rounded-[28px] border bg-[#111C24] text-left shadow-lg transition-all',
         sale.remaining_amount > 0 ? 'border-red-500/20 hover:border-red-500/30' : 'border-white/5 hover:border-[#EA580C]/20'
       )}
     >
@@ -152,6 +154,6 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery }) {
           )}
         </div>
       </div>
-    </button>
+    </div>
   )
 }

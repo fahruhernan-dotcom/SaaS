@@ -319,24 +319,28 @@ function App() {
             <PeternakLayout />
           </ProtectedRoute>
         }>
-          <Route path="beranda"       element={<PeternakPageRouter page="beranda" />} />
-          <Route path="siklus"        element={<PeternakPageRouter page="siklus" />} />
-          <Route path="input-harian"  element={<PeternakPageRouter page="input-harian" />} />
-          <Route path="input"         element={<Navigate to="../input-harian" replace />} />
-          <Route path="pakan"         element={<PeternakPageRouter page="stok-pakan" />} />
-          <Route path="stok-pakan"    element={<Navigate to="../pakan" replace />} />
-          <Route path="laporan"       element={<PeternakPageRouter page="laporan" />} />
+          <Route path="beranda"          element={<PeternakPageRouter page="beranda" />} />
+          <Route path="siklus"           element={<PeternakPageRouter page="siklus" />} />
+          <Route path="vaksinasi"        element={<PeternakPageRouter page="vaksinasi" />} />
+          <Route path="anak-kandang"     element={<PeternakPageRouter page="anak-kandang" />} />
+          <Route path="input-harian"     element={<PeternakPageRouter page="input-harian" />} />
+          <Route path="input"            element={<Navigate to="../input-harian" replace />} />
+          <Route path="pakan"            element={<PeternakPageRouter page="stok-pakan" />} />
+          <Route path="stok-pakan"       element={<Navigate to="../pakan" replace />} />
+          <Route path="laporan"          element={<PeternakPageRouter page="laporan" />} />
           <Route path="laporan/:cycleId" element={<PeternakPageRouter page="laporan" />} />
-          <Route path="akun"          element={<PeternakPageRouter page="akun" />} />
-          <Route path="tim"           element={<PeternakPageRouter page="tim" />} />
-          <Route path="harga-pasar"   element={<PeternakPageRouter page="harga-pasar" />} />
-          
+          <Route path="akun"             element={<PeternakPageRouter page="akun" />} />
+          <Route path="tim"              element={<PeternakPageRouter page="tim" />} />
+          <Route path="harga-pasar"      element={<PeternakPageRouter page="harga-pasar" />} />
+
           {/* Per-farm routes (Level 2) */}
-          <Route path="kandang/:farmId" element={<Navigate to="beranda" replace />} />
-          <Route path="kandang/:farmId/beranda" element={<PeternakPageRouter page="farm-beranda" />} />
-          <Route path="kandang/:farmId/siklus"  element={<PeternakPageRouter page="siklus" />} />
-          <Route path="kandang/:farmId/input"   element={<PeternakPageRouter page="input-harian" />} />
-          <Route path="kandang/:farmId/laporan" element={<PeternakPageRouter page="laporan" />} />
+          <Route path="kandang/:farmId"           element={<Navigate to="beranda" replace />} />
+          <Route path="kandang/:farmId/beranda"   element={<PeternakPageRouter page="farm-beranda" />} />
+          <Route path="kandang/:farmId/siklus"    element={<PeternakPageRouter page="siklus" />} />
+          <Route path="kandang/:farmId/input"     element={<PeternakPageRouter page="input-harian" />} />
+          <Route path="kandang/:farmId/laporan"   element={<PeternakPageRouter page="laporan" />} />
+          <Route path="kandang/:farmId/pakan"     element={<PeternakPageRouter page="stok-pakan" />} />
+          <Route path="kandang/:farmId/vaksinasi" element={<Navigate to="../../vaksinasi" replace />} />
         </Route>
 
         <Route path="/rpa-buyer" element={<Navigate to="/rumah_potong/rpa/beranda" replace />} />

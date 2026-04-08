@@ -232,6 +232,7 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
         invoice_number: sale.invoice_number,
         customerName: custName,
         customer_name: custName,
+        customerPhone: selectedCust?.phone || null,
         revenue: totalAmount,
         total_amount: totalAmount,
         cogs: totalCogs,

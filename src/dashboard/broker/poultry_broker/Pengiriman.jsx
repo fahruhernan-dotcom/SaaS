@@ -61,6 +61,8 @@ import {
     CommandSeparator
 } from '@/components/ui/command'
 
+import { PengirimanSkeleton } from '@/components/ui/BrokerPageSkeleton'
+
 // --- ANIMATIONS ---
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -284,8 +286,10 @@ export default function Pengiriman() {
     }, [deliveries, deliveryFilter])
 
 
+    if (isLoadingDeliveries || isLoadingLoss) return <PengirimanSkeleton />
+
     return (
-        <motion.div 
+        <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className={cn("bg-[#06090F] min-h-screen text-[#F1F5F9] pb-24", isDesktop && "pb-10")}

@@ -3,10 +3,11 @@ import { motion } from 'framer-motion'
 import {
   Plus, AlertTriangle, Info, AlertCircle,
   ClipboardList, BarChart2, ChevronRight, Lock,
-  Activity, Bird, Clock,
+  Activity, Bird, Clock, TrendingUp,
 } from 'lucide-react'
 import { LineChart, Line, ResponsiveContainer, Tooltip, YAxis } from 'recharts'
 import { useAuth } from '@/lib/hooks/useAuth'
+import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 import { useQueryClient } from '@tanstack/react-query'
 import { formatIDRShort } from '@/lib/format'
 import { useNavigate, useLocation } from 'react-router-dom'
@@ -15,13 +16,41 @@ import SetupFarm from './SetupFarm'
 import FarmCard from '../_shared/components/FarmCard'
 import {
   usePeternakFarms, useActiveCycles, useCompletedCycles,
-  calcCurrentAge,
+  useAllActiveVaccinationRecords, calcCurrentAge,
 } from '@/lib/hooks/usePeternakData'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TODAY = new Date().toISOString().split('T')[0]
 const HARVEST_TARGET_DAYS = 32
+
+// Cobb 500 standard bodyweight (gram) by age day
+const COBB500_WEIGHT_G = {
+  1: 42, 3: 68, 5: 105, 7: 160, 10: 275, 14: 480,
+  17: 680, 21: 1000, 24: 1280, 28: 1680,
+  30: 1880, 32: 2060, 35: 2360, 38: 2620, 42: 2990,
+}
+
+// Standard broiler vaccination windows for alert checking
+const VACC_SCHEDULE = [
+  { name: 'ND + IB',           windowStart: 1,  windowEnd: 4,  diseaseKey: 'Newcastle' },
+  { name: 'Gumboro IBD',       windowStart: 7,  windowEnd: 10, diseaseKey: 'Gumboro' },
+  { name: 'ND + IB Booster',   windowStart: 14, windowEnd: 17, diseaseKey: 'Bronchitis' },
+  { name: 'Gumboro IBD Booster', windowStart: 18, windowEnd: 22, diseaseKey: 'Bursal' },
+]
+
+function getCobb500Target(ageDays) {
+  const keys = Object.keys(COBB500_WEIGHT_G).map(Number).sort((a, b) => a - b)
+  if (ageDays <= keys[0]) return COBB500_WEIGHT_G[keys[0]]
+  if (ageDays >= keys[keys.length - 1]) return COBB500_WEIGHT_G[keys[keys.length - 1]]
+  for (let i = 0; i < keys.length - 1; i++) {
+    if (ageDays >= keys[i] && ageDays <= keys[i + 1]) {
+      const t = (ageDays - keys[i]) / (keys[i + 1] - keys[i])
+      return Math.round(COBB500_WEIGHT_G[keys[i]] + t * (COBB500_WEIGHT_G[keys[i + 1]] - COBB500_WEIGHT_G[keys[i]]))
+    }
+  }
+  return null
+}
 
 const BUSINESS_MODEL_LABELS = {
   mandiri_murni:  'Murni Mandiri',
@@ -61,6 +90,19 @@ function getEstimatedFCR(cycle) {
   return biomass > 0 ? feed / biomass : null
 }
 
+// IP Score = (survival% × avg_weight_kg × 100) / (age_days × FCR)
+function getIPScore(cycle) {
+  const docCount = cycle.doc_count ?? 0
+  if (!docCount) return null
+  const alive = docCount - getTotalMortality(cycle)
+  const survivalPct = alive / docCount
+  const avgW = getLatestAvgWeight(cycle)
+  const age = getCycleAge(cycle)
+  const fcr = getEstimatedFCR(cycle)
+  if (!avgW || !age || !fcr || fcr === 0) return null
+  return (survivalPct * avgW * 100) / (age * fcr)
+}
+
 function getMortalityPct(cycle) {
   if (!cycle.doc_count) return 0
   return (getTotalMortality(cycle) / cycle.doc_count) * 100
@@ -85,21 +127,25 @@ export default function PeternakBeranda() {
   const navigate = useNavigate()
   const location = useLocation()
   const queryClient = useQueryClient()
+  const p = usePeternakPermissions()
 
   const peternakBase = `/peternak/${profile?.sub_type || 'peternak_broiler'}`
 
   // Handle FAB action from BottomNav (?action=tambah-kandang)
   React.useEffect(() => {
     const params = new URLSearchParams(location.search)
-    if (params.get('action') === 'tambah-kandang') {
+    if (params.get('action') === 'tambah-kandang' && p.canTambahKandang) {
       setShowSetupWizard(true)
     }
-  }, [location.search])
+  }, [location.search, p.canTambahKandang])
   const [showSetupWizard, setShowSetupWizard] = useState(false)
 
   const { data: farms, isLoading: farmsLoading } = usePeternakFarms()
   const { data: activeCycles = [], isLoading: cyclesLoading } = useActiveCycles()
   const { data: completedCycles = [] } = useCompletedCycles()
+
+  const activeCycleIds = activeCycles.map(c => c.id)
+  const { data: vaccinationRecords = [] } = useAllActiveVaccinationRecords(activeCycleIds)
 
   const farmList = farms ?? []
   const kandangLimit = tenant?.kandang_limit ?? 1
@@ -120,23 +166,94 @@ export default function PeternakBeranda() {
     }, 0)
     const totalMort = activeCycles.reduce((s, c) => s + getTotalMortality(c), 0)
     const mortPct = totalDoc > 0 ? ((totalMort / totalDoc) * 100).toFixed(1) : '0.0'
-    return { totalDoc, avgAge, avgDaysLeft, todayMort, totalMort, mortPct }
+    // IP Score rata-rata dari siklus yang sudah punya data cukup
+    const ipScores = activeCycles.map(c => getIPScore(c)).filter(v => v !== null)
+    const avgIP = ipScores.length ? Math.round(ipScores.reduce((s, v) => s + v, 0) / ipScores.length) : null
+    return { totalDoc, avgAge, avgDaysLeft, todayMort, totalMort, mortPct, avgIP }
   }, [activeCycles])
 
   const alerts = useMemo(() => {
     const list = []
     activeCycles.forEach(c => {
+      const cycleVaccRecords = vaccinationRecords.filter(r => r.cycle_id === c.id)
       const age = getCycleAge(c)
       const mort = getMortalityPct(c)
       const farmName = c.peternak_farms?.farm_name ?? 'Kandang'
-      if (age > 35) list.push({ type: 'danger', msg: `${farmName}: Hari ke-${age} — sudah melewati target panen` })
-      if (mort > 5) list.push({ type: 'warning', msg: `${farmName}: Mortalitas ${mort.toFixed(1)}% — di atas batas normal 5%` })
+      const fcr = getEstimatedFCR(c)
+      const avgW = getLatestAvgWeight(c)
+      const ip = getIPScore(c)
+
+      // Panen overdue
+      if (age > 35) {
+        list.push({ type: 'danger', msg: `${farmName}: Hari ke-${age} — sudah melewati target panen (32 hari)` })
+      }
+
+      // Mortalitas kumulatif
+      if (mort > 5) {
+        list.push({ type: 'danger', msg: `${farmName}: Mortalitas kumulatif ${mort.toFixed(1)}% — sangat tinggi (>5%)` })
+      } else if (mort > 3) {
+        list.push({ type: 'warning', msg: `${farmName}: Mortalitas kumulatif ${mort.toFixed(1)}% — perlu perhatian (>3%)` })
+      }
+
+      // Mortalitas harian (ambil record terbaru = hari ini atau kemarin)
+      const todayRecord = (c.daily_records ?? []).find(r => r.record_date === TODAY)
+      if (todayRecord && c.doc_count) {
+        const dailyMortPct = (todayRecord.mortality_count / c.doc_count) * 100
+        if (dailyMortPct > 0.5) {
+          list.push({ type: 'danger', msg: `${farmName}: Mortalitas hari ini ${dailyMortPct.toFixed(2)}% — KRITIS (>0.5%/hari)` })
+        } else if (dailyMortPct > 0.3) {
+          list.push({ type: 'warning', msg: `${farmName}: Mortalitas hari ini ${dailyMortPct.toFixed(2)}% — waspada (>0.3%/hari)` })
+        }
+      }
+
+      // Bobot badan vs Cobb 500
+      if (avgW && age > 7) {
+        const cobbTarget = getCobb500Target(age)
+        if (cobbTarget) {
+          const avgWGram = avgW * 1000
+          const deficit = cobbTarget - avgWGram
+          if (deficit > 100) {
+            list.push({ type: 'warning', msg: `${farmName}: BB ${avgWGram.toFixed(0)}g — di bawah Cobb 500 hari ke-${age} (target ${cobbTarget}g)` })
+          }
+        }
+      }
+
+      // FCR tinggi
+      if (fcr !== null && fcr >= 1.85) {
+        list.push({ type: 'warning', msg: `${farmName}: FCR ${fcr.toFixed(2)} — efisiensi pakan rendah, periksa manajemen pakan` })
+      }
+
+      // IP Score rendah
+      if (ip !== null && age >= 21) {
+        if (ip < 300) {
+          list.push({ type: 'danger', msg: `${farmName}: IP Score ${Math.round(ip)} — performa buruk (<300), evaluasi manajemen` })
+        } else if (ip < 350) {
+          list.push({ type: 'warning', msg: `${farmName}: IP Score ${Math.round(ip)} — performa di bawah rata-rata (target ≥350)` })
+        }
+      }
+
+      // Vaksinasi terlambat / waktunya sekarang
+      VACC_SCHEDULE.forEach(sched => {
+        if (age < sched.windowStart) return  // belum waktunya
+        const isDone = cycleVaccRecords.some(r =>
+          r.vaccine_name?.toLowerCase().includes(sched.name.split(' ')[0].toLowerCase()) ||
+          r.disease_target?.toLowerCase().includes(sched.diseaseKey.toLowerCase())
+        )
+        if (isDone) return
+        if (age > sched.windowEnd) {
+          list.push({ type: 'danger', msg: `${farmName}: Vaksin ${sched.name} TERLAMBAT — seharusnya hari ke-${sched.windowStart}–${sched.windowEnd}` })
+        } else {
+          list.push({ type: 'warning', msg: `${farmName}: Saatnya vaksin ${sched.name} (hari ke-${sched.windowStart}–${sched.windowEnd})` })
+        }
+      })
+
+      // Belum input hari ini
       if (!(c.daily_records ?? []).some(r => r.record_date === TODAY) && age > 0) {
         list.push({ type: 'info', msg: `${farmName}: Belum ada input harian hari ini` })
       }
     })
     return list
-  }, [activeCycles])
+  }, [activeCycles, vaccinationRecords])
 
   const chartData = useMemo(() => {
     const today = new Date()
@@ -202,38 +319,42 @@ export default function PeternakBeranda() {
           </p>
         </div>
         <div className="flex flex-col items-end gap-1.5">
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#7C3AED] rounded-xl text-white text-xs font-extrabold font-['Sora'] shadow-[0_3px_12px_rgba(124,58,237,0.35)] cursor-pointer border-none"
-            onClick={() => navigate(`${peternakBase}/siklus?action=new`)}
-          >
-            <Plus size={13} strokeWidth={2.5} />
-            Mulai Siklus
-          </motion.button>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-[#4B6478]">{currentCount}/{limitDisplay} kandang</span>
-            <button
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold font-['Sora'] border transition-opacity ${
-                canAdd
-                  ? 'bg-[rgba(124,58,237,0.1)] border-[rgba(124,58,237,0.2)] text-[#A78BFA] cursor-pointer'
-                  : 'bg-white/[0.04] border-white/[0.08] text-[#4B6478] opacity-60 cursor-not-allowed'
-              }`}
-              onClick={() => {
-                if (!canAdd) {
-                  toast.info(
-                    tenant?.plan === 'starter'
-                      ? 'Upgrade ke Pro untuk tambah kandang'
-                      : 'Upgrade ke Business untuk kandang unlimited'
-                  )
-                  return
-                }
-                setShowSetupWizard(true)
-              }}
+          {p.canBuatSiklus && (
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#7C3AED] rounded-xl text-white text-xs font-extrabold font-['Sora'] shadow-[0_3px_12px_rgba(124,58,237,0.35)] cursor-pointer border-none"
+              onClick={() => navigate(`${peternakBase}/siklus?action=new`)}
             >
-              {canAdd ? <Plus size={11} strokeWidth={2.5} /> : <Lock size={11} />}
-              Tambah Kandang
-            </button>
-          </div>
+              <Plus size={13} strokeWidth={2.5} />
+              Mulai Siklus
+            </motion.button>
+          )}
+          {p.canTambahKandang && (
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-[#4B6478]">{currentCount}/{limitDisplay} kandang</span>
+              <button
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold font-['Sora'] border transition-opacity ${
+                  canAdd
+                    ? 'bg-[rgba(124,58,237,0.1)] border-[rgba(124,58,237,0.2)] text-[#A78BFA] cursor-pointer'
+                    : 'bg-white/[0.04] border-white/[0.08] text-[#4B6478] opacity-60 cursor-not-allowed'
+                }`}
+                onClick={() => {
+                  if (!canAdd) {
+                    toast.info(
+                      tenant?.plan === 'starter'
+                        ? 'Upgrade ke Pro untuk tambah kandang'
+                        : 'Upgrade ke Business untuk kandang unlimited'
+                    )
+                    return
+                  }
+                  setShowSetupWizard(true)
+                }}
+              >
+                {canAdd ? <Plus size={11} strokeWidth={2.5} /> : <Lock size={11} />}
+                Tambah Kandang
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -278,13 +399,20 @@ export default function PeternakBeranda() {
           />
         </section>
 
+        {/* ── IP Score Card (shown only when data available) ── */}
+        {kpi.avgIP !== null && activeCycles.length > 0 && (
+          <section className="mt-3">
+            <IPScoreCard ip={kpi.avgIP} cycleCount={activeCycles.length} />
+          </section>
+        )}
+
         {/* ── SECTION C — Kandang Saya ── */}
         <section className="mt-7">
           <SectionHeader
             title="Kandang Saya"
             count={farmList.length}
-            action="Tambah"
-            onAction={() => {
+            action={p.canTambahKandang ? 'Tambah' : null}
+            onAction={p.canTambahKandang ? () => {
               if (!canAdd) {
                 toast.info(
                   tenant?.plan === 'starter'
@@ -294,13 +422,13 @@ export default function PeternakBeranda() {
                 return
               }
               setShowSetupWizard(true)
-            }}
+            } : undefined}
           />
           <div className="flex flex-col gap-4 mt-3.5">
             {farmList.length === 0 ? (
               <div
                 className="flex flex-col items-center justify-center py-10 rounded-2xl border border-dashed border-white/10 text-center gap-3 cursor-pointer"
-                onClick={() => canAdd && setShowSetupWizard(true)}
+                onClick={() => p.canTambahKandang && canAdd && setShowSetupWizard(true)}
               >
                 <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center">
                   <Bird size={22} className="text-purple-400" />
@@ -346,7 +474,8 @@ export default function PeternakBeranda() {
                   key={cycle.id}
                   cycle={cycle}
                   onInputHarian={() => navigate(`${peternakBase}/input?cycle=${cycle.id}`)}
-                  onDetail={() => navigate(`${peternakBase}/siklus/${cycle.id}`)}
+                  onDetail={() => navigate(`${peternakBase}/laporan/${cycle.id}`)}
+                  onVaksinasi={() => navigate(`${peternakBase}/vaksinasi?cycle=${cycle.id}`)}
                 />
               ))}
             </div>
@@ -439,14 +568,75 @@ function KPICard({ icon, label, value, sub, valueColor }) {
   )
 }
 
+// ─── IP Score Card ────────────────────────────────────────────────────────────
+
+function IPScoreCard({ ip, cycleCount }) {
+  // Grade: <300 buruk, 300-349 cukup, 350-399 baik, 400+ sangat baik
+  const grade = ip >= 400 ? { label: 'Sangat Baik', color: '#34D399', bg: 'rgba(52,211,153,0.08)', border: 'rgba(52,211,153,0.2)' }
+    : ip >= 350 ? { label: 'Baik', color: '#A78BFA', bg: 'rgba(124,58,237,0.08)', border: 'rgba(124,58,237,0.2)' }
+    : ip >= 300 ? { label: 'Cukup', color: '#F59E0B', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.2)' }
+    : { label: 'Perlu Perhatian', color: '#F87171', bg: 'rgba(248,113,113,0.08)', border: 'rgba(248,113,113,0.2)' }
+
+  const pct = Math.min(100, Math.round((ip / 500) * 100))
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{ background: grade.bg, border: `1px solid ${grade.border}`, borderRadius: 16, padding: '14px 16px' }}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <TrendingUp size={14} color={grade.color} />
+          <span style={{ fontSize: 10, fontWeight: 900, color: grade.color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            IP Score — Index Performa
+          </span>
+        </div>
+        <span style={{ fontSize: 10, fontWeight: 700, color: '#4B6478' }}>
+          {cycleCount} siklus aktif
+        </span>
+      </div>
+      <div className="flex items-end gap-3 mb-3">
+        <span style={{ fontFamily: 'Sora', fontSize: 36, fontWeight: 900, color: grade.color, lineHeight: 1 }}>
+          {ip}
+        </span>
+        <div className="pb-1">
+          <span style={{
+            fontSize: 11, fontWeight: 800, color: grade.color,
+            background: grade.bg, border: `1px solid ${grade.border}`,
+            padding: '2px 8px', borderRadius: 99,
+          }}>
+            {grade.label}
+          </span>
+          <p style={{ fontSize: 10, color: '#4B6478', marginTop: 4 }}>Target ≥ 350 (industri standar)</p>
+        </div>
+      </div>
+      <div style={{ height: 6, background: 'rgba(255,255,255,0.06)', borderRadius: 99, overflow: 'hidden' }}>
+        <div style={{
+          height: '100%', width: `${pct}%`, borderRadius: 99,
+          background: ip >= 350 ? `linear-gradient(90deg, #7C3AED, ${grade.color})` : grade.color,
+          transition: 'width 0.6s ease',
+        }} />
+      </div>
+      <div className="flex justify-between mt-1.5">
+        <span style={{ fontSize: 9, color: '#4B6478' }}>0</span>
+        <span style={{ fontSize: 9, color: '#4B6478' }}>Buruk &lt;300</span>
+        <span style={{ fontSize: 9, color: '#4B6478' }}>Baik ≥350</span>
+        <span style={{ fontSize: 9, color: '#4B6478' }}>500+</span>
+      </div>
+    </motion.div>
+  )
+}
+
 // ─── Cycle Card ───────────────────────────────────────────────────────────────
 
-function CycleCard({ cycle, onInputHarian, onDetail }) {
+function CycleCard({ cycle, onInputHarian, onDetail, onVaksinasi }) {
   const farm = cycle.peternak_farms ?? {}
   const age = getCycleAge(cycle)
   const alive = (cycle.doc_count ?? 0) - getTotalMortality(cycle)
   const fcr = getEstimatedFCR(cycle)
   const mort = getMortalityPct(cycle)
+  const ip = getIPScore(cycle)
   const progress = Math.min(100, Math.round((age / HARVEST_TARGET_DAYS) * 100))
   const daysLeft = Math.max(0, HARVEST_TARGET_DAYS - age)
   const modelLabel = BUSINESS_MODEL_LABELS[farm.business_model] ?? farm.business_model ?? '—'
@@ -516,7 +706,7 @@ function CycleCard({ cycle, onInputHarian, onDetail }) {
           label="FCR Est."
           value={fcr !== null ? fcr.toFixed(2) : '—'}
           good={fcr !== null && fcr < 1.7}
-          bad={fcr !== null && fcr >= 1.8}
+          bad={fcr !== null && fcr >= 1.85}
         />
         <KpiChip
           label="Mortalitas"
@@ -525,9 +715,10 @@ function CycleCard({ cycle, onInputHarian, onDetail }) {
           bad={mort > 5}
         />
         <KpiChip
-          label="Total Pakan"
-          value={`${(getTotalFeedKg(cycle) / 1000).toFixed(1)} ton`}
-          neutral
+          label="IP Score"
+          value={ip !== null ? Math.round(ip) : '—'}
+          good={ip !== null && ip >= 350}
+          bad={ip !== null && ip < 300}
         />
       </div>
 
@@ -546,6 +737,13 @@ function CycleCard({ cycle, onInputHarian, onDetail }) {
         >
           <BarChart2 size={13} />
           Detail
+        </button>
+        <button
+          className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-slate-400 text-xs font-bold cursor-pointer"
+          onClick={onVaksinasi}
+          title="Program Vaksinasi"
+        >
+          💉
         </button>
       </div>
     </motion.div>

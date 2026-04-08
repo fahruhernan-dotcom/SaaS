@@ -70,6 +70,15 @@ export const useConfirmInvoice = () => {
       const { data: { user } } = await supabase.auth.getUser()
       const now = new Date().toISOString()
 
+      // Superadmin mungkin tidak punya row di profiles — cek dulu, fallback null
+      // supaya FK constraint "subscription_invoices_confirmed_by_fkey" tidak error
+      let confirmedBy = null
+      if (user?.id) {
+        const { data: prof } = await supabase
+          .from('profiles').select('id').eq('id', user.id).maybeSingle()
+        confirmedBy = prof?.id ?? null
+      }
+
       // 1. Update invoice status → paid
       const { error: invoiceErr } = await supabase
         .from('subscription_invoices')
@@ -77,7 +86,7 @@ export const useConfirmInvoice = () => {
           status: 'paid',
           confirmed_at: now,
           paid_at: now,
-          confirmed_by: user?.id,
+          confirmed_by: confirmedBy,
           ...(notes ? { notes } : {})
         })
         .eq('id', invoiceId)
@@ -98,7 +107,16 @@ export const useConfirmInvoice = () => {
       const newExpiry = new Date(baseDate)
       newExpiry.setMonth(newExpiry.getMonth() + billingMonths)
 
-      const kandangLimit = plan === 'starter' ? 1 : plan === 'pro' ? 2 : 99
+      // Fetch dynamic kandang_limit from plan_configs (falls back to hardcoded defaults)
+      const { data: planConfigRow } = await supabase
+        .from('plan_configs')
+        .select('config_value')
+        .eq('config_key', 'kandang_limit')
+        .maybeSingle()
+      const kandangLimitConfig = planConfigRow?.config_value ?? {}
+      const KANDANG_DEFAULTS = { starter: 1, pro: 2, business: 99 }
+      const kandangLimit = kandangLimitConfig[plan] ?? KANDANG_DEFAULTS[plan] ?? 1
+
       const { error: tenantErr } = await supabase
         .from('tenants')
         .update({
