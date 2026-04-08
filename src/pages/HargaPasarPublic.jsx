@@ -153,6 +153,20 @@ export default function HargaPasarPublic() {
 
   // ── Derived data ───────────────────────────────────────────────────────────
 
+  // Deduplicate by date — keep one row per date, preferring source='transaction'
+  const dedupedPrices = useMemo(() => {
+    if (!rawPrices?.length) return []
+    const seen = new Map()
+    for (const row of rawPrices) {
+      const existing = seen.get(row.price_date)
+      if (!existing || row.source === 'transaction') {
+        seen.set(row.price_date, row)
+      }
+    }
+    // Re-sort by date desc (Map insertion order is already date-desc from query)
+    return [...seen.values()].sort((a, b) => b.price_date.localeCompare(a.price_date))
+  }, [rawPrices])
+
   // Harga terbaru — setelah dedup, baris pertama sudah terbaik per tanggal
   const latestRow = useMemo(() => dedupedPrices[0] ?? null, [dedupedPrices])
 
@@ -172,20 +186,6 @@ export default function HargaPasarPublic() {
     const diff = latestRow.avg_sell_price - prevRow.avg_sell_price
     return { dir: diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat', diff }
   }, [latestRow, prevRow])
-
-  // Deduplicate by date — keep one row per date, preferring source='transaction'
-  const dedupedPrices = useMemo(() => {
-    if (!rawPrices?.length) return []
-    const seen = new Map()
-    for (const row of rawPrices) {
-      const existing = seen.get(row.price_date)
-      if (!existing || row.source === 'transaction') {
-        seen.set(row.price_date, row)
-      }
-    }
-    // Re-sort by date desc (Map insertion order is already date-desc from query)
-    return [...seen.values()].sort((a, b) => b.price_date.localeCompare(a.price_date))
-  }, [rawPrices])
 
   // Data chart — 14 hari terakhir, urut ascending
   const chartData = useMemo(() => {
