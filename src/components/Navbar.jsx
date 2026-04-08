@@ -15,6 +15,7 @@ const Navbar = ({ authPage = false }) => {
     { name: 'Fitur', href: '/fitur' },
     { name: 'Harga', href: '/harga' },
     { name: 'Tentang Kami', href: '/tentang-kami' },
+    { name: 'Harga Pasar', href: '/harga-pasar' },
   ];
 
   return (

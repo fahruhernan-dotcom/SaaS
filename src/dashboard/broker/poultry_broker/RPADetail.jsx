@@ -30,6 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
+import { RPADetailSkeleton } from '@/components/ui/BrokerPageSkeleton'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { supabase } from '@/lib/supabase'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
@@ -185,7 +186,7 @@ export default function RPADetail() {
     }
   }
 
-  if ((loadingSales || loadingRpa) && !rpa) return <LoadingState />
+  if ((loadingSales || loadingRpa) && !rpa) return <RPADetailSkeleton />
 
   return (
     <motion.div 

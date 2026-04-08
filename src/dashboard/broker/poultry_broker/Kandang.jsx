@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
+import { KandangSkeleton } from '@/components/ui/BrokerPageSkeleton'
 import { 
   Sheet, SheetContent, SheetHeader, SheetTitle, 
   SheetDescription, SheetFooter 
@@ -83,8 +84,10 @@ export default function Kandang() {
     setOpenModal(true)
   }
 
+  if (isLoading) return <KandangSkeleton />
+
   return (
-    <motion.div 
+    <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}

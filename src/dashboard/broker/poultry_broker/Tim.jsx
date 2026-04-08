@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { getSubscriptionStatus } from '@/lib/subscriptionUtils';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,7 @@ import { toast } from 'sonner';
 import { Loader2, Trash2, X, Plus, UserPlus, Users, Clock, Copy, Pencil, Save, AlertCircle } from 'lucide-react';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { id } from 'date-fns/locale';
+import { TimSkeleton } from '@/components/ui/BrokerPageSkeleton'
 
 const ROLE_BADGE_MAP = {
   owner: { label: 'Owner', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
@@ -26,7 +28,8 @@ const ROLE_BADGE_MAP = {
 };
 
 export default function Tim() {
-  const { profile } = useAuth();
+  const { profile, tenant: authTenant } = useAuth();
+  const sub = getSubscriptionStatus(authTenant);
   const queryClient = useQueryClient();
   const [isInviteSheetOpen, setIsInviteSheetOpen] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -202,19 +205,33 @@ export default function Tim() {
     return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
   };
 
+  if (loadingTenant || loadingMembers) return <TimSkeleton />
+
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8 pb-32">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="font-display text-2xl md:text-3xl font-bold text-tx-1">Tim & Akses</h1>
-          <p className="text-tx-3 mt-1">
+          <p className="text-tx-3 mt-1 text-sm">
             {members.length} anggota aktif {invitations.length > 0 && `• ${invitations.length} undangan tertunda`}
+            {sub.plan !== 'business' && (
+              <span className="ml-2 font-bold text-amber-500">
+                (Kapasitas Plan: {members.length + invitations.length} / 3)
+              </span>
+            )}
           </p>
         </div>
         {isOwner && (
           <Button 
-            onClick={() => setIsInviteSheetOpen(true)}
+            onClick={() => {
+              const totalMembers = members.length + invitations.length;
+              if (sub.plan !== 'business' && totalMembers >= 3) {
+                toast.error('Kapasitas Tim Penuh', { description: 'Plan saat ini dibatasi maksimal 3 anggota. Upgrade ke Business untuk anggota unlimited!' });
+              } else {
+                setIsInviteSheetOpen(true);
+              }
+            }}
             className="bg-em-500 hover:bg-em-600 text-white font-semibold rounded-xl"
           >
             <UserPlus size={18} className="mr-2" />

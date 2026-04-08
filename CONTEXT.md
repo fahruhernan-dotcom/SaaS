@@ -1,6 +1,6 @@
 # TernakOS — Developer Context
 
-> Last updated: 2026-04-05 v3 (Documentation Overhaul session: Synchronized CONTEXT.md and DATABASE_STRUCTURE.md with the live production environment; Documented Universal Broker Architecture (dynamic segments); Updated routing table with all 10+ public and vertical-first routes; Corrected RPA/RPH and Sembako paths; Validated Egg Broker and Sembako Suite as "✅ Full Implementation") | Use this as reference for all future implementations.
+> Last updated: 2026-04-09 v4 (Auth Architecture: useAuth converted to React Context (AuthProvider); Peternak RBAC: usePeternakPermissions hook + manajer role; Cache Warming: PoultryBrokerPrefetcher added to BrokerLayout; WA Link: toWaLink() utility in sembakoSaleUtils.jsx; BrokerPageSkeleton centralized; Various bug fixes) | Use this as reference for all future implementations.
 
 ---
 
@@ -129,7 +129,7 @@ Selalu gunakan helper di `lib/businessModel.js` untuk navigasi antar halaman aga
 > **Safety Rule**: **JANGAN PERNAH** menggunakan `DROP ... CASCADE` (terutama pada FUNCTION) karena dapat menghapus policy RLS secara tidak sengaja.
 
 ### `profiles`
-- `id`, `tenant_id`, `auth_user_id`, `full_name`, `role` (`'owner'` | `'staff'` | `'superadmin'` | `'view_only'` | `'sopir'`)
+- `id`, `tenant_id`, `auth_user_id`, `full_name`, `role` (`'owner'` | `'staff'` | `'manajer'` | `'superadmin'` | `'view_only'` | `'sopir'`)
 - `user_type` (`'broker'` | `'peternak'` | `'rpa'` | `'superadmin'`)
 - `onboarded` (boolean), `business_model_selected` (boolean)
 - `onboarding_completed_at`: timestamptz — waktu selesai onboarding (set saat update profile di OnboardingFlow)
@@ -149,7 +149,9 @@ Selalu gunakan helper di `lib/businessModel.js` untuk navigasi antar halaman aga
 
 ### Role Based Access Control (RBAC)
 
-Pattern wajib di semua komponen:
+#### Broker RBAC (Broker/RPA verticals)
+
+Pattern wajib di semua komponen broker:
 ```javascript
 const { profile } = useAuth()
 const isOwner = profile?.role === 'owner'
@@ -157,7 +159,7 @@ const isViewOnly = profile?.role === 'view_only'
 const canWrite = ['owner', 'staff'].includes(profile?.role)
 ```
 
-**Akses per role:**
+**Akses per role (broker):**
 - **owner**: Semua fitur.
 - **Staff**: Beranda, Transaksi, Kandang, Pengiriman, RPA, Harga Pasar.
   - ✗ Tidak bisa: Cash Flow, Armada, Tim & Akses, Simulator.
@@ -169,8 +171,42 @@ const canWrite = ['owner', 'staff'].includes(profile?.role)
   - ✓ Lihat & update status pengiriman yang di-assign.
 - **Superadmin**: Akses penuh ke `/admin`.
   - ✓ Management Tenant, Invoices, Pricing, Vouchers.
-  - ✓ Standardized icons for business verticals (Bird, Egg, Home, Factory).
-  - ✓ Enforced financial integrity via `InputRupiah` and `Zod`.
+
+#### Peternak RBAC (usePeternakPermissions hook)
+
+Located: `src/lib/hooks/usePeternakPermissions.js`
+
+```javascript
+import { usePeternakPermissions } from '@/lib/hooks/usePeternakPermissions'
+const p = usePeternakPermissions() // reads profile.role from useAuth()
+```
+
+**Roles (hierarchy: owner > manajer > pekerja > view_only)**:
+- `owner`: Full access.
+- `manajer`: Semua operasional termasuk tutup siklus, hapus siklus, input biaya, catat vaksinasi.
+- `pekerja` (maps to `staff`): Input harian, catat vaksinasi. Tidak bisa buat/tutup/hapus siklus, tidak bisa lihat keuangan.
+- `view_only`: Baca saja — tidak ada tombol aksi.
+
+**Permission flags:**
+| Flag | owner | manajer | pekerja | view_only |
+|------|-------|---------|---------|-----------|
+| `canInputHarian` | ✓ | ✓ | ✓ | ✗ |
+| `canBuatSiklus` | ✓ | ✓ | ✗ | ✗ |
+| `canTutupSiklus` | ✓ | ✓ | ✗ | ✗ |
+| `canHapusSiklus` | ✓ | ✓ | ✗ | ✗ |
+| `canTambahKandang` | ✓ | ✗ | ✗ | ✗ |
+| `canViewKeuangan` | ✓ | ✓ | ✗ | ✗ |
+| `canInputBiaya` | ✓ | ✓ | ✗ | ✗ |
+| `canCatatVaksinasi` | ✓ | ✓ | ✓ | ✗ |
+| `canUndangAnggota` | ✓ | ✗ | ✗ | ✗ |
+| `showFab` | ✓ | ✓ | ✓ | ✗ |
+
+**Guard components**: `ProtectedRoute`, `RoleGuard`, and `AdminRoute` in `App.jsx`.
+```jsx
+<RoleGuard allowedRoles={['owner']}>
+  <CashFlow />
+</RoleGuard>
+```
 
 **Route setelah login:**
 - owner, staff, view_only (poultry_broker) → `/broker/broker_ayam/beranda`
@@ -180,13 +216,6 @@ const canWrite = ['owner', 'staff'].includes(profile?.role)
 - owner, staff, view_only (rpa) → `/rumah_potong/rpa/beranda`
 - sopir → `/broker/:sub_type/sopir`
 - superadmin → `/admin`
-
-**Guard components**: `ProtectedRoute`, `RoleGuard`, and `AdminRoute` in `App.jsx`.
-```jsx
-<RoleGuard allowedRoles={['owner']}>
-  <CashFlow />
-</RoleGuard>
-```
 
 ### `tenants`
 - `id`, `business_name`, `plan` (`'starter'` | `'pro'` | `'business'`), `is_active`, `trial_ends_at`
@@ -381,15 +410,23 @@ const canWrite = ['owner', 'staff'].includes(profile?.role)
 ```jsx
 <StrictMode>
   <QueryClientProvider client={queryClient}>
-    <App />
-    <Toaster theme="dark" position="top-center" richColors duration={3000}
-      toastOptions={{ style: { background: '#111C24', border: '1px solid rgba(255,255,255,0.10)', ... } }}
-    />
+    <AuthProvider>
+      <TooltipProvider>
+        <NotificationsProvider>
+          <App />
+        </NotificationsProvider>
+      </TooltipProvider>
+      <Toaster theme="dark" position="top-center" richColors duration={3000}
+        toastOptions={{ style: { background: '#111C24', border: '1px solid rgba(255,255,255,0.10)', ... } }}
+      />
+    </AuthProvider>
   </QueryClientProvider>
 </StrictMode>
 ```
 
-- `queryClient` config: `staleTime: 120_000` (2 min), `retry: 1`
+- `queryClient` config: `staleTime: 300_000` (5 min), `gcTime: 600_000` (10 min), `retry: 1`
+- `AuthProvider` wraps entire app — `getSession()` called exactly once at app startup
+- `NotificationsProvider` wraps `App` for realtime notification context
 - Toast uses Sonner, dark theme with custom dark card styling
 
 ---
@@ -418,6 +455,7 @@ const canWrite = ['owner', 'staff'].includes(profile?.role)
 | `/harga` | `HargaPage` | Pricing tiers |
 | `/terms` | `TermsPage` | Terms of Service |
 | `/privacy` | `PrivacyPage` | Privacy Policy |
+| `/harga-pasar` | `HargaPasarPublic` | Public market price page (no auth, SEO-friendly) |
 | `/check-email` | `CheckEmail` | Post-registration notice |
 | `/forgot-password` | `ForgotPassword` | Password recovery |
 | `/reset-password` | `ResetPassword` | Set new password |
@@ -534,6 +572,10 @@ Pola routing terstandarisasi: `/{role}/{sub_type}/{page}`
 - **Desktop**: Wraps children in `DesktopSidebarLayout`
 - **Mobile**: `max-w-[480px]` centered container + `BottomNav` (fixed at bottom, 64px)
 - Always renders `BusinessModelOverlay` if `profile.business_model_selected === false`
+- **Cache Warming Prefetchers** (mount with layout, render `null`):
+  - `SembakoPrefetcher` — 10 queries for sembako vertical (sales, products, batches, etc.)
+  - `PoultryBrokerPrefetcher` — 5 queries for poultry broker: `['sales', tid]`, `['deliveries', null]`, `['loss-reports']`, `['vehicles', tid]`, `['drivers', tid]`
+  - Both prefetchers are `enabled: !!tid` and use same staleTime as main pages → all nav pages load instantly after first visit
 
 ### `DesktopSidebarLayout` (`src/dashboard/layouts/DesktopSidebarLayout.jsx`)
 - Uses Shadcn `SidebarProvider` → `AppSidebar` + `SidebarInset`
@@ -685,13 +727,13 @@ src/
 │
 ├── lib/
 │   ├── supabase.js                 ← createClient (env vars)
-│   ├── queryClient.js              ← QueryClient (staleTime 2min, retry 1)
+│   ├── queryClient.js              ← QueryClient (staleTime 5min, gcTime 10min, retry 1)
 │   ├── utils.js                    ← cn() (clsx + twMerge)
 │   ├── tokens.js                   ← Design tokens (colors, borders)
 │   ├── format.js                   ← Formatting + label maps (see §11)
 │   ├── businessModel.js            ← BUSINESS_MODELS config + getBusinessModel()
 │   └── hooks/
-│       ├── useAuth.js              ← { user, profile, tenant, loading, refetchProfile }
+│       ├── useAuth.jsx             ← AuthProvider (React Context) + useAuth() consumer — getSession() called once
 │       ├── useMediaQuery.js        ← Returns boolean for CSS media query
 │       ├── useDashboardStats.js    ← Aggregated KPIs (today profit, piutang, etc.)
 │       ├── usePurchases.js         ← Purchases list with farm join
@@ -1100,9 +1142,21 @@ Located: `src/dashboard/components/TransaksiWizard.jsx`
 
 ## 17. Hooks: useAuth & Session
 
-Located: `src/lib/hooks/useAuth.js`
+Located: `src/lib/hooks/useAuth.jsx` (**Note: `.jsx` — file exports JSX via AuthProvider**)
 
-```js
+**Architecture**: `useAuth()` is a **React Context consumer**, NOT a standalone hook.
+- `AuthProvider` in `main.jsx` wraps the entire app.
+- `getSession()` is called exactly once at app startup — NOT per component.
+- All components share one auth state via context.
+- ⚠️ **NEVER** add `useEffect + getSession()` inside a component — that was the old pattern.
+
+```jsx
+// In main.jsx (required — wraps entire app)
+import { AuthProvider } from './lib/hooks/useAuth'
+// <AuthProvider> wraps <App /> inside <QueryClientProvider>
+
+// In any component
+import { useAuth } from '@/lib/hooks/useAuth'
 const { user, profile, tenant, loading, refetchProfile } = useAuth()
 ```
 
@@ -1110,7 +1164,7 @@ const { user, profile, tenant, loading, refetchProfile } = useAuth()
 - `profile` — Profile aktif (dari `profiles` table joined dengan `tenants(*)`)
 - `profiles` — Daftar seluruh profile bisnis milik user tersebut
 - `tenant` — Shorthand `profile?.tenants`
-- `loading` — true while fetching session/profile
+- `loading` — true while fetching session/profile (only false after `fetchAllProfiles()` completes)
 - `switchTenant(tenantId)` — Mengganti konteks bisnis aktif & persist ke localStorage
 - `refetchProfile()` — manually re-fetch profile (used after BusinessModelOverlay)
 
@@ -1290,17 +1344,28 @@ Filter tersedia di `CashFlow.jsx` (UI layer, bukan hook):
 97. **`sembako_products` punya `secondary_unit` + `conversion_rate`**: Ditambahkan via migration `20260401_sembako_products_unit_conversion.sql`. Keduanya nullable. Saat insert, WAJIB konversi empty string ke null: `conversion_rate: form.conversion_rate ? Number(form.conversion_rate) : null`. Tanpa ini → error `22P02 invalid input syntax for type numeric: ""`.
 98. 🚨 **FIFO WAJIB insert ke `sembako_stock_out`**: `useCreateSembakoSale` harus insert satu record ke `sembako_stock_out` per batch yang terdeduct (fields: `tenant_id`, `product_id`, `batch_id`, `sale_id`, `qty_keluar`, `buy_price`, `reason: 'sale'`). Tanpa ini, `useDeleteSembakoSale` tidak bisa mengetahui batch mana yang harus di-restore, sehingga stok tidak pernah kembali setelah sale dihapus. Kolom adalah `qty_keluar` (BUKAN `qty_out`).
 99. **`useSoftDeleteSembakoProduct` cascade ke batches**: Saat produk di-soft-delete, semua `sembako_stock_batches` dengan `product_id` tersebut ikut di-soft-delete (`is_deleted: true`). Ini agar `Total Pembelian Stok` di TokoSupplier.jsx tidak menghitung batch dari produk yang sudah dihapus.
-100. **`BrokerLayout` prefetch untuk sembako**: `BrokerLayout.jsx` memiliki `SembakoPrefetcher` komponen yang di-render ketika `tenant.sub_type === 'distributor_sembako'`. Prefetcher memanggil semua hook sembako utama (`useSembakoDashboardStats`, `useSembakoSales`, `useSembakoProducts`, dll.) saat layout mount. Data di-cache 5 menit via `staleTime: STALE_5M` sehingga navigasi antar halaman instant tanpa loading ulang.
+100. **`BrokerLayout` dual prefetchers**: `BrokerLayout.jsx` memiliki DUA prefetcher: `SembakoPrefetcher` (untuk `distributor_sembako`, 10 queries) dan `PoultryBrokerPrefetcher` (untuk non-sembako broker, 5 queries: sales, deliveries, loss-reports, vehicles, drivers). Keduanya di-render di level layout sehingga data tersedia sebelum user navigasi ke halaman manapun. Gunakan `{!isSembako && <PoultryBrokerPrefetcher />}` / `{isSembako && <SembakoPrefetcher />}` pattern.
 101. **Gunakan `useParams` bukan `getXBasePath(tenant)` di route components**: `getXBasePath(tenant)` returns `/broker/broker_ayam` jika `tenant` belum loaded (null). Di dalam komponen yang sudah di-render dalam route `/broker/:brokerType/*`, selalu pakai `const { brokerType } = useParams()` dan `brokerBase = \`/broker/${brokerType}\`` untuk navigasi. Ini mencegah user yang klik tombol saat loading diarahkan ke route yang salah.
 102. **`20260401_fix_all_rls_bulletproof.sql`** — Migration terbaru yang fix SEMUA 33+ tabel sekaligus termasuk `sembako_deliveries` (sebelumnya pakai `my_tenant_id()`+`my_role()`, berbeda dari `get_my_tenant_id()`). Setelah migration ini dijalankan dan verified 0 rows di query check, tidak ada lagi tabel yang pakai fungsi-fungsi tersebut. Ini final state RLS untuk semua tabel.
 103. **`useSembakoLaporan` gunakan `other_cost` bukan `total_other_cost`**: Kolom di `sembako_sales` adalah `other_cost`. Bug lama menggunakan `i.total_other_cost` → selalu `undefined` → net profit laporan selalu lebih besar dari seharusnya.
+104. **`toWaLink(phone, encodedText?)` — WAJIB untuk semua tombol WhatsApp**: Located di `src/dashboard/broker/sembako_broker/components/sembakoSaleUtils.jsx`. Normalizes Indonesian phone: strip non-digit, `0xx → 62xx`, `+62xx → 62xx`. Returns `https://wa.me/62xxx` atau `https://wa.me/62xxx?text=...` (if encodedText provided). JANGAN gunakan `phone.replace(/[^0-9]/g, '')` langsung — tidak handle prefix `0`. Return `null` jika phone kosong.
+    ```js
+    import { toWaLink } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
+    window.open(toWaLink(phone, encodeURIComponent(msg)), '_blank')
+    ```
+105. **`AuthApiError: Invalid Refresh Token`** — normal Supabase session expiry, bukan code bug. Fix: user login ulang. Tidak perlu code change. Terjadi ketika token expired (biasanya setelah idle lama).
+106. **`useAuth()` must be inside `<AuthProvider>`** — throwing `useAuth must be used inside <AuthProvider>` berarti komponen di-render di luar tree `AuthProvider`. Cek `main.jsx` — semua children harus wrapped di `<AuthProvider>`. Error ini tidak akan muncul dalam normal flow karena `<App />` selalu di dalam `<AuthProvider>`.
+107. **Peternak `manajer` role** — Ditambahkan via migration `20260408_add_manajer_role.sql`. Harus sudah dijalankan di Supabase. Role ini khusus peternak — setara `staff` di broker tapi dengan akses tambahan (bisa tutup/hapus siklus, view keuangan).
+108. **`BrokerPageSkeleton.jsx`** — Centralized skeleton file di `src/components/ui/BrokerPageSkeleton.jsx`. Export: `BerandaSkeleton`, `TransaksiSkeleton`, `PengirimanSkeleton`, `RPASkeleton`, `KandangSkeleton`, `TimSkeleton`, `ArmadaSkeleton`, `CashFlowSkeleton`, `RPADetailSkeleton`, `GenericPageSkeleton`. Gunakan ini — jangan buat skeleton inline per halaman.
+109. **`SembakoInvoiceCard` outer wrapper is `<div role="button">`, NOT `<button>`** — Karena card berisi `<button>` (Atur Pengiriman) di dalamnya. Nested `<button>` inside `<button>` is invalid HTML. Pattern: `<div role="button" tabIndex={0} onClick={...} onKeyDown={(e) => e.key === 'Enter' && handler()}>`.
 
 
 ## 21. RBAC & Role Logic
 
-**`profiles.role` enum**: `owner`, `staff`, `view_only`, `sopir`.
+**`profiles.role` enum**: `owner`, `staff`, `manajer`, `view_only`, `sopir`, `superadmin`.
 - `owner`: Full access, can manage team, billing.
-- `staff`: Standard operational access, cannot manage team/billing.
+- `manajer`: Peternak-specific — operational lead. Can create/close/delete cycles, view keuangan, input expenses, invite not allowed.
+- `staff` / `pekerja`: Standard operational access, cannot manage team/billing.
 - `view_only`: Read-only access to most data.
 - `sopir`: Limited access, primarily for `SopirDashboard` to update delivery status.
 
@@ -1309,6 +1374,11 @@ Filter tersedia di `CashFlow.jsx` (UI layer, bukan hook):
 - Sidebar and Bottom Navigation menus dynamically filter visible items based on user's role.
 - Role badge displayed in sidebar footer for quick identification.
 - Frontend components should check `profile.role` before rendering sensitive action buttons or forms.
+- For peternak: always use `usePeternakPermissions()` hook (see §4 Peternak RBAC) — never check `profile.role` manually.
+
+**`PETERNAK_INVITE_ROLES`** (exported from `usePeternakPermissions.js`): `['manajer', 'pekerja', 'view_only']` — roles owner can invite.
+**`PETERNAK_ROLE_LABELS`**: `{ owner: 'Pemilik', manajer: 'Manajer', pekerja: 'Pekerja', view_only: 'Tamu' }`.
+**`PETERNAK_ROLE_BADGE`**: Colors per role for badge display.
 
 ---
 

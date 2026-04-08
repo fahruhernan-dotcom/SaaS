@@ -7,6 +7,7 @@ import { DatePicker } from '@/components/ui/DatePicker'
 import {
   useActiveCycles, useUpsertDailyRecord, calcCurrentAge,
 } from '@/lib/hooks/usePeternakData'
+import { useAuth } from '@/lib/hooks/useAuth'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
 
 // ─── Constants ────────────────────────────────────────────────────────────────

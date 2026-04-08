@@ -42,10 +42,16 @@ const Footer = () => {
           <div>
             <h4 className="font-body text-[11px] font-bold tracking-wide text-tx-1 mb-[12px]">PRODUK</h4>
             <ul className="space-y-[6px]">
-              {['Fitur', 'Harga', 'Panduan', 'Studi Kasus'].map((link, i) => (
+              {[
+                { name: 'Fitur', href: '/fitur' },
+                { name: 'Harga', href: '/harga' },
+                { name: 'Harga Pasar', href: '/harga-pasar' },
+                { name: 'Panduan', href: '#' },
+                { name: 'Studi Kasus', href: '#' }
+              ].map((link, i) => (
                 <li key={i}>
-                  <a href="#" className="font-body text-[13px] text-tx-3 hover:text-tx-1 block transition-colors duration-150">
-                    {link}
+                  <a href={link.href} className="font-body text-[13px] text-tx-3 hover:text-tx-1 block transition-colors duration-150">
+                    {link.name}
                   </a>
                 </li>
               ))}

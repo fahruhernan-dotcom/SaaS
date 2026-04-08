@@ -23,6 +23,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import EmptyState from '@/components/EmptyState'
 import { Skeleton } from '@/components/ui/skeleton'
+import { RPASkeleton } from '@/components/ui/BrokerPageSkeleton'
 import {
     Sheet,
     SheetContent,
@@ -107,6 +108,8 @@ export default function RPA() {
         setEditingRPA(rpa)
         setOpenModal(true)
     }
+
+    if (isLoading) return <RPASkeleton />
 
     return (
         <motion.div

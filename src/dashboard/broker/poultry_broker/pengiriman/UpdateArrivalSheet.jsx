@@ -710,7 +710,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                      </div>
                 </div>
 
-                <form className="space-y-6 pb-20">
+                <form className="space-y-6 pb-20" onSubmit={handleUpdate}>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label className={cn("font-black uppercase text-[#4B6478] tracking-widest ml-1", isDesktop ? "text-[9px]" : "text-xs")}>Jam Muat</Label>
@@ -1536,8 +1536,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
 
                     {/* ROW 7: Submit */}
                     <button
-                        type="button"
-                        onClick={handleUpdate}
+                        type="submit"
                         disabled={isLoading}
                         className="w-full h-16 rounded-[24px] font-black text-sm uppercase tracking-[0.2em] text-white active:scale-95 transition-all mt-4 disabled:opacity-60 disabled:pointer-events-none flex items-center justify-center gap-3"
                         style={{

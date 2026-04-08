@@ -37,6 +37,9 @@ import { cn } from '@/lib/utils'
 import { 
     useCashFlow, useCashFlowByRPA, useCashFlowByFarm, getPeriodRange 
 } from '@/lib/hooks/useCashFlow'
+import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
+
+import { CashFlowSkeleton } from '@/components/ui/BrokerPageSkeleton'
 
 // UI Components
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -115,6 +118,7 @@ export default function CashFlow() {
     const isDesktop = useMediaQuery('(min-width: 1024px)')
     const { tenant } = useAuth()
     const queryClient = useQueryClient()
+    const sub = getSubscriptionStatus(tenant)
     
     // --- PERIOD STATE ---
     const [selectedPeriod, setSelectedPeriod] = useState('week')
@@ -421,8 +425,10 @@ export default function CashFlow() {
         return allTransactions.filter(tx => tx._type === activeTxFilter)
     }, [allTransactions, activeTxFilter])
 
+    if (isLoading) return <CashFlowSkeleton />
+
     return (
-        <motion.div 
+        <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className={cn("bg-[#06090F] min-h-screen text-[#F1F5F9] pb-24 selection:bg-emerald-500/30", isDesktop && "pb-10")}
@@ -448,7 +454,13 @@ export default function CashFlow() {
                         <Button 
                             variant="outline" 
                             className="flex-1 md:flex-none h-12 rounded-2xl bg-[#0C1319] border-white/5 text-[#4B6478] font-black uppercase tracking-widest text-[10px] hover:bg-white/5 transition-all"
-                            onClick={() => toast("Fitur ekspor segera hadir")}
+                            onClick={() => {
+                                if (sub.plan !== 'business') {
+                                    toast.error('Ekspor Terkunci', { description: 'Export PDF/Excel eksklusif untuk Plan Business. Tingkatkan paketmu untuk membuka automasi laporan.' })
+                                } else {
+                                    toast("Fitur ekspor segera hadir")
+                                }
+                            }}
                         >
                             <Download size={16} className="mr-2" />
                             Export

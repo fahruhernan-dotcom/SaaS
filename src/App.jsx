@@ -20,6 +20,7 @@ import { Menu } from 'lucide-react';
 
 // Dashboard pages
 import HargaPasar from './dashboard/_shared/pages/HargaPasar';
+import HargaPasarPublic from '@/pages/HargaPasarPublic';
 import { BrokerPageRouter } from './dashboard/broker/_shared/BrokerRouter';
 import { RPPageRouter } from './dashboard/rumah_potong/RPPageRouter';
 import RumahPotongLayout from './dashboard/_shared/layouts/RumahPotongLayout';
@@ -246,6 +247,7 @@ function App() {
         <Route path="/tentang-kami" element={<AboutUs />} />
         <Route path="/fitur" element={<FiturPage />} />
         <Route path="/harga" element={<HargaPage />} />
+        <Route path="/harga-pasar" element={<HargaPasarPublic />} />
         <Route path="/check-email" element={<CheckEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />

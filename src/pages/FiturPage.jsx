@@ -5,7 +5,7 @@ import {
   ShoppingCart, UserCheck, FileText, RefreshCw, ClipboardList,
   TrendingUp, ShoppingBag, CreditCard, Building,
   Check, ArrowRight, Globe, TrendingUp as TrendingUpIcon,
-  Shield, Lock,
+  Shield, Lock, Bot, Zap, Network
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
@@ -29,30 +29,55 @@ function FadeUp({ children, delay = 0, className }) {
 
 // ─── Feature list item ────────────────────────────────────────────────────────
 
+const itemVariants = {
+  hidden: { opacity: 0, x: -10 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.3 } }
+};
+
 function FeatureItem({ text }) {
   return (
-    <li className="flex items-start gap-2">
+    <motion.li variants={itemVariants} className="flex items-start gap-2">
       <Check size={14} className="text-emerald-400 shrink-0 mt-0.5" />
       <span className="text-sm text-[#94A3B8] leading-snug">{text}</span>
-    </li>
+    </motion.li>
   )
 }
 
 // ─── Feature Group Card ───────────────────────────────────────────────────────
 
+const listVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08, delayChildren: 0.15 }
+  }
+};
+
 function GroupCard({ Icon, title, desc, features, delay = 0 }) {
   return (
-    <FadeUp delay={delay}>
-      <div className="bg-[#111C24] rounded-2xl p-6 border border-white/8 hover:border-emerald-500/30 transition-all duration-300 h-full flex flex-col">
-        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4 shrink-0">
+    <FadeUp delay={delay} className="h-full">
+      <motion.div 
+        whileHover={{ scale: 1.02, y: -4 }}
+        className="group relative bg-[#111C24] rounded-2xl p-6 border border-white/8 hover:border-emerald-500/40 hover:shadow-[0_8px_30px_rgba(16,185,129,0.12)] transition-all duration-300 h-full flex flex-col overflow-hidden"
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/0 via-emerald-500/0 to-emerald-500/0 group-hover:from-emerald-500/5 group-hover:to-transparent transition-all duration-500" />
+        
+        <div className="relative z-10 w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4 shrink-0 group-hover:bg-emerald-500/20 group-hover:scale-110 transition-all duration-300">
           <Icon size={20} className="text-emerald-400" />
         </div>
-        <h3 className="font-['Sora'] font-bold text-white text-base mb-2 leading-snug">{title}</h3>
-        {desc && <p className="text-xs text-[#4B6478] mb-4 leading-relaxed">{desc}</p>}
-        <ul className="space-y-2 mt-auto">
+        <h3 className="relative z-10 font-['Sora'] font-bold text-white text-base mb-2 leading-snug">{title}</h3>
+        {desc && <p className="relative z-10 text-xs text-[#4B6478] mb-4 leading-relaxed">{desc}</p>}
+        
+        <motion.ul 
+          className="relative z-10 space-y-2 mt-auto"
+          variants={listVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-20px' }}
+        >
           {features.map((f, i) => <FeatureItem key={i} text={f} />)}
-        </ul>
-      </div>
+        </motion.ul>
+      </motion.div>
     </FadeUp>
   )
 }
@@ -69,6 +94,7 @@ const SUBS = {
   broker: [
     { id: 'ayam',  label: 'Broker Ayam',  disabled: false },
     { id: 'telur', label: 'Broker Telur', disabled: false },
+    { id: 'sembako', label: 'Distributor Sembako', disabled: false },
   ],
   peternak: [
     { id: 'broiler', label: 'Ayam Broiler', disabled: false },
@@ -205,6 +231,56 @@ const GROUPS = {
     },
   ],
 
+  broker_sembako: [
+    {
+      Icon: ShoppingCart,
+      title: 'POS Grosir & Eceran Dinamis',
+      desc: null,
+      features: [
+        'Support multi-satuan (Sak, Ball, Karton, Pcs)',
+        'Invoice instan ke kasir & print struck',
+        'Dual-Pricing otomatis (Harga Retail vs Partai)',
+        'Sistem Payment Cash / Tempo (Piutang)',
+        'Diskon dinamis (Tiered Pricing)'
+      ],
+    },
+    {
+      Icon: Package,
+      title: 'Manajamen Multi-Gudang & Inventori',
+      desc: null,
+      features: [
+        'Tracking stok real-time antar cabang',
+        'Mutasi/transfer stok antar gudang tanpa error',
+        'Modul Stok Opname / SO harian terintegrasi',
+        'Alert "Minimum Stock" ke HP pengelola',
+        'Kalkulasi Harga Pokok Penjualan (HPP FIFO/Average)'
+      ],
+    },
+    {
+      Icon: Users,
+      title: 'Kas & Hutang Piutang Lintas Toko',
+      desc: null,
+      features: [
+        'Monitor batas limit kredit toko mitra',
+        'Rekap pencairan Nota Piutang / Bon',
+        'Split-payment system untuk Sales Canvaser',
+        'Monitoring komisi per divisi Sales',
+        'Bukti pelunasan digital tanpa kertas'
+      ],
+    },
+    {
+      Icon: Network,
+      title: 'Sentralisasi Jaringan Distribusi',
+      desc: null,
+      features: [
+        'Konsolidasi laporan performa seluruh agen cabang',
+        'Sinkronisasi master data barang di semua P.O.S',
+        'Analitik Pareto — Produk mana yang paling laris?',
+        'Export Laporan Pemasukan Harian'
+      ],
+    },
+  ],
+
   peternak: [
     {
       Icon: Home,
@@ -334,24 +410,24 @@ const GROUPS = {
 
 const SHARED = [
   {
-    emoji: '🌐',
-    title: 'TernakOS Market',
-    desc: 'Marketplace B2B untuk jual stok, cari ayam, dan posting permintaan. Kontak langsung via WhatsApp.',
+    emoji: '🤖',
+    title: 'TernakBot AI Assistant',
+    desc: 'Asisten AI cerdas untuk analisis data. Tanya "Siapa pembeli nunggak?" atau "Gimana sales bulan ini?" dan sistem merangkum otomatis.',
   },
   {
     emoji: '📈',
-    title: 'Harga Pasar Realtime',
-    desc: 'Data harga ayam broiler dari seluruh Indonesia, diupdate 2x sehari dari sumber terpercaya.',
+    title: 'Dashboard Analisis Real-time',
+    desc: 'Lacak matrik penting bisnis melalui grafik dan rangkuman cash flow komprehensif, disajikan instan.',
   },
   {
     emoji: '🔐',
-    title: 'Multi-Role & Tim',
-    desc: 'Undang anggota tim dengan kode 6 digit. Role: Owner, Staff, View Only, Sopir.',
+    title: 'Role-Based Access (Multi-Role Tim)',
+    desc: 'Undang karyawan (Supir/Staff/Admin) via kode 6-digit dengan fungsi & batasan menu spesifik.',
   },
   {
     emoji: '🛡️',
-    title: 'Data Aman',
-    desc: 'Dihosting di Supabase (PostgreSQL) dengan enkripsi end-to-end dan backup otomatis.',
+    title: 'Keamanan Data Bank-Grade',
+    desc: 'Hosting berbasis Cloud PostgreSQL 100% aman disinkronkan real-time, zero data-loss!',
   },
 ]
 

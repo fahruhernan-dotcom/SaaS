@@ -25,6 +25,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
+import { TransaksiSkeleton } from '@/components/ui/BrokerPageSkeleton'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import TransaksiWizard from '@/dashboard/_shared/components/TransaksiWizard'
 import TransaksiSuccessCard from '@/components/ui/TransaksiSuccessCard'
@@ -531,6 +532,8 @@ export default function Transaksi() {
       setDeleteTargetSale(null)
     }
   }, [])
+
+  if (isLoadingSales) return <TransaksiSkeleton />
 
   return (
     <motion.div

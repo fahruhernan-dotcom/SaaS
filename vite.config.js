@@ -23,7 +23,7 @@ export default defineConfig({
         "font-src 'self' https://fonts.gstatic.com",
         "img-src 'self' data: blob: https:",
         "media-src 'self' data: blob:",
-        "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://prod.spline.design https://*.spline.design https://unpkg.com data:",
+        "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://open.bigmodel.cn https://api.maiarouter.ai https://api.maia.id https://prod.spline.design https://*.spline.design https://unpkg.com data:",
         "frame-src 'self' blob:",
         "object-src 'none'",
         "base-uri 'self'",
