@@ -233,10 +233,10 @@ export default function AdminSubscriptions() {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
+      className="space-y-5 p-4 lg:p-0 lg:space-y-6"
     >
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-0 z-20 bg-[#080C10]/80 backdrop-blur-md py-2 -mx-2 px-2 rounded-xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-14 lg:top-0 z-20 bg-[#080C10]/80 backdrop-blur-md py-2 -mx-2 px-2 rounded-xl">
         <div>
           <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight">
             Subscriptions & Invoices

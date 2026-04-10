@@ -132,11 +132,11 @@ export default function AdminBeranda() {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-6 pb-12"
+      className="space-y-5 pb-4 p-4 lg:p-0 lg:space-y-6 lg:pb-12"
     >
 
       {/* ── SECTION A — Header ───────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sticky top-0 z-20 bg-[#080C10]/80 backdrop-blur-md py-2 -mx-2 px-2 rounded-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sticky top-14 lg:top-0 z-20 bg-[#080C10]/80 backdrop-blur-md py-2 -mx-2 px-2 rounded-xl">
         <div>
           <h1 className="font-display text-2xl font-bold text-white uppercase tracking-tight">
             OVERVIEW
