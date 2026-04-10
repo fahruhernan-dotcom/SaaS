@@ -1,6 +1,6 @@
 # TernakOS — Developer Context
 
-> Last updated: 2026-04-09 v4 (Auth Architecture: useAuth converted to React Context (AuthProvider); Peternak RBAC: usePeternakPermissions hook + manajer role; Cache Warming: PoultryBrokerPrefetcher added to BrokerLayout; WA Link: toWaLink() utility in sembakoSaleUtils.jsx; BrokerPageSkeleton centralized; Various bug fixes) | Use this as reference for all future implementations.
+> Last updated: 2026-04-10 v5 (Kambing & Domba Penggemukan: full dashboard (DB + hooks + 5 UI pages + LaporanBatch) — migration `20260409_feedlot_kambing_domba.sql`; Kambing & Domba Breeding: full dashboard (DB + hooks + 5 UI pages + LaporanFarm) — migration `20260410_breeding_kambing_domba.sql`; Both use `kd_penggemukan_*` / `kd_breeding_*` table namespaces; businessModel.js updated with teal/green accent colors; PeternakRouter.jsx wired to all new pages) | Use this as reference for all future implementations.
 
 ---
 
@@ -547,8 +547,8 @@ Pola routing terstandarisasi: `/{role}/{sub_type}/{page}`
 | /peternak      | peternak          | /peternak/peternak_broiler | peternak_broiler |
 | /peternak      | peternak          | /peternak/peternak_layer   | peternak_layer   |
 | /peternak      | peternak          | /peternak/peternak_sapi    | peternak_sapi    |
-| /peternak      | peternak          | /peternak/peternak_domba   | peternak_domba   |
-| /peternak      | peternak          | /peternak/peternak_kambing | peternak_kambing |
+| /peternak      | peternak_kambing_domba_penggemukan | /peternak/peternak_kambing_domba_penggemukan | peternak_kambing_domba_penggemukan |
+| /peternak      | peternak_kambing_domba_breeding    | /peternak/peternak_kambing_domba_breeding    | peternak_kambing_domba_breeding    |
 | /peternak      | peternak          | /peternak/peternak_babi    | peternak_babi (🔒)|
 | /rumah_potong  | rumah_potong      | /rumah_potong/rpa     | rpa                 |
 | /rumah_potong  | rumah_potong      | /rumah_potong/rph     | rph                 |
@@ -685,8 +685,8 @@ const model = (tenant?.business_vertical && BUSINESS_MODELS[tenant.business_vert
 | `peternak_broiler` | ✅ Aktif | Full |
 | `peternak_layer` | 🚧 Placeholder | - |
 | `peternak_sapi` | 🚧 Placeholder | - |
-| `peternak_domba` | 🚧 Placeholder | - |
-| `peternak_kambing` | 🚧 Placeholder | - |
+| `peternak_kambing_domba_penggemukan` | ✅ Aktif | Full (Batch Penggemukan: Beranda, Ternak, Pakan, Kesehatan, Laporan) |
+| `peternak_kambing_domba_breeding` | ✅ Aktif | Full (Pembibitan: Beranda, Ternak, Reproduksi, Kesehatan, Pakan, Laporan) |
 | `peternak_babi` | 🔒 Coming Soon | - |
 
 - **Broker**: ✅ `broker_ayam`, `broker_telur`, `distributor_daging`, `distributor_sembako` | 🚧 `broker_sapi`
@@ -751,6 +751,20 @@ src/
 │       │                              useCreateCycle, useUpdateCycleStatus, useDeleteCycle,
 │       │                              useCycleById, useUpsertDailyRecord,
 │       │                              useFeedStocks, useUpsertFeedStock, useReduceFeedStock
+│       ├── useKdPenggemukanData.js ← Kambing/Domba Penggemukan hooks: useKdBatches, useKdAnimals,
+│       │                              useKdWeightRecords, useKdHealthLogs, useKdFeedLogs,
+│       │                              useAddKdBatch, useUpdateKdBatch, useAddKdAnimal, useUpdateKdAnimal,
+│       │                              useAddKdWeight, useAddKdHealthLog, useAddKdFeedLog, useAddKdSale;
+│       │                              Pure KPIs: calcADG, calcFCR, calcMortalitas, calcRCRatio, calcROI
+│       └── useKdBreedingData.js   ← Kambing/Domba Breeding hooks: useKdBreedingAnimals,
+│                                     useKdBreedingAnimalWeights, useKdBreedingMatings, useKdBreedingBirths,
+│                                     useKdBreedingHealthLogs, useKdBreedingFeedLogs, useKdBreedingSales,
+│                                     useAddKdBreedingAnimal, useUpdateKdBreedingAnimal, useAddKdBreedingWeight,
+│                                     useAddKdBreedingMating, useUpdateKdBreedingMating, useAddKdBreedingBirth,
+│                                     useAddKdBreedingHealthLog, useAddKdBreedingFeedLog, useAddKdBreedingSale;
+│                                     Pure KPIs: calcBreedingADG, calcConceptionRate, calcLambingRate,
+│                                     calcWeaningRate, calcLitterSize, calcLambingIntervalBulan,
+│                                     calcMortalitasAnakPreSapih, calcBreedingRCRatio, calcAgeInDays
 │       ├── useRPAData.js           ← RPA hooks: useRPAOrders, useRPAHutang, useRPADistribusi,
 │       │                              useRPAProducts, useRPASuppliers, useRPACustomers,
 │       │                              useRPAInvoices, useCreateRPAInvoice, useRPACustomerPayments, etc.
@@ -793,8 +807,11 @@ src/
 │   ├── broiler/           ← full dashboard
 │   ├── layer/             ← placeholder
 │   ├── sapi/              ← placeholder
-│   ├── domba/             ← placeholder
-│   ├── kambing/           ← placeholder
+│   ├── kambing_domba/     ← Kambing & Domba (shared species, dual model)
+│   │   ├── penggemukan/   ← Penggemukan (batch-based feedlot)
+│   │   │   ├── Beranda.jsx, Ternak.jsx, Pakan.jsx, Kesehatan.jsx, LaporanBatch.jsx
+│   │   └── breeding/      ← Pembibitan (pedigree + reproductive cycle)
+│   │       ├── Beranda.jsx, Ternak.jsx, Reproduksi.jsx, Kesehatan.jsx, Pakan.jsx, LaporanFarm.jsx
 │   ├── babi/              ← coming soon (locked)
 │   └── PeternakRouter.jsx
 ├── rumah_potong/
@@ -1063,9 +1080,23 @@ Formatter functions: `formatBuyerType(val)`, `formatPaymentTerms(val)`, `formatP
 | `['notifications', tenantId]` | `useNotifications()` | Notifikasi per tenant (realtime) |
 | `['plan-configs']` | `usePlanConfigs()` | Config plan: kandang_limit, addon_pricing, trial_config, dll |
 | `['xendit-config']` | `useXenditConfig()` | Xendit API config (dari payment_settings) |
+| `['kd_penggemukan_batches', tenantId]` | `useKdBatches()` | Daftar batch penggemukan |
+| `['kd_penggemukan_animals', tenantId]` | `useKdAnimals()` | Hewan per batch |
+| `['kd_penggemukan_weight_records', tenantId]` | `useKdWeightRecords()` | Riwayat timbang penggemukan |
+| `['kd_penggemukan_health_logs', tenantId]` | `useKdHealthLogs()` | Log kesehatan penggemukan |
+| `['kd_penggemukan_feed_logs', tenantId]` | `useKdFeedLogs()` | Log pakan penggemukan |
+| `['kd_breeding_animals', tenantId]` | `useKdBreedingAnimals()` | Master hewan breeding (+ pedigree join) |
+| `['kd_breeding_weight_records', 'animal', animalId]` | `useKdBreedingAnimalWeights(id)` | Riwayat timbang per-ekor breeding |
+| `['kd_breeding_mating_records', tenantId]` | `useKdBreedingMatings()` | Catatan perkawinan |
+| `['kd_breeding_births', tenantId]` | `useKdBreedingBirths()` | Catatan kelahiran (partus) |
+| `['kd_breeding_health_logs', tenantId]` | `useKdBreedingHealthLogs()` | Log kesehatan breeding |
+| `['kd_breeding_feed_logs', tenantId]` | `useKdBreedingFeedLogs()` | Log pakan breeding (per kandang) |
+| `['kd_breeding_sales', tenantId]` | `useKdBreedingSales()` | Penjualan bibit/afkir |
 
 After mutations, invalidate relevant keys. The wizard invalidates: `broker-stats`, `purchases`, `sales`, `deliveries`, `rpa-clients`.
 Peternak mutations invalidate: `active-cycles`, `all-cycles`, `peternak-farms`, `daily-records`, `farm-workers`, `worker-payments`, `feed-stocks`.
+KD Penggemukan mutations invalidate: `kd_penggemukan_batches`, `kd_penggemukan_animals`, `kd_penggemukan_weight_records`, `kd_penggemukan_health_logs`, `kd_penggemukan_feed_logs`.
+KD Breeding mutations invalidate: `kd_breeding_animals`, `kd_breeding_mating_records`, `kd_breeding_births`, `kd_breeding_health_logs`, `kd_breeding_feed_logs`, `kd_breeding_sales`.
 Market mutations invalidate: `market-listings`, `my-listings`.
 
 ---

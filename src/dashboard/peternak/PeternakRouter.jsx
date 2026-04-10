@@ -16,6 +16,22 @@ import BroilerTim from './broiler/Tim'
 // Layer pages (placeholder)
 import LayerBeranda from './layer/LayerBeranda'
 
+// Kambing & Domba — Penggemukan
+import KambingBeranda   from './kambing_domba/Beranda'
+import KambingBatch     from './kambing_domba/Batch'
+import KambingTernak    from './kambing_domba/Ternak'
+import KambingKesehatan from './kambing_domba/Kesehatan'
+import KambingPakan     from './kambing_domba/Pakan'
+import KambingLaporan   from './kambing_domba/LaporanBatch'
+
+// Kambing & Domba — Breeding
+import BreedingBeranda    from './kambing_domba/breeding/Beranda'
+import BreedingTernak     from './kambing_domba/breeding/Ternak'
+import BreedingReproduksi from './kambing_domba/breeding/Reproduksi'
+import BreedingKesehatan  from './kambing_domba/breeding/Kesehatan'
+import BreedingPakan      from './kambing_domba/breeding/Pakan'
+import BreedingLaporan    from './kambing_domba/breeding/LaporanFarm'
+
 // Shared pages
 import HargaPasar from '../_shared/pages/HargaPasar'
 import Akun from '../_shared/pages/Akun'
@@ -41,7 +57,28 @@ export function PeternakPageRouter({ page }) {
     peternak_layer: {
       beranda: <LayerBeranda />,
       'akun':  <Akun />,
-    }
+    },
+    peternak_kambing_domba_breeding: {
+      beranda:    <BreedingBeranda />,
+      ternak:     <BreedingTernak />,
+      reproduksi: <BreedingReproduksi />,
+      kesehatan:  <BreedingKesehatan />,
+      pakan:      <BreedingPakan />,
+      laporan:    <BreedingLaporan />,
+      tim:        <Akun />,
+      akun:       <Akun />,
+    },
+    peternak_kambing_domba_penggemukan: {
+      beranda:       <KambingBeranda />,
+      batch:         <KambingBatch />,
+      ternak:        <KambingTernak />,
+      kesehatan:     <KambingKesehatan />,
+      pakan:         <KambingPakan />,
+      laporan:       <KambingLaporan />,
+      'harga-pasar': <HargaPasar />,
+      tim:           <Akun />,   // placeholder — Phase 4 ganti ke KambingTim
+      akun:          <Akun />,
+    },
   }
   
   return pages[peternakType]?.[page]
