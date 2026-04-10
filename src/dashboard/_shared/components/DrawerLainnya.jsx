@@ -90,12 +90,14 @@ export default function DrawerLainnya({ isOpen, onClose, userType }) {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 400, damping: 40 }}
-            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-bg-1 border-t border-border/10 rounded-t-[32px] z-[1001] pb-[env(safe-area-inset-bottom,24px)] min-h-[50vh] max-h-[90vh] overflow-y-auto"
+            className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-bg-1 border-t border-border/10 rounded-t-[32px] z-[1001] flex flex-col"
+            style={{ maxHeight: '90dvh' }}
           >
-            {/* Handle */}
-            <div className="w-10 h-1.5 bg-muted/20 rounded-full mx-auto my-4" />
+            {/* Handle — non-scrollable */}
+            <div className="shrink-0 w-10 h-1.5 bg-muted/20 rounded-full mx-auto my-4" />
 
-            <div className="px-6 pb-6">
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto overscroll-contain px-6 pb-6" style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}>
               <div className="flex justify-between items-center mb-8">
                 <div>
                   <h2 className="font-display text-lg font-bold">Layanan Lainnya</h2>
@@ -136,7 +138,7 @@ export default function DrawerLainnya({ isOpen, onClose, userType }) {
                   )
                 })}
               </div>
-            </div>
+            </div>{/* end scrollable */}
           </motion.div>
         </>
       )}
