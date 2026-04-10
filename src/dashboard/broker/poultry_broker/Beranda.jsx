@@ -491,7 +491,7 @@ function MobileDashboard({ data, profile, navigate, setWizardOpen, chartPeriod, 
 
   return (
     <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="flex flex-col min-h-full bg-[#06090F] text-foreground pb-24">
-      <header className="px-5 pt-8 pb-6 flex justify-between items-start">
+      <header className="px-5 pt-16 pb-6 flex justify-between items-start">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.2em] text-[#4B6478] mb-1.5">TernakOS Broker</p>
           <h1 className="font-display text-2xl font-black text-[#F1F5F9] leading-tight flex items-center gap-2">

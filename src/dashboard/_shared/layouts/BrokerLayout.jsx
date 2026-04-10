@@ -1,4 +1,4 @@
-import React, { useState, Component } from 'react'
+import React, { useState, useRef, Component } from 'react'
 import { Outlet } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
@@ -149,6 +149,21 @@ export default function BrokerLayout() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  // Swipe-right-from-left-edge to open sidebar
+  const swipeStartX = useRef(null)
+  const handleTouchStart = (e) => {
+    swipeStartX.current = e.touches[0].clientX
+  }
+  const handleTouchEnd = (e) => {
+    if (swipeStartX.current === null) return
+    const dx = e.changedTouches[0].clientX - swipeStartX.current
+    // Only trigger if swipe started within 40px of left edge and moved 60px+ right
+    if (swipeStartX.current < 40 && dx > 60) {
+      setSidebarOpen(true)
+    }
+    swipeStartX.current = null
+  }
+
   if (loading) return null
 
   // Guard: Business Model Selection (Bypassed for Superadmin)
@@ -162,16 +177,20 @@ export default function BrokerLayout() {
   const renderContent = () => {
     if (!isDesktop) {
       return (
-        <div style={{
-          background: '#06090F',
-          minHeight: '100vh',
-          maxWidth: '480px',
-          margin: '0 auto',
-          paddingBottom: '80px',
-          position: 'relative',
-          overflowX: 'hidden',
-          overscrollBehaviorX: 'none'
-        }}>
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          style={{
+            background: '#06090F',
+            minHeight: '100vh',
+            maxWidth: '480px',
+            margin: '0 auto',
+            paddingBottom: '80px',
+            position: 'relative',
+            overflowX: 'hidden',
+            overscrollBehaviorX: 'none'
+          }}
+        >
           {!isSembako && (
             <button
               className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-[#0C1319] border border-white/10 rounded-xl flex items-center justify-center shadow-lg"
