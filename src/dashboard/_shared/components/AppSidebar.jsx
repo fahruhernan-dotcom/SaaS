@@ -1140,14 +1140,14 @@ export default function AppSidebar({ open, onClose }) {
     return (
       <>
         <Sheet open={open} onOpenChange={(val) => !val && onClose?.()}>
-          <SheetContent side="left" className="p-0 border-r border-[#1e293b] w-[280px]" style={{ background: '#090E14' }}>
+          <SheetContent side="left" className="p-0 border-r border-[#1e293b] w-[280px] flex flex-col overflow-hidden" style={{ background: '#090E14' }}>
             <SheetHeader className="sr-only">
               <SheetTitle>Navigasi Sidebar</SheetTitle>
               <SheetDescription>Menu navigasi utama aplikasi TernakOS.</SheetDescription>
             </SheetHeader>
             <SidebarProvider defaultOpen={true}>
               <Sidebar collapsible="none" className="border-none bg-transparent" style={{ width: '100%', height: '100%' }}>
-                <div style={{ paddingBottom: '32px', height: '100%', overflowY: 'auto' }}>
+                <div style={{ paddingBottom: '32px', height: '100%', overflowY: 'auto', overscrollBehavior: 'contain' }}>
                   {sidebarContent}
                 </div>
               </Sidebar>

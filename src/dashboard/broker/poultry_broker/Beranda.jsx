@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import {
   TrendingUp,
   AlertCircle,
@@ -16,7 +16,8 @@ import {
   Beef,
   CalendarX,
   Plus,
-  Truck
+  Truck,
+  Menu,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -75,6 +76,7 @@ const fadeUp = {
 export default function BrokerBeranda() {
   const { profile, tenant } = useAuth()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const { setSidebarOpen } = useOutletContext() || {}
   const _navigate = useNavigate()
   const brokerBase = getBrokerBasePath(tenant)
   const navigate = (path, options) => {
@@ -288,6 +290,7 @@ export default function BrokerBeranda() {
             profile={profile}
             navigate={navigate}
             setWizardOpen={setWizardOpen}
+            setSidebarOpen={setSidebarOpen}
             handleTandaiLunas={handleTandaiLunas}
             chartPeriod={chartPeriod}
             setChartPeriod={setChartPeriod}
@@ -485,30 +488,42 @@ function DesktopDashboard({ data, profile, navigate, setWizardOpen, handleTandai
 }
 
 // --- MOBILE RENDERER ---
-function MobileDashboard({ data, profile, navigate, setWizardOpen, chartPeriod, setChartPeriod, selectedDate, setSelectedDate, currentMonth, setCurrentMonth, agendaFilter, setAgendaFilter }) {
+function MobileDashboard({ data, profile, navigate, setWizardOpen, setSidebarOpen, chartPeriod, setChartPeriod, selectedDate, setSelectedDate, currentMonth, setCurrentMonth, agendaFilter, setAgendaFilter }) {
   const firstName = profile?.full_name?.split(' ')[0] || 'User'
   const initials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'BR'
 
   return (
     <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="flex flex-col min-h-full bg-[#06090F] text-foreground pb-24">
-      <header className="px-5 pt-16 pb-6 flex justify-between items-start">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-[#4B6478] mb-1.5">TernakOS Broker</p>
-          <h1 className="font-display text-2xl font-black text-[#F1F5F9] leading-tight flex items-center gap-2">
-            Halo, {firstName} <span className="text-xl">👋</span>
-          </h1>
-          {data?.insight && (
-            <p className="text-xs font-display font-medium text-[#34D399] mt-2 leading-relaxed">
-              {data.insight.text}
-            </p>
-          )}
+
+      {/* ── Compact fixed TopBar ── */}
+      <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 h-14 flex items-center justify-between px-4 bg-[#06090F]/95 backdrop-blur-xl border-b border-white/[0.05]">
+        <div className="flex items-center gap-3 min-w-0">
+          <button
+            onClick={() => setSidebarOpen?.(true)}
+            className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+          >
+            <Menu size={17} className="text-[#94A3B8]" />
+          </button>
+          <div className="min-w-0">
+            <h1 className="font-display font-black text-[15px] text-[#F1F5F9] leading-tight truncate">
+              Halo, {firstName} <span>👋</span>
+            </h1>
+            {data?.insight && (
+              <p className="text-[10px] font-medium text-[#34D399] leading-tight truncate">
+                {data.insight.text}
+              </p>
+            )}
+          </div>
         </div>
-        <Avatar className="h-10 w-10 border-2 border-emerald-500/30" onClick={() => navigate('/broker/akun')}>
+        <Avatar className="h-9 w-9 border border-emerald-500/30 shrink-0" onClick={() => navigate('/broker/akun')}>
           <AvatarFallback className="bg-emerald-500/10 text-[#34D399] font-black text-xs">
             {initials}
           </AvatarFallback>
         </Avatar>
       </header>
+
+      {/* spacer for fixed topbar */}
+      <div className="h-14" />
 
       {/* KPI Cards Mobile - 2 Column */}
       <div className="px-5 grid grid-cols-2 gap-3 mb-6">
