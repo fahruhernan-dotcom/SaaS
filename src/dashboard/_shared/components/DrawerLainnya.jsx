@@ -19,6 +19,7 @@ import {
   History,
   Store,
   LayoutGrid,
+  Shield,
 } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
@@ -27,11 +28,11 @@ import ThemePicker from '@/components/ui/ThemePicker'
 
 const ICON_MAP = {
   Truck, Wallet, BarChart2, BarChart3, Car, Calculator, User, Users,
-  Package, RefreshCw, ClipboardList, ShoppingCart, CreditCard, History, Store, LayoutGrid,
+  Package, RefreshCw, ClipboardList, ShoppingCart, CreditCard, History, Store, LayoutGrid, Shield,
 }
 
 export default function DrawerLainnya({ isOpen, onClose, userType }) {
-  const { profile, tenant } = useAuth()
+  const { profile, tenant, profiles, isSuperadmin, switchTenant } = useAuth()
   const navigate = useNavigate()
   const model = getBusinessModel(userType, profile?.sub_type)
 
@@ -137,6 +138,31 @@ export default function DrawerLainnya({ isOpen, onClose, userType }) {
                     </motion.div>
                   )
                 })}
+
+                {/* Admin Panel — superadmin only */}
+                {isSuperadmin && (
+                  <motion.div
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      const adminProfile = profiles?.find(
+                        p => p.role === 'superadmin' || p.user_type === 'superadmin'
+                      )
+                      if (adminProfile) switchTenant(adminProfile.tenant_id)
+                      navigate('/admin')
+                      onClose()
+                    }}
+                    className="flex items-center gap-4 p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl cursor-pointer hover:border-amber-500/30 transition-all group"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400">
+                      <Shield size={20} />
+                    </div>
+                    <div className="flex-1">
+                      <span className="font-body text-[15px] font-medium text-amber-300">Admin Panel</span>
+                      <p className="text-[11px] text-amber-400/50 mt-0.5">Superadmin access</p>
+                    </div>
+                    <ChevronRight size={16} className="text-amber-400/40 group-hover:translate-x-1 transition-transform" />
+                  </motion.div>
+                )}
               </div>
             </div>{/* end scrollable */}
           </motion.div>

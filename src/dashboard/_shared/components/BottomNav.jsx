@@ -168,7 +168,7 @@ function CenterFAB({ color, onClick }) {
 
 // ── Root component ─────────────────────────────────────────────────────────────
 export default function BottomNav() {
-  const { user, profile, profiles, tenant, isSuperadmin, switchTenant } = useAuth()
+  const { user, profile, profiles, tenant, switchTenant } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -283,9 +283,7 @@ export default function BottomNav() {
   })
 
 
-  const finalTabs = isSuperadmin
-    ? [...tabs, { label: 'Admin', icon: 'Shield', path: '/admin' }]
-    : tabs
+  const finalTabs = tabs
 
   // Split into left half + right half for FAB layout
   const hasFab = !!fabPath
