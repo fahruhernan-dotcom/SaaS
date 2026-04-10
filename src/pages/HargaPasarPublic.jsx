@@ -97,11 +97,11 @@ function StatCard({ label, value, sub, trend, isLoading }) {
 
 function SourceBadge({ source }) {
   const map = {
-    auto_scraper: { label: 'Auto Scraper', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+    auto_scraper: { label: 'Auto Scraper', color: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
     manual:       { label: 'Input Manual', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-    transaction:  { label: 'Transaksi',    color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+    transaction:  { label: 'Transaksi',    color: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
   }
-  const { label, color } = map[source] ?? { label: source, color: 'bg-white/5 text-text-secondary' }
+  const { label, color } = map[source] ?? { label: source, color: 'bg-white/5 text-[#4B6478] border-white/5' }
   return (
     <span className={cn('text-[10px] px-2 py-0.5 rounded-full border font-medium', color)}>
       {label}
@@ -129,7 +129,7 @@ function CustomTooltip({ active, payload, label }) {
 export default function HargaPasarPublic() {
 
   // ── Data fetching (GLOBAL - no tenant filter) ──────────────────────────────
-  const { data: rawPrices, isLoading } = useQuery({
+  const { data: rawPrices, isLoading, isFetching } = useQuery({
     queryKey: ['public-market-prices'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -141,29 +141,31 @@ export default function HargaPasarPublic() {
         )
         .eq('is_deleted', false)
         .order('price_date', { ascending: false })
-        .order('source',     { ascending: true })   // 'transaction' sorts before 'manual'/'import'
         .order('region',     { ascending: false })
         .limit(60)
 
       if (error) throw error
-      return (data || []).map(normaliseRow)
+      return (data || [])
+        .map(normaliseRow)
+        .filter(r =>
+          r.avg_buy_price > 0 &&
+          r.avg_sell_price > 0 &&
+          r.avg_sell_price >= r.avg_buy_price
+        )
     },
-    staleTime: 5 * 60 * 1000, // 5 menit — cukup untuk halaman publik
+    staleTime: 60 * 1000,      // 1 menit — sinkron dengan refetchInterval
+    refetchInterval: 60 * 1000, // re-fetch setiap 60 detik — backing the "Live" label
   })
 
   // ── Derived data ───────────────────────────────────────────────────────────
 
-  // Deduplicate by date — keep one row per date, preferring source='transaction'
+  // Deduplicate by date — keep one row per date (first encountered = highest priority per query order)
   const dedupedPrices = useMemo(() => {
     if (!rawPrices?.length) return []
     const seen = new Map()
     for (const row of rawPrices) {
-      const existing = seen.get(row.price_date)
-      if (!existing || row.source === 'transaction') {
-        seen.set(row.price_date, row)
-      }
+      if (!seen.has(row.price_date)) seen.set(row.price_date, row)
     }
-    // Re-sort by date desc (Map insertion order is already date-desc from query)
     return [...seen.values()].sort((a, b) => b.price_date.localeCompare(a.price_date))
   }, [rawPrices])
 
@@ -333,9 +335,21 @@ export default function HargaPasarPublic() {
                     Tren Harga 14 Hari Terakhir
                   </h2>
                 </div>
-                <Badge variant="outline" className="text-xs border-white/10 text-text-secondary">
-                  {latestRow?.region ?? 'Nasional'}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  {/* Live indicator — honest: refetches every 60s */}
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className={`absolute inline-flex h-full w-full rounded-full bg-emerald-400 ${isFetching ? 'opacity-100' : 'animate-ping'} opacity-75`} />
+                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">
+                      {isFetching ? 'Updating...' : 'Live'}
+                    </span>
+                  </div>
+                  <Badge variant="outline" className="text-xs border-white/10 text-text-secondary">
+                    {latestRow?.region ?? 'Nasional'}
+                  </Badge>
+                </div>
               </div>
 
               {isLoading ? (
@@ -446,32 +460,34 @@ export default function HargaPasarPublic() {
                       {tableRows.map((row, i) => (
                         <tr
                           key={row.id}
-                          className={cn(
-                            'border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors group',
-                            i === 0 && 'bg-emerald-500/5 relative after:absolute after:left-0 after:top-0 after:bottom-0 after:w-1 after:bg-emerald-500'
-                          )}
+                          className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors"
                         >
-                          <td className="py-2.5 text-text-primary">
-                            {formatShortDate(row.price_date)}
-                            {row.price_date === TODAY && (
-                              <span className="ml-2 text-[10px] text-emerald-400 font-medium">Hari ini</span>
-                            )}
+                          <td className="py-3 text-text-primary font-medium">
+                            <div className="flex items-center gap-2">
+                              {i === 0 && (
+                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+                              )}
+                              {formatShortDate(row.price_date)}
+                              {row.price_date === TODAY && (
+                                <span className="text-[9px] text-[#4B6478] font-black uppercase tracking-widest">Hari ini</span>
+                              )}
+                            </div>
                           </td>
-                          <td className="py-2.5 text-text-secondary capitalize">
+                          <td className="py-3 text-[#4B6478] capitalize text-xs font-medium">
                             {row.region ?? 'Nasional'}
                           </td>
-                          <td className="py-2.5 text-right text-text-primary tabular-nums">
+                          <td className="py-3 text-right text-text-primary tabular-nums">
                             {formatIDR(row.avg_buy_price)}
                           </td>
-                          <td className="py-2.5 text-right text-text-primary tabular-nums">
+                          <td className="py-3 text-right text-text-primary tabular-nums">
                             {formatIDR(row.avg_sell_price)}
                           </td>
-                          <td className="py-2.5 text-right tabular-nums">
-                            <span className={row.broker_margin > 0 ? 'text-emerald-400' : 'text-text-secondary'}>
+                          <td className="py-3 text-right tabular-nums">
+                            <span className="text-text-primary font-medium">
                               {formatIDR(row.broker_margin)}
                             </span>
                           </td>
-                          <td className="py-2.5 pl-3">
+                          <td className="py-3 pl-3">
                             <SourceBadge source={row.source} />
                           </td>
                         </tr>

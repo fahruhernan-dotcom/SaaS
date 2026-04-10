@@ -116,7 +116,7 @@ const ComparisonTable = () => {
             </div>
           </div>
           <a 
-            href="#daftar" 
+            href="/register"
             className="w-full md:w-auto px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-display font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-emerald-500/25 active:scale-95"
           >
             Mulai Migrasi Sekarang

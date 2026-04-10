@@ -34,6 +34,7 @@ import PrivacyPage from './pages/PrivacyPage';
 import AboutUs from './pages/AboutUs';
 import FiturPage from './pages/FiturPage';
 import HargaPage from './pages/HargaPage';
+import FAQPage from './pages/FAQPage';
 import OnboardingFlow from './dashboard/_shared/pages/OnboardingFlow';
 import UpgradePlan from './dashboard/_shared/pages/UpgradePlan';
 import Market from './dashboard/_shared/pages/Market';
@@ -248,6 +249,7 @@ function App() {
         <Route path="/fitur" element={<FiturPage />} />
         <Route path="/harga" element={<HargaPage />} />
         <Route path="/harga-pasar" element={<HargaPasarPublic />} />
+        <Route path="/faq" element={<FAQPage />} />
         <Route path="/check-email" element={<CheckEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />

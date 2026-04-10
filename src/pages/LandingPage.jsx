@@ -10,6 +10,7 @@ import Pricing from '../sections/Pricing';
 import TestimonialsNew from '../sections/TestimonialsNew';
 import BeforeAfter from '../sections/BeforeAfter';
 import FinalCTA from '../sections/FinalCTA';
+import PeopleAlsoAsk from '../sections/PeopleAlsoAsk';
 import Footer from '../components/Footer';
 
 import ComparisonTable from '../sections/ComparisonTable';
@@ -31,6 +32,7 @@ const LandingPage = () => {
       <MarketPrice activeRole={activeRole} />
       <Pricing activeRole={activeRole} setActiveRole={setActiveRole} />
       <TestimonialsNew />
+      <PeopleAlsoAsk />
       <FinalCTA />
       <Footer />
       <StickyCTA />

@@ -5,11 +5,13 @@ import {
   ShoppingCart, UserCheck, FileText, RefreshCw, ClipboardList,
   TrendingUp, ShoppingBag, CreditCard, Building,
   Check, ArrowRight, Globe, TrendingUp as TrendingUpIcon,
-  Shield, Lock, Bot, Zap, Network
+  Shield, Lock, Bot, Zap, Network,
+  ChevronDown, X, MessageCircle
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
 
 // ─── Animation helper ─────────────────────────────────────────────────────────
 
@@ -32,7 +34,7 @@ function FadeUp({ children, delay = 0, className }) {
 const itemVariants = {
   hidden: { opacity: 0, x: -10 },
   visible: { opacity: 1, x: 0, transition: { duration: 0.3 } }
-};
+}
 
 function FeatureItem({ text }) {
   return (
@@ -51,24 +53,24 @@ const listVariants = {
     opacity: 1,
     transition: { staggerChildren: 0.08, delayChildren: 0.15 }
   }
-};
+}
 
 function GroupCard({ Icon, title, desc, features, delay = 0 }) {
   return (
     <FadeUp delay={delay} className="h-full">
-      <motion.div 
+      <motion.div
         whileHover={{ scale: 1.02, y: -4 }}
         className="group relative bg-[#111C24] rounded-2xl p-6 border border-white/8 hover:border-emerald-500/40 hover:shadow-[0_8px_30px_rgba(16,185,129,0.12)] transition-all duration-300 h-full flex flex-col overflow-hidden"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/0 via-emerald-500/0 to-emerald-500/0 group-hover:from-emerald-500/5 group-hover:to-transparent transition-all duration-500" />
-        
+
         <div className="relative z-10 w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4 shrink-0 group-hover:bg-emerald-500/20 group-hover:scale-110 transition-all duration-300">
           <Icon size={20} className="text-emerald-400" />
         </div>
         <h3 className="relative z-10 font-['Sora'] font-bold text-white text-base mb-2 leading-snug">{title}</h3>
         {desc && <p className="relative z-10 text-xs text-[#4B6478] mb-4 leading-relaxed">{desc}</p>}
-        
-        <motion.ul 
+
+        <motion.ul
           className="relative z-10 space-y-2 mt-auto"
           variants={listVariants}
           initial="hidden"
@@ -92,9 +94,9 @@ const ROLES = [
 
 const SUBS = {
   broker: [
-    { id: 'ayam',  label: 'Broker Ayam',  disabled: false },
-    { id: 'telur', label: 'Broker Telur', disabled: false },
-    { id: 'sembako', label: 'Distributor Sembako', disabled: false },
+    { id: 'ayam',    label: 'Broker Ayam',          disabled: false },
+    { id: 'telur',   label: 'Broker Telur',          disabled: false },
+    { id: 'sembako', label: 'Distributor Sembako',   disabled: false },
   ],
   peternak: [
     { id: 'broiler', label: 'Ayam Broiler', disabled: false },
@@ -431,6 +433,285 @@ const SHARED = [
   },
 ]
 
+// ── [SECTION BARU] Hero Data per contentKey ──
+const HERO_CONTENT = {
+  broker_ayam: {
+    eyebrow: 'Solusi Broker Ayam',
+    headline: 'Kelola Ratusan Ton Ayam Tanpa Pusing Selisih Timbangan.',
+    sub: 'Dari catat pembelian kandang sampai kirim nota ke WhatsApp pembeli — semua dalam 3 langkah.',
+    cta: 'Mulai Kelola Transaksi Broker',
+  },
+  broker_telur: {
+    eyebrow: 'Solusi Broker Telur',
+    headline: 'Pantau Harga Telur Harian dan Margin Per Transaksi Secara Real-time.',
+    sub: 'Tidak ada lagi selisih hitungan. Semua tercatat otomatis dari kandang sampai pembeli.',
+    cta: 'Coba Manajemen Broker Telur',
+  },
+  broker_sembako: {
+    eyebrow: 'Solusi Agen Sembako',
+    headline: 'Stok Bocor? Pantau Keluar Masuk Barang Secara Akurat dengan Sistem FIFO.',
+    sub: 'Kelola ribuan item sembako — beras, minyak, telur — dalam satu invoice tanpa salah hitung.',
+    cta: 'Coba Manajemen Stok Sembako',
+  },
+  peternak: {
+    eyebrow: 'Solusi Peternak Mandiri',
+    headline: 'Cetak Indeks Performa (IP) Tertinggi dengan Manajemen Kandang Berbasis Data.',
+    sub: 'Catat FCR, mortality, dan pemakaian obat harian. Bandingkan performa antar siklus kandang.',
+    cta: 'Mulai Kelola Kandang Saya',
+  },
+  rpa: {
+    eyebrow: 'Solusi Rumah Potong Ayam',
+    headline: 'Kelola Pembelian Ayam Hidup dan Pengiriman ke Pembeli Tanpa Dokumen Manual.',
+    sub: 'Timbang, potong, kirim — semua tercatat digital dengan laporan harian otomatis.',
+    cta: 'Kelola Operasional RPA',
+  },
+}
+
+// ── [SECTION BARU] Before/After Data ──
+const BEFORE_AFTER = {
+  broker_ayam: [
+    { before: 'Catat timbangan di buku, sering hilang atau salah', after: 'Input digital, tersimpan otomatis di cloud' },
+    { before: 'Hitung margin manual pakai kalkulator', after: 'Margin terhitung otomatis per transaksi' },
+    { before: 'Kirim nota lewat foto buku ke WhatsApp', after: 'Nota digital dikirim otomatis ke WhatsApp pembeli' },
+    { before: 'Tidak tahu siapa yang belum bayar tempo', after: 'Dashboard piutang real-time dengan alert jatuh tempo' },
+  ],
+  broker_telur: [
+    { before: 'Harga telur dicatat manual tiap hari', after: 'Pantau harga pasar real-time dari dashboard' },
+    { before: 'Margin per transaksi dihitung kalkulator', after: 'Margin otomatis terhitung saat input transaksi' },
+    { before: 'Piutang diingat-ingat sendiri', after: 'Tracking piutang otomatis dengan reminder' },
+    { before: 'Nota dikirim foto buku ke WhatsApp', after: 'Nota digital profesional langsung ke pembeli' },
+  ],
+  broker_sembako: [
+    { before: 'Stok dicatat manual, sering selisih', after: 'FIFO otomatis, stok selalu akurat' },
+    { before: 'Tidak tahu barang mana yang mau expired', after: 'Sistem batch tracking mencegah stok mengendap' },
+    { before: 'Hitung untung rugi di akhir bulan saja', after: 'Laporan profit bersih tersedia kapan saja' },
+    { before: 'Input faktur satu per satu tiap item', after: 'Multi-item entry dalam satu invoice' },
+  ],
+  peternak: [
+    { before: 'Catat kematian ayam di kertas, mudah hilang', after: 'Recording harian digital, tersimpan per siklus' },
+    { before: 'Hitung FCR manual, sering tidak akurat', after: 'Kalkulator FCR otomatis dari data pakan & bobot' },
+    { before: 'Tidak bisa bandingkan performa antar siklus', after: 'Analisis siklus otomatis dengan grafik tren' },
+    { before: 'Tidak tahu profit sebelum panen selesai', after: 'Estimasi keuntungan tersedia real-time' },
+  ],
+  rpa: [
+    { before: 'Dokumen timbang manual, rawan dispute', after: 'Timbangan digital tercatat otomatis' },
+    { before: 'Susut bobot tidak terpantau', after: 'Loss report otomatis setiap pengiriman' },
+    { before: 'Laporan harian dibuat manual', after: 'Dashboard operasional harian otomatis' },
+    { before: 'Koordinasi sopir lewat telepon', after: 'Manajemen armada & jadwal dari dashboard' },
+  ],
+}
+
+// ── [SECTION BARU] FAQ Data ──
+const FAQ_COMMON = [
+  {
+    q: 'Apakah TernakOS gratis?',
+    a: 'TernakOS menyediakan trial gratis 14 hari tanpa kartu kredit. Setelah trial, tersedia paket Starter, Pro, dan Business dengan harga yang terjangkau sesuai skala bisnis kamu.',
+  },
+  {
+    q: 'Berapa lama setup awal TernakOS?',
+    a: 'Rata-rata kurang dari 15 menit. Daftar, pilih tipe bisnis, undang anggota tim — langsung bisa pakai. Tidak perlu instalasi software apapun.',
+  },
+  {
+    q: 'Apakah bisa dipakai di HP Android biasa?',
+    a: 'Ya. TernakOS adalah aplikasi berbasis web yang dioptimasi untuk mobile. Berjalan lancar di HP Android dengan browser Chrome, tanpa perlu download apapun dari Play Store.',
+  },
+  {
+    q: 'Apakah bisa dipakai saat sinyal susah di kandang?',
+    a: 'TernakOS menggunakan sistem prefetching dan caching lokal. Data yang sudah dimuat tetap bisa diakses meski koneksi terputus sementara. Sinkronisasi otomatis saat koneksi kembali.',
+  },
+  {
+    q: 'Apakah data saya aman dari kompetitor?',
+    a: 'Setiap akun memiliki isolasi data penuh menggunakan Row Level Security (RLS) di PostgreSQL. Data bisnis kamu tidak bisa diakses oleh pengguna lain meskipun menggunakan platform yang sama.',
+  },
+  {
+    q: 'Bisakah satu orang punya lebih dari satu bisnis di TernakOS?',
+    a: 'Bisa. Satu akun login bisa terhubung ke beberapa bisnis sekaligus — misalnya kamu punya kandang broiler sekaligus usaha broker ayam. Tinggal switch bisnis dari dashboard.',
+  },
+  {
+    q: 'Apakah ada fitur undang karyawan atau tim?',
+    a: 'Ada. Owner bisa undang anggota tim via kode 6 digit. Setiap anggota dapat role berbeda: Staff, View Only, Sopir — dengan batasan akses yang sesuai jabatannya.',
+  },
+  {
+    q: 'Apakah TernakOS bisa dipakai di laptop atau komputer?',
+    a: 'Bisa. TernakOS berjalan di semua browser modern — Chrome, Firefox, Safari, Edge — di HP maupun laptop tanpa instalasi apapun.',
+  },
+  {
+    q: 'Bagaimana cara backup data di TernakOS?',
+    a: 'Data tersimpan otomatis di cloud (Supabase PostgreSQL) dengan replikasi real-time. Tidak perlu backup manual — data kamu aman meski HP hilang atau rusak.',
+  },
+  {
+    q: 'Apakah ada notifikasi otomatis?',
+    a: 'Ya. TernakOS mengirim notifikasi in-app untuk: piutang jatuh tempo, stok pakan menipis, pengiriman tiba, dan trial hampir habis. Tidak perlu cek manual setiap hari.',
+  },
+]
+
+const FAQ_ROLE = {
+  broker_ayam: [
+    {
+      q: 'Apa itu aplikasi broker ayam dan apa bedanya dengan catatan biasa?',
+      a: 'Aplikasi broker ayam adalah sistem digital untuk mencatat pembelian dari kandang, penjualan ke RPA/pasar, pengiriman, dan piutang dalam satu platform. Berbeda dengan buku atau Excel, data otomatis terhitung — margin, susut timbangan, dan saldo piutang selalu akurat tanpa hitung manual.',
+    },
+    {
+      q: 'Bagaimana cara menghitung margin keuntungan broker ayam secara otomatis?',
+      a: 'TernakOS menghitung margin otomatis: Margin = Harga Jual per kg × Bobot Tiba − (Modal Beli + Biaya Kirim + Biaya Lain). Bobot yang dipakai adalah bobot tiba aktual, bukan estimasi, sehingga susut timbangan sudah diperhitungkan.',
+    },
+    {
+      q: 'Bisakah satu akun untuk beberapa kandang mitra?',
+      a: 'Bisa. Kamu bisa mengelola database kandang mitra tanpa batas dalam satu akun broker. Setiap kandang punya riwayat transaksi, rating kualitas, dan estimasi stok sendiri.',
+    },
+    {
+      q: 'Bagaimana cara kirim nota ke WhatsApp pembeli?',
+      a: 'Setelah transaksi selesai, klik tombol "Kirim Nota" — sistem otomatis membuka WhatsApp dengan nota yang sudah diformat rapi. Pembeli langsung terima detail transaksi tanpa kamu perlu ketik ulang.',
+    },
+    {
+      q: 'Bagaimana cara melacak piutang broker ayam yang belum dibayar?',
+      a: 'Dashboard RPA menampilkan total piutang per pembeli secara real-time. Kamu bisa lihat detail per transaksi, catat pembayaran partial, dan sistem akan menghitung sisa hutang otomatis.',
+    },
+    {
+      q: 'Apakah loss report mortalitas ayam bisa dibuat otomatis?',
+      a: 'Ya. Ketika mencatat kedatangan pengiriman, input ekor tiba vs ekor kirim. Sistem otomatis membuat loss report mortalitas dan menghitung estimasi kerugian finansialnya.',
+    },
+  ],
+  broker_telur: [
+    {
+      q: 'Bagaimana cara kirim nota ke WhatsApp pembeli?',
+      a: 'Setelah transaksi selesai, klik tombol "Kirim Nota" — sistem otomatis membuka WhatsApp dengan nota yang sudah diformat rapi.',
+    },
+    {
+      q: 'Bisakah pantau harga telur harian di dashboard?',
+      a: 'Ya. Dashboard menampilkan harga pasar telur terkini yang diperbarui setiap hari, bisa dipakai sebagai referensi saat negosiasi harga dengan peternak atau pembeli.',
+    },
+    {
+      q: 'Apa itu HPP telur dan bagaimana TernakOS menghitungnya?',
+      a: 'HPP (Harga Pokok Penjualan) adalah total biaya untuk menghasilkan atau mendapatkan satu butir telur, termasuk biaya beli dari peternak dan biaya packaging. TernakOS menghitung HPP per butir otomatis saat kamu input stok masuk.',
+    },
+    {
+      q: 'Bisakah kelola beberapa grade telur sekaligus?',
+      a: 'Bisa. TernakOS mendukung multi-grade: Hero, Standard, dan Salted. Stok, HPP, dan harga jual masing-masing grade dikelola terpisah.',
+    },
+    {
+      q: 'Bagaimana cara tracking piutang pelanggan telur?',
+      a: 'Setiap transaksi dengan status "Piutang" otomatis masuk ke dashboard piutang per customer. Kamu bisa catat pembayaran kapan saja dan saldo sisa piutang terupdate real-time.',
+    },
+  ],
+  broker_sembako: [
+    {
+      q: 'Apa itu sistem FIFO dan kenapa penting untuk toko sembako?',
+      a: 'FIFO (First In First Out) artinya barang yang masuk lebih dulu harus keluar lebih dulu. Ini mencegah barang mengendap dan expired. TernakOS mengelola FIFO per batch otomatis — kamu tidak perlu urutkan manual.',
+    },
+    {
+      q: 'Apakah sistem FIFO bisa untuk ratusan item berbeda?',
+      a: 'Ya. Sistem batch tracking kami dirancang untuk mengelola ribuan SKU dengan metode FIFO otomatis per item. Cocok untuk distributor besar dengan ratusan jenis barang sekaligus.',
+    },
+    {
+      q: 'Bisakah input faktur dari supplier sekaligus banyak item?',
+      a: 'Bisa. Fitur multi-item entry memungkinkan kamu input puluhan item sembako dalam satu faktur pembelian tanpa perlu buat invoice terpisah per item.',
+    },
+    {
+      q: 'Bagaimana cara menghitung HPP sembako secara akurat?',
+      a: 'TernakOS menghitung HPP menggunakan metode FIFO atau rata-rata tertimbang per batch. Saat terjadi penjualan, sistem otomatis mendebet stok dari batch tertua dan menghitung HPP yang tepat.',
+    },
+    {
+      q: 'Apakah bisa kelola piutang toko/agen yang belum bayar?',
+      a: 'Ya. Setiap penjualan dengan sistem tempo otomatis masuk ke dashboard piutang. Kamu bisa monitor batas kredit per toko, rekap pencairan bon, dan catat pelunasan digital.',
+    },
+    {
+      q: 'Bisakah TernakOS dipakai untuk distributor sembako berskala besar?',
+      a: 'Bisa. Paket Business mendukung unlimited pengguna, multi-gudang, dan konsolidasi laporan seluruh cabang. Cocok untuk distributor sembako yang punya jaringan agen dan toko mitra.',
+    },
+  ],
+  peternak: [
+    {
+      q: 'Apa itu FCR dan kenapa penting untuk peternak ayam broiler?',
+      a: 'FCR (Feed Conversion Ratio) adalah rasio kg pakan yang dibutuhkan untuk menghasilkan 1 kg bobot ayam. FCR 1,6 artinya butuh 1,6 kg pakan untuk 1 kg ayam. Semakin rendah FCR, semakin efisien dan menguntungkan. TernakOS menghitung FCR otomatis setiap hari.',
+    },
+    {
+      q: 'Apa itu Indeks Performa (IP) kandang ayam?',
+      a: 'IP (Indeks Performa) adalah angka gabungan yang mencerminkan efisiensi produksi satu siklus kandang: IP = (Survival Rate × Bobot Rata-rata × 100) ÷ (FCR × Umur Panen). IP > 300 dianggap sangat baik. TernakOS menghitung IP otomatis setiap siklus selesai.',
+    },
+    {
+      q: 'Bisakah pantau lebih dari satu kandang?',
+      a: 'Bisa. Tambahkan kandang sebanyak yang kamu miliki (sesuai limit paket). Setiap kandang punya recording harian dan analisis siklus sendiri yang bisa dibandingkan satu sama lain.',
+    },
+    {
+      q: 'Apakah TernakOS mendukung sistem kemitraan (CP, Japfa, dll)?',
+      a: 'Ya. TernakOS mendukung model bisnis mandiri murni, mandiri semi, maupun mitra penuh. Untuk pola mitra, kamu bisa input nama INTI, harga kontrak, dan sistem deducting sapronak otomatis.',
+    },
+    {
+      q: 'Bagaimana cara menghitung keuntungan peternak broiler per siklus?',
+      a: 'TernakOS menghitung profit bersih per siklus: Pendapatan Panen − Biaya DOC − Biaya Pakan − Biaya Obat/Vaksin − Biaya Tenaga Kerja − Biaya Lainnya. Semua tersedia real-time tanpa harus tunggu siklus selesai.',
+    },
+    {
+      q: 'Apakah bisa catat vaksinasi dan penggunaan obat per siklus?',
+      a: 'Ya. Modul vaksinasi memungkinkan kamu catat jenis vaksin, dosis, tanggal, dan tenaga pelaksana. Data ini terintegrasi ke laporan biaya siklus dan bisa jadi referensi untuk siklus berikutnya.',
+    },
+    {
+      q: 'Apakah ada fitur recording harian untuk peternak?',
+      a: 'Ada. Input harian bisa diselesaikan kurang dari 2 menit: mortalitas, pakan terpakai, sampel bobot rata-rata. Sistem otomatis menghitung FCR harian dan menampilkan grafik tren bobot vs pakan.',
+    },
+  ],
+  rpa: [
+    {
+      q: 'Apa yang dimaksud dengan software manajemen RPA?',
+      a: 'Software manajemen RPA (Rumah Potong Ayam) adalah sistem digital untuk mencatat order pembelian ayam hidup dari broker, tracking hutang ke pemasok, distribusi ke customer, dan laporan profitabilitas. Menggantikan proses manual yang rawan dispute dan salah hitung.',
+    },
+    {
+      q: 'Bagaimana TernakOS membantu mengurangi dispute dengan broker?',
+      a: 'Data transaksi di TernakOS tercatat transparan untuk semua pihak. Harga, bobot, tanggal, dan status pembayaran tersimpan digital — tidak ada ruang untuk dispute karena datanya sama-sama bisa dilihat.',
+    },
+    {
+      q: 'Apakah bisa integrasi dengan timbangan digital?',
+      a: 'Saat ini input bobot dilakukan manual di aplikasi. Integrasi timbangan digital ada di roadmap pengembangan kami dan akan tersedia untuk paket Business.',
+    },
+    {
+      q: 'Bisakah buyer melihat status pengiriman?',
+      a: 'Fitur buyer portal sedang dalam pengembangan. Saat ini notifikasi pengiriman bisa dikirim manual via WhatsApp dari dashboard dengan satu klik.',
+    },
+    {
+      q: 'Bagaimana cara tracking hutang RPA ke broker pemasok?',
+      a: 'Dashboard hutang menampilkan total outstanding ke semua broker secara real-time, breakdown per broker dan per transaksi, serta riwayat pembayaran lengkap. Tidak ada hutang yang kelewat.',
+    },
+    {
+      q: 'Apakah ada laporan margin keuntungan per produk di RPA?',
+      a: 'Ada. Laporan profitabilitas menampilkan margin per produk, top customer by revenue, dan grafik Revenue vs HPP vs Profit per periode. Filter tanggal fleksibel untuk analisis bulanan atau mingguan.',
+    },
+  ],
+}
+
+// ── [SECTION BARU] FAQ Item Component ──
+function FAQItem({ q, a, isSembako }) {
+  const [open, setOpen] = useState(false)
+  const accent = isSembako ? 'text-amber-400' : 'text-emerald-400'
+  const borderActive = isSembako ? 'border-amber-500/30' : 'border-emerald-500/30'
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <div className={`rounded-2xl border transition-all duration-200 overflow-hidden ${open ? `bg-white/[0.03] ${borderActive}` : 'bg-[#111C24] border-white/8 hover:border-white/15'}`}>
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="w-full flex items-center justify-between gap-4 px-6 py-4 text-left cursor-pointer"
+          >
+            <span className="text-sm font-semibold text-white leading-snug">{q}</span>
+            <motion.span
+              animate={{ rotate: open ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+              className={`shrink-0 ${open ? accent : 'text-[#4B6478]'}`}
+            >
+              <ChevronDown size={16} />
+            </motion.span>
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="px-6 pb-5">
+            <p className="text-sm text-[#94A3B8] leading-relaxed">{a}</p>
+          </div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function FiturPage() {
@@ -462,49 +743,79 @@ export default function FiturPage() {
   const groups = GROUPS[contentKey] ?? []
   const cols = groups.length <= 4 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'
 
+  const hero = HERO_CONTENT[contentKey] ?? HERO_CONTENT.broker_ayam
+  const beforeAfter = BEFORE_AFTER[contentKey] ?? []
+  const faqItems = [...FAQ_COMMON, ...(FAQ_ROLE[contentKey] ?? [])].slice(0, 4)
+  const isSembako = contentKey === 'broker_sembako'
+
+  // Update document title dynamically (no react-helmet-async needed)
+  useEffect(() => {
+    document.title = `${hero.eyebrow} — TernakOS | Solusi Digital Peternakan Indonesia`
+    return () => { document.title = 'TernakOS | Solusi Digital Peternakan Indonesia' }
+  }, [hero.eyebrow])
+
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] overflow-x-hidden">
       <Navbar />
 
       <main>
 
-        {/* ── HEADER ── */}
-        <section className="relative pt-32 pb-20 px-5 text-center overflow-hidden">
-          {/* Subtle glow */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-64 bg-emerald-500/8 blur-3xl pointer-events-none" />
+        {/* ── [SECTION BARU] Dynamic Hero per Role ── */}
+        <section className="relative pt-32 pb-20 px-5 overflow-hidden">
+          {/* Background glows */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-72 bg-emerald-500/8 blur-3xl pointer-events-none" />
+          {isSembako && (
+            <div className="absolute top-8 right-0 w-[400px] h-48 bg-amber-500/6 blur-3xl pointer-events-none" />
+          )}
 
-          <div className="relative z-10 max-w-3xl mx-auto">
-            <motion.p
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              className="text-[11px] font-bold uppercase tracking-widest text-[#10B981] mb-6"
-            >
-              FITUR LENGKAP
-            </motion.p>
-            <motion.h1
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.45, delay: 0.05 }}
-              className="font-['Sora'] text-4xl md:text-6xl font-black text-white leading-tight mb-5"
-            >
-              Semua yang kamu butuhkan<br />untuk kelola bisnis ternak.
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.12 }}
-              className="text-lg text-[#94A3B8] max-w-xl mx-auto"
-            >
-              Dirancang khusus untuk broker, peternak, dan RPA Indonesia.
-            </motion.p>
+          <div className="relative z-10 max-w-4xl mx-auto">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={contentKey + '_hero'}
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="text-center"
+              >
+                <p className={`text-[11px] font-bold uppercase tracking-widest mb-5 ${isSembako ? 'text-amber-400' : 'text-emerald-400'}`}>
+                  {hero.eyebrow}
+                </p>
+                <h1 className="font-['Sora'] text-3xl md:text-5xl lg:text-6xl font-black text-white leading-[1.1] tracking-tight mb-6 max-w-3xl mx-auto">
+                  {hero.headline}
+                </h1>
+                <p className="text-base md:text-lg text-[#94A3B8] max-w-2xl mx-auto leading-relaxed">
+                  {hero.sub}
+                </p>
+
+                {/* Quick stats row */}
+                <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-xs text-[#4B6478] font-medium">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block" />
+                    Trial 14 hari gratis
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block" />
+                    Setup &lt; 15 menit
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block" />
+                    Tanpa instalasi software
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block" />
+                    Berjalan di HP Android
+                  </span>
+                </div>
+              </motion.div>
+            </AnimatePresence>
           </div>
         </section>
 
         {/* ── SENTINEL for sticky detection ── */}
         <div ref={tabBarRef} />
 
-        {/* ── TAB BAR (sticky) ── */}
+        {/* ── TAB BAR (sticky) — UNCHANGED ── */}
         <div className={`sticky top-0 z-30 transition-all duration-200 ${isSticky ? 'bg-[#06090F]/95 backdrop-blur-md border-b border-white/8 shadow-lg' : 'bg-[#06090F]'}`}>
           <div className="max-w-5xl mx-auto px-4 pt-3 pb-2 flex flex-col items-center gap-2">
 
@@ -562,7 +873,7 @@ export default function FiturPage() {
           </div>
         </div>
 
-        {/* ── FEATURE GROUPS ── */}
+        {/* ── FEATURE GROUPS — UNCHANGED ── */}
         <section className="py-16 px-5">
           <div className="max-w-6xl mx-auto">
             <AnimatePresence mode="wait">
@@ -589,8 +900,65 @@ export default function FiturPage() {
           </div>
         </section>
 
-        {/* ── SHARED FEATURES ── */}
+        {/* ── [SECTION BARU] Before vs After Table ── */}
         <section className="py-20 px-5 bg-[#080D13]">
+          <div className="max-w-4xl mx-auto">
+            <FadeUp className="text-center mb-12">
+              <p className={`text-[11px] font-bold uppercase tracking-widest mb-4 ${isSembako ? 'text-amber-400' : 'text-emerald-400'}`}>
+                PERBANDINGAN
+              </p>
+              <h2 className="font-['Sora'] text-3xl font-bold text-white">
+                Sebelum & Sesudah TernakOS
+              </h2>
+              <p className="text-[#4B6478] text-sm mt-3 max-w-lg mx-auto">
+                Ini bukan janji — ini yang kamu rasakan di hari pertama pakai.
+              </p>
+            </FadeUp>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={contentKey + '_ba'}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                {/* Table header */}
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div className="flex items-center gap-2 px-5 py-3 rounded-xl bg-red-500/8 border border-red-500/15">
+                    <X size={14} className="text-red-400 shrink-0" />
+                    <span className="text-xs font-black uppercase tracking-widest text-red-400">Cara Lama</span>
+                  </div>
+                  <div className={`flex items-center gap-2 px-5 py-3 rounded-xl border ${isSembako ? 'bg-amber-500/8 border-amber-500/15' : 'bg-emerald-500/8 border-emerald-500/15'}`}>
+                    <Check size={14} className={`shrink-0 ${isSembako ? 'text-amber-400' : 'text-emerald-400'}`} />
+                    <span className={`text-xs font-black uppercase tracking-widest ${isSembako ? 'text-amber-400' : 'text-emerald-400'}`}>Dengan TernakOS</span>
+                  </div>
+                </div>
+
+                {/* Rows */}
+                <div className="space-y-2">
+                  {beforeAfter.map((row, i) => (
+                    <FadeUp key={i} delay={i * 0.06}>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="flex items-start gap-3 px-5 py-4 rounded-xl bg-[#111C24] border border-white/5">
+                          <span className="text-red-400/60 text-xs font-bold mt-0.5 shrink-0">✗</span>
+                          <p className="text-sm text-[#94A3B8] leading-snug">{row.before}</p>
+                        </div>
+                        <div className={`flex items-start gap-3 px-5 py-4 rounded-xl border ${isSembako ? 'bg-amber-500/5 border-amber-500/10' : 'bg-emerald-500/5 border-emerald-500/10'}`}>
+                          <span className={`text-xs font-bold mt-0.5 shrink-0 ${isSembako ? 'text-amber-400' : 'text-emerald-400'}`}>✓</span>
+                          <p className="text-sm text-white leading-snug font-medium">{row.after}</p>
+                        </div>
+                      </div>
+                    </FadeUp>
+                  ))}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </section>
+
+        {/* ── SHARED FEATURES — UNCHANGED ── */}
+        <section className="py-20 px-5 bg-[#06090F]">
           <div className="max-w-5xl mx-auto">
 
             <FadeUp className="text-center mb-12">
@@ -616,28 +984,98 @@ export default function FiturPage() {
           </div>
         </section>
 
-        {/* ── CTA ── */}
+        {/* ── [SECTION BARU] FAQ Accordion ── */}
+        <section className="py-20 px-5 bg-[#080D13]">
+          <div className="max-w-2xl mx-auto">
+            <FadeUp className="text-center mb-12">
+              <p className={`text-[11px] font-bold uppercase tracking-widest mb-4 ${isSembako ? 'text-amber-400' : 'text-emerald-400'}`}>
+                FAQ
+              </p>
+              <h2 className="font-['Sora'] text-3xl font-bold text-white">
+                Pertanyaan yang Sering Ditanya
+              </h2>
+            </FadeUp>
+
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={contentKey + '_faq'}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-2"
+              >
+                {faqItems.map((item, i) => (
+                  <FadeUp key={i} delay={i * 0.04}>
+                    <FAQItem q={item.q} a={item.a} isSembako={isSembako} />
+                  </FadeUp>
+                ))}
+              </motion.div>
+            </AnimatePresence>
+
+            <FadeUp className="text-center mt-8">
+              <Link
+                to="/faq"
+                className={`inline-flex items-center gap-2 text-sm font-semibold transition-colors ${isSembako ? 'text-amber-400 hover:text-amber-300' : 'text-emerald-400 hover:text-emerald-300'}`}
+              >
+                Lihat semua 200+ FAQ
+                <ArrowRight size={15} />
+              </Link>
+            </FadeUp>
+          </div>
+        </section>
+
+        {/* ── [SECTION BARU] CTA Footer per Role ── */}
         <section className="py-24 px-5">
           <div className="max-w-3xl mx-auto">
             <FadeUp>
               <div className="relative rounded-3xl p-12 md:p-16 text-center border border-emerald-500/20 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none rounded-3xl" />
                 <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-64 h-32 bg-emerald-500/10 blur-3xl pointer-events-none" />
+                {isSembako && (
+                  <div className="absolute bottom-0 right-0 w-48 h-24 bg-amber-500/8 blur-2xl pointer-events-none" />
+                )}
 
                 <div className="relative z-10">
-                  <h2 className="font-['Sora'] text-3xl md:text-4xl font-bold text-white mb-4">
-                    Siap coba semua fitur ini?
-                  </h2>
-                  <p className="text-[#94A3B8] text-lg mb-10">
-                    14 hari gratis, tanpa kartu kredit.
-                  </p>
-                  <Link
-                    to="/register"
-                    className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-all shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_4px_28px_rgba(16,185,129,0.45)]"
-                  >
-                    Mulai Trial Gratis
-                    <ArrowRight size={18} />
-                  </Link>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={contentKey + '_cta'}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.25 }}
+                    >
+                      <p className={`text-[11px] font-bold uppercase tracking-widest mb-4 ${isSembako ? 'text-amber-400' : 'text-emerald-400'}`}>
+                        {hero.eyebrow}
+                      </p>
+                      <h2 className="font-['Sora'] text-3xl md:text-4xl font-bold text-white mb-4">
+                        Siap coba semua fitur ini?
+                      </h2>
+                      <p className="text-[#94A3B8] text-base mb-10">
+                        14 hari gratis, tanpa kartu kredit, tanpa instalasi.
+                      </p>
+
+                      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <Link
+                          to="/register"
+                          className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-all shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_4px_28px_rgba(16,185,129,0.45)] whitespace-nowrap"
+                        >
+                          {hero.cta}
+                          <ArrowRight size={18} />
+                        </Link>
+
+                        <a
+                          href="https://wa.me/6281234567890"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-8 py-4 bg-white/5 hover:bg-white/10 text-white font-semibold rounded-xl border border-white/10 hover:border-white/20 transition-all whitespace-nowrap"
+                        >
+                          <MessageCircle size={16} />
+                          Hubungi via WhatsApp
+                        </a>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
               </div>
             </FadeUp>

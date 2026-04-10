@@ -9,8 +9,10 @@ const KEY_TO_PATH = {
   broker:              '/broker/broker_ayam/beranda',
   egg_broker:          '/broker/broker_telur/beranda',
   distributor_sembako: '/broker/distributor_sembako/beranda',
-  peternak:            '/peternak/peternak_broiler/beranda',
-  peternak_layer:      '/peternak/peternak_layer/beranda',
+  peternak:                              '/peternak/peternak_broiler/beranda',
+  peternak_layer:                        '/peternak/peternak_layer/beranda',
+  peternak_kambing_domba_penggemukan:    '/peternak/peternak_kambing_domba_penggemukan/beranda',
+  peternak_kambing_domba_breeding:       '/peternak/peternak_kambing_domba_breeding/beranda',
   rumah_potong_rpa:    '/rumah_potong/rpa/beranda',
   rumah_potong_rph:    '/rumah_potong/rph/beranda',
 }

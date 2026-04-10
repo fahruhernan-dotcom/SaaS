@@ -55,7 +55,7 @@ const FinalCTA = () => {
           <ClickSpark sparkColor="#10B981" sparkCount={10} sparkRadius={20}>
             <Magnet padding={40} magnetStrength={0.3} disabled={isTouchDevice()}>
               <a
-                href="#daftar"
+                href="/register"
                 className="inline-block w-full max-w-sm mx-auto px-[24px] py-[16px] font-display text-[16px] font-bold bg-em-500 text-white rounded-[14px] shadow-[0_12px_36px_rgba(16,185,129,0.22)] md:w-auto active:scale-[0.96] transition-transform"
               >
                 Daftar Gratis Sekarang

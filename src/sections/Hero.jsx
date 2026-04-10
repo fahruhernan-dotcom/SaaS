@@ -166,7 +166,7 @@ const Hero = () => {
                     hidden: { opacity: 0, y: 24 },
                     visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
                   }}
-                  href="#daftar"
+                  href="/register"
                   whileTap={{ scale: 0.96 }}
                   className="w-full inline-block text-center px-[28px] py-[16px] font-display text-[15px] font-bold bg-em-500 text-white rounded-[12px] shadow-[0_0_0_1px_rgba(16,185,129,0.2),0_8px_28px_rgba(16,185,129,0.22)] md:w-auto"
                 >

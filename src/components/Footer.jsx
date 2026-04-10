@@ -46,6 +46,7 @@ const Footer = () => {
                 { name: 'Fitur', href: '/fitur' },
                 { name: 'Harga', href: '/harga' },
                 { name: 'Harga Pasar', href: '/harga-pasar' },
+                { name: 'FAQ', href: '/faq' },
                 { name: 'Panduan', href: '#' },
                 { name: 'Studi Kasus', href: '#' }
               ].map((link, i) => (
