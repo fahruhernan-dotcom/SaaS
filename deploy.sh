@@ -2,19 +2,20 @@
 set -e
 
 echo "==> Pull latest code..."
-git -C ~/ternakos pull origin main
+cd ~/ternakos || exit 1
+git pull origin main
 
 echo "==> Install dependencies..."
-npm --prefix ~/ternakos install --legacy-peer-deps
+npm install --legacy-peer-deps
 
 echo "==> Scraping market prices..."
-npm --prefix ~/ternakos run scrape:market
+npm run scrape:market
 
 echo "==> Generating sitemap..."
-npm --prefix ~/ternakos run sitemap
+npm run sitemap
 
 echo "==> Build..."
-npm --prefix ~/ternakos run build
+npm run build
 
 echo "==> Reload Nginx..."
 sudo systemctl reload nginx

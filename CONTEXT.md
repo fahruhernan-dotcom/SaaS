@@ -1,6 +1,6 @@
 # TernakOS — Developer Context
 
-> Last updated: 2026-04-10 v5 (Kambing & Domba Penggemukan: full dashboard (DB + hooks + 5 UI pages + LaporanBatch) — migration `20260409_feedlot_kambing_domba.sql`; Kambing & Domba Breeding: full dashboard (DB + hooks + 5 UI pages + LaporanFarm) — migration `20260410_breeding_kambing_domba.sql`; Both use `kd_penggemukan_*` / `kd_breeding_*` table namespaces; businessModel.js updated with teal/green accent colors; PeternakRouter.jsx wired to all new pages) | Use this as reference for all future implementations.
+> Last updated: 2026-04-11 v6 (Market Intelligence SEO & Sitemaps, Python3 Scraper Support, Peternak Leaderboard, Admin Mobile Dashboard, Mobile UI UX Fixes, Kambing & Domba Penggemukan & Breeding) | Use this as reference for all future implementations.
 
 ---
 
@@ -719,6 +719,13 @@ Pattern wajib di semua role dashboard:
 ## 11. File Structure Map
 
 ```
+supabase/
+├── migrations/                     ← DB Schema (e.g., 20260405_ai_base_tables.sql)
+└── functions/
+    ├── ai-commit/                  ← Edge fn to securely commit AI staged entries
+    ├── fetch-harga/                ← Auto-scraper edge fn
+    └── verify-invite-code/         ← Rate limiting edge fn
+
 src/
 ├── main.jsx                        ← Entry point (StrictMode + QueryClient + Toaster)
 ├── App.jsx                         ← All routes, ProtectedRoute, RoleRedirector
@@ -732,6 +739,11 @@ src/
 │   ├── tokens.js                   ← Design tokens (colors, borders)
 │   ├── format.js                   ← Formatting + label maps (see §11)
 │   ├── businessModel.js            ← BUSINESS_MODELS config + getBusinessModel()
+│   ├── aiPrompt.js                 ← System prompt builder for AI Engine
+│   ├── aiTransactionInserter.js    ← AI staged transaction tools
+│   ├── aiValidation.js             ← Business rules validation for AI
+│   ├── useAIAssistant.jsx          ← Main AI conversation hook (MAIA/GLM)
+│   ├── useBusinessSnapshot.js      ← Context snapshot builder for AI
 │   └── hooks/
 │       ├── useAuth.jsx             ← AuthProvider (React Context) + useAuth() consumer — getSession() called once
 │       ├── useMediaQuery.js        ← Returns boolean for CSS media query
@@ -792,6 +804,7 @@ src/
 ├── dashboard/
 ├── admin/
 ├── broker/
+│   ├── ai/                         ← TernakBot UI components (AIChatBubble.jsx)
 │   ├── poultry_broker/             ← broker ayam (full dashboard)
 │   │   ├── Akun.jsx, Armada.jsx, Beranda.jsx, CashFlow.jsx, Kandang.jsx
 │   │   ├── Pengiriman.jsx, RPA.jsx, RPADetail.jsx, Simulator.jsx
@@ -1722,16 +1735,14 @@ Peternak PRO: 2 kandang + 1 jenis ternak included. Add-on: +Rp 99.000/bln per je
 
 ---
 
-## 31. AI Roadmap (Business Plan)
+## 31. TernakOS AI Assistant (TernakBot)
 
-- **AI Engine**: Grok 4.1 Fast (planned integration).
-- **Key Features**:
-  - **TernakBot Chat**: Ask questions about your business data in natural language.
-  - **Profit Analysis**: Detailed breakdown of margin and cost optimization.
-  - **Anomaly Detection**: Alerts for suspicious transaction patterns or sudden weight drops.
-  - **Harvest Prediction**: AI-driven estimated harvest date based on historical growth logs.
-  - **Auto Reports**: Weekly/Monthly PDF reports generated automatically.
-- **Status**: Planned (Design Phase).
+- **AI Engine**: Multi-Provider Failover (MAIA `grok-4-1-fast-reasoning-latest` & GLM `glm-4.7-flash`).
+- **Architecture**:
+  - **Dual Context & Snapshotting**: Pre-caches `farms`, `rpas`, `vehicles`, `customers`, and products (TTL 90s) into memory for context.
+  - **3-Phase Staging Strategy**: Input Text → `ai_pending_entries` (Database logic & validation) → `ai_staged_transactions` (Staging Lock & Undo Timer 8s) → Edge Fn `ai-commit` (Final Insertion to Production Table).
+  - **Robustness**: Rate limiting (max 15/min), Context caching (intentCache), Multi-turn memory summarization (`conversationSummary`), Soft fuzzy Entity Resolution.
+- **Status**: ✅ **ACTIVE IN PRODUCTION** (Core transaction processing logic and NLP).
 
 ---
 
@@ -1752,6 +1763,7 @@ Peternak PRO: 2 kandang + 1 jenis ternak included. Add-on: +Rp 99.000/bln per je
 - **Business Switcher Performance**: Invalidate spesifik ✅.
 - **Rate Limit Invite Code**: Persistent table `invite_rate_limits` ✅.
 - **DB Alter Table**: New columns & RLS for `broker_connections` ✅.
+- **TernakBot AI Core**: Natural language to transaction wizard (NLP → Staging → Commit Edge Function) ✅.
 
 ### SEDANG DIKERJAKAN
 - **Broker Dashboard Bug Fixes**: Ongoing UI stabilization.
@@ -1762,7 +1774,6 @@ Peternak PRO: 2 kandang + 1 jenis ternak included. Add-on: +Rp 99.000/bln per je
 - **Peternak Full Dashboard**: Sapi, domba, kambing, layer.
 - **RPH Full Dashboard**.
 - **Peternak Babi**: Coming soon (locked status).
-- **TernakBot AI**: Grok 4.1 Fast integration.
 - **Exports**: PDF/Excel generator.
 - **Realtime Notifs**: Bell panel updates & system alerts.
 - **Upgrade Flow**: In-app payment for Pro/Business plans.
@@ -2092,4 +2103,24 @@ Peternak PRO: 2 kandang + 1 jenis ternak included. Add-on: +Rp 99.000/bln per je
 
 ---
 
-*Last updated: 2026-04-02 v1 — Poultry Broker stabilization (infinite loops resolved via stable handlers + subscription pattern), Verified RLS bulletproof architecture (33+ tables), Soft Delete enforcement (.eq('is_deleted', false)), TransaksiSuccessCard flow improvement, and React 19 / Radix UI compatibility.*
+### Updates 2026-04-11
+
+**Market Intelligence SEO & Automation:**
+- SEO: Fixed `robots.txt` and integrated `sitemap.xml` with all public static routes.
+- Script: `deploy.sh` updated to automatically run `npm run scrape:market` and `npm run sitemap` during deployment pipeline.
+- Python Scraper: `ternakos_harga_scraper.py` execution string updated to `python3` to ensure compatibility with Ubuntu server during auto-deployment.
+- Unified Data: Refactored chart logic on Market Intelligence to utilize unified platform data sources.
+
+**Admin & Mobile Enhancements:**
+- Admin Mobile: Full mobile responsive view for Admin Panel implemented.
+- Mobile Navigation: Admin tab moved from BottomNav into `DrawerLainnya` for better space distribution. Scrollable sidebar and compact fixed topbar added.
+- Drawer: Fixed swipe-to-open logic and hamburger intersection with topbar. Restored mobile scrolling inside `DrawerLainnya`.
+
+**Features & Landing Page:**
+- Peternak Consolidated Leaderboard added.
+- Supedadmin Parity elevated across all platform boundaries.
+- Landing Page Overhaul: Appended generic FAQ page, PeopleAlsoAsk section, FiturPage overhaul, and HargaPasarPublic layout revisions.
+
+---
+
+*Last updated: 2026-04-11 v6 — Comprehensive Market Intelligence SEO, Scraper automation, Admin Mobile refactoring, and Landing Page expansions.*
