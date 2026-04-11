@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://ternakos.my.id/sitemap.xml
