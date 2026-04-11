@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { 
   Truck, User, Package, MapPin, 
   Clock, CheckCircle2, AlertCircle,
   Phone, ChevronRight, LogOut,
   Navigation, CheckCircle, Save, X,
-  DollarSign
+  DollarSign, Menu
 } from 'lucide-react'
 import { format, isAfter, parseISO } from 'date-fns'
 import { id } from 'date-fns/locale'
@@ -15,7 +16,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { useNavigate } from 'react-router-dom'
 import { formatIDR, formatWeight, formatEkor, safeNumber } from '@/lib/format'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -29,6 +29,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function SopirDashboard() {
   const { profile, user, tenant } = useAuth()
+  const { setSidebarOpen } = useOutletContext() || {}
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { updateTiba } = useUpdateDelivery()
@@ -115,6 +116,12 @@ export default function SopirDashboard() {
     <div className="bg-[#06090F] min-h-screen text-[#F1F5F9] font-body relative">
       <header className="h-14 px-4 flex justify-between items-center sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-40 border-b border-white/5">
         <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setSidebarOpen?.(true)}
+            className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+          >
+            <Menu size={17} className="text-[#94A3B8]" />
+          </button>
           <div className="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center text-sm">🐔</div>
           <div>
             <h1 className="font-display text-[14px] font-black tracking-tighter uppercase leading-none">TernakOS</h1>
@@ -401,7 +408,7 @@ function UpdateTibaSheet({ isOpen, onClose, delivery, onSuccess }) {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="bg-[#0C1319] border-t border-white/10 p-0 rounded-t-[24px] overflow-y-auto max-h-[92vh]">
+      <SheetContent side="bottom" className="bg-[#0C1319] border-t border-white/10 p-0 rounded-t-[24px] overflow-y-auto max-h-[90dvh]">
         <div className="p-5 space-y-5 pb-10">
           <SheetHeader className="text-left">
             <SheetTitle className="text-white font-display text-xl font-black uppercase tracking-tight flex items-center gap-2.5">

@@ -6,25 +6,32 @@
  * Dirancang untuk:
  *  1. SEO - konten ter-render penuh, bisa dibaca Google Bot
  *  2. Lead magnet - pengunjung tanpa akun tetap bisa akses
- *  3. Reuse komponen dari HargaPasar.jsx tapi tanpa tenant_id / useAuth
+ *  3. Unique selling point: data REAL dari transaksi nyata broker, bukan hanya scraper
  *
- * Data source: tabel `market_prices` (global, bukan per-tenant)
- * Kolom yang dipakai: price_date, chicken_type, region,
- *   farm_gate_price, avg_buy_price, avg_sell_price,
- *   buyer_price, broker_margin, source
+ * Data sources:
+ *   - market_prices: scraper Chickin.id (farm_gate_price)
+ *   - RPC get_province_price_trends: real transaction averages (all brokers)
  */
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   TrendingUp, TrendingDown, Minus,
-  Clock, BarChart3, Info, ExternalLink,
-  ChevronRight, ShieldCheck, Zap
+  Clock, BarChart3, Info, MapPin,
+  ChevronRight, ShieldCheck, Zap, Check, ChevronsUpDown,
+  Search, Database, Users, Activity, Layers, ArrowRight
 } from 'lucide-react'
 import {
+  Popover, PopoverContent, PopoverTrigger
+} from '@/components/ui/popover'
+import {
+  Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList
+} from '@/components/ui/command'
+import { PROVINCES } from '@/lib/constants/regions'
+import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Legend
+  Tooltip, ResponsiveContainer
 } from 'recharts'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
@@ -36,19 +43,14 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import { format, subDays, startOfWeek, endOfWeek, startOfMonth } from 'date-fns'
+import { id as idLocale } from 'date-fns/locale'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
-
 const WIB_OFFSET = 7 * 60 * 60 * 1000
 const TODAY = new Date(Date.now() + WIB_OFFSET).toISOString().split('T')[0]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/**
- * Normalise satu row: fallback ke kolom lama jika kolom baru null.
- * avg_buy_price  → farm_gate_price (harga di kandang)
- * avg_sell_price → buyer_price     (harga di pembeli/pasar)
- */
 function normaliseRow(row) {
   return {
     ...row,
@@ -63,17 +65,38 @@ function formatShortDate(dateStr) {
   return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })
 }
 
+function provinceToSlug(name) {
+  return name.toLowerCase().replace(/\s+/g, '-')
+}
+
+function slugToProvince(slug) {
+  if (!slug) return null
+  return PROVINCES.find(p => provinceToSlug(p) === slug.toLowerCase()) || null
+}
+
+const REGION_GROUPS = {
+  "Sumatera": ["Aceh", "Sumatera Utara", "Sumatera Barat", "Riau", "Kepulauan Riau", "Jambi", "Sumatera Selatan", "Kepulauan Bangka Belitung", "Bengkulu", "Lampung"],
+  "Jawa": ["DKI Jakarta", "Jawa Barat", "Banten", "Jawa Tengah", "DI Yogyakarta", "Jawa Timur"],
+  "Bali & Nusa": ["Bali", "Nusa Tenggara Barat", "Nusa Tenggara Timur"],
+  "Kalimantan": ["Kalimantan Barat", "Kalimantan Tengah", "Kalimantan Selatan", "Kalimantan Timur", "Kalimantan Utara"],
+  "Sulawesi": ["Sulawesi Utara", "Sulawesi Tengah", "Sulawesi Selatan", "Sulawesi Tenggara", "Gorontalo", "Sulawesi Barat"],
+  "Maluku & Papua": ["Maluku", "Maluku Utara", "Papua", "Papua Barat", "Papua Tengah", "Papua Pegunungan", "Papua Selatan", "Papua Barat Daya"]
+}
+
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function StatCard({ label, value, sub, trend, isLoading }) {
+function StatCard({ label, value, sub, trend, isLoading, highlight }) {
   const Icon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus
   const trendColor =
     trend === 'up'   ? 'text-emerald-400' :
-    trend === 'down' ? 'text-red-400'      : 'text-text-secondary'
+    trend === 'down' ? 'text-red-400'      : 'text-[#4B6478]'
 
   return (
-    <Card className="bg-bg-1 border-white/5">
-      <CardContent className="p-4">
+    <Card className={cn(
+      "border-white/5 transition-all duration-300",
+      highlight ? "bg-emerald-500/5 border-emerald-500/20" : "bg-[#0C1319]"
+    )}>
+      <CardContent className="p-5">
         {isLoading ? (
           <>
             <Skeleton className="h-3 w-20 mb-3 bg-white/5" />
@@ -82,10 +105,10 @@ function StatCard({ label, value, sub, trend, isLoading }) {
           </>
         ) : (
           <>
-            <p className="text-xs text-text-secondary mb-1">{label}</p>
-            <p className="text-2xl font-semibold text-text-primary tracking-tight">{value}</p>
-            <div className={cn('flex items-center gap-1 mt-1 text-xs', trendColor)}>
-              <Icon size={12} />
+            <p className="text-[10px] text-[#4B6478] font-black uppercase tracking-[0.2em] mb-2">{label}</p>
+            <p className={cn("text-2xl font-black tracking-tight tabular-nums", highlight ? "text-emerald-400" : "text-white")}>{value}</p>
+            <div className={cn('flex items-center gap-1.5 mt-1.5 text-[10px] font-bold uppercase tracking-wider', trendColor)}>
+              <Icon size={11} />
               <span>{sub}</span>
             </div>
           </>
@@ -95,31 +118,59 @@ function StatCard({ label, value, sub, trend, isLoading }) {
   )
 }
 
-function SourceBadge({ source }) {
-  const map = {
-    auto_scraper: { label: 'Auto Scraper', color: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
-    manual:       { label: 'Input Manual', color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-    transaction:  { label: 'Transaksi',    color: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
-  }
-  const { label, color } = map[source] ?? { label: source, color: 'bg-white/5 text-[#4B6478] border-white/5' }
+function HybridTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null
+  const d = payload[0].payload
+  const spread = (d.platformBeli && d.chickin) ? d.chickin - d.platformBeli : null
+  const margin = (d.platformBeli && d.platformJual) ? d.platformJual - d.platformBeli : null
   return (
-    <span className={cn('text-[10px] px-2 py-0.5 rounded-full border font-medium', color)}>
-      {label}
-    </span>
+    <div className="bg-[#0C1319] border border-white/10 p-4 rounded-2xl shadow-2xl min-w-[200px] backdrop-blur-xl">
+      <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-3">{d.displayDate}</p>
+      <div className="space-y-2.5">
+        {[
+          { label: 'Chickin.id (Ref)', val: d.chickin, color: 'text-amber-400' },
+          { label: 'Beli (Platform)', val: d.platformBeli, color: 'text-emerald-400' },
+          { label: 'Jual (Platform)', val: d.platformJual, color: 'text-indigo-400' },
+        ].map(({ label, val, color }) => (
+          <div key={label} className="flex justify-between items-center gap-4">
+            <span className="text-[11px] text-[#94A3B8] font-bold">{label}</span>
+            <span className={cn("text-sm font-black tabular-nums", val ? color : 'text-[#4B6478]')}>
+              {val ? formatIDR(val) : '—'}
+            </span>
+          </div>
+        ))}
+      </div>
+      {(spread != null || margin != null) && (
+        <div className="mt-3 pt-3 border-t border-white/5 space-y-1.5">
+          {spread != null && (
+            <div className="flex justify-between items-center">
+              <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider">Efisiensi Beli</span>
+              <span className={cn('text-xs font-black tabular-nums', spread >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
+                {spread > 0 ? '+' : ''}{formatIDR(spread)}
+              </span>
+            </div>
+          )}
+          {margin != null && (
+            <div className="flex justify-between items-center">
+              <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider">Margin/kg</span>
+              <span className={cn('text-xs font-black tabular-nums', margin >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
+                {margin > 0 ? '+' : ''}{formatIDR(margin)}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
-function CustomTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null
+function LegendDot({ color, label, dashed }) {
   return (
-    <div className="bg-bg-1 border border-white/10 rounded-lg p-3 text-xs shadow-xl">
-      <p className="text-text-secondary mb-2">{formatShortDate(label)}</p>
-      {payload.map(p => (
-        <div key={p.dataKey} className="flex justify-between gap-6">
-          <span style={{ color: p.color }}>{p.name}</span>
-          <span className="text-text-primary font-medium">{formatIDR(p.value)}</span>
-        </div>
-      ))}
+    <div className="flex items-center gap-2">
+      {dashed
+        ? <div className="w-4 h-0 border-t-2 border-dashed" style={{ borderColor: color }} />
+        : <div className="w-2 h-2 rounded-full" style={{ background: color }} />}
+      <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider">{label}</span>
     </div>
   )
 }
@@ -127,287 +178,655 @@ function CustomTooltip({ active, payload, label }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function HargaPasarPublic() {
+  const { province: provinceSlug } = useParams()
+  const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
+  const [hybridPeriod, setHybridPeriod] = useState('weekly')
+  const currentProvince = useMemo(() => slugToProvince(provinceSlug), [provinceSlug])
 
-  // ── Data fetching (GLOBAL - no tenant filter) ──────────────────────────────
-  const { data: rawPrices, isLoading, isFetching } = useQuery({
-    queryKey: ['public-market-prices'],
+  // ── SEO: Title + Meta Description + Canonical ────────────────────
+  useEffect(() => {
+    const province = currentProvince
+    const todayFmt = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+
+    // Title — include exact keyword
+    document.title = province
+      ? `Harga Ayam Broiler Hidup Hari Ini di ${province} — Update ${todayFmt} | TernakOS`
+      : `Harga Ayam Broiler Hidup Hari Ini — Update Harian Real Data | TernakOS`
+
+    // Meta description
+    const desc = province
+      ? `Harga ayam broiler hidup hari ini di ${province} — ${todayFmt}. Data dari transaksi nyata broker + referensi Chickin.id. Update otomatis setiap hari.`
+      : `Harga ayam broiler hidup hari ini — ${todayFmt}. Data dari transaksi nyata broker aktif seluruh Indonesia. Bandingkan harga kandang vs pasar per provinsi.`
+    let metaDesc = document.querySelector('meta[name="description"]')
+    if (!metaDesc) { metaDesc = document.createElement('meta'); metaDesc.name = 'description'; document.head.appendChild(metaDesc) }
+    metaDesc.content = desc
+
+    // Canonical
+    let canonical = document.querySelector('link[rel="canonical"]')
+    if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical) }
+    canonical.href = province
+      ? `https://ternakos.com/harga-pasar/${provinceToSlug(province)}`
+      : 'https://ternakos.com/harga-pasar'
+
+    // Open Graph
+    const setMeta = (prop, content, attr = 'property') => {
+      let el = document.querySelector(`meta[${attr}="${prop}"]`)
+      if (!el) { el = document.createElement('meta'); el.setAttribute(attr, prop); document.head.appendChild(el) }
+      el.content = content
+    }
+    setMeta('og:title', document.title)
+    setMeta('og:description', desc)
+    setMeta('og:url', canonical.href)
+    setMeta('og:type', 'website')
+  }, [currentProvince])
+
+  // ── Market Prices (Scraper – for stat cards & history table) ─────────────
+  const { data: result, isLoading } = useQuery({
+    queryKey: ['public-market-prices', currentProvince],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('market_prices')
-        .select(
-          'id, price_date, chicken_type, region, ' +
-          'farm_gate_price, avg_buy_price, avg_sell_price, ' +
-          'buyer_price, broker_margin, source, source_url'
-        )
-        .eq('is_deleted', false)
-        .order('price_date', { ascending: false })
-        .order('region',     { ascending: false })
-        .limit(60)
+      const fetchNational = async () => {
+        const { data, error } = await supabase
+          .from('market_prices')
+          .select('price_date, farm_gate_price, buyer_price')
+          .eq('is_deleted', false)
+          .gte('price_date', format(subDays(new Date(), 45), 'yyyy-MM-dd'))
+          .order('price_date', { ascending: false })
+        if (error) throw error
+        const grouped = (data || []).reduce((acc, row) => {
+          const date = row.price_date
+          if (!acc[date]) acc[date] = { price_date: date, farm_gate_sum: 0, buyer_sum: 0, count: 0 }
+          acc[date].farm_gate_sum += (row.farm_gate_price || 0)
+          acc[date].buyer_sum += (row.buyer_price || 0)
+          acc[date].count += 1
+          return acc
+        }, {})
+        return Object.values(grouped).map(g => ({
+          ...g,
+          region: 'Nasional',
+          source: 'Aggregated',
+          avg_buy_price:  Math.round(g.farm_gate_sum / g.count),
+          avg_sell_price: Math.round(g.buyer_sum / g.count),
+          broker_margin:  Math.round((g.buyer_sum - g.farm_gate_sum) / g.count)
+        }))
+      }
 
+      if (!currentProvince) return { data: await fetchNational(), isFallback: false }
+
+      const { data: regData, error } = await supabase
+        .from('market_prices')
+        .select('price_date, farm_gate_price, buyer_price, region, source')
+        .eq('is_deleted', false)
+        .ilike('region', currentProvince)
+        .gte('price_date', format(subDays(new Date(), 45), 'yyyy-MM-dd'))
+        .order('price_date', { ascending: false })
       if (error) throw error
-      return (data || [])
-        .map(normaliseRow)
-        .filter(r =>
-          r.avg_buy_price > 0 &&
-          r.avg_sell_price > 0 &&
-          r.avg_sell_price >= r.avg_buy_price
-        )
+
+      if (!regData || regData.length === 0) return { data: await fetchNational(), isFallback: true }
+
+      return {
+        data: regData.map(r => ({
+          ...r,
+          avg_buy_price:  r.farm_gate_price,
+          avg_sell_price: r.buyer_price,
+          broker_margin:  (r.buyer_price || 0) - (r.farm_gate_price || 0)
+        })),
+        isFallback: false
+      }
     },
-    staleTime: 60 * 1000,      // 1 menit — sinkron dengan refetchInterval
-    refetchInterval: 60 * 1000, // re-fetch setiap 60 detik — backing the "Live" label
+    staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000,
   })
 
-  // ── Derived data ───────────────────────────────────────────────────────────
-
-  // Deduplicate by date — keep one row per date (first encountered = highest priority per query order)
-  const dedupedPrices = useMemo(() => {
-    if (!rawPrices?.length) return []
-    const seen = new Map()
-    for (const row of rawPrices) {
-      if (!seen.has(row.price_date)) seen.set(row.price_date, row)
+  // ── Platform Real-Transaction Hybrid Chart Data (RPC) ────────────────────
+  const { hybridStartDate, hybridEndDate } = useMemo(() => {
+    const now = new Date()
+    let start, end
+    if (hybridPeriod === 'weekly') {
+      start = startOfWeek(now, { weekStartsOn: 1 })
+      end   = now
+    } else {
+      start = startOfMonth(now)
+      end   = now
     }
-    return [...seen.values()].sort((a, b) => b.price_date.localeCompare(a.price_date))
-  }, [rawPrices])
+    return {
+      hybridStartDate: format(start, 'yyyy-MM-dd'),
+      hybridEndDate:   format(end, 'yyyy-MM-dd'),
+    }
+  }, [hybridPeriod])
 
-  // Harga terbaru — setelah dedup, baris pertama sudah terbaik per tanggal
-  const latestRow = useMemo(() => dedupedPrices[0] ?? null, [dedupedPrices])
+  const targetProvince = currentProvince || 'Jawa Tengah'
 
-  // Harga sebelumnya untuk kalkulasi trend
-  const prevRow = useMemo(() => dedupedPrices[1] ?? null, [dedupedPrices])
+  const fetchStartDate = useMemo(() => format(subDays(new Date(), 45), 'yyyy-MM-dd'), [])
+  const fetchEndDate   = useMemo(() => format(new Date(), 'yyyy-MM-dd'), [])
 
-  // Trend beli
-  const buyTrend = useMemo(() => {
+  const { data: platformRpc } = useQuery({
+    queryKey: ['public-platform-rpc', targetProvince],
+    queryFn: async () => {
+      const { data } = await supabase.rpc('get_province_price_trends', {
+        p_province:    targetProvince,
+        p_start_date:  fetchStartDate,
+        p_end_date:    fetchEndDate,
+      })
+      return (data || []).reduce((acc, r) => { acc[r.price_date] = r; return acc }, {})
+    },
+    staleTime: 60 * 1000
+  })
+
+  const rawPrices = result?.data ?? []
+  const isFallback = result?.isFallback ?? false
+
+  const fullUnifiedData = useMemo(() => {
+    const rawMap = new Map()
+    for (const row of rawPrices) if (!rawMap.has(row.price_date)) rawMap.set(row.price_date, row)
+    
+    const dates = new Set([
+      ...rawMap.keys(),
+      ...Object.keys(platformRpc || {})
+    ])
+
+    return [...dates].sort().map(dStr => {
+      const s = rawMap.get(dStr)
+      const p = platformRpc?.[dStr]
+      
+      const chickin = s?.avg_buy_price || null 
+      const pBeli = p?.avg_buy ? Math.round(p.avg_buy) : null
+      const pJual = p?.avg_sell ? Math.round(p.avg_sell) : null
+      
+      const finalBeli = pBeli || chickin || 0
+      const finalJual = pJual || s?.avg_sell_price || (chickin ? chickin + 2500 : 0)
+
+      return {
+        date: dStr,
+        price_date: dStr,
+        displayDate: formatShortDate(dStr),
+        chickin,
+        platformBeli: pBeli,
+        platformJual: pJual,
+        
+        avg_buy_price: finalBeli,
+        avg_sell_price: finalJual,
+        broker_margin: finalJual && finalBeli ? (finalJual - finalBeli) : 0,
+        region: s?.region || targetProvince
+      }
+    })
+  }, [rawPrices, platformRpc, targetProvince])
+
+  const hybridChartData = useMemo(() => {
+    return fullUnifiedData.filter(d => d.date >= hybridStartDate && d.date <= hybridEndDate)
+  }, [fullUnifiedData, hybridStartDate, hybridEndDate])
+
+  const dedupedPrices = useMemo(() => [...fullUnifiedData].reverse(), [fullUnifiedData])
+
+  // ── Activity / Social Proof ──────────────────────────────────────────────
+  const { data: activityMap } = useQuery({
+    queryKey: ['broker-activity'],
+    queryFn: async () => {
+      const sevenDaysAgo = format(subDays(new Date(), 7), 'yyyy-MM-dd')
+      const { data: buyData } = await supabase
+        .from('purchases')
+        .select('transaction_date, farms!inner(province)')
+        .gte('transaction_date', sevenDaysAgo)
+        .eq('is_deleted', false)
+      const { data: sellData } = await supabase
+        .from('sales')
+        .select('transaction_date, rpa_clients!inner(province)')
+        .gte('transaction_date', sevenDaysAgo)
+        .eq('is_deleted', false)
+      const map = {}
+      const process = (rows, getProv) => (rows || []).forEach(row => {
+        const p = getProv(row)
+        if (p) map[p] = (map[p] || 0) + 1
+      })
+      process(buyData, r => r.farms?.province)
+      process(sellData, r => r.rpa_clients?.province)
+      return map
+    },
+    staleTime: 1000 * 60 * 30,
+  })
+
+  const totalPlatformTx   = useMemo(() => Object.values(activityMap || {}).reduce((a, b) => a + b, 0), [activityMap])
+  const activeProvinces   = useMemo(() => Object.keys(activityMap || {}).length, [activityMap])
+
+  // ── Derived data ─────────────────────────────────────────────────────────
+  const todayFmtId = useMemo(() => new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }), [])
+  const latestRow   = dedupedPrices[0] ?? null
+  const prevRow     = dedupedPrices[1] ?? null
+  const buyTrend    = useMemo(() => {
     if (!latestRow || !prevRow) return { dir: 'flat', diff: 0 }
     const diff = latestRow.avg_buy_price - prevRow.avg_buy_price
     return { dir: diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat', diff }
   }, [latestRow, prevRow])
-
-  // Trend jual
-  const sellTrend = useMemo(() => {
+  const sellTrend   = useMemo(() => {
     if (!latestRow || !prevRow) return { dir: 'flat', diff: 0 }
     const diff = latestRow.avg_sell_price - prevRow.avg_sell_price
     return { dir: diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat', diff }
   }, [latestRow, prevRow])
-
-  // Data chart — 14 hari terakhir, urut ascending
-  const chartData = useMemo(() => {
-    if (!dedupedPrices.length) return []
-    return [...dedupedPrices]
-      .filter(r => r.avg_buy_price > 0 && r.avg_sell_price > 0)
-      .slice(0, 14)
-      .reverse()
-      .map(r => ({
-        date:         r.price_date,
-        'Harga Beli': r.avg_buy_price,
-        'Harga Jual': r.avg_sell_price,
-        'Margin':     r.broker_margin,
-      }))
-  }, [dedupedPrices])
-
-  // Tabel history — 10 baris (deduped, one per date)
-  const tableRows = useMemo(() => dedupedPrices.slice(0, 10), [dedupedPrices])
-
-  // Avg margin 7 hari
+  const marginTrend = useMemo(() => {
+    if (!latestRow || !prevRow) return { dir: 'flat', diff: 0 }
+    const diff = latestRow.broker_margin - prevRow.broker_margin
+    return { dir: diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat', diff }
+  }, [latestRow, prevRow])
   const avgMargin7d = useMemo(() => {
-    if (!dedupedPrices.length) return 0
     const recent = dedupedPrices.slice(0, 7).filter(r => r.broker_margin > 0)
     if (!recent.length) return 0
     return Math.round(recent.reduce((s, r) => s + r.broker_margin, 0) / recent.length)
   }, [dedupedPrices])
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── JSON-LD Structured Data (Seo) ────────────────────────────────────
+  const jsonLd = useMemo(() => {
+    const buyPriceStr  = latestRow?.avg_buy_price  ? `Rp ${latestRow.avg_buy_price.toLocaleString('id-ID')}/kg`  : 'belum tersedia'
+    const sellPriceStr = latestRow?.avg_sell_price ? `Rp ${latestRow.avg_sell_price.toLocaleString('id-ID')}/kg` : 'belum tersedia'
+    const provinceLabel = currentProvince || 'Seluruh Indonesia'
+
+    return {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Beranda', item: 'https://ternakos.com' },
+            { '@type': 'ListItem', position: 2, name: 'Harga Pasar', item: 'https://ternakos.com/harga-pasar' },
+            ...(currentProvince ? [{ '@type': 'ListItem', position: 3, name: currentProvince, item: `https://ternakos.com/harga-pasar/${provinceToSlug(currentProvince)}` }] : [])
+          ]
+        },
+        {
+          '@type': 'Dataset',
+          name: `Harga Ayam Broiler Hidup Harian — ${provinceLabel}`,
+          description: `Data harga ayam broiler hidup per kg untuk wilayah ${provinceLabel}. Mencakup harga beli di kandang dan harga jual ke pasar/RPA. Diperbarui setiap hari dari transaksi nyata broker aktif di platform TernakOS.`,
+          url: currentProvince
+            ? `https://ternakos.com/harga-pasar/${provinceToSlug(currentProvince)}`
+            : 'https://ternakos.com/harga-pasar',
+          keywords: [
+            'harga ayam broiler hidup hari ini',
+            'harga ayam broiler',
+            'harga kandang ayam broiler',
+            `harga ayam broiler ${provinceLabel.toLowerCase()}`,
+            'harga jual ayam broiler',
+            'harga pasar ayam hari ini',
+          ],
+          temporalCoverage: `2024-01-01/${new Date().toISOString().split('T')[0]}`,
+          dateModified: new Date().toISOString(),
+          creator: { '@type': 'Organization', name: 'TernakOS', url: 'https://ternakos.com' },
+          variableMeasured: [
+            { '@type': 'PropertyValue', name: 'Harga Beli Kandang', unitText: 'IDR/kg' },
+            { '@type': 'PropertyValue', name: 'Harga Jual Pasar', unitText: 'IDR/kg' },
+            { '@type': 'PropertyValue', name: 'Margin Broker', unitText: 'IDR/kg' },
+          ]
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: [
+            {
+              '@type': 'Question',
+              name: 'Berapa harga ayam broiler hidup hari ini?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: `Harga ayam broiler hidup hari ini per ${todayFmtId} adalah ${buyPriceStr} di tingkat kandang dan ${sellPriceStr} di tingkat pasar. Data ini diperbarui setiap hari dari rata-rata transaksi nyata broker aktif di platform TernakOS untuk wilayah ${provinceLabel}.`
+              }
+            },
+            {
+              '@type': 'Question',
+              name: 'Apa perbedaan harga kandang dan harga pasar ayam broiler?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Harga kandang (farm gate price) adalah harga saat broker membeli ayam langsung dari peternak. Harga pasar adalah harga saat broker menjual ke RPA atau pasar. Selisihnya disebut margin broker, biasanya berkisar Rp 1.500–3.000/kg tergantung jarak dan kondisi pasar.'
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }, [currentProvince, latestRow])
+  const tableRows = useMemo(() => dedupedPrices.slice(0, 10), [dedupedPrices])
+
+  // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-bg-base min-h-screen text-text-primary font-body relative overflow-hidden">
-      
-      {/* ── BACKGROUND GLOW DECORATIONS ── */}
+    <div className="bg-[#06090F] min-h-screen text-white font-body relative overflow-hidden">
+      {/* JSON-LD Structured Data */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+
+      {/* ── Background glows ── */}
       <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute top-[30%] right-[-10%] w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute bottom-0 left-[20%] w-[800px] h-[400px] bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none opacity-50" />
 
-      {/* ── NAVBAR ── */}
       <Navbar />
-      
-      {/* Spacer to clear fixed Navbar */}
       <div className="h-16 md:h-20" />
 
       <main className="max-w-6xl mx-auto px-4 py-12 md:py-20 space-y-20 md:space-y-28 relative z-10">
 
-        {/* ── HERO SECTION ── */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="space-y-2"
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex h-2 w-2 rounded-full bg-emerald-400">
-               <div className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+        {/* ── HERO ── */}
+        <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="space-y-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+              <div className="flex h-1.5 w-1.5 rounded-full bg-emerald-400">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+              </div>
+              <span className="text-[10px] text-emerald-400 font-black uppercase tracking-widest">Update Harian Otomatis</span>
             </div>
-            <span className="text-xs text-emerald-400 font-bold uppercase tracking-widest">Update Harian</span>
+            {activeProvinces > 0 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                <Activity size={10} className="text-[#4B6478]" />
+                <span className="text-[10px] text-[#4B6478] font-black uppercase tracking-widest">{activeProvinces} Provinsi Aktif Minggu Ini</span>
+              </div>
+            )}
+            {totalPlatformTx > 0 && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                <Database size={10} className="text-[#4B6478]" />
+                <span className="text-[10px] text-[#4B6478] font-black uppercase tracking-widest">{totalPlatformTx}+ Transaksi 7 Hari</span>
+              </div>
+            )}
           </div>
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-text-primary leading-[1.1] tracking-tight uppercase max-w-3xl">
-            Harga Ayam & <span className="text-emerald-500">Komoditas</span> Hari Ini
-          </h1>
-          <p className="text-text-secondary text-sm md:text-base font-medium max-w-2xl leading-relaxed mt-4">
-            Data harga pasar terkini untuk peternak, broker, dan agen sembako.
-            Diperbarui setiap hari dari sumber terpercaya untuk membantu pengambilan keputusan bisnis Anda.
-          </p>
-          {latestRow && (
-            <div className="flex items-center gap-2 text-xs text-text-secondary pt-1">
-              <Clock size={12} />
-              <span>
-                Terakhir diperbarui:{' '}
-                {new Date(latestRow.price_date + 'T00:00:00').toLocaleDateString('id-ID', {
-                  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-                })}
-              </span>
-              {latestRow.source_url && (
-                <a
-                  href={latestRow.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-emerald-400 hover:underline"
+
+          <div>
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white leading-[1.1] tracking-tight uppercase max-w-3xl">
+              Harga Ayam Broiler Hidup{currentProvince ? ` di ${currentProvince}` : ''}{' '}
+              <span className="text-emerald-500">Hari Ini</span>
+            </h1>
+            <p className="text-[#94A3B8] text-sm md:text-base font-medium max-w-2xl leading-relaxed mt-4">
+              {currentProvince
+                ? `Update ${todayFmtId}. Data harga ayam broiler hidup hari ini untuk wilayah ${currentProvince} dari transaksi nyata broker + referensi Chickin.id.`
+                : `Update ${todayFmtId}. Harga ayam broiler hidup hari ini nasional — rata-rata transaksi nyata broker aktif di seluruh Indonesia.`}
+            </p>
+          </div>
+
+          {/* Province Selector - Moved Up for UX */}
+          <div className="space-y-3 pb-2">
+            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest pl-1">📍 Pilih Wilayah Anda:</p>
+            <div className="flex flex-col md:flex-row md:items-center gap-4 p-1.5 rounded-2xl bg-white/[0.02] border border-white/5 backdrop-blur-sm w-full">
+              <div className="flex flex-wrap items-center gap-1.5 p-1">
+                <Button
+                  variant="ghost" size="sm"
+                  onClick={() => navigate('/harga-pasar')}
+                  className={cn(
+                    "rounded-xl text-[10px] font-black uppercase tracking-widest px-4 h-9 transition-all",
+                    !currentProvince ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:bg-white/5"
+                  )}
                 >
-                  Sumber <ExternalLink size={10} />
-                </a>
+                  Nasional
+                </Button>
+                {['Jawa Barat', 'Jawa Tengah', 'Jawa Timur', 'Sumatera Selatan', 'Lampung'].map(p => (
+                  <Button
+                    key={p} variant="ghost" size="sm"
+                    onClick={() => navigate(`/harga-pasar/${provinceToSlug(p)}`)}
+                    className={cn(
+                      "rounded-xl text-[10px] font-black uppercase tracking-widest px-4 h-9 transition-all",
+                      currentProvince === p ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:bg-white/5"
+                    )}
+                  >
+                    {p}
+                  </Button>
+                ))}
+              </div>
+              <div className="hidden md:block w-px h-6 bg-white/10 mx-1" />
+              <div className="flex-1 flex items-center gap-3 px-3 min-w-[240px]">
+                <div className="flex items-center gap-2 text-[10px] text-[#4B6478] font-black uppercase tracking-widest">
+                  <Search size={14} />
+                  <span>Cari Wilayah</span>
+                </div>
+                <Popover open={open} onOpenChange={setOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline" role="combobox" aria-expanded={open}
+                      className="flex-1 justify-between h-9 bg-white/5 border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/10 transition-all px-4"
+                    >
+                      {currentProvince ? currentProvince : "Pilih dari 38 Provinsi..."}
+                      <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0 bg-[#0C1319] border-white/10 shadow-2xl">
+                    <Command className="bg-transparent">
+                      <CommandInput placeholder="Ketik nama provinsi..." className="h-11 text-xs" />
+                      <CommandList className="max-h-[350px]">
+                        <CommandEmpty className="py-6 text-center text-xs text-[#4B6478]">Provinsi tidak ditemukan.</CommandEmpty>
+                        <CommandGroup heading="Akses Cepat" className="px-2 text-[9px] font-black uppercase tracking-widest text-[#4B6478] opacity-50">
+                          <CommandItem onSelect={() => { navigate('/harga-pasar'); setOpen(false) }} className="flex items-center gap-2 rounded-lg cursor-pointer text-[10px] font-bold uppercase py-2.5">
+                            <MapPin size={12} className="text-emerald-500" /> Seluruh Indonesia
+                          </CommandItem>
+                        </CommandGroup>
+                        {Object.entries(REGION_GROUPS).map(([group, provinces]) => (
+                          <CommandGroup key={group} heading={group} className="px-2 mt-2 text-[9px] font-black uppercase tracking-widest text-[#4B6478]">
+                            {provinces.map((p) => (
+                              <CommandItem
+                                key={p} value={p}
+                                onSelect={() => { navigate(`/harga-pasar/${provinceToSlug(p)}`); setOpen(false) }}
+                                className="flex items-center justify-between rounded-lg cursor-pointer text-[10px] font-bold uppercase py-2.5 hover:bg-emerald-500/10 group"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <MapPin size={12} className={cn("transition-colors", currentProvince === p ? "text-emerald-500" : "text-[#4B6478] group-hover:text-emerald-500")} />
+                                  <span className={cn(currentProvince === p ? "text-emerald-500" : "text-white")}>{p}</span>
+                                  {activityMap?.[p] && <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {activityMap?.[p] && <span className="text-[8px] text-emerald-500/70 font-black">🔥 {activityMap[p]} TRX</span>}
+                                  {currentProvince === p && <Check className="h-3 w-3 text-emerald-500" />}
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        ))}
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          </div>
+
+          {latestRow && (
+            <div className="flex flex-wrap items-center gap-4 text-xs text-[#4B6478]">
+              <div className="flex items-center gap-2">
+                <Clock size={12} />
+                <span>Update: {formatDate(latestRow.price_date)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin size={12} className={isFallback ? "text-amber-400" : "text-emerald-500"} />
+                <span className={cn("font-bold", isFallback ? "text-amber-400" : "text-white")}>
+                  {currentProvince || 'Seluruh Indonesia (Rata-rata)'}
+                </span>
+              </div>
+              {activityMap?.[currentProvince] && (
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-[10px] text-emerald-400 font-black uppercase tracking-wider animate-pulse">
+                  🔥 Aktif Minggu Ini
+                </div>
               )}
             </div>
           )}
+
+          {isFallback && currentProvince && (
+            <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/10 max-w-xl">
+              <p className="text-[11px] text-amber-400/80 leading-relaxed font-medium">
+                <span className="font-extrabold text-amber-400 mr-1">INFO:</span>
+                Data spesifik <span className="text-amber-400 font-bold">{currentProvince}</span> belum tersedia.
+                Menampilkan <span className="font-bold">Rata-rata Nasional</span> sebagai acuan.
+              </p>
+            </motion.div>
+          )}
         </motion.section>
 
-        {/* ── STAT CARDS ── */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6"
-        >
+        {/* ── KPI STAT CARDS ── */}
+        <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }} className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard
             label="Harga Beli (Kandang)"
             value={isLoading ? '—' : formatIDR(latestRow?.avg_buy_price)}
-            sub={
-              buyTrend.dir === 'flat'
-                ? 'Stabil'
-                : `${buyTrend.dir === 'up' ? '+' : ''}${formatIDR(buyTrend.diff)} dari kemarin`
-            }
-            trend={buyTrend.dir}
-            isLoading={isLoading}
+            sub={buyTrend.dir === 'flat' ? 'Stabil' : `${buyTrend.dir === 'up' ? '+' : ''}${formatIDR(buyTrend.diff)} dari kemarin`}
+            trend={buyTrend.dir} isLoading={isLoading}
           />
           <StatCard
             label="Harga Jual (Pasar)"
             value={isLoading ? '—' : formatIDR(latestRow?.avg_sell_price)}
-            sub={
-              sellTrend.dir === 'flat'
-                ? 'Stabil'
-                : `${sellTrend.dir === 'up' ? '+' : ''}${formatIDR(sellTrend.diff)} dari kemarin`
-            }
-            trend={sellTrend.dir}
-            isLoading={isLoading}
+            sub={sellTrend.dir === 'flat' ? 'Stabil' : `${sellTrend.dir === 'up' ? '+' : ''}${formatIDR(sellTrend.diff)} dari kemarin`}
+            trend={sellTrend.dir} isLoading={isLoading}
           />
           <StatCard
             label="Margin Broker (Hari Ini)"
             value={isLoading ? '—' : formatIDR(latestRow?.broker_margin)}
-            sub="Selisih beli → jual"
-            trend="flat"
-            isLoading={isLoading}
+            sub={marginTrend.dir === 'flat' ? 'Stabil dari kemarin' : `${marginTrend.dir === 'up' ? '+' : ''}${formatIDR(marginTrend.diff)} dari kemarin`}
+            trend={marginTrend.dir} isLoading={isLoading}
           />
           <StatCard
-            label="Rata-rata Margin (7 Hari)"
+            label="Rata-rata Margin 7 Hari"
             value={isLoading ? '—' : formatIDR(avgMargin7d)}
-            sub="Rata-rata 7 hari terakhir"
-            trend="flat"
-            isLoading={isLoading}
+            sub="7 hari terakhir"
+            trend="flat" isLoading={isLoading} highlight
           />
         </motion.section>
 
-        {/* ── AREA CHART ── */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-        >
-          <Card className="bg-bg-1 border-white/5">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <BarChart3 size={16} className="text-emerald-400" />
-                  <h2 className="text-sm font-medium text-text-primary">
-                    Tren Harga 14 Hari Terakhir
-                  </h2>
-                </div>
-                <div className="flex items-center gap-2">
-                  {/* Live indicator — honest: refetches every 60s */}
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className={`absolute inline-flex h-full w-full rounded-full bg-emerald-400 ${isFetching ? 'opacity-100' : 'animate-ping'} opacity-75`} />
-                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                    </span>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">
-                      {isFetching ? 'Updating...' : 'Live'}
-                    </span>
+        {/* ── HYBRID CHART: Real Platform Data vs Chickin.id ── */}
+        <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.15 }}>
+          <Card className="bg-[#0C1319] border-white/5 rounded-[28px] relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(16,185,129,0.04)_0%,transparent_70%)] pointer-events-none" />
+            <CardContent className="p-6 md:p-8">
+              {/* Header */}
+              <div className="flex flex-col gap-4 mb-8 relative z-10">
+                <div className="flex flex-wrap justify-between items-start gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">Data Real Platform + Referensi Pasar</p>
+                    </div>
+                    <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Hybrid Market Intelligence</h2>
+                    <p className="text-[11px] text-[#4B6478] mt-1 max-w-md">
+                      Dibanding platform lain, kami punya data transaksi nyata broker — bukan sekadar scraping.
+                    </p>
                   </div>
-                  <Badge variant="outline" className="text-xs border-white/10 text-text-secondary">
+                  <div className="flex bg-black/40 p-1 rounded-xl border border-white/5 shrink-0">
+                    <button
+                      onClick={() => setHybridPeriod('weekly')}
+                      className={cn("px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all",
+                        hybridPeriod === 'weekly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:text-[#94A3B8]"
+                      )}
+                    >Mingguan</button>
+                    <button
+                      onClick={() => setHybridPeriod('monthly')}
+                      className={cn("px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ml-0.5",
+                        hybridPeriod === 'monthly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:text-[#94A3B8]"
+                      )}
+                    >Bulanan</button>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-4">
+                  <LegendDot color="#F59E0B" label="Chickin.id (Ref)" dashed />
+                  <LegendDot color="#10B981" label="Beli Nyata (Platform)" />
+                  <LegendDot color="#818CF8" label="Jual Nyata (Platform)" />
+                  <span className="ml-auto text-[9px] font-black text-[#4B6478] uppercase tracking-widest">
+                    {currentProvince || 'Jawa Tengah'} · {hybridPeriod === 'weekly' ? 'Minggu Ini' : 'Bulan Ini'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Chart */}
+              <div className="h-[260px] w-full relative z-10">
+                {hybridChartData.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center gap-3 text-center">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+                      <BarChart3 size={20} className="text-emerald-400/50" />
+                    </div>
+                    <p className="text-sm font-bold text-[#4B6478]">Data platform belum tersedia untuk periode ini</p>
+                    <p className="text-[11px] text-[#4B6478]/70">Semakin banyak broker bergabung, semakin akurat datanya.</p>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={hybridChartData}>
+                      <defs>
+                        <linearGradient id="gradBuy" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10B981" stopOpacity={0.15} />
+                          <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="gradSell" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#818CF8" stopOpacity={0.1} />
+                          <stop offset="95%" stopColor="#818CF8" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
+                      <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fill: '#4B6478', fontSize: 10, fontWeight: 800 }} dy={10} interval={hybridPeriod === 'monthly' ? 4 : 0} />
+                      <YAxis hide domain={['dataMin - 3000', 'dataMax + 2000']} />
+                      <Tooltip content={<HybridTooltip />} />
+                      <Area type="monotone" dataKey="chickin"      stroke="#F59E0B" strokeWidth={2} strokeDasharray="5 4" fill="transparent" connectNulls dot={false} />
+                      <Area type="monotone" dataKey="platformJual" stroke="#818CF8" strokeWidth={2} fillOpacity={1} fill="url(#gradSell)" connectNulls activeDot={{ r: 5, stroke: '#0C1319', strokeWidth: 2, fill: '#818CF8' }} />
+                      <Area type="monotone" dataKey="platformBeli" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#gradBuy)"  connectNulls activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: '#10B981' }} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+
+              {/* Data Source Note */}
+              <div className="mt-6 pt-4 border-t border-white/5 flex flex-wrap items-center gap-2">
+                <ShieldCheck size={12} className="text-emerald-400" />
+                <p className="text-[10px] text-[#4B6478] font-medium">
+                  <span className="text-emerald-400 font-black">Garis hijau & ungu</span> diambil dari transaksi nyata broker di platform TernakOS —
+                  bukan estimasi atau scraping. <span className="text-amber-400 font-black">Garis kuning putus-putus</span> adalah harga referensi Chickin.id.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.section>
+
+        {/* ── TREN JUAL BELI PLATFORM ── */}
+        <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }}>
+          <Card className="bg-[#0C1319] border-white/5 rounded-[28px]">
+            <CardContent className="p-6 md:p-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div>
+                  <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-1">Analisis Margin Platform</p>
+                  <h2 className="text-xl font-black text-white">Tren Jual Beli Broker</h2>
+                  <div className="flex items-center gap-4 mt-3">
+                    <LegendDot color="#10B981" label="Harga Beli (Kandang)" />
+                    <LegendDot color="#6366F1" label="Harga Jual (Pasar/RPA)" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
+                    <button
+                      onClick={() => setHybridPeriod('weekly')}
+                      className={cn("px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all",
+                        hybridPeriod === 'weekly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:text-[#94A3B8]"
+                      )}
+                    >Mingguan</button>
+                    <button
+                      onClick={() => setHybridPeriod('monthly')}
+                      className={cn("px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ml-0.5",
+                        hybridPeriod === 'monthly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:text-[#94A3B8]"
+                      )}
+                    >Bulanan</button>
+                  </div>
+                  <Badge className="text-[10px] border-emerald-500/20 bg-emerald-500/5 text-emerald-400 font-black uppercase hidden sm:flex">
                     {latestRow?.region ?? 'Nasional'}
                   </Badge>
                 </div>
               </div>
-
               {isLoading ? (
                 <Skeleton className="h-56 w-full bg-white/5 rounded-lg" />
-              ) : chartData.length === 0 ? (
-                <div className="h-56 flex items-center justify-center text-sm text-text-secondary">
-                  Data belum tersedia
-                </div>
               ) : (
                 <ResponsiveContainer width="100%" height={220}>
-                  <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 8 }}>
+                  <AreaChart data={dedupedPrices
+                    .filter(r => r.price_date >= hybridStartDate && r.price_date <= hybridEndDate)
+                    .reverse().map(r => ({
+                    date: r.price_date,
+                    'Harga Beli': r.avg_buy_price,
+                    'Harga Jual': r.avg_sell_price,
+                  }))} margin={{ top: 4, right: 4, bottom: 0, left: 8 }}>
                     <defs>
-                      <linearGradient id="gradBuy" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="gradB2" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%"  stopColor="#10B981" stopOpacity={0.25} />
                         <stop offset="95%" stopColor="#10B981" stopOpacity={0}    />
                       </linearGradient>
-                      <linearGradient id="gradSell" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="gradS2" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%"  stopColor="#6366F1" stopOpacity={0.25} />
                         <stop offset="95%" stopColor="#6366F1" stopOpacity={0}    />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
-                    <XAxis
-                      dataKey="date"
-                      tickFormatter={formatShortDate}
-                      tick={{ fill: '#94A3B8', fontSize: 11 }}
-                      axisLine={false}
-                      tickLine={false}
+                    <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fill: '#4B6478', fontSize: 10 }} axisLine={false} tickLine={false} interval={hybridPeriod === 'monthly' ? 4 : 0} />
+                    <YAxis tickFormatter={v => `${(v/1000).toFixed(0)}k`} tick={{ fill: '#4B6478', fontSize: 10 }} axisLine={false} tickLine={false} width={38} />
+                    <Tooltip
+                      contentStyle={{ background: '#0C1319', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 12 }}
+                      labelFormatter={formatShortDate}
+                      formatter={v => formatIDR(v)}
                     />
-                    <YAxis
-                      tickFormatter={v => `${(v / 1000).toFixed(0)}k`}
-                      tick={{ fill: '#94A3B8', fontSize: 11 }}
-                      axisLine={false}
-                      tickLine={false}
-                      width={38}
-                    />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend
-                      wrapperStyle={{ fontSize: 12, color: '#94A3B8', paddingTop: 8 }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="Harga Beli"
-                      stroke="#10B981"
-                      strokeWidth={2}
-                      fill="url(#gradBuy)"
-                      dot={false}
-                      activeDot={{ r: 4, fill: '#10B981' }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="Harga Jual"
-                      stroke="#6366F1"
-                      strokeWidth={2}
-                      fill="url(#gradSell)"
-                      dot={false}
-                      activeDot={{ r: 4, fill: '#6366F1' }}
-                    />
+                    <Area type="monotone" dataKey="Harga Beli" stroke="#10B981" strokeWidth={2} fill="url(#gradB2)" dot={false} activeDot={{ r: 4, fill: '#10B981' }} />
+                    <Area type="monotone" dataKey="Harga Jual" stroke="#6366F1" strokeWidth={2} fill="url(#gradS2)" dot={false} activeDot={{ r: 4, fill: '#6366F1' }} />
                   </AreaChart>
                 </ResponsiveContainer>
               )}
@@ -416,79 +835,51 @@ export default function HargaPasarPublic() {
         </motion.section>
 
         {/* ── HISTORY TABLE ── */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-        >
-          <Card className="bg-bg-1 border-white/5">
-            <CardContent className="p-5">
+        <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.3 }}>
+          <Card className="bg-[#0C1319] border-white/5 rounded-[28px]">
+            <CardContent className="p-6 md:p-8">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                  <h2 className="text-lg font-black text-text-primary uppercase tracking-tight">
-                    Riwayat Harga Terbaru
-                  </h2>
-                  <p className="text-xs text-text-secondary mt-1 uppercase tracking-widest font-bold">Data 10 Transaksi Terakhir</p>
+                  <h2 className="text-xl font-black text-white uppercase tracking-tight">Riwayat Harga Terbaru</h2>
+                  <p className="text-[10px] text-[#4B6478] mt-1 uppercase tracking-widest font-bold">10 Data Terakhir</p>
                 </div>
-                <div className="flex items-center gap-3">
-                   <div className="flex h-8 px-3 items-center rounded-lg bg-white/5 border border-white/10 text-[10px] font-black text-emerald-400 uppercase tracking-widest">
-                      Live Database
-                   </div>
+                <div className="flex h-8 px-3 items-center rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+                  🔴 Live Database
                 </div>
               </div>
-
               {isLoading ? (
                 <div className="space-y-2">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={i} className="h-10 w-full bg-white/5 rounded" />
-                  ))}
+                  {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full bg-white/5 rounded" />)}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm min-w-[560px]">
+                  <table className="w-full text-sm min-w-[480px]">
                     <thead>
-                      <tr className="border-b border-white/5 text-xs text-text-secondary">
-                        <th className="text-left pb-2 font-medium">Tanggal</th>
-                        <th className="text-left pb-2 font-medium">Wilayah</th>
-                        <th className="text-right pb-2 font-medium">Harga Beli</th>
-                        <th className="text-right pb-2 font-medium">Harga Jual</th>
-                        <th className="text-right pb-2 font-medium">Margin</th>
-                        <th className="text-left pb-2 font-medium pl-3">Sumber</th>
+                      <tr className="border-b border-white/5 text-[10px] text-[#4B6478] font-black uppercase tracking-widest">
+                        <th className="text-left pb-3">Tanggal</th>
+                        <th className="text-left pb-3">Wilayah</th>
+                        <th className="text-right pb-3">Harga Beli</th>
+                        <th className="text-right pb-3">Harga Jual</th>
+                        <th className="text-right pb-3">Margin</th>
                       </tr>
                     </thead>
                     <tbody>
                       {tableRows.map((row, i) => (
-                        <tr
-                          key={row.id}
-                          className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors"
-                        >
-                          <td className="py-3 text-text-primary font-medium">
+                        <tr key={row.price_date} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors">
+                          <td className="py-3 text-white font-bold">
                             <div className="flex items-center gap-2">
-                              {i === 0 && (
-                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
-                              )}
+                              {i === 0 && <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />}
                               {formatShortDate(row.price_date)}
-                              {row.price_date === TODAY && (
-                                <span className="text-[9px] text-[#4B6478] font-black uppercase tracking-widest">Hari ini</span>
-                              )}
+                              {row.price_date === TODAY && <span className="text-[9px] text-emerald-400 font-black uppercase">Hari ini</span>}
                             </div>
                           </td>
-                          <td className="py-3 text-[#4B6478] capitalize text-xs font-medium">
-                            {row.region ?? 'Nasional'}
-                          </td>
-                          <td className="py-3 text-right text-text-primary tabular-nums">
-                            {formatIDR(row.avg_buy_price)}
-                          </td>
-                          <td className="py-3 text-right text-text-primary tabular-nums">
-                            {formatIDR(row.avg_sell_price)}
-                          </td>
+                          <td className="py-3 text-[#4B6478] text-xs font-medium capitalize">{row.region ?? 'Nasional'}</td>
+                          <td className="py-3 text-right text-white tabular-nums font-bold">{formatIDR(row.avg_buy_price)}</td>
+                          <td className="py-3 text-right text-white tabular-nums font-bold">{formatIDR(row.avg_sell_price)}</td>
                           <td className="py-3 text-right tabular-nums">
-                            <span className="text-text-primary font-medium">
-                              {formatIDR(row.broker_margin)}
+                            <span className={cn("font-black text-sm", row.broker_margin > 0 ? "text-emerald-400" : "text-[#4B6478]")}>
+                              {row.broker_margin > 0 ? '+' : ''}{formatIDR(row.broker_margin)}
                             </span>
-                          </td>
-                          <td className="py-3 pl-3">
-                            <SourceBadge source={row.source} />
                           </td>
                         </tr>
                       ))}
@@ -500,94 +891,189 @@ export default function HargaPasarPublic() {
           </Card>
         </motion.section>
 
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.35 }}
-        >
-          <div className="text-center mb-10 md:mb-16">
-             <h2 className="text-2xl md:text-3xl font-black text-text-primary uppercase tracking-tight">Wawasan Komoditas</h2>
-             <p className="text-xs text-text-secondary mt-2 uppercase tracking-widest font-bold">Edukasi & Dasar Bisnis Peternakan</p>
+        {/* ── USP: WHY OUR DATA IS DIFFERENT ── */}
+        <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.35 }}>
+          <div className="text-center mb-10">
+            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-2">Keunggulan Data</p>
+            <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">Mengapa Data Kami Berbeda?</h2>
+            <p className="text-sm text-[#4B6478] mt-2 max-w-lg mx-auto">
+              Bukan sekedar scraper. TernakOS mengumpulkan data transaksi nyata dari broker aktif di seluruh Indonesia.
+            </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
+          <div className="grid md:grid-cols-3 gap-6">
             {[
               {
-                icon: <Info size={20} className="text-emerald-400" />,
-                title: 'Apa itu Harga Kandang?',
-                body: 'Harga kandang (farm gate price) adalah harga ayam hidup saat masih di lokasi peternak, sebelum biaya transportasi dan distribusi. Ini adalah acuan utama bagi peternak mandiri untuk menghitung keuntungan per kg.',
+                icon: <Database size={20} className="text-emerald-400" />,
+                title: 'Data Transaksi Nyata',
+                body: 'Harga beli dan jual pada chart berasal dari transaksi nyata broker yang menggunakan platform ini — bukan estimasi atau perhitungan manual. Setiap transaksi masuk ke rata-rata provinsi secara real-time.',
+                badge: 'Eksklusif'
               },
               {
-                icon: <TrendingUp size={20} className="text-emerald-400" />,
-                title: 'Cara Hitung Margin Broker',
-                body: 'Margin broker adalah selisih antara harga beli di kandang dan harga jual ke pasar/RPA. Margin sehat biasanya berkisar Rp 1.500–3.000/kg. Pantau margin harian agar tidak rugi akibat fluktuasi harga yang tiba-tiba.',
+                icon: <Activity size={20} className="text-emerald-400" />,
+                title: 'Perbandingan Multi-Sumber',
+                body: 'Kami bandingkan harga scraper Chickin.id vs rata-rata transaksi broker platform. Ini membantu Anda tahu apakah posisi beli Anda sudah kompetitif atau belum sebelum eksekusi transaksi.',
+                badge: 'Unik'
               },
               {
-                icon: <Zap size={20} className="text-emerald-400" />,
-                title: 'Kenapa Harga Bisa Berubah?',
-                body: 'Harga ayam broiler dipengaruhi oleh ketersediaan DOC (Day-Old Chick), biaya pakan (jagung & kedelai), hari besar nasional, dan permintaan dari RPA. Pantau tren 14 hari untuk mengambil keputusan jual yang tepat.',
+                icon: <Layers size={20} className="text-emerald-400" />,
+                title: 'Agregasi Per Provinsi',
+                body: 'Data difilter berdasarkan provinsi kandang penjual dan provinsi RPA pembeli. Semakin banyak broker bergabung dari satu provinsi, semakin representatif data yang tersedia.',
+                badge: 'Akurat'
               },
-            ].map(({ icon, title, body }) => (
-              <Card key={title} className="bg-bg-1 border-white/5 hover:border-emerald-500/20 transition-all duration-300 group">
-                <CardContent className="p-6 md:p-8 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+            ].map(({ icon, title, body, badge }) => (
+              <Card key={title} className="bg-[#0C1319] border-white/5 hover:border-emerald-500/20 transition-all duration-300 group rounded-[20px]">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
                       {icon}
                     </div>
-                    <h3 className="text-base font-bold text-text-primary uppercase tracking-tight">{title}</h3>
+                    <span className="text-[9px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full uppercase tracking-widest">{badge}</span>
                   </div>
-                  <p className="text-sm text-text-secondary leading-relaxed font-medium">{body}</p>
+                  <h3 className="text-base font-black text-white uppercase tracking-tight">{title}</h3>
+                  <p className="text-sm text-[#4B6478] leading-relaxed font-medium">{body}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
         </motion.section>
 
-        {/* ── CTA LEAD MAGNET ── */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.4 }}
-        >
-          <Card className="bg-bg-1 border-white/10 overflow-hidden relative group hover:border-emerald-500/30 transition-all duration-500">
-            {/* Subtle gradient accent */}
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-blue-500/5 pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity" />
+        {/* ── HOW IT WORKS: DATA FLOW ── */}
+        <motion.section initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.2 }}>
+          <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-[32px] p-8 md:p-12 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-[80px] pointer-events-none" />
             
+            <div className="text-center mb-12">
+              <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-2">Proses Data</p>
+              <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">Bagaimana Kami Mendapatkan Harga?</h2>
+            </div>
+            
+            <div className="grid md:grid-cols-3 gap-8 relative">
+              {[
+                {
+                  step: '01',
+                  title: 'Broker Input Transaksi',
+                  desc: 'Broker aktif mencatat pembelian dari kandang dan penjualan ke RPA secara real-time di platform TernakOS.'
+                },
+                {
+                  step: '02',
+                  title: 'Agregasi Anonim',
+                  desc: 'Sistem merata-ratakan harga per provinsi secara otomatis. Identitas broker tetap terjaga 100% anonym.'
+                },
+                {
+                  step: '03',
+                  title: 'Visualisasi Tren',
+                  desc: 'Hasil agregasi ditampilkan pada grafik hibrida sebagai referensi harga beli dan jual nyata di pasar.'
+                }
+              ].map((s, i) => (
+                <div key={i} className="relative z-10 text-center space-y-4">
+                  <div className="w-12 h-12 rounded-2xl bg-[#0C1319] border border-white/10 flex items-center justify-center mx-auto text-emerald-400 font-black text-lg shadow-xl">
+                    {s.step}
+                  </div>
+                  <h3 className="text-sm font-black text-white uppercase tracking-tight">{s.title}</h3>
+                  <p className="text-xs text-[#4B6478] leading-relaxed max-w-[200px] mx-auto font-medium">{s.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </motion.section>
+
+        {/* ── COMPARISON TABLE ── */}
+        <motion.section initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.3 }}>
+          <div className="text-center mb-10">
+            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-2">Transparansi</p>
+            <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">Perbandingan Data</h2>
+          </div>
+          <Card className="bg-[#0C1319] border-white/5 overflow-hidden rounded-[24px]">
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-white/5 text-[10px] text-[#4B6478] font-black uppercase tracking-widest border-b border-white/5">
+                      <th className="px-6 py-4 text-left">Fitur Data Pasar</th>
+                      <th className="px-6 py-4 text-center bg-emerald-500/10 text-emerald-400">TernakOS</th>
+                      <th className="px-6 py-4 text-center">Chickin.id</th>
+                      <th className="px-6 py-4 text-center">Portal Lain</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {[
+                      { f: 'Berdasar Transaksi Nyata', t: true, c: false, p: false },
+                      { f: 'Harga Beli (Farm Gate)', t: true, c: true, p: true },
+                      { f: 'Harga Jual (Pasar/RPA)', t: true, c: false, p: false },
+                      { f: 'Update Otomatis Harian', t: true, c: true, p: false },
+                      { f: 'Analisis Margin Broker', t: true, c: false, p: false },
+                      { f: 'Privasi Data Terjamin', t: true, c: true, p: true },
+                    ].map((row, i) => (
+                      <tr key={i} className="hover:bg-white/[0.01] transition-colors">
+                        <td className="px-6 py-4 font-medium text-white/80">{row.f}</td>
+                        <td className="px-6 py-4 text-center bg-emerald-500/5">
+                          {row.t ? <Check className="mx-auto text-emerald-400" size={18} /> : <div className="mx-auto w-4 h-0.5 bg-white/10 rounded" />}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {row.c ? <Check className="mx-auto text-[#4B6478]" size={16} /> : <div className="mx-auto w-4 h-0.5 bg-white/10 rounded" />}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {row.p ? <Check className="mx-auto text-[#4B6478]" size={16} /> : <div className="mx-auto w-4 h-0.5 bg-white/10 rounded" />}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.section>
+
+        {/* ── CTA ── */}
+        <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.4 }}>
+          <Card className="bg-[#0C1319] border-white/10 overflow-hidden relative group hover:border-emerald-500/30 transition-all duration-500 rounded-[28px]">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-indigo-500/5 pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(16,185,129,0.07)_0%,transparent_70%)] pointer-events-none" />
             <CardContent className="p-8 md:p-12 relative">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 md:gap-12">
                 <div className="space-y-4 max-w-2xl">
                   <div className="flex items-center gap-2">
-                    <ShieldCheck size={20} className="text-emerald-400" />
-                    <span className="text-xs text-emerald-400 font-black uppercase tracking-widest">Premium Management Tool</span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[10px] text-emerald-400 font-black uppercase tracking-widest">Bergabung & Berkontribusi</span>
                   </div>
-                  <h2 className="text-2xl md:text-4xl font-black text-text-primary leading-tight uppercase tracking-tight">
-                    Pantau harga sekaligus <br className="hidden md:block" />
-                    kelola transaksi <span className="text-emerald-500">dalam satu aplikasi</span>
+                  <h2 className="text-2xl md:text-4xl font-black text-white leading-tight uppercase tracking-tight">
+                    Kontribusikan data Anda,<br className="hidden md:block" />
+                    <span className="text-emerald-500">dapatkan insight lebih akurat</span>
                   </h2>
-                  <p className="text-sm md:text-base text-text-secondary leading-relaxed font-medium">
-                    TernakOS menggabungkan monitoring harga pasar dengan manajemen nota,
-                    piutang, dan recording kandang — semua dalam satu genggaman. Efisiensi total untuk bisnis peternakan Anda.
+                  <p className="text-sm md:text-base text-[#94A3B8] leading-relaxed font-medium">
+                    Setiap broker yang bergabung memperkaya data rata-rata provinsi.
+                    Semakin banyak broker aktif, semakin akurat harga pasar yang ditampilkan — untuk kepentingan semua pelaku bisnis ayam broiler.
                   </p>
+                  <div className="flex flex-wrap gap-4 pt-2">
+                    {[
+                      'Catat transaksi beli & jual',
+                      'Pantau piutang RPA otomatis',
+                      'Lihat tren harga per provinsi',
+                      'Bandingkan vs harga pasar',
+                    ].map(f => (
+                      <div key={f} className="flex items-center gap-2 text-[11px] text-[#94A3B8] font-medium">
+                        <Check size={12} className="text-emerald-400" />
+                        {f}
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex flex-col sm:flex-row lg:flex-col gap-4 shrink-0">
                   <Button
-                    className="h-14 px-8 bg-emerald-600 hover:bg-emerald-500 text-white text-[13px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
+                    className="h-14 px-8 bg-emerald-500 hover:bg-emerald-400 text-white text-[13px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
                     asChild
                   >
                     <Link to="/register">
-                      Coba Gratis Sekarang <ChevronRight size={18} className="ml-2" />
+                      Mulai Gratis <ArrowRight size={16} className="ml-2" />
                     </Link>
                   </Button>
                   <Button
                     variant="outline"
-                    className="h-14 px-8 border-white/10 bg-white/5 text-text-primary hover:bg-white/10 hover:border-white/20 text-[13px] font-black uppercase tracking-widest rounded-2xl active:scale-95 transition-all"
+                    className="h-14 px-8 border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/20 text-[13px] font-black uppercase tracking-widest rounded-2xl active:scale-95 transition-all"
                     asChild
                   >
-                    <a
-                      href="https://wa.me/628123456789?text=Halo%2C%20saya%20tertarik%20coba%20TernakOS"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Hubungi via WhatsApp
+                    <a href="https://wa.me/628123456789?text=Halo%2C%20saya%20tertarik%20coba%20TernakOS" target="_blank" rel="noopener noreferrer">
+                      Hubungi via WA
                     </a>
                   </Button>
                 </div>
@@ -598,9 +1084,7 @@ export default function HargaPasarPublic() {
 
       </main>
 
-      {/* ── FOOTER ── */}
       <Footer />
-
     </div>
   )
 }

@@ -5,6 +5,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom'
 import {
   TrendingUp,
   AlertCircle,
+  AlertTriangle,
   ArrowLeftRight,
   ChevronRight,
   ChevronLeft,
@@ -19,6 +20,11 @@ import {
   Plus,
   Truck,
   Menu,
+  MapPin,
+  Check,
+  ChevronsUpDown,
+  TrendingDown,
+  X
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -59,10 +65,14 @@ import {
   SheetTitle,
   SheetDescription
 } from "@/components/ui/sheet"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command"
 import TransaksiWizard from '@/dashboard/_shared/components/TransaksiWizard'
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, format, isToday, isWithinInterval, addDays, differenceInDays } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
 import SmartInsight from '@/dashboard/_shared/components/SmartInsight'
+import { PROVINCES } from '@/lib/constants/regions'
+import { useMarketTrends } from '@/lib/hooks/useMarketTrends'
 
 const staggerContainer = {
   hidden: {},
@@ -97,25 +107,38 @@ export default function BrokerBeranda() {
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [agendaFilter, setAgendaFilter] = useState('Semua') // 'Semua' | 'Piutang' | 'Panen' | 'Pengiriman' | 'Pembayaran'
+  const [provinceWarningDismissed, setProvinceWarningDismissed] = useState(false)
 
+  // Use tenant province as the single source of truth
+  const activeProvince = tenant?.province || 'Seluruh Indonesia'
   const today = useMemo(() => new Date(), [])
   const todayStr = useMemo(() => format(today, 'yyyy-MM-dd'), [today])
 
   // --- DATA FETCHING (Unified for Beranda Redesign) ---
   const { data: dashboardData, isLoading } = useQuery({
-    queryKey: ['dashboard-redesign', tenant?.id],
+    queryKey: ['dashboard-redesign', tenant?.id, activeProvince],
     queryFn: async () => {
       if (!tenant?.id) return null
 
-      // Fetch 60 days of sales to compare periods (Insight & KPI Trends)
+      // Fetch 60 days of sales to identify trends and KPIs
       const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
       
+      const salesQuery = supabase.from('sales').select('*, purchases(*, farms(*)), rpa_clients(*)').eq('tenant_id', tenant.id).eq('is_deleted', false).gte('transaction_date', sixtyDaysAgo)
+      
+      const harvestsQuery = supabase.from('chicken_batches').select('*, farms(*)').eq('tenant_id', tenant.id).eq('is_deleted', false).not('estimated_harvest_date', 'is', null)
+      
+      const deliveriesQuery = supabase.from('deliveries').select('*, sales(*, rpa_clients(*))').eq('tenant_id', tenant.id).eq('is_deleted', false).neq('status', 'completed')
+      
+      const paymentsQuery = supabase.from('payments').select('*, sales(*, rpa_clients(*))').eq('tenant_id', tenant.id)
+
+      const unpaidSalesQuery = supabase.from('sales').select('*, rpa_clients(*)').eq('tenant_id', tenant.id).neq('payment_status', 'lunas').eq('is_deleted', false)
+
       const [salesRes, harvestsRes, deliveriesRes, paymentsRes, unpaidSalesRes] = await Promise.all([
-        supabase.from('sales').select('*, purchases(*), rpa_clients(rpa_name)').eq('tenant_id', tenant.id).eq('is_deleted', false).gte('transaction_date', sixtyDaysAgo.split('T')[0]),
-        supabase.from('chicken_batches').select('*, farms(farm_name)').eq('tenant_id', tenant.id).eq('is_deleted', false).not('estimated_harvest_date', 'is', null),
-        supabase.from('deliveries').select('*, sales(*, rpa_clients(rpa_name))').eq('tenant_id', tenant.id).eq('is_deleted', false).neq('status', 'completed'),
-        supabase.from('payments').select('*, sales(*, rpa_clients(rpa_name))').eq('tenant_id', tenant.id),
-        supabase.from('sales').select('*, rpa_clients(rpa_name)').eq('tenant_id', tenant.id).eq('is_deleted', false).neq('payment_status', 'lunas')
+        salesQuery,
+        harvestsQuery,
+        deliveriesQuery,
+        paymentsQuery,
+        unpaidSalesQuery
       ])
 
       const sales = salesRes.data || []
@@ -124,6 +147,16 @@ export default function BrokerBeranda() {
       const payments = paymentsRes.data || []
       const unpaidSales = unpaidSalesRes.data || []
 
+      // In-memory regional filtering
+      const filteredSales = activeProvince === 'Seluruh Indonesia' ? sales : sales.filter(s => 
+        s.rpa_clients?.province === activeProvince || 
+        s.purchases?.farms?.province === activeProvince
+      )
+      const filteredHarvests = activeProvince === 'Seluruh Indonesia' ? harvests : harvests.filter(h => h.farms?.province === activeProvince)
+      const filteredDeliveries = activeProvince === 'Seluruh Indonesia' ? deliveries : deliveries.filter(d => d.sales?.rpa_clients?.province === activeProvince)
+      const filteredPayments = activeProvince === 'Seluruh Indonesia' ? payments : payments.filter(p => p.sales?.rpa_clients?.province === activeProvince)
+      const filteredUnpaidSales = activeProvince === 'Seluruh Indonesia' ? unpaidSales : unpaidSales.filter(s => s.rpa_clients?.province === activeProvince)
+
       // 1. SMART INSIGHT (W0 vs W1 profit)
       const w0End = new Date()
       const w0Start = addDays(w0End, -6)
@@ -131,7 +164,7 @@ export default function BrokerBeranda() {
       const w1Start = addDays(w1End, -6)
 
       const getIntervalProfit = (start, end) => {
-        return sales
+        return filteredSales
           .filter(s => {
             const d = new Date(s.transaction_date)
             return d >= start && d <= end
@@ -157,17 +190,17 @@ export default function BrokerBeranda() {
       const m1Start = startOfMonth(subMonths(today, 1))
       const m1End = endOfMonth(m1Start)
 
-      const m0Sales = sales.filter(s => {
+      const m0Sales = filteredSales.filter(s => {
         const d = new Date(s.transaction_date)
         return d >= m0Start && d <= today
       })
-      const m1Sales = sales.filter(s => {
+      const m1Sales = filteredSales.filter(s => {
         const d = new Date(s.transaction_date)
         return d >= m1Start && d <= m1End
       })
 
       // KPI 1: TOTAL PIUTANG (Sum remaining amount where not lunas)
-      const totalPiutang = unpaidSales.reduce((sum, s) => sum + calcRemainingAmount(s), 0)
+      const totalPiutang = filteredUnpaidSales.reduce((sum, s) => sum + calcRemainingAmount(s), 0)
       
       const m0Piutang = m0Sales.filter(s => s.payment_status !== 'lunas').reduce((sum, s) => sum + calcRemainingAmount(s), 0)
       const m1Piutang = m1Sales.filter(s => s.payment_status !== 'lunas').reduce((sum, s) => sum + calcRemainingAmount(s), 0)
@@ -193,7 +226,7 @@ export default function BrokerBeranda() {
         let curr = new Date(start)
         while (curr <= end) {
           const dStr = format(curr, 'yyyy-MM-dd')
-          const daySales = sales.filter(s => s.transaction_date === dStr)
+          const daySales = filteredSales.filter(s => s.transaction_date === dStr)
           const isWeekly = differenceInDays(end, start) < 8
           const isFuture = curr > chartToday
           
@@ -221,7 +254,7 @@ export default function BrokerBeranda() {
         insight,
         kpis: {
           totalPiutang,
-          unpaidCount: unpaidSales.length,
+          unpaidCount: filteredUnpaidSales.length,
           piutangTrend,
           monthlySales: m0SalesCount,
           monthlyPurchases: m0PurchasesCount,
@@ -234,13 +267,13 @@ export default function BrokerBeranda() {
           totalNetProfitMonthly: monthlyData.reduce((sum, d) => sum + d.profit, 0)
         },
         events: {
-          harvests,
-          dues: unpaidSales.filter(s => s.due_date),
-          deliveries,
-          payments,
-          todayActivites: sales.filter(s => s.transaction_date === todayStr)
+          harvests: filteredHarvests,
+          dues: filteredUnpaidSales.filter(s => s.due_date),
+          deliveries: filteredDeliveries,
+          payments: filteredPayments,
+          todayActivites: filteredSales.filter(s => s.transaction_date === todayStr)
         },
-        rpaWithDebt:Object.values(unpaidSales.reduce((acc, s) =>{
+        rpaWithDebt:Object.values(filteredUnpaidSales.reduce((acc, s) =>{
           const id = s.rpa_id || 'unknown'
           if(!acc[id]) acc[id] = { id, rpa_name: s.rpa_clients?.rpa_name || 'RPA Umum', total_outstanding: 0 }
           acc[id].total_outstanding += calcRemainingAmount(s)
@@ -268,9 +301,68 @@ export default function BrokerBeranda() {
   if (isLoading || !tenant?.id) return <BerandaSkeleton />
 
   const data = dashboardData
+  const isMissingProvince = !tenant?.province && !provinceWarningDismissed
 
   return (
     <>
+      {/* ── PROVINCE WARNING POPUP ── */}
+      <AnimatePresence>
+        {isMissingProvince && (
+          <motion.div
+            key="province-warning"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-[999] w-full max-w-[560px] px-4"
+          >
+            <div className="relative flex items-start gap-4 p-5 rounded-2xl border border-amber-500/30 bg-[#0C1319]/95 backdrop-blur-xl shadow-2xl shadow-amber-500/10">
+              {/* Glow accent */}
+              <div className="absolute inset-0 rounded-2xl bg-amber-500/[0.04] pointer-events-none" />
+
+              {/* Icon */}
+              <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                <AlertTriangle size={18} className="text-amber-400" />
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-black text-amber-400 uppercase tracking-[0.2em] mb-0.5">Aksi Diperlukan</p>
+                <p className="text-sm font-bold text-[#F1F5F9] leading-snug">
+                  Akun Anda belum memiliki <span className="text-amber-400">Provinsi</span>. Data regional dashboard tidak akan akurat.
+                </p>
+                <p className="text-[11px] text-[#4B6478] mt-1">
+                  Isi provinsi di halaman Akun agar laporan dan filter wilayah berfungsi dengan benar.
+                </p>
+                <div className="flex items-center gap-3 mt-3">
+                  <button
+                    onClick={() => navigate('/broker/akun')}
+                    className="px-4 py-2 rounded-xl bg-amber-500 text-[#0C1319] text-[11px] font-black uppercase tracking-widest hover:bg-amber-400 active:scale-95 transition-all shadow-lg shadow-amber-500/20"
+                  >
+                    <MapPin size={11} className="inline mr-1.5 -mt-0.5" />
+                    Isi Sekarang
+                  </button>
+                  <button
+                    onClick={() => setProvinceWarningDismissed(true)}
+                    className="px-4 py-2 rounded-xl border border-white/10 text-[11px] font-black uppercase tracking-widest text-[#4B6478] hover:text-white hover:border-white/20 active:scale-95 transition-all"
+                  >
+                    Nanti Saja
+                  </button>
+                </div>
+              </div>
+
+              {/* Close */}
+              <button
+                onClick={() => setProvinceWarningDismissed(true)}
+                className="shrink-0 w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-[#4B6478] hover:text-white transition-all"
+              >
+                <X size={13} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence mode="wait">
         {isDesktop ? (
           <DesktopDashboard
@@ -287,6 +379,7 @@ export default function BrokerBeranda() {
             setCurrentMonth={setCurrentMonth}
             agendaFilter={agendaFilter}
             setAgendaFilter={setAgendaFilter}
+            activeProvince={activeProvince}
           />
         ) : (
           <MobileDashboard
@@ -304,6 +397,7 @@ export default function BrokerBeranda() {
             setCurrentMonth={setCurrentMonth}
             agendaFilter={agendaFilter}
             setAgendaFilter={setAgendaFilter}
+            activeProvince={activeProvince}
           />
         )}
       </AnimatePresence>
@@ -313,8 +407,12 @@ export default function BrokerBeranda() {
   )
 }
 
-// --- DESKTOP RENDERER ---
-function DesktopDashboard({ data, profile, navigate, setWizardOpen, handleTandaiLunas, chartPeriod, setChartPeriod, selectedDate, setSelectedDate, currentMonth, setCurrentMonth, agendaFilter, setAgendaFilter }) {
+function DesktopDashboard({ 
+  data, profile, navigate, setWizardOpen, handleTandaiLunas, 
+  chartPeriod, setChartPeriod, selectedDate, setSelectedDate, 
+  currentMonth, setCurrentMonth, agendaFilter, setAgendaFilter, 
+  activeProvince
+}) {
   const firstName = profile?.full_name?.split(' ')[0] || 'User'
 
   return (
@@ -343,41 +441,48 @@ function DesktopDashboard({ data, profile, navigate, setWizardOpen, handleTandai
             <KPICardNew
               compact
               label="TOTAL PIUTANG"
-              value={formatIDRShort(data?.kpis.totalPiutang)}
-              sub={`${data?.kpis.unpaidCount} RPA belum lunas`}
+              value={formatIDRShort(data?.kpis?.totalPiutang)}
+              sub={`${data?.kpis?.unpaidCount || 0} RPA belum lunas`}
               icon={Clock}
-              trend={data?.kpis.piutangTrend}
+              trend={data?.kpis?.piutangTrend}
               onClick={() => navigate('/broker/rpa')}
             />
             <KPICardNew
               compact
               label="TRANSAKSI BULAN INI"
-              value={data?.kpis.monthlySales}
-              sub={`${data?.kpis.monthlySales} jual · ${data?.kpis.monthlyPurchases} beli`}
+              value={data?.kpis?.monthlySales || 0}
+              sub={`${data?.kpis?.monthlySales || 0} jual · ${data?.kpis?.monthlyPurchases || 0} beli`}
               icon={BarChart2}
-              trend={data?.kpis.txTrend}
+              trend={data?.kpis?.txTrend}
               onClick={() => navigate('/broker/transaksi')}
             />
           </div>
-          <Card className="p-8 bg-[#0C1319] border-white/5 rounded-[32px] relative overflow-hidden">
-            <div className="flex justify-between items-start mb-8 relative z-10 transition-all">
+          <Card className="p-8 bg-[#0C1319] border-white/5 rounded-[32px] relative overflow-hidden group">
+            <div className="flex justify-between items-center mb-8 relative z-10">
               <div>
-                <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-1">Total Net Profit</p>
-                <div className="flex items-center gap-3">
-                  <h3 className="text-[28px] font-display font-black text-[#34D399] tabular-nums">
-                    {chartPeriod === 'weekly' ? formatIDR(data?.chart.totalNetProfitWeekly) : formatIDR(data?.chart.totalNetProfitMonthly)}
-                  </h3>
-                  <Badge className="bg-[#10B981]/10 text-[#10B981] border-none text-[10px] font-black uppercase tracking-tighter">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <p className="text-[10px] font-black text-emerald-400/80 uppercase tracking-[0.2em]">Live Performance</p>
+                </div>
+                <h3 className="text-2xl font-display font-black text-white tracking-tight">ANALISIS PROFIT</h3>
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="flex items-center gap-2">
+                    <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Total</p>
+                    <p className="text-sm font-black text-white tabular-nums">
+                      {formatIDR(chartPeriod === 'weekly' ? data?.chart?.totalNetProfitWeekly : data?.chart?.totalNetProfitMonthly)}
+                    </p>
+                  </div>
+                  <Badge className="bg-[#10B981]/10 text-[#10B981] border-none text-[10px] font-black uppercase tracking-widest px-3 py-1">
                     {chartPeriod === 'weekly' ? 'Minggu Ini' : 'Bulan Ini'}
                   </Badge>
                 </div>
               </div>
-              <div className="flex bg-black/20 p-1 rounded-xl border border-white/5">
+              <div className="flex bg-black/40 p-1.5 rounded-2xl border border-white/5 backdrop-blur-md">
                 <button
                   onClick={() => setChartPeriod('weekly')}
                   className={cn(
-                    "px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
-                    chartPeriod === 'weekly' ? "bg-emerald-500 text-white shadow-lg" : "text-[#4B6478] hover:text-[#94A3B8]"
+                    "px-6 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all",
+                    chartPeriod === 'weekly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:text-[#94A3B8]"
                   )}
                 >
                   Mingguan
@@ -385,8 +490,8 @@ function DesktopDashboard({ data, profile, navigate, setWizardOpen, handleTandai
                 <button
                   onClick={() => setChartPeriod('monthly')}
                   className={cn(
-                    "px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ml-1",
-                    chartPeriod === 'monthly' ? "bg-emerald-500 text-white shadow-lg" : "text-[#4B6478] hover:text-[#94A3B8]"
+                    "px-6 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ml-1",
+                    chartPeriod === 'monthly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:text-[#94A3B8]"
                   )}
                 >
                   Bulanan
@@ -394,10 +499,10 @@ function DesktopDashboard({ data, profile, navigate, setWizardOpen, handleTandai
               </div>
             </div>
             
-            <div className="h-[280px] w-full relative z-10 overflow-hidden">
+            <div className="h-[320px] w-full relative z-10">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart 
-                  data={chartPeriod === 'weekly' ? data?.chart.weekly : data?.chart.monthly}
+                  data={chartPeriod === 'weekly' ? data?.chart?.weekly : data?.chart?.monthly}
                   margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                 >
                   <defs>
@@ -434,6 +539,9 @@ function DesktopDashboard({ data, profile, navigate, setWizardOpen, handleTandai
             </div>
           </Card>
 
+          {/* MARKET TREND HYBRID CHART */}
+          <MarketTrendCard province={activeProvince} />
+
           {/* 5. PIUTANG RPA SECTION */}
           <Card className="p-8 bg-[#0C1319] border-white/5 rounded-[32px]">
             <div className="flex justify-between items-center mb-6">
@@ -442,13 +550,13 @@ function DesktopDashboard({ data, profile, navigate, setWizardOpen, handleTandai
                 Lihat Semua <ChevronRight size={14} className="ml-1" />
               </Button>
             </div>
-            {data?.rpaWithDebt.length > 0 ? (
+            {data?.rpaWithDebt?.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {data.rpaWithDebt.map((rpa) => (
                   <div key={rpa.id} className="p-4 border border-white/5 rounded-2xl bg-black/20 flex items-center justify-between group hover:border-emerald-500/20 transition-all">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center font-display font-black text-emerald-400 text-[10px]">
-                        {rpa.rpa_name.substring(0, 2).toUpperCase()}
+                        {rpa.rpa_name?.substring(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0">
                         <p className="text-[13px] font-bold text-[#F1F5F9] truncate">{rpa.rpa_name}</p>
@@ -488,20 +596,25 @@ function DesktopDashboard({ data, profile, navigate, setWizardOpen, handleTandai
 }
 
 // --- MOBILE RENDERER ---
-function MobileDashboard({ data, profile, navigate, setWizardOpen, setSidebarOpen, chartPeriod, setChartPeriod }) {
+function MobileDashboard({ 
+  data, profile, navigate, setWizardOpen, setSidebarOpen, 
+  handleTandaiLunas, chartPeriod, setChartPeriod, 
+  selectedDate, setSelectedDate, currentMonth, setCurrentMonth, 
+  agendaFilter, setAgendaFilter, activeProvince 
+}) {
   const firstName = profile?.full_name?.split(' ')[0] || 'User'
   const initials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'BR'
 
   const recentActivity = useMemo(() => {
     if (!data) return []
     const items = []
-    ;(data.events.todayActivites || []).forEach(s => {
+    ;(data?.events?.todayActivites || []).forEach(s => {
       items.push({ id: `sale-${s.id}`, type: 'Transaksi', label: s.rpa_clients?.rpa_name || 'RPA', amount: calcNetProfit(s), date: s.transaction_date, color: '#10B981', Icon: ArrowLeftRight })
     })
-    ;(data.events.payments || []).forEach(p => {
+    ;(data?.events?.payments || []).forEach(p => {
       items.push({ id: `pay-${p.id}`, type: 'Pembayaran', label: p.sales?.rpa_clients?.rpa_name || 'Pembayaran', amount: p.amount, date: p.payment_date || p.created_at, color: '#818CF8', Icon: CircleCheck })
     })
-    ;(data.events.deliveries || []).forEach(d => {
+    ;(data?.events?.deliveries || []).forEach(d => {
       items.push({ id: `del-${d.id}`, type: 'Pengiriman', label: d.sales?.rpa_clients?.rpa_name || 'Pengiriman', amount: null, date: d.created_at, color: '#F59E0B', Icon: Truck })
     })
     return items.filter(i => i.date).sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
@@ -538,7 +651,7 @@ function MobileDashboard({ data, profile, navigate, setWizardOpen, setSidebarOpe
         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4B6478] mb-1.5">Total Profit Bulan Ini</p>
         <div className="flex items-end gap-3">
           <h1 className="text-[34px] font-display font-black text-[#F1F5F9] tabular-nums leading-none">
-            {formatIDRShort(data?.chart.totalNetProfitMonthly)}
+            {formatIDRShort(data?.chart?.totalNetProfitMonthly || 0)}
           </h1>
           {data?.kpis?.txTrend !== undefined && (
             <span className={cn(
@@ -571,12 +684,12 @@ function MobileDashboard({ data, profile, navigate, setWizardOpen, setSidebarOpe
           <div className="flex justify-between items-end relative z-10">
             <div>
               <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-0.5">Piutang Aktif</p>
-              <p className="text-[22px] font-display font-black text-red-400 tabular-nums leading-none">{formatIDRShort(data?.kpis.totalPiutang)}</p>
-              <p className="text-[10px] text-white/30 mt-1">{data?.kpis.unpaidCount ?? 0} RPA belum lunas</p>
+              <p className="text-[22px] font-display font-black text-red-400 tabular-nums leading-none">{formatIDRShort(data?.kpis?.totalPiutang || 0)}</p>
+              <p className="text-[10px] text-white/30 mt-1">{data?.kpis?.unpaidCount ?? 0} RPA belum lunas</p>
             </div>
             <div className="text-right">
               <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-0.5">Transaksi</p>
-              <p className="text-[22px] font-display font-black text-white/80 tabular-nums leading-none">{data?.kpis.monthlySales ?? 0}</p>
+              <p className="text-[22px] font-display font-black text-white/80 tabular-nums leading-none">{data?.kpis?.monthlySales ?? 0}</p>
               <p className="text-[10px] text-white/30 mt-1">bulan ini</p>
             </div>
           </div>
@@ -592,6 +705,11 @@ function MobileDashboard({ data, profile, navigate, setWizardOpen, setSidebarOpe
           <QuickAction icon={BarChart2} label="Transaksi"       color="#818CF8" onClick={() => navigate('/broker/transaksi')} />
         </div>
       </motion.div>
+
+      {/* ── MARKET TRENDS ── */}
+      <div className="px-4 mb-4">
+        <MarketTrendCard province={activeProvince} />
+      </div>
 
       {/* ── 4. RECENT ACTIVITY ── */}
       <motion.div variants={fadeUp} className="px-4 mb-4">
@@ -1165,4 +1283,205 @@ function getGreeting() {
   if (hour < 15) return 'siang'
   if (hour < 19) return 'sore'
   return 'malam'
+}
+
+// ─── MARKET TREND CARD ────────────────────────────────────────────────────────
+
+function MarketTrendCard({ province }) {
+  const [period, setPeriod] = useState('weekly') // 'weekly' | 'monthly'
+
+  const { startDate, endDate, daysLabel } = useMemo(() => {
+    const now = new Date()
+    const todayStr = format(now, 'yyyy-MM-dd')
+    let start, end
+    if (period === 'weekly') {
+      start = startOfWeek(now, { weekStartsOn: 1 })
+      end   = now // cap to today, don't show future days
+    } else {
+      start = startOfMonth(now)
+      end   = now
+    }
+    return {
+      startDate: format(start, 'yyyy-MM-dd'),
+      endDate:   format(end,   'yyyy-MM-dd'),
+      daysLabel: period === 'weekly' ? 'Minggu Ini' : 'Bulan Ini'
+    }
+  }, [period])
+
+  const { data: trendData, isLoading } = useMarketTrends(
+    province === 'Seluruh Indonesia' ? 'Jawa Tengah' : province,
+    startDate,
+    endDate
+  )
+
+  return (
+    <Card className="p-8 bg-[#0C1319] border-white/5 rounded-[32px] relative overflow-hidden group">
+      <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[radial-gradient(circle,rgba(16,185,129,0.03)_0%,transparent_70%)] pointer-events-none" />
+      
+      <div className="flex flex-col gap-4 mb-8 relative z-10">
+        {/* Row 1: Title + Toggle */}
+        <div className="flex flex-wrap justify-between items-start gap-3">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <TrendingUp size={14} className="text-emerald-400" />
+              <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Tren Harga Pasar — {province}</p>
+            </div>
+            <h3 className="text-2xl font-display font-black text-white">Hybrid Market Insight</h3>
+          </div>
+
+          <div className="flex bg-black/40 p-1 rounded-xl border border-white/5 backdrop-blur-md shrink-0">
+            <button
+              onClick={() => setPeriod('weekly')}
+              className={cn(
+                "px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all",
+                period === 'weekly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:text-[#94A3B8]"
+              )}
+            >
+              Mingguan
+            </button>
+            <button
+              onClick={() => setPeriod('monthly')}
+              className={cn(
+                "px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ml-0.5",
+                period === 'monthly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:text-[#94A3B8]"
+              )}
+            >
+              Bulanan
+            </button>
+          </div>
+        </div>
+
+        {/* Row 2: Meta + Legend */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            {trendData?.[trendData.length - 1]?.delta !== 0 && (
+              <div className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider",
+                trendData?.[trendData.length - 1]?.delta > 0
+                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                  : "bg-rose-500/10 border-rose-500/20 text-rose-400"
+              )}>
+                {trendData?.[trendData.length - 1]?.delta > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                {trendData?.[trendData.length - 1]?.delta > 0 ? '+' : ''}
+                {formatIDR(trendData?.[trendData.length - 1]?.delta)} vs Kemarin
+              </div>
+            )}
+            <Badge className="bg-white/5 text-[#4B6478] border-white/10 text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5">
+              {daysLabel}
+            </Badge>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <LegendItem color="#F59E0B" label="Chickin.id" dashed />
+            <LegendItem color="#10B981" label="Harga Beli" />
+            <LegendItem color="#818CF8" label="Harga Jual" />
+          </div>
+        </div>
+      </div>
+
+      <div className="h-[240px] w-full relative z-10">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={trendData}>
+            <defs>
+              <linearGradient id="colorBuy" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#10B981" stopOpacity={0.15}/>
+                <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+              </linearGradient>
+              <linearGradient id="colorSell" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#818CF8" stopOpacity={0.1}/>
+                <stop offset="95%" stopColor="#818CF8" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
+            <XAxis 
+              dataKey="displayDate" 
+              axisLine={false} 
+              tickLine={false} 
+              tick={{fill: '#4B6478', fontSize: 10, fontWeight: 800}}
+              dy={10}
+              interval={period === 'monthly' ? 2 : 0}
+            />
+            <YAxis hide domain={['dataMin - 3000', 'dataMax + 2000']} />
+            <RechartsTooltip content={<CustomTrendTooltip />} />
+            
+            {/* Chickin.id — dashed amber reference */}
+            <Area type="monotone" dataKey="chickin" stroke="#F59E0B" strokeWidth={2} strokeDasharray="5 4" fill="transparent" connectNulls dot={false} />
+            {/* Harga Jual ke RPA */}
+            <Area type="monotone" dataKey="sellPrice" stroke="#818CF8" strokeWidth={2} fillOpacity={1} fill="url(#colorSell)" connectNulls activeDot={{ r: 5, stroke: '#0C1319', strokeWidth: 2, fill: '#818CF8' }} />
+            {/* Harga Beli dari Kandang — dominant */}
+            <Area type="monotone" dataKey="buyPrice" stroke="#10B981" strokeWidth={4} fillOpacity={1} fill="url(#colorBuy)" activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: '#10B981' }} connectNulls />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </Card>
+  )
+}
+
+function LegendItem({ color, label, dashed = false }) {
+  return (
+    <div className="flex items-center gap-2">
+      {dashed
+        ? <div className="w-4 h-0 border-t-2 border-dashed" style={{ borderColor: color }} />
+        : <div className="w-2 h-2 rounded-full" style={{ background: color }} />}
+      <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider">{label}</span>
+    </div>
+  )
+}
+
+function CustomTrendTooltip({ active, payload }) {
+    if (!active || !payload || !payload.length) return null
+    const data = payload[0].payload
+    const spread = (data.buyPrice && data.chickin) ? data.chickin - data.buyPrice : null
+    const margin = (data.buyPrice && data.sellPrice) ? data.sellPrice - data.buyPrice : null
+    
+    return (
+      <div className="bg-[#0C1319] border border-white/10 p-4 rounded-2xl shadow-2xl min-w-[200px] backdrop-blur-xl">
+        <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-3">{data.displayDate}</p>
+        
+        <div className="space-y-3">
+          <TrendValue label="Chickin.id (Ref)" value={data.chickin} color="text-amber-400" />
+          <TrendValue label="Harga Beli (Pasar)" value={data.buyPrice} color="text-emerald-400" delta={data.delta} />
+          <TrendValue label="Harga Jual (Pasar)" value={data.sellPrice} color="text-indigo-400" />
+        </div>
+        {spread != null && (
+          <div className="mt-3 pt-3 border-t border-white/5 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider">Efisiensi Beli vs Chickin</span>
+              <span className={cn('text-xs font-black tabular-nums', spread >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
+                {spread > 0 ? '+' : ''}{formatIDR(spread)}
+              </span>
+            </div>
+            {margin != null && (
+              <div className="flex justify-between items-center">
+                <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider">Margin/kg (Pasar)</span>
+                <span className={cn('text-xs font-black tabular-nums', margin >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
+                  {margin > 0 ? '+' : ''}{formatIDR(margin)}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    )
+}
+
+function TrendValue({ label, value, color, delta }) {
+  return (
+    <div className="flex justify-between items-center gap-4">
+      <span className="text-[11px] text-[#94A3B8] font-bold">{label}</span>
+      <div className="flex flex-col items-end">
+        <span className={cn("text-sm font-black tabular-nums", value ? color : 'text-[#4B6478]')}>
+          {value ? formatIDR(value) : '—'}
+        </span>
+        {delta !== undefined && delta !== 0 && (
+          <span className={cn(
+            "text-[9px] font-black tabular-nums",
+            delta > 0 ? "text-emerald-400" : "text-rose-400"
+          )}>
+            {delta > 0 ? '▲' : '▼'} {Math.abs(delta).toLocaleString('id-ID')}
+          </span>
+        )}
+      </div>
+    </div>
+  )
 }

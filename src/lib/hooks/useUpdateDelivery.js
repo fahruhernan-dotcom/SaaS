@@ -95,44 +95,71 @@ export function useUpdateDelivery() {
       if (saleUpdateError) console.error('Error updating sale revenue:', saleUpdateError)
       else console.log('✅ Sales total_revenue updated:', newTotalRevenue)
 
-      // 4. Auto-create loss report if there is mortality
-      if (mortality > 0) {
-        // We use a standardized weight per chicken (1.85kg) for mortality financial loss
-        const estWeightLoss = mortality * 1.85
-        const financialLoss = Math.round(estWeightLoss * safeNum(saleData.price_per_kg))
+    // 4. Auto-create loss report if there is mortality or shrinkage
+    const lossReports = []
 
-        await supabase.from('loss_reports').insert({
-          tenant_id:      saleData.tenant_id,
-          delivery_id:    deliveryId,
-          sale_id:        delivery.sale_id,
-          loss_type:      'mortality',
-          chicken_count:  mortality,
-          weight_loss_kg: 0, // In mortality, we usually track count, but financial is derived
-          price_per_kg:   saleData.price_per_kg,
-          financial_loss: financialLoss,
-          description:    `${mortality} ekor mati dalam perjalanan`,
-          report_date:    format(new Date(), 'yyyy-MM-dd')
-        })
-      }
+    if (mortality > 0) {
+      // Standardized weight per chicken (1.85kg) for mortality financial loss
+      const estWeightLoss = mortality * 1.85
+      const financialLoss = 0 // Mortality usually doesn't affect revenue directly in this model
+
+      lossReports.push({
+        tenant_id:      saleData.tenant_id,
+        delivery_id:    deliveryId,
+        sale_id:        delivery.sale_id,
+        loss_type:      'mortality',
+        chicken_count:  mortality,
+        weight_loss_kg: estWeightLoss,
+        price_per_kg:   saleData.price_per_kg,
+        financial_loss: financialLoss,
+        description:    `${mortality} ekor mati dalam perjalanan`,
+        report_date:    format(new Date(), 'yyyy-MM-dd')
+      })
+    }
+
+    if (shrinkage > 0) {
+      const financialLoss = Math.round(shrinkage * safeNum(saleData.price_per_kg))
       
-      // 5. Create notification for Broker/Owner to audit
-      if (updateData.status === 'arrived') {
-        const basePath = getXBasePath(tenant, profile)
-        const driverTitle = driverName || 'Sopir'
-        const rpaTitle = saleData.rpa_clients?.rpa_name || 'Buyer'
-        
-        await supabase.from('notifications').insert({
-          tenant_id: tenant.id,
-          type: 'pengiriman_tiba', // Use correct type for Icon rendering
-          title: '🚚 Pengiriman Tiba',
-          body: `Sopir ${driverTitle} telah sampai di ${rpaTitle}. Segera audit data timbangan.`,
-          action_url: `${basePath}/pengiriman`,
-          metadata: { ref_id: deliveryId },
-        })
-      }
+      lossReports.push({
+        tenant_id:      saleData.tenant_id,
+        delivery_id:    deliveryId,
+        sale_id:        delivery.sale_id,
+        loss_type:      'shrinkage',
+        chicken_count:  0,
+        weight_loss_kg: shrinkage,
+        price_per_kg:   saleData.price_per_kg,
+        financial_loss: financialLoss,
+        description:    `Penyusutan berat ${shrinkage.toFixed(2)} kg`,
+        report_date:    format(new Date(), 'yyyy-MM-dd')
+      })
+    }
+
+    if (lossReports.length > 0) {
+      // Clear old reports first to avoid duplicates
+      await supabase.from('loss_reports').delete().eq('delivery_id', deliveryId)
+      
+      const { error: lossError } = await supabase.from('loss_reports').insert(lossReports)
+      if (lossError) console.error('Error inserting loss reports:', lossError)
+      else console.log('✅ Loss reports created:', lossReports.length)
     }
     
-    // 4. Invalidate all relevant queries
+    // 5. Create notification for Broker/Owner to audit
+    if (updateData.status === 'arrived') {
+      const basePath = getXBasePath(tenant, profile)
+      const driverTitle = driverName || 'Sopir'
+      const rpaTitle = saleData.rpa_clients?.rpa_name || 'Buyer'
+      
+      await supabase.from('notifications').insert({
+        tenant_id: tenant.id,
+        type: 'pengiriman_tiba', 
+        title: '🚚 Pengiriman Tiba',
+        body: `Sopir ${driverTitle} telah sampai di ${rpaTitle}. Segera audit data timbangan.`,
+        action_url: `${basePath}/pengiriman`,
+        metadata: { ref_id: deliveryId },
+      })
+    }
+    
+    // 6. Invalidate all relevant queries
     await queryClient.invalidateQueries({ queryKey: ['sales'] })
     if (saleData) await queryClient.invalidateQueries({ queryKey: ['sales', saleData.tenant_id] })
     await queryClient.invalidateQueries({ queryKey: ['deliveries'] })
@@ -142,6 +169,7 @@ export function useUpdateDelivery() {
     await queryClient.invalidateQueries({ queryKey: ['loss-reports'] })
     
     return { mortality, shrinkage }
+    }
   }
   
   return { updateTiba }

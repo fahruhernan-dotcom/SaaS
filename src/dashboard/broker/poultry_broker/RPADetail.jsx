@@ -330,7 +330,7 @@ export default function RPADetail() {
       <Sheet open={openModal === 'bayar'} onOpenChange={(open) => !open && setOpenModal(null)}>
         <SheetContent
           side={isDesktop ? "right" : "bottom"}
-          className={cn("bg-[#0C1319] border-white/8 overflow-y-auto", isDesktop ? "border-l w-full sm:max-w-[480px] p-8" : "border-t p-5 max-h-[88vh] rounded-t-[24px]")}
+          className={cn("bg-[#0C1319] border-white/8 overflow-y-auto", isDesktop ? "border-l w-full sm:max-w-[480px] p-8" : "border-t p-5 max-h-[90dvh] rounded-t-[24px]")}
         >
           <SheetHeader className={cn("text-left", isDesktop ? "mb-8" : "mb-5")}>
             <SheetTitle className={cn("font-display font-black text-white uppercase tracking-tight text-left", isDesktop ? "text-2xl" : "text-xl")}>
@@ -347,7 +347,7 @@ export default function RPADetail() {
       <Sheet open={showEdit} onOpenChange={setShowEdit}>
         <SheetContent
           side={isDesktop ? "right" : "bottom"}
-          className={cn("bg-[#0C1319] border-white/8 p-0 overflow-hidden flex flex-col", isDesktop ? "border-l w-full max-w-[480px]" : "border-t max-h-[92vh] rounded-t-[24px]")}
+          className={cn("bg-[#0C1319] border-white/8 p-0 overflow-hidden flex flex-col", isDesktop ? "border-l w-full max-w-[480px]" : "border-t max-h-[90dvh] rounded-t-[24px]")}
         >
           <SheetHeader className={cn("border-b border-white/5 flex-shrink-0", isDesktop ? "p-6 pb-4" : "p-4 pb-3")}>
             <SheetTitle className={cn("font-display font-black text-white uppercase tracking-tight", isDesktop ? "text-xl" : "text-[17px]")}>

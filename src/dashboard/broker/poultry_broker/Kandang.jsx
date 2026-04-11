@@ -4,7 +4,7 @@ import { useOutletContext } from 'react-router-dom'
 import {
   Plus, Search, MapPin, ChevronRight, Warehouse, Menu,
   Trash2, Edit, Star, Calendar, Info, AlertTriangle,
-  Clock, CheckCircle2, History, Phone
+  Clock, CheckCircle2, History, Phone, Check, ChevronsUpDown
 } from 'lucide-react'
 import { differenceInDays } from 'date-fns'
 import { useFarms } from '@/lib/hooks/useFarms'
@@ -15,6 +15,8 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { InputNumber } from '@/components/ui/InputNumber'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -38,6 +40,8 @@ import ConfirmDialog from '@/dashboard/_shared/components/ConfirmDialog'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import EmptyState from '@/components/EmptyState'
+import { PROVINCES } from '@/lib/constants/regions'
+import { ProvinceWarningBanner } from './components/ProvinceWarningBanner'
 
 const staggerContainer = {
   hidden: {},
@@ -69,6 +73,7 @@ export default function Kandang() {
   const countReady = farms?.filter(f => f.status === 'ready').length || 0
   const countGrowing = farms?.filter(f => f.status === 'growing').length || 0
   const countEmpty = farms?.filter(f => f.status === 'empty').length || 0
+  const missingProvinceFarms = farms?.filter(f => !f.province).length || 0
 
   const filteredFarms = useMemo(() => {
     if (!farms) return []
@@ -135,6 +140,18 @@ export default function Kandang() {
           </>
         )}
       </header>
+
+      {/* Province Warning */}
+      <ProvinceWarningBanner
+        missingCount={missingProvinceFarms}
+        entityLabel="kandang"
+        onActionClick={() => {
+          const firstMissing = farms?.find(f => !f.province)
+          if (firstMissing) { setEditingFarm(firstMissing); setOpenModal(true) }
+        }}
+        actionLabel="Edit Kandang"
+        className="pt-3"
+      />
 
       {/* Summary Pills */}
       <ScrollArea className="w-full whitespace-nowrap">
@@ -248,7 +265,7 @@ function FarmCard({ farm, onEdit }) {
             <span className="text-white/10 flex-shrink-0">•</span>
             <div className="flex items-center gap-1 flex-1 min-w-0 text-xs">
                 <MapPin size={11} strokeWidth={2.5} className="flex-shrink-0" /> 
-                <span className="truncate">{farm.location || 'N/A'}</span>
+                <span className="truncate">{farm.province ? `${farm.province}, ` : ''}{farm.location || 'N/A'}</span>
             </div>
         </div>
 
@@ -355,7 +372,7 @@ function FarmSheet({ isOpen, onClose, farm, tenantId }) {
                 className="bg-[#0C1319] border-white/10 p-0 overflow-y-auto"
                 style={{
                     width: isDesktop ? '448px' : '100%',
-                    maxHeight: isDesktop ? '100vh' : '92vh',
+                    maxHeight: isDesktop ? '100vh' : '90dvh',
                     borderRadius: isDesktop ? '0' : '24px 24px 0 0',
                 }}
             >
@@ -383,7 +400,8 @@ function FarmSheet({ isOpen, onClose, farm, tenantId }) {
                                             </a>
                                         } 
                                     />
-                                    <DetailRow label="Lokasi" value={farm?.location} />
+                                    <DetailRow label="Provinsi" value={farm?.province} className="capitalize" />
+                                    <DetailRow label="Lokasi / Kota" value={farm?.location} />
                                     <DetailRow label="Jenis Ayam" value={farm?.chicken_type} className="capitalize" />
                                     <DetailRow label="Status" value={farm?.status} className="uppercase" />
                                 </div>
@@ -483,6 +501,7 @@ function FarmForm({ farm, tenantId, onSuccess, onCancel, isSheet }) {
         owner_name: farm?.owner_name ?? '',
         phone: farm?.phone ?? '',
         location: farm?.location ?? '',
+        province: farm?.province ?? '',
         chicken_type: farm?.chicken_type ?? 'broiler',
         status: farm?.status ?? 'empty',
         available_stock: farm?.available_stock ?? 0,
@@ -500,6 +519,7 @@ function FarmForm({ farm, tenantId, onSuccess, onCancel, isSheet }) {
         try {
             const payload = {
                 ...formData,
+                province: formData.province || null,
                 available_stock: formData.status === 'empty' ? 0 : Number(formData.available_stock || 0),
                 avg_weight_kg: formData.avg_weight_kg ? Number(formData.avg_weight_kg) : null,
                 capacity: formData.capacity ? Number(formData.capacity) : null,
@@ -558,16 +578,54 @@ function FarmForm({ farm, tenantId, onSuccess, onCancel, isSheet }) {
                 </div>
             </div>
 
-            <div className="space-y-2">
-                <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Lokasi</Label>
-                <div className="relative">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[#4B6478]" size={18} />
-                    <Input 
-                        placeholder="Boyolali, Jawa Tengah"
-                        value={formData.location} 
-                        onChange={e => setFormData({...formData, location: e.target.value})}
-                        className={cn("bg-[#111C24] border-white/10 h-14 font-black rounded-2xl pl-12", !isDesktop && "text-base")}
-                    />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Provinsi *</Label>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn("w-full bg-[#111C24] border-white/10 h-14 font-black rounded-2xl flex justify-between items-center px-5 uppercase tracking-widest hover:bg-white/5 transition-all text-left", !formData.province && "text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}
+                            >
+                                {formData.province || "Pilih Provinsi..."}
+                                <ChevronsUpDown size={14} className="opacity-50" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[300px] p-0 bg-[#111C24] border-white/10 shadow-2xl">
+                            <Command className="bg-transparent">
+                                <CommandInput placeholder="Cari provinsi..." className="h-11" />
+                                <CommandList className="max-h-[300px] scrollbar-thin">
+                                    <CommandEmpty className="py-4 text-center text-xs opacity-50">Provinsi tidak ditemukan.</CommandEmpty>
+                                    <CommandGroup>
+                                        {PROVINCES.map(p => (
+                                            <CommandItem
+                                                key={p}
+                                                value={p}
+                                                onSelect={() => setFormData({...formData, province: p})}
+                                                className="flex items-center justify-between py-2.5 px-3 cursor-pointer hover:bg-emerald-500/10 rounded-lg text-xs font-bold uppercase tracking-widest"
+                                            >
+                                                <span className={cn(formData.province === p ? "text-emerald-400" : "text-text-primary")}>{p}</span>
+                                                {formData.province === p && <Check size={14} className="text-emerald-400" />}
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
+                </div>
+                <div className="space-y-2">
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Lokasi / Kota</Label>
+                    <div className="relative">
+                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-[#4B6478]" size={18} />
+                        <Input 
+                            placeholder="Boyolali"
+                            value={formData.location} 
+                            onChange={e => setFormData({...formData, location: e.target.value})}
+                            className={cn("bg-[#111C24] border-white/10 h-14 font-black rounded-2xl pl-12", !isDesktop && "text-base")}
+                        />
+                    </div>
                 </div>
             </div>
 

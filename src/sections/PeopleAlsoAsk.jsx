@@ -30,8 +30,13 @@ const TOP_FAQS = [
     a: 'TernakOS mendukung multi-user per bisnis dengan kontrol peran (owner, manajer, staff, sopir). Setiap role punya akses berbeda — misalnya sopir hanya bisa lihat jadwal pengiriman, bukan data keuangan.',
   },
   {
-    q: 'Apakah ada fitur untuk melihat harga pasar ayam broiler hari ini?',
-    a: 'Ada. Halaman Harga Pasar menampilkan rata-rata harga beli dan jual broiler dari seluruh transaksi broker di platform, diperbarui otomatis setiap hari. Tersedia tanpa login.',
+    q: 'Berapa harga ayam broiler hidup hari ini?',
+    a: 'Harga ayam broiler hidup hari ini diperbarui secara otomatis di TernakOS. Data kami unik karena menggabungkan harga referensi pasar dengan rata-rata transaksi nyata dari ratusan broker aktif di seluruh Indonesia.',
+    link: '/harga-pasar',
+  },
+  {
+    q: 'Apa bedanya data harga TernakOS dengan portal harga ayam lain?',
+    a: 'Portal lain biasanya hanya menampilkan scraper atau estimasi manual. TernakOS adalah satu-satunya platform yang menampilkan rata-rata harga beli (kandang) dan harga jual (pasar) dari transaksi nyata platform.',
     link: '/harga-pasar',
   },
 ]

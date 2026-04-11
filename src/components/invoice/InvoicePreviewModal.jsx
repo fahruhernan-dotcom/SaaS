@@ -218,23 +218,22 @@ export default function InvoicePreviewModal({ type, data, isOpen, onClose }) {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
       <DialogContent
-        className="bg-[#0C1319] border border-white/[0.08] p-0 flex flex-col overflow-hidden"
-        style={{ maxWidth: '900px', width: '95vw', height: '92vh', borderRadius: '20px' }}
+        className="bg-[#0C1319] border border-white/[0.08] p-0 flex flex-col overflow-hidden max-w-[900px] w-[95vw] h-[90dvh] rounded-[20px]"
       >
         {/* Header */}
-        <DialogHeader className="flex-row items-center justify-between px-6 pt-5 pb-4 border-b border-white/[0.08] shrink-0">
+        <DialogHeader className="flex-row items-center justify-between px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 border-b border-white/[0.08] shrink-0">
           <div>
-            <DialogTitle className="font-display font-bold text-lg text-white leading-none">
+            <DialogTitle className="font-display font-bold text-base sm:text-lg text-white leading-none">
               {title}
             </DialogTitle>
-            <DialogDescription className="text-[11px] text-[#4B6478] mt-1 font-mono">
+            <DialogDescription className="text-[10px] sm:text-[11px] text-[#4B6478] mt-1 font-mono">
               {invoiceNumber}
             </DialogDescription>
           </div>
         </DialogHeader>
 
         {/* PDF Viewer */}
-        <div className="flex-1 overflow-hidden px-4 py-3">
+        <div className="flex-1 overflow-hidden px-2 sm:px-4 py-2 sm:py-3">
           <Suspense fallback={<PDFSkeleton />}>
             <PDFViewer
               width="100%"
@@ -248,45 +247,45 @@ export default function InvoicePreviewModal({ type, data, isOpen, onClose }) {
         </div>
 
         {/* Footer actions */}
-        <div className="shrink-0 px-6 py-4 border-t border-white/[0.08] flex items-center gap-3">
+        <div className="shrink-0 p-4 sm:px-6 sm:py-4 border-t border-white/[0.08] flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 overflow-y-auto max-h-[30dvh]">
           {/* Simpan ke riwayat */}
           <Button
             variant="outline"
             onClick={handleSave}
             disabled={isSaving || saved}
-            className="h-11 border-white/10 bg-white/[0.03] text-[#94A3B8] font-semibold text-xs uppercase tracking-widest rounded-xl hover:bg-white/[0.06] disabled:opacity-50"
+            className="flex-1 sm:flex-none h-11 border-white/10 bg-white/[0.03] text-[#94A3B8] font-semibold text-[10px] sm:text-xs uppercase tracking-widest rounded-xl hover:bg-white/[0.06] disabled:opacity-50"
           >
             {isSaving ? (
-              <Loader2 size={14} className="animate-spin mr-2" />
+              <Loader2 size={14} className="animate-spin mr-1 sm:mr-2" />
             ) : saved ? (
-              <CheckCircle2 size={14} className="text-emerald-400 mr-2" />
+              <CheckCircle2 size={14} className="text-emerald-400 mr-1 sm:mr-2" />
             ) : (
-              <Save size={14} className="mr-2" />
+              <Save size={14} className="mr-1 sm:mr-2" />
             )}
-            {saved ? 'Tersimpan' : 'Simpan Riwayat'}
+            {saved ? 'Tersimpan' : 'Simpan'}
           </Button>
 
           {/* Print */}
           <Button
             variant="outline"
             onClick={() => window.print()}
-            className="h-11 border-white/10 bg-white/[0.03] text-[#94A3B8] font-semibold text-xs uppercase tracking-widest rounded-xl hover:bg-white/[0.06]"
+            className="flex-1 sm:flex-none h-11 border-white/10 bg-white/[0.03] text-[#94A3B8] font-semibold text-[10px] sm:text-xs uppercase tracking-widest rounded-xl hover:bg-white/[0.06]"
           >
-            <Printer size={14} className="mr-2" />
+            <Printer size={14} className="mr-1 sm:mr-2" />
             Print
           </Button>
 
           {/* Download PDF */}
-          <PDFDownloadLink document={doc} fileName={fileName}>
+          <PDFDownloadLink document={doc} fileName={fileName} className="w-full sm:w-auto sm:ml-auto">
             {({ loading }) => (
               <Button
                 disabled={loading}
-                className="h-11 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs uppercase tracking-widest rounded-xl shadow-[0_4px_16px_rgba(16,185,129,0.25)] active:scale-95 transition-transform disabled:opacity-60 ml-auto"
+                className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-[10px] sm:text-xs uppercase tracking-widest rounded-xl shadow-[0_4px_16px_rgba(16,185,129,0.25)] active:scale-95 transition-transform disabled:opacity-60"
               >
                 {loading ? (
-                  <Loader2 size={14} className="animate-spin mr-2" />
+                  <Loader2 size={14} className="animate-spin mr-1 sm:mr-2" />
                 ) : (
-                  <Download size={14} className="mr-2" />
+                  <Download size={14} className="mr-1 sm:mr-2" />
                 )}
                 {loading ? 'Memproses...' : 'Download PDF'}
               </Button>

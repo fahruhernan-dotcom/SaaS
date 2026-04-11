@@ -1,6 +1,10 @@
 import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Search, Phone, MapPin, ChevronRight, CheckCircle2, Building2, User, Star, Trash2, Lock, Unlock, Menu } from 'lucide-react'
+import { 
+    Plus, Search, Phone, MapPin, ChevronRight, CheckCircle2, Building2, User, Star, Trash2, Lock, Unlock, Menu, ChevronsUpDown, Check,
+    ChevronDown, ChevronUp, Bell, Calculator, BarChart3, HelpCircle, LogOut, CreditCard, Building, ArrowLeftRight, ShieldCheck, 
+    Settings, Store, Smartphone, Mail, Info, Trophy, Crown, Undo2, FileX2, History, Warehouse, Factory, Truck
+} from 'lucide-react'
 import { useRPA } from '@/lib/hooks/useRPA'
 import { useSales } from '@/lib/hooks/useSales'
 import {
@@ -14,6 +18,8 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom'
@@ -37,12 +43,15 @@ import { z } from 'zod'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { InputRupiah } from '@/components/ui/InputRupiah'
+import { PROVINCES } from '@/lib/constants/regions'
+import { ProvinceWarningBanner } from './components/ProvinceWarningBanner'
 
 export const rpaSchema = z.object({
     rpa_name: z.string().min(2, 'Nama RPA minimal 2 karakter'),
     buyer_type: z.string().default('rpa'),
     phone: z.string().min(8, 'Nomor HP minimal 8 digit'),
     location: z.string().optional(),
+    province: z.string().optional().nullable(),
     payment_terms: z.string().default('cash'),
     credit_limit: z.union([z.string(), z.number()]).optional(),
     reliability_score: z.number().min(1).max(5).default(5),
@@ -103,6 +112,7 @@ export default function RPA() {
 
     const totalPiutang = rpaStats?.reduce((acc, r) => acc + r.calculated_outstanding, 0) || 0
     const activeCount = rpaStats?.filter(r => r.calculated_outstanding > 0).length || 0
+    const missingProvinceRPAs = rpas?.filter(r => !r.province).length || 0
 
     const handleEdit = (rpa, e) => {
         e.stopPropagation()
@@ -159,6 +169,15 @@ export default function RPA() {
                   </>
                 )}
             </header>
+
+            {/* Province Warning */}
+            <ProvinceWarningBanner
+              missingCount={missingProvinceRPAs}
+              entityLabel="RPA / pembeli"
+              onActionClick={() => { setEditingRPA(rpas?.find(r => !r.province) || null); setOpenModal(true) }}
+              actionLabel="Lengkapi Provinsi"
+              className="pt-3"
+            />
 
             {/* Summary Card */}
             {totalPiutang > 0 && (
@@ -334,9 +353,10 @@ function RPACard({ rpa, isDesktop, onClick, onEdit }) {
                                 <Phone size={12} className="text-emerald-500/40" /> {rpa.phone}
                             </a>
                             <span className="text-white/10">•</span>
-                            <div className="flex items-center gap-1.5 font-bold text-[#4B6478] text-[11px]">
-                                <MapPin size={12} className="text-emerald-500/40" /> {rpa.location || 'N/A'}
-                            </div>
+                              <div className="flex items-center gap-1.5 font-bold text-[#4B6478] text-[11px] truncate">
+                                <MapPin size={12} className="text-emerald-500/40" /> 
+                                {rpa.province ? `${rpa.province}, ` : ''}{rpa.location || 'N/A'}
+                              </div>
                         </div>
                     </div>
                 </div>
@@ -441,6 +461,7 @@ export function RPAForm({ rpa, isDesktop, onClose, onSubmit, onDelete }) {
             buyer_type: 'rpa',
             phone: '',
             location: '',
+            province: '',
             payment_terms: 'cash',
             credit_limit: 0,
             reliability_score: 5,
@@ -499,13 +520,56 @@ export function RPAForm({ rpa, isDesktop, onClose, onSubmit, onDelete }) {
                 </div>
             </div>
 
-            <div className="space-y-2">
-                <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Lokasi / Alamat</Label>
-                <Input
-                    {...register('location')}
-                    placeholder="Contoh: Boyolali, Jawa Tengah"
-                    className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white text-base focus:border-emerald-500/50"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Provinsi *</Label>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                variant="outline"
+                                role="combobox"
+                                className={cn("w-full bg-[#111C24] border-white/10 h-12 font-bold rounded-xl flex justify-between items-center px-4 uppercase tracking-widest hover:bg-white/5 transition-all text-left", !watch('province') && "text-[#4B6478]", isDesktop ? "text-[11px]" : "text-xs")}
+                            >
+                                {watch('province') || "Pilih Provinsi..."}
+                                <ChevronsUpDown size={14} className="opacity-50" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[300px] p-0 bg-[#111C24] border-white/10 shadow-2xl">
+                            <Command className="bg-transparent">
+                                <CommandInput placeholder="Cari provinsi..." className="h-11" />
+                                <CommandList className="max-h-[300px] scrollbar-thin">
+                                    <CommandEmpty className="py-4 text-center text-xs opacity-50 font-bold uppercase">Provinsi tidak ditemukan.</CommandEmpty>
+                                    <CommandGroup>
+                                        {PROVINCES.map(p => (
+                                            <CommandItem
+                                                key={p}
+                                                value={p}
+                                                onSelect={() => {
+                                                    setValue('province', p)
+                                                }}
+                                                className="flex items-center justify-between py-2.5 px-3 cursor-pointer hover:bg-emerald-500/10 rounded-lg text-xs font-bold uppercase tracking-widest"
+                                            >
+                                                <span className={cn(watch('province') === p ? "text-emerald-400" : "text-white")}>{p}</span>
+                                                {watch('province') === p && <Check size={14} className="text-emerald-400" />}
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
+                </div>
+                <div className="space-y-2">
+                    <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Lokasi / Kota</Label>
+                    <div className="relative">
+                        <MapPin size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#4B6478]" />
+                        <Input
+                            {...register('location')}
+                            placeholder="Contoh: Boyolali"
+                            className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white text-base focus:border-emerald-500/50 pl-12"
+                        />
+                    </div>
+                </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

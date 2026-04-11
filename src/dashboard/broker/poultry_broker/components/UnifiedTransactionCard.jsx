@@ -66,7 +66,7 @@ function getDeliveryBadge(delivery) {
   return map[currentStatus] || map.preparing
 }
 
-export function UnifiedTransactionCard({ sale, onOpenAuditSheet, isOwner, isDesktop }) {
+export function UnifiedTransactionCard({ sale, onOpenAuditSheet, onPay, isOwner, isDesktop }) {
   // Calculations
   const totalRevenue = Number(sale.total_revenue || 0)
   const totalModal = Number(sale.purchases?.total_cost || 0)
@@ -203,7 +203,20 @@ export function UnifiedTransactionCard({ sale, onOpenAuditSheet, isOwner, isDesk
           </div>
         ) : (
           <div className="space-y-1">
-            <p className="text-[10px] uppercase font-bold text-[#F87171] tracking-widest leading-none">SISA HUTANG</p>
+            <div className="flex items-center gap-2">
+              <p className="text-[10px] uppercase font-bold text-[#F87171] tracking-widest leading-none">SISA HUTANG</p>
+              {onPay && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onPay(sale)
+                  }}
+                  className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter active:scale-90 transition-all"
+                >
+                  Bayar
+                </button>
+              )}
+            </div>
             <p className={cn("font-display font-bold text-[#F87171] tabular-nums leading-none mt-1", valSize)}>
               {fmt(remainingDebt)}
             </p>

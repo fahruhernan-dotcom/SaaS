@@ -774,7 +774,7 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
-            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 overflow-y-auto", isDesktop ? "w-full sm:max-w-[520px] border-l" : "max-h-[92vh] rounded-t-[24px] border-t")}>
+            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 overflow-y-auto", isDesktop ? "w-full sm:max-w-[520px] border-l" : "max-h-[90dvh] rounded-t-[24px] border-t")}>
                 <div className={isDesktop ? "p-8 space-y-8" : "p-4 pt-5 space-y-5"}>
                     <SheetHeader className="text-left">
                     <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">
@@ -1030,7 +1030,7 @@ function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
-            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 overflow-y-auto", isDesktop ? "w-full sm:max-w-[520px] border-l" : "max-h-[92vh] rounded-t-[24px] border-t")}>
+            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 overflow-y-auto", isDesktop ? "w-full sm:max-w-[520px] border-l" : "max-h-[90dvh] rounded-t-[24px] border-t")}>
                 <div className={isDesktop ? "p-8 space-y-8" : "p-4 pt-5 space-y-5"}>
                     <SheetHeader className="text-left">
                     <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">
@@ -1191,7 +1191,7 @@ function ExpenseSheet({ isOpen, onClose, vehicle, tenantId }) {
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
-            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 overflow-y-auto", isDesktop ? "w-full sm:max-w-[520px] border-l" : "max-h-[85vh] rounded-t-[24px] border-t")}>
+            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 overflow-y-auto", isDesktop ? "w-full sm:max-w-[520px] border-l" : "max-h-[90dvh] rounded-t-[24px] border-t")}>
                 <div className={isDesktop ? "p-8 space-y-8" : "p-4 pt-5 space-y-5"}>
                     <SheetHeader className="text-left">
                     <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">
@@ -1318,7 +1318,7 @@ function VehicleDetailSheet({ vehicle, onClose }) {
 
     return (
         <Sheet open={!!vehicle} onOpenChange={onClose}>
-            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 flex flex-col", isDesktop ? "w-full sm:max-w-[520px] border-l" : "h-[90vh] rounded-t-[40px] border-t")}>
+            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 flex flex-col", isDesktop ? "w-full sm:max-w-[520px] border-l" : "h-[90dvh] rounded-t-[40px] border-t")}>
                 <div className="p-6 border-b border-white/5">
                     <SheetHeader className="text-left">
                         <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight leading-none mb-1" style={{ color: vehicle?.isUnregistered ? '#EF4444' : 'white' }}>
@@ -1477,7 +1477,7 @@ function DriverDetailSheet({ driver, onClose }) {
 
     return (
         <Sheet open={!!driver} onOpenChange={onClose}>
-            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 flex flex-col", isDesktop ? "w-full sm:max-w-[520px] border-l" : "h-[90vh] rounded-t-[40px] border-t")}>
+            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 flex flex-col", isDesktop ? "w-full sm:max-w-[520px] border-l" : "h-[90dvh] rounded-t-[40px] border-t")}>
                 <div className="p-6 border-b border-white/5 flex gap-4 items-center">
                     <Avatar className="h-14 w-14 rounded-[20px] border border-white/5 shrink-0" style={{ backgroundColor: driver?.isUnregistered ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)' }}>
                         <AvatarFallback className="bg-transparent font-display font-black text-lg uppercase" style={{ color: driver?.isUnregistered ? '#EF4444' : '#34D399' }}>

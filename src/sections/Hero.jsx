@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Play } from 'lucide-react';
+import anime from '../lib/animation';
+import { useState, useEffect } from 'react';
 import BlurText from '../components/reactbits/BlurText';
 import ShinyText from '../components/reactbits/ShinyText';
 import Magnet from '../components/reactbits/Magnet';
@@ -8,10 +9,53 @@ import ClickSpark from '../components/reactbits/ClickSpark';
 import Particles from '../components/reactbits/Particles';
 
 const Hero = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const isTouchDevice = () => 
     typeof window !== 'undefined' && 
     ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    const tl = anime.timeline({
+      easing: 'easeOutExpo'
+    });
+
+    tl
+    .add('.hero-badge', {
+      translateY: [-20, 0],
+      opacity: [0, 1],
+      duration: 800,
+      delay: 500
+    })
+    .add('.hero-headline-row', {
+      translateY: [30, 0],
+      opacity: [0, 1],
+      delay: anime.stagger(150),
+      duration: 1000,
+    }, '-=600')
+    .add('.hero-subheadline', {
+      translateY: [20, 0],
+      opacity: [0, 1],
+      duration: 800,
+    }, '-=700')
+    .add('.hero-cta-item', {
+      translateY: [20, 0],
+      opacity: [0, 1],
+      delay: anime.stagger(100),
+      duration: 800,
+    }, '-=600')
+    .add('.hero-social-proof', {
+      opacity: [0, 1],
+      duration: 600,
+    }, '-=400')
+    .add('.hero-mockup', {
+      translateY: [60, 0],
+      scale: [0.95, 1],
+      opacity: [0, 1],
+      duration: 1200,
+      easing: 'easeOutElastic(1, .8)'
+    }, '-=1000');
+  }, []);
 
   return (
     <section className="relative px-5 py-20 md:px-10 lg:px-20 lg:py-24 bg-bg-base overflow-hidden text-center lg:text-left">
@@ -50,15 +94,13 @@ const Hero = () => {
         <div className="flex-1 w-full max-w-[640px] mx-auto lg:mx-0 flex flex-col items-center lg:items-start">
           
           {/* Badge */}
-          <motion.div 
-            initial={{ opacity: 0, y: -12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94], delay: 0 }}
-            className="inline-flex items-center gap-[7px] bg-[rgba(16,185,129,0.08)] border border-[rgba(16,185,129,0.18)] rounded-full py-[5px] pl-[9px] pr-[13px] text-[11px] font-semibold text-em-400 mb-4"
+          <div 
+            className="hero-badge inline-flex items-center gap-[7px] bg-[rgba(16,185,129,0.08)] border border-[rgba(16,185,129,0.18)] rounded-full py-[5px] pl-[9px] pr-[13px] text-[11px] font-semibold text-em-400 mb-4"
+            style={{ opacity: 0 }}
           >
             <div className="w-[7px] h-[7px] bg-em-400 rounded-full animate-pulse-dot"></div>
             Solusi Digital Terpadu untuk Broker & Peternak
-          </motion.div>
+          </div>
 
           {/* Headline */}
           <div style={{
@@ -70,27 +112,29 @@ const Hero = () => {
             marginBottom: '16px',
           }}>
             {/* Baris 1-2: BlurText */}
-            <BlurText
-              text="Kelola Bisnis Ternak"
-              animateBy="words"
-              direction="top"
-              delay={100}
-              stepDuration={0.4}
-              style={{
-                fontFamily: "'Sora', sans-serif",
-                fontSize: 'inherit',
-                fontWeight: 'inherit',
-                letterSpacing: 'inherit',
-                lineHeight: 'inherit',
-                color: '#F1F5F9',
-                display: 'block',
-                marginBottom: 0,
-                paddingBottom: 0,
-              }}
-            />
+            <div className="hero-headline-row" style={{ opacity: 0 }}>
+              <BlurText
+                text="Kelola Bisnis Ternak"
+                animateBy="words"
+                direction="top"
+                delay={100}
+                stepDuration={0.4}
+                style={{
+                  fontFamily: "'Sora', sans-serif",
+                  fontSize: 'inherit',
+                  fontWeight: 'inherit',
+                  letterSpacing: 'inherit',
+                  lineHeight: 'inherit',
+                  color: '#F1F5F9',
+                  display: 'block',
+                  marginBottom: 0,
+                  paddingBottom: 0,
+                }}
+              />
+            </div>
 
             {/* Baris 3: Lebih Cepat. — shimmer */}
-            <span style={{
+            <span className="hero-headline-row" style={{
               fontFamily: "'Sora', sans-serif",
               fontSize: 'inherit',
               fontWeight: 'inherit',
@@ -100,6 +144,7 @@ const Hero = () => {
               marginTop: 0,
               position: 'relative',
               color: '#34D399',
+              opacity: 0
             }}>
               Lebih Cepat.
               <span aria-hidden="true" style={{
@@ -124,7 +169,7 @@ const Hero = () => {
             </span>
 
             {/* Baris 4: Lebih Rapi. */}
-            <span style={{
+            <span className="hero-headline-row" style={{
               fontFamily: "'Sora', sans-serif",
               fontSize: 'inherit',
               fontWeight: 'inherit',
@@ -133,67 +178,50 @@ const Hero = () => {
               color: '#F1F5F9',
               display: 'block',
               marginTop: 0,
+              opacity: 0
             }}>
               Lebih Rapi.
             </span>
           </div>
           {/* Subheadline */}
-          <motion.p 
-            initial={{ opacity: 0, y: 32 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.4 }}
-            className="text-sm md:text-base text-tx-3 leading-relaxed max-w-[500px] mb-6 text-center lg:text-left font-medium"
+          <p 
+            className="hero-subheadline text-sm md:text-base text-tx-3 leading-relaxed max-w-[500px] mb-6 text-center lg:text-left font-medium"
+            style={{ opacity: 0 }}
           >
             Mulai Rp 499rb/bulan untuk <span className="text-em-400 font-bold">Peternak</span> — atau Rp 999rb/bulan untuk <span className="text-em-400 font-bold">Broker</span>.
-          </motion.p>
+          </p>
 
           {/* CTA Buttons */}
-          <motion.div 
-            initial="hidden"
-            animate="visible"
-            variants={{
-              hidden: {},
-              visible: {
-                transition: { staggerChildren: 0.08, delayChildren: 0.5 }
-              }
-            }}
-            className="flex flex-col w-full md:flex-row md:w-auto gap-[12px]"
-          >
-            <ClickSpark sparkColor="#10B981" sparkCount={10} sparkRadius={20}>
-              <Magnet padding={40} magnetStrength={0.3} disabled={isTouchDevice()}>
-                <motion.a
-                  variants={{
-                    hidden: { opacity: 0, y: 24 },
-                    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-                  }}
-                  href="/register"
-                  whileTap={{ scale: 0.96 }}
-                  className="w-full inline-block text-center px-[28px] py-[16px] font-display text-[15px] font-bold bg-em-500 text-white rounded-[12px] shadow-[0_0_0_1px_rgba(16,185,129,0.2),0_8px_28px_rgba(16,185,129,0.22)] md:w-auto"
-                >
-                  Coba Gratis Sekarang
-                </motion.a>
-              </Magnet>
-            </ClickSpark>
-            <motion.button
-              variants={{
-                hidden: { opacity: 0, y: 24 },
-                visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-              }}
-              onClick={() => setIsModalOpen(true)}
-              whileTap={{ scale: 0.97 }}
-              className="w-full text-center px-[28px] py-[15px] font-body text-[15px] font-bold bg-white/[0.05] text-white border border-white/20 rounded-[12px] md:w-auto hover:bg-white/10 transition-all flex items-center justify-center gap-2"
-            >
-              <Play size={16} fill="currentColor" />
-              Video Demo 1 Menit
-            </motion.button>
-          </motion.div>
+          <div className="flex flex-col w-full md:flex-row md:w-auto gap-[12px]">
+            <div className="hero-cta-item" style={{ opacity: 0 }}>
+              <ClickSpark sparkColor="#10B981" sparkCount={10} sparkRadius={20}>
+                <Magnet padding={40} magnetStrength={0.3} disabled={isTouchDevice()}>
+                  <motion.a
+                    href="/register"
+                    whileTap={{ scale: 0.96 }}
+                    className="w-full inline-block text-center px-[28px] py-[16px] font-display text-[15px] font-bold bg-em-500 text-white rounded-[12px] shadow-[0_0_0_1px_rgba(16,185,129,0.2),0_8px_28px_rgba(16,185,129,0.22)] md:w-auto"
+                  >
+                    Coba Gratis Sekarang
+                  </motion.a>
+                </Magnet>
+              </ClickSpark>
+            </div>
+            <div className="hero-cta-item" style={{ opacity: 0 }}>
+              <motion.button
+                onClick={() => setIsModalOpen(true)}
+                whileTap={{ scale: 0.97 }}
+                className="w-full text-center px-[28px] py-[15px] font-body text-[15px] font-bold bg-white/[0.05] text-white border border-white/20 rounded-[12px] md:w-auto hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+              >
+                <Play size={16} fill="currentColor" />
+                Video Demo 1 Menit
+              </motion.button>
+            </div>
+          </div>
 
           {/* Social Proof */}
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, ease: 'easeOut', delay: 0.65 }}
-            className="flex items-center justify-center lg:justify-start gap-[10px] mt-6 text-[13px] text-tx-3"
+          <div 
+            className="hero-social-proof flex items-center justify-center lg:justify-start gap-[10px] mt-6 text-[13px] text-tx-3"
+            style={{ opacity: 0 }}
           >
             <div className="flex text-white font-bold text-[10px]">
               {[
@@ -211,15 +239,13 @@ const Hero = () => {
               <span className="text-gold">★★★★★</span>
               <span>500+ broker & peternak</span>
             </div>
-          </motion.div>
+          </div>
         </div>
 
         {/* Mockup Card (Visual Side) */}
-        <motion.div 
-          initial={{ opacity: 0, y: 40, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94], delay: 0.3 }}
-          className="flex-1 w-full max-w-[900px] mt-10 lg:mt-0 text-left relative"
+        <div 
+          className="hero-mockup flex-1 w-full max-w-[900px] mt-10 lg:mt-0 text-left relative"
+          style={{ opacity: 0 }}
         >
           {/* Card mengambang kiri */}
           <motion.div 
@@ -363,7 +389,7 @@ const Hero = () => {
                </div>
             </div>
           </div>
-        </motion.div>
+        </div>
 
       </div>
 

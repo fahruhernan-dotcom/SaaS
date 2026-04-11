@@ -249,7 +249,7 @@ function App() {
         <Route path="/tentang-kami" element={<AboutUs />} />
         <Route path="/fitur" element={<FiturPage />} />
         <Route path="/harga" element={<HargaPage />} />
-        <Route path="/harga-pasar" element={<HargaPasarPublic />} />
+        <Route path="/harga-pasar/:province?" element={<HargaPasarPublic />} />
         <Route path="/faq" element={<FAQPage />} />
         <Route path="/check-email" element={<CheckEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />

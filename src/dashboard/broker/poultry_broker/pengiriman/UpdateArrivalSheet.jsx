@@ -485,10 +485,14 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
             formattedDepartureTime = baseDate.toISOString()
         }
         
+        const toastId = toast.loading('Menyimpan data pengiriman...')
         try {
-            console.log('Step 1: update deliveries')
+            console.log('Step 1: processing update')
             if (delivery.status === 'arrived' || delivery.status === 'completed') {
-                // Direct UPDATE for existing delivery
+                // Direct UPDATE for existing delivery (we calculate here manually or move this to hook too)
+                // Actually, let's just make it consistent and call the hook even for updates if possible, 
+                // but the hook is currently structured for 'tiba' event.
+                // For now, let's keep the direct update but remove the redundant loss report logic below.
                 const updatePayload = {
                     arrived_count: tibaCount,
                     arrived_weight_kg: tibaKg,
@@ -549,136 +553,89 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     .update({ total_revenue: newTotalRevenue })
                     .eq('id', delivery.sale_id)
 
-                toast.success('Data kedatangan berhasil diperbarui. Menunggu audit Owner.')
+                // Handled in block below for consistency: Loss reports
             } else {
-                // Standard arrival via hook (hook now handles sales update)
+                // Standard arrival via hook (hook handles sales update and loss reports)
                 const arrivalPayload = {
                     deliveryId: delivery.id,
-                    arrivedCount: arrivedQty,
+                    arrivedCount: tibaCount,
                     arrivedWeight: tibaKg,
                     notes: notes,
                     loadTime: formattedLoadTime,
                     departureTime: formattedDepartureTime,
-                }
-                
-                // Logic-aware status transition
-                if (isArrival) {
-                    arrivalPayload.status = 'arrived'
-                } else if (formattedDepartureTime) {
-                    arrivalPayload.status = 'on_route'
-                } else if (formattedLoadTime) {
-                    arrivalPayload.status = 'loading'
+                    status: isArrival ? 'arrived' : (formattedDepartureTime ? 'on_route' : (formattedLoadTime ? 'loading' : null))
                 }
 
                 if (!vehicleLocked) {
-                    let finalVehicleId = selectedVehicle?.id || null
-                    if (!finalVehicleId && vehiclePlate) {
-                        const { data: newV } = await supabase.from('vehicles').insert({
-                            tenant_id: tenant.id,
-                            brand: 'Auto-Registered',
-                            vehicle_plate: vehiclePlate.toUpperCase(),
-                            vehicle_type: vehicleType || 'Armada',
-                            ownership: 'lainnya',
-                            status: 'aktif'
-                        }).select('id').single()
-                        if (newV) finalVehicleId = newV.id
-                    }
-                    arrivalPayload.vehicleId = finalVehicleId
+                    arrivalPayload.vehicleId = selectedVehicle?.id || null
                     arrivalPayload.vehiclePlate = selectedVehicle?.vehicle_plate || vehiclePlate
                     arrivalPayload.vehicleType = selectedVehicle?.vehicle_type || vehicleType
                 }
 
                 if (!driverLocked) {
-                    let finalDriverId = selectedDriver?.id || null
-                    if (!finalDriverId && driverName) {
-                        const { data: newD } = await supabase.from('drivers').insert({
-                            tenant_id: tenant.id,
-                            full_name: driverName,
-                            phone: driverPhone || null,
-                            status: 'aktif'
-                        }).select('id').single()
-                        if (newD) finalDriverId = newD.id
-                    }
-                    arrivalPayload.driverId = finalDriverId
+                    arrivalPayload.driverId = selectedDriver?.id || null
                     arrivalPayload.driverName = selectedDriver?.full_name || driverName
                     arrivalPayload.driverPhone = selectedDriver?.phone || driverPhone
                     arrivalPayload.driverWage = selectedDriver?.wage_per_trip || driverWage
                 }
 
                 await updateTiba(arrivalPayload)
-                toast.success('Kedatangan berhasil dicatat! Menunggu audit Owner.')
             }
 
-            // Explicit sync variables already declared at top
+            // LOSS REPORTS (If not handled by hook already)
+            // If we are in 'arrived' or 'completed' status, the hook above might have been skipped (direct update).
+            // Let's ensure loss reports are synced.
+            if (delivery.status === 'arrived' || delivery.status === 'completed') {
+                const lossReports = []
+                const pricePerKg = delivery?.sales?.price_per_kg ?? 0
+                const initialCount = safeNum(delivery?.initial_count)
+                const initialWeight = safeNum(delivery?.initial_weight_kg)
+                
+                const mortality = initialCount - tibaCount
+                const shrinkage = initialWeight - tibaKg
 
-            console.log('Step 2: delete old loss_reports')
-            // 1. Hapus loss_reports lama untuk delivery ini (hindari duplikasi)
-            await supabase
-              .from('loss_reports')
-              .delete()
-              .eq('delivery_id', delivery.id)
-              .eq('tenant_id', tenant.id)
+                if (mortality > 0) {
+                    lossReports.push({
+                        tenant_id: tenant.id,
+                        delivery_id: delivery.id,
+                        sale_id: delivery.sale_id,
+                        loss_type: 'mortality',
+                        chicken_count: mortality,
+                        weight_loss_kg: mortality * 1.85,
+                        price_per_kg: pricePerKg,
+                        financial_loss: 0,
+                        report_date: new Date().toISOString().split('T')[0],
+                        description: `Pembaruan data: ${mortality} ekor mati`
+                    })
+                }
 
-            // 2. Hitung nilai
-            const mortalityCount = (delivery?.initial_count ?? 0) - arrivedCount
-            const shrinkageKg = (delivery?.initial_weight_kg ?? 0) - arrivedWeightKg
-            const pricePerKg = delivery?.sales?.price_per_kg ?? 0
-            const avgWeightKg = (delivery?.initial_count || 0) > 0
-              ? ((delivery?.initial_weight_kg || 0) / (delivery?.initial_count || 1))
-              : 1.85
+                if (shrinkage > 0) {
+                    lossReports.push({
+                        tenant_id: tenant.id,
+                        delivery_id: delivery.id,
+                        sale_id: delivery.sale_id,
+                        loss_type: 'shrinkage',
+                        chicken_count: 0,
+                        weight_loss_kg: shrinkage,
+                        price_per_kg: pricePerKg,
+                        financial_loss: Math.round(shrinkage * pricePerKg),
+                        report_date: new Date().toISOString().split('T')[0],
+                        description: `Pembaruan data: Susut ${shrinkage.toFixed(2)} kg`
+                    })
+                }
 
-            console.log('Step 3: insert mortality/shrinkage')
-            // 3. Insert mortality jika ada
-            if (mortalityCount > 0) {
-              const { error: mortError } = await supabase
-                .from('loss_reports')
-                .insert({
-                  tenant_id: tenant.id,
-                  delivery_id: delivery.id,
-                  sale_id: delivery.sale_id,
-                  loss_type: 'mortality',
-                  chicken_count: mortalityCount,
-                  weight_loss_kg: mortalityCount * avgWeightKg,
-                  price_per_kg: pricePerKg,
-                  financial_loss: 0,
-                  report_date: new Date().toISOString().split('T')[0],
-                  description: 'Laporan mortalitas — tidak mempengaruhi revenue',
-                  resolved: false
-                })
-              if (mortError) console.error('Error insert mortality:', mortError)
-              else console.log('✅ Mortality loss_report inserted:', mortalityCount, 'ekor')
+                if (lossReports.length > 0) {
+                    await supabase.from('loss_reports').delete().eq('delivery_id', delivery.id)
+                    await supabase.from('loss_reports').insert(lossReports)
+                }
             }
 
-            // 4. Insert shrinkage jika ada
-            if (shrinkageKg > 0) {
-              const { error: shrinkError } = await supabase
-                .from('loss_reports')
-                .insert({
-                  tenant_id: tenant.id,
-                  delivery_id: delivery.id,
-                  sale_id: delivery.sale_id,
-                  loss_type: 'shrinkage',
-                  chicken_count: 0,
-                  weight_loss_kg: shrinkageKg,
-                  price_per_kg: pricePerKg,
-                  financial_loss: Math.round(shrinkageKg * pricePerKg),
-                  report_date: new Date().toISOString().split('T')[0],
-                  description: 'Auto-generated dari Catat Kedatangan',
-                  resolved: false
-                })
-              if (shrinkError) console.error('Error insert shrinkage:', shrinkError)
-              else console.log('✅ Shrinkage loss_report inserted:', shrinkageKg, 'kg')
-            }
-
-            // 5. Invalidate queries
-            await queryClient.invalidateQueries({ queryKey: ['sales'] })
-            await queryClient.invalidateQueries({ queryKey: ['sales', tenant.id] })
+            toast.success('Data berhasil disimpan!', { id: toastId })
             await queryClient.invalidateQueries({ queryKey: ['deliveries'] })
-            await queryClient.invalidateQueries({ queryKey: ['deliveries', tenant.id] })
-            await queryClient.refetchQueries({ queryKey: ['sales', tenant.id] })
-            queryClient.invalidateQueries({ queryKey: ['loss-reports'] })
-            queryClient.invalidateQueries({ queryKey: ['broker-stats'] })
+            await queryClient.invalidateQueries({ queryKey: ['sales'] })
+            await queryClient.invalidateQueries({ queryKey: ['loss-reports'] })
             onClose()
+
         } catch (err) {
             console.error('Error update arrival:', err)
             toast.error('Gagal memperbarui data: ' + err.message)

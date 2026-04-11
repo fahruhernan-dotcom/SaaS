@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import anime from '../lib/animation';
 
 const Navbar = ({ authPage = false }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -17,6 +18,31 @@ const Navbar = ({ authPage = false }) => {
     { name: 'Tentang Kami', href: '/tentang-kami' },
     { name: 'Harga Pasar', href: '/harga-pasar' },
   ];
+
+  useEffect(() => {
+    // Initial reveal sequence
+    const tl = anime.timeline({
+      easing: 'easeOutExpo'
+    });
+    
+    tl.add('.nav-logo', {
+      translateY: [-20, 0],
+      opacity: [0, 1],
+      duration: 800,
+    })
+    .add('.nav-link-item', {
+      opacity: [0, 1],
+      translateX: [10, 0],
+      delay: anime.stagger(100),
+      duration: 600,
+    }, '-=400')
+    .add('.nav-action-btn', {
+      opacity: [0, 1],
+      scale: [0.9, 1],
+      delay: anime.stagger(100),
+      duration: 800,
+    }, '-=400');
+  }, []);
 
   return (
     <>
@@ -46,6 +72,7 @@ const Navbar = ({ authPage = false }) => {
             {/* Logo Section */}
             <motion.a
               href="/"
+              className="nav-logo"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -81,6 +108,7 @@ const Navbar = ({ authPage = false }) => {
                     <Link
                       key={i}
                       to={link.href}
+                      className="nav-link-item"
                       style={{
                         position: 'relative',
                         padding: '8px 20px',
@@ -91,6 +119,7 @@ const Navbar = ({ authPage = false }) => {
                         textDecoration: 'none',
                         transition: 'color 0.2s ease',
                         letterSpacing: '0.01em',
+                        opacity: 0, // Initial state for anime.js
                       }}
                       onMouseEnter={() => setHoveredIndex(i)}
                       onMouseLeave={() => setHoveredIndex(null)}
@@ -185,6 +214,7 @@ const Navbar = ({ authPage = false }) => {
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <motion.button
                     onClick={() => window.location.href = '/login'}
+                    className="nav-action-btn hidden md:block"
                     style={{
                       padding: '8px 16px',
                       fontSize: '14px',
@@ -196,6 +226,7 @@ const Navbar = ({ authPage = false }) => {
                       borderRadius: '8px',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
+                      opacity: 0, // Initial state for anime.js
                     }}
                     whileHover={{
                       color: '#F1F5F9',
@@ -203,13 +234,13 @@ const Navbar = ({ authPage = false }) => {
                       background: 'rgba(255,255,255,0.04)',
                     }}
                     whileTap={{ scale: 0.97 }}
-                    className="hidden md:block"
                   >
                     Masuk
                   </motion.button>
   
                   <motion.button
                     onClick={() => window.location.href = '/register'}
+                    className="nav-action-btn"
                     style={{
                       padding: '9px 18px',
                       fontSize: '14px',
@@ -223,6 +254,7 @@ const Navbar = ({ authPage = false }) => {
                       position: 'relative',
                       overflow: 'hidden',
                       boxShadow: '0 0 0 1px rgba(16,185,129,0.25), 0 4px 16px rgba(16,185,129,0.18)',
+                      opacity: 0, // Initial state for anime.js
                     }}
                     whileHover={{
                       background: '#059669',

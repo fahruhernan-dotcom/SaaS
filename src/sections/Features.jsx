@@ -1,7 +1,9 @@
-import { useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useMemo, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import CountUp from '../components/reactbits/CountUp';
 import AnimatedContent from '../components/reactbits/AnimatedContent';
+import AnimatedCheckmark from '../components/ui/AnimatedCheckmark';
+import anime from '../lib/animation';
 
 const Features = ({ activeRole }) => {
   const content = useMemo(() => ({
@@ -103,9 +105,34 @@ const Features = ({ activeRole }) => {
   }), []);
 
   const active = content[activeRole];
+  const sectionRef = useRef(null);
+  const isInView = useInView(sectionRef, { once: true, margin: "-10%" });
+
+  useEffect(() => {
+    if (isInView) {
+      // Animate progress bars
+      anime({
+        targets: '.feature-progress-fill',
+        width: (el) => el.getAttribute('data-width'),
+        duration: 1500,
+        easing: 'easeOutElastic(1, .6)',
+        delay: 500
+      });
+
+      // Staggered list items entry
+      anime({
+        targets: '.feature-mockup-item',
+        translateX: [20, 0],
+        opacity: [0, 1],
+        delay: anime.stagger(100, { start: 600 }),
+        duration: 800,
+        easing: 'easeOutExpo'
+      });
+    }
+  }, [isInView, activeRole]);
 
   return (
-    <section id="fitur" className="bg-[#0C1319]">
+    <section id="fitur" className="bg-[#0C1319]" ref={sectionRef}>
       <AnimatePresence mode="wait">
         <motion.div
            key={activeRole}
@@ -142,8 +169,8 @@ const Features = ({ activeRole }) => {
                     {active.block1.checklist.map((item, i) => (
                       <AnimatedContent key={i} direction="vertical" distance={20} delay={0.3 + i * 0.07}>
                         <div className="flex items-start gap-[10px]">
-                          <div className="w-[18px] h-[18px] min-w-[18px] bg-[rgba(16,185,129,0.12)] rounded-[5px] flex items-center justify-center text-em-400 text-[10px] shrink-0 mt-[3px]">
-                            ✓
+                          <div className="w-[18px] h-[18px] min-w-[18px] flex items-center justify-center text-em-400 shrink-0 mt-[3px]">
+                            <AnimatedCheckmark className="w-full h-full" />
                           </div>
                           <span className="font-body text-[14px] text-tx-2 leading-[1.55]">{item}</span>
                         </div>
@@ -164,7 +191,7 @@ const Features = ({ activeRole }) => {
                     
                     <div className="flex flex-col gap-[8px]">
                        {active.block1.mockup.items.map((item, i) => (
-                         <div key={i} className="bg-bg-3 rounded-lg px-[12px] py-[10px]">
+                         <div key={i} className="feature-mockup-item bg-bg-3 rounded-lg px-[12px] py-[10px]" style={{ opacity: 0 }}>
                            <p className="font-body text-[13px] text-tx-2">{item}</p>
                          </div>
                        ))}
@@ -191,7 +218,11 @@ const Features = ({ activeRole }) => {
                       <p className="font-body text-[11px] text-tx-3 font-medium">{active.block1.mockup.stats}</p>
                       
                       <div style={{ height: '3px', background: 'rgba(255,255,255,0.06)', borderRadius: '99px', marginTop: '12px', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: active.block1.mockup.progress, background: 'linear-gradient(90deg, #10B981, #34D399)', borderRadius: '99px' }}/>
+                        <div 
+                          className="feature-progress-fill" 
+                          data-width={active.block1.mockup.progress}
+                          style={{ height: '100%', width: '0%', background: 'linear-gradient(90deg, #10B981, #34D399)', borderRadius: '99px' }}
+                        />
                       </div>
                     </div>
                   </div>
@@ -228,8 +259,8 @@ const Features = ({ activeRole }) => {
                     {active.block2.checklist.map((item, i) => (
                       <AnimatedContent key={i} direction="vertical" distance={20} delay={0.3 + i * 0.07}>
                         <div className="flex items-start gap-[10px]">
-                          <div className="w-[18px] h-[18px] min-w-[18px] bg-[rgba(16,185,129,0.12)] rounded-[5px] flex items-center justify-center text-em-400 text-[10px] shrink-0 mt-[3px]">
-                            ✓
+                          <div className="w-[18px] h-[18px] min-w-[18px] flex items-center justify-center text-em-400 shrink-0 mt-[3px]">
+                            <AnimatedCheckmark className="w-full h-full" />
                           </div>
                           <span className="font-body text-[14px] text-tx-2 leading-[1.55]">{item}</span>
                         </div>

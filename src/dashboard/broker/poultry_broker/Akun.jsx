@@ -6,7 +6,7 @@ import {
   ArrowLeftRight, ShieldCheck, Settings, Store,
   Check, Smartphone, Mail, Info, Trash2,
   Trophy, Star, Crown, Undo2, FileX2, ChevronDown, ChevronUp,
-  History, Warehouse, Factory, Truck, Menu
+  History, Warehouse, Factory, Truck, Menu, MapPin, ChevronsUpDown
 } from 'lucide-react'
 import { getSubscriptionStatus, getExpiryLabel } from '@/lib/subscriptionUtils'
 import { supabase } from '@/lib/supabase'
@@ -31,8 +31,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { 
   Tabs, TabsList, TabsTrigger, TabsContent 
 } from '@/components/ui/tabs'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { cn } from '@/lib/utils'
 import { formatIDR, formatDate } from '@/lib/format'
+import { PROVINCES } from '@/lib/constants/regions'
 
 const staggerContainer = {
   hidden: {},
@@ -389,7 +392,8 @@ function ProfileForm({ profile, onSuccess }) {
     const [formData, setFormData] = useState({
         full_name: profile?.full_name || '',
         phone: profile?.phone || '',
-        business_name: profile?.tenants?.business_name || ''
+        business_name: profile?.tenants?.business_name || '',
+        province: profile?.tenants?.province || ''
     })
 
     const handleSave = async (e) => {
@@ -404,7 +408,8 @@ function ProfileForm({ profile, onSuccess }) {
 
             // Update Tenant
             await supabase.from('tenants').update({
-                business_name: formData.business_name
+                business_name: formData.business_name,
+                province: formData.province
             }).eq('id', profile.tenant_id)
 
             toast.success('✅ Profil diperbarui')
@@ -438,6 +443,49 @@ function ProfileForm({ profile, onSuccess }) {
                         className="bg-[#111C24] border-white/10 h-14 font-black rounded-2xl pl-12 focus:border-emerald-500/50 transition-all uppercase text-[12px]"
                     />
                 </div>
+            </div>
+            <div className="space-y-2">
+                <Label className="uppercase text-[10px] font-black tracking-[0.2em] text-[#4B6478]">Provinsi Operasional</Label>
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                                "w-full bg-[#111C24] border-white/10 h-14 font-black rounded-2xl flex justify-between items-center px-5 uppercase tracking-[0.2em] hover:bg-white/5 transition-all text-left",
+                                !formData.province && "text-[#4B6478]",
+                                "text-[11px]"
+                            )}
+                        >
+                            <div className="flex items-center gap-3">
+                                <MapPin size={16} className="text-[#4B6478]" />
+                                {formData.province || "Pilih Provinsi..."}
+                            </div>
+                            <ChevronsUpDown size={14} className="opacity-50" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0 bg-[#111C24] border-white/10 shadow-2xl">
+                        <Command className="bg-transparent">
+                            <CommandInput placeholder="Cari provinsi..." className="h-11 font-bold" />
+                            <CommandList className="max-h-[300px] scrollbar-thin">
+                                <CommandEmpty className="py-4 text-center text-[10px] font-black uppercase opacity-50">Provinsi tidak ditemukan.</CommandEmpty>
+                                <CommandGroup>
+                                    {PROVINCES.map(p => (
+                                        <CommandItem
+                                            key={p}
+                                            value={p}
+                                            onSelect={() => setFormData({...formData, province: p})}
+                                            className="flex items-center justify-between py-3 px-4 cursor-pointer hover:bg-emerald-500/10 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                                        >
+                                            <span className={cn(formData.province === p ? "text-emerald-400" : "text-white")}>{p}</span>
+                                            {formData.province === p && <Check size={14} className="text-emerald-400" />}
+                                        </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
+                    </PopoverContent>
+                </Popover>
             </div>
             <div className="space-y-2">
                 <Label className="uppercase text-[10px] font-black tracking-[0.2em] text-[#4B6478]">Nomor HP</Label>

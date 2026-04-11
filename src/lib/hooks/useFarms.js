@@ -25,6 +25,7 @@ export function useFarms() {
           quality_notes, 
           notes,
           created_at,
+          province,
           tenant_id
         `)
         .eq('tenant_id', tenant.id)

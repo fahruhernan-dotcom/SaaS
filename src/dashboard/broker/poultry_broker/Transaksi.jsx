@@ -121,6 +121,7 @@ export default function Transaksi() {
   const [arrivedWeight, setArrivedWeight] = useState('')
   const [arrivalNotes, setArrivalNotes] = useState('')
   const [isUpdateArrivalSubmitting, setIsUpdateArrivalSubmitting] = useState(false)
+  const [paymentTarget, setPaymentTarget] = useState(null)
 
   const [timeFilter, setTimeFilter] = useState('keseluruhan') // 'hari_ini', 'minggu_ini', 'bulan_ini', 'keseluruhan'
   const [searchOpen, setSearchOpen] = useState(false)
@@ -574,6 +575,7 @@ export default function Transaksi() {
               <UnifiedTransactionCard
                 sale={sale}
                 onOpenAuditSheet={(id) => { setSelectedSaleId(id); setShowAuditSheet(true) }}
+                onPay={(s) => setPaymentTarget(s)}
                 isOwner={isOwner}
                 isDesktop={isDesktop}
               />
@@ -952,6 +954,11 @@ function LoadingList() {
         {Array(3).fill(0).map((_, i) => (
             <Skeleton key={i} className="h-44 w-full rounded-[22px] bg-secondary/10 border border-white/5" />
         ))}
+      <FormBayarModal
+        isOpen={!!paymentTarget}
+        onClose={() => setPaymentTarget(null)}
+        sale={paymentTarget}
+      />
     </div>
   )
 }

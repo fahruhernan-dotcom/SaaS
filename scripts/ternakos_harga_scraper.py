@@ -68,7 +68,7 @@ def parse_harga(text: str) -> int:
     return int(text) if text.isdigit() else 0
 
 
-def fetch_harga_from_chickin() -> dict:
+def fetch_harga_from_chickin() -> list:
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -87,9 +87,9 @@ def fetch_harga_from_chickin() -> dict:
     if not table:
         raise ValueError("Tabel tidak ditemukan di halaman")
 
-    rows           = table.find_all("tr")
-    collected_prices = []
-    current_region = ""
+    rows             = table.find_all("tr")
+    regional_data    = {}
+    current_region   = "Nasional"
 
     for row in rows:
         cells = row.find_all(["td", "th"])
@@ -98,75 +98,72 @@ def fetch_harga_from_chickin() -> dict:
             continue
 
         # Detect Region
-        # Row structure can vary: [Wilayah, Kota, Berat, Harga] or just [Berat, Harga]
         first_cell = texts[0]
         if first_cell and any(k in first_cell for k in [
             "Jawa", "Bali", "Kalimantan", "Sulawesi", "Sumatera",
-            "Lampung", "Jabodetabek", "Banten", "NTB", "NTT",
+            "Lampung", "Jabodetabek", "Banten", "NTB", "NTT", "DIY",
             "Riau", "Jambi", "Bengkulu", "Gorontalo", "Aceh"
         ]):
             current_region = first_cell
 
-        # Only process targeted regions (Jawa Tengah / DIY)
-        region_str = str(current_region)
-        is_target = any(t in region_str for t in ["Jawa Tengah", "DIY"])
-        if not is_target:
-            continue
-
-        # Look for weight categories under 2kg
+        # Look for weight categories
         berat = texts[-2]
         harga = texts[-1]
         
-        # Log every row in target region for debugging
-        log.info(f"  ? Found row: {current_region} | {berat} | {harga}")
-
-        # Check if it's a valid weight category we want to average
-        # We target weights < 2.0. This includes "< 1", "1.0", "1.2", etc.
-        # But we exclude "> 2" or very large weights.
+        # Check if it's a valid weight category (Livebird < 2.0)
         is_small_weight = any(w in berat for w in ["<", "1,", "1.", "0,"]) or ("2," not in berat and "2." not in berat)
-        
-        # Explicit exclusion for > 2.0
         if "> 2" in berat or ">2" in berat:
             is_small_weight = False
 
         if is_small_weight:
             nilai = parse_harga(harga)
             if nilai > 0:
-                collected_prices.append(nilai)
-                log.info(f"    => Match added! (Current avg: {sum(collected_prices)/len(collected_prices):,.0f})")
+                if current_region not in regional_data:
+                    regional_data[current_region] = []
+                regional_data[current_region].append(nilai)
 
-    if not collected_prices:
-        raise ValueError("Tidak ada data harga valid ditemukan untuk wilayah target")
+    results = []
+    for region, prices in regional_data.items():
+        avg_farm_gate = sum(prices) // len(prices)
+        results.append({
+            "farm_gate_price": avg_farm_gate,
+            "buyer_price":     avg_farm_gate + BUYER_MARGIN,
+            "region":          region,
+            "source_url":      SOURCE_URL,
+        })
+        log.info(f"✓ {region}: Rp {avg_farm_gate:,} ({len(prices)} data)")
 
-    avg_farm_gate = sum(collected_prices) // len(collected_prices)
-    buyer_price   = avg_farm_gate + BUYER_MARGIN
-    today_wib     = datetime.now(WIB).strftime("%Y-%m-%d")
-
-    log.info(f"✓ Rata-rata ditemukan: Rp {avg_farm_gate:,} (dari {len(collected_prices)} baris)")
-
-    # ── Debug prints (requested) ──
-    print(f"Tanggal web: {datetime.now(WIB).strftime('%d %B %Y')}")
-    print(f"Farm gate: {avg_farm_gate}")
-    print(f"Buyer price: {buyer_price}")
-    print(f"Price date: {today_wib}")
-
-    return {
-        "farm_gate_price": avg_farm_gate,
-        "buyer_price":     buyer_price,
-        "region":          "Jawa Tengah",
-        "source_url":      SOURCE_URL,
-    }
+    return results
 
 
 # ══════════════════════════════════════════════════════════
 # SUPABASE
 # ══════════════════════════════════════════════════════════
 
-def already_exists_today() -> bool:
+def get_previous_price(region: str) -> int:
+    """Fetch the latest price for this region to calculate delta."""
+    url = (
+        f"{SUPABASE_URL}/rest/v1/market_prices"
+        f"?region=eq.{region}&source=eq.auto_scraper&order=price_date.desc&limit=1&select=farm_gate_price"
+    )
+    headers = {
+        "apikey":        SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+    }
+    try:
+        res = requests.get(url, headers=headers, timeout=10)
+        if res.ok and len(res.json()) > 0:
+            return res.json()[0]["farm_gate_price"]
+    except Exception as e:
+        log.warning(f"Gagal fetch previous price for {region}: {e}")
+    return 0
+
+
+def already_exists_today(region: str) -> bool:
     today = datetime.now(WIB).strftime("%Y-%m-%d")
     url   = (
         f"{SUPABASE_URL}/rest/v1/market_prices"
-        f"?price_date=eq.{today}&source=eq.auto_scraper&select=id&limit=1"
+        f"?price_date=eq.{today}&region=eq.{region}&source=eq.auto_scraper&select=id&limit=1"
     )
     headers = {
         "apikey":        SUPABASE_KEY,
@@ -181,19 +178,24 @@ def already_exists_today() -> bool:
 
 def insert_to_supabase(harga: dict) -> bool:
     today   = datetime.now(WIB).strftime("%Y-%m-%d")
+    
+    # Calculate Delta
+    prev_price = get_previous_price(harga["region"])
+    price_delta = harga["farm_gate_price"] - prev_price if prev_price > 0 else 0
+
     payload = {
         "price_date":        today,
         "chicken_type":      "broiler",
         "farm_gate_price":   harga["farm_gate_price"],
         "buyer_price":       harga["buyer_price"],
+        "price_delta":       price_delta,
         "region":            harga["region"],
         "source":            "auto_scraper",
         "source_url":        harga["source_url"],
         "transaction_count": 0,
     }
 
-    # ── Debug: print payload before insert ──
-    log.info(f"Insert payload: {json.dumps(payload, indent=2)}")
+    log.info(f"  -> Inserting {harga['region']}...")
 
     headers = {
         "apikey":        SUPABASE_KEY,
@@ -229,7 +231,7 @@ def insert_to_supabase(harga: dict) -> bool:
 
 def main():
     log.info("═" * 55)
-    log.info("TernakOS Harga Scraper — START")
+    log.info("TernakOS Harga Scraper — START (UNIVERSAL REGIONS)")
 
     dry_run = "--dry-run" in sys.argv
 
@@ -238,26 +240,30 @@ def main():
         log.info("Gunakan --dry-run untuk mengetes scraping saja.")
         return
 
-    if not dry_run and already_exists_today():
-        log.info("Data hari ini sudah ada — skip")
-        log.info("═" * 55)
-        return
-
     try:
-        harga = fetch_harga_from_chickin()
+        results = fetch_harga_from_chickin()
     except Exception as e:
         log.error(f"Fetch gagal: {e}")
         log.info("═" * 55)
         return
 
     if dry_run:
-        log.info("DRY RUN — Hasil Scraping:")
-        log.info(json.dumps(harga, indent=2))
+        log.info(f"DRY RUN — Hasil Scraping ({len(results)} wilayah):")
+        log.info(json.dumps(results, indent=2))
         log.info("═" * 55)
         return
 
-    success = insert_to_supabase(harga)
-    log.info("✓ SELESAI" if success else "✗ GAGAL")
+    count_ok = 0
+    for harga in results:
+        # Check if already exists for this specific region today
+        if already_exists_today(harga["region"]):
+            log.info(f"Data {harga['region']} hari ini sudah ada — skip")
+            continue
+            
+        if insert_to_supabase(harga):
+            count_ok += 1
+
+    log.info(f"✓ SELESAI ({count_ok}/{len(results)} berhasil diupdate)")
     log.info("═" * 55)
 
 

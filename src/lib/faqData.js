@@ -120,8 +120,13 @@ export const FAQ_DATA = {
       link: '/fitur',
     },
     {
-      q: 'Apakah TernakOS mendukung harga pasar ayam hari ini?',
-      a: 'Ya. TernakOS memiliki halaman monitoring harga pasar ayam dan komoditas yang diperbarui setiap hari. Data bersumber dari transaksi nyata broker TernakOS dan sumber eksternal terpercaya.',
+      q: 'Apakah TernakOS mendukung harga pasar ayam broiler hidup hari ini?',
+      a: 'Ya. TernakOS memiliki halaman monitoring harga ayam broiler hidup yang diperbarui setiap hari. Keunggulan kami adalah data yang bersumber dari rata-rata transaksi nyata (real-time) broker aktif di platform TernakOS, dipadukan dengan referensi pasar eksternal seperti Chickin.id.',
+      link: '/harga-pasar',
+    },
+    {
+      q: 'Bagaimana TernakOS mendapatkan data harga ayam yang akurat?',
+      a: 'Data kami bersifat hibrida: (1) Referensi pasar dari scraper otomatis, dan (2) Data agregat dari ribuan transaksi nyata broker di seluruh provinsi Indonesia. Ini menjadikan TernakOS satu-satunya platform yang menampilkan harga beli dan jual nyata di lapangan, bukan sekadar estimasi.',
       link: '/harga-pasar',
     },
     {

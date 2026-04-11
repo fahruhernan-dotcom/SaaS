@@ -88,7 +88,7 @@ export function FormBayarModal({ isOpen, onClose, sale, onSuccess }) {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="right" className="bg-[#0C1319] border-l border-white/8 w-full sm:max-w-[480px] p-6 overflow-y-auto z-[100]">
+      <SheetContent side="right" className="bg-[#0C1319] border-l border-white/8 w-full sm:max-w-[480px] p-6 overflow-y-auto">
         <SheetHeader className="mb-6">
           <SheetTitle className="font-display text-2xl font-black text-white uppercase tracking-tight text-left">
             CATAT PEMBAYARAN
@@ -122,7 +122,7 @@ export function FormBayarModal({ isOpen, onClose, sale, onSuccess }) {
                   <SelectTrigger className="h-12 bg-[#111C24] border-white/5 rounded-xl font-bold uppercase">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#0C1319] border-white/10 uppercase z-[110]">
+                  <SelectContent className="bg-[#0C1319] border-white/10 uppercase">
                     <SelectItem value="transfer" className="font-bold cursor-pointer">Transfer Bank</SelectItem>
                     <SelectItem value="cash" className="font-bold cursor-pointer">Tunai (Cash)</SelectItem>
                     <SelectItem value="giro" className="font-bold cursor-pointer">Giro / Cek</SelectItem>

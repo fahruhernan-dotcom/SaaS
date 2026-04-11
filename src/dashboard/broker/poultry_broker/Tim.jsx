@@ -571,7 +571,7 @@ function InviteSheet({ isOpen, onClose, onSubmit, isPending, showCode, inviteCod
         style={{
           width: isDesktop ? '520px' : '100%',
           maxWidth: '100vw',
-          maxHeight: isDesktop ? '100vh' : '95vh',
+          maxHeight: isDesktop ? '100vh' : '90dvh',
           padding: 0,
           borderRadius: isDesktop ? '0' : '24px 24px 0 0',
         }}

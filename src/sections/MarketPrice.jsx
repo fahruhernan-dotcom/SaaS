@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useMemo, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import CountUp from '../components/reactbits/CountUp';
 import AnimatedContent from '../components/reactbits/AnimatedContent';
+import anime from '../lib/animation';
 
 const MarketPrice = ({ activeRole }) => {
   const content = useMemo(() => ({
@@ -11,8 +12,8 @@ const MarketPrice = ({ activeRole }) => {
       desc: "Setiap kali broker mencatat transaksi, harga secara otomatis masuk ke sistem. Kamu tahu rata-rata harga pasar hari ini — bahkan sebelum mulai negosiasi.",
       checklist: [
         'Data dari transaksi nyata — bukan rumor WA',
-        'Update otomatis setiap transaksi',
-        'Semua broker lihat rata-rata (anonim)'
+        '3 Sumber Data: Scraper Nasional, Admin Regional, & Transaksi User',
+        'Analisis per Provinsi untuk akurasi maksimal'
       ]
     },
     peternak: {
@@ -36,6 +37,67 @@ const MarketPrice = ({ activeRole }) => {
   }), []);
 
   const active = content[activeRole] || content.broker;
+  
+  const chartRef = useRef(null);
+  const pathRef = useRef(null);
+  const areaRef = useRef(null);
+  const buyPathRef = useRef(null);
+  const dotRef = useRef(null);
+  
+  const isInView = useInView(chartRef, { once: true, margin: "-10%" });
+
+  useEffect(() => {
+    if (isInView) {
+      // Draw the main price line
+      if (pathRef.current) {
+        const length = pathRef.current.getTotalLength();
+        pathRef.current.style.strokeDasharray = length;
+        pathRef.current.style.strokeDashoffset = length;
+        
+        anime({
+          targets: pathRef.current,
+          strokeDashoffset: [length, 0],
+          duration: 2000,
+          easing: 'easeOutQuart',
+          delay: 500
+        });
+      }
+
+      // Fade in the gradient area
+      if (areaRef.current) {
+        anime({
+          targets: areaRef.current,
+          opacity: [0, 1],
+          duration: 1000,
+          easing: 'linear',
+          delay: 800
+        });
+      }
+
+      // Animate buy line (dashed)
+      if (buyPathRef.current) {
+        anime({
+          targets: buyPathRef.current,
+          strokeDashoffset: [20, 0],
+          duration: 3000,
+          easing: 'linear',
+          loop: true
+        });
+      }
+      
+      // Pulse the live dot
+      if (dotRef.current) {
+        anime({
+          targets: dotRef.current,
+          scale: [1, 1.5, 1],
+          opacity: [1, 0.5, 1],
+          duration: 2000,
+          easing: 'easeInOutQuad',
+          loop: true
+        });
+      }
+    }
+  }, [isInView]);
 
   return (
     <section id="harga-pasar" className="bg-[#0C1319] section-padding overflow-hidden">
@@ -106,9 +168,9 @@ const MarketPrice = ({ activeRole }) => {
              <div className="absolute top-0 right-0 w-[200px] h-[200px] bg-[radial-gradient(circle,rgba(245,158,11,0.05)_0%,transparent_60%)] pointer-events-none"></div>
 
              <div className="relative z-10 flex justify-between items-center mb-4 md:mb-8 border-b border-border-subtle pb-3 md:pb-4">
-                <p className="text-[10px] md:text-sm font-semibold text-text-primary uppercase tracking-tight">Harga Broiler — Jateng</p>
+                <p className="text-[10px] md:text-sm font-semibold text-text-primary uppercase tracking-tight">Data Harga Pasar — Regional & Nasional</p>
                 <div className="flex items-center gap-1 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-dot"></span>
+                  <span ref={dotRef} className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                   <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-tighter">Live</span>
                 </div>
              </div>
@@ -153,7 +215,7 @@ const MarketPrice = ({ activeRole }) => {
              </div>
 
              {/* Chart Mockup */}
-             <div className="h-[80px] md:h-[120px] relative w-full border-t border-border-subtle pt-4 md:pt-6 flex items-end justify-between z-10">
+              <div className="h-[80px] md:h-[120px] relative w-full border-t border-border-subtle pt-4 md:pt-6 flex items-end justify-between z-10" ref={chartRef}>
                 <svg className="absolute inset-0 top-6 w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
                    {/* Gradient Fill */}
                    <defs>
@@ -163,21 +225,28 @@ const MarketPrice = ({ activeRole }) => {
                       </linearGradient>
                    </defs>
                    {/* Buy Line (muted) */}
-                   <path d="M0,80 Q10,75 20,80 T40,70 T60,65 T80,55 T100,50" fill="none" stroke="rgba(16,185,129,0.3)" strokeWidth="1.5" strokeDasharray="4 4" />
-                   {/* Sell Line (bright) area */}
-                   <motion.path 
-                     initial={{ opacity: 0 }}
-                     whileInView={{ opacity: 1 }}
-                     viewport={{ once: true, amount: 0.3 }}
-                     transition={{ duration: 1.5, delay: 0.3 }}
-                     d="M0,45 Q15,40 30,30 T50,35 T75,20 T100,10 L100,100 L0,100 Z" fill="url(#chartGradient)" 
+                   <path 
+                     ref={buyPathRef}
+                     d="M0,80 Q10,75 20,80 T40,70 T60,65 T80,55 T100,50" 
+                     fill="none" 
+                     stroke="rgba(16,185,129,0.3)" 
+                     strokeWidth="1.5" 
+                     strokeDasharray="4 4" 
                    />
-                   <motion.path 
-                     initial={{ pathLength: 0, opacity: 0 }}
-                     whileInView={{ pathLength: 1, opacity: 1 }}
-                     viewport={{ once: true, amount: 0.3 }}
-                     transition={{ duration: 1.5, ease: 'easeInOut', delay: 0.3 }}
-                     d="M0,45 Q15,40 30,30 T50,35 T75,20 T100,10" fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" 
+                   {/* Sell Line (bright) area */}
+                   <path 
+                     ref={areaRef}
+                     style={{ opacity: 0 }}
+                     d="M0,45 Q15,40 30,30 T50,35 T75,20 T100,10 L100,100 L0,100 Z" 
+                     fill="url(#chartGradient)" 
+                   />
+                   <path 
+                     ref={pathRef}
+                     d="M0,45 Q15,40 30,30 T50,35 T75,20 T100,10" 
+                     fill="none" 
+                     stroke="#10B981" 
+                     strokeWidth="2" 
+                     strokeLinecap="round" 
                    />
                 </svg>
              </div>

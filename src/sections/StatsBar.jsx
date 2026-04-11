@@ -1,7 +1,8 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
 import CountUp from '../components/reactbits/CountUp';
 import ShinyText from '../components/reactbits/ShinyText';
+import anime from '../lib/animation';
 
 const StatsBar = () => {
   const ref = useRef(null);
@@ -14,6 +15,19 @@ const StatsBar = () => {
     { value: 14, suffix: " Hari", label: "Coba Gratis", duration: 1.2 }
   ];
 
+  useEffect(() => {
+    if (isInView) {
+      anime({
+        targets: '.stat-card',
+        translateY: [20, 0],
+        opacity: [0, 1],
+        delay: anime.stagger(150, { from: 'center' }),
+        duration: 800,
+        easing: 'easeOutExpo'
+      });
+    }
+  }, [isInView]);
+
   return (
     <section className="bg-[#0A0F16] py-4 md:py-8 px-4 md:px-[80px]" ref={ref}>
       <motion.div 
@@ -24,12 +38,8 @@ const StatsBar = () => {
       >
         <div className="grid grid-cols-4 lg:grid-cols-4 gap-1">
           {stats.map((stat, i) => (
-            <div key={i} className="bg-[#0A0F16] text-center p-2 md:p-[20px_12px] flex flex-col justify-center">
-              <motion.div
-                initial={{ opacity: 0, y: 12 }}
-                animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-              >
+            <div key={i} className="stat-card bg-[#0A0F16] text-center p-2 md:p-[20px_12px] flex flex-col justify-center" style={{ opacity: 0 }}>
+              <div>
                 <div style={{display:'flex', alignItems:'baseline', gap:'1px', justifyContent:'center'}}>
                   <span className="font-display font-extrabold text-[#F1F5F9] tracking-tighter leading-none text-[12px] md:text-[32px] lg:text-[42px]">
                     {stat.isShiny ? (
@@ -47,7 +57,7 @@ const StatsBar = () => {
                 <div className={`mt-1 md:mt-2 font-bold tracking-tight md:tracking-widest text-[7px] md:text-[11px] ${stat.isShiny ? 'text-emerald-400' : 'text-[#4B6478]'}`}>
                   {stat.label}
                 </div>
-              </motion.div>
+              </div>
             </div>
           ))}
         </div>
