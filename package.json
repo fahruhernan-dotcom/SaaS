@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "sitemap": "node scripts/generate-sitemap.js",
-    "scrape:market": "python scripts/ternakos_harga_scraper.py"
+    "scrape:market": "python3 scripts/ternakos_harga_scraper.py"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
