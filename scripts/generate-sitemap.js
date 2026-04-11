@@ -26,6 +26,12 @@ function provinceToSlug(name) {
 const staticRoutes = [
   '',
   '/harga-pasar',
+  '/fitur',
+  '/harga',
+  '/tentang-kami',
+  '/faq',
+  '/terms',
+  '/privacy',
 ];
 
 function generateSitemap() {
