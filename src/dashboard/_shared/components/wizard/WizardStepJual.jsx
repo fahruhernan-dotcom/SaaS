@@ -5,6 +5,7 @@ import * as z from 'zod'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -109,6 +110,7 @@ const PAYMENT_OPTIONS = [
 export default function WizardStepJual({ step1Data, onNext, onBack }) {
   const { tenant } = useAuth()
   const queryClient = useQueryClient()
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [openRPA, setOpenRPA] = useState(false)
   const [showQuickAddRPA, setShowQuickAddRPA] = useState(false)
   const [openPaymentTerms, setOpenPaymentTerms] = useState(false)
@@ -232,7 +234,7 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit, onError)} className="flex flex-col h-full min-h-0 relative">
-      <div className="flex-1 space-y-5 px-5 pb-24 overflow-y-auto">
+      <div className={`flex-1 space-y-4 overflow-y-auto ${isDesktop ? 'px-5 pb-24' : 'px-4 pb-20'}`}>
       <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">Step 2 — Jual ke Siapa?</p>
 
       {/* Step1 Info Card */}
@@ -562,11 +564,11 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
       </div>
       
       {/* Buttons — Sticky Footer */}
-      <div className="sticky bottom-0 z-10 bg-[#0C1319] border-t border-white/10 p-4 px-5 flex gap-3">
-        <Button type="button" variant="ghost" onClick={onBack} className="gap-2 text-[#4B6478] hover:text-white font-bold h-12 rounded-xl">
-          <ChevronLeft size={18} /> KEMBALI
+      <div className={`sticky bottom-0 z-10 bg-[#0C1319] border-t border-white/10 flex gap-3 ${isDesktop ? 'p-4 px-5' : 'p-3 px-4'}`}>
+        <Button type="button" variant="ghost" onClick={onBack} className={`gap-2 text-[#4B6478] hover:text-white font-bold rounded-xl ${isDesktop ? 'h-12' : 'h-10 text-[11px]'}`}>
+          <ChevronLeft size={16} /> KEMBALI
         </Button>
-        <Button type="submit" className="flex-1 h-14 rounded-2xl font-black text-sm tracking-widest shadow-lg shadow-emerald-500/20" style={{ background: '#10B981', color: 'white' }}>
+        <Button type="submit" className={`flex-1 rounded-2xl font-black tracking-widest shadow-lg shadow-emerald-500/20 ${isDesktop ? 'h-14 text-sm' : 'h-11 text-[12px]'}`} style={{ background: '#10B981', color: 'white' }}>
           LANJUT KE PENGIRIMAN →
         </Button>
       </div>

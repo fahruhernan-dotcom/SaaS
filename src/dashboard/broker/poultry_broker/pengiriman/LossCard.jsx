@@ -57,7 +57,7 @@ export function LossSummary({ lossReports }) {
     }, [lossReports])
 
     return (
-        <Card className="bg-red-500/[0.03] border-red-500/15 rounded-[28px] p-6 mb-8 shadow-2xl relative overflow-hidden">
+        <Card className={cn("bg-red-500/[0.03] border-red-500/15 shadow-2xl relative overflow-hidden", isDesktop ? "rounded-[28px] p-6 mb-8" : "rounded-2xl p-4 mb-4")}>
             <div className="absolute top-0 right-0 p-8 text-red-500/5">
                 <TrendingDown size={120} strokeWidth={1} />
             </div>
@@ -120,89 +120,89 @@ export default function LossCard({ entry, onResolve, isResolving }) {
 
     return (
         <motion.div variants={itemVariants}>
-            <Card className="bg-[#111C24] border-white/5 rounded-[28px] overflow-hidden shadow-xl hover:border-white/10 transition-all group">
+            <Card className={cn("bg-[#111C24] border-white/5 overflow-hidden shadow-xl hover:border-white/10 transition-all group", isDesktop ? "rounded-[28px]" : "rounded-[22px]")}>
                 {/* Header: RPA + Date + Status */}
-                <div className="p-6 pb-4 flex justify-between items-start">
-                    <div className="space-y-1">
-                        <h4 className="font-display font-black text-white text-base uppercase tracking-tight truncate max-w-[250px]">{rpaName}</h4>
-                        <div className={cn("flex items-center gap-2 font-black text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-[10px]" : "text-xs")}>
+                <div className={cn("flex justify-between items-start", isDesktop ? "p-6 pb-4" : "p-4 pb-3")}>
+                    <div className="space-y-0.5 flex-1 min-w-0 mr-2">
+                        <h4 className={cn("font-display font-black text-white uppercase tracking-tight truncate", isDesktop ? "text-base max-w-[250px]" : "text-[13px]")}>{rpaName}</h4>
+                        <div className={cn("flex items-center gap-1.5 font-black text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-[10px]" : "text-[9px]")}>
                             <Calendar size={10} />
-                            {format(new Date(entry.report_date || new Date()), 'dd MMMM yyyy', { locale: id })}
+                            {format(new Date(entry.report_date || new Date()), isDesktop ? 'dd MMMM yyyy' : 'dd MMM yyyy', { locale: id })}
                         </div>
                     </div>
                     {isAllResolved ? (
-                         <Badge className={cn("bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-black px-3 py-1 rounded-xl uppercase tracking-widest flex gap-1.5 whitespace-nowrap", isDesktop ? "text-[9px]" : "text-xs")}>
+                         <Badge className={cn("bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-black px-2.5 py-1 rounded-xl uppercase tracking-widest flex gap-1.5 whitespace-nowrap shrink-0", isDesktop ? "text-[9px]" : "text-[9px]")}>
                              <Check size={10} strokeWidth={4} /> Selesai
                          </Badge>
                     ) : (
-                        <Badge className={cn("bg-red-500/20 text-red-500 border border-red-500/30 font-black px-3 py-1 rounded-xl uppercase tracking-widest whitespace-nowrap shadow-[0_0_10px_rgba(239,68,68,0.05)]", isDesktop ? "text-[9px]" : "text-xs")}>
-                            Belum Selesai
+                        <Badge className={cn("bg-red-500/20 text-red-500 border border-red-500/30 font-black px-2.5 py-1 rounded-xl uppercase tracking-widest whitespace-nowrap shrink-0", isDesktop ? "text-[9px]" : "text-[9px]")}>
+                            Pending
                         </Badge>
                     )}
                 </div>
 
                 {/* Logistics Info Strip */}
-                <div className="px-6 py-3 bg-white/[0.02] border-y border-white/5 flex items-center gap-4">
-                     <div className="flex items-center gap-2">
-                         <User size={12} className="text-[#4B6478]" />
-                         <span className={cn("font-black text-[#94A3B8] uppercase", isDesktop ? "text-[10px]" : "text-xs")}>{driverName}</span>
+                <div className={cn("bg-white/[0.02] border-y border-white/5 flex items-center gap-3", isDesktop ? "px-6 py-3" : "px-4 py-2")}>
+                     <div className="flex items-center gap-1.5">
+                         <User size={11} className="text-[#4B6478]" />
+                         <span className={cn("font-black text-[#94A3B8] uppercase", isDesktop ? "text-[10px]" : "text-[10px]")}>{driverName}</span>
                      </div>
                      <div className="w-1 h-1 rounded-full bg-white/10" />
-                     <div className="flex items-center gap-2">
-                         <Truck size={12} className="text-[#4B6478]" />
-                         <span className={cn("font-black text-[#94A3B8] uppercase", isDesktop ? "text-[10px]" : "text-xs")}>{vehiclePlate}</span>
+                     <div className="flex items-center gap-1.5">
+                         <Truck size={11} className="text-[#4B6478]" />
+                         <span className={cn("font-black text-[#94A3B8] uppercase", isDesktop ? "text-[10px]" : "text-[10px]")}>{vehiclePlate}</span>
                      </div>
                 </div>
 
                 {/* Loss Details Grid: 2 Columns */}
                 <div className="grid grid-cols-2 divide-x divide-white/5">
                     {/* Mortality Column */}
-                    <div className="p-6 space-y-3">
+                    <div className={cn("space-y-2", isDesktop ? "p-6 space-y-3" : "p-4")}>
                         <div className="flex items-center gap-2">
                              <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                             <span className={cn("font-black uppercase tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Mortalitas</span>
+                             <span className={cn("font-black uppercase tracking-widest text-[#4B6478]", "text-[10px]")}>Mortalitas</span>
                         </div>
                         {entry.mortality ? (
-                            <div className="space-y-1">
-                                <p className="text-lg font-black text-red-400">{entry.mortality.chicken_count} <span className={cn("uppercase ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Ekor</span></p>
-                                <p className={cn("font-bold text-red-400/40 uppercase leading-tight", isDesktop ? "text-[9px]" : "text-[11px]")}>Rp 0 — TIDAK MEMPENGARUHI REVENUE</p>
+                            <div className="space-y-0.5">
+                                <p className={cn("font-black text-red-400", isDesktop ? "text-lg" : "text-base")}>{entry.mortality.chicken_count} <span className="text-[10px] uppercase ml-1">Ekor</span></p>
+                                <p className={cn("font-bold text-red-400/40 uppercase leading-tight", "text-[9px]")}>Rp 0 — tdk pengaruhi revenue</p>
                             </div>
                         ) : (
-                            <p className={cn("font-bold text-white/5 uppercase italic", isDesktop ? "text-[10px]" : "text-xs")}>Tidak ada</p>
+                            <p className={cn("font-bold text-white/5 uppercase italic", "text-[10px]")}>Tidak ada</p>
                         )}
                     </div>
 
                     {/* Shrinkage Column */}
-                    <div className="p-6 space-y-3">
+                    <div className={cn("space-y-2", isDesktop ? "p-6 space-y-3" : "p-4")}>
                         <div className="flex items-center gap-2">
                              <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                             <span className={cn("font-black uppercase tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>Susut Berat</span>
+                             <span className={cn("font-black uppercase tracking-widest text-[#4B6478]", "text-[10px]")}>Susut Berat</span>
                         </div>
                         {entry.shrinkage ? (
-                            <div className="space-y-1">
-                                <p className="text-lg font-black text-amber-500">{entry.shrinkage.weight_loss_kg.toFixed(1)} <span className={cn("uppercase ml-1", isDesktop ? "text-[10px]" : "text-xs")}>Kg</span></p>
-                                <p className={cn("font-bold text-amber-500/60 uppercase", isDesktop ? "text-[11px]" : "text-xs")}>Loss: {formatIDR(entry.shrinkage.financial_loss)}</p>
+                            <div className="space-y-0.5">
+                                <p className={cn("font-black text-amber-500", isDesktop ? "text-lg" : "text-base")}>{entry.shrinkage.weight_loss_kg.toFixed(1)} <span className="text-[10px] uppercase ml-1">Kg</span></p>
+                                <p className={cn("font-bold text-amber-500/60 uppercase", "text-[10px]")}>Loss: {formatIDR(entry.shrinkage.financial_loss)}</p>
                             </div>
                         ) : (
-                            <p className={cn("font-bold text-white/5 uppercase italic", isDesktop ? "text-[10px]" : "text-xs")}>Tidak ada</p>
+                            <p className={cn("font-bold text-white/5 uppercase italic", "text-[10px]")}>Tidak ada</p>
                         )}
                     </div>
                 </div>
 
                 {/* Footer: Total Loss + Resolve Action */}
-                <div className="p-4 px-6 bg-white/[0.03] border-t border-white/5 flex justify-between items-center">
+                <div className={cn("bg-white/[0.03] border-t border-white/5 flex justify-between items-center", isDesktop ? "p-4 px-6" : "px-4 py-3")}>
                     <div className="flex flex-col">
-                        <span className={cn("font-black text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-[9px]" : "text-xs")}>Total Kerugian</span>
-                        <span className="text-base font-black text-red-400 leading-tight">{formatIDR(totalFinancialLoss)}</span>
+                        <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Total Kerugian</span>
+                        <span className={cn("font-black text-red-400 leading-tight", isDesktop ? "text-base" : "text-sm")}>{formatIDR(totalFinancialLoss)}</span>
                     </div>
                     {!isAllResolved && (
-                        <Button 
+                        <Button
                             size="sm"
                             disabled={isResolving}
                             onClick={onResolve}
-                            className={cn("bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest rounded-xl px-4 h-10 shadow-lg shadow-emerald-500/10 active:scale-95 transition-all", isDesktop ? "text-[10px]" : "text-[11px]")}
+                            className={cn("bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest rounded-xl px-4 shadow-lg shadow-emerald-500/10 active:scale-95 transition-all text-[10px]", isDesktop ? "h-10" : "h-9")}
                         >
-                            {isResolving ? 'PROSES...' : 'Tandai Selesai'}
+                            {isResolving ? 'Proses...' : 'Tandai Selesai'}
                         </Button>
                     )}
                 </div>

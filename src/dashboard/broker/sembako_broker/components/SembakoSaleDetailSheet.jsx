@@ -15,7 +15,7 @@ export function SembakoSaleDetailSheet({ isOpen, onOpenChange, sale, onEdit }) {
   const { tenant, profile } = useAuth()
   const deleteSale = useDeleteSembakoSale()
   const createReturn = useCreateSembakoReturn()
-  const isOwner = profile?.role === 'owner'
+  const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin'
   const [payTarget, setPayTarget] = useState(null)
   const [invoiceModal, setInvoiceModal] = useState({ open: false, type: null })
 

@@ -15,16 +15,17 @@ export function SummaryCard({ label, value, icon: Icon, color, subLabel }) {
 
     return (
         <Card className={cn(
-            "relative overflow-hidden bg-gradient-to-br border shadow-2xl rounded-[32px] p-6 group transition-all hover:scale-[1.02]",
+            "relative overflow-hidden bg-gradient-to-br border shadow-2xl group transition-all hover:scale-[1.02] shrink-0",
+            isDesktop ? "rounded-[32px] p-6" : "rounded-2xl p-3.5 min-w-[130px]",
             colorClasses[color]
         )}>
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Icon size={48} strokeWidth={1.5} />
+            <div className={cn("absolute top-0 right-0 opacity-10 group-hover:opacity-20 transition-opacity", isDesktop ? "p-4" : "p-2")}>
+                <Icon size={isDesktop ? 48 : 32} strokeWidth={1.5} />
             </div>
             <div className="relative z-10 flex flex-col items-start text-left">
-                <p className={cn("font-black uppercase tracking-[0.2em] opacity-60 mb-1", isDesktop ? "text-[10px]" : "text-xs")}>{label}</p>
-                <h3 className="text-2xl font-black tabular-nums tracking-tight">{value}</h3>
-                {subLabel && <p className={cn("font-bold mt-1 opacity-40 uppercase tracking-widest italic", isDesktop ? "text-[9px]" : "text-[11px]")}>{subLabel}</p>}
+                <p className={cn("font-black uppercase tracking-[0.2em] opacity-60 mb-1", isDesktop ? "text-[10px]" : "text-[9px]")}>{label}</p>
+                <h3 className={cn("font-black tabular-nums tracking-tight", isDesktop ? "text-2xl" : "text-lg")}>{value}</h3>
+                {subLabel && <p className={cn("font-bold mt-0.5 opacity-40 uppercase tracking-widest italic", isDesktop ? "text-[9px]" : "text-[8px]")}>{subLabel}</p>}
             </div>
         </Card>
     )
@@ -33,13 +34,13 @@ export function SummaryCard({ label, value, icon: Icon, color, subLabel }) {
 export function FilterPill({ label, active, onClick }) {
     const isDesktop = useMediaQuery('(min-width: 1024px)')
     return (
-        <button 
+        <button
             onClick={onClick}
             className={cn(
-                "h-10 px-6 rounded-2xl font-black uppercase tracking-widest transition-all",
-                isDesktop ? "text-[10px]" : "text-xs",
-                active 
-                    ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" 
+                "rounded-2xl font-black uppercase tracking-widest transition-all shrink-0",
+                isDesktop ? "h-10 px-6 text-[10px]" : "h-9 px-5 text-[11px]",
+                active
+                    ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
                     : "bg-white/5 text-[#4B6478] hover:bg-white/10"
             )}
         >

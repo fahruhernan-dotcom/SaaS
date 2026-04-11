@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useOutletContext } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     Truck, Package, AlertTriangle, CheckCircle2,
@@ -8,7 +8,7 @@ import {
     TrendingDown, AlertCircle, Info, Calendar,
     ArrowRightLeft, MoreHorizontal, Check, Lock, Unlock,
     ChevronDown, ChevronsUpDown, Trash2,
-    Pencil, PencilLine, Printer, X, FileText
+    Pencil, PencilLine, Printer, X, FileText, Menu
 } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { id } from 'date-fns/locale'
@@ -83,6 +83,7 @@ const itemVariants = {
 export default function Pengiriman() {
     const isDesktop = useMediaQuery('(min-width: 1024px)')
     const { tenant, profile } = useAuth()
+    const { setSidebarOpen } = useOutletContext() || {}
     const queryClient = useQueryClient()
     const [activeTab, setActiveTab] = useState('pengiriman')
     const [deliveryFilter, setDeliveryFilter] = useState('semua')
@@ -296,12 +297,18 @@ export default function Pengiriman() {
         >
             {/* Header Mobile Only */}
             {!isDesktop && (
-                <header className="px-5 pt-10 pb-4 flex justify-between items-center sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-40 border-b border-white/5">
-                    <h1 className="font-display text-xl font-black tracking-tight uppercase">Pengiriman & Loss</h1>
+                <header className="h-14 px-4 flex items-center gap-3 sticky top-0 bg-[#06090F]/90 backdrop-blur-md z-40 border-b border-white/5">
+                    <button
+                        onClick={() => setSidebarOpen?.(true)}
+                        className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+                    >
+                        <Menu size={16} className="text-[#94A3B8]" />
+                    </button>
+                    <h1 className="font-display text-[15px] font-black tracking-tight uppercase">Pengiriman & Loss</h1>
                 </header>
             )}
 
-            <div className="px-5 pt-8 max-w-5xl mx-auto space-y-8">
+            <div className={cn("max-w-5xl mx-auto", isDesktop ? "px-5 pt-8 space-y-8" : "px-4 pt-4 space-y-5")}>
                 {/* Desktop Header */}
                 {isDesktop && (
                     <div className="flex justify-between items-end">
@@ -314,8 +321,7 @@ export default function Pengiriman() {
 
                 {/* SUMMARY STRIP */}
                 <div className={cn(
-                    "flex gap-4 overflow-x-auto pb-2 scrollbar-none",
-                    isDesktop ? "grid grid-cols-3" : ""
+                    isDesktop ? "grid grid-cols-3 gap-4" : "flex gap-3 overflow-x-auto pb-2 scrollbar-none pr-4"
                 )}>
                     <SummaryCard 
                         label="Aktif" 
@@ -342,24 +348,24 @@ export default function Pengiriman() {
 
                 {/* MAIN TABS */}
                 <Tabs defaultValue="pengiriman" className="w-full" onValueChange={setActiveTab}>
-                    <TabsList className="bg-secondary/10 p-1.5 rounded-[20px] w-full max-w-[400px]">
-                        <TabsTrigger 
-                            value="pengiriman" 
-                            className="rounded-2xl transition-all data-[state=active]:bg-emerald-500 data-[state=active]:text-white font-black uppercase text-[10px] tracking-widest flex-1 py-3"
+                    <TabsList className={cn("bg-secondary/10 p-1.5 rounded-[20px] w-full", isDesktop && "max-w-[400px]")}>
+                        <TabsTrigger
+                            value="pengiriman"
+                            className={cn("rounded-2xl transition-all data-[state=active]:bg-emerald-500 data-[state=active]:text-white font-black uppercase tracking-widest flex-1", isDesktop ? "text-[10px] py-3" : "text-[11px] py-2.5")}
                         >
                             Pengiriman
                         </TabsTrigger>
-                        <TabsTrigger 
-                            value="loss" 
-                            className="rounded-2xl transition-all data-[state=active]:bg-red-500 data-[state=active]:text-white font-black uppercase text-[10px] tracking-widest flex-1 py-3"
+                        <TabsTrigger
+                            value="loss"
+                            className={cn("rounded-2xl transition-all data-[state=active]:bg-red-500 data-[state=active]:text-white font-black uppercase tracking-widest flex-1", isDesktop ? "text-[10px] py-3" : "text-[11px] py-2.5")}
                         >
                             Loss Report
                         </TabsTrigger>
                     </TabsList>
 
                     {/* --- TAB PENGIRIMAN --- */}
-                    <TabsContent value="pengiriman" className="mt-8">
-                        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2 scrollbar-none">
+                    <TabsContent value="pengiriman" className={cn(isDesktop ? "mt-8" : "mt-4")}>
+                        <div className={cn("flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none pr-4", isDesktop ? "mb-6" : "mb-4")}>
                             <FilterPill label="Semua" active={deliveryFilter === 'semua'} onClick={() => setDeliveryFilter('semua')} />
                             <FilterPill label="Aktif" active={deliveryFilter === 'aktif'} onClick={() => setDeliveryFilter('aktif')} />
                             <FilterPill label="Selesai" active={deliveryFilter === 'selesai'} onClick={() => setDeliveryFilter('selesai')} />
@@ -406,10 +412,10 @@ export default function Pengiriman() {
                     </TabsContent>
 
                     {/* --- TAB LOSS REPORT --- */}
-                    <TabsContent value="loss" className="mt-8">
+                    <TabsContent value="loss" className={cn(isDesktop ? "mt-8" : "mt-4")}>
                        <LossSummary lossReports={lossReports} />
-                       
-                       <div className="flex justify-between items-center mb-6">
+
+                       <div className={cn("flex justify-between items-center", isDesktop ? "mb-6" : "mb-4")}>
                            <h2 className="font-display font-black text-sm uppercase tracking-widest text-[#4B6478]">Riwayat Kerugian</h2>
                            <Button 
                                 variant="outline"

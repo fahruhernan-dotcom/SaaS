@@ -3,9 +3,10 @@
 // Queue UI, Undo Toast, Retry, New Chat, Partial Success
 // =============================================================
 
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useMotionValue, animate } from 'framer-motion'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { Bot, X, Send, Loader2, RotateCcw, AlertCircle, HelpCircle, RefreshCw, Undo2, CheckCircle2, Search } from 'lucide-react'
 import { useAIAssistant, AGENT_STATE } from '@/lib/useAIAssistant.jsx'
 import { toast } from 'sonner'
@@ -37,6 +38,44 @@ export default function AIChatBubble() {
   const scrollRef = useRef(null)
   const inputRef = useRef(null)
   const panelRef = useRef(null)
+
+  // ── Draggable FAB (mobile only) ───────────────────────────
+  const isMobile = !useMediaQuery('(min-width: 1024px)')
+  const FAB_SIZE = 44
+  const FAB_MARGIN = 16
+  const BOTTOM_CLEAR = 80  // above bottom-nav
+  const TOP_CLEAR = 72     // below topbar
+
+  const fabX = useMotionValue(0)
+  const fabY = useMotionValue(0)
+  const [fabReady, setFabReady] = useState(false)
+
+  useEffect(() => {
+    if (!isMobile) return
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    fabX.set(vw - FAB_SIZE - FAB_MARGIN)
+    fabY.set(vh - FAB_SIZE - BOTTOM_CLEAR)
+    setFabReady(true)
+  }, [isMobile]) // eslint-disable-line
+
+  const dragConstraints = useMemo(() => {
+    if (typeof window === 'undefined') return {}
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    return { left: FAB_MARGIN, top: TOP_CLEAR, right: vw - FAB_SIZE - FAB_MARGIN, bottom: vh - FAB_SIZE - BOTTOM_CLEAR }
+  }, [])
+
+  const snapToCorner = useCallback(() => {
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const cx = fabX.get()
+    const cy = fabY.get()
+    const tx = cx > vw / 2 ? vw - FAB_SIZE - FAB_MARGIN : FAB_MARGIN
+    const ty = cy > vh / 2 ? vh - FAB_SIZE - BOTTOM_CLEAR : TOP_CLEAR
+    animate(fabX, tx, { type: 'spring', stiffness: 400, damping: 30 })
+    animate(fabY, ty, { type: 'spring', stiffness: 400, damping: 30 })
+  }, [fabX, fabY]) // eslint-disable-line
 
   const {
     messages,
@@ -179,7 +218,7 @@ export default function AIChatBubble() {
     <>
       {/* ─── FAB ─── */}
       <AnimatePresence>
-        {!isOpen && (
+        {!isOpen && (!isMobile || fabReady) && (
           <motion.button
             key="fab"
             initial={{ scale: 0, opacity: 0 }}
@@ -187,10 +226,21 @@ export default function AIChatBubble() {
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 400, damping: 22 }}
             onClick={handleOpen}
-            className="fixed bottom-24 right-4 lg:bottom-8 lg:right-8 z-[60] w-14 h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-xl shadow-emerald-500/30 flex items-center justify-center transition-colors active:scale-95"
             aria-label="Buka AI Assistant"
+            // ── Mobile: draggable, corner-snap, smaller ──
+            {...(isMobile ? {
+              drag: true,
+              dragMomentum: false,
+              dragElastic: 0,
+              dragConstraints,
+              onDragEnd: snapToCorner,
+              style: { position: 'fixed', left: 0, top: 0, x: fabX, y: fabY, zIndex: 60, touchAction: 'none' },
+              className: "w-11 h-11 rounded-2xl bg-emerald-500 text-white shadow-xl shadow-emerald-500/30 flex items-center justify-center cursor-grab active:cursor-grabbing",
+            } : {
+              className: "fixed bottom-8 right-8 z-[60] w-12 h-12 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-xl shadow-emerald-500/30 flex items-center justify-center transition-colors active:scale-95",
+            })}
           >
-            <Bot size={24} />
+            <Bot size={isMobile ? 18 : 20} />
             {pendingCount > 0 && (
               <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-red-500 border-2 border-[#06090F] flex items-center justify-center text-[9px] font-black text-white">
                 {pendingCount}

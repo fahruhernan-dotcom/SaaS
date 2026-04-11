@@ -23,6 +23,7 @@ export function useUpdateDelivery() {
       vehiclePlate,
       vehicleType,
       departureTime,
+      driverWage,
       status
     } = payload
 
@@ -66,6 +67,7 @@ export function useUpdateDelivery() {
     if (vehicleId !== undefined)    updateData.vehicle_id = vehicleId
     if (vehiclePlate !== undefined) updateData.vehicle_plate = vehiclePlate
     if (vehicleType !== undefined)  updateData.vehicle_type = vehicleType
+    if (driverWage !== undefined)   updateData.driver_wage = driverWage
     
     // 2. Update delivery status
     const { error: updateError } = await supabase

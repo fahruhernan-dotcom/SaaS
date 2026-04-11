@@ -1,18 +1,19 @@
 import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-    Truck, User, Plus, Filter, 
-    MoreHorizontal, Edit2, Trash2, 
-    Phone, MapPin, CreditCard, 
+import {
+    Truck, User, Plus, Filter,
+    MoreHorizontal, Edit2, Trash2,
+    Phone, MapPin, CreditCard,
     Calendar, AlertCircle, CheckCircle2,
     Wrench, Building, ChevronRight,
-    Search, X, Clock, DollarSign
+    Search, X, Clock, DollarSign, Menu
 } from 'lucide-react'
 import { 
     format, differenceInDays, isAfter, 
     parseISO, startOfMonth, endOfMonth 
 } from 'date-fns'
 import { id } from 'date-fns/locale'
+import { useOutletContext } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
@@ -91,6 +92,7 @@ const expenseSchema = z.object({
 export default function Armada() {
     const isDesktop = useMediaQuery('(min-width: 1024px)')
     const { tenant } = useAuth()
+    const { setSidebarOpen } = useOutletContext() || {}
     const queryClient = useQueryClient()
     const [activeTab, setActiveTab] = useState('kendaraan')
     
@@ -115,7 +117,21 @@ export default function Armada() {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('drivers')
-                .select('*, deliveries(id, created_at, is_deleted)')
+                .select(`
+                    *,
+                    deliveries(
+                        id, 
+                        created_at, 
+                        status, 
+                        driver_wage, 
+                        is_deleted,
+                        sales(
+                            id,
+                            purchases(farms(farm_name)),
+                            rpa_clients(rpa_name)
+                        )
+                    )
+                `)
                 .eq('tenant_id', tenant?.id)
                 .eq('is_deleted', false)
                 .order('full_name', { ascending: true })
@@ -194,26 +210,30 @@ export default function Armada() {
         >
             {/* Header Mobile Only */}
             {!isDesktop && (
-                <header className="px-5 pt-10 pb-4 flex justify-between items-center sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-40 border-b border-white/5">
-                    <h1 className="font-display text-xl font-black tracking-tight uppercase">Armada & Sopir</h1>
-                    <div className="flex gap-2">
-                         <div className="relative group">
-                            <Button 
-                                size="sm"
-                                className="h-10 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest transition-all active:scale-95"
-                                onClick={() => {
-                                    setEditingVehicle(null)
-                                    setIsVehicleSheetOpen(true)
-                                }}
-                            >
-                                <Plus size={18} strokeWidth={3} className="mr-1.5" /> Tambah
-                            </Button>
-                         </div>
+                <header className="h-14 px-4 flex items-center justify-between sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-40 border-b border-white/5">
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setSidebarOpen?.(true)}
+                            className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+                        >
+                            <Menu size={16} className="text-[#94A3B8]" />
+                        </button>
+                        <h1 className="font-display text-[15px] font-black tracking-tight uppercase">Armada & Sopir</h1>
                     </div>
+                    <Button
+                        size="sm"
+                        className="h-9 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest transition-all active:scale-95"
+                        onClick={() => {
+                            setEditingVehicle(null)
+                            setIsVehicleSheetOpen(true)
+                        }}
+                    >
+                        <Plus size={15} strokeWidth={3} className="mr-1" /> Tambah
+                    </Button>
                 </header>
             )}
 
-            <div className="px-5 pt-8 max-w-5xl mx-auto space-y-8">
+            <div className={cn("px-5 max-w-5xl mx-auto", isDesktop ? "pt-8 space-y-8" : "pt-4 space-y-5")}>
                 {/* Desktop Header */}
                 {isDesktop && (
                     <div className="flex justify-between items-end">
@@ -246,15 +266,15 @@ export default function Armada() {
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <TabsList className="bg-secondary/20 p-1 rounded-2xl w-full lg:w-fit mb-4">
-                        <TabsTrigger value="kendaraan" className="flex-1 lg:flex-none rounded-xl data-[state=active]:bg-white/10 text-[11px] font-black uppercase tracking-widest px-8 py-3">
+                        <TabsTrigger value="kendaraan" className={cn("flex-1 lg:flex-none rounded-xl data-[state=active]:bg-white/10 text-[11px] font-black uppercase tracking-widest px-8", isDesktop ? "py-3" : "py-2.5")}>
                             <Truck size={14} className="mr-2" /> Kendaraan
                         </TabsTrigger>
-                        <TabsTrigger value="sopir" className="flex-1 lg:flex-none rounded-xl data-[state=active]:bg-white/10 text-[11px] font-black uppercase tracking-widest px-8 py-3">
+                        <TabsTrigger value="sopir" className={cn("flex-1 lg:flex-none rounded-xl data-[state=active]:bg-white/10 text-[11px] font-black uppercase tracking-widest px-8", isDesktop ? "py-3" : "py-2.5")}>
                             <User size={14} className="mr-2" /> Sopir
                         </TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="kendaraan" className="space-y-8 m-0 outline-none">
+                    <TabsContent value="kendaraan" className={cn("m-0 outline-none", isDesktop ? "space-y-8" : "space-y-5")}>
                         <div className="flex overflow-x-auto pb-2 scrollbar-none gap-3">
                             <SummaryPill label="Total" count={vehicles.length} />
                             <SummaryPill label="Mengirim" count={onRouteVehicleIds.size} color="amber" />
@@ -333,7 +353,7 @@ export default function Armada() {
                         </div>
                     </TabsContent>
 
-                    <TabsContent value="sopir" className="space-y-8 m-0 outline-none">
+                    <TabsContent value="sopir" className={cn("m-0 outline-none", isDesktop ? "space-y-8" : "space-y-5")}>
                          <div className="flex overflow-x-auto pb-2 scrollbar-none gap-3">
                             <SummaryPill label="Total" count={drivers.length} />
                             <SummaryPill label="Mengirim" count={onRouteDriverIds.size} color="amber" />
@@ -602,10 +622,18 @@ function DriverCard({ driver, isOnRoute, onEdit, onClickCard }) {
                                 </Badge>
                             </div>
                         </div>
-                        <a href={`tel:${driver.phone}`} className="flex items-center gap-1.5 mt-1.5 text-[#4B6478] hover:text-white transition-colors">
-                            <Phone size={isDesktop ? 11 : 13} />
-                            <span className={cn("font-bold", isDesktop ? "text-[11px]" : "text-xs")}>{driver.phone}</span>
-                        </a>
+                        <div className="mt-2 flex items-center justify-between">
+                            <a href={`tel:${driver.phone}`} className="flex items-center gap-1.5 text-[#4B6478] hover:text-white transition-colors">
+                                <Phone size={isDesktop ? 11 : 13} />
+                                <span className={cn("font-bold", isDesktop ? "text-[11px]" : "text-xs")}>{driver.phone}</span>
+                            </a>
+                            <div className="text-right">
+                                <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest leading-none mb-0.5">Total Upah</p>
+                                <p className="text-xs font-black text-emerald-400">
+                                    {formatIDRShort(driver.deliveries?.filter(d => !d.is_deleted && ['arrived', 'completed', 'tiba'].includes(d.status))?.reduce((acc, d) => acc + (d.driver_wage || 0), 0) || 0)}
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -746,8 +774,8 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
-            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 overflow-y-auto", isDesktop ? "w-full sm:max-w-[520px] border-l" : "h-[90vh] rounded-t-[40px] border-t")}>
-                <div className={isDesktop ? "p-8 space-y-8" : "p-6 pt-10 space-y-6"}>
+            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 overflow-y-auto", isDesktop ? "w-full sm:max-w-[520px] border-l" : "max-h-[92vh] rounded-t-[24px] border-t")}>
+                <div className={isDesktop ? "p-8 space-y-8" : "p-4 pt-5 space-y-5"}>
                     <SheetHeader className="text-left">
                     <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">
                         {editingData ? 'Edit Kendaraan' : 'Tambah Kendaraan'}
@@ -892,18 +920,18 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
                     </div>
 
                     <SheetFooter className="flex flex-col gap-3">
-                        <Button 
+                        <Button
                             disabled={isSubmitting}
-                            className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-[24px] shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
+                            className={cn("w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all", isDesktop ? "h-14 rounded-[24px]" : "h-11")}
                         >
-                            {isSubmitting ? 'MENYIMPAN...' : editingData ? 'SIMPAN PERUBAHAN' : 'TAMBAH KENDARAAN'}
+                            {isSubmitting ? 'Menyimpan...' : editingData ? 'Simpan Perubahan' : 'Tambah Kendaraan'}
                         </Button>
                         {editingData && (
-                            <Button 
+                            <Button
                                 type="button"
                                 variant="ghost"
                                 onClick={() => setIsDeleteDialogOpen(true)}
-                                className="w-full h-14 text-red-500 font-black text-[10px] uppercase tracking-widest flex items-center gap-2"
+                                className={cn("w-full text-red-500 font-black text-[10px] uppercase tracking-widest flex items-center gap-2", isDesktop ? "h-14" : "h-10")}
                             >
                                 <Trash2 size={16} /> Hapus Kendaraan
                             </Button>
@@ -1002,8 +1030,8 @@ function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
-            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 overflow-y-auto", isDesktop ? "w-full sm:max-w-[520px] border-l" : "h-[90vh] rounded-t-[40px] border-t")}>
-                <div className={isDesktop ? "p-8 space-y-8" : "p-6 pt-10 space-y-6"}>
+            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 overflow-y-auto", isDesktop ? "w-full sm:max-w-[520px] border-l" : "max-h-[92vh] rounded-t-[24px] border-t")}>
+                <div className={isDesktop ? "p-8 space-y-8" : "p-4 pt-5 space-y-5"}>
                     <SheetHeader className="text-left">
                     <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">
                         {editingData ? 'Edit Sopir' : 'Tambah Sopir'}
@@ -1093,18 +1121,18 @@ function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
                     </div>
 
                     <SheetFooter className="flex flex-col gap-3">
-                        <Button 
+                        <Button
                             disabled={isSubmitting}
-                            className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-[24px] shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
+                            className={cn("w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.15em] shadow-lg shadow-emerald-500/20 active:scale-95 transition-all", isDesktop ? "h-14 rounded-[24px]" : "h-11 rounded-xl")}
                         >
-                            {isSubmitting ? 'MENYIMPAN...' : editingData ? 'SIMPAN PERUBAHAN' : 'TAMBAH SOPIR'}
+                            {isSubmitting ? 'Menyimpan...' : editingData ? 'Simpan Perubahan' : 'Tambah Sopir'}
                         </Button>
                         {editingData && (
-                            <Button 
+                            <Button
                                 type="button"
                                 variant="ghost"
                                 onClick={() => setIsDeleteDialogOpen(true)}
-                                className="w-full h-14 text-red-500 font-black text-[10px] uppercase tracking-widest flex items-center gap-2"
+                                className={cn("w-full text-red-500 font-black text-[10px] uppercase tracking-widest flex items-center gap-2", isDesktop ? "h-14" : "h-10")}
                             >
                                 <Trash2 size={16} /> Pecat / Hapus Sopir
                             </Button>
@@ -1163,8 +1191,8 @@ function ExpenseSheet({ isOpen, onClose, vehicle, tenantId }) {
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
-            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 overflow-y-auto", isDesktop ? "w-full sm:max-w-[520px] border-l" : "h-[80vh] rounded-t-[40px] border-t")}>
-                <div className={isDesktop ? "p-8 space-y-8" : "p-6 pt-10 space-y-6"}>
+            <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 overflow-y-auto", isDesktop ? "w-full sm:max-w-[520px] border-l" : "max-h-[85vh] rounded-t-[24px] border-t")}>
+                <div className={isDesktop ? "p-8 space-y-8" : "p-4 pt-5 space-y-5"}>
                     <SheetHeader className="text-left">
                     <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">
                         Catat Biaya — {vehicle?.vehicle_plate}
@@ -1226,9 +1254,9 @@ function ExpenseSheet({ isOpen, onClose, vehicle, tenantId }) {
                     <Button 
                         type="submit"
                         disabled={isSubmitting}
-                        className="w-full h-16 bg-white text-black font-black text-xs uppercase tracking-[0.2em] rounded-[24px] shadow-xl active:scale-95 transition-all mt-4"
+                        className={cn("w-full bg-white text-black font-black text-xs uppercase tracking-[0.15em] shadow-lg active:scale-95 transition-all mt-3", isDesktop ? "h-14 rounded-[24px]" : "h-11 rounded-xl")}
                     >
-                        {isSubmitting ? 'MENYIMPAN...' : 'SIMPAN BIAYA'}
+                        {isSubmitting ? 'Menyimpan...' : 'Simpan Biaya'}
                     </Button>
                     </form>
                 </div>
@@ -1375,6 +1403,62 @@ function VehicleDetailSheet({ vehicle, onClose }) {
 // --- SHEET: DRIVER DETAIL ---
 function DriverDetailSheet({ driver, onClose }) {
     const isDesktop = useMediaQuery('(min-width: 1024px)')
+    const queryClient = useQueryClient()
+    const [editingWageId, setEditingWageId] = useState(null)
+    const [tempWage, setTempWage] = useState(0)
+    const [isSaving, setIsSaving] = useState(false)
+    const [editingStandard, setEditingStandard] = useState(false)
+    const [standardWage, setStandardWage] = useState(driver?.wage_per_trip || 0)
+    const [isSavingStandard, setIsSavingStandard] = useState(false)
+
+    // Sync standard wage when driver changes
+    useEffect(() => {
+        if (driver) {
+            setStandardWage(driver.wage_per_trip || 0)
+        }
+    }, [driver])
+
+    const handleUpdateStandardWage = async () => {
+        setIsSavingStandard(true)
+        try {
+            const { error } = await supabase
+                .from('drivers')
+                .update({ wage_per_trip: standardWage })
+                .eq('id', driver.id)
+            
+            if (error) throw error
+            
+            toast.success('Upah standar berhasil diperbarui')
+            setEditingStandard(false)
+            queryClient.invalidateQueries(['drivers'])
+        } catch (error) {
+            toast.error('Gagal memperbarui upah standar')
+        } finally {
+            setIsSavingStandard(false)
+        }
+    }
+
+    const handleUpdateWage = async (deliveryId) => {
+        setIsSaving(true)
+        try {
+            const { error } = await supabase
+                .from('deliveries')
+                .update({ driver_wage: tempWage })
+                .eq('id', deliveryId)
+            
+            if (error) throw error
+            
+            toast.success('Upah trip berhasil diperbarui')
+            setEditingWageId(null)
+            queryClient.invalidateQueries(['driver-deliveries'])
+            queryClient.invalidateQueries(['drivers'])
+        } catch (error) {
+            toast.error('Gagal memperbarui upah')
+        } finally {
+            setIsSaving(false)
+        }
+    }
+
     const { data: deliveries = [], isLoading: loadDel } = useQuery({
         queryKey: ['driver-deliveries', driver?.id],
         queryFn: async () => {
@@ -1410,8 +1494,62 @@ function DriverDetailSheet({ driver, onClose }) {
                     </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                    <h4 className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] mb-2">Riwayat Pengiriman ({deliveries.length})</h4>
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                    {/* STANDARD WAGE CONFIG */}
+                    {!driver?.isUnregistered && (
+                        <div className="p-4 rounded-3xl bg-emerald-500/5 border border-emerald-500/10 space-y-3">
+                            <div className="flex justify-between items-center">
+                                <div className="space-y-0.5">
+                                    <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Upah Standar</p>
+                                    <p className="text-[9px] text-emerald-400/50 font-bold uppercase leading-none italic">Berlaku untuk trip baru</p>
+                                </div>
+                                {!editingStandard && (
+                                    <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => setEditingStandard(true)}
+                                        className="h-8 px-3 rounded-xl hover:bg-emerald-500/10 text-emerald-400 font-black text-[10px] uppercase gap-2"
+                                    >
+                                        <Edit2 size={12} /> Ubah
+                                    </Button>
+                                )}
+                            </div>
+                            
+                            {editingStandard ? (
+                                <div className="flex flex-col gap-2">
+                                    <InputRupiah 
+                                        value={standardWage} 
+                                        onChange={setStandardWage}
+                                        className="h-12 text-base bg-[#0C1319] border-emerald-500/30"
+                                    />
+                                    <div className="flex gap-2">
+                                        <Button 
+                                            disabled={isSavingStandard}
+                                            onClick={handleUpdateStandardWage}
+                                            className="flex-1 h-10 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase rounded-xl"
+                                        >
+                                            {isSavingStandard ? '...' : 'Simpan Perubahan'}
+                                        </Button>
+                                        <Button 
+                                            variant="ghost"
+                                            onClick={() => {
+                                                setEditingStandard(false)
+                                                setStandardWage(driver?.wage_per_trip || 0)
+                                            }}
+                                            className="h-10 px-4 text-[#4B6478] hover:text-white font-black text-[10px] uppercase rounded-xl"
+                                        >
+                                            Batal
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="text-xl font-black text-white">{formatIDR(driver?.wage_per_trip || 0)}</p>
+                            )}
+                        </div>
+                    )}
+
+                    <div className="space-y-4">
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Riwayat Pengiriman ({deliveries.length})</h4>
                     
                     {loadDel ? <div className="p-4 text-center text-[#4B6478] text-xs font-bold uppercase">Memuat data...</div> : 
                      deliveries.length === 0 ? <div className="p-8 text-center text-[#4B6478] text-xs font-bold uppercase border border-dashed border-white/10 rounded-2xl">Belum ada riwayat pengiriman</div> :
@@ -1433,14 +1571,54 @@ function DriverDetailSheet({ driver, onClose }) {
                                     <p className="text-xs text-white font-bold">{d.initial_weight_kg ? safeNumber(d.initial_weight_kg).toLocaleString('id-ID') : 0} Kg</p>
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-[9px] text-[#4B6478] uppercase font-black tracking-widest">Upah (Estimasi)</p>
-                                    <p className="text-xs text-blue-400 font-bold">{driver?.isUnregistered ? '-' : formatIDR(driver?.wage_per_trip || 0)}</p>
+                                    <p className="text-[9px] text-[#4B6478] uppercase font-black tracking-widest leading-none mb-1">Upah Trip</p>
+                                    {editingWageId === d.id ? (
+                                        <div className="flex flex-col gap-1.5">
+                                            <InputRupiah 
+                                                value={tempWage} 
+                                                onChange={setTempWage}
+                                                className="h-8 text-xs bg-white/5 border-emerald-500/30"
+                                            />
+                                            <div className="flex gap-2">
+                                                <Button 
+                                                    size="sm" 
+                                                    disabled={isSaving}
+                                                    onClick={() => handleUpdateWage(d.id)}
+                                                    className="h-6 px-2 text-[8px] bg-emerald-500 hover:bg-emerald-600 font-black uppercase"
+                                                >
+                                                    {isSaving ? '...' : 'Simpan'}
+                                                </Button>
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="ghost"
+                                                    onClick={() => setEditingWageId(null)}
+                                                    className="h-6 px-2 text-[8px] text-[#4B6478] hover:text-white font-black uppercase"
+                                                >
+                                                    Batal
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div 
+                                            className="flex items-center gap-2 group/wage cursor-pointer"
+                                            onClick={() => {
+                                                setEditingWageId(d.id)
+                                                setTempWage(d.driver_wage || 0)
+                                            }}
+                                        >
+                                            <p className="text-xs text-emerald-400 font-bold hover:text-emerald-300 transition-colors">
+                                                {formatIDR(d.driver_wage || 0)}
+                                            </p>
+                                            <Edit2 size={10} className="text-[#4B6478] opacity-0 group-hover/wage:opacity-100 transition-opacity" />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
                     ))}
                 </div>
-            </SheetContent>
-        </Sheet>
+            </div>
+        </SheetContent>
+    </Sheet>
     )
 }

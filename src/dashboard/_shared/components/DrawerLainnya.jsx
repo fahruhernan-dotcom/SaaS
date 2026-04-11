@@ -36,7 +36,7 @@ export default function DrawerLainnya({ isOpen, onClose, userType }) {
   const navigate = useNavigate()
   const model = getBusinessModel(userType, profile?.sub_type)
 
-  const isOwner = profile?.role === 'owner'
+  const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin'
   const isStaff = profile?.role === 'staff'
   const isViewOnly = profile?.role === 'view_only'
 
@@ -48,7 +48,7 @@ export default function DrawerLainnya({ isOpen, onClose, userType }) {
 
     // Peternak role filtering
     if (userType === 'peternak') {
-      if (item.label === 'Tim & Akses') return profile?.role === 'owner'
+      if (item.label === 'Tim & Akses') return profile?.role === 'owner' || profile?.role === 'superadmin'
       if (item.label === 'Stok & Pakan') return profile?.role !== 'view_only'
       return true
     }

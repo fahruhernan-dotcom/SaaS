@@ -5,6 +5,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom'
 import {
   TrendingUp,
   AlertCircle,
+  ArrowLeftRight,
   ChevronRight,
   ChevronLeft,
   BarChart2,
@@ -23,6 +24,8 @@ import { cn } from '@/lib/utils'
 import {
   AreaChart,
   Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -59,6 +62,7 @@ import {
 import TransaksiWizard from '@/dashboard/_shared/components/TransaksiWizard'
 import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, format, isToday, isWithinInterval, addDays, differenceInDays } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
+import SmartInsight from '@/dashboard/_shared/components/SmartInsight'
 
 const staggerContainer = {
   hidden: {},
@@ -322,11 +326,7 @@ function DesktopDashboard({ data, profile, navigate, setWizardOpen, handleTandai
           <p className="text-sm font-bold text-[#4B6478] uppercase mt-1 tracking-widest">
             Selamat datang kembali, <span className="text-emerald-400">{firstName}</span>
           </p>
-          {data?.insight && (
-            <p className="text-[12px] font-display font-medium text-[#34D399] mt-2 flex items-center gap-1.5">
-              {data.insight.text}
-            </p>
-          )}
+          <SmartInsight insight={data?.insight} className="mt-3" />
         </div>
         <Button
           onClick={() => setWizardOpen(true)}
@@ -488,12 +488,27 @@ function DesktopDashboard({ data, profile, navigate, setWizardOpen, handleTandai
 }
 
 // --- MOBILE RENDERER ---
-function MobileDashboard({ data, profile, navigate, setWizardOpen, setSidebarOpen, chartPeriod, setChartPeriod, selectedDate, setSelectedDate, currentMonth, setCurrentMonth, agendaFilter, setAgendaFilter }) {
+function MobileDashboard({ data, profile, navigate, setWizardOpen, setSidebarOpen, chartPeriod, setChartPeriod }) {
   const firstName = profile?.full_name?.split(' ')[0] || 'User'
   const initials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'BR'
 
+  const recentActivity = useMemo(() => {
+    if (!data) return []
+    const items = []
+    ;(data.events.todayActivites || []).forEach(s => {
+      items.push({ id: `sale-${s.id}`, type: 'Transaksi', label: s.rpa_clients?.rpa_name || 'RPA', amount: calcNetProfit(s), date: s.transaction_date, color: '#10B981', Icon: ArrowLeftRight })
+    })
+    ;(data.events.payments || []).forEach(p => {
+      items.push({ id: `pay-${p.id}`, type: 'Pembayaran', label: p.sales?.rpa_clients?.rpa_name || 'Pembayaran', amount: p.amount, date: p.payment_date || p.created_at, color: '#818CF8', Icon: CircleCheck })
+    })
+    ;(data.events.deliveries || []).forEach(d => {
+      items.push({ id: `del-${d.id}`, type: 'Pengiriman', label: d.sales?.rpa_clients?.rpa_name || 'Pengiriman', amount: null, date: d.created_at, color: '#F59E0B', Icon: Truck })
+    })
+    return items.filter(i => i.date).sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5)
+  }, [data])
+
   return (
-    <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="flex flex-col min-h-full bg-[#06090F] text-foreground pb-24">
+    <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="flex flex-col min-h-full bg-[#06090F] text-foreground pb-20">
 
       {/* ── Compact fixed TopBar ── */}
       <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 h-14 flex items-center justify-between px-4 bg-[#06090F]/95 backdrop-blur-xl border-b border-white/[0.05]">
@@ -504,16 +519,9 @@ function MobileDashboard({ data, profile, navigate, setWizardOpen, setSidebarOpe
           >
             <Menu size={17} className="text-[#94A3B8]" />
           </button>
-          <div className="min-w-0">
-            <h1 className="font-display font-black text-[15px] text-[#F1F5F9] leading-tight truncate">
-              Halo, {firstName} <span>👋</span>
-            </h1>
-            {data?.insight && (
-              <p className="text-[10px] font-medium text-[#34D399] leading-tight truncate">
-                {data.insight.text}
-              </p>
-            )}
-          </div>
+          <h1 className="font-display font-black text-[15px] text-[#F1F5F9] leading-tight truncate min-w-0">
+            Halo, {firstName} <span>👋</span>
+          </h1>
         </div>
         <Avatar className="h-9 w-9 border border-emerald-500/30 shrink-0" onClick={() => navigate('/broker/akun')}>
           <AvatarFallback className="bg-emerald-500/10 text-[#34D399] font-black text-xs">
@@ -525,93 +533,109 @@ function MobileDashboard({ data, profile, navigate, setWizardOpen, setSidebarOpe
       {/* spacer for fixed topbar */}
       <div className="h-14" />
 
-      {/* KPI Cards Mobile - 2 Column */}
-      <div className="px-5 grid grid-cols-2 gap-3 mb-6">
-        <KPICardNew
-          label="PIUTANG"
-          value={formatIDRShort(data?.kpis.totalPiutang)}
-          trend={data?.kpis.piutangTrend}
-          small
-          onClick={() => navigate('/broker/rpa')}
-        />
-        <KPICardNew
-          label="PENJUALAN"
-          value={data?.kpis.monthlySales}
-          trend={data?.kpis.txTrend}
-          small
-          onClick={() => navigate('/broker/transaksi')}
-        />
-      </div>
+      {/* ── 1. HERO BALANCE ── */}
+      <motion.div variants={fadeUp} className="px-4 pt-5 pb-4">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4B6478] mb-1.5">Total Profit Bulan Ini</p>
+        <div className="flex items-end gap-3">
+          <h1 className="text-[34px] font-display font-black text-[#F1F5F9] tabular-nums leading-none">
+            {formatIDRShort(data?.chart.totalNetProfitMonthly)}
+          </h1>
+          {data?.kpis?.txTrend !== undefined && (
+            <span className={cn(
+              "text-[11px] font-black px-2 py-0.5 rounded-lg mb-1.5",
+              data.kpis.txTrend >= 0 ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"
+            )}>
+              {data.kpis.txTrend >= 0 ? '+' : ''}{data.kpis.txTrend.toFixed(0)}%
+            </span>
+          )}
+        </div>
+        {data?.insight && (
+          <p className="text-[11px] text-[#4B6478] mt-1.5 leading-snug">{data.insight.text}</p>
+        )}
+      </motion.div>
 
-      <div className="px-5 mb-6">
-        <div className="bg-gradient-to-br from-[#10B981] to-[#059669] rounded-[28px] p-6 text-white shadow-xl shadow-emerald-500/20 relative overflow-hidden active:scale-[0.98] transition-all" onClick={() => setWizardOpen(true)}>
-          <div className="flex justify-between items-center relative z-10">
+      {/* ── 2. BUSINESS SUMMARY CARD ── */}
+      <motion.div variants={fadeUp} className="px-4 mb-4">
+        <div className="rounded-[22px] p-5 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0D1F2E 0%, #112233 55%, #0A1A28 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.13) 0%, transparent 70%)' }} />
+          <div className="absolute -bottom-8 -left-8 w-28 h-28 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.09) 0%, transparent 70%)' }} />
+          <div className="flex justify-between items-start mb-5 relative z-10">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] opacity-70 mb-1.5">Profit {chartPeriod === 'weekly' ? 'Minggu Ini' : 'Bulan Ini'}</p>
-              <h2 className="text-2xl font-display font-black tabular-nums">
-                {chartPeriod === 'weekly' ? formatIDRShort(data?.chart.totalNetProfitWeekly) : formatIDRShort(data?.chart.totalNetProfitMonthly)}
-              </h2>
+              <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/40">TERNAK OS · BROKER</p>
+              <p className="text-sm font-bold text-white/60 mt-0.5 truncate max-w-[160px]">{profile?.full_name}</p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-              <Plus size={20} />
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center">
+              <Beef size={17} className="text-emerald-400" />
+            </div>
+          </div>
+          <div className="flex justify-between items-end relative z-10">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-0.5">Piutang Aktif</p>
+              <p className="text-[22px] font-display font-black text-red-400 tabular-nums leading-none">{formatIDRShort(data?.kpis.totalPiutang)}</p>
+              <p className="text-[10px] text-white/30 mt-1">{data?.kpis.unpaidCount ?? 0} RPA belum lunas</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-0.5">Transaksi</p>
+              <p className="text-[22px] font-display font-black text-white/80 tabular-nums leading-none">{data?.kpis.monthlySales ?? 0}</p>
+              <p className="text-[10px] text-white/30 mt-1">bulan ini</p>
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Mobile Chart Section */}
-      <section className="px-5 mb-8">
-        <div className="bg-[#0C1319] border border-white/5 rounded-[28px] p-5">
-          <div className="flex justify-between items-center mb-4">
-             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#4B6478]">Grafik Profit</h3>
-             <div className="flex bg-black/30 p-0.5 rounded-lg border border-white/5 scale-90 origin-right">
-                <button onClick={() => setChartPeriod('weekly')} className={cn("px-3 py-1 text-xs font-black uppercase rounded-md", chartPeriod === 'weekly' ? "bg-emerald-500 text-white" : "text-[#4B6478]")}>W</button>
-                <button onClick={() => setChartPeriod('monthly')} className={cn("px-3 py-1 text-xs font-black uppercase rounded-md ml-0.5", chartPeriod === 'monthly' ? "bg-emerald-500 text-white" : "text-[#4B6478]")}>M</button>
-             </div>
+      {/* ── 3. QUICK ACTIONS 2×2 ── */}
+      <motion.div variants={fadeUp} className="px-4 mb-4">
+        <div className="grid grid-cols-2 gap-2">
+          <QuickAction icon={Plus}      label="Catat Transaksi" color="#10B981" onClick={() => setWizardOpen(true)} />
+          <QuickAction icon={Wallet}    label="Piutang RPA"     color="#F87171" onClick={() => navigate('/broker/rpa')} />
+          <QuickAction icon={Truck}     label="Pengiriman"      color="#F59E0B" onClick={() => navigate('/broker/pengiriman')} />
+          <QuickAction icon={BarChart2} label="Transaksi"       color="#818CF8" onClick={() => navigate('/broker/transaksi')} />
+        </div>
+      </motion.div>
+
+      {/* ── 4. RECENT ACTIVITY ── */}
+      <motion.div variants={fadeUp} className="px-4 mb-4">
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4B6478]">Aktivitas Terkini</h3>
+          <button onClick={() => navigate('/broker/transaksi')} className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Lihat Semua</button>
+        </div>
+        <div className="space-y-2">
+          {recentActivity.length > 0 ? (
+            recentActivity.map(item => <ActivityItem key={item.id} item={item} />)
+          ) : (
+            <div className="text-center py-5 bg-[#0C1319] border border-white/[0.05] rounded-[16px]">
+              <p className="text-[11px] text-[#4B6478] font-bold">Belum ada aktivitas</p>
+            </div>
+          )}
+        </div>
+      </motion.div>
+
+      {/* ── 5. PROFIT CHART ── */}
+      <motion.div variants={fadeUp} className="px-4 mb-4">
+        <div className="bg-[#0C1319] border border-white/5 rounded-[20px] p-4">
+          <div className="flex justify-between items-center mb-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4B6478]">Pengeluaran / Profit</p>
+              <p className="text-xl font-display font-black text-[#F1F5F9] tabular-nums leading-none mt-0.5">
+                {chartPeriod === 'weekly' ? formatIDRShort(data?.chart.totalNetProfitWeekly) : formatIDRShort(data?.chart.totalNetProfitMonthly)}
+              </p>
+            </div>
+            <div className="flex bg-black/30 p-0.5 rounded-lg border border-white/5">
+              <button onClick={() => setChartPeriod('weekly')} className={cn("px-3 py-1 text-[10px] font-black uppercase rounded-md transition-all", chartPeriod === 'weekly' ? "bg-emerald-500 text-white" : "text-[#4B6478]")}>W</button>
+              <button onClick={() => setChartPeriod('monthly')} className={cn("px-3 py-1 text-[10px] font-black uppercase rounded-md ml-0.5 transition-all", chartPeriod === 'monthly' ? "bg-emerald-500 text-white" : "text-[#4B6478]")}>M</button>
+            </div>
           </div>
-          <div className="h-[180px] w-full overflow-hidden">
+          <div className="h-[130px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartPeriod === 'weekly' ? data?.chart.weekly : data?.chart.monthly}>
-                <XAxis dataKey="name" hide />
-                <RechartsTooltip content={() => null} />
-                <Area type="monotone" dataKey="profit" stroke="#10B981" strokeWidth={2.5} fill="rgba(16,185,129,0.1)" />
-              </AreaChart>
+              <BarChart data={chartPeriod === 'weekly' ? data?.chart.weekly : data?.chart.monthly} barSize={10} barCategoryGap="30%">
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#4B6478', fontSize: 9, fontWeight: 800 }} dy={6} />
+                <RechartsTooltip content={() => null} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
+                <Bar dataKey="profit" radius={[4, 4, 0, 0]} fill="#10B981" />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
-      </section>
-
-      {/* Agenda Section - Moves Below Chart on Mobile */}
-      <div className="px-5">
-        <AgendaSection
-          data={data}
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-          currentMonth={currentMonth}
-          setCurrentMonth={setCurrentMonth}
-          agendaFilter={agendaFilter}
-          setAgendaFilter={setAgendaFilter}
-          isDesktop={false}
-        />
-      </div>
-
-      <section className="px-5 mt-8 mb-4">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#4B6478]">Piutang RPA</h3>
-          <Button variant="link" size="sm" className="text-xs font-black uppercase text-emerald-400 p-0 h-auto" onClick={() => navigate('/broker/rpa')}>Lihat Semua</Button>
-        </div>
-        <div className="space-y-2.5">
-          {data?.rpaWithDebt.map(rpa => (
-            <div key={rpa.id} className="p-3.5 bg-[#111C24] border border-white/5 rounded-2xl flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/5 flex items-center justify-center font-black text-emerald-400 text-xs">{rpa.rpa_name[0]}</div>
-                <p className="text-sm font-bold text-[#F1F5F9]">{rpa.rpa_name}</p>
-              </div>
-              <p className="text-sm font-black text-red-400 tabular-nums">{formatIDRShort(rpa.total_outstanding)}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      </motion.div>
     </motion.div>
   )
 }
@@ -647,6 +671,43 @@ function KPICardNew({ label, value, sub, icon: Icon, onClick, trend, small, comp
       </div>
       {sub && !compact && <p className={cn("text-[#4B6478] font-bold mt-1 uppercase tracking-wider", small ? "text-xs" : "text-[11px]")}>{sub}</p>}
     </Card>
+  )
+}
+
+function QuickAction({ icon: Icon, label, color, onClick }) {
+  return (
+    <motion.button
+      whileTap={{ scale: 0.95 }}
+      onClick={onClick}
+      className="flex items-center gap-2.5 p-3.5 bg-[#0C1319] border border-white/[0.05] rounded-[16px] text-left w-full hover:border-white/10 transition-all active:scale-[0.97]"
+    >
+      <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${color}1A` }}>
+        <Icon size={16} style={{ color }} />
+      </div>
+      <span className="text-[13px] font-bold text-[#CBD5E1] leading-tight">{label}</span>
+    </motion.button>
+  )
+}
+
+function ActivityItem({ item }) {
+  const { Icon, color, type, label, amount, date } = item
+  return (
+    <div className="flex items-center gap-3 p-3 bg-[#0C1319] border border-white/[0.05] rounded-[14px]">
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${color}1A` }}>
+        <Icon size={15} style={{ color }} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-[13px] font-bold text-[#E2E8F0] truncate">{label}</p>
+        <p className="text-[10px] text-[#4B6478]">
+          {type} · {date ? format(new Date(date), 'd MMM', { locale: idLocale }) : '—'}
+        </p>
+      </div>
+      {amount != null && (
+        <p className={cn("text-[13px] font-black tabular-nums shrink-0", amount >= 0 ? "text-emerald-400" : "text-red-400")}>
+          {amount >= 0 ? '+' : ''}{formatIDRShort(amount)}
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -717,8 +778,8 @@ function AgendaSection({ data, selectedDate, setSelectedDate, currentMonth, setC
 
   return (
     <Card className="bg-[#0C1319] border-white/5 rounded-[32px] overflow-hidden border-none lg:border flex flex-col h-full">
-      <div className="p-6 md:p-8 flex-1 overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
+      <div className="p-4 md:p-8 flex-1 overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
           <h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-[#F1F5F9]">Agenda</h3>
           <div className="flex items-center gap-1">
              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-[#4B6478]" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}><ChevronLeft size={16} /></Button>
@@ -735,7 +796,7 @@ function AgendaSection({ data, selectedDate, setSelectedDate, currentMonth, setC
           isDesktop={isDesktop}
         />
 
-        <div className="mt-8">
+        <div className="mt-4">
            <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar">
               {['Semua', 'Piutang', 'Panen', 'Pengiriman', 'Pembayaran'].map(tab => (
                  <button
@@ -752,30 +813,30 @@ function AgendaSection({ data, selectedDate, setSelectedDate, currentMonth, setC
               ))}
            </div>
 
-           <div className="grid grid-cols-2 gap-2 mt-4">
+           <div className="grid grid-cols-2 gap-2 mt-3">
               {/* Card Piutang */}
-              <div className="bg-[#111C24] rounded-xl p-3 border border-white/5">
+              <div className="bg-[#111C24] rounded-xl p-2.5 border border-white/5">
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] font-display mb-1">Piutang</p>
                 <p className="text-[#F1F5F9] font-display font-bold text-sm">
                   {formatIDRShort(stats.piutang)}
                 </p>
               </div>
               {/* Card Panen */}
-              <div className="bg-[#111C24] rounded-xl p-3 border border-white/5">
+              <div className="bg-[#111C24] rounded-xl p-2.5 border border-white/5">
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] font-display mb-1">Panen</p>
                 <p className="text-emerald-400 font-display font-bold text-sm">
                   {stats.panen}
                 </p>
               </div>
               {/* Card Pengiriman */}
-              <div className="bg-[#111C24] rounded-xl p-3 border border-white/5">
+              <div className="bg-[#111C24] rounded-xl p-2.5 border border-white/5">
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] font-display mb-1">Pengiriman</p>
                 <p className="text-amber-400 font-display font-bold text-sm">
                   {stats.krm}
                 </p>
               </div>
               {/* Card Pembayaran */}
-              <div className="bg-[#111C24] rounded-xl p-3 border border-white/5">
+              <div className="bg-[#111C24] rounded-xl p-2.5 border border-white/5">
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] font-display mb-1">Pembayaran</p>
                 <p className="text-purple-400 font-display font-bold text-sm">
                   {stats.bayar}
@@ -783,14 +844,14 @@ function AgendaSection({ data, selectedDate, setSelectedDate, currentMonth, setC
               </div>
            </div>
 
-           <div className="space-y-3 mt-8">
+           <div className="space-y-3 mt-4">
               {filteredEvents.length > 0 ? (
                 filteredEvents.map((event, idx) => (
                   <EventItem key={idx} event={event} isDesktop={isDesktop} onClick={() => setSelectedEvent(event)} />
                 ))
               ) : (
-                <div className="text-center py-8">
-                  <CalendarX className="w-10 h-10 text-[#4B6478] mx-auto mb-2" />
+                <div className="text-center py-5">
+                  <CalendarX className="w-8 h-8 text-[#4B6478] mx-auto mb-2" />
                   <p className="text-[#4B6478] text-sm italic">
                     Tidak ada agenda di tanggal ini
                   </p>

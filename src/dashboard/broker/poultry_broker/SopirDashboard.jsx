@@ -4,7 +4,8 @@ import {
   Truck, User, Package, MapPin, 
   Clock, CheckCircle2, AlertCircle,
   Phone, ChevronRight, LogOut,
-  Navigation, CheckCircle, Save, X
+  Navigation, CheckCircle, Save, X,
+  DollarSign
 } from 'lucide-react'
 import { format, isAfter, parseISO } from 'date-fns'
 import { id } from 'date-fns/locale'
@@ -56,15 +57,16 @@ export default function SopirDashboard() {
     enabled: !!profile?.id
   })
 
-  // --- QUERY DELIVERIES ---
-  const { data: deliveries = [], isLoading } = useQuery({
-    queryKey: ['my-deliveries', driverInfo?.id],
+  // --- QUERY DELIVERIES (ACTIVE & COMPLETED) ---
+  const { data: allDeliveries = [], isLoading } = useQuery({
+    queryKey: ['my-all-deliveries', driverInfo?.id],
     queryFn: async () => {
       if (!driverInfo?.id) return []
       const { data, error } = await supabase
         .from('deliveries')
         .select(`
           *,
+          driver_wage,
           sales(
             total_weight_kg, price_per_kg,
             rpa_clients(rpa_name),
@@ -73,7 +75,6 @@ export default function SopirDashboard() {
         `)
         .eq('driver_id', driverInfo.id)
         .eq('is_deleted', false)
-        .in('status', ['preparing', 'loading', 'on_route', 'arrived'])
         .order('created_at', { ascending: false })
       
       if (error) throw error
@@ -81,6 +82,10 @@ export default function SopirDashboard() {
     },
     enabled: !!driverInfo?.id
   })
+
+  const deliveries = useMemo(() => allDeliveries.filter(d => ['preparing', 'loading', 'on_route', 'arrived'].includes(d.status)), [allDeliveries])
+  const completedDeliveries = useMemo(() => allDeliveries.filter(d => d.status === 'completed'), [allDeliveries])
+  const totalEarnings = useMemo(() => completedDeliveries.reduce((acc, d) => acc + (d.driver_wage || 0), 0), [completedDeliveries])
 
   // --- MUTATIONS ---
   const updateStatus = async (deliveryId, newStatus) => {
@@ -108,31 +113,56 @@ export default function SopirDashboard() {
   // --- RENDER ---
   return (
     <div className="bg-[#06090F] min-h-screen text-[#F1F5F9] font-body relative">
-      {/* Header */}
-      <header className="px-6 pt-12 pb-6 flex justify-between items-start sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-40 border-b border-white/5">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-lg">🐔</div>
-            <h1 className="font-display text-xl font-black tracking-tighter uppercase">TernakOS</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-[#4B6478] uppercase tracking-widest">{profile?.full_name}</span>
-            <Badge className="bg-purple-500/10 text-purple-400 border-none text-[8px] font-black uppercase px-2 py-0.5">SOPIR</Badge>
+      <header className="h-14 px-4 flex justify-between items-center sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-40 border-b border-white/5">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center text-sm">🐔</div>
+          <div>
+            <h1 className="font-display text-[14px] font-black tracking-tighter uppercase leading-none">TernakOS</h1>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="text-[10px] font-bold text-[#4B6478] uppercase tracking-widest">{profile?.full_name}</span>
+              <Badge className="bg-purple-500/10 text-purple-400 border-none text-[8px] font-black uppercase px-1.5 py-0">SOPIR</Badge>
+            </div>
           </div>
         </div>
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={handleLogout}
-          className="text-[#4B6478] hover:text-red-400 hover:bg-red-400/10 rounded-xl"
+          className="w-11 h-11 text-[#4B6478] hover:text-red-400 hover:bg-red-400/10 rounded-xl"
         >
-          <LogOut size={20} />
+          <LogOut size={18} />
         </Button>
       </header>
 
-      <main className="px-6 py-8 space-y-6 pb-24">
-        <h2 className="font-display text-lg font-black uppercase tracking-widest flex items-center gap-3">
-          <Truck size={20} className="text-emerald-400" />
+      <main className="px-4 py-5 space-y-5 pb-24">
+        {/* EARNINGS SUMMARY CARD */}
+        <Card className="bg-[#111C24] border-white/5 rounded-[24px] overflow-hidden shadow-xl">
+          <CardContent className="p-4">
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Total Pendapatan</span>
+              <Badge className="bg-emerald-500/10 text-emerald-500 border-none text-[8px] font-black uppercase">
+                {completedDeliveries.length} Trip Selesai
+              </Badge>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-display font-black text-white">{formatIDR(totalEarnings)}</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-white/5">
+              <div>
+                <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mb-1">Tugas Aktif</p>
+                <p className="text-base font-black text-white">{deliveries.length}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mb-1">Trip Selesai</p>
+                <p className="text-base font-black text-emerald-400">{completedDeliveries.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <h2 className="font-display text-[15px] font-black uppercase tracking-widest flex items-center gap-2.5">
+          <Truck size={18} className="text-emerald-400" />
           Pengiriman Saya
         </h2>
 
@@ -218,12 +248,12 @@ function DeliveryCard({ delivery, onUpdateStatus, onTiba }) {
   const { label, color, icon: Icon } = statusConfig[effectiveStatus] || statusConfig.preparing
 
   return (
-    <Card className="bg-[#111C24] border-white/5 rounded-[32px] overflow-hidden shadow-xl">
+    <Card className="bg-[#111C24] border-white/5 rounded-[22px] overflow-hidden shadow-lg">
       <CardContent className="p-0">
-        <div className={cn("p-4 flex items-center justify-between", color, "bg-opacity-10")}>
-          <div className="flex items-center gap-3">
-            <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center text-white", color)}>
-              <Icon size={20} strokeWidth={2.5} />
+        <div className={cn("px-4 py-3 flex items-center justify-between", color, "bg-opacity-10")}>
+          <div className="flex items-center gap-2.5">
+            <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center text-white", color)}>
+              <Icon size={18} strokeWidth={2.5} />
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Status</p>
@@ -235,7 +265,7 @@ function DeliveryCard({ delivery, onUpdateStatus, onTiba }) {
           </Badge>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-4 space-y-4">
           {/* Info Utama */}
           <div className="space-y-4">
             <div className="flex items-start gap-4">
@@ -256,6 +286,16 @@ function DeliveryCard({ delivery, onUpdateStatus, onTiba }) {
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Tujuan (Buyer)</p>
                 <h5 className="font-bold text-sm text-white truncate">{delivery.sales?.rpa_clients?.rpa_name || 'Buyer'}</h5>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-4 p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/10">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
+                <DollarSign size={16} className="text-emerald-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500/50">Upah Trip Ini</p>
+                <p className="font-black text-sm text-emerald-400">{formatIDR(delivery.driver_wage || 0)}</p>
               </div>
             </div>
 
@@ -283,37 +323,37 @@ function DeliveryCard({ delivery, onUpdateStatus, onTiba }) {
           </div>
 
           {/* Action Buttons */}
-          <div className="pt-4 border-t border-white/5 space-y-3">
+          <div className="pt-3 border-t border-white/5 space-y-2.5">
             {delivery.status === 'preparing' && (
-              <Button 
+              <Button
                 onClick={() => onUpdateStatus(delivery.id, 'loading')}
-                className="w-full h-14 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-amber-500/20"
+                className="w-full h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-transform"
               >
-                Mulai Loading <Package size={16} className="ml-2" />
+                Mulai Loading <Package size={15} className="ml-2" />
               </Button>
             )}
             {delivery.status === 'loading' && (
-              <Button 
+              <Button
                 onClick={() => onUpdateStatus(delivery.id, 'on_route')}
-                className="w-full h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/20"
+                className="w-full h-11 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-transform"
               >
-                Mulai Jalan <Navigation size={16} className="ml-2" />
+                Mulai Jalan <Navigation size={15} className="ml-2" />
               </Button>
             )}
             {delivery.status === 'on_route' && (
-              <Button 
+              <Button
                 onClick={onTiba}
-                className="w-full h-14 rounded-2xl bg-purple-500 hover:bg-purple-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-purple-500/20"
+                className="w-full h-11 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-purple-500/20 active:scale-[0.98] transition-transform"
               >
-                Sudah Tiba <MapPin size={16} className="ml-2" />
+                Sudah Tiba <MapPin size={15} className="ml-2" />
               </Button>
             )}
             {delivery.status === 'arrived' && (
-              <Button 
-                onClick={onTiba} // Arrived means need data update
-                className="w-full h-14 rounded-2xl bg-gray-500 hover:bg-gray-600 text-white font-black text-xs uppercase tracking-widest"
+              <Button
+                onClick={onTiba}
+                className="w-full h-11 rounded-xl bg-gray-500 hover:bg-gray-600 text-white font-black text-xs uppercase tracking-widest active:scale-[0.98] transition-transform"
               >
-                Lengkapi Data Tiba <ChevronRight size={16} className="ml-2" />
+                Lengkapi Data Tiba <ChevronRight size={15} className="ml-2" />
               </Button>
             )}
           </div>
@@ -361,27 +401,27 @@ function UpdateTibaSheet({ isOpen, onClose, delivery, onSuccess }) {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="bottom" className="bg-[#0C1319] border-t border-white/10 p-0 rounded-t-[32px] overflow-y-auto max-h-[90vh]">
-        <div className="p-8 space-y-8 pb-12">
+      <SheetContent side="bottom" className="bg-[#0C1319] border-t border-white/10 p-0 rounded-t-[24px] overflow-y-auto max-h-[92vh]">
+        <div className="p-5 space-y-5 pb-10">
           <SheetHeader className="text-left">
-            <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight flex items-center gap-3">
-              <CheckCircle size={24} className="text-emerald-500" />
+            <SheetTitle className="text-white font-display text-xl font-black uppercase tracking-tight flex items-center gap-2.5">
+              <CheckCircle size={20} className="text-emerald-500" />
               Laporkan Kedatangan
             </SheetTitle>
-            <SheetDescription className="text-[#4B6478] font-bold uppercase text-[10px] tracking-widest mt-1">
+            <SheetDescription className="text-[#4B6478] font-bold uppercase text-[10px] tracking-widest mt-0.5">
               Kirim data akhir pengiriman untuk diaudit Broker
             </SheetDescription>
           </SheetHeader>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 gap-6">
-              <div className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4B6478] ml-1">Ekor Tiba *</Label>
-                <Input 
+                <Input
                   type="number"
                   value={arrivedCount}
                   onChange={(e) => setArrivedCount(e.target.value)}
-                  className="h-16 rounded-2xl bg-[#111C24] border-white/5 font-black text-xl text-emerald-400 placeholder:text-white/5"
+                  className="h-12 rounded-xl bg-[#111C24] border-white/5 font-black text-base text-emerald-400 placeholder:text-white/5"
                   placeholder="0"
                   required
                 />
@@ -390,14 +430,14 @@ function UpdateTibaSheet({ isOpen, onClose, delivery, onSuccess }) {
                 </p>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4B6478] ml-1">Berat Tiba (Kg) *</Label>
-                <Input 
+                <Input
                   type="number"
                   step="0.01"
                   value={arrivedWeight}
                   onChange={(e) => setArrivedWeight(e.target.value)}
-                  className="h-16 rounded-2xl bg-[#111C24] border-white/5 font-black text-xl text-blue-400 placeholder:text-white/5"
+                  className="h-12 rounded-xl bg-[#111C24] border-white/5 font-black text-base text-blue-400 placeholder:text-white/5"
                   placeholder="0.00"
                   required
                 />
@@ -406,29 +446,29 @@ function UpdateTibaSheet({ isOpen, onClose, delivery, onSuccess }) {
                 </p>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4B6478] ml-1">Catatan Kejadian</Label>
-                <Textarea 
+                <Textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="CONTOH: AYAM MATI 2 EKOR DI PERJALANAN, HUJAN DERAS..." 
-                  className="rounded-2xl bg-[#111C24] border-white/5 font-bold text-xs uppercase p-4 min-h-[100px] text-white" 
+                  placeholder="Contoh: Ayam mati 2 ekor, hujan deras..."
+                  className="rounded-xl bg-[#111C24] border-white/5 font-bold text-sm p-3.5 min-h-[80px] text-white"
                 />
               </div>
             </div>
 
-            <Button 
+            <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-16 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-[24px] shadow-xl shadow-emerald-500/20"
+              className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.15em] rounded-xl shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-transform"
             >
-              {isSubmitting ? 'MENGIRIM LAPORAN...' : 'KIRIM LAPORAN KEDATANGAN'}
+              {isSubmitting ? 'Mengirim Laporan...' : 'Kirim Laporan Kedatangan'}
             </Button>
-            <Button 
-              type="button" 
-              variant="ghost" 
+            <Button
+              type="button"
+              variant="ghost"
               onClick={onClose}
-              className="w-full text-[#4B6478] hover:text-white text-[10px] font-black uppercase"
+              className="w-full h-10 text-[#4B6478] hover:text-white text-[10px] font-black uppercase"
             >
               Batalkan
             </Button>

@@ -4,6 +4,7 @@ export function InputRupiah({
   value,
   onChange,
   placeholder = '0',
+  id,
   ...props
 }) {
   // Format angka ke "1.500.000"
@@ -38,6 +39,7 @@ export function InputRupiah({
         Rp
       </span>
       <Input
+        id={id}
         {...props}
         value={formatDisplay(value)}
         onChange={handleChange}

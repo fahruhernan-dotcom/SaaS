@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Search, Phone, MapPin, ChevronRight, CheckCircle2, Building2, User, Star, Trash2, Lock, Unlock } from 'lucide-react'
+import { Plus, Search, Phone, MapPin, ChevronRight, CheckCircle2, Building2, User, Star, Trash2, Lock, Unlock, Menu } from 'lucide-react'
 import { useRPA } from '@/lib/hooks/useRPA'
 import { useSales } from '@/lib/hooks/useSales'
 import {
@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useOutletContext } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useQueryClient } from '@tanstack/react-query'
@@ -74,6 +74,7 @@ export default function RPA() {
     const { brokerType } = useParams()
     const brokerBase = `/broker/${brokerType || 'broker_ayam'}`
     const _navigate = useNavigate()
+    const { setSidebarOpen } = useOutletContext() || {}
     const navigate = (path, options) => {
         if (path.startsWith('/broker')) {
             return _navigate(path.replace('/broker', brokerBase), options)
@@ -119,21 +120,44 @@ export default function RPA() {
             className="bg-[#06090F] min-h-screen pb-24"
         >
             {/* TopBar */}
-            <header className={cn("px-5 pb-4 border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 flex flex-col gap-1", isDesktop ? "pt-8" : "pt-10")}>
-                <div className="flex justify-between items-center text-left">
+            <header className={cn("border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30", isDesktop ? "px-5 pt-8 pb-4 flex flex-col gap-1" : "h-14 px-4 flex items-center justify-between")}>
+                {isDesktop ? (
+                  <div className="flex justify-between items-center text-left">
                     <div>
-                        <h1 className={cn("font-display font-black text-white tracking-tight leading-none uppercase", isDesktop ? "text-2xl" : "text-xl")}>RPA & Piutang</h1>
-                        <p className={cn("font-bold text-[#4B6478] uppercase mt-1", isDesktop ? "text-[11px]" : "text-[10px]")}>{rpas?.length || 0} pembeli terdaftar</p>
+                      <h1 className="font-display text-2xl font-black text-white tracking-tight leading-none uppercase">RPA & Piutang</h1>
+                      <p className="text-[11px] font-bold text-[#4B6478] uppercase mt-1">{rpas?.length || 0} pembeli terdaftar</p>
                     </div>
                     <Button
-                        size="sm"
-                        onClick={() => { setEditingRPA(null); setOpenModal(true); }}
-                        className={cn("bg-[#10B981] hover:bg-[#0D9668] text-white font-black uppercase tracking-widest rounded-xl px-4 gap-2 border-none shadow-[0_4px_12px_rgba(16,185,129,0.2)] h-10 transition-all active:scale-95", isDesktop ? "text-[10px]" : "text-xs")}
+                      size="sm"
+                      onClick={() => { setEditingRPA(null); setOpenModal(true); }}
+                      className="bg-[#10B981] hover:bg-[#0D9668] text-white font-black uppercase tracking-widest text-[10px] rounded-xl px-4 gap-2 border-none shadow-[0_4px_12px_rgba(16,185,129,0.2)] h-10 transition-all active:scale-95"
                     >
-                        <Plus size={16} />
-                        Tambah
+                      <Plus size={16} /> Tambah
                     </Button>
-                </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setSidebarOpen?.(true)}
+                        className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+                      >
+                        <Menu size={16} className="text-[#94A3B8]" />
+                      </button>
+                      <div>
+                        <h1 className="font-display text-[15px] font-black text-white tracking-tight leading-none uppercase">RPA & Piutang</h1>
+                        <p className="text-[10px] font-bold text-[#4B6478] uppercase mt-0.5">{rpas?.length || 0} pembeli</p>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => { setEditingRPA(null); setOpenModal(true); }}
+                      className="h-9 px-3 bg-[#10B981] hover:bg-[#0D9668] text-white font-black uppercase tracking-widest text-xs rounded-xl gap-1.5 border-none active:scale-95 transition-all"
+                    >
+                      <Plus size={15} /> Tambah
+                    </Button>
+                  </>
+                )}
             </header>
 
             {/* Summary Card */}
@@ -407,7 +431,7 @@ function RPACard({ rpa, isDesktop, onClick, onEdit }) {
 
 export function RPAForm({ rpa, isDesktop, onClose, onSubmit, onDelete }) {
     const { profile } = useAuth()
-    const isOwner = profile?.role === 'owner'
+    const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin'
     const [isLoading, setIsLoading] = useState(false)
     
     const { register, handleSubmit, watch, setValue, control, formState: { errors } } = useForm({

@@ -256,106 +256,106 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onComplete, onSho
     return (
         <>
         <motion.div variants={itemVariants}>
-            <Card className="bg-[#111C24] border-white/5 rounded-[28px] overflow-hidden shadow-xl hover:border-white/10 transition-all group">
+            <Card className={cn("bg-[#111C24] border-white/5 overflow-hidden shadow-xl hover:border-white/10 transition-all group", isDesktop ? "rounded-[28px]" : "rounded-[22px]")}>
                 <CardContent className="p-0">
                     {/* Header: Status + Date */}
-                    <div className="p-6 pb-4 flex justify-between items-start">
-                        <div className="flex items-center gap-2">
-                             <div 
-                                className={cn("px-3 py-1.5 rounded-lg font-black uppercase tracking-widest flex items-center gap-1.5", isDesktop ? "text-[9px]" : "text-xs")}
+                    <div className={cn("flex justify-between items-start", isDesktop ? "p-6 pb-4" : "p-4 pb-3")}>
+                        <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
+                             <div
+                                className={cn("px-2.5 py-1 rounded-lg font-black uppercase tracking-widest flex items-center gap-1.5 shrink-0", isDesktop ? "text-[9px] px-3 py-1.5" : "text-[10px]")}
                                 style={{ backgroundColor: meta.bg, color: meta.color }}
                              >
                                  {meta.pulse && (
-                                     <span className="relative flex h-2 w-2">
+                                     <span className="relative flex h-1.5 w-1.5">
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: meta.color }}></span>
-                                        <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: meta.color }}></span>
+                                        <span className="relative inline-flex rounded-full h-1.5 w-1.5" style={{ backgroundColor: meta.color }}></span>
                                      </span>
                                  )}
                                  {meta.label}
                              </div>
-                             <h4 className="font-display font-black text-white text-sm uppercase tracking-tight truncate max-w-[150px]">{rpaName}</h4>
+                             <h4 className={cn("font-display font-black text-white uppercase tracking-tight truncate", isDesktop ? "text-sm max-w-[150px]" : "text-[13px]")}>{rpaName}</h4>
                         </div>
-                        <span className={cn("font-black text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-[10px]" : "text-xs")}>
-                            {format(new Date(delivery.created_at), 'dd MMM yyyy')}
+                        <span className={cn("font-black text-[#4B6478] uppercase tracking-widest shrink-0", isDesktop ? "text-[10px]" : "text-[9px] text-right leading-tight")}>
+                            {format(new Date(delivery.created_at), isDesktop ? 'dd MMM yyyy' : 'dd\nMMM yyyy')}
                         </span>
                     </div>
 
                     {/* Route Info */}
-                    <div className="px-6 py-4 bg-white/[0.02] flex items-center gap-4">
+                    <div className={cn("bg-white/[0.02] flex items-center gap-3", isDesktop ? "px-6 py-4" : "px-4 py-3")}>
                          <div className="flex-1 min-w-0">
-                             <p className={cn("font-black text-[#4B6478] uppercase tracking-widest mb-1", isDesktop ? "text-[10px]" : "text-xs")}>Dari Kandang</p>
-                             <p className="text-xs font-black text-[#94A3B8] truncate">{farmName}</p>
+                             <p className={cn("font-black text-[#4B6478] uppercase tracking-widest mb-1", isDesktop ? "text-[10px]" : "text-[9px]")}>Dari Kandang</p>
+                             <p className={cn("font-black text-[#94A3B8] truncate", isDesktop ? "text-xs" : "text-[11px]")}>{farmName}</p>
                          </div>
-                         <div className="w-10 h-10 rounded-full border border-white/5 bg-secondary/10 flex items-center justify-center text-emerald-500/40">
-                             <Truck size={18} strokeWidth={2.5} />
+                         <div className={cn("rounded-full border border-white/5 bg-secondary/10 flex items-center justify-center text-emerald-500/40 shrink-0", isDesktop ? "w-10 h-10" : "w-7 h-7")}>
+                             <Truck size={isDesktop ? 18 : 14} strokeWidth={2.5} />
                          </div>
                          <div className="flex-1 min-w-0 text-right">
-                             <p className={cn("font-black text-[#4B6478] uppercase tracking-widest mb-1", isDesktop ? "text-[10px]" : "text-xs")}>Ke Buyer</p>
-                             <p className="text-xs font-black text-[#F1F5F9] truncate">{rpaName}</p>
+                             <p className={cn("font-black text-[#4B6478] uppercase tracking-widest mb-1", isDesktop ? "text-[10px]" : "text-[9px]")}>Ke Buyer</p>
+                             <p className={cn("font-black text-[#F1F5F9] truncate", isDesktop ? "text-xs" : "text-[11px]")}>{rpaName}</p>
                          </div>
                     </div>
 
                     {/* Details Grid */}
-                    <div className="p-6 grid grid-cols-3 gap-6">
-                         <DetailItem 
-                             icon={Truck} 
-                             label="Kendaraan" 
+                    <div className={cn("grid grid-cols-3", isDesktop ? "p-6 gap-6" : "p-4 gap-3")}>
+                         <DetailItem
+                             icon={Truck}
+                             label="Kendaraan"
                              value={
                                  <div className="flex flex-col gap-1 items-start w-full min-w-0">
                                      <span className="truncate w-full block">{delivery.vehicles ? `${delivery.vehicles.brand || ''} ${delivery.vehicles.vehicle_plate || ''}`.trim() : `${delivery.vehicle_type || '-'} ${delivery.vehicle_plate || ''}`.trim()}</span>
                                      {!delivery.vehicle_id && (
-                                         <Badge className={cn("border-none bg-red-500/10 text-red-400 font-black uppercase px-1.5 py-0 h-4 rounded-md", isDesktop ? "text-[8px]" : "text-[11px]")}>
-                                             Belum Terdaftar
+                                         <Badge className={cn("border-none bg-red-500/10 text-red-400 font-black uppercase px-1.5 py-0 h-4 rounded-md", isDesktop ? "text-[8px]" : "text-[9px]")}>
+                                             Tdk Terdaftar
                                          </Badge>
                                      )}
                                  </div>
-                             } 
+                             }
                          />
-                         <DetailItem 
-                             icon={User} 
-                             label="Sopir" 
+                         <DetailItem
+                             icon={User}
+                             label="Sopir"
                              value={
                                  <div className="flex flex-col gap-1 items-start w-full min-w-0">
                                      <span className="truncate w-full block">{delivery.drivers?.full_name || delivery.driver_name || '-'}</span>
                                      {!delivery.driver_id && (
-                                         <Badge className={cn("border-none bg-red-500/10 text-red-400 font-black uppercase px-1.5 py-0 h-4 rounded-md", isDesktop ? "text-[8px]" : "text-[11px]")}>
-                                             Belum Terdaftar
+                                         <Badge className={cn("border-none bg-red-500/10 text-red-400 font-black uppercase px-1.5 py-0 h-4 rounded-md", isDesktop ? "text-[8px]" : "text-[9px]")}>
+                                             Tdk Terdaftar
                                          </Badge>
                                      )}
                                  </div>
-                             } 
+                             }
                          />
                          <DetailItem icon={Package} label="Muatan" value={`${delivery.initial_count} ekor`} />
                     </div>
 
                     {/* Timeline (Conditional) */}
                     {(delivery.load_time || delivery.departure_time || delivery.arrival_time) && (
-                        <div className="px-6 pb-6 mt-2">
+                        <div className={cn("mt-1", isDesktop ? "px-6 pb-6" : "px-4 pb-4")}>
                              <Timeline delivery={delivery} status={effectiveStatus} />
                         </div>
                     )}
 
                     {/* Completion results */}
                     {delivery.status === 'completed' && (
-                        <div className="mx-6 mb-6 p-4 rounded-2xl bg-white/[0.03] border border-white/5 grid grid-cols-2 gap-4">
+                        <div className={cn("p-4 rounded-2xl bg-white/[0.03] border border-white/5 grid grid-cols-2 gap-4", isDesktop ? "mx-6 mb-6" : "mx-4 mb-3")}>
                             <div>
-                                <p className={cn("font-black text-[#4B6478] uppercase tracking-widest mb-1", isDesktop ? "text-[9px]" : "text-xs")}>Hasil Tiba</p>
+                                <p className={cn("font-black text-[#4B6478] uppercase tracking-widest mb-1", isDesktop ? "text-[9px]" : "text-[9px]")}>Hasil Tiba</p>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs font-black text-white">{delivery.arrived_count} Ekor</span>
-                                    <span className={cn("font-bold text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>/ {delivery.arrived_weight_kg} kg</span>
+                                    <span className={cn("font-black text-white", isDesktop ? "text-xs" : "text-[11px]")}>{delivery.arrived_count} Ekor</span>
+                                    <span className={cn("font-bold text-[#4B6478]", isDesktop ? "text-[10px]" : "text-[10px]")}>/ {delivery.arrived_weight_kg} kg</span>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className={cn("font-black text-[#4B6478] uppercase tracking-widest mb-1", isDesktop ? "text-[9px]" : "text-xs")}>Discrepancy</p>
-                                <div className="flex items-center justify-end gap-3">
+                                <p className={cn("font-black text-[#4B6478] uppercase tracking-widest mb-1", "text-[9px]")}>Discrepancy</p>
+                                <div className="flex items-center justify-end gap-2">
                                     {delivery.mortality_count > 0 && (
-                                        <span className={cn("font-black text-red-400", isDesktop ? "text-[10px]" : "text-xs")}>-{delivery.mortality_count} Mati</span>
+                                        <span className={cn("font-black text-red-400", isDesktop ? "text-[10px]" : "text-[11px]")}>-{delivery.mortality_count} Mati</span>
                                     )}
                                     {delivery.shrinkage_kg > 0 && (
-                                        <span className={cn("font-black text-amber-500", isDesktop ? "text-[10px]" : "text-xs")}>-{delivery.shrinkage_kg} kg</span>
+                                        <span className={cn("font-black text-amber-500", isDesktop ? "text-[10px]" : "text-[11px]")}>-{delivery.shrinkage_kg} kg</span>
                                     )}
                                     {delivery.mortality_count === 0 && (delivery.shrinkage_kg || 0) <= 0 && (
-                                        <span className={cn("font-black text-emerald-400", isDesktop ? "text-[10px]" : "text-xs")}>AMAN</span>
+                                        <span className={cn("font-black text-emerald-400", isDesktop ? "text-[10px]" : "text-[11px]")}>AMAN</span>
                                     )}
                                 </div>
                             </div>
@@ -367,24 +367,24 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onComplete, onSho
                         {/* Primary Action Button */}
                         <div className="flex gap-2 w-full">
                             {(!delivery.departure_time && delivery.status !== 'arrived' && delivery.status !== 'completed') ? (
-                                <Button 
+                                <Button
                                     onClick={() => onUpdateStatus?.(delivery)}
-                                    className={cn("flex-1 h-12 border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 text-amber-500 font-black uppercase tracking-widest rounded-xl gap-2 shadow-lg shadow-amber-500/5", isDesktop ? "text-[11px]" : "text-xs")}
+                                    className={cn("flex-1 border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 text-amber-500 font-black uppercase tracking-widest rounded-xl gap-2 shadow-lg shadow-amber-500/5", isDesktop ? "h-12 text-[11px]" : "h-10 text-[11px]")}
                                 >
-                                    <Clock size={16} /> Konfirmasi Berangkat
+                                    <Clock size={15} /> Konfirmasi Berangkat
                                 </Button>
                             ) : (delivery.status === 'on_route' || (delivery.departure_time && delivery.status !== 'arrived' && delivery.status !== 'completed')) ? (
-                                <Button 
+                                <Button
                                     onClick={() => onUpdateTiba(delivery)}
-                                    className={cn("flex-1 h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 gap-2", isDesktop ? "text-[11px]" : "text-xs")}
+                                    className={cn("flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 gap-2", isDesktop ? "h-12 text-[11px]" : "h-10 text-[11px]")}
                                 >
-                                    <CheckCircle2 size={16} /> Catat Kedatangan
+                                    <CheckCircle2 size={15} /> Catat Kedatangan
                                 </Button>
                             ) : delivery.status === 'arrived' ? (
                                 <button
                                     type="button"
                                     onClick={() => setShowCompleteConfirm(true)}
-                                    className={cn("flex-1 h-12 rounded-xl font-black uppercase tracking-widest text-white flex items-center justify-center gap-2 active:scale-95 transition-all", isDesktop ? "text-[11px]" : "text-xs")}
+                                    className={cn("flex-1 rounded-xl font-black uppercase tracking-widest text-white flex items-center justify-center gap-2 active:scale-95 transition-all", isDesktop ? "h-12 text-[11px]" : "h-10 text-[11px]")}
                                     style={{
                                         background: 'linear-gradient(135deg, #10B981 0%, #F59E0B 100%)',
                                         boxShadow: '0 8px 16px -4px rgba(245,158,11,0.4), 0 4px 8px -2px rgba(16,185,129,0.3)',
@@ -398,36 +398,36 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onComplete, onSho
                                     <Button
                                         variant="outline"
                                         onClick={() => onEditArrival(delivery)}
-                                        className={cn("flex-1 h-10 text-emerald-400 border-emerald-500/10 hover:bg-emerald-500/5 font-black uppercase tracking-widest gap-2", isDesktop ? "text-[10px]" : "text-[11px]")}
+                                        className={cn("flex-1 h-9 text-emerald-400 border-emerald-500/10 hover:bg-emerald-500/5 font-black uppercase tracking-widest gap-2", isDesktop ? "text-[10px]" : "text-[10px]")}
                                     >
                                         <Pencil size={12} /> Edit Kedatangan
                                     </Button>
                                     <Button
                                         variant="ghost"
                                         onClick={() => onShowLogistics(delivery)}
-                                        className={cn("flex-1 h-10 text-[#4B6478] hover:text-white font-black uppercase tracking-widest", isDesktop ? "text-[10px]" : "text-[11px]")}
+                                        className={cn("flex-1 h-9 text-[#4B6478] hover:text-white font-black uppercase tracking-widest", isDesktop ? "text-[10px]" : "text-[10px]")}
                                     >
-                                        Lihat Detail Logistik
+                                        Detail Logistik
                                     </Button>
                                 </>
                             ) : (
-                                <Button 
+                                <Button
                                     variant="outline"
                                     onClick={() => onUpdateStatus?.(delivery)}
-                                    className={cn("flex-1 h-12 border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-400 font-black uppercase tracking-widest rounded-xl gap-2", isDesktop ? "text-[11px]" : "text-xs")}
+                                    className={cn("flex-1 border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-400 font-black uppercase tracking-widest rounded-xl gap-2", isDesktop ? "h-12 text-[11px]" : "h-10 text-[11px]")}
                                 >
-                                    <Clock size={16} /> Update Status
+                                    <Clock size={15} /> Update Status
                                 </Button>
                             )}
                         </div>
-                        
-                        {/* Print Action - Available as long as departure started */}
+
+                        {/* Print Action */}
                         {onPrintSuratJalan && (
                             <Button
                                 variant="outline"
                                 onClick={() => onPrintSuratJalan(delivery)}
                                 disabled={delivery.status === 'pending' || (!delivery.departure_time && !delivery.load_time)}
-                                className={cn("w-full h-10 border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 text-blue-400 font-black uppercase tracking-widest gap-2 disabled:bg-white/5 disabled:border-white/5 disabled:text-[#4B6478]", isDesktop ? "text-[10px]" : "text-[11px]")}
+                                className={cn("w-full border-blue-500/20 bg-blue-500/5 hover:bg-blue-500/10 text-blue-400 font-black uppercase tracking-widest gap-2 disabled:bg-white/5 disabled:border-white/5 disabled:text-[#4B6478]", isDesktop ? "h-10 text-[10px]" : "h-9 text-[10px]")}
                             >
                                 <FileText size={12} /> Cetak Surat Jalan
                             </Button>

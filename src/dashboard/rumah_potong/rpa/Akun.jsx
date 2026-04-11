@@ -428,7 +428,7 @@ export default function RPAAkun() {
               icon={BarChart2}
               label="Harga Pasar"
               sub="Harga ayam broiler hari ini"
-              onClick={() => navigate('/harga-pasar')}
+              onClick={() => navigate('/dashboard/harga-pasar')}
             />
           </div>
         </div>

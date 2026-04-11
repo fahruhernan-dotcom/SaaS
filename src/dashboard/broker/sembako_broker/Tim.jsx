@@ -41,7 +41,7 @@ export default function SembakoTim() {
     location: ''
   });
   
-  const isOwner = profile?.role === 'owner';
+  const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin';
 
   // --- QUERIES ---
   const { data: tenant, isLoading: loadingTenant } = useQuery({

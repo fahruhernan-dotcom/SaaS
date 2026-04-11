@@ -64,8 +64,8 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
   const queryClient = useQueryClient()
   const { tenant, profile } = useAuth()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
-  const isOwner = profile?.role === 'owner'
-  const canWrite = profile?.role === 'owner' || profile?.role === 'staff'
+  const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin'
+  const canWrite = profile?.role === 'owner' || profile?.role === 'staff' || profile?.role === 'superadmin'
   const { data: rpaClients } = useRPA()
   
   const [isEditing, setIsEditing] = useState(false)
@@ -195,10 +195,10 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
     <>
       <Sheet open={isOpen} onOpenChange={handleSheetOpenChange}>
         <SheetContent side="right" className="bg-[#0C1319] border-white/10 w-full sm:max-w-[480px] p-0 flex flex-col pt-0">
-          <SheetHeader className="p-6 border-b border-white/5 shrink-0 text-left">
+          <SheetHeader className={cn("border-b border-white/5 shrink-0 text-left", isDesktop ? "p-6" : "p-4")}>
             <div className="flex justify-between items-start">
               <div className="space-y-1">
-                <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">
+                <SheetTitle className={cn("text-white font-display font-black uppercase tracking-tight", isDesktop ? "text-2xl" : "text-xl")}>
                   {isLoading ? <Skeleton className="h-8 w-40" /> : (
                     isEditing ? 'Edit Transaksi' : (data?.rpa_clients?.rpa_name || 'RPA Umum')
                   )}
@@ -223,7 +223,7 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
             <SheetDescription className="sr-only">Detail transaksi penjualan</SheetDescription>
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-8 no-scrollbar">
+          <div className={cn("flex-1 overflow-y-auto no-scrollbar", isDesktop ? "p-6 space-y-8" : "p-4 space-y-4")}>
             {isLoading ? (
               <div className="space-y-6">
                 <Skeleton className="h-24 w-full rounded-2xl" />
@@ -265,9 +265,9 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
                     </div>
                   </div>
 
-                  <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex justify-between items-center h-16">
+                  <div className={cn("bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex justify-between items-center", isDesktop ? "h-16" : "h-12")}>
                     <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">Net Profit</p>
-                    <p className={`font-display text-2xl font-black ${profit >= 0 ? 'text-emerald-400' : 'text-red-400'} tabular-nums`}>
+                    <p className={cn(`font-display font-black tabular-nums`, profit >= 0 ? 'text-emerald-400' : 'text-red-400', isDesktop ? 'text-2xl' : 'text-lg')}>
                       {profit >= 0 ? '+' : ''}{formatIDR(profit)}
                     </p>
                   </div>
@@ -276,14 +276,14 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
                     <div className="flex gap-3">
                       <Button
                         onClick={() => handleSendWA(data)}
-                        className="flex-1 h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+                        className={cn("flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all", isDesktop ? "h-12" : "h-10")}
                       >
                         <Smartphone size={16} className="mr-2" /> Kirim WA
                       </Button>
                       {delivery?.status === 'arrived' && isOwner && (
                         <Button
                           onClick={() => handleFinalizeSale(data)}
-                          className="flex-[1.5] h-12 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.1em] rounded-2xl shadow-xl shadow-emerald-500/30 flex items-center justify-center gap-2"
+                          className={cn("flex-[1.5] bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-[0.1em] rounded-2xl shadow-xl shadow-emerald-500/30 flex items-center justify-center gap-2", isDesktop ? "h-12" : "h-10")}
                         >
                           <CheckCircle size={16} /> Selesaikan Transaksi
                         </Button>
@@ -291,7 +291,7 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
                       {canWrite && delivery?.status !== 'arrived' && (
                         <Button
                           onClick={() => setIsEditing(true)}
-                          className="flex-1 h-12 bg-white/5 border border-white/10 rounded-2xl text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+                          className={cn("flex-1 bg-white/5 border border-white/10 rounded-2xl text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all", isDesktop ? "h-12" : "h-10")}
                         >
                           Edit Transaksi
                         </Button>
@@ -301,7 +301,7 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
                 </div>
 
                 {isEditing ? (
-                  <div className="space-y-6">
+                  <div className={cn(isDesktop ? "space-y-6" : "space-y-4")}>
                     <div className="space-y-4">
                       <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Data Penjualan</Label>
                       
@@ -311,7 +311,7 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
                            value={editData.rpa_id || ''} 
                            onValueChange={(val) => setEditData(p => ({ ...p, rpa_id: val }))}
                          >
-                           <SelectTrigger className="h-12 bg-[#111C24] border-white/5 rounded-xl font-bold">
+                           <SelectTrigger className={cn("bg-[#111C24] border-white/5 rounded-xl font-bold", isDesktop ? "h-12" : "h-10")}>
                              <SelectValue placeholder="Pilih RPA/Pembeli" />
                            </SelectTrigger>
                            <SelectContent className="bg-[#0C1319] border-white/10">
@@ -338,7 +338,7 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
                            value={editData.payment_status || 'belum_lunas'} 
                            onValueChange={(val) => setEditData(p => ({ ...p, payment_status: val }))}
                          >
-                           <SelectTrigger className="h-12 bg-[#111C24] border-white/5 rounded-xl font-bold uppercase">
+                           <SelectTrigger className={cn("bg-[#111C24] border-white/5 rounded-xl font-bold uppercase", isDesktop ? "h-12" : "h-10")}>
                              <SelectValue />
                            </SelectTrigger>
                            <SelectContent className="bg-[#0C1319] border-white/10 uppercase">
@@ -424,7 +424,7 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
                                 </div>
                                 <div className="flex flex-col">
                                   <span className="text-[10px] font-bold text-[#4B6478] uppercase leading-none mb-1">Bobot Tiba</span>
-                                  <span className="font-display text-2xl font-black text-white tabular-nums leading-none">
+                                  <span className={cn("font-display font-black text-white tabular-nums leading-none", isDesktop ? "text-2xl" : "text-xl")}>
                                     {formatWeight(data?.deliveries?.[0]?.arrived_weight_kg)}
                                   </span>
                                 </div>
@@ -447,7 +447,7 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
                              </div>
                              <div className="text-right">
                                <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest leading-none mb-1">Total Penjualan</p>
-                               <p className="font-display text-2xl font-black text-emerald-400 tabular-nums leading-none drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]">{formatIDR(totalRevenue)}</p>
+                               <p className={cn("font-display font-black text-emerald-400 tabular-nums leading-none drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]", isDesktop ? "text-2xl" : "text-lg")}>{formatIDR(totalRevenue)}</p>
                              </div>
                           </div>
                         </div>
@@ -584,20 +584,20 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
             )}
           </div>
 
-          <div className="p-6 border-t border-white/5 bg-[#0C1319]/80 backdrop-blur-md space-y-3 shrink-0">
+          <div className={cn("border-t border-white/5 bg-[#0C1319]/80 backdrop-blur-md space-y-3 shrink-0", isDesktop ? "p-6" : "p-4")}>
             {isEditing ? (
               <div className="grid grid-cols-2 gap-3">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setIsEditing(false)}
-                  className="h-12 border-white/10 bg-white/5 text-white font-black text-xs uppercase tracking-widest rounded-xl"
+                  className={cn("border-white/10 bg-white/5 text-white font-black text-xs uppercase tracking-widest rounded-xl", isDesktop ? "h-12" : "h-10")}
                 >
                   Batal
                 </Button>
-                <Button 
+                <Button
                   onClick={handleUpdateSale}
                   disabled={isUpdating}
-                  className="h-12 bg-[#10B981] hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20"
+                  className={cn("bg-[#10B981] hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20", isDesktop ? "h-12" : "h-10")}
                 >
                   {isUpdating ? <Loader2 size={16} className="animate-spin mr-2" /> : 'Simpan'}
                 </Button>
@@ -605,49 +605,52 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
             ) : (
               <>
                 {data?.payment_status !== 'lunas' && !isLoading && (
-                  <Button 
+                  <Button
                     onClick={() => setIsPaymentOpen(true)}
-                    className="w-full h-12 bg-[#10B981] hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20"
+                    className={cn("w-full bg-[#10B981] hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20", isDesktop ? "h-12" : "h-10")}
                   >
                     Catat Bayar
                   </Button>
                 )}
                  {data?.deliveries?.[0]?.status === 'arrived' && canWrite && (
-                  <Button 
+                  <Button
                     onClick={() => onFinalize?.(data)}
-                    className="w-full h-12 bg-purple-500 hover:bg-purple-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-purple-500/20 mb-3"
+                    className={cn("w-full bg-purple-500 hover:bg-purple-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-purple-500/20 mb-3", isDesktop ? "h-12" : "h-10")}
                   >
                     <CheckCircle size={16} className="mr-2" /> Audit Selesai
                   </Button>
                 )}
-                
+
                 <div className="grid grid-cols-2 gap-3">
                   <Button
                     onClick={() => setIsEditing(true)}
-                    variant="outline" className="h-12 border-white/10 bg-white/5 text-white font-black text-xs uppercase tracking-widest rounded-xl"
+                    variant="outline" className={cn("border-white/10 bg-white/5 text-white font-black text-xs uppercase tracking-widest rounded-xl", isDesktop ? "h-12" : "h-10")}
                   >
                     <Pencil size={14} className="mr-2" /> Edit
                   </Button>
-                  <Button
-                    onClick={onDelete}
-                    className="h-12 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-black text-xs uppercase tracking-widest rounded-xl"
-                  >
-                    <Trash2 size={14} className="mr-2" /> Hapus
-                  </Button>
+                  {onDelete && (
+                    <Button
+                      onClick={onDelete}
+                      disabled={isLoading}
+                      className={cn("bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 font-black text-xs uppercase tracking-widest rounded-xl disabled:opacity-50", isDesktop ? "h-12" : "h-10")}
+                    >
+                      <Trash2 size={14} className="mr-2" /> Hapus
+                    </Button>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <Button
                     onClick={() => setInvoiceModal({ open: true, type: 'sale' })}
                     variant="outline"
-                    className="h-11 border-white/10 bg-white/[0.03] text-[#94A3B8] font-semibold text-xs uppercase tracking-widest rounded-xl hover:bg-white/[0.06]"
+                    className={cn("border-white/10 bg-white/[0.03] text-[#94A3B8] font-semibold text-xs uppercase tracking-widest rounded-xl hover:bg-white/[0.06]", isDesktop ? "h-11" : "h-9")}
                   >
                     <Printer size={14} className="mr-2" /> Invoice Jual
                   </Button>
                   <Button
                     onClick={() => setInvoiceModal({ open: true, type: 'purchase' })}
                     variant="outline"
-                    className="h-11 border-white/10 bg-white/[0.03] text-[#94A3B8] font-semibold text-xs uppercase tracking-widest rounded-xl hover:bg-white/[0.06]"
+                    className={cn("border-white/10 bg-white/[0.03] text-[#94A3B8] font-semibold text-xs uppercase tracking-widest rounded-xl hover:bg-white/[0.06]", isDesktop ? "h-11" : "h-9")}
                   >
                     <Receipt size={14} className="mr-2" /> Surat Jalan
                   </Button>

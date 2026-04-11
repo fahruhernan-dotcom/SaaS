@@ -20,6 +20,7 @@ import { Menu } from 'lucide-react';
 
 // Dashboard pages
 import HargaPasar from './dashboard/_shared/pages/HargaPasar';
+import MarketPriceDashboard from './dashboard/_shared/pages/MarketPriceDashboard'; // New Standalone Page
 import HargaPasarPublic from '@/pages/HargaPasarPublic';
 import { BrokerPageRouter } from './dashboard/broker/_shared/BrokerRouter';
 import { RPPageRouter } from './dashboard/rumah_potong/RPPageRouter';
@@ -372,9 +373,9 @@ function App() {
         } />
 
         {/* Shared routes */}
-        <Route path="/harga-pasar" element={
+        <Route path="/dashboard/harga-pasar" element={
           <ProtectedRoute>
-            <DashboardLayout><HargaPasar /></DashboardLayout>
+            <DashboardLayout><MarketPriceDashboard /></DashboardLayout>
           </ProtectedRoute>
         } />
 

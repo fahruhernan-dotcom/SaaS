@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
     Truck, ArrowRightLeft,
@@ -35,6 +35,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
     const queryClient = useQueryClient()
     const [legacyShippingSelectors] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
+    const isSubmittingRef = useRef(false)
     const [arrivedQty, setArrivedQty] = useState('')
     const [mortalityQty, setMortalityQty] = useState(0)
     const [notes, setNotes] = useState('')
@@ -56,6 +57,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
     const [driverSearch, setDriverSearch] = useState('')
     const [driverName, setDriverName] = useState('')
     const [driverPhone, setDriverPhone] = useState('')
+    const [driverWage, setDriverWage] = useState(0)
     const [driverLocked, setDriverLocked] = useState(true)
     const [showDriverConfirm, setShowDriverConfirm] = useState(false)
 
@@ -97,7 +99,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
         queryFn: async () => {
             const { data } = await supabase
                 .from('drivers')
-                .select('id, full_name, phone')
+                .select('id, full_name, phone, wage_per_trip')
                 .eq('tenant_id', tenant?.id)
                 .eq('status', 'aktif')
                 .eq('is_deleted', false)
@@ -181,6 +183,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
             // Initial Driver Info
             setDriverName(delivery.driver_name || '')
             setDriverPhone(delivery.driver_phone || '')
+            setDriverWage(delivery.driver_wage || 0)
             if (delivery.driver_id) {
                 setDriverManual(false)
             } else {
@@ -215,6 +218,9 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
             if (matched) {
                 if (selectedDriver?.id !== matched.id) {
                     setSelectedDriver(matched)
+                    if (!delivery.driver_wage) {
+                        setDriverWage(matched.wage_per_trip || 0)
+                    }
                 }
                 if (driverManual) {
                     setDriverManual(false)
@@ -436,7 +442,8 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
 
     const handleUpdate = async (e) => {
         if (e && e.preventDefault) e.preventDefault()
-        if (isLoading) return
+        if (isLoading || isSubmittingRef.current) return
+        isSubmittingRef.current = true
         const arrivedCount = tibaCount
         const arrivedWeightKg = tibaKg
         console.log('SUBMIT DIPANGGIL', { arrivedCount, arrivedWeightKg })
@@ -489,6 +496,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     notes: notes,
                     load_time: formattedLoadTime,
                     departure_time: formattedDepartureTime,
+                    driver_wage: driverWage
                 }
 
                 if (!vehicleLocked) {
@@ -523,6 +531,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     updatePayload.driver_id = finalDriverId
                     updatePayload.driver_name = selectedDriver?.full_name || driverName
                     updatePayload.driver_phone = selectedDriver?.phone || driverPhone
+                    updatePayload.driver_wage = selectedDriver?.wage_per_trip || driverWage
                 }
 
                 const { error } = await supabase
@@ -593,6 +602,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     arrivalPayload.driverId = finalDriverId
                     arrivalPayload.driverName = selectedDriver?.full_name || driverName
                     arrivalPayload.driverPhone = selectedDriver?.phone || driverPhone
+                    arrivalPayload.driverWage = selectedDriver?.wage_per_trip || driverWage
                 }
 
                 await updateTiba(arrivalPayload)
@@ -674,6 +684,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
             toast.error('Gagal memperbarui data: ' + err.message)
         } finally {
             setIsLoading(false)
+            isSubmittingRef.current = false
         }
     }
 

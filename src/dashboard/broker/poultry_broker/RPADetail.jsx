@@ -34,6 +34,7 @@ import { RPADetailSkeleton } from '@/components/ui/BrokerPageSkeleton'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { supabase } from '@/lib/supabase'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -81,7 +82,8 @@ export default function RPADetail() {
   const { id } = useParams()
   const queryClient = useQueryClient()
   const { tenant, profile } = useAuth()
-  const isOwner = profile?.role === 'owner'
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin'
   
   const _navigate = useNavigate()
   const brokerBase = getBrokerBasePath(tenant)
@@ -196,25 +198,23 @@ export default function RPADetail() {
         className="bg-[#06090F] min-h-screen pb-24"
     >
       {/* TopBar */}
-      <header className="px-5 pt-8 pb-4 flex items-center justify-between sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 border-b border-white/5">
-        <div className="flex items-center gap-4">
+      <header className={cn("px-4 flex items-center justify-between sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 border-b border-white/5", isDesktop ? "pt-8 pb-4" : "h-14")}>
+        <div className="flex items-center gap-3">
             <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center text-white active:scale-90 transition-transform">
-                <ArrowLeft size={20} />
+                <ArrowLeft size={18} />
             </button>
             <div className="text-left">
-                <h1 className="font-display text-lg font-black text-white tracking-tight leading-none uppercase truncate max-w-[180px]">{rpa?.rpa_name}</h1>
-                <p className="text-[10px] font-black text-[#4B6478] uppercase mt-1 tracking-widest">Detail Pembeli</p>
+                <h1 className={cn("font-display font-black text-white tracking-tight leading-none uppercase truncate max-w-[180px]", isDesktop ? "text-lg" : "text-[15px]")}>{rpa?.rpa_name}</h1>
+                <p className="text-[10px] font-black text-[#4B6478] uppercase mt-0.5 tracking-widest">Detail Pembeli</p>
             </div>
         </div>
         {isOwner && (
-          <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-slate-400 hover:text-white"
+          <button
+              className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-colors active:scale-95"
               onClick={() => setShowEdit(true)}
           >
-              <Edit size={18} />
-          </Button>
+              <Edit size={16} />
+          </button>
         )}
       </header>
 
@@ -328,17 +328,17 @@ export default function RPADetail() {
 
       {/* Modal Catat Pembayaran */}
       <Sheet open={openModal === 'bayar'} onOpenChange={(open) => !open && setOpenModal(null)}>
-        <SheetContent 
-          side="right" 
-          className="bg-[#0C1319] border-l border-white/8 w-full sm:max-w-[480px] p-8 overflow-y-auto"
+        <SheetContent
+          side={isDesktop ? "right" : "bottom"}
+          className={cn("bg-[#0C1319] border-white/8 overflow-y-auto", isDesktop ? "border-l w-full sm:max-w-[480px] p-8" : "border-t p-5 max-h-[88vh] rounded-t-[24px]")}
         >
-          <SheetHeader className="mb-8 text-left">
-            <SheetTitle className="font-display text-2xl font-black text-white uppercase tracking-tight text-left">
-              CATAT PEMBAYARAN
+          <SheetHeader className={cn("text-left", isDesktop ? "mb-8" : "mb-5")}>
+            <SheetTitle className={cn("font-display font-black text-white uppercase tracking-tight text-left", isDesktop ? "text-2xl" : "text-xl")}>
+              Catat Pembayaran
             </SheetTitle>
             <SheetDescription className="sr-only">Form Catat Pembayaran RPA</SheetDescription>
           </SheetHeader>
-          
+
           {selectedSale && <FormPaymentModal sale={selectedSale} onClose={() => setOpenModal(null)} />}
         </SheetContent>
       </Sheet>
@@ -346,29 +346,11 @@ export default function RPADetail() {
       {/* Edit RPA Sheet */}
       <Sheet open={showEdit} onOpenChange={setShowEdit}>
         <SheetContent
-          side="right"
-          style={{
-            background: 'hsl(var(--card))',
-            border: 'none',
-            borderLeft: '1px solid hsl(var(--border))',
-            width: '100%',
-            maxWidth: '480px',
-            padding: 0,
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column'
-          }}
+          side={isDesktop ? "right" : "bottom"}
+          className={cn("bg-[#0C1319] border-white/8 p-0 overflow-hidden flex flex-col", isDesktop ? "border-l w-full max-w-[480px]" : "border-t max-h-[92vh] rounded-t-[24px]")}
         >
-          <SheetHeader style={{
-            padding: '20px 24px 16px',
-            borderBottom: '1px solid hsl(var(--border))',
-            flexShrink: 0
-          }}>
-            <SheetTitle style={{
-              fontFamily: 'Sora',
-              fontSize: '18px',
-              fontWeight: 700
-            }}>
+          <SheetHeader className={cn("border-b border-white/5 flex-shrink-0", isDesktop ? "p-6 pb-4" : "p-4 pb-3")}>
+            <SheetTitle className={cn("font-display font-black text-white uppercase tracking-tight", isDesktop ? "text-xl" : "text-[17px]")}>
               Edit RPA
             </SheetTitle>
             <SheetDescription className="sr-only">
@@ -377,14 +359,10 @@ export default function RPADetail() {
           </SheetHeader>
 
           {/* Form scroll area */}
-          <div style={{
-            flex: 1,
-            overflowY: 'auto',
-            padding: '20px 24px'
-          }}>
+          <div className={cn("flex-1 overflow-y-auto", isDesktop ? "p-6" : "p-4")}>
             <RPAForm
               rpa={rpa}
-              isDesktop={true}
+              isDesktop={isDesktop}
               onClose={() => setShowEdit(false)}
               onSubmit={async (data) => {
                 const { error } = await supabase.from('rpa_clients').update(data).eq('id', id)
@@ -830,7 +808,7 @@ function FormPaymentModal({ sale, onClose }) {
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6 pb-12">
             <div className="text-center space-y-1">
                 <p className="text-[10px] font-black text-red-400 uppercase tracking-widest leading-none mb-1">Sisa Hutang</p>
-                <p className="font-display text-4xl font-black text-red-500 tracking-tight tabular-nums">{formatIDR(currentRemaining)}</p>
+                <p className="font-display text-3xl font-black text-red-500 tracking-tight tabular-nums">{formatIDR(currentRemaining)}</p>
             </div>
 
             <Separator className="bg-secondary/10" />
@@ -838,11 +816,11 @@ function FormPaymentModal({ sale, onClose }) {
             <div className="space-y-2 text-left">
                 <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Jumlah Bayar (Rp)</Label>
                 <div className="relative">
-                    <InputRupiah 
+                    <InputRupiah
                         value={amount}
                         onChange={(val) => setValue('amount', val, { shouldValidate: true })}
                         placeholder="50.000.000"
-                        className="bg-[#111C24] border-white/10 h-16 text-2xl font-black text-white rounded-2xl"
+                        className="bg-[#111C24] border-white/10 h-12 text-base font-black text-white rounded-xl"
                     />
                 </div>
                 {errors.amount && <p className="text-[10px] text-red-500 font-black uppercase mt-1 leading-tight">{errors.amount.message}</p>}
@@ -851,7 +829,7 @@ function FormPaymentModal({ sale, onClose }) {
             <div className="space-y-2 text-left">
                 <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">Metode Bayar</Label>
                 <Select value={method} onValueChange={(val) => setValue('method', val)}>
-                    <SelectTrigger className="bg-[#111C24] border-white/10 h-14 font-black rounded-2xl uppercase tracking-widest text-xs px-4 focus:ring-emerald-500/20">
+                    <SelectTrigger className="bg-[#111C24] border-white/10 h-11 font-black rounded-xl uppercase tracking-widest text-xs px-4 focus:ring-emerald-500/20">
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#111C24] border-white/10 text-white">
@@ -872,9 +850,9 @@ function FormPaymentModal({ sale, onClose }) {
                 )}
             </div>
 
-            <Button 
-                type="submit" 
-                className="w-full h-16 rounded-2xl bg-[#10B981] hover:bg-[#0D9668] text-sm font-black border-none shadow-[0_4px_20px_rgba(16,185,129,0.2)] uppercase tracking-[0.2em] transition-all active:scale-95"
+            <Button
+                type="submit"
+                className="w-full h-11 rounded-xl bg-[#10B981] hover:bg-[#0D9668] text-sm font-black border-none shadow-lg shadow-emerald-500/20 uppercase tracking-[0.15em] transition-all active:scale-[0.98]"
                 disabled={isLoading}
             >
                 {isLoading ? 'Menyimpan...' : 'Konfirmasi Pembayaran'}

@@ -1,17 +1,17 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  User, ChevronRight, Bell, Calculator, BarChart3, 
-  HelpCircle, LogOut, CreditCard, Building, 
+  User, ChevronRight, Bell, Calculator, BarChart3,
+  HelpCircle, LogOut, CreditCard, Building,
   ArrowLeftRight, ShieldCheck, Settings, Store,
   Check, Smartphone, Mail, Info, Trash2,
   Trophy, Star, Crown, Undo2, FileX2, ChevronDown, ChevronUp,
-  History, Warehouse, Factory, Truck
+  History, Warehouse, Factory, Truck, Menu
 } from 'lucide-react'
 import { getSubscriptionStatus, getExpiryLabel } from '@/lib/subscriptionUtils'
 import { supabase } from '@/lib/supabase'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useOutletContext } from 'react-router-dom'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -52,6 +52,7 @@ export default function Akun() {
   const { profile, user, tenant, refetchProfile } = useAuth()
   
   const _navigate = useNavigate()
+  const { setSidebarOpen } = useOutletContext() || {}
   const brokerBase = getBrokerBasePath(tenant)
   const navigate = (path, options) => {
     if (typeof path === 'string' && path.startsWith('/broker/') && !path.startsWith(brokerBase)) {
@@ -93,14 +94,21 @@ export default function Akun() {
     >
       {/* TopBar */}
       {!isDesktop && (
-        <header className="px-5 pt-8 pb-4 border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 flex flex-col gap-1">
-            <h1 className="font-display text-xl font-black text-white tracking-tight leading-none uppercase">Akun</h1>
+        <header className="h-14 px-4 border-b border-white/5 sticky top-0 bg-[#06090F]/90 backdrop-blur-md z-30 flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen?.(true)}
+              className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+            >
+              <Menu size={16} className="text-[#94A3B8]" />
+            </button>
+            <h1 className="font-display text-[15px] font-black text-white tracking-tight leading-none uppercase">Akun</h1>
         </header>
       )}
 
       {/* Profil Section */}
-      <div className="px-5 mt-6">
+      <div className={cn(isDesktop ? "px-5 mt-6" : "px-4 mt-5")}>
         <motion.div variants={fadeUp} initial="hidden" animate="visible">
+          {isDesktop ? (
             <Card className="bg-gradient-to-b from-[#111C24] to-[#0C1319] border-white/5 rounded-[32px] overflow-hidden shadow-2xl relative">
               <div className="absolute top-0 right-0 p-6 opacity-5">
                   <Crown size={120} strokeWidth={1} />
@@ -119,8 +127,8 @@ export default function Akun() {
                       </Badge>
                    </div>
                 </div>
-                <Button 
-                    variant="outline" 
+                <Button
+                    variant="outline"
                     onClick={() => setOpenEditProfile(true)}
                     className="w-full h-12 rounded-[18px] border-white/5 bg-secondary/15 text-[10px] font-black uppercase tracking-[0.2em] gap-2 mt-7 text-[#F1F5F9] hover:bg-secondary/20 hover:border-white/10 transition-all active:scale-95"
                 >
@@ -128,6 +136,42 @@ export default function Akun() {
                 </Button>
               </CardContent>
             </Card>
+          ) : (
+            /* Mobile: Centered profile card */
+            <Card className="bg-gradient-to-b from-[#111C24] to-[#0C1319] border-white/5 rounded-[28px] overflow-hidden shadow-2xl relative">
+              <div className="absolute top-0 right-0 p-4 opacity-5">
+                  <Crown size={80} strokeWidth={1} />
+              </div>
+              <CardContent className="p-5">
+                <div className="flex flex-col items-center text-center pt-2 pb-1">
+                  {/* Avatar with edit overlay */}
+                  <div className="relative mb-3">
+                    <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center font-display text-2xl font-black text-emerald-400 shadow-inner">
+                      {initials}
+                    </div>
+                    <button
+                      onClick={() => setOpenEditProfile(true)}
+                      className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-emerald-500 border-2 border-[#111C24] flex items-center justify-center active:scale-95 transition-all"
+                    >
+                      <Settings size={10} className="text-white" />
+                    </button>
+                  </div>
+                  <h2 className="font-display text-lg font-black text-[#F1F5F9] uppercase tracking-tight leading-tight">{profile?.full_name}</h2>
+                  <p className="text-[11px] font-bold text-[#4B6478] mt-0.5 mb-2.5 lowercase">{user?.email}</p>
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-black text-[9px] px-3 h-5 uppercase tracking-widest">
+                    {profile?.user_type || 'BROKER'}
+                  </Badge>
+                </div>
+                <Button
+                    variant="outline"
+                    onClick={() => setOpenEditProfile(true)}
+                    className="w-full h-10 rounded-2xl border-white/5 bg-white/[0.04] text-[10px] font-black uppercase tracking-[0.2em] gap-2 mt-4 text-[#F1F5F9] hover:bg-white/[0.07] transition-all active:scale-[0.98]"
+                >
+                   <User size={13} strokeWidth={2.5} /> Edit Profil
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </motion.div>
       </div>
 
@@ -135,16 +179,16 @@ export default function Akun() {
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
-        className="space-y-8 mt-8 pb-10"
+        className={cn("pb-10", isDesktop ? "space-y-8 mt-8" : "space-y-5 mt-5")}
       >
         {/* Subscription Section */}
-        <motion.div variants={fadeUp} className="px-5 space-y-3">
-          <Label className="uppercase text-[10px] font-black tracking-[0.25em] text-[#4B6478] px-1 ml-1">Plan & Layanan</Label>
-          <Card className="bg-[#111C24] border-white/5 rounded-[28px] p-6 space-y-5">
+        <motion.div variants={fadeUp} className={cn("space-y-2.5", isDesktop ? "px-5" : "px-4")}>
+          <p className="uppercase text-[10px] font-black tracking-[0.25em] text-[#4B6478] px-1 ml-1">Plan & Layanan</p>
+          <Card className={cn("bg-[#111C24] border-white/5", isDesktop ? "rounded-[28px] p-6 space-y-5" : "rounded-[22px] p-4 space-y-4")}>
               <div className="flex justify-between items-center">
-                  <div className="space-y-1">
-                      <h3 className="font-display font-black text-white text-lg tracking-tight uppercase leading-none">{tenant?.plan || 'Starter Free'}</h3>
-                      <p className="text-[11px] font-black text-[#4B6478] uppercase tracking-widest">Status Berlangganan</p>
+                  <div className="space-y-0.5">
+                      <h3 className={cn("font-display font-black text-white uppercase tracking-tight leading-none", isDesktop ? "text-lg" : "text-base")}>{tenant?.plan || 'Starter Free'}</h3>
+                      <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Status Berlangganan</p>
                   </div>
                   {sub.status === 'trial' ? (
                     <Badge className="bg-amber-500/10 text-amber-500 border border-amber-500/20 font-black text-[9px] px-3 h-6 uppercase tracking-widest">TRIAL</Badge>
@@ -156,7 +200,7 @@ export default function Akun() {
               </div>
 
               {(sub.status === 'trial' || isExpiringSoon) && (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                       <div className="flex justify-between items-end">
                           <p className={cn(
                               "text-[11px] font-black uppercase tracking-wider",
@@ -166,7 +210,7 @@ export default function Akun() {
                           </p>
                           <p className="text-[11px] text-[#4B6478] font-black tabular-nums">{Math.round(subProgress)}%</p>
                       </div>
-                      <Progress value={subProgress} className="h-2 bg-secondary/10 rounded-full overflow-hidden"
+                      <Progress value={subProgress} className="h-1.5 bg-secondary/10 rounded-full overflow-hidden"
                           indicatorClassName={cn(
                               "transition-all duration-500",
                               daysLeft <= 3 ? "bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.3)]" : "bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.3)]"
@@ -177,24 +221,24 @@ export default function Akun() {
 
               <Button
                 onClick={() => navigate('/upgrade')}
-                className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] uppercase tracking-[0.2em] gap-3 rounded-[20px] border-none shadow-[0_8px_30px_rgba(16,185,129,0.15)] active:scale-95 transition-all mt-2"
+                className={cn("w-full bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] uppercase tracking-[0.2em] gap-3 border-none shadow-[0_8px_30px_rgba(16,185,129,0.15)] active:scale-95 transition-all", isDesktop ? "h-14 rounded-[20px] mt-2" : "h-11 rounded-[16px]")}
               >
-                  <CreditCard size={18} strokeWidth={2.5} />
+                  <CreditCard size={isDesktop ? 18 : 16} strokeWidth={2.5} />
                   {sub.status === 'active' ? 'Perpanjang Plan' : 'Upgrade Plan'}
               </Button>
           </Card>
         </motion.div>
 
         {/* Bisnis Model Section */}
-        <motion.div variants={fadeUp} className="px-5 space-y-3">
-          <Label className="uppercase text-[10px] font-black tracking-[0.25em] text-[#4B6478] px-1 ml-1">Bisnis Model</Label>
-          <Card className="bg-[#111C24] border-white/5 rounded-[22px] p-4 flex items-center gap-4 group hover:border-white/10 transition-all active:scale-[0.98]">
-              <div className="w-12 h-12 rounded-[14px] bg-secondary/15 flex items-center justify-center text-2xl shadow-inner border border-white/5 group-hover:bg-emerald-500/10 transition-colors">
+        <motion.div variants={fadeUp} className={cn("space-y-2.5", isDesktop ? "px-5" : "px-4")}>
+          <p className="uppercase text-[10px] font-black tracking-[0.25em] text-[#4B6478] px-1 ml-1">Bisnis Model</p>
+          <Card className="bg-[#111C24] border-white/5 rounded-[22px] p-4 flex items-center gap-3.5 group hover:border-white/10 transition-all active:scale-[0.98]">
+              <div className={cn("rounded-[14px] bg-secondary/15 flex items-center justify-center shadow-inner border border-white/5 group-hover:bg-emerald-500/10 transition-colors", isDesktop ? "w-12 h-12 text-2xl" : "w-10 h-10 text-xl")}>
                 🤝
               </div>
-              <div className="flex-1">
-                 <p className="text-xs font-black text-white uppercase tracking-wider leading-none mb-1.5">Broker / Pedagang</p>
-                 <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-tight">Dashboard & Fitur Disesuaikan</p>
+              <div className="flex-1 min-w-0">
+                 <p className={cn("font-black text-white uppercase tracking-wider leading-none mb-1", isDesktop ? "text-xs" : "text-[12px]")}>Broker / Pedagang</p>
+                 <p className="text-[9px] text-[#4B6478] font-bold uppercase tracking-tight">Dashboard & Fitur Disesuaikan</p>
               </div>
               <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -231,9 +275,9 @@ export default function Akun() {
         </motion.div>
 
         {/* Aplikasi Menu */}
-        <motion.div variants={fadeUp} className="px-5 space-y-3">
-          <Label className="uppercase text-[10px] font-black tracking-[0.25em] text-[#4B6478] px-1 ml-1">Aplikasi</Label>
-          <div className="bg-[#111C24] border border-white/5 rounded-[32px] overflow-hidden shadow-xl">
+        <motion.div variants={fadeUp} className={cn("space-y-2.5", isDesktop ? "px-5" : "px-4")}>
+          <p className="uppercase text-[10px] font-black tracking-[0.25em] text-[#4B6478] px-1 ml-1">Aplikasi</p>
+          <div className={cn("bg-[#111C24] border border-white/5 overflow-hidden shadow-xl", isDesktop ? "rounded-[32px]" : "rounded-[22px]")}>
               <MenuItem 
                   icon={Bell} label="Notifikasi" sub="Peringatan piutang & info harga" 
                   badge="Soon"
@@ -247,7 +291,7 @@ export default function Akun() {
               <Separator className="bg-secondary/10 mx-5" />
               <MenuItem 
                   icon={BarChart3} label="Harga Pasar" sub="Pantau update live regional" 
-                  onClick={() => navigate('/harga-pasar')}
+                  onClick={() => navigate('/dashboard/harga-pasar')}
               />
               <Separator className="bg-secondary/10 mx-5" />
               <MenuItem 
@@ -263,12 +307,12 @@ export default function Akun() {
         </motion.div>
 
         {/* Logout */}
-        <motion.div variants={fadeUp} className="px-5 pt-4">
+        <motion.div variants={fadeUp} className={cn(isDesktop ? "px-5 pt-4" : "px-4")}>
             <AlertDialog>
                 <AlertDialogTrigger asChild>
-                    <Button 
-                        variant="destructive" 
-                        className="w-full h-15 rounded-2xl bg-red-500/5 hover:bg-red-500/10 border border-red-500/10 text-red-500 font-black text-[11px] uppercase tracking-[0.25em] gap-3 transition-all h-14 active:scale-95"
+                    <Button
+                        variant="destructive"
+                        className={cn("w-full rounded-2xl bg-red-500/5 hover:bg-red-500/10 border border-red-500/10 text-red-500 font-black text-[11px] uppercase tracking-[0.25em] gap-3 transition-all active:scale-95", isDesktop ? "h-14" : "h-11")}
                     >
                         <LogOut size={20} strokeWidth={2.5} /> Keluar Aplikasi
                     </Button>
@@ -294,7 +338,7 @@ export default function Akun() {
         </motion.div>
 
         {/* Recycle Bin Section */}
-        <motion.div variants={fadeUp} className="px-5">
+        <motion.div variants={fadeUp} className={cn(isDesktop ? "px-5" : "px-4")}>
             <RecycleBinSection tenantId={tenant?.id} />
         </motion.div>
 
@@ -319,22 +363,23 @@ export default function Akun() {
 }
 
 function MenuItem({ icon: Icon, label, sub, onClick, badge }) {
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   return (
-    <div 
+    <div
       onClick={onClick}
-      className="flex items-center gap-5 p-5 cursor-pointer hover:bg-secondary/15 transition-all group active:bg-white/[0.05]"
+      className={cn("flex items-center cursor-pointer hover:bg-secondary/15 transition-all group active:bg-white/[0.05]", isDesktop ? "gap-5 p-5" : "gap-4 px-4 py-3.5")}
     >
-      <div className="w-11 h-11 rounded-[14px] bg-secondary/10 flex items-center justify-center text-[#94A3B8] group-hover:bg-emerald-500/10 group-hover:text-emerald-400 transition-all border border-transparent group-hover:border-emerald-500/20">
-        <Icon size={20} />
+      <div className={cn("rounded-[14px] bg-secondary/10 flex items-center justify-center text-[#94A3B8] group-hover:bg-emerald-500/10 group-hover:text-emerald-400 transition-all border border-transparent group-hover:border-emerald-500/20", isDesktop ? "w-11 h-11" : "w-9 h-9")}>
+        <Icon size={isDesktop ? 20 : 17} />
       </div>
-      <div className="flex-1">
-        <div className="flex items-center gap-2.5">
-            <p className="text-[13px] font-black text-white leading-none uppercase tracking-tight group-hover:text-emerald-400 transition-colors">{label}</p>
-            {badge && <Badge className="h-4.5 px-2 text-[8px] bg-amber-500/10 text-amber-500 border border-amber-500/20 font-black flex items-center justify-center uppercase tracking-widest leading-none">{badge}</Badge>}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+            <p className={cn("font-black text-white leading-none uppercase tracking-tight group-hover:text-emerald-400 transition-colors", isDesktop ? "text-[13px]" : "text-[12px]")}>{label}</p>
+            {badge && <Badge className="h-4 px-1.5 text-[8px] bg-amber-500/10 text-amber-500 border border-amber-500/20 font-black flex items-center justify-center uppercase tracking-widest leading-none">{badge}</Badge>}
         </div>
-        <p className="text-[10px] text-[#4B6478] font-black uppercase tracking-wider mt-2 group-hover:text-[#F1F5F9]/40 transition-colors">{sub}</p>
+        <p className={cn("text-[#4B6478] font-bold uppercase tracking-wider group-hover:text-[#F1F5F9]/40 transition-colors", isDesktop ? "text-[10px] mt-2" : "text-[9px] mt-1")}>{sub}</p>
       </div>
-      <ChevronRight size={16} className="text-[#4B6478] group-hover:text-[#F1F5F9] group-hover:translate-x-1 transition-all" />
+      <ChevronRight size={15} className="text-[#4B6478] group-hover:text-[#F1F5F9] group-hover:translate-x-1 transition-all shrink-0" />
     </div>
   )
 }

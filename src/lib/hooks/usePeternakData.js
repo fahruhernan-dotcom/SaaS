@@ -62,7 +62,8 @@ export function useActiveCycles() {
         .select(`
           *,
           peternak_farms(farm_name, livestock_type, business_model, capacity, mitra_company),
-          daily_records(*)
+          daily_records(*),
+          cycle_expenses(*)
         `)
         .eq('tenant_id', tenant.id)
         .eq('status', 'active')
@@ -88,7 +89,8 @@ export function useAllCycles() {
         .select(`
           *,
           peternak_farms(farm_name, livestock_type, business_model, mitra_company),
-          daily_records(*)
+          daily_records(*),
+          cycle_expenses(*)
         `)
         .eq('tenant_id', tenant.id)
         .eq('is_deleted', false)

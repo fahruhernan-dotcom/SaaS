@@ -87,7 +87,7 @@ export default function AppSidebar({ open, onClose }) {
   )
   const userDropdownRef = useRef(null)
   
-  const isDesktop = useMediaQuery('(min-width: 768px)')
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   // Farms for peternak multi-kandang sidebar
   const { data: peternakFarms = [] } = usePeternakFarms()
@@ -319,7 +319,7 @@ export default function AppSidebar({ open, onClose }) {
       label: 'LAINNYA',
       items: [
         ...((tenant?.sub_type === 'broker_ayam' || tenant?.business_vertical === 'poultry_broker') ? [
-          { title: 'Harga Pasar',     url: '/harga-pasar', icon: BarChart2 },
+          { title: 'Harga Pasar',     url: '/dashboard/harga-pasar', icon: BarChart2 },
         ] : []),
         { title: 'TernakOS Market', url: '/market',      icon: Building2 },
       ]

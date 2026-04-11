@@ -259,7 +259,7 @@ export default function BottomNav() {
     if (profile?.user_type !== 'broker') return true
 
     // ── Broker vertical ───────────────────────────────────────────────────
-    const isOwner    = profile?.role === 'owner'
+    const isOwner    = profile?.role === 'owner' || profile?.role === 'superadmin'
     const isStaff    = profile?.role === 'staff'
     const isViewOnly = profile?.role === 'view_only'
 

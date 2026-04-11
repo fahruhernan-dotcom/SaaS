@@ -5,6 +5,7 @@ import * as z from 'zod'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { ChevronLeft, Loader2, Truck, ChevronsUpDown, Check, Plus } from 'lucide-react'
@@ -29,8 +30,10 @@ const FIELD_LABELS = {
 
 // NUCLEAR OPTION: Global Zod Mapping to eliminate ALL technical jargon
 z.setErrorMap((issue, ctx) => {
-  if (ctx.defaultError && !ctx.defaultError.includes('Expected') && !ctx.defaultError.includes('Invalid') && !ctx.defaultError.includes('Required')) {
-    return { message: ctx.defaultError }
+  const defaultMsg = ctx?.defaultError || ''
+  
+  if (defaultMsg && !defaultMsg.includes('Expected') && !defaultMsg.includes('Invalid') && !defaultMsg.includes('Required')) {
+    return { message: defaultMsg }
   }
   if (issue.code === z.ZodIssueCode.invalid_type) {
     if (issue.received === 'undefined' || issue.received === 'null' || (issue.received === 'string' && issue.code === 'too_small')) {
@@ -38,7 +41,7 @@ z.setErrorMap((issue, ctx) => {
     }
     return { message: 'Format data tidak valid' }
   }
-  return { message: ctx.defaultError }
+  return { message: defaultMsg || 'Input tidak valid' }
 })
 
 // Helper to add 1 hour spare time to HH:MM format (Harden to handle ISO and avoid NaN)
@@ -89,6 +92,9 @@ const pengirimanSchema = z.object({
     required_error: 'Jam berangkat wajib diisi',
     invalid_type_error: 'Jam berangkat wajib diisi' 
   }).min(1, 'Jam berangkat wajib diisi').nullable(),
+  include_driver_wage: z.boolean().optional().default(true),
+  include_fuel_cost: z.boolean().optional().default(true),
+  driver_wage: z.number().optional().default(0),
   notes: z.string().trim().max(500, 'Catatan terlalu panjang (max 500 karakter)').optional()
 }).refine(data => data.load_time !== data.departure_time, {
   message: 'Jam berangkat harus berbeda dengan jam muat',
@@ -103,6 +109,7 @@ const S = {
 export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3Data, setStep3Data, onSubmit, onBack, submitting }) {
   const { tenant } = useAuth()
   const queryClient = useQueryClient()
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [vehicleMode, setVehicleMode] = useState('armada')
   const [driverMode, setDriverMode] = useState('driver')
   const [openVehicle, setOpenVehicle] = useState(false)
@@ -122,19 +129,14 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
       delivery_cost: step3Data.delivery_cost || 0,
       load_time: step3Data.load_time || null,
       departure_time: step3Data.departure_time || null,
+      include_driver_wage: step3Data.include_driver_wage ?? true,
+      include_fuel_cost: step3Data.include_fuel_cost ?? true,
+      driver_wage: step3Data.driver_wage || 0,
       notes: step3Data.notes || ''
     }
   })
 
   const formValues = watch()
-
-  // Sync form values to parent state via subscription (avoids infinite loop)
-  useEffect(() => {
-    const subscription = watch((values) => {
-      setStep3Data(prev => ({ ...prev, ...values }))
-    })
-    return () => subscription.unsubscribe()
-  }, [watch, setStep3Data])
 
   const { data: vehicles } = useQuery({
     queryKey: ['vehicles-active', tenant?.id],
@@ -153,6 +155,26 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
     },
     enabled: !!tenant?.id && !!step3Data.enabled
   })
+
+  // Sync form values to parent state via subscription (avoids infinite loop)
+  useEffect(() => {
+    const subscription = watch((values) => {
+      setStep3Data(prev => ({ ...prev, ...values }))
+    })
+    return () => subscription.unsubscribe()
+  }, [watch, setStep3Data])
+
+  const driversList = drivers || []
+  const selectedDriver = driversList.find(d => d.id === formValues.driver_id)
+  const selectedVehicle = (vehicles || []).find(v => v.id === formValues.vehicle_id)
+
+  useEffect(() => {
+    if (selectedDriver && formValues.include_driver_wage) {
+      if (!formValues.driver_wage || formValues.driver_wage === 0 || selectedDriver?.id) {
+         setValue('driver_wage', selectedDriver.wage_per_trip || 0)
+      }
+    }
+  }, [selectedDriver?.id, formValues.include_driver_wage])
 
   const shouldRenderNewDriverForm = driverMode === 'manual' || (driverMode === 'driver' && drivers?.length === 0) || showQuickAddDriver;
   const shouldRenderNewVehicleForm = vehicleMode === 'manual' || (vehicleMode === 'armada' && vehicles?.length === 0) || showQuickAddVehicle;
@@ -201,8 +223,17 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
       // Trigger Zod validation
       const isValid = await trigger()
       if (!isValid) {
-        const firstError = Object.keys(errors)[0]
-        const el = document.getElementById(firstError) || document.getElementsByName(firstError)[0]
+        const firstErrorKey = Object.keys(errors)[0]
+        const firstErrorMessage = errors[firstErrorKey]?.message || "Harap lengkapi semua data wajib"
+        const labelText = FIELD_LABELS[firstErrorKey] || firstErrorKey
+        
+        toast.error("Informasi Belum Lengkap", { 
+          description: `${labelText}: ${firstErrorMessage}`
+        })
+
+        const el = document.getElementById(firstErrorKey) || 
+                   document.getElementById(`${firstErrorKey}_trigger`) || 
+                   document.getElementsByName(firstErrorKey)[0]
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
         return
       }
@@ -296,47 +327,45 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
     return { hp, statusBadge }
   }
 
-  const selectedVehicle = vehicles?.find(v => v.id === formValues.vehicle_id)
-  const selectedDriver = drivers?.find(d => d.id === formValues.driver_id)
 
   return (
     <div className="flex flex-col h-full min-h-0 relative">
-      <div className="flex-1 space-y-5 px-5 pb-24 overflow-y-auto">
-      <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">Step 3 — Detail Pengiriman</p>
-      
-      {/* Summary Card Update */}
-      <Card className="bg-[#111C24] border-white/5 rounded-2xl p-5 overflow-hidden relative">
+      <div className={`flex-1 space-y-4 overflow-y-auto ${isDesktop ? 'px-5 pb-24' : 'px-4 pb-20'}`}>
+      <p className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Step 3 — Detail Pengiriman</p>
+
+      {/* Summary Card */}
+      <Card className={`bg-[#111C24] border-white/5 rounded-2xl overflow-hidden relative ${isDesktop ? 'p-5' : 'p-4'}`}>
         <div className="absolute top-0 right-0 p-4 opacity-5">
-          <Truck size={80} />
+          <Truck size={isDesktop ? 80 : 60} />
         </div>
-        <div className="relative z-10 space-y-4">
+        <div className={`relative z-10 ${isDesktop ? 'space-y-4' : 'space-y-3'}`}>
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-1">Rute Transaksi</p>
-              <h4 className="text-base font-black text-white">{farmName} <span className="text-[#4B6478] mx-1">→</span> {rpaName}</h4>
+              <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-1">Rute Transaksi</p>
+              <h4 className={`font-black text-white ${isDesktop ? 'text-base' : 'text-[13px]'}`}>{farmName} <span className="text-[#4B6478] mx-1">→</span> {rpaName}</h4>
             </div>
             <div className="text-right">
-              <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-1">Volume</p>
-              <p className="text-sm font-bold text-white">{safeNum(qty).toLocaleString('id-ID')} ekor · {safeNum(totalWeightKg).toFixed(1)} kg</p>
-            </div>
-          </div>
-          
-          <Separator className="bg-white/5" />
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.1em] mb-1">Pendapatan</p>
-              <p className="text-sm font-bold text-emerald-400">{formatIDR(totalRevenue)}</p>
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.1em] mb-1">Total Biaya (Modal + Kirim)</p>
-              <p className="text-sm font-bold text-red-400">{formatIDR(safeNum(totalModal) + safeNum(deliveryCost))}</p>
+              <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-1">Volume</p>
+              <p className={`font-bold text-white ${isDesktop ? 'text-sm' : 'text-[12px]'}`}>{safeNum(qty).toLocaleString('id-ID')} ekor · {safeNum(totalWeightKg).toFixed(1)} kg</p>
             </div>
           </div>
 
-          <div className="pt-2 flex justify-between items-center border-t border-white/5 mt-2">
-            <span className="text-xs font-black text-[#4B6478] uppercase tracking-widest">Estimasi Profit Bersih</span>
-            <span className={`text-xl font-black tabular-nums ${profitBersih >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+          <Separator className="bg-white/5" />
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-[0.1em] mb-0.5">Pendapatan</p>
+              <p className={`font-bold text-emerald-400 ${isDesktop ? 'text-sm' : 'text-[12px]'}`}>{formatIDR(totalRevenue)}</p>
+            </div>
+            <div>
+              <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-[0.1em] mb-0.5">Modal + Kirim</p>
+              <p className={`font-bold text-red-400 ${isDesktop ? 'text-sm' : 'text-[12px]'}`}>{formatIDR(safeNum(totalModal) + safeNum(deliveryCost))}</p>
+            </div>
+          </div>
+
+          <div className="pt-2 flex justify-between items-center border-t border-white/5">
+            <span className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Est. Profit</span>
+            <span className={`font-black tabular-nums ${profitBersih >= 0 ? 'text-emerald-400' : 'text-red-400'} ${isDesktop ? 'text-xl' : 'text-base'}`}>
               {profitBersih >= 0 ? '+' : ''}{formatIDR(profitBersih)}
             </span>
           </div>
@@ -344,10 +373,10 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
       </Card>
 
       {/* Toggle Catat Pengiriman */}
-      <div className="flex items-center justify-between p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl">
+      <div className={`flex items-center justify-between bg-emerald-500/5 border border-emerald-500/10 rounded-2xl ${isDesktop ? 'p-4' : 'p-3.5'}`}>
         <div>
-          <p className="text-[13px] font-black text-emerald-400 uppercase tracking-wider">Lengkapi Detail Pengiriman?</p>
-          <p className="text-[11px] text-[#4B6478] font-medium mt-0.5">Wajib jika ingin cetak Surat Jalan</p>
+          <p className={`font-black text-emerald-400 uppercase tracking-wider ${isDesktop ? 'text-[13px]' : 'text-[12px]'}`}>Lengkapi Detail Pengiriman?</p>
+          <p className="text-[10px] text-[#4B6478] font-medium mt-0.5">Wajib jika ingin cetak Surat Jalan</p>
         </div>
         <button
           type="button"
@@ -370,7 +399,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
         <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
           {/* Kendaraan */}
           <div className="space-y-2.5">
-            <label style={S.label}>Pilih Kendaraan *</label>
+            <label htmlFor="vehicle_trigger" style={S.label}>Pilih Kendaraan *</label>
             <div className="flex gap-1.5 mb-2">
               {['armada', 'manual'].map(m => (
                 <button key={m} type="button" 
@@ -488,7 +517,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
 
           {/* Sopir */}
           <div className="space-y-2.5">
-            <label style={S.label}>Pilih Sopir *</label>
+            <label htmlFor="driver_trigger" style={S.label}>Pilih Sopir *</label>
             <div className="flex gap-1.5 mb-2">
               {['driver', 'manual'].map(m => (
                 <button key={m} type="button" 
@@ -635,11 +664,34 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
           </div>
 
           {/* TOTAL BIAYA PENGIRIMAN */}
-          <div className="space-y-1.5">
+          <div className="space-y-3">
             <label htmlFor="delivery_cost" style={S.label}>Total Biaya Pengiriman *</label>
-            <InputRupiah id="delivery_cost" name="delivery_cost" value={formValues.delivery_cost || 0} onChange={v => setValue('delivery_cost', v, { shouldValidate: true })} placeholder="0" className={`bg-[#111C24] ${errors.delivery_cost ? 'border-red-500 ring-1 ring-red-500' : 'border-emerald-500/20'} h-14 rounded-2xl text-xl font-bold text-white shadow-inner`} />
-            <p className="text-[10px] text-[#4B6478] font-bold uppercase mt-1 italic">
-              Termasuk solar, uang makan, portal, dll.
+            
+            <InputRupiah id="delivery_cost" name="delivery_cost" value={formValues.delivery_cost || 0} onChange={v => setValue('delivery_cost', v, { shouldValidate: true })} placeholder="0" className={`bg-[#111C24] ${errors.delivery_cost ? 'border-red-500 ring-1 ring-red-500' : 'border-emerald-500/20'} ${isDesktop ? 'h-14 text-xl' : 'h-11 text-base'} rounded-2xl font-bold text-white shadow-inner`} />
+            
+            {/* Toggles Container */}
+            <div className="flex flex-wrap gap-4 py-1">
+              <ToggleRow 
+                label="Biaya Sopir" 
+                active={formValues.include_driver_wage} 
+                onClick={() => {
+                  const newState = !formValues.include_driver_wage
+                  setValue('include_driver_wage', newState)
+                  if (!newState) setValue('driver_wage', 0)
+                  else if (selectedDriver?.wage_per_trip) setValue('driver_wage', selectedDriver.wage_per_trip)
+                }} 
+              />
+              <ToggleRow 
+                label="Biaya Solar" 
+                active={formValues.include_fuel_cost} 
+                onClick={() => setValue('include_fuel_cost', !formValues.include_fuel_cost)} 
+              />
+            </div>
+
+            {/* UPPAH SOPIR INPUT - SHOW IF TOGGLE IS ON */}
+
+            <p className="text-[10px] text-[#4B6478] font-bold uppercase mt-1 italic leading-relaxed">
+              Biaya operasional yang sudah tercakup dalam total pembayaran.
             </p>
             {errors.delivery_cost && <p className="text-[10px] text-red-500 font-bold">{errors.delivery_cost.message}</p>}
           </div>
@@ -656,17 +708,17 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
       </div>
       
       {/* Buttons — Sticky Footer */}
-      <div className="sticky bottom-0 z-10 bg-[#0C1319] border-t border-white/10 p-4 px-5 space-y-4">
+      <div className={`sticky bottom-0 z-10 bg-[#0C1319] border-t border-white/10 ${isDesktop ? 'p-4 px-5 space-y-4' : 'p-3 px-4 space-y-3'}`}>
         <button type="button" onClick={handlePreSubmit} disabled={submitting}
-          className="w-full h-14 rounded-2xl font-black text-sm tracking-[0.15em] text-white flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
+          className={`w-full rounded-2xl font-black tracking-[0.15em] text-white flex items-center justify-center gap-2.5 transition-all active:scale-[0.98] ${isDesktop ? 'h-14 text-sm' : 'h-11 text-[12px]'}`}
           style={{ background: '#10B981', boxShadow: '0 12px 24px -8px rgba(16,185,129,0.4)', opacity: submitting ? 0.7 : 1 }}
         >
-          {submitting ? <><Loader2 size={20} className="animate-spin" /> MENYIMPAN...</> : <><Truck size={20} /> SIMPAN TRANSAKSI</>}
+          {submitting ? <><Loader2 size={18} className="animate-spin" /> MENYIMPAN...</> : <><Truck size={18} /> SIMPAN TRANSAKSI</>}
         </button>
-        
-        <div className="flex items-center gap-4">
-          <Button type="button" variant="ghost" onClick={onBack} className="gap-2 text-[#4B6478] hover:text-white font-bold h-12 rounded-xl flex-1 border border-white/5">
-            <ChevronLeft size={18} /> KEMBALI
+
+        <div className="flex items-center gap-3">
+          <Button type="button" variant="ghost" onClick={onBack} className={`gap-2 text-[#4B6478] hover:text-white font-bold rounded-xl flex-1 border border-white/5 ${isDesktop ? 'h-12' : 'h-9 text-[11px]'}`}>
+            <ChevronLeft size={16} /> KEMBALI
           </Button>
           {!step3Data.enabled && (
              <button type="button" onClick={handlePreSubmit} disabled={submitting}
@@ -678,5 +730,26 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
         </div>
       </div>
     </div>
+  )
+}
+
+function ToggleRow({ label, active, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-3 transition-opacity active:opacity-70 group"
+    >
+      <div 
+        className={`w-10 h-5 rounded-full relative transition-colors ${active ? 'bg-emerald-500' : 'bg-white/10'}`}
+      >
+        <div 
+          className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${active ? 'left-6' : 'left-1'}`}
+        />
+      </div>
+      <span className={`text-[11px] font-black uppercase tracking-widest transition-colors ${active ? 'text-white' : 'text-[#4B6478] group-hover:text-slate-300'}`}>
+        {label}
+      </span>
+    </button>
   )
 }

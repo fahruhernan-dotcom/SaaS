@@ -239,7 +239,7 @@ export default function SembakoAkun() {
               <Separator className="bg-secondary/10 mx-5" />
               <MenuItem 
                   icon={BarChart3} label="Harga Pasar" sub="Pantau update live regional" 
-                  onClick={() => _navigate('/harga-pasar')}
+                  onClick={() => _navigate('/dashboard/harga-pasar')}
               />
               <Separator className="bg-secondary/10 mx-5" />
               <MenuItem 

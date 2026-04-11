@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, useOutletContext } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Plus, Search, History, AlertCircle, Trash2, Loader2, Eye
+  Plus, Search, History, AlertCircle, Trash2, Loader2, Eye, Menu
 } from 'lucide-react'
 import InvoicePreviewModal from '@/components/invoice/InvoicePreviewModal'
 import { format, isSameDay, isSameWeek, isSameMonth, parseISO } from 'date-fns'
@@ -70,6 +70,7 @@ export default function Transaksi() {
   const navigate = useNavigate()
   const location = useLocation()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const { setSidebarOpen } = useOutletContext() || {}
 
   React.useEffect(() => {
     // Initial check (in case of direct deep link)
@@ -86,9 +87,9 @@ export default function Transaksi() {
     }
   }, [location.search])
   
-  const isOwner = profile?.role === 'owner'
+  const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin'
   const isViewOnly = profile?.role === 'view_only'
-  const canWrite = profile?.role === 'owner' || profile?.role === 'staff'
+  const canWrite = profile?.role === 'owner' || profile?.role === 'staff' || profile?.role === 'superadmin'
 
   // --- STATES ---
   const [activeTab, setActiveTab] = useState('semua')
@@ -122,6 +123,7 @@ export default function Transaksi() {
   const [isUpdateArrivalSubmitting, setIsUpdateArrivalSubmitting] = useState(false)
 
   const [timeFilter, setTimeFilter] = useState('keseluruhan') // 'hari_ini', 'minggu_ini', 'bulan_ini', 'keseluruhan'
+  const [searchOpen, setSearchOpen] = useState(false)
 
   // --- DATA FETCHING ---
   const { data: sales = [], isLoading: isLoadingSales, refetch: refetchSales } = useQuery({
@@ -535,124 +537,260 @@ export default function Transaksi() {
 
   if (isLoadingSales) return <TransaksiSkeleton />
 
+  const TIME_FILTERS = [
+    { id: 'hari_ini', label: 'Hari Ini' },
+    { id: 'minggu_ini', label: 'Minggu Ini' },
+    { id: 'bulan_ini', label: 'Bulan Ini' },
+    { id: 'keseluruhan', label: 'Semua' },
+  ]
+
+  const STATUS_FILTERS = [
+    { id: 'semua', label: 'Semua' },
+    { id: 'lunas', label: 'Lunas' },
+    { id: 'belum_lunas', label: 'Belum Lunas' },
+    { id: 'sebagian', label: 'Sebagian' },
+  ]
+
+  const TransactionList = () => (
+    <AnimatePresence mode="wait">
+      {isLoadingSales ? (
+        <LoadingList />
+      ) : !filteredSales.length ? (
+        <EmptyState
+          icon={History}
+          title="Tidak ada transaksi"
+          description={activeTab === 'semua' ? 'Catat transaksi pertamamu hari ini.' : 'Belum ada transaksi dengan filter ini.'}
+        />
+      ) : (
+        <motion.div
+          key={activeTab + timeFilter + searchQuery}
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+          className="space-y-3"
+        >
+          {filteredSales.map(sale => (
+            <motion.div key={sale.id} variants={fadeUp}>
+              <UnifiedTransactionCard
+                sale={sale}
+                onOpenAuditSheet={(id) => { setSelectedSaleId(id); setShowAuditSheet(true) }}
+                isOwner={isOwner}
+                isDesktop={isDesktop}
+              />
+            </motion.div>
+          ))}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+
   return (
     <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="bg-[#06090F] min-h-screen pb-24"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="bg-[#06090F] min-h-screen pb-20"
     >
-      {/* Header with Search & Filter */}
-      <BrokerPageHeader
-        title="Transaksi"
-        subtitle={tenant?.business_name || 'BROKER OPS'}
-        isDesktop={isDesktop}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        searchPlaceholder="Cari RPA, Kandang, Plat..."
-        filters={[
-          { id: 'hari_ini', label: 'Hari Ini' },
-          { id: 'minggu_ini', label: 'Minggu Ini' },
-          { id: 'bulan_ini', label: 'Bulan Ini' },
-          { id: 'keseluruhan', label: 'Keseluruhan' }
-        ]}
-        activeFilter={timeFilter}
-        onFilterChange={setTimeFilter}
-        isViewOnly={isViewOnly}
-        actionButton={canWrite && (
-          <Button 
-            onClick={handleWizardOpen}
-            className="h-10 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all shrink-0"
-          >
-            <Plus size={14} className="mr-1" /> JUAL
-          </Button>
-        )}
-      />
 
-      {/* Summary Highlights */}
-      <BrokerSummaryStrip
-        isDesktop={isDesktop}
-        items={[
-          { label: 'Total Jual', value: totalSalesVal, isCurrency: true, color: 'emerald', alignment: 'left' },
-          { label: 'Modal Produk', value: totalModalVal, isCurrency: true, alignment: 'center' },
-          { label: 'Net Margin', value: netProfitVal, isCurrency: true, color: netProfitVal >= 0 ? 'emerald' : 'red', prefix: netProfitVal >= 0 ? '+' : '−', alignment: 'right' }
-        ]}
-      />
+    {/* ══════════════════════════════════════════
+        MOBILE LAYOUT
+    ══════════════════════════════════════════ */}
+    {!isDesktop && (
+      <>
+        {/* Fixed TopBar */}
+        <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 h-14 flex items-center justify-between px-4 bg-[#06090F]/95 backdrop-blur-xl border-b border-white/[0.05]">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen?.(true)}
+              className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+            >
+              <Menu size={16} className="text-[#94A3B8]" />
+            </button>
+            <h1 className="font-display font-black text-[15px] text-[#F1F5F9] tracking-tight uppercase leading-none">Transaksi</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSearchOpen(v => !v)}
+              className={cn("w-9 h-9 rounded-xl border flex items-center justify-center transition-all", searchOpen ? "bg-emerald-500/15 border-emerald-500/30" : "bg-white/[0.05] border-white/[0.08]")}
+            >
+              <Search size={16} className={searchOpen ? "text-emerald-400" : "text-[#94A3B8]"} />
+            </button>
+            {canWrite && (
+              <button
+                onClick={handleWizardOpen}
+                className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/25 active:scale-90 transition-transform"
+              >
+                <Plus size={17} className="text-white" />
+              </button>
+            )}
+          </div>
+        </header>
+        <div className="h-14" />
 
-      {/* Pending Audits Banner */}
-      <BrokerAuditNotice
-        count={pendingAuditCount}
-        message="transaksi timbangan tiba (audit)"
-        isDesktop={isDesktop}
-      />
+        {/* Collapsible Search */}
+        <AnimatePresence>
+          {searchOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="overflow-hidden sticky top-14 z-30 bg-[#06090F] px-4 pb-2 pt-2 border-b border-white/[0.05]"
+            >
+              <div className="relative">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4B6478]" />
+                <input
+                  autoFocus
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Cari RPA, Kandang, Plat..."
+                  className="w-full h-10 pl-9 pr-4 bg-[#111C24] border border-white/[0.06] rounded-xl text-xs font-bold text-white placeholder:text-[#4B6478] focus:outline-none focus:border-emerald-500/40"
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      {/* Tabs */}
-      <Tabs defaultValue="semua" className="mt-4" onValueChange={setActiveTab}>
-        <div className="px-5">
-          <TabsList className="w-full bg-[#111C24] border border-white/5 h-12 p-1 rounded-2xl">
-            <TabsTrigger
-              value="semua"
-              className={cn("flex-1 rounded-xl font-black h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}
-            >
-              Semua
-            </TabsTrigger>
-            <TabsTrigger
-              value="lunas"
-              className={cn("flex-1 rounded-xl font-black h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}
-            >
-              Lunas
-            </TabsTrigger>
-            <TabsTrigger
-              value="belum_lunas"
-              className={cn("flex-1 rounded-xl font-black h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}
-            >
-              Belum Lunas
-            </TabsTrigger>
-            <TabsTrigger
-              value="sebagian"
-              className={cn("flex-1 rounded-xl font-black h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}
-            >
-              Sebagian
-            </TabsTrigger>
-          </TabsList>
+        {/* Hero Net Profit */}
+        <motion.div variants={fadeUp} initial="hidden" animate="visible" className="px-4 pt-5 pb-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4B6478] mb-1.5">Net Profit</p>
+          <div className="flex items-end gap-3">
+            <h1 className={cn("text-[34px] font-display font-black tabular-nums leading-none", netProfitVal >= 0 ? "text-[#F1F5F9]" : "text-red-400")}>
+              {netProfitVal >= 0 ? '' : '−'}{formatIDRShort(Math.abs(netProfitVal))}
+            </h1>
+            <span className="text-[11px] font-black px-2 py-0.5 rounded-lg mb-1.5 bg-white/[0.06] text-[#4B6478]">
+              {filteredSales.length} transaksi
+            </span>
+          </div>
+        </motion.div>
+
+        {/* Summary Card */}
+        <motion.div variants={fadeUp} initial="hidden" animate="visible" className="px-4 mb-4">
+          <div className="rounded-[22px] p-5 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0D1F2E 0%, #112233 55%, #0A1A28 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)' }} />
+            <div className="absolute -bottom-8 -left-8 w-28 h-28 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)' }} />
+            <div className="flex justify-between items-end relative z-10">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-0.5">Total Jual</p>
+                <p className="text-[20px] font-display font-black text-emerald-400 tabular-nums leading-none">{formatIDRShort(totalSalesVal)}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-0.5">Modal</p>
+                <p className="text-[20px] font-display font-black text-white/60 tabular-nums leading-none">{formatIDRShort(totalModalVal)}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[9px] font-black uppercase tracking-widest text-white/30 mb-0.5">Profit</p>
+                <p className={cn("text-[20px] font-display font-black tabular-nums leading-none", netProfitVal >= 0 ? "text-emerald-400" : "text-red-400")}>
+                  {netProfitVal >= 0 ? '+' : '−'}{formatIDRShort(Math.abs(netProfitVal))}
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Time Filter Pills */}
+        <div className="px-4 mb-3">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 pr-4">
+            {TIME_FILTERS.map(f => (
+              <button
+                key={f.id}
+                onClick={() => setTimeFilter(f.id)}
+                className={cn(
+                  "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap shrink-0",
+                  timeFilter === f.id ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "bg-[#111C24] text-[#4B6478] border border-white/5"
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <TabsContent value={activeTab} className="px-5 mt-4 outline-none">
-          <AnimatePresence mode="wait">
-            {isLoadingSales ? (
-              <LoadingList />
-            ) : !filteredSales.length ? (
-              <EmptyState
-                  icon={History}
-                  title="Tidak ada transaksi"
-                  description={activeTab === 'semua' ? "Catat transaksi pertamamu hari ini." : `Belum ada transaksi dengan filter ini.`}
-              />
-            ) : (
-              <motion.div
-                key={activeTab + timeFilter + searchQuery}
-                variants={staggerContainer}
-                initial="hidden"
-                animate="visible"
-                className="space-y-3"
+        {/* Audit Notice */}
+        <BrokerAuditNotice count={pendingAuditCount} message="transaksi timbangan tiba (audit)" isDesktop={false} />
+
+        {/* Payment Status Pills */}
+        <div className="px-4 mb-3">
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 pr-4">
+            {STATUS_FILTERS.map(f => (
+              <button
+                key={f.id}
+                onClick={() => setActiveTab(f.id)}
+                className={cn(
+                  "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap shrink-0",
+                  activeTab === f.id ? "bg-white/10 text-emerald-400 border border-emerald-500/30" : "bg-[#111C24] text-[#4B6478] border border-white/5"
+                )}
               >
-                {filteredSales.map(sale => (
-                   <motion.div key={sale.id} variants={fadeUp}>
-                      <UnifiedTransactionCard
-                        sale={sale}
-                        onOpenAuditSheet={(id) => {
-                          setSelectedSaleId(id)
-                          setShowAuditSheet(true)
-                        }}
-                        isOwner={isOwner}
-                        isDesktop={isDesktop}
-                      />
-                   </motion.div>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </TabsContent>
-      </Tabs>
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Transaction List */}
+        <div className="px-4">
+          <TransactionList />
+        </div>
+      </>
+    )}
+
+    {/* ══════════════════════════════════════════
+        DESKTOP LAYOUT (unchanged)
+    ══════════════════════════════════════════ */}
+    {isDesktop && (
+      <>
+        <BrokerPageHeader
+          title="Transaksi"
+          subtitle={tenant?.business_name || 'BROKER OPS'}
+          isDesktop={isDesktop}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Cari RPA, Kandang, Plat..."
+          filters={TIME_FILTERS}
+          activeFilter={timeFilter}
+          onFilterChange={setTimeFilter}
+          isViewOnly={isViewOnly}
+          actionButton={canWrite && (
+            <Button
+              onClick={handleWizardOpen}
+              className="h-10 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all shrink-0"
+            >
+              <Plus size={14} className="mr-1" /> JUAL
+            </Button>
+          )}
+        />
+
+        <BrokerSummaryStrip
+          isDesktop={isDesktop}
+          items={[
+            { label: 'Total Jual', value: totalSalesVal, isCurrency: true, color: 'emerald', alignment: 'left' },
+            { label: 'Modal Produk', value: totalModalVal, isCurrency: true, alignment: 'center' },
+            { label: 'Net Margin', value: netProfitVal, isCurrency: true, color: netProfitVal >= 0 ? 'emerald' : 'red', prefix: netProfitVal >= 0 ? '+' : '−', alignment: 'right' }
+          ]}
+        />
+
+        <BrokerAuditNotice count={pendingAuditCount} message="transaksi timbangan tiba (audit)" isDesktop={isDesktop} />
+
+        <Tabs defaultValue="semua" className="mt-4" onValueChange={setActiveTab}>
+          <div className="px-5">
+            <TabsList className="w-full bg-[#111C24] border border-white/5 h-12 p-1 rounded-2xl">
+              {STATUS_FILTERS.map(f => (
+                <TabsTrigger
+                  key={f.id}
+                  value={f.id}
+                  className="flex-1 rounded-xl font-black h-full uppercase tracking-widest data-[state=active]:bg-secondary/10 data-[state=active]:text-emerald-400 text-[#4B6478] text-[10px]"
+                >
+                  {f.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+          <TabsContent value={activeTab} className="px-5 mt-4 outline-none">
+            <TransactionList />
+          </TabsContent>
+        </Tabs>
+      </>
+    )}
 
       {/* Modals */}
       <TransaksiWizard isOpen={wizardOpen} onClose={handleWizardClose} />
@@ -746,7 +884,7 @@ export default function Transaksi() {
         data={saleDetail}
         isLoading={loadingDetail}
         onFinalize={handleFinalizeSale}
-        onDelete={isOwner ? () => {
+        onDelete={isOwner && saleDetail ? () => {
           setDeleteTargetSale(saleDetail)
           setShowDeleteSaleDialog(true)
         } : null}

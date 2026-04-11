@@ -22,6 +22,7 @@ import {
 } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
 import { C } from './components/sembakoSaleUtils'
+import SmartInsight from '@/dashboard/_shared/components/SmartInsight'
 
 // ── Skeleton ────────────────────────────────────────────────────────────────────
 function Skel({ h = '60px', w = '100%', r = '14px' }) {
@@ -497,11 +498,7 @@ function DesktopBeranda({ stats, sales, employees, navigate, name, salesLoading,
           <p style={{ fontSize: '12px', color: C.muted, marginTop: '4px', fontWeight: 600, letterSpacing: '0.08em' }}>
             DASHBOARD DISTRIBUTOR SEMBAKO
           </p>
-          {insight && (
-            <p style={{ fontSize: '12px', color: insight.type === 'up' ? '#34D399' : '#F87171', marginTop: '6px', fontWeight: 700 }}>
-              {insight.text}
-            </p>
-          )}
+          <SmartInsight insight={insight} className="mt-2" />
         </div>
         <button
           onClick={() => navigate(`${brokerBase}/penjualan?action=new`)}
@@ -685,11 +682,7 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
           <p style={{ fontSize: '11px', color: C.muted, marginTop: '2px', fontWeight: 600, letterSpacing: '0.08em' }}>
             DASHBOARD DISTRIBUTOR SEMBAKO
           </p>
-          {insight && (
-            <p style={{ fontSize: '11px', color: insight.type === 'up' ? '#34D399' : '#F87171', marginTop: '6px', fontWeight: 700 }}>
-              {insight.text}
-            </p>
-          )}
+          <SmartInsight insight={insight} className="mt-2" />
         </div>
         {/* Revenue hero card */}
         <motion.div

@@ -118,7 +118,7 @@ export default function DesktopTopBar() {
       <div className="flex items-center gap-3">
         {vertical === 'poultry_broker' && (
           <button
-            onClick={() => navigate('/harga-pasar')}
+            onClick={() => navigate('/dashboard/harga-pasar')}
             className="flex items-center gap-3 px-3.5 py-1.5 bg-secondary border border-border rounded-xl hover:border-white/20 transition-all group"
           >
             <BarChart2 size={13} className="text-emerald-400 group-hover:scale-110 transition-transform" />

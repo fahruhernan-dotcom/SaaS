@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +17,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Trash2, X, Plus, UserPlus, Users, Clock, Copy, Pencil, Save, AlertCircle } from 'lucide-react';
+import { Loader2, Trash2, X, Plus, UserPlus, Users, Clock, Copy, Pencil, Save, AlertCircle, Menu } from 'lucide-react';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { TimSkeleton } from '@/components/ui/BrokerPageSkeleton'
@@ -39,7 +41,9 @@ export default function Tim() {
     location: ''
   });
   
-  const isOwner = profile?.role === 'owner';
+  const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin';
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const { setSidebarOpen } = useOutletContext() || {};
 
   // --- QUERIES ---
   const { data: tenant, isLoading: loadingTenant } = useQuery({
@@ -207,39 +211,77 @@ export default function Tim() {
 
   if (loadingTenant || loadingMembers) return <TimSkeleton />
 
+  const handleInviteClick = () => {
+    const totalMembers = members.length + invitations.length;
+    if (sub.plan !== 'business' && totalMembers >= 3) {
+      toast.error('Kapasitas Tim Penuh', { description: 'Plan saat ini dibatasi maksimal 3 anggota. Upgrade ke Business untuk anggota unlimited!' });
+    } else {
+      setIsInviteSheetOpen(true);
+    }
+  };
+
   return (
-    <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8 pb-32">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-tx-1">Tim & Akses</h1>
-          <p className="text-tx-3 mt-1 text-sm">
-            {members.length} anggota aktif {invitations.length > 0 && `• ${invitations.length} undangan tertunda`}
-            {sub.plan !== 'business' && (
-              <span className="ml-2 font-bold text-amber-500">
-                (Kapasitas Plan: {members.length + invitations.length} / 3)
-              </span>
-            )}
-          </p>
-        </div>
-        {isOwner && (
-          <Button 
-            onClick={() => {
-              const totalMembers = members.length + invitations.length;
-              if (sub.plan !== 'business' && totalMembers >= 3) {
-                toast.error('Kapasitas Tim Penuh', { description: 'Plan saat ini dibatasi maksimal 3 anggota. Upgrade ke Business untuk anggota unlimited!' });
-              } else {
-                setIsInviteSheetOpen(true);
-              }
-            }}
+    <div className={cn("max-w-5xl mx-auto", isDesktop ? "p-8 space-y-8 pb-32" : "space-y-5 pb-24")}>
+      {/* Mobile sticky header */}
+      {!isDesktop && (
+        <header className="h-14 px-4 flex items-center gap-3 justify-between sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 border-b border-white/5">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen?.(true)}
+              className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+            >
+              <Menu size={16} className="text-[#94A3B8]" />
+            </button>
+            <h1 className="font-display text-[15px] font-black text-white uppercase tracking-tight">Tim & Akses</h1>
+          </div>
+          {isOwner && (
+            <button
+              onClick={handleInviteClick}
+              className="h-9 px-3 text-[11px] font-black bg-em-500 hover:bg-em-600 text-white rounded-xl flex items-center gap-1.5 uppercase tracking-widest transition-all active:scale-95"
+            >
+              <UserPlus size={13} /> Undang
+            </button>
+          )}
+        </header>
+      )}
+
+      {/* Desktop Header */}
+      {isDesktop && (
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="font-display text-2xl md:text-3xl font-bold text-tx-1">Tim & Akses</h1>
+            <p className="text-tx-3 mt-1 text-sm">
+              {members.length} anggota aktif {invitations.length > 0 && `• ${invitations.length} undangan tertunda`}
+              {sub.plan !== 'business' && (
+                <span className="ml-2 font-bold text-amber-500">
+                  (Kapasitas Plan: {members.length + invitations.length} / 3)
+                </span>
+              )}
+            </p>
+          </div>
+          <Button
+            onClick={handleInviteClick}
             className="bg-em-500 hover:bg-em-600 text-white font-semibold rounded-xl"
           >
             <UserPlus size={18} className="mr-2" />
             Undang Anggota
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
+      {/* Mobile subtitle */}
+      {!isDesktop && (
+        <p className="text-tx-3 text-xs px-4 pt-1">
+          {members.length} anggota aktif {invitations.length > 0 && `• ${invitations.length} undangan tertunda`}
+          {sub.plan !== 'business' && (
+            <span className="ml-2 font-bold text-amber-500">
+              ({members.length + invitations.length}/3)
+            </span>
+          )}
+        </p>
+      )}
+
+      <div className={cn(isDesktop ? "" : "px-4")}>
       {!isOwner && (
         <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-amber-500 text-sm">
           Anda masuk sebagai <strong>{ROLE_BADGE_MAP[profile?.role]?.label || profile?.role}</strong>. Hanya owner yang dapat mengelola undangan dan akses.
@@ -265,11 +307,11 @@ export default function Tim() {
             Profil Bisnis
           </h2>
           {isOwner && !isEditingProfile && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setIsEditingProfile(true)}
-              className="text-tx-3 hover:text-tx-1 hover:bg-white/5 rounded-lg h-8 px-2"
+              className={cn("text-tx-3 hover:text-tx-1 hover:bg-white/5 rounded-lg px-2", isDesktop ? "h-8" : "h-10")}
             >
               <Pencil size={14} className="mr-2" />
               Edit Profil
@@ -277,7 +319,7 @@ export default function Tim() {
           )}
         </div>
 
-        <div className="bg-[#0C1319] rounded-2xl border border-white/8 p-6 shadow-sm transition-all duration-300">
+        <div className={cn("bg-[#0C1319] rounded-2xl border border-white/8 shadow-sm transition-all duration-300", isDesktop ? "p-6" : "p-4")}>
           {loadingTenant ? (
             <div className="py-8 flex justify-center text-tx-3"><Loader2 className="animate-spin" /></div>
           ) : isEditingProfile ? (
@@ -486,13 +528,15 @@ export default function Tim() {
         </div>
       </section>
 
-      <InviteSheet 
-        isOpen={isInviteSheetOpen} 
+      </div>
+
+      <InviteSheet
+        isOpen={isInviteSheetOpen}
         onClose={() => {
           setIsInviteSheetOpen(false);
           setShowCode(false);
           setInviteCode(null);
-        }} 
+        }}
         onSubmit={(data) => inviteMutation.mutate(data)}
         isPending={inviteMutation.isPending}
         showCode={showCode}
@@ -532,16 +576,16 @@ function InviteSheet({ isOpen, onClose, onSubmit, isPending, showCode, inviteCod
           borderRadius: isDesktop ? '0' : '24px 24px 0 0',
         }}
       >
-        <SheetHeader className="text-left p-6 sm:p-8 pb-0">
+        <SheetHeader className={cn("text-left pb-0", isDesktop ? "p-8" : "p-5")}>
           <SheetTitle className="font-display text-xl font-bold text-tx-1">Undang Anggota</SheetTitle>
           <SheetDescription className="text-tx-3 text-sm">
-            {showCode 
+            {showCode
               ? "Kode berhasil dibuat. Bagikan ke anggota yang ingin diundang."
               : "Generate kode undangan untuk anggota baru bergabung ke bisnis Anda."}
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 flex flex-col gap-6 p-6 sm:p-8 pt-4">
+        <div className={cn("flex-1 flex flex-col gap-6 pt-4", isDesktop ? "p-8" : "p-5")}>
           {!showCode ? (
             <form onSubmit={handleSubmit} className="space-y-6 flex-1 flex flex-col">
               <div className="space-y-2">
@@ -574,9 +618,9 @@ function InviteSheet({ isOpen, onClose, onSubmit, isPending, showCode, inviteCod
               </div>
 
               <div className="mt-auto pt-6 border-t border-border-sub">
-                <Button 
-                  type="submit" 
-                  className="w-full bg-em-500 hover:bg-em-600 text-white font-bold h-12 rounded-xl text-[15px] transition-all"
+                <Button
+                  type="submit"
+                  className={cn("w-full bg-em-500 hover:bg-em-600 text-white font-bold rounded-xl transition-all", isDesktop ? "h-12 text-[15px]" : "h-11 text-[14px]")}
                   disabled={isPending}
                 >
                   {isPending ? <Loader2 className="animate-spin mr-2" /> : <Plus size={18} className="mr-2" />}
@@ -597,9 +641,9 @@ function InviteSheet({ isOpen, onClose, onSubmit, isPending, showCode, inviteCod
                   <p className="text-[#4B6478] text-xs font-medium">Berlaku 7 hari · Hanya 1x pakai</p>
                 </div>
 
-                <Button 
+                <Button
                   onClick={copyToClipboard}
-                  className="w-full bg-[#10B981] hover:bg-em-600 text-white font-bold h-12 rounded-xl transition-all shadow-lg shadow-emerald-500/20"
+                  className={cn("w-full bg-[#10B981] hover:bg-em-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20", isDesktop ? "h-12" : "h-11")}
                 >
                   <Copy size={16} className="mr-2" />
                   Salin Kode

@@ -169,7 +169,38 @@ export default function PeternakBeranda() {
     // IP Score rata-rata dari siklus yang sudah punya data cukup
     const ipScores = activeCycles.map(c => getIPScore(c)).filter(v => v !== null)
     const avgIP = ipScores.length ? Math.round(ipScores.reduce((s, v) => s + v, 0) / ipScores.length) : null
-    return { totalDoc, avgAge, avgDaysLeft, todayMort, totalMort, mortPct, avgIP }
+
+    const totalExpense = activeCycles.reduce((s, c) => {
+      const cycleExp = (c.cycle_expenses ?? []).reduce((sum, exp) => sum + (exp.total_amount || 0), 0)
+      return s + cycleExp
+    }, 0)
+
+    return { totalDoc, avgAge, avgDaysLeft, todayMort, totalMort, mortPct, avgIP, totalExpense }
+  }, [activeCycles])
+
+  const farmRanking = useMemo(() => {
+    if (!activeCycles.length) return []
+    const farms = activeCycles.map(c => {
+      const ip = getIPScore(c) || 0
+      const fcr = getEstimatedFCR(c)
+      const mort = getMortalityPct(c)
+      const expense = (c.cycle_expenses ?? []).reduce((sum, exp) => sum + (exp.total_amount || 0), 0)
+      const age = getCycleAge(c)
+      const farmName = c.peternak_farms?.farm_name || 'Kandang'
+      
+      return {
+        id: c.peternak_farm_id,
+        cycle_id: c.id,
+        farmName,
+        ip,
+        fcr,
+        mort,
+        expense,
+        age
+      }
+    }).sort((a, b) => b.ip - a.ip)
+
+    return farms
   }, [activeCycles])
 
   const alerts = useMemo(() => {
@@ -367,6 +398,29 @@ export default function PeternakBeranda() {
           </section>
         )}
 
+        {/* Modal Berjalan (Cashflow Global) */}
+        {(profile?.role === 'owner' || profile?.role === 'superadmin') && activeCycles.length > 0 && (
+          <section className="mt-4">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-gradient-to-r from-[#111C24] to-[#1A2633] border border-emerald-500/20 rounded-2xl p-4 shadow-lg shadow-emerald-500/5 relative overflow-hidden"
+            >
+              <div className="absolute right-0 top-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-6 h-6 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <TrendingUp size={14} className="text-emerald-400" />
+                </div>
+                <p className="text-[10px] font-bold text-emerald-400/80 uppercase tracking-wider">Total Modal Berjalan</p>
+              </div>
+              <p className="font-['Sora'] text-2xl font-black text-slate-100 mb-0.5">
+                {formatIDRShort(kpi.totalExpense)}
+              </p>
+              <p className="text-[10px] text-[#4B6478]">Akumulasi seluruh biaya siklus aktif berjalan</p>
+            </motion.div>
+          </section>
+        )}
+
         {/* ── SECTION B — KPI Cards ── */}
         <section className="grid grid-cols-2 gap-2.5 mt-4">
           <KPICard
@@ -403,6 +457,66 @@ export default function PeternakBeranda() {
         {kpi.avgIP !== null && activeCycles.length > 0 && (
           <section className="mt-3">
             <IPScoreCard ip={kpi.avgIP} cycleCount={activeCycles.length} />
+          </section>
+        )}
+
+        {/* ── Leaderboard & Konsolidasi Performa Kandang ── */}
+        {(profile?.role === 'owner' || profile?.role === 'superadmin') && farmRanking.length > 0 && (
+          <section className="mt-7">
+            <div className="flex items-center justify-between mb-3.5">
+              <h2 className="font-['Sora'] text-sm font-extrabold text-slate-100">🏆 Leaderboard Kandang</h2>
+            </div>
+            <div className="flex flex-col gap-3">
+              {farmRanking.map((f, idx) => {
+                const isTop = idx === 0 && f.ip >= 300
+                const isBad = f.ip > 0 && f.ip < 300
+                return (
+                  <motion.div
+                    key={f.id}
+                    initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.1 }}
+                    className={`p-3.5 rounded-2xl border ${isTop ? 'bg-amber-400/[0.04] border-amber-400/20 shadow-[0_4px_24px_rgba(251,191,36,0.05)]' : isBad ? 'bg-red-400/[0.04] border-red-400/20' : 'bg-[#111C24] border-white/[0.06]' }`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shadow-inner
+                          ${idx === 0 ? 'bg-amber-400 text-amber-900' : idx === 1 ? 'bg-slate-300 text-slate-800' : idx === 2 ? 'bg-orange-400 text-orange-950' : 'bg-white/5 text-slate-400 border border-white/10'}
+                        `}>
+                          #{idx + 1}
+                        </div>
+                        <div>
+                          <p onClick={() => navigate(`${peternakBase}/kandang/${f.id}/beranda`)} className={`font-['Sora'] text-sm font-bold cursor-pointer hover:underline ${isTop ? 'text-amber-400' : 'text-slate-200'}`}>
+                            {f.farmName}
+                          </p>
+                          <p className="text-[10px] text-[#4B6478]">Siklus: Hari ke-{f.age}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[9px] text-[#4B6478] uppercase mb-0.5 tracking-wide">IP Score</p>
+                        <p className={`font-['Sora'] text-base font-black leading-none ${isTop ? 'text-amber-400' : isBad ? 'text-red-400' : 'text-slate-100'}`}>
+                          {Math.round(f.ip)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/[0.04]">
+                      <div className="flex gap-4">
+                        <div>
+                          <p className="text-[9px] text-[#4B6478] uppercase mb-0.5">FCR</p>
+                          <p className="text-xs font-bold text-slate-300">{f.fcr ? f.fcr.toFixed(2) : '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] text-[#4B6478] uppercase mb-0.5">Mortalitas</p>
+                          <p className="text-xs font-bold text-slate-300">{f.mort.toFixed(1)}%</p>
+                        </div>
+                      </div>
+                      <div className="text-right bg-[#0C1319]/50 px-2.5 py-1.5 rounded-lg border border-white/[0.03]">
+                        <p className="text-[9px] text-[#4B6478] uppercase mb-0.5">Modal Berjalan</p>
+                        <p className="text-[11px] font-bold text-emerald-400">{formatIDRShort(f.expense)}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </div>
           </section>
         )}
 

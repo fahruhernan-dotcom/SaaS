@@ -140,7 +140,7 @@ export default function Akun() {
         <div style={menuContainerStyle}>
           <MenuItem icon={Bell} label="Notifikasi" sub="Coming soon" />
           <MenuItem icon={Calculator} label="Simulator Margin" onClick={() => navigate('/simulator')} />
-          <MenuItem icon={BarChart3} label="Harga Pasar" onClick={() => navigate('/harga-pasar')} />
+          <MenuItem icon={BarChart3} label="Harga Pasar" onClick={() => navigate('/dashboard/harga-pasar')} />
           <MenuItem icon={HelpCircle} label="Bantuan" sub="WhatsApp Center" />
         </div>
       </section>

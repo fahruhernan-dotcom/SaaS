@@ -49,44 +49,49 @@ function ProgressIndicator({ currentStep, steps }) {
 // ─── Step 0 — Mode Selection ─────────────────────────────────────────────────
 function Step0ModeSelect({ onSelect }) {
   const [selected, setSelected] = useState(null)
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const pad = isDesktop ? '16px' : '12px'
+  const emojiSize = isDesktop ? 22 : 18
+  const titleSize = isDesktop ? 14 : 13
+  const subSize = isDesktop ? 12 : 11
 
   return (
-    <div className="space-y-6 px-5 pb-8">
+    <div className={isDesktop ? "space-y-6 px-5 pb-8" : "space-y-4 px-4 pb-6"}>
       <div>
-        <p className="text-[13px] text-muted-foreground font-medium mb-4">Bagaimana transaksi ini dimulai?</p>
-        <div className="space-y-3">
+        <p className={isDesktop ? "text-[13px] text-muted-foreground font-medium mb-4" : "text-[12px] text-muted-foreground font-medium mb-3"}>Bagaimana transaksi ini dimulai?</p>
+        <div className="space-y-2.5">
           <button
             type="button"
             onClick={() => setSelected('buy_first')}
             style={{
-              width: '100%', textAlign: 'left', padding: '16px', borderRadius: 16,
+              width: '100%', textAlign: 'left', padding: pad, borderRadius: 14,
               background: selected === 'buy_first' ? 'rgba(16,185,129,0.08)' : 'rgba(16,185,129,0.03)',
               border: selected === 'buy_first' ? '2px solid rgba(16,185,129,0.40)' : '1px solid rgba(16,185,129,0.15)',
               cursor: 'pointer', transition: 'all 0.2s'
             }}
           >
-            <div className="flex items-center gap-3 mb-1.5">
-              <span style={{ fontSize: 22 }}>🏚️ → 🤝 → 🏭</span>
+            <div className="flex items-center gap-2 mb-1">
+              <span style={{ fontSize: emojiSize }}>🏚️ → 🤝 → 🏭</span>
             </div>
-            <p style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', margin: 0 }}>Beli dari Kandang, Jual ke RPA</p>
-            <p style={{ fontSize: 12, color: '#4B6478', margin: '4px 0 0' }}>Kamu sudah beli stok dari kandang, sekarang mau jual ke pembeli.</p>
+            <p style={{ fontSize: titleSize, fontWeight: 700, color: '#F1F5F9', margin: 0 }}>Beli dari Kandang, Jual ke RPA</p>
+            <p style={{ fontSize: subSize, color: '#4B6478', margin: '3px 0 0' }}>Kamu sudah beli stok dari kandang, sekarang mau jual ke pembeli.</p>
           </button>
 
           <button
             type="button"
             onClick={() => setSelected('order_first')}
             style={{
-              width: '100%', textAlign: 'left', padding: '16px', borderRadius: 16,
+              width: '100%', textAlign: 'left', padding: pad, borderRadius: 14,
               background: selected === 'order_first' ? 'rgba(96,165,250,0.08)' : 'rgba(96,165,250,0.03)',
               border: selected === 'order_first' ? '2px solid rgba(96,165,250,0.40)' : '1px solid rgba(96,165,250,0.15)',
               cursor: 'pointer', transition: 'all 0.2s'
             }}
           >
-            <div className="flex items-center gap-3 mb-1.5">
-              <span style={{ fontSize: 22 }}>📋 → 🏚️</span>
+            <div className="flex items-center gap-2 mb-1">
+              <span style={{ fontSize: emojiSize }}>📋 → 🏚️</span>
             </div>
-            <p style={{ fontSize: 14, fontWeight: 700, color: '#F1F5F9', margin: 0 }}>Ada Order dari RPA dulu</p>
-            <p style={{ fontSize: 12, color: '#4B6478', margin: '4px 0 0' }}>RPA pesan ke kamu, sekarang kamu cari kandang yang cocok.</p>
+            <p style={{ fontSize: titleSize, fontWeight: 700, color: '#F1F5F9', margin: 0 }}>Ada Order dari RPA dulu</p>
+            <p style={{ fontSize: subSize, color: '#4B6478', margin: '3px 0 0' }}>RPA pesan ke kamu, sekarang kamu cari kandang yang cocok.</p>
           </button>
         </div>
       </div>
@@ -99,7 +104,7 @@ function Step0ModeSelect({ onSelect }) {
             exit={{ opacity: 0, y: 8 }}
           >
             <Button
-              className="w-full h-14 rounded-2xl font-black text-base"
+              className={isDesktop ? "w-full h-14 rounded-2xl font-black text-base" : "w-full h-11 rounded-xl font-black text-[13px]"}
               style={{ background: '#10B981', color: 'white', boxShadow: '0 8px 24px rgba(16,185,129,0.25)' }}
               onClick={() => onSelect(selected)}
             >
@@ -122,7 +127,7 @@ export default function TransaksiWizard({ isOpen, onClose }) {
   const [currentStep, setCurrentStep] = useState(0)
   const [step1Data, setStep1Data] = useState(null)
   const [step2Data, setStep2Data] = useState(null)
-  const [step3Data, setStep3Data] = useState({ enabled: false })
+  const [step3Data, setStep3Data] = useState({ enabled: false, include_driver_wage: true, include_fuel_cost: true, driver_wage: 0 })
   const [submitting, setSubmitting] = useState(false)
   const [successData, setSuccessData] = useState(null)
 
@@ -131,7 +136,7 @@ export default function TransaksiWizard({ isOpen, onClose }) {
     setCurrentStep(0)
     setStep1Data(null)
     setStep2Data(null)
-    setStep3Data({ enabled: false })
+    setStep3Data(p => ({ ...p, enabled: false, include_driver_wage: true, include_fuel_cost: true, driver_wage: 0 }))
     localStorage.removeItem(`ternak_os_wizard_draft_${tenant?.id}`)
   }
 
@@ -179,7 +184,7 @@ export default function TransaksiWizard({ isOpen, onClose }) {
       setCurrentStep(p.currentStep || 0)
       setStep1Data(p.step1Data)
       setStep2Data(p.step2Data)
-      setStep3Data(p.step3Data || { enabled: false })
+      setStep3Data(p.step3Data || { enabled: false, include_driver_wage: true, include_fuel_cost: true, driver_wage: 0 })
     }
     setHasDraft(false)
   }
@@ -322,6 +327,9 @@ export default function TransaksiWizard({ isOpen, onClose }) {
           load_time: step3Data.load_time || null,
           departure_time: step3Data.departure_time || null,
           delivery_cost: finalDeliveryCost,
+          include_driver_wage: step3Data.include_driver_wage ?? true,
+          include_fuel_cost: step3Data.include_fuel_cost ?? true,
+          driver_wage: step3Data.driver_wage || 0,
           status: 'preparing',
           notes: step3Data.notes || null
         }

@@ -6,16 +6,17 @@ import { cn } from '@/lib/utils'
  * BrokerBaseCard - Universal card container for any broker transaction list.
  * Handles premium hover effects, borders, and consistent spacing.
  */
-export function BrokerBaseCard({ 
-  onClick, 
-  isLoss, 
-  children, 
-  footer, 
-  header, 
-  className 
+export function BrokerBaseCard({
+  onClick,
+  isLoss,
+  children,
+  footer,
+  header,
+  className,
+  isDesktop = true
 }) {
   return (
-    <Card 
+    <Card
       onClick={onClick}
       className={cn(
         "bg-[#111C24] rounded-[22px] overflow-hidden relative cursor-pointer hover:bg-white/[0.04] active:scale-[0.98] transition-all group",
@@ -23,19 +24,20 @@ export function BrokerBaseCard({
         className
       )}
     >
-      <div className="p-5 space-y-6">
+      <div className={cn(isDesktop ? "p-5 space-y-6" : "p-3.5 space-y-3")}>
         {header && (
-          <div className="flex justify-between items-start gap-2">
+          <div className={cn("flex gap-2", isDesktop ? "justify-between items-start" : "flex-col")}>
             {header}
           </div>
         )}
-        
+
         {children}
       </div>
 
       {footer && (
         <div className={cn(
-          "px-6 py-3 flex justify-between items-center",
+          "flex justify-between items-center",
+          isDesktop ? "px-6 py-3" : "px-4 py-2.5",
           isLoss ? "bg-[#3d0f0f] border-t border-[#F87171]" : "bg-[#0C1319] border-t border-white/5"
         )}>
           {footer}

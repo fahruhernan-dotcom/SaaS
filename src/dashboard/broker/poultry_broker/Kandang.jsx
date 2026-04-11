@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Plus, Search, MapPin, ChevronRight, Warehouse, 
+import { useOutletContext } from 'react-router-dom'
+import {
+  Plus, Search, MapPin, ChevronRight, Warehouse, Menu,
   Trash2, Edit, Star, Calendar, Info, AlertTriangle,
   Clock, CheckCircle2, History, Phone
 } from 'lucide-react'
@@ -54,6 +55,7 @@ const fadeUp = {
 export default function Kandang() {
   const { tenant } = useAuth()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const { setSidebarOpen } = useOutletContext() || {}
   const { data: farms, isLoading } = useFarms()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('Semua') // 'Semua' | 'READY' | 'GROWING' | 'EMPTY'
@@ -94,21 +96,44 @@ export default function Kandang() {
         className="bg-[#06090F] min-h-screen pb-24"
     >
       {/* TopBar */}
-      <header className="px-5 pt-8 pb-4 border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 flex flex-col gap-1">
-        <div className="flex justify-between items-center">
+      <header className={cn("border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30", isDesktop ? "px-5 pt-8 pb-4 flex flex-col gap-1" : "h-14 px-4 flex items-center justify-between")}>
+        {isDesktop ? (
+          <div className="flex justify-between items-center">
             <div className="text-left">
-                <h1 className="font-display text-2xl font-black text-white tracking-tight uppercase">Kandang</h1>
-                <p className={cn("font-black text-[#4B6478] uppercase tracking-widest mt-1", isDesktop ? "text-[10px]" : "text-xs")}>{safeNumber(totalEkor).toLocaleString('id-ID')} ekor tersedia</p>
+              <h1 className="font-display text-2xl font-black text-white tracking-tight uppercase">Kandang</h1>
+              <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mt-1">{safeNumber(totalEkor).toLocaleString('id-ID')} ekor tersedia</p>
             </div>
-            <Button 
-                size="sm" 
-                onClick={() => { setEditingFarm(null); setOpenModal(true); }}
-                className="bg-[#10B981] hover:bg-emerald-600 text-white font-black rounded-xl h-10 px-5 gap-2 border-none shadow-[0_4px_20px_rgba(16,185,129,0.15)] active:scale-95 transition-transform uppercase text-xs tracking-widest"
+            <Button
+              size="sm"
+              onClick={() => { setEditingFarm(null); setOpenModal(true); }}
+              className="bg-[#10B981] hover:bg-emerald-600 text-white font-black rounded-xl h-10 px-5 gap-2 border-none shadow-[0_4px_20px_rgba(16,185,129,0.15)] active:scale-95 transition-transform uppercase text-xs tracking-widest"
             >
-                <Plus size={16} strokeWidth={3} />
-                Tambah
+              <Plus size={16} strokeWidth={3} /> Tambah
             </Button>
-        </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSidebarOpen?.(true)}
+                className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+              >
+                <Menu size={16} className="text-[#94A3B8]" />
+              </button>
+              <div>
+                <h1 className="font-display text-[15px] font-black text-white tracking-tight uppercase leading-none">Kandang</h1>
+                <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mt-0.5">{safeNumber(totalEkor).toLocaleString('id-ID')} ekor</p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              onClick={() => { setEditingFarm(null); setOpenModal(true); }}
+              className="h-9 px-3 bg-[#10B981] hover:bg-emerald-600 text-white font-black rounded-xl gap-1.5 border-none active:scale-95 transition-transform uppercase text-xs tracking-widest"
+            >
+              <Plus size={15} strokeWidth={3} /> Tambah
+            </Button>
+          </>
+        )}
       </header>
 
       {/* Summary Pills */}
@@ -296,7 +321,7 @@ function HarvestPill({ days, date }) {
 function FarmSheet({ isOpen, onClose, farm, tenantId }) {
     const { profile } = useAuth()
     const isDesktop = useMediaQuery('(min-width: 1024px)')
-    const isOwner = profile?.role === 'owner'
+    const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin'
     const [mode, setMode] = useState('view')
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
     const queryClient = useQueryClient()
@@ -325,10 +350,18 @@ function FarmSheet({ isOpen, onClose, farm, tenantId }) {
 
     return (
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <SheetContent side="right" className="sm:max-w-md bg-[#0C1319] border-white/10 p-0 overflow-y-auto">
+            <SheetContent
+                side={isDesktop ? 'right' : 'bottom'}
+                className="bg-[#0C1319] border-white/10 p-0 overflow-y-auto"
+                style={{
+                    width: isDesktop ? '448px' : '100%',
+                    maxHeight: isDesktop ? '100vh' : '92vh',
+                    borderRadius: isDesktop ? '0' : '24px 24px 0 0',
+                }}
+            >
                 {mode === 'view' ? (
                     <div className="flex flex-col h-full">
-                        <div className="p-6 space-y-8 flex-1">
+                        <div className={cn(isDesktop ? "p-6 space-y-8" : "p-4 space-y-5", "flex-1")}>
                             <SheetHeader className="text-left space-y-3">
                                 <div className="space-y-1">
                                     <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight leading-none">
@@ -375,32 +408,31 @@ function FarmSheet({ isOpen, onClose, farm, tenantId }) {
                             </div>
                         </div>
 
-                        <SheetFooter className="p-6 border-t border-white/5 flex-col gap-3">
-                            <Button 
+                        <SheetFooter className={cn("border-t border-white/5 flex-col gap-3", isDesktop ? "p-6" : "p-4")}>
+                            <Button
                                 onClick={() => setMode('edit')}
                                 variant="outline"
-                                className="w-full h-14 border-emerald-500/20 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/10 font-black text-xs uppercase tracking-widest rounded-2xl"
+                                className={cn("w-full border-emerald-500/20 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/10 font-black text-xs uppercase tracking-widest rounded-2xl", isDesktop ? "h-14" : "h-11")}
                             >
                                 <Edit size={16} className="mr-2" /> Edit Kandang
                             </Button>
-                            {/* Delete Button */}
-            {isOwner && (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setIsDeleteDialogOpen(true)}
-                className="w-full h-12 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl font-bold uppercase tracking-widest text-[10px]"
-              >
-                <Trash2 size={16} className="mr-2" />
-                Hapus Kandang
-              </Button>
-            )}
+                            {isOwner && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    onClick={() => setIsDeleteDialogOpen(true)}
+                                    className={cn("w-full text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl font-bold uppercase tracking-widest text-[10px]", isDesktop ? "h-12" : "h-10")}
+                                >
+                                    <Trash2 size={16} className="mr-2" />
+                                    Hapus Kandang
+                                </Button>
+                            )}
                         </SheetFooter>
                     </div>
                 ) : (
-                    <div className="p-6 space-y-8">
+                    <div className={cn(isDesktop ? "p-6 space-y-8" : "p-4 space-y-5")}>
                         <SheetHeader className="text-left">
-                            <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">
+                            <SheetTitle className={cn("text-white font-display font-black uppercase tracking-tight", isDesktop ? "text-2xl" : "text-xl")}>
                                 {farm ? 'Edit Kandang' : 'Tambah Kandang'}
                             </SheetTitle>
                             <SheetDescription className={cn("text-[#4B6478] font-bold uppercase tracking-widest mt-1", isDesktop ? "text-[10px]" : "text-[11px]")}>
@@ -625,21 +657,21 @@ function FarmForm({ farm, tenantId, onSuccess, onCancel, isSheet }) {
                 </div>
             </div>
 
-            <div className="flex gap-3 pt-6">
-                <Button 
-                    type="submit" 
+            <div className="flex gap-3 pt-4">
+                <Button
+                    type="submit"
                     disabled={isLoading}
-                    className="flex-1 h-14 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl"
+                    className={cn("flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl", isDesktop ? "h-14" : "h-11")}
                 >
                     {isLoading ? 'Menyimpan...' : farm ? 'Simpan Kandang' : 'Tambah Kandang'}
                 </Button>
-                
+
                 {onCancel && (
-                    <Button 
-                        type="button" 
+                    <Button
+                        type="button"
                         variant="outline"
                         onClick={onCancel}
-                        className="h-14 border-white/10 text-[#4B6478] hover:text-white font-black text-xs uppercase tracking-widest rounded-2xl px-8"
+                        className={cn("border-white/10 text-[#4B6478] hover:text-white font-black text-xs uppercase tracking-widest rounded-2xl px-8", isDesktop ? "h-14" : "h-11")}
                     >
                         Batal
                     </Button>

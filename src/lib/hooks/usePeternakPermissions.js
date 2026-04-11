@@ -22,7 +22,7 @@ import { useAuth } from '@/lib/hooks/useAuth'
  * Useful outside React (e.g. server-side checks, tests).
  */
 export function peternakPermissions(role) {
-  const isOwner    = role === 'owner'
+  const isOwner    = role === 'owner' || role === 'superadmin'
   const isManajer  = role === 'manajer'
   const isStaff    = role === 'staff'        // = Pekerja / Anak Kandang
   const isViewOnly = role === 'view_only'
