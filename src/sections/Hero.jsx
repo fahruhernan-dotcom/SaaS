@@ -7,6 +7,7 @@ import ShinyText from '../components/reactbits/ShinyText';
 import Magnet from '../components/reactbits/Magnet';
 import ClickSpark from '../components/reactbits/ClickSpark';
 import Particles from '../components/reactbits/Particles';
+import { usePricingConfig } from '@/lib/hooks/useAdminData';
 
 const Hero = () => {
   const isTouchDevice = () => 
@@ -14,6 +15,16 @@ const Hero = () => {
     ('ontouchstart' in window || navigator.maxTouchPoints > 0);
     
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { data: dbPricing } = usePricingConfig();
+
+  const peternakPrice = dbPricing?.peternak?.pro?.price || 499000;
+  const brokerPrice = dbPricing?.broker?.pro?.price || 999000;
+
+  const formatShort = (num) => {
+    if (num >= 1000000) return `Rp ${(num/1000000).toFixed(1).replace('.0', '')}jt`;
+    if (num >= 1000) return `Rp ${num/1000}rb`;
+    return `Rp ${num}`;
+  };
 
   useEffect(() => {
     const tl = anime.timeline({
@@ -188,7 +199,7 @@ const Hero = () => {
             className="hero-subheadline text-sm md:text-base text-tx-3 leading-relaxed max-w-[500px] mb-6 text-center lg:text-left font-medium"
             style={{ opacity: 0 }}
           >
-            Mulai Rp 499rb/bulan untuk <span className="text-em-400 font-bold">Peternak</span> — atau Rp 999rb/bulan untuk <span className="text-em-400 font-bold">Broker</span>.
+            Mulai {formatShort(peternakPrice)}/bulan untuk <span className="text-em-400 font-bold">Peternak</span> — atau {formatShort(brokerPrice)}/bulan untuk <span className="text-em-400 font-bold">Broker</span>.
           </p>
 
           {/* CTA Buttons */}

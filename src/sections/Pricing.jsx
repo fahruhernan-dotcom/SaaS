@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import AnimatedContent from '../components/reactbits/AnimatedContent';
+import { usePricingConfig, usePlanConfigs } from '@/lib/hooks/useAdminData';
 
 // Social proof avatars for BUSINESS card
 const AVATARS = [
@@ -22,6 +23,9 @@ const Pricing = ({ activeRole, setActiveRole }) => {
   const [isAnnual, setIsAnnual] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
   const switchRef = useRef(null);
+
+  const { data: dbPricing } = usePricingConfig();
+  const { data: dbConfigs } = usePlanConfigs();
 
   const handleToggle = useCallback((checked) => {
     setIsAnnual(checked);
@@ -42,36 +46,55 @@ const Pricing = ({ activeRole, setActiveRole }) => {
   }, []);
 
   const getPrices = (role) => {
+    const discountPct = dbConfigs?.annual_discount?.discount_percent || 20;
+    
+    let basePro = 0; let baseBiz = 0;
+    let originalPro = 0; let originalBiz = 0;
+    
+    // Default fallback values
     switch (role) {
       case 'peternak':
-        return {
-          pro: 499000, biz: 999000,
-          proAnnual: 399000, bizAnnual: 799000,
-          proAnchor: 799000, bizAnchor: 1599000,
-          proSaving: 300000, bizSaving: 200000,
-          bizAnnualLoss: 2400000,
-        };
+        basePro = 499000; baseBiz = 999000; break;
       case 'rpa':
-        return {
-          pro: 699000, biz: 1499000,
-          proAnnual: 559000, bizAnnual: 1199000,
-          proAnchor: 1099000, bizAnchor: 2099000,
-          proSaving: 400000, bizSaving: 300000,
-          bizAnnualLoss: 3600000,
-        };
+        basePro = 699000; baseBiz = 1499000; break;
       case 'broker':
       default:
-        return {
-          pro: 999000, biz: 1499000,
-          proAnnual: 799000, bizAnnual: 1199000,
-          proAnchor: 1499000, bizAnchor: 2499000,
-          proSaving: 500000, bizSaving: 300000,
-          bizAnnualLoss: 3600000,
-        };
+        basePro = 999000; baseBiz = 1499000; break;
     }
+    
+    originalPro = basePro + 500000;
+    originalBiz = baseBiz + 1000000;
+    
+    // Override with DB data if available
+    if (dbPricing?.[role]) {
+      if (dbPricing[role].pro) {
+          basePro = dbPricing[role].pro.price;
+          originalPro = dbPricing[role].pro.originalPrice || basePro + 500000;
+      }
+      if (dbPricing[role].business) {
+          baseBiz = dbPricing[role].business.price;
+          originalBiz = dbPricing[role].business.originalPrice || baseBiz + 1000000;
+      }
+    }
+    
+    const proAnnual = Math.round(basePro * (1 - (discountPct / 100)));
+    const bizAnnual = Math.round(baseBiz * (1 - (discountPct / 100)));
+    
+    return {
+      pro: basePro,
+      biz: baseBiz,
+      proAnnual: proAnnual,
+      bizAnnual: bizAnnual,
+      proAnchor: originalPro,
+      bizAnchor: originalBiz,
+      proSaving: (basePro - proAnnual) * 12,
+      bizSaving: (baseBiz - bizAnnual) * 12,
+      bizAnnualLoss: (baseBiz * 12) - (bizAnnual * 12),
+    };
   };
 
-  const currentPrices = useMemo(() => getPrices(activeRole), [activeRole]);
+  const currentPrices = useMemo(() => getPrices(activeRole), [activeRole, dbPricing, dbConfigs]);
+  const discountPctDisplay = dbConfigs?.annual_discount?.discount_percent || 20;
 
   const formatRupiah = (n) =>
     new Intl.NumberFormat('id-ID').format(n);
@@ -207,7 +230,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                   Tahunan
                 </span>
                 <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase tracking-widest">
-                  Hemat 20%
+                  Hemat {discountPctDisplay}%
                 </span>
               </div>
             </div>
