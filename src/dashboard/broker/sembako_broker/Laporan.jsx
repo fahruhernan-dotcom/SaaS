@@ -84,8 +84,8 @@ export default function SembakoLaporan() {
           <h1 style={{ display: isDesktop ? 'block' : 'none', fontSize: isDesktop ? '28px' : '22px', fontWeight: 900, color: C.text, fontFamily: 'DM Sans' }}>
             Laporan Bisnis
           </h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap', width: isDesktop ? 'auto' : '100%' }}>
-            <div style={{ width: '130px' }}>
+          <div style={{ display: 'flex', flexDirection: isDesktop ? 'row' : 'column', alignItems: isDesktop ? 'center' : 'stretch', gap: '8px', width: isDesktop ? 'auto' : '100%' }}>
+            <div style={{ width: isDesktop ? '130px' : '100%' }}>
               <CustomSelect
                 value={preset}
                 onChange={handlePresetChange}
@@ -100,16 +100,23 @@ export default function SembakoLaporan() {
               />
             </div>
             {preset === 'custom' && (
-              <>
-                <Calendar size={14} color={C.muted} style={{ flexShrink: 0, marginLeft: '8px' }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <DatePicker id="start-date" value={startDate} onChange={val => setStartDate(val)} placeholder="Start" />
+              isDesktop ? (
+                <>
+                  <Calendar size={14} color={C.muted} style={{ flexShrink: 0, marginLeft: '8px' }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <DatePicker id="start-date" value={startDate} onChange={val => setStartDate(val)} placeholder="Start" />
+                  </div>
+                  <span style={{ color: C.muted, fontSize: '12px', fontWeight: 700 }}>—</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <DatePicker id="end-date" value={endDate} onChange={val => setEndDate(val)} placeholder="End" />
+                  </div>
+                </>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <DatePicker id="start-date" value={startDate} onChange={val => setStartDate(val)} placeholder="Dari" />
+                  <DatePicker id="end-date" value={endDate} onChange={val => setEndDate(val)} placeholder="Sampai" />
                 </div>
-                <span style={{ color: C.muted, fontSize: '12px', fontWeight: 700 }}>—</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <DatePicker id="end-date" value={endDate} onChange={val => setEndDate(val)} placeholder="End" />
-                </div>
-              </>
+              )
             )}
           </div>
         </div>

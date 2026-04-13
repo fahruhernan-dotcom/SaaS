@@ -252,27 +252,27 @@ function ListingCard({ listing }) {
 
       {/* Details */}
       <div className="space-y-1">
-        {listing.quantity_ekor > 0 && (
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-[#4B6478]">Jumlah</span>
-            <span className="text-[#94A3B8] font-semibold tabular-nums">
-              {listing.quantity_ekor.toLocaleString('id-ID')} ekor
-            </span>
-          </div>
-        )}
         {listing.weight_kg > 0 && (
           <div className="flex items-center justify-between text-xs">
-            <span className="text-[#4B6478]">Bobot</span>
-            <span className="text-[#94A3B8] font-semibold tabular-nums">{listing.weight_kg} kg/ekor</span>
+            <span className="text-[#4B6478]">Kuantitas / Bobot Total</span>
+            <span className="text-[#94A3B8] font-semibold tabular-nums">{listing.weight_kg} kg/Liter</span>
+          </div>
+        )}
+        {listing.quantity_ekor > 0 && (
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-[#4B6478]">Jumlah Unit/Ekor</span>
+            <span className="text-[#94A3B8] font-semibold tabular-nums">
+              {listing.quantity_ekor.toLocaleString('id-ID')} unit
+            </span>
           </div>
         )}
         {listing.price_per_kg > 0 && (
           <div className="flex items-center justify-between text-xs">
             <span className="text-[#4B6478]">
-              {listing.listing_type === 'permintaan_rpa' ? 'Budget' : 'Harga'}
+              {listing.listing_type === 'permintaan_rpa' ? 'Budget Harga' : 'Harga Per Satuan'}
             </span>
             <span className="font-bold tabular-nums" style={{ color: '#34D399' }}>
-              {formatRp(listing.price_per_kg)}/kg
+              {formatRp(listing.price_per_kg)}
             </span>
           </div>
         )}
@@ -555,10 +555,10 @@ function SheetPasangIklan({ isOpen, onClose, profile }) {
                   />
                 </div>
 
-                {/* Jenis ayam */}
+                {/* Jenis Komoditas */}
                 <div>
                   <label htmlFor="ml-chicken" className="block text-xs font-semibold text-[#4B6478] mb-1.5 uppercase tracking-wider">
-                    Jenis Ayam *
+                    Pilih Komoditas *
                   </label>
                   <select
                     id="ml-chicken"
@@ -567,34 +567,20 @@ function SheetPasangIklan({ isOpen, onClose, profile }) {
                     onChange={e => set('chicken_type', e.target.value)}
                     className="w-full bg-[#111C24] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-[#F1F5F9] focus:outline-none focus:border-emerald-500/50"
                   >
-                    <option value="">Pilih jenis...</option>
-                    <option value="broiler">Broiler</option>
-                    <option value="kampung">Kampung</option>
-                    <option value="pejantan">Pejantan</option>
-                    <option value="layer">Layer</option>
+                    <option value="">Pilih...</option>
+                    {COMMODITY_GROUPS.map(g => (
+                      <optgroup key={g.label} label={g.label}>
+                        {g.options.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                      </optgroup>
+                    ))}
                   </select>
                 </div>
 
                 {/* Quantity */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label htmlFor="ml-qty" className="block text-xs font-semibold text-[#4B6478] mb-1.5 uppercase tracking-wider">
-                      {form.listing_type === 'permintaan_rpa' ? 'Jumlah Butuh' : 'Jumlah Tersedia'} (ekor)
-                    </label>
-                    <input
-                      id="ml-qty"
-                      name="quantity_ekor"
-                      type="number"
-                      min="1"
-                      value={form.quantity_ekor}
-                      onChange={e => set('quantity_ekor', e.target.value)}
-                      placeholder="Contoh: 5000"
-                      className="w-full bg-[#111C24] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-[#F1F5F9] placeholder:text-white/20 focus:outline-none focus:border-emerald-500/50 transition-colors"
-                    />
-                  </div>
-                  <div>
                     <label htmlFor="ml-weight" className="block text-xs font-semibold text-[#4B6478] mb-1.5 uppercase tracking-wider">
-                      {form.listing_type === 'permintaan_rpa' ? 'Target Berat' : 'Est. Bobot'} (kg)
+                      {form.listing_type === 'permintaan_rpa' ? 'Target Kuantitas' : 'Total Kuantitas'} (Kg/Top)
                     </label>
                     <input
                       id="ml-weight"
@@ -604,7 +590,23 @@ function SheetPasangIklan({ isOpen, onClose, profile }) {
                       step="0.01"
                       value={form.weight_kg}
                       onChange={e => set('weight_kg', e.target.value)}
-                      placeholder="Contoh: 2.2"
+                      placeholder="Contoh: 50.5"
+                      className="w-full bg-[#111C24] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-[#F1F5F9] placeholder:text-white/20 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="ml-qty" className="block text-xs font-semibold text-[#4B6478] mb-1.5 uppercase tracking-wider">
+                      Stok Item 
+                      <span className="text-[10px] lowercase normal-case ml-1">(Ekor/Karton)</span>
+                    </label>
+                    <input
+                      id="ml-qty"
+                      name="quantity_ekor"
+                      type="number"
+                      min="0"
+                      value={form.quantity_ekor}
+                      onChange={e => set('quantity_ekor', e.target.value)}
+                      placeholder="Contoh: 100"
                       className="w-full bg-[#111C24] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-[#F1F5F9] placeholder:text-white/20 focus:outline-none focus:border-emerald-500/50 transition-colors"
                     />
                   </div>
@@ -613,7 +615,7 @@ function SheetPasangIklan({ isOpen, onClose, profile }) {
                 {/* Price */}
                 <div>
                   <label htmlFor="ml-price" className="block text-xs font-semibold text-[#4B6478] mb-1.5 uppercase tracking-wider">
-                    {form.listing_type === 'permintaan_rpa' ? 'Budget Harga (Rp/kg)' : 'Harga (Rp/kg)'}
+                    {form.listing_type === 'permintaan_rpa' ? 'Budget Harga per Satuan (Rp)' : 'Harga per Satuan (Rp)'}
                   </label>
                   <input
                     id="ml-price"
@@ -785,15 +787,16 @@ export default function Market() {
   ).length
 
   return (
-    <div className="p-4 md:p-6 space-y-5 max-w-6xl mx-auto pb-24">
+    <div className="p-4 md:p-6 pt-16 md:pt-8 space-y-5 max-w-6xl mx-auto pb-24">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Store size={20} className="text-emerald-400" />
+            <Store size={20} className="text-emerald-400 shrink-0" />
             <h1 className="font-display font-black text-xl text-[#F1F5F9]">TernakOS Market</h1>
             {pendingIncoming > 0 && (
-              <span className="w-5 h-5 rounded-full bg-red-500
+              <span className="w-5 h-5 rounded-full bg-red-500 shrink-0
+
                 text-white text-[10px] font-black flex items-center justify-center">
                 {pendingIncoming}
               </span>
@@ -817,7 +820,7 @@ export default function Market() {
         {[
           { label: 'Listing Aktif',      value: totalActive,  color: '#F1F5F9' },
           { label: 'Stok Tersedia',       value: stokAyam,     color: '#A78BFA' },
-          { label: 'Permintaan Terbuka',  value: permintaan,   color: '#FBBF24' },
+          { label: 'Dicari',  value: permintaan,   color: '#FBBF24' },
         ].map((s, i) => (
           <div key={i} className="flex flex-col items-center shrink-0">
             <span className="font-display font-black text-2xl" style={{ color: s.color }}>
@@ -876,7 +879,12 @@ export default function Market() {
               onChange={e => setChickenFilter(e.target.value)}
               className="appearance-none bg-[#111C24] border border-white/10 rounded-xl pl-3 pr-7 py-2 text-xs text-[#F1F5F9] focus:outline-none focus:border-emerald-500/50 transition-colors"
             >
-              {CHICKEN_TYPES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              <option value="all">Semua Komoditas</option>
+              {COMMODITY_GROUPS.map(g => (
+                <optgroup key={g.label} label={g.label}>
+                  {g.options.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </optgroup>
+              ))}
             </select>
             <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#4B6478] pointer-events-none" />
           </div>

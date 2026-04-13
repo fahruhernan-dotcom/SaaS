@@ -821,6 +821,26 @@ export const useCompleteSembakoDelivery = () => {
   })
 }
 
+export const useStartSembakoDelivery = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (deliveryId) => {
+      const { error } = await supabase
+        .from('sembako_deliveries')
+        .update({ status: 'on_route' })
+        .eq('id', deliveryId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sembako-deliveries'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-sales-pending-delivery'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
+      toast.success('Pengiriman mulai berjalan')
+    },
+    onError: (err) => toast.error('Gagal: ' + err.message),
+  })
+}
+
 export const useMarkPayrollPaid = () => {
   const queryClient = useQueryClient()
   return useMutation({

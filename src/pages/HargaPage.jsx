@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, ChevronDown, ArrowRight, Star, X as XIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import { usePricingConfig, usePlanConfigs } from '@/lib/hooks/useAdminData'
+import Particles from '../components/reactbits/Particles'
+
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -380,9 +383,12 @@ function AccordionItem({ q, a }) {
 
 // ─── Pricing cards ────────────────────────────────────────────────────────────
 
-function ProCard({ data, billing }) {
+function ProCard({ data, billing, annualDiscount }) {
   const price      = billing === 'yearly' ? data.proYearly : data.proPrice
   const yearlyTotal = data.proYearly * 12
+  const discountLabel = annualDiscount?.badge_text || 'Hemat 2 bln!'
+  const discountPct = annualDiscount?.discount_percent || 20
+
 
   return (
     <div className="bg-[#111C24] rounded-2xl p-8 border border-white/8 flex flex-col h-full">
@@ -401,7 +407,7 @@ function ProCard({ data, billing }) {
         </div>
         {billing === 'yearly' && (
           <p className="text-xs text-[#4B6478] mt-1">
-            {fmtIDR(yearlyTotal)}/tahun · hemat 20%
+            {fmtIDR(yearlyTotal)}/tahun · hemat {discountPct}%
           </p>
         )}
       </div>
@@ -421,16 +427,18 @@ function ProCard({ data, billing }) {
         to="/register"
         className="block text-center py-3 rounded-xl border border-emerald-500/40 text-emerald-400 text-sm font-bold hover:bg-emerald-500/10 transition-colors"
       >
-        Mulai 14 Hari Gratis
+        Mulai {data.trialDays || 14} Hari Gratis
       </Link>
     </div>
   )
 }
 
-function BusinessCard({ data, billing, roleLabel }) {
+function BusinessCard({ data, billing, roleLabel, annualDiscount }) {
   const price        = billing === 'yearly' ? data.bizYearly : data.bizPrice
   const yearlyTotal  = data.bizYearly * 12
   const yearlySaving = (data.bizPrice - data.bizYearly) * 12
+  const discountPct = annualDiscount?.discount_percent || 20
+
 
   return (
     <div className="relative">
@@ -461,7 +469,7 @@ function BusinessCard({ data, billing, roleLabel }) {
           </div>
           {billing === 'yearly' && (
             <p className="text-xs text-[#4B6478] mt-1">
-              {fmtIDR(yearlyTotal)}/tahun · hemat 20%
+              {fmtIDR(yearlyTotal)}/tahun · hemat {discountPct}%
             </p>
           )}
 
@@ -491,7 +499,7 @@ function BusinessCard({ data, billing, roleLabel }) {
             to="/register"
             className="block text-center py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold transition-colors shadow-[0_4px_20px_rgba(16,185,129,0.3)]"
           >
-            Mulai 14 Hari Gratis
+            Mulai {data.trialDays || 14} Hari Gratis
           </Link>
           <p className="text-center text-[11px] text-[#4B6478] mt-2">Tidak perlu kartu kredit</p>
         </div>
@@ -508,7 +516,7 @@ function StarterCard({ data }) {
         <div className="flex items-baseline gap-1 mb-1">
           <span className="font-['Sora'] text-3xl font-black text-white">Gratis</span>
         </div>
-        <p className="text-xs text-[#4B6478] mt-1">Trial 14 hari tanpa kartu kredit</p>
+        <p className="text-xs text-[#4B6478] mt-1">Trial {data.trialDays || 14} hari tanpa kartu kredit</p>
       </div>
 
       <ul className="space-y-2.5 flex-1 mb-8">
@@ -570,10 +578,45 @@ export default function HargaPage() {
   const [selectedSub, setSelectedSub]   = useState('ayam')
   const [billing, setBilling]           = useState('monthly')
 
+  const { data: dbPricing } = usePricingConfig()
+  const { data: dbConfigs } = usePlanConfigs()
+
   useEffect(() => {
     document.title = 'Pricing - TernakOS'
     return () => { document.title = 'TernakOS' }
   }, [])
+
+  const dynamicPricingData = useMemo(() => {
+    const newData = JSON.parse(JSON.stringify(PRICING_DATA))
+    
+    // Get custom trial days or defaults
+    const trialDays = dbConfigs?.trial_config?.pro || 14
+    const discountPct = dbConfigs?.annual_discount?.discount_percent || 20
+
+    // Loop through our local keys and merge DB pricing if available
+    for (const key of Object.keys(newData)) {
+      const dbRole = key.split('_')[0] // 'broker_ayam' -> 'broker'
+      
+      newData[key].trialDays = trialDays
+      
+      if (dbPricing?.[dbRole]) {
+         const dp = dbPricing[dbRole]
+         // Handle PRO
+         if (dp.pro) {
+            newData[key].proPrice = dp.pro.price
+            newData[key].proStrike = dp.pro.originalPrice
+            newData[key].proYearly = Math.round(dp.pro.price * (1 - (discountPct / 100)))
+         }
+         // Handle BUSINESS
+         if (dp.business) {
+            newData[key].bizPrice = dp.business.price
+            newData[key].bizStrike = dp.business.originalPrice
+            newData[key].bizYearly = Math.round(dp.business.price * (1 - (discountPct / 100)))
+         }
+      }
+    }
+    return newData
+  }, [dbPricing, dbConfigs])
 
   const handleRoleChange = (role) => {
     setSelectedRole(role)
@@ -582,17 +625,43 @@ export default function HargaPage() {
   }
 
   const contentKey = `${selectedRole}_${selectedSub}`
-  const data = PRICING_DATA[contentKey]
+  const data = dynamicPricingData[contentKey]
+  const annualDiscount = dbConfigs?.annual_discount || { discount_percent: 20, badge_text: 'Hemat 2 bln!' }
+
 
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] overflow-x-hidden">
       <Navbar />
 
-      <main>
+      {/* Global Background Elements */}
+      <div 
+        className="fixed inset-0 pointer-events-none z-0"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)`,
+          backgroundSize: '40px 40px',
+          WebkitMaskImage: 'radial-gradient(ellipse 80% 50% at center top, black 30%, transparent 80%)',
+          maskImage: 'radial-gradient(ellipse 80% 50% at center top, black 30%, transparent 80%)'
+        }}
+      />
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+        <Particles
+          particleColors={['#10B981', '#34D399', '#059669']}
+          particleCount={typeof window !== 'undefined' && window.innerWidth < 768 ? 25 : 50}
+          speed={0.2}
+          particleBaseSize={1.4}
+        />
+      </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.2 }}
+        className="fixed top-[-120px] left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(16,185,129,0.18),transparent_70%)] animate-glow-breathe z-0 pointer-events-none md:w-[800px] md:h-[800px]"
+      />
+
+      <main className="relative z-10">
 
         {/* ── HEADER ── */}
-        <section className="relative pt-32 pb-16 px-5 text-center overflow-hidden">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-56 bg-emerald-500/8 blur-3xl pointer-events-none" />
+        <section className="relative pt-32 pb-16 px-5 text-center">
           <div className="relative z-10 max-w-2xl mx-auto">
             <motion.p
               initial={{ opacity: 0, y: 12 }}
@@ -616,7 +685,7 @@ export default function HargaPage() {
               transition={{ duration: 0.4, delay: 0.1 }}
               className="text-[#94A3B8] text-lg"
             >
-              Semua plan include trial 14 hari gratis.
+              Semua plan include trial {data.trialDays || 14} hari gratis.
             </motion.p>
           </div>
         </section>
@@ -645,12 +714,12 @@ export default function HargaPage() {
                 </span>
                 {b === 'yearly' && billing === 'yearly' && (
                   <span className="relative ml-2 bg-amber-500/20 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                    Hemat 2 bln!
+                    {annualDiscount.badge_text}
                   </span>
                 )}
                 {b === 'yearly' && billing !== 'yearly' && (
                   <span className="relative ml-2 bg-amber-500/10 text-amber-500/60 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                    Hemat 2 bln!
+                    {annualDiscount.badge_text}
                   </span>
                 )}
               </button>
@@ -727,18 +796,18 @@ export default function HargaPage() {
                   /* Peternak: 4 cards — Starter | PRO | Business | Enterprise */
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-start pt-6">
                     <StarterCard data={data} />
-                    <ProCard data={data} billing={billing} />
+                    <ProCard data={data} billing={billing} annualDiscount={annualDiscount} />
                     <div className="xl:relative xl:z-10 xl:scale-[1.03]">
-                      <BusinessCard data={data} billing={billing} roleLabel={ROLES.find(r => r.id === selectedRole)?.label} />
+                      <BusinessCard data={data} billing={billing} roleLabel={ROLES.find(r => r.id === selectedRole)?.label} annualDiscount={annualDiscount} />
                     </div>
                     <EnterpriseCard />
                   </div>
                 ) : (
                   /* Broker & RPA: 3 cards — PRO | Business | Enterprise */
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start pt-6">
-                    <ProCard data={data} billing={billing} />
+                    <ProCard data={data} billing={billing} annualDiscount={annualDiscount} />
                     <div className="md:scale-105 md:relative md:z-10">
-                      <BusinessCard data={data} billing={billing} roleLabel={ROLES.find(r => r.id === selectedRole)?.label} />
+                      <BusinessCard data={data} billing={billing} roleLabel={ROLES.find(r => r.id === selectedRole)?.label} annualDiscount={annualDiscount} />
                     </div>
                     <EnterpriseCard />
                   </div>
@@ -748,7 +817,7 @@ export default function HargaPage() {
 
             {/* All plans note */}
             <p className="text-center text-xs text-[#4B6478] mt-8">
-              Semua plan include: Trial 14 hari gratis · Tidak perlu kartu kredit · Cancel kapan saja
+              Semua plan include: Trial {data.trialDays || 14} hari gratis · Tidak perlu kartu kredit · Cancel kapan saja
             </p>
           </div>
         </section>
@@ -783,7 +852,7 @@ export default function HargaPage() {
 
                 <div className="relative z-10">
                   <h2 className="font-['Sora'] text-3xl font-bold text-white mb-3">Masih ragu?</h2>
-                  <p className="text-[#94A3B8] mb-8">Coba 14 hari gratis. Tidak perlu kartu kredit.</p>
+                  <p className="text-[#94A3B8] mb-8">Coba {data.trialDays || 14} hari gratis. Tidak perlu kartu kredit.</p>
 
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                     <Link

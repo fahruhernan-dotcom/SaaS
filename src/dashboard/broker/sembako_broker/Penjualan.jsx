@@ -8,7 +8,6 @@ import {
 import { useSembakoSales } from '@/lib/hooks/useSembakoData'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { formatIDR } from '@/lib/format'
-import TopBar from '@/dashboard/_shared/components/TopBar'
 import { SembakoPageHeader } from '@/dashboard/broker/sembako_broker/components/SembakoPageHeader'
 import { SembakoSummaryStrip } from '@/dashboard/broker/sembako_broker/components/SembakoSummaryStrip'
 import { SembakoInvoiceCard } from '@/dashboard/broker/sembako_broker/components/SembakoInvoiceCard'
@@ -22,6 +21,7 @@ export default function SembakoPenjualan() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const location = useLocation()
   const [openWizard, setOpenWizard] = useState(false)
+  const navigate = useNavigate()
 
   const { setSidebarOpen } = useOutletContext()
   useEffect(() => {
@@ -170,6 +170,7 @@ function TabInvoice({ isDesktop, openWizard, setOpenWizard }) {
               <SembakoInvoiceCard
                 key={sale.id}
                 sale={sale}
+                isDesktop={isDesktop}
                 onOpenDetail={() => {
                   setSelectedSaleId(sale.id)
                   setShowDetail(true)

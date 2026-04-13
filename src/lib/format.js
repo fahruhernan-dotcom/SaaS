@@ -6,6 +6,16 @@ export const safeNumber = (val, fallback = 0) => {
   return isNaN(num) || val === null || val === undefined ? fallback : num
 }
 
+export const toTitleCase = (str) => {
+  if (!str) return ''
+  return str.toLowerCase()
+    .replace(/_/g, ' ')
+    .split(' ')
+    .filter(word => word.length > 0)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
 export const safePercent = (num, den, fallback = 0) => {
   const n = Number(num)
   const d = Number(den)

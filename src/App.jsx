@@ -39,6 +39,7 @@ import FAQPage from './pages/FAQPage';
 import OnboardingFlow from './dashboard/_shared/pages/OnboardingFlow';
 import UpgradePlan from './dashboard/_shared/pages/UpgradePlan';
 import Market from './dashboard/_shared/pages/Market';
+import MarketPublic from './pages/MarketPublic';
 
 // Components
 import ErrorBoundary from './components/ErrorBoundary';
@@ -249,6 +250,7 @@ function App() {
         <Route path="/tentang-kami" element={<AboutUs />} />
         <Route path="/fitur" element={<FiturPage />} />
         <Route path="/harga" element={<HargaPage />} />
+        <Route path="/market" element={<MarketPublic />} />
         <Route path="/harga-pasar/:province?" element={<HargaPasarPublic />} />
         <Route path="/faq" element={<FAQPage />} />
         <Route path="/check-email" element={<CheckEmail />} />
@@ -392,29 +394,15 @@ function App() {
         {/* Admin routes */}
         <Route path="/admin" element={
           <AdminRoute>
-            <AdminLayout><AdminBeranda /></AdminLayout>
+            <AdminLayout />
           </AdminRoute>
-        } />
-        <Route path="/admin/users" element={
-          <AdminRoute>
-            <AdminLayout><AdminUsers /></AdminLayout>
-          </AdminRoute>
-        } />
-        <Route path="/admin/subscriptions" element={
-          <AdminRoute>
-            <AdminLayout><AdminSubscriptions /></AdminLayout>
-          </AdminRoute>
-        } />
-        <Route path="/admin/pricing" element={
-          <AdminRoute>
-            <AdminLayout><AdminPricing /></AdminLayout>
-          </AdminRoute>
-        } />
-        <Route path="/admin/activity" element={
-          <AdminRoute>
-            <AdminLayout><AdminActivity /></AdminLayout>
-          </AdminRoute>
-        } />
+        }>
+          <Route index element={<AdminBeranda />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="subscriptions" element={<AdminSubscriptions />} />
+          <Route path="pricing" element={<AdminPricing />} />
+          <Route path="activity" element={<AdminActivity />} />
+        </Route>
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

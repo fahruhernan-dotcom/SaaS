@@ -554,3 +554,182 @@ export const useAllUsers = () => {
     }
   })
 }
+
+export const useDeleteUser = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (userId) => {
+      // 1. Get all profiles associated with this user
+      const { data: userProfiles } = await supabase
+        .from('profiles')
+        .select('id, tenant_id, role')
+        .eq('auth_user_id', userId)
+
+      if (userProfiles && userProfiles.length > 0) {
+        for (const p of userProfiles) {
+          // 2. If they are an owner, check if the business is "lonely"
+          if (p.role === 'owner') {
+            const { count, error: countErr } = await supabase
+              .from('profiles')
+              .select('*', { count: 'exact', head: true })
+              .eq('tenant_id', p.tenant_id)
+            
+            if (!countErr && count === 1) {
+              // User is the ONLY person in this business. 
+              // Delete the Tenant (this should ideally cascade delete all its wiring)
+              await supabase.from('tenants').delete().eq('id', p.tenant_id)
+            }
+          }
+        }
+      }
+
+      // 3. Remove the user's profile entries
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('auth_user_id', userId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-all-users'])
+      queryClient.invalidateQueries(['admin-tenants'])
+      toast.success('User berhasil dihapus dari database')
+    },
+    onError: (error) => {
+      toast.error('Gagal hapus user: ' + error.message)
+    }
+  })
+}
+
+export const useDeleteTenant = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (tenantId) => {
+      const tid = tenantId
+      console.group(`🗑️ [DELETE TENANT] Starting cascade delete for tenant: ${tid}`)
+
+      // Helper: delete with logging
+      const del = async (table, filter = { col: 'tenant_id', val: tid }) => {
+        const { error, count } = await supabase
+          .from(table)
+          .delete({ count: 'exact' })
+          .eq(filter.col, filter.val)
+        if (error) {
+          console.error(`❌ FAILED: ${table} — ${error.message}`, error)
+        } else {
+          console.log(`✅ ${table}: deleted ${count ?? '?'} rows`)
+        }
+      }
+
+      // Helper: nullify with logging
+      const nullify = async (table, col) => {
+        const { error, count } = await supabase
+          .from(table)
+          .update({ [col]: null }, { count: 'exact' })
+          .eq(col, tid)
+        if (error) {
+          console.error(`❌ FAILED nullify: ${table}.${col} — ${error.message}`, error)
+        } else {
+          console.log(`✅ ${table}.${col} nullified: ${count ?? '?'} rows`)
+        }
+      }
+
+      // ── Manual cleanup: only tables with NO ACTION delete_rule ────────────
+      console.log('--- Step 1: NO ACTION tables ---')
+      await del('ai_anomaly_logs')
+      await del('ai_staged_transactions')
+      await del('broker_profiles')
+      await del('cycle_expenses')
+      await del('generated_invoices')
+      await del('harvest_records')
+      await del('kandang_workers')
+      await del('market_listings')
+      await del('peternak_profiles')
+      await del('worker_payments')
+
+      // broker_connections: 2 NO ACTION cross-ref FKs
+      console.log('--- Step 2: broker_connections cross-refs ---')
+      const { error: bcErr } = await supabase
+        .from('broker_connections')
+        .delete()
+        .or(`requester_tenant_id.eq.${tid},target_tenant_id.eq.${tid}`)
+      if (bcErr) console.error(`❌ FAILED: broker_connections — ${bcErr.message}`, bcErr)
+      else console.log(`✅ broker_connections: deleted`)
+
+      // RPA cross-references: SET NULL to preserve RPA records
+      console.log('--- Step 3: RPA cross-ref nullify ---')
+      await nullify('rpa_payments', 'broker_tenant_id')
+      await nullify('rpa_purchase_orders', 'broker_tenant_id')
+
+      // RPA own data
+      console.log('--- Step 4: RPA own data ---')
+      await del('rpa_customer_payments')
+      await del('rpa_invoices')
+      await del('rpa_customers')
+      await del('rpa_products')
+
+      // Sembako tables
+      console.log('--- Step 5: Sembako tables ---')
+      await del('sembako_stock_out')
+      await del('sembako_payroll')
+      await del('sembako_supplier_payments')
+      await del('sembako_payments')
+      await del('sembako_deliveries')
+      await del('sembako_expenses')
+      await del('sembako_sales')
+      await del('sembako_stock_batches')
+      await del('sembako_products')
+      await del('sembako_customers')
+      await del('sembako_suppliers')
+      await del('sembako_employees')
+
+      // ── Final: delete the tenant (CASCADE handles remaining tables) ───────
+      console.log('--- Step 6: DELETE TENANT ---')
+      const { error, count } = await supabase
+        .from('tenants')
+        .delete({ count: 'exact' })
+        .eq('id', tid)
+      if (error) {
+        console.error(`❌ FAILED: tenants — ${error.message}`, error)
+        console.groupEnd()
+        throw error
+      }
+      if (count === 0) {
+        console.error(`❌ RLS BLOCK: tenants delete returned 0 rows — superadmin DELETE policy missing`)
+        console.groupEnd()
+        throw new Error('Akses ditolak: Admin tidak punya izin hapus tenant. Tambahkan RLS DELETE policy di Supabase.')
+      }
+      console.log(`✅ tenants: deleted tenant ${tid} (${count} rows)`)
+      console.groupEnd()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-tenants'])
+      queryClient.invalidateQueries(['admin-all-users'])
+      toast.success('Bisnis dan seluruh data terkait berhasil dihapus')
+    },
+    onError: (error) => {
+      toast.error('Gagal hapus bisnis: ' + error.message)
+    }
+  })
+}
+
+
+export const useDeleteInvoice = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (invoiceId) => {
+      const { error } = await supabase
+        .from('subscription_invoices')
+        .delete()
+        .eq('id', invoiceId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-invoices'])
+      toast.success('Invoice berhasil dihapus permanen')
+    },
+    onError: (error) => {
+      toast.error('Gagal hapus invoice: ' + error.message)
+    }
+  })
+}

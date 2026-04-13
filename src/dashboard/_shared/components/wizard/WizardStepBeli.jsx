@@ -13,7 +13,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { PhoneInput } from '@/components/ui/PhoneInput'
-import { AlertCircle, ChevronLeft, ChevronsUpDown, Check, Plus, ChevronDown, TrendingDown } from 'lucide-react'
+import { AlertCircle, ChevronLeft, ChevronsUpDown, Check, Plus, ChevronDown, TrendingDown, MapPin } from 'lucide-react'
+import { PROVINCES } from '@/lib/constants/regions'
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from '@/components/ui/select'
 
 const FIELD_LABELS = {
   farm_id: 'Kandang',
@@ -27,7 +31,7 @@ const FIELD_LABELS = {
 // NUCLEAR OPTION: Global Zod Mapping to eliminate ALL technical jargon
 z.setErrorMap((issue, ctx) => {
   // 1. If schema has a specific message, always prioritize it!
-  if (ctx.defaultError && !ctx.defaultError.includes('Expected') && !ctx.defaultError.includes('Invalid') && !ctx.defaultError.includes('Required')) {
+  if (ctx?.defaultError && !ctx.defaultError.includes('Expected') && !ctx.defaultError.includes('Invalid') && !ctx.defaultError.includes('Required')) {
     return { message: ctx.defaultError }
   }
   
@@ -96,7 +100,8 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
   const [unitOpen, setUnitOpen] = useState(false)
   const [openKandang, setOpenKandang] = useState(false)
   const [showQuickAddKandang, setShowQuickAddKandang] = useState(false)
-  const [newFarm, setNewFarm] = useState({ farm_name: '', owner_name: '', phone: '', location: '' })
+  const [newFarm, setNewFarm] = useState({ farm_name: '', owner_name: '', phone: '', province: '' })
+  const [provinceOpen, setProvinceOpen] = useState(false)
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
@@ -142,7 +147,7 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
         farm_name: newFarm.farm_name,
         owner_name: newFarm.owner_name,
         phone: newFarm.phone || null,
-        location: newFarm.location || null,
+        province: newFarm.province || null,
         status: 'growing',
         available_stock: 0,
         chicken_type: 'broiler'
@@ -158,7 +163,7 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
     queryClient.invalidateQueries({ queryKey: ['farms-active-simple'] })
     setValue('farm_id', data.id)
     setShowQuickAddKandang(false)
-    setNewFarm({ farm_name: '', owner_name: '', phone: '', location: '' })
+    setNewFarm({ farm_name: '', owner_name: '', phone: '', province: '' })
     toast.success(`✅ Kandang ${data.farm_name} ditambahkan!`)
   }
 
@@ -405,8 +410,44 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
                 />
               </div>
               <div className="space-y-1">
-                <label htmlFor="new_farm_location" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Lokasi</label>
-                <Input id="new_farm_location" name="new_farm_location" placeholder="Boyolali" value={newFarm.location} onChange={e => setNewFarm(p => ({ ...p, location: e.target.value }))} className="h-9 bg-black/20" />
+                <label htmlFor="new_farm_province" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Provinsi *</label>
+                <Popover open={provinceOpen} onOpenChange={setProvinceOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex h-9 w-full items-center justify-between rounded-md border border-white/10 bg-black/20 px-3 py-2 text-[11px] font-bold text-[#F1F5F9] transition-colors hover:bg-black/30"
+                    >
+                      <span className="truncate">{newFarm.province || 'Pilih Provinsi'}</span>
+                      <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 bg-[#111C24] border-white/10" align="start">
+                    <Command className="bg-transparent">
+                      <CommandInput placeholder="Cari provinsi..." className="h-9 text-xs" />
+                      <CommandList>
+                        <CommandEmpty className="py-2 text-center text-[10px] text-[#4B6478] font-bold uppercase">Tidak ditemukan</CommandEmpty>
+                        <CommandGroup className="max-h-[250px] overflow-y-auto">
+                          {PROVINCES.map((p) => (
+                            <CommandItem
+                              key={p}
+                              value={p}
+                              onSelect={(val) => {
+                                setNewFarm(prev => ({ ...prev, province: p }))
+                                setProvinceOpen(false)
+                              }}
+                              className="text-[11px] font-bold uppercase tracking-wider py-2 group cursor-pointer"
+                            >
+                              <Check
+                                className={`mr-2 h-3 w-3 text-emerald-500 ${newFarm.province === p ? 'opacity-100' : 'opacity-0'}`}
+                              />
+                              <span className={newFarm.province === p ? 'text-emerald-400' : 'text-[#F1F5F9]'}>{p}</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
             <div className="flex gap-2 mt-1">

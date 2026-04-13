@@ -10,7 +10,7 @@ import {
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useSembakoDashboardStats, useSembakoSales, useSembakoEmployees, useSembakoDeliveries } from '@/lib/hooks/useSembakoData'
-import { formatIDR } from '@/lib/format'
+import { formatIDR, formatIDRShort } from '@/lib/format'
 import NotificationBell from '@/dashboard/_shared/components/NotificationBell'
 import { SembakoMobileBar, SembakoHamburgerDrawer } from './components/SembakoNavigation'
 import {
@@ -87,6 +87,7 @@ const STATUS_STYLE = {
 // ── KPI Card (horizontal, compact) ────────────────────────────────────────────
 // Icon beside text — reduces card height ~35% vs stacked layout
 function KPICard({ icon: Icon, label, value, sub, accentColor = C.accent, urgent, badge, trend }) {
+  const hasBadge = (badge && !trend) || trend != null
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -98,66 +99,64 @@ function KPICard({ icon: Icon, label, value, sub, accentColor = C.accent, urgent
         border: `1px solid ${C.border}`,
         borderLeft: urgent ? `3px solid ${accentColor}` : `1px solid ${C.border}`,
         display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
+        alignItems: 'flex-start',
+        gap: '10px',
         position: 'relative',
         overflow: 'hidden',
       }}
     >
       {/* Icon pill */}
       <div style={{
-        width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
+        width: '32px', height: '32px', borderRadius: '9px', flexShrink: 0, marginTop: '2px',
         background: `${accentColor}18`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <Icon size={16} color={accentColor} />
+        <Icon size={15} color={accentColor} />
       </div>
 
       {/* Text */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{
-          fontSize: '10px', color: C.muted, fontWeight: 700,
-          letterSpacing: '0.06em', textTransform: 'uppercase',
-          marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          fontSize: '9px', color: C.muted, fontWeight: 700,
+          letterSpacing: '0.05em', textTransform: 'uppercase',
+          marginBottom: '3px', lineHeight: 1.3,
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
         }}>
           {label}
         </p>
         <p style={{
-          fontSize: '16px', fontWeight: 800, color: C.text,
+          fontSize: '15px', fontWeight: 800, color: C.text,
           lineHeight: 1.1, fontFamily: 'DM Sans',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {value}
         </p>
         {sub && (
-          <p style={{ fontSize: '10px', color: C.muted, marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <p style={{ fontSize: '9px', color: C.muted, marginTop: '3px', lineHeight: 1.3,
+            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+          }}>
             {sub}
           </p>
         )}
+        {/* Badge inline — no overlap */}
+        {hasBadge && (
+          <span style={{
+            display: 'inline-block', marginTop: '4px',
+            background: trend != null
+              ? (trend >= 0 ? 'rgba(52,211,153,0.12)' : 'rgba(239,68,68,0.12)')
+              : 'rgba(239,68,68,0.15)',
+            color: trend != null
+              ? (trend >= 0 ? '#34D399' : '#EF4444')
+              : '#EF4444',
+            fontSize: '8px', fontWeight: 800, padding: '2px 5px',
+            borderRadius: '4px', letterSpacing: '0.02em', whiteSpace: 'nowrap',
+          }}>
+            {trend != null
+              ? `${trend >= 0 ? '↑' : '↓'} ${Math.abs(trend).toFixed(0)}%`
+              : badge}
+          </span>
+        )}
       </div>
-
-      {/* Badge */}
-      {badge && !trend && (
-        <span style={{
-          position: 'absolute', top: '8px', right: '8px',
-          background: 'rgba(239,68,68,0.15)', color: '#EF4444',
-          fontSize: '9px', fontWeight: 700, padding: '2px 6px',
-          borderRadius: '5px', letterSpacing: '0.02em', whiteSpace: 'nowrap',
-        }}>
-          {badge}
-        </span>
-      )}
-      {/* Trend badge */}
-      {trend != null && (
-        <span style={{
-          position: 'absolute', top: '8px', right: '8px',
-          background: trend >= 0 ? 'rgba(52,211,153,0.12)' : 'rgba(239,68,68,0.12)',
-          color: trend >= 0 ? '#34D399' : '#EF4444',
-          fontSize: '9px', fontWeight: 800, padding: '2px 6px',
-          borderRadius: '5px', whiteSpace: 'nowrap',
-        }}>
-          {trend >= 0 ? '↑' : '↓'} {Math.abs(trend).toFixed(0)}%
-        </span>
-      )}
     </motion.div>
   )
 }
@@ -724,14 +723,14 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
           <KPICard
             icon={CreditCard}
             label="Piutang Toko"
-            value={formatIDR(stats?.penjualan?.totalOutstanding || 0)}
+            value={formatIDRShort(stats?.penjualan?.totalOutstanding || 0)}
             sub={overdue > 0 ? `${overdue} jatuh tempo` : 'Lancar'}
             urgent={(stats?.penjualan?.totalOutstanding || 0) > 0}
           />
           <KPICard
             icon={Package}
             label="Nilai Stok"
-            value={formatIDR(stats?.stok?.nilaiStok || 0)}
+            value={formatIDRShort(stats?.stok?.nilaiStok || 0)}
             sub={`${stats?.stok?.totalProduk || 0} produk`}
             accentColor={C.amber}
             badge={lowStock.length > 0 ? `${lowStock.length} tipis` : null}
@@ -739,7 +738,7 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
           <KPICard
             icon={Receipt}
             label="Pengeluaran"
-            value={formatIDR(totalExp)}
+            value={formatIDRShort(totalExp)}
             sub="Incl. gaji"
             accentColor="#EF4444"
           />

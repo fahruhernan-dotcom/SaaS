@@ -18,6 +18,7 @@ import {
   useUpsertPaymentSetting,
   useDeletePaymentSetting,
   useCreateInvoice,
+  useDeleteInvoice,
   useAllTenants,
   usePricingConfig,
   useXenditConfig,
@@ -39,7 +40,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { DatePicker } from '@/components/ui/DatePicker'
-import { formatIDR, formatDate } from '@/lib/format'
+import { formatIDR, formatDate, toTitleCase } from '@/lib/format'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
@@ -54,6 +55,7 @@ export default function AdminSubscriptions() {
   const upsertBank = useUpsertPaymentSetting()
   const deleteBank = useDeletePaymentSetting()
   const createInvoice = useCreateInvoice()
+  const deleteInvoice = useDeleteInvoice()
 
   const [activeMainTab, setActiveMainTab] = useState('invoices')
   const [invoiceSearch, setInvoiceSearch] = useState('')
@@ -177,6 +179,18 @@ export default function AdminSubscriptions() {
       queryClient.invalidateQueries(['admin-invoices'])
       setIsSheetOpen(false)
     }
+  }
+
+  const handleDeleteInvoice = async () => {
+    if (!selectedInvoice) return
+    if (!confirm(`HAPUS PERMANEN invoice #${selectedInvoice.invoice_number}?\n\nData ini akan hilang selamanya dan tidak bisa dikembalikan.`)) return
+    
+    deleteInvoice.mutate(selectedInvoice.id, {
+      onSuccess: () => {
+        setIsSheetOpen(false)
+        setSelectedInvoice(null)
+      }
+    })
   }
 
   const handleSaveBank = (e) => {
@@ -395,10 +409,10 @@ export default function AdminSubscriptions() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
-                          <p className="text-[13px] font-bold text-white truncate max-w-[140px]">{inv.tenants?.business_name}</p>
+                          <p className="text-[13px] font-bold text-white truncate max-w-[140px]">{toTitleCase(inv.tenants?.business_name)}</p>
                           {inv.tenants?.business_vertical && (
-                            <Badge variant="outline" className="text-[8px] font-black uppercase tracking-tighter h-4 px-1 border-white/10 bg-white/5 text-[#4B6478]">
-                              {inv.tenants.business_vertical.split('_')[0]}
+                            <Badge variant="outline" className="text-[8px] font-black tracking-tighter h-4 px-1 border-white/10 bg-white/5 text-[#4B6478]">
+                              {toTitleCase(inv.tenants.business_vertical)}
                             </Badge>
                           )}
                         </div>
@@ -642,7 +656,7 @@ export default function AdminSubscriptions() {
                           {getVerticalIcon(selectedInvoice.tenants?.business_vertical)}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-white leading-tight">{selectedInvoice.tenants?.business_name}</p>
+                          <p className="text-sm font-bold text-white leading-tight">{toTitleCase(selectedInvoice.tenants?.business_name)}</p>
                           <p className="text-[10px] text-[#4B6478] font-bold uppercase mt-0.5">
                             ID: {selectedInvoice.tenants?.id?.substring(0, 8)}...
                           </p>
@@ -792,6 +806,14 @@ export default function AdminSubscriptions() {
                       >
                         ✗ Batalkan Invoice
                       </Button>
+                      <Button
+                        variant="ghost"
+                        className="w-full text-red-500/50 hover:text-red-400 text-[10px] font-black uppercase tracking-widest pt-4"
+                        onClick={handleDeleteInvoice}
+                        disabled={deleteInvoice.isPending}
+                      >
+                        <Trash2 size={12} className="mr-1.5" /> Hapus Permanen (Admin Only)
+                      </Button>
                     </div>
                   )
                 })()}
@@ -821,13 +843,13 @@ export default function AdminSubscriptions() {
                   name="genTenantId"
                   value={genForm.tenantId}
                   onChange={(e) => { setGenForm(f => ({ ...f, tenantId: e.target.value })); setManualPrice(0) }}
-                  className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-sm font-medium text-white focus:border-emerald-500/50 focus:outline-none transition-all"
+                  className={`w-full h-12 bg-white/5 border rounded-xl px-4 text-sm font-medium text-white focus:border-emerald-500/50 focus:outline-none transition-all ${genHasPending ? 'border-amber-500/50 ring-1 ring-amber-500/20' : 'border-white/10'}`}
                   required
                 >
                   <option value="" className="bg-[#0C1319]">— Pilih Tenant —</option>
                   {allTenants?.map(t => (
                     <option key={t.id} value={t.id} className="bg-[#0C1319]">
-                      {t.business_name} ({t.business_vertical})
+                      {toTitleCase(t.business_name)} ({toTitleCase(t.business_vertical)})
                     </option>
                   ))}
                 </select>
@@ -1160,8 +1182,8 @@ function ExpiringPlansTab({ allTenants, onRenew }) {
                     >
                       <td className="px-6 py-4">
                         <div className="space-y-0.5">
-                          <p className="text-[13px] font-bold text-white truncate max-w-[180px]">{tenant.business_name}</p>
-                          <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-wider">{tenant.business_vertical}</p>
+                          <p className="text-[13px] font-bold text-white truncate max-w-[180px]">{toTitleCase(tenant.business_name)}</p>
+                          <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-wider">{toTitleCase(tenant.business_vertical)}</p>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center"><PlanBadge plan={sub.plan} /></td>

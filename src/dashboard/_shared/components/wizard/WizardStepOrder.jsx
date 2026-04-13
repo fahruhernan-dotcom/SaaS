@@ -33,7 +33,7 @@ const FIELD_LABELS = {
 // NUCLEAR OPTION: Global Zod Mapping to eliminate ALL technical jargon
 z.setErrorMap((issue, ctx) => {
   // 1. If schema has a specific message, always prioritize it!
-  if (ctx.defaultError && !ctx.defaultError.includes('Expected') && !ctx.defaultError.includes('Invalid') && !ctx.defaultError.includes('Required')) {
+  if (ctx?.defaultError && !ctx.defaultError.includes('Expected') && !ctx.defaultError.includes('Invalid') && !ctx.defaultError.includes('Required')) {
     return { message: ctx.defaultError }
   }
   

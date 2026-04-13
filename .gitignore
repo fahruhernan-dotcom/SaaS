@@ -52,5 +52,4 @@ checkSembako.js
 !scripts/requirements.txt
 !.env.example
 !public/robots.txt
-
-
+scratch/

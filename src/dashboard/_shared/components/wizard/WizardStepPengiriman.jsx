@@ -33,8 +33,8 @@ const FIELD_LABELS = {
 z.setErrorMap((issue, ctx) => {
   const defaultMsg = ctx?.defaultError || ''
   
-  if (defaultMsg && !defaultMsg.includes('Expected') && !defaultMsg.includes('Invalid') && !defaultMsg.includes('Required')) {
-    return { message: defaultMsg }
+  if (ctx?.defaultError && !ctx.defaultError.includes('Expected') && !ctx.defaultError.includes('Invalid') && !ctx.defaultError.includes('Required')) {
+    return { message: ctx.defaultError }
   }
   if (issue.code === z.ZodIssueCode.invalid_type) {
     if (issue.received === 'undefined' || issue.received === 'null' || (issue.received === 'string' && issue.code === 'too_small')) {
@@ -171,9 +171,11 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
 
   useEffect(() => {
     if (selectedDriver && formValues.include_driver_wage) {
-      if (!formValues.driver_wage || formValues.driver_wage === 0 || selectedDriver?.id) {
-         setValue('driver_wage', selectedDriver.wage_per_trip || 0)
-      }
+       // Only auto-fill if the current wage is 0 or it's a fresh driver selection
+       // (The bug was || selectedDriver?.id which made it always true)
+       if (!formValues.driver_wage || formValues.driver_wage === 0) {
+          setValue('driver_wage', selectedDriver.wage_per_trip || 0)
+       }
     }
   }, [selectedDriver?.id, formValues.include_driver_wage])
 
@@ -493,8 +495,8 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                     <Input id="new_vehicle_brand" name="new_vehicle_brand" placeholder="Truk Canter" value={newVehicle.brand} onChange={e => setNewVehicle(p => ({ ...p, brand: e.target.value }))} className="h-9 bg-black/20" />
                   </div>
                   <div className="space-y-1">
-                    <label htmlFor="new_vehicle_plate" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>Plat Nomor *</label>
-                    <Input id="new_vehicle_plate" name="new_vehicle_plate" placeholder="B 1234 ABC" value={newVehicle.vehicle_plate} onChange={e => setNewVehicle(p => ({ ...p, vehicle_plate: e.target.value.toUpperCase() }))} className="h-9 bg-black/20 uppercase" />
+                    <label htmlFor="new_vehicle_plate" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>No. Plat *</label>
+                    <Input id="new_vehicle_plate" name="new_vehicle_plate" placeholder="B 1234 ABC" value={newVehicle.vehicle_plate} onChange={e => setNewVehicle(p => ({ ...p, vehicle_plate: e.target.value.toUpperCase() }))} className="h-9 bg-black/20 uppercase font-black" />
                   </div>
                 </div>
                 <div className="flex gap-2 mt-1">
@@ -622,6 +624,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                       <Input id="new_driver_name" name="new_driver_name" placeholder="Pak Ahmad" value={newDriver.full_name} onChange={e => setNewDriver(p => ({ ...p, full_name: e.target.value }))} className="h-9 bg-black/20" />
                     </div>
                     <div className="space-y-1">
+                      <label htmlFor="new_driver_phone" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>No HP</label>
                       <PhoneInput id="new_driver_phone" name="new_driver_phone" placeholder="081..." value={newDriver.phone} onChange={e => setNewDriver(p => ({ ...p, phone: e.target.value }))} className="h-9 bg-black/20" />
                     </div>
                   </div>
@@ -688,7 +691,22 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
               />
             </div>
 
-            {/* UPPAH SOPIR INPUT - SHOW IF TOGGLE IS ON */}
+            {/* UPAH SOPIR INPUT - SHOW IF TOGGLE IS ON */}
+            {formValues.include_driver_wage && (
+              <div className="bg-white/5 border border-white/5 p-3 rounded-2xl flex justify-between items-center group animate-in zoom-in-95 duration-200">
+                <div className="space-y-0.5">
+                  <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Detail Upah Sopir</p>
+                  <p className="text-[11px] font-bold text-emerald-400">Termasuk dalam biaya kirim</p>
+                </div>
+                <div className="w-32">
+                   <InputRupiah 
+                     value={formValues.driver_wage} 
+                     onChange={v => setValue('driver_wage', v, { shouldValidate: true })}
+                     className="h-9 bg-black/20 border-white/5 text-right font-black text-xs"
+                   />
+                </div>
+              </div>
+            )}
 
             <p className="text-[10px] text-[#4B6478] font-bold uppercase mt-1 italic leading-relaxed">
               Biaya operasional yang sudah tercakup dalam total pembayaran.

@@ -539,9 +539,6 @@ function DesktopDashboard({
             </div>
           </Card>
 
-          {/* MARKET TREND HYBRID CHART */}
-          <MarketTrendCard province={activeProvince} />
-
           {/* 5. PIUTANG RPA SECTION */}
           <Card className="p-8 bg-[#0C1319] border-white/5 rounded-[32px]">
             <div className="flex justify-between items-center mb-6">
@@ -575,6 +572,9 @@ function DesktopDashboard({
               </div>
             )}
           </Card>
+
+          {/* MARKET TREND HYBRID CHART */}
+          <MarketTrendCard province={activeProvince} />
         </div>
 
         {/* 4. AGENDA SECTION */}
@@ -706,11 +706,6 @@ function MobileDashboard({
         </div>
       </motion.div>
 
-      {/* ── MARKET TRENDS ── */}
-      <div className="px-4 mb-4">
-        <MarketTrendCard province={activeProvince} />
-      </div>
-
       {/* ── 4. RECENT ACTIVITY ── */}
       <motion.div variants={fadeUp} className="px-4 mb-4">
         <div className="flex justify-between items-center mb-3">
@@ -754,6 +749,11 @@ function MobileDashboard({
           </div>
         </div>
       </motion.div>
+
+      {/* ── MARKET TRENDS ── */}
+      <div className="px-4 mb-4">
+        <MarketTrendCard province={activeProvince} />
+      </div>
     </motion.div>
   )
 }

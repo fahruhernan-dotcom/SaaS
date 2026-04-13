@@ -12,6 +12,7 @@ import AIChatBubble from '@/dashboard/broker/ai/AIChatBubble'
 import { useNotificationGenerator } from '@/lib/hooks/useNotifications.jsx'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { BusinessNameWarningBanner } from '../components/BusinessNameWarningBanner'
 import {
   useSembakoDashboardStats, useSembakoSales, useSembakoProducts,
   useSembakoAllBatches, useSembakoSuppliers, useSembakoCustomers,
@@ -190,20 +191,18 @@ export default function BrokerLayout() {
             overscrollBehaviorX: 'none'
           }}
         >
-          {/* Hamburger is rendered inside each page's TopBar via setSidebarOpen context */}
-
           {isSembako 
             ? <SembakoHamburgerDrawer open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
             : <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           }
-          
+          <BusinessNameWarningBanner />
           <Outlet context={{ setSidebarOpen }} />
           <BottomNav />
         </div>
       )
     }
 
-    return <DesktopSidebarLayout><Outlet context={{ setSidebarOpen }} /></DesktopSidebarLayout>
+    return <DesktopSidebarLayout><BusinessNameWarningBanner /><Outlet context={{ setSidebarOpen }} /></DesktopSidebarLayout>
   }
 
   return (

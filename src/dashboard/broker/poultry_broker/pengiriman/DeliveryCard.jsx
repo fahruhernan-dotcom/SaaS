@@ -56,8 +56,14 @@ function Timeline({ delivery, status }) {
         completed_at: delivery.status === 'completed' ? delivery.updated_at : null 
     }
 
-    const currentIdx = steps.findIndex(s => !data[s.key])
-    const activeIdx = currentIdx === -1 ? 4 : currentIdx
+    const statusIdxMap = {
+        preparing: 0,
+        loading: 1,
+        on_route: 2,
+        arrived: 3,
+        completed: 4
+    }
+    const activeIdx = statusIdxMap[status] ?? 0
 
     const trackRef = useRef(null)
     const [truckLeft, setTruckLeft] = useState(-6)
@@ -243,15 +249,18 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onComplete, onSho
     
     // Auto-derive status based on time only if NOT already arrived or completed
     if (effectiveStatus !== 'arrived' && effectiveStatus !== 'completed') {
-        if (delivery.departure_time) {
+        const loadTime = delivery.load_time ? parseISO(delivery.load_time) : null
+        const departTime = delivery.departure_time ? parseISO(delivery.departure_time) : null
+        const arrivalTime = delivery.arrival_time ? parseISO(delivery.arrival_time) : null
+
+        if (arrivalTime && currentTime >= arrivalTime) {
+            effectiveStatus = 'arrived'
+        } else if (departTime && currentTime >= departTime) {
             effectiveStatus = 'on_route'
-        } else if (delivery.load_time) {
-            const loadTime = parseISO(delivery.load_time)
-            if (isAfter(loadTime, currentTime)) {
-                effectiveStatus = 'preparing'
-            } else {
-                effectiveStatus = 'loading'
-            }
+        } else if (loadTime && currentTime >= loadTime) {
+            effectiveStatus = 'loading'
+        } else {
+            effectiveStatus = 'preparing'
         }
     }
 

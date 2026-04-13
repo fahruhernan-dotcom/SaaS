@@ -209,7 +209,12 @@ export function ProgressIndicator({ currentStep, steps }) {
                   : <span style={{ fontSize: 10, fontWeight: 700, color: active ? C.green : C.muted }}>{i + 1}</span>
                 }
               </div>
-              <span style={{ fontSize: 9, color: done ? C.green : active ? C.green : C.muted, textAlign: 'center', marginTop: 4, whiteSpace: 'nowrap', fontWeight: 600 }}>{label}</span>
+              <span style={{
+                fontSize: 9, color: done ? C.green : active ? C.green : C.muted,
+                textAlign: 'center', marginTop: 4, fontWeight: 600,
+                width: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                display: 'block',
+              }}>{label}</span>
             </div>
             {i < steps.length - 1 && (
               <div style={{ flex: 1, height: 2, marginTop: 11, background: i < currentStep ? C.green : C.border }} />

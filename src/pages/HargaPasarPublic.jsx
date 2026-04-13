@@ -44,6 +44,7 @@ import { cn } from '@/lib/utils'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth } from 'date-fns'
+import Particles from '@/components/reactbits/Particles'
 import { id as idLocale } from 'date-fns/locale'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -295,7 +296,7 @@ export default function HargaPasarPublic() {
     }
   }, [hybridPeriod])
 
-  const targetProvince = currentProvince || 'Jawa Tengah'
+  const targetProvince = currentProvince || '%' // Use '%' for National aggregated data
 
   const fetchStartDate = useMemo(() => format(subDays(new Date(), 45), 'yyyy-MM-dd'), [])
   const fetchEndDate   = useMemo(() => format(new Date(), 'yyyy-MM-dd'), [])
@@ -358,31 +359,18 @@ export default function HargaPasarPublic() {
 
   const dedupedPrices = useMemo(() => [...fullUnifiedData].reverse(), [fullUnifiedData])
 
-  // ── Activity / Social Proof ──────────────────────────────────────────────
+  // ── Activity / Social Proof (Using RPC to bypass RLS) ──────────────────────
   const { data: activityMap } = useQuery({
-    queryKey: ['broker-activity'],
+    queryKey: ['broker-activity-public'],
     queryFn: async () => {
-      const sevenDaysAgo = format(subDays(new Date(), 7), 'yyyy-MM-dd')
-      const { data: buyData } = await supabase
-        .from('purchases')
-        .select('transaction_date, farms!inner(province)')
-        .gte('transaction_date', sevenDaysAgo)
-        .eq('is_deleted', false)
-      const { data: sellData } = await supabase
-        .from('sales')
-        .select('transaction_date, rpa_clients!inner(province)')
-        .gte('transaction_date', sevenDaysAgo)
-        .eq('is_deleted', false)
-      const map = {}
-      const process = (rows, getProv) => (rows || []).forEach(row => {
-        const p = getProv(row)
-        if (p) map[p] = (map[p] || 0) + 1
-      })
-      process(buyData, r => r.farms?.province)
-      process(sellData, r => r.rpa_clients?.province)
-      return map
+      const { data, error } = await supabase.rpc('get_public_market_stats')
+      if (error) {
+        console.error('[SocialProof] RPC Error:', error.message)
+        return {}
+      }
+      return data || {}
     },
-    staleTime: 1000 * 60 * 30,
+    staleTime: 1000 * 60 * 30, // 30 minutes cache
   })
 
   const totalPlatformTx   = useMemo(() => Object.values(activityMap || {}).reduce((a, b) => a + b, 0), [activityMap])
@@ -486,10 +474,30 @@ export default function HargaPasarPublic() {
       {/* JSON-LD Structured Data */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
-      {/* ── Background glows ── */}
-      <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute top-[30%] right-[-10%] w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-0 left-[20%] w-[800px] h-[400px] bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none opacity-50" />
+      {/* Global Background Elements */}
+      <div 
+        className="fixed inset-0 pointer-events-none z-0"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)`,
+          backgroundSize: '40px 40px',
+          WebkitMaskImage: 'radial-gradient(ellipse 80% 50% at center top, black 30%, transparent 80%)',
+          maskImage: 'radial-gradient(ellipse 80% 50% at center top, black 30%, transparent 80%)'
+        }}
+      />
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+        <Particles
+          particleColors={['#10B981', '#34D399', '#059669']}
+          particleCount={typeof window !== 'undefined' && window.innerWidth < 768 ? 25 : 50}
+          speed={0.2}
+          particleBaseSize={1.4}
+        />
+      </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.2 }}
+        className="fixed top-[-120px] left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(16,185,129,0.18),transparent_70%)] animate-glow-breathe z-0 pointer-events-none md:w-[800px] md:h-[800px]"
+      />
 
       <Navbar />
       <div className="h-16 md:h-20" />

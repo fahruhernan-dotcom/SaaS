@@ -200,23 +200,21 @@ function TambahStokSheet({ preselectedProductId, products, suppliers, onClose })
             </div>
           )}
 
-          {/* Dates */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <SField label="Tanggal Masuk *">
-              <DatePicker
-                value={form.purchase_date}
-                onChange={val => set('purchase_date', val)}
-                placeholder="Pilih tanggal"
-              />
-            </SField>
-            <SField label="Tanggal Kadaluarsa">
-              <DatePicker
-                value={form.expiry_date}
-                onChange={val => set('expiry_date', val)}
-                placeholder="Pilih tanggal"
-              />
-            </SField>
-          </div>
+          {/* Dates — stacked for mobile-friendly calendar opening */}
+          <SField label="Tanggal Masuk *">
+            <DatePicker
+              value={form.purchase_date}
+              onChange={val => set('purchase_date', val)}
+              placeholder="Pilih tanggal"
+            />
+          </SField>
+          <SField label="Tanggal Kadaluarsa">
+            <DatePicker
+              value={form.expiry_date}
+              onChange={val => set('expiry_date', val)}
+              placeholder="Pilih tanggal"
+            />
+          </SField>
 
           {/* Notes */}
           <SField label="Catatan">

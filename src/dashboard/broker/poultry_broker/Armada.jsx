@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     Truck, User, Plus, Filter,
@@ -118,21 +118,7 @@ export default function Armada() {
         queryFn: async () => {
             const { data, error } = await supabase
                 .from('drivers')
-                .select(`
-                    *,
-                    deliveries(
-                        id, 
-                        created_at, 
-                        status, 
-                        driver_wage, 
-                        is_deleted,
-                        sales(
-                            id,
-                            purchases(farms(farm_name)),
-                            rpa_clients(rpa_name)
-                        )
-                    )
-                `)
+                .select('*')
                 .eq('tenant_id', tenant?.id)
                 .eq('is_deleted', false)
                 .order('full_name', { ascending: true })
@@ -141,6 +127,27 @@ export default function Armada() {
         },
         enabled: !!tenant?.id
     })
+
+    const { data: allDeliveries = [] } = useQuery({
+        queryKey: ['all-deliveries-for-drivers', tenant?.id],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from('deliveries')
+                .select('id, driver_id, status, driver_wage, is_deleted')
+                .eq('tenant_id', tenant?.id)
+                .eq('is_deleted', false)
+            if (error) throw error
+            return data
+        },
+        enabled: !!tenant?.id
+    })
+
+    const driversWithDeliveries = useMemo(() => {
+        return drivers.map(driver => ({
+            ...driver,
+            deliveries: allDeliveries.filter(d => d.driver_id === driver.id)
+        }))
+    }, [drivers, allDeliveries])
 
     const { data: activeDeliveries = [] } = useQuery({
         queryKey: ['active-deliveries', tenant?.id],
@@ -398,7 +405,7 @@ export default function Armada() {
                                     </div>
                                 </div>
                             )}
-                            {drivers.filter(d => {
+                            {driversWithDeliveries.filter(d => {
                                 if (driverFilter === 'Semua') return true
                                 if (driverFilter === 'Mengirim') return onRouteDriverIds.has(d.id)
                                 return d.status === driverFilter.toLowerCase()
@@ -414,7 +421,7 @@ export default function Armada() {
                                     }}
                                 />
                             ))}
-                            {drivers.length === 0 && !isLoadingDrivers && (
+                            {driversWithDeliveries.length === 0 && !isLoadingDrivers && (
                                 <EmptyState 
                                     icon={User} 
                                     title="Belum ada sopir" 
@@ -631,7 +638,11 @@ function DriverCard({ driver, isOnRoute, onEdit, onClickCard }) {
                             <div className="text-right">
                                 <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest leading-none mb-0.5">Total Upah</p>
                                 <p className="text-xs font-black text-emerald-400">
-                                    {formatIDRShort(driver.deliveries?.filter(d => !d.is_deleted && ['arrived', 'completed', 'tiba'].includes(d.status))?.reduce((acc, d) => acc + (d.driver_wage || 0), 0) || 0)}
+                                    {formatIDRShort(
+                                      (driver.deliveries || [])
+                                        .filter(d => ['arrived', 'completed', 'tiba', 'on_route'].includes(d.status?.toLowerCase()))
+                                        .reduce((sum, d) => sum + (Number(d.driver_wage) || 0), 0)
+                                    )}
                                 </p>
                             </div>
                         </div>

@@ -10,7 +10,6 @@ import {
 } from '@/lib/hooks/useSembakoData'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { formatIDR } from '@/lib/format'
-import TopBar from '@/dashboard/_shared/components/TopBar'
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from '@/components/ui/sheet'

@@ -17,7 +17,7 @@ export function SembakoPageHeader({
   isViewOnly = false,
 }) {
   return (
-    <header className="px-5 pt-8 pb-4 sticky top-0 bg-[#06090F]/85 backdrop-blur-md z-30 space-y-4 border-b border-[#EA580C]/10">
+    <header className={`px-5 pb-4 ${isDesktop ? 'pt-8' : 'pt-4'} sticky ${isDesktop ? 'top-0' : 'top-[64px]'} bg-[#06090F]/85 backdrop-blur-md z-30 space-y-4 border-b border-[#EA580C]/10`}>
       <div className="flex justify-between items-center gap-4">
         <div className="min-w-0">
           <h1 className="font-display text-2xl font-black text-[#FEF3C7] tracking-tight uppercase leading-none">

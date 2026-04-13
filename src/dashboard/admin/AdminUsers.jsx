@@ -5,13 +5,14 @@ import {
   MoreVertical, Edit3, Trash2, CheckCircle2,
   XCircle, AlertCircle, Clock, Check, ChevronRight,
   ArrowRight, Sparkles, User as UserIcon, Calendar,
-  Bird, Egg, Home, Activity, Factory
+  Bird, Egg, Home, Activity, Factory, AlertTriangle, Loader2
 } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
-import { useAllTenants, useAdminUpdateTenant, useAllUsers } from '@/lib/hooks/useAdminData'
+import { useAllTenants, useAdminUpdateTenant, useAllUsers, useDeleteUser, useDeleteTenant } from '@/lib/hooks/useAdminData'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { Card } from '@/components/ui/card'
+import { toTitleCase } from '@/lib/format'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -38,6 +39,8 @@ export default function AdminUsers() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const { data: tenants, isLoading } = useAllTenants()
   const updateTenant = useAdminUpdateTenant()
+  const deleteUser = useDeleteUser()
+  const deleteTenant = useDeleteTenant()
 
   const [searchQuery, setSearchQuery] = useState('')
   const [viewMode, setViewMode] = useState('tenants') // 'tenants' | 'users'
@@ -48,6 +51,10 @@ export default function AdminUsers() {
   // New States for User View
   const [selectedUser, setSelectedUser] = useState(null)
   const [isUserSheetOpen, setIsUserSheetOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [isTenantDeleteModalOpen, setIsTenantDeleteModalOpen] = useState(false)
+  const [tenantDeleteConfirmText, setTenantDeleteConfirmText] = useState('')
 
   const { data: allUsers, isLoading: isUsersLoading } = useAllUsers()
 
@@ -124,6 +131,36 @@ export default function AdminUsers() {
       return matchesSearch
     })
   }, [allUsers, searchQuery])
+
+  const handleDeleteUser = () => {
+    if (!selectedUser) return
+    if (deleteConfirmText !== (selectedUser.name || 'HAPUS')) {
+      toast.error('Teks konfirmasi tidak sesuai')
+      return
+    }
+    deleteUser.mutate(selectedUser.id, {
+      onSuccess: () => {
+        setIsDeleteModalOpen(false)
+        setIsUserSheetOpen(false)
+        setSelectedUser(null)
+      }
+    })
+  }
+
+  const handleDeleteTenant = () => {
+    if (!selectedTenant) return
+    if (tenantDeleteConfirmText !== (selectedTenant.business_name || 'HAPUS')) {
+      toast.error('Teks konfirmasi tidak sesuai')
+      return
+    }
+    deleteTenant.mutate(selectedTenant.id, {
+      onSuccess: () => {
+        setIsTenantDeleteModalOpen(false)
+        setIsSheetOpen(false)
+        setSelectedTenant(null)
+      }
+    })
+  }
 
   const handleOpenDetail = (tenant) => {
     setSelectedTenant(tenant)
@@ -261,15 +298,21 @@ export default function AdminUsers() {
                               {renderVerticalIcon(t.business_vertical)}
                             </div>
                             <div>
-                              <p className="text-[14px] font-black text-white leading-tight mb-1">{t.business_name || '(Tanpa Nama)'}</p>
+                              <p className="text-[14px] font-black text-white leading-tight mb-1">{toTitleCase(t.business_name) || '(Tanpa Nama)'}</p>
                               <div className="flex items-center gap-3">
-                                <span className="text-[9px] font-bold text-[#4B6478] uppercase tracking-[0.2em] border border-white/5 px-1.5 py-0.5 rounded bg-white/[0.02]">
-                                  {(t.business_vertical || '').replace('_', ' ') || '-'}
+                                <span className="text-[9px] font-bold text-[#4B6478] tracking-[0.2em] border border-white/5 px-1.5 py-0.5 rounded bg-white/[0.02]">
+                                  {toTitleCase(t.business_vertical) || '-'}
                                 </span>
                                 <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/[0.03] border border-white/5">
                                   <UserIcon size={10} className="text-[#4B6478]" />
                                   <span className="text-[10px] font-medium text-slate-400">
-                                    {t.profiles?.find(p => p.role === 'owner')?.full_name || 'Belum ada owner'}
+                                    {(() => {
+                                      const owner = t.profiles?.find(p => p.role === 'owner')
+                                      if (owner) return toTitleCase(owner.full_name)
+                                      const firstMember = t.profiles?.[0]
+                                      if (firstMember) return `${toTitleCase(firstMember.full_name)} (Member)`
+                                      return 'Belum ada owner'
+                                    })()}
                                   </span>
                                 </div>
                               </div>
@@ -371,7 +414,7 @@ export default function AdminUsers() {
                               <AvatarFallback className="bg-[#1C2C38] text-blue-400 text-[11px] font-black uppercase">{u.name?.substring(0, 2) || '??'}</AvatarFallback>
                             </Avatar>
                             <div>
-                               <p className="text-[14px] font-black text-white leading-tight">{u.name || '(Tanpa Nama)'}</p>
+                               <p className="text-[14px] font-black text-white leading-tight">{toTitleCase(u.name) || '(Tanpa Nama)'}</p>
                                <p className="text-[9px] font-bold text-[#4B6478] uppercase mt-1 tracking-widest">UID: {u.id.substring(0, 8)}</p>
                             </div>
                           </div>
@@ -483,7 +526,7 @@ export default function AdminUsers() {
                                 <div className="flex items-center gap-2 mt-0.5">
                                   <RoleBadge role={p.user_type === 'superadmin' ? 'superadmin' : p.role} />
                                   <span className="text-[10px] font-bold text-[#4B6478] uppercase">
-                                    {(p.tenants?.business_vertical || '').replace('_', ' ')}
+                                    {toTitleCase(p.tenants?.business_vertical)}
                                   </span>
                                 </div>
                               </div>
@@ -512,13 +555,23 @@ export default function AdminUsers() {
                   </section>
                 </div>
 
-                <div className="p-6 border-t border-white/5 bg-white/[0.02]">
+                <div className="p-6 border-t border-white/5 bg-white/[0.02] flex flex-col gap-3">
                   <Button
                     variant="ghost"
                     className="w-full text-[#4B6478] hover:text-white"
                     onClick={() => setIsUserSheetOpen(false)}
                   >
                     Tutup
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full h-11 rounded-xl border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white transition-all text-[12px] font-bold uppercase tracking-widest"
+                    onClick={() => {
+                      setDeleteConfirmText('')
+                      setIsDeleteModalOpen(true)
+                    }}
+                  >
+                    <Trash2 size={16} className="mr-2" /> Hapus Akun User
                   </Button>
                 </div>
               </motion.div>
@@ -547,10 +600,10 @@ export default function AdminUsers() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <SheetTitle className="text-xl font-black text-white uppercase tracking-tight">
-                          {selectedTenant.business_name || '(Tanpa Nama)'}
+                          {toTitleCase(selectedTenant.business_name) || '(Tanpa Nama)'}
                         </SheetTitle>
                         <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-widest bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
-                          {(selectedTenant.business_vertical || '').replace('_', ' ') || '-'}
+                          {toTitleCase(selectedTenant.business_vertical) || '-'}
                         </Badge>
                       </div>
                       <SheetDescription className="text-[11px] font-bold text-[#4B6478] uppercase mt-1 tracking-widest">
@@ -697,7 +750,7 @@ export default function AdminUsers() {
                           </Avatar>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <p className="text-[12px] font-bold text-white truncate">{p.full_name || '-'}</p>
+                              <p className="text-[12px] font-bold text-white truncate">{toTitleCase(p.full_name) || '-'}</p>
                               <RoleBadge role={p.user_type === 'superadmin' ? 'superadmin' : p.role} />
                             </div>
                             <p className="text-[10px] text-[#4B6478] font-bold uppercase mt-0.5 tracking-tighter">
@@ -728,13 +781,11 @@ export default function AdminUsers() {
                     variant="outline"
                     className="w-full h-11 rounded-xl border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white transition-all text-[12px] font-bold uppercase tracking-widest"
                     onClick={() => {
-                      if (confirm(`Apakah Anda yakin ingin menonaktifkan tenant "${selectedTenant.business_name}"?`)) {
-                        handleUpdateStatus(selectedTenant.id, false)
-                        setIsSheetOpen(false)
-                      }
+                      setTenantDeleteConfirmText('')
+                      setIsTenantDeleteModalOpen(true)
                     }}
                   >
-                    Nonaktifkan Tenant
+                    <Trash2 size={16} className="mr-2" /> Hapus Permanen Bisnis
                   </Button>
                 </div>
               </motion.div>
@@ -742,6 +793,28 @@ export default function AdminUsers() {
           </AnimatePresence>
         </SheetContent>
       </Sheet>
+
+      {/* Confirm Deletion Modal */}
+      <ConfirmDeleteModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteUser}
+        user={selectedUser}
+        confirmText={deleteConfirmText}
+        setConfirmText={setDeleteConfirmText}
+        isDeleting={deleteUser.isPending}
+        allTenants={tenants}
+      />
+
+      <ConfirmDeleteTenantModal
+        isOpen={isTenantDeleteModalOpen}
+        onClose={() => setIsTenantDeleteModalOpen(false)}
+        onConfirm={handleDeleteTenant}
+        tenantName={selectedTenant?.business_name || ''}
+        confirmText={tenantDeleteConfirmText}
+        setConfirmText={setTenantDeleteConfirmText}
+        isDeleting={deleteTenant.isPending}
+      />
     </motion.div>
   )
 }
@@ -751,7 +824,14 @@ export default function AdminUsers() {
 // --- Sub-Components ---
 
 function TenantMobileCard({ tenant, onDetail, onStatusChange }) {
-  const owner = tenant.profiles?.find(p => p.role === 'owner')?.full_name || 'Belum ada owner'
+  const getOwnerDisplay = () => {
+    const owner = tenant.profiles?.find(p => p.role === 'owner')
+    if (owner) return toTitleCase(owner.full_name)
+    const firstMember = tenant.profiles?.[0]
+    if (firstMember) return `${toTitleCase(firstMember.full_name)} (Member)`
+    return 'Belum ada owner'
+  }
+  const owner = getOwnerDisplay()
   
   return (
     <div className="bg-[#111C24] border border-white/8 rounded-2xl p-4 shadow-lg active:scale-[0.98] transition-all">
@@ -761,10 +841,10 @@ function TenantMobileCard({ tenant, onDetail, onStatusChange }) {
                 {renderVerticalIcon(tenant.business_vertical, 20)}
              </div>
              <div className="min-w-0">
-                <p className="text-[14px] font-black text-white leading-tight truncate">{tenant.business_name || '(Tanpa Nama)'}</p>
+                <p className="text-[14px] font-black text-white leading-tight truncate">{toTitleCase(tenant.business_name) || '(Tanpa Nama)'}</p>
                 <div className="flex items-center gap-2 mt-1">
                    <span className="text-[8px] font-black text-[#4B6478] uppercase tracking-widest bg-white/5 px-1.5 py-0.5 rounded">
-                      {(tenant.business_vertical || '').replace('_', ' ')}
+                      {toTitleCase(tenant.business_vertical)}
                    </span>
                    <PlanBadge plan={tenant.plan} />
                 </div>
@@ -813,7 +893,7 @@ function UserMobileCard({ user, onClick }) {
              <AvatarFallback className="bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase">{user.name?.substring(0, 2) || '??'}</AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-             <p className="text-[14px] font-black text-white leading-tight truncate">{user.name || '(Tanpa Nama)'}</p>
+             <p className="text-[14px] font-black text-white leading-tight truncate">{toTitleCase(user.name) || '(Tanpa Nama)'}</p>
              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 {Array.from(new Set(user.profiles.map(p => p.role))).slice(0, 2).map(role => (
                   <RoleBadge key={role} role={role} />
@@ -874,7 +954,7 @@ function PlanBadge({ plan }) {
 
   return (
     <Badge className={`px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm ${styles[plan] || styles.starter}`}>
-      {plan}
+      {toTitleCase(plan)}
     </Badge>
   )
 }
@@ -890,7 +970,7 @@ function RoleBadge({ role }) {
 
   return (
     <span className={`text-[8px] font-black uppercase tracking-[0.15em] px-2 py-0.5 rounded-md border leading-none ${styles[role] || styles.view_only}`}>
-      {(role || '').replace('_', ' ') || '-'}
+      {toTitleCase(role)}
     </span>
   )
 }
@@ -940,4 +1020,166 @@ function renderVerticalIcon(v, size = 18) {
     case 'rpa': return <Factory size={size} />
     default: return <Building2 size={size} />
   }
+}
+
+// ─── Internal Component: ConfirmDeleteModal ───────────────────
+
+function ConfirmDeleteModal({ isOpen, onClose, onConfirm, user, confirmText, setConfirmText, isDeleting, allTenants }) {
+  if (!isOpen) return null
+  const userName = user?.name || ''
+
+  // Determine which tenants will be deleted (Deep Cleanup)
+  const lonelyTenants = user?.profiles?.filter(p => {
+    if (p.role !== 'owner') return false
+    const tenant = allTenants?.find(t => t.id === p.tenant_id)
+    return tenant?.profiles?.length === 1
+  }).map(p => p.tenants?.business_name) || []
+
+  const sharedTenants = user?.profiles?.filter(p => {
+    const tenant = allTenants?.find(t => t.id === p.tenant_id)
+    return !lonelyTenants.includes(tenant?.business_name)
+  }).map(p => ({ 
+    name: p.tenants?.business_name, 
+    role: p.user_type === 'superadmin' ? 'superadmin' : p.role 
+  }))
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+      <motion.div 
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="w-full max-w-md bg-[#111C24] border border-white/10 rounded-3xl p-6 shadow-2xl space-y-6"
+      >
+        <div className="flex flex-col items-center text-center space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500">
+            <AlertTriangle size={32} />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-black text-white uppercase tracking-tight">Hapus Akun Permanen?</h3>
+            <p className="text-[13px] text-slate-400 font-medium leading-relaxed">
+              Tindakan ini akan menghapus profil <span className="text-white font-bold">{userName}</span> secara total.
+            </p>
+          </div>
+        </div>
+
+        {(lonelyTenants.length > 0 || sharedTenants.length > 0) && (
+          <div className="bg-black/20 rounded-2xl p-4 border border-white/5 space-y-3">
+            <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Dampak Penghapusan (Wiring Cleanup):</p>
+            
+            {lonelyTenants.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-bold text-red-400 uppercase tracking-tight flex items-center gap-1.5">
+                   <Trash2 size={10} /> BISNIS DIHAPUS PERMANEN (DATA LENGKAP):
+                </p>
+                {lonelyTenants.map((t, idx) => (
+                  <div key={idx} className="text-[12px] font-black text-white pl-4 border-l border-red-500/30">
+                    {toTitleCase(t)}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {sharedTenants.length > 0 && (
+              <div className="space-y-1.5 pt-2 border-t border-white/5">
+                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-tight flex items-center gap-1.5">
+                   <Shield size={10} /> DIKELUARKAN DARI TEAM (BISNIS TETAP ADA):
+                </p>
+                <div className="flex flex-wrap gap-2 pl-4">
+                  {sharedTenants.map((t, idx) => (
+                    <div key={idx} className="text-[11px] font-bold text-slate-300">
+                      {toTitleCase(t.name)} <span className="text-[9px] text-slate-500">({toTitleCase(t.role)})</span>
+                      {idx < sharedTenants.length - 1 && ","}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest ml-1">
+            Ketik "{userName || 'HAPUS'}" untuk mengonfirmasi
+          </label>
+          <Input 
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            placeholder="Ketik nama user di sini..."
+            className="bg-black/20 border-white/10 h-12 rounded-xl text-center font-bold text-white focus:border-red-500/50"
+          />
+        </div>
+
+        <div className="flex gap-3">
+          <Button 
+            variant="ghost" 
+            className="flex-1 h-12 rounded-xl text-[#4B6478] hover:text-white"
+            onClick={onClose}
+          >
+            Batal
+          </Button>
+          <Button 
+            disabled={confirmText !== (userName || 'HAPUS') || isDeleting}
+            className="flex-1 h-12 rounded-xl bg-red-500 hover:bg-red-600 text-white font-black uppercase tracking-widest text-[11px] disabled:opacity-30"
+            onClick={onConfirm}
+          >
+            {isDeleting ? <Loader2 className="animate-spin" size={18} /> : 'YA, HAPUS AKUN'}
+          </Button>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+function ConfirmDeleteTenantModal({ isOpen, onClose, onConfirm, tenantName, confirmText, setConfirmText, isDeleting }) {
+  if (!isOpen) return null
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+      <motion.div 
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="w-full max-w-md bg-[#111C24] border border-white/10 rounded-3xl p-6 shadow-2xl space-y-6"
+      >
+        <div className="flex flex-col items-center text-center space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500">
+            <Trash2 size={32} />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-black text-white uppercase tracking-tight">Hapus Bisnis Permanen?</h3>
+            <p className="text-[13px] text-slate-400 font-medium leading-relaxed">
+              Tindakan ini akan menghapus <span className="text-white font-bold">{tenantName}</span> beserta SELURUH data kandang, siklus, dan transaksi di dalamnya.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest ml-1">
+            Ketik "{tenantName || 'HAPUS'}" untuk mengonfirmasi
+          </label>
+          <Input 
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            placeholder="Ketik nama bisnis di sini..."
+            className="bg-black/20 border-white/10 h-12 rounded-xl text-center font-bold text-white focus:border-red-500/50"
+          />
+        </div>
+
+        <div className="flex gap-3">
+          <Button 
+            variant="ghost" 
+            className="flex-1 h-12 rounded-xl text-[#4B6478] hover:text-white"
+            onClick={onClose}
+          >
+            Batal
+          </Button>
+          <Button 
+            disabled={confirmText !== (tenantName || 'HAPUS') || isDeleting}
+            className="flex-1 h-12 rounded-xl bg-red-500 hover:bg-red-600 text-white font-black uppercase tracking-widest text-[11px] disabled:opacity-30 shadow-lg shadow-red-500/20"
+            onClick={onConfirm}
+          >
+            {isDeleting ? <Loader2 className="animate-spin" size={18} /> : 'HAPUS SEKARANG'}
+          </Button>
+        </div>
+      </motion.div>
+    </div>
+  )
 }

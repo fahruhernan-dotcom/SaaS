@@ -30,6 +30,15 @@ import {
   TooltipProvider, 
   TooltipTrigger 
 } from '@/components/ui/tooltip'
+import { PROVINCES } from '@/lib/constants/regions'
+import {
+  Popover, PopoverContent, PopoverTrigger
+} from '@/components/ui/popover'
+import {
+  Command, CommandEmpty, CommandGroup,
+  CommandInput, CommandItem, CommandSeparator, CommandList
+} from '@/components/ui/command'
+import { Check, ChevronsUpDown } from 'lucide-react'
 
 export default function HargaPasar() {
   const { profile, tenant } = useAuth()
@@ -297,10 +306,13 @@ export default function HargaPasar() {
                       </button>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="p-4 pt-0">
-                      <ManualPriceForm onSuccess={() => {
+                      <ManualPriceForm 
+                        tenant={tenant}
+                        onSuccess={() => {
                           setIsManualOpen(false)
-                          queryClient.invalidateQueries(['market-prices'])
-                      }} />
+                          queryClient.invalidateQueries({ queryKey: ['market-prices'] })
+                        }} 
+                      />
                   </CollapsibleContent>
               </Collapsible>
           </section>
@@ -462,13 +474,16 @@ function CustomTooltip({ active, payload }) {
     return null
 }
 
-function ManualPriceForm({ onSuccess }) {
+function ManualPriceForm({ tenant, onSuccess }) {
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({ beli: '', jual: '' })
+    const [region, setRegion] = useState(tenant?.area_operasi || '')
+    const [openRegion, setRegionOpen] = useState(false)
     
     const handleSave = async (e) => {
         e.preventDefault()
         if (!formData.beli || !formData.jual) return toast.error('Harap isi harga beli dan jual')
+        if (!region) return toast.error('Harap pilih wilayah/provinsi')
         
         setLoading(true)
         try {
@@ -478,7 +493,7 @@ function ManualPriceForm({ onSuccess }) {
                 .upsert({
                     price_date: todayString,
                     chicken_type: 'broiler',
-                    region: 'Jawa Tengah',
+                    region: region,
                     avg_buy_price: Number(formData.beli),
                     avg_sell_price: Number(formData.jual),
                     farm_gate_price: Number(formData.beli),
@@ -499,6 +514,55 @@ function ManualPriceForm({ onSuccess }) {
 
     return (
         <form onSubmit={handleSave} className="space-y-4 pt-4">
+            {/* Wilayah Selection */}
+            <div className="space-y-1.5">
+                <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Wilayah / Provinsi</Label>
+                <Popover open={openRegion} onOpenChange={setRegionOpen}>
+                    <PopoverTrigger asChild>
+                        <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={openRegion}
+                            className="w-full justify-between bg-black/20 border-white/5 h-10 font-bold"
+                        >
+                            {region
+                                ? PROVINCES.find((p) => p.value === region)?.label
+                                : "Pilih wilayah..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0 bg-[#0C1319] border-white/10" align="start">
+                        <Command className="bg-transparent">
+                            <CommandInput placeholder="Cari provinsi..." className="h-9" />
+                            <CommandList>
+                                <CommandEmpty>Provinsi tidak ditemukan.</CommandEmpty>
+                                <CommandGroup>
+                                    {PROVINCES.map((p) => (
+                                        <CommandItem
+                                            key={p.value}
+                                            value={p.value}
+                                            onSelect={(currentValue) => {
+                                                setRegion(currentValue)
+                                                setRegionOpen(false)
+                                            }}
+                                            className="text-white hover:bg-white/5"
+                                        >
+                                            <Check
+                                                className={cn(
+                                                    "mr-2 h-4 w-4",
+                                                    region === p.value ? "opacity-100" : "opacity-0"
+                                                )}
+                                            />
+                                            {p.label}
+                                        </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
+                    </PopoverContent>
+                </Popover>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                     <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Harga Beli</Label>

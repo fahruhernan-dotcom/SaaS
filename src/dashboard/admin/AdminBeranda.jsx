@@ -15,7 +15,7 @@ import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { formatIDR } from '@/lib/format'
+import { formatIDR, toTitleCase } from '@/lib/format'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 
@@ -321,7 +321,7 @@ export default function AdminBeranda() {
                     className="flex items-center justify-between p-3 rounded-xl bg-white/[0.01] border border-white/5 hover:border-white/10 transition-all"
                   >
                     <div>
-                      <p className="text-[12px] font-bold text-white leading-tight">{t.business_name}</p>
+                      <p className="text-[12px] font-bold text-white leading-tight">{toTitleCase(t.business_name)}</p>
                       <p className={`text-[9px] font-black uppercase mt-1 tracking-wider ${urgency}`}>
                         Expires in {daysLeft} days
                       </p>
@@ -372,8 +372,8 @@ export default function AdminBeranda() {
                     <p className="text-emerald-400 font-mono text-xs font-bold leading-tight uppercase">
                       #{inv.invoice_number?.substring(0, 8)}
                     </p>
-                    <p className="text-[#4B6478] text-[10px] font-bold uppercase mt-0.5 truncate">
-                      {inv.tenants?.business_name}
+                    <p className="text-[#4B6478] text-[10px] font-bold mt-0.5 truncate">
+                      {toTitleCase(inv.tenants?.business_name)}
                     </p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0 ml-3">

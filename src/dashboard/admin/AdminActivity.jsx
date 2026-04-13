@@ -21,6 +21,7 @@ import {
     SheetDescription,
 } from "@/components/ui/sheet"
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import { toTitleCase } from '@/lib/format'
 
 const getActionIcon = (action) => {
     if (action.startsWith('INSERT')) return <CheckCircle2 size={14} className="text-emerald-400" />
@@ -72,12 +73,12 @@ function LogCard({ log, onClick }) {
                     </div>
                     <div className="min-w-0">
                         <p className="text-[11px] font-bold text-[#F1F5F9] truncate leading-tight">
-                            {log.actor?.full_name || 'System'}
+                            {toTitleCase(log.actor?.full_name) || 'System'}
                         </p>
                         {log.tenant && (
                             <div className="flex items-center gap-1 mt-0.5">
                                 <Building2 size={9} className="text-emerald-500/50 shrink-0" />
-                                <p className="text-[9px] font-bold text-[#4B6478] truncate">{log.tenant.business_name}</p>
+                                <p className="text-[9px] font-bold text-[#4B6478] truncate">{toTitleCase(log.tenant.business_name)}</p>
                             </div>
                         )}
                     </div>
@@ -203,10 +204,10 @@ export default function AdminActivity() {
                                                     </div>
                                                     <div className="flex flex-col">
                                                         <span className="text-[12px] font-bold text-[#F1F5F9] truncate max-w-[120px]">
-                                                            {log.actor?.full_name || 'System'}
+                                                            {toTitleCase(log.actor?.full_name) || 'System'}
                                                         </span>
-                                                        <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider">
-                                                            {log.actor?.role || 'SYSTEM'}
+                                                        <span className="text-[9px] font-black text-[#4B6478] tracking-wider">
+                                                            {toTitleCase(log.actor?.role) || 'SYSTEM'}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -232,7 +233,7 @@ export default function AdminActivity() {
                                                     <div className="flex items-center gap-2">
                                                         <Building2 size={12} className="text-emerald-500/50" />
                                                         <span className="text-[11px] font-bold text-white transition-colors group-hover:text-emerald-400">
-                                                            {log.tenant.business_name}
+                                                            {toTitleCase(log.tenant.business_name)}
                                                         </span>
                                                     </div>
                                                 ) : (

@@ -65,9 +65,10 @@ import { peternakPermissions } from '@/lib/hooks/usePeternakPermissions'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { usePeternakFarms } from '@/lib/hooks/usePeternakData'
+import { usePlanConfigs } from '@/lib/hooks/useAdminData'
 import { useTheme } from '@/lib/hooks/useTheme'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 
@@ -86,6 +87,12 @@ export default function AppSidebar({ open, onClose }) {
     () => /^\/peternak\/[^/]+\/kandang\//.test(location.pathname)
   )
   const userDropdownRef = useRef(null)
+  const [showTrialChoices, setShowTrialChoices] = useState(false)
+
+  // Get dynamic trial configuration from admin settings
+  const { data: planConfigs } = usePlanConfigs()
+  const trialConfig = planConfigs?.trial_config || { duration: 14 }
+  const trialDurationDays = Number(trialConfig.duration) || 14
   
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 
@@ -856,7 +863,7 @@ export default function AppSidebar({ open, onClose }) {
                   ? '1px solid rgba(245,158,11,0.20)'
                   : '1px solid rgba(16,185,129,0.20)',
               }}>
-                {sub.status === 'expired' ? 'Expired' : sub.status === 'trial' ? `Trial ${daysLeft}h` : `${daysLeft}h`}
+                {sub.status === 'expired' ? 'Expired' : sub.status === 'trial' ? `Trial ${daysLeft} Hari` : `${daysLeft} Hari`}
               </span>
             )}
 
@@ -880,7 +887,7 @@ export default function AppSidebar({ open, onClose }) {
             }}>
               <div style={{
                 height: '100%',
-                width: `${Math.max(4, (daysLeft / (sub.status === 'trial' ? 14 : 30)) * 100)}%`,
+                width: `${Math.max(4, (daysLeft / (sub.status === 'trial' ? trialDurationDays : 30)) * 100)}%`,
                 background: daysLeft <= 3 ? '#F87171' : daysLeft <= 7 ? '#F59E0B' : '#10B981',
                 borderRadius: '99px', transition: 'width 0.3s ease'
               }} />
@@ -907,50 +914,63 @@ export default function AppSidebar({ open, onClose }) {
 
           {/* Mulai Trial button — hanya untuk starter yang belum/sudah expired trial */}
           {!isAccountActive && !isSuperadmin && sub.plan === 'starter' && (
-            <button
-              onClick={async () => {
-                try {
-                  const trialEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
-                  const { error, count } = await supabase
-                    .from('tenants')
-                    .update({ trial_ends_at: trialEnd })
-                    .eq('id', tenant?.id)
-                  
-                  if (error) throw error
-                  
-                  // Supabase RLS may silently block — detect via refetch
-                  toast.success('🎉 Trial 14 hari dimulai! Memuat ulang...')
-                  
-                  // Refetch auth data then reload
-                  setTimeout(() => window.location.reload(), 500)
-                } catch (err) {
-                  console.error('Trial start error:', err)
-                  toast.error('Gagal memulai trial: ' + (err.message || 'RLS policy mungkin memblokir update'))
-                }
-              }}
-              style={{
-                width: '100%',
-                marginTop: '10px',
-                padding: '8px 12px',
-                background: '#10B981',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '12px',
-                fontWeight: 700,
-                fontFamily: 'Sora',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                boxShadow: '0 2px 12px rgba(16,185,129,0.25)',
-                transition: 'all 0.2s'
-              }}
-            >
-              <Sparkles size={14} />
-              Mulai Trial 14 Hari
-            </button>
+            <div style={{ marginTop: '10px' }}>
+              {!showTrialChoices ? (
+                <button
+                  onClick={() => setShowTrialChoices(true)}
+                  style={{
+                    width: '100%', padding: '8px 12px',
+                    background: '#10B981', color: 'white', border: 'none', borderRadius: '8px',
+                    fontSize: '12px', fontWeight: 700, fontFamily: 'Sora', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    boxShadow: '0 2px 12px rgba(16,185,129,0.25)', transition: 'all 0.2s'
+                  }}
+                >
+                  <Sparkles size={14} />
+                  Pilih Plan Trial ({trialDurationDays} Hari)
+                </button>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                  {['starter', 'pro', 'business'].map(p => (
+                    <button
+                      key={p}
+                      onClick={async () => {
+                        try {
+                          const trialEnd = new Date(Date.now() + trialDurationDays * 24 * 60 * 60 * 1000).toISOString()
+                          const { error } = await supabase
+                            .from('tenants')
+                            .update({ 
+                               plan: p, 
+                               trial_ends_at: trialEnd, 
+                               kandang_limit: p === 'business' ? 99 : p === 'pro' ? 2 : 1
+                            })
+                            .eq('id', tenant?.id)
+                          
+                          if (error) throw error
+                          toast.success(`🎉 Trial ${p.toUpperCase()} ${trialDurationDays} Hari dimulai!`)
+                          setTimeout(() => window.location.reload(), 500)
+                        } catch (err) {
+                          toast.error('Gagal: ' + err.message)
+                        }
+                      }}
+                      style={{
+                        padding: '6px 2px', borderRadius: '6px', border: '1px solid #10B981',
+                        background: 'transparent', color: '#34D399', fontSize: '9px',
+                        fontWeight: 800, cursor: 'pointer', textAlign: 'center'
+                      }}
+                    >
+                      {p.toUpperCase()}
+                    </button>
+                  ))}
+                  <button 
+                    onClick={() => setShowTrialChoices(false)}
+                    style={{ gridColumn: 'span 3', background: 'transparent', border: 'none', color: '#4B6478', fontSize: '9px', marginTop: '4px', cursor: 'pointer' }}
+                  >
+                    Batal
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
 

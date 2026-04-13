@@ -13,7 +13,8 @@ import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { PhoneInput } from '@/components/ui/PhoneInput'
-import { ChevronLeft, TrendingUp, TrendingDown, ChevronsUpDown, Check, Plus, ChevronDown, AlertCircle } from 'lucide-react'
+import { ChevronLeft, TrendingUp, TrendingDown, ChevronsUpDown, Check, Plus, ChevronDown, AlertCircle, MapPin } from 'lucide-react'
+import { PROVINCES } from '@/lib/constants/regions'
 
 const FIELD_LABELS = {
   rpa_id: 'Pembeli RPA',
@@ -28,7 +29,7 @@ const FIELD_LABELS = {
 // NUCLEAR OPTION: Global Zod Mapping to eliminate ALL technical jargon
 z.setErrorMap((issue, ctx) => {
   // 1. If schema has a specific message, always prioritize it!
-  if (ctx.defaultError && !ctx.defaultError.includes('Expected') && !ctx.defaultError.includes('Invalid') && !ctx.defaultError.includes('Required')) {
+  if (ctx?.defaultError && !ctx.defaultError.includes('Expected') && !ctx.defaultError.includes('Invalid') && !ctx.defaultError.includes('Required')) {
     return { message: ctx.defaultError }
   }
   
@@ -115,7 +116,8 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
   const [openRPA, setOpenRPA] = useState(false)
   const [showQuickAddRPA, setShowQuickAddRPA] = useState(false)
   const [openPaymentTerms, setOpenPaymentTerms] = useState(false)
-  const [newRPA, setNewRPA] = useState({ rpa_name: '', phone: '', payment_terms: 'cash' })
+  const [newRPA, setNewRPA] = useState({ rpa_name: '', phone: '', payment_terms: 'cash', province: '' })
+  const [provinceOpen, setProvinceOpen] = useState(false)
 
   const { formState: { errors }, watch, setValue, handleSubmit, register } = useForm({
     resolver: zodResolver(saleSchema),
@@ -174,6 +176,7 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
         tenant_id: tenant?.id,
         rpa_name: newRPA.rpa_name,
         phone: newRPA.phone || null,
+        province: newRPA.province || null,
         payment_terms: newRPA.payment_terms || 'cash',
         buyer_type: 'rpa',
         total_outstanding: 0,
@@ -190,7 +193,7 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
     queryClient.invalidateQueries({ queryKey: ['rpa-clients-active-simple'] })
     setValue('rpa_id', data.id, { shouldValidate: true })
     setShowQuickAddRPA(false)
-    setNewRPA({ rpa_name: '', phone: '', payment_terms: 'cash' })
+    setNewRPA({ rpa_name: '', phone: '', payment_terms: 'cash', province: '' })
     toast.success(`✅ RPA ${data.rpa_name} ditambahkan!`)
   }
 
@@ -411,19 +414,63 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
             </p>
             
             {/* Nama RPA */}
-            <div>
-              <label htmlFor="new_rpa_name" style={{ fontSize: '11px', color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', marginBottom: 6 }}>
-                Nama RPA / Pembeli *
-              </label>
-              <Input
-                id="new_rpa_name"
-                name="new_rpa_name"
-                placeholder="RPA Prima Jaya"
-                value={newRPA.rpa_name}
-                onChange={e => setNewRPA(p => ({ ...p, rpa_name: e.target.value }))}
-                className="h-10 bg-black/20"
-                autoFocus
-              />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label htmlFor="new_rpa_name" style={{ fontSize: '11px', color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', marginBottom: 6 }}>
+                  Nama RPA / Pembeli *
+                </label>
+                <Input
+                  id="new_rpa_name"
+                  name="new_rpa_name"
+                  placeholder="RPA Prima Jaya"
+                  value={newRPA.rpa_name}
+                  onChange={e => setNewRPA(p => ({ ...p, rpa_name: e.target.value }))}
+                  className="h-10 bg-black/20"
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '11px', color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', marginBottom: 6 }}>
+                  Provinsi *
+                </label>
+                <Popover open={provinceOpen} onOpenChange={setProvinceOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="flex h-10 w-full items-center justify-between rounded-md border border-white/10 bg-black/20 px-3 py-2 text-[11px] font-bold text-[#F1F5F9] transition-colors hover:bg-black/30"
+                    >
+                      <span className="truncate">{newRPA.province || 'Pilih Provinsi'}</span>
+                      <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 bg-[#111C24] border-white/10 shadow-2xl" align="start">
+                    <Command className="bg-transparent">
+                      <CommandInput placeholder="Cari provinsi..." className="h-9 text-xs" />
+                      <CommandList>
+                        <CommandEmpty className="py-2 text-center text-[10px] text-[#4B6478] font-bold uppercase">Tidak ditemukan</CommandEmpty>
+                        <CommandGroup className="max-h-[250px] overflow-y-auto overflow-x-hidden">
+                          {PROVINCES.map((p) => (
+                            <CommandItem
+                              key={p}
+                              value={p}
+                              onSelect={() => {
+                                setNewRPA(prev => ({ ...prev, province: p }))
+                                setProvinceOpen(false)
+                              }}
+                              className="text-[11px] font-bold uppercase tracking-wider py-2 group cursor-pointer"
+                            >
+                              <Check
+                                className={`mr-2 h-3 w-3 text-emerald-500 ${newRPA.province === p ? 'opacity-100' : 'opacity-0'}`}
+                              />
+                              <span className={newRPA.province === p ? 'text-emerald-400' : 'text-[#F1F5F9]'}>{p}</span>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
             
             {/* HP + Payment Terms */}

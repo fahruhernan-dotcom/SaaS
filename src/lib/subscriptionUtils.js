@@ -18,36 +18,45 @@ export function getSubscriptionStatus(tenant) {
 
   const now = new Date()
   const plan = tenant.plan || 'starter'
-
-  if (plan === 'starter') {
-    const trialEnd = tenant.trial_ends_at ? new Date(tenant.trial_ends_at) : null
-    if (!trialEnd || trialEnd <= now) {
-      return { status: 'expired', label: 'Trial Berakhir', daysLeft: 0, plan, expiresAt: trialEnd }
-    }
+  
+  // 1. Check for Active Trial (Any plan can have a trial)
+  const trialEnd = tenant.trial_ends_at ? new Date(tenant.trial_ends_at) : null
+  if (trialEnd && trialEnd > now) {
     const daysLeft = Math.ceil((trialEnd - now) / 86400000)
     return {
       status: 'trial',
-      label: 'Trial',
+      label: 'Trial ' + (plan.charAt(0).toUpperCase() + plan.slice(1)),
       daysLeft,
       expiresAt: trialEnd,
-      isExpiringSoon: daysLeft <= 7,
+      isExpiringSoon: daysLeft <= 3,
       plan,
     }
   }
 
-  // pro / business
-  const planExp = tenant.plan_expires_at ? new Date(tenant.plan_expires_at) : null
-  if (!planExp || planExp <= now) {
-    return { status: 'expired', label: 'Expired', daysLeft: 0, plan, expiresAt: planExp }
+  // 2. Check for Paid Plan (Pro/Business)
+  if (plan !== 'starter') {
+    const planExp = tenant.plan_expires_at ? new Date(tenant.plan_expires_at) : null
+    if (planExp && planExp > now) {
+      const daysLeft = Math.ceil((planExp - now) / 86400000)
+      return {
+        status: 'active',
+        label: plan === 'pro' ? 'Pro' : 'Business',
+        daysLeft,
+        expiresAt: planExp,
+        isExpiringSoon: daysLeft <= 14,
+        plan,
+      }
+    }
   }
-  const daysLeft = Math.ceil((planExp - now) / 86400000)
-  return {
-    status: 'active',
-    label: plan === 'pro' ? 'Pro' : 'Business',
-    daysLeft,
-    expiresAt: planExp,
-    isExpiringSoon: daysLeft <= 14,
-    plan,
+
+  // 3. Fallback to Expired
+  const lastExpiry = (plan !== 'starter' ? tenant.plan_expires_at : tenant.trial_ends_at) || tenant.created_at
+  return { 
+    status: 'expired', 
+    label: plan === 'starter' ? 'Trial Berakhir' : 'Plan Berakhir', 
+    daysLeft: 0, 
+    plan, 
+    expiresAt: new Date(lastExpiry) 
   }
 }
 

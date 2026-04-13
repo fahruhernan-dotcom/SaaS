@@ -358,11 +358,11 @@ export default function AdminLayout({ children }) {
         return (
             <div className="min-h-screen bg-[#06090F]">
                 <AdminSidebar />
-                <main className="pt-[calc(4.5rem+env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))] overflow-x-hidden">
-                <div className="max-w-[1440px] mx-auto px-4 lg:px-8">
-                    <Outlet />
-                </div>
-            </main>
+                <main className="lg:pl-[240px] pt-[calc(4.5rem+env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))] overflow-x-hidden">
+                    <div className="max-w-[1440px] mx-auto px-4 lg:px-8">
+                        {children || <Outlet />}
+                    </div>
+                </main>
             </div>
         )
     }
@@ -371,7 +371,7 @@ export default function AdminLayout({ children }) {
         <div className="bg-[#06090F] min-h-screen max-w-[480px] mx-auto shadow-2xl relative">
             <AdminTopBar onOpenMenu={() => setMenuOpen(true)} />
             <main className="pt-14 pb-20 overflow-x-hidden">
-                <Outlet />
+                {children || <Outlet />}
             </main>
             <AdminBottomNav onOpenMenu={() => setMenuOpen(true)} />
             <AdminMenuHub isOpen={menuOpen} onClose={() => setMenuOpen(false)} />

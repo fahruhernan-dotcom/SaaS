@@ -47,7 +47,7 @@ export function DatePicker({ id, value, onChange, placeholder, className, allowC
           </div>
         )}
       </div>
-      <PopoverContent align="start" className="w-auto p-0 border-none bg-transparent shadow-none">
+      <PopoverContent align="start" sideOffset={4} collisionPadding={16} className="w-auto p-0 border-none bg-transparent shadow-none">
         <Calendar
           mode="single"
           selected={dateValue}

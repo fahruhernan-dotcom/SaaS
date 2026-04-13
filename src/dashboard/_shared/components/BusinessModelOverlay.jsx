@@ -1,14 +1,19 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Lock, ArrowLeft } from 'lucide-react'
+import { Check, Lock, ArrowLeft, Building2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { BUSINESS_MODELS, BUSINESS_CATEGORIES } from '@/lib/businessModel'
+import { toTitleCase } from '@/lib/format'
 
 export default function BusinessModelOverlay({ profile, onComplete }) {
   const [step, setStep] = useState(1)
   const [category, setCategory] = useState(null)
   const [selected, setSelected] = useState(null)
+  const [businessName, setBusinessName] = useState('')
+  const [nameChecking, setNameChecking] = useState(false)
+  const [nameTaken, setNameTaken] = useState(false)
   const [loading, setLoading] = useState(false)
+  const debounceRef = useRef(null)
 
   // Memoize sub-roles based on category for performance
   const subRoles = useMemo(() => {
@@ -19,10 +24,48 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
   if (!profile) return null
   if (profile.business_model_selected) return null
 
+  // Reset name check state when name changes
+  const handleNameChange = (val) => {
+    setBusinessName(val)
+    setNameTaken(false)
+    setNameChecking(val.trim().length >= 3)
+
+    // Debounce uniqueness check: 600ms after user stops typing
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (val.trim().length < 3) { setNameChecking(false); return }
+
+    debounceRef.current = setTimeout(async () => {
+      const formatted = toTitleCase(val.trim())
+      const { data } = await supabase
+        .from('tenants')
+        .select('id')
+        .ilike('business_name', formatted)
+        .neq('id', profile.tenant_id || '') // exclude own tenant
+        .limit(1)
+      setNameChecking(false)
+      setNameTaken(data && data.length > 0)
+    }, 600)
+  }
+
   const handleConfirm = async () => {
-    if (!selected) return
+    if (!selected || !businessName.trim() || businessName.trim().length < 3) return
+    if (nameTaken || nameChecking) return
     const model = BUSINESS_MODELS[selected]
     if (!model) return
+
+    const formattedName = toTitleCase(businessName.trim())
+
+    // Final server-side uniqueness check before saving
+    const { data: existing } = await supabase
+      .from('tenants')
+      .select('id')
+      .ilike('business_name', formattedName)
+      .neq('id', profile.tenant_id || '')
+      .limit(1)
+    if (existing && existing.length > 0) {
+      setNameTaken(true)
+      return
+    }
 
     setLoading(true)
     try {
@@ -42,7 +85,8 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
           .from('tenants')
           .update({ 
             sub_type: model.sub_type,
-            business_vertical: model.key
+            business_vertical: model.key,
+            business_name: formattedName,
           })
           .eq('id', profile.tenant_id)
       }
@@ -62,10 +106,19 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
     setStep(2)
   }
 
+  const handleSubRoleSelect = (key) => {
+    setSelected(key)
+    setStep(3)
+  }
+
   const handleBack = () => {
-    setStep(1)
-    setCategory(null)
-    setSelected(null)
+    if (step === 3) {
+      setStep(2)
+    } else {
+      setStep(1)
+      setCategory(null)
+      setSelected(null)
+    }
   }
 
   return (
@@ -103,7 +156,6 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
           background: 'linear-gradient(90deg, transparent, rgba(16,185,129,0.5), transparent)'
         }} />
 
-        {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '14px' }}>
             <img src="/logo.png" alt="TernakOS" style={{ width: 30, height: 30, borderRadius: '8px', objectFit: 'cover' }} />
@@ -111,7 +163,7 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '14px' }}>
-            {[1, 2].map((s) => (
+            {[1, 2, 3].map((s) => (
               <div key={s} style={{
                 height: '4px',
                 width: step >= s ? '28px' : '16px',
@@ -132,13 +184,22 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
                   Pilih kategori bisnis kamu.
                 </p>
               </motion.div>
-            ) : (
+            ) : step === 2 ? (
               <motion.div key="s2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
                 <h2 style={{ fontFamily: 'Sora', fontSize: '19px', fontWeight: 800, color: '#F1F5F9', marginBottom: '6px' }}>
                   Pilih jenis bisnismu
                 </h2>
                 <p style={{ fontSize: '13px', color: '#4B6478', lineHeight: 1.5 }}>
                   Lebih spesifik agar dashboard sesuai kebutuhanmu.
+                </p>
+              </motion.div>
+            ) : (
+              <motion.div key="s3" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
+                <h2 style={{ fontFamily: 'Sora', fontSize: '19px', fontWeight: 800, color: '#F1F5F9', marginBottom: '6px' }}>
+                  Nama bisnis kamu apa?
+                </h2>
+                <p style={{ fontSize: '13px', color: '#4B6478', lineHeight: 1.5 }}>
+                  Nama ini akan tampil di seluruh laporan dan invoice.
                 </p>
               </motion.div>
             )}
@@ -158,7 +219,7 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
                 <CategoryCard key={cat.key} cat={cat} onClick={() => handleCategorySelect(cat.key)} />
               ))}
             </motion.div>
-          ) : (
+          ) : step === 2 ? (
             <motion.div
               key="step2"
               initial={{ opacity: 0, x: 20 }}
@@ -177,40 +238,134 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
                       comingSoon: model.comingSoon
                     }}
                     selected={selected === model.key}
-                    onClick={() => !model.comingSoon && setSelected(model.key)}
+                    onClick={() => !model.comingSoon && handleSubRoleSelect(model.key)}
                   />
                 ))}
               </div>
 
-              <AnimatePresence>
-                {selected && (
-                  <motion.button
-                    initial={{ y: 16, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 8, opacity: 0 }}
-                    onClick={handleConfirm}
-                    disabled={loading}
-                    whileTap={{ scale: 0.97 }}
-                    style={{
-                      width: '100%',
-                      padding: '15px',
-                      background: '#10B981',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '12px',
-                      fontFamily: 'Sora',
-                      fontSize: '15px',
-                      fontWeight: 700,
-                      boxShadow: '0 4px 20px rgba(16,185,129,0.25)',
-                      marginTop: '16px',
-                      cursor: loading ? 'not-allowed' : 'pointer',
-                      opacity: loading ? 0.7 : 1,
-                    }}
-                  >
-                    {loading ? 'Menyiapkan dashboard...' : 'Mulai Sekarang →'}
-                  </motion.button>
+              <button
+                onClick={handleBack}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  width: '100%',
+                  marginTop: '12px',
+                  padding: '10px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#4B6478',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  fontFamily: 'DM Sans',
+                }}
+              >
+                <ArrowLeft size={14} />
+                Kembali
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="step3"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+            >
+              {/* Business Name Input */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  background: 'rgba(16,185,129,0.06)',
+                  border: '1px solid rgba(16,185,129,0.15)',
+                  borderRadius: '12px',
+                  padding: '12px 14px',
+                  marginBottom: '14px',
+                }}>
+                  <Building2 size={16} color="#10B981" />
+                  <span style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#4B6478', lineHeight: 1.5 }}>
+                    Nama ini akan tampil di sidebar, invoice, dan laporan bisnismu.
+                  </span>
+                </div>
+
+                <input
+                  type="text"
+                  value={businessName}
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  onBlur={(e) => handleNameChange(toTitleCase(e.target.value))}
+                  placeholder="Contoh: Poultry Farm Jaya"
+                  maxLength={80}
+                  autoFocus
+                  style={{
+                    width: '100%',
+                    padding: '14px 16px',
+                    background: '#111C24',
+                    border: nameTaken
+                      ? '1px solid rgba(248,113,113,0.5)'
+                      : businessName.trim().length >= 3 && !nameChecking
+                        ? '1px solid rgba(16,185,129,0.4)'
+                        : '1px solid rgba(255,255,255,0.09)',
+                    borderRadius: '12px',
+                    color: '#F1F5F9',
+                    fontFamily: 'Sora',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    transition: 'border-color 0.2s ease',
+                  }}
+                />
+
+                {/* Status messages */}
+                {businessName.trim().length > 0 && businessName.trim().length < 3 && (
+                  <p style={{ fontSize: '12px', color: '#F87171', marginTop: '6px', marginLeft: '4px' }}>
+                    Nama bisnis minimal 3 karakter
+                  </p>
                 )}
-              </AnimatePresence>
+                {businessName.trim().length >= 3 && nameChecking && (
+                  <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '6px', marginLeft: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ display: 'inline-block', width: '10px', height: '10px', border: '2px solid #94A3B8', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                    Mengecek ketersediaan nama...
+                  </p>
+                )}
+                {businessName.trim().length >= 3 && !nameChecking && nameTaken && (
+                  <p style={{ fontSize: '12px', color: '#F87171', marginTop: '6px', marginLeft: '4px' }}>
+                    ❌ Nama "<strong>{toTitleCase(businessName)}</strong>" sudah dipakai bisnis lain. Coba nama yang berbeda.
+                  </p>
+                )}
+                {businessName.trim().length >= 3 && !nameChecking && !nameTaken && (
+                  <p style={{ fontSize: '12px', color: '#10B981', marginTop: '6px', marginLeft: '4px' }}>
+                    ✅ Akan disimpan sebagai: <strong>{toTitleCase(businessName)}</strong>
+                  </p>
+                )}
+              </div>
+
+              <motion.button
+                onClick={handleConfirm}
+                disabled={loading || businessName.trim().length < 3 || nameTaken || nameChecking}
+                whileTap={{ scale: 0.97 }}
+                style={{
+                  width: '100%',
+                  padding: '15px',
+                  background: (businessName.trim().length >= 3 && !nameTaken && !nameChecking)
+                    ? '#10B981'
+                    : 'rgba(16,185,129,0.3)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontFamily: 'Sora',
+                  fontSize: '15px',
+                  fontWeight: 700,
+                  boxShadow: businessName.trim().length >= 3 ? '0 4px 20px rgba(16,185,129,0.25)' : 'none',
+                  cursor: loading || businessName.trim().length < 3 ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.7 : 1,
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {loading ? 'Menyiapkan dashboard...' : 'Mulai Sekarang →'}
+              </motion.button>
 
               <button
                 onClick={handleBack}
