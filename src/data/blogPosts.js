@@ -30,7 +30,7 @@ export const blogPosts = [
     publishedAt: '2026-04-13',
     readTime: 7,
     excerpt: 'FCR (Feed Conversion Ratio) adalah angka paling penting yang harus dipantau setiap peternak broiler. Artikel ini menjelaskan rumus, standar ideal, dan cara praktis menurunkan FCR kandang Anda.',
-    image: '/blog-fcr-ayam-broiler.png',
+    image: '/blog-fcr-ayam-broiler.jpg',
     relatedSlugs: ['cara-hitung-indeks-performa-ayam-broiler', 'cara-hitung-keuntungan-peternak-ayam-broiler'],
     content: `
 <h2>Apa Itu FCR dan Kenapa Sangat Penting?</h2>
@@ -118,7 +118,7 @@ export const blogPosts = [
     publishedAt: '2026-04-13',
     readTime: 6,
     excerpt: 'Indeks Performa (IP) adalah satu angka yang merangkum seluruh performa kandang broiler Anda: bobot, kecepatan tumbuh, mortalitas, dan FCR. Pelajari cara menghitung dan meningkatkannya.',
-    image: '/blog-indeks-performa-ayam.png',
+    image: '/blog-indeks-performa-ayam.jpg',
     relatedSlugs: ['cara-hitung-fcr-ayam-broiler', 'cara-mengurangi-angka-kematian-ayam-broiler'],
     content: `
 <h2>Apa Itu Indeks Performa (IP) Ayam Broiler?</h2>
@@ -200,7 +200,7 @@ export const blogPosts = [
     publishedAt: '2026-04-13',
     readTime: 8,
     excerpt: 'Angka kematian ayam broiler yang tinggi bukan hanya masalah kemanusiaan — ini langsung menghantam profitabilitas kandang. Artikel ini membahas 7 langkah konkret yang bisa diterapkan hari ini.',
-    image: null,
+    image: '/blog-mortality-ayam-broiler.jpg',
     relatedSlugs: ['cara-hitung-indeks-performa-ayam-broiler', 'tips-manajemen-kandang-ayam-broiler-pemula'],
     content: `
 <h2>Berapa Angka Mortality Normal Ayam Broiler?</h2>
@@ -274,7 +274,7 @@ export const blogPosts = [
     publishedAt: '2026-04-12',
     readTime: 9,
     excerpt: 'Baru memulai usaha ternak ayam broiler? Panduan ini memandu Anda langkah demi langkah — dari persiapan kandang sebelum DOC masuk hingga pencatatan harian yang wajib dilakukan setiap hari.',
-    image: null,
+    image: '/blog-manajemen-kandang-pemula.jpg',
     relatedSlugs: ['cara-hitung-fcr-ayam-broiler', 'cara-mengurangi-angka-kematian-ayam-broiler'],
     content: `
 <h2>Mengapa Manajemen Kandang Itu Segalanya?</h2>
@@ -360,7 +360,7 @@ export const blogPosts = [
     publishedAt: '2026-04-11',
     readTime: 8,
     excerpt: 'Banyak peternak tidak tahu apakah kandangnya benar-benar untung atau rugi per siklus. Artikel ini membahas seluruh komponen biaya, cara hitung pendapatan, dan rumus profit bersih dengan contoh nyata.',
-    image: null,
+    image: '/blog-hitung-keuntungan-peternak.png',
     relatedSlugs: ['cara-hitung-fcr-ayam-broiler', 'cara-hitung-indeks-performa-ayam-broiler'],
     content: `
 <h2>Kenapa Banyak Peternak Tidak Tahu Untung atau Rugi?</h2>
