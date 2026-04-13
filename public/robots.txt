@@ -1,3 +1,23 @@
 User-agent: *
 Allow: /
+Allow: /harga-pasar
+Allow: /tentang-kami
+Allow: /fitur
+Allow: /harga
+Allow: /market
+
+# Disallow auth and dashboard routes for better SEO hygiene
+Disallow: /login
+Disallow: /register
+Disallow: /auth/
+Disallow: /onboarding
+Disallow: /check-email
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /invite
+Disallow: /broker/
+Disallow: /peternak/
+Disallow: /rumah_potong/
+Disallow: /admin/
+
 Sitemap: https://ternakos.my.id/sitemap.xml
