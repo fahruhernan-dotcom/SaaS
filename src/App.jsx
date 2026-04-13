@@ -40,6 +40,7 @@ import OnboardingFlow from './dashboard/_shared/pages/OnboardingFlow';
 import UpgradePlan from './dashboard/_shared/pages/UpgradePlan';
 import Market from './dashboard/_shared/pages/Market';
 import MarketPublic from './pages/MarketPublic';
+import HubungiKami from './pages/HubungiKami';
 
 // Components
 import ErrorBoundary from './components/ErrorBoundary';
@@ -248,6 +249,7 @@ function App() {
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/tentang-kami" element={<AboutUs />} />
+        <Route path="/hubungi-kami" element={<HubungiKami />} />
         <Route path="/fitur" element={<FiturPage />} />
         <Route path="/harga" element={<HargaPage />} />
         <Route path="/market" element={<MarketPublic />} />

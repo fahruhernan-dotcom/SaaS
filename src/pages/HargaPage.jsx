@@ -10,7 +10,7 @@ import Particles from '../components/reactbits/Particles'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-const WA_URL = 'https://wa.me/6281234567890' // ganti dengan nomor asli
+import { WA_URL } from '@/lib/constants/contact'
 
 const ROLES = [
   { id: 'broker',   label: 'Broker',   emoji: '🐔' },

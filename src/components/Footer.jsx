@@ -1,6 +1,8 @@
 import React from 'react';
 import { Instagram, Smartphone, Disc as TiktokIcon } from 'lucide-react';
 
+import { WA_URL } from '@/lib/constants/contact';
+
 const Footer = () => {
   return (
     <footer className="bg-[#030508] relative overflow-hidden" style={{ padding: '40px clamp(20px, 5vw, 80px) 32px' }}>
@@ -47,8 +49,7 @@ const Footer = () => {
                 { name: 'Harga', href: '/harga' },
                 { name: 'Harga Pasar', href: '/harga-pasar' },
                 { name: 'FAQ', href: '/faq' },
-                { name: 'Panduan', href: '#' },
-                { name: 'Studi Kasus', href: '#' }
+                { name: 'Blog', href: '/blog' }
               ].map((link, i) => (
                 <li key={i}>
                   <a href={link.href} className="font-body text-[13px] text-tx-3 hover:text-tx-1 block transition-colors duration-150">
@@ -63,10 +64,14 @@ const Footer = () => {
           <div>
             <h4 className="font-body text-[11px] font-bold tracking-wide text-tx-1 mb-[12px]">PERUSAHAAN</h4>
             <ul className="space-y-[6px]">
-              {['Tentang Kami', 'Karir', 'Blog', 'Hubungi Kami'].map((link, i) => (
+              {[
+                { name: 'Tentang Kami', href: '/tentang-kami' },
+                { name: 'Hubungi Kami', href: '/hubungi-kami' },
+                { name: 'Karir', href: '#' }
+              ].map((link, i) => (
                 <li key={i}>
-                  <a href={link === 'Tentang Kami' ? '/tentang-kami' : '#'} className="font-body text-[13px] text-tx-3 hover:text-tx-1 block transition-colors duration-150">
-                    {link}
+                  <a href={link.href} className="font-body text-[13px] text-tx-3 hover:text-tx-1 block transition-colors duration-150">
+                    {link.name}
                   </a>
                 </li>
               ))}
@@ -93,10 +98,19 @@ const Footer = () => {
           <div>
             <h4 className="font-body text-[10px] font-bold tracking-wide text-tx-1 mb-[12px]">SUPPORT</h4>
             <ul className="space-y-[6px]">
-              {['Pusat Bantuan', 'WhatsApp Admin', 'Status Sistem'].map((link, i) => (
+              {[
+                { name: 'WhatsApp Admin', href: WA_URL },
+                { name: 'Pusat Bantuan', href: '#' },
+                { name: 'Status Sistem', href: '#' }
+              ].map((link, i) => (
                 <li key={i}>
-                  <a href="#" className="font-body text-[12px] text-tx-3 hover:text-tx-1 block transition-colors duration-150">
-                    {link}
+                  <a 
+                    href={link.href} 
+                    target={link.name === 'WhatsApp Admin' ? '_blank' : undefined}
+                    rel={link.name === 'WhatsApp Admin' ? 'noopener noreferrer' : undefined}
+                    className="font-body text-[12px] text-tx-3 hover:text-tx-1 block transition-colors duration-150"
+                  >
+                    {link.name}
                   </a>
                 </li>
               ))}
