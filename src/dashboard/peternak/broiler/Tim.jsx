@@ -29,7 +29,6 @@ export default function Tim() {
         .from('profiles')
         .select('id, full_name, email, role, created_at')
         .eq('tenant_id', profile.tenant_id)
-        .neq('role', 'superadmin')
         .order('created_at', { ascending: true })
       if (error) throw error
       return data ?? []

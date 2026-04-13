@@ -103,6 +103,7 @@ export const PETERNAK_ROLE_BADGE = {
   manajer:   { label: 'Manajer',    cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20'         },
   staff:     { label: 'Pekerja',    cls: 'bg-violet-500/10 text-violet-400 border-violet-500/20'   },
   view_only: { label: 'Lihat Saja', cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20'      },
+  superadmin: { label: 'Platform Admin', cls: 'bg-amber-500/10 text-amber-500 border-amber-500/20 font-black' },
 }
 
 /** Role options shown in invite sheet (peternak context) */
