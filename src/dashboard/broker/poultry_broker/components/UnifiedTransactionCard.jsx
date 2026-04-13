@@ -12,15 +12,21 @@ import { BrokerBaseCard } from '@/dashboard/_shared/components/transactions/Brok
 /**
  * getDeliveryBadge - Specific to Poultry Broker delivery statuses.
  */
-function getDeliveryBadge(delivery) {
+function getDeliveryBadge(delivery, now = new Date()) {
   if (!delivery) return { label: 'Siap Kirim', color: '#94A3B8', bg: 'rgba(148,163,184,0.08)', border: 'rgba(148,163,184,0.15)', icon: '📦' }
   
-  // Logic Fix: If status is on_route but load_time is in the future, downgrade label to Persiapan
   let currentStatus = delivery.status
-  if (currentStatus === 'on_route' && delivery.load_time) {
-    const now = new Date()
-    const loadTime = parseISO(delivery.load_time)
-    if (isAfter(loadTime, now)) {
+  
+  // Auto-upgrade logic for in-progress statuses based on actual time
+  if (currentStatus !== 'arrived' && currentStatus !== 'completed') {
+    const loadTime = delivery.load_time ? new Date(delivery.load_time) : null
+    const departTime = delivery.departure_time ? new Date(delivery.departure_time) : null
+
+    if (departTime && now >= departTime) {
+      currentStatus = 'on_route'
+    } else if (loadTime && now >= loadTime) {
+      currentStatus = 'loading'
+    } else {
       currentStatus = 'preparing'
     }
   }
@@ -67,6 +73,13 @@ function getDeliveryBadge(delivery) {
 }
 
 export function UnifiedTransactionCard({ sale, onOpenAuditSheet, onPay, isOwner, isDesktop }) {
+  // Force re-render every 30 minutes to update time-based status badges
+  const [now, setNow] = React.useState(new Date())
+  React.useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1800000)
+    return () => clearInterval(timer)
+  }, [])
+
   // Calculations
   const totalRevenue = Number(sale.total_revenue || 0)
   const totalModal = Number(sale.purchases?.total_cost || 0)
@@ -88,7 +101,7 @@ export function UnifiedTransactionCard({ sale, onOpenAuditSheet, onPay, isOwner,
   const farmName = sale.purchases?.farms?.farm_name || 'Kandang'
   const initialRpa = rpaName.charAt(0).toUpperCase()
 
-  const deliveryBadge = getDeliveryBadge(delivery)
+  const deliveryBadge = getDeliveryBadge(delivery, now)
 
   // ── DESKTOP header (unchanged) ──
   const desktopHeader = (
@@ -205,7 +218,7 @@ export function UnifiedTransactionCard({ sale, onOpenAuditSheet, onPay, isOwner,
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <p className="text-[10px] uppercase font-bold text-[#F87171] tracking-widest leading-none">SISA HUTANG</p>
-              {onPay && (
+              {onPay && (delivery?.status === 'arrived' || delivery?.status === 'completed') && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation()

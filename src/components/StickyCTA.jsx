@@ -37,13 +37,13 @@ const StickyCTA = () => {
             
             <div className="flex flex-1 items-center gap-1.5 md:gap-2">
               <a 
-                href="#daftar" 
+                href="/register" 
                 className="flex-[1.5] text-center py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-display font-black text-[10px] md:text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 whitespace-nowrap px-2"
               >
                 Coba Gratis
               </a>
               <a 
-                href="#harga" 
+                href="/harga" 
                 className="flex-1 text-center py-3.5 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-display font-black text-[10px] md:text-xs uppercase tracking-widest rounded-xl transition-all active:scale-95 whitespace-nowrap px-2"
               >
                 Harga

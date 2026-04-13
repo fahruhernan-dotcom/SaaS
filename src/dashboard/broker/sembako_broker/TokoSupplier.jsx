@@ -39,6 +39,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Input } from '@/components/ui/input'
+import { PhoneInput } from '@/components/ui/PhoneInput'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -438,7 +439,7 @@ function TokoActions({ compact = false }) {
             </Field>
 
             <Field label="No. HP">
-              <Input
+              <PhoneInput
                 className="h-12 rounded-xl border-[#EA580C]/10 bg-[#231A0E] font-bold text-[#FEF3C7] placeholder:text-[#92400E]"
                 value={form.phone}
                 onChange={(event) => setForm({ ...form, phone: event.target.value })}
@@ -569,7 +570,7 @@ function SupplierActions({ compact = false }) {
             </Field>
 
             <Field label="No. HP">
-              <Input
+              <PhoneInput
                 className="h-12 rounded-xl border-[#F59E0B]/10 bg-[#231A0E] font-bold text-[#FEF3C7] placeholder:text-[#92400E]"
                 value={form.phone}
                 onChange={(event) => setForm({ ...form, phone: event.target.value })}

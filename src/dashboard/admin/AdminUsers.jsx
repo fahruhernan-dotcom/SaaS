@@ -5,11 +5,12 @@ import {
   MoreVertical, Edit3, Trash2, CheckCircle2,
   XCircle, AlertCircle, Clock, Check, ChevronRight,
   ArrowRight, Sparkles, User as UserIcon, Calendar,
-  Bird, Egg, Home, Activity, User
+  Bird, Egg, Home, Activity, Factory
 } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import { useAllTenants, useAdminUpdateTenant, useAllUsers } from '@/lib/hooks/useAdminData'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -34,6 +35,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { toast } from 'sonner'
 
 export default function AdminUsers() {
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const { data: tenants, isLoading } = useAllTenants()
   const updateTenant = useAdminUpdateTenant()
 
@@ -150,15 +152,15 @@ export default function AdminUsers() {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-5 p-4 lg:p-0 lg:space-y-6"
+      className="space-y-3 p-4 lg:p-0 lg:space-y-6 overflow-x-hidden"
     >
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-14 lg:top-0 z-20 bg-[#080C10]/80 backdrop-blur-md py-2 -mx-2 px-2 rounded-xl">
+      {/* Header — Hidden on mobile as it's in TopBar */}
+      <div className="hidden lg:flex items-center justify-between py-4">
         <div>
           <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight">
             Users & Tenant Management
           </h1>
-          <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mt-1">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">
             Kelola akses dan paket langganan seluruh bisnis
           </p>
         </div>
@@ -169,55 +171,55 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      {/* Stats Bar */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Tenant" value={stats.totalTenants} icon={Building2} color="emerald" />
-        <StatCard label="Total User" value={stats.totalUsers} icon={Users} color="blue" />
-        <StatCard label="Active Pro" value={stats.activePro} icon={Shield} color="amber" />
-        <StatCard label="Active Business" value={stats.activeBusiness} icon={Sparkles} color="purple" />
+      {/* Stats Bar — High density on mobile */}
+      <div className="grid grid-cols-4 lg:grid-cols-4 gap-2 lg:gap-4">
+        <StatCard label={isDesktop ? "Total Tenant" : "Tenant"} value={stats.totalTenants} icon={Building2} color="emerald" compact={!isDesktop} />
+        <StatCard label={isDesktop ? "Total User" : "User"} value={stats.totalUsers} icon={Users} color="blue" compact={!isDesktop} />
+        <StatCard label={isDesktop ? "Active Pro" : "Pro"} value={stats.activePro} icon={Shield} color="amber" compact={!isDesktop} />
+        <StatCard label={isDesktop ? "Active Business" : "Biz"} value={stats.activeBusiness} icon={Sparkles} color="purple" compact={!isDesktop} />
       </div>
 
       {/* View Switcher, Filter & Search */}
-      <div className="flex flex-col lg:flex-row items-center justify-between gap-4 bg-[#111C24] p-4 rounded-2xl border border-white/8">
-        <div className="flex flex-col md:flex-row gap-4 w-full lg:w-auto">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-[#111C24] p-3 lg:p-4 rounded-2xl border border-white/8 shadow-lg">
+        <div className="flex flex-col md:flex-row gap-3 w-full lg:w-auto">
           <Tabs value={viewMode} onValueChange={setViewMode} className="w-full md:w-auto">
-            <TabsList className="bg-[#0A0F14] border border-white/5 p-1 h-12 rounded-2xl shadow-inner shadow-black/50">
+            <TabsList className="bg-black/40 border border-white/5 p-1 h-10 lg:h-12 rounded-xl lg:rounded-2xl">
               <TabsTrigger
                 value="tenants"
-                className="rounded-xl px-6 text-[11px] font-black uppercase tracking-[0.15em] data-[state=active]:bg-emerald-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/20 transition-all duration-300"
+                className="rounded-lg lg:rounded-xl px-4 lg:px-6 text-[9px] lg:text-[11px] font-black uppercase tracking-widest data-[state=active]:bg-emerald-500 data-[state=active]:text-white shadow-emerald-500/10"
               >
-                <Building2 size={13} className="mr-2" />
-                Daftar Tenant
+                Tenant
               </TabsTrigger>
               <TabsTrigger
                 value="users"
-                className="rounded-xl px-6 text-[11px] font-black uppercase tracking-[0.15em] data-[state=active]:bg-blue-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-blue-500/20 transition-all duration-300"
+                className="rounded-lg lg:rounded-xl px-4 lg:px-6 text-[9px] lg:text-[11px] font-black uppercase tracking-widest data-[state=active]:bg-blue-500 data-[state=active]:text-white shadow-blue-500/10"
               >
-                <Users size={13} className="mr-2" />
-                Daftar User
+                User
               </TabsTrigger>
             </TabsList>
           </Tabs>
 
           {viewMode === 'tenants' && (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
-              <TabsList className="bg-white/[0.03] border border-white/5 p-1 h-10 rounded-xl space-x-1">
-                {['Semua', 'Starter', 'Pro', 'Business', 'Trial'].map(tab => (
-                  <TabsTrigger
-                    key={tab}
-                    value={tab}
-                    className="rounded-lg px-3 text-[10px] font-bold uppercase tracking-wider data-[state=active]:bg-white/10 data-[state=active]:text-emerald-400 transition-all"
-                  >
-                    {tab}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
+            <div className="overflow-x-auto no-scrollbar -mx-1 px-1">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-fit">
+                <TabsList className="bg-white/[0.03] border border-white/5 p-1 h-9 rounded-xl space-x-1">
+                  {['Semua', 'Starter', 'Pro', 'Business', 'Trial'].map(tab => (
+                    <TabsTrigger
+                      key={tab}
+                      value={tab}
+                      className="rounded-lg px-3 text-[9px] font-bold uppercase tracking-wider data-[state=active]:bg-white/10 data-[state=active]:text-emerald-400"
+                    >
+                      {tab}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
           )}
         </div>
 
         <div className="relative w-full lg:w-72">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4B6478]" size={16} />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
           <Input
             id="search-user-tenant"
             name="search-user-tenant"
@@ -225,219 +227,198 @@ export default function AdminUsers() {
             placeholder={viewMode === 'tenants' ? "Cari nama bisnis..." : "Cari user atau bisnis..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-black/20 border-white/10 h-11 rounded-xl pl-11 text-sm focus:border-emerald-500/50 transition-all font-medium text-white"
+            className="bg-black/20 border-white/5 h-10 lg:h-11 rounded-xl pl-10 text-base lg:text-sm text-white focus:ring-1 focus:ring-emerald-500/30"
           />
         </div>
       </div>
 
       {viewMode === 'tenants' ? (
-        <div className="bg-[#0C1319] rounded-2xl border border-white/8 overflow-hidden shadow-xl">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-white/5 bg-white/[0.02]">
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">Bisnis</th>
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Plan</th>
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Sisa Waktu</th>
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Users</th>
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">Daftar</th>
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Status</th>
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTenants.map((t, i) => (
-                  <tr
-                    key={t.id}
-                    className={`border-b border-white/5 hover:bg-white/[0.03] transition-colors group ${i % 2 === 1 ? 'bg-white/[0.01]' : ''}`}
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-emerald-400">
-                          {renderVerticalIcon(t.business_vertical)}
-                        </div>
-                        <div>
-                          <p className="text-[14px] font-black text-white leading-tight mb-1">{t.business_name || '(Tanpa Nama)'}</p>
+        isDesktop ? (
+          <div className="bg-[#0C1319] rounded-2xl border border-white/8 overflow-hidden shadow-xl">
+             {/* Desktop Table Content */}
+             <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/5 bg-white/[0.02]">
+                      <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">Bisnis</th>
+                      <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Plan</th>
+                      <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Sisa Waktu</th>
+                      <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Users</th>
+                      <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">Daftar</th>
+                      <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Status</th>
+                      <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredTenants.map((t, i) => (
+                      <tr
+                        key={t.id}
+                        className={`border-b border-white/5 hover:bg-white/[0.03] transition-colors group ${i % 2 === 1 ? 'bg-white/[0.01]' : ''}`}
+                      >
+                        <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <span className="text-[9px] font-bold text-[#4B6478] uppercase tracking-[0.2em] border border-white/5 px-1.5 py-0.5 rounded bg-white/[0.02]">
-                              {(t.business_vertical || '').replace('_', ' ') || '-'}
-                            </span>
-                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/[0.03] border border-white/5">
-                              <User size={10} className="text-[#4B6478]" />
-                              <span className="text-[10px] font-medium text-slate-400">
-                                {t.profiles?.find(p => p.role === 'owner')?.full_name || 'Belum ada owner'}
-                              </span>
+                            <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-emerald-400">
+                              {renderVerticalIcon(t.business_vertical)}
+                            </div>
+                            <div>
+                              <p className="text-[14px] font-black text-white leading-tight mb-1">{t.business_name || '(Tanpa Nama)'}</p>
+                              <div className="flex items-center gap-3">
+                                <span className="text-[9px] font-bold text-[#4B6478] uppercase tracking-[0.2em] border border-white/5 px-1.5 py-0.5 rounded bg-white/[0.02]">
+                                  {(t.business_vertical || '').replace('_', ' ') || '-'}
+                                </span>
+                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/[0.03] border border-white/5">
+                                  <UserIcon size={10} className="text-[#4B6478]" />
+                                  <span className="text-[10px] font-medium text-slate-400">
+                                    {t.profiles?.find(p => p.role === 'owner')?.full_name || 'Belum ada owner'}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <PlanBadge plan={t.plan} />
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <TrialDisplay date={t.trial_ends_at} plan={t.plan} planExpiresAt={t.plan_expires_at} />
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className="text-[13px] font-bold text-white">{t.profiles?.length || 0}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-[12px] text-white font-medium">
-                        {t.created_at ? format(new Date(t.created_at), 'dd MMM yyyy') : '-'}
-                      </p>
-                      <p className="text-[10px] text-[#4B6478] font-medium mt-0.5">
-                        {t.created_at ? format(new Date(t.created_at), 'HH:mm') : '-'}
-                      </p>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex justify-center">
-                        <Switch
-                          id={`status-toggle-${t.id}`}
-                          name={`status-toggle-${t.id}`}
-                          aria-label={`Ubah status aktif untuk bisnis ${t.business_name || 'Tanpa Nama'}`}
-                          checked={t.is_active}
-                          onCheckedChange={(val) => handleUpdateStatus(t.id, val)}
-                          className="data-[state=checked]:bg-emerald-500"
-                        />
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleOpenDetail(t)}
-                        className="h-8 rounded-lg border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all text-[11px] font-bold uppercase tracking-wider px-3"
-                      >
-                        Detail
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-                {filteredTenants.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center">
-                      <div className="flex flex-col items-center gap-2 opacity-30">
-                        <Search size={32} />
-                        <p className="text-sm font-bold uppercase tracking-widest">Tidak ada tenant ditemukan</p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <PlanBadge plan={t.plan} />
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <TrialDisplay date={t.trial_ends_at} plan={t.plan} planExpiresAt={t.plan_expires_at} />
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="text-[13px] font-bold text-white">{t.profiles?.length || 0}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-[12px] text-white font-medium">
+                            {t.created_at ? format(new Date(t.created_at), 'dd MMM yyyy') : '-'}
+                          </p>
+                          <p className="text-[10px] text-[#4B6478] font-medium mt-0.5">
+                            {t.created_at ? format(new Date(t.created_at), 'HH:mm') : '-'}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex justify-center">
+                            <Switch
+                              id={`status-toggle-${t.id}`}
+                              name={`status-toggle-${t.id}`}
+                              checked={t.is_active}
+                              onCheckedChange={(val) => handleUpdateStatus(t.id, val)}
+                              className="data-[state=checked]:bg-emerald-500"
+                            />
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenDetail(t)}
+                            className="h-8 rounded-lg border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 transition-all text-[11px] font-bold uppercase tracking-wider px-3"
+                          >
+                            Detail
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+             </div>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 pb-8">
+            {filteredTenants.map(t => (
+              <TenantMobileCard
+                key={t.id}
+                tenant={t}
+                onDetail={handleOpenDetail}
+                onStatusChange={handleUpdateStatus}
+              />
+            ))}
+            {filteredTenants.length === 0 && (
+               <div className="py-12 text-center opacity-30">
+                 <Building2 size={32} className="mx-auto mb-2" />
+                 <p className="text-xs font-black uppercase tracking-widest text-[#4B6478]">Tidak ada tenant</p>
+               </div>
+            )}
+          </div>
+        )
       ) : (
-        <div className="bg-[#0C1319] rounded-2xl border border-white/8 overflow-hidden shadow-xl">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-white/5 bg-white/[0.02]">
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">User</th>
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">Role</th>
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">Bisnis / Tenant</th>
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Aktif</th>
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">Bergabung</th>
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {isUsersLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      <td colSpan={6} className="px-6 py-6 bg-white/[0.01]" />
+        isDesktop ? (
+          <div className="bg-[#0C1319] rounded-2xl border border-white/8 overflow-hidden shadow-xl">
+             <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/5 bg-white/[0.02]">
+                      <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">User</th>
+                      <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">Role</th>
+                      <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">Bisnis / Tenant</th>
+                      <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Aktif</th>
+                      <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">Bergabung</th>
+                      <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-right">Aksi</th>
                     </tr>
-                  ))
-                ) : groupedUsers.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center">
-                      <div className="flex flex-col items-center gap-2 opacity-30">
-                        <Users size={32} />
-                        <p className="text-sm font-bold uppercase tracking-widest">Tidak ada user ditemukan</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  groupedUsers.map((u, i) => (
-                    <tr
-                      key={u.id}
-                      className={`border-b border-white/5 hover:bg-white/[0.03] transition-colors group cursor-pointer ${i % 2 === 1 ? 'bg-white/[0.01]' : ''}`}
-                      onClick={() => {
-                        setSelectedUser(u)
-                        setIsUserSheetOpen(true)
-                      }}
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-4">
-                          <Avatar className="h-11 w-11 border border-white/10 ring-2 ring-transparent group-hover:ring-blue-500/20 transition-all shadow-xl">
-                            <AvatarImage src={u.avatar} />
-                            <AvatarFallback className="bg-[#1C2C38] text-blue-400 text-[12px] font-black uppercase">
-                              {u.name?.substring(0, 2) || '??'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="text-[15px] font-black text-white leading-tight tracking-tight">{u.name || '(Tanpa Nama)'}</p>
-                            <p className="text-[9px] font-bold text-[#4B6478] uppercase mt-1.5 tracking-[0.2em] opacity-80">
-                              UID: {u.id.substring(0, 8)}
-                            </p>
+                  </thead>
+                  <tbody>
+                    {isUsersLoading ? (
+                      Array.from({ length: 5 }).map((_, i) => (
+                        <tr key={i} className="animate-pulse"><td colSpan={6} className="px-6 py-6 bg-white/[0.01]" /></tr>
+                      ))
+                    ) : groupedUsers.map((u, i) => (
+                      <tr
+                        key={u.id}
+                        className={`border-b border-white/5 hover:bg-white/[0.03] transition-colors group cursor-pointer ${i % 2 === 1 ? 'bg-white/[0.01]' : ''}`}
+                        onClick={() => { setSelectedUser(u); setIsUserSheetOpen(true) }}
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-4">
+                            <Avatar className="h-10 w-10 border border-white/10 ring-2 ring-transparent group-hover:ring-blue-500/20 shadow-xl">
+                              <AvatarImage src={u.avatar} />
+                              <AvatarFallback className="bg-[#1C2C38] text-blue-400 text-[11px] font-black uppercase">{u.name?.substring(0, 2) || '??'}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                               <p className="text-[14px] font-black text-white leading-tight">{u.name || '(Tanpa Nama)'}</p>
+                               <p className="text-[9px] font-bold text-[#4B6478] uppercase mt-1 tracking-widest">UID: {u.id.substring(0, 8)}</p>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-wrap gap-1.5">
-                          {Array.from(new Set(u.profiles.map(p => p.user_type === 'superadmin' ? 'superadmin' : p.role))).map(role => (
-                            <RoleBadge key={role} role={role} />
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="flex -space-x-2 mr-2">
-                            {u.profiles.slice(0, 3).map((p, idx) => (
-                              <div key={idx} className="w-6 h-6 rounded-lg bg-emerald-500/10 border border-white/20 flex items-center justify-center text-[10px] text-emerald-400">
-                                {renderVerticalIcon(p.tenants?.business_vertical, 12)}
-                              </div>
-                            ))}
-                            {u.profiles.length > 3 && (
-                              <div className="w-6 h-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[9px] text-[#4B6478] font-bold">
-                                +{u.profiles.length - 3}
-                              </div>
-                            )}
-                          </div>
-                          <span className="text-[12px] font-bold text-slate-300">
-                            Terdaftar di {u.profiles.length} Bisnis
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex flex-col items-center">
-                          <div className={`w-2 h-2 rounded-full mb-1 ${u.last_active && new Date(u.last_active) > new Date(Date.now() - 5 * 60 * 1000) ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-slate-600'}`} />
-                          <span className="text-[10px] font-medium text-[#4B6478]">
-                            {u.last_active ? formatDistanceToNow(new Date(u.last_active), { addSuffix: true, locale: localeId }) : 'Baru'}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-[12px] text-white font-medium">
-                          {u.created_at ? format(new Date(u.created_at), 'dd MMM yyyy') : '-'}
-                        </p>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 rounded-lg text-[#4B6478] hover:text-white hover:bg-white/10"
-                        >
-                          <ArrowRight size={16} />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="px-6 py-4">
+                           <div className="flex flex-wrap gap-1.5">
+                              {Array.from(new Set(u.profiles.map(p => p.user_type === 'superadmin' ? 'superadmin' : p.role))).map(role => (
+                                <RoleBadge key={role} role={role} />
+                              ))}
+                           </div>
+                        </td>
+                        <td className="px-6 py-4">
+                           <div className="flex items-center gap-2">
+                             <span className="text-[12px] font-bold text-slate-400">Terdaftar di {u.profiles.length} Bisnis</span>
+                           </div>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                           <div className="flex flex-col items-center">
+                              <div className={`w-1.5 h-1.5 rounded-full mb-1 ${u.last_active && new Date(u.last_active) > new Date(Date.now() - 5 * 60 * 1000) ? 'bg-emerald-500' : 'bg-slate-600'}`} />
+                              <span className="text-[9px] font-bold text-[#4B6478] uppercase">{u.last_active ? formatDistanceToNow(new Date(u.last_active), { addSuffix: true, locale: localeId }) : 'Baru'}</span>
+                           </div>
+                        </td>
+                        <td className="px-6 py-4"><p className="text-[12px] text-white font-medium">{u.created_at ? format(new Date(u.created_at), 'dd MMM yyyy') : '-'}</p></td>
+                        <td className="px-6 py-4 text-right"><Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg text-[#4B6478] hover:text-white"><ArrowRight size={16} /></Button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+             </div>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 pb-8">
+            {groupedUsers.map(u => (
+              <UserMobileCard
+                key={u.id}
+                user={u}
+                onClick={() => { setSelectedUser(u); setIsUserSheetOpen(true) }}
+              />
+            ))}
+            {groupedUsers.length === 0 && (
+               <div className="py-12 text-center opacity-30">
+                 <Users size={32} className="mx-auto mb-2" />
+                 <p className="text-xs font-black uppercase tracking-widest text-[#4B6478]">Tidak ada user</p>
+               </div>
+            )}
+          </div>
+        )
       )}
 
       {/* User Associations Sheet */}
@@ -767,16 +748,107 @@ export default function AdminUsers() {
 
 // --- Sub-Components ---
 
-function StatCard({ label, value, icon: Icon, color }) {
+// --- Sub-Components ---
+
+function TenantMobileCard({ tenant, onDetail, onStatusChange }) {
+  const owner = tenant.profiles?.find(p => p.role === 'owner')?.full_name || 'Belum ada owner'
+  
+  return (
+    <div className="bg-[#111C24] border border-white/8 rounded-2xl p-4 shadow-lg active:scale-[0.98] transition-all">
+       <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+             <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-emerald-400">
+                {renderVerticalIcon(tenant.business_vertical, 20)}
+             </div>
+             <div className="min-w-0">
+                <p className="text-[14px] font-black text-white leading-tight truncate">{tenant.business_name || '(Tanpa Nama)'}</p>
+                <div className="flex items-center gap-2 mt-1">
+                   <span className="text-[8px] font-black text-[#4B6478] uppercase tracking-widest bg-white/5 px-1.5 py-0.5 rounded">
+                      {(tenant.business_vertical || '').replace('_', ' ')}
+                   </span>
+                   <PlanBadge plan={tenant.plan} />
+                </div>
+             </div>
+          </div>
+          <Switch
+            checked={tenant.is_active}
+            onCheckedChange={(val) => onStatusChange(tenant.id, val)}
+            className="data-[state=checked]:bg-emerald-500 scale-90"
+          />
+       </div>
+
+       <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-white/5">
+          <div className="space-y-1">
+             <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest">Owner / Pengelola</p>
+             <div className="flex items-center gap-1.5 text-white">
+                <UserIcon size={10} className="text-[#4B6478]" />
+                <span className="text-[11px] font-bold truncate">{owner}</span>
+             </div>
+          </div>
+          <div className="space-y-1 text-right">
+             <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest">Sisa Aktif</p>
+             <TrialDisplay date={tenant.trial_ends_at} plan={tenant.plan} planExpiresAt={tenant.plan_expires_at} />
+          </div>
+       </div>
+
+       <Button
+         onClick={() => onDetail(tenant)}
+         className="w-full mt-4 h-10 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 font-black text-[10px] uppercase tracking-[0.2em] rounded-xl"
+       >
+         Konfigurasi Tenant
+       </Button>
+    </div>
+  )
+}
+
+function UserMobileCard({ user, onClick }) {
+  return (
+    <div 
+      onClick={onClick}
+      className="bg-[#111C24] border border-white/8 rounded-2xl p-4 shadow-lg active:scale-[0.98] transition-all flex items-center justify-between gap-3"
+    >
+       <div className="flex items-center gap-4 min-w-0">
+          <Avatar className="h-10 w-10 border border-white/10 ring-2 ring-transparent">
+             <AvatarImage src={user.avatar} />
+             <AvatarFallback className="bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase">{user.name?.substring(0, 2) || '??'}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+             <p className="text-[14px] font-black text-white leading-tight truncate">{user.name || '(Tanpa Nama)'}</p>
+             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                {Array.from(new Set(user.profiles.map(p => p.role))).slice(0, 2).map(role => (
+                  <RoleBadge key={role} role={role} />
+                ))}
+                <span className="text-[9px] font-bold text-[#4B6478] uppercase">{user.profiles.length} Bisnis</span>
+             </div>
+          </div>
+       </div>
+       <ChevronRight size={16} className="text-[#4B6478] shrink-0" />
+    </div>
+  )
+}
+
+function StatCard({ label, value, icon: Icon, color, compact = false }) {
   const themes = {
-    emerald: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-emerald-500/5",
-    blue: "bg-blue-500/10 border-blue-500/20 text-blue-400 shadow-blue-500/5",
-    amber: "bg-amber-500/10 border-amber-500/20 text-amber-400 shadow-amber-500/5",
-    purple: "bg-purple-500/10 border-purple-500/20 text-purple-400 shadow-purple-500/5"
+    emerald: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
+    blue: "bg-blue-500/10 border-blue-500/20 text-blue-400",
+    amber: "bg-amber-500/10 border-amber-500/20 text-amber-400",
+    purple: "bg-purple-500/10 border-purple-500/20 text-purple-400"
+  }
+
+  if (compact) {
+    return (
+      <div className={`flex flex-col items-center justify-center py-3 rounded-2xl bg-[#111C24] border border-white/8 ${themes[color]}`}>
+         <div className={`w-7 h-7 rounded-lg flex items-center justify-center border mb-2 ${themes[color]}`}>
+            <Icon size={12} />
+         </div>
+         <p className="text-[16px] font-black text-white leading-none font-display">{value}</p>
+         <p className="text-[8px] lg:text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1.5 text-center leading-tight">{label}</p>
+      </div>
+    )
   }
 
   return (
-    <Card className={`bg-[#111C24] border-white/8 rounded-2xl p-4 lg:p-5 relative overflow-hidden group hover:border-white/15 transition-all shadow-lg ${themes[color]}`}>
+    <Card className={`bg-[#111C24] border-white/8 rounded-2xl p-5 relative overflow-hidden group hover:border-white/15 transition-all shadow-lg ${themes[color]}`}>
       <div className="absolute -right-2 -bottom-2 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity">
         <Icon size={70} />
       </div>
@@ -785,7 +857,7 @@ function StatCard({ label, value, icon: Icon, color }) {
           <Icon size={16} />
         </div>
         <div>
-          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mb-1">{label}</p>
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">{label}</p>
           <p className="font-display text-2xl lg:text-3xl font-black text-white leading-none">{value}</p>
         </div>
       </div>
@@ -828,19 +900,19 @@ function TrialDisplay({ date, plan, planExpiresAt }) {
 
   // Paid plan — tampilkan sisa waktu dari plan_expires_at
   if (plan === 'pro' || plan === 'business') {
-    if (!planExpiresAt) return <span className="text-[#4B6478] text-[13px]">—</span>
+    if (!planExpiresAt) return <span className="text-slate-500 text-[13px]">—</span>
     const end = new Date(planExpiresAt)
     const days = Math.ceil((end - now) / (1000 * 60 * 60 * 24))
     if (days <= 0) return (
       <div className="flex flex-col items-center">
         <span className="text-[13px] font-black text-red-400">Expired</span>
-        <span className="text-[8px] text-red-400/60 font-bold uppercase tracking-tighter mt-0.5">Perlu Renewal</span>
+        <span className="text-[8px] text-red-400/60 font-bold uppercase tracking-tighter mt-1">Perlu Renewal</span>
       </div>
     )
     return (
       <div className="flex flex-col items-center">
         <span className={`text-[13px] font-black ${days <= 14 ? 'text-amber-400' : 'text-emerald-400'}`}>{days} Hari</span>
-        <span className="text-[8px] text-[#4B6478] font-bold uppercase tracking-tighter mt-0.5">
+        <span className="text-[8px] text-slate-500 font-bold uppercase tracking-tighter mt-1">
           {plan === 'pro' ? 'Sisa Pro' : 'Sisa Business'}
         </span>
       </div>
@@ -848,14 +920,14 @@ function TrialDisplay({ date, plan, planExpiresAt }) {
   }
 
   // Starter / trial
-  if (!date) return <span className="text-[#4B6478] text-[13px]">—</span>
+  if (!date) return <span className="text-slate-500 text-[13px]">—</span>
   const end = new Date(date)
   const days = Math.ceil((end - now) / (1000 * 60 * 60 * 24))
-  if (days <= 0) return <span className="text-[#4B6478] text-[13px]">—</span>
+  if (days <= 0) return <span className="text-slate-500 text-[13px]">—</span>
   return (
     <div className="flex flex-col items-center">
       <span className={`text-[13px] font-black ${days <= 3 ? 'text-red-400' : 'text-amber-400'}`}>{days} Hari</span>
-      <span className="text-[8px] text-[#4B6478] font-bold uppercase tracking-tighter mt-0.5">Sisa Trial</span>
+      <span className="text-[8px] text-slate-500 font-bold uppercase tracking-tighter mt-1">Sisa Trial</span>
     </div>
   )
 }

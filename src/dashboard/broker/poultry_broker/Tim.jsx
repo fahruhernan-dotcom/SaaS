@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PhoneInput } from '@/components/ui/PhoneInput';
 import { 
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter 
 } from '@/components/ui/sheet';
@@ -336,7 +337,7 @@ export default function Tim() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">No HP Bisnis</Label>
-                  <Input 
+                  <PhoneInput 
                     value={profileForm.phone}
                     onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
                     placeholder="0812..."

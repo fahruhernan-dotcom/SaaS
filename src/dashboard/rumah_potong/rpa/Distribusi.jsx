@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
+import { PhoneInput } from '@/components/ui/PhoneInput'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import {
   Select,
@@ -824,9 +825,14 @@ function CustomerFormSheet({ open, customer, onClose }) {
             </div>
             <div>
               <label htmlFor="cust-phone" style={labelStyle}>NO. TELEPON</label>
-              <input id="cust-phone" name="phone" type="tel" value={form.phone}
-                onChange={e => set('phone', e.target.value)} placeholder="0812..."
-                style={inputBase(false)} />
+              <PhoneInput 
+                id="cust-phone" 
+                name="phone" 
+                value={form.phone}
+                onChange={v => set('phone', v)} 
+                placeholder="0812..."
+                style={inputBase(false)} 
+              />
             </div>
           </div>
 

@@ -21,6 +21,7 @@ import { Separator } from '@/components/ui/separator'
 import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PhoneInput } from '@/components/ui/PhoneInput'
 import { 
   AlertDialog, AlertDialogAction, AlertDialogCancel, 
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter, 
@@ -491,8 +492,8 @@ function ProfileForm({ profile, onSuccess }) {
                 <Label className="uppercase text-[10px] font-black tracking-[0.2em] text-[#4B6478]">Nomor HP</Label>
                 <div className="relative">
                     <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-[#4B6478]" size={18} />
-                    <Input 
-                        required type="tel"
+                    <PhoneInput 
+                        required
                         value={formData.phone} 
                         onChange={e => setFormData({...formData, phone: e.target.value})}
                         className="bg-[#111C24] border-white/10 h-14 font-black rounded-2xl pl-12 focus:border-emerald-500/50 transition-all"

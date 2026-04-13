@@ -34,6 +34,11 @@ function FadeUp({ children, delay = 0, className }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AboutUs() {
+  React.useEffect(() => {
+    document.title = 'Tentang Kami - TernakOS';
+    return () => { document.title = 'TernakOS | Solusi Digital Peternakan Indonesia' };
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans selection:bg-emerald-500/30 overflow-x-hidden">
       <Navbar />

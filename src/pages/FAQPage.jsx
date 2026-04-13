@@ -95,7 +95,7 @@ export default function FAQPage() {
 
   // Page title
   useEffect(() => {
-    document.title = 'FAQ TernakOS — 200+ Pertanyaan & Jawaban Lengkap'
+    document.title = 'FAQ & Help Center - TernakOS'
     return () => { document.title = 'TernakOS' }
   }, [])
 

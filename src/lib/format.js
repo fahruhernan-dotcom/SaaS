@@ -253,3 +253,26 @@ export const calcIndeksPerforma = (cycle) => {
   if (fcr === 0) return 0
   return Number(((survivalRate * avgWeight * 100) / (fcr * agedays)).toFixed(1))
 }
+
+/**
+ * Normalisasi nomor HP ke format 08...
+ * Menghilangkan karakter non-digit dan mengubah +62/62 menjadi 0
+ * @param {string} str - Nomor HP input
+ * @returns {string} Nomor HP yang sudah dinormalisasi
+ */
+export const normalizePhone = (str) => {
+  if (!str) return ''
+  // Bersihkan dari segela karakter non-digit
+  let cleaned = str.replace(/\D/g, '') 
+  
+  // Jika diawali 62, ubah jadi 0
+  if (cleaned.startsWith('62')) {
+    cleaned = '0' + cleaned.slice(2)
+  } 
+  // Jika langsung diawali angka 8, tambahkan 0 di depan
+  else if (cleaned.startsWith('8')) {
+    cleaned = '0' + cleaned
+  }
+  
+  return cleaned
+}

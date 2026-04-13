@@ -17,6 +17,7 @@ import {
 // Lazy-import sheets from Distribusi to avoid circular deps — inline them here
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
+import { PhoneInput } from '@/components/ui/PhoneInput'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 
 // ─── Constants & Helpers ──────────────────────────────────────────────────────
@@ -129,8 +130,13 @@ function EditCustomerSheet({ open, customer, onClose }) {
             </div>
             <div>
               <label htmlFor="edit-cust-phone" style={labelStyle}>Telepon</label>
-              <input id="edit-cust-phone" name="phone" type="tel" value={form.phone}
-                onChange={e => set('phone', e.target.value)} style={inputBase(false)} />
+              <PhoneInput
+                id="edit-cust-phone"
+                name="phone"
+                value={form.phone}
+                onChange={e => set('phone', e.target.value)}
+                style={inputBase(false)}
+              />
             </div>
           </div>
           <div>

@@ -45,6 +45,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { PROVINCES } from '@/lib/constants/regions'
 import { ProvinceWarningBanner } from './components/ProvinceWarningBanner'
+import { PhoneInput } from '@/components/ui/PhoneInput'
 
 export const rpaSchema = z.object({
     rpa_name: z.string().min(2, 'Nama RPA minimal 2 karakter'),
@@ -510,8 +511,7 @@ export function RPAForm({ rpa, isDesktop, onClose, onSubmit, onDelete }) {
                 </div>
                 <div className="space-y-2">
                     <Label className={cn("uppercase font-black tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>No HP *</Label>
-                    <Input
-                        type="tel"
+                    <PhoneInput
                         {...register('phone')}
                         placeholder="0812..."
                         className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold text-white text-base focus:border-emerald-500/50"

@@ -15,6 +15,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PhoneInput } from '@/components/ui/PhoneInput'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { InputNumber } from '@/components/ui/InputNumber'
@@ -569,8 +570,7 @@ function FarmForm({ farm, tenantId, onSuccess, onCancel, isSheet }) {
                 </div>
                 <div className="space-y-2">
                     <Label className={cn("uppercase font-black tracking-widest text-[#4B6478]", isDesktop ? "text-[10px]" : "text-xs")}>No HP</Label>
-                    <Input 
-                        type="tel"
+                    <PhoneInput 
                         value={formData.phone} 
                         onChange={e => setFormData({...formData, phone: e.target.value})}
                         className={cn("bg-[#111C24] border-white/10 h-14 font-black rounded-2xl", !isDesktop && "text-base")}

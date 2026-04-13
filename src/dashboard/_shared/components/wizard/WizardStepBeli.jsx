@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { PhoneInput } from '@/components/ui/PhoneInput'
 import { AlertCircle, ChevronLeft, ChevronsUpDown, Check, Plus, ChevronDown, TrendingDown } from 'lucide-react'
 
 const FIELD_LABELS = {
@@ -50,7 +51,7 @@ import { formatIDR, safeNum, formatWeight } from '@/lib/format'
 import { toast } from 'sonner'
 import {
   Command, CommandEmpty, CommandGroup,
-  CommandInput, CommandItem, CommandSeparator
+  CommandInput, CommandItem, CommandSeparator, CommandList
 } from '@/components/ui/command'
 import {
   Popover, PopoverContent, PopoverTrigger
@@ -223,75 +224,147 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
         </div>
       )}
 
-      {/* Kandang Combobox */}
+      {/* Kandang Selection */}
       <div className="space-y-1.5">
-        <label style={S.label}>Pilih Kandang *</label>
-        <Popover open={openKandang} onOpenChange={(open) => setOpenKandang(open)}>
-          <PopoverTrigger asChild>
-            <button type="button" 
-              id="farm_id"
-              style={{
-                width: '100%',
-                padding: '13px 14px',
-                background: 'hsl(var(--input))',
-                border: errors.farm_id ? '1px solid #ef4444' : '1px solid hsl(var(--border))',
-                borderRadius: '10px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                cursor: 'pointer',
-                fontSize: '16px',
-                color: farmId ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
-                textAlign: 'left',
-                boxShadow: errors.farm_id ? '0 0 0 1px #ef4444' : 'none'
-              }}>
-              <span className="truncate">
-                {selectedKandang ? selectedKandang.farm_name : 'Pilih kandang sumber'}
-              </span>
-              <ChevronsUpDown size={14} className="ml-2 flex-shrink-0 text-muted-foreground" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="p-0 border-white/5 bg-[#111C24]" style={{ width: 'var(--radix-popover-trigger-width)' }} align="start">
-            <Command className="bg-transparent">
-              <CommandInput placeholder="Cari kandang..." className="h-10 border-none" />
-              <CommandEmpty>
-                <div className="py-2 text-center text-xs text-muted-foreground">Kandang tidak ditemukan</div>
-              </CommandEmpty>
-              <CommandGroup className="max-h-64 overflow-y-auto">
-                {farms?.map(farm => (
-                  <CommandItem
-                    key={farm.id}
-                    value={farm.farm_name}
-                    onSelect={() => {
-                      setValue('farm_id', farm.id)
-                      setOpenKandang(false)
-                    }}
-                    className="cursor-pointer py-3 px-4 border-b border-white/5 last:border-none focus:bg-white/5"
-                  >
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-white">{farm.farm_name}</p>
-                      <p className="text-[11px] text-[#4B6478] font-medium mt-0.5">{farmLabel(farm)}</p>
+        {!isDesktop && openKandang ? (
+          <div className="space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className="flex items-center justify-between px-1">
+              <label style={S.label}>Cari & Pilih Kandang</label>
+              <button 
+                type="button" 
+                onClick={() => setOpenKandang(false)}
+                className="text-[10px] font-black text-red-400 uppercase tracking-wider h-6 px-2"
+              >
+                Tutup ✕
+              </button>
+            </div>
+            <div className="bg-[#111C24] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+              <Command className="bg-transparent">
+                <CommandInput placeholder="Ketik nama kandang atau pemilik..." className="h-12 border-none text-base" autoFocus />
+                <CommandList className="max-h-[350px] overflow-y-auto">
+                  <CommandEmpty>
+                    <div className="py-8 text-center flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
+                        <AlertCircle className="text-muted-foreground" size={20} />
+                      </div>
+                      <p className="text-xs text-muted-foreground font-medium">Kandang tidak ditemukan</p>
                     </div>
-                    {farmId === farm.id && <Check size={14} className="text-emerald-400 ml-2" />}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-              <CommandSeparator className="bg-white/5" />
-              <CommandGroup>
-                <CommandItem
-                  onSelect={() => {
-                    setOpenKandang(false)
-                    setShowQuickAddKandang(true)
-                  }}
-                  className="cursor-pointer py-3 px-4 text-emerald-400 focus:bg-emerald-400/5"
-                >
-                  <Plus size={14} className="mr-2" />
-                  <span className="text-xs font-black uppercase tracking-widest">Tambah Kandang Baru</span>
-                </CommandItem>
-              </CommandGroup>
-            </Command>
-          </PopoverContent>
-        </Popover>
+                  </CommandEmpty>
+                  <CommandGroup>
+                    {farms?.map(farm => (
+                      <CommandItem
+                        key={farm.id}
+                        value={farm.farm_name}
+                        onSelect={() => {
+                          setValue('farm_id', farm.id, { shouldValidate: true })
+                          setOpenKandang(false)
+                        }}
+                        className="cursor-pointer py-4 px-5 border-b border-white/5 last:border-none aria-selected:bg-emerald-500/10"
+                      >
+                        <div className="flex-1">
+                          <p className="text-sm font-black text-white">{farm.farm_name}</p>
+                          <p className="text-[11px] text-[#4B6478] font-bold mt-1 uppercase tracking-tighter">{farmLabel(farm)}</p>
+                        </div>
+                        {farmId === farm.id && <Check size={16} className="text-emerald-400 ml-2" />}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                  <CommandSeparator className="bg-white/5" />
+                  <CommandGroup>
+                    <CommandItem
+                      onSelect={() => {
+                        setOpenKandang(false)
+                        setShowQuickAddKandang(true)
+                      }}
+                      className="cursor-pointer py-4 px-5 text-emerald-400 border-t border-white/5"
+                    >
+                      <Plus size={16} className="mr-3" />
+                      <span className="text-[11px] font-black uppercase tracking-[0.15em]">Tambah Kandang Baru</span>
+                    </CommandItem>
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </div>
+          </div>
+        ) : (
+          <>
+            <label style={S.label}>Pilih Kandang *</label>
+            <Popover modal={true} open={isDesktop ? openKandang : false} onOpenChange={(open) => isDesktop && setOpenKandang(open)}>
+              <PopoverTrigger asChild>
+                <button type="button" 
+                  id="farm_id"
+                  onClick={() => !isDesktop && setOpenKandang(true)}
+                  style={{
+                    width: '100%',
+                    padding: isDesktop ? '13px 14px' : '15px 16px',
+                    background: 'hsl(var(--input))',
+                    border: errors.farm_id ? '1px solid #ef4444' : '1px solid hsl(var(--border))',
+                    borderRadius: '14px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    color: farmId ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
+                    textAlign: 'left',
+                    boxShadow: errors.farm_id ? '0 0 0 1px #ef4444' : 'none'
+                  }}>
+                  <span className="truncate font-bold">
+                    {selectedKandang ? selectedKandang.farm_name : 'Pilih kandang sumber'}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {farmId && <Check size={14} className="text-emerald-400" />}
+                    <ChevronsUpDown size={14} className="flex-shrink-0 text-muted-foreground" />
+                  </div>
+                </button>
+              </PopoverTrigger>
+              {isDesktop && (
+                <PopoverContent className="p-0 border-white/5 bg-[#111C24]" style={{ width: 'var(--radix-popover-trigger-width)' }} align="start">
+                  <Command className="bg-transparent">
+                    <CommandInput placeholder="Cari kandang..." className="h-10 border-none" />
+                    <CommandList className="max-h-72 overflow-y-auto">
+                      <CommandEmpty>
+                        <div className="py-2 text-center text-xs text-muted-foreground">Kandang tidak ditemukan</div>
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {farms?.map(farm => (
+                          <CommandItem
+                            key={farm.id}
+                            value={farm.farm_name}
+                            onSelect={() => {
+                              setValue('farm_id', farm.id)
+                              setOpenKandang(false)
+                            }}
+                            className="cursor-pointer py-3 px-4 border-b border-white/5 last:border-none focus:bg-white/5"
+                          >
+                            <div className="flex-1">
+                              <p className="text-sm font-bold text-white">{farm.farm_name}</p>
+                              <p className="text-[11px] text-[#4B6478] font-medium mt-0.5">{farmLabel(farm)}</p>
+                            </div>
+                            {farmId === farm.id && <Check size={14} className="text-emerald-400 ml-2" />}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                      <CommandSeparator className="bg-white/5" />
+                      <CommandGroup>
+                        <CommandItem
+                          onSelect={() => {
+                            setOpenKandang(false)
+                            setShowQuickAddKandang(true)
+                          }}
+                          className="cursor-pointer py-3 px-4 text-emerald-400 focus:bg-emerald-400/5"
+                        >
+                          <Plus size={14} className="mr-2" />
+                          <span className="text-xs font-black uppercase tracking-widest">Tambah Kandang Baru</span>
+                        </CommandItem>
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              )}
+            </Popover>
+          </>
+        )}
         {errors.farm_id && <p className="text-[10px] text-red-500 font-bold">{errors.farm_id.message}</p>}
 
         {/* Quick Add Kandang */}
@@ -322,16 +395,12 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
                 <label htmlFor="new_farm_phone" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>No HP</label>
-                <Input 
+                <PhoneInput 
                   id="new_farm_phone"
                   name="new_farm_phone"
-                  type="tel" 
                   placeholder="081..." 
                   value={newFarm.phone} 
-                  onChange={e => {
-                    const val = e.target.value.replace(/[^0-9+]/g, '')
-                    setNewFarm(p => ({ ...p, phone: val }))
-                  }} 
+                  onChange={e => setNewFarm(p => ({ ...p, phone: e.target.value }))} 
                   className="h-9 bg-black/20" 
                 />
               </div>

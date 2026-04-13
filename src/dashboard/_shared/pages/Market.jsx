@@ -19,6 +19,7 @@ import {
 } from '@/lib/hooks/useBrokerConnections'
 import { formatDistanceToNow } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
+import { PhoneInput } from '@/components/ui/PhoneInput'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -693,14 +694,13 @@ function SheetPasangIklan({ isOpen, onClose, profile }) {
                     />
                   </div>
                   <div>
-                    <label htmlFor="ml-wa" className="block text-xs text-[#4B6478] mb-1">No. WhatsApp * (format: 628xx...)</label>
-                    <input
+                    <label htmlFor="ml-wa" className="block text-xs text-[#4B6478] mb-1">No. WhatsApp *</label>
+                    <PhoneInput
                       id="ml-wa"
                       name="contact_wa"
-                      type="tel"
                       value={form.contact_wa}
                       onChange={e => set('contact_wa', e.target.value)}
-                      placeholder="Contoh: 6281234567890"
+                      placeholder="cth. 0812..."
                       className="w-full bg-[#111C24] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-[#F1F5F9] placeholder:text-white/20 focus:outline-none focus:border-emerald-500/50 transition-colors"
                     />
                   </div>

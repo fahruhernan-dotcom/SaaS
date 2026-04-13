@@ -5,6 +5,7 @@ import { useEggCustomers } from '@/lib/hooks/useEggCustomers'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { PhoneInput } from '@/components/ui/PhoneInput'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -234,8 +235,7 @@ function CustomerForm({ customer, onClose, onSave, onDelete }) {
 
             <div className="space-y-2">
                 <Label className="uppercase text-[10px] font-black tracking-widest text-[#4B6478]">No HP / Telp</Label>
-                <Input
-                    type="tel"
+                <PhoneInput
                     value={formData.phone}
                     onChange={e => setFormData({...formData, phone: e.target.value})}
                     className="bg-[#111C24] border-white/10 rounded-xl h-12 font-bold focus:border-emerald-500/50"

@@ -138,29 +138,34 @@ function CenterFAB({ color, onClick }) {
   return (
     // Outer spacer — same flex:1 so FAB slot takes same width as a tab
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-      {/* The actual floating button — lifted above the nav bar */}
       <motion.button
         onClick={onClick}
-        whileTap={{ scale: 0.88 }}
-        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.92 }}
+        whileHover={{ scale: 1.05 }}
         style={{
           position: 'absolute',
-          bottom: 8,
-          width: 52,
-          height: 52,
-          borderRadius: '50%',
+          bottom: 12,
+          width: 54,
+          height: 54,
+          borderRadius: 20,
           background: color,
-          border: 'none',
+          border: '1px solid rgba(255,255,255,0.15)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: `0 4px 20px ${color}55, 0 2px 8px rgba(0,0,0,0.4)`,
+          boxShadow: `0 12px 24px ${color}40, 0 4px 10px rgba(0,0,0,0.3)`,
           WebkitTapHighlightColor: 'transparent',
-          zIndex: 10,
+          zIndex: 50,
         }}
       >
-        <Plus size={24} color="white" strokeWidth={2.5} />
+        <div style={{
+          position: 'absolute',
+          inset: -6,
+          borderRadius: 30,
+          background: 'transparent',
+        }} />
+        <Plus size={28} color="white" strokeWidth={3} />
       </motion.button>
     </div>
   )

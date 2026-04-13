@@ -253,11 +253,11 @@ export default function AdminPricing() {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-5 p-4 lg:p-0 lg:space-y-6"
+      className="space-y-5 p-4 lg:p-0 lg:space-y-6 pb-32 lg:pb-12"
     >
-      {/* Header */}
+      {/* Header — Optimized for Mobile: Large text hidden to save space */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-14 lg:top-0 z-20 bg-[#080C10]/80 backdrop-blur-md py-2 -mx-2 px-2 rounded-xl">
-        <div>
+        <div className="hidden md:block">
           <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight">
             Pricing & Discounts
           </h1>
@@ -265,11 +265,12 @@ export default function AdminPricing() {
             Atur skema harga paket dan kelola kode voucher promo
           </p>
         </div>
+        
         {activeTab === 'plans' && (
           <Button
             onClick={handleSaveAllPricing}
             disabled={savingRole === 'all'}
-            className="bg-emerald-500 hover:bg-emerald-600 rounded-xl h-11 px-6 text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+            className="hidden md:flex bg-emerald-500 hover:bg-emerald-600 rounded-xl h-11 px-6 text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
           >
             {savingRole === 'all' ? (
               <><Loader2 size={14} className="animate-spin mr-2" /> Menyiimpan...</>
@@ -281,7 +282,7 @@ export default function AdminPricing() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-[#111C24] border border-white/5 p-1 h-12 rounded-2xl mb-8 grid grid-cols-4">
+        <TabsList className="bg-[#111C24] border border-white/5 p-1 h-12 rounded-2xl mb-8 -mx-2 lg:mx-0 grid grid-cols-4 sticky top-16 md:relative z-10">
           <TabsTrigger
             value="plans"
             className="rounded-xl data-[state=active]:bg-emerald-500 data-[state=active]:text-white font-bold uppercase text-[11px] tracking-widest transition-all"
@@ -943,6 +944,23 @@ export default function AdminPricing() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Floating Sticky Save Button for Mobile (High-Density UX) */}
+      {activeTab === 'plans' && (
+        <div className="md:hidden fixed bottom-20 left-4 right-4 z-40 animate-in slide-in-from-bottom-4 duration-500 pb-[env(safe-area-inset-bottom)]">
+          <Button
+            onClick={handleSaveAllPricing}
+            disabled={savingRole === 'all'}
+            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-14 rounded-2xl font-black uppercase text-[12px] tracking-[0.2em] shadow-[0_20px_50px_rgba(16,185,129,0.3)] border border-emerald-400/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+          >
+             {savingRole === 'all' ? (
+              <><Loader2 size={18} className="animate-spin" /> MENYIMPAN DATA...</>
+            ) : (
+              <>SIMPAN SEMUA PERUBAHAN</>
+            )}
+          </Button>
+        </div>
+      )}
     </motion.div>
   )
 }
@@ -975,24 +993,24 @@ function RolePricingCard({ roleName, roleId, icon: Icon, color, data, onChange, 
       <div className="space-y-4 pt-2 relative z-10">
         <div className="space-y-6">
           {/* PRO Row */}
-          <div className="space-y-2">
-            <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-black tracking-widest text-[9px]">PRO</Badge>
-            <div className="grid grid-cols-2 gap-3 items-end">
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase text-[#4B6478] font-bold ml-1">HARGA ASLI (opsional)</label>
+          <div className="space-y-4">
+            <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-black tracking-widest text-[9px]">PRO PLAN</Badge>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase text-[#4B6478] font-black tracking-widest ml-1">HARGA ASLI (opsional)</label>
                 <InputRupiah
                   value={data.pro.originalPrice}
                   onChange={(v) => onChange(roleId, 'pro', 'originalPrice', v)}
-                  className="bg-black/40 border-white/10 h-10 rounded-xl text-right font-black text-white/60 text-sm"
+                  className="bg-black/40 border-white/10 h-11 rounded-xl text-right font-black text-white/50 text-base focus:border-emerald-500/30"
                   placeholder="0"
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase text-emerald-500/60 font-bold ml-1">HARGA AKTIF</label>
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase text-emerald-500/60 font-black tracking-widest ml-1">HARGA AKTIF</label>
                 <InputRupiah
                   value={data.pro.price}
                   onChange={(v) => onChange(roleId, 'pro', 'price', v)}
-                  className="bg-black/40 border-white/10 h-10 rounded-xl text-right font-black text-white text-sm focus:border-emerald-500/50"
+                  className="bg-black/30 border-emerald-500/20 h-11 rounded-xl text-right font-black text-white text-base focus:border-emerald-500/50 focus:bg-emerald-500/5 shadow-inner"
                 />
               </div>
             </div>
@@ -1006,24 +1024,24 @@ function RolePricingCard({ roleName, roleId, icon: Icon, color, data, onChange, 
           </div>
 
           {/* BUSINESS Row */}
-          <div className="space-y-2">
-            <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 font-black tracking-widest text-[9px]">BUSINESS</Badge>
-            <div className="grid grid-cols-2 gap-3 items-end">
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase text-[#4B6478] font-bold ml-1">HARGA ASLI (opsional)</label>
+          <div className="space-y-4">
+            <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 font-black tracking-widest text-[9px]">BUSINESS PLAN</Badge>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase text-[#4B6478] font-black tracking-widest ml-1">HARGA ASLI (opsional)</label>
                 <InputRupiah
                   value={data.business.originalPrice}
                   onChange={(v) => onChange(roleId, 'business', 'originalPrice', v)}
-                  className="bg-black/40 border-white/10 h-10 rounded-xl text-right font-black text-white/60 text-sm"
+                  className="bg-black/40 border-white/10 h-11 rounded-xl text-right font-black text-white/50 text-base focus:border-amber-500/30"
                   placeholder="0"
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase text-amber-500/60 font-bold ml-1">HARGA AKTIF</label>
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase text-amber-500/60 font-black tracking-widest ml-1">HARGA AKTIF</label>
                 <InputRupiah
                   value={data.business.price}
                   onChange={(v) => onChange(roleId, 'business', 'price', v)}
-                  className="bg-black/40 border-white/10 h-10 rounded-xl text-right font-black text-white text-sm focus:border-amber-500/50"
+                  className="bg-black/30 border-amber-500/20 h-11 rounded-xl text-right font-black text-white text-base focus:border-amber-500/50 focus:bg-amber-500/5 shadow-inner"
                 />
               </div>
             </div>

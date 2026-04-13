@@ -32,7 +32,7 @@ export function useMarketTrends(province = 'Jawa Tengah', startDate, endDate) {
         .gte('price_date', startDate)
         .lte('price_date', endDate)
         .order('price_date', { ascending: true })
-      if (!isAll) scraperQ = scraperQ.ilike('region', normalizedRegion)
+      if (!isAll) scraperQ = scraperQ.ilike('region', `%${normalizedRegion}%`)
       const { data: scraperData, error: scraperErr } = await scraperQ
       if (scraperErr) console.error('[useMarketTrends] scraper:', scraperErr.message)
 

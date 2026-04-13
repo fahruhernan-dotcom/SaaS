@@ -70,12 +70,18 @@ export function useUpdateDelivery() {
     if (driverWage !== undefined)   updateData.driver_wage = driverWage
     
     // 2. Update delivery status
-    const { error: updateError } = await supabase
+    console.log('[useUpdateDelivery] Sending Update to Supabase:', updateData)
+    const { data: updateRes, error: updateError } = await supabase
       .from('deliveries')
       .update(updateData)
       .eq('id', deliveryId)
+      .select('status, arrival_time')
     
-    if (updateError) throw updateError
+    if (updateError) {
+      console.error('[useUpdateDelivery] Supabase Update Error:', updateError)
+      throw updateError
+    }
+    console.log('[useUpdateDelivery] Supabase Update Success:', updateRes?.[0])
     
     // 3. Update Sales Revenue based on Arrived Weight
     const { data: saleData } = await supabase
@@ -94,23 +100,26 @@ export function useUpdateDelivery() {
 
       if (saleUpdateError) console.error('Error updating sale revenue:', saleUpdateError)
       else console.log('✅ Sales total_revenue updated:', newTotalRevenue)
+    }
 
     // 4. Auto-create loss report if there is mortality or shrinkage
     const lossReports = []
+    const pricePerKg = saleData?.price_per_kg ?? 0
+    const tenantId = saleData?.tenant_id ?? tenant.id
 
     if (mortality > 0) {
       // Standardized weight per chicken (1.85kg) for mortality financial loss
       const estWeightLoss = mortality * 1.85
-      const financialLoss = 0 // Mortality usually doesn't affect revenue directly in this model
+      const financialLoss = 0 
 
       lossReports.push({
-        tenant_id:      saleData.tenant_id,
+        tenant_id:      tenantId,
         delivery_id:    deliveryId,
         sale_id:        delivery.sale_id,
         loss_type:      'mortality',
         chicken_count:  mortality,
         weight_loss_kg: estWeightLoss,
-        price_per_kg:   saleData.price_per_kg,
+        price_per_kg:   pricePerKg,
         financial_loss: financialLoss,
         description:    `${mortality} ekor mati dalam perjalanan`,
         report_date:    format(new Date(), 'yyyy-MM-dd')
@@ -118,16 +127,16 @@ export function useUpdateDelivery() {
     }
 
     if (shrinkage > 0) {
-      const financialLoss = Math.round(shrinkage * safeNum(saleData.price_per_kg))
+      const financialLoss = Math.round(shrinkage * safeNum(pricePerKg))
       
       lossReports.push({
-        tenant_id:      saleData.tenant_id,
+        tenant_id:      tenantId,
         delivery_id:    deliveryId,
         sale_id:        delivery.sale_id,
         loss_type:      'shrinkage',
         chicken_count:  0,
         weight_loss_kg: shrinkage,
-        price_per_kg:   saleData.price_per_kg,
+        price_per_kg:   pricePerKg,
         financial_loss: financialLoss,
         description:    `Penyusutan berat ${shrinkage.toFixed(2)} kg`,
         report_date:    format(new Date(), 'yyyy-MM-dd')
@@ -135,9 +144,7 @@ export function useUpdateDelivery() {
     }
 
     if (lossReports.length > 0) {
-      // Clear old reports first to avoid duplicates
       await supabase.from('loss_reports').delete().eq('delivery_id', deliveryId)
-      
       const { error: lossError } = await supabase.from('loss_reports').insert(lossReports)
       if (lossError) console.error('Error inserting loss reports:', lossError)
       else console.log('✅ Loss reports created:', lossReports.length)
@@ -147,9 +154,9 @@ export function useUpdateDelivery() {
     if (updateData.status === 'arrived') {
       const basePath = getXBasePath(tenant, profile)
       const driverTitle = driverName || 'Sopir'
-      const rpaTitle = saleData.rpa_clients?.rpa_name || 'Buyer'
+      const rpaTitle = saleData?.rpa_clients?.rpa_name || 'Buyer'
       
-      await supabase.from('notifications').insert({
+      const { error: notifError } = await supabase.from('notifications').insert({
         tenant_id: tenant.id,
         type: 'pengiriman_tiba', 
         title: '🚚 Pengiriman Tiba',
@@ -157,19 +164,22 @@ export function useUpdateDelivery() {
         action_url: `${basePath}/pengiriman`,
         metadata: { ref_id: deliveryId },
       })
+      if (notifError) console.error('Notification error:', notifError)
     }
     
     // 6. Invalidate all relevant queries
-    await queryClient.invalidateQueries({ queryKey: ['sales'] })
-    if (saleData) await queryClient.invalidateQueries({ queryKey: ['sales', saleData.tenant_id] })
-    await queryClient.invalidateQueries({ queryKey: ['deliveries'] })
-    if (saleData) await queryClient.invalidateQueries({ queryKey: ['deliveries', saleData.tenant_id] })
-    if (saleData) await queryClient.refetchQueries({ queryKey: ['sales', saleData.tenant_id] })
-    await queryClient.invalidateQueries({ queryKey: ['broker-stats'] })
-    await queryClient.invalidateQueries({ queryKey: ['loss-reports'] })
+    console.log('[useUpdateDelivery] Invalidating queries...')
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['sales'] }),
+      queryClient.invalidateQueries({ queryKey: ['deliveries'] }),
+      queryClient.invalidateQueries({ queryKey: ['loss-reports'] }),
+      queryClient.invalidateQueries({ queryKey: ['broker-stats'] })
+    ])
+    
+    // Force a high-priority refetch for the specific deliveries list
+    await queryClient.refetchQueries({ queryKey: ['deliveries'] })
     
     return { mortality, shrinkage }
-    }
   }
   
   return { updateTiba }

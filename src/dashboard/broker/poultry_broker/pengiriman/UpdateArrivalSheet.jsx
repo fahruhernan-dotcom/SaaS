@@ -28,6 +28,7 @@ import {
     AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
     AlertDialogHeader, AlertDialogTitle
 } from '@/components/ui/alert-dialog'
+import { PhoneInput } from '@/components/ui/PhoneInput'
 
 export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
     const isDesktop = useMediaQuery('(min-width: 1024px)')
@@ -487,12 +488,10 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
         
         const toastId = toast.loading('Menyimpan data pengiriman...')
         try {
-            console.log('Step 1: processing update')
+            console.log(`[UpdateArrivalSheet] Processing ${isArrival ? 'Arrival' : 'Logistic Update'} for delivery:`, delivery.id)
+            
             if (delivery.status === 'arrived' || delivery.status === 'completed') {
-                // Direct UPDATE for existing delivery (we calculate here manually or move this to hook too)
-                // Actually, let's just make it consistent and call the hook even for updates if possible, 
-                // but the hook is currently structured for 'tiba' event.
-                // For now, let's keep the direct update but remove the redundant loss report logic below.
+                // Scenario: Updating an existing arrived delivery
                 const updatePayload = {
                     arrived_count: tibaCount,
                     arrived_weight_kg: tibaKg,
@@ -501,6 +500,10 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     load_time: formattedLoadTime,
                     departure_time: formattedDepartureTime,
                     driver_wage: driverWage
+                }
+
+                if (isArrival && !delivery.arrival_time) {
+                    updatePayload.arrival_time = new Date().toISOString()
                 }
 
                 if (!vehicleLocked) {
@@ -538,12 +541,17 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     updatePayload.driver_wage = selectedDriver?.wage_per_trip || driverWage
                 }
 
-                const { error } = await supabase
+                const { data: directRes, error } = await supabase
                     .from('deliveries')
                     .update(updatePayload)
                     .eq('id', delivery.id)
+                    .select('status, arrival_time')
 
-                if (error) throw error
+                if (error) {
+                    console.error('[UpdateArrivalSheet] Manual Update Error:', error)
+                    throw error
+                }
+                console.log('[UpdateArrivalSheet] Manual Update Success:', directRes?.[0])
                 
                 // Update Sales Revenue
                 const pricePerKg = delivery?.sales?.price_per_kg ?? 0
@@ -553,44 +561,10 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     .update({ total_revenue: newTotalRevenue })
                     .eq('id', delivery.sale_id)
 
-                // Handled in block below for consistency: Loss reports
-            } else {
-                // Standard arrival via hook (hook handles sales update and loss reports)
-                const arrivalPayload = {
-                    deliveryId: delivery.id,
-                    arrivedCount: tibaCount,
-                    arrivedWeight: tibaKg,
-                    notes: notes,
-                    loadTime: formattedLoadTime,
-                    departureTime: formattedDepartureTime,
-                    status: isArrival ? 'arrived' : (formattedDepartureTime ? 'on_route' : (formattedLoadTime ? 'loading' : null))
-                }
-
-                if (!vehicleLocked) {
-                    arrivalPayload.vehicleId = selectedVehicle?.id || null
-                    arrivalPayload.vehiclePlate = selectedVehicle?.vehicle_plate || vehiclePlate
-                    arrivalPayload.vehicleType = selectedVehicle?.vehicle_type || vehicleType
-                }
-
-                if (!driverLocked) {
-                    arrivalPayload.driverId = selectedDriver?.id || null
-                    arrivalPayload.driverName = selectedDriver?.full_name || driverName
-                    arrivalPayload.driverPhone = selectedDriver?.phone || driverPhone
-                    arrivalPayload.driverWage = selectedDriver?.wage_per_trip || driverWage
-                }
-
-                await updateTiba(arrivalPayload)
-            }
-
-            // LOSS REPORTS (If not handled by hook already)
-            // If we are in 'arrived' or 'completed' status, the hook above might have been skipped (direct update).
-            // Let's ensure loss reports are synced.
-            if (delivery.status === 'arrived' || delivery.status === 'completed') {
+                // Sync Loss Reports manually for existing arrivals
                 const lossReports = []
-                const pricePerKg = delivery?.sales?.price_per_kg ?? 0
                 const initialCount = safeNum(delivery?.initial_count)
                 const initialWeight = safeNum(delivery?.initial_weight_kg)
-                
                 const mortality = initialCount - tibaCount
                 const shrinkage = initialWeight - tibaKg
 
@@ -628,18 +602,52 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     await supabase.from('loss_reports').delete().eq('delivery_id', delivery.id)
                     await supabase.from('loss_reports').insert(lossReports)
                 }
+            } else {
+                // Scenario: First time arrival or logistic update for pending delivery
+                const arrivalPayload = {
+                    deliveryId: delivery.id,
+                    arrivedCount: tibaCount,
+                    arrivedWeight: tibaKg,
+                    notes: notes,
+                    loadTime: formattedLoadTime,
+                    departureTime: formattedDepartureTime,
+                    status: isArrival ? 'arrived' : (formattedDepartureTime ? 'on_route' : (formattedLoadTime ? 'loading' : null))
+                }
+
+                if (!vehicleLocked) {
+                    arrivalPayload.vehicleId = selectedVehicle?.id || null
+                    arrivalPayload.vehiclePlate = selectedVehicle?.vehicle_plate || vehiclePlate
+                    arrivalPayload.vehicleType = selectedVehicle?.vehicle_type || vehicleType
+                }
+
+                if (!driverLocked) {
+                    arrivalPayload.driverId = selectedDriver?.id || null
+                    arrivalPayload.driverName = selectedDriver?.full_name || driverName
+                    arrivalPayload.driverPhone = selectedDriver?.phone || driverPhone
+                    arrivalPayload.driverWage = selectedDriver?.wage_per_trip || driverWage
+                }
+
+                await updateTiba(arrivalPayload)
             }
 
             toast.success('Data berhasil disimpan!', { id: toastId })
-            await queryClient.invalidateQueries({ queryKey: ['deliveries'] })
-            await queryClient.invalidateQueries({ queryKey: ['sales'] })
-            await queryClient.invalidateQueries({ queryKey: ['loss-reports'] })
+            
+            // Sync all relevant queries before closing to ensure background UI is fresh
+            console.log('[UpdateArrivalSheet] Refetching queries...')
+            await Promise.all([
+                queryClient.invalidateQueries({ queryKey: ['deliveries'] }),
+                queryClient.invalidateQueries({ queryKey: ['sales'] }),
+                queryClient.invalidateQueries({ queryKey: ['loss-reports'] }),
+                queryClient.refetchQueries({ queryKey: ['deliveries'] })
+            ])
+            
+            // Close now that data is fresh
+            console.log('[UpdateArrivalSheet] Closing sheet.')
             onClose()
 
         } catch (err) {
-            console.error('Error update arrival:', err)
-            toast.error('Gagal memperbarui data: ' + err.message)
-        } finally {
+            console.error('[UpdateArrivalSheet] Error:', err)
+            toast.error('Gagal memperbarui data: ' + err.message, { id: toastId })
             setIsLoading(false)
             isSubmittingRef.current = false
         }
@@ -1416,11 +1424,11 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                                                     onChange={e => setDriverName(e.target.value)}
                                                     className="h-12 bg-[#111C24] border-white/10 text-xs font-black text-white"
                                                 />
-                                                <Input 
+                                                <PhoneInput 
                                                     placeholder="NO HP" 
                                                     value={driverPhone}
-                                                    onChange={e => setDriverPhone(e.target.value)}
-                                                    className="h-12 bg-[#111C24] border-white/10 text-xs font-black text-white"
+                                                    onChange={v => setDriverPhone(v)}
+                                                    style={{ height: '48px' }}
                                                 />
                                             </div>
                                         )}

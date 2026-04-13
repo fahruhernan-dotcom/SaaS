@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { PhoneInput } from '@/components/ui/PhoneInput'
 import { ChevronLeft, TrendingUp, TrendingDown, ChevronsUpDown, Check, Plus, ChevronDown, AlertCircle } from 'lucide-react'
 
 const FIELD_LABELS = {
@@ -49,7 +50,7 @@ import { formatIDR, safeNum, PAYMENT_TERMS_LABELS, formatIDRShort } from '@/lib/
 import { toast } from 'sonner'
 import {
   Command, CommandEmpty, CommandGroup,
-  CommandInput, CommandItem, CommandSeparator
+  CommandInput, CommandItem, CommandSeparator, CommandList
 } from '@/components/ui/command'
 import {
   Popover, PopoverContent, PopoverTrigger
@@ -244,89 +245,153 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
         </p>
       </div>
 
-      {/* RPA Client Combobox */}
+      {/* RPA Client Selection */}
       <div className="space-y-1.5">
-        <label style={S.label}>Pilih RPA Buyer *</label>
-        <Popover open={openRPA} onOpenChange={(open) => setOpenRPA(open)}>
-          <PopoverTrigger asChild>
-            <button type="button" 
-              id="rpa_id"
-              style={{
-                width: '100%',
-                padding: '13px 14px',
-                background: 'hsl(var(--input))',
-                border: errors.rpa_id ? '1px solid #ef4444' : '1px solid hsl(var(--border))',
-                borderRadius: '10px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                cursor: 'pointer',
-                fontSize: '16px',
-                color: rpaId ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
-                textAlign: 'left',
-                boxShadow: errors.rpa_id ? '0 0 0 1px #ef4444' : 'none'
-              }}>
-              <span className="truncate">
-                {selectedRPA ? selectedRPA.rpa_name : 'Pilih pembeli RPA'}
-              </span>
-              <ChevronsUpDown size={14} className="ml-2 flex-shrink-0 text-muted-foreground" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent className="p-0 border-white/5 bg-[#111C24]" style={{ width: 'var(--radix-popover-trigger-width)' }} align="start">
-            <Command className="bg-transparent">
-              <CommandInput placeholder="Cari RPA..." className="h-10 border-none" />
-              <CommandEmpty>
-                <div style={{
-                  padding: '12px 16px',
-                  textAlign: 'center',
-                  fontSize: '13px',
-                  color: 'hsl(var(--muted-foreground))'
-                }}>
-                  RPA tidak ditemukan
-                </div>
-              </CommandEmpty>
-              <CommandGroup className="max-h-64 overflow-y-auto">
-                {rpaClients?.map(r => (
-                  <CommandItem
-                    key={r.id}
-                    value={r.rpa_name}
-                    onSelect={() => {
-                      setValue('rpa_id', r.id, { shouldValidate: true })
-                      setOpenRPA(false)
-                    }}
-                    className="cursor-pointer py-3 px-4 border-b border-white/5 last:border-none focus:bg-white/5"
-                  >
-                    <div className="flex-1">
-                      <p style={{ fontSize: '14px', fontWeight: 600, margin: 0, color: 'hsl(var(--foreground))' }}>
-                        {r.rpa_name}
-                      </p>
-                      <p style={{ fontSize: '12px', color: 'hsl(var(--muted-foreground))', margin: 0 }}>
-                        {PAYMENT_TERMS_LABELS[r.payment_terms] || r.payment_terms}
-                        {safeNum(r.total_outstanding) > 0
-                          ? ` · Hutang: ${formatIDRShort(r.total_outstanding)}`
-                          : ''}
-                      </p>
+        {!isDesktop && openRPA ? (
+          <div className="space-y-3 animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className="flex items-center justify-between px-1">
+              <label style={S.label}>Cari & Pilih RPA Buyer</label>
+              <button 
+                type="button" 
+                onClick={() => setOpenRPA(false)}
+                className="text-[10px] font-black text-red-400 uppercase tracking-wider h-6 px-2"
+              >
+                Tutup ✕
+              </button>
+            </div>
+            <div className="bg-[#111C24] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+              <Command className="bg-transparent">
+                <CommandInput placeholder="Ketik nama RPA atau pembeli..." className="h-12 border-none text-base" autoFocus />
+                <CommandList className="max-h-[350px] overflow-y-auto">
+                  <CommandEmpty>
+                    <div className="py-8 text-center flex flex-col items-center gap-2">
+                      <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center">
+                        <AlertCircle className="text-muted-foreground" size={20} />
+                      </div>
+                      <p className="text-xs text-muted-foreground font-medium">Pembeli tidak ditemukan</p>
                     </div>
-                    {rpaId === r.id && <Check size={14} className="text-emerald-400 ml-2" />}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-              <CommandSeparator className="bg-white/5" />
-              <CommandGroup>
-                <CommandItem
-                  onSelect={() => {
-                    setOpenRPA(false)
-                    setShowQuickAddRPA(true)
-                  }}
-                  className="cursor-pointer py-3 px-4 text-emerald-400 focus:bg-emerald-400/5"
-                >
-                  <Plus size={14} className="mr-2" />
-                  <span className="text-xs font-black uppercase tracking-widest">Tambah RPA Baru</span>
-                </CommandItem>
-              </CommandGroup>
-            </Command>
-          </PopoverContent>
-        </Popover>
+                  </CommandEmpty>
+                  <CommandGroup>
+                    {rpaClients?.map(r => (
+                      <CommandItem
+                        key={r.id}
+                        value={r.rpa_name}
+                        onSelect={() => {
+                          setValue('rpa_id', r.id, { shouldValidate: true })
+                          setOpenRPA(false)
+                        }}
+                        className="cursor-pointer py-4 px-5 border-b border-white/5 last:border-none aria-selected:bg-emerald-500/10"
+                      >
+                        <div className="flex-1">
+                          <p className="text-sm font-black text-white">{r.rpa_name}</p>
+                          <p className="text-[11px] text-[#4B6478] font-bold mt-1 uppercase tracking-tighter">
+                            {PAYMENT_TERMS_LABELS[r.payment_terms] || r.payment_terms}
+                            {safeNum(r.total_outstanding) > 0 ? ` · Hutang: ${formatIDRShort(r.total_outstanding)}` : ''}
+                          </p>
+                        </div>
+                        {rpaId === r.id && <Check size={16} className="text-emerald-400 ml-2" />}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                  <CommandSeparator className="bg-white/5" />
+                  <CommandGroup>
+                    <CommandItem
+                      onSelect={() => {
+                        setOpenRPA(false)
+                        setShowQuickAddRPA(true)
+                      }}
+                      className="cursor-pointer py-4 px-5 text-emerald-400 border-t border-white/5"
+                    >
+                      <Plus size={16} className="mr-3" />
+                      <span className="text-[11px] font-black uppercase tracking-[0.15em]">Tambah RPA Baru</span>
+                    </CommandItem>
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </div>
+          </div>
+        ) : (
+          <>
+            <label style={S.label}>Pilih RPA Buyer *</label>
+            <Popover modal={true} open={isDesktop ? openRPA : false} onOpenChange={(open) => isDesktop && setOpenRPA(open)}>
+              <PopoverTrigger asChild>
+                <button type="button" 
+                  id="rpa_id"
+                  onClick={() => !isDesktop && setOpenRPA(true)}
+                  style={{
+                    width: '100%',
+                    padding: isDesktop ? '13px 14px' : '15px 16px',
+                    background: 'hsl(var(--input))',
+                    border: errors.rpa_id ? '1px solid #ef4444' : '1px solid hsl(var(--border))',
+                    borderRadius: '14px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    color: rpaId ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
+                    textAlign: 'left',
+                    boxShadow: errors.rpa_id ? '0 0 0 1px #ef4444' : 'none'
+                  }}>
+                  <span className="truncate font-bold">
+                    {selectedRPA ? selectedRPA.rpa_name : 'Pilih pembeli RPA'}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {rpaId && <Check size={14} className="text-emerald-400" />}
+                    <ChevronsUpDown size={14} className="flex-shrink-0 text-muted-foreground" />
+                  </div>
+                </button>
+              </PopoverTrigger>
+              {isDesktop && (
+                <PopoverContent className="p-0 border-white/5 bg-[#111C24]" style={{ width: 'var(--radix-popover-trigger-width)' }} align="start">
+                  <Command className="bg-transparent">
+                    <CommandInput placeholder="Cari RPA..." className="h-10 border-none" />
+                    <CommandList className="max-h-72 overflow-y-auto">
+                      <CommandEmpty>
+                        <div style={{ padding: '12px 16px', textAlign: 'center', fontSize: '13px', color: 'hsl(var(--muted-foreground))' }}>RPA tidak ditemukan</div>
+                      </CommandEmpty>
+                      <CommandGroup>
+                        {rpaClients?.map(r => (
+                          <CommandItem
+                            key={r.id}
+                            value={r.rpa_name}
+                            onSelect={() => {
+                              setValue('rpa_id', r.id, { shouldValidate: true })
+                              setOpenRPA(false)
+                            }}
+                            className="cursor-pointer py-3 px-4 border-b border-white/5 last:border-none focus:bg-white/5"
+                          >
+                            <div className="flex-1">
+                              <p style={{ fontSize: '14px', fontWeight: 600, margin: 0, color: 'hsl(var(--foreground))' }}>{r.rpa_name}</p>
+                              <p style={{ fontSize: '12px', color: 'hsl(var(--muted-foreground))', margin: 0 }}>
+                                {PAYMENT_TERMS_LABELS[r.payment_terms] || r.payment_terms}
+                                {safeNum(r.total_outstanding) > 0 ? ` · Hutang: ${formatIDRShort(r.total_outstanding)}` : ''}
+                              </p>
+                            </div>
+                            {rpaId === r.id && <Check size={14} className="text-emerald-400 ml-2" />}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                      <CommandSeparator className="bg-white/5" />
+                      <CommandGroup>
+                        <CommandItem
+                          onSelect={() => {
+                            setOpenRPA(false)
+                            setShowQuickAddRPA(true)
+                          }}
+                          className="cursor-pointer py-3 px-4 text-emerald-400 focus:bg-emerald-400/5"
+                        >
+                          <Plus size={14} className="mr-2" />
+                          <span className="text-xs font-black uppercase tracking-widest">Tambah RPA Baru</span>
+                        </CommandItem>
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              )}
+            </Popover>
+          </>
+        )}
         {errors.rpa_id && <p className="text-[10px] text-red-500 font-bold">{errors.rpa_id.message}</p>}
 
         {/* Quick Add RPA */}
@@ -367,10 +432,9 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
                 <label htmlFor="new_rpa_phone" style={{ fontSize: '11px', color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.8px', display: 'block', marginBottom: 6 }}>
                   No HP
                 </label>
-                <Input
+                <PhoneInput
                   id="new_rpa_phone"
                   name="new_rpa_phone"
-                  type="tel"
                   placeholder="081..."
                   value={newRPA.phone}
                   onChange={e => setNewRPA(p => ({ ...p, phone: e.target.value }))}

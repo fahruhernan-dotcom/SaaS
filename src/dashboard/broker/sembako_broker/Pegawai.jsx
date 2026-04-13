@@ -15,6 +15,7 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
+import { PhoneInput } from '@/components/ui/PhoneInput'
 import {
   C, sInput, sBtn, sLabel, fmtDate, InputRupiah, CustomSelect,
 } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
@@ -162,7 +163,7 @@ function TabPegawai({ isDesktop }) {
                 placeholder="Pilih role"
               />
             </div>
-            <div><p style={sLabel}>NO HP</p><input id="emp-phone" name="phone" style={sInput} value={form.phone || ''} onChange={e => setForm({ ...form, phone: e.target.value.replace(/[^0-9+]/g, '') })} /></div>
+            <div><p style={sLabel}>NO HP</p><PhoneInput id="emp-phone" name="phone" style={sInput} value={form.phone || ''} onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
             <div><p style={sLabel}>ALAMAT</p><input id="emp-addr" name="address" style={sInput} value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })} /></div>
             <div><p style={sLabel}>TANGGAL MASUK</p><DatePicker id="emp-join" value={form.join_date || ''} onChange={val => setForm({ ...form, join_date: val })} placeholder="Pilih tanggal" /></div>
             <div><p style={sLabel}>TIPE GAJI</p>

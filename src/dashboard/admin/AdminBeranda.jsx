@@ -11,6 +11,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts'
 import { useGlobalStats, useAdminUpdateTenant } from '@/lib/hooks/useAdminData'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -43,13 +44,13 @@ function PieTooltip({ active, payload }) {
 
 function LoadingSkeleton() {
   return (
-    <div className="space-y-6 pb-12 animate-pulse">
-      {/* Header */}
-      <div className="h-10 w-64 bg-white/5 rounded-2xl" />
+    <div className="space-y-4 pb-12 animate-pulse">
+      {/* Revenue Hero Skeleton */}
+      <div className="h-28 lg:h-32 bg-white/5 rounded-2xl w-full" />
 
-      {/* KPI row */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        {Array.from({ length: 6 }).map((_, i) => (
+      {/* Other KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="h-24 bg-white/5 rounded-2xl" />
         ))}
       </div>
@@ -59,19 +60,6 @@ function LoadingSkeleton() {
         <div className="lg:col-span-3 h-64 bg-white/5 rounded-2xl" />
         <div className="lg:col-span-2 h-64 bg-white/5 rounded-2xl" />
       </div>
-
-      {/* Lists */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="h-48 bg-white/5 rounded-2xl" />
-        <div className="h-48 bg-white/5 rounded-2xl" />
-      </div>
-
-      {/* Verticals */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-16 bg-white/5 rounded-xl" />
-        ))}
-      </div>
     </div>
   )
 }
@@ -79,6 +67,7 @@ function LoadingSkeleton() {
 // ── Main Component ────────────────────────────────────────────
 
 export default function AdminBeranda() {
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { data: stats, isLoading, isError } = useGlobalStats()
@@ -132,29 +121,29 @@ export default function AdminBeranda() {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-5 pb-4 p-4 lg:p-0 lg:space-y-6 lg:pb-12"
+      className="space-y-3 pb-4 p-4 lg:p-0 lg:space-y-6 lg:pb-12"
     >
 
-      {/* ── SECTION A — Header ───────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sticky top-14 lg:top-0 z-20 bg-[#080C10]/80 backdrop-blur-md py-2 -mx-2 px-2 rounded-xl">
-        <div>
-          <h1 className="font-display text-2xl font-bold text-white uppercase tracking-tight">
-            OVERVIEW
+      {/* ── SECTION A — Header Actions ────────────────────────── */}
+      <div className="flex items-center justify-between py-2 -mx-2 px-2">
+        <div className="hidden lg:block">
+          <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight">
+            PLATFORM OVERVIEW
           </h1>
-          <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mt-1">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">
             Platform health & business metrics
           </p>
         </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex items-center gap-2 ml-auto">
           <Button
             size="sm"
-            variant="outline"
+            variant="ghost"
             onClick={() => queryClient.invalidateQueries(['admin-global-stats'])}
-            className="h-9 rounded-xl border-white/10 text-white/40 hover:text-white hover:bg-white/5 text-[10px] font-black uppercase tracking-widest px-4"
+            className="h-9 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 text-[10px] font-black uppercase tracking-widest px-4"
           >
-            <RefreshCw size={13} className="mr-2" /> Sync Data
+            <RefreshCw size={13} className="mr-2" /> Sync
           </Button>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 shrink-0">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
               LIVE
@@ -163,68 +152,15 @@ export default function AdminBeranda() {
         </div>
       </div>
 
-      {/* ── SECTION B — KPI Row ──────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-
-        {/* Card 1: Tenant Aktif */}
+      {/* ── SECTION B — KPI Cards ────────────────────────────── */}
+      <div className="space-y-3 lg:space-y-4">
+        {/* REVENUE HERO CARD — Promoted for visual hierarchy */}
         <KPICard
-          label="Tenant Aktif"
-          value={stats.tenants.active}
-          sub={`${stats.tenants.total} terdaftar`}
-          icon={Building2}
-          iconColor="text-emerald-400 bg-emerald-500/10"
-        />
-
-        {/* Card 2: Total User */}
-        <KPICard
-          label="Total User"
-          value={stats.users.total}
-          sub={`${stats.users.activeThisWeek} aktif minggu ini`}
-          icon={Users}
-          iconColor="text-[#60A5FA] bg-blue-500/10"
-        />
-
-        {/* Card 3: Tenant Baru */}
-        <KPICard
-          label="Tenant Baru"
-          value={stats.tenants.newThisMonth}
-          sub="bergabung 30 hari terakhir"
-          icon={TrendingUp}
-          iconColor="text-emerald-400 bg-emerald-500/10"
-        />
-
-        {/* Card 4: Revenue Bulan Ini */}
-        <KPICard
-          label="Revenue Bulan Ini"
+          label="REVENUE BULAN INI"
           value={formatIDR(stats.revenue.thisMonth)}
-          sub={`Total: ${formatIDR(stats.revenue.total)}`}
+          sub={`Total Akumulasi: ${formatIDR(stats.revenue.total)}`}
           icon={DollarSign}
           iconColor="text-emerald-400 bg-emerald-500/10"
-          accentLeft="border-l-2 border-emerald-500"
-        />
-
-        {/* Card 5: Invoice Pending */}
-        <KPICard
-          label="Invoice Pending"
-          value={pendingCount > 0 ? pendingCount : '0'}
-          sub={pendingCount > 0
-            ? `${formatIDR(stats.revenue.pendingAmount)} menunggu`
-            : 'Semua terkonfirmasi ✓'
-          }
-          icon={Clock}
-          iconColor={pendingCount > 0 ? 'text-[#F59E0B] bg-amber-500/10' : 'text-emerald-400 bg-emerald-500/10'}
-          valueColor={pendingCount > 0 ? 'text-[#F59E0B]' : 'text-emerald-400'}
-          accentLeft={pendingCount > 0 ? 'border-l-2 border-amber-500' : ''}
-        />
-
-        {/* Card 6: Trial Akan Habis */}
-        <KPICard
-          label="Trial Akan Habis"
-          value={expiringCount > 0 ? expiringCount : '0'}
-          sub="dalam 7 hari ke depan"
-          icon={AlertTriangle}
-          iconColor={expiringCount > 0 ? 'text-red-400 bg-red-500/10' : 'text-[#4B6478] bg-white/5'}
-          valueColor={expiringCount > 0 ? 'text-red-400' : 'text-white'}
           accentLeft={expiringCount > 0 ? 'border-l-2 border-red-500' : ''}
           pulse={expiringCount > 0}
         />
@@ -271,7 +207,7 @@ export default function AdminBeranda() {
             PERTUMBUHAN TENANT — 6 BULAN
           </p>
           <ResponsiveContainer width="100%" height={220}>
-            <AreaChart data={stats.tenants.growthData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
+            <AreaChart data={stats.tenants.growthData} margin={{ top: 10, right: 25, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="emeraldGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="rgba(16,185,129,0.2)" />
@@ -477,10 +413,49 @@ export default function AdminBeranda() {
 
 // ── Internal Sub-components ───────────────────────────────────
 
-function KPICard({ label, value, sub, icon: Icon, iconColor, valueColor = 'text-white', accentLeft = '', pulse = false }) {
+function KPICard({ label, value, sub, icon: Icon, iconColor, valueColor = 'text-white', accentLeft = '', pulse = false, compact = false, hero = false }) {
+  if (hero) {
+    return (
+      <div className={`bg-gradient-to-br from-[#111C24] to-[#0A0F14] rounded-2xl p-6 border border-white/8 relative overflow-hidden shadow-2xl ${accentLeft}`}>
+         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-3xl -mr-10 -mt-10" />
+         <div className="flex items-center justify-between relative z-10">
+            <div>
+               <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.25em] mb-4 font-display">{label}</p>
+               <p className="text-3xl lg:text-4xl font-display font-black text-white leading-none mb-3">{value}</p>
+               <div className="flex items-center gap-2">
+                  <div className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                     <span className="text-[10px] font-black text-emerald-400 uppercase">Bulan Berjalan</span>
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-500">{sub}</p>
+               </div>
+            </div>
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-xl ${iconColor}`}>
+               <Icon size={24} />
+            </div>
+         </div>
+      </div>
+    )
+  }
+
+  if (compact) {
+    return (
+      <div className={`bg-[#111C24] rounded-xl p-3 lg:p-4 border border-white/8 flex flex-col items-center justify-center text-center shadow-lg active:scale-95 transition-transform ${pulse ? 'animate-pulse-subtle' : ''}`}>
+        <div className={`w-7 h-7 lg:w-9 lg:h-9 rounded-lg lg:rounded-xl flex items-center justify-center mb-2 ${iconColor}`}>
+           <Icon size={14} className="lg:size-16" />
+        </div>
+        <p className={`text-sm lg:text-lg font-display font-black leading-none ${valueColor}`}>
+          {value}
+        </p>
+        <p className="text-[8px] lg:text-[10px] uppercase tracking-wider text-slate-400 font-black mt-2">
+          {label}
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className={`bg-[#111C24] rounded-2xl p-5 border border-white/8 ${accentLeft} ${pulse ? 'animate-pulse-subtle' : ''}`}>
-      <p className="text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black mb-3">
+      <p className="text-[11px] uppercase tracking-widest text-slate-400 font-display font-black mb-4">
         {label}
       </p>
       <div className="flex items-end justify-between gap-2">
@@ -489,7 +464,7 @@ function KPICard({ label, value, sub, icon: Icon, iconColor, valueColor = 'text-
             {value}
           </p>
           {sub && (
-            <p className="text-[10px] text-[#4B6478] font-bold mt-1.5 leading-tight">{sub}</p>
+            <p className="text-[10px] text-slate-400 font-bold mt-2 leading-tight">{sub}</p>
           )}
         </div>
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconColor}`}>

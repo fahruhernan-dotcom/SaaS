@@ -8,6 +8,7 @@ import { useOutletContext } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PhoneInput } from '@/components/ui/PhoneInput';
 import { 
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter 
 } from '@/components/ui/sheet';
@@ -284,7 +285,7 @@ export default function SembakoTim() {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4B6478] ml-1">No HP Bisnis</Label>
-                    <Input 
+                    <PhoneInput 
                       value={profileForm.phone}
                       onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
                       placeholder="0812..."

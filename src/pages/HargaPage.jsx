@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, ChevronDown, ArrowRight, Star, X as XIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -569,6 +569,11 @@ export default function HargaPage() {
   const [selectedRole, setSelectedRole] = useState('broker')
   const [selectedSub, setSelectedSub]   = useState('ayam')
   const [billing, setBilling]           = useState('monthly')
+
+  useEffect(() => {
+    document.title = 'Pricing - TernakOS'
+    return () => { document.title = 'TernakOS' }
+  }, [])
 
   const handleRoleChange = (role) => {
     setSelectedRole(role)

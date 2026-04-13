@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Plus, Phone, Edit2, Clock } from 'lucide-react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { PhoneInput } from '@/components/ui/PhoneInput'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { supabase } from '@/lib/supabase'
@@ -375,10 +376,9 @@ function WorkerSheet({ open, onClose, worker, farms, onSaved }) {
           {/* HP */}
           <div>
             <label htmlFor="worker_phone" style={labelStyle}>No. HP</label>
-            <input
+            <PhoneInput
               id="worker_phone"
               name="worker_phone"
-              type="tel"
               placeholder="cth. 08123456789"
               value={form.phone}
               onChange={e => setField('phone', e.target.value)}

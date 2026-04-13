@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import anime from '../lib/animation';
 
 const Navbar = ({ authPage = false }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [hoveredIndex, setHoveredIndex] = useState(null);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const { scrollY } = useScroll();
   const backgroundColor = useTransform(scrollY, [0, 50], ["rgba(6,9,15,0)", "rgba(6,9,15,0.85)"]);
@@ -20,28 +22,8 @@ const Navbar = ({ authPage = false }) => {
   ];
 
   useEffect(() => {
-    // Initial reveal sequence
-    const tl = anime.timeline({
-      easing: 'easeOutExpo'
-    });
-    
-    tl.add('.nav-logo', {
-      translateY: [-20, 0],
-      opacity: [0, 1],
-      duration: 800,
-    })
-    .add('.nav-link-item', {
-      opacity: [0, 1],
-      translateX: [10, 0],
-      delay: anime.stagger(100),
-      duration: 600,
-    }, '-=400')
-    .add('.nav-action-btn', {
-      opacity: [0, 1],
-      scale: [0.9, 1],
-      delay: anime.stagger(100),
-      duration: 800,
-    }, '-=400');
+    // Initial reveal sequence is now handled by framer-motion components directly
+    // to prevent invisibility on location-based re-renders.
   }, []);
 
   return (
@@ -73,6 +55,9 @@ const Navbar = ({ authPage = false }) => {
             <motion.a
               href="/"
               className="nav-logo"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -81,7 +66,6 @@ const Navbar = ({ authPage = false }) => {
                 textDecoration: 'none'
               }}
               whileHover={{ opacity: 0.85 }}
-              transition={{ duration: 0.15 }}
             >
               <img src="/favicon.svg" alt="TernakOS Logo" className="w-[32px] h-[32px] rounded-lg" />
               <span style={{
@@ -104,76 +88,91 @@ const Navbar = ({ authPage = false }) => {
                 className="hidden md:flex items-center"
               >
                 <nav style={{ display: 'flex', alignItems: 'center', gap: '0px', position: 'relative' }}>
-                  {navLinks.map((link, i) => (
-                    <Link
+                  {navLinks.map((link, i) => {
+                    const isActive = location.pathname === link.href;
+                    const isHovered = hoveredIndex === i;
+                    
+                    return (
+                    <motion.div
                       key={i}
-                      to={link.href}
-                      className="nav-link-item"
-                      style={{
-                        position: 'relative',
-                        padding: '8px 20px',
-                        fontSize: '14px',
-                        fontWeight: 500,
-                        fontFamily: "'DM Sans', sans-serif",
-                        color: hoveredIndex === i ? '#F1F5F9' : '#64748B',
-                        textDecoration: 'none',
-                        transition: 'color 0.2s ease',
-                        letterSpacing: '0.01em',
-                        opacity: 0, // Initial state for anime.js
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ 
+                        duration: 0.5, 
+                        delay: 0.15 + (i * 0.1),
+                        ease: "easeOut" 
                       }}
-                      onMouseEnter={() => setHoveredIndex(i)}
-                      onMouseLeave={() => setHoveredIndex(null)}
                     >
-                      {/* Spotlight background saat hover */}
-                      <AnimatePresence>
-                        {hoveredIndex === i && (
-                          <motion.div
-                            layoutId="nav-spotlight"
-                            style={{
-                              position: 'absolute',
-                              inset: 0,
-                              borderRadius: '8px',
-                              background: 'rgba(255,255,255,0.05)',
-                              zIndex: -1,
-                            }}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{
-                              type: 'spring',
-                              stiffness: 500,
-                              damping: 35,
-                            }}
-                          />
-                        )}
-                      </AnimatePresence>
-  
-                      {/* Teks */}
-                      <span style={{ position: 'relative', zIndex: 1 }}>
-                        {link.name}
-                      </span>
-  
-                      {/* Underline emerald tipis saat hover */}
-                      <motion.div
+                      <Link
+                        to={link.href}
+                        className="nav-link-item"
                         style={{
-                          position: 'absolute',
-                          bottom: '2px',
-                          left: '20px',
-                          right: '20px',
-                          height: '1.5px',
-                          background: 'linear-gradient(90deg, transparent, #10B981, transparent)',
-                          borderRadius: '99px',
-                          originX: 0.5,
+                          position: 'relative',
+                          padding: '8px 20px',
+                          fontSize: '14px',
+                          fontWeight: isActive ? 600 : 500,
+                          fontFamily: "'DM Sans', sans-serif",
+                          color: isActive || isHovered ? '#F1F5F9' : '#64748B',
+                          textDecoration: 'none',
+                          transition: 'all 0.2s ease',
+                          letterSpacing: '0.01em',
                         }}
-                        initial={{ scaleX: 0, opacity: 0 }}
-                        animate={{
-                          scaleX: hoveredIndex === i ? 1 : 0,
-                          opacity: hoveredIndex === i ? 1 : 0,
-                        }}
-                        transition={{ duration: 0.2, ease: 'easeOut' }}
-                      />
-                    </Link>
-                  ))}
+                        onMouseEnter={() => setHoveredIndex(i)}
+                        onMouseLeave={() => setHoveredIndex(null)}
+                      >
+                        {/* Spotlight background saat hover */}
+                        <AnimatePresence>
+                          {isHovered && (
+                            <motion.div
+                              layoutId="nav-spotlight"
+                              style={{
+                                position: 'absolute',
+                                inset: 0,
+                                borderRadius: '8px',
+                                background: 'rgba(255,255,255,0.05)',
+                                zIndex: -1,
+                              }}
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              transition={{
+                                type: 'spring',
+                                stiffness: 500,
+                                damping: 35,
+                              }}
+                            />
+                          )}
+                        </AnimatePresence>
+    
+                        {/* Teks */}
+                        <span style={{ position: 'relative', zIndex: 1 }}>
+                          {link.name}
+                        </span>
+    
+                        {/* Underline emerald tipis saat hover atau aktif */}
+                        <motion.div
+                          style={{
+                            position: 'absolute',
+                            bottom: '2px',
+                            left: '20px',
+                            right: '20px',
+                            height: '2px',
+                            background: isActive 
+                              ? '#10B981' 
+                              : 'linear-gradient(90deg, transparent, #10B981, transparent)',
+                            borderRadius: '99px',
+                            originX: 0.5,
+                          }}
+                          initial={{ scaleX: 0, opacity: 0 }}
+                          animate={{
+                            scaleX: isActive || isHovered ? 1 : 0,
+                            opacity: isActive ? 1 : (isHovered ? 0.7 : 0),
+                          }}
+                          transition={{ duration: 0.2, ease: 'easeOut' }}
+                        />
+                      </Link>
+                    </motion.div>
+                  )})}
                 </nav>
               </motion.div>
             )}
@@ -213,8 +212,11 @@ const Navbar = ({ authPage = false }) => {
               ) : (
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <motion.button
-                    onClick={() => window.location.href = '/login'}
+                    onClick={() => navigate('/login')}
                     className="nav-action-btn hidden md:block"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, delay: 0.5 }}
                     style={{
                       padding: '8px 16px',
                       fontSize: '14px',
@@ -226,7 +228,6 @@ const Navbar = ({ authPage = false }) => {
                       borderRadius: '8px',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
-                      opacity: 0, // Initial state for anime.js
                     }}
                     whileHover={{
                       color: '#F1F5F9',
@@ -239,8 +240,10 @@ const Navbar = ({ authPage = false }) => {
                   </motion.button>
   
                   <motion.button
-                    onClick={() => window.location.href = '/register'}
+                    onClick={() => navigate('/register')}
                     className="nav-action-btn"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1, transition: { duration: 0.5, delay: 0.6 } }}
                     style={{
                       padding: '9px 18px',
                       fontSize: '14px',
@@ -254,7 +257,6 @@ const Navbar = ({ authPage = false }) => {
                       position: 'relative',
                       overflow: 'hidden',
                       boxShadow: '0 0 0 1px rgba(16,185,129,0.25), 0 4px 16px rgba(16,185,129,0.18)',
-                      opacity: 0, // Initial state for anime.js
                     }}
                     whileHover={{
                       background: '#059669',
@@ -320,18 +322,20 @@ const Navbar = ({ authPage = false }) => {
              </div>
              
              <div className="px-6 py-5 flex flex-col gap-3 bg-white/[0.01]">
-                <a 
-                  href="/login" 
+                <Link 
+                  to="/login" 
+                  onClick={() => setIsMobileMenuOpen(false)}
                   className="w-full py-3 text-center rounded-xl bg-white/[0.03] border border-white/10 text-tx-1 font-semibold text-sm transition-all active:scale-[0.98]"
                 >
                   Masuk Akun
-                </a>
-                <a 
-                  href="/register" 
+                </Link>
+                <Link 
+                  to="/register" 
+                  onClick={() => setIsMobileMenuOpen(false)}
                   className="w-full py-3 text-center rounded-xl bg-em-500 text-white font-bold text-sm shadow-[0_4px_15px_rgba(16,185,129,0.2)] transition-all active:scale-[0.98]"
                 >
                   Coba Gratis Sekarang
-                </a>
+                </Link>
              </div>
           </motion.div>
         )}

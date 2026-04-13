@@ -517,7 +517,14 @@ export default function Transaksi() {
     window.open(`https://wa.me/${finalPhone}?text=${message}`, '_blank')
   }
 
-  const handleWizardClose = React.useCallback(() => setWizardOpen(false), [])
+  const handleWizardClose = React.useCallback(() => {
+    setWizardOpen(false)
+    // Clear URL parameter when closed to avoid "stuck" states
+    if (location.search.includes('action=new')) {
+      navigate(location.pathname, { replace: true })
+    }
+  }, [location.search, location.pathname, navigate])
+
   const handleWizardOpen = React.useCallback(() => setWizardOpen(true), [])
 
   const handleDeliveryClose = React.useCallback(() => setShowUpdateDelivery(false), [])

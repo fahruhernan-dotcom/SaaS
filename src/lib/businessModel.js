@@ -68,7 +68,7 @@ export const BUSINESS_MODELS = {
       { path: '/market',                        icon: 'Store',      label: 'TernakOS Market'   },
       { path: '/broker/broker_ayam/akun',       icon: 'User',       label: 'Akun & Profil'     },
     ],
-    fabPath: '/broker/broker_ayam/transaksi',
+    fabPath: '/broker/broker_ayam/transaksi?action=new',
   },
   distributor_sembako: {
     key: 'distributor_sembako',
@@ -97,7 +97,7 @@ export const BUSINESS_MODELS = {
       { path: '/broker/distributor_sembako/laporan',       icon: 'BarChart2',label: 'Laporan'          },
       { path: '/broker/distributor_sembako/akun',          icon: 'User',     label: 'Akun & Profil'    },
     ],
-    fabPath: '/broker/distributor_sembako/penjualan',
+    fabPath: '/broker/distributor_sembako/penjualan?action=new',
   },
   egg_broker: {
     key: 'egg_broker',
@@ -197,7 +197,7 @@ export const BUSINESS_MODELS = {
       { path: '/market',                           icon: 'Store',    label: 'TernakOS Market'      },
       { path: '/rumah_potong/rpa_ayam/akun',       icon: 'User',     label: 'Akun & Profil'        },
     ],
-    fabPath: '/rumah_potong/rpa_ayam/transaksi',
+    fabPath: '/rumah_potong/rpa_ayam/order?action=new',
   },
   peternak_kambing_domba_penggemukan: {
     key: 'peternak_kambing_domba_penggemukan',

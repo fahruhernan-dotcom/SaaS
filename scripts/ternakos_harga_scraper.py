@@ -68,6 +68,19 @@ def parse_harga(text: str) -> int:
     return int(text) if text.isdigit() else 0
 
 
+def normalize_region(name: str) -> str:
+    """
+    Standardize region names to match TernakOS frontend.
+    Example: 'Jawa Tengah DIY' -> 'Jawa Tengah'
+    """
+    name_clean = name.strip()
+    if "Jawa Tengah" in name_clean:
+        return "Jawa Tengah"
+    if "Yogyakarta" in name_clean or name_clean == "DIY":
+        return "DIY"
+    return name_clean
+
+
 def fetch_harga_from_chickin() -> list:
     headers = {
         "User-Agent": (
@@ -125,13 +138,16 @@ def fetch_harga_from_chickin() -> list:
     results = []
     for region, prices in regional_data.items():
         avg_farm_gate = sum(prices) // len(prices)
+        norm_region = normalize_region(region)
+        
         results.append({
             "farm_gate_price": avg_farm_gate,
             "buyer_price":     avg_farm_gate + BUYER_MARGIN,
-            "region":          region,
+            "region":          norm_region,
             "source_url":      SOURCE_URL,
+            "original_region": region # For logging
         })
-        log.info(f"✓ {region}: Rp {avg_farm_gate:,} ({len(prices)} data)")
+        log.info(f"✓ {norm_region} (from {region}): Rp {avg_farm_gate:,} ({len(prices)} data)")
 
     return results
 

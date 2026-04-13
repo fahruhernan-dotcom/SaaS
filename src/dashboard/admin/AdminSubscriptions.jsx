@@ -233,11 +233,11 @@ export default function AdminSubscriptions() {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-5 p-4 lg:p-0 lg:space-y-6"
+      className="space-y-5 p-4 lg:p-0 lg:space-y-6 pb-32 lg:pb-12"
     >
-      {/* Header */}
+      {/* Header — Optimized for Mobile: Large text hidden to save space */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-14 lg:top-0 z-20 bg-[#080C10]/80 backdrop-blur-md py-2 -mx-2 px-2 rounded-xl">
-        <div>
+        <div className="hidden md:block">
           <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight">
             Subscriptions & Invoices
           </h1>
@@ -247,7 +247,7 @@ export default function AdminSubscriptions() {
         </div>
         <Button
           onClick={() => setIsGenerateOpen(true)}
-          className="bg-emerald-500 hover:bg-emerald-600 rounded-xl h-11 px-6 text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/20 shrink-0 transition-all active:scale-95"
+          className="hidden md:flex bg-emerald-500 hover:bg-emerald-600 rounded-xl h-11 px-6 text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/20 shrink-0 transition-all active:scale-95"
         >
           <Plus size={16} className="mr-2" /> Generate Invoice Manual
         </Button>
@@ -333,7 +333,7 @@ export default function AdminSubscriptions() {
                   placeholder="Cari No. Invoice / Bisnis..."
                   value={invoiceSearch}
                   onChange={(e) => setInvoiceSearch(e.target.value)}
-                  className="bg-black/20 border-white/10 h-10 rounded-xl pl-11 text-sm focus:border-emerald-500/50 transition-all font-medium"
+                  className="bg-black/20 border-white/10 h-11 rounded-xl pl-11 text-base lg:text-sm focus:border-emerald-500/50 transition-all font-medium"
                 />
               </div>
               <div className="flex items-center gap-1.5">
@@ -342,7 +342,7 @@ export default function AdminSubscriptions() {
                   value={dateFrom}
                   onChange={setDateFrom}
                   placeholder="Mulai..."
-                  className="!h-10 !w-[130px] !rounded-xl bg-[#111C24] border-white/10 text-white/70 px-3 text-xs"
+                  className="!h-11 !w-[130px] !rounded-xl bg-[#111C24] border-white/10 text-white/70 px-3 text-base lg:text-xs"
                 />
                 <span className="text-[#4B6478] text-xs font-bold">—</span>
                 <DatePicker
@@ -350,7 +350,7 @@ export default function AdminSubscriptions() {
                   value={dateTo}
                   onChange={setDateTo}
                   placeholder="Sampai..."
-                  className="!h-10 !w-[130px] !rounded-xl bg-[#111C24] border-white/10 text-white/70 px-3 text-xs"
+                  className="!h-11 !w-[130px] !rounded-xl bg-[#111C24] border-white/10 text-white/70 px-3 text-base lg:text-xs"
                 />
                 {(dateFrom || dateTo) && (
                   <button
@@ -1051,6 +1051,15 @@ export default function AdminSubscriptions() {
           </motion.div>
         </div>
       )}
+      {/* FAB (Floating Action Button) for Mobile — Prevents Intersecting Layouts */}
+      <div className="md:hidden fixed bottom-20 right-4 z-40 animate-in translate-y-4 duration-500 pb-[env(safe-area-inset-bottom)]">
+        <Button
+          onClick={() => setIsGenerateOpen(true)}
+          className="w-14 h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-[0_10px_30px_rgba(16,185,129,0.4)] border border-emerald-400/20 active:scale-90 transition-transform flex items-center justify-center p-0"
+        >
+          <Plus size={28} />
+        </Button>
+      </div>
     </motion.div>
   )
 }

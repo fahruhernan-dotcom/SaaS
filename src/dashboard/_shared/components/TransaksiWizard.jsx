@@ -427,27 +427,49 @@ export default function TransaksiWizard({ isOpen, onClose }) {
     <Sheet open={isOpen && !successData} onOpenChange={handleClose}>
       <SheetContent
         side={isDesktop ? 'right' : 'bottom'}
+        className="hide-scrollbar"
         style={{
           width: isDesktop ? '520px' : '100%',
-          maxHeight: isDesktop ? '100vh' : '95vh',
+          height: isDesktop ? '100vh' : '100dvh',
+          maxHeight: isDesktop ? '100vh' : '100dvh',
           padding: 0,
           background: '#0C1319',
           border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: isDesktop ? '0' : '24px 24px 0 0',
+          borderRadius: 0,
           display: 'flex', flexDirection: 'column',
           overflow: 'hidden'
         }}
       >
         {/* Header */}
-        <SheetHeader style={{ padding: '20px 20px 0', flexShrink: 0 }}>
-          {!isDesktop && <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.15)', margin: '0 auto 16px' }} />}
+        <SheetHeader style={{ 
+          padding: isDesktop ? '20px 20px 0' : 'env(safe-area-inset-top, 20px) 20px 0', 
+          flexShrink: 0 
+        }}>
+          {!isDesktop && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
+              <button 
+                onClick={handleClose}
+                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground hover:text-white"
+              >
+                <X size={20} />
+              </button>
+            </div>
+          )}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-            <SheetTitle style={{ fontFamily: 'Sora', fontSize: 18, fontWeight: 800, color: '#F1F5F9', margin: 0 }}>
-              Catat Transaksi Baru
+            <SheetTitle style={{ fontFamily: 'Sora', fontSize: 22, fontWeight: 800, color: '#F1F5F9', margin: 0 }}>
+              Catat Transaksi
             </SheetTitle>
             <SheetDescription className="sr-only">
               Form wizard transaksi broker untuk mencatat pembelian dan penjualan.
             </SheetDescription>
+            {isDesktop && (
+              <button 
+                onClick={handleClose}
+                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground hover:text-white"
+              >
+                <X size={20} />
+              </button>
+            )}
           </div>
         </SheetHeader>
 

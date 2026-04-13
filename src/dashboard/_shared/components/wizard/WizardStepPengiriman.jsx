@@ -8,7 +8,8 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { ChevronLeft, Loader2, Truck, ChevronsUpDown, Check, Plus } from 'lucide-react'
+import { PhoneInput } from '@/components/ui/PhoneInput'
+import { AlertCircle, ChevronLeft, Check, Plus, Search, Truck, MapPin, Calculator, Info, Zap, Smartphone, Loader2, ChevronsUpDown } from 'lucide-react'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { Input } from '@/components/ui/input'
 import { formatIDR, safeNum } from '@/lib/format'
@@ -621,8 +622,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                       <Input id="new_driver_name" name="new_driver_name" placeholder="Pak Ahmad" value={newDriver.full_name} onChange={e => setNewDriver(p => ({ ...p, full_name: e.target.value }))} className="h-9 bg-black/20" />
                     </div>
                     <div className="space-y-1">
-                      <label htmlFor="new_driver_phone" style={{ fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase' }}>No HP</label>
-                      <Input id="new_driver_phone" name="new_driver_phone" placeholder="081..." value={newDriver.phone} onChange={e => setNewDriver(p => ({ ...p, phone: e.target.value }))} className="h-9 bg-black/20" />
+                      <PhoneInput id="new_driver_phone" name="new_driver_phone" placeholder="081..." value={newDriver.phone} onChange={e => setNewDriver(p => ({ ...p, phone: e.target.value }))} className="h-9 bg-black/20" />
                     </div>
                   </div>
                   <div className="flex gap-2 mt-1">

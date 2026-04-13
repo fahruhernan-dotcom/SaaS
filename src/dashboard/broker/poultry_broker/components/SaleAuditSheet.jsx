@@ -604,7 +604,7 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
               </div>
             ) : (
               <>
-                {data?.payment_status !== 'lunas' && !isLoading && (
+            {data?.payment_status !== 'lunas' && !isLoading && (delivery?.status === 'arrived' || delivery?.status === 'completed') && (
                   <Button
                     onClick={() => setIsPaymentOpen(true)}
                     className={cn("w-full bg-[#10B981] hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20", isDesktop ? "h-12" : "h-10")}

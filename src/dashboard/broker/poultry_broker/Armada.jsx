@@ -35,6 +35,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet'
 import { Input } from '@/components/ui/input'
+import { PhoneInput } from '@/components/ui/PhoneInput'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
@@ -1050,7 +1051,7 @@ function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
                         </div>
                         <div className="space-y-2">
                              <Label className={cn("font-black uppercase tracking-widest text-[#4B6478] ml-1", isDesktop ? "text-[10px]" : "text-xs")}>No. WhatsApp / HP *</Label>
-                             <Input {...register('phone')} type="tel" placeholder="08123456789" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-bold text-base text-white placeholder:text-white/10" />
+                             <PhoneInput {...register('phone')} placeholder="08123456789" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-bold text-base text-white placeholder:text-white/10" />
                              {errors.phone && <p className="text-[9px] text-red-500 font-black uppercase">{errors.phone.message}</p>}
                         </div>
                     </div>

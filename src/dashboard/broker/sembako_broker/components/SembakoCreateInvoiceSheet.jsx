@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion' // eslint-disable-line n
 import { Plus, X, ChevronLeft, Loader2 } from 'lucide-react'
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
+import { PhoneInput } from '@/components/ui/PhoneInput'
 import { toast } from 'sonner'
 import { formatIDR } from '@/lib/format'
 import {
@@ -364,7 +365,7 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
                           <div><p style={sLabel}>TIPE TOKO</p>
                             <CustomSelect value={newCustForm.customer_type} onChange={v => setNewCustForm({...newCustForm, customer_type: v})} options={CUSTOMER_TYPE_OPTIONS} placeholder="Pilih Tipe" />
                           </div>
-                          <div><p style={sLabel}>NO HP</p><input style={sInput} value={newCustForm.phone} onChange={e => setNewCustForm({...newCustForm, phone: e.target.value})} placeholder="0812..." /></div>
+                          <div><p style={sLabel}>NO HP</p><PhoneInput value={newCustForm.phone} onChange={e => setNewCustForm({...newCustForm, phone: e.target.value})} placeholder="0812..." /></div>
                           <button onClick={handleSaveQuickCust} disabled={createCustomer.isPending} style={{ ...sBtn(true), width: '100%', marginTop: '8px' }}>
                             {createCustomer.isPending ? 'Menyimpan...' : 'Simpan Toko'}
                           </button>

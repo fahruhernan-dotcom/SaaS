@@ -27,16 +27,22 @@ export default function SembakoPenjualan() {
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     if (params.get('action') === 'new') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOpenWizard(true)
     }
   }, [location.search])
+
+  const handleWizardClose = useCallback(() => {
+    setOpenWizard(false)
+    if (location.search.includes('action=new')) {
+      navigate(location.pathname, { replace: true })
+    }
+  }, [location.search, location.pathname, navigate])
 
   return (
     <div style={{ background: C.bg, minHeight: '100vh', paddingBottom: '96px' }}>
       {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Penjualan" />}
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <TabInvoice isDesktop={isDesktop} openWizard={openWizard} setOpenWizard={setOpenWizard} />
+        <TabInvoice isDesktop={isDesktop} openWizard={openWizard} setOpenWizard={handleWizardClose} />
       </div>
     </div>
   )

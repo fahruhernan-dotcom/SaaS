@@ -240,12 +240,18 @@ export default function DeliveryCard({ delivery, onUpdateTiba, onComplete, onSho
     }, [])
 
     let effectiveStatus = delivery.status
-    if (delivery.departure_time && effectiveStatus !== 'completed' && effectiveStatus !== 'arrived') {
-        effectiveStatus = 'on_route'
-    } else if (effectiveStatus === 'on_route' && delivery.load_time) {
-        const loadTime = parseISO(delivery.load_time)
-        if (isAfter(loadTime, currentTime)) {
-            effectiveStatus = 'preparing'
+    
+    // Auto-derive status based on time only if NOT already arrived or completed
+    if (effectiveStatus !== 'arrived' && effectiveStatus !== 'completed') {
+        if (delivery.departure_time) {
+            effectiveStatus = 'on_route'
+        } else if (delivery.load_time) {
+            const loadTime = parseISO(delivery.load_time)
+            if (isAfter(loadTime, currentTime)) {
+                effectiveStatus = 'preparing'
+            } else {
+                effectiveStatus = 'loading'
+            }
         }
     }
 
