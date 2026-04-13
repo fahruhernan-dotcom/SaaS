@@ -26,6 +26,16 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://ternakos.my.id/hubungi-kami</loc>
+    <lastmod>2026-04-13</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ternakos.my.id/blog</loc>
+    <lastmod>2026-04-13</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://ternakos.my.id/faq</loc>
     <lastmod>2026-04-13</lastmod>
     <priority>0.8</priority>
@@ -229,5 +239,30 @@
     <loc>https://ternakos.my.id/harga-pasar/papua-barat-daya</loc>
     <lastmod>2026-04-13</lastmod>
     <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://ternakos.my.id/blog/cara-hitung-fcr-ayam-broiler</loc>
+    <lastmod>2026-04-13</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ternakos.my.id/blog/cara-hitung-indeks-performa-ayam-broiler</loc>
+    <lastmod>2026-04-13</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ternakos.my.id/blog/cara-mengurangi-angka-kematian-ayam-broiler</loc>
+    <lastmod>2026-04-13</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ternakos.my.id/blog/tips-manajemen-kandang-ayam-broiler-pemula</loc>
+    <lastmod>2026-04-13</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://ternakos.my.id/blog/cara-hitung-keuntungan-peternak-ayam-broiler</loc>
+    <lastmod>2026-04-13</lastmod>
+    <priority>0.8</priority>
   </url>
 </urlset>

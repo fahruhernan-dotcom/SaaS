@@ -7,11 +7,13 @@ import './index.css'
 import { TooltipProvider } from './components/ui/tooltip'
 import { AuthProvider } from './lib/hooks/useAuth'
 import { NotificationsProvider } from './lib/hooks/useNotifications.jsx'
+import { HelmetProvider } from 'react-helmet-async'
 import App from './App.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
           <NotificationsProvider>
@@ -43,5 +45,6 @@ createRoot(document.getElementById('root')).render(
         />
       </AuthProvider>
     </QueryClientProvider>
+    </HelmetProvider>
   </StrictMode>,
 )

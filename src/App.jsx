@@ -41,6 +41,8 @@ import UpgradePlan from './dashboard/_shared/pages/UpgradePlan';
 import Market from './dashboard/_shared/pages/Market';
 import MarketPublic from './pages/MarketPublic';
 import HubungiKami from './pages/HubungiKami';
+import BlogPage from './pages/BlogPage';
+import BlogPostPage from './pages/BlogPostPage';
 
 // Components
 import ErrorBoundary from './components/ErrorBoundary';
@@ -250,6 +252,8 @@ function App() {
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/tentang-kami" element={<AboutUs />} />
         <Route path="/hubungi-kami" element={<HubungiKami />} />
+        <Route path="/blog" element={<BlogPage />} />
+        <Route path="/blog/:slug" element={<BlogPostPage />} />
         <Route path="/fitur" element={<FiturPage />} />
         <Route path="/harga" element={<HargaPage />} />
         <Route path="/market" element={<MarketPublic />} />

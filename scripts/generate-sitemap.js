@@ -33,9 +33,20 @@ const staticRoutes = [
   '/fitur',
   '/harga',
   '/tentang-kami',
+  '/hubungi-kami',
+  '/blog',
   '/faq',
   '/terms',
   '/privacy',
+];
+
+// Blog article slugs — keep in sync with src/data/blogPosts.js
+const BLOG_SLUGS = [
+  'cara-hitung-fcr-ayam-broiler',
+  'cara-hitung-indeks-performa-ayam-broiler',
+  'cara-mengurangi-angka-kematian-ayam-broiler',
+  'tips-manajemen-kandang-ayam-broiler-pemula',
+  'cara-hitung-keuntungan-peternak-ayam-broiler',
 ];
 
 function generateSitemap() {
@@ -60,6 +71,15 @@ function generateSitemap() {
     xml += `    <loc>${BASE_URL}/harga-pasar/${slug}</loc>\n`;
     xml += `    <lastmod>${lastMod}</lastmod>\n`;
     xml += `    <priority>0.6</priority>\n`;
+    xml += `  </url>\n`;
+  });
+
+  // 3. Blog Article Route
+  BLOG_SLUGS.forEach(slug => {
+    xml += `  <url>\n`;
+    xml += `    <loc>${BASE_URL}/blog/${slug}</loc>\n`;
+    xml += `    <lastmod>${lastMod}</lastmod>\n`;
+    xml += `    <priority>0.8</priority>\n`;
     xml += `  </url>\n`;
   });
 
