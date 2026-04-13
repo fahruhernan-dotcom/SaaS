@@ -19,7 +19,6 @@ const Navbar = ({ authPage = false }) => {
     { name: 'Harga', href: '/harga' },
     { name: 'Tentang Kami', href: '/tentang-kami' },
     { name: 'Harga Pasar', href: '/harga-pasar' },
-    { name: 'Blog', href: '/blog' },
     { name: 'TernakOS Market', href: '/market' },
   ];
 
