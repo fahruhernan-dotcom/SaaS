@@ -8,6 +8,15 @@ import { id as idLocale } from 'date-fns/locale'
 
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -306,22 +315,27 @@ export default function MarketPublic() {
 
               {/* Chicken type + location */}
               <div className="flex gap-3">
-                <div className="relative flex-1">
-                  <select
-                    id="market-chicken"
-                    name="chicken_filter"
-                    value={chickenFilter}
-                    onChange={e => setChickenFilter(e.target.value)}
-                    className="w-full appearance-none bg-[#111C24] border border-white/10 rounded-xl pl-4 pr-8 py-2.5 text-sm text-[#F1F5F9] focus:outline-none focus:border-emerald-500/50 transition-colors"
-                  >
-                    <option value="all">Semua Komoditas</option>
-                    {COMMODITY_GROUPS.map(g => (
-                      <optgroup key={g.label} label={g.label}>
-                        {g.options.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                      </optgroup>
-                    ))}
-                  </select>
-                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4B6478] pointer-events-none" />
+                <div className="flex-1">
+                  <Select value={chickenFilter} onValueChange={setChickenFilter}>
+                    <SelectTrigger className="w-full h-12 bg-[#111C24] border-white/10 rounded-xl text-sm text-[#F1F5F9] focus:ring-emerald-500/50">
+                      <SelectValue placeholder="Semua Komoditas" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0C1319] border-white/10 text-[#F1F5F9]">
+                      <SelectItem value="all">Semua Komoditas</SelectItem>
+                      {COMMODITY_GROUPS.map(g => (
+                        <SelectGroup key={g.label}>
+                          <SelectLabel className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] px-2 py-2">
+                            {g.label}
+                          </SelectLabel>
+                          {g.options.map(c => (
+                            <SelectItem key={c.value} value={c.value} className="focus:bg-emerald-500/10 focus:text-emerald-400">
+                              {c.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="relative flex-1">
