@@ -157,8 +157,10 @@ export default function BrokerLayout() {
     if (swipeStartX.current === null) return
     const dx = e.changedTouches[0].clientX - swipeStartX.current
     // Only trigger if swipe started within 40px of left edge and moved 60px+ right
-    if (swipeStartX.current < 40 && dx > 60) {
+    if (!sidebarOpen && swipeStartX.current < 40 && dx > 60) {
       setSidebarOpen(true)
+    } else if (sidebarOpen && dx < -50) {
+      setSidebarOpen(false)
     }
     swipeStartX.current = null
   }

@@ -341,7 +341,7 @@ export default function PeternakBeranda() {
 
       {/* ── SECTION A — Header ── */}
       <header className="px-4 pt-6 pb-5 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.04] flex justify-between items-start">
-        <div>
+        <div className="hidden md:block">
           <p className="text-xs text-[#4B6478] mb-1">Selamat {getGreeting()},</p>
           <h1 className="font-['Sora'] text-xl font-extrabold text-slate-100 mb-1">
             {profile?.full_name?.split(' ')[0] ?? 'Peternak'} 👋
