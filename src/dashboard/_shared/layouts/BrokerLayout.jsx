@@ -4,7 +4,6 @@ import BottomNav from '../components/BottomNav'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import DesktopSidebarLayout from './DesktopSidebarLayout'
 import AppSidebar from '../components/AppSidebar'
-import { SembakoHamburgerDrawer } from '@/dashboard/broker/sembako_broker/components/SembakoNavigation'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { resolveBusinessVertical } from '@/lib/businessModel'
 import BusinessModelOverlay from '../components/BusinessModelOverlay'
@@ -191,10 +190,7 @@ export default function BrokerLayout() {
             overscrollBehaviorX: 'none'
           }}
         >
-          {isSembako 
-            ? <SembakoHamburgerDrawer open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-            : <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-          }
+          <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           <BusinessNameWarningBanner />
           <Outlet context={{ setSidebarOpen }} />
           <BottomNav />

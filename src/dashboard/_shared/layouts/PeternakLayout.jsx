@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { Outlet } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
@@ -19,12 +19,29 @@ export default function PeternakLayout() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  // Swipe-right-from-left-edge to open sidebar
+  const swipeStartX = useRef(null)
+  const handleTouchStart = (e) => {
+    swipeStartX.current = e.touches[0].clientX
+  }
+  const handleTouchEnd = (e) => {
+    if (swipeStartX.current === null) return
+    const dx = e.changedTouches[0].clientX - swipeStartX.current
+    if (swipeStartX.current < 40 && dx > 60) {
+      setSidebarOpen(true)
+    }
+    swipeStartX.current = null
+  }
+
   if (loading) return null
 
   const renderContent = () => {
     if (!isDesktop) {
       return (
-        <div style={{
+        <div 
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          style={{
           background: '#06090F',
           minHeight: '100vh',
           maxWidth: '480px',
@@ -34,16 +51,9 @@ export default function PeternakLayout() {
           overflowX: 'hidden',
           overscrollBehaviorX: 'none'
         }}>
-          <button
-            className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-[#0C1319] border border-white/10 rounded-xl flex items-center justify-center shadow-lg"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="w-5 h-5 text-[#94A3B8]" />
-          </button>
-          
           <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           <BusinessNameWarningBanner />
-          <Outlet />
+          <Outlet context={{ setSidebarOpen }} />
 
           <BottomNav />
         </div>

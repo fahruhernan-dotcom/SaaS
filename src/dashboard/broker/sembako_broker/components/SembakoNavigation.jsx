@@ -145,7 +145,7 @@ export function SembakoHamburgerDrawer({ open, onClose }) {
             transition={{ duration: 0.2 }}
             onClick={onClose}
             style={{
-              position: 'fixed', inset: 0, zIndex: 200,
+              position: 'fixed', inset: 0, zIndex: 4000,
               background: 'rgba(0,0,0,0.65)',
             }}
           />
@@ -158,7 +158,7 @@ export function SembakoHamburgerDrawer({ open, onClose }) {
             transition={{ type: 'spring', stiffness: 320, damping: 32 }}
             style={{
               position: 'fixed', top: 0, left: 0, bottom: 0,
-              width: '75%', maxWidth: 300, zIndex: 201,
+              width: '75%', maxWidth: 300, zIndex: 4001,
               background: '#0E0905',
               borderRight: '1px solid rgba(234,88,12,0.12)',
               display: 'flex', flexDirection: 'column',
