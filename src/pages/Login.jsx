@@ -27,6 +27,7 @@ const GoogleIcon = () => (
 import BlurText from '@/components/reactbits/BlurText'
 import AnimatedContent from '@/components/reactbits/AnimatedContent'
 import Particles from '@/components/reactbits/Particles'
+import ShaderBackground from '@/components/ui/shader-background'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -572,75 +573,82 @@ function MobileLoginView({ email, setEmail, password, setPassword, showPassword,
   }, [])
 
   return (
-    <div ref={containerRef} style={{ minHeight: '100vh', background: '#0d1117', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: 420, minHeight: '100vh', background: '#0d1117', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div ref={containerRef} style={{ minHeight: '100vh', background: 'transparent', display: 'flex', justifyContent: 'center', position: 'relative' }}>
+      {/* Background Shader Effect */}
+      <ShaderBackground />
+
+      <div style={{ 
+        width: '100%', 
+        maxWidth: 420, 
+        minHeight: '100vh', 
+        background: 'rgba(6, 9, 15, 0.4)', 
+        backdropFilter: 'blur(32px)',
+        overflow: 'hidden', 
+        display: 'flex', 
+        flexDirection: 'column',
+        position: 'relative',
+        zIndex: 1,
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+      }}>
         <div style={{ position: 'relative' }}>
-          <div style={{ background: 'linear-gradient(145deg, #0f3d22 0%, #14532d 40%, #166534 70%, #15803d 100%)', padding: '52px 28px 84px', position: 'relative', overflow: 'hidden' }}>
+          {/* Refined Mesh Gradient Header */}
+          <div style={{ 
+            background: 'radial-gradient(circle at 15% 15%, #065f46 0%, #0d1117 80%)', 
+            padding: '32px 32px 40px', 
+            position: 'relative', 
+            overflow: 'hidden',
+          }}>
+            {/* Ambient circles with ultra-low opacity */}
             <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice">
-              <circle className="ml-circle" cx="340" cy="25"  r="105" fill="none" stroke="white" strokeWidth="1.5" style={{ opacity: 0.05 }} />
-              <circle className="ml-circle" cx="340" cy="25"  r="66"  fill="none" stroke="white" strokeWidth="1"   style={{ opacity: 0.05 }} />
-              <circle className="ml-circle" cx="340" cy="25"  r="32"  fill="none" stroke="white" strokeWidth="0.8" style={{ opacity: 0.05 }} />
-              <circle className="ml-circle" cx="-20" cy="205" r="120" fill="none" stroke="white" strokeWidth="1.5" style={{ opacity: 0.04 }} />
-              <circle className="ml-circle" cx="-20" cy="205" r="78"  fill="none" stroke="white" strokeWidth="1"   style={{ opacity: 0.04 }} />
-              <circle className="ml-circle" cx="185" cy="-8"  r="72"  fill="none" stroke="white" strokeWidth="1"   style={{ opacity: 0.04 }} />
+              <circle className="ml-circle" cx="360" cy="10"  r="160" fill="none" stroke="white" strokeWidth="0.5" style={{ opacity: 0.02 }} />
+              <circle className="ml-circle" cx="-40" cy="220" r="180" fill="none" stroke="white" strokeWidth="0.5" style={{ opacity: 0.01 }} />
             </svg>
-            <div className="ml-logo-wrap ml-stagger" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28, opacity: 0 }}>
-              <div style={{ position: 'relative', width: 46, height: 46, flexShrink: 0 }}>
-                <div style={{ position: 'absolute', inset: -3, borderRadius: 15, background: 'rgba(34,197,94,0.35)', filter: 'blur(6px)' }} />
+
+            {/* Branding – Premium Presence */}
+            <Link to="/" className="ml-logo-wrap ml-stagger" style={{ display: 'inline-flex', alignItems: 'center', gap: 14, marginBottom: 20, opacity: 0, textDecoration: 'none', cursor: 'pointer' }}>
+              <div style={{ position: 'relative', width: 38, height: 38, flexShrink: 0 }}>
+                <div style={{ position: 'absolute', inset: -6, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', filter: 'blur(10px)' }} />
                 <img
                   src="/logo.png"
                   alt="TernakOS"
-                  style={{ width: 46, height: 46, borderRadius: 12, objectFit: 'cover', position: 'relative', zIndex: 1, boxShadow: '0 0 0 1.5px rgba(34,197,94,0.5)' }}
+                  style={{ width: 38, height: 38, borderRadius: 10, objectFit: 'cover', position: 'relative', zIndex: 1, display: 'block', border: '1px solid rgba(255,255,255,0.05)' }}
                 />
               </div>
-              <span style={{ color: 'white', fontWeight: 800, fontSize: 20, letterSpacing: '-0.04em', fontFamily: 'Sora, sans-serif', lineHeight: 1 }}>TernakOS</span>
-            </div>
+              <span className="font-display" style={{ color: 'white', fontWeight: 800, fontSize: 20, letterSpacing: '-0.04em', lineHeight: 1 }}>TernakOS</span>
+            </Link>
+
+            {/* Heading – Balanced Presence */}
             <div className="ml-stagger" style={{ opacity: 0 }}>
-              <h1 style={{ color: 'white', margin: '0 0 8px', fontSize: 30, fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.03em', fontFamily: 'Sora, sans-serif' }}>
-                Selamat datang<br />kembali 👋
+              <h1 className="font-display" style={{ color: 'white', margin: '0 0 8px', fontSize: 24, fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.04em' }}>
+                Selamat datang kembali 👋
               </h1>
-              <p style={{ color: '#86efac', margin: 0, fontSize: 14, lineHeight: 1.65, fontFamily: 'Inter, sans-serif' }}>
+              <p className="font-body" style={{ color: '#94a3b8', margin: 0, fontSize: 14, fontWeight: 500, lineHeight: 1.4 }}>
                 Masuk untuk kelola ternak kamu
               </p>
             </div>
+
+            {/* Elegance Wave separator */}
+            <svg viewBox="0 0 420 40" preserveAspectRatio="none" style={{ position: 'absolute', bottom: -1, left: 0, width: '100%', height: 32, pointerEvents: 'none', zIndex: 10 }}>
+              <path d="M0,20 C150,45 270,-5 420,15 L420,40 L0,40 Z" fill="#06090f" style={{ opacity: 0.4 }} />
+              <path d="M0,25 C120,45 300,5 420,20 L420,40 L0,40 Z" fill="#06090f" />
+            </svg>
           </div>
-          <svg viewBox="0 0 420 60" preserveAspectRatio="none" style={{ display: 'block', width: '100%', height: 60, marginTop: -1 }}>
-            <path d="M0,0 C80,60 180,0 280,40 C350,65 400,20 420,0 L420,60 L0,60 Z" fill="#0d1117" />
-          </svg>
         </div>
-        <div style={{ flex: 1, padding: '4px 28px 36px', marginTop: -16 }}>
-          <div className="ml-stagger" style={{ opacity: 0 }}>
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '13px', background: '#161b22', border: '1.5px solid #2d3748', borderRadius: 14, color: '#e2e8f0', fontSize: 15, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit' }}
-              onMouseEnter={e => { e.currentTarget.style.background = '#1c2533'; e.currentTarget.style.borderColor = '#3d4f63' }}
-              onMouseLeave={e => { e.currentTarget.style.background = '#161b22'; e.currentTarget.style.borderColor = '#2d3748' }}
-              onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.97)' }}
-              onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)' }}
-            >
-              <GoogleIcon />
-              Masuk dengan Google
-            </button>
-          </div>
-          <div className="ml-stagger" style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0', opacity: 0 }}>
-            <div style={{ flex: 1, height: 1, background: '#1f2937' }} />
-            <span style={{ color: '#374151', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em' }}>ATAU</span>
-            <div style={{ flex: 1, height: 1, background: '#1f2937' }} />
-          </div>
-          <form onSubmit={e => { e.preventDefault(); handleLogin() }}>
-            <div className="ml-stagger" style={{ marginBottom: 26, opacity: 0 }}>
-              <label style={{ display: 'block', color: '#6b7280', fontSize: 11, fontWeight: 700, marginBottom: 10, letterSpacing: '0.1em' }}>EMAIL</label>
+        <div style={{ flex: 1, padding: '12px 32px 48px' }}>
+          {/* Primary Form */}
+          <form onSubmit={e => { e.preventDefault(); handleLogin() }} style={{ marginTop: 12 }}>
+            <div className="ml-stagger" style={{ marginBottom: 32, opacity: 0 }}>
+              <label style={{ display: 'block', color: '#64748b', fontSize: 12, fontWeight: 600, marginBottom: 12, letterSpacing: '0.05em' }} className="font-body">EMAIL</label>
               <AnimatedMobileInput
                 type="email"
                 placeholder="nama@email.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                icon={<Mail size={17} />}
+                icon={<Mail size={18} strokeWidth={1.5} />}
               />
             </div>
-            <div className="ml-stagger" style={{ marginBottom: 8, opacity: 0 }}>
-              <label style={{ display: 'block', color: '#6b7280', fontSize: 11, fontWeight: 700, marginBottom: 10, letterSpacing: '0.1em' }}>PASSWORD</label>
+            <div className="ml-stagger" style={{ marginBottom: 12, opacity: 0 }}>
+              <label style={{ display: 'block', color: '#64748b', fontSize: 12, fontWeight: 600, marginBottom: 12, letterSpacing: '0.05em' }} className="font-body">PASSWORD</label>
               <AnimatedMobileInput
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Masukkan password"
@@ -705,10 +713,34 @@ function MobileLoginView({ email, setEmail, password, setPassword, showPassword,
                 onPointerDown={e => { if (email && password && !isLoading) e.currentTarget.style.transform = 'scale(0.97)' }}
                 onPointerUp={e => { if (email && password && !isLoading) e.currentTarget.style.transform = 'scale(1)' }}
               >
-                {isLoading ? <><Loader2 size={16} className="animate-spin" /> Masuk...</> : 'Masuk'}
+                {isLoading ? <><Loader2 size={16} className="animate-spin" /> Masuk...</> : 'Masuk →'}
               </button>
             </div>
           </form>
+
+          {/* Divider – ultra subtle */}
+          <div className="ml-stagger" style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '24px 0', opacity: 0 }}>
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.05))' }} />
+            <span style={{ color: '#475569', fontSize: 11, fontWeight: 700, letterSpacing: '0.2em' }} className="font-body">ATAU</span>
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(to left, transparent, rgba(255,255,255,0.05))' }} />
+          </div>
+
+          {/* Google button – Classy Glass Style */}
+          <div className="ml-stagger" style={{ opacity: 0 }}>
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '14px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, color: '#e2e8f0', fontSize: 15, fontWeight: 600, cursor: 'pointer', transition: 'all 0.3s ease', backdropFilter: 'blur(8px)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'rgba(34,197,94,0.3)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
+              onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.98)' }}
+              onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)' }}
+              className="font-body"
+            >
+              <GoogleIcon />
+              Masuk dengan Google
+            </button>
+          </div>
           <div className="ml-stagger" style={{ textAlign: 'center', marginTop: 18, marginBottom: 10, color: '#4a5568', fontSize: 13, opacity: 0 }}>
             Belum punya akun?
           </div>
@@ -726,7 +758,6 @@ function MobileLoginView({ email, setEmail, password, setPassword, showPassword,
             </button>
           </div>
           <p className="ml-stagger" style={{ textAlign: 'center', color: '#374151', fontSize: 12, marginTop: 22, lineHeight: 1.6, opacity: 0 }}>
-            Dengan masuk, kamu menyetujui{' '}
             <Link to="/terms" style={{ color: '#22c55e', textDecoration: 'none' }}>Syarat & Ketentuan</Link>
             {' '}dan{' '}
             <Link to="/privacy" style={{ color: '#22c55e', textDecoration: 'none' }}>Kebijakan Privasi</Link> kami.
@@ -739,35 +770,82 @@ function MobileLoginView({ email, setEmail, password, setPassword, showPassword,
 
 function AnimatedMobileInput({ type, placeholder, value, onChange, icon, rightIcon }) {
   const [focused, setFocused] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
+  
   return (
-    <div style={{ position: 'relative', paddingBottom: 2 }}>
-      <span style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', color: focused ? '#22c55e' : '#4a5568', transition: 'color 0.25s', pointerEvents: 'none', lineHeight: 0 }}>
-        {icon}
-      </span>
-      <input
-        type={type}
-        placeholder={placeholder}
-        value={value}
-        onChange={onChange}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1.5px solid #1f2937', padding: '10px 36px', color: '#e2e8f0', fontSize: 15, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', caretColor: '#22c55e' }}
-      />
+    <div 
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{ position: 'relative', marginBottom: 24 }}
+    >
+      <style>{`
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus {
+          -webkit-text-fill-color: #f1f5f9 !important;
+          -webkit-box-shadow: 0 0 0px 1000px #0a1118 inset !important;
+          transition: background-color 500000s ease-in-out 0s;
+          caret-color: #22c55e !important;
+        }
+        input::placeholder {
+          color: #475569 !important;
+          opacity: 0.6;
+        }
+      `}</style>
+
       <div style={{
-        position: 'absolute', bottom: 0, left: '50%',
-        transform: `translateX(-50%) scaleX(${focused ? 1 : 0})`,
-        width: '100%', height: 2,
-        background: 'linear-gradient(90deg, transparent 0%, #22c55e 50%, transparent 100%)',
-        transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-        transformOrigin: 'center',
-        borderRadius: 999,
-        willChange: 'transform',
-      }} />
-      {rightIcon && (
-        <div style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', lineHeight: 0 }}>
-          {rightIcon}
+        display: 'flex',
+        alignItems: 'center',
+        padding: '14px 16px',
+        background: 'rgba(13, 17, 23, 0.7)',
+        borderRadius: 14,
+        border: focused ? '1.5px solid rgba(34, 197, 94, 0.45)' : (isHovered ? '1.5px solid rgba(255, 255, 255, 0.12)' : '1.5px solid rgba(255, 255, 255, 0.03)'),
+        transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: focused ? '0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(34, 197, 94, 0.05)' : 'none'
+      }}>
+        <div style={{ color: focused ? '#22c55e' : '#475569', transition: 'color 0.3s', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, marginRight: 16, flexShrink: 0 }}>
+          {icon}
         </div>
-      )}
+
+        <input
+          type={type}
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={{ 
+            flex: 1,
+            background: 'transparent', 
+            border: 'none',
+            color: '#f1f5f9', 
+            fontSize: 16, 
+            outline: 'none', 
+            fontFamily: 'inherit', 
+            caretColor: '#22c55e',
+            padding: 0,
+            width: '100%'
+          }}
+        />
+
+        {rightIcon && (
+          <div style={{ marginLeft: 10, display: 'flex', alignItems: 'center', color: '#475569' }}>
+            {rightIcon}
+          </div>
+        )}
+      </div>
+      
+      {/* Precision Accent Beam */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: '15%',
+        transform: `scaleX(${focused ? 1 : 0})`,
+        width: '70%', height: 1.5,
+        background: 'linear-gradient(90deg, transparent 0%, #22c55e 50%, transparent 100%)',
+        transition: 'transform 0.6s cubic-bezier(0.19, 1, 0.22, 1)',
+        transformOrigin: 'center',
+        opacity: focused ? 0.8 : 0,
+        zIndex: 2
+      }} />
     </div>
   )
 }

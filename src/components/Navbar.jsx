@@ -242,7 +242,7 @@ const Navbar = ({ authPage = false }) => {
   
                   <motion.button
                     onClick={() => navigate('/register')}
-                    className="nav-action-btn"
+                    className="nav-action-btn hidden md:block"
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1, transition: { duration: 0.5, delay: 0.6 } }}
                     style={{
