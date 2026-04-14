@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { motion } from 'framer-motion'
@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import {
 import {
   Eye, EyeOff, AlertCircle, Loader2,
   TrendingUp, Truck, BarChart2, Clock, Shield, Users, Zap, Mail, Lock
@@ -620,188 +619,194 @@ function MobileLoginView({ email, setEmail, password, setPassword, showPassword,
         }
         .daftar-btn:hover { border-color: #22c55e; color: #22c55e; }
         .daftar-btn:active { transform: scale(0.98); }
+  const [remember, setRemember] = useState(false)
+  const containerRef = useRef(null)
 
-        .remember-check {
-          width: 16px; height: 16px; accent-color: #22c55e; cursor: pointer;
-        }
-        .lupa-link { color: #22c55e; font-size: 13px; font-weight: 500; text-decoration: none; background: none; border: none; cursor: pointer; padding: 0; }
-        .lupa-link:hover { text-decoration: underline; }
-      `}</style>
+  useEffect(() => {
+    import('animejs').then(({ animate, createTimeline, stagger }) => {
+      createTimeline({ defaults: { ease: 'outElastic(1, 0.6)', duration: 750 } })
+        .add('.ml-stagger', {
+          opacity: [0, 1],
+          translateY: [32, 0],
+        }, stagger(90))
 
-      <div style={{
-        width: "100%",
-        maxWidth: 420,
-        minHeight: "100vh",
-        background: "#0d1117",
-        overflow: "hidden",
-        position: "relative",
-        display: "flex",
-        flexDirection: "column",
-      }}>
-        {/* ── HERO HEADER with wave ── */}
-        <div style={{ position: "relative", background: "#0d1117" }}>
-          {/* Green hero area */}
-          <div style={{
-            background: "linear-gradient(145deg, #14532d 0%, #166534 50%, #15803d 100%)",
-            padding: "52px 28px 80px",
-            position: "relative",
-            overflow: "hidden",
-          }}>
-            {/* Subtle organic pattern */}
-            <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0.08 }} viewBox="0 0 400 220" preserveAspectRatio="xMidYMid slice">
-              <circle cx="320" cy="40" r="90" fill="none" stroke="white" strokeWidth="1.5"/>
-              <circle cx="320" cy="40" r="60" fill="none" stroke="white" strokeWidth="1"/>
-              <circle cx="320" cy="40" r="30" fill="none" stroke="white" strokeWidth="0.8"/>
-              <circle cx="-20" cy="180" r="100" fill="none" stroke="white" strokeWidth="1.5"/>
-              <circle cx="-20" cy="180" r="65" fill="none" stroke="white" strokeWidth="1"/>
-              <circle cx="180" cy="-10" r="70" fill="none" stroke="white" strokeWidth="1"/>
+      animate('.ml-logo-wrap', {
+        scale: [0.5, 1],
+        opacity: [0, 1],
+        ease: 'outElastic(1, 0.5)',
+        duration: 900,
+      })
+
+      animate('.ml-circle', {
+        opacity: [0.05, 0.2],
+        ease: 'inOutSine',
+        duration: 3200,
+        loop: true,
+        alternate: true,
+        delay: stagger(650),
+      })
+    })
+  }, [])
+
+  return (
+    <div ref={containerRef} style={{ minHeight: '100vh', background: '#0d1117', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: 420, minHeight: '100vh', background: '#0d1117', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ position: 'relative' }}>
+          <div style={{ background: 'linear-gradient(145deg, #0f3d22 0%, #14532d 40%, #166534 70%, #15803d 100%)', padding: '52px 28px 84px', position: 'relative', overflow: 'hidden' }}>
+            <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice">
+              <circle className="ml-circle" cx="340" cy="25"  r="105" fill="none" stroke="white" strokeWidth="1.5" style={{ opacity: 0.05 }} />
+              <circle className="ml-circle" cx="340" cy="25"  r="66"  fill="none" stroke="white" strokeWidth="1"   style={{ opacity: 0.05 }} />
+              <circle className="ml-circle" cx="340" cy="25"  r="32"  fill="none" stroke="white" strokeWidth="0.8" style={{ opacity: 0.05 }} />
+              <circle className="ml-circle" cx="-20" cy="205" r="120" fill="none" stroke="white" strokeWidth="1.5" style={{ opacity: 0.04 }} />
+              <circle className="ml-circle" cx="-20" cy="205" r="78"  fill="none" stroke="white" strokeWidth="1"   style={{ opacity: 0.04 }} />
+              <circle className="ml-circle" cx="185" cy="-8"  r="72"  fill="none" stroke="white" strokeWidth="1"   style={{ opacity: 0.04 }} />
             </svg>
-
-            {/* Logo */}
-            <div className="anim-1" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 28 }}>
-              <div style={{
-                width: 40, height: 40, borderRadius: 10,
-                background: "#22c55e",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontWeight: 800, fontSize: 18, color: "white", fontFamily: "Sora"
-              }}>T</div>
-              <span style={{ color: "white", fontWeight: 700, fontSize: 18, letterSpacing: "-0.02em", fontFamily: "Sora" }}>TernakOS</span>
+            <div className="ml-logo-wrap ml-stagger" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28, opacity: 0 }}>
+              <div style={{ position: 'relative', width: 46, height: 46, flexShrink: 0 }}>
+                <div style={{ position: 'absolute', inset: -3, borderRadius: 15, background: 'rgba(34,197,94,0.35)', filter: 'blur(6px)' }} />
+                <img
+                  src="/logo.png"
+                  alt="TernakOS"
+                  style={{ width: 46, height: 46, borderRadius: 12, objectFit: 'cover', position: 'relative', zIndex: 1, boxShadow: '0 0 0 1.5px rgba(34,197,94,0.5)' }}
+                />
+              </div>
+              <span style={{ color: 'white', fontWeight: 800, fontSize: 20, letterSpacing: '-0.04em', fontFamily: 'Sora, sans-serif', lineHeight: 1 }}>TernakOS</span>
             </div>
-
-            {/* Heading */}
-            <div className="anim-2">
-              <h1 style={{
-                color: "white", margin: "0 0 8px",
-                fontSize: 30, fontWeight: 800,
-                lineHeight: 1.2, letterSpacing: "-0.03em", fontFamily: "Sora"
-              }}>Selamat datang<br/>kembali 👋</h1>
-              <p style={{ color: "#86efac", margin: 0, fontSize: 14, fontWeight: 400, lineHeight: 1.5, fontFamily: "Inter, sans-serif" }}>
+            <div className="ml-stagger" style={{ opacity: 0 }}>
+              <h1 style={{ color: 'white', margin: '0 0 8px', fontSize: 30, fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.03em', fontFamily: 'Sora, sans-serif' }}>
+                Selamat datang<br />kembali 👋
+              </h1>
+              <p style={{ color: '#86efac', margin: 0, fontSize: 14, lineHeight: 1.65, fontFamily: 'Inter, sans-serif' }}>
                 Masuk untuk kelola ternak kamu
               </p>
             </div>
           </div>
-
-          {/* Wave SVG */}
-          <svg
-            viewBox="0 0 420 60"
-            preserveAspectRatio="none"
-            style={{ display: "block", width: "100%", height: 60, marginTop: -1 }}
-          >
-            <path
-              d="M0,0 C80,60 180,0 280,40 C350,65 400,20 420,0 L420,60 L0,60 Z"
-              fill="#0d1117"
-            />
+          <svg viewBox="0 0 420 60" preserveAspectRatio="none" style={{ display: 'block', width: '100%', height: 60, marginTop: -1 }}>
+            <path d="M0,0 C80,60 180,0 280,40 C350,65 400,20 420,0 L420,60 L0,60 Z" fill="#0d1117" />
           </svg>
         </div>
-
-        {/* ── FORM AREA ── */}
-        <div style={{ flex: 1, padding: "4px 28px 32px", marginTop: -16 }}>
-
-          {/* Google button */}
-          <div className="anim-3">
-            <button className="google-btn font-sans" onClick={handleGoogleSignIn} type="button" style={{
-              width: "100%", display: "flex", alignItems: "center",
-              justifyContent: "center", gap: 10,
-              padding: "13px", background: "#161b22",
-              border: "1.5px solid #2d3748", borderRadius: 12,
-              color: "#e2e8f0", fontSize: 15, fontWeight: 600,
-              cursor: "pointer", transition: "background 0.2s",
-            }}>
+        <div style={{ flex: 1, padding: '4px 28px 36px', marginTop: -16 }}>
+          <div className="ml-stagger" style={{ opacity: 0 }}>
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '13px', background: '#161b22', border: '1.5px solid #2d3748', borderRadius: 14, color: '#e2e8f0', fontSize: 15, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit' }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#1c2533'; e.currentTarget.style.borderColor = '#3d4f63' }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#161b22'; e.currentTarget.style.borderColor = '#2d3748' }}
+              onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.97)' }}
+              onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)' }}
+            >
               <GoogleIcon />
               Masuk dengan Google
             </button>
           </div>
-
-          {/* Divider */}
-          <div className="anim-4 font-sans" style={{ display: "flex", alignItems: "center", gap: 12, margin: "20px 0" }}>
-            <div style={{ flex: 1, height: 1, background: "#2d3748" }} />
-            <span style={{ color: "#4a5568", fontSize: 12, fontWeight: 500, letterSpacing: "0.1em" }}>ATAU</span>
-            <div style={{ flex: 1, height: 1, background: "#2d3748" }} />
+          <div className="ml-stagger" style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '20px 0', opacity: 0 }}>
+            <div style={{ flex: 1, height: 1, background: '#1f2937' }} />
+            <span style={{ color: '#374151', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em' }}>ATAU</span>
+            <div style={{ flex: 1, height: 1, background: '#1f2937' }} />
           </div>
-
-          <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
-            {/* Email */}
-            <div className="anim-5 font-sans" style={{ marginBottom: 24 }}>
-              <label style={{ display: "block", color: "#a3a3a3", fontSize: 12, fontWeight: 600, marginBottom: 8, letterSpacing: "0.06em" }}>EMAIL</label>
-              <div className="input-wrap">
-                <span className="icon-left"><Mail size={18} /></span>
-                <input
-                  type="email"
-                  placeholder="nama@email.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="font-sans"
-                />
-              </div>
+          <form onSubmit={e => { e.preventDefault(); handleLogin() }}>
+            <div className="ml-stagger" style={{ marginBottom: 26, opacity: 0 }}>
+              <label style={{ display: 'block', color: '#6b7280', fontSize: 11, fontWeight: 700, marginBottom: 10, letterSpacing: '0.1em' }}>EMAIL</label>
+              <AnimatedMobileInput
+                type="email"
+                placeholder="nama@email.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                icon={<Mail size={17} />}
+              />
             </div>
-
-            {/* Password */}
-            <div className="anim-5 font-sans" style={{ marginBottom: 16 }}>
-              <label style={{ display: "block", color: "#a3a3a3", fontSize: 12, fontWeight: 600, marginBottom: 8, letterSpacing: "0.06em" }}>PASSWORD</label>
-              <div className="input-wrap">
-                <span className="icon-left"><Lock size={18} /></span>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Masukkan password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="font-sans"
-                />
-                <button type="button" className="icon-right" onClick={() => setShowPassword(!showPassword)}>
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
+            <div className="ml-stagger" style={{ marginBottom: 8, opacity: 0 }}>
+              <label style={{ display: 'block', color: '#6b7280', fontSize: 11, fontWeight: 700, marginBottom: 10, letterSpacing: '0.1em' }}>PASSWORD</label>
+              <AnimatedMobileInput
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Masukkan password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                icon={<Lock size={17} />}
+                rightIcon={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4a5568', display: 'flex', alignItems: 'center', padding: 0, transition: 'color 0.2s' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = '#22c55e' }}
+                    onMouseLeave={e => { e.currentTarget.style.color = '#4a5568' }}
+                  >
+                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                }
+              />
             </div>
-
             {error && (
-              <div className="anim-5 mb-4" style={{
-                padding: '10px 14px', background: 'rgba(248,113,113,0.08)',
-                border: '1px solid rgba(248,113,113,0.20)', borderRadius: '10px',
-                fontSize: '13px', color: '#F87171', display: 'flex', gap: '8px', alignItems: 'center'
-              }}>
-                <AlertCircle size={14} className="shrink-0" />
+              <div style={{ padding: '10px 14px', background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.20)', borderRadius: 10, fontSize: 13, color: '#F87171', display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, marginTop: 12 }}>
+                <AlertCircle size={14} style={{ flexShrink: 0 }} />
                 {error}
               </div>
             )}
-
-            {/* Remember me + Lupa password */}
-            <div className="anim-6 font-sans" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
-              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+            <div className="ml-stagger" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '20px 0 26px', opacity: 0 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                 <input
                   type="checkbox"
-                  className="remember-check"
                   checked={remember}
                   onChange={e => setRemember(e.target.checked)}
+                  style={{ width: 16, height: 16, accentColor: '#22c55e', cursor: 'pointer' }}
                 />
-                <span style={{ color: "#a3a3a3", fontSize: 13 }}>Ingat saya</span>
+                <span style={{ color: '#9ca3af', fontSize: 13, fontFamily: 'inherit' }}>Ingat saya</span>
               </label>
-              <button type="button" onClick={() => navigate('/forgot-password')} className="lupa-link">Lupa password?</button>
+              <button
+                type="button"
+                onClick={() => navigate('/forgot-password')}
+                style={{ color: '#22c55e', fontSize: 13, fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+              >
+                Lupa password?
+              </button>
             </div>
-
-            {/* Masuk button */}
-            <div className="anim-6 font-sans" style={{ marginBottom: 12 }}>
-              <button type="submit" disabled={isLoading || !email || !password} className="masuk-btn flex items-center justify-center gap-2">
+            <div className="ml-stagger" style={{ marginBottom: 12, opacity: 0 }}>
+              <button
+                type="submit"
+                disabled={isLoading || !email || !password}
+                style={{
+                  width: '100%', padding: '14px',
+                  background: (!email || !password) ? '#14532d' : '#22c55e',
+                  border: 'none', borderRadius: 14, color: 'white',
+                  fontSize: 16, fontWeight: 700, fontFamily: 'Sora, sans-serif',
+                  cursor: isLoading || !email || !password ? 'not-allowed' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  letterSpacing: '0.01em',
+                  boxShadow: (!email || !password) ? 'none' : '0 4px 24px rgba(34,197,94,0.3)',
+                  transition: 'all 0.2s',
+                  opacity: (!email || !password) ? 0.55 : 1,
+                }}
+                onMouseEnter={e => { if (email && password && !isLoading) e.currentTarget.style.background = '#16a34a' }}
+                onMouseLeave={e => { if (email && password && !isLoading) e.currentTarget.style.background = '#22c55e' }}
+                onPointerDown={e => { if (email && password && !isLoading) e.currentTarget.style.transform = 'scale(0.97)' }}
+                onPointerUp={e => { if (email && password && !isLoading) e.currentTarget.style.transform = 'scale(1)' }}
+              >
                 {isLoading ? <><Loader2 size={16} className="animate-spin" /> Masuk...</> : 'Masuk'}
               </button>
             </div>
           </form>
-
-          {/* Divider */}
-          <div className="anim-7 font-sans" style={{ textAlign: "center", margin: "16px 0 12px", color: "#4a5568", fontSize: 13 }}>
+          <div className="ml-stagger" style={{ textAlign: 'center', marginTop: 18, marginBottom: 10, color: '#4a5568', fontSize: 13, opacity: 0 }}>
             Belum punya akun?
           </div>
-
-          {/* Daftar button */}
-          <div className="anim-7 font-sans">
-            <button type="button" onClick={() => navigate('/register')} className="daftar-btn">Daftar Sekarang — Gratis 14 Hari</button>
+          <div className="ml-stagger" style={{ opacity: 0 }}>
+            <button
+              type="button"
+              onClick={() => navigate('/register')}
+              style={{ width: '100%', padding: '13px', background: 'transparent', border: '1.5px solid #2d3748', borderRadius: 14, color: '#a3a3a3', fontSize: 15, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = '#22c55e'; e.currentTarget.style.color = '#22c55e' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = '#2d3748'; e.currentTarget.style.color = '#a3a3a3' }}
+              onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.97)' }}
+              onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)' }}
+            >
+              Daftar Sekarang — Gratis 14 Hari
+            </button>
           </div>
-
-          {/* Legal */}
-          <p className="font-sans" style={{ textAlign: "center", color: "#4a5568", fontSize: 12, marginTop: 20, lineHeight: 1.6 }}>
-            Dengan masuk, kamu menyetujui{" "}
-            <Link to="/terms" style={{ color: "#22c55e", textDecoration: "none" }}>Syarat & Ketentuan</Link>
-            {" "}dan{" "}
-            <Link to="/privacy" style={{ color: "#22c55e", textDecoration: "none" }}>Kebijakan Privasi</Link> kami.
+          <p className="ml-stagger" style={{ textAlign: 'center', color: '#374151', fontSize: 12, marginTop: 22, lineHeight: 1.6, opacity: 0 }}>
+            Dengan masuk, kamu menyetujui{' '}
+            <Link to="/terms" style={{ color: '#22c55e', textDecoration: 'none' }}>Syarat & Ketentuan</Link>
+            {' '}dan{' '}
+            <Link to="/privacy" style={{ color: '#22c55e', textDecoration: 'none' }}>Kebijakan Privasi</Link> kami.
           </p>
         </div>
       </div>
@@ -809,3 +814,37 @@ function MobileLoginView({ email, setEmail, password, setPassword, showPassword,
   )
 }
 
+function AnimatedMobileInput({ type, placeholder, value, onChange, icon, rightIcon }) {
+  const [focused, setFocused] = useState(false)
+  return (
+    <div style={{ position: 'relative', paddingBottom: 2 }}>
+      <span style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', color: focused ? '#22c55e' : '#4a5568', transition: 'color 0.25s', pointerEvents: 'none', lineHeight: 0 }}>
+        {icon}
+      </span>
+      <input
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1.5px solid #1f2937', padding: '10px 36px', color: '#e2e8f0', fontSize: 15, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', caretColor: '#22c55e' }}
+      />
+      <div style={{
+        position: 'absolute', bottom: 0, left: '50%',
+        transform: `translateX(-50%) scaleX(${focused ? 1 : 0})`,
+        width: '100%', height: 2,
+        background: 'linear-gradient(90deg, transparent 0%, #22c55e 50%, transparent 100%)',
+        transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+        transformOrigin: 'center',
+        borderRadius: 999,
+        willChange: 'transform',
+      }} />
+      {rightIcon && (
+        <div style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', lineHeight: 0 }}>
+          {rightIcon}
+        </div>
+      )}
+    </div>
+  )
+}
