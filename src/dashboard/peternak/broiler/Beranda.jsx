@@ -338,27 +338,10 @@ export default function PeternakBeranda() {
 
   return (
     <div className="text-slate-100 pb-10">
-      {/* ── Compact fixed TopBar (Mobile) ── */}
-      <header className="md:hidden fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 h-14 flex items-center justify-between px-4 bg-[#06090F]/95 backdrop-blur-xl border-b border-white/[0.05]">
-        <div className="flex items-center gap-3 min-w-0">
-          <button
-            onClick={() => setSidebarOpen?.(true)}
-            className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
-          >
-            <Menu size={17} className="text-[#94A3B8]" />
-          </button>
-          <h1 className="font-display font-black text-[15px] text-[#F1F5F9] leading-tight truncate min-w-0">
-            Halo, {profile?.full_name?.split(' ')[0] ?? 'Peternak'} <span>👋</span>
-          </h1>
-        </div>
-      </header>
-
-      {/* spacer for fixed topbar */}
-      <div className="md:hidden h-14" />
 
       {/* ── SECTION A — Header ── */}
       <header className="px-4 pt-6 pb-5 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.04] flex justify-between items-start">
-        <div className="hidden md:block">
+        <div>
           <p className="text-xs text-[#4B6478] mb-1">Selamat {getGreeting()},</p>
           <h1 className="font-['Sora'] text-xl font-extrabold text-slate-100 mb-1">
             {profile?.full_name?.split(' ')[0] ?? 'Peternak'} 👋
@@ -368,7 +351,7 @@ export default function PeternakBeranda() {
           </p>
         </div>
         
-        {/* On mobile, only show the action buttons in the header area, right-aligned */}
+        {/* Action Buttons */}
         <div className="flex flex-col items-end gap-1.5 ml-auto">
           {p.canBuatSiklus && (
             <motion.button

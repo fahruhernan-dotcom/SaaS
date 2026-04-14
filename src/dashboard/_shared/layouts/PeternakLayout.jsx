@@ -51,6 +51,24 @@ export default function PeternakLayout() {
           overflowX: 'hidden',
           overscrollBehaviorX: 'none'
         }}>
+          {/* ── Global Compact Mobile TopBar ── */}
+          <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-[60] h-14 flex items-center justify-between px-4 bg-[#06090F]/80 backdrop-blur-xl border-b border-white/[0.05]">
+            <div className="flex items-center gap-3 min-w-0">
+              <button
+                onClick={(e) => { e.stopPropagation(); setSidebarOpen(true); }}
+                className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+              >
+                <Menu size={17} className="text-[#94A3B8]" />
+              </button>
+              <h1 className="font-display font-black text-[15px] text-[#F1F5F9] leading-tight truncate min-w-0">
+                Halo, {profile?.full_name?.split(' ')[0] ?? 'Peternak'} <span>👋</span>
+              </h1>
+            </div>
+          </header>
+
+          {/* Spacer to push content below the fixed TopBar */}
+          <div className="h-14" />
+
           <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           <BusinessNameWarningBanner />
           <Outlet context={{ setSidebarOpen }} />
