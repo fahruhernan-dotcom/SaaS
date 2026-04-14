@@ -8,6 +8,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'react-router-dom/server.js': 'react-router-dom',
+      'react-router-dom/server': 'react-router-dom',
     },
   },
   server: {
@@ -34,5 +36,30 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 3000,
+  },
+  ssgOptions: {
+    script: 'async',
+    formatting: 'minify',
+    dirStyle: 'nested',
+    includedRoutes() {
+      return [
+        '/',
+        '/fitur',
+        '/harga',
+        '/harga-pasar',
+        '/tentang-kami',
+        '/hubungi-kami',
+        '/faq',
+        '/blog',
+        '/blog/cara-hitung-fcr-ayam-broiler',
+        '/blog/cara-hitung-indeks-performa-ayam-broiler',
+        '/blog/cara-mengurangi-angka-kematian-ayam-broiler',
+        '/blog/tips-manajemen-kandang-ayam-broiler-pemula',
+        '/blog/cara-hitung-keuntungan-peternak-ayam-broiler',
+      ]
+    },
+    onFinished() {
+      console.log('SSG Prerendering finished.')
+    },
   },
 })
