@@ -148,14 +148,42 @@ export default function Pengiriman() {
     const location = useLocation()
 
     useEffect(() => {
-        if (location.state?.openLoss) {
+        if (!location.state) return
+
+        // 1. Handle Loss Report deep link
+        if (location.state.openLoss) {
             setActiveTab('loss')
             setInitialLossData(location.state.initialLoss)
             setIsCreateLossOpen(true)
-            // Clear state so it doesn't reopen on refresh
+        }
+
+        // 2. Handle Audit deep link (via openAudit=true or metadata.ref_id)
+        const refId = location.state.metadata?.ref_id || location.state.refId
+        const openAudit = location.state.openAudit
+
+        if (refId && deliveries.length > 0) {
+            const delivery = deliveries.find(d => d.id === refId)
+            if (delivery) {
+                setSelectedDelivery(delivery)
+                setIsUpdateArrivalOpen(true)
+                // Clear state to avoid reopening
+                window.history.replaceState({}, document.title)
+            }
+        } else if (openAudit) {
+            setDeliveryFilter('aktif')
+            // Option: toast or scroll to first 'arrived' delivery if exists
+            const firstAudit = deliveries.find(d => d.status === 'arrived')
+            if (firstAudit) {
+                // We don't auto-open here since there might be many, 
+                // but we filter the list to 'aktif'
+            }
+        }
+
+        // Cleanup state if we handled the basic flags
+        if (location.state.openLoss) {
             window.history.replaceState({}, document.title)
         }
-    }, [location])
+    }, [location, deliveries])
 
     // --- QUERIES ---
     const { data: deliveries = [], isLoading: isLoadingDeliveries } = useQuery({

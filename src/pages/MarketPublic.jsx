@@ -21,10 +21,10 @@ import {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const LISTING_TYPES = [
-  { value: 'all',               label: 'Semua Kategori',       emoji: '📋' },
-  { value: 'stok_ayam',         label: 'Jual Stok / Barang',   emoji: '📦' },
-  { value: 'penawaran_broker',  label: 'Penawaran Broker',      emoji: '🤝' },
-  { value: 'permintaan_rpa',    label: 'Permintaan / Dicari',   emoji: '🔍' },
+  { value: 'all', label: 'Semua Kategori', emoji: '📋' },
+  { value: 'stok_ayam', label: 'Jual Stok / Barang', emoji: '📦' },
+  { value: 'penawaran_broker', label: 'Penawaran Broker', emoji: '🤝' },
+  { value: 'permintaan_rpa', label: 'Permintaan / Dicari', emoji: '🔍' },
 ]
 
 const COMMODITY_GROUPS = [
@@ -58,9 +58,9 @@ const COMMODITY_GROUPS = [
 ]
 
 const TYPE_META = {
-  stok_ayam:        { label: 'Jual Stok',    color: '#A78BFA', bg: 'rgba(124,58,237,0.12)',  border: 'rgba(124,58,237,0.3)'  },
-  penawaran_broker: { label: 'Penawaran',  color: '#34D399', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)'  },
-  permintaan_rpa:   { label: 'Permintaan',    color: '#FBBF24', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)'  },
+  stok_ayam: { label: 'Jual Stok', color: '#A78BFA', bg: 'rgba(124,58,237,0.12)', border: 'rgba(124,58,237,0.3)' },
+  penawaran_broker: { label: 'Penawaran', color: '#34D399', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)' },
+  permintaan_rpa: { label: 'Permintaan', color: '#FBBF24', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
 }
 
 function normalizeWA(raw) {
@@ -206,17 +206,17 @@ function ListingCard({ listing }) {
 
 export default function MarketPublic() {
   const navigate = useNavigate()
-  
-  const [typeFilter,    setTypeFilter]    = useState('all')
+
+  const [typeFilter, setTypeFilter] = useState('all')
   const [chickenFilter, setChickenFilter] = useState('all')
-  const [search,        setSearch]        = useState('')
+  const [search, setSearch] = useState('')
   const [locationQuery, setLocationQuery] = useState('')
 
   const filters = useMemo(() => ({
-    type:         typeFilter !== 'all'    ? typeFilter    : undefined,
+    type: typeFilter !== 'all' ? typeFilter : undefined,
     chicken_type: chickenFilter !== 'all' ? chickenFilter : undefined,
-    search:       search.trim()           || undefined,
-    location:     locationQuery.trim()    || undefined,
+    search: search.trim() || undefined,
+    location: locationQuery.trim() || undefined,
   }), [typeFilter, chickenFilter, search, locationQuery])
 
   const { data: listings = [], isLoading } = useMarketListings(filters)
@@ -227,9 +227,9 @@ export default function MarketPublic() {
   }, [])
 
   // Stats
-  const totalActive   = listings.length
-  const stokAyam      = listings.filter(l => l.listing_type === 'stok_ayam').length
-  const permintaan    = listings.filter(l => l.listing_type === 'permintaan_rpa').length
+  const totalActive = listings.length
+  const stokAyam = listings.filter(l => l.listing_type === 'stok_ayam').length
+  const permintaan = listings.filter(l => l.listing_type === 'permintaan_rpa').length
 
   return (
     <div className="bg-bg-base min-h-screen text-text-primary font-body overflow-x-hidden pt-20">
@@ -259,9 +259,9 @@ export default function MarketPublic() {
         {/* Stats ticker */}
         <div className="flex items-center justify-between py-3 px-5 bg-[#111C24] rounded-2xl border border-white/8 overflow-x-auto gap-8">
           {[
-            { label: 'Listing Aktif',      value: totalActive,  color: '#F1F5F9' },
-            { label: 'Stok Tersedia',       value: stokAyam,     color: '#A78BFA' },
-            { label: 'Dicari',  value: permintaan,   color: '#FBBF24' },
+            { label: 'Listing Aktif', value: totalActive, color: '#F1F5F9' },
+            { label: 'Stok Tersedia', value: stokAyam, color: '#A78BFA' },
+            { label: 'Dicari', value: permintaan, color: '#FBBF24' },
           ].map((s, i) => (
             <div key={i} className="flex flex-col items-center shrink-0 w-full sm:w-1/3">
               <span className="font-display font-black text-3xl" style={{ color: s.color }}>
@@ -274,8 +274,8 @@ export default function MarketPublic() {
 
         {/* Filter bar */}
         <div className="space-y-4 bg-black/20 p-5 rounded-2xl border border-white/5">
-            <h3 className="text-sm font-black uppercase tracking-widest text-[#4B6478]">Pencarian & Filter</h3>
-            
+          <h3 className="text-sm font-black uppercase tracking-widest text-[#4B6478]">Pencarian & Filter</h3>
+
           {/* Search */}
           <div className="relative">
             <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#4B6478] pointer-events-none" />
@@ -296,61 +296,61 @@ export default function MarketPublic() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Type chips */}
-              <div className="flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden items-center">
-                {LISTING_TYPES.map(t => (
-                  <button
-                    key={t.value}
-                    onClick={() => setTypeFilter(t.value)}
-                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all"
-                    style={typeFilter === t.value
-                      ? { background: '#10B981', color: '#fff', border: '1px solid #10B981' }
-                      : { background: 'rgba(255,255,255,0.04)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.08)' }
-                    }
-                  >
-                    {t.emoji} {t.label}
-                  </button>
-                ))}
+            {/* Type chips */}
+            <div className="flex gap-2 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden items-center">
+              {LISTING_TYPES.map(t => (
+                <button
+                  key={t.value}
+                  onClick={() => setTypeFilter(t.value)}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all"
+                  style={typeFilter === t.value
+                    ? { background: '#10B981', color: '#fff', border: '1px solid #10B981' }
+                    : { background: 'rgba(255,255,255,0.04)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.08)' }
+                  }
+                >
+                  {t.emoji} {t.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Chicken type + location */}
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <Select value={chickenFilter} onValueChange={setChickenFilter}>
+                  <SelectTrigger className="w-full h-12 bg-[#111C24] border-white/10 rounded-xl text-sm text-[#F1F5F9] focus:ring-emerald-500/50">
+                    <SelectValue placeholder="Semua Komoditas" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0C1319] border-white/10 text-[#F1F5F9]">
+                    <SelectItem value="all">Semua Komoditas</SelectItem>
+                    {COMMODITY_GROUPS.map(g => (
+                      <SelectGroup key={g.label}>
+                        <SelectLabel className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] px-2 py-2">
+                          {g.label}
+                        </SelectLabel>
+                        {g.options.map(c => (
+                          <SelectItem key={c.value} value={c.value} className="focus:bg-emerald-500/10 focus:text-emerald-400">
+                            {c.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Chicken type + location */}
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <Select value={chickenFilter} onValueChange={setChickenFilter}>
-                    <SelectTrigger className="w-full h-12 bg-[#111C24] border-white/10 rounded-xl text-sm text-[#F1F5F9] focus:ring-emerald-500/50">
-                      <SelectValue placeholder="Semua Komoditas" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#0C1319] border-white/10 text-[#F1F5F9]">
-                      <SelectItem value="all">Semua Komoditas</SelectItem>
-                      {COMMODITY_GROUPS.map(g => (
-                        <SelectGroup key={g.label}>
-                          <SelectLabel className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] px-2 py-2">
-                            {g.label}
-                          </SelectLabel>
-                          {g.options.map(c => (
-                            <SelectItem key={c.value} value={c.value} className="focus:bg-emerald-500/10 focus:text-emerald-400">
-                              {c.label}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="relative flex-1">
-                  <MapPin size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4B6478] pointer-events-none" />
-                  <input
-                    id="market-location"
-                    name="location_filter"
-                    type="text"
-                    value={locationQuery}
-                    onChange={e => setLocationQuery(e.target.value)}
-                    placeholder="Filter lokasi..."
-                    className="w-full bg-[#111C24] border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-[#F1F5F9] placeholder:text-white/20 focus:outline-none focus:border-emerald-500/50 transition-colors"
-                  />
-                </div>
+              <div className="relative flex-1">
+                <MapPin size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4B6478] pointer-events-none" />
+                <input
+                  id="market-location"
+                  name="location_filter"
+                  type="text"
+                  value={locationQuery}
+                  onChange={e => setLocationQuery(e.target.value)}
+                  placeholder="Filter lokasi..."
+                  className="w-full bg-[#111C24] border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-sm text-[#F1F5F9] placeholder:text-white/20 focus:outline-none focus:border-emerald-500/50 transition-colors"
+                />
               </div>
+            </div>
           </div>
         </div>
 
@@ -367,10 +367,10 @@ export default function MarketPublic() {
               Coba gunakan filter lokasi lain atau daftarkan akun untuk memposting iklan pertama Anda.
             </p>
             <button
-                onClick={() => navigate('/register')}
-                className="mt-6 text-sm text-emerald-400 font-bold hover:text-emerald-300 underline"
+              onClick={() => navigate('/register')}
+              className="mt-6 text-sm text-emerald-400 font-bold hover:text-emerald-300 underline"
             >
-                Daftar & Pasang Iklan
+              Daftar & Pasang Iklan
             </button>
           </div>
         ) : (

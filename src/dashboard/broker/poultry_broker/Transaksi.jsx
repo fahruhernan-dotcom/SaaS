@@ -716,7 +716,12 @@ export default function Transaksi() {
         </div>
 
         {/* Audit Notice */}
-        <BrokerAuditNotice count={pendingAuditCount} message="transaksi timbangan tiba (audit)" isDesktop={false} />
+        <BrokerAuditNotice 
+          count={pendingAuditCount} 
+          message="transaksi timbangan tiba (audit)" 
+          isDesktop={false} 
+          onClick={() => navigate('../pengiriman', { state: { openAudit: true } })}
+        />
 
         {/* Payment Status Pills */}
         <div className="px-4 mb-3">
@@ -778,7 +783,12 @@ export default function Transaksi() {
           ]}
         />
 
-        <BrokerAuditNotice count={pendingAuditCount} message="transaksi timbangan tiba (audit)" isDesktop={isDesktop} />
+        <BrokerAuditNotice 
+          count={pendingAuditCount} 
+          message="transaksi timbangan tiba (audit)" 
+          isDesktop={isDesktop} 
+          onClick={() => navigate('../pengiriman', { state: { openAudit: true } })}
+        />
 
         <Tabs defaultValue="semua" className="mt-4" onValueChange={setActiveTab}>
           <div className="px-5">

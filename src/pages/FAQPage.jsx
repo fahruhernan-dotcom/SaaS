@@ -62,11 +62,11 @@ function FAQItem({ item, accentColor = 'emerald' }) {
 
 // ── Category accent map ────────────────────────────────────────────────────────
 const ACCENT = {
-  umum:        'emerald',
+  umum: 'emerald',
   broker_ayam: 'emerald',
-  sembako:     'amber',
-  peternak:    'emerald',
-  teknis:      'emerald',
+  sembako: 'amber',
+  peternak: 'emerald',
+  teknis: 'emerald',
 }
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
@@ -103,13 +103,13 @@ export default function FAQPage() {
   const trimmed = query.trim().toLowerCase()
   const filtered = trimmed
     ? FAQ_CATEGORIES.flatMap(cat => {
-        const items = (FAQ_DATA[cat.id] || []).filter(
-          item =>
-            item.q.toLowerCase().includes(trimmed) ||
-            item.a.toLowerCase().includes(trimmed)
-        )
-        return items.length ? [{ ...cat, items }] : []
-      })
+      const items = (FAQ_DATA[cat.id] || []).filter(
+        item =>
+          item.q.toLowerCase().includes(trimmed) ||
+          item.a.toLowerCase().includes(trimmed)
+      )
+      return items.length ? [{ ...cat, items }] : []
+    })
     : FAQ_CATEGORIES.map(cat => ({ ...cat, items: FAQ_DATA[cat.id] || [] }))
 
   const totalVisible = filtered.reduce((n, c) => n + c.items.length, 0)
@@ -193,11 +193,10 @@ export default function FAQPage() {
               <button
                 key={cat.id}
                 onClick={() => scrollTo(cat.id)}
-                className={`shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                  activeCategory === cat.id
+                className={`shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${activeCategory === cat.id
                     ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300'
                     : 'border-white/10 bg-white/[0.03] text-[#64748B] hover:text-white hover:border-white/20'
-                }`}
+                  }`}
               >
                 <span>{cat.emoji}</span>
                 <span>{cat.label}</span>

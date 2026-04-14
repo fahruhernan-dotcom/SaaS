@@ -106,7 +106,9 @@ export default function NotificationBell() {
 
   const handleItemClick = async (notif) => {
     await markAsRead(notif.id)
-    if (notif.action_url) navigate(notif.action_url)
+    if (notif.action_url) {
+      navigate(notif.action_url, { state: { metadata: notif.metadata } })
+    }
     setIsOpen(false)
   }
 

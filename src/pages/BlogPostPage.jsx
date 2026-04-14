@@ -10,9 +10,9 @@ import { getPostBySlug, getRelatedPosts, formatDate } from '../data/blogPosts';
 
 const CATEGORY_COLORS = {
   peternak: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20' },
-  broker:   { bg: 'bg-purple-500/10',  text: 'text-purple-400',  border: 'border-purple-500/20'  },
-  sembako:  { bg: 'bg-amber-500/10',   text: 'text-amber-400',   border: 'border-amber-500/20'   },
-  umum:     { bg: 'bg-blue-500/10',    text: 'text-blue-400',    border: 'border-blue-500/20'    },
+  broker: { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/20' },
+  sembako: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20' },
+  umum: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20' },
 };
 
 // ─── Related Post Card ─────────────────────────────────────────────────────────

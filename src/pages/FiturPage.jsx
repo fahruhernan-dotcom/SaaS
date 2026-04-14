@@ -12,6 +12,8 @@ import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
+import Particles from '../components/reactbits/Particles'
+
 
 // ─── Animation helper ─────────────────────────────────────────────────────────
 
@@ -87,21 +89,21 @@ function GroupCard({ Icon, title, desc, features, delay = 0 }) {
 // ─── Tab data ─────────────────────────────────────────────────────────────────
 
 const ROLES = [
-  { id: 'broker',   label: 'Broker',   emoji: '🐔' },
+  { id: 'broker', label: 'Broker', emoji: '🐔' },
   { id: 'peternak', label: 'Peternak', emoji: '🏠' },
-  { id: 'rpa',      label: 'RPA',      emoji: '🏭' },
+  { id: 'rpa', label: 'RPA', emoji: '🏭' },
 ]
 
 const SUBS = {
   broker: [
-    { id: 'ayam',    label: 'Broker Ayam',          disabled: false },
-    { id: 'telur',   label: 'Broker Telur',          disabled: false },
-    { id: 'sembako', label: 'Distributor Sembako',   disabled: false },
+    { id: 'ayam', label: 'Broker Ayam', disabled: false },
+    { id: 'telur', label: 'Broker Telur', disabled: false },
+    { id: 'sembako', label: 'Distributor Sembako', disabled: false },
   ],
   peternak: [
     { id: 'broiler', label: 'Ayam Broiler', disabled: false },
-    { id: 'petelur', label: 'Ayam Petelur', disabled: true  },
-    { id: 'sapi',    label: 'Sapi',         disabled: true  },
+    { id: 'petelur', label: 'Ayam Petelur', disabled: true },
+    { id: 'sapi', label: 'Sapi', disabled: true },
   ],
   rpa: [],
 }
@@ -716,7 +718,7 @@ function FAQItem({ q, a, isSembako }) {
 
 export default function FiturPage() {
   const [selectedRole, setSelectedRole] = useState('broker')
-  const [selectedSub, setSelectedSub]   = useState('ayam')
+  const [selectedSub, setSelectedSub] = useState('ayam')
   const tabBarRef = useRef(null)
   const [isSticky, setIsSticky] = useState(false)
 
@@ -739,7 +741,7 @@ export default function FiturPage() {
 
   const contentKey = selectedRole === 'rpa' ? 'rpa'
     : selectedRole === 'peternak' ? 'peternak'
-    : `broker_${selectedSub}`
+      : `broker_${selectedSub}`
   const groups = GROUPS[contentKey] ?? []
   const cols = groups.length <= 4 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'
 
@@ -768,7 +770,18 @@ export default function FiturPage() {
             <div className="absolute top-8 right-0 w-[400px] h-48 bg-amber-500/6 blur-3xl pointer-events-none" />
           )}
 
+          {/* Background Particles */}
+          <div className="absolute inset-0 z-0 pointer-events-none">
+            <Particles
+              particleColors={isSembako ? ['#F59E0B', '#FBBF24', '#D97706'] : ['#10B981', '#34D399', '#059669']}
+              particleCount={typeof window !== 'undefined' && window.innerWidth < 768 ? 20 : 40}
+              speed={0.3}
+              particleBaseSize={1.2}
+            />
+          </div>
+
           <div className="relative z-10 max-w-4xl mx-auto">
+
             <AnimatePresence mode="wait">
               <motion.div
                 key={contentKey + '_hero'}
@@ -826,11 +839,10 @@ export default function FiturPage() {
                   key={role.id}
                   type="button"
                   onClick={() => handleRoleChange(role.id)}
-                  className={`relative z-10 px-5 md:px-7 py-2 rounded-full text-[11px] md:text-xs font-bold uppercase tracking-wider transition-colors duration-200 cursor-pointer border-none ${
-                    selectedRole === role.id
+                  className={`relative z-10 px-5 md:px-7 py-2 rounded-full text-[11px] md:text-xs font-bold uppercase tracking-wider transition-colors duration-200 cursor-pointer border-none ${selectedRole === role.id
                       ? 'text-emerald-400'
                       : 'text-white/40 hover:text-white/70'
-                  }`}
+                    }`}
                 >
                   {selectedRole === role.id && (
                     <motion.span
@@ -853,13 +865,12 @@ export default function FiturPage() {
                     type="button"
                     disabled={sub.disabled}
                     onClick={() => !sub.disabled && setSelectedSub(sub.id)}
-                    className={`flex items-center gap-1 px-3.5 py-1 rounded-full text-[11px] font-semibold border transition-colors duration-150 ${
-                      sub.disabled
+                    className={`flex items-center gap-1 px-3.5 py-1 rounded-full text-[11px] font-semibold border transition-colors duration-150 ${sub.disabled
                         ? 'opacity-40 cursor-not-allowed border-white/8 text-white/40'
                         : selectedSub === sub.id
                           ? 'border-white/20 bg-white/[0.08] text-white cursor-pointer'
                           : 'border-transparent text-white/50 hover:text-white/70 cursor-pointer'
-                    }`}
+                      }`}
                   >
                     {sub.label}
                     {sub.disabled && (

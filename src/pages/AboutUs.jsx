@@ -159,10 +159,10 @@ export default function AboutUs() {
           <div className="max-w-5xl mx-auto px-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {[
-                { countTo: 500,   suffix: '+',  sep: '',  label: 'Pengguna Aktif' },
-                { countTo: 10000, suffix: '+',  sep: '.', label: 'Transaksi Tercatat' },
-                { raw: 'Rp 50M+',               label: 'Nilai Transaksi' },
-                { raw: '3',                      label: 'Vertikal Bisnis' },
+                { countTo: 500, suffix: '+', sep: '', label: 'Pengguna Aktif' },
+                { countTo: 10000, suffix: '+', sep: '.', label: 'Transaksi Tercatat' },
+                { raw: 'Rp 50M+', label: 'Nilai Transaksi' },
+                { raw: '3', label: 'Vertikal Bisnis' },
               ].map((stat, i) => (
                 <FadeUp key={i} delay={i * 0.1} className={`text-center ${i < 3 ? 'md:border-r border-white/8' : ''}`}>
                   <div className="font-display text-3xl font-black text-white mb-1">
@@ -298,8 +298,8 @@ export default function AboutUs() {
 
                 <div className="space-y-4">
                   {[
-                    { Icon: FileX,        text: 'Catat di kertas, hilang besok' },
-                    { Icon: BarChart2,    text: 'Excel berantakan, susah analisis' },
+                    { Icon: FileX, text: 'Catat di kertas, hilang besok' },
+                    { Icon: BarChart2, text: 'Excel berantakan, susah analisis' },
                     { Icon: TrendingDown, text: 'Margin tipis karena tidak terpantau' },
                   ].map(({ Icon, text }, i) => (
                     <FadeUp key={i} delay={0.4 + i * 0.08}>
@@ -404,8 +404,8 @@ export default function AboutUs() {
                     <span
                       key={i}
                       className={`text-[10px] font-medium rounded-md px-3 py-1.5 border ${tag.type === 'emerald'
-                          ? 'bg-[#10B981]/8 border-[#10B981]/15 text-[#34D399]'
-                          : 'bg-white/4 border-white/8 text-[#94A3B8]'
+                        ? 'bg-[#10B981]/8 border-[#10B981]/15 text-[#34D399]'
+                        : 'bg-white/4 border-white/8 text-[#94A3B8]'
                         }`}
                     >
                       {tag.text}
@@ -497,12 +497,12 @@ export default function AboutUs() {
 
             <div>
               {[
-                { num: '01', Icon: Eye,    title: 'Transparansi', body: 'Kami bangun fitur yang membuat semua angka terlihat jelas — bukan tersembunyi di balik rumus Excel.' },
-                { num: '02', Icon: Wrench, title: 'Pragmatisme',  body: 'Fitur yang kami bangun berdasarkan kebutuhan nyata di lapangan, bukan asumsi dari ruang rapat.' },
-                { num: '03', Icon: Zap,    title: 'Keberanian',   body: 'Industri ini sudah terlalu lama stagnan. Kami berani mendorong perubahan meski tidak populer.' },
-                { num: '04', Icon: Shield, title: 'Kejujuran',    body: 'Termasuk jujur soal keterbatasan kami sendiri. Kami masih berkembang, dan kami tidak menyembunyikannya.' },
-                { num: '05', Icon: Heart,  title: 'Keberpihakan', body: 'Berpihak pada peternak kecil dan broker independen — mereka yang selama ini tidak punya akses ke tools yang layak.' },
-                { num: '06', Icon: Rocket, title: 'Inovasi',      body: 'Terus berkembang bersama industri. Setiap fitur baru lahir dari feedback pengguna nyata di lapangan.' },
+                { num: '01', Icon: Eye, title: 'Transparansi', body: 'Kami bangun fitur yang membuat semua angka terlihat jelas — bukan tersembunyi di balik rumus Excel.' },
+                { num: '02', Icon: Wrench, title: 'Pragmatisme', body: 'Fitur yang kami bangun berdasarkan kebutuhan nyata di lapangan, bukan asumsi dari ruang rapat.' },
+                { num: '03', Icon: Zap, title: 'Keberanian', body: 'Industri ini sudah terlalu lama stagnan. Kami berani mendorong perubahan meski tidak populer.' },
+                { num: '04', Icon: Shield, title: 'Kejujuran', body: 'Termasuk jujur soal keterbatasan kami sendiri. Kami masih berkembang, dan kami tidak menyembunyikannya.' },
+                { num: '05', Icon: Heart, title: 'Keberpihakan', body: 'Berpihak pada peternak kecil dan broker independen — mereka yang selama ini tidak punya akses ke tools yang layak.' },
+                { num: '06', Icon: Rocket, title: 'Inovasi', body: 'Terus berkembang bersama industri. Setiap fitur baru lahir dari feedback pengguna nyata di lapangan.' },
               ].map(({ num, Icon, title, body }, i) => (
                 <FadeUp key={i} delay={i * 0.06}>
                   <div className={`flex items-start gap-6 md:gap-10 py-10 ${i < 5 ? 'border-b border-white/5' : ''}`}>
@@ -604,24 +604,21 @@ export default function AboutUs() {
               ].map((item, i) => (
                 <FadeUp key={i} delay={i * 0.1}>
                   <div className="relative pl-12 pb-14 last:pb-0">
-                    <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 z-10 ${
-                      item.status === 'selesai' ? 'bg-emerald-500 border-emerald-500' :
-                      item.status === 'ongoing' ? 'bg-[#F59E0B] border-[#F59E0B] animate-pulse' :
-                      'bg-[#111C24] border-white/20'
-                    }`} />
+                    <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 z-10 ${item.status === 'selesai' ? 'bg-emerald-500 border-emerald-500' :
+                        item.status === 'ongoing' ? 'bg-[#F59E0B] border-[#F59E0B] animate-pulse' :
+                          'bg-[#111C24] border-white/20'
+                      }`} />
 
-                    <div className={`bg-[#0C1319] border rounded-3xl p-8 transition-all duration-300 ${
-                      item.status === 'selesai' ? 'border-emerald-500/20' :
-                      item.status === 'ongoing' ? 'border-amber-500/20' :
-                      'border-white/5'
-                    }`}>
+                    <div className={`bg-[#0C1319] border rounded-3xl p-8 transition-all duration-300 ${item.status === 'selesai' ? 'border-emerald-500/20' :
+                        item.status === 'ongoing' ? 'border-amber-500/20' :
+                          'border-white/5'
+                      }`}>
                       <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
                         <div className="flex items-center gap-3">
-                          <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${
-                            item.status === 'selesai' ? 'bg-emerald-500/10 text-emerald-400' :
-                            item.status === 'ongoing' ? 'bg-amber-500/10 text-amber-400' :
-                            'bg-white/5 text-[#4B6478]'
-                          }`}>{item.time}</span>
+                          <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${item.status === 'selesai' ? 'bg-emerald-500/10 text-emerald-400' :
+                              item.status === 'ongoing' ? 'bg-amber-500/10 text-amber-400' :
+                                'bg-white/5 text-[#4B6478]'
+                            }`}>{item.time}</span>
                           <h4 className="font-display text-xl font-bold text-white uppercase tracking-tight">{item.title}</h4>
                         </div>
                         <div>

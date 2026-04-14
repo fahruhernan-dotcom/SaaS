@@ -83,7 +83,7 @@ export function useUpdateDelivery() {
     }
     console.log('[useUpdateDelivery] Supabase Update Success:', updateRes?.[0])
     
-    // 3. Update Sales Revenue based on Arrived Weight
+    // 3. Update Sales Revenue based on TOTAL Arrived Weight (Sum of all deliveries for this sale)
     const { data: saleData } = await supabase
       .from('sales')
       .select('price_per_kg, tenant_id, rpa_clients(rpa_name)')
@@ -91,7 +91,26 @@ export function useUpdateDelivery() {
       .single()
 
     if (saleData) {
-      const newTotalRevenue = Math.round(safeNum(arrivedWeight) * safeNum(saleData.price_per_kg))
+      // Fetch all deliveries for this sale to get the true total revenue
+      const { data: allDeliveries } = await supabase
+        .from('deliveries')
+        .select('arrived_weight_kg, initial_weight_kg, status')
+        .eq('sale_id', delivery.sale_id)
+        .eq('is_deleted', false)
+
+      const totalArrivedWeight = (allDeliveries || []).reduce((sum, d) => {
+        // If it's this delivery being updated, use the new weight from payload
+        if (d.id === deliveryId) return sum + safeNum(arrivedWeight)
+        
+        // For others, use arrived_weight if completed/arrived, else use initial_weight as fallback for "projected" revenue
+        // (Though usually total_revenue is only finalized on arrival)
+        const weight = (d.status === 'arrived' || d.status === 'completed') 
+          ? safeNum(d.arrived_weight_kg) 
+          : safeNum(d.initial_weight_kg)
+        return sum + weight
+      }, 0)
+
+      const newTotalRevenue = Math.round(totalArrivedWeight * safeNum(saleData.price_per_kg))
       
       const { error: saleUpdateError } = await supabase
         .from('sales')
@@ -99,7 +118,7 @@ export function useUpdateDelivery() {
         .eq('id', delivery.sale_id)
 
       if (saleUpdateError) console.error('Error updating sale revenue:', saleUpdateError)
-      else console.log('✅ Sales total_revenue updated:', newTotalRevenue)
+      else console.log('✅ Sales total_revenue updated (Cumulative):', newTotalRevenue)
     }
 
     // 4. Auto-create loss report if there is mortality or shrinkage

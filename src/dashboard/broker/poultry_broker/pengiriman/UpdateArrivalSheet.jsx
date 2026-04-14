@@ -246,7 +246,13 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
     
     const initialKg = safeNum(delivery?.initial_weight_kg)
     const initialCount = safeNum(delivery?.initial_count)
-    const isArrival = delivery && ['on_route', 'arrived', 'completed'].includes(delivery.status)
+    
+    // Arrival mode is active if status is already on_route+ OR if user manually starts entering arrival data
+    const isArrival = delivery && (
+        ['on_route', 'arrived', 'completed'].includes(delivery.status) ||
+        safeNum(arrivedQty) > 0 ||
+        (inputMode === 'manual' ? safeNum(beratTiba) > 0 : scaleEntries.length > 0)
+    )
 
     // Sync Handlers
     const handleArrivedChange = (val) => {
@@ -553,9 +559,23 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                 }
                 console.log('[UpdateArrivalSheet] Manual Update Success:', directRes?.[0])
                 
-                // Update Sales Revenue
+                // Update Sales Revenue (Cumulative sum across all deliveries for this sale)
                 const pricePerKg = delivery?.sales?.price_per_kg ?? 0
-                const newTotalRevenue = Math.round(arrivedWeightKg * pricePerKg)
+                const { data: allDels } = await supabase
+                    .from('deliveries')
+                    .select('arrived_weight_kg, initial_weight_kg, status, id')
+                    .eq('sale_id', delivery.sale_id)
+                    .eq('is_deleted', false)
+
+                const totalWeight = (allDels || []).reduce((sum, d) => {
+                    if (d.id === delivery.id) return sum + safeNum(arrivedWeightKg)
+                    const w = (d.status === 'arrived' || d.status === 'completed') 
+                        ? safeNum(d.arrived_weight_kg) 
+                        : safeNum(d.initial_weight_kg)
+                    return sum + w
+                }, 0)
+
+                const newTotalRevenue = Math.round(totalWeight * pricePerKg)
                 await supabase
                     .from('sales')
                     .update({ total_revenue: newTotalRevenue })
@@ -604,6 +624,13 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                 }
             } else {
                 // Scenario: First time arrival or logistic update for pending delivery
+                // Ensure status is 'arrived' if we have arrival data, even if DB doesn't know it yet
+                let finalStatus = isArrival ? 'arrived' : (formattedDepartureTime ? 'on_route' : (formattedLoadTime ? 'loading' : null))
+                
+                // CRITICAL: Double check if user actually filled arrival data
+                const hasArrivalData = safeNum(tibaCount) > 0 || safeNum(tibaKg) > 0
+                if (hasArrivalData) finalStatus = 'arrived'
+
                 const arrivalPayload = {
                     deliveryId: delivery.id,
                     arrivedCount: tibaCount,
@@ -611,7 +638,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     notes: notes,
                     loadTime: formattedLoadTime,
                     departureTime: formattedDepartureTime,
-                    status: isArrival ? 'arrived' : (formattedDepartureTime ? 'on_route' : (formattedLoadTime ? 'loading' : null))
+                    status: finalStatus
                 }
 
                 if (!vehicleLocked) {
@@ -627,6 +654,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     arrivalPayload.driverWage = selectedDriver?.wage_per_trip || driverWage
                 }
 
+                console.log('[UpdateArrivalSheet] Calling updateTiba with status:', finalStatus)
                 await updateTiba(arrivalPayload)
             }
 

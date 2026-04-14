@@ -13,25 +13,25 @@ import Particles from '../components/reactbits/Particles'
 import { WA_URL } from '@/lib/constants/contact'
 
 const ROLES = [
-  { id: 'broker',   label: 'Broker',   emoji: '🐔' },
+  { id: 'broker', label: 'Broker', emoji: '🐔' },
   { id: 'peternak', label: 'Peternak', emoji: '🏠' },
-  { id: 'rpa',      label: 'RPA',      emoji: '🏭' },
+  { id: 'rpa', label: 'RPA', emoji: '🏭' },
 ]
 
 const SUBS = {
   broker: [
-    { id: 'ayam',        label: 'Broker Ayam',       disabled: false },
-    { id: 'telur',       label: 'Broker Telur',       disabled: false },
+    { id: 'ayam', label: 'Broker Ayam', disabled: false },
+    { id: 'telur', label: 'Broker Telur', disabled: false },
     { id: 'distributor', label: 'Distributor Daging', disabled: false },
-    { id: 'sembako',     label: 'Distributor Sembako',disabled: false },
+    { id: 'sembako', label: 'Distributor Sembako', disabled: false },
   ],
   peternak: [
-    { id: 'ayam',       label: 'Ayam Broiler & Layer',   disabled: false },
-    { id: 'ruminansia', label: 'Sapi, Kambing, Domba',    disabled: true  },
+    { id: 'ayam', label: 'Ayam Broiler & Layer', disabled: false },
+    { id: 'ruminansia', label: 'Sapi, Kambing, Domba', disabled: true },
   ],
   rpa: [
     { id: 'buyer', label: 'Rumah Potong Ayam', disabled: false },
-    { id: 'rph',   label: 'RPH',               disabled: true  },
+    { id: 'rph', label: 'RPH', disabled: true },
   ],
 }
 
@@ -69,23 +69,23 @@ const ENTERPRISE_FEATURES = [
 
 // Shared broker pricing (Ayam & Telur sama)
 const _brokerBase = {
-  proPrice:    999000,
-  proYearly:   799000,
-  proStrike:   1499000,
-  bizPrice:    1499000,
-  bizYearly:   1199000,
-  bizStrike:   2499000,
+  proPrice: 999000,
+  proYearly: 799000,
+  proStrike: 1499000,
+  bizPrice: 1499000,
+  bizYearly: 1199000,
+  bizStrike: 2499000,
 }
 
 // Shared peternak pricing (Ayam & Ruminansia sama)
 const _peternakBase = {
-  proPrice:    499000,
-  proYearly:   399000,
-  proStrike:   749000,
-  bizPrice:    999000,
-  bizYearly:   799000,
-  bizStrike:   1499000,
-  addOnNote:   true,
+  proPrice: 499000,
+  proYearly: 399000,
+  proStrike: 749000,
+  bizPrice: 999000,
+  bizYearly: 799000,
+  bizStrike: 1499000,
+  addOnNote: true,
   starterFeatures: [
     '1 kandang aktif',
     '1 jenis ternak',
@@ -100,12 +100,12 @@ const _peternakBase = {
 
 // Shared RPA pricing (Buyer & Distributor sama)
 const _rpaBase = {
-  proPrice:    699000,
-  proYearly:   559000,
-  proStrike:   999000,
-  bizPrice:    1499000,
-  bizYearly:   1199000,
-  bizStrike:   2499000,
+  proPrice: 699000,
+  proYearly: 559000,
+  proStrike: 999000,
+  bizPrice: 1499000,
+  bizYearly: 1199000,
+  bizStrike: 2499000,
 }
 
 const PRICING_DATA = {
@@ -384,7 +384,7 @@ function AccordionItem({ q, a }) {
 // ─── Pricing cards ────────────────────────────────────────────────────────────
 
 function ProCard({ data, billing, annualDiscount }) {
-  const price      = billing === 'yearly' ? data.proYearly : data.proPrice
+  const price = billing === 'yearly' ? data.proYearly : data.proPrice
   const yearlyTotal = data.proYearly * 12
   const discountLabel = annualDiscount?.badge_text || 'Hemat 2 bln!'
   const discountPct = annualDiscount?.discount_percent || 20
@@ -434,8 +434,8 @@ function ProCard({ data, billing, annualDiscount }) {
 }
 
 function BusinessCard({ data, billing, roleLabel, annualDiscount }) {
-  const price        = billing === 'yearly' ? data.bizYearly : data.bizPrice
-  const yearlyTotal  = data.bizYearly * 12
+  const price = billing === 'yearly' ? data.bizYearly : data.bizPrice
+  const yearlyTotal = data.bizYearly * 12
   const yearlySaving = (data.bizPrice - data.bizYearly) * 12
   const discountPct = annualDiscount?.discount_percent || 20
 
@@ -575,8 +575,8 @@ function EnterpriseCard() {
 
 export default function HargaPage() {
   const [selectedRole, setSelectedRole] = useState('broker')
-  const [selectedSub, setSelectedSub]   = useState('ayam')
-  const [billing, setBilling]           = useState('monthly')
+  const [selectedSub, setSelectedSub] = useState('ayam')
+  const [billing, setBilling] = useState('monthly')
 
   const { data: dbPricing } = usePricingConfig()
   const { data: dbConfigs } = usePlanConfigs()
@@ -588,7 +588,7 @@ export default function HargaPage() {
 
   const dynamicPricingData = useMemo(() => {
     const newData = JSON.parse(JSON.stringify(PRICING_DATA))
-    
+
     // Get custom trial days or defaults
     const trialDays = dbConfigs?.trial_config?.pro || 14
     const discountPct = dbConfigs?.annual_discount?.discount_percent || 20
@@ -596,23 +596,23 @@ export default function HargaPage() {
     // Loop through our local keys and merge DB pricing if available
     for (const key of Object.keys(newData)) {
       const dbRole = key.split('_')[0] // 'broker_ayam' -> 'broker'
-      
+
       newData[key].trialDays = trialDays
-      
+
       if (dbPricing?.[dbRole]) {
-         const dp = dbPricing[dbRole]
-         // Handle PRO
-         if (dp.pro) {
-            newData[key].proPrice = dp.pro.price
-            newData[key].proStrike = dp.pro.originalPrice
-            newData[key].proYearly = Math.round(dp.pro.price * (1 - (discountPct / 100)))
-         }
-         // Handle BUSINESS
-         if (dp.business) {
-            newData[key].bizPrice = dp.business.price
-            newData[key].bizStrike = dp.business.originalPrice
-            newData[key].bizYearly = Math.round(dp.business.price * (1 - (discountPct / 100)))
-         }
+        const dp = dbPricing[dbRole]
+        // Handle PRO
+        if (dp.pro) {
+          newData[key].proPrice = dp.pro.price
+          newData[key].proStrike = dp.pro.originalPrice
+          newData[key].proYearly = Math.round(dp.pro.price * (1 - (discountPct / 100)))
+        }
+        // Handle BUSINESS
+        if (dp.business) {
+          newData[key].bizPrice = dp.business.price
+          newData[key].bizStrike = dp.business.originalPrice
+          newData[key].bizYearly = Math.round(dp.business.price * (1 - (discountPct / 100)))
+        }
       }
     }
     return newData
@@ -634,7 +634,7 @@ export default function HargaPage() {
       <Navbar />
 
       {/* Global Background Elements */}
-      <div 
+      <div
         className="fixed inset-0 pointer-events-none z-0"
         style={{
           backgroundImage: `linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)`,
@@ -698,9 +698,8 @@ export default function HargaPage() {
                 key={b}
                 type="button"
                 onClick={() => setBilling(b)}
-                className={`relative px-5 py-2 rounded-full text-xs font-bold transition-colors duration-200 cursor-pointer border-none ${
-                  billing === b ? 'text-white' : 'text-white/40 hover:text-white/70'
-                }`}
+                className={`relative px-5 py-2 rounded-full text-xs font-bold transition-colors duration-200 cursor-pointer border-none ${billing === b ? 'text-white' : 'text-white/40 hover:text-white/70'
+                  }`}
               >
                 {billing === b && (
                   <motion.span
@@ -737,9 +736,8 @@ export default function HargaPage() {
                 key={role.id}
                 type="button"
                 onClick={() => handleRoleChange(role.id)}
-                className={`relative px-5 md:px-7 py-2 rounded-full text-[11px] md:text-xs font-bold uppercase tracking-wider transition-colors duration-200 cursor-pointer border-none ${
-                  selectedRole === role.id ? 'text-emerald-400' : 'text-white/40 hover:text-white/70'
-                }`}
+                className={`relative px-5 md:px-7 py-2 rounded-full text-[11px] md:text-xs font-bold uppercase tracking-wider transition-colors duration-200 cursor-pointer border-none ${selectedRole === role.id ? 'text-emerald-400' : 'text-white/40 hover:text-white/70'
+                  }`}
               >
                 {selectedRole === role.id && (
                   <motion.span
@@ -762,13 +760,12 @@ export default function HargaPage() {
                   type="button"
                   disabled={sub.disabled}
                   onClick={() => !sub.disabled && setSelectedSub(sub.id)}
-                  className={`flex items-center gap-1 px-3.5 py-1 rounded-full text-[11px] font-semibold border transition-colors duration-150 ${
-                    sub.disabled
+                  className={`flex items-center gap-1 px-3.5 py-1 rounded-full text-[11px] font-semibold border transition-colors duration-150 ${sub.disabled
                       ? 'opacity-40 cursor-not-allowed border-white/8 text-white/40'
                       : selectedSub === sub.id
                         ? 'border-white/20 bg-white/[0.08] text-white cursor-pointer'
                         : 'border-transparent text-white/50 hover:text-white/70 cursor-pointer'
-                  }`}
+                    }`}
                 >
                   {sub.label}
                   {sub.disabled && (

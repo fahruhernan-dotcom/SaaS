@@ -9,28 +9,28 @@ import { getAllPosts, formatDate } from '../data/blogPosts';
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { value: 'all',      label: 'Semua Artikel', emoji: '📚' },
-  { value: 'peternak', label: 'Peternak',       emoji: '🐔' },
-  { value: 'broker',   label: 'Broker',         emoji: '🤝' },
-  { value: 'sembako',  label: 'Sembako',        emoji: '🌾' },
-  { value: 'umum',     label: 'Umum',           emoji: '💡' },
+  { value: 'all', label: 'Semua Artikel', emoji: '📚' },
+  { value: 'peternak', label: 'Peternak', emoji: '🐔' },
+  { value: 'broker', label: 'Broker', emoji: '🤝' },
+  { value: 'sembako', label: 'Sembako', emoji: '🌾' },
+  { value: 'umum', label: 'Umum', emoji: '💡' },
 ];
 
 const CATEGORY_COLORS = {
   peternak: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20' },
-  broker:   { bg: 'bg-purple-500/10',  text: 'text-purple-400',  border: 'border-purple-500/20'  },
-  sembako:  { bg: 'bg-amber-500/10',   text: 'text-amber-400',   border: 'border-amber-500/20'   },
-  umum:     { bg: 'bg-blue-500/10',    text: 'text-blue-400',    border: 'border-blue-500/20'    },
+  broker: { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/20' },
+  sembako: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20' },
+  umum: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20' },
 };
 
 // ─── Animation helpers ─────────────────────────────────────────────────────────
 
 const containerVariants = {
-  hidden:  {},
+  hidden: {},
   visible: { transition: { staggerChildren: 0.07 } },
 };
 const cardVariants = {
-  hidden:  { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: 'easeOut' } },
 };
 
@@ -141,7 +141,7 @@ export default function BlogPage() {
                 Artikel & Panduan Peternakan
               </div>
               <h1 className="font-display text-4xl md:text-5xl font-black text-white leading-tight tracking-tight mb-5">
-                Blog & Panduan<br/>
+                Blog & Panduan<br />
                 <span className="text-emerald-400">TernakOS</span>
               </h1>
               <p className="text-[#94A3B8] text-lg leading-relaxed max-w-2xl mx-auto">

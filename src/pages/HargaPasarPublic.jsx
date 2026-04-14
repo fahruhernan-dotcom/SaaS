@@ -55,9 +55,9 @@ const TODAY = new Date(Date.now() + WIB_OFFSET).toISOString().split('T')[0]
 function normaliseRow(row) {
   return {
     ...row,
-    avg_buy_price:  safeNum(row.avg_buy_price)  || safeNum(row.farm_gate_price)  || 0,
-    avg_sell_price: safeNum(row.avg_sell_price) || safeNum(row.buyer_price)       || 0,
-    broker_margin:  safeNum(row.broker_margin)  || 0,
+    avg_buy_price: safeNum(row.avg_buy_price) || safeNum(row.farm_gate_price) || 0,
+    avg_sell_price: safeNum(row.avg_sell_price) || safeNum(row.buyer_price) || 0,
+    broker_margin: safeNum(row.broker_margin) || 0,
   }
 }
 
@@ -89,8 +89,8 @@ const REGION_GROUPS = {
 function StatCard({ label, value, sub, trend, isLoading, highlight }) {
   const Icon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus
   const trendColor =
-    trend === 'up'   ? 'text-emerald-400' :
-    trend === 'down' ? 'text-red-400'      : 'text-[#4B6478]'
+    trend === 'up' ? 'text-emerald-400' :
+      trend === 'down' ? 'text-red-400' : 'text-[#4B6478]'
 
   return (
     <Card className={cn(
@@ -246,9 +246,9 @@ export default function HargaPasarPublic() {
           ...g,
           region: 'Nasional',
           source: 'Aggregated',
-          avg_buy_price:  Math.round(g.farm_gate_sum / g.count),
+          avg_buy_price: Math.round(g.farm_gate_sum / g.count),
           avg_sell_price: Math.round(g.buyer_sum / g.count),
-          broker_margin:  Math.round((g.buyer_sum - g.farm_gate_sum) / g.count)
+          broker_margin: Math.round((g.buyer_sum - g.farm_gate_sum) / g.count)
         }))
       }
 
@@ -268,9 +268,9 @@ export default function HargaPasarPublic() {
       return {
         data: regData.map(r => ({
           ...r,
-          avg_buy_price:  r.farm_gate_price,
+          avg_buy_price: r.farm_gate_price,
           avg_sell_price: r.buyer_price,
-          broker_margin:  (r.buyer_price || 0) - (r.farm_gate_price || 0)
+          broker_margin: (r.buyer_price || 0) - (r.farm_gate_price || 0)
         })),
         isFallback: false
       }
@@ -285,29 +285,29 @@ export default function HargaPasarPublic() {
     let start, end
     if (hybridPeriod === 'weekly') {
       start = startOfWeek(now, { weekStartsOn: 1 })
-      end   = now
+      end = now
     } else {
       start = startOfMonth(now)
-      end   = now
+      end = now
     }
     return {
       hybridStartDate: format(start, 'yyyy-MM-dd'),
-      hybridEndDate:   format(end, 'yyyy-MM-dd'),
+      hybridEndDate: format(end, 'yyyy-MM-dd'),
     }
   }, [hybridPeriod])
 
   const targetProvince = currentProvince || '%' // Use '%' for National aggregated data
 
   const fetchStartDate = useMemo(() => format(subDays(new Date(), 45), 'yyyy-MM-dd'), [])
-  const fetchEndDate   = useMemo(() => format(new Date(), 'yyyy-MM-dd'), [])
+  const fetchEndDate = useMemo(() => format(new Date(), 'yyyy-MM-dd'), [])
 
   const { data: platformRpc } = useQuery({
     queryKey: ['public-platform-rpc', targetProvince],
     queryFn: async () => {
       const { data } = await supabase.rpc('get_province_price_trends', {
-        p_province:    targetProvince,
-        p_start_date:  fetchStartDate,
-        p_end_date:    fetchEndDate,
+        p_province: targetProvince,
+        p_start_date: fetchStartDate,
+        p_end_date: fetchEndDate,
       })
       return (data || []).reduce((acc, r) => { acc[r.price_date] = r; return acc }, {})
     },
@@ -320,7 +320,7 @@ export default function HargaPasarPublic() {
   const fullUnifiedData = useMemo(() => {
     const rawMap = new Map()
     for (const row of rawPrices) if (!rawMap.has(row.price_date)) rawMap.set(row.price_date, row)
-    
+
     const dates = new Set([
       ...rawMap.keys(),
       ...Object.keys(platformRpc || {})
@@ -329,11 +329,11 @@ export default function HargaPasarPublic() {
     return [...dates].sort().map(dStr => {
       const s = rawMap.get(dStr)
       const p = platformRpc?.[dStr]
-      
-      const chickin = s?.avg_buy_price || null 
+
+      const chickin = s?.avg_buy_price || null
       const pBeli = p?.avg_buy ? Math.round(p.avg_buy) : null
       const pJual = p?.avg_sell ? Math.round(p.avg_sell) : null
-      
+
       const finalBeli = pBeli || chickin || 0
       const finalJual = pJual || s?.avg_sell_price || (chickin ? chickin + 2500 : 0)
 
@@ -344,7 +344,7 @@ export default function HargaPasarPublic() {
         chickin,
         platformBeli: pBeli,
         platformJual: pJual,
-        
+
         avg_buy_price: finalBeli,
         avg_sell_price: finalJual,
         broker_margin: finalJual && finalBeli ? (finalJual - finalBeli) : 0,
@@ -373,19 +373,19 @@ export default function HargaPasarPublic() {
     staleTime: 1000 * 60 * 30, // 30 minutes cache
   })
 
-  const totalPlatformTx   = useMemo(() => Object.values(activityMap || {}).reduce((a, b) => a + b, 0), [activityMap])
-  const activeProvinces   = useMemo(() => Object.keys(activityMap || {}).length, [activityMap])
+  const totalPlatformTx = useMemo(() => Object.values(activityMap || {}).reduce((a, b) => a + b, 0), [activityMap])
+  const activeProvinces = useMemo(() => Object.keys(activityMap || {}).length, [activityMap])
 
   // ── Derived data ─────────────────────────────────────────────────────────
   const todayFmtId = useMemo(() => new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }), [])
-  const latestRow   = dedupedPrices[0] ?? null
-  const prevRow     = dedupedPrices[1] ?? null
-  const buyTrend    = useMemo(() => {
+  const latestRow = dedupedPrices[0] ?? null
+  const prevRow = dedupedPrices[1] ?? null
+  const buyTrend = useMemo(() => {
     if (!latestRow || !prevRow) return { dir: 'flat', diff: 0 }
     const diff = latestRow.avg_buy_price - prevRow.avg_buy_price
     return { dir: diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat', diff }
   }, [latestRow, prevRow])
-  const sellTrend   = useMemo(() => {
+  const sellTrend = useMemo(() => {
     if (!latestRow || !prevRow) return { dir: 'flat', diff: 0 }
     const diff = latestRow.avg_sell_price - prevRow.avg_sell_price
     return { dir: diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat', diff }
@@ -403,7 +403,7 @@ export default function HargaPasarPublic() {
 
   // ── JSON-LD Structured Data (Seo) ────────────────────────────────────
   const jsonLd = useMemo(() => {
-    const buyPriceStr  = latestRow?.avg_buy_price  ? `Rp ${latestRow.avg_buy_price.toLocaleString('id-ID')}/kg`  : 'belum tersedia'
+    const buyPriceStr = latestRow?.avg_buy_price ? `Rp ${latestRow.avg_buy_price.toLocaleString('id-ID')}/kg` : 'belum tersedia'
     const sellPriceStr = latestRow?.avg_sell_price ? `Rp ${latestRow.avg_sell_price.toLocaleString('id-ID')}/kg` : 'belum tersedia'
     const provinceLabel = currentProvince || 'Seluruh Indonesia'
 
@@ -475,7 +475,7 @@ export default function HargaPasarPublic() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Global Background Elements */}
-      <div 
+      <div
         className="fixed inset-0 pointer-events-none z-0"
         style={{
           backgroundImage: `linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)`,
@@ -751,9 +751,9 @@ export default function HargaPasarPublic() {
                       <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fill: '#4B6478', fontSize: 10, fontWeight: 800 }} dy={10} interval={hybridPeriod === 'monthly' ? 4 : 0} />
                       <YAxis hide domain={['dataMin - 3000', 'dataMax + 2000']} />
                       <Tooltip content={<HybridTooltip />} />
-                      <Area type="monotone" dataKey="chickin"      stroke="#F59E0B" strokeWidth={2} strokeDasharray="5 4" fill="transparent" connectNulls dot={false} />
+                      <Area type="monotone" dataKey="chickin" stroke="#F59E0B" strokeWidth={2} strokeDasharray="5 4" fill="transparent" connectNulls dot={false} />
                       <Area type="monotone" dataKey="platformJual" stroke="#818CF8" strokeWidth={2} fillOpacity={1} fill="url(#gradSell)" connectNulls activeDot={{ r: 5, stroke: '#0C1319', strokeWidth: 2, fill: '#818CF8' }} />
-                      <Area type="monotone" dataKey="platformBeli" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#gradBuy)"  connectNulls activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: '#10B981' }} />
+                      <Area type="monotone" dataKey="platformBeli" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#gradBuy)" connectNulls activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: '#10B981' }} />
                     </AreaChart>
                   </ResponsiveContainer>
                 )}
@@ -811,23 +811,23 @@ export default function HargaPasarPublic() {
                   <AreaChart data={dedupedPrices
                     .filter(r => r.price_date >= hybridStartDate && r.price_date <= hybridEndDate)
                     .reverse().map(r => ({
-                    date: r.price_date,
-                    'Harga Beli': r.avg_buy_price,
-                    'Harga Jual': r.avg_sell_price,
-                  }))} margin={{ top: 4, right: 4, bottom: 0, left: 8 }}>
+                      date: r.price_date,
+                      'Harga Beli': r.avg_buy_price,
+                      'Harga Jual': r.avg_sell_price,
+                    }))} margin={{ top: 4, right: 4, bottom: 0, left: 8 }}>
                     <defs>
                       <linearGradient id="gradB2" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor="#10B981" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#10B981" stopOpacity={0}    />
+                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="gradS2" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor="#6366F1" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#6366F1" stopOpacity={0}    />
+                        <stop offset="5%" stopColor="#6366F1" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
                     <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fill: '#4B6478', fontSize: 10 }} axisLine={false} tickLine={false} interval={hybridPeriod === 'monthly' ? 4 : 0} />
-                    <YAxis tickFormatter={v => `${(v/1000).toFixed(0)}k`} tick={{ fill: '#4B6478', fontSize: 10 }} axisLine={false} tickLine={false} width={38} />
+                    <YAxis tickFormatter={v => `${(v / 1000).toFixed(0)}k`} tick={{ fill: '#4B6478', fontSize: 10 }} axisLine={false} tickLine={false} width={38} />
                     <Tooltip
                       contentStyle={{ background: '#0C1319', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 12 }}
                       labelFormatter={formatShortDate}
@@ -949,12 +949,12 @@ export default function HargaPasarPublic() {
         <motion.section initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.2 }}>
           <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-[32px] p-8 md:p-12 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-[80px] pointer-events-none" />
-            
+
             <div className="text-center mb-12">
               <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-2">Proses Data</p>
               <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">Bagaimana Kami Mendapatkan Harga?</h2>
             </div>
-            
+
             <div className="grid md:grid-cols-3 gap-8 relative">
               {[
                 {
