@@ -13,6 +13,7 @@ import BlurText from '../components/reactbits/BlurText';
 import AnimatedContent from '../components/reactbits/AnimatedContent';
 import Particles from '../components/reactbits/Particles';
 import CountUp from '../components/reactbits/CountUp';
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
 import '../components/reactbits/ShinyText.css';
 
 // ─── Animation helper ─────────────────────────────────────────────────────────
@@ -34,6 +35,8 @@ function FadeUp({ children, delay = 0, className }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AboutUs() {
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
+
   React.useEffect(() => {
     document.title = 'Tentang Kami - TernakOS';
     return () => { document.title = 'TernakOS | Solusi Digital Peternakan Indonesia' };
@@ -49,7 +52,7 @@ export default function AboutUs() {
             SECTION HERO — LOCKED: DO NOT MODIFY
         ══════════════════════════════════════════════ */}
         <section
-          className="relative px-5 md:px-10 lg:px-20 h-[600px] md:h-[750px] lg:h-[800px] flex items-center overflow-hidden"
+          className="relative px-5 md:px-10 lg:px-20 pt-32 pb-16 md:h-[750px] lg:h-[800px] flex items-center overflow-hidden"
           style={{ background: '#06090F' }}
         >
           {/* Background Effects */}
@@ -89,7 +92,7 @@ export default function AboutUs() {
 
           <div className="relative z-10 max-w-[1280px] mx-auto w-full flex items-center pointer-events-none">
             {/* Kolom kiri — teks */}
-            <div className="relative w-full md:w-1/2 py-24 pointer-events-auto">
+            <div className={`relative w-full md:w-1/2 ${isDesktop ? 'py-24' : 'py-10'} pointer-events-auto`}>
               {/* Overlay KIRI */}
               <div
                 className="absolute left-[-100vw] right-0 inset-y-0 pointer-events-none"
@@ -114,7 +117,7 @@ export default function AboutUs() {
                     delay={100}
                     animateBy="words"
                     direction="top"
-                    className="font-display text-5xl lg:text-6xl font-black text-white leading-[1.1] tracking-tight"
+                    className={`font-display ${isDesktop ? 'text-5xl lg:text-6xl' : 'text-3xl'} font-black text-white ${isDesktop ? 'leading-[1.1]' : 'leading-[1.2]'} tracking-tight`}
                   />
                 </div>
 
@@ -242,19 +245,20 @@ export default function AboutUs() {
                 },
               ].map(({ Icon, iconCls, iconBg, badge, badgeCls, hoverBorder, title, pain, features }, i) => (
                 <FadeUp key={i} delay={i * 0.1}>
-                  <div className={`bg-[#0C1319] rounded-3xl p-8 border border-white/8 ${hoverBorder} transition-all duration-300 h-full flex flex-col`}>
-                    <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center mb-5 shrink-0`}>
-                      <Icon size={20} className={iconCls} />
+                  <div className={`group relative bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01))] rounded-3xl p-8 border border-white/8 ${hoverBorder} transition-all duration-300 h-full flex flex-col shadow-[0_8px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_20px_45px_rgba(16,185,129,0.12)]`}>
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/0 via-emerald-500/0 to-emerald-500/0 group-hover:from-emerald-500/5 group-hover:to-transparent transition-all duration-500 rounded-3xl" />
+                    <div className={`relative z-10 w-12 h-12 rounded-2xl ${iconBg} flex items-center justify-center mb-6 shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+                      <Icon size={24} className={iconCls} />
                     </div>
-                    <span className={`inline-block text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-4 self-start ${badgeCls}`}>
+                    <span className={`relative z-10 inline-block text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-4 self-start ${badgeCls} border border-white/5`}>
                       {badge}
                     </span>
-                    <h3 className="font-display text-xl font-bold text-white mb-3">{title}</h3>
-                    <p className="text-[#94A3B8] text-sm leading-relaxed mb-6">{pain}</p>
-                    <ul className="space-y-2 mt-auto">
+                    <h3 className="relative z-10 font-['Sora'] text-xl font-bold text-white mb-3 tracking-tight">{title}</h3>
+                    <p className="relative z-10 text-[#94A3B8] text-sm leading-relaxed mb-6 font-medium">{pain}</p>
+                    <ul className="relative z-10 space-y-3 mt-auto">
                       {features.map((f, j) => (
-                        <li key={j} className="flex items-start gap-2 text-sm text-[#94A3B8]">
-                          <Check size={13} className="text-emerald-400 shrink-0 mt-0.5" />
+                        <li key={j} className="flex items-start gap-3 text-[13px] text-[#94A3B8]">
+                          <Check size={14} className="text-emerald-400 shrink-0 mt-0.5" />
                           {f}
                         </li>
                       ))}

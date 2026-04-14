@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, Search, X, ChevronLeft } from 'lucide-react'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { FAQ_DATA, FAQ_CATEGORIES, getAllFAQForSchema } from '../lib/faqData'
 import Footer from '../components/Footer'
 
@@ -73,6 +74,7 @@ const ACCENT = {
 export default function FAQPage() {
   const [query, setQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState(null)
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const sectionRefs = useRef({})
 
   // Inject JSON-LD FAQ schema
@@ -144,7 +146,7 @@ export default function FAQPage() {
       </header>
 
       {/* ── Hero ── */}
-      <section className="pt-16 pb-12 px-6 border-b border-white/5 relative overflow-hidden">
+      <section className="pt-32 md:pt-24 pb-12 px-6 border-b border-white/5 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 to-transparent pointer-events-none" />
         <div className="max-w-3xl mx-auto relative z-10 text-center">
           <motion.div
@@ -155,7 +157,7 @@ export default function FAQPage() {
             <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-400 mb-4">
               Pusat Bantuan & FAQ
             </p>
-            <h1 className="font-display text-4xl md:text-5xl font-black tracking-tight leading-none mb-4">
+            <h1 className={`font-display ${isDesktop ? 'text-4xl md:text-5xl' : 'text-3xl'} font-black tracking-tight ${isDesktop ? 'leading-none' : 'leading-[1.2]'} mb-4`}>
               Pertanyaan yang <span className="text-emerald-400">Sering Ditanya</span>
             </h1>
             <p className="text-[#4B6478] text-base md:text-lg max-w-xl mx-auto leading-relaxed mb-8">

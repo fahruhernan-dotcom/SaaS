@@ -8,6 +8,7 @@ import Magnet from '../components/reactbits/Magnet';
 import ClickSpark from '../components/reactbits/ClickSpark';
 import Particles from '../components/reactbits/Particles';
 import { usePricingConfig } from '@/lib/hooks/useAdminData';
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
 
 const Hero = () => {
   const isTouchDevice = () => 
@@ -16,6 +17,7 @@ const Hero = () => {
     
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { data: dbPricing } = usePricingConfig();
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
 
   const peternakPrice = dbPricing?.peternak?.pro?.price || 499000;
   const brokerPrice = dbPricing?.broker?.pro?.price || 999000;
@@ -69,7 +71,7 @@ const Hero = () => {
   }, []);
 
   return (
-    <section className="relative px-5 py-20 md:px-10 lg:px-20 lg:py-24 bg-bg-base overflow-hidden text-center lg:text-left">
+    <section className="relative px-5 pt-32 pb-16 md:px-10 md:py-20 lg:px-20 lg:py-24 bg-bg-base overflow-hidden text-center lg:text-left">
       
       {/* Background Particles */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
@@ -116,11 +118,11 @@ const Hero = () => {
           {/* Headline */}
           <div style={{
             fontFamily: "'Sora', sans-serif",
-            fontSize: 'clamp(32px, 8vw, 60px)',
+            fontSize: isDesktop ? 'clamp(32px, 8vw, 60px)' : 'clamp(28px, 9vw, 42px)',
             fontWeight: 800,
-            letterSpacing: '-2.2px',
-            lineHeight: 1.05,
-            marginBottom: '16px',
+            letterSpacing: isDesktop ? '-2.2px' : '-1.2px',
+            lineHeight: isDesktop ? 1.05 : 1.2,
+            marginBottom: isDesktop ? '16px' : '20px',
           }}>
             {/* Baris 1-2: BlurText */}
             <div className="hero-headline-row" style={{ opacity: 0 }}>

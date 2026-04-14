@@ -13,6 +13,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
 import Particles from '../components/reactbits/Particles'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 
 
 // ─── Animation helper ─────────────────────────────────────────────────────────
@@ -62,24 +63,29 @@ function GroupCard({ Icon, title, desc, features, delay = 0 }) {
     <FadeUp delay={delay} className="h-full">
       <motion.div
         whileHover={{ scale: 1.02, y: -4 }}
-        className="group relative bg-[#111C24] rounded-2xl p-6 border border-white/8 hover:border-emerald-500/40 hover:shadow-[0_8px_30px_rgba(16,185,129,0.12)] transition-all duration-300 h-full flex flex-col overflow-hidden"
+        className="group relative bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01))] rounded-2xl p-7 border border-white/8 hover:border-emerald-500/40 hover:shadow-[0_20px_45px_rgba(16,185,129,0.12)] transition-all duration-300 h-full flex flex-col overflow-hidden"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/0 via-emerald-500/0 to-emerald-500/0 group-hover:from-emerald-500/5 group-hover:to-transparent transition-all duration-500" />
 
-        <div className="relative z-10 w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-4 shrink-0 group-hover:bg-emerald-500/20 group-hover:scale-110 transition-all duration-300">
-          <Icon size={20} className="text-emerald-400" />
+        <div className="relative z-10 w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center mb-6 shrink-0 group-hover:bg-emerald-500/20 group-hover:scale-110 transition-all duration-300">
+          <Icon size={24} className="text-emerald-400" />
         </div>
-        <h3 className="relative z-10 font-['Sora'] font-bold text-white text-base mb-2 leading-snug">{title}</h3>
-        {desc && <p className="relative z-10 text-xs text-[#4B6478] mb-4 leading-relaxed">{desc}</p>}
+        <h3 className="relative z-10 font-['Sora'] font-bold text-white text-lg mb-2 leading-snug tracking-tight">{title}</h3>
+        {desc && <p className="relative z-10 text-xs text-[#4B6478] mb-6 leading-relaxed font-medium">{desc}</p>}
 
         <motion.ul
-          className="relative z-10 space-y-2 mt-auto"
+          className="relative z-10 space-y-3 mt-auto"
           variants={listVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-20px' }}
         >
-          {features.map((f, i) => <FeatureItem key={i} text={f} />)}
+          {features.map((f, i) => (
+            <motion.li key={i} variants={itemVariants} className="flex items-start gap-3">
+              <Check size={14} className="text-emerald-400 shrink-0 mt-0.5" />
+              <span className="text-[13px] text-[#94A3B8] leading-snug font-medium">{f}</span>
+            </motion.li>
+          ))}
         </motion.ul>
       </motion.div>
     </FadeUp>
@@ -721,6 +727,7 @@ export default function FiturPage() {
   const [selectedSub, setSelectedSub] = useState('ayam')
   const tabBarRef = useRef(null)
   const [isSticky, setIsSticky] = useState(false)
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   const handleRoleChange = (role) => {
     setSelectedRole(role)
@@ -794,10 +801,10 @@ export default function FiturPage() {
                 <p className={`text-[11px] font-bold uppercase tracking-widest mb-5 ${isSembako ? 'text-amber-400' : 'text-emerald-400'}`}>
                   {hero.eyebrow}
                 </p>
-                <h1 className="font-['Sora'] text-3xl md:text-5xl lg:text-6xl font-black text-white leading-[1.1] tracking-tight mb-6 max-w-3xl mx-auto">
+                <h1 className={`font-['Sora'] ${isDesktop ? 'text-4xl md:text-5xl lg:text-6xl' : 'text-3xl'} font-black text-white ${isDesktop ? 'leading-[1.1]' : 'leading-[1.2]'} tracking-tight mb-6 max-w-3xl mx-auto`}>
                   {hero.headline}
                 </h1>
-                <p className="text-base md:text-lg text-[#94A3B8] max-w-2xl mx-auto leading-relaxed">
+                <p className={`${isDesktop ? 'text-lg' : 'text-base'} text-[#94A3B8] max-w-2xl mx-auto leading-relaxed`}>
                   {hero.sub}
                 </p>
 

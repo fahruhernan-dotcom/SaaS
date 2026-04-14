@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, ChevronDown, ArrowRight, Star, X as XIcon } from 'lucide-react'
@@ -5,6 +7,7 @@ import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { usePricingConfig, usePlanConfigs } from '@/lib/hooks/useAdminData'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import Particles from '../components/reactbits/Particles'
 
 
@@ -391,8 +394,9 @@ function ProCard({ data, billing, annualDiscount }) {
 
 
   return (
-    <div className="bg-[#111C24] rounded-2xl p-8 border border-white/8 flex flex-col h-full">
-      <div className="mb-6">
+    <div className="group relative bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01))] rounded-2xl p-8 border border-white/8 flex flex-col h-full transition-all duration-300 hover:border-emerald-500/30 hover:shadow-[0_20px_45px_rgba(0,0,0,0.3)]">
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/0 via-emerald-500/0 to-emerald-500/0 group-hover:from-emerald-500/5 group-hover:to-transparent transition-all duration-500 rounded-2xl" />
+      <div className="relative z-10 mb-6">
         {/* Anchoring: strikethrough */}
         <p className="text-[10px] font-bold uppercase tracking-widest text-[#4B6478] mb-3">PRO</p>
         <div className="flex items-end gap-2 mb-1">
@@ -412,20 +416,20 @@ function ProCard({ data, billing, annualDiscount }) {
         )}
       </div>
 
-      <ul className="space-y-2.5 mb-5 flex-1">
+      <ul className="relative z-10 space-y-3 mb-5 flex-1">
         {data.proFeatures.map((f, i) => <FeatureItem key={i} text={f} />)}
       </ul>
 
       {/* Add-on note for peternak */}
       {data.addOnNote && (
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-5 text-xs text-amber-400 leading-relaxed">
+        <div className="relative z-10 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-5 text-[11px] text-amber-400 leading-relaxed font-medium">
           💡 Punya lebih dari 1 jenis ternak aktif? Tambahkan +Rp&nbsp;99.000/bln per jenis. Maks 2 add-on — lebih dari itu otomatis lebih hemat upgrade ke Business.
         </div>
       )}
 
       <Link
         to="/register"
-        className="block text-center py-3 rounded-xl border border-emerald-500/40 text-emerald-400 text-sm font-bold hover:bg-emerald-500/10 transition-colors"
+        className="relative z-10 block text-center py-3 rounded-xl border border-emerald-500/40 text-emerald-400 text-sm font-bold hover:bg-emerald-500/10 transition-colors"
       >
         Mulai {data.trialDays || 14} Hari Gratis
       </Link>
@@ -450,10 +454,12 @@ function BusinessCard({ data, billing, roleLabel, annualDiscount }) {
       </div>
 
       <div
-        className="bg-[#0C1319] rounded-2xl p-8 border-2 border-emerald-500/60 flex flex-col h-full"
+        className="group relative bg-[#0C1319] rounded-2xl p-8 border-2 border-emerald-500/60 flex flex-col h-full transition-all duration-300 hover:border-emerald-500 hover:shadow-[0_24px_60px_rgba(16,185,129,0.25)]"
         style={{ boxShadow: '0 0 40px rgba(16,185,129,0.15)' }}
       >
-        <div className="mb-6">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent pointer-events-none rounded-2xl" />
+        
+        <div className="relative z-10 mb-6">
           <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 mb-3">BUSINESS</p>
 
           {/* Anchoring */}
@@ -475,8 +481,8 @@ function BusinessCard({ data, billing, roleLabel, annualDiscount }) {
 
           {/* Loss aversion */}
           {billing === 'yearly' && (
-            <div className="mt-3 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
-              <p className="text-xs text-amber-400 font-semibold">
+            <div className="mt-4 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
+              <p className="text-[11px] text-amber-400 font-bold">
                 💡 Hemat {fmtIDR(yearlySaving)} vs bayar bulanan
               </p>
             </div>
@@ -484,24 +490,24 @@ function BusinessCard({ data, billing, roleLabel, annualDiscount }) {
         </div>
 
         {/* Social proof */}
-        <div className="mb-5">
+        <div className="relative z-10 mb-6">
           <SocialAvatars count={data.socialProof} />
         </div>
 
-        <ul className="space-y-2.5 mb-2 flex-1">
+        <ul className="relative z-10 space-y-3 mb-2 flex-1">
           {data.proFeatures.map((f, i) => <FeatureItem key={i} text={f} />)}
           <li className="pt-2 border-t border-white/8" />
           {data.bizExtras.map((f, i) => <FeatureItem key={i} text={f} isExtra />)}
         </ul>
 
-        <div className="mt-6">
+        <div className="relative z-10 mt-8">
           <Link
             to="/register"
-            className="block text-center py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold transition-colors shadow-[0_4px_20px_rgba(16,185,129,0.3)]"
+            className="block text-center py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold transition-all shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_4px_28px_rgba(16,185,129,0.45)] hover:-translate-y-0.5 active:translate-y-0"
           >
             Mulai {data.trialDays || 14} Hari Gratis
           </Link>
-          <p className="text-center text-[11px] text-[#4B6478] mt-2">Tidak perlu kartu kredit</p>
+          <p className="text-center text-[11px] text-[#4B6478] mt-3 font-medium">Tidak perlu kartu kredit</p>
         </div>
       </div>
     </div>
@@ -510,8 +516,8 @@ function BusinessCard({ data, billing, roleLabel, annualDiscount }) {
 
 function StarterCard({ data }) {
   return (
-    <div className="bg-[#111C24] rounded-2xl p-8 border border-white/8 flex flex-col h-full">
-      <div className="mb-6">
+    <div className="group relative bg-[linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))] rounded-2xl p-8 border border-white/8 flex flex-col h-full transition-all duration-300 hover:border-white/20">
+      <div className="relative z-10 mb-6">
         <p className="text-[10px] font-bold uppercase tracking-widest text-[#4B6478] mb-3">STARTER</p>
         <div className="flex items-baseline gap-1 mb-1">
           <span className="font-['Sora'] text-3xl font-black text-white">Gratis</span>
@@ -519,24 +525,24 @@ function StarterCard({ data }) {
         <p className="text-xs text-[#4B6478] mt-1">Trial {data.trialDays || 14} hari tanpa kartu kredit</p>
       </div>
 
-      <ul className="space-y-2.5 flex-1 mb-8">
+      <ul className="relative z-10 space-y-3 flex-1 mb-8">
         {data.starterFeatures.map((f, i) => (
-          <li key={i} className="flex items-start gap-2">
-            <Check size={13} className="text-emerald-400 shrink-0 mt-0.5" />
-            <span className="text-sm text-[#94A3B8] leading-snug">{f}</span>
+          <li key={i} className="flex items-start gap-3">
+            <Check size={14} className="text-emerald-400 shrink-0 mt-0.5" />
+            <span className="text-[13px] text-[#94A3B8] leading-snug">{f}</span>
           </li>
         ))}
         {data.starterMissing.map((f, i) => (
-          <li key={`x-${i}`} className="flex items-start gap-2">
-            <XIcon size={13} className="text-[#4B6478] shrink-0 mt-0.5" />
-            <span className="text-sm text-[#4B6478] leading-snug line-through">{f}</span>
+          <li key={`x-${i}`} className="flex items-start gap-3">
+            <XIcon size={14} className="text-[#4B6478] shrink-0 mt-0.5" />
+            <span className="text-[13px] text-[#4B6478] leading-snug line-through">{f}</span>
           </li>
         ))}
       </ul>
 
       <Link
         to="/register"
-        className="block text-center py-3 rounded-xl border border-white/15 text-[#94A3B8] text-sm font-bold hover:border-white/25 hover:text-white transition-colors"
+        className="relative z-10 block text-center py-3 rounded-xl border border-white/10 text-[#64748B] text-sm font-bold hover:border-white/30 hover:text-white transition-all"
       >
         Mulai Gratis
       </Link>
@@ -546,8 +552,8 @@ function StarterCard({ data }) {
 
 function EnterpriseCard() {
   return (
-    <div className="bg-[#111C24] rounded-2xl p-8 border border-white/8 flex flex-col h-full">
-      <div className="mb-6">
+    <div className="group relative bg-[linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))] rounded-2xl p-8 border border-white/8 flex flex-col h-full transition-all duration-300 hover:border-white/20">
+      <div className="relative z-10 mb-6">
         <p className="text-[10px] font-bold uppercase tracking-widest text-[#4B6478] mb-3">ENTERPRISE</p>
         <div className="flex items-baseline gap-1 mb-1">
           <span className="font-['Sora'] text-3xl font-black text-white">Custom</span>
@@ -555,7 +561,7 @@ function EnterpriseCard() {
         <p className="text-xs text-[#4B6478] mt-1">Harga disesuaikan kebutuhan bisnis</p>
       </div>
 
-      <ul className="space-y-2.5 mb-8 flex-1">
+      <ul className="relative z-10 space-y-3 mb-8 flex-1">
         {ENTERPRISE_FEATURES.map((f, i) => <FeatureItem key={i} text={f} />)}
       </ul>
 
@@ -563,7 +569,7 @@ function EnterpriseCard() {
         href={WA_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="block text-center py-3 rounded-xl border border-white/15 text-white text-sm font-bold hover:border-white/30 hover:bg-white/5 transition-colors"
+        className="relative z-10 block text-center py-3 rounded-xl border border-white/10 text-white text-sm font-bold hover:border-white/30 hover:bg-white/5 transition-all"
       >
         Hubungi Kami
       </a>
@@ -577,6 +583,7 @@ export default function HargaPage() {
   const [selectedRole, setSelectedRole] = useState('broker')
   const [selectedSub, setSelectedSub] = useState('ayam')
   const [billing, setBilling] = useState('monthly')
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   const { data: dbPricing } = usePricingConfig()
   const { data: dbConfigs } = usePlanConfigs()
@@ -675,7 +682,7 @@ export default function HargaPage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, delay: 0.05 }}
-              className="font-['Sora'] text-4xl md:text-5xl font-black text-white leading-tight mb-4"
+              className={`font-['Sora'] ${isDesktop ? 'text-4xl md:text-5xl lg:text-6xl' : 'text-3xl'} font-black text-white ${isDesktop ? 'leading-tight' : 'leading-[1.2]'} mb-4`}
             >
               Pilih plan yang sesuai bisnismu.
             </motion.h1>
