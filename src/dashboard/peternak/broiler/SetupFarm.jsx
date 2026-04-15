@@ -19,12 +19,11 @@ import { DatePicker } from '@/components/ui/DatePicker'
 const TODAY = new Date().toISOString().split('T')[0]
 
 const LIVESTOCK_OPTIONS = [
-  { id: 'ayam_broiler', Icon: Bird,     label: 'Ayam Broiler', iconColor: 'text-purple-400', iconBg: 'bg-purple-500/10', available: true  },
-  { id: 'ayam_petelur', Icon: Egg,      label: 'Ayam Petelur', iconColor: 'text-blue-400',   iconBg: 'bg-blue-500/10',   available: true  },
-  { id: 'domba',        Icon: PawPrint, label: 'Domba',        iconColor: 'text-white/30',   iconBg: 'bg-white/5',       available: false },
-  { id: 'kambing',      Icon: PawPrint, label: 'Kambing',      iconColor: 'text-white/30',   iconBg: 'bg-white/5',       available: false },
-  { id: 'sapi',         Icon: PawPrint, label: 'Sapi',         iconColor: 'text-white/30',   iconBg: 'bg-white/5',       available: false },
-  { id: 'babi',         Icon: PawPrint, label: 'Babi',         iconColor: 'text-white/30',   iconBg: 'bg-white/5',       available: false },
+  { id: 'ayam_broiler', Icon: Bird,     label: 'Ayam Broiler', iconColor: 'text-emerald-400', iconBg: 'bg-emerald-500/10', available: true  },
+  { id: 'domba',        Icon: PawPrint, label: 'Kambing & Domba', iconColor: 'text-orange-400',  iconBg: 'bg-orange-500/10',  available: true },
+  { id: 'ayam_petelur', Icon: Egg,      label: 'Ayam Petelur', iconColor: 'text-[#4B6478]',   iconBg: 'bg-white/5',       available: false },
+  { id: 'sapi',         Icon: PawPrint, label: 'Sapi',         iconColor: 'text-[#4B6478]',   iconBg: 'bg-white/5',       available: false },
+  { id: 'babi',         Icon: PawPrint, label: 'Babi',         iconColor: 'text-[#4B6478]',   iconBg: 'bg-white/5',       available: false },
 ]
 
 // ─── Shared styles ─────────────────────────────────────────────────────────────
@@ -204,7 +203,7 @@ export default function SetupFarm({ onSuccess, onCancel }) {
               </div>
               <div>
                 <h1 className="font-display font-bold text-white text-lg leading-none mb-1">
-                  Setup Kandang Pertama
+                  {livestock === 'domba' ? 'Setup Farm Kambing/Domba' : 'Setup Kandang Ayam Pertama'}
                 </h1>
                 <p className="text-[#4B6478] text-sm">Langkah {step} dari 3</p>
               </div>
@@ -319,7 +318,7 @@ export default function SetupFarm({ onSuccess, onCancel }) {
                     {/* Jumlah Kandang */}
                     <div>
                       <label htmlFor={isMultiKandangEnabled ? "kandang_count" : undefined} className={labelCls}>
-                        Jumlah Kandang / Pen
+                        {livestock === 'domba' ? 'Jumlah Kandang / Kelompok' : 'Jumlah Kandang / Pen'}
                       </label>
                       {isMultiKandangEnabled ? (
                         <InputNumber
@@ -357,13 +356,17 @@ export default function SetupFarm({ onSuccess, onCancel }) {
             {/* Step 3 — Mulai Siklus */}
             {step === 3 && (
               <motion.div key="step3" {...stepMotion}>
-                <h2 className="font-display text-2xl font-bold text-white">Mulai Siklus Pertama</h2>
+                <h2 className="font-display text-2xl font-bold text-white">
+                  {livestock === 'domba' ? 'Mulai Penggemukan Pertama' : 'Mulai Siklus Pertama'}
+                </h2>
                 <p className="text-[#94A3B8] text-sm mt-1 mb-6">
-                  Opsional — kamu bisa skip dan tambahkan siklus nanti
+                  {livestock === 'domba' ? 'Isi populasi awal ternak bapak' : 'Opsional — kamu bisa skip dan tambahkan siklus nanti'}
                 </p>
                 <div className="flex flex-col gap-4">
                   <div>
-                    <label htmlFor="doc_count" className={labelCls}>Jumlah DOC (Ekor)</label>
+                    <label htmlFor="doc_count" className={labelCls}>
+                      {livestock === 'domba' ? 'Jumlah Ekor' : 'Jumlah DOC (Ekor)'}
+                    </label>
                     <InputNumber
                       id="doc_count"
                       name="doc_count"
@@ -374,7 +377,9 @@ export default function SetupFarm({ onSuccess, onCancel }) {
                     />
                   </div>
                   <div>
-                    <label htmlFor="start_date" className={labelCls}>Tanggal Masuk DOC</label>
+                    <label htmlFor="start_date" className={labelCls}>
+                      {livestock === 'domba' ? 'Tanggal Mulai Penggemukan' : 'Tanggal Masuk DOC'}
+                    </label>
                     <DatePicker
                       id="start_date"
                       value={cycleForm.start_date}
@@ -384,7 +389,9 @@ export default function SetupFarm({ onSuccess, onCancel }) {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label htmlFor="target_weight_kg" className={labelCls}>Target Berat Panen (kg)</label>
+                      <label htmlFor="target_weight_kg" className={labelCls}>
+                        {livestock === 'domba' ? 'Target Berat Jual (kg)' : 'Target Berat Panen (kg)'}
+                      </label>
                       <InputNumber
                         id="target_weight_kg"
                         name="target_weight_kg"
@@ -392,7 +399,7 @@ export default function SetupFarm({ onSuccess, onCancel }) {
                         onChange={v => setCycleField('target_weight_kg', v)}
                         min={0.1}
                         step={0.1}
-                        placeholder="2.0"
+                        placeholder={livestock === 'domba' ? '35.0' : '2.0'}
                         className="h-12 rounded-xl bg-[#111C24] border-white/10 text-sm"
                       />
                     </div>
