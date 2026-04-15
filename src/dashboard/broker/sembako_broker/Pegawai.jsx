@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react'
-import { useNavigate, useOutletContext } from 'react-router-dom'
+import { useNavigate, useOutletContext, Link } from 'react-router-dom'
 import { SembakoMobileBar } from './components/SembakoNavigation'
 import { motion } from 'framer-motion' // eslint-disable-line no-unused-vars
-import { Users, Plus, DollarSign, CalendarCheck, Check } from 'lucide-react'
+import { Users, Plus, DollarSign, CalendarCheck, Check, Lock } from 'lucide-react'
+import { useAuth } from '@/lib/hooks/useAuth'
+import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import {
   useSembakoEmployees, useSembakoPayrolls,
   useCreateSembakoEmployee, useUpdateSembakoEmployee,
@@ -33,7 +35,43 @@ const ROLES = ['gudang', 'sales', 'kurir', 'admin', 'lainnya']
 export default function SembakoPegawai() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const { setSidebarOpen } = useOutletContext()
+  const { tenant } = useAuth()
+  const sub = getSubscriptionStatus(tenant)
+  const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
   const [tab, setTab] = useState('pegawai')
+
+  if (isStarter) {
+    return (
+      <div style={{ background: C.bg, minHeight: '100vh' }}>
+        {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Pegawai" />}
+        <div className="flex flex-col items-center justify-center min-h-[80vh] px-6 text-center gap-6">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+            style={{ background: 'rgba(234,88,12,0.12)', border: '1px solid rgba(234,88,12,0.25)' }}>
+            <Lock size={28} style={{ color: '#EA580C' }} />
+          </div>
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-3"
+              style={{ background: 'rgba(234,88,12,0.1)', border: '1px solid rgba(234,88,12,0.2)' }}>
+              <Users size={11} style={{ color: '#EA580C' }} />
+              <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#EA580C' }}>Fitur Pro</span>
+            </div>
+            <h2 className="font-display font-black text-xl text-white mb-2">Karyawan & Payroll</h2>
+            <p className="text-sm max-w-xs leading-relaxed" style={{ color: '#64748B' }}>
+              Kelola data karyawan, jadwal gaji, dan rekap payroll tersedia di plan{' '}
+              <span className="text-white font-bold">Pro</span> dan <span className="text-white font-bold">Business</span>.
+            </p>
+          </div>
+          <Link
+            to="/upgrade"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm text-white transition-colors"
+            style={{ background: '#EA580C', boxShadow: '0 4px 20px rgba(234,88,12,0.3)' }}
+          >
+            Lihat Paket Pro →
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ background: C.bg, minHeight: '100vh', paddingBottom: '96px' }}>

@@ -27,39 +27,6 @@ export function useAntiSpam(formId, {
   const honeypotRef = useRef('')
   const timerRef = useRef(null)
 
-  // Check lockout status on mount
-  useEffect(() => {
-    checkLockout()
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-  }, [])
-
-  // Cooldown countdown
-  useEffect(() => {
-    if (cooldown <= 0) return
-    const interval = setInterval(() => {
-      setCooldown(prev => {
-        if (prev <= 1) {
-          clearInterval(interval)
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [cooldown])
-
-  // Lockout countdown
-  useEffect(() => {
-    if (!isLocked) return
-    const interval = setInterval(() => {
-      checkLockout()
-    }, 1000)
-    timerRef.current = interval
-    return () => clearInterval(interval)
-  }, [isLocked])
-
   function getStorageData() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
@@ -113,6 +80,39 @@ export function useAntiSpam(formId, {
     setIsLocked(false)
     setLockoutRemaining(0)
   }
+
+  // Check lockout status on mount
+  useEffect(() => {
+    checkLockout()
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [])
+
+  // Cooldown countdown
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const interval = setInterval(() => {
+      setCooldown(prev => {
+        if (prev <= 1) {
+          clearInterval(interval)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [cooldown])
+
+  // Lockout countdown
+  useEffect(() => {
+    if (!isLocked) return
+    const interval = setInterval(() => {
+      checkLockout()
+    }, 1000)
+    timerRef.current = interval
+    return () => clearInterval(interval)
+  }, [isLocked])
 
   function recordAttempt() {
     const data = getStorageData()

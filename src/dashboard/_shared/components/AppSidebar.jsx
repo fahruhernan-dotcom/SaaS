@@ -288,8 +288,8 @@ export default function AppSidebar({ open, onClose }) {
           { title: 'Toko & Supplier', url: `${brokerBase}/toko-supplier`, icon: Store },
           { title: 'Pengiriman',      url: `${brokerBase}/pengiriman`,    icon: Truck },
           { title: 'Gudang',          url: `${brokerBase}/gudang`,        icon: Warehouse },
-          { title: 'Inventori & HPP', url: `${brokerBase}/produk`,        icon: Package,   roles: ['owner', 'staff'] },
-          { title: 'Karyawan',        url: `${brokerBase}/karyawan`,      icon: Users,     roles: ['owner'] },
+          { title: 'Inventori & HPP', url: `${brokerBase}/produk`,        icon: Package,        roles: ['owner', 'staff'] },
+          { title: 'Karyawan',        url: `${brokerBase}/karyawan`,      icon: Users,          roles: ['owner'], planRequired: 'pro' },
         ] : []),
       ]
     },
@@ -298,8 +298,8 @@ export default function AppSidebar({ open, onClose }) {
     ...(isSembako ? [{
       label: 'LAPORAN & AKUN',
       items: [
-        { title: 'Laporan',      url: `${brokerBase}/laporan`, icon: BarChart2, roles: ['owner'] },
-        { title: 'Tim & Akses',  url: `${brokerBase}/tim`,     icon: Shield,   roles: ['owner'] },
+        { title: 'Laporan',       url: `${brokerBase}/laporan`, icon: BarChart2, roles: ['owner'], planRequired: 'pro' },
+        { title: 'Tim & Akses',   url: `${brokerBase}/tim`,     icon: Shield,    roles: ['owner'] },
         { title: 'Akun & Profil', url: `${brokerBase}/akun`,    icon: User },
       ]
     }] : []),

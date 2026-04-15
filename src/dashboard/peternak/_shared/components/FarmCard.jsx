@@ -2,102 +2,6 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, Users, Layers, ChevronRight, PlayCircle } from 'lucide-react'
 
-// ─── Maps ─────────────────────────────────────────────────────────────────────
-
-const LIVESTOCK_LABELS = {
-  ayam_broiler: '🐔 Ayam Broiler',
-  ayam_petelur: '🥚 Ayam Petelur',
-  domba:        '🐑 Domba',
-  kambing:      '🐐 Kambing',
-  sapi:         '🐄 Sapi',
-  babi:         '🐷 Babi',
-}
-
-const BUSINESS_MODEL_LABELS = {
-  mandiri_murni:  'Murni Mandiri',
-  mandiri_semi:   'Semi Mandiri',
-  mitra_penuh:    'INTI-PLASMA',
-  mitra_pakan:    'Kemitraan Pakan',
-  mitra_sapronak: 'Kemitraan Sapronak',
-}
-
-const isMandiri = model => model === 'mandiri_murni' || model === 'mandiri_semi'
-
-// ─── Component ────────────────────────────────────────────────────────────────
-
-export default function FarmCard({ farm, activeCycle, onStart, onView }) {
-  const livestockLabel = LIVESTOCK_LABELS[farm.livestock_type] ?? farm.livestock_type ?? '—'
-  const modelLabel = BUSINESS_MODEL_LABELS[farm.business_model] ?? farm.business_model ?? '—'
-  const mandiri = isMandiri(farm.business_model)
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      style={cardStyle}
-    >
-      {/* ── Top row: name + livestock badge ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <h3 style={farmNameStyle}>{farm.farm_name}</h3>
-          {farm.location && (
-            <div style={locationRowStyle}>
-              <MapPin size={11} color="#4B6478" />
-              <span style={locationTextStyle}>{farm.location}</span>
-            </div>
-          )}
-        </div>
-        <span style={livestockBadgeStyle}>{livestockLabel}</span>
-      </div>
-
-      {/* ── Business model badge ── */}
-      <span style={{ ...modelBadgeStyle, ...(mandiri ? mandiriBadgeStyle : kemitraanBadgeStyle) }}>
-        {modelLabel}
-      </span>
-
-      {/* ── Stats row ── */}
-      <div style={statsRowStyle}>
-        <div style={statItemStyle}>
-          <Users size={12} color="#4B6478" />
-          <span style={statTextStyle}>{(farm.capacity || 0).toLocaleString('id-ID')} ekor</span>
-        </div>
-        <div style={dotSepStyle} />
-        <div style={statItemStyle}>
-          <Layers size={12} color="#4B6478" />
-          <span style={statTextStyle}>{farm.kandang_count || 1} kandang</span>
-        </div>
-      </div>
-
-      {/* ── Active cycle status ── */}
-      <div style={cycleRowStyle}>
-        {activeCycle ? (
-          <div style={cycleActivePillStyle}>
-            <div style={pulseDotStyle} />
-            <span>Siklus #{activeCycle.cycle_number} aktif · Hari ke-{activeCycle.age_days ?? '—'}</span>
-          </div>
-        ) : (
-          <span style={cycleEmptyStyle}>Belum ada siklus aktif</span>
-        )}
-      </div>
-
-      {/* ── CTA ── */}
-      <div style={{ marginTop: 14 }}>
-        {activeCycle ? (
-          <button style={viewBtnStyle} onClick={() => onView?.(farm)}>
-            Masuk Kandang
-            <ChevronRight size={14} />
-          </button>
-        ) : (
-          <button style={startBtnStyle} onClick={() => onStart?.(farm)}>
-            <PlayCircle size={14} />
-            Mulai Siklus
-          </button>
-        )}
-      </div>
-    </motion.div>
-  )
-}
-
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const cardStyle = {
@@ -200,3 +104,102 @@ const startBtnStyle = {
   boxShadow: '0 4px 14px rgba(124,58,237,0.3)',
   fontFamily: 'Sora',
 }
+
+
+
+// ─── Maps ─────────────────────────────────────────────────────────────────────
+
+const LIVESTOCK_LABELS = {
+  ayam_broiler: '🐔 Ayam Broiler',
+  ayam_petelur: '🥚 Ayam Petelur',
+  domba:        '🐑 Domba',
+  kambing:      '🐐 Kambing',
+  sapi:         '🐄 Sapi',
+  babi:         '🐷 Babi',
+}
+
+const BUSINESS_MODEL_LABELS = {
+  mandiri_murni:  'Murni Mandiri',
+  mandiri_semi:   'Semi Mandiri',
+  mitra_penuh:    'INTI-PLASMA',
+  mitra_pakan:    'Kemitraan Pakan',
+  mitra_sapronak: 'Kemitraan Sapronak',
+}
+
+const isMandiri = model => model === 'mandiri_murni' || model === 'mandiri_semi'
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export default function FarmCard({ farm, activeCycle, onStart, onView }) {
+  const livestockLabel = LIVESTOCK_LABELS[farm.livestock_type] ?? farm.livestock_type ?? '—'
+  const modelLabel = BUSINESS_MODEL_LABELS[farm.business_model] ?? farm.business_model ?? '—'
+  const mandiri = isMandiri(farm.business_model)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={cardStyle}
+    >
+      {/* ── Top row: name + livestock badge ── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h3 style={farmNameStyle}>{farm.farm_name}</h3>
+          {farm.location && (
+            <div style={locationRowStyle}>
+              <MapPin size={11} color="#4B6478" />
+              <span style={locationTextStyle}>{farm.location}</span>
+            </div>
+          )}
+        </div>
+        <span style={livestockBadgeStyle}>{livestockLabel}</span>
+      </div>
+
+      {/* ── Business model badge ── */}
+      <span style={{ ...modelBadgeStyle, ...(mandiri ? mandiriBadgeStyle : kemitraanBadgeStyle) }}>
+        {modelLabel}
+      </span>
+
+      {/* ── Stats row ── */}
+      <div style={statsRowStyle}>
+        <div style={statItemStyle}>
+          <Users size={12} color="#4B6478" />
+          <span style={statTextStyle}>{(farm.capacity || 0).toLocaleString('id-ID')} ekor</span>
+        </div>
+        <div style={dotSepStyle} />
+        <div style={statItemStyle}>
+          <Layers size={12} color="#4B6478" />
+          <span style={statTextStyle}>{farm.kandang_count || 1} kandang</span>
+        </div>
+      </div>
+
+      {/* ── Active cycle status ── */}
+      <div style={cycleRowStyle}>
+        {activeCycle ? (
+          <div style={cycleActivePillStyle}>
+            <div style={pulseDotStyle} />
+            <span>Siklus #{activeCycle.cycle_number} aktif · Hari ke-{activeCycle.age_days ?? '—'}</span>
+          </div>
+        ) : (
+          <span style={cycleEmptyStyle}>Belum ada siklus aktif</span>
+        )}
+      </div>
+
+      {/* ── CTA ── */}
+      <div style={{ marginTop: 14 }}>
+        {activeCycle ? (
+          <button style={viewBtnStyle} onClick={() => onView?.(farm)}>
+            Masuk Kandang
+            <ChevronRight size={14} />
+          </button>
+        ) : (
+          <button style={startBtnStyle} onClick={() => onStart?.(farm)}>
+            <PlayCircle size={14} />
+            Mulai Siklus
+          </button>
+        )}
+      </div>
+    </motion.div>
+  )
+}
+

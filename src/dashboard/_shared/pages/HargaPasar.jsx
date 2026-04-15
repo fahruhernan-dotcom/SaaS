@@ -59,6 +59,7 @@ export default function HargaPasar() {
         .from('market_prices')
         .select('*')
         .eq('is_deleted', false)
+        .neq('source', 'arboge_scraper')
         .order('price_date', { ascending: false })
         .order('region', { ascending: false })
         .order('source', { ascending: false })
@@ -130,6 +131,31 @@ export default function HargaPasar() {
     enabled: !!tenant?.id
   })
 
+  // Arboge.com reference & realization prices (merged reference line)
+  const { data: arbogeData } = useQuery({
+    queryKey: ['arboge-dashboard-prices'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('market_prices')
+        .select('price_date, farm_gate_price, source')
+        .eq('is_deleted', false)
+        .in('source', ['arboge_referensi', 'arboge_realisasi'])
+        .order('price_date', { ascending: false })
+        .limit(60) // Fetch more to cover overlaps
+      
+      return (data || []).reduce((acc, r) => {
+        // Source priority: realisasi > referensi
+        // If we already added a referensi but find a realisasi for the same date, overwrite it.
+        const existing = acc[r.price_date]
+        if (!existing || r.source === 'arboge_realisasi') {
+          acc[r.price_date] = r.farm_gate_price
+        }
+        return acc
+      }, {})
+    },
+    staleTime: 60 * 1000,
+  })
+
   const todayPrice = useMemo(() => {
     // Priority 1: Live transactions today (filtered by is_deleted=false)
     if (liveData && liveData.transaction_count > 0) {
@@ -177,10 +203,11 @@ export default function HargaPasar() {
             date: formatDate(date, 'dd MMM'),
             beli: p.avg_buy_price,
             jual: p.avg_sell_price,
-            margin: p.avg_sell_price - p.avg_buy_price
+            margin: p.avg_sell_price - p.avg_buy_price,
+            arboge: arbogeData?.[date] || null
         }
     })
-  }, [prices])
+  }, [prices, arbogeData])
 
   return (
     <TooltipProvider>
@@ -225,12 +252,24 @@ export default function HargaPasar() {
                                     <UITooltip>
                                         <TooltipTrigger asChild>
                                             <Badge variant="outline" className="bg-white/5 border-white/10 text-[#4B6478] text-[9px] font-black px-1.5 py-0 rounded-md h-4 flex items-center gap-1 cursor-help">
-                                                AUTO
+                                                CHICKIN
                                                 <Info size={10} />
                                             </Badge>
                                         </TooltipTrigger>
                                         <TooltipContent side="right" className="bg-[#111C24] border-white/10 text-[10px] font-bold text-white/60">
-                                            Estimasi dari chickin.id
+                                            Referensi harga dari chickin.id
+                                        </TooltipContent>
+                                    </UITooltip>
+                                ) : todayPrice.source === 'arboge_scraper' ? (
+                                    <UITooltip>
+                                        <TooltipTrigger asChild>
+                                            <Badge variant="outline" className="bg-orange-500/10 border-orange-500/20 text-orange-400 text-[9px] font-black px-1.5 py-0 rounded-md h-4 flex items-center gap-1 cursor-help">
+                                                ARBOGE
+                                                <Info size={10} />
+                                            </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right" className="bg-[#111C24] border-orange-500/20 text-[10px] font-bold text-orange-400">
+                                            Realisasi harga dari arboge.com
                                         </TooltipContent>
                                     </UITooltip>
                                 ) : todayPrice.source === 'manual' ? (
@@ -265,7 +304,7 @@ export default function HargaPasar() {
                             <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Harga Jual</Label>
                             <div className="flex flex-col items-end">
                                 <span className="font-display text-[26px] font-black text-emerald-400 leading-none tracking-tighter">
-                                    {todayPrice.source === 'auto_scraper' && '~'}
+                                    {(todayPrice.source === 'auto_scraper' || todayPrice.source === 'arboge_scraper') && '~'}
                                     {todayPrice.avg_sell_price > 0 ? formatIDR(todayPrice.avg_sell_price) : '-'}
                                 </span>
                                 <ChangeIndicator diff={sellDiff} />
@@ -282,6 +321,8 @@ export default function HargaPasar() {
                          </p>
                          {todayPrice.source === 'auto_scraper' ? (
                             <p className="text-[11px] font-bold text-[#4B6478]">estimasi +Rp 2.500 margin dari chickin.id</p>
+                         ) : todayPrice.source === 'arboge_scraper' ? (
+                            <p className="text-[11px] font-bold text-[#4B6478]">estimasi +Rp 2.500 margin (realisasi arboge.com)</p>
                          ) : (
                             <p className="text-[11px] font-bold text-[#4B6478]">dari {todayPrice.transaction_count} transaksi hari ini</p>
                          )}
@@ -359,11 +400,17 @@ export default function HargaPasar() {
                             stroke="#10B981" strokeWidth={2} 
                             fillOpacity={1} fill="url(#colorJual)" 
                         />
+                        <Area 
+                            type="monotone" dataKey="arboge"
+                            stroke="#F97316" strokeWidth={2} strokeDasharray="4 4"
+                            fill="transparent" connectNulls dot={false}
+                        />
                     </AreaChart>
                 </ResponsiveContainer>
-                <div className="flex justify-center gap-6 mt-2">
+                <div className="flex justify-center gap-6 mt-2 flex-wrap">
                     <LegendItem color="#4B6478" label="Beli" />
                     <LegendItem color="#10B981" label="Jual" />
+                    <LegendItem color="#F97316" label="Arboge (Ref)" dashed />
                 </div>
             </div>
         </section>
@@ -438,10 +485,12 @@ function ChangeIndicator({ diff }) {
     )
 }
 
-function LegendItem({ color, label }) {
+function LegendItem({ color, label, dashed }) {
     return (
         <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full" style={{ background: color }} />
+            {dashed
+              ? <div className="w-4 h-0 border-t-2 border-dashed" style={{ borderColor: color }} />
+              : <div className="w-2 h-2 rounded-full" style={{ background: color }} />}
             <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">{label}</span>
         </div>
     )
@@ -450,19 +499,28 @@ function LegendItem({ color, label }) {
 function CustomTooltip({ active, payload }) {
     if (active && payload && payload.length) {
         const data = payload[0].payload
-        const margin = payload[1].value - payload[0].value
+        const beli = payload.find(p => p.dataKey === 'beli')?.value
+        const jual = payload.find(p => p.dataKey === 'jual')?.value
+        const arboge = payload.find(p => p.dataKey === 'arboge')?.value
+        const margin = jual && beli ? jual - beli : 0
         return (
-            <div className="bg-[#111C24] border border-white/10 rounded-xl p-3 shadow-2xl space-y-2 min-w-[120px]">
+            <div className="bg-[#111C24] border border-white/10 rounded-xl p-3 shadow-2xl space-y-2 min-w-[140px]">
                 <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest border-b border-white/5 pb-1.5 mb-1.5">{data.date}</p>
                 <div className="space-y-1">
                     <div className="flex justify-between items-center gap-4">
                         <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Beli</span>
-                        <span className="text-[11px] font-bold text-[#F1F5F9] tabular-nums">{safeNum(payload[0].value).toLocaleString('id-ID')}</span>
+                        <span className="text-[11px] font-bold text-[#F1F5F9] tabular-nums">{safeNum(beli).toLocaleString('id-ID')}</span>
                     </div>
                     <div className="flex justify-between items-center gap-4">
                         <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Jual</span>
-                        <span className="text-[11px] font-bold text-white tabular-nums">{safeNum(payload[1].value).toLocaleString('id-ID')}</span>
+                        <span className="text-[11px] font-bold text-white tabular-nums">{safeNum(jual).toLocaleString('id-ID')}</span>
                     </div>
+                    {arboge && (
+                      <div className="flex justify-between items-center gap-4">
+                          <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest">Arboge</span>
+                          <span className="text-[11px] font-bold text-orange-400 tabular-nums">{safeNum(arboge).toLocaleString('id-ID')}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between items-center gap-4 pt-1.5 mt-1.5 border-t border-white/5">
                         <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">Margin</span>
                         <span className="text-[11px] font-black text-amber-500 tabular-nums">{safeNum(margin).toLocaleString('id-ID')}</span>

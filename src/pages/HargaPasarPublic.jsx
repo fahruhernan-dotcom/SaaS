@@ -130,8 +130,9 @@ function HybridTooltip({ active, payload }) {
       <div className="space-y-2.5">
         {[
           { label: 'Chickin.id (Ref)', val: d.chickin, color: 'text-amber-400' },
-          { label: 'Beli (Platform)', val: d.platformBeli, color: 'text-emerald-400' },
-          { label: 'Jual (Platform)', val: d.platformJual, color: 'text-indigo-400' },
+          { label: 'Arboge.com (Ref)', val: d.arboge, color: 'text-orange-400' },
+          { label: 'Beli (TernakOS)', val: d.platformBeli, color: 'text-emerald-400' },
+          { label: 'Jual (TernakOS)', val: d.platformJual, color: 'text-indigo-400' },
         ].map(({ label, val, color }) => (
           <div key={label} className="flex justify-between items-center gap-4">
             <span className="text-[11px] text-[#94A3B8] font-bold">{label}</span>
@@ -231,6 +232,7 @@ export default function HargaPasarPublic() {
           .from('market_prices')
           .select('price_date, farm_gate_price, buyer_price')
           .eq('is_deleted', false)
+          .not('source', 'ilike', 'arboge_%')
           .gte('price_date', format(subDays(new Date(), 45), 'yyyy-MM-dd'))
           .order('price_date', { ascending: false })
         if (error) throw error
@@ -258,6 +260,7 @@ export default function HargaPasarPublic() {
         .from('market_prices')
         .select('price_date, farm_gate_price, buyer_price, region, source')
         .eq('is_deleted', false)
+        .not('source', 'ilike', 'arboge_%')
         .ilike('region', currentProvince)
         .gte('price_date', format(subDays(new Date(), 45), 'yyyy-MM-dd'))
         .order('price_date', { ascending: false })
@@ -277,6 +280,32 @@ export default function HargaPasarPublic() {
     },
     staleTime: 60 * 1000,
     refetchInterval: 60 * 1000,
+  })
+
+  // ── Arboge.com Reference & Realization Prices (Merged Source) ──────────
+  const { data: arbogeMap } = useQuery({
+    queryKey: ['public-arboge-prices', currentProvince],
+    queryFn: async () => {
+      let q = supabase
+        .from('market_prices')
+        .select('price_date, farm_gate_price, region, source')
+        .eq('is_deleted', false)
+        .in('source', ['arboge_referensi', 'arboge_realisasi'])
+        .gte('price_date', format(subDays(new Date(), 45), 'yyyy-MM-dd'))
+        .order('price_date', { ascending: false })
+      if (currentProvince) q = q.ilike('region', currentProvince)
+      const { data } = await q
+      
+      return (data || []).reduce((acc, r) => {
+        // Priority: Realisasi > Referensi
+        const existing = acc[r.price_date]
+        if (!existing || r.source === 'arboge_realisasi') {
+          acc[r.price_date] = r
+        }
+        return acc
+      }, {})
+    },
+    staleTime: 60 * 1000,
   })
 
   // ── Platform Real-Transaction Hybrid Chart Data (RPC) ────────────────────
@@ -331,6 +360,7 @@ export default function HargaPasarPublic() {
       const p = platformRpc?.[dStr]
 
       const chickin = s?.avg_buy_price || null
+      const arboge = arbogeMap?.[dStr]?.farm_gate_price || null
       const pBeli = p?.avg_buy ? Math.round(p.avg_buy) : null
       const pJual = p?.avg_sell ? Math.round(p.avg_sell) : null
 
@@ -342,6 +372,7 @@ export default function HargaPasarPublic() {
         price_date: dStr,
         displayDate: formatShortDate(dStr),
         chickin,
+        arboge,
         platformBeli: pBeli,
         platformJual: pJual,
 
@@ -351,7 +382,7 @@ export default function HargaPasarPublic() {
         region: s?.region || targetProvince
       }
     })
-  }, [rawPrices, platformRpc, targetProvince])
+  }, [rawPrices, platformRpc, targetProvince, arbogeMap])
 
   const hybridChartData = useMemo(() => {
     return fullUnifiedData.filter(d => d.date >= hybridStartDate && d.date <= hybridEndDate)
@@ -716,8 +747,9 @@ export default function HargaPasarPublic() {
                 </div>
                 <div className="flex flex-wrap items-center gap-4">
                   <LegendDot color="#F59E0B" label="Chickin.id (Ref)" dashed />
-                  <LegendDot color="#10B981" label="Beli Nyata (Platform)" />
-                  <LegendDot color="#818CF8" label="Jual Nyata (Platform)" />
+                  <LegendDot color="#F97316" label="Arboge.com (Ref)" dashed />
+                  <LegendDot color="#10B981" label="Beli Nyata (TernakOS)" />
+                  <LegendDot color="#818CF8" label="Jual Nyata (TernakOS)" />
                   <span className="ml-auto text-[9px] font-black text-[#4B6478] uppercase tracking-widest">
                     {currentProvince || 'Jawa Tengah'} · {hybridPeriod === 'weekly' ? 'Minggu Ini' : 'Bulan Ini'}
                   </span>
@@ -752,6 +784,7 @@ export default function HargaPasarPublic() {
                       <YAxis hide domain={['dataMin - 3000', 'dataMax + 2000']} />
                       <Tooltip content={<HybridTooltip />} />
                       <Area type="monotone" dataKey="chickin" stroke="#F59E0B" strokeWidth={2} strokeDasharray="5 4" fill="transparent" connectNulls dot={false} />
+                      <Area type="monotone" dataKey="arboge" stroke="#F97316" strokeWidth={2} strokeDasharray="3 3" fill="transparent" connectNulls dot={false} />
                       <Area type="monotone" dataKey="platformJual" stroke="#818CF8" strokeWidth={2} fillOpacity={1} fill="url(#gradSell)" connectNulls activeDot={{ r: 5, stroke: '#0C1319', strokeWidth: 2, fill: '#818CF8' }} />
                       <Area type="monotone" dataKey="platformBeli" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#gradBuy)" connectNulls activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: '#10B981' }} />
                     </AreaChart>
@@ -763,8 +796,9 @@ export default function HargaPasarPublic() {
               <div className="mt-6 pt-4 border-t border-white/5 flex flex-wrap items-center gap-2">
                 <ShieldCheck size={12} className="text-emerald-400" />
                 <p className="text-[10px] text-[#4B6478] font-medium">
-                  <span className="text-emerald-400 font-black">Garis hijau & ungu</span> diambil dari transaksi nyata broker di platform TernakOS —
-                  bukan estimasi atau scraping. <span className="text-amber-400 font-black">Garis kuning putus-putus</span> adalah harga referensi Chickin.id.
+                  <span className="text-emerald-400 font-black">Garis hijau & ungu</span> = transaksi nyata broker TernakOS.{' '}
+                  <span className="text-amber-400 font-black">Kuning</span> = referensi Chickin.id.{' '}
+                  <span className="text-orange-400 font-black">Oranye</span> = realisasi Arboge.com.
                 </p>
               </div>
             </CardContent>

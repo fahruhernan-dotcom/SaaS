@@ -14,6 +14,23 @@ import {
 import { toast } from 'sonner'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const labelStyle = {
+  display: 'block', fontSize: 10, fontWeight: 800,
+  color: '#4B6478', textTransform: 'uppercase',
+  letterSpacing: '0.1em', marginBottom: 6,
+}
+const inputStyle = {
+  width: '100%', padding: '12px 14px',
+  background: '#111C24', border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 12, color: '#F1F5F9',
+  fontSize: 15, fontFamily: 'DM Sans', outline: 'none',
+  boxSizing: 'border-box',
+}
+
+
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TODAY = new Date().toISOString().split('T')[0]
@@ -633,17 +650,4 @@ function AddVaccinationSheet({ open, onClose, cycle, tenantId, prefill, cycleAge
   )
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
 
-const labelStyle = {
-  display: 'block', fontSize: 10, fontWeight: 800,
-  color: '#4B6478', textTransform: 'uppercase',
-  letterSpacing: '0.1em', marginBottom: 6,
-}
-const inputStyle = {
-  width: '100%', padding: '12px 14px',
-  background: '#111C24', border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: 12, color: '#F1F5F9',
-  fontSize: 15, fontFamily: 'DM Sans', outline: 'none',
-  boxSizing: 'border-box',
-}

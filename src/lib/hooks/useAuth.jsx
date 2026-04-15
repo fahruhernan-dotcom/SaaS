@@ -18,27 +18,6 @@ export function AuthProvider({ children }) {
   const getPersistedTenantId = () => localStorage.getItem('ternakos_active_tenant_id')
   const setPersistedTenantId = (id) => localStorage.setItem('ternakos_active_tenant_id', id)
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) fetchAllProfiles(session.user.id)
-      else setLoading(false)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null)
-        if (session?.user) fetchAllProfiles(session.user.id)
-        else {
-          setProfile(null)
-          setProfiles([])
-          setLoading(false)
-        }
-      }
-    )
-    return () => subscription.unsubscribe()
-  }, [])
-
   async function fetchAllProfiles(userId) {
     const { data, error } = await supabase
       .from('profiles')
@@ -69,6 +48,27 @@ export function AuthProvider({ children }) {
     setLoading(false)
   }
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      if (session?.user) fetchAllProfiles(session.user.id)
+      else setLoading(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null)
+        if (session?.user) fetchAllProfiles(session.user.id)
+        else {
+          setProfile(null)
+          setProfiles([])
+          setLoading(false)
+        }
+      }
+    )
+    return () => subscription.unsubscribe()
+  }, [])
+
   const switchTenant = (tenantId) => {
     const target = profiles.find(p => p.tenant_id === tenantId)
     if (target) {
@@ -97,7 +97,17 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>')
+  if (!ctx) {
+    // Graceful fallback during HMR or if called outside AuthProvider
+    // NotificationsProvider and other consumers guard against null tenant/profile
+    if (import.meta.env.DEV) {
+      console.warn('[useAuth] Called outside <AuthProvider> — returning empty context.')
+    }
+    return {
+      user: null, profile: null, tenant: null, tenants: [],
+      loading: true, switchTenant: async () => {}, refetchProfile: () => {},
+    }
+  }
   return ctx
 }
 

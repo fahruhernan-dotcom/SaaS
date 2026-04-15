@@ -376,3 +376,6 @@ export function SaleInvoice({ tenant, sale, rpa, farm, delivery, invoiceNumber, 
     </Document>
   )
 }
+
+
+

@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { motion } from 'framer-motion'
 import {
   Settings, Globe, Bot, Shield, Box, HelpCircle, AlertTriangle, 
   Save, RefreshCw, PowerOff, Building2
@@ -66,11 +65,7 @@ export default function AdminSettings() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6 pb-20 lg:pb-0"
-    >
+    <div>
       <div className="hidden lg:flex items-center justify-between py-4">
         <div>
           <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight">System Settings</h1>
@@ -347,6 +342,6 @@ export default function AdminSettings() {
           </Button>
         </div>
       )}
-    </motion.div>
+    </div>
   )
 }

@@ -90,6 +90,10 @@ function getEstimatedFCR(cycle) {
   return biomass > 0 ? feed / biomass : null
 }
 
+function getCycleAge(cycle) {
+  return calcCurrentAge(cycle.start_date)
+}
+
 // IP Score = (survival% × avg_weight_kg × 100) / (age_days × FCR)
 function getIPScore(cycle) {
   const docCount = cycle.doc_count ?? 0
@@ -106,10 +110,6 @@ function getIPScore(cycle) {
 function getMortalityPct(cycle) {
   if (!cycle.doc_count) return 0
   return (getTotalMortality(cycle) / cycle.doc_count) * 100
-}
-
-function getCycleAge(cycle) {
-  return calcCurrentAge(cycle.start_date)
 }
 
 function getGreeting() {
@@ -131,6 +131,7 @@ export default function PeternakBeranda() {
   const p = usePeternakPermissions()
 
   const peternakBase = `/peternak/${profile?.sub_type || 'peternak_broiler'}`
+  const [showSetupWizard, setShowSetupWizard] = useState(false)
 
   // Handle FAB action from BottomNav (?action=tambah-kandang)
   React.useEffect(() => {
@@ -139,7 +140,6 @@ export default function PeternakBeranda() {
       setShowSetupWizard(true)
     }
   }, [location.search, p.canTambahKandang])
-  const [showSetupWizard, setShowSetupWizard] = useState(false)
 
   const { data: farms, isLoading: farmsLoading } = usePeternakFarms()
   const { data: activeCycles = [], isLoading: cyclesLoading } = useActiveCycles()

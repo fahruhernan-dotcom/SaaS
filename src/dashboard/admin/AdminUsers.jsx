@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import {
   Users, Building2, Shield, Search, Filter,
   MoreVertical, Edit3, Trash2, CheckCircle2,
@@ -36,7 +36,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { toast } from 'sonner'
 import { getSubscriptionStatus, getStatusColor } from '@/lib/subscriptionUtils'
 
+function renderVerticalIcon(v, size = 18) {
+  switch (v) {
+    case 'poultry_broker': return <Bird size={size} />
+    case 'egg_broker': return <Egg size={size} />
+    case 'peternak': return <Home size={size} />
+    case 'rpa': return <Factory size={size} />
+    default: return <Building2 size={size} />
+  }
+}
+
 export default function AdminUsers() {
+  const navigate = useNavigate()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const { data: tenants, isLoading } = useAllTenants()
   const updateTenant = useAdminUpdateTenant()
@@ -95,6 +106,8 @@ export default function AdminUsers() {
   // Filtering logic
   const filteredTenants = useMemo(() => {
     if (!tenants) return []
+    const now = Date.now()
+    const fiveMinutesAgo = now - 5 * 60 * 1000
 
     const filtered = tenants.filter(t => {
       const ownerName = t.profiles?.find(p => p.role === 'owner')?.full_name || ''
@@ -117,11 +130,13 @@ export default function AdminUsers() {
       const nameA = (a.business_name || '').toLowerCase()
       const nameB = (b.business_name || '').toLowerCase()
       return nameA.localeCompare(nameB)
-    })
+    }).map(t => ({ ...t, _refTime: fiveMinutesAgo }))
   }, [tenants, searchQuery, activeTab])
 
   const groupedUsers = useMemo(() => {
     if (!allUsers) return []
+    const now = Date.now()
+    const fiveMinutesAgo = now - 5 * 60 * 1000
 
     const groups = {}
     allUsers.forEach(u => {
@@ -133,7 +148,8 @@ export default function AdminUsers() {
           avatar: u.avatar_url,
           profiles: [],
           last_active: u.last_seen_at,
-          created_at: u.created_at
+          created_at: u.created_at,
+          _refTime: fiveMinutesAgo
         }
       }
       groups[key].profiles.push(u)
@@ -205,11 +221,7 @@ export default function AdminUsers() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-3 p-4 lg:p-0 lg:space-y-6 overflow-x-hidden"
-    >
+    <div className="space-y-3 p-4 lg:p-0 lg:space-y-6 overflow-x-hidden">
       {/* Header — Hidden on mobile as it's in TopBar */}
       <div className="hidden lg:flex items-center justify-between py-4">
         <div>
@@ -452,7 +464,7 @@ export default function AdminUsers() {
                         </td>
                         <td className="px-6 py-4 text-center">
                            <div className="flex flex-col items-center">
-                              <div className={`w-1.5 h-1.5 rounded-full mb-1 ${u.last_active && new Date(u.last_active) > new Date(Date.now() - 5 * 60 * 1000) ? 'bg-emerald-500' : 'bg-slate-600'}`} />
+                              <div className={`w-1.5 h-1.5 rounded-full mb-1 ${u.last_active && new Date(u.last_active).getTime() > u._refTime ? 'bg-emerald-500' : 'bg-slate-600'}`} />
                               <span className="text-[9px] font-bold text-[#4B6478] uppercase">{u.last_active ? formatDistanceToNow(new Date(u.last_active), { addSuffix: true, locale: localeId }) : 'Baru'}</span>
                            </div>
                         </td>
@@ -486,9 +498,9 @@ export default function AdminUsers() {
       {/* User Associations Sheet */}
       <Sheet open={isUserSheetOpen} onOpenChange={setIsUserSheetOpen}>
         <SheetContent side="right" className="w-full sm:w-[480px] bg-[#0C1319] border-l border-white/8 p-0 overflow-hidden flex flex-col">
-          <AnimatePresence>
+          
             {selectedUser && (
-              <motion.div
+              <div
                 initial={{ x: 20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: 20, opacity: 0 }}
@@ -593,18 +605,18 @@ export default function AdminUsers() {
                     <Trash2 size={16} className="mr-2" /> Hapus Akun User
                   </Button>
                 </div>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
+          
         </SheetContent>
       </Sheet>
 
       {/* Detail Sheet */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent side="right" className="w-full sm:w-[480px] bg-[#0C1319] border-l border-white/8 p-0 overflow-hidden flex flex-col">
-          <AnimatePresence>
+          
             {selectedTenant && (
-              <motion.div
+              <div
                 initial={{ x: 20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: 20, opacity: 0 }}
@@ -816,9 +828,9 @@ export default function AdminUsers() {
                     <Trash2 size={16} className="mr-2" /> Hapus Permanen Bisnis
                   </Button>
                 </div>
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
+          
         </SheetContent>
       </Sheet>
 
@@ -843,7 +855,7 @@ export default function AdminUsers() {
         setConfirmText={setTenantDeleteConfirmText}
         isDeleting={deleteTenant.isPending}
       />
-    </motion.div>
+    </div>
   )
 }
 
@@ -1034,16 +1046,6 @@ function TrialDisplay({ tenant }) {
   )
 }
 
-function renderVerticalIcon(v, size = 18) {
-  switch (v) {
-    case 'poultry_broker': return <Bird size={size} />
-    case 'egg_broker': return <Egg size={size} />
-    case 'peternak': return <Home size={size} />
-    case 'rpa': return <Factory size={size} />
-    default: return <Building2 size={size} />
-  }
-}
-
 // ─── Internal Component: ConfirmDeleteModal ───────────────────
 
 function ConfirmDeleteModal({ isOpen, onClose, onConfirm, user, confirmText, setConfirmText, isDeleting, allTenants }) {
@@ -1067,7 +1069,7 @@ function ConfirmDeleteModal({ isOpen, onClose, onConfirm, user, confirmText, set
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <motion.div 
+      <div 
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         className="w-full max-w-md bg-[#111C24] border border-white/10 rounded-3xl p-6 shadow-2xl space-y-6"
@@ -1147,7 +1149,7 @@ function ConfirmDeleteModal({ isOpen, onClose, onConfirm, user, confirmText, set
             {isDeleting ? <Loader2 className="animate-spin" size={18} /> : 'YA, HAPUS AKUN'}
           </Button>
         </div>
-      </motion.div>
+      </div>
     </div>
   )
 }
@@ -1156,7 +1158,7 @@ function ConfirmDeleteTenantModal({ isOpen, onClose, onConfirm, tenantName, conf
   if (!isOpen) return null
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <motion.div 
+      <div 
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         className="w-full max-w-md bg-[#111C24] border border-white/10 rounded-3xl p-6 shadow-2xl space-y-6"
@@ -1201,7 +1203,7 @@ function ConfirmDeleteTenantModal({ isOpen, onClose, onConfirm, tenantName, conf
             {isDeleting ? <Loader2 className="animate-spin" size={18} /> : 'HAPUS SEKARANG'}
           </Button>
         </div>
-      </motion.div>
+      </div>
     </div>
   )
 }

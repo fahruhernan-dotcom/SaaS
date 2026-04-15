@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, Link } from 'react-router-dom';
+import { getSubscriptionStatus } from '@/lib/subscriptionUtils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,7 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, Trash2, X, Plus, UserPlus, Users, Clock, Copy, Pencil, Save, AlertCircle } from 'lucide-react';
+import { Loader2, Trash2, X, Plus, UserPlus, Users, Clock, Copy, Pencil, Save, AlertCircle, Lock } from 'lucide-react';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { SembakoMobileBar } from './components/SembakoNavigation';
@@ -207,26 +208,61 @@ export default function SembakoTim() {
     return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
   };
 
+  const sub = getSubscriptionStatus(tenant)
+  const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
+
+  const handleInviteClick = () => {
+    if (isStarter) {
+      toast.error('Fitur Tim tidak tersedia di Starter', {
+        description: 'Upgrade ke Pro untuk mengundang anggota tim.',
+      })
+      return
+    }
+    setIsInviteSheetOpen(true)
+  }
+
   return (
     <div className="bg-[#06090F] min-h-screen text-left">
       {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Tim & Akses" />}
 
       <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8 pb-32">
+
+        {/* Starter banner */}
+        {isStarter && (
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-2xl border"
+            style={{ background: 'rgba(234,88,12,0.06)', borderColor: 'rgba(234,88,12,0.2)' }}>
+            <div className="flex items-start gap-3">
+              <Lock size={16} className="mt-0.5 shrink-0" style={{ color: '#EA580C' }} />
+              <div>
+                <p className="text-sm font-black text-white">Plan Starter — hanya 1 akun (owner)</p>
+                <p className="text-[11px] mt-0.5" style={{ color: '#4B6478' }}>Upgrade ke Pro untuk mengundang staff, view-only, dan supir.</p>
+              </div>
+            </div>
+            <Link to="/upgrade"
+              className="shrink-0 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+              style={{ color: '#EA580C', border: '1px solid rgba(234,88,12,0.3)' }}
+            >
+              Upgrade →
+            </Link>
+          </div>
+        )}
+
         {/* Header Desktop */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className={cn(!isDesktop && "hidden")}>
             <h1 className="font-display text-2xl md:text-3xl font-bold text-white uppercase tracking-tight">Tim & Akses</h1>
             <p className="text-[#4B6478] text-sm font-bold uppercase tracking-widest mt-1">
-              {members.length} anggota aktif {invitations.length > 0 && `• ${invitations.length} undangan tertunda`}
+              {isStarter ? 'Starter: hanya owner' : `${members.length} anggota aktif${invitations.length > 0 ? ` • ${invitations.length} undangan tertunda` : ''}`}
             </p>
           </div>
           {isOwner && (
-            <Button 
-              onClick={() => setIsInviteSheetOpen(true)}
-              className="bg-[#EA580C] hover:bg-[#D44E0A] text-white font-black text-[12px] uppercase tracking-widest rounded-xl h-12 px-6 shadow-lg shadow-orange-950/20 active:scale-95 transition-all w-full md:w-auto"
+            <Button
+              onClick={handleInviteClick}
+              disabled={isStarter}
+              className="bg-[#EA580C] hover:bg-[#D44E0A] text-white font-black text-[12px] uppercase tracking-widest rounded-xl h-12 px-6 shadow-lg shadow-orange-950/20 active:scale-95 transition-all w-full md:w-auto disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <UserPlus size={18} className="mr-2" />
-              Undang Anggota
+              {isStarter ? <Lock size={16} className="mr-2" /> : <UserPlus size={18} className="mr-2" />}
+              {isStarter ? 'Pro Only' : 'Undang Anggota'}
             </Button>
           )}
         </div>

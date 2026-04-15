@@ -15,7 +15,7 @@ const TOP_FAQS = [
   },
   {
     q: 'Apakah data bisnis saya aman di TernakOS?',
-    a: 'Ya. TernakOS menggunakan Row Level Security (RLS) PostgreSQL — standar keamanan setara perbankan. Data setiap bisnis terisolasi penuh, tidak bisa diakses bisnis lain meskipun menggunakan platform yang sama.',
+    a: 'Ya. TernakOS menggunakan Row Level Security (RLS) PostgreSQL — standar keamanan setara perbankan. Data setiap bisnis terisolasi penuh, tidak bisa diakses bisnis lain meskipun menggunakan ekosistem yang sama.',
   },
   {
     q: 'Apakah broker ayam bisa mencatat hutang dan piutang di TernakOS?',
@@ -36,7 +36,7 @@ const TOP_FAQS = [
   },
   {
     q: 'Apa bedanya data harga TernakOS dengan portal harga ayam lain?',
-    a: 'Portal lain biasanya hanya menampilkan scraper atau estimasi manual. TernakOS adalah satu-satunya platform yang menampilkan rata-rata harga beli (kandang) dan harga jual (pasar) dari transaksi nyata platform.',
+    a: 'Portal lain biasanya hanya menampilkan scraper atau estimasi manual. TernakOS adalah satu-satunya platform yang menampilkan rata-rata harga beli (kandang) dan harga jual (pasar) dari transaksi nyata TernakOS.',
     link: '/harga-pasar',
   },
 ]

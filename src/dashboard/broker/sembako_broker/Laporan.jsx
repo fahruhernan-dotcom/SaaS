@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from 'react'
-import { useNavigate, useOutletContext } from 'react-router-dom'
+import { useNavigate, useOutletContext, Link } from 'react-router-dom'
 import { SembakoMobileBar } from './components/SembakoNavigation'
 import { motion } from 'framer-motion' // eslint-disable-line no-unused-vars
 import {
   TrendingUp, TrendingDown, DollarSign, Receipt,
-  ChevronDown, ChevronUp, Calendar,
+  ChevronDown, ChevronUp, Calendar, Lock, BarChart3,
 } from 'lucide-react'
+import { useAuth } from '@/lib/hooks/useAuth'
+import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
 } from 'recharts'
@@ -31,6 +33,42 @@ const STATUS_STYLE = {
 export default function SembakoLaporan() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const { setSidebarOpen } = useOutletContext()
+  const { tenant } = useAuth()
+  const sub = getSubscriptionStatus(tenant)
+  const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
+
+  if (isStarter) {
+    return (
+      <div style={{ background: C.bg, minHeight: '100vh' }}>
+        {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Laporan" />}
+        <div className="flex flex-col items-center justify-center min-h-[80vh] px-6 text-center gap-6">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+            style={{ background: 'rgba(234,88,12,0.12)', border: '1px solid rgba(234,88,12,0.25)' }}>
+            <Lock size={28} style={{ color: '#EA580C' }} />
+          </div>
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-3"
+              style={{ background: 'rgba(234,88,12,0.1)', border: '1px solid rgba(234,88,12,0.2)' }}>
+              <BarChart3 size={11} style={{ color: '#EA580C' }} />
+              <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#EA580C' }}>Fitur Pro</span>
+            </div>
+            <h2 className="font-display font-black text-xl text-white mb-2">Laporan Keuangan</h2>
+            <p className="text-sm max-w-xs leading-relaxed" style={{ color: '#64748B' }}>
+              Akses laporan P&L, analitik pengeluaran, dan breakdown omzet tersedia di plan{' '}
+              <span className="text-white font-bold">Pro</span> dan <span className="text-white font-bold">Business</span>.
+            </p>
+          </div>
+          <Link
+            to="/upgrade"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm text-white transition-colors"
+            style={{ background: '#EA580C', boxShadow: '0 4px 20px rgba(234,88,12,0.3)' }}
+          >
+            Lihat Paket Pro →
+          </Link>
+        </div>
+      </div>
+    )
+  }
   const now = new Date()
   const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
   const lastOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)

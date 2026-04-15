@@ -792,7 +792,7 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
                 ownership: 'milik_sendiri'
             })
         }
-    }, [editingData, isOpen])
+    }, [editingData, isOpen, reset])
 
     const onSubmit = async (vals) => {
         setIsSubmitting(true)
@@ -1034,7 +1034,7 @@ function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
                 wage_per_trip: '0'
             })
         }
-    }, [editingData, isOpen])
+    }, [editingData, isOpen, reset])
 
     const onSubmit = async (vals) => {
         setIsSubmitting(true)
@@ -1223,7 +1223,7 @@ function ExpenseSheet({ isOpen, onClose, vehicle, tenantId }) {
 
     React.useEffect(() => {
         reset({ expense_date: format(new Date(), 'yyyy-MM-dd'), expense_type: 'bbm' })
-    }, [isOpen])
+    }, [isOpen, reset])
 
     const onSubmit = async (vals) => {
         setIsSubmitting(true)

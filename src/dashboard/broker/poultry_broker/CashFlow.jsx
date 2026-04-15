@@ -55,6 +55,9 @@ import { DatePicker } from '@/components/ui/DatePicker'
 import { DateRangePicker } from '@/components/ui/DateRangePicker'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 
+// --- HELPER FORMATTERS ---
+const formatRupiah = (val) => formatIDR(val)
+
 const formatCompact = (value) => {
     const n = Number(value) || 0
     if (Math.abs(n) >= 1_000_000_000) 
@@ -72,9 +75,6 @@ const isOnDay = (dateString, targetDate) => {
         return false
     }
 }
-
-// --- HELPER FORMATTERS ---
-const formatRupiah = (val) => formatIDR(val)
 const getStatusLabel = (status) => {
     const labels = {
         'lunas': 'Lunas',
@@ -145,7 +145,7 @@ export default function CashFlow() {
             default:
                 return { start: startOfWeek(today, { weekStartsOn: 1 }), end: endOfWeek(today, { weekStartsOn: 1 }) }
         }
-    }, [selectedPeriod, customRange])
+    }, [selectedPeriod, customRange, tenant?.created_at])
 
     const startStr = format(dateRange.start, 'yyyy-MM-dd')
     const endStr = format(dateRange.end, 'yyyy-MM-dd')
@@ -337,7 +337,7 @@ export default function CashFlow() {
         }, 0)
 
         return { chartData: cData, breakdownData: bData, totalTransport: totalTransportCost, totalSusutValue: totalSusutValueValue }
-    }, [data, previousData, selectedPeriod, dateRange, sales, purchases, extras, summary])
+    }, [data, previousData, selectedPeriod, dateRange, sales, purchases, extras, summary, prevPeriodKey, isLoading])
 
     // --- TRANSACTION LIST MERGING ---
     const allTransactions = useMemo(() => {

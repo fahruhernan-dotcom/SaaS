@@ -288,11 +288,10 @@ if __name__ == "__main__":
         log.info("Memulai mode DAEMON")
         main() # Jalankan sekali saat start
         
-        # Jadwalkan 2x sehari WIB
-        schedule.every().day.at("12:00").do(main)
-        schedule.every().day.at("18:00").do(main)
+        # Jadwalkan setiap 3 jam
+        schedule.every(3).hours.do(main)
         
-        log.info("Daemon aktif — jadwal scrape: 12:00 & 18:00 WIB")
+        log.info("Daemon aktif — setiap 3 jam")
         try:
             while True:
                 schedule.run_pending()

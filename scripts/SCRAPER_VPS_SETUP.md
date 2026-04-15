@@ -1,45 +1,57 @@
 # TernakOS Market Price Scraper - VPS Setup Guide
 
-Since you are using a VPS, the best way to handle daily price updates is via a **Cron Job**. This ensures the data is always fresh without manual intervention.
+Since you are using a VPS, the best way to handle daily price updates is via **systemd Services** (for daemon/background mode) or **Cron Jobs**.
 
 ## 1. Prerequisites
 Ensure your VPS has Python 3 and the necessary libraries installed:
 ```bash
 # Navigate to the project directory
-cd /path/to/Ternak-OS
+cd ~/ternakos
 
-# Install dependencies
-pip install requests beautifulsoup4 python-dotenv schedule
+# Setup venv (Recommended)
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r scripts/requirements.txt
 ```
 
-## 2. Setting Up the Cron Job
-We recommend running the scraper **twice a day** (around 07:00 and 13:00 WIB) to capture the morning update and any midday corrections from Chickin.id.
+## 2. Setting Up Service Daemons (Recommended)
+This runs the scrapers in the background and automatically retries if they fail.
 
-1. Open your crontab editor:
+1. **Copy service files**:
    ```bash
-   crontab -e
+   sudo cp scripts/ternakos-scraper.service /etc/systemd/system/
+   sudo cp scripts/arboge-scraper.service /etc/systemd/system/
    ```
 
-2. Add the following lines (adjust paths accordingly):
+2. **Enable and Start**:
    ```bash
-   # Scrape at 07:00 WIB
-   0 7 * * * /usr/bin/python3 /path/to/Ternak-OS/scripts/ternakos_harga_scraper.py >> /path/to/Ternak-OS/scripts/scraper.log 2>&1
-
-   # Scrape at 13:00 WIB
-   0 13 * * * /usr/bin/python3 /path/to/Ternak-OS/scripts/ternakos_harga_scraper.py >> /path/to/Ternak-OS/scripts/scraper.log 2>&1
+   sudo systemctl daemon-reload
+   sudo systemctl enable ternakos-scraper
+   sudo systemctl enable arboge-scraper
+   sudo systemctl start ternakos-scraper
+   sudo systemctl start arboge-scraper
    ```
 
-## 3. Manual Scraper Trigger
-You can also trigger a manual scrape directly using the npm script I added:
+3. **Check Status**:
+   ```bash
+   sudo systemctl status ternakos-scraper
+   sudo systemctl status arboge-scraper
+   ```
+
+## 3. Alternative: Setting Up Cron Jobs
+If you prefer standard cron (runs only every 3 hours):
 ```bash
-npm run scrape:market
+# Scrape every 3 hours (00:00, 03:00, 06:00, dst)
+0 */3 * * * ~/ternakos/.venv/bin/python ~/ternakos/scripts/ternakos_harga_scraper.py >> ~/ternakos/scripts/scraper.log 2>&1
+0 */3 * * * ~/ternakos/.venv/bin/python ~/ternakos/scripts/arboge_scraper.py >> ~/ternakos/scripts/arboge.log 2>&1
 ```
 
 ## 4. Verification
-Check the `scripts/scraper.log` file to verify that the cron jobs are running successfully:
+Check the logs to verify updates:
 ```bash
-tail -f scripts/scraper.log
+tail -f scripts/arboge_scraper.log
 ```
 
 ---
 **Note:** Ensure your `.env` file in the project root contains the correct `SUPABASE_SERVICE_KEY` and `SUPABASE_URL`.
+

@@ -1,12 +1,11 @@
 import React, { useState, useMemo } from 'react'
-import { motion } from 'framer-motion'
 import { format, addDays } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
 import {
   Tag, Sparkles, Building2,
   Home, Factory, Trash2, Copy, Check,
   RefreshCcw, AlertCircle, Loader2,
-  Settings2, Clock, Infinity, Egg, ShoppingBasket
+  Settings2, Clock, Infinity as InfinityIcon, Egg, ShoppingBasket
 } from 'lucide-react'
 import {
   usePricingConfig,
@@ -35,6 +34,19 @@ import { formatIDR, formatDate } from '@/lib/format'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { InputRupiah } from '@/components/ui/InputRupiah'
+
+const PRICING_FEATURES = [
+  { label: 'Multi-Tenant (1 Bisnis)', starter: true, pro: true, business: true },
+  { label: 'Manajemen Tim & Gaji', starter: true, pro: true, business: true },
+  { label: 'Laporan Dashboard Harian', starter: true, pro: true, business: true },
+  { label: 'Backup Cloud Gratis', starter: true, pro: true, business: true },
+  { label: 'Fitur Khusus RPA & RPA Buyer', starter: false, pro: true, business: true },
+  { label: 'Laporan Laba/Rugi Detail', starter: false, pro: true, business: true },
+  { label: 'Input Transaksi Tanpa Limit', starter: false, pro: true, business: true },
+  { label: 'Prioritas Customer Support', starter: false, pro: false, business: true },
+  { label: 'Audit Log Perubahan Data', starter: false, pro: false, business: true },
+  { label: 'Whitelist IP & Keamanan Extra', starter: false, pro: false, business: true },
+]
 
 const pricingSchema = z.object({
   price: z.number().min(0, 'Harga aktif tidak boleh negatif'),
@@ -90,7 +102,7 @@ export default function AdminPricing() {
     if (pricing && !editingPricing) {
       setEditingPricing(pricing)
     }
-  }, [pricing])
+  }, [pricing, editingPricing])
 
   // Initialise config state once plan_configs data arrives
   useMemo(() => {
@@ -103,7 +115,7 @@ export default function AdminPricing() {
       if (configs.transaction_quota) setTrxQuota(v => ({ ...v, ...configs.transaction_quota }))
       setConfigsInited(true)
     }
-  }, [configs])
+  }, [configs, configsInited])
 
   const handleSaveAllPricing = async () => {
     setSavingRole('all')
@@ -271,11 +283,7 @@ export default function AdminPricing() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-5 p-4 lg:p-0 lg:space-y-6 pb-32 lg:pb-12"
-    >
+    <div>
       {/* Background Orbs for AdminPricing specific depth */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[20%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/5 blur-[120px] rounded-full opacity-50" />
@@ -323,13 +331,9 @@ export default function AdminPricing() {
               className="flex-1 shrink-0 min-w-[120px] relative rounded-xl font-bold uppercase text-[10px] md:text-[11px] tracking-widest transition-colors data-[state=active]:text-white text-[#4B6478] hover:text-white/60 h-full z-10 bg-transparent"
             >
               {activeTab === tab.id && (
-                <motion.div
-                  layoutId="activeTabAdmin"
-                  className="absolute inset-0 bg-emerald-500 rounded-xl shadow-[0_4px_20px_rgba(16,185,129,0.4)] z-[-1]"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                />
+                <div className="absolute inset-0 bg-white/5 rounded-xl border border-white/10 shadow-lg" />
               )}
-              {tab.label}
+              <span className="relative z-10">{tab.label}</span>
             </TabsTrigger>
           ))}
         </TabsList>
@@ -537,7 +541,7 @@ export default function AdminPricing() {
                   KUOTA TRANSAKSI BULANAN
                 </p>
                 <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-widest mt-0.5">
-                  Jumlah transaksi maksimal per bulan yang bisa dilakukan per plan
+                  Berlaku untuk semua vertikal (Broker Ayam, Sembako, Telur, dll) — global per plan
                 </p>
               </div>
             </div>
@@ -579,7 +583,7 @@ export default function AdminPricing() {
                     Kuota Transaksi / Bulan
                   </label>
                   <div className="h-12 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex items-center px-4 gap-2 text-sm font-black text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]">
-                    <Infinity size={16} /> Unlimited
+                    <InfinityIcon size={16} /> Unlimited
                   </div>
                   <p className="text-[10px] text-emerald-500/50 ml-1 font-semibold">Tidak ada batas transaksi</p>
                 </div>
@@ -595,7 +599,7 @@ export default function AdminPricing() {
                     Kuota Transaksi / Bulan
                   </label>
                   <div className="h-12 rounded-2xl bg-amber-500/5 border border-amber-500/20 flex items-center px-4 gap-2 text-sm font-black text-amber-400 shadow-[inset_0_0_20px_rgba(245,158,11,0.05)]">
-                    <Infinity size={16} /> Unlimited
+                    <InfinityIcon size={16} /> Unlimited
                   </div>
                   <p className="text-[10px] text-amber-500/50 ml-1 font-semibold">Tidak ada batas transaksi</p>
                 </div>
@@ -737,7 +741,7 @@ export default function AdminPricing() {
                 <p className="text-[12px] font-bold text-[#94A3B8]">Gratis Selamanya — tidak ada trial</p>
                 <p className="text-[11px] text-[#4B6478] mt-0.5">Plan Starter tidak menggunakan mekanisme trial. Akses langsung tanpa batas waktu.</p>
               </div>
-              <Infinity size={18} className="text-[#2A3F52] shrink-0" />
+              <InfinityIcon size={18} className="text-[#2A3F52] shrink-0" />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1148,7 +1152,7 @@ export default function AdminPricing() {
           </Button>
         </div>
       )}
-    </motion.div>
+    </div>
   )
 }
 
@@ -1317,12 +1321,12 @@ function PlanLimitCard({ planName, badgeClass, badgeExtra, kandangValue, teamVal
         </label>
         {readOnly ? (
           <div className="h-12 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center px-4 gap-2 text-sm font-black text-white/30">
-            <Infinity size={16} /> Unlimited Access
+            <InfinityIcon size={16} /> Unlimited Access
           </div>
         ) : isUnlimited(kandangValue) ? (
           <div className="flex items-center gap-2">
             <div className="flex-1 h-12 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex items-center px-4 gap-2 text-sm font-black text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]">
-              <Infinity size={16} /> Unlimited
+              <InfinityIcon size={16} /> Unlimited
             </div>
             <input
               id={`kl_${planName}`}
@@ -1351,7 +1355,7 @@ function PlanLimitCard({ planName, badgeClass, badgeExtra, kandangValue, teamVal
         </label>
         {readOnly ? (
           <div className="h-12 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center px-4 gap-2 text-sm font-black text-white/30">
-            <Infinity size={16} /> Unlimited Access
+            <InfinityIcon size={16} /> Unlimited Access
           </div>
         ) : (
           <input
@@ -1399,16 +1403,3 @@ function AddonPreview({ peternakProBase, peternakBizBase, addonPricing }) {
     </div>
   )
 }
-
-const PRICING_FEATURES = [
-  { label: 'Multi-Tenant (1 Bisnis)', starter: true, pro: true, business: true },
-  { label: 'Manajemen Tim & Gaji', starter: true, pro: true, business: true },
-  { label: 'Laporan Dashboard Harian', starter: true, pro: true, business: true },
-  { label: 'Backup Cloud Gratis', starter: true, pro: true, business: true },
-  { label: 'Fitur Khusus RPA & RPA Buyer', starter: false, pro: true, business: true },
-  { label: 'Laporan Laba/Rugi Detail', starter: false, pro: true, business: true },
-  { label: 'Input Transaksi Tanpa Limit', starter: false, pro: true, business: true },
-  { label: 'Prioritas Customer Support', starter: false, pro: false, business: true },
-  { label: 'Audit Log Perubahan Data', starter: false, pro: false, business: true },
-  { label: 'Whitelist IP & Keamanan Extra', starter: false, pro: false, business: true },
-]

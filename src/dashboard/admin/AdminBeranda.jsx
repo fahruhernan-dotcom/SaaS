@@ -1,5 +1,5 @@
 import React from 'react'
-import { motion } from 'framer-motion'
+
 import {
   Users, Building2, TrendingUp, Clock,
   DollarSign, AlertTriangle, Bird, Egg,
@@ -119,11 +119,7 @@ export default function AdminBeranda() {
   const planExpiredCount  = stats.tenants.planAlreadyExpired.length
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-3 pb-4 p-4 lg:p-0 lg:space-y-6 lg:pb-12"
-    >
+    <div>
 
       {/* ── SECTION A — Header Actions ────────────────────────── */}
       <div className="flex items-center justify-between py-2 -mx-2 px-2">
@@ -409,7 +405,7 @@ export default function AdminBeranda() {
         <VerticalCard label="Peternak" value={stats.tenants.byVertical.peternak} icon={Home} color="purple" />
         <VerticalCard label="RPA" value={stats.tenants.byVertical.rpa} icon={Factory} color="amber" />
       </div>
-    </motion.div>
+    </div>
   )
 }
 

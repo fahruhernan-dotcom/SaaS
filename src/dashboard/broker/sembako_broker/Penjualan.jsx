@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
-import { useLocation, useNavigate, useOutletContext } from 'react-router-dom'
+import { useLocation, useNavigate, useOutletContext, Link } from 'react-router-dom'
 import { SembakoMobileBar } from './components/SembakoNavigation'
 import {
   Plus, CreditCard, TrendingUp, CheckCircle2, AlertTriangle,
-  History,
+  History, Lock,
 } from 'lucide-react'
 import { useSembakoSales } from '@/lib/hooks/useSembakoData'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
@@ -16,6 +16,8 @@ import { Button } from '@/components/ui/button'
 import { SembakoSaleDetailSheet } from '@/dashboard/broker/sembako_broker/components/SembakoSaleDetailSheet'
 import { SembakoCreateInvoiceSheet } from '@/dashboard/broker/sembako_broker/components/SembakoCreateInvoiceSheet'
 import { C, INVOICE_FILTERS, LoadingSkeleton, EmptyBox } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
+import { useAuth } from '@/lib/hooks/useAuth'
+import { useSembakoTransactionQuota } from '@/lib/hooks/useSembakoTransactionQuota'
 
 export default function SembakoPenjualan() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
@@ -51,6 +53,8 @@ export default function SembakoPenjualan() {
 function TabInvoice({ isDesktop, openWizard, setOpenWizard }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { tenant } = useAuth()
+  const quota = useSembakoTransactionQuota(tenant)
   const { data: sales = [], isLoading } = useSembakoSales()
   const [search, setSearch] = useState('')
   const [invoiceFilter, setInvoiceFilter] = useState('all')
@@ -144,10 +148,14 @@ function TabInvoice({ isDesktop, openWizard, setOpenWizard }) {
         actionButton={
           <Button
             type="button"
-            onClick={() => setOpenWizard(true)}
-            className="h-10 rounded-xl bg-[#EA580C] px-4 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-orange-950/20"
+            onClick={() => !quota.isAtLimit && setOpenWizard(true)}
+            disabled={quota.isAtLimit}
+            title={quota.isAtLimit ? 'Kuota transaksi bulan ini habis — Upgrade ke Pro' : undefined}
+            className="h-10 rounded-xl px-4 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-orange-950/20 disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ background: quota.isAtLimit ? '#6B7280' : '#EA580C' }}
           >
-            <Plus size={15} className="mr-1" /> Catat Penjualan
+            {quota.isAtLimit ? <Lock size={14} className="mr-1" /> : <Plus size={15} className="mr-1" />}
+            {quota.isAtLimit ? 'Kuota Habis' : 'Catat Penjualan'}
           </Button>
         }
       />
@@ -160,6 +168,74 @@ function TabInvoice({ isDesktop, openWizard, setOpenWizard }) {
         <SembakoStatCard icon={CheckCircle2} label="Lunas" value={stats.lunas} color="green" subLabel="Invoice selesai" />
         <SembakoStatCard icon={AlertTriangle} label="Jatuh Tempo" value={stats.overdue} color={stats.overdue > 0 ? 'red' : 'green'} subLabel="Butuh follow-up" />
       </div>
+
+      {/* Quota Banner — Starter only */}
+      {quota.isStarter && (
+        <div style={{ padding: '0 20px', marginBottom: '12px' }}>
+          <div
+            className="px-4 py-3 rounded-xl flex items-center justify-between gap-3"
+            style={{
+              background: quota.isAtLimit
+                ? 'rgba(239,68,68,0.08)'
+                : quota.remaining <= 5
+                  ? 'rgba(245,158,11,0.08)'
+                  : 'rgba(234,88,12,0.06)',
+              border: `1px solid ${quota.isAtLimit
+                ? 'rgba(239,68,68,0.25)'
+                : quota.remaining <= 5
+                  ? 'rgba(245,158,11,0.2)'
+                  : 'rgba(234,88,12,0.15)'}`,
+            }}
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div
+                className="flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center"
+                style={{ background: quota.isAtLimit ? 'rgba(239,68,68,0.15)' : 'rgba(234,88,12,0.12)' }}
+              >
+                <span className="text-[11px]">{quota.isAtLimit ? '🔒' : '📊'}</span>
+              </div>
+              <div className="min-w-0">
+                <p
+                  className="text-[11px] font-bold leading-tight"
+                  style={{ color: quota.isAtLimit ? '#F87171' : quota.remaining <= 5 ? '#FBBF24' : '#94A3B8' }}
+                >
+                  {quota.isAtLimit
+                    ? 'Kuota bulan ini habis'
+                    : `${quota.used} / ${quota.limit} transaksi bulan ini`}
+                </p>
+                {quota.isAtLimit && (
+                  <p className="text-[10px] mt-0.5" style={{ color: '#64748B' }}>
+                    Upgrade ke Pro untuk transaksi unlimited
+                  </p>
+                )}
+              </div>
+            </div>
+            {!quota.isAtLimit && (
+              <div className="w-20 flex-shrink-0">
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.min(100, (quota.used / quota.limit) * 100)}%`,
+                      background: quota.remaining <= 5 ? '#F59E0B' : '#EA580C',
+                    }}
+                  />
+                </div>
+                <p className="text-[9px] text-right mt-0.5" style={{ color: '#4B6478' }}>{quota.remaining} sisa</p>
+              </div>
+            )}
+            {quota.isAtLimit && (
+              <Link
+                to="/upgrade"
+                className="flex-shrink-0 text-[10px] font-black px-3 py-1.5 rounded-lg whitespace-nowrap transition-colors"
+                style={{ color: '#EA580C', border: '1px solid rgba(234,88,12,0.3)' }}
+              >
+                Upgrade
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
 
       <div style={{ padding: '0 20px' }}>
         {isLoading ? <LoadingSkeleton /> : paged.length === 0 ? (

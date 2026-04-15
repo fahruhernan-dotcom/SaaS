@@ -8,8 +8,20 @@ git pull origin main
 echo "==> Install dependencies..."
 npm install --legacy-peer-deps
 
-echo "==> Scraping market prices..."
-npm run scrape:market
+echo "==> Install Python dependencies..."
+# If using venv (recommended)
+if [ -d ".venv" ]; then
+    ./.venv/bin/pip install -r scripts/requirements.txt
+else
+    pip3 install -r scripts/requirements.txt
+fi
+
+echo "==> Scraping all market prices (Chickin & Arboge)..."
+npm run scrape:all
+
+echo "==> Restarting Scraper Daemons..."
+sudo systemctl restart ternakos-scraper || true
+sudo systemctl restart arboge-scraper || true
 
 echo "==> Generating sitemap..."
 npm run sitemap

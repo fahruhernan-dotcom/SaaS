@@ -74,6 +74,15 @@ function getCobb500(ageDays) {
   return null
 }
 
+function getEstimatedFCR(cycle) {
+  const feed  = getTotalFeedKg(cycle)
+  const alive = (cycle?.doc_count ?? 0) - getTotalMortality(cycle)
+  const avgW  = getLatestAvgWeight(cycle)
+  if (!feed || !alive || !avgW) return null
+  const biomass = alive * avgW
+  return biomass > 0 ? feed / biomass : null
+}
+
 // IP Score
 function getIPScore(cycle) {
   const docCount = cycle?.doc_count ?? 0
@@ -94,15 +103,6 @@ const VACC_WINDOWS = [
   { name: 'ND + IB Booster',     windowStart: 14, windowEnd: 17, diseaseKey: 'Bronchitis' },
   { name: 'Gumboro IBD Booster', windowStart: 18, windowEnd: 22, diseaseKey: 'Bursal'    },
 ]
-
-function getEstimatedFCR(cycle) {
-  const feed  = getTotalFeedKg(cycle)
-  const alive = (cycle?.doc_count ?? 0) - getTotalMortality(cycle)
-  const avgW  = getLatestAvgWeight(cycle)
-  if (!feed || !alive || !avgW) return null
-  const biomass = alive * avgW
-  return biomass > 0 ? feed / biomass : null
-}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 

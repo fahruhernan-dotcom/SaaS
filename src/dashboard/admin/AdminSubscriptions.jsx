@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+
 import { useQueryClient } from '@tanstack/react-query'
 import {
   CreditCard, Banknote, History, Search,
@@ -44,6 +44,16 @@ import { formatIDR, formatDate, toTitleCase } from '@/lib/format'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+
+function getVerticalIcon(v) {
+  switch (v) {
+    case 'poultry_broker': return <Bird size={18} />
+    case 'egg_broker': return <Egg size={18} />
+    case 'peternak': return <Home size={18} />
+    case 'rpa': return <Factory size={18} />
+    default: return <Building2 size={18} />
+  }
+}
 
 export default function AdminSubscriptions() {
   const queryClient = useQueryClient()
@@ -244,11 +254,7 @@ export default function AdminSubscriptions() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="relative space-y-6 p-4 lg:p-0 pb-32 lg:pb-12 min-h-screen"
-    >
+    <div>
       {/* Background Orbs — Consistently 'Modern Classy' */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-500/5 blur-[120px] rounded-full animate-pulse-glow" />
@@ -298,11 +304,7 @@ export default function AdminSubscriptions() {
               className="flex-1 shrink-0 min-w-[140px] relative rounded-lg font-bold uppercase text-[10px] md:text-[11px] tracking-widest transition-colors data-[state=active]:text-white text-[#4B6478] hover:text-white/60 h-full z-10 bg-transparent group"
             >
               {activeMainTab === tab.id && (
-                <motion.div
-                  layoutId="activeBillingTab"
-                  className="absolute inset-0 bg-emerald-500 rounded-lg shadow-lg shadow-emerald-500/20 z-[-1]"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                />
+                <div className="absolute inset-0 bg-white/10 rounded-lg shadow-inner" />
               )}
               {tab.id === 'expiring' ? (
                 <div className="flex items-center gap-2">
@@ -347,11 +349,7 @@ export default function AdminSubscriptions() {
                     className="relative rounded-lg px-5 h-full text-[11px] font-bold uppercase tracking-wider data-[state=active]:text-white text-[#4B6478] hover:text-white/60 transition-colors bg-transparent shrink-0"
                   >
                     {invoiceTab === tab && (
-                      <motion.div
-                        layoutId="activeInvoiceFilter"
-                        className="absolute inset-0 bg-emerald-500 rounded-lg shadow-[0_4px_15px_rgba(16,185,129,0.3)] z-[-1]"
-                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                      />
+                      <div className="absolute inset-0 bg-white/10 rounded-lg shadow-inner" />
                     )}
                     <span className="relative z-10 flex items-center gap-2">
                       {tab}
@@ -608,47 +606,31 @@ export default function AdminSubscriptions() {
       {/* ─── INVOICE DETAIL SHEET ─── */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         <SheetContent side="right" className="w-full sm:w-[500px] bg-[#0A0F14]/95 backdrop-blur-2xl border-l border-white/5 p-0 overflow-hidden flex flex-col shadow-2xl">
-          <AnimatePresence>
+          
             {selectedInvoice && (
-              <motion.div
-                initial={{ x: 20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: 20, opacity: 0 }}
-                className="flex flex-col h-full relative"
-              >
+              <div>
                 {/* Background glow for sheet */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[80px] rounded-full pointer-events-none" />
 
                 {/* Sheet Header */}
                 <div className="p-8 pb-6 border-b border-white/5 bg-white/[0.01] relative z-10">
-                  <AnimatePresence mode="wait">
+                  
                     {confirmSuccess ? (
-                      <motion.div
-                        key="success-banner"
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-5 py-4 mb-6 shadow-inner"
-                      >
+                      <div>
                         <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
                           <Check size={16} className="text-emerald-400" />
                         </div>
                         <p className="text-[12px] font-black text-emerald-400 uppercase tracking-[0.2em]">
                           ✓ Terkonfirmasi
                         </p>
-                      </motion.div>
+                      </div>
                     ) : (
-                      <motion.div
-                        key="status-row"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="flex items-center justify-between mb-6"
-                      >
+                      <div>
                         <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em]">Payment Invoice</p>
                         <StatusBadge status={selectedInvoice.status} />
-                      </motion.div>
+                      </div>
                     )}
-                  </AnimatePresence>
+                  
                   <SheetTitle className="text-3xl font-display font-black text-white tracking-tight leading-none mb-2">
                     #{selectedInvoice.invoice_number}
                   </SheetTitle>
@@ -854,9 +836,9 @@ export default function AdminSubscriptions() {
                     </div>
                   )
                 })()}
-              </motion.div>
+              </div>
             )}
-          </AnimatePresence>
+          
         </SheetContent>
       </Sheet>
 
@@ -898,21 +880,16 @@ export default function AdminSubscriptions() {
               </div>
 
               {/* Double-bill warning */}
-              <AnimatePresence>
+              
                 {genHasPending && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 shadow-inner overflow-hidden"
-                  >
+                  <div>
                     <AlertTriangle size={18} className="text-amber-400 shrink-0 mt-0.5" />
                     <p className="text-[11px] font-black text-amber-300 leading-relaxed uppercase tracking-wider">
                       Tenant ini sudah punya invoice pending. Konfirmasi atau batalkan dulu sebelum generate baru.
                     </p>
-                  </motion.div>
+                  </div>
                 )}
-              </AnimatePresence>
+              
 
               {/* Plan */}
               <div className="space-y-2">
@@ -1045,22 +1022,14 @@ export default function AdminSubscriptions() {
       </Sheet>
 
       {/* ─── BANK MODAL ─── */}
-      <AnimatePresence>
+      
       {isBankModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-[#080C10]/80 backdrop-blur-md"
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setIsBankModalOpen(false)}
           />
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            className="bg-white/[0.02] border border-white/10 w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl relative z-10 backdrop-blur-2xl"
-          >
+          <div className="relative z-10 bg-[#111C24] border border-white/10 rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[80px] rounded-full pointer-events-none" />
             <form onSubmit={handleSaveBank} className="relative z-10">
               <div className="p-8 pb-6 border-b border-white/5">
@@ -1124,10 +1093,10 @@ export default function AdminSubscriptions() {
                 </Button>
               </div>
             </form>
-          </motion.div>
+          </div>
         </div>
       )}
-      </AnimatePresence>
+      
       {/* FAB (Floating Action Button) for Mobile — Prevents Intersecting Layouts */}
       <div className="md:hidden fixed bottom-20 right-4 z-40 animate-in translate-y-4 duration-500 pb-[env(safe-area-inset-bottom)]">
         <Button
@@ -1137,7 +1106,7 @@ export default function AdminSubscriptions() {
           <Plus size={28} />
         </Button>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
@@ -1322,10 +1291,11 @@ function StatCard({ label, value, icon: Icon, color, isUrgent }) {
   const theme = themes[color] || themes.emerald
 
   return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      className={`relative overflow-hidden border ${theme.border} rounded-[24px] p-5 lg:p-6 shadow-xl transition-all group backdrop-blur-md bg-white/[0.02] ${isUrgent ? 'animate-pulse border-amber-500/40 shadow-amber-500/10' : ''}`}
-    >
+    <div className={cn(
+      "relative overflow-hidden rounded-2xl border p-5 lg:p-6 group cursor-default transition-all duration-500 hover:-translate-y-0.5 shadow-lg",
+      theme.bg, theme.border,
+      isUrgent && 'ring-1 ring-amber-500/30'
+    )}>
       <div className={`absolute -right-2 -bottom-2 opacity-[0.05] group-hover:opacity-[0.1] transition-opacity ${theme.text}`}>
         <Icon size={80} strokeWidth={1} />
       </div>
@@ -1346,7 +1316,7 @@ function StatCard({ label, value, icon: Icon, color, isUrgent }) {
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
@@ -1399,11 +1369,7 @@ function BankCard({ bank, onEdit, onDelete }) {
   }
 
   return (
-    <motion.div
-      layout
-      whileHover={{ y: -5 }}
-      className={`relative overflow-hidden border rounded-[32px] p-8 transition-all group backdrop-blur-md bg-white/[0.02] shadow-2xl ${bank.is_active ? 'border-emerald-500/20 shadow-emerald-500/5' : 'border-white/5 opacity-60 hover:opacity-100'}`}
-    >
+    <div className="relative overflow-hidden rounded-[24px] border border-white/8 bg-[#111C24] p-6 lg:p-7 hover:border-white/15 group cursor-default transition-all duration-500 hover:-translate-y-0.5 shadow-lg">
       <div className="absolute -right-4 -bottom-4 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity -rotate-12 duration-700">
         <CreditCard size={120} />
       </div>
@@ -1463,7 +1429,7 @@ function BankCard({ bank, onEdit, onDelete }) {
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
@@ -1735,14 +1701,4 @@ function BankSkeleton() {
       </div>
     </div>
   )
-}
-
-function getVerticalIcon(v) {
-  switch (v) {
-    case 'poultry_broker': return <Bird size={18} />
-    case 'egg_broker': return <Egg size={18} />
-    case 'peternak': return <Home size={18} />
-    case 'rpa': return <Factory size={18} />
-    default: return <Building2 size={18} />
-  }
 }

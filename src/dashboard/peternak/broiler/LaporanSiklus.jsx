@@ -17,6 +17,72 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { toast } from 'sonner'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
 
+const sheetLabelStyle = {
+  display: 'block', fontSize: 10, fontWeight: 800,
+  color: '#4B6478', textTransform: 'uppercase',
+  letterSpacing: '0.1em', marginBottom: 6,
+}
+const sheetInputStyle = {
+  width: '100%', padding: '12px 14px',
+  background: '#111C24', border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 12, color: '#F1F5F9',
+  fontSize: 15, fontFamily: 'DM Sans', outline: 'none',
+  boxSizing: 'border-box',
+}
+
+// ─── KPI Card ─────────────────────────────────────────────────────────────────
+
+function KPICard({ label, value, sub, valueColor, badge }) {
+  return (
+    <div className="bg-[#111C24] border border-white/[0.08] rounded-2xl p-4">
+      <p className="text-[10px] font-extrabold text-[#4B6478] uppercase tracking-widest mb-2">{label}</p>
+      <p className={`font-['Sora'] font-extrabold text-xl leading-tight ${valueColor}`}>{value}</p>
+      {badge && (
+        <span className={`inline-block text-[9px] font-extrabold px-2 py-0.5 rounded-full border mt-1.5 ${badge.cls}`}>
+          {badge.label}
+        </span>
+      )}
+      {sub && <p className="text-[10px] text-[#4B6478] mt-1 leading-tight">{sub}</p>}
+    </div>
+  )
+}
+
+// ─── Analysis Card ────────────────────────────────────────────────────────────
+
+function AnalysisCard({ icon, title, badge, desc }) {
+  return (
+    <div className="bg-[#111C24] border border-white/[0.08] rounded-2xl p-4">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-base">{icon}</span>
+        <p className="font-bold text-sm text-slate-100">{title}</p>
+        {badge && (
+          <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border ${badge.cls}`}>
+            {badge.label}
+          </span>
+        )}
+      </div>
+      <p className="text-[12px] text-[#4B6478] leading-relaxed">{desc}</p>
+    </div>
+  )
+}
+
+// ─── Cost Row ─────────────────────────────────────────────────────────────────
+
+function CostRow({ label, value, valueColor, bold, large }) {
+  return (
+    <div className="flex justify-between items-center py-0.5">
+      <span className={`text-[12px] ${bold ? 'font-bold text-slate-100' : 'text-[#4B6478]'} ${large ? 'text-[13px]' : ''}`}>
+        {label}
+      </span>
+      <span className={`font-bold font-['Sora'] ${large ? 'text-[14px]' : 'text-[12px]'} ${valueColor ?? (bold ? 'text-slate-100' : 'text-[#4B6478]')}`}>
+        {value}
+      </span>
+    </div>
+  )
+}
+
+
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const TODAY = new Date().toISOString().split('T')[0]
@@ -1029,66 +1095,3 @@ function AddExpenseSheet({ open, onClose, cycleId, tenantId, onSuccess }) {
   )
 }
 
-const sheetLabelStyle = {
-  display: 'block', fontSize: 10, fontWeight: 800,
-  color: '#4B6478', textTransform: 'uppercase',
-  letterSpacing: '0.1em', marginBottom: 6,
-}
-const sheetInputStyle = {
-  width: '100%', padding: '12px 14px',
-  background: '#111C24', border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: 12, color: '#F1F5F9',
-  fontSize: 15, fontFamily: 'DM Sans', outline: 'none',
-  boxSizing: 'border-box',
-}
-
-// ─── KPI Card ─────────────────────────────────────────────────────────────────
-
-function KPICard({ label, value, sub, valueColor, badge }) {
-  return (
-    <div className="bg-[#111C24] border border-white/[0.08] rounded-2xl p-4">
-      <p className="text-[10px] font-extrabold text-[#4B6478] uppercase tracking-widest mb-2">{label}</p>
-      <p className={`font-['Sora'] font-extrabold text-xl leading-tight ${valueColor}`}>{value}</p>
-      {badge && (
-        <span className={`inline-block text-[9px] font-extrabold px-2 py-0.5 rounded-full border mt-1.5 ${badge.cls}`}>
-          {badge.label}
-        </span>
-      )}
-      {sub && <p className="text-[10px] text-[#4B6478] mt-1 leading-tight">{sub}</p>}
-    </div>
-  )
-}
-
-// ─── Analysis Card ────────────────────────────────────────────────────────────
-
-function AnalysisCard({ icon, title, badge, desc }) {
-  return (
-    <div className="bg-[#111C24] border border-white/[0.08] rounded-2xl p-4">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-base">{icon}</span>
-        <p className="font-bold text-sm text-slate-100">{title}</p>
-        {badge && (
-          <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full border ${badge.cls}`}>
-            {badge.label}
-          </span>
-        )}
-      </div>
-      <p className="text-[12px] text-[#4B6478] leading-relaxed">{desc}</p>
-    </div>
-  )
-}
-
-// ─── Cost Row ─────────────────────────────────────────────────────────────────
-
-function CostRow({ label, value, valueColor, bold, large }) {
-  return (
-    <div className="flex justify-between items-center py-0.5">
-      <span className={`text-[12px] ${bold ? 'font-bold text-slate-100' : 'text-[#4B6478]'} ${large ? 'text-[13px]' : ''}`}>
-        {label}
-      </span>
-      <span className={`font-bold font-['Sora'] ${large ? 'text-[14px]' : 'text-[12px]'} ${valueColor ?? (bold ? 'text-slate-100' : 'text-[#4B6478]')}`}>
-        {value}
-      </span>
-    </div>
-  )
-}

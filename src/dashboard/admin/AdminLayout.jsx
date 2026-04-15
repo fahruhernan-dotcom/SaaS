@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { NavLink, Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Home, Users, CreditCard, Tag, LogOut, Shield, 
   ArrowLeft, Activity, Bird, LayoutGrid, Menu as MenuIcon,
@@ -94,11 +93,7 @@ function AdminSidebar() {
                             )}
                         >
                             {isActive && (
-                                <motion.div
-                                    layoutId="admin-nav-active"
-                                    className="absolute left-[-12px] top-1/2 -translate-y-1/2 w-[4px] h-10 bg-emerald-500 rounded-r-full shadow-[4px_0_20px_rgba(16,185,129,0.6)] z-20"
-                                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                                />
+                                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-emerald-400 rounded-full" />
                             )}
                             <item.icon
                                 size={18}
@@ -243,27 +238,14 @@ function AdminMenuHub({ isOpen, onClose }) {
     const { handleBackToDashboard, handleLogout } = useAdminNav()
 
     return (
-        <AnimatePresence>
+        <>
             {isOpen && (
                 <div className="fixed inset-0 z-[100] flex flex-col items-center justify-end">
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-black/80 backdrop-blur-md"
+                    <div
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                         onClick={onClose}
                     />
-                    <motion.div
-                        drag="y"
-                        dragConstraints={{ top: 0 }}
-                        dragElastic={0.2}
-                        onDragEnd={(_, info) => {
-                            if (info.offset.y > 100) onClose()
-                        }}
-                        initial={{ y: '100%' }}
-                        animate={{ y: 0 }}
-                        exit={{ y: '100.5%' }}
-                        transition={{ type: 'spring', stiffness: 420, damping: 36, mass: 0.8 }}
+                    <div
                         className="relative mt-auto bg-[#080C10] rounded-t-[2.5rem] border-t border-white/[0.08] p-4 lg:p-6 pb-[calc(2rem+env(safe-area-inset-bottom))] max-w-[480px] w-full mx-auto shadow-[0_-20px_50px_rgba(0,0,0,0.5)]"
                     >
                         <div className="w-12 h-1.5 rounded-full bg-white/10 mx-auto mb-6 active:bg-white/20 transition-colors" />
@@ -342,10 +324,10 @@ function AdminMenuHub({ isOpen, onClose }) {
                                 </div>
                             </button>
                         </div>
-                    </motion.div>
+                    </div>
                 </div>
             )}
-        </AnimatePresence>
+        </>
     )
 }
 
@@ -368,17 +350,9 @@ export default function AdminLayout({ children }) {
                     <AdminSidebar />
                     <main className="lg:pl-[240px] pt-[calc(2rem+env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))] relative z-10 transition-all duration-500">
                         <div className="max-w-[1440px] mx-auto px-4 lg:px-8">
-                            <AnimatePresence mode="wait">
-                                <motion.div
-                                    key={window.location.pathname}
-                                    initial={{ opacity: 0, y: 10, filter: 'blur(5px)' }}
-                                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                                    exit={{ opacity: 0, y: -10, filter: 'blur(5px)' }}
-                                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                                >
+                            <div className="px-2 lg:px-0">
                                     {children || <Outlet />}
-                                </motion.div>
-                            </AnimatePresence>
+                                </div>
                         </div>
                     </main>
                 </>
@@ -386,18 +360,9 @@ export default function AdminLayout({ children }) {
                 <div className="max-w-[480px] mx-auto shadow-2xl relative z-10">
                     <AdminTopBar onOpenMenu={() => setMenuOpen(true)} />
                     <main className="pt-20 pb-28">
-                        <AnimatePresence mode="wait">
-                            <motion.div
-                                key={window.location.pathname}
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                transition={{ duration: 0.3 }}
-                                className="px-4"
-                            >
+                        <div className="px-4">
                                 {children || <Outlet />}
-                            </motion.div>
-                        </AnimatePresence>
+                            </div>
                     </main>
                     <AdminBottomNav onOpenMenu={() => setMenuOpen(true)} />
                     <AdminMenuHub isOpen={menuOpen} onClose={() => setMenuOpen(false)} />

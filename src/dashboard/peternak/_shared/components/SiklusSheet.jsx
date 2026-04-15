@@ -8,6 +8,41 @@ import { usePeternakFarms } from '@/lib/hooks/usePeternakData'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const labelStyle = {
+  display: 'block', fontSize: 10, fontWeight: 800,
+  color: '#4B6478', textTransform: 'uppercase',
+  letterSpacing: '0.1em', marginBottom: 6,
+}
+
+const inputStyle = {
+  width: '100%', padding: '12px 14px',
+  background: '#111C24',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 12, color: '#F1F5F9',
+  fontSize: 15, fontFamily: 'DM Sans', outline: 'none',
+  boxSizing: 'border-box',
+}
+
+const infoBoxStyle = {
+  padding: '10px 14px',
+  background: 'rgba(52,211,153,0.06)',
+  border: '1px solid rgba(52,211,153,0.15)',
+  borderRadius: 10,
+}
+
+const submitBtnStyle = {
+  width: '100%', padding: '14px',
+  background: '#7C3AED', border: 'none', borderRadius: 12,
+  color: 'white', fontSize: 15, fontWeight: 800,
+  cursor: 'pointer', fontFamily: 'Sora',
+  boxShadow: '0 4px 16px rgba(124,58,237,0.3)',
+  marginTop: 4,
+}
+
+
+
 const BUSINESS_MODEL_LABELS = {
   mandiri_murni:  'Murni Mandiri',
   mandiri_semi:   'Semi Mandiri',
@@ -257,35 +292,4 @@ function FormField({ id, label, type = 'text', placeholder, value, onChange }) {
   )
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
 
-const labelStyle = {
-  display: 'block', fontSize: 10, fontWeight: 800,
-  color: '#4B6478', textTransform: 'uppercase',
-  letterSpacing: '0.1em', marginBottom: 6,
-}
-
-const inputStyle = {
-  width: '100%', padding: '12px 14px',
-  background: '#111C24',
-  border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: 12, color: '#F1F5F9',
-  fontSize: 15, fontFamily: 'DM Sans', outline: 'none',
-  boxSizing: 'border-box',
-}
-
-const infoBoxStyle = {
-  padding: '10px 14px',
-  background: 'rgba(52,211,153,0.06)',
-  border: '1px solid rgba(52,211,153,0.15)',
-  borderRadius: 10,
-}
-
-const submitBtnStyle = {
-  width: '100%', padding: '14px',
-  background: '#7C3AED', border: 'none', borderRadius: 12,
-  color: 'white', fontSize: 15, fontWeight: 800,
-  cursor: 'pointer', fontFamily: 'Sora',
-  boxShadow: '0 4px 16px rgba(124,58,237,0.3)',
-  marginTop: 4,
-}

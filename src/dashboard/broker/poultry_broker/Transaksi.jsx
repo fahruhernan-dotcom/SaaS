@@ -73,6 +73,10 @@ export default function Transaksi() {
   const location = useLocation()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const { setSidebarOpen } = useOutletContext() || {}
+  // --- STATES ---
+  const [wizardOpen, setWizardOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState('semua')
+  const [searchQuery, setSearchQuery] = useState('')
 
   React.useEffect(() => {
     // Initial check (in case of direct deep link)
@@ -93,14 +97,10 @@ export default function Transaksi() {
   const isViewOnly = profile?.role === 'view_only'
   const canWrite = profile?.role === 'owner' || profile?.role === 'staff' || profile?.role === 'superadmin'
 
-  // --- STATES ---
-  const [activeTab, setActiveTab] = useState('semua')
-  const [searchQuery, setSearchQuery] = useState('')
 
   // --- FINAL SUCCESS STATE ---
   const [isSuccessOpen, setIsSuccessOpen] = useState(false)
   const [finalSuccessData, setFinalSuccessData] = useState(null)
-  const [wizardOpen, setWizardOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)

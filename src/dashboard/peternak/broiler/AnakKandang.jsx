@@ -12,6 +12,126 @@ import { usePeternakFarms } from '@/lib/hooks/usePeternakData'
 import { toast } from 'sonner'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const headerStyle = {
+  padding: '24px 16px 16px',
+  background: 'linear-gradient(180deg, #0C1319 0%, #06090F 100%)',
+  borderBottom: '1px solid rgba(255,255,255,0.04)',
+  display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+}
+const pageTitleStyle = { fontFamily: 'Sora', fontWeight: 800, fontSize: 20, color: '#F1F5F9', marginBottom: 4 }
+const pageSubStyle   = { fontSize: 12, color: '#4B6478' }
+
+const addBtnStyle = {
+  display: 'flex', alignItems: 'center', gap: 6,
+  padding: '9px 14px',
+  background: '#7C3AED', border: 'none', borderRadius: 10,
+  color: 'white', fontSize: 12, fontWeight: 800,
+  cursor: 'pointer', flexShrink: 0, fontFamily: 'Sora',
+  boxShadow: '0 3px 12px rgba(124,58,237,0.3)',
+}
+
+const sectionTitleStyle = { fontFamily: 'Sora', fontWeight: 800, fontSize: 14, color: '#F1F5F9' }
+
+const cardStyle = {
+  padding: '14px',
+  background: '#0C1319',
+  border: '1px solid rgba(255,255,255,0.07)',
+  borderRadius: 16,
+}
+
+const avatarStyle = {
+  width: 44, height: 44, borderRadius: '50%',
+  background: 'rgba(124,58,237,0.15)',
+  border: '1.5px solid rgba(124,58,237,0.3)',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  fontFamily: 'Sora', fontWeight: 800, fontSize: 15, color: '#A78BFA',
+  flexShrink: 0,
+}
+
+const workerNameStyle  = { fontFamily: 'Sora', fontWeight: 700, fontSize: 14, color: '#F1F5F9' }
+const workerFarmStyle  = { fontSize: 11, color: '#4B6478', marginTop: 2 }
+const statusBadgeStyle = { fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 99, flexShrink: 0 }
+const activeStatusStyle   = { background: 'rgba(52,211,153,0.1)',  color: '#34D399', border: '1px solid rgba(52,211,153,0.2)' }
+const inactiveStatusStyle = { background: 'rgba(248,113,113,0.08)', color: '#F87171', border: '1px solid rgba(248,113,113,0.15)' }
+
+const salaryRowStyle  = { display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }
+const salaryItemStyle = { display: 'flex', flexDirection: 'column', gap: 2 }
+const salaryLabelStyle = { fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.08em' }
+const salaryValueStyle = { fontFamily: 'Sora', fontWeight: 700, fontSize: 12, color: '#F1F5F9' }
+
+const metaChipStyle = { display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#4B6478' }
+
+const editBtnStyle = {
+  display: 'flex', alignItems: 'center', gap: 5,
+  padding: '6px 10px',
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 8, color: '#94A3B8', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+}
+const payBtnStyle = {
+  display: 'flex', alignItems: 'center', gap: 5,
+  padding: '6px 10px',
+  background: 'rgba(124,58,237,0.08)',
+  border: '1px solid rgba(124,58,237,0.2)',
+  borderRadius: 8, color: '#A78BFA', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+}
+
+const paymentRowStyle = {
+  padding: '12px 14px',
+  background: '#111C24',
+  borderRadius: 12,
+  border: '1px solid rgba(255,255,255,0.05)',
+}
+
+const addFormBoxStyle = {
+  padding: 16,
+  background: 'rgba(124,58,237,0.05)',
+  border: '1px solid rgba(124,58,237,0.15)',
+  borderRadius: 14,
+  display: 'flex', flexDirection: 'column', gap: 14,
+}
+const addFormTitleStyle = {
+  fontSize: 11, fontWeight: 900, color: '#7C3AED',
+  textTransform: 'uppercase', letterSpacing: '0.1em',
+}
+
+const labelStyle = {
+  display: 'block', fontSize: 10, fontWeight: 800,
+  color: '#4B6478', textTransform: 'uppercase',
+  letterSpacing: '0.1em', marginBottom: 6,
+}
+const inputStyle = {
+  width: '100%', padding: '12px 14px',
+  background: '#111C24',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 12, color: '#F1F5F9',
+  fontSize: 15, fontFamily: 'DM Sans', outline: 'none',
+  boxSizing: 'border-box',
+}
+const submitBtnStyle = {
+  width: '100%', padding: '14px',
+  background: '#7C3AED', border: 'none', borderRadius: 12,
+  color: 'white', fontSize: 15, fontWeight: 800,
+  cursor: 'pointer', fontFamily: 'Sora',
+  boxShadow: '0 4px 16px rgba(124,58,237,0.3)',
+}
+const cancelBtnStyle = {
+  flex: 1, padding: '12px',
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 10, color: '#4B6478',
+  fontSize: 13, fontWeight: 700, cursor: 'pointer',
+}
+const emptyStyle = {
+  marginTop: 24, padding: '48px 20px', textAlign: 'center',
+  background: '#0C1319', borderRadius: 20,
+  border: '1px dashed rgba(255,255,255,0.05)',
+}
+
+
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmt(dateStr) {
@@ -718,120 +838,4 @@ function PaymentSheet({ open, onClose, worker }) {
   )
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
 
-const headerStyle = {
-  padding: '24px 16px 16px',
-  background: 'linear-gradient(180deg, #0C1319 0%, #06090F 100%)',
-  borderBottom: '1px solid rgba(255,255,255,0.04)',
-  display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-}
-const pageTitleStyle = { fontFamily: 'Sora', fontWeight: 800, fontSize: 20, color: '#F1F5F9', marginBottom: 4 }
-const pageSubStyle   = { fontSize: 12, color: '#4B6478' }
-
-const addBtnStyle = {
-  display: 'flex', alignItems: 'center', gap: 6,
-  padding: '9px 14px',
-  background: '#7C3AED', border: 'none', borderRadius: 10,
-  color: 'white', fontSize: 12, fontWeight: 800,
-  cursor: 'pointer', flexShrink: 0, fontFamily: 'Sora',
-  boxShadow: '0 3px 12px rgba(124,58,237,0.3)',
-}
-
-const sectionTitleStyle = { fontFamily: 'Sora', fontWeight: 800, fontSize: 14, color: '#F1F5F9' }
-
-const cardStyle = {
-  padding: '14px',
-  background: '#0C1319',
-  border: '1px solid rgba(255,255,255,0.07)',
-  borderRadius: 16,
-}
-
-const avatarStyle = {
-  width: 44, height: 44, borderRadius: '50%',
-  background: 'rgba(124,58,237,0.15)',
-  border: '1.5px solid rgba(124,58,237,0.3)',
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  fontFamily: 'Sora', fontWeight: 800, fontSize: 15, color: '#A78BFA',
-  flexShrink: 0,
-}
-
-const workerNameStyle  = { fontFamily: 'Sora', fontWeight: 700, fontSize: 14, color: '#F1F5F9' }
-const workerFarmStyle  = { fontSize: 11, color: '#4B6478', marginTop: 2 }
-const statusBadgeStyle = { fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 99, flexShrink: 0 }
-const activeStatusStyle   = { background: 'rgba(52,211,153,0.1)',  color: '#34D399', border: '1px solid rgba(52,211,153,0.2)' }
-const inactiveStatusStyle = { background: 'rgba(248,113,113,0.08)', color: '#F87171', border: '1px solid rgba(248,113,113,0.15)' }
-
-const salaryRowStyle  = { display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }
-const salaryItemStyle = { display: 'flex', flexDirection: 'column', gap: 2 }
-const salaryLabelStyle = { fontSize: 9, fontWeight: 800, color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.08em' }
-const salaryValueStyle = { fontFamily: 'Sora', fontWeight: 700, fontSize: 12, color: '#F1F5F9' }
-
-const metaChipStyle = { display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#4B6478' }
-
-const editBtnStyle = {
-  display: 'flex', alignItems: 'center', gap: 5,
-  padding: '6px 10px',
-  background: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: 8, color: '#94A3B8', fontSize: 11, fontWeight: 700, cursor: 'pointer',
-}
-const payBtnStyle = {
-  display: 'flex', alignItems: 'center', gap: 5,
-  padding: '6px 10px',
-  background: 'rgba(124,58,237,0.08)',
-  border: '1px solid rgba(124,58,237,0.2)',
-  borderRadius: 8, color: '#A78BFA', fontSize: 11, fontWeight: 700, cursor: 'pointer',
-}
-
-const paymentRowStyle = {
-  padding: '12px 14px',
-  background: '#111C24',
-  borderRadius: 12,
-  border: '1px solid rgba(255,255,255,0.05)',
-}
-
-const addFormBoxStyle = {
-  padding: 16,
-  background: 'rgba(124,58,237,0.05)',
-  border: '1px solid rgba(124,58,237,0.15)',
-  borderRadius: 14,
-  display: 'flex', flexDirection: 'column', gap: 14,
-}
-const addFormTitleStyle = {
-  fontSize: 11, fontWeight: 900, color: '#7C3AED',
-  textTransform: 'uppercase', letterSpacing: '0.1em',
-}
-
-const labelStyle = {
-  display: 'block', fontSize: 10, fontWeight: 800,
-  color: '#4B6478', textTransform: 'uppercase',
-  letterSpacing: '0.1em', marginBottom: 6,
-}
-const inputStyle = {
-  width: '100%', padding: '12px 14px',
-  background: '#111C24',
-  border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: 12, color: '#F1F5F9',
-  fontSize: 15, fontFamily: 'DM Sans', outline: 'none',
-  boxSizing: 'border-box',
-}
-const submitBtnStyle = {
-  width: '100%', padding: '14px',
-  background: '#7C3AED', border: 'none', borderRadius: 12,
-  color: 'white', fontSize: 15, fontWeight: 800,
-  cursor: 'pointer', fontFamily: 'Sora',
-  boxShadow: '0 4px 16px rgba(124,58,237,0.3)',
-}
-const cancelBtnStyle = {
-  flex: 1, padding: '12px',
-  background: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: 10, color: '#4B6478',
-  fontSize: 13, fontWeight: 700, cursor: 'pointer',
-}
-const emptyStyle = {
-  marginTop: 24, padding: '48px 20px', textAlign: 'center',
-  background: '#0C1319', borderRadius: 20,
-  border: '1px dashed rgba(255,255,255,0.05)',
-}

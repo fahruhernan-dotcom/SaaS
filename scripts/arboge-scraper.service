@@ -1,0 +1,16 @@
+[Unit]
+Description=TernakOS Arboge.com Price Scraper
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ubuntu/ternakos
+# Use absolute path to the virtualenv python if using venv
+ExecStart=/home/ubuntu/ternakos/.venv/bin/python scripts/arboge_scraper.py --daemon
+Restart=on-failure
+RestartSec=30
+StandardOutput=append:/home/ubuntu/ternakos/scripts/arboge_scraper.log
+StandardError=append:/home/ubuntu/ternakos/scripts/arboge_scraper.log
+
+[Install]
+WantedBy=multi-user.target
