@@ -14,6 +14,7 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
   const [nameChecking, setNameChecking] = useState(false)
   const [nameTaken, setNameTaken] = useState(false)
   const [province, setProvince] = useState('')
+  const [provinceSearch, setProvinceSearch] = useState('')
   const [provinceOpen, setProvinceOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const debounceRef = useRef(null)
@@ -158,12 +159,20 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
   const handleBack = () => {
     if (step === 3) {
       setStep(2)
+      setProvinceSearch('')
     } else {
       setStep(1)
       setCategory(null)
       setSelected(null)
     }
   }
+
+  const filteredProvinces = useMemo(() => {
+    if (!provinceSearch) return PROVINCES
+    return PROVINCES.filter(p => 
+      p.toLowerCase().includes(provinceSearch.toLowerCase())
+    )
+  }, [provinceSearch])
 
   return (
     <div style={{
@@ -374,88 +383,110 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
                 )}
               </div>
 
-              {/* Province Dropdown */}
+              {/* Province Searchable Combobox */}
               <div style={{ marginBottom: '16px', position: 'relative' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 800, color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '8px', marginLeft: '2px' }}>
                   <MapPin size={11} color="#4B6478" />
                   Provinsi *
                 </label>
-                <button
-                  type="button"
-                  onClick={() => setProvinceOpen(v => !v)}
-                  style={{
-                    width: '100%',
-                    padding: '13px 16px',
-                    background: '#111C24',
-                    border: province
-                      ? '1px solid rgba(16,185,129,0.4)'
-                      : '1px solid rgba(255,255,255,0.09)',
-                    borderRadius: '12px',
-                    color: province ? '#F1F5F9' : '#4B6478',
-                    fontFamily: 'DM Sans',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    transition: 'border-color 0.2s ease',
-                    textAlign: 'left',
-                  }}
-                >
-                  <span>{province || 'Pilih provinsi...'}</span>
-                  <ChevronDown size={15} color="#4B6478" style={{ transform: provinceOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
-                </button>
+                
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    value={provinceOpen ? provinceSearch : province}
+                    onChange={(e) => {
+                      setProvinceSearch(e.target.value)
+                      if (!provinceOpen) setProvinceOpen(true)
+                    }}
+                    onFocus={() => {
+                      setProvinceSearch('')
+                      setProvinceOpen(true)
+                    }}
+                    placeholder={province || 'Ketik nama provinsi...'}
+                    style={{
+                      width: '100%',
+                      padding: '13px 16px',
+                      paddingRight: '40px',
+                      background: '#111C24',
+                      border: province
+                        ? '1px solid rgba(16,185,129,0.4)'
+                        : '1px solid rgba(255,255,255,0.09)',
+                      borderRadius: '12px',
+                      color: '#F1F5F9',
+                      fontFamily: 'DM Sans',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      transition: 'border-color 0.2s ease',
+                    }}
+                  />
+                  <div 
+                    onClick={() => setProvinceOpen(v => !v)}
+                    style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', padding: '4px' }}
+                  >
+                    <ChevronDown size={15} color="#4B6478" style={{ transform: provinceOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
+                  </div>
+                </div>
 
                 <AnimatePresence>
                   {provinceOpen && (
                     <motion.div
-                      initial={{ opacity: 0, y: -6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -6 }}
-                      transition={{ duration: 0.15 }}
+                      initial={{ opacity: 0, scale: 0.98, y: -4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.98, y: -4 }}
+                      transition={{ duration: 0.1 }}
                       style={{
                         position: 'absolute',
                         top: 'calc(100% + 6px)',
                         left: 0, right: 0,
                         background: '#0C1319',
                         border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '12px',
-                        maxHeight: '200px',
+                        borderRadius: '16px',
+                        maxHeight: '220px',
                         overflowY: 'auto',
                         zIndex: 100,
-                        padding: '6px',
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+                        padding: '8px',
+                        boxShadow: '0 12px 40px rgba(0,0,0,0.7)',
                       }}
                     >
-                      {PROVINCES.map(p => (
-                        <button
-                          key={p}
-                          type="button"
-                          onClick={() => { setProvince(p); setProvinceOpen(false) }}
-                          style={{
-                            width: '100%',
-                            padding: '9px 12px',
-                            background: province === p ? 'rgba(16,185,129,0.1)' : 'transparent',
-                            border: 'none',
-                            borderRadius: '8px',
-                            color: province === p ? '#10B981' : '#F1F5F9',
-                            fontFamily: 'DM Sans',
-                            fontSize: '13px',
-                            fontWeight: province === p ? 700 : 400,
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                          }}
-                        >
-                          {province === p && <Check size={12} color="#10B981" strokeWidth={3} />}
-                          {p}
-                        </button>
-                      ))}
+                      {filteredProvinces.length > 0 ? (
+                        filteredProvinces.map(p => (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => { 
+                              setProvince(p)
+                              setProvinceSearch('')
+                              setProvinceOpen(false) 
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: '10px 14px',
+                              background: province === p ? 'rgba(16,185,129,0.1)' : 'transparent',
+                              border: 'none',
+                              borderRadius: '10px',
+                              color: province === p ? '#10B981' : '#F1F5F9',
+                              fontFamily: 'DM Sans',
+                              fontSize: '13px',
+                              fontWeight: province === p ? 700 : 500,
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              marginBottom: '2px',
+                            }}
+                          >
+                            <span>{p}</span>
+                            {province === p && <Check size={12} color="#10B981" strokeWidth={3} />}
+                          </button>
+                        ))
+                      ) : (
+                        <div style={{ padding: '20px 10px', textAlign: 'center' }}>
+                          <p style={{ fontSize: '12px', color: '#4B6478', margin: 0 }}>Provinsi tidak ditemukan.</p>
+                        </div>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
