@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Lock, ArrowLeft, Building2, MapPin, ChevronDown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { resolveBusinessVertical } from '@/lib/businessModel'
+import { BUSINESS_MODELS, BUSINESS_CATEGORIES, ANIMAL_GROUPS, resolveBusinessVertical } from '@/lib/businessModel'
 import { toTitleCase } from '@/lib/format'
 import { PROVINCES } from '@/lib/constants/regions'
 import { checkQuotaUsage } from '@/lib/quotaUtils'
@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 export default function BusinessModelOverlay({ profile, isNewBusiness, onComplete }) {
   const [step, setStep] = useState(1)
   const [category, setCategory] = useState(null)
+  const [animalGroup, setAnimalGroup] = useState(null)
   const [selected, setSelected] = useState(null)
   const [businessName, setBusinessName] = useState('')
   const [nameChecking, setNameChecking] = useState(false)
@@ -21,11 +22,22 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
   const [loading, setLoading] = useState(false)
   const debounceRef = useRef(null)
 
-  // Memoize sub-roles based on category for performance
+  // Dynamic step count: Peternak gets an extra "animal group" step
+  const totalSteps = category === 'peternak' ? 4 : 3
+  const isPeternak = category === 'peternak'
+  const isAnimalStep = isPeternak && step === 2
+  const isSubRoleStep = isPeternak ? step === 3 : step === 2
+  const isNameStep = step === totalSteps
+
+  // Memoize sub-roles based on category + animal group
   const subRoles = useMemo(() => {
     if (!category) return []
+    if (isPeternak && animalGroup) {
+      const group = ANIMAL_GROUPS.find(g => g.key === animalGroup)
+      if (group) return Object.values(BUSINESS_MODELS).filter(m => m.category === 'peternak' && group.filter(m))
+    }
     return Object.values(BUSINESS_MODELS).filter(m => m.category === category)
-  }, [category])
+  }, [category, animalGroup, isPeternak])
 
   // New: Role Locking Logic
   const primaryRoleInfo = useMemo(() => {
@@ -160,19 +172,40 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
 
   const handleCategorySelect = (key) => {
     setCategory(key)
+    setAnimalGroup(null)
     setSelected(null)
     setStep(2)
   }
 
-  const handleSubRoleSelect = (key) => {
-    setSelected(key)
+  const handleAnimalGroupSelect = (key) => {
+    setAnimalGroup(key)
+    setSelected(null)
     setStep(3)
   }
 
+  const handleSubRoleSelect = (key) => {
+    setSelected(key)
+    setStep(isPeternak ? 4 : 3)
+  }
+
   const handleBack = () => {
-    if (step === 3) {
-      setStep(2)
+    if (isNameStep) {
+      setStep(step - 1)
       setProvinceSearch('')
+    } else if (isSubRoleStep) {
+      if (isPeternak) {
+        setStep(2) // back to animal group
+        setSelected(null)
+      } else {
+        setStep(1)
+        setCategory(null)
+        setSelected(null)
+      }
+    } else if (isAnimalStep) {
+      setStep(1)
+      setCategory(null)
+      setAnimalGroup(null)
+      setSelected(null)
     } else {
       setStep(1)
       setCategory(null)
@@ -229,7 +262,7 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '14px' }}>
-            {[1, 2, 3].map((s) => (
+            {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
               <div key={s} style={{
                 height: '4px',
                 width: step >= s ? '28px' : '16px',
@@ -250,19 +283,28 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
                   Pilih kategori bisnis kamu.
                 </p>
               </motion.div>
-            ) : step === 2 ? (
-              <motion.div key="s2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
+            ) : isAnimalStep ? (
+              <motion.div key="s-animal" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
                 <h2 style={{ fontFamily: 'Sora', fontSize: '19px', fontWeight: 800, color: '#F1F5F9', marginBottom: '6px' }}>
-                  {isNewBusiness ? `Tambah Unit ${primaryRoleInfo?.label || 'Bisnis'} Baru` : 'Pilih jenis bisnismu'}
+                  Jenis hewan apa yang bapak ternak?
+                </h2>
+                <p style={{ fontSize: '13px', color: '#4B6478', lineHeight: 1.5 }}>
+                  Pilih jenis ternak utama bapak.
+                </p>
+              </motion.div>
+            ) : isSubRoleStep ? (
+              <motion.div key="s-sub" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
+                <h2 style={{ fontFamily: 'Sora', fontSize: '19px', fontWeight: 800, color: '#F1F5F9', marginBottom: '6px' }}>
+                  {isNewBusiness ? `Tambah Unit ${primaryRoleInfo?.label || 'Bisnis'} Baru` : 'Pilih spesialisasi'}
                 </h2>
                 <p style={{ fontSize: '13px', color: '#4B6478', lineHeight: 1.5 }}>
                   {isNewBusiness 
-                    ? `Pilih jenis unit ${primaryRoleInfo?.label?.toLowerCase() || 'bisnis'} tambahan yang ingin bapak kelola.`
+                    ? `Pilih spesialisasi unit ${primaryRoleInfo?.label?.toLowerCase() || 'bisnis'} tambahan.`
                     : 'Lebih spesifik agar dashboard sesuai kebutuhanmu.'}
                 </p>
               </motion.div>
-            ) : (
-              <motion.div key="s3" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
+            ) : isNameStep ? (
+              <motion.div key="s-name" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
                 <h2 style={{ fontFamily: 'Sora', fontSize: '19px', fontWeight: 800, color: '#F1F5F9', marginBottom: '6px' }}>
                   Nama {category === 'peternak' ? 'farm' : 'bisnis'} kamu apa?
                 </h2>
@@ -272,7 +314,7 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
                     : 'Nama ini akan tampil di seluruh laporan dan invoice.'}
                 </p>
               </motion.div>
-            )}
+            ) : null}
           </AnimatePresence>
         </div>
 
@@ -289,9 +331,41 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
                 <CategoryCard key={cat.key} cat={cat} onClick={() => handleCategorySelect(cat.key)} />
               ))}
             </motion.div>
-          ) : step === 2 ? (
+          ) : isAnimalStep ? (
             <motion.div
-              key="step2"
+              key="step-animal"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '50vh', overflowY: 'auto', paddingRight: '2px' }}>
+                {ANIMAL_GROUPS.map((group) => (
+                  <ModelCard
+                    key={group.key}
+                    model={{
+                      key: group.key,
+                      label: group.label,
+                      icon: group.icon,
+                      description: group.description,
+                      comingSoon: group.comingSoon,
+                    }}
+                    selected={animalGroup === group.key}
+                    onClick={() => !group.comingSoon && handleAnimalGroupSelect(group.key)}
+                  />
+                ))}
+              </div>
+
+              <button
+                onClick={handleBack}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', width: '100%', marginTop: '12px', padding: '10px', background: 'transparent', border: 'none', color: '#4B6478', fontSize: '13px', cursor: 'pointer', fontFamily: 'DM Sans' }}
+              >
+                <ArrowLeft size={14} />
+                Kembali
+              </button>
+            </motion.div>
+          ) : isSubRoleStep ? (
+            <motion.div
+              key="step-sub"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
@@ -335,9 +409,9 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
                 Kembali
               </button>
             </motion.div>
-          ) : (
+          ) : isNameStep ? (
             <motion.div
-              key="step3"
+              key="step-name"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
@@ -556,7 +630,7 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
                 Kembali
               </button>
             </motion.div>
-          )}
+          ) : null}
         </AnimatePresence>
       </motion.div>
     </div>
