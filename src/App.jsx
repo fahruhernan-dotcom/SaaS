@@ -290,10 +290,14 @@ function RootLayout() {
 }
 
 export const routes = createRoutesFromElements(
-  <Route element={<RootLayout />}>
-    {/* Public */}
-    <Route path="/" element={<LandingPage />} />
-    <Route path="/login" element={<Login />} />
+  <Route>
+    {/* SPA Fallback route to avoid SSG pollution on Dashboard */}
+    <Route path="/_spa_fallback" element={null} />
+
+    <Route element={<RootLayout />}>
+      {/* Public */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<Login />} />
     <Route path="/register" element={<Register />} />
     <Route path="/invite" element={<AcceptInvite />} />
     <Route path="/terms" element={<TermsPage />} />
@@ -460,6 +464,7 @@ export const routes = createRoutesFromElements(
 
     {/* Fallback */}
     <Route path="*" element={<Navigate to="/" replace />} />
+  </Route>
   </Route>
 );
 

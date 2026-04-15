@@ -17,6 +17,9 @@ npm run sitemap
 echo "==> Build..."
 npm run build
 
+echo "==> Patching Nginx Fallback..."
+sudo sed -i -E 's/try_files \$uri \$uri\/ \/index\.html(.*?);/try_files \$uri \$uri\/ \/200.html\1;/g' /etc/nginx/sites-enabled/* || true
+
 echo "==> Reload Nginx..."
 sudo systemctl reload nginx
 
