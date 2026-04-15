@@ -117,13 +117,19 @@ export default function AppSidebar({ open, onClose }) {
     }
   }, [location.pathname])
 
-  const hasActiveTrial = profiles?.some(p => {
-    const t = p.tenants
-    const s = getSubscriptionStatus(t)
-    return s.status === 'trial'
-  })
+  // ── Multi-Tenant Quota Check ──
+  const [quota, setQuota] = useState({ usage: 0, limit: 0, canAdd: false })
+  useEffect(() => {
+    async function loadQuota() {
+      if (!tenant || !profile) return
+      const res = await checkQuotaUsage(tenant, profile, 'business')
+      setQuota(res)
+    }
+    loadQuota()
+  }, [tenant, profile, profiles])
+
+  const canAddBusiness = isSuperadmin || quota.canAdd
   const hasPaidPlan = profiles?.some(p => ['pro', 'business'].includes(p.tenants?.plan))
-  const canAddBusiness = isSuperadmin || !hasActiveTrial || hasPaidPlan
 
   const [activeProfileId, setActiveProfileId] = useState(null)
 
@@ -499,18 +505,23 @@ export default function AppSidebar({ open, onClose }) {
                 <DropdownMenuItem
                   onSelect={() => {
                     setTenantMenuOpen(false)
-                    if (!canAddBusiness) return
+                    if (!canAddBusiness) {
+                      navigate('/dashboard/addons')
+                      return
+                    }
                     window.setTimeout(() => setIsAddingBusiness(true), 0)
                   }}
-                  className={`gap-3 rounded-lg p-2 text-muted-foreground transition-colors ${canAddBusiness ? 'cursor-pointer hover:bg-accent hover:text-foreground focus:bg-accent focus:text-foreground' : 'opacity-50 cursor-not-allowed'}`}
-                  title={!canAddBusiness ? 'Upgrade ke PRO untuk tambah bisnis' : undefined}
+                  className={`gap-3 rounded-lg p-2 text-muted-foreground transition-colors cursor-pointer hover:bg-accent hover:text-foreground focus:bg-accent focus:text-foreground`}
+                  title={!canAddBusiness ? 'Kuota bisnis penuh. Beli slot tambahan.' : undefined}
                 >
                   <div className="w-6 h-6 rounded flex items-center justify-center bg-white/5 flex-shrink-0">
-                    {canAddBusiness ? <Plus size={14} /> : <Lock size={14} />}
+                    {canAddBusiness ? <Plus size={14} /> : <Lock size={14} className="text-amber-400" />}
                   </div>
-                  <span className="text-[13px] font-medium flex-1">Tambah Bisnis Baru</span>
+                  <span className={`text-[13px] font-medium flex-1 ${!canAddBusiness ? 'text-amber-400/80' : ''}`}>
+                    {canAddBusiness ? 'Tambah Bisnis Baru' : 'Beli Slot Bisnis Baru'}
+                  </span>
                   {!canAddBusiness && (
-                    <span className="text-[9px] font-black text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full uppercase tracking-widest">PRO</span>
+                    <span className="text-[9px] font-black text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full uppercase tracking-widest">ADD-ON</span>
                   )}
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -567,10 +578,10 @@ export default function AppSidebar({ open, onClose }) {
                     </button>
                   ) : (
                     <button
-                      onClick={() => { setIsAddingBusiness(false); navigate(akunPath) }}
-                      className="w-full bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/15 text-amber-400 font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2"
+                      onClick={() => { setIsAddingBusiness(false); navigate('/dashboard/addons') }}
+                      className="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-purple-500/20 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
                     >
-                      <Lock size={16} /> Upgrade ke PRO
+                      <Plus size={16} /> Beli Slot Bisnis Baru
                     </button>
                   )}
                   <button

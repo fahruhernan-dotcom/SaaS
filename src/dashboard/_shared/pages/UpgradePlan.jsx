@@ -558,6 +558,43 @@ export default function UpgradePlan() {
         {/* ── Divider ── */}
         <div className="flex items-center gap-3 mb-6">
           <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+          <span className="text-[10px] text-[#2A3F52] font-semibold uppercase tracking-widest">Add-on & Fitur Ekstra</span>
+          <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+        </div>
+
+        {/* ── Add-on: Multi-Tenant Slot ── */}
+        <div className="mb-8">
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={() => navigate('/dashboard/addons')}
+            className="w-full text-left p-5 rounded-3xl bg-[linear-gradient(135deg,rgba(168,85,247,0.1),rgba(168,85,247,0.05))] border border-purple-500/20 group hover:border-purple-500/40 transition-all"
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400">
+                  <Building2 size={20} />
+                </div>
+                <div>
+                  <h3 className="font-display font-black text-sm text-white uppercase tracking-tight">Slot Bisnis Tambahan</h3>
+                  <p className="text-[11px] text-[#4B6478]">Kelola multi-bisnis dalam 1 akun</p>
+                </div>
+              </div>
+              <div className="bg-purple-500/20 text-purple-400 text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-purple-500/20 group-hover:bg-purple-500 group-hover:text-white transition-all">
+                Mulai Rp 150rb
+              </div>
+            </div>
+            <p className="text-xs text-[#94A3B8] leading-relaxed mb-4">
+              Bapak punya unit usaha RPA dan Kandang terpisah? Tambah slot bisnis agar data tidak bercampur dan laporan tetap profesional.
+            </p>
+            <div className="flex items-center gap-2 text-[11px] font-bold text-purple-400 group-hover:gap-3 transition-all">
+              Beli Slot Bisnis Baru <Zap size={12} className="fill-purple-400" />
+            </div>
+          </motion.button>
+        </div>
+
+        {/* ── Divider 2 ── */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
           <span className="text-[10px] text-[#2A3F52] font-semibold uppercase tracking-widest">Atur Langganan</span>
           <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
         </div>

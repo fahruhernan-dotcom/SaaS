@@ -43,6 +43,7 @@ import HargaPage from './pages/HargaPage';
 import FAQPage from './pages/FAQPage';
 import OnboardingFlow from './dashboard/_shared/pages/OnboardingFlow';
 import UpgradePlan from './dashboard/_shared/pages/UpgradePlan';
+const AddonPortal = lazy(() => import('./dashboard/_shared/pages/AddonPortal'));
 import Market from './dashboard/_shared/pages/Market';
 import MarketPublic from './pages/MarketPublic';
 import HubungiKami from './pages/HubungiKami';

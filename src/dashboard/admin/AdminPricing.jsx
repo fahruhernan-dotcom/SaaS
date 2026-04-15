@@ -75,9 +75,13 @@ export default function AdminPricing() {
   const [teamLimits, setTeamLimits] = useState({
     starter: 1, pro: 3, business: 10, enterprise: 99
   })
+  const [businessLimits, setBusinessLimits] = useState({
+    starter: 1, pro: 3, business: 999, enterprise: 999
+  })
   const [addonPricing, setAddonPricing] = useState({
     price_per_type: 99000,
     max_addons_before_upgrade: 2,
+    business_slot_price: 150000, // New: Default price for additional business slots
   })
   const [savingLimits, setSavingLimits] = useState(false)
   const [savingAddon, setSavingAddon] = useState(false)
@@ -109,6 +113,7 @@ export default function AdminPricing() {
     if (configs && Object.keys(configs).length > 0 && !configsInited) {
       if (configs.kandang_limit) setKandangLimits(v => ({ ...v, ...configs.kandang_limit }))
       if (configs.team_limit) setTeamLimits(v => ({ ...v, ...configs.team_limit }))
+      if (configs.business_limit) setBusinessLimits(v => ({ ...v, ...configs.business_limit }))
       if (configs.addon_pricing) setAddonPricing(v => ({ ...v, ...configs.addon_pricing }))
       if (configs.trial_config) setTrialConfig(v => ({ ...v, ...configs.trial_config }))
       if (configs.annual_discount) setAnnualDiscount(v => ({ ...v, ...configs.annual_discount }))
@@ -225,6 +230,7 @@ export default function AdminPricing() {
     try {
       await updateConfig.mutateAsync({ config_key: 'kandang_limit', config_value: kandangLimits })
       await updateConfig.mutateAsync({ config_key: 'team_limit', config_value: teamLimits })
+      await updateConfig.mutateAsync({ config_key: 'business_limit', config_value: businessLimits })
     } catch { /* toast shown in hook */ } finally {
       setSavingLimits(false)
     }
@@ -672,6 +678,21 @@ export default function AdminPricing() {
                     />
                     <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-[#4B6478] uppercase tracking-widest">JENIS</div>
                   </div>
+                </div>
+
+                {/* New: Price per Business Slot */}
+                <div className="space-y-2.5">
+                  <label htmlFor="business_slot_price" className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">
+                    HARGA PER SLOT BISNIS TAMBAHAN (ONE-TIME)
+                  </label>
+                  <InputRupiah
+                    id="business_slot_price"
+                    name="business_slot_price"
+                    value={addonPricing.business_slot_price}
+                    onChange={v => setAddonPricing(p => ({ ...p, business_slot_price: v || 0 }))}
+                    className="bg-black/40 border-white/5 h-14 rounded-2xl font-black text-white text-xl focus:border-purple-500/40 focus:bg-purple-500/5 transition-all shadow-inner"
+                  />
+                  <p className="text-[10px] text-[#4B6478] mt-1 ml-1 font-medium">Bapak bisa jual slot bisnis tambahan sebagai add-on mandiri.</p>
                 </div>
               </div>
 
@@ -1298,8 +1319,9 @@ function RolePricingCard({ roleName, roleId, icon: Icon, color, data, onChange, 
 
 // ─── Helper: PlanLimitCard ────────────────────────────────────────────────────
 
-function PlanLimitCard({ planName, badgeClass, badgeExtra, kandangValue, teamValue, onKandangChange, onTeamChange, readOnly }) {
+function PlanLimitCard({ planName, badgeClass, badgeExtra, kandangValue, teamValue, businessValue, onKandangChange, onTeamChange, onBusinessChange, readOnly }) {
   const isUnlimited = (v) => Number(v) >= 99
+  const isUnlimitedBusiness = (v) => Number(v) >= 999
   const inputCls = "w-full bg-black/40 border border-white/5 h-12 rounded-2xl px-4 text-sm text-white font-black focus:outline-none focus:border-emerald-500/40 focus:bg-emerald-500/5 transition-all shadow-inner disabled:opacity-50"
 
   return (
@@ -1312,6 +1334,36 @@ function PlanLimitCard({ planName, badgeClass, badgeExtra, kandangValue, teamVal
           <span className="text-[9px] font-black text-amber-400 bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/10 animate-pulse">
             {badgeExtra}
           </span>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor={`bl_${planName}`} className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1 group-hover:text-purple-500/60 transition-colors">
+          Business Limit (Jatah Bisnis)
+        </label>
+        {isUnlimitedBusiness(businessValue) ? (
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-12 rounded-2xl bg-purple-500/5 border border-purple-500/20 flex items-center px-4 gap-2 text-sm font-black text-purple-400 shadow-[inset_0_0_20px_rgba(168,85,247,0.05)]">
+              <InfinityIcon size={16} /> Unlimited
+            </div>
+            <input
+              id={`bl_${planName}`}
+              type="number"
+              value={businessValue}
+              onChange={e => onBusinessChange(parseInt(e.target.value) || 1)}
+              className="w-16 bg-black/40 border-white/5 h-12 rounded-xl px-2 text-sm text-white/40 font-black text-center"
+            />
+          </div>
+        ) : (
+          <input
+            id={`bl_${planName}`}
+            type="number"
+            min={1}
+            max={999}
+            value={businessValue}
+            onChange={e => onBusinessChange(parseInt(e.target.value) || 1)}
+            className={inputCls}
+          />
         )}
       </div>
 

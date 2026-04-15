@@ -96,14 +96,37 @@ export const useConfirmInvoice = () => {
         .eq('id', invoiceId)
       if (invoiceErr) throw invoiceErr
 
-      // 2. Update tenant plan + plan_expires_at (support stacking renewal)
+      // 2. Specialized Fulfillment
+      // If it's an add-on (e.g. addon_business_slot), we update profiles, not tenants.
+      if (plan.startsWith('addon_')) {
+        if (plan === 'addon_business_slot') {
+          // Find the owner profile to increment their additional_slots
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id, additional_slots')
+            .eq('tenant_id', tenantId)
+            .eq('role', 'owner')
+            .maybeSingle()
+
+          if (profile) {
+            const { error: profErr } = await supabase
+              .from('profiles')
+              .update({ additional_slots: (profile.additional_slots || 0) + (billingMonths || 1) })
+              .eq('id', profile.id)
+            if (profErr) throw profErr
+            toast.success('Slot bisnis tambahan berhasil dikonfirmasi!')
+          }
+        }
+        return // Stop here for addons
+      }
+
+      // 3. Regular Plan Fulfillment (Pro/Business)
       const { data: currentTenant } = await supabase
         .from('tenants')
         .select('plan_expires_at')
         .eq('id', tenantId)
         .single()
 
-      // Stacking: kalau plan masih aktif, perpanjang dari tanggal expiry — bukan dari sekarang
       const baseDate = currentTenant?.plan_expires_at && new Date(currentTenant.plan_expires_at) > new Date()
         ? new Date(currentTenant.plan_expires_at)
         : new Date()
@@ -111,7 +134,6 @@ export const useConfirmInvoice = () => {
       const newExpiry = new Date(baseDate)
       newExpiry.setMonth(newExpiry.getMonth() + billingMonths)
 
-      // Fetch dynamic kandang_limit from plan_configs (falls back to hardcoded defaults)
       const { data: planConfigRow } = await supabase
         .from('plan_configs')
         .select('config_value')

@@ -2,9 +2,11 @@ import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Lock, ArrowLeft, Building2, MapPin, ChevronDown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { BUSINESS_MODELS, BUSINESS_CATEGORIES } from '@/lib/businessModel'
+import { resolveBusinessVertical } from '@/lib/businessModel'
 import { toTitleCase } from '@/lib/format'
 import { PROVINCES } from '@/lib/constants/regions'
+import { checkQuotaUsage } from '@/lib/quotaUtils'
+import { toast } from 'sonner'
 
 export default function BusinessModelOverlay({ profile, isNewBusiness, onComplete }) {
   const [step, setStep] = useState(1)
@@ -24,6 +26,30 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
     if (!category) return []
     return Object.values(BUSINESS_MODELS).filter(m => m.category === category)
   }, [category])
+
+  // New: Role Locking Logic
+  const primaryRoleInfo = useMemo(() => {
+    if (!isNewBusiness || !profile) return null
+    
+    // We assume the first profile is the 'primary' or the user's root specialization
+    // In many cases, profile is already the active one, but we ideally want the oldest one.
+    // However, since we just want to know the category, we can trust the current profile's parent category
+    // because we will lock all subsequent ones to be the same.
+    const verticalKey = resolveBusinessVertical(profile, profile.tenants)
+    const model = BUSINESS_MODELS[verticalKey]
+    return {
+       category: model?.category || 'broker',
+       label: model?.categoryLabel || 'Bisnis'
+    }
+  }, [profile, isNewBusiness])
+
+  // Auto-skip step 1 if it's a new business (we already know the category)
+  useEffect(() => {
+    if (isNewBusiness && primaryRoleInfo && step === 1) {
+      setCategory(primaryRoleInfo.category)
+      setStep(2)
+    }
+  }, [isNewBusiness, primaryRoleInfo, step])
 
   if (!profile) return null
   if (profile.business_model_selected && !isNewBusiness) return null
@@ -75,6 +101,14 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
     setLoading(true)
     try {
       if (isNewBusiness) {
+        // --- SCALABILITY: Final Quota Check before RPC ---
+        const quota = await checkQuotaUsage(null, profile, 'business')
+        if (!quota.canAdd) {
+          toast.error(`Jatah bisnis bapak sudah penuh (${quota.usage}/${quota.limit}). Silakan beli slot tambahan di Portal Add-on.`)
+          setLoading(false)
+          return
+        }
+
         // --- MULTI-TENANT: Use RPC for Atomic Creation (Bypasses RLS issues) ---
         const { data: newTenantId, error: rpcError } = await supabase
           .rpc('setup_new_business', {
@@ -219,19 +253,23 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
             ) : step === 2 ? (
               <motion.div key="s2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
                 <h2 style={{ fontFamily: 'Sora', fontSize: '19px', fontWeight: 800, color: '#F1F5F9', marginBottom: '6px' }}>
-                  Pilih jenis bisnismu
+                  {isNewBusiness ? `Tambah Unit ${primaryRoleInfo?.label || 'Bisnis'} Baru` : 'Pilih jenis bisnismu'}
                 </h2>
                 <p style={{ fontSize: '13px', color: '#4B6478', lineHeight: 1.5 }}>
-                  Lebih spesifik agar dashboard sesuai kebutuhanmu.
+                  {isNewBusiness 
+                    ? `Pilih jenis unit ${primaryRoleInfo?.label?.toLowerCase() || 'bisnis'} tambahan yang ingin bapak kelola.`
+                    : 'Lebih spesifik agar dashboard sesuai kebutuhanmu.'}
                 </p>
               </motion.div>
             ) : (
               <motion.div key="s3" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
                 <h2 style={{ fontFamily: 'Sora', fontSize: '19px', fontWeight: 800, color: '#F1F5F9', marginBottom: '6px' }}>
-                  Nama bisnis kamu apa?
+                  Nama {category === 'peternak' ? 'farm' : 'bisnis'} kamu apa?
                 </h2>
                 <p style={{ fontSize: '13px', color: '#4B6478', lineHeight: 1.5 }}>
-                  Nama ini akan tampil di seluruh laporan dan invoice.
+                  {category === 'peternak' 
+                    ? 'Nama cabang farm atau lokasi peternakan bapak yang baru.'
+                    : 'Nama ini akan tampil di seluruh laporan dan invoice.'}
                 </p>
               </motion.div>
             )}
