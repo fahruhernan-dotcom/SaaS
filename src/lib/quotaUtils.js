@@ -53,6 +53,17 @@ export async function getUserAddons(userId, type = 'business_slot') {
  * Final check: Is the user still within their total quota?
  */
 export async function checkQuotaUsage(tenant, profile, type) {
+  // 1. Admin Bypass: Admins have unlimited quota
+  if (profile?.role === 'admin') {
+    return {
+      usage: 0,
+      limit: Infinity,
+      canAdd: true,
+      remaining: Infinity,
+      isAdmin: true
+    }
+  }
+
   const baseLimit = await getFeatureLimit(tenant, type + '_limit')
   const extraSlots = await getUserAddons(profile?.id, type + '_slot')
   const totalLimit = baseLimit + extraSlots

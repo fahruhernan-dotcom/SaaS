@@ -5,7 +5,7 @@ import {
   Check, Copy, ArrowLeft, Zap, Crown, Loader2, CheckCircle2,
   Truck, Users, FileText, TrendingUp, Calculator, Warehouse,
   Receipt, BarChart3, ShieldCheck, Headphones, Infinity,
-  ChevronDown, ChevronUp, Star,
+  ChevronDown, ChevronUp, Star, Building2,
 } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { usePaymentSettings, usePricingConfig, useCreateInvoice } from '@/lib/hooks/useAdminData'

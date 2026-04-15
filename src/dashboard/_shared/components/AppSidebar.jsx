@@ -64,6 +64,7 @@ import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { peternakPermissions } from '@/lib/hooks/usePeternakPermissions'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { supabase } from '@/lib/supabase'
+import { checkQuotaUsage } from '@/lib/quotaUtils'
 import { toast } from 'sonner'
 import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { ScrollArea } from "@/components/ui/scroll-area"
