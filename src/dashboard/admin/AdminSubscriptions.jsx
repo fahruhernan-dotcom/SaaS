@@ -247,73 +247,87 @@ export default function AdminSubscriptions() {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-5 p-4 lg:p-0 lg:space-y-6 pb-32 lg:pb-12"
+      className="relative space-y-6 p-4 lg:p-0 pb-32 lg:pb-12 min-h-screen"
     >
-      {/* Header — Optimized for Mobile: Large text hidden to save space */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-14 lg:top-0 z-20 bg-[#080C10]/80 backdrop-blur-md py-2 -mx-2 px-2 rounded-xl">
-        <div className="hidden md:block">
-          <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight">
-            Subscriptions & Invoices
-          </h1>
-          <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mt-1">
-            Monitoring pendapatan dan konfirmasi pembayaran tenant
-          </p>
+      {/* Background Orbs — Consistently 'Modern Classy' */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-500/5 blur-[120px] rounded-full animate-pulse-glow" />
+        <div className="absolute bottom-[10%] left-[-5%] w-[400px] h-[400px] bg-blue-500/5 blur-[100px] rounded-full" />
+      </div>
+
+      {/* Header — Enhanced for Premium Feel */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-14 lg:top-0 z-40 bg-[#080C10]/80 backdrop-blur-2xl py-4 -mx-2 px-4 rounded-2xl border border-white/5 shadow-2xl overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+        <div className="relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+              <History className="text-emerald-400" size={20} />
+            </div>
+            <div>
+              <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight leading-none">
+                Billing & <span className="text-emerald-400">Subscriptions</span>
+              </h1>
+              <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-[0.2em] mt-1.5 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Revenue Monitoring & Invoice Management
+              </p>
+            </div>
+          </div>
         </div>
         <Button
           onClick={() => setIsGenerateOpen(true)}
-          className="hidden md:flex bg-emerald-500 hover:bg-emerald-600 rounded-xl h-11 px-6 text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/20 shrink-0 transition-all active:scale-95"
+          className="relative z-10 hidden md:flex bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl h-12 px-6 text-[11px] font-black uppercase tracking-[0.2em] shadow-[0_4px_20px_rgba(16,185,129,0.3)] shrink-0 transition-all active:scale-95 group/btn overflow-hidden"
         >
-          <Plus size={16} className="mr-2" /> Generate Invoice Manual
+          <div className="absolute inset-0 bg-white/10 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
+          <Plus size={16} className="mr-2 relative z-10" /> 
+          <span className="relative z-10">Generate Invoice Manual</span>
         </Button>
       </div>
 
-      <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
-        <TabsList className="bg-[#111C24] border border-white/5 p-1 h-12 rounded-2xl mb-6">
-          <TabsTrigger
-            value="invoices"
-            className="flex-1 rounded-xl data-[state=active]:bg-emerald-500 data-[state=active]:text-white font-bold uppercase text-[12px] tracking-widest transition-all"
-          >
-            Invoice Management
-          </TabsTrigger>
-          <TabsTrigger
-            value="settings"
-            className="flex-1 rounded-xl data-[state=active]:bg-emerald-500 data-[state=active]:text-white font-bold uppercase text-[12px] tracking-widest transition-all"
-          >
-            Rekening Bank
-          </TabsTrigger>
-          <TabsTrigger
-            value="expiring"
-            className="flex-1 rounded-xl data-[state=active]:bg-amber-500 data-[state=active]:text-white font-bold uppercase text-[12px] tracking-widest transition-all"
-          >
-            {(() => {
-              const count = (allTenants ?? []).filter(t => {
-                const s = getSubscriptionStatus(t)
-                return (s.status === 'active' || s.status === 'trial') && s.daysLeft <= 30
-              }).length
-              return (
-                <>
-                  Expiring Plans
-                  {count > 0 && (
-                    <span className="ml-2 w-4 h-4 rounded-full bg-red-500 text-[9px] flex items-center justify-center animate-pulse">
-                      {count}
-                    </span>
-                  )}
-                </>
-              )
-            })()}
-          </TabsTrigger>
-          <TabsTrigger
-            value="xendit"
-            className="flex-1 rounded-xl data-[state=active]:bg-violet-500 data-[state=active]:text-white font-bold uppercase text-[12px] tracking-widest transition-all"
-          >
-            Xendit
-          </TabsTrigger>
+      <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full relative z-10 mt-4">
+        <TabsList className="bg-white/5 backdrop-blur-xl border border-white/10 p-1 h-12 lg:h-10 rounded-xl mb-6 lg:mb-8 w-full lg:max-w-3xl flex overflow-x-auto scrollbar-hide flex-nowrap relative z-30 shadow-xl items-center justify-start">
+          {[
+            { id: 'invoices', label: 'Invoices' },
+            { id: 'settings', label: 'Rekening Bank' },
+            { id: 'expiring', label: 'Expiring Plans' },
+            { id: 'xendit', label: 'Xendit Gateway' }
+          ].map((tab) => (
+            <TabsTrigger
+              key={tab.id}
+              value={tab.id}
+              className="flex-1 shrink-0 min-w-[140px] relative rounded-lg font-bold uppercase text-[10px] md:text-[11px] tracking-widest transition-colors data-[state=active]:text-white text-[#4B6478] hover:text-white/60 h-full z-10 bg-transparent group"
+            >
+              {activeMainTab === tab.id && (
+                <motion.div
+                  layoutId="activeBillingTab"
+                  className="absolute inset-0 bg-emerald-500 rounded-lg shadow-lg shadow-emerald-500/20 z-[-1]"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+              {tab.id === 'expiring' ? (
+                <div className="flex items-center gap-2">
+                  {tab.label}
+                  {(() => {
+                    const count = (allTenants ?? []).filter(t => {
+                      const s = getSubscriptionStatus(t)
+                      return (s.status === 'active' || s.status === 'trial') && s.daysLeft <= 30
+                    }).length
+                    return count > 0 && (
+                      <span className="w-4 h-4 rounded-full bg-red-500 text-[9px] flex items-center justify-center animate-pulse shadow-lg shadow-red-500/20">
+                        {count}
+                      </span>
+                    )
+                  })()}
+                </div>
+              ) : tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         {/* ─── INVOICES TAB ─── */}
         <TabsContent value="invoices" className="space-y-6 animate-in fade-in duration-300">
           {/* Stats Bar */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8 lg:mt-4">
             <StatCard label="Pending Konfirmasi" value={stats.pending} icon={Clock} color="amber" isUrgent={stats.pending > 0} />
             <StatCard label="Lunas Bulan Ini" value={stats.paidMonth} icon={CheckCircle2} color="emerald" />
             <StatCard label="Total Revenue" value={formatIDR(stats.totalRevenue)} icon={Banknote} color="blue" />
@@ -321,21 +335,32 @@ export default function AdminSubscriptions() {
           </div>
 
           {/* Filter & Search */}
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-4 bg-[#111C24] p-4 rounded-2xl border border-white/8">
-            <Tabs value={invoiceTab} onValueChange={setInvoiceTab} className="w-full lg:w-auto">
-              <TabsList className="bg-black/20 border border-white/5 p-1 h-11 rounded-xl overflow-x-auto justify-start flex-nowrap">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-4 bg-white/[0.03] backdrop-blur-md p-5 rounded-3xl border border-white/8 shadow-2xl relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+            
+            <Tabs value={invoiceTab} onValueChange={setInvoiceTab} className="w-full lg:w-auto relative z-10">
+              <TabsList className="bg-black/40 border border-white/5 p-1 h-12 rounded-xl flex overflow-x-auto scrollbar-hide flex-nowrap justify-start items-center">
                 {['Semua', 'Pending', 'Paid', 'Expired', 'Cancelled'].map(tab => (
                   <TabsTrigger
                     key={tab}
                     value={tab}
-                    className="rounded-lg px-4 text-[11px] font-bold uppercase tracking-wider data-[state=active]:bg-emerald-500 data-[state=active]:text-white whitespace-nowrap"
+                    className="relative rounded-lg px-5 h-full text-[11px] font-bold uppercase tracking-wider data-[state=active]:text-white text-[#4B6478] hover:text-white/60 transition-colors bg-transparent shrink-0"
                   >
-                    {tab}
-                    {tab === 'Pending' && stats.pending > 0 && (
-                      <span className="ml-2 w-4 h-4 rounded-full bg-red-500 text-[9px] flex items-center justify-center animate-pulse">
-                        {stats.pending}
-                      </span>
+                    {invoiceTab === tab && (
+                      <motion.div
+                        layoutId="activeInvoiceFilter"
+                        className="absolute inset-0 bg-emerald-500 rounded-lg shadow-[0_4px_15px_rgba(16,185,129,0.3)] z-[-1]"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
                     )}
+                    <span className="relative z-10 flex items-center gap-2">
+                      {tab}
+                      {tab === 'Pending' && stats.pending > 0 && (
+                        <span className="w-4 h-4 rounded-full bg-red-500 text-[9px] flex items-center justify-center animate-pulse shadow-lg shadow-red-500/20">
+                          {stats.pending}
+                        </span>
+                      )}
+                    </span>
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -381,55 +406,58 @@ export default function AdminSubscriptions() {
           </div>
 
           {/* Invoice Table */}
-          <div className="bg-[#0C1319] rounded-2xl border border-white/8 overflow-hidden shadow-xl">
-            <div className="overflow-x-auto">
+          <div className="bg-white/[0.02] backdrop-blur-xl rounded-[32px] border border-white/8 overflow-hidden shadow-2xl relative group">
+            <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
+            <div className="overflow-x-auto relative z-10">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-white/5 bg-white/[0.02]">
-                    <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">Invoice</th>
-                    <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">Tenant</th>
-                    <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Plan</th>
-                    <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Periode</th>
-                    <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">Amount</th>
-                    <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Status</th>
-                    <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-right">Aksi</th>
+                    <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black">Invoice</th>
+                    <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black">Tenant</th>
+                    <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black text-center">Plan</th>
+                    <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black text-center">Periode</th>
+                    <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black">Amount</th>
+                    <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black text-center">Status</th>
+                    <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black text-right">Aksi</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-white/5">
                   {pagedInvoices.map((inv, i) => (
                     <tr
                       key={inv.id}
-                      className={`border-b border-white/5 hover:bg-white/[0.03] transition-colors group ${i % 2 === 1 ? 'bg-white/[0.01]' : ''}`}
+                      className="hover:bg-white/[0.04] transition-all group"
                     >
-                      <td className="px-6 py-4">
-                        <div className="space-y-0.5">
-                          <p className="text-[12px] font-mono font-bold text-emerald-400 leading-none">#{inv.invoice_number}</p>
-                          <p className="text-[10px] text-[#4B6478] font-bold uppercase">{formatDate(inv.created_at)}</p>
+                      <td className="px-8 py-5">
+                        <div className="space-y-1">
+                          <p className="text-[12px] font-mono font-black text-emerald-400 leading-none group-hover:scale-105 transition-transform origin-left inline-block">#{inv.invoice_number}</p>
+                          <p className="text-[9px] text-[#4B6478] font-black uppercase tracking-wider">{formatDate(inv.created_at)}</p>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <p className="text-[13px] font-bold text-white truncate max-w-[140px]">{toTitleCase(inv.tenants?.business_name)}</p>
+                      <td className="px-8 py-5">
+                        <div className="flex flex-col gap-1">
+                          <p className="text-[13px] font-black text-white group-hover:text-emerald-400 transition-colors uppercase tracking-tight">{toTitleCase(inv.tenants?.business_name)}</p>
                           {inv.tenants?.business_vertical && (
-                            <Badge variant="outline" className="text-[8px] font-black tracking-tighter h-4 px-1 border-white/10 bg-white/5 text-[#4B6478]">
-                              {toTitleCase(inv.tenants.business_vertical)}
-                            </Badge>
+                            <div className="flex">
+                              <Badge className="text-[8px] font-black tracking-[0.1em] h-4 px-1.5 border-emerald-500/20 bg-emerald-500/5 text-emerald-500/70 uppercase">
+                                {toTitleCase(inv.tenants.business_vertical)}
+                              </Badge>
+                            </div>
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-center"><PlanBadge plan={inv.plan} /></td>
-                      <td className="px-6 py-4 text-center text-[13px] font-bold text-white">{inv.billing_months} Bln</td>
-                      <td className="px-6 py-4">
-                        <p className="text-[14px] font-display font-black text-white">{formatIDR(inv.amount)}</p>
+                      <td className="px-8 py-5 text-center"><PlanBadge plan={inv.plan} /></td>
+                      <td className="px-8 py-5 text-center text-[12px] font-black text-white">{inv.billing_months} BLN</td>
+                      <td className="px-8 py-5">
+                        <p className="text-[14px] font-display font-black text-white tracking-tight">{formatIDR(inv.amount)}</p>
                       </td>
-                      <td className="px-6 py-4 text-center"><StatusBadge status={inv.status} /></td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-8 py-5 text-center"><StatusBadge status={inv.status} /></td>
+                      <td className="px-8 py-5 text-right">
                         <div className="flex justify-end gap-2">
                           {inv.status === 'pending' && (
                             <Button
                               size="sm"
                               onClick={() => handleOpenDetail(inv)}
-                              className="h-8 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white transition-all text-[10px] font-black uppercase tracking-widest px-3"
+                              className="h-9 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white transition-all text-[10px] font-black uppercase tracking-widest px-4 shadow-[0_4px_15px_rgba(16,185,129,0.2)]"
                             >
                               Konfirmasi
                             </Button>
@@ -438,9 +466,9 @@ export default function AdminSubscriptions() {
                             variant="outline"
                             size="sm"
                             onClick={() => handleOpenDetail(inv)}
-                            className="h-8 w-8 p-0 rounded-lg border-white/10 text-[#4B6478] hover:bg-white/5 transition-all flex items-center justify-center"
+                            className="h-9 w-9 p-0 rounded-xl border-white/10 text-[#4B6478] hover:bg-white/10 hover:text-white transition-all flex items-center justify-center group/btn"
                           >
-                            <ChevronRight size={14} />
+                            <ChevronRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
                           </Button>
                         </div>
                       </td>
@@ -448,22 +476,22 @@ export default function AdminSubscriptions() {
                   ))}
                   {filteredInvoices.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="px-6 py-24 text-center">
-                        <div className="flex flex-col items-center justify-center space-y-4 max-w-sm mx-auto">
-                          <div className="w-20 h-20 rounded-3xl bg-white/[0.03] border border-white/5 flex items-center justify-center relative overflow-hidden group">
-                            <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <History size={32} className="text-[#4B6478] group-hover:text-emerald-400 transition-colors" />
+                      <td colSpan={7} className="px-8 py-32 text-center">
+                        <div className="flex flex-col items-center justify-center space-y-6 max-w-sm mx-auto">
+                          <div className="w-24 h-24 rounded-[32px] bg-white/[0.03] border border-white/5 flex items-center justify-center relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+                            <History size={40} className="text-[#4B6478] group-hover:text-emerald-400 transition-all duration-500" />
                           </div>
-                          <div className="space-y-1">
-                            <p className="text-[13px] font-black text-white uppercase tracking-widest">Belum ada riwayat invoice</p>
-                            <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-widest leading-loose">
+                          <div className="space-y-2">
+                            <p className="text-[14px] font-black text-white uppercase tracking-[0.2em]">Belum ada riwayat invoice</p>
+                            <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-[0.15em] leading-relaxed">
                               Data transaksi atau tagihan tenant akan muncul di sini setelah dibuat.
                             </p>
                           </div>
                           <Button
                             variant="outline"
                             onClick={() => setIsGenerateOpen(true)}
-                            className="h-9 rounded-xl border-white/10 text-white/40 hover:text-white hover:bg-white/5 text-[10px] font-black uppercase tracking-widest"
+                            className="h-11 rounded-2xl border-white/10 text-white/50 hover:text-white hover:bg-white/5 hover:border-emerald-500/30 text-[10px] font-black uppercase tracking-[0.2em] transition-all"
                           >
                             Generate Pertama
                           </Button>
@@ -579,17 +607,20 @@ export default function AdminSubscriptions() {
 
       {/* ─── INVOICE DETAIL SHEET ─── */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="w-full sm:w-[480px] bg-[#0C1319] border-l border-white/8 p-0 overflow-hidden flex flex-col">
+        <SheetContent side="right" className="w-full sm:w-[500px] bg-[#0A0F14]/95 backdrop-blur-2xl border-l border-white/5 p-0 overflow-hidden flex flex-col shadow-2xl">
           <AnimatePresence>
             {selectedInvoice && (
               <motion.div
                 initial={{ x: 20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: 20, opacity: 0 }}
-                className="flex flex-col h-full"
+                className="flex flex-col h-full relative"
               >
+                {/* Background glow for sheet */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[80px] rounded-full pointer-events-none" />
+
                 {/* Sheet Header */}
-                <div className="p-6 border-b border-white/5 bg-white/[0.02]">
+                <div className="p-8 pb-6 border-b border-white/5 bg-white/[0.01] relative z-10">
                   <AnimatePresence mode="wait">
                     {confirmSuccess ? (
                       <motion.div
@@ -597,13 +628,13 @@ export default function AdminSubscriptions() {
                         initial={{ opacity: 0, y: -8 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -8 }}
-                        className="flex items-center gap-3 bg-emerald-500/15 border border-emerald-500/30 rounded-xl px-4 py-3 mb-4"
+                        className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-5 py-4 mb-6 shadow-inner"
                       >
-                        <div className="w-7 h-7 rounded-lg bg-emerald-500/30 flex items-center justify-center shrink-0">
-                          <Check size={14} className="text-emerald-400" />
+                        <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
+                          <Check size={16} className="text-emerald-400" />
                         </div>
-                        <p className="text-[12px] font-black text-emerald-400 uppercase tracking-widest">
-                          ✓ Terkonfirmasi — Menutup...
+                        <p className="text-[12px] font-black text-emerald-400 uppercase tracking-[0.2em]">
+                          ✓ Terkonfirmasi
                         </p>
                       </motion.div>
                     ) : (
@@ -611,209 +642,215 @@ export default function AdminSubscriptions() {
                         key="status-row"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="flex items-center justify-between mb-4"
+                        className="flex items-center justify-between mb-6"
                       >
-                        <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">PAYMENT INVOICE</p>
+                        <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em]">Payment Invoice</p>
                         <StatusBadge status={selectedInvoice.status} />
                       </motion.div>
                     )}
                   </AnimatePresence>
-                  <SheetTitle className="text-2xl font-black text-white tracking-tight leading-none mb-1">
+                  <SheetTitle className="text-3xl font-display font-black text-white tracking-tight leading-none mb-2">
                     #{selectedInvoice.invoice_number}
                   </SheetTitle>
-                  <SheetDescription className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mt-1">
+                  <SheetDescription className="text-[11px] font-bold text-[#4B6478] uppercase tracking-[0.2em]">
                     Dibuat pada {formatDate(selectedInvoice.created_at)}
                   </SheetDescription>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-8">
-                  {/* Amount */}
-                  <div className="bg-emerald-500/5 border border-emerald-500/10 p-6 rounded-[24px] text-center space-y-2 relative overflow-hidden">
-                    <div className="absolute -right-4 -bottom-4 opacity-[0.03] rotate-12">
-                      <Banknote size={120} className="text-emerald-400" />
+                <div className="flex-1 overflow-y-auto p-8 space-y-10 relative z-10 scrollbar-hide">
+                  {/* Amount Section — High Impact Glass */}
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 p-8 rounded-[40px] text-center space-y-3 relative overflow-hidden shadow-2xl group/amount">
+                    <div className="absolute -right-6 -bottom-6 opacity-[0.05] group-hover/amount:opacity-[0.12] transition-opacity -rotate-12 duration-1000">
+                      <Banknote size={180} />
                     </div>
-                    <p className="text-[10px] font-black text-emerald-500/60 uppercase tracking-widest leading-none">TOTAL PEMBAYARAN</p>
-                    <p className="text-4xl font-display font-black text-white">{formatIDR(selectedInvoice.amount)}</p>
-                    <div className="flex items-center justify-center gap-2 mt-2">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent" />
+                    
+                    <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.4em] leading-none mb-1">Total Premium Amount</p>
+                    <p className="text-5xl font-display font-black text-white tracking-tighter drop-shadow-2xl">{formatIDR(selectedInvoice.amount)}</p>
+                    
+                    <div className="flex items-center justify-center gap-2.5 pt-4">
                       <PlanBadge plan={selectedInvoice.plan} />
-                      <Badge className="bg-white/5 text-white/40 border-white/10 uppercase text-[9px] font-bold">
-                        {selectedInvoice.billing_months} BULAN
-                      </Badge>
+                      <div className="h-5 w-px bg-white/10" />
+                      <span className="bg-white/5 px-2.5 py-1 rounded-lg text-[9px] font-black text-white/50 uppercase tracking-widest border border-white/5">
+                        {selectedInvoice.billing_months} MONTHS
+                      </span>
                       {selectedInvoice.payment_method && (
-                        <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 uppercase text-[9px] font-bold">
-                          {selectedInvoice.payment_method === 'manual' ? 'Transfer Manual' : selectedInvoice.payment_method}
-                        </Badge>
+                        <span className="bg-blue-500/10 px-2.5 py-1 rounded-lg text-[9px] font-black text-blue-400 uppercase tracking-widest border border-blue-500/20">
+                          {selectedInvoice.payment_method === 'manual' ? 'MANUAL TRANSFER' : selectedInvoice.payment_method.toUpperCase()}
+                        </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Tenant */}
+                  {/* Tenant Details Section */}
                   <section className="space-y-4">
-                    <h3 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em] px-1">DETAIL TENANT</h3>
-                    <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 flex items-center justify-between group cursor-pointer hover:bg-white/[0.05] transition-all">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-2xl">
+                    <div className="flex items-center justify-between px-2">
+                      <h3 className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em]">Client Information</h3>
+                      <div className="h-px flex-1 mx-4 bg-white/5" />
+                    </div>
+                    
+                    <div className="bg-white/[0.03] border border-white/8 rounded-[32px] p-6 flex items-center justify-between group transition-all hover:bg-white/[0.06] hover:border-white/20 shadow-xl cursor-default">
+                      <div className="flex items-center gap-5">
+                        <div className="w-16 h-16 rounded-[24px] bg-black/40 border border-white/5 flex items-center justify-center text-3xl shadow-inner group-hover:scale-105 transition-transform duration-500">
                           {getVerticalIcon(selectedInvoice.tenants?.business_vertical)}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-white leading-tight">{toTitleCase(selectedInvoice.tenants?.business_name)}</p>
-                          <p className="text-[10px] text-[#4B6478] font-bold uppercase mt-0.5">
-                            ID: {selectedInvoice.tenants?.id?.substring(0, 8)}...
+                          <p className="text-lg font-display font-black text-white leading-tight uppercase tracking-tight">{toTitleCase(selectedInvoice.tenants?.business_name)}</p>
+                          <p className="text-[11px] text-[#4B6478] font-bold uppercase tracking-widest mt-1.5 flex items-center gap-2">
+                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                             Tenant ID: {selectedInvoice.tenants?.id?.substring(0, 8)}
                           </p>
                         </div>
                       </div>
-                      <ExternalLink size={14} className="text-[#4B6478] group-hover:text-emerald-400 transition-colors" />
+                      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-[#4B6478] group-hover:text-emerald-400 group-hover:bg-emerald-500/10 transition-all">
+                        <ExternalLink size={16} />
+                      </div>
                     </div>
                   </section>
 
-                  {/* Payment Proof */}
+                  {/* Payment Proof Section */}
                   <section className="space-y-4">
-                    <h3 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em] px-1">BUKTI PEMBAYARAN</h3>
-                    <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 relative min-h-[160px] flex items-center justify-center overflow-hidden">
+                    <div className="flex items-center justify-between px-2">
+                      <h3 className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em]">Evidence Log</h3>
+                      <div className="h-px flex-1 mx-4 bg-white/5" />
+                    </div>
+                    
+                    <div className="bg-white/[0.03] border border-white/8 rounded-[32px] relative min-h-[220px] flex items-center justify-center overflow-hidden shadow-2xl group/proof">
                       {selectedInvoice.payment_proof_url ? (
                         <>
                           <img
                             src={selectedInvoice.payment_proof_url}
                             alt="Bukti Pembayaran"
-                            className="w-full h-full absolute inset-0 object-cover opacity-40 hover:opacity-100 transition-opacity cursor-pointer"
-                            onClick={() => window.open(selectedInvoice.payment_proof_url, '_blank')}
+                            className="w-full h-full absolute inset-0 object-cover opacity-30 group-hover/proof:opacity-60 transition-all duration-700 blur-[2px] group-hover/proof:blur-0"
                           />
-                          <div className="relative z-10 flex flex-col gap-2">
+                          <div className="absolute inset-0 bg-gradient-to-t from-[#0A0F14] via-transparent to-transparent opacity-60" />
+                          
+                          <div className="relative z-10 flex flex-col gap-3">
                             <Button
                               variant="secondary"
-                              size="sm"
-                              className="bg-white/10 hover:bg-white/20 text-white border-white/20 h-9 rounded-xl font-bold text-[11px] uppercase tracking-widest"
                               onClick={() => window.open(selectedInvoice.payment_proof_url, '_blank')}
+                              className="bg-white/10 hover:bg-emerald-500 hover:text-white backdrop-blur-md text-white border-white/10 h-11 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] transition-all px-6 shadow-2xl"
                             >
-                              <Globe size={14} className="mr-2" /> Lihat Bukti
+                              <Globe size={14} className="mr-2" /> Preview Fullscreen
                             </Button>
                             <Button
-                              variant="secondary"
-                              size="sm"
-                              className="bg-white/10 hover:bg-white/20 text-white border-white/20 h-9 rounded-xl font-bold text-[11px] uppercase tracking-widest"
+                              variant="outline"
                               onClick={() => {
                                 const a = document.createElement('a')
                                 a.href = selectedInvoice.payment_proof_url
-                                a.download = `bukti-${selectedInvoice.invoice_number}`
+                                a.download = `TERNAKOS-INVOICE-${selectedInvoice.invoice_number}`
                                 a.click()
                               }}
+                              className="bg-black/40 hover:bg-white/10 border-white/5 text-white/60 hover:text-white h-11 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] transition-all px-6"
                             >
-                              <Download size={14} className="mr-2" /> Download
+                              <Download size={14} className="mr-2" /> Archive Proof
                             </Button>
                           </div>
                         </>
                       ) : (
-                        <div className="text-center space-y-2 opacity-40">
-                          <AlertCircle size={32} className="mx-auto text-[#4B6478]" />
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#4B6478]">Belum ada bukti pembayaran</p>
+                        <div className="text-center space-y-3 opacity-30 group-hover/proof:opacity-50 transition-opacity p-8">
+                          <div className="w-16 h-16 rounded-full border-2 border-dashed border-[#4B6478] flex items-center justify-center mx-auto mb-2">
+                            <AlertCircle size={28} className="text-[#4B6478]" />
+                          </div>
+                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#4B6478] leading-relaxed">Evidence not yet<br/>provided by tenant</p>
                         </div>
                       )}
                     </div>
                   </section>
 
-                  {/* Notes (if exists) */}
-                  {selectedInvoice.notes && (
-                    <section className="space-y-3">
-                      <h3 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em] px-1">CATATAN</h3>
-                      <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4">
-                        <p className="text-[13px] text-white/70 font-medium leading-relaxed">{selectedInvoice.notes}</p>
-                      </div>
-                    </section>
-                  )}
-
-                  {/* Confirmation Log */}
+                  {/* Log Confirmation */}
                   {selectedInvoice.confirmed_at && (
                     <section className="space-y-4">
-                      <h3 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em] px-1">LOG KONFIRMASI</h3>
-                      <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl p-4 space-y-2">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-                            <Check size={16} />
+                      <div className="flex items-center justify-between px-2">
+                        <h3 className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em]">Confirmation Trail</h3>
+                        <div className="h-px flex-1 mx-4 bg-white/5" />
+                      </div>
+                      
+                      <div className="bg-emerald-500/5 border border-emerald-500/15 rounded-[24px] p-6 space-y-4 shadow-inner relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                           <CheckCircle2 size={60} className="text-emerald-400" />
+                        </div>
+                        <div className="flex items-center gap-4 relative z-10">
+                          <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30 shadow-xl">
+                            <Check size={20} strokeWidth={3} />
                           </div>
                           <div>
-                            <p className="text-[12px] font-bold text-white uppercase tracking-tight">Dikonfirmasi</p>
-                            <p className="text-[10px] text-emerald-500/70 font-bold uppercase tracking-tighter">
-                              {formatDate(selectedInvoice.confirmed_at)} • {format(new Date(selectedInvoice.confirmed_at), 'HH:mm')} WIB
+                            <p className="text-sm font-black text-white uppercase tracking-tight">Invoice Confirmed</p>
+                            <p className="text-[11px] text-emerald-500/80 font-bold uppercase tracking-widest mt-0.5">
+                              {formatDate(selectedInvoice.confirmed_at)} @ {format(new Date(selectedInvoice.confirmed_at), 'HH:mm')}
                             </p>
                           </div>
                         </div>
-                        {selectedInvoice.paid_at && selectedInvoice.paid_at !== selectedInvoice.confirmed_at && (
-                          <div className="pt-2 border-t border-emerald-500/10">
-                            <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-widest">Paid At</p>
-                            <p className="text-[11px] font-bold text-emerald-400 mt-0.5">
-                              {formatDate(selectedInvoice.paid_at)} • {format(new Date(selectedInvoice.paid_at), 'HH:mm')} WIB
-                            </p>
-                          </div>
-                        )}
                       </div>
                     </section>
                   )}
                 </div>
 
-                {/* Footer Actions */}
+                {/* Footer Actions — Bottom Stick with Blur */}
                 {selectedInvoice.status === 'pending' && (() => {
                   const isXenditInvoice = selectedInvoice.payment_method === 'xendit' || !!selectedInvoice.xendit_invoice_id
                   return (
-                    <div className="p-6 border-t border-white/5 bg-white/[0.02] space-y-3">
+                    <div className="p-8 border-t border-white/5 bg-gradient-to-b from-[#0A0F14]/40 to-[#0A0F14] relative z-20 space-y-4">
                       {isXenditInvoice ? (
-                        <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/25 rounded-xl px-4 py-4">
-                          <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
-                            <Zap size={15} className="text-amber-400" />
+                        <div className="flex items-start gap-4 bg-amber-500/5 border border-amber-500/20 rounded-3xl p-5 shadow-inner">
+                          <div className="w-10 h-10 rounded-2xl bg-amber-500/20 flex items-center justify-center shrink-0 border border-amber-500/20 shadow-xl">
+                            <Zap size={18} className="text-amber-400" />
                           </div>
-                          <div className="space-y-0.5">
-                            <p className="text-[12px] font-black text-amber-300 uppercase tracking-wide leading-snug">
-                              Invoice ini dibayar via Xendit
+                          <div className="space-y-1">
+                            <p className="text-[12px] font-black text-amber-300 uppercase tracking-widest leading-none">Automated Gateway</p>
+                            <p className="text-[11px] font-bold text-amber-400/50 leading-relaxed uppercase tracking-tighter">
+                              Processing via Xendit. Confirmation will trigger via Webhook.
                             </p>
-                            <p className="text-[11px] font-medium text-amber-400/70 leading-snug">
-                              Konfirmasi otomatis saat webhook diterima.
-                            </p>
-                            {selectedInvoice.xendit_invoice_id && (
-                              <p className="text-[10px] font-mono text-amber-500/50 mt-1 break-all">
-                                ID: {selectedInvoice.xendit_invoice_id}
-                              </p>
-                            )}
                           </div>
                         </div>
                       ) : (
                         <>
-                          <div className="space-y-2">
-                            <label htmlFor="confirmNotes" className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest ml-1">
-                              Catatan Konfirmasi (opsional)
+                          <div className="space-y-2.5">
+                            <label htmlFor="confirmNotes" className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em] ml-1">
+                              Confirmation Logs
                             </label>
                             <Textarea
                               id="confirmNotes"
                               name="confirmNotes"
-                              placeholder="Mis. Transfer BCA tanggal 25 Maret..."
+                              placeholder="Add processing notes (e.g. Validated BCA transfer)..."
                               value={confirmNotes}
                               onChange={(e) => setConfirmNotes(e.target.value)}
                               rows={2}
-                              className="bg-white/5 border-white/10 rounded-xl text-sm font-medium focus:border-emerald-500/50 resize-none"
+                              className="bg-white/[0.02] border-white/10 rounded-2xl text-sm font-bold text-white focus:border-emerald-500/50 hover:bg-white/[0.04] transition-all resize-none shadow-inner"
                             />
                           </div>
                           <Button
-                            className="w-full h-12 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[12px] tracking-widest shadow-xl shadow-emerald-500/20"
+                            className="w-full h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[12px] tracking-[0.2em] shadow-[0_10px_30px_rgba(16,185,129,0.3)] transition-all active:scale-95 flex items-center justify-center gap-2 group/confirm"
                             onClick={handleConfirm}
                             disabled={confirmInvoice.isPending}
                           >
-                            {confirmInvoice.isPending ? 'Memproses...' : '✓ Konfirmasi Pembayaran'}
+                            {confirmInvoice.isPending ? 'Validating...' : (
+                              <>
+                                <Check size={18} strokeWidth={3} className="group-hover:scale-110 transition-transform" />
+                                Approve Payment
+                              </>
+                            )}
                           </Button>
                         </>
                       )}
-                      <Button
-                        variant="outline"
-                        className="w-full h-11 rounded-xl border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white transition-all font-bold uppercase text-[11px] tracking-widest"
-                        onClick={handleCancelInvoice}
-                      >
-                        ✗ Batalkan Invoice
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        className="w-full text-red-500/50 hover:text-red-400 text-[10px] font-black uppercase tracking-widest pt-4"
-                        onClick={handleDeleteInvoice}
-                        disabled={deleteInvoice.isPending}
-                      >
-                        <Trash2 size={12} className="mr-1.5" /> Hapus Permanen (Admin Only)
-                      </Button>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <Button
+                          variant="outline"
+                          className="h-12 rounded-2xl border-white/5 bg-white/5 text-[#4B6478] hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all font-black uppercase text-[10px] tracking-[0.2em]"
+                          onClick={handleCancelInvoice}
+                        >
+                          Cancel Unit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="h-12 rounded-2xl text-red-500/40 hover:text-red-500 hover:bg-red-500/5 transition-all font-black uppercase text-[10px] tracking-[0.2em]"
+                          onClick={handleDeleteInvoice}
+                          disabled={deleteInvoice.isPending}
+                        >
+                          Destroy Data
+                        </Button>
+                      </div>
                     </div>
                   )
                 })()}
@@ -825,60 +862,72 @@ export default function AdminSubscriptions() {
 
       {/* ─── GENERATE INVOICE SHEET ─── */}
       <Sheet open={isGenerateOpen} onOpenChange={setIsGenerateOpen}>
-        <SheetContent side="right" className="w-full sm:w-[480px] bg-[#0C1319] border-l border-white/8 p-0 overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-white/5 bg-white/[0.02]">
-            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2">ADMIN ACTION</p>
-            <SheetTitle className="text-xl font-black text-white tracking-tight">Generate Invoice Manual</SheetTitle>
-            <SheetDescription className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mt-1">
+        <SheetContent side="right" className="w-full sm:w-[500px] bg-[#0A0F14]/95 backdrop-blur-2xl border-l border-white/5 p-0 overflow-hidden flex flex-col shadow-2xl">
+          <div className="p-8 pb-6 border-b border-white/5 bg-white/[0.01] relative z-10">
+            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mb-2">Admin Action</p>
+            <SheetTitle className="text-3xl font-display font-black text-white tracking-tight leading-none mb-2">Generate Invoice</SheetTitle>
+            <SheetDescription className="text-[11px] font-bold text-[#4B6478] uppercase tracking-[0.2em]">
               Buat invoice baru untuk tenant secara manual
             </SheetDescription>
           </div>
-          <form onSubmit={handleGenerateInvoice} className="flex-1 overflow-y-auto">
-            <div className="p-6 space-y-5">
+          <form onSubmit={handleGenerateInvoice} className="flex-1 overflow-y-auto relative z-10">
+            <div className="p-8 space-y-6">
               {/* Tenant Select */}
               <div className="space-y-2">
-                <label htmlFor="genTenantId" className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest ml-1">Tenant *</label>
-                <select
-                  id="genTenantId"
-                  name="genTenantId"
-                  value={genForm.tenantId}
-                  onChange={(e) => { setGenForm(f => ({ ...f, tenantId: e.target.value })); setManualPrice(0) }}
-                  className={`w-full h-12 bg-white/5 border rounded-xl px-4 text-sm font-medium text-white focus:border-emerald-500/50 focus:outline-none transition-all ${genHasPending ? 'border-amber-500/50 ring-1 ring-amber-500/20' : 'border-white/10'}`}
-                  required
-                >
-                  <option value="" className="bg-[#0C1319]">— Pilih Tenant —</option>
-                  {allTenants?.map(t => (
-                    <option key={t.id} value={t.id} className="bg-[#0C1319]">
-                      {toTitleCase(t.business_name)} ({toTitleCase(t.business_vertical)})
-                    </option>
-                  ))}
-                </select>
+                <label htmlFor="genTenantId" className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em] ml-1">Tenant *</label>
+                <div className="relative">
+                  <select
+                    id="genTenantId"
+                    name="genTenantId"
+                    value={genForm.tenantId}
+                    onChange={(e) => { setGenForm(f => ({ ...f, tenantId: e.target.value })); setManualPrice(0) }}
+                    className={`w-full h-12 bg-white/[0.02] border rounded-2xl px-4 text-sm font-medium text-white focus:border-emerald-500 focus:bg-white/[0.05] transition-all appearance-none ${genHasPending ? 'border-amber-500/50 ring-1 ring-amber-500/20 shadow-amber-500/10 shadow-lg' : 'border-white/10 hover:border-white/20'}`}
+                    required
+                  >
+                    <option value="" className="bg-[#0C1319]">— Pilih Tenant —</option>
+                    {allTenants?.map(t => (
+                      <option key={t.id} value={t.id} className="bg-[#0A0F14]">
+                        {toTitleCase(t.business_name)} ({toTitleCase(t.business_vertical)})
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#4B6478]">
+                    <ChevronRight size={16} className="rotate-90" />
+                  </div>
+                </div>
               </div>
 
-              {/* FIX 2: Double-bill warning */}
-              {genHasPending && (
-                <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/25 rounded-xl px-4 py-3">
-                  <AlertTriangle size={16} className="text-amber-400 shrink-0 mt-0.5" />
-                  <p className="text-[11px] font-bold text-amber-300 leading-snug">
-                    Tenant ini sudah punya invoice <span className="text-amber-400 uppercase">pending</span>. Konfirmasi atau batalkan dulu sebelum generate baru.
-                  </p>
-                </div>
-              )}
+              {/* Double-bill warning */}
+              <AnimatePresence>
+                {genHasPending && (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 shadow-inner overflow-hidden"
+                  >
+                    <AlertTriangle size={18} className="text-amber-400 shrink-0 mt-0.5" />
+                    <p className="text-[11px] font-black text-amber-300 leading-relaxed uppercase tracking-wider">
+                      Tenant ini sudah punya invoice pending. Konfirmasi atau batalkan dulu sebelum generate baru.
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Plan */}
               <div className="space-y-2">
-                <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest ml-1">Plan *</p>
+                <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em] ml-1">Plan *</p>
                 <div className="grid grid-cols-2 gap-3">
                   {['pro', 'business'].map(p => (
                     <button
                       key={p}
                       type="button"
                       onClick={() => setGenForm(f => ({ ...f, plan: p }))}
-                      className={`h-12 rounded-xl font-black uppercase text-[12px] tracking-widest border transition-all ${genForm.plan === p
+                      className={`h-14 rounded-2xl font-black uppercase text-[12px] tracking-widest border transition-all shadow-xl group ${genForm.plan === p
                           ? p === 'pro'
-                            ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-                            : 'bg-amber-500/20 border-amber-500 text-amber-400'
-                          : 'bg-white/5 border-white/10 text-[#4B6478] hover:bg-white/10'
+                            ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400 shadow-emerald-500/10 hover:bg-emerald-500/20'
+                            : 'bg-amber-500/10 border-amber-500/50 text-amber-400 shadow-amber-500/10 hover:bg-amber-500/20'
+                          : 'bg-white/[0.02] border-white/5 text-[#4B6478] hover:bg-white/[0.05] hover:text-white hover:border-white/20'
                         }`}
                     >
                       {p === 'pro' ? '⭐ PRO' : '👑 BUSINESS'}
@@ -889,64 +938,64 @@ export default function AdminSubscriptions() {
 
               {/* Duration */}
               <div className="space-y-2">
-                <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest ml-1">Durasi *</p>
+                <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em] ml-1">Durasi *</p>
                 <div className="grid grid-cols-4 gap-2">
                   {[1, 3, 6, 12].map(m => (
                     <button
                       key={m}
                       type="button"
                       onClick={() => setGenForm(f => ({ ...f, billingMonths: m }))}
-                      className={`h-12 rounded-xl font-black text-[13px] border transition-all ${genForm.billingMonths === m
-                          ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-                          : 'bg-white/5 border-white/10 text-[#4B6478] hover:bg-white/10'
+                      className={`h-14 rounded-2xl border transition-all flex flex-col items-center justify-center gap-0.5 ${genForm.billingMonths === m
+                          ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400 shadow-xl shadow-emerald-500/10'
+                          : 'bg-white/[0.02] border-white/5 text-[#4B6478] hover:bg-white/[0.05] hover:text-white hover:border-white/20'
                         }`}
                     >
-                      {m}
-                      <span className="block text-[9px] uppercase tracking-widest font-bold opacity-60">{m === 1 ? 'bln' : 'bln'}</span>
+                      <span className="font-display font-black text-[16px] leading-none">{m}</span>
+                      <span className="text-[8px] uppercase tracking-[0.2em] font-bold opacity-70">BLN</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* FIX 3: Manual price override when config not found */}
+              {/* Manual price override */}
               {!isPriceFromConfig && genForm.tenantId && (
-                <div className="space-y-2">
-                  <label htmlFor="manualPriceInput" className="text-[10px] font-black text-amber-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                    <AlertTriangle size={11} /> HARGA TIDAK DITEMUKAN — INPUT MANUAL
+                <div className="space-y-2 overflow-hidden rounded-2xl bg-amber-500/5 border border-amber-500/20 p-4">
+                  <label htmlFor="manualPriceInput" className="text-[10px] font-black text-amber-400 uppercase tracking-widest ml-1 flex items-center gap-1.5 mb-3">
+                    <AlertTriangle size={12} /> HARGA DEFAULT TIDAK DITEMUKAN
                   </label>
                   <InputRupiah
                     id="manualPriceInput"
                     name="manualPriceInput"
                     value={manualPrice}
                     onChange={setManualPrice}
-                    placeholder="Harga per bulan (Rp)"
-                    className="bg-amber-500/5 border-amber-500/30 h-12 rounded-xl focus:border-amber-500/60"
+                    placeholder="Input Harga per bulan (Rp)"
+                    className="bg-black/40 border-amber-500/30 h-12 rounded-xl focus:border-amber-500/60 font-display text-lg"
                   />
                 </div>
               )}
 
               {/* Price Breakdown */}
-              <div className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 space-y-3">
-                <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">KALKULASI HARGA</p>
-                <div className="flex justify-between text-[12px]">
-                  <span className="text-white/50 font-medium">Harga {genForm.billingMonths} bln × {formatIDR(effectiveMonthly)}</span>
-                  <span className="font-bold text-white">{formatIDR(genSubtotal)}</span>
+              <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6 space-y-4 shadow-inner">
+                <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em]">Kalkulasi Total</p>
+                <div className="flex justify-between items-end pb-3 border-b border-white/5">
+                  <span className="text-white/50 text-[11px] font-bold uppercase tracking-wider">{genForm.billingMonths} BLN × {formatIDR(effectiveMonthly)}</span>
+                  <span className="font-display font-black text-white text-[14px]">{formatIDR(genSubtotal)}</span>
                 </div>
                 {genDiscount > 0 && (
-                  <div className="flex justify-between text-[12px]">
-                    <span className="text-red-400/70 font-medium">Diskon {genForm.discountPct}%</span>
-                    <span className="font-bold text-red-400">-{formatIDR(genDiscount)}</span>
+                  <div className="flex justify-between items-end pb-3 border-b border-white/5">
+                    <span className="text-red-400/70 text-[11px] font-bold uppercase tracking-wider">Diskon {genForm.discountPct}%</span>
+                    <span className="font-display font-black text-red-500 text-[14px]">-{formatIDR(genDiscount)}</span>
                   </div>
                 )}
-                <div className="pt-2 border-t border-white/5 flex justify-between">
-                  <span className="text-[13px] font-black text-white uppercase tracking-wide">Total</span>
-                  <span className="text-[16px] font-display font-black text-emerald-400">{formatIDR(genFinal)}</span>
+                <div className="flex justify-between items-center pt-2">
+                  <span className="text-[12px] font-black text-[#4B6478] uppercase tracking-[0.3em]">Final</span>
+                  <span className="text-[24px] font-display font-black text-emerald-400 tracking-tight">{formatIDR(genFinal)}</span>
                 </div>
               </div>
 
               {/* Discount */}
               <div className="space-y-2">
-                <label htmlFor="genDiscount" className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest ml-1">Diskon %</label>
+                <label htmlFor="genDiscount" className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em] ml-1">Diskon %</label>
                 <Input
                   id="genDiscount"
                   name="genDiscount"
@@ -955,40 +1004,40 @@ export default function AdminSubscriptions() {
                   max={100}
                   value={genForm.discountPct}
                   onChange={(e) => setGenForm(f => ({ ...f, discountPct: Number(e.target.value) }))}
-                  className="bg-white/5 border-white/10 h-12 rounded-xl text-sm font-medium focus:border-emerald-500/50"
+                  className="bg-white/[0.02] border-white/10 h-12 rounded-2xl text-sm font-bold focus:border-emerald-500/50 hover:bg-white/[0.04]"
                 />
               </div>
 
               {/* Notes */}
               <div className="space-y-2">
-                <label htmlFor="genNotes" className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest ml-1">Catatan</label>
+                <label htmlFor="genNotes" className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em] ml-1">Keterangan Internal</label>
                 <Textarea
                   id="genNotes"
                   name="genNotes"
-                  placeholder="Catatan untuk invoice ini (opsional)..."
+                  placeholder="Catatan tambahan (opsional)..."
                   value={genForm.notes}
                   onChange={(e) => setGenForm(f => ({ ...f, notes: e.target.value }))}
                   rows={3}
-                  className="bg-white/5 border-white/10 rounded-xl text-sm font-medium focus:border-emerald-500/50 resize-none"
+                  className="bg-white/[0.02] border-white/10 rounded-2xl text-sm font-medium focus:border-emerald-500/50 hover:bg-white/[0.04] resize-none"
                 />
               </div>
             </div>
 
-            <div className="p-6 pt-0 flex gap-3 sticky bottom-0 bg-[#0C1319] border-t border-white/5">
+            <div className="p-8 pt-0 flex gap-4 sticky bottom-0 bg-gradient-to-t from-[#0A0F14] via-[#0A0F14]/90 to-transparent">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setIsGenerateOpen(false)}
-                className="flex-1 h-12 rounded-xl border-white/10 text-[#4B6478] font-black uppercase text-[11px] tracking-widest"
+                className="flex-1 h-14 rounded-2xl border-white/10 text-[#4B6478] hover:bg-white/5 hover:text-white font-black uppercase text-[11px] tracking-[0.2em] transition-all"
               >
                 Batal
               </Button>
               <Button
                 type="submit"
                 disabled={createInvoice.isPending || !genForm.tenantId || genFinal <= 0 || genHasPending}
-                className="flex-1 h-12 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[11px] tracking-widest shadow-xl shadow-emerald-500/20 disabled:opacity-50"
+                className="flex-1 h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[11px] tracking-[0.2em] shadow-[0_4px_20px_rgba(16,185,129,0.3)] disabled:opacity-50 transition-all active:scale-95"
               >
-                {createInvoice.isPending ? 'Membuat...' : <><FileText size={15} className="mr-2" /> Generate Invoice</>}
+                {createInvoice.isPending ? 'Proses...' : <><FileText size={16} className="mr-2" /> Generate</>}
               </Button>
             </div>
           </form>
@@ -996,83 +1045,89 @@ export default function AdminSubscriptions() {
       </Sheet>
 
       {/* ─── BANK MODAL ─── */}
+      <AnimatePresence>
       {isBankModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="absolute inset-0 bg-black/80 backdrop-blur-md"
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-[#080C10]/80 backdrop-blur-md"
             onClick={() => setIsBankModalOpen(false)}
           />
           <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-[#0C1319] border border-white/10 w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl relative z-10"
+            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+            className="bg-white/[0.02] border border-white/10 w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl relative z-10 backdrop-blur-2xl"
           >
-            <form onSubmit={handleSaveBank}>
-              <div className="p-8 pb-4">
-                <h2 className="text-xl font-black text-white uppercase tracking-tight mb-1">
-                  {editingBank ? 'Edit Rekening' : 'Tambah Rekening'}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[80px] rounded-full pointer-events-none" />
+            <form onSubmit={handleSaveBank} className="relative z-10">
+              <div className="p-8 pb-6 border-b border-white/5">
+                <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.3em] mb-2">REKENING TENANT</p>
+                <h2 className="text-2xl font-display font-black text-white uppercase tracking-tight leading-none mb-1">
+                  {editingBank ? 'Edit Bank' : 'Tambah Bank'}
                 </h2>
-                <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest">
+                <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-[0.2em] mt-2">
                   Pengaturan mutasi bank TernakOS
                 </p>
               </div>
-              <div className="p-8 pt-4 space-y-4">
+              <div className="p-8 space-y-5">
                 <div className="space-y-2">
-                  <label htmlFor="bank_name" className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest ml-1">Nama Bank</label>
+                  <label htmlFor="bank_name" className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em] ml-1">Provider Bank</label>
                   <Input
                     id="bank_name"
                     name="bank_name"
                     defaultValue={editingBank?.bank_name}
-                    placeholder="Contoh: BCA / Mandiri / BNI"
-                    className="bg-white/5 border-white/10 h-12 rounded-xl text-sm font-medium focus:border-emerald-500/50"
+                    placeholder="BCA / Mandiri / CIMB..."
+                    className="bg-white/[0.02] border-white/10 hover:border-white/20 h-14 rounded-2xl text-sm font-bold focus:border-emerald-500 transition-all font-display tracking-wide"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="account_number" className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest ml-1">Nomor Rekening</label>
+                  <label htmlFor="account_number" className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em] ml-1">No. Rekening</label>
                   <Input
                     id="account_number"
                     name="account_number"
                     defaultValue={editingBank?.account_number}
                     placeholder="000123456789"
-                    className="bg-white/5 border-white/10 h-12 rounded-xl text-sm font-medium focus:border-emerald-500/50"
+                    className="bg-white/[0.02] border-white/10 hover:border-white/20 h-14 rounded-2xl text-sm font-black text-emerald-400 focus:border-emerald-500 transition-all font-mono tracking-widest"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="account_name" className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest ml-1">Atas Nama (Pemilik)</label>
+                  <label htmlFor="account_name" className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em] ml-1">Atas Nama</label>
                   <Input
                     id="account_name"
                     name="account_name"
                     defaultValue={editingBank?.account_name}
                     placeholder="PT TERNAKOS TEKNOLOGI"
-                    className="bg-white/5 border-white/10 h-12 rounded-xl text-sm font-medium focus:border-emerald-500/50 uppercase"
+                    className="bg-white/[0.02] border-white/10 hover:border-white/20 h-14 rounded-2xl text-sm font-black focus:border-emerald-500 transition-all uppercase tracking-wider"
                     required
                   />
                 </div>
               </div>
-              <div className="p-8 pt-0 flex gap-3">
+              <div className="p-8 pt-0 flex gap-4">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setIsBankModalOpen(false)}
-                  className="flex-1 h-12 rounded-xl border-white/10 text-[#4B6478] font-black uppercase text-[11px] tracking-widest"
+                  className="flex-1 h-14 rounded-2xl border-white/10 hover:border-white/20 hover:bg-white/5 text-[#4B6478] hover:text-white font-black uppercase text-[11px] tracking-[0.2em] transition-all"
                 >
                   Batal
                 </Button>
                 <Button
                   type="submit"
-                  className="flex-1 h-12 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[11px] tracking-widest shadow-xl shadow-emerald-500/20"
+                  className="flex-1 h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[11px] tracking-[0.2em] shadow-[0_4px_20px_rgba(16,185,129,0.3)] transition-all active:scale-95"
                 >
-                  Simpan Akun
+                  {editingBank ? 'Simpan' : '+ Tambah'}
                 </Button>
               </div>
             </form>
           </motion.div>
         </div>
       )}
+      </AnimatePresence>
       {/* FAB (Floating Action Button) for Mobile — Prevents Intersecting Layouts */}
       <div className="md:hidden fixed bottom-20 right-4 z-40 animate-in translate-y-4 duration-500 pb-[env(safe-area-inset-bottom)]">
         <Button
@@ -1156,19 +1211,20 @@ function ExpiringPlansTab({ allTenants, onRenew }) {
           )}
         </div>
       ) : (
-        <div className="bg-[#0C1319] rounded-2xl border border-white/8 overflow-hidden shadow-xl">
-          <div className="overflow-x-auto">
+        <div className="bg-white/[0.02] backdrop-blur-xl rounded-[32px] border border-white/8 overflow-hidden shadow-2xl relative group">
+          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
+          <div className="overflow-x-auto relative z-10">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-white/5 bg-white/[0.02]">
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black">Bisnis</th>
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Plan</th>
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Berakhir</th>
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-center">Sisa</th>
-                  <th className="px-6 py-4 text-[11px] uppercase tracking-widest text-[#4B6478] font-display font-black text-right">Aksi</th>
+                  <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black">Bisnis</th>
+                  <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black text-center">Plan</th>
+                  <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black text-center">Berakhir</th>
+                  <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black text-center">Sisa</th>
+                  <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-white/5">
                 {expiring.map((tenant, i) => {
                   const sub = tenant._sub
                   const isUrgent = sub.daysLeft <= 7
@@ -1178,35 +1234,43 @@ function ExpiringPlansTab({ allTenants, onRenew }) {
                   return (
                     <tr
                       key={tenant.id}
-                      className={`border-b border-white/5 hover:bg-white/[0.03] transition-colors ${i % 2 === 1 ? 'bg-white/[0.01]' : ''}`}
+                      className="hover:bg-white/[0.04] transition-all group"
                     >
-                      <td className="px-6 py-4">
-                        <div className="space-y-0.5">
-                          <p className="text-[13px] font-bold text-white truncate max-w-[180px]">{toTitleCase(tenant.business_name)}</p>
-                          <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-wider">{toTitleCase(tenant.business_vertical)}</p>
+                      <td className="px-8 py-5">
+                        <div className="space-y-1">
+                          <p className="text-[13px] font-black text-white group-hover:text-amber-400 transition-colors uppercase tracking-tight truncate max-w-[200px]">{toTitleCase(tenant.business_name)}</p>
+                          <div className="flex">
+                            <Badge className="text-[8px] font-black tracking-[0.1em] h-4 px-1.5 border-white/10 bg-white/5 text-[#4B6478] uppercase">
+                              {toTitleCase(tenant.business_vertical)}
+                            </Badge>
+                          </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-center"><PlanBadge plan={sub.plan} /></td>
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-8 py-5 text-center"><PlanBadge plan={sub.plan} /></td>
+                      <td className="px-8 py-5 text-center">
                         <p className="text-[12px] font-bold text-white/70">{expiryStr}</p>
                       </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider ${
+                      <td className="px-8 py-5 text-center">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-wider shadow-inner ${
                           isUrgent
-                            ? 'bg-red-500/15 text-red-400 border border-red-500/30'
-                            : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                            ? 'bg-red-500/10 text-red-400 border border-red-500/20'
+                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
                         }`}>
-                          {isUrgent && <AlertTriangle size={10} />}
+                          {isUrgent && <AlertTriangle size={12} className="animate-pulse" />}
                           {sub.daysLeft}h lagi
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-8 py-5 text-right">
                         <Button
                           size="sm"
                           onClick={() => onRenew(tenant)}
-                          className="h-8 rounded-lg bg-amber-500 hover:bg-amber-600 text-black text-[10px] font-black uppercase tracking-widest px-3 shadow-md shadow-amber-500/20 transition-all active:scale-95"
+                          className={`h-9 rounded-xl text-[10px] font-black uppercase tracking-widest px-4 transition-all active:scale-95 shadow-xl ${
+                            isUrgent 
+                              ? 'bg-red-500 hover:bg-red-600 text-white shadow-red-500/20' 
+                              : 'bg-amber-500 hover:bg-amber-600 text-black shadow-amber-500/20'
+                          }`}
                         >
-                          Buat Invoice Renewal
+                          Buat Renewal
                         </Button>
                       </td>
                     </tr>
@@ -1224,29 +1288,68 @@ function ExpiringPlansTab({ allTenants, onRenew }) {
 // ─── Internal UI Components ───────────────────────────────────────────────────
 
 function StatCard({ label, value, icon: Icon, color, isUrgent }) {
-  const colors = {
-    amber: 'text-amber-400 border-amber-500/20 bg-amber-500/5',
-    emerald: 'text-emerald-400 border-emerald-500/20 bg-emerald-500/5',
-    blue: 'text-blue-400 border-blue-500/20 bg-blue-500/5',
-    red: 'text-red-400 border-red-500/20 bg-red-500/5'
+  const themes = {
+    amber: {
+      bg: 'bg-amber-500/5',
+      border: 'border-amber-500/10',
+      iconBg: 'bg-amber-500/10',
+      text: 'text-amber-400',
+      glow: 'from-amber-500/10 to-transparent'
+    },
+    emerald: {
+      bg: 'bg-emerald-500/5',
+      border: 'border-emerald-500/10',
+      iconBg: 'bg-emerald-500/10',
+      text: 'text-emerald-400',
+      glow: 'from-emerald-500/10 to-transparent'
+    },
+    blue: {
+      bg: 'bg-blue-500/5',
+      border: 'border-blue-500/10',
+      iconBg: 'bg-blue-500/10',
+      text: 'text-blue-400',
+      glow: 'from-blue-500/10 to-transparent'
+    },
+    red: {
+      bg: 'bg-red-500/5',
+      border: 'border-red-500/10',
+      iconBg: 'bg-red-500/10',
+      text: 'text-red-400',
+      glow: 'from-red-500/10 to-transparent'
+    }
   }
+
+  const theme = themes[color] || themes.emerald
+
   return (
-    <Card className={`relative overflow-hidden border border-white/8 rounded-[24px] p-5 shadow-2xl transition-all group hover:border-white/20 ${isUrgent ? 'animate-pulse border-amber-500/50' : ''}`}>
-      <div className={`absolute -right-2 -bottom-2 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity ${colors[color]}`}>
-        <Icon size={80} strokeWidth={2.5} />
+    <motion.div
+      whileHover={{ y: -4 }}
+      className={`relative overflow-hidden border ${theme.border} rounded-[24px] p-5 lg:p-6 shadow-xl transition-all group backdrop-blur-md bg-white/[0.02] ${isUrgent ? 'animate-pulse border-amber-500/40 shadow-amber-500/10' : ''}`}
+    >
+      <div className={`absolute -right-2 -bottom-2 opacity-[0.05] group-hover:opacity-[0.1] transition-opacity ${theme.text}`}>
+        <Icon size={80} strokeWidth={1} />
       </div>
-      <div className="relative z-10 flex flex-col h-full justify-between gap-4">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${colors[color]} group-hover:scale-110 transition-transform`}>
-          <Icon size={18} />
+      
+      <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${theme.glow} opacity-30`} />
+
+      <div className="relative z-10 flex flex-col h-full justify-between gap-4 lg:gap-6">
+        <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-xl flex items-center justify-center border ${theme.border} ${theme.bg} ${theme.text} group-hover:scale-110 group-hover:bg-opacity-20 transition-all duration-500 shadow-md`}>
+          <Icon size={18} className="lg:scale-110" />
         </div>
+        
         <div>
-          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mb-1">{label}</p>
-          <p className="text-2xl font-display font-black text-white leading-none whitespace-nowrap">{value}</p>
+          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-1.5">{label}</p>
+          <div className="flex items-baseline gap-1">
+            <p className="text-xl lg:text-2xl font-display font-black text-white leading-none tracking-tight">
+              {value}
+            </p>
+          </div>
         </div>
       </div>
-    </Card>
+    </motion.div>
   )
 }
+
 
 function PlanBadge({ plan }) {
   const styles = {
@@ -1298,56 +1401,62 @@ function BankCard({ bank, onEdit, onDelete }) {
   return (
     <motion.div
       layout
-      className={`bg-[#111C24] border rounded-[24px] p-6 relative overflow-hidden group transition-all shadow-xl ${bank.is_active ? 'border-white/8 hover:border-emerald-500/30' : 'border-white/5 opacity-60 hover:opacity-80'
-        }`}
+      whileHover={{ y: -5 }}
+      className={`relative overflow-hidden border rounded-[32px] p-8 transition-all group backdrop-blur-md bg-white/[0.02] shadow-2xl ${bank.is_active ? 'border-emerald-500/20 shadow-emerald-500/5' : 'border-white/5 opacity-60 hover:opacity-100'}`}
     >
-      <div className="absolute -right-4 -bottom-4 opacity-[0.02] -rotate-12">
-        <CreditCard size={100} />
+      <div className="absolute -right-4 -bottom-4 opacity-[0.04] group-hover:opacity-[0.08] transition-opacity -rotate-12 duration-700">
+        <CreditCard size={120} />
       </div>
-      <div className="flex justify-between items-start mb-6">
-        <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xl">
+      
+      <div className="flex justify-between items-start mb-10">
+        <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-2xl group-hover:scale-110 group-hover:bg-white/10 transition-all duration-500 shadow-xl">
           🏦
         </div>
-        <div className="flex items-center gap-2">
-          <span className={`text-[9px] font-black uppercase tracking-widest ${bank.is_active ? 'text-emerald-400' : 'text-[#4B6478]'}`}>
-            {bank.is_active ? 'AKTIF' : 'NONAKTIF'}
+        <div className="flex items-center gap-3 bg-black/40 px-3 py-1.5 rounded-full border border-white/5 shadow-inner">
+          <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${bank.is_active ? 'text-emerald-400' : 'text-[#4B6478]'}`}>
+            {bank.is_active ? 'ACTIVE' : 'INACTIVE'}
           </span>
           <Switch
             checked={bank.is_active}
             onCheckedChange={handleToggleActive}
             disabled={isToggling}
-            className="data-[state=checked]:bg-emerald-500 scale-90"
+            className="data-[state=checked]:bg-emerald-500 scale-75"
           />
         </div>
       </div>
-      <div className="space-y-4 relative z-10">
-        <div>
-          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-1">Bank Name</p>
-          <p className="text-xl font-display font-black text-white">{bank.bank_name}</p>
+
+      <div className="space-y-6 relative z-10">
+        <div className="space-y-1">
+          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em]">Bank Provider</p>
+          <p className="text-2xl font-display font-black text-white group-hover:text-emerald-400 transition-colors uppercase tracking-tight">{bank.bank_name}</p>
         </div>
-        <div>
-          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-1">Account Number</p>
-          <p className="text-lg font-mono font-bold text-white/80">{bank.account_number}</p>
-        </div>
-        <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-          <div>
-            <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-wider mb-0.5">Atas Nama</p>
-            <p className="text-[11px] font-black text-white uppercase truncate max-w-[120px]">{bank.account_name}</p>
+        
+        <div className="space-y-1">
+          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em]">Account Details</p>
+          <div className="p-3 bg-black/40 border border-white/5 rounded-xl font-mono text-sm font-bold text-emerald-400/80 tracking-widest shadow-inner">
+            {bank.account_number}
           </div>
-          <div className="flex gap-2">
+        </div>
+
+        <div className="pt-6 border-t border-white/5 flex items-center justify-between">
+          <div>
+            <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-[0.3em] mb-1">Holder</p>
+            <p className="text-[12px] font-black text-white uppercase truncate max-w-[130px] leading-tight font-display tracking-tight">{bank.account_name}</p>
+          </div>
+          <div className="flex gap-2.5">
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={onEdit}
-              className="h-9 w-9 p-0 rounded-xl bg-white/5 hover:bg-emerald-500 hover:text-white transition-all border border-transparent hover:border-emerald-500 shadow-lg"
+              className="h-10 w-10 p-0 rounded-2xl bg-white/5 hover:bg-emerald-500 hover:text-white transition-all border border-white/10 hover:border-emerald-500 shadow-xl"
             >
               <Edit2 size={14} />
             </Button>
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={onDelete}
-              className="h-9 w-9 p-0 rounded-xl bg-white/5 hover:bg-red-500 hover:text-white transition-all border border-transparent hover:border-red-500 shadow-lg"
+              className="h-10 w-10 p-0 rounded-2xl bg-white/5 hover:bg-red-500 hover:text-white transition-all border border-white/10 hover:border-red-500 shadow-xl"
             >
               <Trash2 size={14} />
             </Button>

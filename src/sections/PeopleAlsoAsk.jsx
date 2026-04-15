@@ -7,7 +7,7 @@ import { ChevronDown, ArrowRight } from 'lucide-react'
 const TOP_FAQS = [
   {
     q: 'Apakah TernakOS gratis?',
-    a: 'TernakOS menyediakan trial gratis 14 hari tanpa kartu kredit. Setelah trial, kamu bisa pilih paket Starter, Pro, atau Business sesuai skala bisnis. Selama trial, semua fitur penuh tersedia.',
+    a: 'TernakOS menyediakan paket Starter gratis selamanya. Untuk fitur yang lebih lengkap, tersedia trial gratis paket Pro atau Business tanpa kartu kredit. Selama trial, semua fitur utama tersedia.',
   },
   {
     q: 'Apa perbedaan TernakOS dengan Excel atau buku catatan biasa?',

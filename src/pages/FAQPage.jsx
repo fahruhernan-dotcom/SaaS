@@ -281,7 +281,7 @@ export default function FAQPage() {
                 to="/register"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-white text-sm font-semibold rounded-xl border border-white/10 hover:border-white/20 transition-all"
               >
-                Coba Gratis 14 Hari →
+                Mulai Sekarang →
               </Link>
             </div>
           </div>

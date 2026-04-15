@@ -99,70 +99,96 @@ const Pricing = ({ activeRole, setActiveRole }) => {
   const formatRupiah = (n) =>
     new Intl.NumberFormat('id-ID').format(n);
 
-  const plans = useMemo(() => [
-    {
-      name: 'PRO',
-      subtitle: activeRole === 'broker' ? 'Broker' : activeRole === 'peternak' ? 'Peternak' : 'RPA',
-      monthlyPrice: currentPrices.pro,
-      annualPrice: currentPrices.proAnnual,
-      anchorPrice: currentPrices.proAnchor,
-      savingAmount: currentPrices.proSaving,
-      description: 'Solusi lengkap untuk manajemen operasional harian.',
-      features: [
-        { text: activeRole === 'peternak' ? 'Manajemen kandang & populasi' : 'Manajemen transaksi & operasional', highlight: false },
-        { text: activeRole === 'peternak' ? 'Tracking pakan & mortalitas' : 'Tracking pengiriman & loss report', highlight: false },
-        { text: activeRole === 'peternak' ? 'Prediksi panen & bobot' : 'RPA & piutang management', highlight: false },
-        { text: 'Cash flow & laporan keuangan', highlight: false },
-        { text: activeRole === 'broker' ? 'Armada & tim (maks 3 anggota)' : 'Manajemen tim & akses', highlight: false },
+  const plans = useMemo(() => {
+    const trialPro = dbConfigs?.trial_config?.pro || 14;
+    const trialBiz = dbConfigs?.trial_config?.business || 14;
+
+    const starterFeatures = {
+      peternak: [
+        { text: '1 Kandang aktif', highlight: false },
+        { text: '1 Jenis ternak', highlight: false },
+        { text: 'Input harian & laporan dasar', highlight: false },
+        { text: 'FCR & IP Score tracking', highlight: false },
+        { text: 'Akses mobile dashboard', highlight: false },
+      ],
+      broker: [
+        { text: 'Input transaksi harian', highlight: false },
+        { text: 'Laporan harian dasar', highlight: false },
+        { text: 'Manajemen 1 armada/sopir', highlight: false },
         { text: 'Harga pasar realtime', highlight: false },
+        { text: 'Akses mobile dashboard', highlight: false },
       ],
-      buttonText: 'Mulai 14 Hari Gratis',
-      href: '/register',
-      isPopular: false,
-      isSocial: false,
-    },
-    {
-      name: 'BUSINESS',
-      subtitle: activeRole === 'broker' ? 'Broker' : activeRole === 'peternak' ? 'Peternak' : 'RPA',
-      monthlyPrice: currentPrices.biz,
-      annualPrice: currentPrices.bizAnnual,
-      anchorPrice: currentPrices.bizAnchor,
-      savingAmount: currentPrices.bizSaving,
-      annualLoss: currentPrices.bizAnnualLoss,
-      description: 'Optimalkan profit dengan kecerdasan buatan dan analitik mendalam.',
-      features: [
-        { text: 'Semua fitur PRO', highlight: false },
-        { text: 'TernakBot AI (Grok 4.1 Fast)', highlight: true },
-        { text: 'Analisis profit otomatis', highlight: false },
-        { text: 'Deteksi anomali transaksi', highlight: false },
-        { text: activeRole === 'peternak' ? 'AI Health Monitor (Beta)' : 'Prediksi panen AI', highlight: true },
-        { text: 'Laporan PDF/Excel otomatis', highlight: false },
-        { text: 'Tim unlimited', highlight: false },
-      ],
-      buttonText: 'Mulai 14 Hari Gratis',
-      href: '/register',
-      isPopular: true,
-      isSocial: true,
-    },
-    {
-      name: 'ENTERPRISE',
-      subtitle: 'Custom',
-      price: 'Custom',
-      description: 'Skalabilitas penuh dan dukungan prioritas untuk korporasi besar.',
-      features: [
-        { text: 'Semua fitur BUSINESS', highlight: false },
-        { text: 'Multi-tenant management', highlight: false },
-        { text: 'Dedicated onboarding', highlight: false },
-        { text: 'SLA & support prioritas', highlight: false },
-        { text: 'Integrasi custom', highlight: false },
-        { text: 'Kontrak fleksibel', highlight: false },
-      ],
-      buttonText: 'Hubungi Kami',
-      href: 'https://wa.me/628123456789',
-      isPopular: false,
-      isSocial: false,
-    },
-  ], [activeRole, currentPrices]);
+      rpa: [
+        { text: 'Input harian operasional', highlight: false },
+        { text: 'Laporan stok dasar', highlight: false },
+        { text: 'Manajemen 1 unit RPA', highlight: false },
+        { text: 'Harga pasar realtime', highlight: false },
+        { text: 'Akses mobile dashboard', highlight: false },
+      ]
+    };
+
+    return [
+      {
+        name: 'STARTER',
+        subtitle: activeRole === 'broker' ? 'Broker' : activeRole === 'peternak' ? 'Peternak' : 'RPA',
+        price: 'Gratis',
+        description: 'Langkah awal digitalisasi bisnismu secara gratis selamanya.',
+        features: starterFeatures[activeRole] || starterFeatures.peternak,
+        buttonText: 'Mulai Gratis',
+        href: '/register',
+        isPopular: false,
+        isSocial: false,
+        anchorPrice: 0,
+        monthlyPrice: 0,
+        annualPrice: 0,
+        savingAmount: 0,
+      },
+      {
+        name: 'PRO',
+        subtitle: activeRole === 'broker' ? 'Broker' : activeRole === 'peternak' ? 'Peternak' : 'RPA',
+        monthlyPrice: currentPrices.pro,
+        annualPrice: currentPrices.proAnnual,
+        anchorPrice: currentPrices.proAnchor,
+        savingAmount: currentPrices.proSaving,
+        description: 'Solusi lengkap untuk manajemen operasional harian.',
+        features: [
+          { text: activeRole === 'peternak' ? 'Manajemen kandang & populasi' : 'Manajemen transaksi & operasional', highlight: false },
+          { text: activeRole === 'peternak' ? 'Tracking pakan & mortalitas' : 'Tracking pengiriman & loss report', highlight: false },
+          { text: activeRole === 'peternak' ? 'Prediksi panen & bobot' : 'RPA & piutang management', highlight: false },
+          { text: 'Cash flow & laporan keuangan', highlight: false },
+          { text: activeRole === 'broker' ? 'Armada & tim (maks 3 anggota)' : 'Manajemen tim & akses', highlight: false },
+          { text: 'Harga pasar realtime', highlight: false },
+        ],
+        buttonText: `Mulai ${trialPro} Hari Gratis`,
+        href: '/register',
+        isPopular: false,
+        isSocial: false,
+      },
+      {
+        name: 'BUSINESS',
+        subtitle: activeRole === 'broker' ? 'Broker' : activeRole === 'peternak' ? 'Peternak' : 'RPA',
+        monthlyPrice: currentPrices.biz,
+        annualPrice: currentPrices.bizAnnual,
+        anchorPrice: currentPrices.bizAnchor,
+        savingAmount: currentPrices.bizSaving,
+        annualLoss: currentPrices.bizAnnualLoss,
+        description: 'Optimalkan profit dengan kecerdasan buatan dan analitik mendalam.',
+        features: [
+          { text: 'Semua fitur PRO', highlight: false },
+          { text: 'TernakBot AI (Grok 4.1 Fast)', highlight: true },
+          { text: 'Analisis profit otomatis', highlight: false },
+          { text: 'Deteksi anomali transaksi', highlight: false },
+          { text: activeRole === 'peternak' ? 'AI Health Monitor (Beta)' : 'Prediksi panen AI', highlight: true },
+          { text: 'Laporan PDF/Excel otomatis', highlight: false },
+          { text: 'Tim unlimited', highlight: false },
+        ],
+        buttonText: `Mulai ${trialBiz} Hari Gratis`,
+        href: '/register',
+        isPopular: true,
+        isSocial: true,
+      },
+    ];
+  }, [activeRole, currentPrices, dbConfigs]);
 
   const faqs = [
     { q: 'Bisa cancel kapan saja?', a: 'Tentu. Tidak ada kontrak panjang. Anda bisa berhenti berlangganan kapan saja.' },
@@ -194,7 +220,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
 
           <AnimatedContent direction="vertical" distance={20} delay={0.2}>
             <p className="text-[#94A3B8] max-w-lg mx-auto mb-8 text-sm font-medium leading-relaxed">
-              Mulai dengan 14 hari gratis tanpa kartu kredit. Upgrade atau downgrade kapan saja sesuai kebutuhan bisnis Anda.
+              Mulai gratis selamanya dengan paket Starter, atau pilih plan Pro/Business untuk fitur yang lebih powerful.
             </p>
           </AnimatedContent>
 
@@ -295,7 +321,11 @@ const Pricing = ({ activeRole, setActiveRole }) => {
 
                 {/* Pricing block */}
                 <div className="mb-2 md:mb-4">
-                  {plan.price === 'Custom' ? (
+                  {plan.price === 'Gratis' ? (
+                    <div className="h-6 md:h-12 flex items-center">
+                      <span className="text-xs md:text-4xl font-black text-white uppercase tracking-tight">GRATIS</span>
+                    </div>
+                  ) : plan.price === 'Custom' ? (
                     <div className="h-6 md:h-12 flex items-center">
                       <span className="text-xs md:text-4xl font-black text-white uppercase tracking-tight">CUSTOM</span>
                     </div>

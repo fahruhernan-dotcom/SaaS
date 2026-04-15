@@ -13,9 +13,10 @@ import {
     parseISO, startOfMonth, endOfMonth 
 } from 'date-fns'
 import { id } from 'date-fns/locale'
-import { useOutletContext } from 'react-router-dom'
+import { useOutletContext, Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -195,6 +196,12 @@ export default function Armada() {
     const onRouteVehicleIds = useMemo(() => new Set(activeDeliveries.map(d => d.vehicle_id).filter(Boolean)), [activeDeliveries])
     const onRouteDriverIds = useMemo(() => new Set(activeDeliveries.map(d => d.driver_id).filter(Boolean)), [activeDeliveries])
 
+    // Starter plan limits: maks 1 kendaraan & 1 sopir
+    const sub = getSubscriptionStatus(tenant)
+    const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
+    const vehicleLimitReached = isStarter && vehicles.length >= 1
+    const driverLimitReached  = isStarter && drivers.length >= 1
+
     // --- STATE ---
     const [isVehicleSheetOpen, setIsVehicleSheetOpen] = useState(false)
     const [editingVehicle, setEditingVehicle] = useState(null)
@@ -230,10 +237,26 @@ export default function Armada() {
                     </div>
                     <Button
                         size="sm"
-                        className="h-9 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest transition-all active:scale-95"
+                        disabled={activeTab === 'kendaraan' ? vehicleLimitReached : driverLimitReached}
+                        title={
+                            (activeTab === 'kendaraan' ? vehicleLimitReached : driverLimitReached)
+                                ? 'Limit Starter: maks 1. Upgrade ke Pro.'
+                                : undefined
+                        }
+                        className={cn(
+                            "h-9 px-3 rounded-xl text-white font-black text-xs uppercase tracking-widest transition-all active:scale-95",
+                            (activeTab === 'kendaraan' ? vehicleLimitReached : driverLimitReached)
+                                ? "bg-white/[0.06] opacity-40 cursor-not-allowed"
+                                : "bg-emerald-500 hover:bg-emerald-600"
+                        )}
                         onClick={() => {
-                            setEditingVehicle(null)
-                            setIsVehicleSheetOpen(true)
+                            if (activeTab === 'kendaraan') {
+                                setEditingVehicle(null)
+                                setIsVehicleSheetOpen(true)
+                            } else {
+                                setEditingDriver(null)
+                                setIsDriverSheetOpen(true)
+                            }
                         }}
                     >
                         <Plus size={15} strokeWidth={3} className="mr-1" /> Tambah
@@ -249,24 +272,46 @@ export default function Armada() {
                             <h1 className="font-display text-3xl font-black tracking-tight uppercase">Armada & Sopir</h1>
                             <p className="text-[#4B6478] font-bold text-sm uppercase tracking-wider">Kelola kendaraan dan sopir pengiriman</p>
                         </div>
-                        <div className="flex gap-4">
-                            <Button 
+                        <div className="flex items-center gap-4">
+                            {isStarter && (
+                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/8 border border-amber-500/15">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-amber-500/70">
+                                        Starter: 1 kendaraan · 1 sopir
+                                    </span>
+                                    <Link to="/upgrade" className="text-[10px] font-black text-emerald-400 hover:underline">Upgrade →</Link>
+                                </div>
+                            )}
+                            <Button
                                 onClick={() => {
                                     setEditingVehicle(null)
                                     setIsVehicleSheetOpen(true)
                                 }}
-                                className="h-12 px-6 rounded-2xl bg-[#111C24] border border-white/5 hover:bg-white/5 text-white font-black text-[11px] uppercase tracking-widest gap-2 shadow-lg"
+                                disabled={vehicleLimitReached}
+                                title={vehicleLimitReached ? 'Limit Starter: maks 1 kendaraan. Upgrade ke Pro.' : undefined}
+                                className={cn(
+                                    "h-12 px-6 rounded-2xl font-black text-[11px] uppercase tracking-widest gap-2 shadow-lg",
+                                    vehicleLimitReached
+                                        ? "bg-white/[0.04] border border-white/5 text-white/30 cursor-not-allowed"
+                                        : "bg-[#111C24] border border-white/5 hover:bg-white/5 text-white"
+                                )}
                             >
-                                <Plus size={18} strokeWidth={3} className="text-emerald-400" /> Tambah Kendaraan
+                                <Plus size={18} strokeWidth={3} className={vehicleLimitReached ? "text-white/20" : "text-emerald-400"} /> Tambah Kendaraan
                             </Button>
-                            <Button 
+                            <Button
                                 onClick={() => {
                                     setEditingDriver(null)
                                     setIsDriverSheetOpen(true)
                                 }}
-                                className="h-12 px-6 rounded-2xl bg-[#111C24] border border-white/5 hover:bg-white/5 text-white font-black text-[11px] uppercase tracking-widest gap-2 shadow-lg"
+                                disabled={driverLimitReached}
+                                title={driverLimitReached ? 'Limit Starter: maks 1 sopir. Upgrade ke Pro.' : undefined}
+                                className={cn(
+                                    "h-12 px-6 rounded-2xl font-black text-[11px] uppercase tracking-widest gap-2 shadow-lg",
+                                    driverLimitReached
+                                        ? "bg-white/[0.04] border border-white/5 text-white/30 cursor-not-allowed"
+                                        : "bg-[#111C24] border border-white/5 hover:bg-white/5 text-white"
+                                )}
                             >
-                                <Plus size={18} strokeWidth={3} className="text-blue-400" /> Tambah Sopir
+                                <Plus size={18} strokeWidth={3} className={driverLimitReached ? "text-white/20" : "text-blue-400"} /> Tambah Sopir
                             </Button>
                         </div>
                     </div>

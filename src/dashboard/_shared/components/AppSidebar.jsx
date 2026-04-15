@@ -119,10 +119,11 @@ export default function AppSidebar({ open, onClose }) {
 
   const hasActiveTrial = profiles?.some(p => {
     const t = p.tenants
-    return t?.plan === 'starter' && t?.is_active && new Date(t?.trial_ends_at) > new Date()
+    const s = getSubscriptionStatus(t)
+    return s.status === 'trial'
   })
   const hasPaidPlan = profiles?.some(p => ['pro', 'business'].includes(p.tenants?.plan))
-  const canAddBusiness = !hasActiveTrial || hasPaidPlan
+  const canAddBusiness = isSuperadmin || !hasActiveTrial || hasPaidPlan
 
   const [activeProfileId, setActiveProfileId] = useState(null)
 
@@ -307,10 +308,10 @@ export default function AppSidebar({ open, onClose }) {
     ...(isPoultry ? [{
       label: 'OPERASIONAL',
       items: [
-        { title: 'Pengiriman', url: `${brokerBase}/pengiriman`, icon: Truck,       roles: ['owner', 'staff'] },
-        { title: 'Cash Flow',  url: `${brokerBase}/cashflow`,  icon: Wallet,      roles: ['owner'] },
-        { title: 'Armada',     url: `${brokerBase}/armada`,    icon: Car,         roles: ['owner'] },
-        { title: 'Simulator',  url: `${brokerBase}/simulator`, icon: Calculator,  roles: ['owner'] },
+        { title: 'Pengiriman', url: `${brokerBase}/pengiriman`, icon: Truck,      roles: ['owner', 'staff'] },
+        { title: 'Cash Flow',  url: `${brokerBase}/cashflow`,   icon: Wallet,     roles: ['owner'],          planRequired: 'pro' },
+        { title: 'Armada',     url: `${brokerBase}/armada`,     icon: Car,        roles: ['owner'] },
+        { title: 'Simulator',  url: `${brokerBase}/simulator`,  icon: Calculator, roles: ['owner'],          planRequired: 'pro' },
       ]
     }] : []),
 
@@ -326,9 +327,9 @@ export default function AppSidebar({ open, onClose }) {
       label: 'LAINNYA',
       items: [
         ...((tenant?.sub_type === 'broker_ayam' || tenant?.business_vertical === 'poultry_broker') ? [
-          { title: 'Harga Pasar',     url: '/dashboard/harga-pasar', icon: BarChart2 },
+          { title: 'Harga Pasar', url: '/dashboard/harga-pasar', icon: BarChart2 },
         ] : []),
-        { title: 'TernakOS Market', url: '/market',      icon: Building2 },
+        { title: 'TernakOS Market', url: '/market', icon: Building2 },
       ]
     },
   ]
@@ -362,9 +363,23 @@ export default function AppSidebar({ open, onClose }) {
   }
 
   // Subscription status — single source of truth
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active':   return { color: '#10B981', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.25)' }
+      case 'trial':    return { color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.25)' }
+      case 'expired':  return { color: '#F87171', bg: 'rgba(248,113,113,0.12)', border: 'rgba(248,113,113,0.25)' }
+      default:         return { color: '#64748B', bg: 'rgba(100,116,139,0.10)', border: 'rgba(100,116,139,0.20)' }
+    }
+  }
+
   const sub = getSubscriptionStatus(tenant)
   const isAccountActive = isSuperadmin || sub.status === 'active' || sub.status === 'trial'
   const daysLeft = isSuperadmin ? 0 : sub.daysLeft
+
+  // Plan-tier gating
+  const planTier = isSuperadmin ? 'business' : (sub.plan || 'starter')
+  const isPro     = ['pro', 'business'].includes(planTier) || sub.status === 'trial'
+  const isBusiness = planTier === 'business' || (sub.status === 'trial' && sub.plan === 'business')
 
   const sidebarContent = (
     <>
@@ -603,18 +618,25 @@ export default function AppSidebar({ open, onClose }) {
               <SidebarMenu>
                 {group.items.map((item) => {
                   const isActive = location.pathname === item.url
-                  const isLocked = (item.locked || !isAccountActive) && !isSuperadmin
+                  const isPlanLocked = !isSuperadmin && (
+                    (item.planRequired === 'pro'      && !isPro) ||
+                    (item.planRequired === 'business' && !isBusiness)
+                  )
+                  const isLocked = !isSuperadmin && (item.locked || !isAccountActive || isPlanLocked)
+                  const lockTooltip = isPlanLocked
+                    ? `${item.title} — Upgrade ke ${item.planRequired === 'business' ? 'Business' : 'Pro'}`
+                    : `${item.title} (Segera Hadir)`
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
                         asChild={!isLocked}
                         isActive={isActive}
-                        tooltip={isLocked ? `${item.title} (Segera Hadir)` : item.title}
+                        tooltip={isLocked ? lockTooltip : item.title}
                         className={`rounded-xl mb-0.5 transition-all duration-200 ${
                           isLocked
                             ? 'opacity-40 cursor-not-allowed'
-                            : isActive 
-                              ? 'bg-opacity-10' 
+                            : isActive
+                              ? 'bg-opacity-10'
                               : 'hover:bg-white/[0.03] text-foreground'
                         }`}
                         style={isActive && !isLocked ? { background: `${color}18`, border: `1px solid ${color}33`, color: color } : {}}
@@ -629,7 +651,13 @@ export default function AppSidebar({ open, onClose }) {
                             <span className="font-body text-[14px] flex-1 font-medium text-muted-foreground">
                               {item.title}
                             </span>
-                            <Lock size={12} className="text-muted-foreground" />
+                            {isPlanLocked ? (
+                              <span className="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500/60 border border-emerald-500/15">
+                                PRO
+                              </span>
+                            ) : (
+                              <Lock size={12} className="text-muted-foreground" />
+                            )}
                           </div>
                         ) : (
                           <NavLink to={item.url} className="flex items-center gap-3 w-full">
@@ -805,44 +833,31 @@ export default function AppSidebar({ open, onClose }) {
 
       <SidebarFooter className="p-2 pb-6">
         <SidebarSeparator className="mb-2" />
-        {/* Plan info */}
         <div style={{
           margin: '0 4px 8px',
           padding: '10px 12px',
-          background: isSuperadmin
-            ? 'rgba(245,158,11,0.06)'
-            : sub.status === 'expired'
-            ? 'rgba(248,113,113,0.06)'
-            : sub.isExpiringSoon
-            ? 'rgba(245,158,11,0.06)'
-            : 'rgba(16,185,129,0.06)',
-          border: isSuperadmin
-            ? '1px solid rgba(245,158,11,0.15)'
-            : sub.status === 'expired'
-            ? '1px solid rgba(248,113,113,0.25)'
-            : sub.isExpiringSoon
-            ? '1px solid rgba(245,158,11,0.25)'
-            : '1px solid rgba(16,185,129,0.15)',
-          borderRadius: '10px',
+          background: sub.status === 'expired' ? 'rgba(248,113,113,0.06)' : 'rgba(255,255,255,0.03)',
+          border: `1px solid ${getStatusColor(sub.status).border}`,
+          borderRadius: '12px',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <p style={{
-                fontSize: '10px', fontWeight: 600,
-                color: isSuperadmin ? 'rgba(245,158,11,0.6)' : '#4B6478',
+                fontSize: '10px', fontWeight: 700,
+                color: '#4B6478',
                 textTransform: 'uppercase', letterSpacing: '0.8px', margin: 0
               }}>
                 {isSuperadmin ? 'Status Akun' : 'Plan Aktif'}
               </p>
               <p style={{
                 fontFamily: 'Sora', fontSize: '13px', fontWeight: 800,
-                color: isSuperadmin ? '#F59E0B' : sub.status === 'expired' ? '#F87171' : '#34D399',
+                color: isSuperadmin ? '#F59E0B' : getStatusColor(sub.status).color,
                 margin: '2px 0 0', display: 'flex', alignItems: 'center', gap: '4px'
               }}>
                 {isSuperadmin ? (
                   <><Shield size={14} className="text-amber-500" /> PLATFORM ADMIN</>
                 ) : (
-                  tenant?.plan?.toUpperCase() || 'STARTER'
+                  sub.label.toUpperCase()
                 )}
               </p>
             </div>
@@ -850,62 +865,48 @@ export default function AppSidebar({ open, onClose }) {
             {/* Status badge (non-superadmin) */}
             {!isSuperadmin && sub.status !== 'unknown' && (
               <span style={{
-                fontSize: '10px', fontWeight: 700, borderRadius: '6px', padding: '2px 7px',
-                background: sub.status === 'expired'
-                  ? 'rgba(248,113,113,0.15)'
-                  : sub.status === 'trial'
-                  ? 'rgba(245,158,11,0.12)'
-                  : 'rgba(16,185,129,0.12)',
-                color: sub.status === 'expired' ? '#F87171' : sub.status === 'trial' ? '#F59E0B' : '#34D399',
-                border: sub.status === 'expired'
-                  ? '1px solid rgba(248,113,113,0.25)'
-                  : sub.status === 'trial'
-                  ? '1px solid rgba(245,158,11,0.20)'
-                  : '1px solid rgba(16,185,129,0.20)',
+                fontSize: '10px', fontWeight: 800, borderRadius: '6px', padding: '2px 8px',
+                background: getStatusColor(sub.status).bg,
+                color: getStatusColor(sub.status).color,
+                border: `1px solid ${getStatusColor(sub.status).border}`,
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
               }}>
-                {sub.status === 'expired' ? 'Expired' : sub.status === 'trial' ? `Trial ${daysLeft} Hari` : `${daysLeft} Hari`}
-              </span>
-            )}
-
-            {/* Premium Badge for Superadmin */}
-            {isSuperadmin && (
-              <span style={{
-                fontSize: '9px', fontWeight: 900,
-                background: 'rgba(245,158,11,0.2)', color: '#F59E0B',
-                borderRadius: '4px', padding: '1px 5px', letterSpacing: '1px'
-              }}>
-                PRO
+                {sub.status === 'trial' ? `${sub.daysLeft} Hari` : sub.status === 'active' && sub.plan === 'starter' ? 'Gratis' : sub.status === 'expired' ? 'Expired' : `${sub.daysLeft} Hari`}
               </span>
             )}
           </div>
 
           {/* Progress bar — shown for trial and expiring paid plans */}
-          {!isSuperadmin && (sub.status === 'trial' || (sub.status === 'active' && sub.isExpiringSoon)) && (
+          {!isSuperadmin && (sub.status === 'trial' || (sub.status === 'active' && sub.isExpiringSoon && sub.plan !== 'starter')) && (
             <div style={{
-              marginTop: '8px', height: '3px',
-              background: 'rgba(255,255,255,0.08)', borderRadius: '99px', overflow: 'hidden'
+              marginTop: '10px', height: '4px',
+              background: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden'
             }}>
               <div style={{
                 height: '100%',
-                width: `${Math.max(4, (daysLeft / (sub.status === 'trial' ? trialDurationDays : 30)) * 100)}%`,
-                background: daysLeft <= 3 ? '#F87171' : daysLeft <= 7 ? '#F59E0B' : '#10B981',
-                borderRadius: '99px', transition: 'width 0.3s ease'
+                width: `${Math.max(8, (sub.daysLeft / (sub.status === 'trial' ? 14 : 30)) * 100)}%`,
+                background: sub.daysLeft <= 3 ? '#F87171' : sub.daysLeft <= 7 ? '#F59E0B' : '#10B981',
+                borderRadius: '99px', transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
               }} />
             </div>
           )}
 
           {/* Renewal / Upgrade shortcut for expiring or expired paid plans */}
-          {!isSuperadmin && sub.status !== 'unknown' && (sub.status === 'expired' && sub.plan !== 'starter' || sub.isExpiringSoon && sub.status === 'active') && (
+          {!isSuperadmin && sub.status !== 'unknown' && ((sub.status === 'expired' && sub.plan !== 'starter') || (sub.isExpiringSoon && sub.status === 'active' && sub.plan !== 'starter')) && (
             <button
               onClick={() => navigate('/upgrade')}
               style={{
-                width: '100%', marginTop: '10px', padding: '7px 12px',
-                background: sub.status === 'expired' ? 'rgba(248,113,113,0.15)' : 'rgba(245,158,11,0.15)',
-                color: sub.status === 'expired' ? '#F87171' : '#F59E0B',
-                border: sub.status === 'expired' ? '1px solid rgba(248,113,113,0.3)' : '1px solid rgba(245,158,11,0.3)',
-                borderRadius: '8px', fontSize: '11px', fontWeight: 700, fontFamily: 'Sora',
+                width: '100%', marginTop: '10px', padding: '8px 12px',
+                background: sub.status === 'expired' ? 'rgba(248,113,113,0.1)' : 'rgba(16,185,129,0.1)',
+                color: sub.status === 'expired' ? '#F87171' : '#10B981',
+                border: `1px solid ${sub.status === 'expired' ? 'rgba(248,113,113,0.2)' : 'rgba(16,185,129,0.2)'}`,
+                borderRadius: '10px', fontSize: '11px', fontWeight: 800, fontFamily: 'Sora',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                transition: 'all 0.2s'
               }}
+              onMouseEnter={(e) => e.currentTarget.style.background = sub.status === 'expired' ? 'rgba(248,113,113,0.15)' : 'rgba(16,185,129,0.15)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = sub.status === 'expired' ? 'rgba(248,113,113,0.1)' : 'rgba(16,185,129,0.1)'}
             >
               <CreditCard size={13} />
               {sub.status === 'expired' ? 'Perbarui Sekarang' : 'Perpanjang Plan'}

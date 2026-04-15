@@ -215,3 +215,13 @@ canvas ~ div > a {
   opacity: 0 !important;
   pointer-events: none !important;
 }
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

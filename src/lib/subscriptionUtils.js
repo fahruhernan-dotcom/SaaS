@@ -33,27 +33,37 @@ export function getSubscriptionStatus(tenant) {
     }
   }
 
-  // 2. Check for Paid Plan (Pro/Business)
-  if (plan !== 'starter') {
-    const planExp = tenant.plan_expires_at ? new Date(tenant.plan_expires_at) : null
-    if (planExp && planExp > now) {
-      const daysLeft = Math.ceil((planExp - now) / 86400000)
-      return {
-        status: 'active',
-        label: plan === 'pro' ? 'Pro' : 'Business',
-        daysLeft,
-        expiresAt: planExp,
-        isExpiringSoon: daysLeft <= 14,
-        plan,
-      }
+  // 2. Handle Starter Plan (Free Forever if no trial)
+  if (plan === 'starter') {
+    return {
+      status: 'active',
+      label: 'Starter',
+      daysLeft: 999, // Infinite
+      expiresAt: null,
+      isExpiringSoon: false,
+      plan,
     }
   }
 
-  // 3. Fallback to Expired
+  // 3. Check for Paid Plan (Pro/Business)
+  const planExp = tenant.plan_expires_at ? new Date(tenant.plan_expires_at) : null
+  if (planExp && planExp > now) {
+    const daysLeft = Math.ceil((planExp - now) / 86400000)
+    return {
+      status: 'active',
+      label: plan === 'pro' ? 'Pro' : 'Business',
+      daysLeft,
+      expiresAt: planExp,
+      isExpiringSoon: daysLeft <= 14,
+      plan,
+    }
+  }
+
+  // 4. Fallback to Expired
   const lastExpiry = (plan !== 'starter' ? tenant.plan_expires_at : tenant.trial_ends_at) || tenant.created_at
   return { 
     status: 'expired', 
-    label: plan === 'starter' ? 'Trial Berakhir' : 'Plan Berakhir', 
+    label: plan === 'starter' ? 'Gratis' : 'Langganan Berakhir', 
     daysLeft: 0, 
     plan, 
     expiresAt: new Date(lastExpiry) 

@@ -144,7 +144,7 @@ export default function TermsPage() {
             <p>TernakOS menawarkan model berlangganan dengan detail sebagai berikut:</p>
             <div className="mt-6 grid md:grid-cols-3 gap-4">
               <PlanCard name="Starter" color="text-[#94A3B8]" border="border-white/10">
-                <p>Gratis, trial 14 hari. Akses fitur dasar dengan 1 kandang. Tidak memerlukan pembayaran.</p>
+                <p>Gratis selamanya. Akses fitur dasar dengan 1 kandang. Tidak memerlukan pembayaran.</p>
               </PlanCard>
               <PlanCard name="Pro" color="text-emerald-400" border="border-emerald-500/30">
                 <p>Berbayar, akses fitur lengkap hingga 2 kandang. Tagihan bulanan atau tahunan.</p>

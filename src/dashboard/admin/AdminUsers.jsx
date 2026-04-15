@@ -34,6 +34,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { toast } from 'sonner'
+import { getSubscriptionStatus, getStatusColor } from '@/lib/subscriptionUtils'
 
 export default function AdminUsers() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
@@ -82,13 +83,13 @@ export default function AdminUsers() {
       const matchesSearch = (t.business_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
         ownerName.toLowerCase().includes(searchQuery.toLowerCase())
 
-      const isTrial = t.trial_ends_at && new Date(t.trial_ends_at) > new Date()
+      const sub = getSubscriptionStatus(t)
 
       let matchesTab = true
       if (activeTab === 'Starter') matchesTab = t.plan === 'starter'
       else if (activeTab === 'Pro') matchesTab = t.plan === 'pro'
       else if (activeTab === 'Business') matchesTab = t.plan === 'business'
-      else if (activeTab === 'Trial') matchesTab = isTrial
+      else if (activeTab === 'Trial') matchesTab = sub.status === 'trial'
 
       return matchesSearch && matchesTab
     })
@@ -323,7 +324,7 @@ export default function AdminUsers() {
                           <PlanBadge plan={t.plan} />
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <TrialDisplay date={t.trial_ends_at} plan={t.plan} planExpiresAt={t.plan_expires_at} />
+                          <TrialDisplay tenant={t} />
                         </td>
                         <td className="px-6 py-4 text-center">
                           <span className="text-[13px] font-bold text-white">{t.profiles?.length || 0}</span>
@@ -693,13 +694,22 @@ export default function AdminUsers() {
                             <Clock size={18} className="text-amber-400" />
                           </div>
                           <div>
-                            <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-wider mb-1">Trial Berakhir</p>
-                            <p className="text-[13px] font-bold text-white">
-                              {selectedTenant.trial_ends_at ? format(new Date(selectedTenant.trial_ends_at), 'dd MMMM yyyy', { locale: localeId }) : 'Belum Dimulai'}
-                            </p>
-                            <p className="text-[10px] font-bold uppercase mt-0.5 tracking-wider" style={{ color: selectedTenant.trial_ends_at && new Date(selectedTenant.trial_ends_at) > new Date() ? '#F59E0B' : '#F87171' }}>
-                              {selectedTenant.trial_ends_at && new Date(selectedTenant.trial_ends_at) > new Date() ? 'Masih Aktif' : 'Expired'}
-                            </p>
+                            {(() => {
+                              const detailSub = getSubscriptionStatus(selectedTenant)
+                              return (
+                                <>
+                                  <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-wider mb-1">
+                                    {detailSub.status === 'trial' ? 'Trial Berakhir' : 'Status Plan'}
+                                  </p>
+                                  <p className="text-[13px] font-bold text-white">
+                                    {detailSub.expiresAt ? format(new Date(detailSub.expiresAt), 'dd MMMM yyyy', { locale: localeId }) : 'Gratis Selamanya'}
+                                  </p>
+                                  <p className="text-[10px] font-bold uppercase mt-0.5 tracking-wider" style={{ color: getStatusColor(detailSub.status).color }}>
+                                    {detailSub.status === 'trial' ? 'Masa Trial' : detailSub.status === 'expired' ? 'Expired' : 'Aktif'}
+                                  </p>
+                                </>
+                              )
+                            })()}
                           </div>
                         </div>
                         <Button
@@ -867,7 +877,7 @@ function TenantMobileCard({ tenant, onDetail, onStatusChange }) {
           </div>
           <div className="space-y-1 text-right">
              <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest">Sisa Aktif</p>
-             <TrialDisplay date={tenant.trial_ends_at} plan={tenant.plan} planExpiresAt={tenant.plan_expires_at} />
+             <TrialDisplay tenant={tenant} />
           </div>
        </div>
 
@@ -975,39 +985,33 @@ function RoleBadge({ role }) {
   )
 }
 
-function TrialDisplay({ date, plan, planExpiresAt }) {
-  const now = new Date()
+function TrialDisplay({ tenant }) {
+  const sub = getSubscriptionStatus(tenant)
+  const color = getStatusColor(sub.status).color
 
-  // Paid plan — tampilkan sisa waktu dari plan_expires_at
-  if (plan === 'pro' || plan === 'business') {
-    if (!planExpiresAt) return <span className="text-slate-500 text-[13px]">—</span>
-    const end = new Date(planExpiresAt)
-    const days = Math.ceil((end - now) / (1000 * 60 * 60 * 24))
-    if (days <= 0) return (
-      <div className="flex flex-col items-center">
-        <span className="text-[13px] font-black text-red-400">Expired</span>
-        <span className="text-[8px] text-red-400/60 font-bold uppercase tracking-tighter mt-1">Perlu Renewal</span>
-      </div>
-    )
+  if (sub.plan === 'starter' && sub.status === 'active') {
+    return <span className="text-slate-500 text-[13px]">—</span>
+  }
+
+  if (sub.status === 'expired') {
     return (
       <div className="flex flex-col items-center">
-        <span className={`text-[13px] font-black ${days <= 14 ? 'text-amber-400' : 'text-emerald-400'}`}>{days} Hari</span>
-        <span className="text-[8px] text-slate-500 font-bold uppercase tracking-tighter mt-1">
-          {plan === 'pro' ? 'Sisa Pro' : 'Sisa Business'}
+        <span className="text-[13px] font-black text-red-400">Expired</span>
+        <span className="text-[8px] text-red-400/60 font-bold uppercase tracking-tighter mt-1">
+          {sub.plan === 'starter' ? 'Trial Habis' : 'Perlu Renewal'}
         </span>
       </div>
     )
   }
 
-  // Starter / trial
-  if (!date) return <span className="text-slate-500 text-[13px]">—</span>
-  const end = new Date(date)
-  const days = Math.ceil((end - now) / (1000 * 60 * 60 * 24))
-  if (days <= 0) return <span className="text-slate-500 text-[13px]">—</span>
   return (
     <div className="flex flex-col items-center">
-      <span className={`text-[13px] font-black ${days <= 3 ? 'text-red-400' : 'text-amber-400'}`}>{days} Hari</span>
-      <span className="text-[8px] text-slate-500 font-bold uppercase tracking-tighter mt-1">Sisa Trial</span>
+      <span className="text-[13px] font-black" style={{ color }}>
+        {sub.daysLeft === 999 ? '∞' : `${sub.daysLeft} Hari`}
+      </span>
+      <span className="text-[8px] text-slate-500 font-bold uppercase tracking-tighter mt-1 leading-none">
+        {sub.status === 'trial' ? 'Sisa Trial' : `Sisa ${toTitleCase(sub.plan)}`}
+      </span>
     </div>
   )
 }

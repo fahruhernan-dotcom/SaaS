@@ -286,7 +286,7 @@ export default function Register() {
       <div className="flex-1 flex items-center justify-center px-5 py-8 md:p-8 min-h-screen overflow-y-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }} className="w-full max-w-[400px] py-10">
           <h1 className="font-display text-2xl font-black text-white mb-2">Buat akun baru</h1>
-          <p className="text-[#4B6478] text-sm mb-8">14 hari gratis, tanpa kartu kredit.</p>
+          <p className="text-[#4B6478] text-sm mb-8">Gratis selamanya, tanpa kartu kredit.</p>
 
           <Button type="button" variant="outline" onClick={handleGoogleSignIn} className="w-full h-11 border-white/10 bg-transparent text-white font-semibold rounded-xl hover:bg-white/5 transition-colors mb-6">
             <GoogleIcon /> Daftar dengan Google

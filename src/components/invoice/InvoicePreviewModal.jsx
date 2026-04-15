@@ -4,8 +4,11 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Download, Printer, Save, Loader2, CheckCircle2 } from 'lucide-react'
+import { Download, Printer, Save, Loader2, CheckCircle2, Lock, FileText } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
+import { useAuth } from '@/lib/hooks/useAuth'
+import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { SaleInvoice } from './templates/SaleInvoice'
 import { PurchaseInvoice } from './templates/PurchaseInvoice'
 import { DeliveryReceipt } from './templates/DeliveryReceipt'
@@ -151,6 +154,10 @@ export default function InvoicePreviewModal({ type, data, isOpen, onClose }) {
   const [invoiceNumber] = useState(() => generateInvoiceNumber(typeMap[type] || 'sale'))
   const [saved, setSaved] = useState(false)
 
+  const { tenant } = useAuth()
+  const sub = getSubscriptionStatus(tenant)
+  const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
+
   const { mutate: saveInvoice, isPending: isSaving } = useSaveInvoice()
 
   if (!isOpen || !data) return null
@@ -232,8 +239,46 @@ export default function InvoicePreviewModal({ type, data, isOpen, onClose }) {
           </div>
         </DialogHeader>
 
-        {/* PDF Viewer */}
+        {/* PDF Viewer / Upgrade Wall */}
         <div className="flex-1 overflow-hidden px-2 sm:px-4 py-2 sm:py-3">
+          {isStarter ? (
+            <div className="h-full flex flex-col items-center justify-center gap-6 rounded-xl relative overflow-hidden"
+              style={{ background: 'linear-gradient(135deg, #0D1F2E 0%, #0A1520 100%)', border: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              {/* Blurred fake lines */}
+              <div className="absolute inset-0 opacity-10 pointer-events-none select-none p-8 flex flex-col gap-3 blur-sm">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <div key={i} className="h-3 rounded-full bg-white/40" style={{ width: `${55 + (i % 3) * 15}%` }} />
+                ))}
+              </div>
+
+              {/* Lock overlay */}
+              <div className="relative z-10 flex flex-col items-center text-center gap-4 px-6">
+                <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                  <Lock size={28} className="text-emerald-400" />
+                </div>
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-3">
+                    <FileText size={11} className="text-emerald-400" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Fitur Pro</span>
+                  </div>
+                  <h3 className="font-display text-xl font-black text-white mb-2">
+                    Generate Invoice & PDF
+                  </h3>
+                  <p className="text-sm text-[#64748B] max-w-xs leading-relaxed">
+                    Buat invoice, surat jalan, dan kwitansi PDF profesional. Tersedia di plan <span className="text-white font-bold">Pro</span> dan <span className="text-white font-bold">Business</span>.
+                  </p>
+                </div>
+                <Link
+                  to="/upgrade"
+                  onClick={onClose}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-black text-sm rounded-xl transition-colors shadow-[0_4px_20px_rgba(16,185,129,0.3)]"
+                >
+                  Lihat Paket Pro →
+                </Link>
+              </div>
+            </div>
+          ) : (
           <Suspense fallback={<PDFSkeleton />}>
             <PDFViewer
               width="100%"
@@ -244,6 +289,7 @@ export default function InvoicePreviewModal({ type, data, isOpen, onClose }) {
               {doc}
             </PDFViewer>
           </Suspense>
+          )}
         </div>
 
         {/* Footer actions */}
@@ -252,7 +298,7 @@ export default function InvoicePreviewModal({ type, data, isOpen, onClose }) {
           <Button
             variant="outline"
             onClick={handleSave}
-            disabled={isSaving || saved}
+            disabled={isSaving || saved || isStarter}
             className="flex-1 sm:flex-none h-11 border-white/10 bg-white/[0.03] text-[#94A3B8] font-semibold text-[10px] sm:text-xs uppercase tracking-widest rounded-xl hover:bg-white/[0.06] disabled:opacity-50"
           >
             {isSaving ? (
@@ -269,13 +315,23 @@ export default function InvoicePreviewModal({ type, data, isOpen, onClose }) {
           <Button
             variant="outline"
             onClick={() => window.print()}
-            className="flex-1 sm:flex-none h-11 border-white/10 bg-white/[0.03] text-[#94A3B8] font-semibold text-[10px] sm:text-xs uppercase tracking-widest rounded-xl hover:bg-white/[0.06]"
+            disabled={isStarter}
+            className="flex-1 sm:flex-none h-11 border-white/10 bg-white/[0.03] text-[#94A3B8] font-semibold text-[10px] sm:text-xs uppercase tracking-widest rounded-xl hover:bg-white/[0.06] disabled:opacity-50"
           >
             <Printer size={14} className="mr-1 sm:mr-2" />
             Print
           </Button>
 
           {/* Download PDF */}
+          {isStarter ? (
+            <Button
+              disabled
+              className="w-full sm:w-auto sm:ml-auto h-11 bg-white/[0.05] text-white/30 font-bold text-[10px] sm:text-xs uppercase tracking-widest rounded-xl cursor-not-allowed"
+            >
+              <Lock size={14} className="mr-1 sm:mr-2" />
+              Download — Pro Only
+            </Button>
+          ) : (
           <PDFDownloadLink document={doc} fileName={fileName} className="w-full sm:w-auto sm:ml-auto">
             {({ loading }) => (
               <Button
@@ -291,6 +347,7 @@ export default function InvoicePreviewModal({ type, data, isOpen, onClose }) {
               </Button>
             )}
           </PDFDownloadLink>
+          )}
         </div>
       </DialogContent>
     </Dialog>

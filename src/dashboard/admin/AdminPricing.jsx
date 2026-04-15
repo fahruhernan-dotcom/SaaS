@@ -6,7 +6,7 @@ import {
   Tag, Sparkles, Building2,
   Home, Factory, Trash2, Copy, Check,
   RefreshCcw, AlertCircle, Loader2,
-  Settings2, Clock, Infinity,
+  Settings2, Clock, Infinity, Egg, ShoppingBasket
 } from 'lucide-react'
 import {
   usePricingConfig,
@@ -71,6 +71,9 @@ export default function AdminPricing() {
   const [savingAddon, setSavingAddon] = useState(false)
 
   // ── New: Trial & Diskon state ─────────────────────────────────────────────
+  const [trxQuota, setTrxQuota] = useState({ starter: 30 })
+  const [savingQuota, setSavingQuota] = useState(false)
+
   const [trialConfig, setTrialConfig] = useState({
     starter: 14, pro: 14, business: 14
   })
@@ -97,6 +100,7 @@ export default function AdminPricing() {
       if (configs.addon_pricing) setAddonPricing(v => ({ ...v, ...configs.addon_pricing }))
       if (configs.trial_config) setTrialConfig(v => ({ ...v, ...configs.trial_config }))
       if (configs.annual_discount) setAnnualDiscount(v => ({ ...v, ...configs.annual_discount }))
+      if (configs.transaction_quota) setTrxQuota(v => ({ ...v, ...configs.transaction_quota }))
       setConfigsInited(true)
     }
   }, [configs])
@@ -104,21 +108,24 @@ export default function AdminPricing() {
   const handleSaveAllPricing = async () => {
     setSavingRole('all')
     try {
-      const roles = ['broker', 'peternak', 'rpa']
-      const promises = roles.flatMap(role => [
-        updatePricing.mutateAsync({
-          role,
-          plan: 'pro',
-          price: editingPricing[role].pro.price,
-          originalPrice: editingPricing[role].pro.originalPrice
-        }),
-        updatePricing.mutateAsync({
-          role,
-          plan: 'business',
-          price: editingPricing[role].business.price,
-          originalPrice: editingPricing[role].business.originalPrice
-        })
-      ])
+      const roles = ['broker', 'peternak', 'rpa', 'egg_broker', 'sembako_broker']
+      const promises = roles.flatMap(role => {
+        if (!editingPricing[role]) return []
+        return [
+          updatePricing.mutateAsync({
+            role,
+            plan: 'pro',
+            price: editingPricing[role].pro.price,
+            originalPrice: editingPricing[role].pro.originalPrice
+          }),
+          updatePricing.mutateAsync({
+            role,
+            plan: 'business',
+            price: editingPricing[role].business.price,
+            originalPrice: editingPricing[role].business.originalPrice
+          })
+        ]
+      })
       await Promise.all(promises)
       toast.success('Semua perubahan harga berhasil disimpan!')
     } catch (err) {
@@ -220,6 +227,20 @@ export default function AdminPricing() {
     }
   }
 
+  const handleSaveQuota = async () => {
+    const val = Number(trxQuota.starter)
+    if (!val || val < 1 || val > 9999) {
+      toast.error('Kuota harus antara 1–9999')
+      return
+    }
+    setSavingQuota(true)
+    try {
+      await updateConfig.mutateAsync({ config_key: 'transaction_quota', config_value: { starter: val } })
+    } catch { /* toast shown in hook */ } finally {
+      setSavingQuota(false)
+    }
+  }
+
   const handleSaveTrial = async () => {
     setSavingTrial(true)
     try {
@@ -255,14 +276,21 @@ export default function AdminPricing() {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-5 p-4 lg:p-0 lg:space-y-6 pb-32 lg:pb-12"
     >
+      {/* Background Orbs for AdminPricing specific depth */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[20%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/5 blur-[120px] rounded-full opacity-50" />
+        <div className="absolute bottom-[10%] left-[-10%] w-[40%] h-[40%] bg-purple-500/5 blur-[120px] rounded-full opacity-50" />
+      </div>
+
       {/* Header — Optimized for Mobile: Large text hidden to save space */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-14 lg:top-0 z-20 bg-[#080C10]/80 backdrop-blur-md py-2 -mx-2 px-2 rounded-xl">
-        <div className="hidden md:block">
-          <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sticky top-20 md:top-20 lg:top-0 z-20 bg-[#080C10]/60 backdrop-blur-xl border border-white/5 py-4 -mx-2 px-6 rounded-2xl shadow-xl">
+        <div>
+          <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+            <span className="w-1.5 h-6 bg-emerald-500 rounded-full" />
             Pricing & Discounts
           </h1>
-          <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mt-1">
-            Atur skema harga paket dan kelola kode voucher promo
+          <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mt-1 ml-4">
+            Kelola skema pendapatan & promosi platform
           </p>
         </div>
         
@@ -270,7 +298,7 @@ export default function AdminPricing() {
           <Button
             onClick={handleSaveAllPricing}
             disabled={savingRole === 'all'}
-            className="hidden md:flex bg-emerald-500 hover:bg-emerald-600 rounded-xl h-11 px-6 text-[11px] font-black uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+            className="hidden md:flex bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl h-11 px-8 text-[11px] font-black uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(16,185,129,0.3)] transition-all active:scale-95 border border-emerald-400/20"
           >
             {savingRole === 'all' ? (
               <><Loader2 size={14} className="animate-spin mr-2" /> Menyiimpan...</>
@@ -281,39 +309,36 @@ export default function AdminPricing() {
         )}
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-[#111C24] border border-white/5 p-1 h-12 rounded-2xl mb-8 -mx-2 lg:mx-0 grid grid-cols-4 sticky top-16 md:relative z-10">
-          <TabsTrigger
-            value="plans"
-            className="rounded-xl data-[state=active]:bg-emerald-500 data-[state=active]:text-white font-bold uppercase text-[11px] tracking-widest transition-all"
-          >
-            Harga Plan
-          </TabsTrigger>
-          <TabsTrigger
-            value="addons"
-            className="rounded-xl data-[state=active]:bg-emerald-500 data-[state=active]:text-white font-bold uppercase text-[11px] tracking-widest transition-all"
-          >
-            Add-on & Limit
-          </TabsTrigger>
-          <TabsTrigger
-            value="trial"
-            className="rounded-xl data-[state=active]:bg-emerald-500 data-[state=active]:text-white font-bold uppercase text-[11px] tracking-widest transition-all"
-          >
-            Trial & Diskon
-          </TabsTrigger>
-          <TabsTrigger
-            value="vouchers"
-            className="rounded-xl data-[state=active]:bg-emerald-500 data-[state=active]:text-white font-bold uppercase text-[11px] tracking-widest transition-all"
-          >
-            Kode Diskon
-          </TabsTrigger>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full relative z-10">
+        <TabsList className="bg-white/[0.03] backdrop-blur-md border border-white/5 p-1 h-14 rounded-2xl mb-10 w-full flex overflow-x-auto overflow-y-hidden scrollbar-hide flex-nowrap sticky top-[10rem] md:top-[10rem] lg:relative lg:top-0 z-10 shadow-2xl items-center justify-start">
+          {[
+            { id: 'plans', label: 'Harga Plan' },
+            { id: 'addons', label: 'Add-on & Limit' },
+            { id: 'trial', label: 'Trial & Diskon' },
+            { id: 'vouchers', label: 'Kode Diskon' }
+          ].map((tab) => (
+            <TabsTrigger
+              key={tab.id}
+              value={tab.id}
+              className="flex-1 shrink-0 min-w-[120px] relative rounded-xl font-bold uppercase text-[10px] md:text-[11px] tracking-widest transition-colors data-[state=active]:text-white text-[#4B6478] hover:text-white/60 h-full z-10 bg-transparent"
+            >
+              {activeTab === tab.id && (
+                <motion.div
+                  layoutId="activeTabAdmin"
+                  className="absolute inset-0 bg-emerald-500 rounded-xl shadow-[0_4px_20px_rgba(16,185,129,0.4)] z-[-1]"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
+              {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
-        <TabsContent value="plans" className="space-y-12 animate-in fade-in duration-300">
+        <TabsContent value="plans" className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
           {/* Pricing Matrix */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <RolePricingCard
-              roleName="Broker"
+              roleName="Broker Ayam"
               roleId="broker"
               icon={Building2}
               color="emerald"
@@ -321,6 +346,7 @@ export default function AdminPricing() {
               onChange={handlePriceChange}
               onSave={() => handleSavePricing('broker')}
               isSaving={savingRole === 'broker'}
+              vertical="poultry_broker"
             />
             <RolePricingCard
               roleName="Peternak"
@@ -331,9 +357,10 @@ export default function AdminPricing() {
               onChange={handlePriceChange}
               onSave={() => handleSavePricing('peternak')}
               isSaving={savingRole === 'peternak'}
+              vertical="peternak"
             />
             <RolePricingCard
-              roleName="RPA"
+              roleName="Rumah Potong (RPA)"
               roleId="rpa"
               icon={Factory}
               color="amber"
@@ -341,62 +368,96 @@ export default function AdminPricing() {
               onChange={handlePriceChange}
               onSave={() => handleSavePricing('rpa')}
               isSaving={savingRole === 'rpa'}
+              vertical="rumah_potong"
+            />
+            <RolePricingCard
+              roleName="Broker Telur"
+              roleId="egg_broker"
+              icon={Egg}
+              color="sky"
+              data={editingPricing.egg_broker ?? { pro: { price: 199000, originalPrice: 249000 }, business: { price: 399000, originalPrice: 499000 } }}
+              onChange={handlePriceChange}
+              onSave={() => handleSavePricing('egg_broker')}
+              isSaving={savingRole === 'egg_broker'}
+              vertical="egg_broker"
+            />
+            <RolePricingCard
+              roleName="Sembako / Distributor"
+              roleId="sembako_broker"
+              icon={ShoppingBasket}
+              color="rose"
+              data={editingPricing.sembako_broker ?? { pro: { price: 249000, originalPrice: 299000 }, business: { price: 499000, originalPrice: 599000 } }}
+              onChange={handlePriceChange}
+              onSave={() => handleSavePricing('sembako_broker')}
+              isSaving={savingRole === 'sembako_broker'}
+              vertical="sembako_broker"
             />
           </div>
 
           {/* Preview Section */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="h-[1px] flex-1 bg-white/10" />
-              <h2 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.3em] whitespace-nowrap">PREVIEW TAMPILAN PRICING</h2>
-              <div className="h-[1px] flex-1 bg-white/10" />
+          <section className="space-y-10">
+            <div className="flex items-center gap-6">
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+              <h2 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.4em] whitespace-nowrap bg-[#080C10] px-4 py-1 rounded-full border border-white/5">PREVIEW TAMPILAN PRICING</h2>
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
             </div>
 
-            <div className="bg-[#0C1319] rounded-[32px] border border-white/8 overflow-hidden shadow-2xl max-w-5xl mx-auto">
-              <table className="w-full text-left border-collapse">
+            <div className="bg-white/[0.02] backdrop-blur-2xl rounded-[40px] border border-white/5 overflow-hidden shadow-[0_32px_120px_rgba(0,0,0,0.6)] max-w-5xl mx-auto group">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+              <table className="w-full text-left border-collapse relative z-10">
                 <thead>
-                  <tr className="bg-white/5 border-b border-white/10">
-                    <th className="px-8 py-6 text-[12px] font-black uppercase text-[#4B6478]">Fitur & Benefit</th>
-                    <th className="px-8 py-6 text-center">
-                      <Badge className="bg-gray-500/10 text-gray-400 border-gray-500/20 mb-2 font-black uppercase tracking-widest">STARTER</Badge>
-                      <p className="text-2xl font-display font-black text-white">GRATIS</p>
-                      <p className="text-[10px] font-bold text-[#4B6478] uppercase mt-1">Selamanya</p>
-                    </th>
-                    <th className="px-8 py-6 text-center bg-emerald-500/5 relative">
-                      <div className="absolute top-0 right-0 p-2">
-                        <Sparkles size={16} className="text-emerald-400 opacity-30" />
+                  <tr className="bg-white/[0.01] border-b border-white/5">
+                    <th className="px-10 py-10 text-[11px] font-black uppercase text-[#4B6478] tracking-widest">Fitur & Benefit</th>
+                    <th className="px-8 py-10 text-center">
+                      <div className="bg-white/5 inline-flex p-1 rounded-lg mb-4">
+                        <Badge className="bg-transparent text-white/40 border-none font-black uppercase tracking-widest text-[9px]">STARTER</Badge>
                       </div>
-                      <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 mb-2 font-black uppercase tracking-widest">PRO</Badge>
-                      {editingPricing.broker.pro.originalPrice > 0 && (
-                        <p className="line-through text-[#4B6478] text-sm mb-1">{formatIDR(editingPricing.broker.pro.originalPrice)}</p>
-                      )}
-                      <p className="text-2xl font-display font-black text-white">{formatIDR(editingPricing.broker.pro.price)}</p>
-                      <p className="text-[10px] font-bold text-emerald-500/60 uppercase mt-1">Per Bulan</p>
+                      <p className="text-3xl font-display font-black text-white tracking-tight">GRATIS</p>
+                      <p className="text-[10px] font-bold text-[#4B6478] uppercase mt-2">Selamanya</p>
                     </th>
-                    <th className="px-8 py-6 text-center bg-amber-500/5">
-                      <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 mb-2 font-black uppercase tracking-widest">BUSINESS</Badge>
-                      {editingPricing.broker.business.originalPrice > 0 && (
-                        <p className="line-through text-[#4B6478] text-sm mb-1">{formatIDR(editingPricing.broker.business.originalPrice)}</p>
+                    <th className="px-8 py-10 text-center bg-emerald-500/[0.03] relative min-w-[200px]">
+                      <div className="absolute top-0 right-0 p-4">
+                        <Sparkles size={16} className="text-emerald-400 opacity-20" />
+                      </div>
+                      <div className="bg-emerald-500/10 inline-flex p-1 rounded-lg mb-4 border border-emerald-500/20">
+                        <Badge className="bg-transparent text-emerald-400 border-none font-black uppercase tracking-widest text-[9px]">PRO</Badge>
+                      </div>
+                      {editingPricing.broker.pro.originalPrice > 0 && (
+                        <p className="line-through text-[#4B6478] text-xs mb-1 font-bold">{formatIDR(editingPricing.broker.pro.originalPrice)}</p>
                       )}
-                      <p className="text-2xl font-display font-black text-white">{formatIDR(editingPricing.broker.business.price)}</p>
-                      <p className="text-[10px] font-bold text-amber-500/60 uppercase mt-1">Per Bulan</p>
+                      <p className="text-3xl font-display font-black text-emerald-400 tracking-tight drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]">{formatIDR(editingPricing.broker.pro.price)}</p>
+                      <p className="text-[10px] font-bold text-emerald-500/60 uppercase mt-2">Per Bulan</p>
+                    </th>
+                    <th className="px-8 py-10 text-center bg-amber-500/[0.03] min-w-[200px]">
+                      <div className="bg-amber-500/10 inline-flex p-1 rounded-lg mb-4 border border-amber-500/20">
+                        <Badge className="bg-transparent text-amber-400 border-none font-black uppercase tracking-widest text-[9px]">BUSINESS</Badge>
+                      </div>
+                      {editingPricing.broker.business.originalPrice > 0 && (
+                        <p className="line-through text-[#4B6478] text-xs mb-1 font-bold">{formatIDR(editingPricing.broker.business.originalPrice)}</p>
+                      )}
+                      <p className="text-3xl font-display font-black text-amber-400 tracking-tight drop-shadow-[0_0_15px_rgba(245,158,11,0.3)]">{formatIDR(editingPricing.broker.business.price)}</p>
+                      <p className="text-[10px] font-bold text-amber-500/60 uppercase mt-2">Per Bulan</p>
                     </th>
                   </tr>
                 </thead>
-                <tbody className="text-[13px]">
+                <tbody className="text-[14px]">
                   {PRICING_FEATURES.map((feature, i) => (
-                    <tr key={i} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
-                      <td className="px-8 py-4 text-white/80 font-medium">{feature.label}</td>
-                      <td className="px-8 py-4 text-center">{feature.starter ? <Check size={18} className="mx-auto text-emerald-500" /> : <div className="w-4 h-0.5 bg-white/10 mx-auto" />}</td>
-                      <td className="px-8 py-4 text-center bg-emerald-500/[0.02]">{feature.pro ? <Check size={18} className="mx-auto text-emerald-500" /> : <div className="w-4 h-0.5 bg-white/10 mx-auto" />}</td>
-                      <td className="px-8 py-4 text-center bg-amber-500/[0.02]">{feature.business ? <Check size={18} className="mx-auto text-amber-500" /> : <div className="w-4 h-0.5 bg-white/10 mx-auto" />}</td>
+                    <tr key={i} className="border-b border-white/[0.03] hover:bg-white/[0.03] transition-colors group/row">
+                      <td className="px-10 py-5 text-white/70 font-medium group-hover/row:text-white transition-colors">{feature.label}</td>
+                      <td className="px-8 py-5 text-center">{feature.starter ? <Check size={20} className="mx-auto text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]" /> : <div className="w-5 h-0.5 bg-white/5 mx-auto" />}</td>
+                      <td className="px-8 py-5 text-center bg-emerald-500/[0.01]">{feature.pro ? <Check size={20} className="mx-auto text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]" /> : <div className="w-5 h-0.5 bg-white/5 mx-auto" />}</td>
+                      <td className="px-8 py-5 text-center bg-amber-500/[0.01]">{feature.business ? <Check size={20} className="mx-auto text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]" /> : <div className="w-5 h-0.5 bg-white/5 mx-auto" />}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              <div className="p-10 bg-white/[0.01] border-t border-white/5 flex justify-center">
+                <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-[0.2em]">Semua paket termasuk update fitur berkelanjutan & backup harian otomatis</p>
+              </div>
             </div>
           </section>
         </TabsContent>
+
 
         {/* ═══════════════════════════════════════════════════════════════ */}
         {/* TAB: ADD-ON & LIMIT                                          */}
@@ -454,102 +515,196 @@ export default function AdminPricing() {
             <button
               onClick={handleSaveLimits}
               disabled={savingLimits}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-10 rounded-xl font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-12 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(16,185,129,0.3)] border border-emerald-400/20 active:scale-[0.98]"
             >
               {savingLimits
-                ? <><Loader2 size={14} className="animate-spin" />Menyimpan...</>
-                : 'Simpan Limit'
+                ? <><Loader2 size={16} className="animate-spin" /> MENYIMPAN LIMIT...</>
+                : 'SIMPAN KONFIGURASI LIMIT'
               }
             </button>
           </section>
 
-          <div className="h-px bg-white/8" />
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/5 to-transparent my-4" />
 
-          {/* Section B — Add-on Pricing */}
-          <section className="space-y-5">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478] font-display flex items-center gap-2">
-                <Tag size={13} /> ADD-ON JENIS TERNAK — PETERNAK PRO
-              </p>
-              <p className="text-xs text-[#4B6478] mt-1">
-                Berlaku untuk plan PRO yang punya lebih dari 1 jenis ternak aktif
-              </p>
+          {/* Section B — Transaction Quota */}
+          <section className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                <RefreshCcw size={18} className="text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#4B6478]">
+                  KUOTA TRANSAKSI BULANAN
+                </p>
+                <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-widest mt-0.5">
+                  Jumlah transaksi maksimal per bulan yang bisa dilakukan per plan
+                </p>
+              </div>
             </div>
 
-            <div className="bg-[#111C24] rounded-2xl p-6 border border-white/8 space-y-5">
-              {/* Price per type */}
-              <div className="space-y-1.5">
-                <label htmlFor="addon_price" className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">
-                  HARGA ADD-ON PER JENIS TERNAK / BULAN
-                </label>
-                <InputRupiah
-                  id="addon_price"
-                  name="addon_price"
-                  value={addonPricing.price_per_type}
-                  onChange={v => setAddonPricing(p => ({ ...p, price_per_type: v || 0 }))}
-                  className="bg-[#162230] border-white/10 h-10 rounded-xl font-bold focus:border-emerald-500/40"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Starter — editable */}
+              <div className="bg-white/[0.03] backdrop-blur-lg rounded-[32px] p-7 border border-white/5 space-y-5 hover:border-white/10 transition-all duration-500 group">
+                <span className="inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border border-white/5 bg-white/5 text-[#94A3B8]">
+                  STARTER
+                </span>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1 group-hover:text-emerald-500/60 transition-colors">
+                    Kuota Transaksi / Bulan
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min={1}
+                      max={9999}
+                      value={trxQuota.starter}
+                      onChange={e => setTrxQuota(v => ({ ...v, starter: Number(e.target.value) }))}
+                      className="w-full bg-black/40 border border-white/5 h-12 rounded-2xl px-4 text-sm text-white font-black focus:outline-none focus:border-emerald-500/40 focus:bg-emerald-500/5 transition-all shadow-inner"
+                    />
+                    <span className="text-[11px] text-[#4B6478] font-bold whitespace-nowrap shrink-0">trx / bln</span>
+                  </div>
+                  <p className="text-[10px] text-[#4B6478] ml-1">
+                    Tersimpan: <span className="text-white font-bold">{configs?.transaction_quota?.starter ?? 30}</span>
+                  </p>
+                </div>
               </div>
 
-              {/* Max add-ons before upgrade */}
-              <div className="space-y-1.5">
-                <label htmlFor="max_addons" className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">
-                  MAKSIMAL ADD-ON SEBELUM SUGGEST UPGRADE
-                </label>
-                <Input
-                  id="max_addons"
-                  name="max_addons"
-                  type="number"
-                  min={1}
-                  max={10}
-                  value={addonPricing.max_addons_before_upgrade}
-                  onChange={e => setAddonPricing(p => ({ ...p, max_addons_before_upgrade: parseInt(e.target.value) || 1 }))}
-                  className="w-full bg-[#162230] border border-white/10 h-10 rounded-xl px-3 text-sm text-white font-bold focus:outline-none focus:border-emerald-500/40"
-                />
-                <p className="text-[11px] text-[#4B6478]">
-                  Jika user punya lebih dari {addonPricing.max_addons_before_upgrade} jenis ternak aktif, tampilkan banner "Lebih hemat upgrade ke Business"
+              {/* Pro — unlimited */}
+              <div className="bg-white/[0.03] backdrop-blur-lg rounded-[32px] p-7 border border-white/5 space-y-5 hover:border-emerald-500/20 transition-all duration-500 group">
+                <span className="inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
+                  PRO
+                </span>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1 group-hover:text-emerald-500/60 transition-colors">
+                    Kuota Transaksi / Bulan
+                  </label>
+                  <div className="h-12 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex items-center px-4 gap-2 text-sm font-black text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]">
+                    <Infinity size={16} /> Unlimited
+                  </div>
+                  <p className="text-[10px] text-emerald-500/50 ml-1 font-semibold">Tidak ada batas transaksi</p>
+                </div>
+              </div>
+
+              {/* Business — unlimited */}
+              <div className="bg-white/[0.03] backdrop-blur-lg rounded-[32px] p-7 border border-white/5 space-y-5 hover:border-amber-500/20 transition-all duration-500 group">
+                <span className="inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-400">
+                  BUSINESS
+                </span>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1 group-hover:text-amber-500/60 transition-colors">
+                    Kuota Transaksi / Bulan
+                  </label>
+                  <div className="h-12 rounded-2xl bg-amber-500/5 border border-amber-500/20 flex items-center px-4 gap-2 text-sm font-black text-amber-400 shadow-[inset_0_0_20px_rgba(245,158,11,0.05)]">
+                    <Infinity size={16} /> Unlimited
+                  </div>
+                  <p className="text-[10px] text-amber-500/50 ml-1 font-semibold">Tidak ada batas transaksi</p>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleSaveQuota}
+              disabled={savingQuota}
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-12 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(16,185,129,0.3)] border border-emerald-400/20 active:scale-[0.98]"
+            >
+              {savingQuota
+                ? <><Loader2 size={16} className="animate-spin" /> MENYIMPAN...</>
+                : 'SIMPAN KUOTA TRANSAKSI'
+              }
+            </button>
+          </section>
+
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/5 to-transparent my-4" />
+
+          {/* Section C — Add-on Pricing */}
+          <section className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                <Tag size={18} className="text-purple-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#4B6478]">
+                  ADD-ON JENIS TERNAK — PETERNAK PRO
                 </p>
+                <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-widest mt-0.5">
+                  Upselling skema multi-vertical
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white/[0.02] backdrop-blur-xl rounded-[32px] p-8 border border-white/5 space-y-8 shadow-xl relative overflow-hidden group">
+               <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+               
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                {/* Price per type */}
+                <div className="space-y-2.5">
+                  <label htmlFor="addon_price" className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">
+                    HARGA ADD-ON PER JENIS TERNAK / BULAN
+                  </label>
+                  <InputRupiah
+                    id="addon_price"
+                    name="addon_price"
+                    value={addonPricing.price_per_type}
+                    onChange={v => setAddonPricing(p => ({ ...p, price_per_type: v || 0 }))}
+                    className="bg-black/40 border-white/5 h-14 rounded-2xl font-black text-white text-xl focus:border-purple-500/40 focus:bg-purple-500/5 transition-all shadow-inner"
+                  />
+                </div>
+
+                {/* Max add-ons before upgrade */}
+                <div className="space-y-2.5">
+                  <label htmlFor="max_addons" className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">
+                    MAKSIMAL ADD-ON SEBELUM UPGRADE
+                  </label>
+                  <div className="relative">
+                    <Input
+                      id="max_addons"
+                      name="max_addons"
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={addonPricing.max_addons_before_upgrade}
+                      onChange={e => setAddonPricing(p => ({ ...p, max_addons_before_upgrade: parseInt(e.target.value) || 1 }))}
+                      className="w-full bg-black/40 border-white/5 h-14 rounded-2xl px-4 text-lg text-white font-black focus:border-purple-500/40 focus:bg-purple-500/5 transition-all shadow-inner"
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-[#4B6478] uppercase tracking-widest">JENIS</div>
+                  </div>
+                </div>
               </div>
 
               {/* Plans that get add-on (informational) */}
-              <div className="space-y-1.5">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">PLAN YANG KENA ADD-ON</p>
-                <div className="flex items-center gap-4">
+              <div className="space-y-4 relative z-10 pb-4 border-b border-white/5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">TIER PENERIMA ADD-ON</p>
+                <div className="flex items-center gap-6">
                   {[
-                    { id: 'cb_pro', label: 'PRO', checked: true, disabled: false },
-                    { id: 'cb_business', label: 'Business', checked: false, disabled: true },
-                    { id: 'cb_enterprise', label: 'Enterprise', checked: false, disabled: true },
+                    { id: 'cb_pro', label: 'PRO', checked: true, color: 'text-emerald-400' },
+                    { id: 'cb_business', label: 'BUSINESS', checked: false, color: 'text-[#4B6478]' },
+                    { id: 'cb_enterprise', label: 'ENTERPRISE', checked: false, color: 'text-[#4B6478]' },
                   ].map(item => (
-                    <label key={item.id} htmlFor={item.id} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        id={item.id}
-                        name={item.id}
-                        type="checkbox"
-                        defaultChecked={item.checked}
-                        disabled={item.disabled}
-                        className="accent-emerald-500"
-                      />
-                      <span className={`text-sm font-semibold ${item.disabled ? 'text-[#4B6478]' : 'text-white'}`}>{item.label}</span>
-                    </label>
+                    <div key={item.id} className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${item.checked ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-white/10'}`} />
+                      <span className={`text-[11px] font-black tracking-widest ${item.color}`}>{item.label}</span>
+                    </div>
                   ))}
                 </div>
               </div>
 
               {/* Realtime preview */}
-              <AddonPreview
-                peternakProBase={editingPricing?.peternak?.pro?.price || 499000}
-                peternakBizBase={editingPricing?.peternak?.business?.price || 999000}
-                addonPricing={addonPricing}
-              />
+              <div className="relative z-10">
+                <AddonPreview
+                  peternakProBase={editingPricing?.peternak?.pro?.price || 499000}
+                  peternakBizBase={editingPricing?.peternak?.business?.price || 999000}
+                  addonPricing={addonPricing}
+                />
+              </div>
 
               <button
                 onClick={handleSaveAddon}
                 disabled={savingAddon}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-10 rounded-xl font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="relative z-10 w-full bg-white/[0.03] hover:bg-white/[0.08] text-white h-14 rounded-2xl font-black uppercase text-[11px] tracking-[0.25em] transition-all border border-white/5 flex items-center justify-center gap-3 active:scale-[0.98]"
               >
                 {savingAddon
-                  ? <><Loader2 size={14} className="animate-spin" />Menyimpan...</>
-                  : 'Simpan Add-on Config'
+                  ? <><Loader2 size={16} className="animate-spin" /> MENYIMPAN...</>
+                  : 'UPDATE KONFIGURASI ADD-ON'
                 }
               </button>
             </div>
@@ -559,50 +714,63 @@ export default function AdminPricing() {
         {/* ═══════════════════════════════════════════════════════════════ */}
         {/* TAB: TRIAL & DISKON                                           */}
         {/* ═══════════════════════════════════════════════════════════════ */}
-        <TabsContent value="trial" className="space-y-10 animate-in fade-in duration-300">
+        <TabsContent value="trial" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
           {/* Section A — Trial Duration */}
-          <section className="space-y-5">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478] font-display flex items-center gap-2">
-                <Clock size={13} /> DURASI TRIAL GRATIS
-              </p>
-              <p className="text-xs text-[#4B6478] mt-1">Berapa hari user bisa coba gratis sebelum perlu berlangganan</p>
+          <section className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                <Clock size={18} className="text-amber-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#4B6478]">Durasi Trial Gratis</p>
+                <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-widest mt-0.5">Konfigurasi first-user experience</p>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Starter info — bukan trial, gratis permanen */}
+            <div className="flex items-center gap-4 px-5 py-4 rounded-2xl border border-white/5 bg-white/[0.02]">
+              <span className="inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border bg-white/5 text-[#94A3B8] border-white/5 shrink-0">
+                STARTER
+              </span>
+              <div className="flex-1">
+                <p className="text-[12px] font-bold text-[#94A3B8]">Gratis Selamanya — tidak ada trial</p>
+                <p className="text-[11px] text-[#4B6478] mt-0.5">Plan Starter tidak menggunakan mekanisme trial. Akses langsung tanpa batas waktu.</p>
+              </div>
+              <Infinity size={18} className="text-[#2A3F52] shrink-0" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
-                { key: 'starter', label: 'STARTER', badgeClass: 'bg-white/10 text-white/50' },
-                { key: 'pro', label: 'PRO', badgeClass: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
-                { key: 'business', label: 'BUSINESS', badgeClass: 'bg-amber-500/10 text-amber-400 border border-amber-500/20' },
+                { key: 'pro',     label: 'PRO',     badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', hoverBorder: 'hover:border-emerald-500/20', labelHover: 'group-hover:text-emerald-500/60', previewColor: 'text-emerald-400', inputFocus: 'focus:border-emerald-500/40 focus:bg-emerald-500/5' },
+                { key: 'business',label: 'BUSINESS',badgeClass: 'bg-amber-500/10 text-amber-400 border-amber-500/20',   hoverBorder: 'hover:border-amber-500/20',   labelHover: 'group-hover:text-amber-500/60',   previewColor: 'text-amber-400',   inputFocus: 'focus:border-amber-500/40 focus:bg-amber-500/5'   },
               ].map(plan => (
-                <div key={plan.key} className="bg-[#111C24] rounded-2xl p-5 border border-white/8 space-y-4">
-                  <span className={`inline-block text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${plan.badgeClass}`}>
+                <div key={plan.key} className={`bg-white/[0.03] backdrop-blur-lg rounded-[32px] p-7 border border-white/5 space-y-5 ${plan.hoverBorder} transition-all duration-500 group`}>
+                  <span className={`inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border ${plan.badgeClass}`}>
                     {plan.label}
                   </span>
-                  <div className="space-y-1.5">
-                    <label htmlFor={`trial_${plan.key}`} className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">
-                      DURASI TRIAL (HARI)
+
+                  <div className="space-y-2">
+                    <label htmlFor={`trial_${plan.key}`} className={`text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1 ${plan.labelHover} transition-colors`}>
+                      Durasi Trial (Hari)
                     </label>
                     <Input
                       id={`trial_${plan.key}`}
-                      name={`trial_${plan.key}`}
                       type="number"
                       min={1}
                       max={365}
                       value={trialConfig[plan.key]}
                       onChange={e => setTrialConfig(p => ({ ...p, [plan.key]: parseInt(e.target.value) || 1 }))}
-                      className="w-full bg-[#162230] border border-white/10 h-10 rounded-xl px-3 text-sm text-white font-bold focus:outline-none focus:border-emerald-500/40"
+                      className={`w-full bg-black/40 border-white/5 h-12 rounded-2xl px-4 text-sm text-white font-black shadow-inner ${plan.inputFocus} transition-all`}
                     />
                   </div>
-                  <div className="bg-white/[0.03] rounded-xl px-3 py-2 border border-white/5">
-                    <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-widest mb-1">PREVIEW</p>
-                    <p className="text-xs text-white/70">
-                      Daftar hari ini → trial sampai{' '}
-                      <span className="text-emerald-400 font-semibold">
-                        {previewTrialDate(trialConfig[plan.key])}
-                      </span>
+
+                  <div className="bg-white/[0.02] rounded-2xl p-4 border border-white/5">
+                    <p className="text-[10px] text-[#4B6478] font-black uppercase tracking-[0.15em] mb-1.5">Aktif trial sampai</p>
+                    <p className={`text-base font-black tracking-tight ${plan.previewColor}`}>
+                      {previewTrialDate(trialConfig[plan.key])}
                     </p>
+                    <p className="text-[11px] text-[#4B6478] mt-0.5">jika daftar hari ini</p>
                   </div>
                 </div>
               ))}
@@ -611,83 +779,92 @@ export default function AdminPricing() {
             <button
               onClick={handleSaveTrial}
               disabled={savingTrial}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-10 rounded-xl font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-12 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(16,185,129,0.3)] border border-emerald-400/20 active:scale-[0.98]"
             >
               {savingTrial
-                ? <><Loader2 size={14} className="animate-spin" />Menyimpan...</>
-                : 'Simpan Trial Config'
+                ? <><Loader2 size={16} className="animate-spin" /> MENYIMPAN...</>
+                : 'SIMPAN KONFIGURASI TRIAL'
               }
             </button>
           </section>
 
-          <div className="h-px bg-white/8" />
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/5 to-transparent" />
 
           {/* Section B — Diskon Tahunan */}
-          <section className="space-y-5">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478] font-display flex items-center gap-2">
-                <Infinity size={13} /> DISKON BILLING TAHUNAN
-              </p>
-              <p className="text-xs text-[#4B6478] mt-1">Potongan harga jika user pilih billing tahunan</p>
+          <section className="space-y-10">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shadow-lg shadow-purple-500/5">
+                <Infinity size={22} className="text-purple-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-white uppercase tracking-tight">Diskon Billing Tahunan</h2>
+                <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mt-1">Incentive untuk komitmen jangka panjang</p>
+              </div>
             </div>
 
-            <div className="bg-[#111C24] rounded-2xl p-6 border border-white/8 space-y-5">
-              {/* Discount percent */}
-              <div className="space-y-1.5">
-                <label htmlFor="discount_percent" className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">
-                  PERSENTASE DISKON (%)
-                </label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="discount_percent"
-                    name="discount_percent"
-                    type="number"
-                    min={0}
-                    max={50}
-                    value={annualDiscount.discount_percent}
-                    onChange={e => setAnnualDiscount(p => ({ ...p, discount_percent: parseInt(e.target.value) || 0 }))}
-                    className="w-32 bg-[#162230] border border-white/10 h-10 rounded-xl px-3 text-sm text-white font-bold focus:outline-none focus:border-emerald-500/40"
-                  />
-                  <span className="text-sm font-bold text-[#4B6478]">%</span>
-                </div>
-              </div>
+            <div className="bg-white/[0.02] backdrop-blur-xl rounded-[40px] p-8 border border-white/5 space-y-10 shadow-2xl relative overflow-hidden group">
+               <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-50" />
+               
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
+                  {/* Discount percent */}
+                  <div className="space-y-3">
+                    <label htmlFor="discount_percent" className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">
+                      PERSENTASE POTONGAN (%)
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <div className="relative flex-1">
+                        <Input
+                          id="discount_percent"
+                          name="discount_percent"
+                          type="number"
+                          min={0}
+                          max={50}
+                          value={annualDiscount.discount_percent}
+                          onChange={e => setAnnualDiscount(p => ({ ...p, discount_percent: parseInt(e.target.value) || 0 }))}
+                          className="w-full bg-black/40 border-white/5 h-16 rounded-3xl px-8 text-3xl font-black text-white text-center focus:border-purple-500/40 focus:bg-purple-500/5 transition-all shadow-inner tabular-nums"
+                        />
+                        <div className="absolute right-6 top-1/2 -translate-y-1/2 text-2xl font-black text-[#4B6478]">%</div>
+                      </div>
+                    </div>
+                  </div>
 
-              {/* Badge text */}
-              <div className="space-y-1.5">
-                <label htmlFor="badge_text" className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">
-                  TEKS BADGE DI UI
-                </label>
-                <Input
-                  id="badge_text"
-                  name="badge_text"
-                  type="text"
-                  value={annualDiscount.badge_text}
-                  onChange={e => setAnnualDiscount(p => ({ ...p, badge_text: e.target.value }))}
-                  placeholder="Hemat 2 bln!"
-                  className="w-full bg-[#162230] border border-white/10 h-10 rounded-xl px-3 text-sm text-white focus:outline-none focus:border-emerald-500/40"
-                />
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-[#4B6478]">Preview:</span>
-                  <span className="bg-amber-500/20 text-amber-400 text-xs font-bold px-2 py-0.5 rounded-full">
-                    {annualDiscount.badge_text || 'Hemat 2 bln!'}
-                  </span>
-                </div>
+                  {/* Badge text */}
+                  <div className="space-y-3">
+                    <label htmlFor="badge_text" className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">
+                      TEKS LABEL PROMO DI UI
+                    </label>
+                    <Input
+                      id="badge_text"
+                      name="badge_text"
+                      type="text"
+                      value={annualDiscount.badge_text}
+                      onChange={e => setAnnualDiscount(p => ({ ...p, badge_text: e.target.value }))}
+                      placeholder="Contoh: Hemat 2 bln!"
+                      className="w-full bg-black/40 border-white/5 h-16 rounded-3xl px-6 text-xl text-white font-bold focus:border-purple-500/40 focus:bg-purple-500/5 transition-all shadow-inner"
+                    />
+                    <div className="flex items-center gap-3 mt-2 ml-2">
+                      <span className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Live Preview:</span>
+                      <span className="bg-amber-500/10 text-amber-400 text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.2)] animate-pulse">
+                        {annualDiscount.badge_text || 'HEMET 2 BLN!'}
+                      </span>
+                    </div>
+                  </div>
               </div>
 
               {/* Discount preview table */}
-              <div className="space-y-2">
-                <p className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">PREVIEW TABEL DISKON</p>
-                <div className="rounded-xl border border-white/8 overflow-hidden">
+              <div className="space-y-4 relative z-10 border-t border-white/5 pt-8">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#4B6478] ml-1">PROYEKSI HARGA SETELAH DISKON</p>
+                <div className="rounded-[24px] border border-white/5 overflow-hidden shadow-inner bg-black/20">
                   <table className="w-full text-xs border-collapse">
                     <thead>
-                      <tr className="bg-white/[0.03] border-b border-white/8">
-                        <th className="px-4 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Role / Plan</th>
-                        <th className="px-4 py-2.5 text-right text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Bulanan</th>
-                        <th className="px-4 py-2.5 text-right text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Tahunan/bln</th>
-                        <th className="px-4 py-2.5 text-right text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Hemat/tahun</th>
+                      <tr className="bg-white/[0.04] border-b border-white/5">
+                        <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Paket Layanan</th>
+                        <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Monthly</th>
+                        <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-emerald-400">Tahunan (Eff. per bln)</th>
+                        <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-widest text-amber-500">Hemat per Tahun</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="text-[13px]">
                       {[
                         { roleId: 'broker', roleLabel: 'Broker' },
                         { roleId: 'peternak', roleLabel: 'Peternak' },
@@ -698,17 +875,17 @@ export default function AdminPricing() {
                           const yearly = Math.round(base * (1 - annualDiscount.discount_percent / 100))
                           const saving = (base - yearly) * 12
                           return (
-                            <tr key={`${roleId}-${plan}`} className="border-b border-white/5 hover:bg-white/[0.02]">
-                              <td className="px-4 py-2.5 text-white/70 font-medium">
-                                {roleLabel} <span className="text-[#4B6478]">{plan.toUpperCase()}</span>
+                            <tr key={`${roleId}-${plan}`} className="border-b border-white/[0.02] hover:bg-white/[0.03] transition-colors group/row">
+                              <td className="px-6 py-3.5 text-white/50 font-black tracking-tight group-hover/row:text-white transition-colors">
+                                {roleLabel} <span className="text-[#4B6478] ml-1">{plan.toUpperCase()}</span>
                               </td>
-                              <td className="px-4 py-2.5 text-right text-white font-bold tabular-nums">
+                              <td className="px-6 py-3.5 text-right text-white/40 font-bold tabular-nums">
                                 {formatIDR(base)}
                               </td>
-                              <td className="px-4 py-2.5 text-right text-emerald-400 font-bold tabular-nums">
+                              <td className="px-6 py-3.5 text-right text-emerald-400 font-black tabular-nums bg-emerald-500/[0.02]">
                                 {formatIDR(yearly)}
                               </td>
-                              <td className="px-4 py-2.5 text-right text-amber-400 font-bold tabular-nums">
+                              <td className="px-6 py-3.5 text-right text-amber-400 font-black tabular-nums">
                                 {formatIDR(saving)}
                               </td>
                             </tr>
@@ -723,28 +900,32 @@ export default function AdminPricing() {
               <button
                 onClick={handleSaveDiscount}
                 disabled={savingDiscount}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-10 rounded-xl font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="relative z-10 w-full bg-emerald-500 hover:bg-emerald-600 text-white h-14 rounded-2xl font-black uppercase text-[11px] tracking-[0.25em] transition-all border border-emerald-400/20 flex items-center justify-center gap-3 active:scale-[0.98] shadow-[0_10px_30px_rgba(16,185,129,0.3)]"
               >
                 {savingDiscount
-                  ? <><Loader2 size={14} className="animate-spin" />Menyimpan...</>
-                  : 'Simpan Diskon'
+                  ? <><Loader2 size={16} className="animate-spin" /> MENYIMPAN DISKON...</>
+                  : 'UPDATE SKEMA DISKON TAHUNAN'
                 }
               </button>
             </div>
           </section>
         </TabsContent>
 
+
         <TabsContent value="vouchers" className="space-y-8 animate-in slide-in-from-right-4 duration-300">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             {/* Form Create Voucher */}
-            <Card className="lg:col-span-1 bg-[#111C24] border-white/8 rounded-[32px] p-8 space-y-6 shadow-2xl relative overflow-hidden">
-              <div className="absolute -right-4 -top-4 opacity-[0.05] -rotate-12">
+            <Card className="lg:col-span-1 bg-white/[0.02] backdrop-blur-xl border-white/5 rounded-[40px] p-8 space-y-8 shadow-[0_32px_120px_rgba(0,0,0,0.5)] relative overflow-hidden group">
+              <div className="absolute -right-4 -top-4 opacity-[0.02] group-hover:opacity-[0.05] -rotate-12 transition-all duration-1000 scale-150">
                 <Tag size={120} className="text-emerald-400" />
               </div>
 
-              <div>
-                <h2 className="text-xl font-black text-white uppercase tracking-tight">Buat Voucher</h2>
-                <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mt-1">Berikan potongan khusus untuk tenant</p>
+              <div className="relative z-10">
+                <h2 className="text-2xl font-black text-white uppercase tracking-tight">Buat Voucher</h2>
+                <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mt-2 flex items-center gap-2">
+                   <div className="w-1 h-1 rounded-full bg-emerald-500" />
+                   Loyalty & Promo Engine
+                </p>
               </div>
 
               <form key={formKey} onSubmit={handleCreateVoucher} className="space-y-4 relative z-10">
@@ -845,10 +1026,16 @@ export default function AdminPricing() {
             </Card>
 
             {/* Table List Vouchers */}
-            <div className="lg:col-span-2 space-y-4">
-              <h2 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.3em] flex items-center gap-2 mb-4">
-                <Tag size={14} /> DAFTAR VOUCHER AKTIF
-              </h2>
+            <div className="lg:col-span-2 space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.4em] flex items-center gap-3">
+                  <Tag size={14} className="text-emerald-500" />
+                  DAFTAR VOUCHER AKTIF
+                </h2>
+                <div className="bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                    <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">{vouchers?.length || 0} TOTAL</span>
+                </div>
+              </div>
 
               <div className="bg-[#0C1319] rounded-[32px] border border-white/8 overflow-hidden shadow-xl">
                 <div className="overflow-x-auto">
@@ -967,157 +1154,187 @@ export default function AdminPricing() {
 
 // --- Internal UI Components ---
 
-function RolePricingCard({ roleName, roleId, icon: Icon, color, data, onChange, onSave, isSaving }) {
+function RolePricingCard({ roleName, roleId, icon: Icon, color, data, onChange, onSave, isSaving, vertical }) {
+  if (!data?.pro || !data?.business) return null
+
   const themes = {
-    emerald: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-emerald-500/5",
-    purple: "bg-purple-500/10 border-purple-500/20 text-purple-400 shadow-purple-500/5",
-    amber: "bg-amber-500/10 border-amber-500/20 text-amber-400 shadow-amber-500/5"
-  }
+    emerald: {
+      card: "shadow-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40",
+      icon: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)]",
+      mesh: "from-emerald-500/10 via-transparent to-transparent",
+      inputFocus: "focus:border-emerald-500/40 focus:bg-emerald-500/5 focus:shadow-[0_0_20px_rgba(16,185,129,0.1)]"
+    },
+    purple: {
+      card: "shadow-purple-500/5 border-purple-500/20 hover:border-purple-500/40",
+      icon: "bg-purple-500/10 border-purple-500/20 text-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.2)]",
+      mesh: "from-purple-500/10 via-transparent to-transparent",
+      inputFocus: "focus:border-purple-500/40 focus:bg-purple-500/5 focus:shadow-[0_0_20px_rgba(168,85,247,0.1)]"
+    },
+    amber: {
+      card: "shadow-amber-500/5 border-amber-500/20 hover:border-amber-500/40",
+      icon: "bg-amber-500/10 border-amber-500/20 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)]",
+      mesh: "from-amber-500/10 via-transparent to-transparent",
+      inputFocus: "focus:border-amber-500/40 focus:bg-amber-500/5 focus:shadow-[0_0_20px_rgba(245,158,11,0.1)]"
+    },
+    sky: {
+      card: "shadow-sky-500/5 border-sky-500/20 hover:border-sky-500/40",
+      icon: "bg-sky-500/10 border-sky-500/20 text-sky-400 shadow-[0_0_20px_rgba(14,165,233,0.2)]",
+      mesh: "from-sky-500/10 via-transparent to-transparent",
+      inputFocus: "focus:border-sky-500/40 focus:bg-sky-500/5 focus:shadow-[0_0_20px_rgba(14,165,233,0.1)]"
+    },
+    rose: {
+      card: "shadow-rose-500/5 border-rose-500/20 hover:border-rose-500/40",
+      icon: "bg-rose-500/10 border-rose-500/20 text-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.2)]",
+      mesh: "from-rose-500/10 via-transparent to-transparent",
+      inputFocus: "focus:border-rose-500/40 focus:bg-rose-500/5 focus:shadow-[0_0_20px_rgba(244,63,94,0.1)]"
+    },
+  }[color]
 
   return (
-    <Card className={`bg-[#111C24] border-white/8 rounded-[32px] p-8 space-y-6 shadow-2xl relative overflow-hidden group hover:border-white/20 transition-all`}>
-      <div className={`absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity ${themes[color]}`}>
-        <Icon size={120} strokeWidth={2.5} />
+    <Card className={`group relative bg-[#111C24]/40 backdrop-blur-xl rounded-[40px] p-8 border ${themes.card} transition-all duration-500 overflow-hidden hover:-translate-y-2`}>
+      {/* Mesh Gradient Background */}
+      <div className={`absolute inset-0 bg-gradient-to-br ${themes.mesh} opacity-50 group-hover:opacity-100 transition-opacity duration-700`} />
+      
+      {/* Decorative Icon in background */}
+      <div className="absolute -right-8 -bottom-8 opacity-[0.03] group-hover:opacity-[0.08] transition-all duration-700 scale-150 group-hover:rotate-12">
+        <Icon size={180} strokeWidth={1} />
       </div>
 
-      <div className="flex items-center gap-4 relative z-10">
-        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border ${themes[color]}`}>
-          <Icon size={24} />
+      <div className="relative z-10 flex flex-col h-full">
+        <div className="flex items-center gap-5 mb-10">
+          <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center border transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6 ${themes.icon}`}>
+            <Icon size={28} strokeWidth={2.5} />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em] mb-1 opacity-70">ADMIN CONTROL</p>
+            <h3 className="text-2xl font-display font-black text-white uppercase tracking-tight leading-none group-hover:tracking-wider transition-all duration-500">{roleName}</h3>
+            {vertical && (
+              <p className="text-[9px] text-[#2A3F52] font-mono mt-1">business_vertical: {vertical}</p>
+            )}
+          </div>
         </div>
-        <div>
-          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-0.5">Role Vertical</p>
-          <h3 className="text-xl font-display font-black text-white uppercase tracking-tight leading-none">{roleName}</h3>
-        </div>
-      </div>
 
-      <div className="space-y-4 pt-2 relative z-10">
-        <div className="space-y-6">
-          {/* PRO Row */}
-          <div className="space-y-4">
-            <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 font-black tracking-widest text-[9px]">PRO PLAN</Badge>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase text-[#4B6478] font-black tracking-widest ml-1">HARGA ASLI (opsional)</label>
-                <InputRupiah
-                  value={data.pro.originalPrice}
-                  onChange={(v) => onChange(roleId, 'pro', 'originalPrice', v)}
-                  className="bg-black/40 border-white/10 h-11 rounded-xl text-right font-black text-white/50 text-base focus:border-emerald-500/30"
-                  placeholder="0"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase text-emerald-500/60 font-black tracking-widest ml-1">HARGA AKTIF</label>
+        <div className="flex-1 space-y-10">
+          {/* PRO PLAN SECTION */}
+          <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-700 delay-100">
+            <div className="flex items-center gap-3">
+              <Badge className="bg-emerald-500/10 text-emerald-400 border-none font-black tracking-widest text-[9px] px-3 py-1">PRO PLAN</Badge>
+              <div className="h-px flex-1 bg-white/5" />
+            </div>
+            
+            <div className="grid grid-cols-1 gap-5">
+              <div className="space-y-2 group/input">
+                <label className="text-[9px] uppercase text-[#4B6478] font-black tracking-widest ml-1 transition-colors group-hover/input:text-emerald-500/60">Target Harga Aktif</label>
                 <InputRupiah
                   value={data.pro.price}
                   onChange={(v) => onChange(roleId, 'pro', 'price', v)}
-                  className="bg-black/30 border-emerald-500/20 h-11 rounded-xl text-right font-black text-white text-base focus:border-emerald-500/50 focus:bg-emerald-500/5 shadow-inner"
+                  className={`bg-black/40 border-white/5 h-14 rounded-2xl text-right font-black text-white text-lg transition-all duration-300 shadow-inner ${themes.inputFocus}`}
+                />
+              </div>
+              <div className="space-y-2 opacity-60 hover:opacity-100 transition-opacity">
+                <label className="text-[9px] uppercase text-[#4B6478] font-black tracking-widest ml-1">Harga Semula (Coret)</label>
+                <InputRupiah
+                  value={data.pro.originalPrice}
+                  onChange={(v) => onChange(roleId, 'pro', 'originalPrice', v)}
+                  className="bg-black/20 border-white/5 h-12 rounded-xl text-right font-black text-white/40 text-sm focus:border-white/10 transition-all"
+                  placeholder="Opsional"
                 />
               </div>
             </div>
-            {data.pro.originalPrice > 0 && (
-              <div className="flex items-center gap-2 px-2 py-1 bg-white/[0.03] rounded-lg border border-white/5 mt-1">
-                <span className="line-through text-[#4B6478] text-[11px] font-bold">{formatIDR(data.pro.originalPrice)}</span>
-                <span className="text-white/40 text-[10px]">→</span>
-                <span className="text-white font-black text-[11px]">{formatIDR(data.pro.price)}</span>
-              </div>
-            )}
           </div>
 
-          {/* BUSINESS Row */}
-          <div className="space-y-4">
-            <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 font-black tracking-widest text-[9px]">BUSINESS PLAN</Badge>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase text-[#4B6478] font-black tracking-widest ml-1">HARGA ASLI (opsional)</label>
-                <InputRupiah
-                  value={data.business.originalPrice}
-                  onChange={(v) => onChange(roleId, 'business', 'originalPrice', v)}
-                  className="bg-black/40 border-white/10 h-11 rounded-xl text-right font-black text-white/50 text-base focus:border-amber-500/30"
-                  placeholder="0"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase text-amber-500/60 font-black tracking-widest ml-1">HARGA AKTIF</label>
+          {/* BUSINESS PLAN SECTION */}
+          <div className="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-700 delay-200">
+            <div className="flex items-center gap-3">
+              <Badge className="bg-amber-500/10 text-amber-400 border-none font-black tracking-widest text-[9px] px-3 py-1">BUSINESS PLAN</Badge>
+              <div className="h-px flex-1 bg-white/5" />
+            </div>
+
+            <div className="grid grid-cols-1 gap-5">
+              <div className="space-y-2 group/input">
+                <label className="text-[9px] uppercase text-[#4B6478] font-black tracking-widest ml-1 transition-colors group-hover/input:text-amber-500/60">Target Harga Aktif</label>
                 <InputRupiah
                   value={data.business.price}
                   onChange={(v) => onChange(roleId, 'business', 'price', v)}
-                  className="bg-black/30 border-amber-500/20 h-11 rounded-xl text-right font-black text-white text-base focus:border-amber-500/50 focus:bg-amber-500/5 shadow-inner"
+                  className={`bg-black/40 border-white/5 h-14 rounded-2xl text-right font-black text-white text-lg transition-all duration-300 shadow-inner ${themes.inputFocus}`}
+                />
+              </div>
+              <div className="space-y-2 opacity-60 hover:opacity-100 transition-opacity">
+                <label className="text-[9px] uppercase text-[#4B6478] font-black tracking-widest ml-1">Harga Semula (Coret)</label>
+                <InputRupiah
+                  value={data.business.originalPrice}
+                  onChange={(v) => onChange(roleId, 'business', 'originalPrice', v)}
+                  className="bg-black/20 border-white/5 h-12 rounded-xl text-right font-black text-white/40 text-sm focus:border-white/10 transition-all"
+                  placeholder="Opsional"
                 />
               </div>
             </div>
-            {data.business.originalPrice > 0 && (
-              <div className="flex items-center gap-2 px-2 py-1 bg-white/[0.03] rounded-lg border border-white/5 mt-1">
-                <span className="line-through text-[#4B6478] text-[11px] font-bold">{formatIDR(data.business.originalPrice)}</span>
-                <span className="text-white/40 text-[10px]">→</span>
-                <span className="text-white font-black text-[11px]">{formatIDR(data.business.price)}</span>
-              </div>
-            )}
           </div>
         </div>
 
-        <Button
-          onClick={onSave}
-          disabled={isSaving}
-          className="w-full bg-white/5 hover:bg-white/10 text-white h-11 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border border-white/10 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSaving ? (
-            <><Loader2 size={14} className="animate-spin mr-2" />Menyimpan...</>
-          ) : (
-            'Simpan Perubahan'
-          )}
-        </Button>
+        <div className="mt-12 pt-8 border-t border-white/5 relative z-10">
+          <Button
+            onClick={onSave}
+            disabled={isSaving}
+            className="w-full bg-white/[0.03] hover:bg-white/[0.08] text-white h-14 rounded-[20px] text-[11px] font-black uppercase tracking-[0.25em] border border-white/5 active:scale-[0.97] transition-all duration-300 disabled:opacity-50 overflow-hidden relative group/btn shadow-xl"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000" />
+            {isSaving ? (
+              <><Loader2 size={16} className="animate-spin mr-3" /> Menyimpan...</>
+            ) : (
+              'Update Skema →'
+            )}
+          </Button>
+        </div>
       </div>
     </Card>
   )
 }
 
+
 // ─── Helper: PlanLimitCard ────────────────────────────────────────────────────
 
 function PlanLimitCard({ planName, badgeClass, badgeExtra, kandangValue, teamValue, onKandangChange, onTeamChange, readOnly }) {
   const isUnlimited = (v) => Number(v) >= 99
-  const inputCls = "w-full bg-[#162230] border border-white/10 h-10 rounded-xl px-3 text-sm text-white font-bold focus:outline-none focus:border-emerald-500/40 disabled:opacity-50"
+  const inputCls = "w-full bg-black/40 border border-white/5 h-12 rounded-2xl px-4 text-sm text-white font-black focus:outline-none focus:border-emerald-500/40 focus:bg-emerald-500/5 transition-all shadow-inner disabled:opacity-50"
 
   return (
-    <div className="bg-[#111C24] rounded-2xl p-5 border border-white/8 space-y-4">
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className={`inline-block text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${badgeClass}`}>
+    <div className="bg-white/[0.03] backdrop-blur-lg rounded-[32px] p-7 border border-white/5 space-y-6 hover:border-white/10 transition-all duration-500 group">
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className={`inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border border-white/5 ${badgeClass}`}>
           {planName}
         </span>
         {badgeExtra && (
-          <span className="text-[9px] font-black text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded">
+          <span className="text-[9px] font-black text-amber-400 bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/10 animate-pulse">
             {badgeExtra}
           </span>
         )}
       </div>
 
-      <div className="space-y-1.5">
-        <label htmlFor={`kl_${planName}`} className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">
+      <div className="space-y-2">
+        <label htmlFor={`kl_${planName}`} className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1 group-hover:text-emerald-500/60 transition-colors">
           Kandang Limit
         </label>
         {readOnly ? (
-          <div className="h-10 rounded-xl bg-white/[0.03] border border-white/8 flex items-center px-3 gap-1.5 text-sm font-bold text-white/40">
-            <Infinity size={14} /> Unlimited
+          <div className="h-12 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center px-4 gap-2 text-sm font-black text-white/30">
+            <Infinity size={16} /> Unlimited Access
           </div>
         ) : isUnlimited(kandangValue) ? (
           <div className="flex items-center gap-2">
-            <div className="flex-1 h-10 rounded-xl bg-white/[0.03] border border-white/8 flex items-center px-3 gap-1.5 text-sm font-bold text-amber-400">
-              <Infinity size={14} /> Unlimited
+            <div className="flex-1 h-12 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex items-center px-4 gap-2 text-sm font-black text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]">
+              <Infinity size={16} /> Unlimited
             </div>
             <input
               id={`kl_${planName}`}
-              name={`kl_${planName}`}
               type="number"
-              min={1}
-              max={99}
               value={kandangValue}
               onChange={e => onKandangChange(parseInt(e.target.value) || 1)}
-              className="w-16 bg-[#162230] border border-white/10 h-10 rounded-xl px-2 text-sm text-white/50 font-bold focus:outline-none focus:border-emerald-500/40"
+              className="w-16 bg-black/40 border-white/5 h-12 rounded-xl px-2 text-sm text-white/40 font-black text-center"
             />
           </div>
         ) : (
           <input
             id={`kl_${planName}`}
-            name={`kl_${planName}`}
             type="number"
             min={1}
             max={99}
@@ -1128,18 +1345,17 @@ function PlanLimitCard({ planName, badgeClass, badgeExtra, kandangValue, teamVal
         )}
       </div>
 
-      <div className="space-y-1.5">
-        <label htmlFor={`tl_${planName}`} className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">
-          Max Tim
+      <div className="space-y-2">
+        <label htmlFor={`tl_${planName}`} className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1 group-hover:text-emerald-500/60 transition-colors">
+          Max Anggota Tim
         </label>
         {readOnly ? (
-          <div className="h-10 rounded-xl bg-white/[0.03] border border-white/8 flex items-center px-3 gap-1.5 text-sm font-bold text-white/40">
-            <Infinity size={14} /> Unlimited
+          <div className="h-12 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center px-4 gap-2 text-sm font-black text-white/30">
+            <Infinity size={16} /> Unlimited Access
           </div>
         ) : (
           <input
             id={`tl_${planName}`}
-            name={`tl_${planName}`}
             type="number"
             min={1}
             max={99}

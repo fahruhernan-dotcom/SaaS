@@ -511,7 +511,7 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
               }}
               className="hover:bg-white/5 transition-colors"
             >
-              Daftar Sekarang — Gratis 14 Hari
+              Daftar Sekarang — Gratis
             </Button>
             
             <p className="text-[12px] text-[#4B6478] text-center mt-8 leading-relaxed">
@@ -754,7 +754,7 @@ function MobileLoginView({ email, setEmail, password, setPassword, showPassword,
               onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.97)' }}
               onPointerUp={e => { e.currentTarget.style.transform = 'scale(1)' }}
             >
-              Daftar Sekarang — Gratis 14 Hari
+              Daftar Sekarang — Gratis
             </button>
           </div>
           <p className="ml-stagger" style={{ textAlign: 'center', color: '#374151', fontSize: 12, marginTop: 22, lineHeight: 1.6, opacity: 0 }}>

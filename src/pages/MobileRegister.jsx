@@ -66,7 +66,7 @@ export default function MobileRegister({
                 Buat akun baru 🚀
               </h1>
               <p className="font-body" style={{ color: '#94a3b8', margin: 0, fontSize: 14, fontWeight: 500, lineHeight: 1.4 }}>
-                14 hari gratis, tanpa kartu kredit.
+                Gratis selamanya, tanpa kartu kredit.
               </p>
             </div>
             <svg viewBox="0 0 420 40" preserveAspectRatio="none" style={{ position: 'absolute', bottom: -1, left: 0, width: '100%', height: 32, pointerEvents: 'none', zIndex: 10 }}>

@@ -448,7 +448,7 @@ export default function AIChatBubble() {
                   <p className="text-[11px] font-medium text-amber-200/90 text-center leading-relaxed">
                     TernakBot AI Assistant eksklusif untuk <strong className="text-amber-400">Plan Business</strong> dan <strong className="text-amber-400">Trial</strong>. Mulai upgrade untuk otomatisasi AI tanpa ribet.
                   </p>
-                  <Link to="/harga" className="mt-2.5 h-8 px-4 rounded-lg bg-amber-500 hover:bg-amber-600 text-[#06090F] font-black text-[11px] uppercase tracking-widest flex items-center justify-center transition-colors shadow-lg shadow-amber-500/20 active:scale-95">
+                  <Link to="/upgrade" className="mt-2.5 h-8 px-4 rounded-lg bg-amber-500 hover:bg-amber-600 text-[#06090F] font-black text-[11px] uppercase tracking-widest flex items-center justify-center transition-colors shadow-lg shadow-amber-500/20 active:scale-95">
                     Upgrade Sekarang
                   </Link>
                 </div>

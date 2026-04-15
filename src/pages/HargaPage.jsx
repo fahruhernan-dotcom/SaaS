@@ -53,7 +53,7 @@ const FAQ_LIST = [
   },
   {
     q: 'Apa yang terjadi setelah trial berakhir?',
-    a: 'Kamu akan diminta memilih plan. Data tidak dihapus selama 30 hari setelah trial berakhir, sehingga kamu punya waktu untuk memutuskan.',
+    a: 'Kamu akan diminta memilih plan. Data tidak dihapus selama 30 hari setelah masa trial (paket Pro atau Business) berakhir, sehingga kamu punya waktu untuk memutuskan.',
   },
   {
     q: 'Bisakah saya upgrade atau downgrade plan?',
@@ -78,6 +78,16 @@ const _brokerBase = {
   bizPrice: 1499000,
   bizYearly: 1199000,
   bizStrike: 2499000,
+  starterFeatures: [
+    'Input transaksi harian',
+    'Laporan harian dasar',
+    'Manajemen 1 armada/sopir',
+    'Harga pasar realtime',
+  ],
+  starterMissing: [
+    'RPA & piutang management',
+    'TernakBot AI',
+  ],
 }
 
 // Shared peternak pricing (Ayam & Ruminansia sama)
@@ -109,6 +119,16 @@ const _rpaBase = {
   bizPrice: 1499000,
   bizYearly: 1199000,
   bizStrike: 2499000,
+  starterFeatures: [
+    'Input harian operasional',
+    'Laporan stok dasar',
+    'Manajemen 1 unit RPA',
+    'Harga pasar realtime',
+  ],
+  starterMissing: [
+    'Prediksi permintaan AI',
+    'Dedicated support',
+  ],
 }
 
 const PRICING_DATA = {
@@ -405,9 +425,9 @@ function ProCard({ data, billing, annualDiscount }) {
             HEMAT {Math.round((1 - data.proPrice / data.proStrike) * 100)}%
           </span>
         </div>
-        <div className="flex items-baseline gap-1">
+        <div className="flex items-end gap-1">
           <span className="font-['Sora'] text-3xl font-black text-white">{fmtIDR(price)}</span>
-          <span className="text-sm text-[#4B6478]">/bln</span>
+          <span className="text-sm text-[#4B6478] mb-1">/bln</span>
         </div>
         {billing === 'yearly' && (
           <p className="text-xs text-[#4B6478] mt-1">
@@ -458,7 +478,7 @@ function BusinessCard({ data, billing, roleLabel, annualDiscount }) {
         style={{ boxShadow: '0 0 40px rgba(16,185,129,0.15)' }}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent pointer-events-none rounded-2xl" />
-        
+
         <div className="relative z-10 mb-6">
           <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 mb-3">BUSINESS</p>
 
@@ -469,9 +489,9 @@ function BusinessCard({ data, billing, roleLabel, annualDiscount }) {
               HEMAT {Math.round((1 - data.bizPrice / data.bizStrike) * 100)}%
             </span>
           </div>
-          <div className="flex items-baseline gap-1">
+          <div className="flex items-end gap-1">
             <span className="font-['Sora'] text-3xl font-black text-white">{fmtIDR(price)}</span>
-            <span className="text-sm text-[#4B6478]">/bln</span>
+            <span className="text-sm text-[#4B6478] mb-1">/bln</span>
           </div>
           {billing === 'yearly' && (
             <p className="text-xs text-[#4B6478] mt-1">
@@ -522,7 +542,7 @@ function StarterCard({ data }) {
         <div className="flex items-baseline gap-1 mb-1">
           <span className="font-['Sora'] text-3xl font-black text-white">Gratis</span>
         </div>
-        <p className="text-xs text-[#4B6478] mt-1">Trial {data.trialDays || 14} hari tanpa kartu kredit</p>
+        <p className="text-xs text-[#4B6478] mt-1">Gratis selamanya untuk operasional dasar</p>
       </div>
 
       <ul className="relative z-10 space-y-3 flex-1 mb-8">
@@ -692,7 +712,7 @@ export default function HargaPage() {
               transition={{ duration: 0.4, delay: 0.1 }}
               className="text-[#94A3B8] text-lg"
             >
-              Semua plan include trial {data.trialDays || 14} hari gratis.
+              Paket Pro & Business include trial {data.trialDays || 14} hari gratis.
             </motion.p>
           </div>
         </section>
@@ -768,10 +788,10 @@ export default function HargaPage() {
                   disabled={sub.disabled}
                   onClick={() => !sub.disabled && setSelectedSub(sub.id)}
                   className={`flex items-center gap-1 px-3.5 py-1 rounded-full text-[11px] font-semibold border transition-colors duration-150 ${sub.disabled
-                      ? 'opacity-40 cursor-not-allowed border-white/8 text-white/40'
-                      : selectedSub === sub.id
-                        ? 'border-white/20 bg-white/[0.08] text-white cursor-pointer'
-                        : 'border-transparent text-white/50 hover:text-white/70 cursor-pointer'
+                    ? 'opacity-40 cursor-not-allowed border-white/8 text-white/40'
+                    : selectedSub === sub.id
+                      ? 'border-white/20 bg-white/[0.08] text-white cursor-pointer'
+                      : 'border-transparent text-white/50 hover:text-white/70 cursor-pointer'
                     }`}
                 >
                   {sub.label}
@@ -786,8 +806,8 @@ export default function HargaPage() {
         </div>
 
         {/* ── PRICING CARDS ── */}
-        <section className="px-5 pb-6">
-          <div className={selectedRole === 'peternak' ? 'max-w-7xl mx-auto' : 'max-w-5xl mx-auto'}>
+        <section className="px-4 md:px-8 pb-6">
+          <div className="max-w-7xl mx-auto">
             <AnimatePresence mode="wait">
               <motion.div
                 key={contentKey}
@@ -796,32 +816,21 @@ export default function HargaPage() {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
               >
-                {selectedRole === 'peternak' ? (
-                  /* Peternak: 4 cards — Starter | PRO | Business | Enterprise */
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-start pt-6">
-                    <StarterCard data={data} />
-                    <ProCard data={data} billing={billing} annualDiscount={annualDiscount} />
-                    <div className="xl:relative xl:z-10 xl:scale-[1.03]">
-                      <BusinessCard data={data} billing={billing} roleLabel={ROLES.find(r => r.id === selectedRole)?.label} annualDiscount={annualDiscount} />
-                    </div>
-                    <EnterpriseCard />
+                {/* Unified layout: 4 cards for ALL roles — Starter | PRO | Business | Enterprise */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start pt-6">
+                  <StarterCard data={data} />
+                  <ProCard data={data} billing={billing} annualDiscount={annualDiscount} />
+                  <div className="lg:relative lg:z-10 lg:scale-[1.03]">
+                    <BusinessCard data={data} billing={billing} roleLabel={ROLES.find(r => r.id === selectedRole)?.label} annualDiscount={annualDiscount} />
                   </div>
-                ) : (
-                  /* Broker & RPA: 3 cards — PRO | Business | Enterprise */
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start pt-6">
-                    <ProCard data={data} billing={billing} annualDiscount={annualDiscount} />
-                    <div className="md:scale-105 md:relative md:z-10">
-                      <BusinessCard data={data} billing={billing} roleLabel={ROLES.find(r => r.id === selectedRole)?.label} annualDiscount={annualDiscount} />
-                    </div>
-                    <EnterpriseCard />
-                  </div>
-                )}
+                  <EnterpriseCard />
+                </div>
               </motion.div>
             </AnimatePresence>
 
             {/* All plans note */}
             <p className="text-center text-xs text-[#4B6478] mt-8">
-              Semua plan include: Trial {data.trialDays || 14} hari gratis · Tidak perlu kartu kredit · Cancel kapan saja
+              Paket Pro & Business include: Trial {data.trialDays || 14} hari gratis · Tidak perlu kartu kredit · Cancel kapan saja
             </p>
           </div>
         </section>
@@ -856,7 +865,7 @@ export default function HargaPage() {
 
                 <div className="relative z-10">
                   <h2 className="font-['Sora'] text-3xl font-bold text-white mb-3">Masih ragu?</h2>
-                  <p className="text-[#94A3B8] mb-8">Coba {data.trialDays || 14} hari gratis. Tidak perlu kartu kredit.</p>
+                  <p className="text-[#94A3B8] mb-8">Coba trial gratis untuk paket Pro & Business. Tidak perlu kartu kredit.</p>
 
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                     <Link

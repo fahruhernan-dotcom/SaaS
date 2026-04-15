@@ -4,7 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { Link } from 'react-router-dom'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -111,6 +113,9 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
   const { tenant } = useAuth()
   const queryClient = useQueryClient()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+
+  const sub = getSubscriptionStatus(tenant)
+  const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
   const [vehicleMode, setVehicleMode] = useState('armada')
   const [driverMode, setDriverMode] = useState('driver')
   const [openVehicle, setOpenVehicle] = useState(false)
@@ -156,6 +161,9 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
     },
     enabled: !!tenant?.id && !!step3Data.enabled
   })
+
+  const vehicleLimitReached = isStarter && (vehicles?.length ?? 0) >= 1
+  const driverLimitReached  = isStarter && (drivers?.length ?? 0) >= 1
 
   // Sync form values to parent state via subscription (avoids infinite loop)
   useEffect(() => {
@@ -247,6 +255,10 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
 
   const handleQuickAddVehicle = async () => {
     if (!newVehicle.brand || !newVehicle.vehicle_plate) return
+    if (vehicleLimitReached) {
+      toast.error('Limit Starter: maks 1 kendaraan. Upgrade ke Pro untuk unlimited.')
+      return
+    }
     setIsAdding(true)
     
     const { data, error } = await supabase
@@ -278,6 +290,10 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
 
   const handleQuickAddDriver = async () => {
     if (!newDriver.full_name) return
+    if (driverLimitReached) {
+      toast.error('Limit Starter: maks 1 sopir. Upgrade ke Pro untuk unlimited.')
+      return
+    }
     setIsAdding(true)
     
     const { data, error } = await supabase
@@ -459,16 +475,23 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                     </CommandGroup>
                     <CommandSeparator className="bg-white/5" />
                     <CommandGroup>
-                      <CommandItem
-                        onSelect={() => {
-                          setOpenVehicle(false)
-                          setShowQuickAddVehicle(true)
-                        }}
-                        className="cursor-pointer py-3 px-4 text-emerald-400 focus:bg-emerald-400/5"
-                      >
-                        <Plus size={14} className="mr-2" />
-                        <span className="text-xs font-black uppercase tracking-widest">Tambah Kendaraan Baru</span>
-                      </CommandItem>
+                      {vehicleLimitReached ? (
+                        <div className="px-4 py-3 flex items-center gap-2">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Limit Starter (maks 1)</span>
+                          <Link to="/upgrade" className="text-[10px] font-black text-emerald-400 hover:underline">Upgrade →</Link>
+                        </div>
+                      ) : (
+                        <CommandItem
+                          onSelect={() => {
+                            setOpenVehicle(false)
+                            setShowQuickAddVehicle(true)
+                          }}
+                          className="cursor-pointer py-3 px-4 text-emerald-400 focus:bg-emerald-400/5"
+                        >
+                          <Plus size={14} className="mr-2" />
+                          <span className="text-xs font-black uppercase tracking-widest">Tambah Kendaraan Baru</span>
+                        </CommandItem>
+                      )}
                     </CommandGroup>
                   </Command>
                 </PopoverContent>
@@ -581,16 +604,23 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                         </CommandGroup>
                         <CommandSeparator className="bg-white/5" />
                         <CommandGroup>
-                          <CommandItem
-                            onSelect={() => {
-                              setOpenDriver(false)
-                              setShowQuickAddDriver(true)
-                            }}
-                            className="cursor-pointer py-3 px-4 text-emerald-400 focus:bg-emerald-400/5"
-                          >
-                            <Plus size={14} className="mr-2" />
-                            <span className="text-xs font-black uppercase tracking-widest">Tambah Sopir Baru</span>
-                          </CommandItem>
+                          {driverLimitReached ? (
+                            <div className="px-4 py-3 flex items-center gap-2">
+                              <span className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Limit Starter (maks 1)</span>
+                              <Link to="/upgrade" className="text-[10px] font-black text-emerald-400 hover:underline">Upgrade →</Link>
+                            </div>
+                          ) : (
+                            <CommandItem
+                              onSelect={() => {
+                                setOpenDriver(false)
+                                setShowQuickAddDriver(true)
+                              }}
+                              className="cursor-pointer py-3 px-4 text-emerald-400 focus:bg-emerald-400/5"
+                            >
+                              <Plus size={14} className="mr-2" />
+                              <span className="text-xs font-black uppercase tracking-widest">Tambah Sopir Baru</span>
+                            </CommandItem>
+                          )}
                         </CommandGroup>
                       </Command>
                     </PopoverContent>

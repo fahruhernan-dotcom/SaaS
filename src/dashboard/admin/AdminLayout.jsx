@@ -354,27 +354,56 @@ export default function AdminLayout({ children }) {
     const isDesktop = useMediaQuery('(min-width: 1024px)')
     const [menuOpen, setMenuOpen] = useState(false)
 
-    if (isDesktop) {
-        return (
-            <div className="min-h-screen bg-[#06090F]">
-                <AdminSidebar />
-                <main className="lg:pl-[240px] pt-[calc(4.5rem+env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))] overflow-x-hidden">
-                    <div className="max-w-[1440px] mx-auto px-4 lg:px-8">
-                        {children || <Outlet />}
-                    </div>
-                </main>
-            </div>
-        )
-    }
-
     return (
-        <div className="bg-[#06090F] min-h-screen max-w-[480px] mx-auto shadow-2xl relative">
-            <AdminTopBar onOpenMenu={() => setMenuOpen(true)} />
-            <main className="pt-14 pb-20 overflow-x-hidden">
-                {children || <Outlet />}
-            </main>
-            <AdminBottomNav onOpenMenu={() => setMenuOpen(true)} />
-            <AdminMenuHub isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+        <div className="min-h-screen bg-[#06090F] selection:bg-emerald-500/30 selection:text-emerald-200 overflow-x-hidden relative">
+            {/* Background Orbs */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/5 blur-[120px] rounded-full" />
+                <div className="absolute bottom-[20%] left-[-5%] w-[30%] h-[30%] bg-purple-500/5 blur-[100px] rounded-full" />
+                <div className="absolute top-[40%] left-[10%] w-[20%] h-[20%] bg-blue-500/3 blur-[80px] rounded-full" />
+            </div>
+
+            {isDesktop ? (
+                <>
+                    <AdminSidebar />
+                    <main className="lg:pl-[240px] pt-[calc(2rem+env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))] relative z-10 transition-all duration-500">
+                        <div className="max-w-[1440px] mx-auto px-4 lg:px-8">
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={window.location.pathname}
+                                    initial={{ opacity: 0, y: 10, filter: 'blur(5px)' }}
+                                    animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                                    exit={{ opacity: 0, y: -10, filter: 'blur(5px)' }}
+                                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                                >
+                                    {children || <Outlet />}
+                                </motion.div>
+                            </AnimatePresence>
+                        </div>
+                    </main>
+                </>
+            ) : (
+                <div className="max-w-[480px] mx-auto shadow-2xl relative z-10">
+                    <AdminTopBar onOpenMenu={() => setMenuOpen(true)} />
+                    <main className="pt-20 pb-28">
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={window.location.pathname}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                transition={{ duration: 0.3 }}
+                                className="px-4"
+                            >
+                                {children || <Outlet />}
+                            </motion.div>
+                        </AnimatePresence>
+                    </main>
+                    <AdminBottomNav onOpenMenu={() => setMenuOpen(true)} />
+                    <AdminMenuHub isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
+                </div>
+            )}
         </div>
     )
 }
+

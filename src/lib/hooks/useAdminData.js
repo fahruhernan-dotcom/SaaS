@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 import { toast } from 'sonner'
+import { getSubscriptionStatus } from '../subscriptionUtils'
 
 export const useAllTenants = () => {
   return useQuery({
@@ -35,6 +36,9 @@ export const useAdminUpdateTenant = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-tenants'])
+      queryClient.invalidateQueries(['admin-all-users'])
+      queryClient.invalidateQueries(['profile'])
+      queryClient.invalidateQueries(['admin-global-stats'])
       toast.success('Tenant berhasil diupdate')
     },
     onError: (error) => {
@@ -464,24 +468,21 @@ export const useGlobalStats = () => useQuery({
         newThisMonth: tenants.filter(t => new Date(t.created_at) > thirtyDaysAgo).length,
         trialExpiringSoon: tenants
           .filter(t => {
-            if (t.plan !== 'starter' || !t.trial_ends_at) return false
-            const diff = new Date(t.trial_ends_at) - now
-            return diff > 0 && diff < 7 * 24 * 60 * 60 * 1000
+            const status = getSubscriptionStatus(t)
+            return status.status === 'trial' && status.isExpiringSoon
           })
-          .sort((a, b) => new Date(a.trial_ends_at) - new Date(b.trial_ends_at)),
+          .sort((a, b) => getSubscriptionStatus(a).daysLeft - getSubscriptionStatus(b).daysLeft),
         planExpiringSoon: tenants
           .filter(t => {
-            if (!['pro', 'business'].includes(t.plan) || !t.plan_expires_at) return false
-            const diff = new Date(t.plan_expires_at) - now
-            return diff > 0 && diff < 30 * 24 * 60 * 60 * 1000
+            const status = getSubscriptionStatus(t)
+            return status.status === 'active' && status.plan !== 'starter' && status.isExpiringSoon
           })
-          .sort((a, b) => new Date(a.plan_expires_at) - new Date(b.plan_expires_at)),
+          .sort((a, b) => getSubscriptionStatus(a).daysLeft - getSubscriptionStatus(b).daysLeft),
         planAlreadyExpired: tenants
-          .filter(t =>
-            ['pro', 'business'].includes(t.plan) &&
-            t.plan_expires_at &&
-            new Date(t.plan_expires_at) < now
-          ),
+          .filter(t => {
+            const status = getSubscriptionStatus(t)
+            return status.status === 'expired'
+          }),
         byVertical: {
           poultry_broker: tenants.filter(t => t.business_vertical === 'poultry_broker').length,
           egg_broker:     tenants.filter(t => t.business_vertical === 'egg_broker').length,

@@ -12,6 +12,7 @@ import {
 } from 'recharts'
 import { useGlobalStats, useAdminUpdateTenant } from '@/lib/hooks/useAdminData'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -313,7 +314,8 @@ export default function AdminBeranda() {
           <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
             {stats.tenants.trialExpiringSoon.length > 0 ? (
               stats.tenants.trialExpiringSoon.map(t => {
-                const daysLeft = Math.ceil((new Date(t.trial_ends_at) - new Date()) / (1000 * 60 * 60 * 24))
+                const sub = getSubscriptionStatus(t)
+                const daysLeft = sub.daysLeft
                 const urgency = daysLeft <= 3 ? 'text-red-400' : 'text-amber-400'
                 return (
                   <div

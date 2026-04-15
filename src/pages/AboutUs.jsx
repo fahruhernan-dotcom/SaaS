@@ -669,7 +669,7 @@ export default function AboutUs() {
                     Siap bergabung dengan ekosistem<br />peternakan modern?
                   </h2>
                   <p className="text-[#94A3B8] text-lg mb-10">
-                    Daftar dan coba gratis. Trial 14 hari, tidak perlu kartu kredit.
+                    Daftar dan mulai gratis selamanya. Tanpa perlu kartu kredit.
                   </p>
 
                   <div className="flex flex-wrap items-center justify-center gap-4">

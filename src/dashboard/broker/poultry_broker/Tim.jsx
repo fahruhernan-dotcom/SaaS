@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/hooks/useAuth';
@@ -212,13 +212,20 @@ export default function Tim() {
 
   if (loadingTenant || loadingMembers) return <TimSkeleton />
 
+  const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
+  const memberLimit = isStarter ? 1 : sub.plan === 'business' ? Infinity : 3
+
   const handleInviteClick = () => {
     const totalMembers = members.length + invitations.length;
-    if (sub.plan !== 'business' && totalMembers >= 3) {
-      toast.error('Kapasitas Tim Penuh', { description: 'Plan saat ini dibatasi maksimal 3 anggota. Upgrade ke Business untuk anggota unlimited!' });
-    } else {
-      setIsInviteSheetOpen(true);
+    if (isStarter) {
+      toast.error('Fitur Tim tidak tersedia di Starter', { description: 'Upgrade ke Pro untuk mengundang hingga 3 anggota tim.' });
+      return;
     }
+    if (sub.plan !== 'business' && totalMembers >= 3) {
+      toast.error('Kapasitas Tim Penuh', { description: 'Plan Pro dibatasi maksimal 3 anggota. Upgrade ke Business untuk anggota unlimited!' });
+      return;
+    }
+    setIsInviteSheetOpen(true);
   };
 
   return (
@@ -254,8 +261,10 @@ export default function Tim() {
             <p className="text-tx-3 mt-1 text-sm">
               {members.length} anggota aktif {invitations.length > 0 && `• ${invitations.length} undangan tertunda`}
               {sub.plan !== 'business' && (
-                <span className="ml-2 font-bold text-amber-500">
-                  (Kapasitas Plan: {members.length + invitations.length} / 3)
+                <span className={`ml-2 font-bold ${isStarter ? 'text-red-400' : 'text-amber-500'}`}>
+                  {isStarter
+                    ? '(Starter: hanya owner)'
+                    : `(Kapasitas Plan: ${members.length + invitations.length} / 3)`}
                 </span>
               )}
             </p>
@@ -275,11 +284,25 @@ export default function Tim() {
         <p className="text-tx-3 text-xs px-4 pt-1">
           {members.length} anggota aktif {invitations.length > 0 && `• ${invitations.length} undangan tertunda`}
           {sub.plan !== 'business' && (
-            <span className="ml-2 font-bold text-amber-500">
-              ({members.length + invitations.length}/3)
+            <span className={`ml-2 font-bold ${isStarter ? 'text-red-400' : 'text-amber-500'}`}>
+              {isStarter ? '(Starter: hanya owner)' : `(${members.length + invitations.length}/3)`}
             </span>
           )}
         </p>
+      )}
+
+      {isStarter && (
+        <div className={cn("flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-red-500/8 border border-red-500/20", isDesktop ? "" : "mx-4")}>
+          <div className="flex items-center gap-2.5">
+            <AlertCircle size={14} className="text-red-400 shrink-0" />
+            <p className="text-[12px] font-bold text-red-400">
+              Plan Starter hanya untuk 1 akun (owner). Upgrade ke Pro untuk mengundang tim.
+            </p>
+          </div>
+          <Link to="/upgrade" className="shrink-0 text-[10px] font-black text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors whitespace-nowrap">
+            Upgrade
+          </Link>
+        </div>
       )}
 
       <div className={cn(isDesktop ? "" : "px-4")}>

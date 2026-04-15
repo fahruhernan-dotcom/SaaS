@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate, useLocation, useOutletContext } from 'react-router-dom'
+import { useNavigate, useLocation, useOutletContext, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, Search, History, AlertCircle, Trash2, Loader2, Eye, Menu
@@ -20,6 +20,7 @@ import {
 } from '@/lib/format'
 import { useUpdateDelivery } from '@/lib/hooks/useUpdateDelivery'
 import { useRPA } from '@/lib/hooks/useRPA'
+import { useTransactionQuota } from '@/lib/hooks/useTransactionQuota'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -66,6 +67,7 @@ const fadeUp = {
 
 export default function Transaksi() {
   const { tenant, profile } = useAuth()
+  const quota = useTransactionQuota(tenant)
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const location = useLocation()
@@ -525,7 +527,10 @@ export default function Transaksi() {
     }
   }, [location.search, location.pathname, navigate])
 
-  const handleWizardOpen = React.useCallback(() => setWizardOpen(true), [])
+  const handleWizardOpen = React.useCallback(() => {
+    if (quota.isAtLimit) return
+    setWizardOpen(true)
+  }, [quota.isAtLimit])
 
   const handleDeliveryClose = React.useCallback(() => setShowUpdateDelivery(false), [])
 
@@ -627,7 +632,14 @@ export default function Transaksi() {
             {canWrite && (
               <button
                 onClick={handleWizardOpen}
-                className="w-9 h-9 rounded-xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/25 active:scale-90 transition-transform"
+                disabled={quota.isAtLimit}
+                title={quota.isAtLimit ? 'Kuota transaksi bulan ini habis' : 'Buat transaksi baru'}
+                className={cn(
+                  "w-9 h-9 rounded-xl flex items-center justify-center shadow-lg transition-all",
+                  quota.isAtLimit
+                    ? "bg-white/[0.06] cursor-not-allowed opacity-40"
+                    : "bg-emerald-500 shadow-emerald-500/25 active:scale-90"
+                )}
               >
                 <Plus size={17} className="text-white" />
               </button>
@@ -635,6 +647,55 @@ export default function Transaksi() {
           </div>
         </header>
         <div className="h-14" />
+
+        {/* Quota Banner — Starter only */}
+        {quota.isStarter && (
+          <div className={cn(
+            "mx-4 mt-3 px-4 py-3 rounded-xl flex items-center justify-between gap-3",
+            quota.isAtLimit
+              ? "bg-red-500/10 border border-red-500/25"
+              : quota.remaining <= 5
+                ? "bg-amber-500/10 border border-amber-500/20"
+                : "bg-white/[0.04] border border-white/[0.06]"
+          )}>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center"
+                style={{ background: quota.isAtLimit ? 'rgba(248,113,113,0.15)' : 'rgba(16,185,129,0.12)' }}>
+                <span className="text-[11px]">{quota.isAtLimit ? '🔒' : '📊'}</span>
+              </div>
+              <div className="min-w-0">
+                <p className={cn("text-[11px] font-bold leading-tight", quota.isAtLimit ? "text-red-400" : quota.remaining <= 5 ? "text-amber-400" : "text-[#94A3B8]")}>
+                  {quota.isAtLimit
+                    ? 'Kuota bulan ini habis'
+                    : `${quota.used} / ${quota.limit} transaksi bulan ini`}
+                </p>
+                {quota.isAtLimit && (
+                  <p className="text-[10px] text-[#64748B] mt-0.5">Upgrade ke Pro untuk transaksi unlimited</p>
+                )}
+              </div>
+            </div>
+            {/* Progress bar */}
+            {!quota.isAtLimit && (
+              <div className="w-20 flex-shrink-0">
+                <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.min(100, (quota.used / quota.limit) * 100)}%`,
+                      background: quota.remaining <= 5 ? '#F59E0B' : '#10B981',
+                    }}
+                  />
+                </div>
+                <p className="text-[9px] text-[#4B6478] text-right mt-0.5">{quota.remaining} sisa</p>
+              </div>
+            )}
+            {quota.isAtLimit && (
+              <Link to="/upgrade" className="flex-shrink-0 text-[10px] font-black text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg whitespace-nowrap hover:bg-emerald-500/10 transition-colors">
+                Upgrade
+              </Link>
+            )}
+          </div>
+        )}
 
         {/* Collapsible Search */}
         <AnimatePresence>
@@ -767,7 +828,14 @@ export default function Transaksi() {
           actionButton={canWrite && (
             <Button
               onClick={handleWizardOpen}
-              className="h-10 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all shrink-0"
+              disabled={quota.isAtLimit}
+              title={quota.isAtLimit ? 'Kuota transaksi bulan ini habis — Upgrade ke Pro' : undefined}
+              className={cn(
+                "h-10 text-white font-black text-[10px] uppercase tracking-widest rounded-xl shadow-lg active:scale-95 transition-all shrink-0",
+                quota.isAtLimit
+                  ? "bg-white/[0.08] opacity-50 cursor-not-allowed shadow-none"
+                  : "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20"
+              )}
             >
               <Plus size={14} className="mr-1" /> JUAL
             </Button>

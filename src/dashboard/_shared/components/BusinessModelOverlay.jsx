@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Lock, ArrowLeft, Building2 } from 'lucide-react'
+import { Check, Lock, ArrowLeft, Building2, MapPin, ChevronDown } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { BUSINESS_MODELS, BUSINESS_CATEGORIES } from '@/lib/businessModel'
 import { toTitleCase } from '@/lib/format'
+import { PROVINCES } from '@/lib/constants/regions'
 
 export default function BusinessModelOverlay({ profile, onComplete }) {
   const [step, setStep] = useState(1)
@@ -12,6 +13,8 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
   const [businessName, setBusinessName] = useState('')
   const [nameChecking, setNameChecking] = useState(false)
   const [nameTaken, setNameTaken] = useState(false)
+  const [province, setProvince] = useState('')
+  const [provinceOpen, setProvinceOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const debounceRef = useRef(null)
 
@@ -50,6 +53,7 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
   const handleConfirm = async () => {
     if (!selected || !businessName.trim() || businessName.trim().length < 3) return
     if (nameTaken || nameChecking) return
+    if (!province) return
     const model = BUSINESS_MODELS[selected]
     if (!model) return
 
@@ -87,6 +91,7 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
             sub_type: model.sub_type,
             business_vertical: model.key,
             business_name: formattedName,
+            province: province || null,
           })
           .eq('id', profile.tenant_id)
       }
@@ -274,22 +279,10 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
             >
               {/* Business Name Input */}
               <div style={{ marginBottom: '16px' }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  background: 'rgba(16,185,129,0.06)',
-                  border: '1px solid rgba(16,185,129,0.15)',
-                  borderRadius: '12px',
-                  padding: '12px 14px',
-                  marginBottom: '14px',
-                }}>
-                  <Building2 size={16} color="#10B981" />
-                  <span style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#4B6478', lineHeight: 1.5 }}>
-                    Nama ini akan tampil di sidebar, invoice, dan laporan bisnismu.
-                  </span>
-                </div>
-
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 800, color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '8px', marginLeft: '2px' }}>
+                  <Building2 size={11} color="#4B6478" />
+                  Nama Bisnis *
+                </label>
                 <input
                   type="text"
                   value={businessName}
@@ -332,24 +325,111 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
                 )}
                 {businessName.trim().length >= 3 && !nameChecking && nameTaken && (
                   <p style={{ fontSize: '12px', color: '#F87171', marginTop: '6px', marginLeft: '4px' }}>
-                    ❌ Nama "<strong>{toTitleCase(businessName)}</strong>" sudah dipakai bisnis lain. Coba nama yang berbeda.
+                    ❌ Nama "<strong>{toTitleCase(businessName)}</strong>" sudah dipakai bisnis lain.
                   </p>
                 )}
                 {businessName.trim().length >= 3 && !nameChecking && !nameTaken && (
                   <p style={{ fontSize: '12px', color: '#10B981', marginTop: '6px', marginLeft: '4px' }}>
-                    ✅ Akan disimpan sebagai: <strong>{toTitleCase(businessName)}</strong>
+                    ✅ <strong>{toTitleCase(businessName)}</strong>
                   </p>
                 )}
               </div>
 
+              {/* Province Dropdown */}
+              <div style={{ marginBottom: '16px', position: 'relative' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 800, color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '8px', marginLeft: '2px' }}>
+                  <MapPin size={11} color="#4B6478" />
+                  Provinsi *
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setProvinceOpen(v => !v)}
+                  style={{
+                    width: '100%',
+                    padding: '13px 16px',
+                    background: '#111C24',
+                    border: province
+                      ? '1px solid rgba(16,185,129,0.4)'
+                      : '1px solid rgba(255,255,255,0.09)',
+                    borderRadius: '12px',
+                    color: province ? '#F1F5F9' : '#4B6478',
+                    fontFamily: 'DM Sans',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    transition: 'border-color 0.2s ease',
+                    textAlign: 'left',
+                  }}
+                >
+                  <span>{province || 'Pilih provinsi...'}</span>
+                  <ChevronDown size={15} color="#4B6478" style={{ transform: provinceOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
+                </button>
+
+                <AnimatePresence>
+                  {provinceOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.15 }}
+                      style={{
+                        position: 'absolute',
+                        top: 'calc(100% + 6px)',
+                        left: 0, right: 0,
+                        background: '#0C1319',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '12px',
+                        maxHeight: '200px',
+                        overflowY: 'auto',
+                        zIndex: 100,
+                        padding: '6px',
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+                      }}
+                    >
+                      {PROVINCES.map(p => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => { setProvince(p); setProvinceOpen(false) }}
+                          style={{
+                            width: '100%',
+                            padding: '9px 12px',
+                            background: province === p ? 'rgba(16,185,129,0.1)' : 'transparent',
+                            border: 'none',
+                            borderRadius: '8px',
+                            color: province === p ? '#10B981' : '#F1F5F9',
+                            fontFamily: 'DM Sans',
+                            fontSize: '13px',
+                            fontWeight: province === p ? 700 : 400,
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                          }}
+                        >
+                          {province === p && <Check size={12} color="#10B981" strokeWidth={3} />}
+                          {p}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
               <motion.button
                 onClick={handleConfirm}
-                disabled={loading || businessName.trim().length < 3 || nameTaken || nameChecking}
+                disabled={loading || businessName.trim().length < 3 || nameTaken || nameChecking || !province}
                 whileTap={{ scale: 0.97 }}
                 style={{
                   width: '100%',
                   padding: '15px',
-                  background: (businessName.trim().length >= 3 && !nameTaken && !nameChecking)
+                  background: (businessName.trim().length >= 3 && !nameTaken && !nameChecking && province)
                     ? '#10B981'
                     : 'rgba(16,185,129,0.3)',
                   color: 'white',
@@ -359,7 +439,7 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
                   fontSize: '15px',
                   fontWeight: 700,
                   boxShadow: businessName.trim().length >= 3 ? '0 4px 20px rgba(16,185,129,0.25)' : 'none',
-                  cursor: loading || businessName.trim().length < 3 ? 'not-allowed' : 'pointer',
+                  cursor: loading || businessName.trim().length < 3 || !province ? 'not-allowed' : 'pointer',
                   opacity: loading ? 0.7 : 1,
                   transition: 'all 0.2s ease',
                 }}

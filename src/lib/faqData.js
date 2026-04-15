@@ -50,17 +50,17 @@ export const FAQ_DATA = {
     },
     {
       q: 'Apakah TernakOS bisa dipakai untuk bisnis peternakan yang baru mulai?',
-      a: 'Sangat cocok. Paket Starter gratis 14 hari tanpa kartu kredit. Setup kurang dari 15 menit, tidak perlu pengetahuan teknis. Langsung bisa catat transaksi pertama di hari yang sama.',
+      a: 'Sangat cocok. Paket Starter gratis selamanya tanpa kartu kredit. Setup kurang dari 15 menit, tidak perlu pengetahuan teknis. Langsung bisa catat transaksi pertama di hari yang sama.',
       link: '/harga',
     },
     {
       q: 'Berapa biaya berlangganan TernakOS per bulan?',
-      a: 'TernakOS menyediakan tiga paket: Starter (gratis, trial 14 hari), Pro (berbayar, untuk bisnis berkembang), dan Business (berbayar, untuk operasi skala besar dengan fitur penuh). Cek halaman harga untuk detail terkini.',
+      a: 'TernakOS menyediakan tiga paket: Starter (gratis selamanya), Pro (berbayar, untuk bisnis berkembang), dan Business (berbayar, untuk operasi skala besar dengan fitur penuh). Cek halaman harga untuk detail terkini.',
       link: '/harga',
     },
     {
       q: 'Apakah ada versi gratis TernakOS?',
-      a: 'Ada. Kamu bisa mulai trial 14 hari penuh tanpa kartu kredit dan tanpa batasan fitur. Setelah trial berakhir, kamu bisa pilih paket berbayar atau akun akan dibatasi ke mode read-only.',
+      a: 'Ada. Kamu bisa menggunakan paket Starter secara gratis selamanya tanpa kartu kredit. Untuk fitur lebih lengkap, tersedia trial 14 hari untuk paket Pro dan Business.',
       link: '/harga',
     },
     {
@@ -79,7 +79,7 @@ export const FAQ_DATA = {
     },
     {
       q: 'Apakah TernakOS memiliki fitur notifikasi otomatis?',
-      a: 'Ya. TernakOS mengirim notifikasi in-app untuk: piutang jatuh tempo, stok pakan menipis, pengiriman tiba, harga pasar berubah, dan masa trial hampir habis. Tidak perlu cek manual setiap hari.',
+      a: 'Ya. TernakOS mengirim notifikasi in-app untuk: piutang jatuh tempo, stok pakan menipis, pengiriman tiba, harga pasar berubah, dan masa berlangganan hampir habis. Tidak perlu cek manual setiap hari.',
     },
     {
       q: 'Bagaimana cara daftar akun TernakOS?',
@@ -131,7 +131,7 @@ export const FAQ_DATA = {
     },
     {
       q: 'Apakah ada demo atau video tutorial TernakOS?',
-      a: 'Kamu bisa langsung coba trial 14 hari gratis untuk merasakan semua fitur secara langsung. Tutorial dan panduan penggunaan tersedia di dalam aplikasi.',
+      a: 'Kamu bisa langsung daftar dan menggunakan paket Starter secara gratis selamanya. Tutorial dan panduan penggunaan tersedia di dalam aplikasi.',
       link: '/register',
     },
     {
@@ -778,7 +778,7 @@ export const FAQ_DATA = {
     },
     {
       q: 'Apakah ada biaya bulanan atau sekali bayar untuk TernakOS?',
-      a: 'TernakOS menggunakan model berlangganan bulanan (atau tahunan dengan diskon). Tidak ada biaya setup atau biaya tersembunyi. Paket Starter tersedia gratis dengan trial 14 hari penuh.',
+      a: 'TernakOS menggunakan model berlangganan bulanan (atau tahunan dengan diskon). Tidak ada biaya setup atau biaya tersembunyi. Paket Starter tersedia gratis selamanya.',
       link: '/harga',
     },
     {
@@ -815,7 +815,7 @@ export const FAQ_DATA = {
     },
     {
       q: 'Apa yang terjadi dengan data saya jika masa trial TernakOS berakhir?',
-      a: 'Setelah trial 14 hari berakhir, akun masuk mode read-only — kamu masih bisa melihat data yang sudah ada tetapi tidak bisa input data baru. Upgrade ke paket berbayar kapan saja untuk melanjutkan.',
+      a: 'Untuk paket Pro dan Business, setelah masa trial 14 hari berakhir, akun masuk mode read-only — kamu masih bisa melihat data yang sudah ada tetapi tidak bisa input data baru. Upgrade ke paket berbayar kapan saja untuk melanjutkan.',
       link: '/harga',
     },
     {
@@ -965,7 +965,7 @@ export const FAQ_DATA = {
     },
     {
       q: 'Apa perbedaan paket Starter, Pro, dan Business di TernakOS?',
-      a: 'Starter: gratis trial 14 hari, 1 kandang (peternak), fitur dasar. Pro: berbayar, lebih banyak kandang, fitur analitik lanjutan. Business: unlimited kandang, unlimited pengguna, semua fitur termasuk API dan priority support.',
+      a: 'Starter: gratis selamanya, 1 kandang (peternak), fitur dasar. Pro: berbayar, lebih banyak kandang, fitur analitik lanjutan. Business: unlimited kandang, unlimited pengguna, semua fitur termasuk API dan priority support.',
       link: '/harga',
     },
     {

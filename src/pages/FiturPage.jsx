@@ -513,7 +513,7 @@ const BEFORE_AFTER = {
 const FAQ_COMMON = [
   {
     q: 'Apakah TernakOS gratis?',
-    a: 'TernakOS menyediakan trial gratis 14 hari tanpa kartu kredit. Setelah trial, tersedia paket Starter, Pro, dan Business dengan harga yang terjangkau sesuai skala bisnis kamu.',
+    a: 'TernakOS menyediakan paket Starter gratis selamanya. Untuk fitur yang lebih lengkap, kamu bisa mencoba trial paket Pro atau Business secara gratis tanpa kartu kredit.',
   },
   {
     q: 'Berapa lama setup awal TernakOS?',
@@ -549,7 +549,7 @@ const FAQ_COMMON = [
   },
   {
     q: 'Apakah ada notifikasi otomatis?',
-    a: 'Ya. TernakOS mengirim notifikasi in-app untuk: piutang jatuh tempo, stok pakan menipis, pengiriman tiba, dan trial hampir habis. Tidak perlu cek manual setiap hari.',
+    a: 'Ya. TernakOS mengirim notifikasi in-app untuk: piutang jatuh tempo, stok pakan menipis, pengiriman tiba, dan masa berlangganan hampir habis. Tidak perlu cek manual setiap hari.',
   },
 ]
 
@@ -812,7 +812,7 @@ export default function FiturPage() {
                 <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-xs text-[#4B6478] font-medium">
                   <span className="flex items-center gap-1.5">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block" />
-                    Trial 14 hari gratis
+                    Mulai gratis sekarang
                   </span>
                   <span className="flex items-center gap-1.5">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block" />
@@ -847,8 +847,8 @@ export default function FiturPage() {
                   type="button"
                   onClick={() => handleRoleChange(role.id)}
                   className={`relative z-10 px-5 md:px-7 py-2 rounded-full text-[11px] md:text-xs font-bold uppercase tracking-wider transition-colors duration-200 cursor-pointer border-none ${selectedRole === role.id
-                      ? 'text-emerald-400'
-                      : 'text-white/40 hover:text-white/70'
+                    ? 'text-emerald-400'
+                    : 'text-white/40 hover:text-white/70'
                     }`}
                 >
                   {selectedRole === role.id && (
@@ -873,10 +873,10 @@ export default function FiturPage() {
                     disabled={sub.disabled}
                     onClick={() => !sub.disabled && setSelectedSub(sub.id)}
                     className={`flex items-center gap-1 px-3.5 py-1 rounded-full text-[11px] font-semibold border transition-colors duration-150 ${sub.disabled
-                        ? 'opacity-40 cursor-not-allowed border-white/8 text-white/40'
-                        : selectedSub === sub.id
-                          ? 'border-white/20 bg-white/[0.08] text-white cursor-pointer'
-                          : 'border-transparent text-white/50 hover:text-white/70 cursor-pointer'
+                      ? 'opacity-40 cursor-not-allowed border-white/8 text-white/40'
+                      : selectedSub === sub.id
+                        ? 'border-white/20 bg-white/[0.08] text-white cursor-pointer'
+                        : 'border-transparent text-white/50 hover:text-white/70 cursor-pointer'
                       }`}
                   >
                     {sub.label}
@@ -1070,7 +1070,7 @@ export default function FiturPage() {
                         Siap coba semua fitur ini?
                       </h2>
                       <p className="text-[#94A3B8] text-base mb-10">
-                        14 hari gratis, tanpa kartu kredit, tanpa instalasi.
+                        Gratis selamanya, tanpa kartu kredit, tanpa instalasi.
                       </p>
 
                       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
 import { getXBasePath, resolveBusinessVertical } from '../businessModel'
+import { getSubscriptionStatus } from '../subscriptionUtils'
 
 const NotificationsContext = createContext()
 
@@ -147,30 +148,22 @@ export const useNotificationGenerator = () => {
       }
 
       // 2. Notifikasi subscription
-      const isPaidPlan = tenant.plan === 'pro' || tenant.plan === 'business'
-      const expiryDate = isPaidPlan
-        ? (tenant.plan_expires_at ? new Date(tenant.plan_expires_at) : null)
-        : (tenant.trial_ends_at ? new Date(tenant.trial_ends_at) : null)
-      const threshold = isPaidPlan ? 14 : 7
-
-      if (expiryDate) {
-        const daysLeft = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24))
-        if (daysLeft <= threshold && daysLeft > 0) {
-          if (!existingKeys.has('subscription_expires' + tenant.id)) {
-            const title = isPaidPlan
-              ? `Langganan ${tenant.plan === 'pro' ? 'Pro' : 'Business'} Akan Berakhir`
-              : 'Trial Akan Berakhir'
-            await supabase.from('notifications').insert({
-              tenant_id: tenant.id,
-              type: 'subscription_expires',
-              title,
-              body: isPaidPlan
-                ? `Langganan ${tenant.plan === 'pro' ? 'Pro' : 'Business'} kamu berakhir dalam ${daysLeft} hari.`
-                : `Trial kamu berakhir dalam ${daysLeft} hari.`,
-              action_url: `${basePath}/akun`,
-              metadata: { ref_id: tenant.id, days_left: daysLeft },
-            })
-          }
+      const sub = getSubscriptionStatus(tenant)
+      
+      // Only notify for trial or active paid plans with imminent expiry
+      if (sub.status === 'trial' || (sub.status === 'active' && sub.plan !== 'starter' && sub.isExpiringSoon)) {
+        if (!existingKeys.has('subscription_expires' + tenant.id)) {
+          const title = sub.status === 'trial' ? 'Trial Akan Berakhir' : `Langganan ${toTitleCase(sub.plan)} Akan Berakhir`
+          await supabase.from('notifications').insert({
+            tenant_id: tenant.id,
+            type: 'subscription_expires',
+            title,
+            body: sub.status === 'trial' 
+              ? `Trial kamu berakhir dalam ${sub.daysLeft} hari.`
+              : `Langganan ${toTitleCase(sub.plan)} kamu berakhir dalam ${sub.daysLeft} hari.`,
+            action_url: `${basePath}/akun`,
+            metadata: { ref_id: tenant.id, days_left: sub.daysLeft },
+          })
         }
       }
 
