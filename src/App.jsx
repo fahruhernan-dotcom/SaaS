@@ -289,6 +289,16 @@ function RootLayout() {
   );
 }
 
+const AdminComingSoon = () => (
+  <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+    <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(16,185,129,0.15)]">
+      <span className="text-3xl">🚧</span>
+    </div>
+    <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-2">Segera Hadir</h2>
+    <p className="text-[#4B6478] font-bold text-sm tracking-wider uppercase">Menu ini sedang dalam tahap pengembangan.</p>
+  </div>
+);
+
 export const routes = createRoutesFromElements(
   <Route>
     {/* SPA Fallback route to avoid SSG pollution on Dashboard */}
@@ -460,6 +470,9 @@ export const routes = createRoutesFromElements(
       <Route path="subscriptions" element={<AdminSubscriptions />} />
       <Route path="pricing" element={<AdminPricing />} />
       <Route path="activity" element={<AdminActivity />} />
+      <Route path="settings" element={<AdminComingSoon />} />
+      <Route path="info" element={<AdminComingSoon />} />
+      <Route path="help" element={<AdminComingSoon />} />
     </Route>
 
     {/* Fallback */}

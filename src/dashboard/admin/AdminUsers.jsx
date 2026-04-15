@@ -61,18 +61,36 @@ export default function AdminUsers() {
 
   // Stats calculation
   const stats = useMemo(() => {
-    if (!tenants) return { totalTenants: 0, totalUsers: 0, activePro: 0, activeBusiness: 0 }
+    const totalTenants = tenants?.length || 0
+    let totalUsers = 0
+    let activePro = 0
+    let activeBusiness = 0
 
-    return tenants.reduce((acc, t) => {
-      acc.totalTenants += 1
-      acc.totalUsers += t.profiles?.length || 0
-      if (t.is_active) {
-        if (t.plan === 'pro') acc.activePro += 1
-        if (t.plan === 'business') acc.activeBusiness += 1
-      }
-      return acc
-    }, { totalTenants: 0, totalUsers: 0, activePro: 0, activeBusiness: 0 })
-  }, [tenants])
+    if (tenants) {
+      tenants.forEach(t => {
+        if (t.is_active) {
+          if (t.plan === 'pro') activePro += 1
+          if (t.plan === 'business') activeBusiness += 1
+        }
+      })
+    }
+
+    if (allUsers) {
+      const uniqueIds = new Set()
+      allUsers.forEach(u => {
+        uniqueIds.add(u.auth_user_id || u.full_name)
+      })
+      totalUsers = uniqueIds.size
+    } else if (tenants) {
+      const uniqueIds = new Set()
+      tenants.forEach(t => {
+        t.profiles?.forEach(p => uniqueIds.add(p.auth_user_id || p.full_name))
+      })
+      totalUsers = uniqueIds.size
+    }
+
+    return { totalTenants, totalUsers, activePro, activeBusiness }
+  }, [tenants, allUsers])
 
   // Filtering logic
   const filteredTenants = useMemo(() => {
