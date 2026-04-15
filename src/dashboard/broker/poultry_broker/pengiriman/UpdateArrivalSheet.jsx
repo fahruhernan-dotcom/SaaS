@@ -267,6 +267,10 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
         setArrivedQty(Math.max(0, initialCount - num))
     }
 
+    // Scale Logic
+    const totalScaleKita = scaleEntries.reduce((acc, e) => acc + (parseFloat(e.weightKita) || 0), 0)
+    const selisihKg = initialKg - totalScaleKita
+
     const tibaKg = inputMode === 'scale' ? totalScaleKita : beratTibaKg
     const tibaCount = safeNum(arrivedQty)
     const matiEkor = safeNum(mortalityQty)
@@ -274,10 +278,6 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
     const susutPct = initialKg > 0
       ? (susutKg / initialKg * 100).toFixed(1)
       : 0
-
-    // Scale Logic
-    const totalScaleKita = scaleEntries.reduce((acc, e) => acc + (parseFloat(e.weightKita) || 0), 0)
-    const selisihKg = initialKg - totalScaleKita
 
     const handleAddScale = () => {
         if (!newScaleEntry.weightKita) {
