@@ -48,6 +48,7 @@ import MarketPublic from './pages/MarketPublic';
 import HubungiKami from './pages/HubungiKami';
 import BlogPage from './pages/BlogPage';
 import BlogPostPage from './pages/BlogPostPage';
+import NotFound from './pages/NotFound';
 
 // Components
 import ErrorBoundary from './components/ErrorBoundary';
@@ -476,7 +477,7 @@ export const routes = createRoutesFromElements(
     </Route>
 
     {/* Fallback */}
-    <Route path="*" element={<Navigate to="/" replace />} />
+    <Route path="*" element={<NotFound />} />
   </Route>
   </Route>
 );
