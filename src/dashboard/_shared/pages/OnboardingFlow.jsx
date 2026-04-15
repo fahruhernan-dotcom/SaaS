@@ -1,5 +1,5 @@
 import React from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/lib/hooks/useAuth'
 import BusinessModelOverlay from '../components/BusinessModelOverlay'
 import LoadingScreen from '@/components/LoadingScreen'
@@ -20,35 +20,44 @@ const KEY_TO_PATH = {
 export default function OnboardingFlow() {
   const { profile, loading, refetchProfile } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const isNewBusiness = searchParams.get('mode') === 'new_business'
 
   // Hooks MUST come before any early returns
   React.useEffect(() => {
-    if (loading || !profile?.onboarded) return
-    if (profile.role === 'superadmin' || profile.user_type === 'superadmin') {
-      navigate('/admin', { replace: true })
-      return
+    if (loading) return
+    
+    // Original redirect logic only if NOT in new business mode
+    if (!isNewBusiness && profile?.onboarded) {
+      if (profile.role === 'superadmin' || profile.user_type === 'superadmin') {
+        navigate('/admin', { replace: true })
+        return
+      }
+      if (profile.user_type === 'peternak') {
+        navigate(`/peternak/${profile.tenants?.sub_type || 'peternak_broiler'}/beranda`, { replace: true })
+        return
+      }
+      if (profile.user_type === 'rumah_potong') {
+        navigate(`/rumah_potong/${profile.tenants?.sub_type || 'rpa_ayam'}/beranda`, { replace: true })
+        return
+      }
+      navigate(getBrokerBasePath(profile.tenants) + '/beranda', { replace: true })
     }
-    if (profile.user_type === 'peternak') {
-      navigate(`/peternak/${profile.tenants?.sub_type || 'peternak_broiler'}/beranda`, { replace: true })
-      return
-    }
-    if (profile.user_type === 'rumah_potong') {
-      navigate(`/rumah_potong/${profile.tenants?.sub_type || 'rpa_ayam'}/beranda`, { replace: true })
-      return
-    }
-    navigate(getBrokerBasePath(profile.tenants) + '/beranda', { replace: true })
-  }, [profile, loading, navigate])
+  }, [profile, loading, navigate, isNewBusiness])
 
-  if (loading || profile?.onboarded) return <LoadingScreen />
+  if (loading || (!isNewBusiness && profile?.onboarded)) return <LoadingScreen />
 
   return (
     <div className="min-h-screen bg-[#06090F]">
       <BusinessModelOverlay
         profile={profile}
+        isNewBusiness={isNewBusiness}
         onComplete={async (selectedKey) => {
           await refetchProfile()
           const path = KEY_TO_PATH[selectedKey]
           if (path) navigate(path, { replace: true })
+          // If it was a new business, we might want to refresh the whole App state to see the new profile in sidebar
+          if (isNewBusiness) window.location.reload()
         }}
       />
     </div>

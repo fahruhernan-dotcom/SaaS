@@ -6,7 +6,7 @@ import { BUSINESS_MODELS, BUSINESS_CATEGORIES } from '@/lib/businessModel'
 import { toTitleCase } from '@/lib/format'
 import { PROVINCES } from '@/lib/constants/regions'
 
-export default function BusinessModelOverlay({ profile, onComplete }) {
+export default function BusinessModelOverlay({ profile, isNewBusiness, onComplete }) {
   const [step, setStep] = useState(1)
   const [category, setCategory] = useState(null)
   const [selected, setSelected] = useState(null)
@@ -25,7 +25,7 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
   }, [category])
 
   if (!profile) return null
-  if (profile.business_model_selected) return null
+  if (profile.business_model_selected && !isNewBusiness) return null
 
   // Reset name check state when name changes
   const handleNameChange = (val) => {
@@ -73,27 +73,66 @@ export default function BusinessModelOverlay({ profile, onComplete }) {
 
     setLoading(true)
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          user_type: model.user_type,
-          business_model_selected: true,
-          onboarded: true,
-        })
-        .eq('auth_user_id', profile.auth_user_id)
-
-      if (error) throw error
-
-      if (profile.tenant_id && model.sub_type) {
-        await supabase
+      if (isNewBusiness) {
+        // --- MULTI-TENANT: Create New Tenant & Profile ---
+        
+        // 1. Insert New Tenant
+        const { data: newTenant, error: tErr } = await supabase
           .from('tenants')
-          .update({ 
-            sub_type: model.sub_type,
-            business_vertical: model.key,
+          .insert({
             business_name: formattedName,
+            business_vertical: model.key,
+            sub_type: model.sub_type,
             province: province || null,
+            plan: 'starter',
+            trial_ends_at: null
           })
-          .eq('id', profile.tenant_id)
+          .select()
+          .single()
+
+        if (tErr) throw tErr
+
+        // 2. Insert New Profile (Owner) for this tenant
+        const { error: pErr } = await supabase
+          .from('profiles')
+          .insert({
+            auth_user_id: profile.auth_user_id,
+            tenant_id: newTenant.id,
+            role: 'owner',
+            user_type: model.user_type,
+            business_model_selected: true,
+            onboarded: true,
+            full_name: profile.full_name || 'Owner'
+          })
+
+        if (pErr) throw pErr
+
+      } else {
+        // --- INITIAL ONBOARDING: Update Existing ---
+        const { error: profError } = await supabase
+          .from('profiles')
+          .update({
+            user_type: model.user_type,
+            business_model_selected: true,
+            onboarded: true,
+          })
+          .eq('auth_user_id', profile.auth_user_id)
+
+        if (profError) throw profError
+
+        if (profile.tenant_id && model.sub_type) {
+          const { error: tenError } = await supabase
+            .from('tenants')
+            .update({ 
+              sub_type: model.sub_type,
+              business_vertical: model.key,
+              business_name: formattedName,
+              province: province || null,
+            })
+            .eq('id', profile.tenant_id)
+          
+          if (tenError) throw tenError
+        }
       }
 
       if (onComplete) onComplete(selected)
