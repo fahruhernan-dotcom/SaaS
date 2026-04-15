@@ -75,38 +75,17 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
     setLoading(true)
     try {
       if (isNewBusiness) {
-        // --- MULTI-TENANT: Create New Tenant & Profile ---
-        
-        // 1. Insert New Tenant
-        const { data: newTenant, error: tErr } = await supabase
-          .from('tenants')
-          .insert({
-            business_name: formattedName,
-            business_vertical: model.key,
-            sub_type: model.sub_type,
-            province: province || null,
-            plan: 'starter',
-            trial_ends_at: null
-          })
-          .select()
-          .single()
-
-        if (tErr) throw tErr
-
-        // 2. Insert New Profile (Owner) for this tenant
-        const { error: pErr } = await supabase
-          .from('profiles')
-          .insert({
-            auth_user_id: profile.auth_user_id,
-            tenant_id: newTenant.id,
-            role: 'owner',
-            user_type: model.user_type,
-            business_model_selected: true,
-            onboarded: true,
-            full_name: profile.full_name || 'Owner'
+        // --- MULTI-TENANT: Use RPC for Atomic Creation (Bypasses RLS issues) ---
+        const { data: newTenantId, error: rpcError } = await supabase
+          .rpc('setup_new_business', {
+            p_business_name: formattedName,
+            p_vertical: model.key,
+            p_sub_type: model.sub_type,
+            p_province: province || null
           })
 
-        if (pErr) throw pErr
+        if (rpcError) throw rpcError
+        console.log('Successfully created new business:', newTenantId)
 
       } else {
         // --- INITIAL ONBOARDING: Update Existing ---
