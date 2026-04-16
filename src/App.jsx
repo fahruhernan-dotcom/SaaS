@@ -188,14 +188,10 @@ function RoleRedirector() {
     return <Navigate to={`/broker/${subType}/sopir`} replace />;
   }
   
-  const role = profile.user_type === 'rumah_potong' ? 'rumah_potong' : profile.user_type;
-  
-  // If superadmin, owner, broker, or rumah_potong, point to the vertical-specific beranda
-  if (profile.role === 'superadmin' || profile.role === 'owner' || profile.user_type === 'broker' || profile.user_type === 'rumah_potong') {
-    return <Navigate to={getVerticalBeranda(tenant, profile)} replace />;
-  }
-  
-  return <Navigate to={`/${role}/beranda`} replace />;
+  // Always use getVerticalBeranda — it correctly resolves sub_type for all user types
+  // Previously used `/${role}/beranda` which produced /peternak/beranda instead of
+  // /peternak/peternak_broiler/beranda, causing a URL structure mismatch.
+  return <Navigate to={getVerticalBeranda(tenant, profile)} replace />;
 }
 
 function DashboardLayout({ children }) {

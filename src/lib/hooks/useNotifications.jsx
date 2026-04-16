@@ -1,8 +1,11 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
 import { getXBasePath, resolveBusinessVertical } from '../businessModel'
 import { getSubscriptionStatus } from '../subscriptionUtils'
+
+const toTitleCase = (str) =>
+  str ? str.charAt(0).toUpperCase() + str.slice(1).toLowerCase() : ''
 
 const NotificationsContext = createContext()
 
@@ -89,8 +92,9 @@ export const useNotifications = () => useContext(NotificationsContext) ?? {
 export const useNotificationGenerator = () => {
   const { tenant, profile } = useAuth()
   const context = useNotifications()
-  const notifications = context?.notifications || []
-  
+  const notificationsRef = useRef([])
+  notificationsRef.current = context?.notifications || []
+
   const vertical = resolveBusinessVertical(profile, tenant)
   const basePath = getXBasePath(tenant, profile)
 
@@ -98,8 +102,9 @@ export const useNotificationGenerator = () => {
     if (!tenant?.id) return
     try {
       const today = new Date()
+      // Use ref to always read latest notifications without stale closure
       const existingKeys = new Set(
-        notifications.map((n) => n.type + (n.metadata?.ref_id ?? ''))
+        notificationsRef.current.map((n) => n.type + (n.metadata?.ref_id ?? ''))
       )
 
       // 1. Piutang jatuh tempo

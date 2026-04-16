@@ -527,7 +527,7 @@ export function resolveBusinessVertical(profile, tenant) {
   
   if (model && userType && userType !== 'superadmin' && userType !== 'owner' && role !== 'superadmin' && role !== 'owner') {
     if (model.category !== userType) {
-      if (userType === 'peternak') return 'peternak_broiler'
+      if (userType === 'peternak') return 'peternak'        // 'peternak' is the valid BUSINESS_MODELS key
       if (userType === 'rumah_potong') return 'rumah_potong_rpa'
       return 'poultry_broker'
     }
