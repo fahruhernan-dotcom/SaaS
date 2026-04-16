@@ -30,6 +30,44 @@ import { PROVINCES } from '@/lib/constants/regions'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const WIB_OFFSET = 7 * 60 * 60 * 1000
+
+// Arboge stores generic region names (e.g. "Sumatera" not "Sumatera Utara").
+// This maps each province to the arboge region key stored in DB.
+const PROVINCE_TO_ARBOGE_REGION = {
+  'DKI Jakarta': 'Jakarta',
+  'Banten': 'Banten',
+  'Jawa Barat': 'Jawa Barat',
+  'Jawa Tengah': 'Jawa Tengah',
+  'DI Yogyakarta': 'Jawa Tengah',
+  'Jawa Timur': 'Jawa Timur',
+  'Bali': 'Bali',
+  'Nusa Tenggara Barat': 'NTB',
+  'Nusa Tenggara Timur': 'NTT',
+  'Lampung': 'Lampung',
+  // Sumatera provinces → generic "Sumatera"
+  'Aceh': 'Sumatera',
+  'Sumatera Utara': 'Sumatera',
+  'Sumatera Barat': 'Sumatera',
+  'Riau': 'Sumatera',
+  'Kepulauan Riau': 'Sumatera',
+  'Jambi': 'Sumatera',
+  'Sumatera Selatan': 'Sumatera',
+  'Kepulauan Bangka Belitung': 'Sumatera',
+  'Bengkulu': 'Sumatera',
+  // Kalimantan provinces → generic "Kalimantan"
+  'Kalimantan Barat': 'Kalimantan',
+  'Kalimantan Tengah': 'Kalimantan',
+  'Kalimantan Selatan': 'Kalimantan',
+  'Kalimantan Timur': 'Kalimantan',
+  'Kalimantan Utara': 'Kalimantan',
+  // Sulawesi provinces → generic "Sulawesi"
+  'Sulawesi Utara': 'Sulawesi',
+  'Sulawesi Tengah': 'Sulawesi',
+  'Sulawesi Selatan': 'Sulawesi',
+  'Sulawesi Tenggara': 'Sulawesi',
+  'Gorontalo': 'Sulawesi',
+  'Sulawesi Barat': 'Sulawesi',
+}
 const TODAY_STR = new Date(Date.now() + WIB_OFFSET).toISOString().split('T')[0]
 
 const REGION_GROUPS = {
@@ -107,6 +145,8 @@ export default function MarketPriceDashboard() {
     queryKey: ['dashboard-arboge-prices', selectedProvince],
     queryFn: async () => {
       const isAll = selectedProvince === 'Seluruh Indonesia'
+      // Arboge uses generic region names — map province to arboge region key
+      const arbogeRegion = PROVINCE_TO_ARBOGE_REGION[selectedProvince] || selectedProvince
       let q = supabase
         .from('market_prices')
         .select('price_date, farm_gate_price, region, source')
@@ -114,9 +154,9 @@ export default function MarketPriceDashboard() {
         .in('source', ['arboge_referensi', 'arboge_realisasi'])
         .gte('price_date', format(subDays(new Date(), 45), 'yyyy-MM-dd'))
         .order('price_date', { ascending: false })
-      if (!isAll) q = q.ilike('region', selectedProvince)
+      if (!isAll) q = q.ilike('region', arbogeRegion)
       const { data } = await q
-      
+
       return (data || []).reduce((acc, r) => {
         const existing = acc[r.price_date]
         if (!existing || r.source === 'arboge_realisasi') acc[r.price_date] = r
