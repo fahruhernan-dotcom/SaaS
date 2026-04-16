@@ -9,12 +9,10 @@ echo "==> Install dependencies..."
 npm install --legacy-peer-deps
 
 echo "==> Install Python dependencies..."
-# If using venv (recommended)
-if [ -d ".venv" ]; then
-    ./.venv/bin/pip install -r scripts/requirements.txt
-else
-    pip3 install -r scripts/requirements.txt
+if [ ! -d ".venv" ]; then
+    python3 -m venv .venv
 fi
+./.venv/bin/pip install -q -r scripts/requirements.txt
 
 echo "==> Scraping all market prices (Chickin & Arboge)..."
 npm run scrape:all
