@@ -173,7 +173,11 @@ export default function MarketPriceDashboard() {
     const rawMap = new Map()
     for (const row of (scrapResult || [])) if (!rawMap.has(row.price_date)) rawMap.set(row.price_date, row)
 
-    const dates = new Set([...rawMap.keys(), ...Object.keys(platformRpc || {})])
+    const dates = new Set([
+      ...rawMap.keys(),
+      ...Object.keys(platformRpc || {}),
+      ...Object.keys(arbogeMap || {}),
+    ])
     return [...dates].sort().map(dStr => {
       const s = rawMap.get(dStr)
       const p = platformRpc?.[dStr]
