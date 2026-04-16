@@ -15,21 +15,15 @@
 -- Fix: Drop the record_market_price() triggers (incremental approach).
 --      Keep sync_market_price_on_purchase / sync_market_price_on_sale
 --      which call aggregate_daily_market_price() (full recompute).
+--
+-- Confirmed trigger names from information_schema.triggers:
+--   trigger_record_market_price_purchases → purchases → record_market_price()
+--   trigger_record_market_price_sales     → sales     → record_market_price()
 -- =============================================================
 
--- Drop record_market_price trigger from purchases (try common names)
-DROP TRIGGER IF EXISTS record_market_price_on_purchases ON public.purchases;
-DROP TRIGGER IF EXISTS record_market_price_on_purchase  ON public.purchases;
-DROP TRIGGER IF EXISTS market_price_on_purchases        ON public.purchases;
-DROP TRIGGER IF EXISTS market_price_trigger_purchases   ON public.purchases;
-DROP TRIGGER IF EXISTS trg_record_market_price_purchase ON public.purchases;
-
--- Drop record_market_price trigger from sales (try common names)
-DROP TRIGGER IF EXISTS record_market_price_on_sales     ON public.sales;
-DROP TRIGGER IF EXISTS record_market_price_on_sale      ON public.sales;
-DROP TRIGGER IF EXISTS market_price_on_sales            ON public.sales;
-DROP TRIGGER IF EXISTS market_price_trigger_sales       ON public.sales;
-DROP TRIGGER IF EXISTS trg_record_market_price_sale     ON public.sales;
+-- Drop the confirmed redundant triggers
+DROP TRIGGER IF EXISTS trigger_record_market_price_purchases ON public.purchases;
+DROP TRIGGER IF EXISTS trigger_record_market_price_sales     ON public.sales;
 
 -- Ensure the correct aggregate triggers are in place
 -- (idempotent — safe to re-create)
@@ -45,8 +39,7 @@ CREATE TRIGGER sync_market_price_on_sale
   FOR EACH ROW
   EXECUTE FUNCTION trg_sales_sync_market_price();
 
--- Verify: should show exactly 2 triggers on purchases and 2 on sales
--- (set_updated_at_* + sync_market_price_*)
+-- Verify: should NOT contain trigger_record_market_price_* anymore
 SELECT trigger_name, event_object_table, event_manipulation
 FROM information_schema.triggers
 WHERE trigger_schema = 'public'
