@@ -236,9 +236,11 @@ function AppContentLayout() {
       <AnimatePresence mode="wait">
         {loading && <LoadingScreen key="loading-screen" />}
       </AnimatePresence>
-      <Suspense fallback={<LoadingScreen />}>
-        <Outlet />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingScreen />}>
+          <Outlet />
+        </Suspense>
+      </ErrorBoundary>
     </>
   );
 }
