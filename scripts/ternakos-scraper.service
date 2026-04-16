@@ -4,11 +4,13 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=/path/to/project
-EnvironmentFile=/path/to/project/.env
-ExecStart=/usr/bin/python3 scripts/ternakos_harga_scraper.py --daemon
+WorkingDirectory=/home/ubuntu/ternakos
+EnvironmentFile=/home/ubuntu/ternakos/.env
+ExecStart=/home/ubuntu/ternakos/.venv/bin/python scripts/ternakos_harga_scraper.py --daemon
 Restart=on-failure
-RestartSec=10
+RestartSec=30
+StandardOutput=append:/home/ubuntu/ternakos/scripts/ternakos_scraper.log
+StandardError=append:/home/ubuntu/ternakos/scripts/ternakos_scraper.log
 
 [Install]
 WantedBy=multi-user.target
