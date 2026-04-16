@@ -23,6 +23,7 @@ import KambingTernak    from './kambing_domba/Ternak'
 import KambingKesehatan from './kambing_domba/Kesehatan'
 import KambingPakan     from './kambing_domba/Pakan'
 import KambingLaporan   from './kambing_domba/LaporanBatch'
+import KandangView      from './kambing_domba/KandangView'
 
 // Kambing & Domba — Breeding
 import BreedingBeranda    from './kambing_domba/breeding/Beranda'
@@ -75,6 +76,7 @@ export function PeternakPageRouter({ page }) {
       kesehatan:     <KambingKesehatan />,
       pakan:         <KambingPakan />,
       laporan:       <KambingLaporan />,
+      'kandang-view':<KandangView />,
       'harga-pasar': <HargaPasar />,
       tim:           <Akun />,   // placeholder — Phase 4 ganti ke KambingTim
       akun:          <Akun />,

@@ -53,8 +53,29 @@ export async function getUserAddons(userId, type = 'business_slot') {
  * Final check: Is the user still within their total quota?
  */
 export async function checkQuotaUsage(tenant, profile, type) {
-  // 1. Admin Bypass: Admins have unlimited quota
-  if (profile?.role === 'admin') {
+  if (!profile?.auth_user_id) return { canAdd: false, usage: 0, limit: 1 }
+
+  // 1. GLOBAL ADMIN CHECK: Fetch all profiles for this user to check global status
+  const { data: userProfiles, error: profError } = await supabase
+    .from('profiles')
+    .select('role, user_type')
+    .eq('auth_user_id', profile.auth_user_id)
+
+  if (profError) {
+    console.error('[QUOTA_ERROR] Failed to fetch user profiles:', profError)
+  }
+
+  const isAdminGlobal = (userProfiles || []).some(p => 
+    p.role === 'admin' || 
+    p.role === 'superadmin' || 
+    p.user_type === 'superadmin' ||
+    p.user_type === 'admin'
+  )
+
+
+
+  // 2. Bypass if global admin
+  if (isAdminGlobal) {
     return {
       usage: 0,
       limit: Infinity,
@@ -64,18 +85,15 @@ export async function checkQuotaUsage(tenant, profile, type) {
     }
   }
 
+  // 3. Regular Plan Calculation
   const baseLimit = await getFeatureLimit(tenant, type + '_limit')
   const extraSlots = await getUserAddons(profile?.id, type + '_slot')
   const totalLimit = baseLimit + extraSlots
 
   let currentUsage = 0
   if (type === 'business') {
-    // Count how many profiles/tenants this user has
-    const { count } = await supabase
-      .from('profiles')
-      .select('*', { count: 'exact', head: true })
-      .eq('auth_user_id', profile?.auth_user_id)
-    currentUsage = count || 0
+    // Current usage is just the number of profiles (businesses) this user has
+    currentUsage = userProfiles?.length || 0
   }
 
   return {

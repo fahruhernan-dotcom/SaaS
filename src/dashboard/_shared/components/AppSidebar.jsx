@@ -30,6 +30,7 @@ import {
   RefreshCw,
   ClipboardList,
   FileText,
+  LayoutGrid,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -268,6 +269,7 @@ export default function AppSidebar({ open, onClose }) {
         // Peternak — global links (farm-specific sections rendered separately below)
         ...(isPeternak ? [
           { title: 'Semua Siklus',   url: `${peternakBase}/siklus`,        icon: RefreshCw,  show: pp?.canViewSiklus    ?? true },
+          { title: 'Denah Kandang',  url: `${peternakBase}/kandang-view`,  icon: LayoutGrid, show: (profile?.sub_type === 'peternak_kambing_domba_penggemukan' || profile?.sub_type === 'peternak_kambing_domba_breeding') },
           { title: 'Program Vaksin', url: `${peternakBase}/vaksinasi`,      icon: Syringe,    show: pp?.canViewVaksinasi ?? true },
           { title: 'Laporan Siklus', url: `${peternakBase}/laporan`,        icon: FileText,   show: pp?.canViewLaporan   ?? true },
           { title: 'Stok Pakan',     url: `${peternakBase}/pakan`,          icon: Warehouse,  show: pp?.canViewPakan     ?? true },
@@ -282,7 +284,7 @@ export default function AppSidebar({ open, onClose }) {
             { title: 'Order',      url: '/rumah_potong/rpa/order',      icon: ArrowLeftRight },
             { title: 'Hutang',     url: '/rumah_potong/rpa/hutang',     icon: Wallet },
             { title: 'Distribusi', url: '/rumah_potong/rpa/distribusi', icon: Truck },
-            { title: 'Laporan',    url: '/rumah_potong/rpa/laporan',    icon: BarChart2, roles: ['owner'] },
+            { title: 'Laporan',    url: '/rumah_potong/rpa/laporan',    icon: BarChart2, roles: ['owner'], planRequired: 'pro' },
           ] : [
             /* RPH placeholder items if any */
             { title: 'Dashboard',   url: '/rumah_potong/rph/beranda',   icon: Home },

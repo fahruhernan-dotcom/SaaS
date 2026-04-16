@@ -4,13 +4,13 @@ import {
   TrendingUp, TrendingDown, Clock, Zap,
   BarChart3, ShieldCheck, ExternalLink, Globe,
   PieChart, Activity, MapPin, Check, ChevronsUpDown,
-  RefreshCw
+  RefreshCw, Search, Database, Users, Layers, ArrowRight, Minus
 } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer
 } from 'recharts'
-import { format, startOfWeek, startOfMonth, addDays } from 'date-fns'
+import { format, startOfWeek, startOfMonth, addDays, subDays } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
@@ -31,6 +31,15 @@ import { PROVINCES } from '@/lib/constants/regions'
 // ─── Constants ───────────────────────────────────────────────────────────────
 const WIB_OFFSET = 7 * 60 * 60 * 1000
 const TODAY_STR = new Date(Date.now() + WIB_OFFSET).toISOString().split('T')[0]
+
+const REGION_GROUPS = {
+  "Sumatera": ["Aceh", "Sumatera Utara", "Sumatera Barat", "Riau", "Kepulauan Riau", "Jambi", "Sumatera Selatan", "Kepulauan Bangka Belitung", "Bengkulu", "Lampung"],
+  "Jawa": ["DKI Jakarta", "Jawa Barat", "Banten", "Jawa Tengah", "DI Yogyakarta", "Jawa Timur"],
+  "Bali & Nusa": ["Bali", "Nusa Tenggara Barat", "Nusa Tenggara Timur"],
+  "Kalimantan": ["Kalimantan Barat", "Kalimantan Tengah", "Kalimantan Selatan", "Kalimantan Timur", "Kalimantan Utara"],
+  "Sulawesi": ["Sulawesi Utara", "Sulawesi Tengah", "Sulawesi Selatan", "Sulawesi Tenggara", "Gorontalo", "Sulawesi Barat"],
+  "Maluku & Papua": ["Maluku", "Maluku Utara", "Papua", "Papua Barat", "Papua Tengah", "Papua Pegunungan", "Papua Selatan", "Papua Barat Daya"]
+}
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -65,60 +74,144 @@ export default function MarketPriceDashboard() {
   const [selectedProvince, setSelectedProvince] = useState(
     tenant?.province || 'Jawa Tengah'
   )
+  const [trendPeriod, setTrendPeriod] = useState('monthly')
 
-  // ── Market Prices (Historical Table + Stats) ───────────────────────────────
-  const { data: rawPrices, isLoading } = useQuery({
+  // ── 1. Scraper Prices (Chickin.id) ──
+  const { data: scrapResult, isLoading: scraperLoading } = useQuery({
     queryKey: ['dashboard-market-prices', selectedProvince],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const isAll = selectedProvince === 'Seluruh Indonesia'
+      let q = supabase
         .from('market_prices')
-        .select('*')
+        .select('price_date, farm_gate_price, buyer_price, region, source')
         .eq('is_deleted', false)
-        .ilike('region', selectedProvince === 'Seluruh Indonesia' ? '%' : selectedProvince)
+        .not('source', 'ilike', 'arboge_%')
+        .gte('price_date', format(subDays(new Date(), 45), 'yyyy-MM-dd'))
         .order('price_date', { ascending: false })
-        .limit(60)
+      
+      if (!isAll) q = q.ilike('region', selectedProvince)
+      const { data, error } = await q
       if (error) throw error
-      return (data || []).map(normaliseRow).filter(r => r.avg_buy_price > 0 && r.avg_sell_price > 0)
+      return (data || []).map(r => ({
+        ...r,
+        avg_buy_price: r.farm_gate_price,
+        avg_sell_price: r.buyer_price,
+        broker_margin: (r.buyer_price || 0) - (r.farm_gate_price || 0)
+      }))
     },
     staleTime: 60 * 1000,
   })
 
-  // ── Hybrid Trend Chart ────────────────────────────────────────────────────
-  const [trendPeriod, setTrendPeriod] = useState('weekly') // 'weekly' | 'monthly'
+  // ── 2. Arboge Reference & Realization ──
+  const { data: arbogeMap } = useQuery({
+    queryKey: ['dashboard-arboge-prices', selectedProvince],
+    queryFn: async () => {
+      const isAll = selectedProvince === 'Seluruh Indonesia'
+      let q = supabase
+        .from('market_prices')
+        .select('price_date, farm_gate_price, region, source')
+        .eq('is_deleted', false)
+        .in('source', ['arboge_referensi', 'arboge_realisasi'])
+        .gte('price_date', format(subDays(new Date(), 45), 'yyyy-MM-dd'))
+        .order('price_date', { ascending: false })
+      if (!isAll) q = q.ilike('region', selectedProvince)
+      const { data } = await q
+      
+      return (data || []).reduce((acc, r) => {
+        const existing = acc[r.price_date]
+        if (!existing || r.source === 'arboge_realisasi') acc[r.price_date] = r
+        return acc
+      }, {})
+    },
+    staleTime: 60 * 1000,
+  })
 
+  // ── 3. Platform Real-Transaction Hybrid Data (RPC) ──
   const { trendStartDate, trendEndDate, trendLabel } = useMemo(() => {
     const now = new Date()
     let start, end
     if (trendPeriod === 'weekly') {
       start = startOfWeek(now, { weekStartsOn: 1 })
-      end   = now // cap to today
+      end = now
     } else {
       start = startOfMonth(now)
-      end   = now
+      end = now
     }
     return {
       trendStartDate: format(start, 'yyyy-MM-dd'),
-      trendEndDate:   format(end,   'yyyy-MM-dd'),
-      trendLabel:     trendPeriod === 'weekly' ? 'Minggu Ini' : 'Bulan Ini'
+      trendEndDate: format(end, 'yyyy-MM-dd'),
+      trendLabel: trendPeriod === 'weekly' ? 'Minggu Ini' : 'Bulan Ini'
     }
   }, [trendPeriod])
 
-  const { data: trendData, isLoading: trendLoading } = useMarketTrends(selectedProvince, trendStartDate, trendEndDate)
+  const { data: platformRpc, isLoading: rpcLoading } = useQuery({
+    queryKey: ['dashboard-platform-rpc', selectedProvince],
+    queryFn: async () => {
+      const target = selectedProvince === 'Seluruh Indonesia' ? '%' : selectedProvince
+      const { data } = await supabase.rpc('get_province_price_trends', {
+        p_province: target,
+        p_start_date: format(subDays(new Date(), 45), 'yyyy-MM-dd'),
+        p_end_date: format(new Date(), 'yyyy-MM-dd'),
+      })
+      return (data || []).reduce((acc, r) => { acc[r.price_date] = r; return acc }, {})
+    },
+    staleTime: 60 * 1000
+  })
 
-  // ── Derived Data ──────────────────────────────────────────────────────────
-  const dedupedPrices = useMemo(() => {
-    if (!rawPrices?.length) return []
-    const seen = new Map()
-    for (const row of rawPrices) {
-      if (!seen.has(row.price_date)) seen.set(row.price_date, row)
-    }
-    return [...seen.values()].sort((a, b) => b.price_date.localeCompare(a.price_date))
-  }, [rawPrices])
+  // ── Activity Stats (🔥 Indicators) ──
+  const { data: activityMap } = useQuery({
+    queryKey: ['dashboard-market-stats'],
+    queryFn: async () => {
+      const { data } = await supabase.rpc('get_public_market_stats')
+      return data || {}
+    },
+    staleTime: 1000 * 60 * 15,
+  })
 
+  // ── Unified Data Merging ──
+  const unifiedData = useMemo(() => {
+    const rawMap = new Map()
+    for (const row of (scrapResult || [])) if (!rawMap.has(row.price_date)) rawMap.set(row.price_date, row)
+
+    const dates = new Set([...rawMap.keys(), ...Object.keys(platformRpc || {})])
+    return [...dates].sort().map(dStr => {
+      const s = rawMap.get(dStr)
+      const p = platformRpc?.[dStr]
+
+      const chickin = s?.avg_buy_price || null
+      const arboge = arbogeMap?.[dStr]?.farm_gate_price || null
+      const pBeli = p?.avg_buy ? Math.round(p.avg_buy) : null
+      const pJual = p?.avg_sell ? Math.round(p.avg_sell) : null
+
+      const finalBeli = pBeli || chickin || 0
+      const finalJual = pJual || s?.avg_sell_price || (chickin ? chickin + 2500 : 0)
+
+      return {
+        date: dStr,
+        price_date: dStr,
+        displayDate: formatShortDate(dStr),
+        chickin,
+        arboge,
+        platformBeli: pBeli,
+        platformJual: pJual,
+
+        avg_buy_price: finalBeli,
+        avg_sell_price: finalJual,
+        broker_margin: finalJual && finalBeli ? (finalJual - finalBeli) : 0,
+        source: s?.source || (p ? 'transaction' : 'auto_scraper')
+      }
+    })
+  }, [scrapResult, platformRpc, arbogeMap])
+
+  const trendData = useMemo(() => {
+    return unifiedData.filter(d => d.date >= trendStartDate && d.date <= trendEndDate)
+  }, [unifiedData, trendStartDate, trendEndDate])
+
+  const dedupedPrices = useMemo(() => [...unifiedData].reverse(), [unifiedData])
   const latestRow = dedupedPrices[0] ?? null
-  const prevRow   = dedupedPrices[1] ?? null
-  const buyDiff   = latestRow && prevRow ? latestRow.avg_buy_price  - prevRow.avg_buy_price  : 0
-  const sellDiff  = latestRow && prevRow ? latestRow.avg_sell_price - prevRow.avg_sell_price : 0
+  const prevRow = dedupedPrices[1] ?? null
+  const buyDiff = latestRow && prevRow ? latestRow.avg_buy_price - prevRow.avg_buy_price : 0
+  const sellDiff = latestRow && prevRow ? latestRow.avg_sell_price - prevRow.avg_sell_price : 0
 
   const avgMargin7d = useMemo(() => {
     const recent = dedupedPrices.slice(0, 7).filter(r => r.broker_margin > 0)
@@ -129,9 +222,9 @@ export default function MarketPriceDashboard() {
   const latestDelta = trendData?.[trendData.length - 1]?.delta ?? 0
 
   // Spread: broker's latest avg buy price vs Chickin.id reference
-  const latestTrend   = trendData?.[trendData.length - 1]
-  const spreadVsMarket = (latestTrend?.buyPrice && latestTrend?.chickin)
-    ? latestTrend.buyPrice - latestTrend.chickin
+  const latestTrend = trendData?.[trendData.length - 1]
+  const spreadVsMarket = (latestTrend?.avg_buy_price && latestTrend?.chickin)
+    ? latestTrend.avg_buy_price - latestTrend.chickin
     : null
 
   return (
@@ -146,7 +239,6 @@ export default function MarketPriceDashboard() {
         className="px-6 pt-10 pb-6 relative z-10"
       >
         <motion.div variants={fadeUp} className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          {/* Title */}
           <div>
             <div className="flex items-center gap-2 mb-2">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -160,9 +252,12 @@ export default function MarketPriceDashboard() {
             </p>
           </div>
 
-          {/* Province Filter + Last Updated */}
           <div className="flex items-center gap-3 flex-wrap">
-            <ProvinceSelector selected={selectedProvince} onSelect={setSelectedProvince} />
+            <ProvinceSelector 
+              selected={selectedProvince} 
+              onSelect={setSelectedProvince} 
+              activityMap={activityMap}
+            />
 
             <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 flex items-center gap-2.5">
               <Clock size={13} className="text-[#4B6478]" />
@@ -179,125 +274,110 @@ export default function MarketPriceDashboard() {
         variants={stagger} initial="hidden" animate="visible"
         className="px-6 grid grid-cols-2 md:grid-cols-4 gap-4 pb-8 relative z-10"
       >
-        {[
-          { label: 'Harga Beli (Kandang)', value: latestRow?.avg_buy_price, diff: buyDiff,   icon: TrendingDown },
-          { label: 'Harga Jual (Pasar)',   value: latestRow?.avg_sell_price, diff: sellDiff,  icon: TrendingUp, highlight: true },
-          { label: 'Margin Hari Ini',      value: latestRow?.broker_margin,  sub: 'Hari ini', icon: PieChart },
-          {
-            label: 'Spread vs Chickin.id',
-            value: spreadVsMarket != null ? Math.abs(spreadVsMarket) : null,
-            sub: spreadVsMarket != null
-              ? (spreadVsMarket > 0 ? '▲ Beli lebih mahal' : spreadVsMarket < 0 ? '▼ Beli lebih murah' : '= Sama')
-              : 'Belum ada data',
-            icon: Activity,
-            spreadPositive: spreadVsMarket != null && spreadVsMarket <= 0
-          },
-        ].map((s, i) => (
-          <motion.div key={i} variants={fadeUp}>
-            <StatCard {...s} isLoading={isLoading || trendLoading} />
-          </motion.div>
-        ))}
+        <StatCard
+          label="Harga Beli (Kandang)"
+          value={latestRow?.avg_buy_price}
+          diff={buyDiff}
+          sub={buyDiff === 0 ? 'Stabil' : `${buyDiff > 0 ? '+' : ''}${formatIDR(buyDiff)} vs kemarin`}
+          icon={TrendingDown}
+          isLoading={scraperLoading || rpcLoading}
+        />
+        <StatCard
+          label="Harga Jual (Pasar)"
+          value={latestRow?.avg_sell_price}
+          diff={sellDiff}
+          sub={sellDiff === 0 ? 'Stabil' : `${sellDiff > 0 ? '+' : ''}${formatIDR(sellDiff)} vs kemarin`}
+          icon={TrendingUp}
+          isLoading={scraperLoading || rpcLoading}
+          highlight
+        />
+        <StatCard
+          label="Margin Broker"
+          value={latestRow?.broker_margin}
+          sub="Rata-rata saat ini"
+          icon={PieChart}
+          isLoading={scraperLoading || rpcLoading}
+        />
+        <StatCard
+          label="Spread vs Chickin.id"
+          value={spreadVsMarket != null ? Math.abs(spreadVsMarket) : null}
+          sub={spreadVsMarket != null
+            ? (spreadVsMarket > 0 ? '▲ Beli lebih mahal' : spreadVsMarket < 0 ? '▼ Beli lebih murah' : '= Sama')
+            : 'Belum ada data'}
+          icon={Activity}
+          isLoading={scraperLoading || rpcLoading}
+          spreadPositive={spreadVsMarket != null && spreadVsMarket <= 0}
+        />
       </motion.section>
 
       {/* ── MAIN CONTENT ────────────────────────────────────────────────── */}
       <section className="px-6 grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
-
-        {/* LEFT: Charts + Table */}
         <div className="lg:col-span-2 space-y-6">
-
-          {/* ── Hybrid Trend Chart (from Beranda) ── */}
           <motion.div variants={fadeUp} initial="hidden" animate="visible">
             <Card className="p-6 md:p-8 bg-[#0C1319] border-white/5 rounded-[28px] relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[radial-gradient(circle,rgba(16,185,129,0.04)_0%,transparent_70%)] pointer-events-none" />
+              <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(16,185,129,0.04)_0%,transparent_70%)] pointer-events-none" />
 
-              <div className="flex justify-between items-start mb-6 relative z-10">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <TrendingUp size={13} className="text-emerald-400" />
-                    <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]">
-                      Tren Harga — {selectedProvince}
-                    </p>
+              <div className="flex flex-col gap-4 mb-8 relative z-10">
+                <div className="flex flex-wrap justify-between items-start gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">Data Real Platform + Referensi Pasar</p>
+                    </div>
+                    <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Hybrid Market Insight</h2>
                   </div>
-                  <h3 className="text-xl font-display font-black text-white">Hybrid Market Insight</h3>
-                    {latestDelta !== 0 && (
-                      <div className={cn(
-                        "mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider",
-                        latestDelta > 0
-                          ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                          : "bg-rose-500/10 border-rose-500/20 text-rose-400"
-                      )}>
-                        {latestDelta > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
-                        {latestDelta > 0 ? '+' : ''}{formatIDR(latestDelta)} vs Kemarin
-                      </div>
-                    )}
-                    <span className="mt-1 inline-block text-[10px] font-black text-[#4B6478] uppercase tracking-widest bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-lg">
-                      {trendLabel}
-                    </span>
-                </div>
-
-                <div className="flex flex-col md:flex-row items-end gap-3">
-                  <div className="flex bg-black/40 p-1 rounded-xl border border-white/5 backdrop-blur-md">
+                  <div className="flex bg-black/40 p-1 rounded-xl border border-white/5 shrink-0">
                     <button
                       onClick={() => setTrendPeriod('weekly')}
-                      className={cn(
-                        "px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all",
+                      className={cn("px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all",
                         trendPeriod === 'weekly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:text-[#94A3B8]"
                       )}
-                    >
-                      Mingguan
-                    </button>
+                    >Mingguan</button>
                     <button
                       onClick={() => setTrendPeriod('monthly')}
-                      className={cn(
-                        "px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ml-0.5",
+                      className={cn("px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ml-0.5",
                         trendPeriod === 'monthly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:text-[#94A3B8]"
                       )}
-                    >
-                      Bulanan
-                    </button>
+                    >Bulanan</button>
                   </div>
-
-                  <div className="flex items-center gap-4">
-                    <LegendItem color="#F59E0B" label="Chickin.id" dashed />
-                    <LegendItem color="#10B981" label="Harga Beli" />
-                    <LegendItem color="#818CF8" label="Harga Jual" />
-                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-4">
+                  <LegendItem color="#F59E0B" label="Chickin.id (Ref)" dashed />
+                  <LegendItem color="#F97316" label="Arboge.com (Ref)" dashed />
+                  <LegendItem color="#10B981" label="Beli (TernakOS)" />
+                  <LegendItem color="#818CF8" label="Jual (TernakOS)" />
+                  <span className="ml-auto text-[9px] font-black text-[#4B6478] uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded-lg border border-white/10">
+                    {selectedProvince} · {trendLabel}
+                  </span>
                 </div>
               </div>
 
-              <div className="h-[240px] w-full relative z-10">
-                {trendLoading ? (
-                  <Skeleton className="w-full h-full rounded-2xl bg-white/5" />
+              <div className="h-[260px] w-full relative z-10">
+                {rpcLoading ? (
+                  <div className="h-full flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full border-2 border-emerald-500/30 border-t-emerald-500 animate-spin" />
+                  </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={trendData}>
                       <defs>
-                        <linearGradient id="mpColorBuy" x1="0" y1="0" x2="0" y2="1">
+                        <linearGradient id="gradBuy" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#10B981" stopOpacity={0.15} />
                           <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                         </linearGradient>
-                        <linearGradient id="mpColorSell" x1="0" y1="0" x2="0" y2="1">
+                        <linearGradient id="gradSell" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#818CF8" stopOpacity={0.1} />
                           <stop offset="95%" stopColor="#818CF8" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
-                      <XAxis
-                        dataKey="displayDate"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fill: '#4B6478', fontSize: 10, fontWeight: 800 }}
-                        dy={10}
-                        interval={trendPeriod === 'monthly' ? 4 : 0}
-                      />
+                      <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fill: '#4B6478', fontSize: 10, fontWeight: 800 }} dy={10} interval={trendPeriod === 'monthly' ? 4 : 0} />
                       <YAxis hide domain={['dataMin - 3000', 'dataMax + 2000']} />
                       <RechartsTooltip content={<HybridTooltip />} />
-                      {/* Chickin.id reference — dashed amber line */}
                       <Area type="monotone" dataKey="chickin" stroke="#F59E0B" strokeWidth={2} strokeDasharray="5 4" fill="transparent" connectNulls dot={false} />
-                      {/* Harga Jual Broker ke RPA — blue fill */}
-                      <Area type="monotone" dataKey="sellPrice" stroke="#818CF8" strokeWidth={2} fillOpacity={1} fill="url(#mpColorSell)" connectNulls activeDot={{ r: 5, stroke: '#0C1319', strokeWidth: 2, fill: '#818CF8' }} />
-                      {/* Harga Beli Broker dari Kandang — dominant green line */}
-                      <Area type="monotone" dataKey="buyPrice" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#mpColorBuy)" connectNulls activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: '#10B981' }} />
+                      <Area type="monotone" dataKey="arboge" stroke="#F97316" strokeWidth={2} strokeDasharray="3 3" fill="transparent" connectNulls dot={false} />
+                      <Area type="monotone" dataKey="platformJual" stroke="#818CF8" strokeWidth={2} fillOpacity={1} fill="url(#gradSell)" connectNulls activeDot={{ r: 5, stroke: '#0C1319', strokeWidth: 2, fill: '#818CF8' }} />
+                      <Area type="monotone" dataKey="platformBeli" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#gradBuy)" connectNulls activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: '#10B981' }} />
                     </AreaChart>
                   </ResponsiveContainer>
                 )}
@@ -305,7 +385,6 @@ export default function MarketPriceDashboard() {
             </Card>
           </motion.div>
 
-          {/* ── Riwayat Harga Table ── */}
           <motion.div variants={fadeUp} initial="hidden" animate="visible">
             <div className="flex items-center justify-between px-1 mb-3">
               <h3 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Riwayat Update</h3>
@@ -317,49 +396,31 @@ export default function MarketPriceDashboard() {
                   <thead>
                     <tr className="border-b border-white/5 bg-white/[0.02]">
                       <th className="p-4 text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Tanggal</th>
-                      <th className="p-4 text-[10px] font-black text-[#4B6478] uppercase text-right">Beli</th>
-                      <th className="p-4 text-[10px] font-black text-[#4B6478] uppercase text-right">Jual</th>
+                      <th className="p-4 text-[10px] font-black text-[#4B6478] uppercase text-right">Beli (Kandang)</th>
+                      <th className="p-4 text-[10px] font-black text-[#4B6478] uppercase text-right">Jual (RPA/Pasar)</th>
                       <th className="p-4 text-[10px] font-black text-[#4B6478] uppercase text-right">Margin</th>
-                      <th className="p-4 text-[10px] font-black text-[#4B6478] uppercase text-right">Delta</th>
                       <th className="p-4 text-[10px] font-black text-[#4B6478] uppercase text-center">Sumber</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {isLoading ? (
+                    {scraperLoading ? (
                       Array(6).fill(0).map((_, i) => (
-                        <tr key={i}><td colSpan={6} className="p-4"><Skeleton className="h-4 w-full bg-white/5" /></td></tr>
+                        <tr key={i}><td colSpan={5} className="p-4"><Skeleton className="h-4 w-full bg-white/5" /></td></tr>
                       ))
                     ) : !dedupedPrices.length ? (
-                      <tr>
-                        <td colSpan={6} className="p-8 text-center text-[#4B6478] text-sm font-bold">
-                          Belum ada data untuk {selectedProvince}
+                      <tr><td colSpan={5} className="p-8 text-center text-[#4B6478] text-sm font-bold">Belum ada data untuk {selectedProvince}</td></tr>
+                    ) : dedupedPrices.slice(0, 14).map((p, i) => (
+                      <tr key={i} className={cn("border-b border-white/5 transition-colors", p.price_date === TODAY_STR ? "bg-emerald-500/5" : "hover:bg-white/[0.02]")}>
+                        <td className="p-4 text-xs font-bold text-slate-300 flex items-center gap-2">
+                          {p.price_date === TODAY_STR && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />}
+                          {formatDate(p.price_date, 'dd MMM yyyy')}
                         </td>
+                        <td className="p-4 text-xs font-bold text-slate-400 text-right tabular-nums">{formatIDR(p.avg_buy_price).replace('Rp ', '')}</td>
+                        <td className="p-4 text-xs font-black text-white text-right tabular-nums">{formatIDR(p.avg_sell_price).replace('Rp ', '')}</td>
+                        <td className="p-4 text-xs font-black text-emerald-400 text-right tabular-nums">{formatIDR(p.broker_margin).replace('Rp ', '')}</td>
+                        <td className="p-4 text-center"><SourceBadge source={p.source} /></td>
                       </tr>
-                    ) : dedupedPrices.slice(0, 14).map((p, i) => {
-                      const isToday = p.price_date === TODAY_STR
-                      return (
-                        <tr key={i} className={cn(
-                          "border-b border-white/5 transition-colors",
-                          isToday ? "bg-emerald-500/5" : "hover:bg-white/[0.02]"
-                        )}>
-                          <td className="p-4 text-xs font-bold text-slate-300 flex items-center gap-2">
-                            {isToday && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />}
-                            {formatDate(p.price_date, 'dd MMM yyyy')}
-                          </td>
-                          <td className="p-4 text-xs font-bold text-slate-400 text-right tabular-nums">{formatIDR(p.avg_buy_price).replace('Rp ', '')}</td>
-                          <td className="p-4 text-xs font-black text-white text-right tabular-nums">{formatIDR(p.avg_sell_price).replace('Rp ', '')}</td>
-                          <td className="p-4 text-xs font-bold text-emerald-400 text-right tabular-nums">{formatIDR(p.broker_margin).replace('Rp ', '')}</td>
-                          <td className="p-4 text-xs font-bold text-right tabular-nums">
-                            {p.price_delta != null ? (
-                              <span className={p.price_delta >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
-                                {p.price_delta >= 0 ? '▲' : '▼'} {Math.abs(p.price_delta).toLocaleString('id-ID')}
-                              </span>
-                            ) : <span className="text-[#4B6478]">—</span>}
-                          </td>
-                          <td className="p-4 text-center"><SourceBadge source={p.source} /></td>
-                        </tr>
-                      )
-                    })}
+                    ))}
                   </tbody>
                 </table>
                 <ScrollBar orientation="horizontal" />
@@ -368,67 +429,42 @@ export default function MarketPriceDashboard() {
           </motion.div>
         </div>
 
-        {/* RIGHT: Actions + Info */}
         <div className="space-y-6">
-
-        {/* ── Data Source Info Card ── */}
           <motion.div variants={fadeUp} initial="hidden" animate="visible">
             <Card className="bg-[#0C1319] border border-white/5 rounded-[28px] overflow-hidden relative">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.05),transparent_60%)] pointer-events-none" />
               <CardContent className="p-6 relative z-10">
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-                    <ShieldCheck size={15} className="text-emerald-400" />
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                    <ShieldCheck size={15} />
                   </div>
                   <div>
-                    <p className="text-[9px] font-black text-emerald-400 uppercase tracking-[0.2em]">Sumber Data</p>
-                    <h3 className="text-sm font-black text-white">Otomatis & Terverifikasi</h3>
+                    <p className="text-[9px] font-black text-emerald-400 uppercase tracking-[0.2em]">Metodologi Data</p>
+                    <h3 className="text-sm font-black text-white">Hybrid Intelligence</h3>
                   </div>
                 </div>
-
-                <div className="space-y-3">
-                  <SourceInfoRow
-                    color="#F59E0B"
-                    label="Chickin.id"
-                    desc="Harga pasar realtime dari scraper otomatis"
-                    badge="Auto"
-                    badgeColor="text-amber-400 bg-amber-500/10"
-                  />
-                  <SourceInfoRow
-                    color="#10B981"
-                    label="Transaksi Platform"
-                    desc="Rata-rata harga dari transaksi broker yang sudah selesai"
-                    badge="Verified"
-                    badgeColor="text-emerald-400 bg-emerald-500/10"
-                  />
-                  <SourceInfoRow
-                    color="#818CF8"
-                    label="Admin Regional"
-                    desc="Data referensi wilayah dari tim admin TernakOS"
-                    badge="Admin"
-                    badgeColor="text-indigo-400 bg-indigo-500/10"
-                  />
+                <div className="space-y-4">
+                  <SourceInfoRow color="#F59E0B" label="Chickin.id" desc="Scraper harian farm gate price" badge="Auto" badgeColor="text-amber-400 bg-amber-500/10" />
+                  <SourceInfoRow color="#F97316" label="Arboge.com" desc="Realisasi & referensi harga broker" badge="Broker" badgeColor="text-orange-400 bg-orange-500/10" />
+                  <SourceInfoRow color="#10B981" label="Transaksi Platform" desc="Rata-rata transaksi broker TernakOS" badge="Verified" badgeColor="text-emerald-400 bg-emerald-500/10" />
                 </div>
-
                 <div className="mt-5 pt-4 border-t border-white/5">
                   <p className="text-[10px] text-[#4B6478] font-medium leading-relaxed">
-                    ⚠️ Data harga bersifat <span className="text-white font-bold">read-only</span> dan diambil secara otomatis. Input manual tidak diizinkan untuk menjaga integritas data pasar.
+                    ⚠️ Data bersifat <span className="text-white font-bold">read-only</span>. Digunakan sebagai acuan posisi beli dan jual broker di pasar regional.
                   </p>
                 </div>
               </CardContent>
             </Card>
           </motion.div>
 
-          {/* ── Wawasan Komoditas ── */}
           <motion.div variants={fadeUp} initial="hidden" animate="visible">
             <h3 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em] px-1 mb-3">Wawasan Komoditas</h3>
             <div className="space-y-3">
               {[
-                { title: 'Harga Kandang',    desc: 'Harga ayam hidup di lokasi peternak sebelum distribusi.',   icon: Globe },
-                { title: 'Margin Sehat',     desc: 'Range margin ideal broker berkisar Rp 1.500–3.000/kg.',     icon: ShieldCheck },
-                { title: 'Volatilitas Pasar',desc: 'Dipengaruhi ketersediaan DOC, pakan, dan hari besar.',      icon: TrendingUp },
+                { title: 'TernakOS vs Chickin', desc: 'Kami fokus pada data transaksi nyata broker.', icon: Activity },
+                { title: 'Positioning Harga', desc: 'Bandingkan posisi beli Anda vs referensi pasar.', icon: ShieldCheck },
               ].map((item, i) => (
-                <Card key={i} className="bg-[#111C24] border border-white/5 rounded-2xl hover:border-white/10 transition-all cursor-default group">
+                <Card key={i} className="bg-[#111C24] border border-white/5 rounded-2xl group cursor-default">
                   <CardContent className="p-4 flex gap-4">
                     <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center shrink-0 group-hover:bg-emerald-500/10 group-hover:text-emerald-400 transition-colors text-[#4B6478]">
                       <item.icon size={17} />
@@ -442,36 +478,21 @@ export default function MarketPriceDashboard() {
               ))}
             </div>
           </motion.div>
-
-          {/* ── Public Link ── */}
-          <motion.div variants={fadeUp} initial="hidden" animate="visible">
-            <Card className="bg-[#0C1319] border border-dashed border-white/10 rounded-2xl p-5 text-center">
-              <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-3">
-                <ExternalLink size={17} className="text-[#4B6478]" />
-              </div>
-              <p className="text-xs font-bold text-slate-400 mb-4">
-                Lihat visualisasi publik & SEO untuk landing page.
-              </p>
-              <Button variant="outline" className="w-full bg-transparent border-white/10 text-[10px] font-black uppercase tracking-widest h-10 rounded-xl" asChild>
-                <a href="/harga-pasar" target="_blank">Kunjungi Link Publik</a>
-              </Button>
-            </Card>
-          </motion.div>
         </div>
       </section>
     </div>
   )
 }
 
-// ─── Province Selector ────────────────────────────────────────────────────────
-function ProvinceSelector({ selected, onSelect }) {
+// ─── Sub-Components ──────────────────────────────────────────────────────────
+
+function ProvinceSelector({ selected, onSelect, activityMap }) {
   const [open, setOpen] = useState(false)
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          role="combobox"
           className="h-10 bg-[#111C24] border-white/10 font-black rounded-xl flex justify-between items-center px-4 gap-3 uppercase tracking-widest hover:bg-white/5 transition-all text-[10px] min-w-[200px]"
         >
           <div className="flex items-center gap-2">
@@ -481,23 +502,33 @@ function ProvinceSelector({ selected, onSelect }) {
           <ChevronsUpDown size={13} className="opacity-50 shrink-0" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[260px] p-0 bg-[#111C24] border-white/10 shadow-2xl">
+      <PopoverContent className="w-[300px] p-0 bg-[#0C1319] border-white/10 shadow-2xl">
         <Command className="bg-transparent">
           <CommandInput placeholder="Cari provinsi..." className="h-11 font-bold" />
-          <CommandList className="max-h-[280px]">
+          <CommandList className="max-h-[350px]">
             <CommandEmpty className="py-4 text-center text-[10px] font-black uppercase opacity-50">Tidak ditemukan.</CommandEmpty>
-            <CommandGroup>
-              {['Seluruh Indonesia', ...PROVINCES].map(p => (
-                <CommandItem
-                  key={p} value={p}
-                  onSelect={() => { onSelect(p); setOpen(false) }}
-                  className="flex items-center justify-between py-3 px-4 cursor-pointer hover:bg-emerald-500/10 rounded-xl text-[10px] font-black uppercase tracking-widest"
-                >
-                  <span className={cn(selected === p ? 'text-emerald-400' : 'text-white')}>{p}</span>
-                  {selected === p && <Check size={13} className="text-emerald-400" />}
-                </CommandItem>
-              ))}
+            <CommandGroup heading="Akses Cepat" className="px-2 text-[9px] font-black uppercase tracking-widest text-[#4B6478] opacity-50">
+              <CommandItem onSelect={() => { onSelect('Seluruh Indonesia'); setOpen(false) }} className="flex items-center gap-2 rounded-lg cursor-pointer text-[10px] font-bold uppercase py-2.5">
+                <MapPin size={12} className="text-emerald-500" /> Seluruh Indonesia
+              </CommandItem>
             </CommandGroup>
+            {Object.entries(REGION_GROUPS).map(([group, provinces]) => (
+              <CommandGroup key={group} heading={group} className="px-2 mt-2 text-[9px] font-black uppercase tracking-widest text-[#4B6478]">
+                {provinces.map((p) => (
+                  <CommandItem
+                    key={p} value={p}
+                    onSelect={() => { onSelect(p); setOpen(false) }}
+                    className="flex items-center justify-between rounded-lg cursor-pointer text-[10px] font-bold uppercase py-2.5 hover:bg-emerald-500/10 group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <MapPin size={12} className={cn("transition-colors", selected === p ? "text-emerald-500" : "text-[#4B6478] group-hover:text-emerald-500")} />
+                      <span className={cn(selected === p ? "text-emerald-500" : "text-white")}>{p}</span>
+                    </div>
+                    {activityMap?.[p] && <span className="text-[8px] text-emerald-500/70 font-black">🔥 {activityMap[p]} TRX</span>}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            ))}
           </CommandList>
         </Command>
       </PopoverContent>
@@ -505,34 +536,28 @@ function ProvinceSelector({ selected, onSelect }) {
   )
 }
 
-// ─── StatCard ────────────────────────────────────────────────────────────────
-function StatCard({ label, value, diff, sub, icon: Icon, isLoading, highlight }) {
+function StatCard({ label, value, diff, sub, icon: Icon, isLoading, highlight, spreadPositive }) {
   return (
-    <Card className={cn(
-      "border-white/5 rounded-[20px] transition-all",
-      highlight ? "bg-[#0C1319] border-emerald-500/20" : "bg-[#0C1319]/60"
-    )}>
+    <Card className={cn("border-white/5 rounded-[20px] transition-all", highlight ? "bg-[#0C1319] border-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.05)]" : "bg-[#0C1319]/60")}>
       <CardContent className="p-4 md:p-5">
         {isLoading ? (
-          <div className="space-y-2"><Skeleton className="h-3 w-20 bg-white/5" /><Skeleton className="h-8 w-full bg-white/5" /></div>
+          <div className="space-y-2"><Skeleton className="h-3 w-16 bg-white/5" /><Skeleton className="h-8 w-24 bg-white/5" /></div>
         ) : (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest leading-tight">{label}</span>
-              <Icon size={13} className={cn(highlight ? 'text-emerald-400' : 'text-[#4B6478]')} />
+              <Icon size={13} className={cn(highlight || spreadPositive ? 'text-emerald-400' : 'text-[#4B6478]')} />
             </div>
             <div>
-              <span className={cn("text-2xl font-black tabular-nums tracking-tight block", highlight ? 'text-emerald-400' : 'text-white')}>
-                {value > 0 ? formatIDR(value).replace('Rp ', '') : '—'}
+              <span className={cn("text-2xl font-black tabular-nums tracking-tight block", highlight || spreadPositive ? 'text-emerald-400' : 'text-white')}>
+                {value ? formatIDR(value).replace('Rp ', '') : '—'}
               </span>
               {diff !== undefined && (
-                <span className={cn("text-[9px] font-black flex items-center gap-0.5 uppercase mt-0.5",
-                  diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-rose-400' : 'text-[#4B6478]'
-                )}>
+                <span className={cn("text-[9px] font-black flex items-center gap-0.5 uppercase mt-0.5", diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-rose-400' : 'text-[#4B6478]')}>
                   {diff > 0 ? '▲' : diff < 0 ? '▼' : '●'} {Math.abs(diff).toLocaleString('id-ID')}
                 </span>
               )}
-              {sub && <span className="text-[10px] font-bold text-[#4B6478] mt-0.5 block">{sub}</span>}
+              {sub && <span className={cn("text-[10px] font-bold mt-0.5 block", spreadPositive ? 'text-emerald-500/70' : 'text-[#4B6478]')}>{sub}</span>}
             </div>
           </div>
         )}
@@ -541,7 +566,75 @@ function StatCard({ label, value, diff, sub, icon: Icon, isLoading, highlight })
   )
 }
 
-// ─── SourceInfoRow ────────────────────────────────────────────────────────────
+function HybridTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null
+  const d = payload[0].payload
+  const spread = (d.platformBeli && d.chickin) ? d.chickin - d.platformBeli : null
+  const margin = (d.platformBeli && d.platformJual) ? d.platformJual - d.platformBeli : null
+  return (
+    <div className="bg-[#0C1319] border border-white/10 p-4 rounded-2xl shadow-2xl min-w-[200px] backdrop-blur-xl">
+      <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-3">{d.displayDate}</p>
+      <div className="space-y-2.5">
+        {[
+          { label: 'Chickin.id (Ref)', val: d.chickin, color: 'text-amber-400' },
+          { label: 'Arboge.com (Ref)', val: d.arboge, color: 'text-orange-400' },
+          { label: 'Beli (TernakOS)', val: d.platformBeli, color: 'text-emerald-400' },
+          { label: 'Jual (TernakOS)', val: d.platformJual, color: 'text-indigo-400' },
+        ].map(({ label, val, color }) => (
+          <div key={label} className="flex justify-between items-center gap-4">
+            <span className="text-[11px] text-[#94A3B8] font-bold">{label}</span>
+            <span className={cn("text-sm font-black tabular-nums", val ? color : 'text-[#4B6478]')}>
+              {val ? formatIDR(val) : '—'}
+            </span>
+          </div>
+        ))}
+      </div>
+      {(spread != null || margin != null) && (
+        <div className="mt-3 pt-3 border-t border-white/5 space-y-1.5">
+          {spread != null && (
+            <div className="flex justify-between items-center">
+              <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider">Efisiensi Beli</span>
+              <span className={cn('text-xs font-black tabular-nums', spread >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
+                {spread > 0 ? '+' : ''}{formatIDR(spread)}
+              </span>
+            </div>
+          )}
+          {margin != null && (
+            <div className="flex justify-between items-center">
+              <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider">Margin/kg</span>
+              <span className={cn('text-xs font-black tabular-nums', margin >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
+                {margin > 0 ? '+' : ''}{formatIDR(margin)}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SourceBadge({ source }) {
+  const map = {
+    auto_scraper: { label: 'Scraped', color: 'text-sky-400 bg-sky-500/10' },
+    transaction: { label: 'Verified', color: 'text-emerald-400 bg-emerald-500/10' },
+    arboge_referensi: { label: 'Arboge Ref', color: 'text-amber-400 bg-amber-500/10' },
+    arboge_realisasi: { label: 'Arboge Real', color: 'text-orange-400 bg-orange-500/10' },
+  }
+  const s = map[source] || { label: source || '—', color: 'text-[#4B6478] bg-white/5' }
+  return <span className={cn('text-[9px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-lg', s.color)}>{s.label}</span>
+}
+
+function LegendItem({ color, label, dashed = false }) {
+  return (
+    <div className="hidden md:flex items-center gap-2">
+      {dashed
+        ? <div className="w-4 h-0 border-t-2 border-dashed" style={{ borderColor: color }} />
+        : <div className="w-2 h-2 rounded-full" style={{ background: color }} />}
+      <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider">{label}</span>
+    </div>
+  )
+}
+
 function SourceInfoRow({ color, label, desc, badge, badgeColor }) {
   return (
     <div className="flex items-start gap-3">
@@ -554,76 +647,5 @@ function SourceInfoRow({ color, label, desc, badge, badgeColor }) {
         <p className="text-[10px] text-[#4B6478] font-medium leading-relaxed">{desc}</p>
       </div>
     </div>
-  )
-}
-
-// ─── LegendItem ──────────────────────────────────────────────────────────────
-function LegendItem({ color, label, dashed = false }) {
-  return (
-    <div className="hidden md:flex items-center gap-2">
-      {dashed
-        ? <div className="w-4 h-0 border-t-2 border-dashed" style={{ borderColor: color }} />
-        : <div className="w-2 h-2 rounded-full" style={{ background: color }} />}
-      <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider">{label}</span>
-    </div>
-  )
-}
-
-// ─── HybridTooltip ────────────────────────────────────────────────────────────
-function HybridTooltip({ active, payload }) {
-  if (!active || !payload?.length) return null
-  const d = payload[0].payload
-  const spread = (d.buyPrice && d.chickin) ? d.buyPrice - d.chickin : null
-  return (
-    <div className="bg-[#0C1319] border border-white/10 p-4 rounded-2xl shadow-2xl min-w-[200px] backdrop-blur-xl">
-      <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-3">{d.displayDate}</p>
-      <div className="space-y-2">
-        {[
-          { label: 'Chickin.id (Ref)',    val: d.chickin,   color: 'text-amber-400',   dashed: true },
-          { label: 'Harga Beli (Pasar)',  val: d.buyPrice,  color: 'text-emerald-400' },
-          { label: 'Harga Jual (Pasar)',  val: d.sellPrice, color: 'text-indigo-400' },
-        ].map(({ label, val, color, dashed }) => (
-          <div key={label} className="flex justify-between items-center gap-4">
-            <span className={cn('text-[10px] font-bold', dashed ? 'text-amber-400/70' : 'text-[#94A3B8]')}>{label}</span>
-            <span className={cn('text-sm font-black tabular-nums', val ? color : 'text-[#4B6478]')}>
-              {val ? formatIDR(val) : '—'}
-            </span>
-          </div>
-        ))}
-      </div>
-      {d.spread != null && (
-        <div className="mt-3 pt-3 border-t border-white/5 space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-black text-[#4B6478] uppercase tracking-wider">Efisiensi Beli vs Chickin</span>
-            <span className={cn('text-xs font-black tabular-nums', d.spread >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
-              {d.spread > 0 ? '+' : ''}{formatIDR(d.spread)}
-            </span>
-          </div>
-          {d.margin != null && (
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] font-black text-[#4B6478] uppercase tracking-wider">Margin/kg (Pasar)</span>
-              <span className={cn('text-xs font-black tabular-nums', d.margin >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
-                {d.margin > 0 ? '+' : ''}{formatIDR(d.margin)}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── SourceBadge ──────────────────────────────────────────────────────────────
-function SourceBadge({ source }) {
-  const map = {
-    auto_scraper: { label: 'Scraped', color: 'text-sky-400 bg-sky-500/10' },
-    manual:       { label: 'Manual',  color: 'text-amber-400 bg-amber-500/10' },
-    transaction:  { label: 'Verified', color: 'text-emerald-400 bg-emerald-500/10' },
-  }
-  const s = map[source] || { label: source || '—', color: 'text-[#4B6478] bg-white/5' }
-  return (
-    <span className={cn('text-[9px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-lg', s.color)}>
-      {s.label}
-    </span>
   )
 }

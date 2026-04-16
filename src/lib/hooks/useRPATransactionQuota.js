@@ -7,14 +7,13 @@ import { FALLBACK_TRANSACTION_QUOTA } from '@/lib/constants/planGating'
 const FALLBACK_STARTER_LIMIT = FALLBACK_TRANSACTION_QUOTA
 
 /**
- * Returns transaction quota info for the current tenant.
- * Limit is read from plan_configs (config_key: 'transaction_quota').
- * Only enforced for Starter plan (non-trial).
+ * Transaction quota untuk RPA (queries rpa_invoices).
+ * Sama logikanya dengan useSembakoTransactionQuota tapi pakai tabel berbeda.
  *
  * @param {object} tenant
  * @returns {{ used, limit, remaining, isAtLimit, isStarter, isLoading }}
  */
-export function useTransactionQuota(tenant) {
+export function useRPATransactionQuota(tenant) {
   const sub = getSubscriptionStatus(tenant)
   const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
 
@@ -25,10 +24,10 @@ export function useTransactionQuota(tenant) {
   const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
 
   const { data: used = 0, isLoading } = useQuery({
-    queryKey: ['transaction-quota', tenant?.id, now.getFullYear(), now.getMonth()],
+    queryKey: ['rpa-transaction-quota', tenant?.id, now.getFullYear(), now.getMonth()],
     queryFn: async () => {
       const { count, error } = await supabase
-        .from('sales')
+        .from('rpa_invoices')
         .select('id', { count: 'exact', head: true })
         .eq('tenant_id', tenant.id)
         .eq('is_deleted', false)

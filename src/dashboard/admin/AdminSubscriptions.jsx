@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 import { useQueryClient } from '@tanstack/react-query'
@@ -291,41 +292,37 @@ export default function AdminSubscriptions() {
         </Button>
       </div>
 
-      <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full relative z-10 mt-4">
-        <TabsList className="bg-white/5 backdrop-blur-xl border border-white/10 p-1 h-12 lg:h-10 rounded-xl mb-6 lg:mb-8 w-full lg:max-w-3xl flex overflow-x-auto scrollbar-hide flex-nowrap relative z-30 shadow-xl items-center justify-start">
-          {[
-            { id: 'invoices', label: 'Invoices' },
-            { id: 'settings', label: 'Rekening Bank' },
-            { id: 'expiring', label: 'Expiring Plans' },
-            { id: 'xendit', label: 'Xendit Gateway' }
-          ].map((tab) => (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              className="flex-1 shrink-0 min-w-[140px] relative rounded-lg font-bold uppercase text-[10px] md:text-[11px] tracking-widest transition-colors data-[state=active]:text-white text-[#4B6478] hover:text-white/60 h-full z-10 bg-transparent group"
-            >
-              {activeMainTab === tab.id && (
-                <div className="absolute inset-0 bg-white/10 rounded-lg shadow-inner" />
-              )}
-              {tab.id === 'expiring' ? (
-                <div className="flex items-center gap-2">
-                  {tab.label}
-                  {(() => {
-                    const count = (allTenants ?? []).filter(t => {
-                      const s = getSubscriptionStatus(t)
-                      return (s.status === 'active' || s.status === 'trial') && s.daysLeft <= 30
-                    }).length
-                    return count > 0 && (
-                      <span className="w-4 h-4 rounded-full bg-red-500 text-[9px] flex items-center justify-center animate-pulse shadow-lg shadow-red-500/20">
-                        {count}
-                      </span>
-                    )
-                  })()}
-                </div>
-              ) : tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full relative z-10 mt-6">
+        <div className="flex items-center justify-center lg:justify-start mb-8 overflow-x-auto scrollbar-hide -mx-4 px-4">
+          <TabsList className="bg-white/[0.03] backdrop-blur-3xl border border-white/5 p-1 h-14 lg:h-12 rounded-[20px] flex gap-1 shadow-2xl relative z-30">
+            {[
+              { id: 'invoices', label: 'Invoices', icon: History },
+              { id: 'settings', label: 'Bank', icon: Building2 },
+              { id: 'expiring', label: 'Expiring', icon: Clock },
+              { id: 'xendit', label: 'Xendit', icon: Zap }
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className="relative flex items-center gap-2.5 px-6 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] transition-all data-[state=active]:text-white text-[#4B6478] hover:text-white/60 h-full data-[state=active]:bg-white/10 data-[state=active]:shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)] group/tab overflow-hidden"
+              >
+                <tab.icon size={13} className={cn("transition-transform group-hover/tab:scale-110", activeMainTab === tab.id ? "text-emerald-400" : "text-[#4B6478]")} />
+                <span className="relative z-10">{tab.label}</span>
+                {tab.id === 'expiring' && (() => {
+                  const count = (allTenants ?? []).filter(t => {
+                    const s = getSubscriptionStatus(t)
+                    return (s.status === 'active' || s.status === 'trial') && s.daysLeft <= 30
+                  }).length
+                  return count > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-red-500 text-[9px] flex items-center justify-center animate-pulse shadow-lg shadow-red-500/20 text-white border border-white/10 ml-1">
+                      {count}
+                    </span>
+                  )
+                })()}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
         {/* ─── INVOICES TAB ─── */}
         <TabsContent value="invoices" className="space-y-6 animate-in fade-in duration-300">
@@ -410,26 +407,30 @@ export default function AdminSubscriptions() {
             <div className="overflow-x-auto relative z-10">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-white/5 bg-white/[0.02]">
-                    <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black">Invoice</th>
-                    <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black">Tenant</th>
-                    <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black text-center">Plan</th>
-                    <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black text-center">Periode</th>
-                    <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black">Amount</th>
-                    <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black text-center">Status</th>
-                    <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] text-[#4B6478] font-display font-black text-right">Aksi</th>
+                  <tr className="border-b border-white/5 bg-white/[0.03]">
+                    <th className="px-8 py-6 text-[10px] uppercase tracking-[0.3em] text-[#4B6478] font-display font-black">Invoice</th>
+                    <th className="px-8 py-6 text-[10px] uppercase tracking-[0.3em] text-[#4B6478] font-display font-black">Tenant</th>
+                    <th className="px-8 py-6 text-[10px] uppercase tracking-[0.3em] text-[#4B6478] font-display font-black text-center">Plan</th>
+                    <th className="px-8 py-6 text-[10px] uppercase tracking-[0.3em] text-[#4B6478] font-display font-black text-center">Periode</th>
+                    <th className="px-8 py-6 text-[10px] uppercase tracking-[0.3em] text-[#4B6478] font-display font-black">Amount</th>
+                    <th className="px-8 py-6 text-[10px] uppercase tracking-[0.3em] text-[#4B6478] font-display font-black text-center">Status</th>
+                    <th className="px-8 py-6 text-[10px] uppercase tracking-[0.3em] text-[#4B6478] font-display font-black text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {pagedInvoices.map((inv, i) => (
                     <tr
                       key={inv.id}
-                      className="hover:bg-white/[0.04] transition-all group"
+                      onClick={() => handleOpenDetail(inv)}
+                      className={cn(
+                        "hover:bg-white/[0.05] transition-all group cursor-pointer border-l-4",
+                        inv.status === 'pending' ? 'border-amber-500/40 bg-amber-500/[0.02]' : 'border-transparent'
+                      )}
                     >
-                      <td className="px-8 py-5">
-                        <div className="space-y-1">
+                      <td className="px-8 py-6">
+                        <div className="space-y-1.5">
                           <p className="text-[12px] font-mono font-black text-emerald-400 leading-none group-hover:scale-105 transition-transform origin-left inline-block">#{inv.invoice_number}</p>
-                          <p className="text-[9px] text-[#4B6478] font-black uppercase tracking-wider">{formatDate(inv.created_at)}</p>
+                          <p className="text-[9px] text-[#4B6478] font-black uppercase tracking-[0.2em]">{formatDate(inv.created_at)}</p>
                         </div>
                       </td>
                       <td className="px-8 py-5">
@@ -445,12 +446,12 @@ export default function AdminSubscriptions() {
                         </div>
                       </td>
                       <td className="px-8 py-5 text-center"><PlanBadge plan={inv.plan} /></td>
-                      <td className="px-8 py-5 text-center text-[12px] font-black text-white">{inv.billing_months} BLN</td>
-                      <td className="px-8 py-5">
-                        <p className="text-[14px] font-display font-black text-white tracking-tight">{formatIDR(inv.amount)}</p>
+                      <td className="px-8 py-6 text-center text-[12px] font-black text-white/80">{inv.billing_months} BLN</td>
+                      <td className="px-8 py-6">
+                        <p className="text-[15px] font-display font-black text-white tracking-tight">{formatIDR(inv.amount)}</p>
                       </td>
-                      <td className="px-8 py-5 text-center"><StatusBadge status={inv.status} /></td>
-                      <td className="px-8 py-5 text-right">
+                      <td className="px-8 py-6 text-center"><StatusBadge status={inv.status} /></td>
+                      <td className="px-8 py-6 text-right">
                         <div className="flex justify-end gap-2">
                           {inv.status === 'pending' && (
                             <Button
@@ -604,61 +605,63 @@ export default function AdminSubscriptions() {
         </TabsContent>
       </Tabs>
 
-      {/* ─── INVOICE DETAIL SHEET ─── */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="w-full sm:w-[500px] bg-[#0A0F14]/95 backdrop-blur-2xl border-l border-white/5 p-0 overflow-hidden flex flex-col shadow-2xl">
-          
+        <SheetContent side="right" className="w-full sm:w-[500px] bg-[#0A0F14]/95 backdrop-blur-2xl border-l border-white/5 p-0 overflow-hidden shadow-2xl">
+          <AnimatePresence>
             {selectedInvoice && (
-              <div>
+              <motion.div 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="flex flex-col h-full relative"
+              >
                 {/* Background glow for sheet */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[80px] rounded-full pointer-events-none" />
 
-                {/* Sheet Header */}
-                <div className="p-8 pb-6 border-b border-white/5 bg-white/[0.01] relative z-10">
-                  
+                {/* Sheet Header — Fixed Top */}
+                <div className="p-8 pb-6 border-b border-white/5 bg-white/[0.01] relative z-20 shrink-0">
+                  <div className="flex items-center justify-between mb-4">
                     {confirmSuccess ? (
-                      <div>
-                        <div className="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center shrink-0">
-                          <Check size={16} className="text-emerald-400" />
-                        </div>
-                        <p className="text-[12px] font-black text-emerald-400 uppercase tracking-[0.2em]">
-                          ✓ Terkonfirmasi
-                        </p>
+                      <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                        <Check size={14} className="text-emerald-400" />
+                        <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">Verified</p>
                       </div>
                     ) : (
-                      <div>
+                      <div className="flex items-center justify-between w-full">
                         <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em]">Payment Invoice</p>
                         <StatusBadge status={selectedInvoice.status} />
                       </div>
                     )}
+                  </div>
                   
-                  <SheetTitle className="text-3xl font-display font-black text-white tracking-tight leading-none mb-2">
+                  <SheetTitle className="text-4xl font-display font-black text-white tracking-tighter leading-none mb-1">
                     #{selectedInvoice.invoice_number}
                   </SheetTitle>
-                  <SheetDescription className="text-[11px] font-bold text-[#4B6478] uppercase tracking-[0.2em]">
-                    Dibuat pada {formatDate(selectedInvoice.created_at)}
+                  <SheetDescription className="text-[11px] font-bold text-[#4B6478] uppercase tracking-[0.2em] flex items-center gap-2">
+                    <CalendarDays size={12} /> Issued on {formatDate(selectedInvoice.created_at)}
                   </SheetDescription>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-8 space-y-10 relative z-10 scrollbar-hide">
+                {/* Scrollable Content Area */}
+                <div className="flex-1 overflow-y-auto p-8 space-y-10 relative z-10 scrollbar-hide bg-gradient-to-b from-white/[0.01] to-transparent">
                   {/* Amount Section — High Impact Glass */}
-                  <div className="bg-emerald-500/10 border border-emerald-500/20 p-8 rounded-[40px] text-center space-y-3 relative overflow-hidden shadow-2xl group/amount">
-                    <div className="absolute -right-6 -bottom-6 opacity-[0.05] group-hover/amount:opacity-[0.12] transition-opacity -rotate-12 duration-1000">
-                      <Banknote size={180} />
+                  <div className="bg-emerald-500/10 border border-emerald-500/30 p-10 rounded-[48px] text-center space-y-4 relative overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] group/amount">
+                    <div className="absolute -right-10 -bottom-10 opacity-[0.03] group-hover/amount:opacity-[0.1] transition-all duration-1000 -rotate-12 group-hover:scale-110">
+                      <Banknote size={240} />
                     </div>
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent" />
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent shadow-[0_0_20px_rgba(16,185,129,0.5)]" />
                     
-                    <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.4em] leading-none mb-1">Total Premium Amount</p>
-                    <p className="text-5xl font-display font-black text-white tracking-tighter drop-shadow-2xl">{formatIDR(selectedInvoice.amount)}</p>
+                    <p className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.5em] leading-none mb-1 opacity-80">Total Premium Amount</p>
+                    <p className="text-6xl font-display font-black text-white tracking-tighter drop-shadow-[0_10px_10px_rgba(0,0,0,0.3)]">{formatIDR(selectedInvoice.amount)}</p>
                     
-                    <div className="flex items-center justify-center gap-2.5 pt-4">
+                    <div className="flex items-center justify-center gap-3 pt-4">
                       <PlanBadge plan={selectedInvoice.plan} />
-                      <div className="h-5 w-px bg-white/10" />
-                      <span className="bg-white/5 px-2.5 py-1 rounded-lg text-[9px] font-black text-white/50 uppercase tracking-widest border border-white/5">
+                      <div className="h-6 w-px bg-white/10" />
+                      <span className="bg-white/5 px-3 py-1.5 rounded-xl text-[10px] font-black text-white/50 uppercase tracking-[0.2em] border border-white/5 shadow-inner">
                         {selectedInvoice.billing_months} MONTHS
                       </span>
                       {selectedInvoice.payment_method && (
-                        <span className="bg-blue-500/10 px-2.5 py-1 rounded-lg text-[9px] font-black text-blue-400 uppercase tracking-widest border border-blue-500/20">
+                        <span className="bg-blue-500/15 px-3 py-1.5 rounded-xl text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
                           {selectedInvoice.payment_method === 'manual' ? 'MANUAL TRANSFER' : selectedInvoice.payment_method.toUpperCase()}
                         </span>
                       )}
@@ -672,21 +675,27 @@ export default function AdminSubscriptions() {
                       <div className="h-px flex-1 mx-4 bg-white/5" />
                     </div>
                     
-                    <div className="bg-white/[0.03] border border-white/8 rounded-[32px] p-6 flex items-center justify-between group transition-all hover:bg-white/[0.06] hover:border-white/20 shadow-xl cursor-default">
-                      <div className="flex items-center gap-5">
-                        <div className="w-16 h-16 rounded-[24px] bg-black/40 border border-white/5 flex items-center justify-center text-3xl shadow-inner group-hover:scale-105 transition-transform duration-500">
+                    <div className="bg-white/[0.03] border border-white/5 rounded-[40px] p-8 flex items-center justify-between group transition-all hover:bg-white/[0.05] hover:border-emerald-500/20 shadow-2xl cursor-default relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="flex items-center gap-6 relative z-10">
+                        <div className="w-20 h-20 rounded-[28px] bg-black/40 border border-white/5 flex items-center justify-center text-4xl shadow-inner group-hover:scale-105 group-hover:-rotate-3 transition-all duration-700">
                           {getVerticalIcon(selectedInvoice.tenants?.business_vertical)}
                         </div>
                         <div>
-                          <p className="text-lg font-display font-black text-white leading-tight uppercase tracking-tight">{toTitleCase(selectedInvoice.tenants?.business_name)}</p>
-                          <p className="text-[11px] text-[#4B6478] font-bold uppercase tracking-widest mt-1.5 flex items-center gap-2">
-                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                             Tenant ID: {selectedInvoice.tenants?.id?.substring(0, 8)}
+                          <p className="text-xl font-display font-black text-white leading-tight uppercase tracking-tight group-hover:text-emerald-400 transition-colors">
+                            {toTitleCase(selectedInvoice.tenants?.business_name)}
                           </p>
+                          <div className="flex items-center gap-3 mt-2">
+                             <span className="bg-emerald-500/20 text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-md border border-emerald-500/20 uppercase">Active Client</span>
+                             <div className="w-1 h-1 rounded-full bg-white/20" />
+                             <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-[0.2em]">
+                               ID: {selectedInvoice.tenants?.id?.substring(0, 8)}
+                             </p>
+                          </div>
                         </div>
                       </div>
-                      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-[#4B6478] group-hover:text-emerald-400 group-hover:bg-emerald-500/10 transition-all">
-                        <ExternalLink size={16} />
+                      <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-[#4B6478] group-hover:text-emerald-400 group-hover:bg-emerald-500/10 transition-all border border-transparent group-hover:border-emerald-500/20 relative z-10">
+                        <ExternalLink size={18} />
                       </div>
                     </div>
                   </section>
@@ -769,11 +778,11 @@ export default function AdminSubscriptions() {
                   )}
                 </div>
 
-                {/* Footer Actions — Bottom Stick with Blur */}
+                {/* Footer Actions — Sticky Bottom with High Gloss Glass */}
                 {selectedInvoice.status === 'pending' && (() => {
                   const isXenditInvoice = selectedInvoice.payment_method === 'xendit' || !!selectedInvoice.xendit_invoice_id
                   return (
-                    <div className="p-8 border-t border-white/5 bg-gradient-to-b from-[#0A0F14]/40 to-[#0A0F14] relative z-20 space-y-4">
+                    <div className="p-8 border-t border-white/10 bg-[#0A0F14]/90 backdrop-blur-xl relative z-30 shrink-0 shadow-[0_-20px_40px_rgba(0,0,0,0.4)]">
                       {isXenditInvoice ? (
                         <div className="flex items-start gap-4 bg-amber-500/5 border border-amber-500/20 rounded-3xl p-5 shadow-inner">
                           <div className="w-10 h-10 rounded-2xl bg-amber-500/20 flex items-center justify-center shrink-0 border border-amber-500/20 shadow-xl">
@@ -837,9 +846,9 @@ export default function AdminSubscriptions() {
                     </div>
                   )
                 })()}
-              </div>
+              </motion.div>
             )}
-          
+          </AnimatePresence>
         </SheetContent>
       </Sheet>
 
@@ -1261,31 +1270,35 @@ function StatCard({ label, value, icon: Icon, color, isUrgent }) {
   const themes = {
     amber: {
       bg: 'bg-amber-500/5',
-      border: 'border-amber-500/10',
+      border: 'border-amber-500/20',
       iconBg: 'bg-amber-500/10',
       text: 'text-amber-400',
-      glow: 'from-amber-500/10 to-transparent'
+      glow: 'from-amber-400/20 to-transparent',
+      shadow: 'shadow-amber-500/5'
     },
     emerald: {
       bg: 'bg-emerald-500/5',
-      border: 'border-emerald-500/10',
+      border: 'border-emerald-500/20',
       iconBg: 'bg-emerald-500/10',
       text: 'text-emerald-400',
-      glow: 'from-emerald-500/10 to-transparent'
+      glow: 'from-emerald-400/20 to-transparent',
+      shadow: 'shadow-emerald-500/5'
     },
     blue: {
       bg: 'bg-blue-500/5',
-      border: 'border-blue-500/10',
+      border: 'border-blue-500/20',
       iconBg: 'bg-blue-500/10',
       text: 'text-blue-400',
-      glow: 'from-blue-500/10 to-transparent'
+      glow: 'from-blue-400/20 to-transparent',
+      shadow: 'shadow-blue-500/5'
     },
     red: {
       bg: 'bg-red-500/5',
-      border: 'border-red-500/10',
+      border: 'border-red-500/20',
       iconBg: 'bg-red-500/10',
       text: 'text-red-400',
-      glow: 'from-red-500/10 to-transparent'
+      glow: 'from-red-400/20 to-transparent',
+      shadow: 'shadow-red-500/5'
     }
   }
 
@@ -1293,25 +1306,26 @@ function StatCard({ label, value, icon: Icon, color, isUrgent }) {
 
   return (
     <div className={cn(
-      "relative overflow-hidden rounded-2xl border p-5 lg:p-6 group cursor-default transition-all duration-500 hover:-translate-y-0.5 shadow-lg",
-      theme.bg, theme.border,
-      isUrgent && 'ring-1 ring-amber-500/30'
+      "relative overflow-hidden rounded-[32px] border p-6 lg:p-7 group cursor-default transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl active:scale-[0.98]",
+      theme.bg, theme.border, theme.shadow,
+      isUrgent && 'ring-1 ring-amber-500/40 animate-pulse-slow'
     )}>
-      <div className={`absolute -right-2 -bottom-2 opacity-[0.05] group-hover:opacity-[0.1] transition-opacity ${theme.text}`}>
-        <Icon size={80} strokeWidth={1} />
-      </div>
+      {/* Background Gradient Glow */}
+      <div className={cn("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-700", theme.glow)} />
       
-      <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${theme.glow} opacity-30`} />
+      {/* Abstract Background Icon */}
+      <div className={cn("absolute -right-6 -bottom-6 opacity-[0.03] group-hover:opacity-[0.08] transition-all duration-1000 group-hover:scale-110", theme.text)}>
+        <Icon size={160} strokeWidth={1} />
+      </div>
 
-      <div className="relative z-10 flex flex-col h-full justify-between gap-4 lg:gap-6">
-        <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-xl flex items-center justify-center border ${theme.border} ${theme.bg} ${theme.text} group-hover:scale-110 group-hover:bg-opacity-20 transition-all duration-500 shadow-md`}>
-          <Icon size={18} className="lg:scale-110" />
+      <div className="relative z-10 flex items-center gap-6">
+        <div className={cn("w-16 h-16 rounded-[24px] flex items-center justify-center shadow-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6", theme.iconBg, theme.border)}>
+          <Icon size={28} className={theme.text} strokeWidth={2.5} />
         </div>
-        
-        <div>
-          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-1.5">{label}</p>
-          <div className="flex items-baseline gap-1">
-            <p className="text-xl lg:text-2xl font-display font-black text-white leading-none tracking-tight">
+        <div className="space-y-1">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#4B6478] drop-shadow-sm">{label}</p>
+          <div className="flex items-baseline gap-2">
+            <p className={cn("text-3xl font-display font-black tracking-tight leading-none truncate max-w-[180px]", theme.text)}>
               {value}
             </p>
           </div>
@@ -1325,21 +1339,21 @@ function StatCard({ label, value, icon: Icon, color, isUrgent }) {
 function PlanBadge({ plan }) {
   const styles = {
     starter: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
-    pro: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    business: 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+    pro: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]',
+    business: 'bg-amber-500/15 text-amber-400 border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)]'
   }
   return (
-    <Badge className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-widest border ${styles[plan] || styles.starter}`}>
-      {plan}
+    <Badge className={cn("px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] border rounded-lg", styles[plan] || styles.starter)}>
+      {plan === 'pro' ? '⭐ PRO' : plan === 'business' ? '👑 BUSINESS' : plan}
     </Badge>
   )
 }
 
 function StatusBadge({ status }) {
   const styles = {
-    pending: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-    paid: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-    expired: 'bg-red-500/10 text-red-500 border-red-500/20',
+    pending: 'bg-amber-500/15 text-amber-500 border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.15)] animate-pulse-slow',
+    paid: 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.15)]',
+    expired: 'bg-red-500/15 text-red-500 border-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.15)]',
     cancelled: 'bg-white/5 text-[#4B6478] border-white/10'
   }
   return (

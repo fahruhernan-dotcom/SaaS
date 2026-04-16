@@ -37,6 +37,17 @@ export default function SembakoLaporan() {
   const sub = getSubscriptionStatus(tenant)
   const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
 
+  // Compute before useState so initial values are stable regardless of isStarter.
+  // Rules of Hooks: all hooks must be called unconditionally before any early return.
+  const now = new Date()
+  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+  const lastOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)
+
+  const [startDate, setStartDate] = useState(firstOfMonth)
+  const [endDate, setEndDate] = useState(lastOfMonth)
+  const [preset, setPreset] = useState('bulan_ini')
+
+  // ── Upgrade wall — must come after all hooks ──────────────────────────────
   if (isStarter) {
     return (
       <div style={{ background: C.bg, minHeight: '100vh' }}>
@@ -69,13 +80,6 @@ export default function SembakoLaporan() {
       </div>
     )
   }
-  const now = new Date()
-  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
-  const lastOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)
-
-  const [startDate, setStartDate] = useState(firstOfMonth)
-  const [endDate, setEndDate] = useState(lastOfMonth)
-  const [preset, setPreset] = useState('bulan_ini')
 
   const handlePresetChange = (val) => {
     setPreset(val)

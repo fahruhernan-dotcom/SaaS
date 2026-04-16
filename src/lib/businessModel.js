@@ -488,24 +488,50 @@ export const SUB_TYPE_TO_VERTICAL = VERTICAL_ALIASES
  * CENTRALIZED RESOLUTION LOGIC
  */
 export function resolveBusinessVertical(profile, tenant) {
+  let resolved = null
+
   // 1. Forced Sembako logic (Highest priority)
   const isSembakoName = tenant?.business_name?.toLowerCase().includes('sembako') || 
                        profile?.business_name?.toLowerCase().includes('sembako')
-  if (isSembakoName) return 'distributor_sembako'
+  if (isSembakoName) {
+    resolved = 'distributor_sembako'
+  }
 
   // 2. Direct vertical field check
-  const directVertical = tenant?.business_vertical || profile?.business_vertical
-  if (directVertical) {
-    if (BUSINESS_MODELS[directVertical]) return directVertical
-    if (VERTICAL_ALIASES[directVertical]) return VERTICAL_ALIASES[directVertical]
+  if (!resolved) {
+    const directVertical = tenant?.business_vertical || profile?.business_vertical
+    if (directVertical) {
+      if (BUSINESS_MODELS[directVertical]) resolved = directVertical
+      else if (VERTICAL_ALIASES[directVertical]) resolved = VERTICAL_ALIASES[directVertical]
+    }
   }
 
   // 3. Sub-type mapping check
-  const subType = tenant?.sub_type || profile?.sub_type
-  if (subType && VERTICAL_ALIASES[subType]) {
-    return VERTICAL_ALIASES[subType]
+  if (!resolved) {
+    const subType = tenant?.sub_type || profile?.sub_type
+    if (subType && VERTICAL_ALIASES[subType]) {
+      resolved = VERTICAL_ALIASES[subType]
+    }
   }
 
   // 4. Default Fallback
-  return 'poultry_broker'
+  if (!resolved) {
+    resolved = 'poultry_broker'
+  }
+
+  // 5. ENFORCE CATEGORY MATCH (Prevents infinite redirect loops)
+  // Ensures a user with user_type="broker" doesn't get routed to a "peternak" dashboard and rejected back repeatedly.
+  const model = BUSINESS_MODELS[resolved]
+  const userType = profile?.user_type
+  const role = profile?.role
+  
+  if (model && userType && userType !== 'superadmin' && userType !== 'owner' && role !== 'superadmin' && role !== 'owner') {
+    if (model.category !== userType) {
+      if (userType === 'peternak') return 'peternak_broiler'
+      if (userType === 'rumah_potong') return 'rumah_potong_rpa'
+      return 'poultry_broker'
+    }
+  }
+
+  return resolved
 }

@@ -2,8 +2,9 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { usePlanConfigs } from '@/lib/hooks/useAdminData'
+import { FALLBACK_TRANSACTION_QUOTA } from '@/lib/constants/planGating'
 
-const FALLBACK_STARTER_LIMIT = 30
+const FALLBACK_STARTER_LIMIT = FALLBACK_TRANSACTION_QUOTA
 
 /**
  * Transaction quota untuk Sembako Broker (queries sembako_sales).

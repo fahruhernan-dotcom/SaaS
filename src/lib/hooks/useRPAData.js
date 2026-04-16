@@ -202,7 +202,17 @@ export const useCreateInvoice = () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-dashboard-stats', tenant?.id] })
       toast.success('Invoice berhasil dibuat')
     },
-    onError: (err) => toast.error('Gagal buat invoice: ' + err.message),
+    onError: (err) => {
+      // Trigger QUOTA_EXCEEDED has structured message: "QUOTA_EXCEEDED|rpa_invoices|starter|limit|used"
+      if (err.message?.startsWith('QUOTA_EXCEEDED')) {
+        const [, , , limit, used] = err.message.split('|')
+        toast.error('Kuota invoice habis', {
+          description: `Plan Starter dibatasi ${limit} invoice/bulan (${used} terpakai). Upgrade ke Pro untuk unlimited.`,
+        })
+      } else {
+        toast.error('Gagal buat invoice: ' + err.message)
+      }
+    },
   })
 }
 

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Calculator, ArrowLeft, RefreshCw, Zap, 
-  TrendingUp, TrendingDown, DollarSign, Scale, 
+import {
+  Calculator, ArrowLeft, RefreshCw, Zap,
+  TrendingUp, TrendingDown, DollarSign, Scale,
   Truck, ShoppingCart, Info, AlertCircle, CheckCircle2,
-  Sparkles, Target
+  Sparkles, Target, Lock
 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { formatIDR, formatWeight, safeNumber } from '@/lib/format'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,8 @@ import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/lib/hooks/useAuth'
+import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 
 const staggerContainer = {
   hidden: {},
@@ -34,6 +36,10 @@ const fadeUp = {
 export default function Simulator() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const navigate = useNavigate()
+  const { tenant } = useAuth()
+  const sub = getSubscriptionStatus(tenant)
+  const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
+
   const [marketPrices, setMarketPrices] = useState(null)
   const [formData, setFormData] = useState({
     ekor: '',
@@ -101,8 +107,51 @@ export default function Simulator() {
     })
   }
 
+  if (isStarter) {
+    return (
+      <div className="bg-[#06090F] min-h-screen">
+        <header className="px-5 pt-8 pb-4 border-b border-white/5">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="w-11 h-11 rounded-[16px] bg-secondary/10 border border-white/5 flex items-center justify-center text-white/50 hover:text-white transition-colors active:scale-90"
+            >
+              <ArrowLeft size={20} strokeWidth={2.5} />
+            </button>
+            <div>
+              <h1 className="font-display text-xl font-black text-white tracking-tight leading-none uppercase">Simulator Margin</h1>
+              <p className="text-[10px] font-black text-[#4B6478] uppercase mt-1.5 tracking-wider">Simulasi angka sebelum transaksi...</p>
+            </div>
+          </div>
+        </header>
+        <div className="flex flex-col items-center justify-center min-h-[75vh] px-8 text-center">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 bg-emerald-500/10 border border-emerald-500/20">
+            <Calculator size={30} className="text-emerald-400" />
+          </div>
+          <span className="inline-block mb-4 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+            Fitur Pro
+          </span>
+          <h2 className="font-display text-2xl font-black text-white mb-3 uppercase tracking-tight">
+            Simulator Margin
+          </h2>
+          <p className="text-[14px] text-[#4B6478] max-w-xs leading-relaxed mb-8">
+            Hitung margin, BEP, dan ROI sebelum eksekusi transaksi. Tersedia di plan Pro ke atas.
+          </p>
+          <Link
+            to="/upgrade"
+            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl font-black text-[13px] uppercase tracking-widest text-white transition-all active:scale-95"
+            style={{ background: '#10B981', boxShadow: '0 8px 24px rgba(16,185,129,0.3)' }}
+          >
+            <Lock size={14} />
+            Upgrade ke Pro
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <motion.div 
+    <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}

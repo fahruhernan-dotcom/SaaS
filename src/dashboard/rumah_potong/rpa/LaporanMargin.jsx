@@ -4,13 +4,16 @@ import {
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import { motion, AnimatePresence } from 'framer-motion'
-import { TrendingUp, TrendingDown, DollarSign, ChevronDown, ChevronUp, FileText } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign, ChevronDown, ChevronUp, FileText, Lock, BarChart3 } from 'lucide-react'
 import { format, startOfMonth, parseISO, differenceInDays, addDays } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
+import { Link } from 'react-router-dom'
 import { DatePicker } from '@/components/ui/DatePicker'
 import TopBar from '../../_shared/components/TopBar'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useRPAMarginReport } from '@/lib/hooks/useRPAData'
+import { useAuth } from '@/lib/hooks/useAuth'
+import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -100,11 +103,17 @@ function Skeleton({ h = 60, rounded = 12 }) {
 
 export default function RPALaporanMargin() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const { tenant } = useAuth()
+  const sub = getSubscriptionStatus(tenant)
+  const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
+
   const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'))
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [showAllInvoices, setShowAllInvoices] = useState(false)
   const [invFilter, setInvFilter] = useState('all')
 
+  // NOTE: ALL hooks must be called before any conditional return (Rules of Hooks).
+  // useRPAMarginReport runs for all users; result is unused when isStarter = true.
   const { data, isLoading } = useRPAMarginReport(startDate, endDate)
 
   const chartData = useMemo(
@@ -143,6 +152,55 @@ export default function RPALaporanMargin() {
     if (invFilter === 'all') return data.invoices
     return data.invoices.filter(i => i.payment_status === invFilter)
   }, [data, invFilter])
+
+  // ── Upgrade wall — must come after all hooks ──────────────────────────────
+  if (isStarter) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#06090F' }}>
+        {!isDesktop && <TopBar title="Laporan Margin" subtitle="Analisis profitabilitas" />}
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          minHeight: '80vh', padding: '32px 20px', textAlign: 'center',
+        }}>
+          <div style={{
+            width: '64px', height: '64px', borderRadius: '20px', marginBottom: '20px',
+            background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <BarChart3 size={28} color="#F59E0B" />
+          </div>
+          <span style={{
+            display: 'inline-block', marginBottom: '14px',
+            padding: '4px 12px', borderRadius: '20px',
+            background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)',
+            fontSize: '11px', fontWeight: 700, color: '#F59E0B',
+            textTransform: 'uppercase', letterSpacing: '0.1em',
+          }}>
+            Fitur Pro
+          </span>
+          <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#F1F5F9', marginBottom: '10px', fontFamily: 'Sora' }}>
+            Laporan Margin & HPP
+          </h2>
+          <p style={{ fontSize: '14px', color: '#4B6478', maxWidth: '320px', lineHeight: 1.6, marginBottom: '28px' }}>
+            Analitik HPP, margin per produk, breakdown per customer, dan chart revenue vs cost tersedia di plan Pro ke atas.
+          </p>
+          <Link
+            to="/upgrade"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              padding: '12px 28px', borderRadius: '14px',
+              background: '#F59E0B', color: '#0D1117',
+              fontWeight: 800, fontSize: '14px', textDecoration: 'none',
+              boxShadow: '0 8px 24px rgba(245,158,11,0.3)',
+            }}
+          >
+            <Lock size={15} />
+            Upgrade ke Pro
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   const mc = marginColor(data?.marginPct ?? 0)
   const profitPositive = (data?.totalProfit ?? 0) >= 0

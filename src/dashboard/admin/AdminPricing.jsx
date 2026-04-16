@@ -490,8 +490,10 @@ export default function AdminPricing() {
                 badgeClass="bg-white/10 text-white/50"
                 kandangValue={kandangLimits.starter}
                 teamValue={teamLimits.starter}
+                businessValue={businessLimits.starter}
                 onKandangChange={v => setKandangLimits(p => ({ ...p, starter: v }))}
                 onTeamChange={v => setTeamLimits(p => ({ ...p, starter: v }))}
+                onBusinessChange={v => setBusinessLimits(p => ({ ...p, starter: v }))}
               />
               {/* PRO */}
               <PlanLimitCard
@@ -499,8 +501,10 @@ export default function AdminPricing() {
                 badgeClass="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                 kandangValue={kandangLimits.pro}
                 teamValue={teamLimits.pro}
+                businessValue={businessLimits.pro}
                 onKandangChange={v => setKandangLimits(p => ({ ...p, pro: v }))}
                 onTeamChange={v => setTeamLimits(p => ({ ...p, pro: v }))}
+                onBusinessChange={v => setBusinessLimits(p => ({ ...p, pro: v }))}
               />
               {/* Business */}
               <PlanLimitCard
@@ -509,8 +513,10 @@ export default function AdminPricing() {
                 badgeClass="bg-amber-500/10 text-amber-400 border border-amber-500/20"
                 kandangValue={kandangLimits.business}
                 teamValue={teamLimits.business}
+                businessValue={businessLimits.business}
                 onKandangChange={v => setKandangLimits(p => ({ ...p, business: v }))}
                 onTeamChange={v => setTeamLimits(p => ({ ...p, business: v }))}
+                onBusinessChange={v => setBusinessLimits(p => ({ ...p, business: v }))}
               />
               {/* Enterprise */}
               <PlanLimitCard
@@ -519,6 +525,7 @@ export default function AdminPricing() {
                 readOnly
                 kandangValue={99}
                 teamValue={99}
+                businessValue={999}
               />
             </div>
 

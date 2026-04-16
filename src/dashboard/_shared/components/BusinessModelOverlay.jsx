@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Lock, ArrowLeft, Building2, MapPin, ChevronDown } from 'lucide-react'
+import { Check, Lock, ArrowLeft, Building2, MapPin, ChevronDown, X } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { BUSINESS_MODELS, BUSINESS_CATEGORIES, ANIMAL_GROUPS, resolveBusinessVertical } from '@/lib/businessModel'
 import { toTitleCase } from '@/lib/format'
@@ -122,16 +122,16 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
         }
 
         // --- MULTI-TENANT: Use RPC for Atomic Creation (Bypasses RLS issues) ---
-        const { data: newTenantId, error: rpcError } = await supabase
-          .rpc('setup_new_business', {
+        const { error: rpcError } = await supabase
+          .rpc('create_new_business', {
             p_business_name: formattedName,
-            p_vertical: model.key,
-            p_sub_type: model.sub_type,
-            p_province: province || null
+            p_business_vertical: model.key,
+            p_location: province || null,
+            p_phone: profile?.phone || ''
           })
 
         if (rpcError) throw rpcError
-        console.log('Successfully created new business:', newTenantId)
+        toast.success('Bisnis baru berhasil dibuat!')
 
       } else {
         // --- INITIAL ONBOARDING: Update Existing ---
@@ -164,7 +164,7 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
       if (onComplete) onComplete(selected)
     } catch (err) {
       console.error('Error saving business model:', err)
-      alert('Gagal menyimpan pilihan. Silakan coba lagi.')
+      toast.error('Gagal menyimpan pilihan. Silakan coba lagi.')
     } finally {
       setLoading(false)
     }
@@ -247,6 +247,14 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
           margin: 'auto',
         }}
       >
+        {/* Close Button */}
+        <button
+          onClick={() => onComplete?.()}
+          className="absolute top-5 right-5 w-8 h-8 rounded-full flex items-center justify-center bg-white/5 border border-white/10 text-[#4B6478] hover:text-white hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer z-20"
+        >
+          <X size={16} />
+        </button>
+
         {/* Top accent */}
         <div style={{
           position: 'absolute',

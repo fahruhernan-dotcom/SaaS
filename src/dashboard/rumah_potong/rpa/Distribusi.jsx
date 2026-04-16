@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   FileText, Store, Plus, Search, X, Package, Star, Phone,
-  Pencil, AlertTriangle, TrendingUp, DollarSign, Download,
+  Pencil, AlertTriangle, TrendingUp, DollarSign, Download, Lock,
 } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
@@ -26,6 +26,8 @@ import {
   useCreateInvoice, useRecordCustomerPayment,
 } from '@/lib/hooks/useRPAData'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { Link } from 'react-router-dom'
+import { useRPATransactionQuota } from '@/lib/hooks/useRPATransactionQuota'
 import InvoicePreviewModal from '@/components/invoice/InvoicePreviewModal'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -1060,6 +1062,7 @@ export default function RPADistribusi() {
   const navigate = useNavigate()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const { tenant, profile } = useAuth()
+  const quota = useRPATransactionQuota(tenant)
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [mainTab, setMainTab] = useState('invoice')
@@ -1125,18 +1128,23 @@ export default function RPADistribusi() {
 
   const AddInvoiceButton = (
     <motion.button
-      whileTap={{ scale: 0.95 }}
-      onClick={openInvoiceSheet}
+      whileTap={quota.isAtLimit ? {} : { scale: 0.95 }}
+      onClick={() => !quota.isAtLimit && openInvoiceSheet()}
+      disabled={quota.isAtLimit}
+      title={quota.isAtLimit ? 'Kuota invoice bulan ini habis — Upgrade ke Pro' : undefined}
       style={{
         display: 'flex', alignItems: 'center', gap: '6px',
         padding: '8px 14px', borderRadius: '10px',
-        background: '#F59E0B', border: 'none',
-        color: '#0D1117', fontWeight: 700, fontSize: '13px', cursor: 'pointer',
-        flexShrink: 0,
+        background: quota.isAtLimit ? 'rgba(255,255,255,0.06)' : '#F59E0B',
+        border: 'none',
+        color: quota.isAtLimit ? '#4B6478' : '#0D1117',
+        fontWeight: 700, fontSize: '13px',
+        cursor: quota.isAtLimit ? 'not-allowed' : 'pointer',
+        flexShrink: 0, opacity: quota.isAtLimit ? 0.6 : 1,
       }}
     >
-      <Plus size={15} />
-      {isDesktop ? 'Buat Invoice' : 'Invoice'}
+      {quota.isAtLimit ? <Lock size={14} /> : <Plus size={15} />}
+      {quota.isAtLimit ? 'Kuota Habis' : (isDesktop ? 'Buat Invoice' : 'Invoice')}
     </motion.button>
   )
 
@@ -1198,6 +1206,79 @@ export default function RPADistribusi() {
                 </div>
               ))}
             </div>
+
+            {/* Quota Banner — Starter only */}
+            {quota.isStarter && (
+              <div style={{
+                marginBottom: '14px',
+                padding: '12px 16px',
+                borderRadius: '12px',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
+                background: quota.isAtLimit
+                  ? 'rgba(239,68,68,0.08)'
+                  : quota.remaining <= 5
+                    ? 'rgba(245,158,11,0.08)'
+                    : 'rgba(245,158,11,0.06)',
+                border: `1px solid ${quota.isAtLimit
+                  ? 'rgba(239,68,68,0.25)'
+                  : quota.remaining <= 5
+                    ? 'rgba(245,158,11,0.2)'
+                    : 'rgba(245,158,11,0.15)'}`,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                  <div style={{
+                    width: '28px', height: '28px', borderRadius: '8px', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: quota.isAtLimit ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.12)',
+                    fontSize: '13px',
+                  }}>
+                    {quota.isAtLimit ? '🔒' : '📊'}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{
+                      fontSize: '12px', fontWeight: 700, lineHeight: 1.3,
+                      color: quota.isAtLimit ? '#F87171' : quota.remaining <= 5 ? '#FBBF24' : '#94A3B8',
+                    }}>
+                      {quota.isAtLimit
+                        ? 'Kuota invoice bulan ini habis'
+                        : `${quota.used} / ${quota.limit} invoice bulan ini`}
+                    </p>
+                    {quota.isAtLimit && (
+                      <p style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>
+                        Upgrade ke Pro untuk invoice unlimited
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {!quota.isAtLimit && (
+                  <div style={{ width: '80px', flexShrink: 0 }}>
+                    <div style={{ height: '6px', background: 'rgba(255,255,255,0.06)', borderRadius: '99px', overflow: 'hidden' }}>
+                      <div style={{
+                        height: '100%', borderRadius: '99px', transition: 'width 0.5s',
+                        width: `${Math.min(100, (quota.used / quota.limit) * 100)}%`,
+                        background: quota.remaining <= 5 ? '#F59E0B' : '#F59E0B',
+                      }} />
+                    </div>
+                    <p style={{ fontSize: '10px', color: '#4B6478', textAlign: 'right', marginTop: '3px' }}>
+                      {quota.remaining} sisa
+                    </p>
+                  </div>
+                )}
+                {quota.isAtLimit && (
+                  <Link
+                    to="/upgrade"
+                    style={{
+                      flexShrink: 0, fontSize: '11px', fontWeight: 800,
+                      color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)',
+                      padding: '6px 12px', borderRadius: '8px',
+                      textDecoration: 'none', whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Upgrade
+                  </Link>
+                )}
+              </div>
+            )}
 
             {/* Filter + Search */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>

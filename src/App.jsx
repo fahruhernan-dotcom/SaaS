@@ -7,7 +7,7 @@ import { queryClient } from './lib/queryClient';
 import { TooltipProvider } from './components/ui/tooltip';
 import { AuthProvider, useAuth } from './lib/hooks/useAuth';
 import { NotificationsProvider, useNotificationGenerator } from './lib/hooks/useNotifications.jsx';
-import { HelmetProvider } from 'react-helmet-async';
+import { HelmetProvider, Helmet } from 'react-helmet-async';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -190,8 +190,8 @@ function RoleRedirector() {
   
   const role = profile.user_type === 'rumah_potong' ? 'rumah_potong' : profile.user_type;
   
-  // If broker/rumah_potong, point to the vertical-specific beranda
-  if (profile.user_type === 'broker' || profile.user_type === 'rumah_potong') {
+  // If superadmin, owner, broker, or rumah_potong, point to the vertical-specific beranda
+  if (profile.role === 'superadmin' || profile.role === 'owner' || profile.user_type === 'broker' || profile.user_type === 'rumah_potong') {
     return <Navigate to={getVerticalBeranda(tenant, profile)} replace />;
   }
   
@@ -253,6 +253,11 @@ function AppContentLayout() {
 function RootLayout() {
   return (
     <HelmetProvider>
+      <Helmet>
+        <link rel="icon" type="image/png" href="/logo.png?v=2" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
+        <link rel="shortcut icon" href="/logo.png?v=2" />
+      </Helmet>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <TooltipProvider>
@@ -409,6 +414,7 @@ export const routes = createRoutesFromElements(
       <Route path="akun"             element={<PeternakPageRouter page="akun" />} />
       <Route path="tim"              element={<PeternakPageRouter page="tim" />} />
       <Route path="harga-pasar"      element={<PeternakPageRouter page="harga-pasar" />} />
+      <Route path="kandang-view"     element={<PeternakPageRouter page="kandang-view" />} />
 
       {/* Per-farm routes (Level 2) */}
       <Route path="kandang/:farmId"           element={<Navigate to="beranda" replace />} />

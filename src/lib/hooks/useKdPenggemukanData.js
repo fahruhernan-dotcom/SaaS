@@ -601,3 +601,107 @@ export function useDeleteKdWeightRecord() {
     onError: (err) => toast.error('Gagal hapus: ' + err.message),
   })
 }
+
+// ─── KANDANG MANAGEMENT HOOKS ───────────────────────────────────────────────
+
+export function useKdKandangs(batchId) {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['kd-kandangs', batchId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('kd_kandangs')
+        .select('*')
+        .eq('tenant_id', tenant.id)
+        .eq('batch_id', batchId)
+        .eq('is_active', true)
+        .order('is_holding', { ascending: false }) // Holding selalu di atas (atau di bawah, tergantung query. false dulu baru true? false ascending = false, true. descending = true, false. Jadi holding di depan)
+        .order('created_at', { ascending: true })
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: !!batchId && !!tenant?.id,
+  })
+}
+
+export function useCreateKdKandang() {
+  const qc = useQueryClient()
+  const { tenant } = useAuth()
+  return useMutation({
+    mutationFn: async (payload) => {
+      // payload: { batch_id, name, capacity, panjang_m, lebar_m, is_holding, notes }
+      const { error } = await supabase
+        .from('kd_kandangs')
+        .insert({
+          tenant_id: tenant.id,
+          ...payload
+        })
+      if (error) throw error
+    },
+    onSuccess: (_, { batch_id }) => {
+      qc.invalidateQueries({ queryKey: ['kd-kandangs', batch_id] })
+      toast.success('Kandang berhasil ditambahkan')
+    },
+    onError: (err) => toast.error('Gagal buat kandang: ' + err.message)
+  })
+}
+
+export function useMoveAnimalToKandang() {
+  const qc = useQueryClient()
+  const { tenant } = useAuth()
+  return useMutation({
+    mutationFn: async ({ animalId, kandangId, kandangSlot, batchId }) => {
+      const { error } = await supabase
+        .from('kd_penggemukan_animals')
+        .update({ 
+          kandang_id: kandangId,
+          kandang_slot: kandangSlot // backward compatibility
+        })
+        .eq('id', animalId)
+        .eq('tenant_id', tenant.id)
+      if (error) throw error
+    },
+    onSuccess: (_, { batchId }) => {
+      qc.invalidateQueries({ queryKey: ['kd-animals', batchId] })
+      // Don't toast here to avoid spam during drag and drop, maybe handled later
+    },
+    onError: (err) => toast.error('Gagal memindahkan ternak: ' + err.message)
+  })
+}
+
+export function useEnsureHoldingPen() {
+  const qc = useQueryClient()
+  const { tenant } = useAuth()
+  return useMutation({
+    mutationFn: async (batchId) => {
+      // Check if holding pen exists
+      const { data, error: checkErr } = await supabase
+        .from('kd_kandangs')
+        .select('id')
+        .eq('tenant_id', tenant.id)
+        .eq('batch_id', batchId)
+        .eq('is_holding', true)
+        .limit(1)
+      
+      if (checkErr) throw checkErr
+
+      if (!data || data.length === 0) {
+        // Create holding pen
+        const { error: insertErr } = await supabase
+          .from('kd_kandangs')
+          .insert({
+            tenant_id: tenant.id,
+            batch_id: batchId,
+            name: 'Kandang Holding',
+            capacity: 9999, // unlimited
+            is_holding: true,
+            notes: 'Area penampungan domba belum dialokasikan'
+          })
+        if (insertErr) throw insertErr
+      }
+    },
+    onSuccess: (_, batchId) => {
+      qc.invalidateQueries({ queryKey: ['kd-kandangs', batchId] })
+    }
+  })
+}

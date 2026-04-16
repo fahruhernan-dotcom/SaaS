@@ -3,13 +3,18 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft, ChevronRight, Check, Lock,
   LayoutGrid, Bird, Egg, PawPrint,
+  MapPin, ChevronsUpDown
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { resolveBusinessVertical } from '@/lib/businessModel'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { usePeternakFarms } from '@/lib/hooks/usePeternakData'
+import { PROVINCES } from '@/lib/constants/regions'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
 import { InputNumber } from '@/components/ui/InputNumber'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { DatePicker } from '@/components/ui/DatePicker'
@@ -25,6 +30,19 @@ const LIVESTOCK_OPTIONS = [
   { id: 'sapi',         Icon: PawPrint, label: 'Sapi',         iconColor: 'text-[#4B6478]',   iconBg: 'bg-white/5',       available: false },
   { id: 'babi',         Icon: PawPrint, label: 'Babi',         iconColor: 'text-[#4B6478]',   iconBg: 'bg-white/5',       available: false },
 ]
+
+const VERTICAL_TO_LIVESTOCK = {
+  peternak: 'ayam_broiler',
+  peternak_layer: 'ayam_petelur',
+  peternak_kambing_domba_penggemukan: 'domba',
+  peternak_kambing_domba_breeding: 'domba',
+  peternak_sapi_penggemukan: 'sapi',
+  peternak_sapi_breeding: 'sapi',
+  peternak_bebek_pedaging: 'bebek',
+  peternak_bebek_layer: 'bebek',
+  peternak_babi_penggemukan: 'babi',
+  peternak_babi_breeding: 'babi',
+}
 
 // ─── Shared styles ─────────────────────────────────────────────────────────────
 
@@ -63,7 +81,7 @@ function FormField({ id, label, placeholder, value, onChange, type = 'text' }) {
 // ─── Main component ────────────────────────────────────────────────────────────
 
 export default function SetupFarm({ onSuccess, onCancel }) {
-  const { tenant, refetchProfile } = useAuth()
+  const { profile, tenant, refetchProfile } = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
@@ -77,21 +95,38 @@ export default function SetupFarm({ onSuccess, onCancel }) {
   const [livestock,        setLivestock]        = useState(null)
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [form,             setForm]             = useState({
-    farm_name: '', location: '', capacity: '', kandang_count: 1,
+    farm_name: '', location: '', province: '', capacity: '', kandang_count: 1,
   })
   const [cycleForm, setCycleForm] = useState({
     doc_count: '', start_date: TODAY, target_weight_kg: '', sell_price_per_kg: '',
   })
   const [loading, setLoading] = useState(false)
 
+  const vertical = resolveBusinessVertical(profile, tenant)
+  const roleLivestock = VERTICAL_TO_LIVESTOCK[vertical]
+
+  // ── Auto-detect livestock based on role ──
+  React.useEffect(() => {
+    if (tenant && !livestock) {
+      if (roleLivestock) {
+        setLivestock(roleLivestock)
+        setStep(2) // Skip to step 2 if role is clear
+      }
+    }
+  }, [tenant, profile, roleLivestock])
+
+  const filteredOptions = roleLivestock 
+    ? LIVESTOCK_OPTIONS.filter(o => o.id === roleLivestock)
+    : LIVESTOCK_OPTIONS
+
   const setField      = (key, val) => setForm(f => ({ ...f, [key]: val }))
   const setCycleField = (key, val) => setCycleForm(f => ({ ...f, [key]: val }))
 
   const canNext1 = !!livestock
-  const canNext2 = form.farm_name.trim() && Number(form.capacity) > 0
+  const canNext2 = form.farm_name.trim() && form.province && Number(form.capacity) > 0
 
   const handleSubmit = async (skipCycle = false) => {
-    if (!form.farm_name.trim() || !Number(form.capacity) || loading) return
+    if (!form.farm_name.trim() || !form.province || !Number(form.capacity) || loading) return
     if (!tenant?.id) {
       toast.error('Sesi tidak valid. Silakan muat ulang halaman.')
       setLoading(false)
@@ -107,6 +142,7 @@ export default function SetupFarm({ onSuccess, onCancel }) {
           tenant_id:     tenant.id,
           farm_name:     form.farm_name.trim(),
           location:      form.location.trim() || null,
+          province:      form.province,
           capacity:      parseInt(form.capacity) || 0,
           kandang_count: isMultiKandangEnabled ? (parseInt(form.kandang_count) || 1) : 1,
           livestock_type: livestock,
@@ -243,7 +279,7 @@ export default function SetupFarm({ onSuccess, onCancel }) {
                   Apa yang akan kamu pelihara di kandang ini?
                 </p>
                 <div className="grid grid-cols-2 gap-3">
-                  {LIVESTOCK_OPTIONS.map(({ id, Icon, label, iconColor, iconBg, available }) => {
+                  {filteredOptions.map(({ id, Icon, label, iconColor, iconBg, available }) => {
                     const selected = livestock === id
                     return (
                       <button
@@ -295,6 +331,48 @@ export default function SetupFarm({ onSuccess, onCancel }) {
                     value={form.farm_name}
                     onChange={v => setField('farm_name', v)}
                   />
+                  <div className="space-y-1.5 flex flex-col">
+                    <label className={labelCls}>Provinsi *</label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          role="combobox"
+                          className="flex items-center justify-between w-full h-12 px-4 bg-[#111C24] border border-white/10 rounded-xl text-white font-medium hover:border-white/20 transition-all text-sm uppercase tracking-widest outline-none"
+                        >
+                          <span className={form.province ? "text-white" : "text-[#4B6478]"}>
+                            {form.province || "Pilih Provinsi..."}
+                          </span>
+                          <ChevronsUpDown size={14} className="text-[#4B6478]" />
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[340px] p-0 bg-[#0C1319] border-white/10 shadow-2xl z-[100] overflow-hidden" align="start">
+                        <Command className="bg-transparent">
+                          <CommandInput placeholder="Cari provinsi..." className="h-11 font-bold text-white border-none focus:ring-0" />
+                          <CommandList className="max-h-[250px] overflow-y-auto scrollbar-thin">
+                            <CommandEmpty className="py-4 text-center text-xs text-[#4B6478] font-bold uppercase tracking-widest">Provinsi tidak ditemukan.</CommandEmpty>
+                            <CommandGroup>
+                              {PROVINCES.map((p) => (
+                                <CommandItem
+                                  key={p}
+                                  value={p}
+                                  onSelect={() => {
+                                    setField('province', p)
+                                  }}
+                                  className="flex items-center justify-between py-2.5 px-3 cursor-pointer hover:bg-emerald-500/10 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors data-[selected=true]:bg-white/5"
+                                >
+                                  <span className={form.province === p ? "text-emerald-400" : "text-white/70"}>
+                                    {p}
+                                  </span>
+                                  {form.province === p && <Check size={14} className="text-emerald-400" />}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                   <FormField
                     id="location"
                     label="Lokasi"
@@ -434,8 +512,8 @@ export default function SetupFarm({ onSuccess, onCancel }) {
 
         {/* ── Footer ── */}
         <div className="px-8 pb-8 pt-4 border-t border-white/5 flex justify-between items-center shrink-0">
-          {/* Back button — hidden on step 1 */}
-          {step > 1 ? (
+          {/* Back button — hidden on step 1 OR if role is locked at step 2 */}
+          {step > 1 && (step > 2 || !roleLivestock) ? (
             <button
               type="button"
               onClick={() => setStep(s => s - 1)}
