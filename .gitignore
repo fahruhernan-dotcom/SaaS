@@ -53,3 +53,7 @@ checkSembako.js
 !.env.example
 !public/robots.txt
 scratch/
+
+# Lint output files
+*_lint.json
+*_lint_final.json
