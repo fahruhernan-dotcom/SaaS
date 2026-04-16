@@ -16,24 +16,17 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import LoadingScreen from './components/LoadingScreen';
 
-import { PeternakPageRouter } from './dashboard/peternak/PeternakRouter';
-import PeternakLayout from './dashboard/_shared/layouts/PeternakLayout';
-
-
+// Components (always synchronous — used in layout shell & initial load)
+import ErrorBoundary from './components/ErrorBoundary';
+import BottomNav from './dashboard/_shared/components/BottomNav';
 import AppSidebar from './dashboard/_shared/components/AppSidebar';
+import DesktopSidebarLayout from './dashboard/_shared/layouts/DesktopSidebarLayout';
+import { useMediaQuery } from './lib/hooks/useMediaQuery';
 import { Menu } from 'lucide-react';
 
-// Dashboard pages
-import HargaPasar from './dashboard/_shared/pages/HargaPasar';
-import MarketPriceDashboard from './dashboard/_shared/pages/MarketPriceDashboard'; // New Standalone Page
+// Public pages — kept static for SSG pre-rendering
 import HargaPasarPublic from '@/pages/HargaPasarPublic';
-import { BrokerPageRouter } from './dashboard/broker/_shared/BrokerRouter';
-import { RPPageRouter } from './dashboard/rumah_potong/RPPageRouter';
-import RumahPotongLayout from './dashboard/_shared/layouts/RumahPotongLayout';
-
-
-// Egg Broker Vertical
-import AcceptInvite from './pages/AcceptInvite'
+import AcceptInvite from './pages/AcceptInvite';
 import AuthCallback from './pages/AuthCallback';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
@@ -41,31 +34,33 @@ import AboutUs from './pages/AboutUs';
 import FiturPage from './pages/FiturPage';
 import HargaPage from './pages/HargaPage';
 import FAQPage from './pages/FAQPage';
-import OnboardingFlow from './dashboard/_shared/pages/OnboardingFlow';
-import UpgradePlan from './dashboard/_shared/pages/UpgradePlan';
-const AddonPortal = lazy(() => import('./dashboard/_shared/pages/AddonPortal'));
-import Market from './dashboard/_shared/pages/Market';
 import MarketPublic from './pages/MarketPublic';
 import HubungiKami from './pages/HubungiKami';
 import BlogPage from './pages/BlogPage';
 import BlogPostPage from './pages/BlogPostPage';
 import NotFound from './pages/NotFound';
 
-// Components
-import ErrorBoundary from './components/ErrorBoundary';
-import BottomNav from './dashboard/_shared/components/BottomNav';
+// Auth-protected dashboard pages — lazy loaded (not SSG, client-only)
+const PeternakLayout       = lazy(() => import('./dashboard/_shared/layouts/PeternakLayout'))
+const BrokerLayout         = lazy(() => import('./dashboard/_shared/layouts/BrokerLayout'))
+const RumahPotongLayout    = lazy(() => import('./dashboard/_shared/layouts/RumahPotongLayout'))
+const PeternakPageRouter   = lazy(() => import('./dashboard/peternak/PeternakRouter').then(m => ({ default: m.PeternakPageRouter })))
+const BrokerPageRouter     = lazy(() => import('./dashboard/broker/_shared/BrokerRouter').then(m => ({ default: m.BrokerPageRouter })))
+const RPPageRouter         = lazy(() => import('./dashboard/rumah_potong/RPPageRouter').then(m => ({ default: m.RPPageRouter })))
+const HargaPasar           = lazy(() => import('./dashboard/_shared/pages/HargaPasar'))
+const MarketPriceDashboard = lazy(() => import('./dashboard/_shared/pages/MarketPriceDashboard'))
+const Market               = lazy(() => import('./dashboard/_shared/pages/Market'))
+const OnboardingFlow       = lazy(() => import('./dashboard/_shared/pages/OnboardingFlow'))
+const UpgradePlan          = lazy(() => import('./dashboard/_shared/pages/UpgradePlan'))
+const AddonPortal          = lazy(() => import('./dashboard/_shared/pages/AddonPortal'))
 
-import BrokerLayout from './dashboard/_shared/layouts/BrokerLayout';
-import DesktopSidebarLayout from './dashboard/_shared/layouts/DesktopSidebarLayout';
-import { useMediaQuery } from './lib/hooks/useMediaQuery';
-
-// Admin
-import AdminLayout from './dashboard/admin/AdminLayout';
-import AdminBeranda from './dashboard/admin/AdminBeranda';
-import AdminUsers from './dashboard/admin/AdminUsers';
-import AdminSubscriptions from './dashboard/admin/AdminSubscriptions';
-import AdminPricing from './dashboard/admin/AdminPricing';
-import AdminActivity from './dashboard/admin/AdminActivity';
+// Admin — lazy loaded (superadmin only)
+const AdminLayout       = lazy(() => import('./dashboard/admin/AdminLayout'))
+const AdminBeranda      = lazy(() => import('./dashboard/admin/AdminBeranda'))
+const AdminUsers        = lazy(() => import('./dashboard/admin/AdminUsers'))
+const AdminSubscriptions= lazy(() => import('./dashboard/admin/AdminSubscriptions'))
+const AdminPricing      = lazy(() => import('./dashboard/admin/AdminPricing'))
+const AdminActivity     = lazy(() => import('./dashboard/admin/AdminActivity'))
 
 import { getXBasePath, resolveBusinessVertical, BUSINESS_MODELS } from './lib/businessModel'
 
@@ -241,7 +236,9 @@ function AppContentLayout() {
       <AnimatePresence mode="wait">
         {loading && <LoadingScreen key="loading-screen" />}
       </AnimatePresence>
-      <Outlet />
+      <Suspense fallback={<LoadingScreen />}>
+        <Outlet />
+      </Suspense>
     </>
   );
 }
