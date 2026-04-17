@@ -63,7 +63,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-import { resolveBusinessVertical, BUSINESS_MODELS } from '@/lib/businessModel'
+import { resolveBusinessVertical, BUSINESS_MODELS, getXBasePath } from '@/lib/businessModel'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { peternakPermissions } from '@/lib/hooks/usePeternakPermissions'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
@@ -179,6 +179,8 @@ export default function AppSidebar({ open, onClose }) {
   const isBroiler  = vertical === 'peternak'
   const isKambingPenggemukan = vertical === 'peternak_kambing_domba_penggemukan'
   const isKambingBreeding    = vertical === 'peternak_kambing_domba_breeding'
+  const isSapiPenggemukan    = vertical === 'peternak_sapi_penggemukan'
+  const isSapiBreeding       = vertical === 'peternak_sapi_breeding'
   const isRPA      = vertical === 'rumah_potong_rpa' || model?.category === 'rumah_potong'
   const isSembako  = ['distributor_sembako', 'sembako_broker'].includes(vertical)
 
@@ -186,31 +188,17 @@ export default function AppSidebar({ open, onClose }) {
   const pp = isPeternak ? peternakPermissions(profile?.role) : null
 
   const brokerBase = getBrokerBasePath(tenant)
-  const peternakBase = `/peternak/${profile?.sub_type || 'peternak_broiler'}`
+  const peternakBase = getXBasePath(tenant, profile)
   
   const color = accentColor || (isSembako ? '#EA580C' : isEgg ? '#7C3AED' : isRPA ? '#F59E0B' : '#10B981')
 
   const getBerandaPath = (v, t = tenant) => {
     const bBase = getBrokerBasePath(t)
-    const pBase = `/peternak/${t?.sub_type || 'peternak_broiler'}`
-    const m = BUSINESS_MODELS[v]
-    if (m?.category === 'peternak') return `${pBase}/beranda`
-    if (m?.category === 'rumah_potong') {
-      const rpType = t?.sub_type?.startsWith('rpa') ? 'rpa' : 'rph'
-      return `/rumah_potong/${rpType}/beranda`
-    }
     return `${bBase}/beranda`
   }
 
   const getAkunPath = (v, t = tenant) => {
     const bBase = getBrokerBasePath(t)
-    const pBase = `/peternak/${t?.sub_type || 'peternak_broiler'}`
-    const m = BUSINESS_MODELS[v]
-    if (m?.category === 'peternak') return `${pBase}/akun`
-    if (m?.category === 'rumah_potong') {
-      const rpType = t?.sub_type?.startsWith('rpa') ? 'rpa' : 'rph'
-      return `/rumah_potong/${rpType}/akun`
-    }
     return `${bBase}/akun`
   }
 
@@ -298,6 +286,26 @@ export default function AppSidebar({ open, onClose }) {
           { title: 'Stok Pakan',     url: `${peternakBase}/pakan`,       icon: Warehouse },
           { title: 'Laporan Farm',   url: `${peternakBase}/laporan`,     icon: FileText },
           { title: 'Tim & Akses',    url: `${peternakBase}/tim`,         icon: Users },
+        ] : []),
+
+        // Sapi Penggemukan
+        ...(isSapiPenggemukan ? [
+          { title: 'Batch Aktif',   url: `${peternakBase}/batch`,      icon: RefreshCw },
+          { title: 'Data Ternak',   url: `${peternakBase}/ternak`,     icon: Tag },
+          { title: 'Kesehatan',     url: `${peternakBase}/kesehatan`,  icon: Syringe },
+          { title: 'Stok Pakan',    url: `${peternakBase}/stok-pakan`, icon: Warehouse },
+          { title: 'Laporan Batch', url: `${peternakBase}/laporan`,    icon: FileText },
+          { title: 'Tim & Akses',   url: `${peternakBase}/tim`,        icon: Users },
+        ] : []),
+
+        // Sapi Breeding
+        ...(isSapiBreeding ? [
+          { title: 'Data Ternak',   url: `${peternakBase}/ternak`,     icon: Tag },
+          { title: 'Reproduksi',    url: `${peternakBase}/reproduksi`, icon: Heart },
+          { title: 'Kesehatan',     url: `${peternakBase}/kesehatan`,  icon: Syringe },
+          { title: 'Stok Pakan',    url: `${peternakBase}/stok-pakan`, icon: Warehouse },
+          { title: 'Laporan Farm',  url: `${peternakBase}/laporan`,    icon: FileText },
+          { title: 'Tim & Akses',   url: `${peternakBase}/tim`,        icon: Users },
         ] : []),
 
         // RPA
@@ -1215,7 +1223,7 @@ export default function AppSidebar({ open, onClose }) {
                     key={p.id}
                     onClick={() => {
                       const targetVertical = p.tenants?.business_vertical
-                      const targetPath = getBerandaPath(targetVertical)
+                      const targetPath = getBerandaPath(targetVertical, p.tenants)
                       switchTenant(p.tenant_id)
                       // Clear ONLY tenant-specific cache
                       queryClient.invalidateQueries({

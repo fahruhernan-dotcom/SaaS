@@ -1,5 +1,5 @@
 import React from 'react'
-import { PawPrint, Scale, Hash, Calendar, Info, Calculator, BadgePercent } from 'lucide-react'
+import { PawPrint, Scale, Hash, Calendar, Info, Calculator, BadgePercent, Warehouse } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { DatePicker } from '@/components/ui/DatePicker'
@@ -14,19 +14,36 @@ export default function PeternakSapiForm({ data, onChange }) {
   return (
     <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
       
-      {/* Nama Batch */}
-      <div className={inputContainerStyle}>
-        <Label className={fieldLabelStyle}>
-          <Hash size={12} className="text-amber-500" />
-          Nama Batch <span className="text-amber-500/50 ml-0.5">*</span>
-        </Label>
-        <Input
-          type="text"
-          value={data.batch_name || ''}
-          onChange={e => set('batch_name', e.target.value)}
-          placeholder="Contoh: Batch April 2024"
-          className="h-11 rounded-xl bg-[#111C24] border-white/5 px-4 font-bold text-sm focus:bg-[#15232d] transition-all"
-        />
+      <div className="grid grid-cols-2 gap-3">
+        {/* Nama Kandang */}
+        <div className={inputContainerStyle}>
+          <Label className={fieldLabelStyle}>
+            <Warehouse size={12} className="text-amber-500" />
+            Kandang <span className="text-amber-500/50 ml-0.5">*</span>
+          </Label>
+          <Input
+            type="text"
+            value={data.kandang_name || ''}
+            onChange={e => set('kandang_name', e.target.value)}
+            placeholder="Kandang A"
+            className="h-11 rounded-xl bg-[#111C24] border-white/5 px-4 font-bold text-sm focus:bg-[#15232d] transition-all"
+          />
+        </div>
+
+        {/* Nama Batch */}
+        <div className={inputContainerStyle}>
+          <Label className={fieldLabelStyle}>
+            <Hash size={12} className="text-amber-500" />
+            Nama Batch <span className="text-amber-500/50 ml-0.5">*</span>
+          </Label>
+          <Input
+            type="text"
+            value={data.batch_name || ''}
+            onChange={e => set('batch_name', e.target.value)}
+            placeholder="Batch April 2024"
+            className="h-11 rounded-xl bg-[#111C24] border-white/5 px-4 font-bold text-sm focus:bg-[#15232d] transition-all"
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">

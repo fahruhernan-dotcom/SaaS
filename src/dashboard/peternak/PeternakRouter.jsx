@@ -34,6 +34,14 @@ import KambingPakan     from './kambing_domba/Pakan'
 import KambingLaporan   from './kambing_domba/LaporanBatch'
 import KandangView      from './kambing_domba/KandangView'
 
+// Sapi — Breeding
+import SapiBreedingBeranda    from './sapi/breeding/Beranda'
+import SapiBreedingTernak     from './sapi/breeding/Ternak'
+import SapiBreedingReproduksi from './sapi/breeding/Reproduksi'
+import SapiBreedingKesehatan  from './sapi/breeding/Kesehatan'
+import SapiBreedingPakan      from './sapi/breeding/Pakan'
+import SapiBreedingLaporan    from './sapi/breeding/LaporanFarm'
+
 // Kambing & Domba — Breeding
 import BreedingBeranda    from './kambing_domba/breeding/Beranda'
 import BreedingTernak     from './kambing_domba/breeding/Ternak'
@@ -116,6 +124,17 @@ export function PeternakPageRouter({ page }) {
       kesehatan:     <SapiKesehatan />,
       'stok-pakan':  <SapiPakan />,
       laporan:       <SapiLaporan />,
+      'harga-pasar': <HargaPasar />,
+      tim:           <Akun />,
+      akun:          <Akun />,
+    },
+    peternak_sapi_breeding: {
+      beranda:       <SapiBreedingBeranda />,
+      ternak:        <SapiBreedingTernak />,
+      reproduksi:    <SapiBreedingReproduksi />,
+      kesehatan:     <SapiBreedingKesehatan />,
+      'stok-pakan':  <SapiBreedingPakan />,
+      laporan:       <SapiBreedingLaporan />,
       'harga-pasar': <HargaPasar />,
       tim:           <Akun />,
       akun:          <Akun />,

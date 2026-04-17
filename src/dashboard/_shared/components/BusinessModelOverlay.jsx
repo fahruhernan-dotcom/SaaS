@@ -231,9 +231,10 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
       // --- SETUP STEP: Save initial batch for Sapi Penggemukan ---
       if (selected === 'peternak_sapi_penggemukan' && setupData.initial_count && resolvedTenantId) {
         const batchCode = `BATCH-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-001`
-        await supabase.from('sapi_penggemukan_batches').insert({
+        const { error: batchError } = await supabase.from('sapi_penggemukan_batches').insert({
           tenant_id: resolvedTenantId,
           batch_code: setupData.batch_name?.trim() || batchCode,
+          kandang_name: setupData.kandang_name?.trim() || 'Kandang Utama',
           start_date: setupData.start_date,
           total_animals: parseInt(setupData.initial_count) || 0,
           avg_entry_weight_kg: parseFloat(setupData.initial_avg_weight) || null,
@@ -243,6 +244,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
             ? `Harga beli: Rp ${parseInt(setupData.purchase_price_per_kg).toLocaleString('id-ID')}/kg`
             : null,
         })
+        if (batchError) throw batchError
       }
 
       if (onComplete) onComplete(selected)

@@ -14,6 +14,7 @@ const KEY_TO_PATH = {
   peternak_kambing_domba_penggemukan:    '/peternak/peternak_kambing_domba_penggemukan/beranda',
   peternak_kambing_domba_breeding:       '/peternak/peternak_kambing_domba_breeding/beranda',
   peternak_sapi_penggemukan:             '/peternak/peternak_sapi_penggemukan/beranda',
+  peternak_sapi_breeding:                '/peternak/peternak_sapi_breeding/beranda',
   rumah_potong_rpa:    '/rumah_potong/rpa/beranda',
   rumah_potong_rph:    '/rumah_potong/rph/beranda',
 }
