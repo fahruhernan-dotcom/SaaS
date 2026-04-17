@@ -103,7 +103,7 @@ export function PeternakPageRouter({ page }) {
       'stok-pakan': <LayerBeranda />, // placeholder
       'laporan':    <LayerBeranda />, // placeholder
       'harga-pasar':<HargaPasar />,
-      'tim':        <Akun />,
+      tim:           <BroilerTim />,
       'akun':       <Akun />,
     },
     peternak_kambing_domba_breeding: {
@@ -114,7 +114,7 @@ export function PeternakPageRouter({ page }) {
       'stok-pakan': <BreedingPakan />,
       laporan:      <BreedingLaporan />,
       'harga-pasar':<HargaPasar />,
-      tim:          <Akun />,
+      tim:          <BroilerTim />,
       akun:         <Akun />,
     },
     peternak_sapi_penggemukan: {
@@ -125,7 +125,7 @@ export function PeternakPageRouter({ page }) {
       'stok-pakan':  <SapiPakan />,
       laporan:       <SapiLaporan />,
       'harga-pasar': <HargaPasar />,
-      tim:           <Akun />,
+      tim:           <BroilerTim />,
       akun:          <Akun />,
     },
     peternak_sapi_breeding: {
@@ -136,7 +136,7 @@ export function PeternakPageRouter({ page }) {
       'stok-pakan':  <SapiBreedingPakan />,
       laporan:       <SapiBreedingLaporan />,
       'harga-pasar': <HargaPasar />,
-      tim:           <Akun />,
+      tim:           <BroilerTim />,
       akun:          <Akun />,
     },
     peternak_kambing_domba_penggemukan: {
@@ -148,7 +148,7 @@ export function PeternakPageRouter({ page }) {
       laporan:       <KambingLaporan />,
       'kandang-view':<KandangView />,
       'harga-pasar': <HargaPasar />,
-      tim:           <Akun />,
+      tim:           <BroilerTim />,
       akun:          <Akun />,
     },
   }

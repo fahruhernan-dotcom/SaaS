@@ -14,15 +14,19 @@ import {
 import { supabase } from '@/lib/supabase'
 import { getSubscriptionStatus, getExpiryLabel } from '@/lib/subscriptionUtils'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { resolveBusinessVertical, BUSINESS_MODELS } from '@/lib/businessModel'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
 export default function Akun() {
-  const { profile, user, tenant } = useAuth()
+  const { profile, user, tenant, isSuperadmin } = useAuth()
   const navigate = useNavigate()
 
   const sub = getSubscriptionStatus(tenant)
   const expiryLabel = getExpiryLabel(tenant)
+  
+  const vertical = resolveBusinessVertical(profile, tenant)
+  const activeModel = BUSINESS_MODELS[vertical]
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut()
@@ -66,27 +70,29 @@ export default function Akun() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
           <div>
             <p style={labelStyle}>Plan Saya</p>
-            <div style={planBadgeStyle}>{tenant?.plan?.toUpperCase() || 'STARTER'}</div>
+            <div style={planBadgeStyle}>{isSuperadmin ? 'BUSINESS (ADMIN)' : (tenant?.plan?.toUpperCase() || 'STARTER')}</div>
           </div>
           <div style={{ textAlign: 'right' }}>
             <p style={labelStyle}>Status</p>
             <p style={{
               fontSize: '12px', fontWeight: 600,
-              color: sub.status === 'expired' ? '#F87171' : sub.status === 'trial' ? '#F59E0B' : '#10B981'
+              color: isSuperadmin ? '#10B981' : sub.status === 'expired' ? '#F87171' : sub.status === 'trial' ? '#F59E0B' : '#10B981'
             }}>
-              {sub.status === 'expired' ? 'Expired' : sub.status === 'trial' ? 'Trial Aktif' : `Aktif (${sub.label})`}
+              {isSuperadmin ? 'Bypass Sistem Aktif' : sub.status === 'expired' ? 'Expired' : sub.status === 'trial' ? 'Trial Aktif' : `Aktif (${sub.label})`}
             </p>
           </div>
         </div>
-        {expiryLabel && (
+        {!isSuperadmin && expiryLabel && (
           <p style={{ fontSize: '11px', color: '#4B6478', marginBottom: '16px' }}>
             {expiryLabel}
             {sub.status !== 'active' && ' — Upgrade ke Pro untuk fitur tanpa batas.'}
           </p>
         )}
-        <button style={outlineBtnBlueStyle} onClick={() => navigate('/upgrade')}>
-          <CreditCard size={16} /> {sub.status === 'active' ? 'Perpanjang Plan' : 'Upgrade Plan'}
-        </button>
+        {!isSuperadmin && (
+          <button style={outlineBtnBlueStyle} onClick={() => navigate('/upgrade')}>
+            <CreditCard size={16} /> {sub.status === 'active' ? 'Perpanjang Plan' : 'Upgrade Plan'}
+          </button>
+        )}
       </section>
 
       {/* Business Model Section */}
@@ -103,11 +109,11 @@ export default function Akun() {
             justifyContent: 'center',
             fontSize: '20px'
           }}>
-            {profile?.user_type === 'broker' ? '🤝' : profile?.user_type === 'peternak' ? '🏚️' : '🏭'}
+            {activeModel?.icon || '🏢'}
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: '15px', fontWeight: 700 }}>
-              {profile?.user_type === 'broker' ? 'Broker / Pedagang' : profile?.user_type === 'peternak' ? 'Peternak' : 'RPA / Buyer'}
+              {activeModel?.name || 'Bisnis Tidak Diketahui'}
             </p>
             <p style={{ fontSize: '11px', color: '#4B6478' }}>Model bisnis Anda saat ini</p>
           </div>
