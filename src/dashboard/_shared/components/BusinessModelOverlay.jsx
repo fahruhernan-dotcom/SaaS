@@ -322,117 +322,105 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
   }, [provinceSearch])
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      zIndex: 9999,
-      background: 'rgba(0,0,0,0.92)',
-      backdropFilter: 'blur(8px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '16px',
-      overflowY: 'auto',
-    }}>
+    <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 sm:p-6 overflow-y-auto custom-scrollbar">
       <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        style={{
-          background: '#0C1319',
-          border: '1px solid rgba(255,255,255,0.09)',
-          borderRadius: '24px',
-          padding: '28px 20px',
-          width: '100%',
-          maxWidth: '440px',
-          position: 'relative',
-          margin: 'auto',
-        }}
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        className="relative w-full max-w-[480px] m-auto bg-[#0C1319]/80 border border-white/5 rounded-[32px] p-8 sm:p-10 shadow-2xl backdrop-blur-md overflow-hidden"
       >
+        {/* Animated Background Orbs */}
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none" />
+
         {/* Close Button */}
         <button
           onClick={() => onComplete?.()}
-          className="absolute top-5 right-5 w-8 h-8 rounded-full flex items-center justify-center bg-white/5 border border-white/10 text-[#4B6478] hover:text-white hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer z-20"
+          className="absolute top-6 right-6 w-10 h-10 rounded-full flex items-center justify-center bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer z-30 active:scale-90"
         >
-          <X size={16} />
+          <X size={18} />
         </button>
 
-        {/* Top accent */}
-        <div style={{
-          position: 'absolute',
-          top: 0, left: '15%', right: '15%',
-          height: '1px',
-          background: 'linear-gradient(90deg, transparent, rgba(16,185,129,0.5), transparent)'
-        }} />
+        {/* Top accent line */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent shadow-[0_0_15px_rgba(16,185,129,0.3)]" />
 
-        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '14px' }}>
-            <img src="/logo.png" alt="TernakOS" style={{ width: 30, height: 30, borderRadius: '8px', objectFit: 'cover' }} />
-            <span style={{ fontFamily: 'Sora', fontWeight: 800, fontSize: '17px', color: '#F1F5F9' }}>TernakOS</span>
+        <div className="text-center mb-8 relative z-10">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="p-1.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 shadow-inner">
+              <img src="/logo.png" alt="TernakOS" className="w-8 h-8 rounded-lg object-cover" />
+            </div>
+            <span className="font-display font-black text-xl tracking-tight text-white">TernakOS</span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '14px' }}>
+          <div className="flex items-center justify-center gap-2 mb-8 relative z-10">
             {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
-              <div key={s} style={{
-                height: '4px',
-                width: step >= s ? '28px' : '16px',
-                borderRadius: '99px',
-                background: step >= s ? '#10B981' : 'rgba(255,255,255,0.1)',
-                transition: 'all 0.3s ease',
-              }} />
+              <div key={s} className={cn(
+                "h-1.5 rounded-full transition-all duration-500",
+                step >= s 
+                  ? "w-8 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]" 
+                  : "w-2 bg-white/10"
+              )} />
             ))}
           </div>
 
           <AnimatePresence mode="wait">
-            {step === 1 ? (
-              <motion.div key="s1" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-                <h2 style={{ fontFamily: 'Sora', fontSize: '19px', fontWeight: 800, color: '#F1F5F9', marginBottom: '6px' }}>
-                  Kamu berbisnis sebagai?
-                </h2>
-                <p style={{ fontSize: '13px', color: '#4B6478', lineHeight: 1.5 }}>
-                  Pilih kategori bisnis kamu.
-                </p>
-              </motion.div>
-            ) : isAnimalStep ? (
-              <motion.div key="s-animal" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-                <h2 style={{ fontFamily: 'Sora', fontSize: '19px', fontWeight: 800, color: '#F1F5F9', marginBottom: '6px' }}>
-                  Jenis hewan apa yang bapak ternak?
-                </h2>
-                <p style={{ fontSize: '13px', color: '#4B6478', lineHeight: 1.5 }}>
-                  Pilih jenis ternak utama bapak.
-                </p>
-              </motion.div>
-            ) : isSubRoleStep ? (
-              <motion.div key="s-sub" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-                <h2 style={{ fontFamily: 'Sora', fontSize: '19px', fontWeight: 800, color: '#F1F5F9', marginBottom: '6px' }}>
-                  {isNewBusiness ? `Tambah Unit ${primaryRoleInfo?.label || 'Bisnis'} Baru` : 'Pilih spesialisasi'}
-                </h2>
-                <p style={{ fontSize: '13px', color: '#4B6478', lineHeight: 1.5 }}>
-                  {isNewBusiness 
-                    ? `Pilih spesialisasi unit ${primaryRoleInfo?.label?.toLowerCase() || 'bisnis'} tambahan.`
-                    : 'Lebih spesifik agar dashboard sesuai kebutuhanmu.'}
-                </p>
-              </motion.div>
-            ) : isNameStep ? (
-              <motion.div key="s-name" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-                <h2 style={{ fontFamily: 'Sora', fontSize: '19px', fontWeight: 800, color: '#F1F5F9', marginBottom: '6px' }}>
-                  Nama {category === 'peternak' ? 'farm' : 'bisnis'} kamu apa?
-                </h2>
-                <p style={{ fontSize: '13px', color: '#4B6478', lineHeight: 1.5 }}>
-                  {category === 'peternak' 
-                    ? 'Nama cabang farm atau lokasi peternakan bapak yang baru.'
-                    : 'Nama ini akan tampil di seluruh laporan dan invoice.'}
-                </p>
-              </motion.div>
-            ) : isSetupStep ? (
-              <motion.div key="s-setup" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
-                <h2 style={{ fontFamily: 'Sora', fontSize: '19px', fontWeight: 800, color: '#F1F5F9', marginBottom: '6px' }}>
-                  Setup Batch Pertama 🐄
-                </h2>
-                <p style={{ fontSize: '13px', color: '#4B6478', lineHeight: 1.5 }}>
-                  Data ini bisa diubah kapan saja dari menu Batch.
-                </p>
-              </motion.div>
-            ) : null}
+            <motion.div
+              key={step}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="relative z-10"
+            >
+              {step === 1 ? (
+                <>
+                  <h2 className="font-display text-2xl font-black text-white mb-2 leading-tight">
+                    Kamu berbisnis sebagai?
+                  </h2>
+                  <p className="text-[14px] text-slate-400 font-medium">
+                    Pilih kategori bisnis utama kamu.
+                  </p>
+                </>
+              ) : isAnimalStep ? (
+                <>
+                  <h2 className="font-display text-2xl font-black text-white mb-2 leading-tight">
+                    Jenis hewan apa? 🐄
+                  </h2>
+                  <p className="text-[14px] text-slate-400 font-medium">
+                    Pilih jenis ternak utama bapak.
+                  </p>
+                </>
+              ) : isSubRoleStep ? (
+                <>
+                  <h2 className="font-display text-2xl font-black text-white mb-2 leading-tight">
+                    {isNewBusiness ? `Bisnis ${primaryRoleInfo?.label || 'Baru'}` : 'Spesialisasi Bisnis'}
+                  </h2>
+                  <p className="text-[14px] text-slate-400 font-medium leading-relaxed max-w-[320px] mx-auto">
+                    {isNewBusiness 
+                      ? `Pilih spesialisasi unit ${primaryRoleInfo?.label?.toLowerCase() || 'bisnis'} tambahan.`
+                      : 'Lengkapi profil agar dashboard sesuai kebutuhanmu.'}
+                  </p>
+                </>
+              ) : isNameStep ? (
+                <>
+                  <h2 className="font-display text-2xl font-black text-white mb-2 leading-tight">
+                    Nama {category === 'peternak' ? 'farm' : 'bisnis'} bapak?
+                  </h2>
+                  <p className="text-[14px] text-slate-400 font-medium leading-relaxed">
+                    {category === 'peternak' 
+                      ? 'Berikan nama yang unik untuk lokasi farm ini.'
+                      : 'Nama ini akan tampil di seluruh laporan dan invoice.'}
+                  </p>
+                </>
+              ) : isSetupStep ? (
+                <>
+                  <h2 className="font-display text-2xl font-black text-white mb-3 flex items-center justify-center gap-3 leading-tight">
+                    Setup Batch Pertama <span className="animate-bounce-slow">🐄</span>
+                  </h2>
+                  <p className="text-[14px] text-slate-400 font-medium leading-relaxed">
+                    Data awal untuk personalisasi performa ternak.
+                  </p>
+                </>
+              ) : null}
+            </motion.div>
           </AnimatePresence>
         </div>
 
@@ -443,7 +431,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}
+              className="flex flex-col gap-3 relative z-10"
             >
               {BUSINESS_CATEGORIES.map((cat) => (
                 <CategoryCard key={cat.key} cat={cat} onClick={() => handleCategorySelect(cat.key)} />
@@ -455,8 +443,9 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
+              className="relative z-10"
             >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '50vh', overflowY: 'auto', paddingRight: '2px' }}>
+              <div className="flex flex-col gap-3 max-h-[45vh] overflow-y-auto pr-1 custom-scrollbar">
                 {ANIMAL_GROUPS.map((group) => (
                   <ModelCard
                     key={group.key}
@@ -476,9 +465,9 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               {isRoleLocked ? null : (
                 <button
                   onClick={handleBack}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', width: '100%', marginTop: '12px', padding: '10px', background: 'transparent', border: 'none', color: '#4B6478', fontSize: '13px', cursor: 'pointer', fontFamily: 'DM Sans' }}
+                  className="flex items-center justify-center gap-2 w-full mt-6 py-2 text-slate-500 hover:text-white transition-colors text-sm font-bold"
                 >
-                  <ArrowLeft size={14} />
+                  <ArrowLeft size={16} />
                   Kembali
                 </button>
               )}
@@ -489,8 +478,9 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
+              className="relative z-10"
             >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '50vh', overflowY: 'auto', paddingRight: '2px' }}>
+              <div className="flex flex-col gap-3 max-h-[45vh] overflow-y-auto pr-1 custom-scrollbar">
                 {subRoles.map((model) => (
                   <ModelCard
                     key={model.key}
@@ -510,23 +500,9 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               {isRoleLocked && !isPeternak ? null : (
                 <button
                   onClick={handleBack}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    width: '100%',
-                    marginTop: '12px',
-                    padding: '10px',
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#4B6478',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    fontFamily: 'DM Sans',
-                  }}
+                  className="flex items-center justify-center gap-2 w-full mt-6 py-2 text-slate-500 hover:text-white transition-colors text-sm font-bold"
                 >
-                  <ArrowLeft size={14} />
+                  <ArrowLeft size={16} />
                   Kembali
                 </button>
               )}
@@ -537,73 +513,68 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
+              className="relative z-10"
             >
               {/* Business Name Input */}
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 800, color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '8px', marginLeft: '2px' }}>
-                  <Building2 size={11} color="#4B6478" />
-                  Nama Bisnis *
+              <div className="mb-6">
+                <label className="flex items-center gap-2.5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 ml-1">
+                  <Building2 size={12} className="text-slate-500" />
+                  Nama Bisnis <span className="text-emerald-500/50">*</span>
                 </label>
-                <input
-                  type="text"
-                  value={businessName}
-                  onChange={(e) => handleNameChange(e.target.value)}
-                  onBlur={(e) => handleNameChange(toTitleCase(e.target.value))}
-                  placeholder="Contoh: Poultry Farm Jaya"
-                  maxLength={80}
-                  autoFocus
-                  style={{
-                    width: '100%',
-                    padding: '14px 16px',
-                    background: '#111C24',
-                    border: nameTaken
-                      ? '1px solid rgba(248,113,113,0.5)'
-                      : businessName.trim().length >= 3 && !nameChecking
-                        ? '1px solid rgba(16,185,129,0.4)'
-                        : '1px solid rgba(255,255,255,0.09)',
-                    borderRadius: '12px',
-                    color: '#F1F5F9',
-                    fontFamily: 'Sora',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    transition: 'border-color 0.2s ease',
-                  }}
-                />
+                <div className="relative group">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
+                  <input
+                    type="text"
+                    value={businessName}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    onBlur={(e) => handleNameChange(toTitleCase(e.target.value))}
+                    placeholder="Contoh: Poultry Farm Jaya"
+                    maxLength={80}
+                    autoFocus
+                    className={cn(
+                      "relative w-full h-14 px-5 bg-[#111C24] border rounded-2xl text-white font-display font-bold text-lg outline-none transition-all duration-300",
+                      nameTaken 
+                        ? "border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.1)]" 
+                        : businessName.trim().length >= 3 && !nameChecking
+                          ? "border-emerald-500/30 focus:border-emerald-500/60"
+                          : "border-white/5 focus:border-white/10"
+                    )}
+                  />
+                </div>
 
                 {/* Status messages */}
-                {businessName.trim().length > 0 && businessName.trim().length < 3 && (
-                  <p style={{ fontSize: '12px', color: '#F87171', marginTop: '6px', marginLeft: '4px' }}>
-                    Nama bisnis minimal 3 karakter
-                  </p>
-                )}
-                {businessName.trim().length >= 3 && nameChecking && (
-                  <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '6px', marginLeft: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ display: 'inline-block', width: '10px', height: '10px', border: '2px solid #94A3B8', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-                    Mengecek ketersediaan nama...
-                  </p>
-                )}
-                {businessName.trim().length >= 3 && !nameChecking && nameTaken && (
-                  <p style={{ fontSize: '12px', color: '#F87171', marginTop: '6px', marginLeft: '4px' }}>
-                    ❌ Nama "<strong>{toTitleCase(businessName)}</strong>" sudah dipakai bisnis lain.
-                  </p>
-                )}
-                {businessName.trim().length >= 3 && !nameChecking && !nameTaken && (
-                  <p style={{ fontSize: '12px', color: '#10B981', marginTop: '6px', marginLeft: '4px' }}>
-                    ✅ <strong>{toTitleCase(businessName)}</strong>
-                  </p>
-                )}
+                <div className="min-h-[24px] mt-2.5 px-1">
+                  {businessName.trim().length > 0 && businessName.trim().length < 3 && (
+                    <p className="text-[12px] text-red-400 font-medium">Nama bisnis minimal 3 karakter</p>
+                  )}
+                  {businessName.trim().length >= 3 && nameChecking && (
+                    <div className="flex items-center gap-2.5 text-[12px] text-slate-500 font-medium font-display">
+                      <div className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" />
+                      Mengecek ketersediaan...
+                    </div>
+                  )}
+                  {businessName.trim().length >= 3 && !nameChecking && nameTaken && (
+                    <p className="text-[12px] text-red-500 font-medium animate-in fade-in slide-in-from-left-2 duration-300">
+                      ❌ Nama "<strong>{toTitleCase(businessName)}</strong>" sudah terpakai.
+                    </p>
+                  )}
+                  {businessName.trim().length >= 3 && !nameChecking && !nameTaken && (
+                    <p className="text-[12px] text-emerald-500 font-bold animate-in fade-in slide-in-from-left-2 duration-300">
+                      ✅ <strong>{toTitleCase(businessName)}</strong> tersedia
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Province Searchable Combobox */}
-              <div style={{ marginBottom: '16px', position: 'relative' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 800, color: '#4B6478', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '8px', marginLeft: '2px' }}>
-                  <MapPin size={11} color="#4B6478" />
-                  Provinsi *
+              <div className="mb-8 relative">
+                <label className="flex items-center gap-2.5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 ml-1">
+                  <MapPin size={12} className="text-slate-500" />
+                  Provinsi <span className="text-emerald-500/50">*</span>
                 </label>
                 
-                <div style={{ position: 'relative' }}>
+                <div className="relative group">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
                   <input
                     type="text"
                     value={provinceOpen ? provinceSearch : province}
@@ -616,29 +587,16 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                       setProvinceOpen(true)
                     }}
                     placeholder={province || 'Ketik nama provinsi...'}
-                    style={{
-                      width: '100%',
-                      padding: '13px 16px',
-                      paddingRight: '40px',
-                      background: '#111C24',
-                      border: province
-                        ? '1px solid rgba(16,185,129,0.4)'
-                        : '1px solid rgba(255,255,255,0.09)',
-                      borderRadius: '12px',
-                      color: '#F1F5F9',
-                      fontFamily: 'DM Sans',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                      transition: 'border-color 0.2s ease',
-                    }}
+                    className={cn(
+                      "relative w-full h-14 pl-5 pr-12 bg-[#111C24] border rounded-2xl text-white font-medium text-[15px] outline-none transition-all duration-300",
+                      province ? "border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.05)]" : "border-white/5 focus:border-white/10"
+                    )}
                   />
                   <div 
                     onClick={() => setProvinceOpen(v => !v)}
-                    style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', padding: '4px' }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 hover:bg-white/5 rounded-full cursor-pointer transition-all z-10"
                   >
-                    <ChevronDown size={15} color="#4B6478" style={{ transform: provinceOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
+                    <ChevronDown size={16} className={cn("text-slate-500 transition-transform duration-300", provinceOpen && "rotate-180")} />
                   </div>
                 </div>
 
@@ -648,20 +606,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                       initial={{ opacity: 0, scale: 0.98, y: -4 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.98, y: -4 }}
-                      transition={{ duration: 0.1 }}
-                      style={{
-                        position: 'absolute',
-                        top: 'calc(100% + 6px)',
-                        left: 0, right: 0,
-                        background: '#0C1319',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '16px',
-                        maxHeight: '220px',
-                        overflowY: 'auto',
-                        zIndex: 100,
-                        padding: '8px',
-                        boxShadow: '0 12px 40px rgba(0,0,0,0.7)',
-                      }}
+                      className="absolute top-[calc(100%+8px)] left-0 right-0 bg-[#111C24]/95 border border-white/10 rounded-2xl max-h-[220px] overflow-y-auto z-[100] p-2 shadow-2xl backdrop-blur-xl custom-scrollbar animate-in fade-in slide-in-from-top-2 duration-200"
                     >
                       {filteredProvinces.length > 0 ? (
                         filteredProvinces.map(p => (
@@ -673,31 +618,20 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                               setProvinceSearch('')
                               setProvinceOpen(false) 
                             }}
-                            style={{
-                              width: '100%',
-                              padding: '10px 14px',
-                              background: province === p ? 'rgba(16,185,129,0.1)' : 'transparent',
-                              border: 'none',
-                              borderRadius: '10px',
-                              color: province === p ? '#10B981' : '#F1F5F9',
-                              fontFamily: 'DM Sans',
-                              fontSize: '13px',
-                              fontWeight: province === p ? 700 : 500,
-                              cursor: 'pointer',
-                              textAlign: 'left',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              marginBottom: '2px',
-                            }}
+                            className={cn(
+                              "w-full px-4 py-3.5 text-left rounded-xl text-[14px] font-medium transition-all mb-1 flex items-center justify-between",
+                              province === p 
+                                ? "bg-emerald-500/10 text-emerald-400 font-bold" 
+                                : "text-slate-300 hover:bg-white/5 hover:text-white"
+                            )}
                           >
                             <span>{p}</span>
-                            {province === p && <Check size={12} color="#10B981" strokeWidth={3} />}
+                            {province === p && <Check size={14} className="text-emerald-400 font-black" />}
                           </button>
                         ))
                       ) : (
-                        <div style={{ padding: '20px 10px', textAlign: 'center' }}>
-                          <p style={{ fontSize: '12px', color: '#4B6478', margin: 0 }}>Provinsi tidak ditemukan.</p>
+                        <div className="py-8 text-center">
+                          <p className="text-sm text-slate-500 italic">Provinsi tidak ditemukan</p>
                         </div>
                       )}
                     </motion.div>
@@ -709,46 +643,28 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                 onClick={handleConfirm}
                 disabled={loading || businessName.trim().length < 3 || nameTaken || nameChecking || !province}
                 whileTap={{ scale: 0.97 }}
-                style={{
-                  width: '100%',
-                  padding: '15px',
-                  background: (businessName.trim().length >= 3 && !nameTaken && !nameChecking && province)
-                    ? '#10B981'
-                    : 'rgba(16,185,129,0.3)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '12px',
-                  fontFamily: 'Sora',
-                  fontSize: '15px',
-                  fontWeight: 700,
-                  boxShadow: businessName.trim().length >= 3 ? '0 4px 20px rgba(16,185,129,0.25)' : 'none',
-                  cursor: loading || businessName.trim().length < 3 || !province ? 'not-allowed' : 'pointer',
-                  opacity: loading ? 0.7 : 1,
-                  transition: 'all 0.2s ease',
-                }}
+                className={cn(
+                  "w-full h-16 rounded-2xl font-display font-black text-lg shadow-xl transition-all duration-300 active:scale-95 flex items-center justify-center gap-2",
+                  (businessName.trim().length >= 3 && !nameTaken && !nameChecking && province)
+                    ? "bg-emerald-500 hover:bg-emerald-400 text-[#052c1e] shadow-emerald-500/20"
+                    : "bg-white/5 text-slate-500 cursor-not-allowed border border-white/5"
+                )}
               >
-                {loading ? 'Menyiapkan dashboard...' : 'Mulai Sekarang →'}
+                {loading ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 border-3 border-emerald-900/30 border-t-emerald-900 rounded-full animate-spin" />
+                    Menyiapkan...
+                  </div>
+                ) : (
+                  <>Mulai Sekarang <ArrowLeft size={18} className="rotate-180" /></>
+                )}
               </motion.button>
 
               <button
                 onClick={handleBack}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  width: '100%',
-                  marginTop: '12px',
-                  padding: '10px',
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#4B6478',
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  fontFamily: 'DM Sans',
-                }}
+                className="flex items-center justify-center gap-2 w-full mt-6 py-2 text-slate-500 hover:text-white transition-colors text-sm font-bold"
               >
-                <ArrowLeft size={14} />
+                <ArrowLeft size={16} />
                 Kembali
               </button>
             </motion.div>
@@ -758,87 +674,51 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
+              className="relative z-10"
             >
-              <div style={{ marginBottom: '20px' }}>
-                <h2 style={{ fontFamily: 'Sora', fontSize: '19px', fontWeight: 800, color: '#F1F5F9', marginBottom: '6px' }}>
-                  Setup Awal Batch 🐄
-                </h2>
-                <p style={{ fontSize: '13px', color: '#4B6478', lineHeight: 1.5 }}>
-                  Isi data batch pertama untuk personalisasi dashboard bapak.
-                </p>
+              <div className="mb-2">
+                <StepSetup
+                  selectedModel={selected}
+                  setupData={setupData}
+                  setSetupData={setSetupData}
+                />
               </div>
-
-              <StepSetup
-                selectedModel={selected}
-                setupData={setupData}
-                setSetupData={setSetupData}
-              />
 
               <motion.button
                 onClick={saveAndComplete}
                 disabled={loading}
                 whileTap={{ scale: 0.97 }}
-                style={{
-                  width: '100%',
-                  marginTop: '20px',
-                  padding: '15px',
-                  background: loading ? 'rgba(217,119,6,0.4)' : '#D97706',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '12px',
-                  fontFamily: 'Sora',
-                  fontSize: '15px',
-                  fontWeight: 700,
-                  boxShadow: '0 4px 20px rgba(217,119,6,0.25)',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  opacity: loading ? 0.7 : 1,
-                  transition: 'all 0.2s ease',
-                }}
+                className={cn(
+                  "w-full h-16 rounded-2xl font-display font-black text-lg shadow-xl shadow-amber-500/20 transition-all duration-300 active:scale-95 flex items-center justify-center gap-2",
+                  loading ? "bg-amber-500/50 cursor-not-allowed" : "bg-amber-500 hover:bg-amber-400 text-[#2c1a05]"
+                )}
               >
-                {loading ? 'Menyiapkan dashboard...' : 'Mulai Sekarang →'}
+                {loading ? (
+                   <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 border-3 border-amber-900/30 border-t-amber-900 rounded-full animate-spin" />
+                    Menyimpan...
+                  </div>
+                ) : (
+                  <>Selesaikan Setup <ArrowLeft size={18} className="rotate-180" /></>
+                )}
               </motion.button>
 
-              <button
-                onClick={() => saveAndComplete()}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '100%',
-                  marginTop: '10px',
-                  padding: '10px',
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#4B6478',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  fontFamily: 'DM Sans',
-                }}
-              >
-                Lewati untuk sekarang
-              </button>
+              <div className="flex flex-col gap-1 mt-6">
+                <button
+                  onClick={() => saveAndComplete()}
+                  className="w-full py-2.5 text-slate-500 hover:text-slate-300 text-[13px] font-bold transition-colors"
+                >
+                  Lewati untuk sekarang
+                </button>
 
-              <button
-                onClick={handleBack}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  width: '100%',
-                  marginTop: '4px',
-                  padding: '8px',
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#4B6478',
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  fontFamily: 'DM Sans',
-                }}
-              >
-                <ArrowLeft size={14} />
-                Kembali
-              </button>
+                <button
+                  onClick={handleBack}
+                  className="flex items-center justify-center gap-2 w-full py-2 text-slate-600 hover:text-slate-400 transition-colors text-xs font-bold"
+                >
+                  <ArrowLeft size={14} />
+                  Kembali ke Nama Bisnis
+                </button>
+              </div>
             </motion.div>
           ) : null}
         </AnimatePresence>
@@ -850,40 +730,27 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
 function CategoryCard({ cat, onClick }) {
   return (
     <motion.div
-      whileTap={{ scale: 0.985 }}
+      whileTap={{ scale: 0.98 }}
+      whileHover={{ scale: 1.01, borderColor: 'rgba(16,185,129,0.2)' }}
       onClick={onClick}
-      style={{
-        background: '#111C24',
-        border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: '14px',
-        padding: '16px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '14px',
-        transition: 'all 0.15s ease',
-      }}
-      whileHover={{ borderColor: 'rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.04)' }}
+      className="group relative bg-[#111C24] border border-white/5 rounded-2xl p-5 cursor-pointer transition-all duration-300 hover:bg-[#15232d] shadow-lg hover:shadow-emerald-500/5"
     >
-      <div style={{
-        width: '48px', height: '48px',
-        background: 'rgba(16,185,129,0.10)',
-        borderRadius: '12px',
-        fontSize: '22px',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0,
-      }}>
-        {cat.icon}
+      <div className="flex items-center gap-5">
+        <div className="w-14 h-14 bg-emerald-500/10 rounded-xl flex items-center justify-center text-3xl flex-shrink-0 group-hover:scale-110 transition-transform duration-500 border border-emerald-500/10 group-hover:border-emerald-500/30 group-hover:bg-emerald-500/20">
+          {cat.icon}
+        </div>
+        <div className="flex-1">
+          <h4 className="font-display font-bold text-[16px] text-white group-hover:text-emerald-400 transition-colors duration-300">
+            {cat.label}
+          </h4>
+          <p className="font-body text-[12px] text-slate-500 mt-1 leading-relaxed">
+            {cat.description}
+          </p>
+        </div>
+        <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-600 group-hover:text-emerald-400 group-hover:bg-emerald-500/10 transition-all duration-300">
+          ›
+        </div>
       </div>
-      <div style={{ flex: 1 }}>
-        <h4 style={{ fontFamily: 'Sora', fontSize: '15px', fontWeight: 700, color: '#F1F5F9', margin: '0 0 3px' }}>
-          {cat.label}
-        </h4>
-        <p style={{ fontFamily: 'DM Sans', fontSize: '12px', color: '#4B6478', lineHeight: 1.5, margin: 0 }}>
-          {cat.description}
-        </p>
-      </div>
-      <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: '18px', flexShrink: 0 }}>›</div>
     </motion.div>
   )
 }
@@ -891,59 +758,50 @@ function CategoryCard({ cat, onClick }) {
 function ModelCard({ model, selected, onClick }) {
   return (
     <motion.div
-      whileTap={!model.comingSoon ? { scale: 0.985 } : {}}
+      whileTap={!model.comingSoon ? { scale: 0.98 } : {}}
+      whileHover={!model.comingSoon ? { scale: 1.01 } : {}}
       onClick={onClick}
-      style={{
-        background: model.comingSoon ? 'rgba(255,255,255,0.02)' : selected ? 'rgba(16,185,129,0.07)' : '#111C24',
-        border: model.comingSoon ? '1px solid rgba(255,255,255,0.05)' : selected ? '1px solid rgba(16,185,129,0.45)' : '1px solid rgba(255,255,255,0.08)',
-        borderRadius: '14px',
-        padding: '14px',
-        cursor: model.comingSoon ? 'not-allowed' : 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        opacity: model.comingSoon ? 0.45 : 1,
-        transition: 'all 0.15s ease',
-        boxShadow: selected ? '0 0 0 1px rgba(16,185,129,0.12)' : 'none',
-      }}
+      className={cn(
+        "group relative border rounded-2xl p-4 transition-all duration-300 flex items-center gap-4",
+        model.comingSoon ? "bg-white/[0.02] border-white/5 opacity-50 cursor-not-allowed" : 
+        selected 
+          ? "bg-emerald-500/5 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.1)] cursor-pointer" 
+          : "bg-[#111C24] border-white/5 hover:border-white/10 hover:bg-[#15232d] cursor-pointer"
+      )}
     >
-      <div style={{
-        width: '44px', height: '44px',
-        background: model.comingSoon ? 'rgba(255,255,255,0.04)' : 'rgba(16,185,129,0.10)',
-        borderRadius: '10px',
-        fontSize: '20px',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0,
-      }}>
+      <div className={cn(
+        "w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 transition-all duration-500 border",
+        selected 
+          ? "bg-emerald-500/20 border-emerald-500/30 shadow-inner" 
+          : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10"
+      )}>
         {model.icon}
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-          <h4 style={{ fontFamily: 'Sora', fontSize: '14px', fontWeight: 700, color: '#F1F5F9', margin: 0 }}>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2.5 mb-1">
+          <h4 className={cn(
+            "font-display font-bold text-[15px] truncate transition-colors",
+            selected ? "text-emerald-400" : "text-white"
+          )}>
             {model.label}
           </h4>
           {model.comingSoon && (
-            <span style={{
-              fontSize: '9px', fontWeight: 700, letterSpacing: '0.05em',
-              color: '#FBBF24', background: 'rgba(251,191,36,0.12)',
-              border: '1px solid rgba(251,191,36,0.2)',
-              padding: '1px 5px', borderRadius: '4px', flexShrink: 0,
-            }}>SEGERA</span>
+            <span className="text-[9px] font-black tracking-widest text-[#FBBF24] bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full uppercase">
+              Soon
+            </span>
           )}
         </div>
-        <p style={{ fontFamily: 'DM Sans', fontSize: '11px', color: '#4B6478', lineHeight: 1.5, margin: 0 }}>
+        <p className="font-body text-[11px] text-slate-500 leading-relaxed truncate">
           {model.description}
         </p>
       </div>
-      <div style={{
-        width: '20px', height: '20px',
-        borderRadius: '50%',
-        border: selected ? 'none' : '1.5px solid rgba(255,255,255,0.15)',
-        background: selected ? '#10B981' : 'transparent',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0,
-      }}>
-        {model.comingSoon ? <Lock size={10} color="rgba(255,255,255,0.2)" /> : selected && <Check size={12} color="white" strokeWidth={3} />}
+      <div className={cn(
+        "w-6 h-6 rounded-full flex items-center justify-center transition-all duration-500 border-1.5",
+        selected 
+          ? "bg-emerald-500 border-transparent shadow-[0_0_10px_rgba(16,185,129,0.3)]" 
+          : "border-white/10"
+      )}>
+        {model.comingSoon ? <Lock size={10} className="text-white/20" /> : selected && <Check size={12} className="text-[#052c1e] font-black" strokeWidth={4} />}
       </div>
     </motion.div>
   )
