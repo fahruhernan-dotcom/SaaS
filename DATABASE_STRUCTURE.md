@@ -1,36 +1,35 @@
 # TernakOS — Database Structure
 > Generated from Supabase schema. Gunakan sebagai referensi Antigravity.
-> Last updated: 2026-04-10 v4 (Added Kambing & Domba Penggemukan: 6 tables `kd_penggemukan_*`; Added Kambing & Domba Breeding: 7 tables `kd_breeding_*`; Updated dependency map, vertical status table, and CRITICAL rules for generated columns.)
-> Previous updates: 2026-04-05 v3 (Documentation Overhaul), 2026-04-02 (Financial Transparency), 2026-04-01 (Sembako Unit Conversion & Bulletproof RLS)
+> Last updated: 2026-04-17 v5.1 (Supabase Deep Audit & Automation Edition: Added Edge Functions, Arboge Scrapers, and Bulletproof RLS Documentation)
+> Previous updates: 2026-04-17 v5 (Deep Audit), 2026-04-10 v4 (Kambing & Domba overhaul), 2026-04-05 v3 (Documentation Overhaul)
 
 ---
 
 ## ⚠️ CRITICAL RULES
 
 ```
-❌ NEVER INSERT generated columns:
+❌ NEVER INSERT generated columns (Postgres calculation):
    purchases.total_modal
-   sales.net_revenue
-   sales.remaining_amount
+   sales.net_revenue, sales.remaining_amount
    deliveries.shrinkage_kg
    market_prices.broker_margin
-   rpa_invoices.net_profit
-   rpa_invoices.remaining_amount
+   rpa_invoices.net_profit, rpa_invoices.remaining_amount
    rpa_invoice_items.subtotal
-   egg_inventory.cost_per_pack
    egg_sales.net_profit
+   egg_inventory.cost_per_pack
    egg_sale_items.subtotal
+   sembako_sales.gross_profit, sembako_sales.net_profit, sembako_sales.remaining_amount
    sembako_stock_batches.total_cost
-   sembako_sales.gross_profit
-   sembako_sales.net_profit
-   sembako_sales.remaining_amount
-   sembako_sale_items.subtotal
-   sembako_sale_items.cogs_total
+   sembako_sale_items.subtotal, sembako_sale_items.cogs_total
    sembako_payroll.total_pay
+   kd_kandangs.luas_m2
    kd_breeding_births.total_born_dead
    kd_breeding_feed_logs.consumed_kg
-   kd_penggemukan_batches.total_cost (jika ada)
    kd_penggemukan_feed_logs.consumed_kg
+
+❌ NEVER use implicit schema in Functions/Triggers:
+   Semua tabel/obyek dalam SQL Function/Trigger WAJIB pakai `public.table_name`.
+   (Contoh: `FROM public.purchases` BUKAN `FROM purchases`).
 
 ❌ NEVER use `broker_connections.peternak_tenant_id` (deprecated)
 ❌ NEVER use `broker_connections.broker_tenant_id` (deprecated)
@@ -76,59 +75,108 @@ supabase.auth.signOut()
 ```
 auth.users
   └── tenants
-        ├── profiles          (tenant_id, auth_user_id)
-        ├── farms             (tenant_id)
-        │     └── purchases   (tenant_id, farm_id)
-        │           └── sales (tenant_id, purchase_id, rpa_id)
-        │                 ├── deliveries    (tenant_id, sale_id)
-        │                 │     └── loss_reports (delivery_id)
-        │                 ├── payments      (tenant_id, sale_id)
-        │                 └── loss_reports  (sale_id)
-        ├── rpa_clients       (tenant_id)  ← referenced by sales.rpa_id
-        ├── vehicles          (tenant_id)  ← referenced by deliveries.vehicle_id
-        │     └── vehicle_expenses
-        ├── drivers           (tenant_id)  ← referenced by deliveries.driver_id
-        ├── chicken_batches   (tenant_id, farm_id)
-        │     └── orders      (matched_batch_id)
-        ├── orders            (tenant_id, rpa_id)
-        ├── extra_expenses    (tenant_id)
-        ├── notifications     (tenant_id)
-        ├── team_invitations  (tenant_id, invited_by)
+        ├── profiles       (tenant_id, auth_user_id)
+        ├── team_invitations (tenant_id, invited_by)
         ├── subscription_invoices (tenant_id)
-        ├── peternak_farms    (tenant_id)
-        │     ├── breeding_cycles (peternak_farm_id)
-        │     │     ├── daily_records
-        │     │     ├── cycle_expenses
-        │     │     ├── harvest_records
-        │     │     └── stock_listings
-        │     ├── feed_stocks
-        │     └── farm_workers   (peternak_farm_id)
-        │           └── worker_payments (worker_id)
-        ├── market_listings   (tenant_id)
-        ├── broker_profiles   (tenant_id UNIQUE)
-        ├── peternak_profiles (tenant_id UNIQUE)
-        ├── rpa_profiles      (tenant_id)
-        ├── rpa_products      (tenant_id)
-        ├── rpa_customers     (tenant_id)
-        │     └── rpa_invoices (tenant_id, customer_id)
-        │           ├── rpa_invoice_items     (invoice_id)
-        │           └── rpa_customer_payments (tenant_id, invoice_id, customer_id)
-        ├── broker_connections (requester_tenant_id / target_tenant_id)
-        ├── rpa_purchase_orders (rpa_tenant_id / broker_tenant_id)
-        ├── kd_penggemukan_batches (tenant_id)
-        │     ├── kd_penggemukan_animals (tenant_id, batch_id)
-        │     │     └── kd_penggemukan_weight_records (tenant_id, animal_id)
-        │     ├── kd_penggemukan_health_logs (tenant_id, animal_id)
-        │     ├── kd_penggemukan_feed_logs (tenant_id, batch_id)
-        │     └── kd_penggemukan_sales (tenant_id, animal_id)
-        └── kd_breeding_animals (tenant_id, dam_id→self, sire_id→self)
-              ├── kd_breeding_weight_records (tenant_id, animal_id)
-              ├── kd_breeding_health_logs (tenant_id, animal_id)
-              ├── kd_breeding_sales (tenant_id, animal_id)
-              └── kd_breeding_mating_records (tenant_id, dam_id, sire_id)
-                    └── kd_breeding_births (tenant_id, mating_record_id, dam_id)
+        ├── ai_conversations (tenant_id, profile_id)
+        │     └── ai_pending_entries (conversation_id)
+        │           └── ai_staged_transactions (pending_entry_id)
+        │                 └── ai_anomaly_logs (staged_transaction_id)
+        ├── 🐔 POULTRY VERTICAL
+        │     ├── farms           (tenant_id)
+        │     │     ├── purchases (tenant_id, farm_id)
+        │     │     │     └── sales (tenant_id, purchase_id, rpa_id)
+        │     │     │           ├── deliveries (tenant_id, sale_id)
+        │     │     │           │     └── loss_reports (delivery_id)
+        │     │     │           ├── payments (tenant_id, sale_id)
+        │     │     │           └── loss_reports (sale_id)
+        │     │     └── chicken_batches (tenant_id, farm_id)
+        │     │           └── orders (matched_batch_id)
+        │     ├── rpa_clients     (tenant_id)
+        │     ├── vehicles        (tenant_id) 
+        │     │     └── vehicle_expenses (vehicle_id)
+        │     └── drivers         (tenant_id)
+        ├── 🥚 EGG BROKER VERTICAL
+        │     ├── egg_suppliers   (tenant_id)
+        │     ├── egg_customers   (tenant_id)
+        │     └── egg_inventory   (tenant_id)
+        │           └── egg_stock_logs (inventory_id, supplier_id, sale_id)
+        │                 └── egg_sales (customer_id)
+        ├── 🛒 SEMBAKO VERTICAL
+        │     ├── sembako_suppliers (tenant_id)
+        │     ├── sembako_customers (tenant_id)
+        │     ├── sembako_employees (tenant_id)
+        │     │     ├── sembako_payroll (employee_id)
+        │     │     └── sembako_deliveries (employee_id, sale_id)
+        │     └── sembako_products (tenant_id)
+        │           └── sembako_stock_batches (product_id, supplier_id)
+        │                 └── sembako_sales (customer_id)
+        │                       ├── sembako_sale_items (sale_id, product_id)
+        │                       │     └── sembako_stock_out (batch_id, sale_id)
+        │                       └── sembako_payments (sale_id, customer_id)
+        ├── 🐐 K&D (PENGGEMUKAN)
+        │     ├── kd_penggemukan_batches (tenant_id)
+        │     │     └── kd_penggemukan_feed_logs (batch_id)
+        │     ├── kd_kandangs (tenant_id, batch_id)
+        │     └── kd_penggemukan_animals (batch_id, kandang_id)
+        │           ├── kd_penggemukan_weight_records (animal_id)
+        │           ├── kd_penggemukan_health_logs (animal_id)
+        │           └── kd_penggemukan_sales (animal_id)
+        └── 🐑 K&D (BREEDING)
+              ├── kd_breeding_animals (tenant_id, kandang_id)
+              │     ├── kd_breeding_mating_records (animal_id, ram_id, ewe_id)
+              │     │     └── kd_breeding_births (mating_id, parent_id)
+              │     ├── kd_breeding_health_logs (animal_id)
+              │     ├── kd_breeding_feed_logs (animal_id)
+              │     └── kd_breeding_sales (animal_id)
+              └── kd_kandangs (tenant_id)
+```
 
-plan_configs ← GLOBAL, tidak ada tenant_id
+---
+
+## 🤖 AI INFRASTRUCTURE (Fase 2)
+> Tabel untuk tracking percakapan AI, pending entries, dan commitment flow.
+
+### `ai_conversations`
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `profile_id` | uuid FK → profiles | User yang memulai chat |
+| `title` | text | auto-generated title |
+| `created_at` | timestamptz | |
+
+### `ai_pending_entries`
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `conversation_id` | uuid FK → ai_conversations | |
+| `raw_input` | text | Teks asli dari user |
+| `parsed_data` | jsonb | Hasil ekstraksi LLM |
+| `status` | text | `'pending'` \| `'validated'` \| `'committed'` \| `'rejected'` \| `'error'` |
+| `error_message` | text | |
+
+### `ai_staged_transactions`
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `pending_entry_id` | uuid FK → ai_pending_entries | |
+| `transaction_type` | text | `'sale'` \| `'purchase'` \| `'expense'` \| `'feed_log'` |
+| `staged_data` | jsonb | Data transaksi yang siap di-commit |
+| `validation_status` | boolean | |
+
+### `ai_anomaly_logs`
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `staged_transaction_id` | uuid FK → ai_staged_transactions | |
+| `anomaly_type` | text | e.g. `'price_out_of_range'` |
+| `severity` | text | `'low'` \| `'medium'` \| `'high'` |
+| `description` | text | |
+
+---
+
+## 🗺️ DEPENDENCY MAP (Urutan Insert)
 
 ---
 
@@ -2600,4 +2648,63 @@ Gunakan data `RPA UD Jaya` dan `RPA Jaya Abadi` sebagai benchmark:
 
 ---
 
-*TernakOS Database Structure — updated 2026-04-05 v3 — Comprehensive Documentation Overhaul; Added Sembako, Egg, and System table details; Fixed Poultry `payments` soft-delete inconsistency; Bulletproof RLS pattern enforced.*
+---
+
+## 🛡️ ROW LEVEL SECURITY (RLS) POLICIES
+> TernakOS menggunakan "Bulletproof Pattern" untuk memastikan isolasi multi-tenant yang aman.
+
+### 🏠 Core Isolation Pattern
+Semua tabel dengan kolom `tenant_id` wajib menggunakan subquery profile untuk validasi akses, mendukung satu user dengan banyak tenant:
+```sql
+USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE auth_user_id = auth.uid()))
+```
+
+### 📋 Policy Summary
+| Table Group | Policy Type | Key Logic |
+|-------------|-------------|-----------|
+| **Standard Tables** | Tenant Isolation | Filter by `tenant_id` via profiles lookup. |
+| **profiles** | Auth Mapping | `auth_user_id = auth.uid()`. |
+| **tenants** | Participation | Access if user has a profile in that tenant. |
+| **Item Tables** | Inherited | Check `tenant_id` of the parent table (e.g., `sale_items` -> `sales`). |
+| **market_prices** | Public/Auth | `SELECT` public; `INSERT` restricted to scraper/superadmin. |
+| **AI Tables** | Ownership | User can only see logs/conversations they created. |
+
+### 🛠️ RBAC Rules
+- **Superadmin**: Bypass manual filters via `is_superadmin()` logic in policies.
+- **Service Role**: Akses penuh (bypass RLS) — digunakan oleh Edge Functions (`ai-commit`).
+
+---
+
+## ⚡ SUPABASE EDGE FUNCTIONS
+| Function Name | Description | Trigger/Usage |
+|---------------|-------------|---------------|
+| `fetch-harga` | Scraper market data dari **Chickin.id**. | Scheduled Cron / Manual Dashboard Trigger. |
+| `ai-commit` | Finalisasi transaksi dari `ai_staged_transactions`. | Frontend call setelah user menyetujui hasil prediksi AI. |
+| `verify-invite-code` | Validasi kode undangan tim. | Proses onboarding user baru. |
+
+### 🌐 EXTERNAL AUTOMATION & SCRAPERS
+- **Arboge Scraper (VPS)**:
+    - **Host**: VPS External (bukan Edge Function).
+    - **Logic**: Python + Selenium scraper untuk `Arboge.com` (Pinsar).
+    - **Action**: Direct `INSERT` ke `public.market_prices` menggunakan service role/admin connection.
+
+---
+
+## 🛠️ RPC FUNCTIONS & UTILITIES
+> Fungsi database yang dapat dipanggil via `supabase.rpc()`
+
+| Nama Fungsi | Argumen | Return Type | Deskripsi |
+|-------------|---------|-------------|-----------|
+| `get_province_price_trends` | `p_province`, `p_start_date`, `p_end_date` | `TABLE` | Digunakan untuk grafik tren harga di Dashboard Harga. |
+| `get_public_market_stats` | - | `json` | Statistik agregat untuk landing page/halaman publik. |
+| `create_new_business` | `p_business_name`, `p_vertical`, `p_phone`, `p_location` | `uuid` | Helper untuk membuat tenant baru + profile owner. |
+| `get_kandang_limit` | `p_tenant_id` | `integer` | Cek batas kandang berdasarkan plan aktif. |
+| `my_role` | - | `text` | Mendapatkan role user saat ini di tenant aktif. |
+| `my_tenant_id` | - | `uuid` | Mendapatkan tenant_id dari profil user yang aktif. |
+| `is_superadmin` | - | `boolean` | Verifikasi apakah user punya akses superadmin. |
+| `generate_egg_invoice_number` | `p_tenant_id` | `text` | Generate nomor invoice berurut untuk broker telur. |
+| `aggregate_daily_market_price`| `p_date` | `void` | (Admin) Agregasi data transaksi ke `market_prices`. |
+
+---
+
+*TernakOS Database Structure — **updated 2026-04-17 v5.1** — Supabase Deep Audit & Automation Edition; Synced all vertical columns (Poultry, Sapi, Sembako, Egg); Documented AI Infrastructure; Refined Generated Columns logic; Added RPC Function listing; Documented Edge Functions & Scrapers; Standardized Bulletproof RLS Patterns; Standardized `public.` schema qualification rules.*
