@@ -545,97 +545,100 @@ export default function AppSidebar({ open, onClose }) {
             </DropdownMenu>
 
             <Sheet open={isAddingBusiness} onOpenChange={setIsAddingBusiness}>
-              <SheetContent hideClose side="right" className="bg-[#090E14] border-border text-foreground w-[400px] p-0 flex flex-col overflow-hidden">
-                {/* Header with Background Gradient */}
-                <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 to-transparent h-64 pointer-events-none" />
-                
-                <SheetHeader className="p-8 pb-4 text-left relative z-10">
-                  <div className="flex items-center justify-between mb-2">
-                    <SheetTitle className="font-display font-extrabold text-2xl bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">Multi-Tenant</SheetTitle>
-                    <button 
-                      onClick={() => setIsAddingBusiness(false)}
-                      className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-muted-foreground hover:text-white hover:bg-white/10 hover:border-white/20 transition-all active:scale-95"
-                    >
-                      <X size={20} />
-                    </button>
-                  </div>
-                  <SheetDescription className="text-sm font-medium text-slate-400 max-w-[280px]">
-                    Kelola ekosistem bisnis Anda dalam satu akun terpusat.
-                  </SheetDescription>
-                </SheetHeader>
-
-                <div className="px-8 py-4 relative z-10 flex-1">
-                  {/* Hero Card */}
-                  <div className="relative group mb-8">
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-3xl blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-                    <div className="relative bg-[#0C141D] border border-white/5 rounded-3xl p-6 overflow-hidden">
-                      <div className="absolute right-[-20px] top-[-20px] w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl" />
-                      
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400/20 to-teal-400/20 border border-emerald-400/20 flex items-center justify-center mb-5 text-emerald-400 shadow-inner">
-                        <Building2 size={28} />
-                      </div>
-                      
-                      <h3 className="text-xl font-bold text-white mb-2 leading-tight">Setup Bisnis Baru</h3>
-                      <p className="text-sm text-slate-400 leading-relaxed font-medium">
-                        Mulai langkah ekspansi Anda. Setiap bisnis baru memiliki data, tim, dan infrastruktur keuangan terisolasi secara sempurna.
-                      </p>
+              <SheetContent hideClose side="right" className="bg-[#090E14] border-border text-foreground w-[400px] p-0 flex flex-col h-full">
+                {/* Scrollable Container */}
+                <div className="flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar relative">
+                  {/* Header with Background Gradient */}
+                  <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-emerald-500/10 to-transparent h-48 pointer-events-none" />
+                  
+                  <SheetHeader className="p-6 pb-2 text-left relative z-10">
+                    <div className="flex items-center justify-between mb-1">
+                      <SheetTitle className="font-display font-extrabold text-2xl bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">Multi-Tenant</SheetTitle>
+                      <button 
+                        onClick={() => setIsAddingBusiness(false)}
+                        className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-muted-foreground hover:text-white hover:bg-white/10 transition-all active:scale-95"
+                      >
+                        <X size={18} />
+                      </button>
                     </div>
-                  </div>
+                    <SheetDescription className="text-sm font-medium text-slate-400">
+                      Kelola ekosistem bisnis Anda secara terpusat.
+                    </SheetDescription>
+                  </SheetHeader>
 
-                  {/* Features List */}
-                  <div className="space-y-6 px-1">
-                    <div className="flex items-start gap-4">
-                      <div className="w-6 h-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Check size={14} className="text-emerald-400" />
-                      </div>
-                      <div>
-                        <p className="text-[14px] font-bold text-slate-200 mb-0.5">Data Terisolasi Penuh</p>
-                        <p className="text-xs text-slate-500 font-medium leading-relaxed">Keamanan data stok, klien, dan transaksi dijamin tidak akan pernah bercampur antar tenant.</p>
+                  <div className="px-6 py-2 relative z-10">
+                    {/* Hero Card - More Compact */}
+                    <div className="relative group mb-5">
+                      <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-3xl blur opacity-10 group-hover:opacity-25 transition duration-1000"></div>
+                      <div className="relative bg-[#0C141D] border border-white/5 rounded-3xl p-5 overflow-hidden">
+                        <div className="absolute right-[-10px] top-[-10px] w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl" />
+                        
+                        <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4 text-emerald-400">
+                          <Building2 size={24} />
+                        </div>
+                        
+                        <h3 className="text-lg font-bold text-white mb-1.5 leading-tight">Setup Bisnis Baru</h3>
+                        <p className="text-[13px] text-slate-400 leading-relaxed font-medium">
+                          Mulai langkah ekspansi Anda. Setiap bisnis baru memiliki data dan infrastruktur keuangan terisolasi.
+                        </p>
                       </div>
                     </div>
-                    
-                    <div className="flex items-start gap-4">
-                      <div className="w-6 h-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <Check size={14} className="text-emerald-400" />
+
+                    {/* Features List - Tightened */}
+                    <div className="space-y-4 px-1">
+                      <div className="flex items-start gap-3.5">
+                        <div className="w-5.5 h-5.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check size={12} className="text-emerald-400" />
+                        </div>
+                        <div>
+                          <p className="text-[13px] font-bold text-slate-200">Data Terisolasi Penuh</p>
+                          <p className="text-[11px] text-slate-500 font-medium leading-tight mt-0.5">Keamanan data stok dan transaksi dijamin tidak akan bercampur antar tenant.</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-[14px] font-bold text-slate-200 mb-0.5">Delegasi Tim Kustom</p>
-                        <p className="text-xs text-slate-500 font-medium leading-relaxed">Undang tim operasional berbeda untuk setiap unit bisnis dengan kontrol akses granular.</p>
+                      
+                      <div className="flex items-start gap-3.5">
+                        <div className="w-5.5 h-5.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Check size={12} className="text-emerald-400" />
+                        </div>
+                        <div>
+                          <p className="text-[13px] font-bold text-slate-200">Delegasi Tim Kustom</p>
+                          <p className="text-[11px] text-slate-500 font-medium leading-tight mt-0.5">Undang tim berbeda untuk setiap unit bisnis dengan kontrol akses granular.</p>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Footer Actions */}
-                <div className="p-8 pt-4 bg-gradient-to-t from-[#090E14] to-transparent relative z-20">
-                  <div className="flex flex-col gap-3">
+                {/* Footer Actions - Sticky at bottom */}
+                <div className="p-6 pt-2 pb-6 border-t border-white/5 bg-[#090E14] z-20">
+                  <div className="flex flex-col gap-2.5">
                     {canAddBusiness ? (
                       <button
                         onClick={() => {
                           setIsAddingBusiness(false)
                           navigate('/onboarding?mode=new_business')
                         }}
-                        className="w-full bg-emerald-500 hover:bg-emerald-400 text-[#052c1e] text-[15px] font-black py-4.5 rounded-2xl shadow-xl shadow-emerald-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                        className="w-full bg-emerald-500 hover:bg-emerald-400 text-[#052c1e] text-[16px] font-black py-5 rounded-2xl shadow-xl shadow-emerald-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                       >
                         Mulai Setup Sekarang
                       </button>
                     ) : (
                       <button
                         onClick={() => { setIsAddingBusiness(false); navigate('/dashboard/addons') }}
-                        className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-[15px] font-bold py-4.5 rounded-2xl shadow-xl shadow-purple-500/20 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+                        className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-[16px] font-bold py-5 rounded-2xl shadow-xl shadow-purple-500/20 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
                       >
                         <Plus size={18} /> Beli Slot Bisnis Baru
                       </button>
                     )}
                     <button
                       onClick={() => setIsAddingBusiness(false)}
-                      className="w-full bg-white/5 hover:bg-white/10 text-slate-300 text-[14px] font-bold py-4 rounded-2xl transition-all border border-white/5"
+                      className="w-full bg-white/5 hover:bg-white/10 text-slate-400 text-[14px] font-bold py-3.5 rounded-2xl transition-all border border-white/5"
                     >
                       Mungkin Nanti
                     </button>
                   </div>
                   
-                  <p className="text-[10px] text-center text-slate-600 mt-6 font-bold tracking-widest uppercase">
+                  <p className="text-[9px] text-center text-slate-600 mt-4 font-bold tracking-[0.2em] uppercase">
                     TernakOS Infrastructure v5.1
                   </p>
                 </div>
