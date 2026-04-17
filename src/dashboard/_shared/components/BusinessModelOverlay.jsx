@@ -7,6 +7,7 @@ import { toTitleCase } from '@/lib/format'
 import { PROVINCES } from '@/lib/constants/regions'
 import { checkQuotaUsage } from '@/lib/quotaUtils'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import StepSetup from './onboarding/StepSetup'
 
 // Verticals that need a dedicated setup step after business name
@@ -322,11 +323,11 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
   }, [provinceSearch])
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 sm:p-6 overflow-y-auto custom-scrollbar">
+    <div className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-xl flex items-center justify-center p-2 sm:p-4 overflow-y-auto custom-scrollbar">
       <motion.div
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        className="relative w-full max-w-[480px] m-auto bg-[#0C1319]/80 border border-white/5 rounded-[32px] p-8 sm:p-10 shadow-2xl backdrop-blur-md overflow-hidden"
+        className="relative w-full max-w-[460px] m-auto bg-[#0C1319]/80 border border-white/5 rounded-[28px] p-6 sm:p-8 shadow-2xl backdrop-blur-md overflow-hidden"
       >
         {/* Animated Background Orbs */}
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none" />
@@ -343,21 +344,21 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         {/* Top accent line */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent shadow-[0_0_15px_rgba(16,185,129,0.3)]" />
 
-        <div className="text-center mb-8 relative z-10">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="p-1.5 bg-emerald-500/10 rounded-xl border border-emerald-500/20 shadow-inner">
-              <img src="/logo.png" alt="TernakOS" className="w-8 h-8 rounded-lg object-cover" />
+        <div className="text-center mb-6 relative z-10">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="p-1 bg-emerald-500/10 rounded-lg border border-emerald-500/20 shadow-inner">
+              <img src="/logo.png" alt="TernakOS" className="w-7 h-7 rounded-md object-cover" />
             </div>
-            <span className="font-display font-black text-xl tracking-tight text-white">TernakOS</span>
+            <span className="font-display font-black text-lg tracking-tight text-white">TernakOS</span>
           </div>
 
-          <div className="flex items-center justify-center gap-2 mb-8 relative z-10">
+          <div className="flex items-center justify-center gap-1.5 mb-6 relative z-10">
             {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
               <div key={s} className={cn(
-                "h-1.5 rounded-full transition-all duration-500",
+                "h-1 rounded-full transition-all duration-500",
                 step >= s 
-                  ? "w-8 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]" 
-                  : "w-2 bg-white/10"
+                  ? "w-7 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]" 
+                  : "w-1.5 bg-white/10"
               )} />
             ))}
           </div>
@@ -372,28 +373,28 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
             >
               {step === 1 ? (
                 <>
-                  <h2 className="font-display text-2xl font-black text-white mb-2 leading-tight">
+                  <h2 className="font-display text-xl sm:text-2xl font-black text-white mb-2 leading-tight">
                     Kamu berbisnis sebagai?
                   </h2>
-                  <p className="text-[14px] text-slate-400 font-medium">
+                  <p className="text-[13px] text-slate-400 font-medium">
                     Pilih kategori bisnis utama kamu.
                   </p>
                 </>
               ) : isAnimalStep ? (
                 <>
-                  <h2 className="font-display text-2xl font-black text-white mb-2 leading-tight">
+                  <h2 className="font-display text-xl sm:text-2xl font-black text-white mb-2 leading-tight">
                     Jenis hewan apa? 🐄
                   </h2>
-                  <p className="text-[14px] text-slate-400 font-medium">
+                  <p className="text-[13px] text-slate-400 font-medium">
                     Pilih jenis ternak utama bapak.
                   </p>
                 </>
               ) : isSubRoleStep ? (
                 <>
-                  <h2 className="font-display text-2xl font-black text-white mb-2 leading-tight">
+                  <h2 className="font-display text-xl sm:text-2xl font-black text-white mb-1.5 leading-tight">
                     {isNewBusiness ? `Bisnis ${primaryRoleInfo?.label || 'Baru'}` : 'Spesialisasi Bisnis'}
                   </h2>
-                  <p className="text-[14px] text-slate-400 font-medium leading-relaxed max-w-[320px] mx-auto">
+                  <p className="text-[13px] text-slate-400 font-medium leading-relaxed max-w-[320px] mx-auto">
                     {isNewBusiness 
                       ? `Pilih spesialisasi unit ${primaryRoleInfo?.label?.toLowerCase() || 'bisnis'} tambahan.`
                       : 'Lengkapi profil agar dashboard sesuai kebutuhanmu.'}
@@ -401,10 +402,10 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                 </>
               ) : isNameStep ? (
                 <>
-                  <h2 className="font-display text-2xl font-black text-white mb-2 leading-tight">
+                  <h2 className="font-display text-xl sm:text-2xl font-black text-white mb-1.5 leading-tight">
                     Nama {category === 'peternak' ? 'farm' : 'bisnis'} bapak?
                   </h2>
-                  <p className="text-[14px] text-slate-400 font-medium leading-relaxed">
+                  <p className="text-[13px] text-slate-400 font-medium leading-relaxed">
                     {category === 'peternak' 
                       ? 'Berikan nama yang unik untuk lokasi farm ini.'
                       : 'Nama ini akan tampil di seluruh laporan dan invoice.'}
@@ -412,11 +413,11 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                 </>
               ) : isSetupStep ? (
                 <>
-                  <h2 className="font-display text-2xl font-black text-white mb-3 flex items-center justify-center gap-3 leading-tight">
+                  <h2 className="font-display text-xl sm:text-2xl font-black text-white mb-1.5 flex items-center justify-center gap-2.5 leading-tight">
                     Setup Batch Pertama <span className="animate-bounce-slow">🐄</span>
                   </h2>
-                  <p className="text-[14px] text-slate-400 font-medium leading-relaxed">
-                    Data awal untuk personalisasi performa ternak.
+                  <p className="text-[13px] text-slate-400 font-medium leading-relaxed">
+                    Data awal untuk mendukung performa ternak.
                   </p>
                 </>
               ) : null}
@@ -644,19 +645,19 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                 disabled={loading || businessName.trim().length < 3 || nameTaken || nameChecking || !province}
                 whileTap={{ scale: 0.97 }}
                 className={cn(
-                  "w-full h-16 rounded-2xl font-display font-black text-lg shadow-xl transition-all duration-300 active:scale-95 flex items-center justify-center gap-2",
+                  "w-full h-14 rounded-2xl font-display font-black text-base shadow-xl transition-all duration-300 active:scale-95 flex items-center justify-center gap-2",
                   (businessName.trim().length >= 3 && !nameTaken && !nameChecking && province)
                     ? "bg-emerald-500 hover:bg-emerald-400 text-[#052c1e] shadow-emerald-500/20"
                     : "bg-white/5 text-slate-500 cursor-not-allowed border border-white/5"
                 )}
               >
                 {loading ? (
-                  <div className="flex items-center gap-3">
-                    <div className="w-5 h-5 border-3 border-emerald-900/30 border-t-emerald-900 rounded-full animate-spin" />
-                    Menyiapkan...
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-emerald-900/30 border-t-emerald-900 rounded-full animate-spin" />
+                    Menyimpan...
                   </div>
                 ) : (
-                  <>Mulai Sekarang <ArrowLeft size={18} className="rotate-180" /></>
+                  <>Lanjutkan <ArrowLeft size={16} className="rotate-180" /></>
                 )}
               </motion.button>
 
