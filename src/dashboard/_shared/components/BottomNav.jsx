@@ -22,6 +22,8 @@ import {
   LayoutGrid,
   Store,
   Syringe,
+  Tag,
+  Heart,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
@@ -34,7 +36,7 @@ const ICON_MAP = {
   Home, ArrowLeftRight, Building2, User, Users, MoreHorizontal,
   RefreshCw, ClipboardList, ShoppingCart, CreditCard, Package,
   Truck, Wallet, Car, BarChart2, Calculator, Shield, LayoutGrid, Store,
-  Syringe,
+  Syringe, Tag, Heart,
 }
 
 // ── Single tab button ──────────────────────────────────────────────────────────

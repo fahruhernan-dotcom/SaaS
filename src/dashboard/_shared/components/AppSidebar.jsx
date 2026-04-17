@@ -31,6 +31,8 @@ import {
   ClipboardList,
   FileText,
   LayoutGrid,
+  Tag,
+  Heart,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -169,10 +171,14 @@ export default function AppSidebar({ open, onClose }) {
   const { accentColor } = useTheme()
 
   const vertical = resolveBusinessVertical(profile, tenant)
+  const model      = BUSINESS_MODELS[vertical]
   const isPoultry  = vertical === 'poultry_broker'
   const isEgg      = vertical === 'egg_broker'
-  const isPeternak = vertical === 'peternak'
-  const isRPA      = vertical === 'rumah_potong'
+  const isPeternak = model?.category === 'peternak'   // true for ALL peternak verticals
+  const isBroiler  = vertical === 'peternak'
+  const isKambingPenggemukan = vertical === 'peternak_kambing_domba_penggemukan'
+  const isKambingBreeding    = vertical === 'peternak_kambing_domba_breeding'
+  const isRPA      = vertical === 'rumah_potong_rpa' || model?.category === 'rumah_potong'
   const isSembako  = ['distributor_sembako', 'sembako_broker'].includes(vertical)
 
   // Peternak permission matrix (null for non-peternak users)
@@ -186,35 +192,25 @@ export default function AppSidebar({ open, onClose }) {
   const getBerandaPath = (v, t = tenant) => {
     const bBase = getBrokerBasePath(t)
     const pBase = `/peternak/${t?.sub_type || 'peternak_broiler'}`
-    
-    switch (v) {
-      case 'poultry_broker': return `${bBase}/beranda`
-      case 'egg_broker':     return `${bBase}/beranda`
-      case 'peternak':       return `${pBase}/beranda`
-      case 'rumah_potong': {
-        const rpType = t?.sub_type?.startsWith('rpa') ? 'rpa' : 'rph'
-        return `/rumah_potong/${rpType}/beranda`
-      }
-      case 'distributor_sembako':
-      case 'sembako_broker': return `${bBase}/beranda`
-      default:               return `${bBase}/beranda`
+    const m = BUSINESS_MODELS[v]
+    if (m?.category === 'peternak') return `${pBase}/beranda`
+    if (m?.category === 'rumah_potong') {
+      const rpType = t?.sub_type?.startsWith('rpa') ? 'rpa' : 'rph'
+      return `/rumah_potong/${rpType}/beranda`
     }
+    return `${bBase}/beranda`
   }
 
   const getAkunPath = (v, t = tenant) => {
     const bBase = getBrokerBasePath(t)
     const pBase = `/peternak/${t?.sub_type || 'peternak_broiler'}`
-
-    switch (v) {
-      case 'peternak':       return `${pBase}/akun`
-      case 'rumah_potong': {
-        const rpType = t?.sub_type?.startsWith('rpa') ? 'rpa' : 'rph'
-        return `/rumah_potong/${rpType}/akun`
-      }
-      case 'distributor_sembako':
-      case 'sembako_broker': return `${bBase}/akun`
-      default:               return `${bBase}/akun`
+    const m = BUSINESS_MODELS[v]
+    if (m?.category === 'peternak') return `${pBase}/akun`
+    if (m?.category === 'rumah_potong') {
+      const rpType = t?.sub_type?.startsWith('rpa') ? 'rpa' : 'rph'
+      return `/rumah_potong/${rpType}/akun`
     }
+    return `${bBase}/akun`
   }
 
   const berandaPath = getBerandaPath(vertical)
@@ -222,13 +218,20 @@ export default function AppSidebar({ open, onClose }) {
 
   const getVerticalInfo = (v) => {
     switch (v) {
-      case 'poultry_broker': return { icon: '🐔', label: 'Broker Ayam' }
-      case 'egg_broker':     return { icon: '🥚', label: 'Broker Telur' }
-      case 'peternak':       return { icon: '🏠', label: 'Peternak' }
-      case 'rpa':            return { icon: '🏭', label: 'RPA' }
+      case 'poultry_broker':                    return { icon: '🐔', label: 'Broker Ayam' }
+      case 'egg_broker':                        return { icon: '🥚', label: 'Broker Telur' }
+      case 'peternak':                          return { icon: '🐔', label: 'Peternak Broiler' }
+      case 'peternak_layer':                    return { icon: '🥚', label: 'Peternak Layer' }
+      case 'peternak_kambing_domba_penggemukan':return { icon: '🐐', label: 'Penggemukan Kambing' }
+      case 'peternak_kambing_domba_breeding':   return { icon: '🐑', label: 'Breeding Kambing' }
+      case 'rumah_potong_rpa':
+      case 'rpa':                               return { icon: '🏭', label: 'RPA' }
       case 'distributor_sembako':
-      case 'sembako_broker': return { icon: '🛒', label: 'Distributor Sembako' }
-      default:               return { icon: '🏢', label: 'Bisnis' }
+      case 'sembako_broker':                    return { icon: '🛒', label: 'Distributor Sembako' }
+      default: {
+        const m = BUSINESS_MODELS[v]
+        return { icon: m ? '🏚️' : '🏢', label: m?.name || 'Bisnis' }
+      }
     }
   }
 
@@ -266,16 +269,35 @@ export default function AppSidebar({ open, onClose }) {
           { title: 'Riwayat Transaksi', url: `${brokerBase}/transaksi`,  icon: BarChart2,  roles: ['owner', 'staff'] },
         ] : []),
 
-        // Peternak — global links (farm-specific sections rendered separately below)
-        ...(isPeternak ? [
-          { title: 'Semua Siklus',   url: `${peternakBase}/siklus`,        icon: RefreshCw,  show: pp?.canViewSiklus    ?? true },
-          { title: 'Denah Kandang',  url: `${peternakBase}/kandang-view`,  icon: LayoutGrid, show: (profile?.sub_type === 'peternak_kambing_domba_penggemukan' || profile?.sub_type === 'peternak_kambing_domba_breeding') },
-          { title: 'Program Vaksin', url: `${peternakBase}/vaksinasi`,      icon: Syringe,    show: pp?.canViewVaksinasi ?? true },
-          { title: 'Laporan Siklus', url: `${peternakBase}/laporan`,        icon: FileText,   show: pp?.canViewLaporan   ?? true },
-          { title: 'Stok Pakan',     url: `${peternakBase}/pakan`,          icon: Warehouse,  show: pp?.canViewPakan     ?? true },
-          { title: 'Anak Kandang',   url: `${peternakBase}/anak-kandang`,   icon: Users,      show: pp?.canViewAnakKandang ?? true },
-          { title: 'Tim & Akses',    url: `${peternakBase}/tim`,            icon: Users,      show: pp?.canViewTim       ?? false },
+        // Peternak Broiler — global links (farm-specific sections rendered separately below)
+        ...(isBroiler ? [
+          { title: 'Semua Siklus',   url: `${peternakBase}/siklus`,       icon: RefreshCw,  show: pp?.canViewSiklus      ?? true },
+          { title: 'Program Vaksin', url: `${peternakBase}/vaksinasi`,     icon: Syringe,    show: pp?.canViewVaksinasi   ?? true },
+          { title: 'Laporan Siklus', url: `${peternakBase}/laporan`,       icon: FileText,   show: pp?.canViewLaporan     ?? true },
+          { title: 'Stok Pakan',     url: `${peternakBase}/pakan`,         icon: Warehouse,  show: pp?.canViewPakan       ?? true },
+          { title: 'Anak Kandang',   url: `${peternakBase}/anak-kandang`,  icon: Users,      show: pp?.canViewAnakKandang ?? true },
+          { title: 'Tim & Akses',    url: `${peternakBase}/tim`,           icon: Users,      show: pp?.canViewTim         ?? false },
         ].filter(item => item.show !== false) : []),
+
+        // Kambing & Domba Penggemukan
+        ...(isKambingPenggemukan ? [
+          { title: 'Batch Aktif',    url: `${peternakBase}/batch`,       icon: RefreshCw },
+          { title: 'Data Ternak',    url: `${peternakBase}/ternak`,      icon: Tag },
+          { title: 'Kesehatan',      url: `${peternakBase}/kesehatan`,   icon: Syringe },
+          { title: 'Stok Pakan',     url: `${peternakBase}/pakan`,       icon: Warehouse },
+          { title: 'Laporan Batch',  url: `${peternakBase}/laporan`,     icon: FileText },
+          { title: 'Tim & Akses',    url: `${peternakBase}/tim`,         icon: Users },
+        ] : []),
+
+        // Kambing & Domba Breeding
+        ...(isKambingBreeding ? [
+          { title: 'Data Ternak',    url: `${peternakBase}/ternak`,      icon: Tag },
+          { title: 'Reproduksi',     url: `${peternakBase}/reproduksi`,  icon: Heart },
+          { title: 'Kesehatan',      url: `${peternakBase}/kesehatan`,   icon: Syringe },
+          { title: 'Stok Pakan',     url: `${peternakBase}/pakan`,       icon: Warehouse },
+          { title: 'Laporan Farm',   url: `${peternakBase}/laporan`,     icon: FileText },
+          { title: 'Tim & Akses',    url: `${peternakBase}/tim`,         icon: Users },
+        ] : []),
 
         // RPA
         // Rumah Potong
