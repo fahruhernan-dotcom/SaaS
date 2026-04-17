@@ -206,7 +206,7 @@ export default function BrokerLayout() {
   return (
     <>
       {isSembako && <SembakoPrefetcher />}
-      {!isSembako && <PoultryBrokerPrefetcher />}
+      {vertical === 'poultry_broker' && <PoultryBrokerPrefetcher />}
       {renderContent()}
       <AIErrorBoundary><AIChatBubble /></AIErrorBoundary>
     </>

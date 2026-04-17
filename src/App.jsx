@@ -123,28 +123,38 @@ function ProtectedRoute({ children, requiredType, requiredVertical }) {
   const location = useLocation();
 
   if (loading) return <LoadingScreen />;
-  
   if (!user) return <Navigate to="/login" replace />;
 
-  // Allow superadmin to access any business route without guards
   if (profile?.role === 'superadmin') return children;
 
   if (profile && !profile.onboarded && location.pathname !== '/onboarding' && profile.role === 'owner') {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // Role guard (only check if business model is selected)
-  if (profile?.business_model_selected && requiredType && profile.user_type !== requiredType) {
-    const role = profile.user_type === 'rumah_potong' ? 'rpa-buyer' : profile.user_type;
-    return <Navigate to={`/${role}/beranda`} replace />;
+  // Unified Vertical Resolver
+  const currentVertical = resolveBusinessVertical(profile, tenant)
+  const currentModel = BUSINESS_MODELS[currentVertical]
+  const normalize = (p) => p?.replace(/\/$/, '') || '';
+
+  // 1. VERTICAL OVERRIDE: If the user is on a route matching their business category, ALLOW IT
+  // This prevents 'broker' users with 'peternak' businesses from being looped out
+  if (requiredVertical && currentModel?.category === requiredVertical) {
+    return children;
   }
 
-  // Vertical guard — compare model category, not raw business_vertical string
-  if (requiredVertical && tenant?.business_vertical) {
-    const vertical = resolveBusinessVertical(profile, tenant)
-    const model = BUSINESS_MODELS[vertical]
-    if (model && model.category !== requiredVertical) {
-      return <Navigate to={getVerticalBeranda(tenant, profile)} replace />;
+  // 2. ROLE TYPE GUARD: Only redirect if they are explicitly on the wrong major route type
+  if (profile?.business_model_selected && requiredType && profile.user_type !== requiredType) {
+    const target = getVerticalBeranda(tenant, profile);
+    if (normalize(target) !== normalize(location.pathname)) {
+      return <Navigate to={target} replace />;
+    }
+  }
+
+  // 3. VERTICAL GUARD: Final check for specific vertical mismatch within the same category
+  if (requiredVertical && currentModel && currentModel.category !== requiredVertical) {
+    const target = getVerticalBeranda(tenant, profile);
+    if (normalize(target) !== normalize(location.pathname)) {
+      return <Navigate to={target} replace />;
     }
   }
 
@@ -153,14 +163,16 @@ function ProtectedRoute({ children, requiredType, requiredVertical }) {
 
 function RoleGuard({ allowedRoles, children }) {
   const { profile, tenant, loading } = useAuth();
+  const location = useLocation();
   
   if (loading) return <LoadingScreen />;
-  
-  // Superadmin bypass
-  if (profile?.role === 'superadmin') return children;
-  
+
   if (!profile || !allowedRoles.includes(profile.role)) {
-    return <Navigate to={getVerticalBeranda(tenant, profile)} replace />;
+    const target = getVerticalBeranda(tenant, profile);
+    const normalize = (p) => p?.replace(/\/$/, '') || '';
+    
+    if (normalize(target) === normalize(location.pathname)) return null;
+    return <Navigate to={target} replace />;
   }
 
   return children;
@@ -183,10 +195,21 @@ function RoleRedirector() {
     return <Navigate to={`/broker/${subType}/sopir`} replace />;
   }
   
-  // Always use getVerticalBeranda — it correctly resolves sub_type for all user types
-  // Previously used `/${role}/beranda` which produced /peternak/beranda instead of
-  // /peternak/peternak_broiler/beranda, causing a URL structure mismatch.
-  return <Navigate to={getVerticalBeranda(tenant, profile)} replace />;
+  const targetPath = getVerticalBeranda(tenant, profile);
+  console.log('[DEBUG] RoleRedirector:', { 
+    from: location.pathname, 
+    to: targetPath,
+    profileOnboarded: profile?.onboarded
+  })
+  
+  // Emergency brake: don't redirect if we are already there (normalized)
+  const normalize = (p) => p?.replace(/\/$/, '') || '';
+  if (normalize(targetPath) === normalize(location.pathname)) {
+    console.log('[DEBUG] RoleRedirector EMERGENCY BRAKE TRIGGERED')
+    return null;
+  }
+
+  return <Navigate to={targetPath} replace />;
 }
 
 function DashboardLayout({ children }) {

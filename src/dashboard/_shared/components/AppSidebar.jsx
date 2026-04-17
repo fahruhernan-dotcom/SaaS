@@ -33,6 +33,7 @@ import {
   LayoutGrid,
   Tag,
   Heart,
+  X,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -353,16 +354,7 @@ export default function AppSidebar({ open, onClose }) {
       ]
     }] : []),
 
-    // ── SHARED (semua vertical) ─────────────────────────────
-    {
-      label: 'LAINNYA',
-      items: [
-        ...((tenant?.sub_type === 'broker_ayam' || tenant?.business_vertical === 'poultry_broker') ? [
-          { title: 'Harga Pasar', url: '/dashboard/harga-pasar', icon: BarChart2 },
-        ] : []),
-        { title: 'TernakOS Market', url: '/market', icon: Building2 },
-      ]
-    },
+    // LAINNYA removed from here to be rendered manually at the bottom
   ]
 
   const filteredNavMain = navMain.map(group => ({
@@ -553,12 +545,18 @@ export default function AppSidebar({ open, onClose }) {
             </DropdownMenu>
 
             <Sheet open={isAddingBusiness} onOpenChange={setIsAddingBusiness}>
-              <SheetContent side="right" className="bg-[#090E14] border-border text-foreground w-[400px]">
-                <SheetHeader>
+              <SheetContent side="right" className="bg-[#090E14] border-border text-foreground w-[400px] p-0 flex flex-col">
+                <SheetHeader className="p-6 pb-2 text-left relative">
                   <SheetTitle className="font-display font-bold text-xl text-foreground">Multi-Tenant</SheetTitle>
                   <SheetDescription className="text-muted-foreground">
                     Kelola banyak bisnis dalam satu akun TernakOS.
                   </SheetDescription>
+                  <button 
+                    onClick={() => setIsAddingBusiness(false)}
+                    className="absolute right-4 top-4 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground hover:text-white"
+                  >
+                    <X size={18} />
+                  </button>
                 </SheetHeader>
 
                 <div className="py-8">
@@ -721,13 +719,34 @@ export default function AppSidebar({ open, onClose }) {
             </SidebarGroupContent>
             )}
           </SidebarGroup>
-          )
-        })}
+        )})}
 
         {/* ── Peternak: per-farm collapsible sections ── */}
-        {isBroiler && peternakFarms.length > 0 && (
+        {isBroiler && (
           <>
             <SidebarSeparator className="my-1" />
+            
+            {/* Empty State CTA */}
+            {peternakFarms.length === 0 && (
+              <div className="px-3 py-4">
+                <div className="bg-purple-500/5 border border-dashed border-purple-500/20 rounded-2xl p-4 text-center">
+                  <div className="w-9 h-9 rounded-xl bg-purple-500/10 flex items-center justify-center mx-auto mb-3">
+                    <Plus size={18} className="text-purple-400" />
+                  </div>
+                  <p className="text-[11px] font-bold text-slate-300 mb-1">Belum Ada Kandang</p>
+                  <p className="text-[10px] text-[#4B6478] mb-4 leading-relaxed">
+                    Mulai kelola operasional dengan menambah kandang pertama.
+                  </p>
+                  <button
+                    onClick={() => navigate(`${peternakBase}/beranda`)}
+                    className="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-bold rounded-xl shadow-lg shadow-purple-900/20 transition-all border-none cursor-pointer"
+                  >
+                    ＋ Tambah Kandang
+                  </button>
+                </div>
+              </div>
+            )}
+
             {peternakFarms.map((farm) => {
               const isOpen    = expandedFarms[farm.id] ?? false
               const farmBase  = `${peternakBase}/kandang/${farm.id}`
@@ -840,8 +859,46 @@ export default function AppSidebar({ open, onClose }) {
                 </div>
               )
             })()}
+
           </>
         )}
+
+        {/* ── LAINNYA ── */}
+        <SidebarGroup className="mt-2">
+          <SidebarGroupLabel className="text-[10px] font-bold tracking-[0.15em] text-muted-foreground px-2 mb-1">
+            LAINNYA
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {(isPoultry || isPeternak) && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location.pathname === '/dashboard/harga-pasar'} className="rounded-xl mb-0.5 hover:bg-white/[0.03]">
+                    <NavLink to="/dashboard/harga-pasar" className="flex items-center gap-3 w-full">
+                      <BarChart2 size={18} className="text-muted-foreground" />
+                      <span className="font-body text-[14px] font-medium text-foreground">Harga Pasar</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location.pathname === '/market'} className="rounded-xl mb-0.5 hover:bg-white/[0.03]">
+                  <NavLink to="/market" className="flex items-center gap-3 w-full">
+                    <Building2 size={18} className="text-muted-foreground" />
+                    <span className="font-body text-[14px] font-medium text-foreground">TernakOS Market</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location.pathname === akunPath} className="rounded-xl mb-0.5 hover:bg-white/[0.03]">
+                  <NavLink to={akunPath} className="flex items-center gap-3 w-full">
+                    <User size={18} className="text-muted-foreground" />
+                    <span className="font-body text-[14px] font-medium text-foreground">Akun & Profil</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
         {/* ── Quick Actions (fills bottom space) ── */}
         <div className="mt-auto px-1 pb-2 space-y-0.5">

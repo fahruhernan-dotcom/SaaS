@@ -7,8 +7,12 @@ import { toTitleCase } from '@/lib/format'
 import { PROVINCES } from '@/lib/constants/regions'
 import { checkQuotaUsage } from '@/lib/quotaUtils'
 import { toast } from 'sonner'
+import StepSetup from './onboarding/StepSetup'
 
-export default function BusinessModelOverlay({ profile, isNewBusiness, onComplete }) {
+// Verticals that need a dedicated setup step after business name
+const SETUP_REQUIRED_VERTICALS = new Set(['peternak_sapi_penggemukan'])
+
+export default function BusinessModelOverlay({ user, profile, isNewBusiness, onComplete }) {
   const [step, setStep] = useState(1)
   const [category, setCategory] = useState(null)
   const [animalGroup, setAnimalGroup] = useState(null)
@@ -20,14 +24,30 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
   const [provinceSearch, setProvinceSearch] = useState('')
   const [provinceOpen, setProvinceOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [setupData, setSetupData] = useState({
+    batch_name: '',
+    start_date: new Date().toISOString().split('T')[0],
+    initial_count: '',
+    initial_avg_weight: '',
+    purchase_price_per_kg: '',
+  })
   const debounceRef = useRef(null)
 
-  // Dynamic step count: Peternak gets an extra "animal group" step
-  const totalSteps = category === 'peternak' ? 4 : 3
+  // Verticals that need extra setup step
+  const needsSetupStep = SETUP_REQUIRED_VERTICALS.has(selected)
+
+  // Dynamic step count:
+  // Peternak: Category(1) → Animal Group(2) → Sub-role(3) → Name(4) [→ Setup(5) if sapi]
+  // Others: Category(1) → Sub-role(2) → Name(3)
+  const peternak_base_steps = 4
+  const totalSteps = category === 'peternak'
+    ? (needsSetupStep ? 5 : 4)
+    : 3
   const isPeternak = category === 'peternak'
   const isAnimalStep = isPeternak && step === 2
   const isSubRoleStep = isPeternak ? step === 3 : step === 2
-  const isNameStep = step === totalSteps
+  const isNameStep = isPeternak ? step === 4 : step === 3
+  const isSetupStep = needsSetupStep && step === 5
 
   // Memoize sub-roles based on category + animal group
   const subRoles = useMemo(() => {
@@ -40,31 +60,46 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
   }, [category, animalGroup, isPeternak])
 
   // New: Role Locking Logic
+  const isRoleLocked = useMemo(() => {
+    // Platform-wide admins (superadmin) should not be locked into a specific business category
+    // They should be able to create any type of business
+    if (profile?.role === 'superadmin' || profile?.user_type === 'superadmin') return false
+    return isNewBusiness || profile?.onboarded
+  }, [isNewBusiness, profile])
+
   const primaryRoleInfo = useMemo(() => {
-    if (!isNewBusiness || !profile) return null
+    if (!isRoleLocked || !profile) return null
     
-    // We assume the first profile is the 'primary' or the user's root specialization
-    // In many cases, profile is already the active one, but we ideally want the oldest one.
-    // However, since we just want to know the category, we can trust the current profile's parent category
-    // because we will lock all subsequent ones to be the same.
+    // Use the explicit user_type if it's a valid business category
+    const userType = profile.user_type
+    const validCategory = BUSINESS_CATEGORIES.find(c => c.key === userType)
+    
+    if (validCategory) {
+      return {
+        category: userType,
+        label: validCategory.label || 'Bisnis'
+      }
+    }
+
     const verticalKey = resolveBusinessVertical(profile, profile.tenants)
     const model = BUSINESS_MODELS[verticalKey]
     return {
        category: model?.category || 'broker',
        label: model?.categoryLabel || 'Bisnis'
     }
-  }, [profile, isNewBusiness])
+  }, [profile, isRoleLocked])
 
-  // Auto-skip step 1 if it's a new business (we already know the category)
+  // Auto-skip step 1 ONLY if role is locked
   useEffect(() => {
-    if (isNewBusiness && primaryRoleInfo && step === 1) {
+    if (isRoleLocked && primaryRoleInfo && step === 1) {
       setCategory(primaryRoleInfo.category)
       setStep(2)
     }
-  }, [isNewBusiness, primaryRoleInfo, step])
+  }, [isRoleLocked, primaryRoleInfo, step])
 
-  if (!profile) return null
-  if (profile.business_model_selected && !isNewBusiness) return null
+  // Allow rendering even without profile (for brand new users)
+  // But if session is already onboarded and NOT in new business mode, hide it (Safety)
+  if (profile?.onboarded && !isNewBusiness) return null
 
   // Reset name check state when name changes
   const handleNameChange = (val) => {
@@ -78,18 +113,23 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
 
     debounceRef.current = setTimeout(async () => {
       const formatted = toTitleCase(val.trim())
-      const { data } = await supabase
+      let query = supabase
         .from('tenants')
         .select('id')
         .ilike('business_name', formatted)
-        .neq('id', profile.tenant_id || '') // exclude own tenant
-        .limit(1)
+      
+      if (profile?.tenant_id) {
+        query = query.neq('id', profile.tenant_id)
+      }
+
+      const { data } = await query.limit(1)
       setNameChecking(false)
       setNameTaken(data && data.length > 0)
     }, 600)
   }
 
-  const handleConfirm = async () => {
+  // Called when user clicks "Mulai Sekarang" on name step
+  const handleNameConfirm = async () => {
     if (!selected || !businessName.trim() || businessName.trim().length < 3) return
     if (nameTaken || nameChecking) return
     if (!province) return
@@ -99,42 +139,68 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
     const formattedName = toTitleCase(businessName.trim())
 
     // Final server-side uniqueness check before saving
-    const { data: existing } = await supabase
+    let uniqueQuery = supabase
       .from('tenants')
       .select('id')
       .ilike('business_name', formattedName)
-      .neq('id', profile.tenant_id || '')
-      .limit(1)
+    
+    if (profile?.tenant_id) {
+      uniqueQuery = uniqueQuery.neq('id', profile.tenant_id)
+    }
+
+    const { data: existing } = await uniqueQuery.limit(1)
+    
     if (existing && existing.length > 0) {
       setNameTaken(true)
       return
     }
 
+    // If this vertical needs a setup step, go there instead of finishing
+    if (needsSetupStep) {
+      setStep(5)
+      return
+    }
+
+    await saveAndComplete()
+  }
+
+  const saveAndComplete = async () => {
+    const model = BUSINESS_MODELS[selected]
+    if (!model) return
+    const formattedName = toTitleCase(businessName.trim())
+
     setLoading(true)
     try {
-      if (isNewBusiness) {
+      const targetAuthId = profile?.auth_user_id || user?.id
+      if (!targetAuthId) throw new Error('User session missing')
+
+      let resolvedTenantId = profile?.tenant_id
+
+      if (isNewBusiness || !profile) {
         // --- SCALABILITY: Final Quota Check before RPC ---
         const quota = await checkQuotaUsage(null, profile, 'business')
-        if (!quota.canAdd) {
+        if (isNewBusiness && !quota.canAdd) {
           toast.error(`Jatah bisnis bapak sudah penuh (${quota.usage}/${quota.limit}). Silakan beli slot tambahan di Portal Add-on.`)
           setLoading(false)
           return
         }
 
-        // --- MULTI-TENANT: Use RPC for Atomic Creation (Bypasses RLS issues) ---
-        const { error: rpcError } = await supabase
+        // --- MULTI-TENANT & NEW USER: Use RPC for Atomic Creation ---
+        const { data: rpcData, error: rpcError } = await supabase
           .rpc('create_new_business', {
             p_business_name: formattedName,
             p_business_vertical: model.key,
             p_location: province || null,
-            p_phone: profile?.phone || ''
+            p_phone: profile?.phone || user?.user_metadata?.phone || ''
           })
 
         if (rpcError) throw rpcError
-        toast.success('Bisnis baru berhasil dibuat!')
+        // Resolve the new tenant_id for setup step saving
+        if (rpcData) resolvedTenantId = rpcData
+        toast.success(isNewBusiness ? 'Bisnis baru berhasil dibuat!' : 'Profil bisnis berhasil dibuat!')
 
       } else {
-        // --- INITIAL ONBOARDING: Update Existing ---
+        // --- INITIAL ONBOARDING: Update Existing Profile ---
         const { error: profError } = await supabase
           .from('profiles')
           .update({
@@ -142,7 +208,7 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
             business_model_selected: true,
             onboarded: true,
           })
-          .eq('auth_user_id', profile.auth_user_id)
+          .eq('auth_user_id', targetAuthId)
 
         if (profError) throw profError
 
@@ -161,6 +227,23 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
         }
       }
 
+      // --- SETUP STEP: Save initial batch for Sapi Penggemukan ---
+      if (selected === 'peternak_sapi_penggemukan' && setupData.initial_count && resolvedTenantId) {
+        const batchCode = `BATCH-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-001`
+        await supabase.from('sapi_penggemukan_batches').insert({
+          tenant_id: resolvedTenantId,
+          batch_code: setupData.batch_name?.trim() || batchCode,
+          start_date: setupData.start_date,
+          total_animals: parseInt(setupData.initial_count) || 0,
+          avg_entry_weight_kg: parseFloat(setupData.initial_avg_weight) || null,
+          status: 'active',
+          batch_purpose: 'potong',
+          notes: setupData.purchase_price_per_kg
+            ? `Harga beli: Rp ${parseInt(setupData.purchase_price_per_kg).toLocaleString('id-ID')}/kg`
+            : null,
+        })
+      }
+
       if (onComplete) onComplete(selected)
     } catch (err) {
       console.error('Error saving business model:', err)
@@ -169,6 +252,9 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
       setLoading(false)
     }
   }
+
+  // Legacy alias used by the name step's confirm button
+  const handleConfirm = handleNameConfirm
 
   const handleCategorySelect = (key) => {
     setCategory(key)
@@ -186,10 +272,20 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
   const handleSubRoleSelect = (key) => {
     setSelected(key)
     setStep(isPeternak ? 4 : 3)
+    // Reset setup data when changing sub-role
+    setSetupData({
+      batch_name: '',
+      start_date: new Date().toISOString().split('T')[0],
+      initial_count: '',
+      initial_avg_weight: '',
+      purchase_price_per_kg: '',
+    })
   }
 
   const handleBack = () => {
-    if (isNameStep) {
+    if (isSetupStep) {
+      setStep(4)
+    } else if (isNameStep) {
       setStep(step - 1)
       setProvinceSearch('')
     } else if (isSubRoleStep) {
@@ -197,16 +293,21 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
         setStep(2) // back to animal group
         setSelected(null)
       } else {
+        // If role is locked, they can't go back to Category selection (Step 1)
+        if (isRoleLocked) return
         setStep(1)
         setCategory(null)
         setSelected(null)
       }
     } else if (isAnimalStep) {
+      // If role is locked, they can't go back to Category selection (Step 1)
+      if (isRoleLocked) return
       setStep(1)
       setCategory(null)
       setAnimalGroup(null)
       setSelected(null)
     } else {
+      if (isRoleLocked) return
       setStep(1)
       setCategory(null)
       setSelected(null)
@@ -322,6 +423,15 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
                     : 'Nama ini akan tampil di seluruh laporan dan invoice.'}
                 </p>
               </motion.div>
+            ) : isSetupStep ? (
+              <motion.div key="s-setup" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
+                <h2 style={{ fontFamily: 'Sora', fontSize: '19px', fontWeight: 800, color: '#F1F5F9', marginBottom: '6px' }}>
+                  Setup Batch Pertama 🐄
+                </h2>
+                <p style={{ fontSize: '13px', color: '#4B6478', lineHeight: 1.5 }}>
+                  Data ini bisa diubah kapan saja dari menu Batch.
+                </p>
+              </motion.div>
             ) : null}
           </AnimatePresence>
         </div>
@@ -363,13 +473,15 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
                 ))}
               </div>
 
-              <button
-                onClick={handleBack}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', width: '100%', marginTop: '12px', padding: '10px', background: 'transparent', border: 'none', color: '#4B6478', fontSize: '13px', cursor: 'pointer', fontFamily: 'DM Sans' }}
-              >
-                <ArrowLeft size={14} />
-                Kembali
-              </button>
+              {isRoleLocked ? null : (
+                <button
+                  onClick={handleBack}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', width: '100%', marginTop: '12px', padding: '10px', background: 'transparent', border: 'none', color: '#4B6478', fontSize: '13px', cursor: 'pointer', fontFamily: 'DM Sans' }}
+                >
+                  <ArrowLeft size={14} />
+                  Kembali
+                </button>
+              )}
             </motion.div>
           ) : isSubRoleStep ? (
             <motion.div
@@ -395,27 +507,29 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
                 ))}
               </div>
 
-              <button
-                onClick={handleBack}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px',
-                  width: '100%',
-                  marginTop: '12px',
-                  padding: '10px',
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#4B6478',
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  fontFamily: 'DM Sans',
-                }}
-              >
-                <ArrowLeft size={14} />
-                Kembali
-              </button>
+              {isRoleLocked && !isPeternak ? null : (
+                <button
+                  onClick={handleBack}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    width: '100%',
+                    marginTop: '12px',
+                    padding: '10px',
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#4B6478',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    fontFamily: 'DM Sans',
+                  }}
+                >
+                  <ArrowLeft size={14} />
+                  Kembali
+                </button>
+              )}
             </motion.div>
           ) : isNameStep ? (
             <motion.div
@@ -626,6 +740,94 @@ export default function BusinessModelOverlay({ profile, isNewBusiness, onComplet
                   width: '100%',
                   marginTop: '12px',
                   padding: '10px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#4B6478',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  fontFamily: 'DM Sans',
+                }}
+              >
+                <ArrowLeft size={14} />
+                Kembali
+              </button>
+            </motion.div>
+          ) : isSetupStep ? (
+            <motion.div
+              key="step-setup"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+            >
+              <div style={{ marginBottom: '20px' }}>
+                <h2 style={{ fontFamily: 'Sora', fontSize: '19px', fontWeight: 800, color: '#F1F5F9', marginBottom: '6px' }}>
+                  Setup Awal Batch 🐄
+                </h2>
+                <p style={{ fontSize: '13px', color: '#4B6478', lineHeight: 1.5 }}>
+                  Isi data batch pertama untuk personalisasi dashboard bapak.
+                </p>
+              </div>
+
+              <StepSetup
+                selectedModel={selected}
+                setupData={setupData}
+                setSetupData={setSetupData}
+              />
+
+              <motion.button
+                onClick={saveAndComplete}
+                disabled={loading}
+                whileTap={{ scale: 0.97 }}
+                style={{
+                  width: '100%',
+                  marginTop: '20px',
+                  padding: '15px',
+                  background: loading ? 'rgba(217,119,6,0.4)' : '#D97706',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontFamily: 'Sora',
+                  fontSize: '15px',
+                  fontWeight: 700,
+                  boxShadow: '0 4px 20px rgba(217,119,6,0.25)',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  opacity: loading ? 0.7 : 1,
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                {loading ? 'Menyiapkan dashboard...' : 'Mulai Sekarang →'}
+              </motion.button>
+
+              <button
+                onClick={() => saveAndComplete()}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '100%',
+                  marginTop: '10px',
+                  padding: '10px',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#4B6478',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  fontFamily: 'DM Sans',
+                }}
+              >
+                Lewati untuk sekarang
+              </button>
+
+              <button
+                onClick={handleBack}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  width: '100%',
+                  marginTop: '4px',
+                  padding: '8px',
                   background: 'transparent',
                   border: 'none',
                   color: '#4B6478',

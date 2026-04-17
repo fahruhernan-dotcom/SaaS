@@ -2,9 +2,7 @@ import React, { useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  ChevronLeft, ChevronRight, ClipboardList, BarChart2,
-  Package, AlertTriangle, AlertCircle, Info, Activity,
-  PlayCircle, MapPin, Layers, Syringe,
+  PlayCircle, MapPin, Layers, Syringe, Settings
 } from 'lucide-react'
 import {
   useSingleFarm,
@@ -415,9 +413,20 @@ export default function FarmBeranda() {
               </div>
             )}
           </div>
-          <span className="text-[11px] font-bold text-slate-300 bg-white/[0.05] border border-white/[0.08] px-2.5 py-1 rounded-full whitespace-nowrap flex-shrink-0">
-            {livestockLabel}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold text-slate-300 bg-white/[0.05] border border-white/[0.08] px-2.5 py-1 rounded-full whitespace-nowrap flex-shrink-0">
+              {livestockLabel}
+            </span>
+            {(profile?.role === 'owner' || profile?.role === 'superadmin') && (
+              <button
+                onClick={() => navigate(`${peternakBase}/kandang/${farmId}/atur`)}
+                className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"
+                title="Atur Kandang"
+              >
+                <Settings size={14} />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Model + stats row */}

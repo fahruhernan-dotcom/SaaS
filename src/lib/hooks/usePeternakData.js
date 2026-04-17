@@ -43,7 +43,11 @@ export function usePeternakFarms() {
         .eq('is_deleted', false)
         .order('created_at', { ascending: false })
       if (error) throw error
-      return data ?? []
+      // Filter out deleted cycles in JS to avoid inner-join filtering effects
+      return (data ?? []).map(f => ({
+        ...f,
+        breeding_cycles: (f.breeding_cycles ?? []).filter(c => !c.is_deleted)
+      }))
     },
     enabled: !!tenant?.id,
   })
@@ -155,11 +159,12 @@ export const useCreatePeternakFarm = () => {
   const queryClient = useQueryClient()
   const { tenant } = useAuth()
   return useMutation({
-    mutationFn: async ({ farm_name, location, capacity, kandang_count }) => {
+    mutationFn: async ({ farm_name, location, province, capacity, kandang_count, livestock_type, business_model, mitra_company }) => {
       const { error } = await supabase.from('peternak_farms').insert({
         tenant_id: tenant.id,
-        farm_name, location,
+        farm_name, location, province,
         capacity, kandang_count,
+        livestock_type, business_model, mitra_company,
         is_active: true,
       })
       if (error) throw error
@@ -169,6 +174,52 @@ export const useCreatePeternakFarm = () => {
       toast.success('Kandang berhasil ditambahkan')
     },
     onError: (err) => toast.error('Gagal tambah kandang: ' + err.message),
+  })
+}
+
+export const useUpdatePeternakFarm = () => {
+  const queryClient = useQueryClient()
+  const { tenant } = useAuth()
+  return useMutation({
+    mutationFn: async ({ id, farm_name, location, province, capacity, kandang_count, livestock_type, business_model, mitra_company }) => {
+      const { error } = await supabase
+        .from('peternak_farms')
+        .update({
+          farm_name, location, province,
+          capacity, kandang_count,
+          livestock_type, business_model, mitra_company,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['peternak-farms', tenant?.id] })
+      queryClient.invalidateQueries({ queryKey: ['peternak-farm', vars.id] })
+      toast.success('Informasi kandang diperbarui')
+    },
+    onError: (err) => toast.error('Gagal update kandang: ' + err.message),
+  })
+}
+
+export const useDeletePeternakFarm = () => {
+  const queryClient = useQueryClient()
+  const { tenant } = useAuth()
+  return useMutation({
+    mutationFn: async (farmId) => {
+      const { error } = await supabase
+        .from('peternak_farms')
+        .update({ is_deleted: true, updated_at: new Date().toISOString() })
+        .eq('id', farmId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['peternak-farms', tenant?.id] })
+      queryClient.invalidateQueries({ queryKey: ['active-cycles', tenant?.id] })
+      queryClient.invalidateQueries({ queryKey: ['all-cycles', tenant?.id] })
+      toast.success('Kandang berhasil dihapus')
+    },
+    onError: (err) => toast.error('Gagal hapus kandang: ' + err.message),
   })
 }
 
@@ -319,8 +370,9 @@ export function useFeedStocks() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('feed_stocks')
-        .select('*, peternak_farms(id, farm_name)')
+        .select('*, peternak_farms!inner(id, farm_name, is_deleted)')
         .eq('tenant_id', tenant.id)
+        .eq('peternak_farms.is_deleted', false)
         .order('feed_type', { ascending: true })
       if (error) throw error
       return data ?? []
@@ -429,6 +481,7 @@ export function useSingleFarm(farmId) {
         .from('peternak_farms')
         .select('*')
         .eq('id', farmId)
+        .eq('is_deleted', false)
         .single()
       if (error) throw error
       return data
@@ -467,9 +520,10 @@ export const useDeleteCycle = () => {
         .eq('id', cycleId)
       if (error) throw error
     },
-    onSuccess: () => {
+    onSuccess: (_, cycleId) => {
       queryClient.invalidateQueries({ queryKey: ['all-cycles', tenant?.id] })
       queryClient.invalidateQueries({ queryKey: ['active-cycles', tenant?.id] })
+      queryClient.invalidateQueries({ queryKey: ['cycle', cycleId] })
       toast.success('Siklus dihapus')
     },
     onError: (err) => toast.error('Gagal hapus siklus: ' + err.message),

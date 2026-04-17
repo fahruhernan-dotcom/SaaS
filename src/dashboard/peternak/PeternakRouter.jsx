@@ -10,11 +10,20 @@ import BroilerAnakKandang from './broiler/AnakKandang'
 import BroilerLaporanSiklus from './broiler/LaporanSiklus'
 import BroilerFarmBeranda from './broiler/FarmBeranda'
 import BroilerSetupFarm from './broiler/SetupFarm'
+import BroilerFarmSettings from './broiler/FarmSettings' // [NEW]
 import BroilerVaksinasi from './broiler/Vaksinasi'
 import BroilerTim from './broiler/Tim'
 
 // Layer pages (placeholder)
 import LayerBeranda from './layer/LayerBeranda'
+
+// Sapi — Penggemukan
+import SapiBeranda    from './sapi/Beranda'
+import SapiBatch      from './sapi/Batch'
+import SapiTernak     from './sapi/Ternak'
+import SapiKesehatan  from './sapi/Kesehatan'
+import SapiPakan      from './sapi/Pakan'
+import SapiLaporan    from './sapi/LaporanBatch'
 
 // Kambing & Domba — Penggemukan
 import KambingBeranda   from './kambing_domba/Beranda'
@@ -36,6 +45,31 @@ import BreedingLaporan    from './kambing_domba/breeding/LaporanFarm'
 // Shared pages
 import HargaPasar from '../_shared/pages/HargaPasar'
 import Akun from '../_shared/pages/Akun'
+import { useAuth } from '@/lib/hooks/useAuth'
+import LoadingSpinner from '../_shared/components/LoadingSpinner'
+
+// ─── Route Guard ──────────────────────────────────────────────────────────────
+
+function PeternakAdminGuard({ children }) {
+  const { profile, loading } = useAuth()
+  if (loading) return <LoadingSpinner fullPage />
+  
+  const isAllowed = profile?.role === 'owner' || profile?.role === 'superadmin'
+  if (!isAllowed) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center text-slate-400">
+        <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
+          <span className="text-2xl">🔒</span>
+        </div>
+        <h2 className="font-['Sora'] font-bold text-white text-lg mb-2">Akses Terbatas</h2>
+        <p className="text-[#94A3B8] text-sm max-w-xs mx-auto">
+          Hanya Owner atau Admin yang dapat mengakses pengaturan kandang.
+        </p>
+      </div>
+    )
+  }
+  return children
+}
 
 export function PeternakPageRouter({ page }) {
   const { peternakType } = useParams()
@@ -54,31 +88,48 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar':  <HargaPasar />,
       'akun':         <Akun />,
       'tim':          <BroilerTim />,
+      'atur':         <PeternakAdminGuard><BroilerFarmSettings /></PeternakAdminGuard>,
     },
     peternak_layer: {
-      beranda: <LayerBeranda />,
-      'akun':  <Akun />,
+      beranda:      <LayerBeranda />,
+      'stok-pakan': <LayerBeranda />, // placeholder
+      'laporan':    <LayerBeranda />, // placeholder
+      'harga-pasar':<HargaPasar />,
+      'tim':        <Akun />,
+      'akun':       <Akun />,
     },
     peternak_kambing_domba_breeding: {
-      beranda:    <BreedingBeranda />,
-      ternak:     <BreedingTernak />,
-      reproduksi: <BreedingReproduksi />,
-      kesehatan:  <BreedingKesehatan />,
-      pakan:      <BreedingPakan />,
-      laporan:    <BreedingLaporan />,
-      tim:        <Akun />,
-      akun:       <Akun />,
+      beranda:      <BreedingBeranda />,
+      ternak:       <BreedingTernak />,
+      reproduksi:   <BreedingReproduksi />,
+      kesehatan:    <BreedingKesehatan />,
+      'stok-pakan': <BreedingPakan />,
+      laporan:      <BreedingLaporan />,
+      'harga-pasar':<HargaPasar />,
+      tim:          <Akun />,
+      akun:         <Akun />,
+    },
+    peternak_sapi_penggemukan: {
+      beranda:       <SapiBeranda />,
+      batch:         <SapiBatch />,
+      ternak:        <SapiTernak />,
+      kesehatan:     <SapiKesehatan />,
+      'stok-pakan':  <SapiPakan />,
+      laporan:       <SapiLaporan />,
+      'harga-pasar': <HargaPasar />,
+      tim:           <Akun />,
+      akun:          <Akun />,
     },
     peternak_kambing_domba_penggemukan: {
       beranda:       <KambingBeranda />,
       batch:         <KambingBatch />,
       ternak:        <KambingTernak />,
       kesehatan:     <KambingKesehatan />,
-      pakan:         <KambingPakan />,
+      'stok-pakan':   <KambingPakan />,
       laporan:       <KambingLaporan />,
       'kandang-view':<KandangView />,
       'harga-pasar': <HargaPasar />,
-      tim:           <Akun />,   // placeholder — Phase 4 ganti ke KambingTim
+      tim:           <Akun />,
       akun:          <Akun />,
     },
   }

@@ -382,16 +382,24 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
                   <>
                     <div className="space-y-4 text-left">
                       <Label className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Pembelian</Label>
-                      <div className="space-y-3 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
-                        <DetailRow label="Kandang" value={data?.purchases?.farms?.farm_name} icon={<MapPin size={14} />} />
-                        <DetailRow label="Jumlah" value={`${formatEkor(data?.purchases?.quantity)} · ${formatWeight(data?.purchases?.total_weight_kg)}`} icon={<Package size={14} />} />
-                        <DetailRow label="Harga Beli" value={`${formatIDR(data?.purchases?.price_per_kg)}/kg`} icon={<TrendingDown size={14} />} />
-                        <DetailRow label="Total Modal" value={formatIDR(data?.purchases?.total_cost)} highlight />
-                        <DetailRow label="Tanggal Beli" value={formatDate(data?.purchases?.transaction_date)} icon={<Calendar size={14} />} />
-                        {data?.purchases?.notes && (
-                          <p className="text-[12px] text-[#4B6478] italic mt-2 leading-relaxed">"{data.purchases.notes}"</p>
-                        )}
-                      </div>
+                      {data?.purchases ? (
+                        <div className="space-y-3 bg-white/[0.02] border border-white/5 rounded-2xl p-4">
+                          <DetailRow label="Kandang" value={data?.purchases?.farms?.farm_name} icon={<MapPin size={14} />} />
+                          <DetailRow label="Jumlah" value={`${formatEkor(data?.purchases?.quantity)} · ${formatWeight(data?.purchases?.total_weight_kg)}`} icon={<Package size={14} />} />
+                          <DetailRow label="Harga Beli" value={`${formatIDR(data?.purchases?.price_per_kg)}/kg`} icon={<TrendingDown size={14} />} />
+                          <DetailRow label="Total Modal" value={formatIDR(data?.purchases?.total_cost)} highlight />
+                          <DetailRow label="Tanggal Beli" value={formatDate(data?.purchases?.transaction_date)} icon={<Calendar size={14} />} />
+                          {data?.purchases?.notes && (
+                            <p className="text-[12px] text-[#4B6478] italic mt-2 leading-relaxed">"{data.purchases.notes}"</p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="bg-white/[0.02] border border-dashed border-white/5 rounded-2xl p-6 text-center">
+                          <AlertCircle size={20} className="mx-auto text-[#4B6478] mb-2 opacity-50" />
+                          <p className="text-[11px] font-medium text-[#4B6478] uppercase tracking-wider">Data pembelian tidak tersedia</p>
+                          <p className="text-[9px] text-[#4B6478]/60 mt-1 italic">Transaksi ini mungkin dicatat tanpa data kandang.</p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-4 text-left">

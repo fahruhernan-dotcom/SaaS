@@ -130,12 +130,16 @@ export default function MarketPriceDashboard() {
       if (!isAll) q = q.ilike('region', selectedProvince)
       const { data, error } = await q
       if (error) throw error
-      return (data || []).map(r => ({
-        ...r,
-        avg_buy_price: r.farm_gate_price,
-        avg_sell_price: r.buyer_price,
-        broker_margin: (r.buyer_price || 0) - (r.farm_gate_price || 0)
-      }))
+      
+      // Filter out invalid zero or ultra-low prices
+      return (data || [])
+        .filter(r => (r.farm_gate_price > 1000) || (r.buyer_price > 1000))
+        .map(r => ({
+          ...r,
+          avg_buy_price: r.farm_gate_price,
+          avg_sell_price: r.buyer_price,
+          broker_margin: (r.buyer_price || 0) - (r.farm_gate_price || 0)
+        }))
     },
     staleTime: 60 * 1000,
   })
@@ -157,11 +161,13 @@ export default function MarketPriceDashboard() {
       if (!isAll) q = q.ilike('region', arbogeRegion)
       const { data } = await q
 
-      return (data || []).reduce((acc, r) => {
-        const existing = acc[r.price_date]
-        if (!existing || r.source === 'arboge_realisasi') acc[r.price_date] = r
-        return acc
-      }, {})
+      return (data || [])
+        .filter(r => r.farm_gate_price > 1000) // Ignore invalid data
+        .reduce((acc, r) => {
+          const existing = acc[r.price_date]
+          if (!existing || r.source === 'arboge_realisasi') acc[r.price_date] = r
+          return acc
+        }, {})
     },
     staleTime: 60 * 1000,
   })
@@ -222,13 +228,15 @@ export default function MarketPriceDashboard() {
       const s = rawMap.get(dStr)
       const p = platformRpc?.[dStr]
 
-      const chickin = s?.avg_buy_price || null
-      const arboge = arbogeMap?.[dStr]?.farm_gate_price || null
-      const pBeli = p?.avg_buy ? Math.round(p.avg_buy) : null
-      const pJual = p?.avg_sell ? Math.round(p.avg_sell) : null
+      // Validation: only accept values > 1000 as valid market prices
+      const chickin = (s?.avg_buy_price > 1000) ? s.avg_buy_price : null
+      const arboge = (arbogeMap?.[dStr]?.farm_gate_price > 1000) ? arbogeMap[dStr].farm_gate_price : null
+      const pBeli = (p?.avg_buy > 1000) ? Math.round(p.avg_buy) : null
+      const pJual = (p?.avg_sell > 1000) ? Math.round(p.avg_sell) : null
 
+      // For the summary table, we can pick the best available price
       const finalBeli = pBeli || chickin || 0
-      const finalJual = pJual || s?.avg_sell_price || (chickin ? chickin + 2500 : 0)
+      const finalJual = pJual || s?.avg_sell_price || (chickin ? (chickin + 2000) : 0)
 
       return {
         date: dStr,
@@ -241,10 +249,10 @@ export default function MarketPriceDashboard() {
 
         avg_buy_price: finalBeli,
         avg_sell_price: finalJual,
-        broker_margin: finalJual && finalBeli ? (finalJual - finalBeli) : 0,
-        source: s?.source || (p ? 'transaction' : 'auto_scraper')
+        broker_margin: (finalJual > 0 && finalBeli > 0) ? (finalJual - finalBeli) : 0,
+        source: p ? 'transaction' : (s?.source || 'auto_scraper')
       }
-    })
+    }).filter(d => d.chickin || d.arboge || d.platformBeli || d.platformJual) // Remove empty dates junk
   }, [scrapResult, platformRpc, arbogeMap])
 
   const trendData = useMemo(() => {
@@ -488,9 +496,15 @@ export default function MarketPriceDashboard() {
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <SourceInfoRow color="#F59E0B" label="Chickin.id" desc="Scraper harian farm gate price" badge="Auto" badgeColor="text-amber-400 bg-amber-500/10" />
-                  <SourceInfoRow color="#F97316" label="Arboge.com" desc="Realisasi & referensi harga broker" badge="Broker" badgeColor="text-orange-400 bg-orange-500/10" />
-                  <SourceInfoRow color="#10B981" label="Transaksi Platform" desc="Rata-rata transaksi broker TernakOS" badge="Verified" badgeColor="text-emerald-400 bg-emerald-500/10" />
+                  <SourceInfoRow color="#F59E0B" label="Chickin.id" desc="Scraper harian farm gate price" badge="Auto" badgeColor="text-amber-400 bg-amber-500/10" dotted />
+                  <SourceInfoRow color="#F97316" label="Arboge.com" desc="Referensi harga broker regional" badge="Reference" badgeColor="text-orange-400 bg-orange-500/10" dotted />
+                  <SourceInfoRow 
+                    isHybrid
+                    label="Transaksi Platform" 
+                    desc="Rata-rata transaksi broker TernakOS" 
+                    badge="Verified" 
+                    badgeColor="text-emerald-400 bg-emerald-500/10" 
+                  />
                 </div>
                 <div className="mt-5 pt-4 border-t border-white/5">
                   <p className="text-[10px] text-[#4B6478] font-medium leading-relaxed">
@@ -679,10 +693,20 @@ function LegendItem({ color, label, dashed = false }) {
   )
 }
 
-function SourceInfoRow({ color, label, desc, badge, badgeColor }) {
+function SourceInfoRow({ color, label, desc, badge, badgeColor, dotted, isHybrid }) {
   return (
     <div className="flex items-start gap-3">
-      <div className="w-2 h-2 rounded-full mt-1.5 shrink-0" style={{ background: color }} />
+      {isHybrid ? (
+         <div className="flex gap-1 mt-2 shrink-0">
+           <div className="w-2 h-2 rounded-full" style={{ background: '#10B981' }} title="Beli" />
+           <div className="w-2 h-2 rounded-full" style={{ background: '#818CF8' }} title="Jual" />
+         </div>
+      ) : (
+        <div 
+          className={cn("shrink-0 mt-1.5", dotted ? "w-3 h-0 border-t-2 border-dashed" : "w-2 h-2 rounded-full")} 
+          style={{ borderColor: color, background: dotted ? 'transparent' : color }} 
+        />
+      )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
           <span className="text-[11px] font-black text-white uppercase tracking-tight">{label}</span>

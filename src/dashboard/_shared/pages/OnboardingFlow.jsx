@@ -13,12 +13,13 @@ const KEY_TO_PATH = {
   peternak_layer:                        '/peternak/peternak_layer/beranda',
   peternak_kambing_domba_penggemukan:    '/peternak/peternak_kambing_domba_penggemukan/beranda',
   peternak_kambing_domba_breeding:       '/peternak/peternak_kambing_domba_breeding/beranda',
+  peternak_sapi_penggemukan:             '/peternak/peternak_sapi_penggemukan/beranda',
   rumah_potong_rpa:    '/rumah_potong/rpa/beranda',
   rumah_potong_rph:    '/rumah_potong/rph/beranda',
 }
 
 export default function OnboardingFlow() {
-  const { profile, loading, refetchProfile } = useAuth()
+  const { user, profile, loading, refetchProfile } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const isNewBusiness = searchParams.get('mode') === 'new_business'
@@ -45,19 +46,41 @@ export default function OnboardingFlow() {
     }
   }, [profile, loading, navigate, isNewBusiness])
 
-  if (loading || (!isNewBusiness && profile?.onboarded)) return <LoadingScreen />
+  // Only show LoadingScreen if we are literally loading the session from Supabase.
+  // If loading is false, even if profile is null (new user), we should render the overlay.
+  if (loading) return <LoadingScreen />
+  
+  // If already onboarded and not in add-business mode, we should have been redirected by useEffect.
+  // But as a fallback, show LoadingScreen while redirecting.
+  if (!isNewBusiness && profile?.onboarded) return <LoadingScreen />
 
   return (
     <div className="min-h-screen bg-[#06090F]">
       <BusinessModelOverlay
+        user={user}
         profile={profile}
         isNewBusiness={isNewBusiness}
         onComplete={async (selectedKey) => {
+          if (!selectedKey) {
+            // User cancelled / closed the overlay
+            if (isNewBusiness) {
+              // Go back to previous page or dashboard
+              navigate(-1)
+            }
+            return
+          }
+          
           await refetchProfile()
           const path = KEY_TO_PATH[selectedKey]
-          if (path) navigate(path, { replace: true })
-          // If it was a new business, we might want to refresh the whole App state to see the new profile in sidebar
-          if (isNewBusiness) window.location.reload()
+          
+          if (path) {
+            navigate(path, { replace: true })
+            // If it was a new business, we refresh to ensure all context (tenants etc) is updated
+            if (isNewBusiness) window.location.reload()
+          } else {
+            // Fallback for unknown keys
+            window.location.href = '/'
+          }
         }}
       />
     </div>

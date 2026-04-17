@@ -132,6 +132,7 @@ export default function Transaksi() {
   const { data: sales = [], isLoading: isLoadingSales, refetch: refetchSales } = useQuery({
     queryKey: ['sales', tenant?.id],
     queryFn: async () => {
+      // 1. Try with purchases join
       const { data, error } = await supabase
         .from('sales')
         .select(`
@@ -151,7 +152,32 @@ export default function Transaksi() {
         .eq('tenant_id', tenant?.id)
         .eq('is_deleted', false)
         .order('transaction_date', { ascending: false })
-      if (error) throw error
+
+      if (error) {
+        // Fallback: If purchases table is missing, fetch without it
+        if (error.message?.includes('relation "purchases" does not exist')) {
+          console.warn('[ResilientMode] Purchases table missing, falling back to simplified query')
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('sales')
+            .select(`
+              *,
+              rpa_clients ( rpa_name, phone ),
+              deliveries ( 
+                *,
+                vehicles ( brand, vehicle_plate ),
+                drivers ( full_name )
+              ),
+              payments ( * )
+            `)
+            .eq('tenant_id', tenant?.id)
+            .eq('is_deleted', false)
+            .order('transaction_date', { ascending: false })
+          
+          if (fallbackError) throw fallbackError
+          return fallbackData
+        }
+        throw error
+      }
       return data
     },
     enabled: !!tenant?.id
@@ -164,6 +190,7 @@ export default function Transaksi() {
   const { data: saleDetail, isLoading: loadingDetail } = useQuery({
     queryKey: ['sales', selectedSaleId],
     queryFn: async () => {
+      // 1. Try with purchases join
       const { data: sale, error: saleErr } = await supabase
         .from('sales')
         .select(`
@@ -188,7 +215,32 @@ export default function Transaksi() {
         .eq('is_deleted', false)
         .single();
       
-      if (saleErr) throw saleErr;
+      if (saleErr) {
+        if (saleErr.message?.includes('relation "purchases" does not exist')) {
+          console.warn('[ResilientMode] Detail lookup: purchases table missing, falling back')
+          const { data: fallback, error: fallbackErr } = await supabase
+            .from('sales')
+            .select(`
+              *,
+              rpa_clients(rpa_name, phone),
+              deliveries(
+                status, shrinkage_kg, arrived_weight_kg,
+                initial_weight_kg, delivery_cost,
+                vehicle_plate, vehicle_type, driver_name,
+                arrival_time, departure_time, load_time,
+                vehicles(brand)
+              ),
+              payments(amount, payment_date, payment_method)
+            `)
+            .eq('id', selectedSaleId)
+            .eq('is_deleted', false)
+            .single();
+          
+          if (fallbackErr) throw fallbackErr;
+          return fallback;
+        }
+        throw saleErr;
+      }
       return sale;
     },
     enabled: !!selectedSaleId

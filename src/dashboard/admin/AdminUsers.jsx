@@ -5,7 +5,8 @@ import {
   MoreVertical, Edit3, Trash2, CheckCircle2,
   XCircle, AlertCircle, Clock, Check, ChevronRight,
   ArrowRight, Sparkles, User as UserIcon, Calendar,
-  Bird, Egg, Home, Activity, Factory, AlertTriangle, Loader2
+  Bird, Egg, Home, Activity, Factory, AlertTriangle, Loader2,
+  Briefcase, Store, UserCheck
 } from 'lucide-react'
 import { format, formatDistanceToNow } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
@@ -451,10 +452,22 @@ export default function AdminUsers() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                           <div className="flex flex-wrap gap-1.5">
-                              {Array.from(new Set(u.profiles.map(p => p.user_type === 'superadmin' ? 'superadmin' : p.role))).map(role => (
-                                <RoleBadge key={role} role={role} />
-                              ))}
+                           <div className="flex items-center gap-3">
+                              {/* Business Category Badges */}
+                              <div className="flex flex-wrap gap-2">
+                                {Array.from(new Set(u.profiles.map(p => p.user_type))).filter(Boolean).map(cat => (
+                                  <CategoryBadge key={cat} category={cat} />
+                                ))}
+                              </div>
+                              
+                              <div className="w-[1px] h-4 bg-white/10 hidden lg:block" />
+
+                              {/* Membership Role Badges (Subtle) */}
+                              <div className="flex flex-wrap gap-2">
+                                {Array.from(new Set(u.profiles.map(p => p.user_type === 'superadmin' ? 'superadmin' : p.role))).map(role => (
+                                  <RoleBadge key={role} role={role} />
+                                ))}
+                              </div>
                            </div>
                         </td>
                         <td className="px-6 py-4">
@@ -1001,17 +1014,62 @@ function PlanBadge({ plan }) {
 
 function RoleBadge({ role }) {
   const styles = {
-    superadmin: "bg-white/10 text-white border-white/20 shadow-[0_0_10px_rgba(255,255,255,0.1)]",
-    owner: "bg-emerald-500/5 text-emerald-400/80 border-emerald-500/10",
-    staff: "bg-blue-500/5 text-blue-400/80 border-blue-500/10",
-    view_only: "bg-white/5 text-slate-400 border-white/10",
-    sopir: "bg-amber-500/5 text-amber-400/80 border-amber-500/10"
+    superadmin: "text-amber-400",
+    owner: "text-slate-400",
+    staff: "text-slate-500",
+    view_only: "text-slate-600",
+    sopir: "text-slate-500"
   }
 
   return (
-    <span className={`text-[8px] font-black uppercase tracking-[0.15em] px-2 py-0.5 rounded-md border leading-none ${styles[role] || styles.view_only}`}>
-      {toTitleCase(role)}
-    </span>
+    <div className="flex items-center gap-1.5 px-1 py-1">
+      <div className={`w-1 h-1 rounded-full ${
+        role === 'superadmin' ? 'bg-amber-500' : 
+        role === 'owner' ? 'bg-emerald-500/40' : 
+        'bg-slate-600'
+      }`} />
+      <span className={`text-[9px] font-bold uppercase tracking-widest leading-none ${styles[role] || styles.view_only}`}>
+        {toTitleCase(role)}
+      </span>
+    </div>
+  )
+}
+
+function CategoryBadge({ category }) {
+  const themes = {
+    peternak: {
+      style: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-emerald-500/5",
+      icon: Home
+    },
+    broker: {
+      style: "bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-blue-500/5",
+      icon: Users
+    },
+    rumah_potong: {
+      style: "bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-rose-500/5",
+      icon: Factory
+    },
+    rpa: {
+      style: "bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-rose-500/5",
+      icon: Factory
+    }
+  }
+  
+  const labels = {
+    peternak: "Peternak",
+    broker: "Broker",
+    rumah_potong: "RPA",
+    rpa: "RPA"
+  }
+
+  const theme = themes[category] || { style: "bg-white/5 text-slate-400 border-white/10", icon: Building2 }
+  const Icon = theme.icon
+
+  return (
+    <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-widest shadow-lg ${theme.style}`}>
+      <Icon size={11} className="opacity-70" />
+      <span>{labels[category] || category}</span>
+    </div>
   )
 }
 

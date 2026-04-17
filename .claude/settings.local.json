@@ -17,7 +17,9 @@
       "Bash(python ingest.py)",
       "Bash(python -c ':*)",
       "Bash(grep -n \"export.*usePoultry\\\\|export.*usePoul\" \"d:\\\\Dokumen\\\\02_Kerja_Profesional\\\\Ternak OS\\\\src\\\\lib\\\\hooks\"/*.js)",
-      "Bash(grep -l \"poultry\" \"d:\\\\Dokumen\\\\02_Kerja_Profesional\\\\Ternak OS\\\\src\\\\lib\\\\hooks\"/*.js)"
+      "Bash(grep -l \"poultry\" \"d:\\\\Dokumen\\\\02_Kerja_Profesional\\\\Ternak OS\\\\src\\\\lib\\\\hooks\"/*.js)",
+      "Bash(ls docs/)",
+      "Bash(ls *.md)"
     ]
   }
 }

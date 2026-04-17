@@ -119,7 +119,7 @@ function Step0ModeSelect({ onSelect }) {
 
 // ─── Main Wizard ──────────────────────────────────────────────────────────────
 export default function TransaksiWizard({ isOpen, onClose }) {
-  const { tenant } = useAuth()
+  const { tenant, profile } = useAuth()
   const queryClient = useQueryClient()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 
@@ -206,76 +206,121 @@ export default function TransaksiWizard({ isOpen, onClose }) {
       const finalDeliveryCost = step3Data?.enabled ? (Number(step3Data.delivery_cost) || 0) : 0
 
       if (mode === 'buy_first') {
-        // 1. Insert purchase (Legacy costs are now 0 as they move to delivery)
-        const { data: purchase, error: purchaseError } = await supabase.from('purchases').insert({
-          tenant_id: tenant.id,
-          farm_id: step1Data.farm_id,
-          quantity: step1Data.quantity,
-          avg_weight_kg: step1Data.avg_weight_kg,
-          total_weight_kg: step1Data.total_weight_kg,
-          price_per_kg: step1Data.price_per_kg,
-          total_cost: step1Data.total_cost,
-          transport_cost: 0,
-          other_cost: 0,
-          transaction_date: step1Data.transaction_date,
-          notes: step1Data.notes || null
-        }).select().single()
-        if (purchaseError) throw purchaseError
-        purchaseId = purchase.id
+        // 1. Insert purchase
+        const { data: purchase, error: purchaseError } = await supabase
+          .from('purchases')
+          .insert({
+            tenant_id: tenant.id,
+            farm_id: step1Data.farm_id,
+            quantity: step1Data.quantity,
+            avg_weight_kg: step1Data.avg_weight_kg,
+            total_weight_kg: step1Data.total_weight_kg,
+            price_per_kg: step1Data.price_per_kg,
+            total_cost: step1Data.total_cost,
+            transport_cost: 0,
+            other_cost: 0,
+            transaction_date: step1Data.transaction_date,
+            notes: step1Data.notes || null
+          })
+          .select()
+          .maybeSingle()
+        
+        if (purchaseError) {
+           const isMissingTable = purchaseError.message?.includes('relation "purchases" does not exist')
+             || purchaseError.code === 'PGRST116'
+             || purchaseError.code === '42P01'
+             || String(purchaseError.status) === '404'
+             
+           if (isMissingTable) {
+             console.warn('[ResilientMode] Skipping purchase ID link.')
+             purchaseId = null
+           } else {
+             throw purchaseError
+           }
+        } else {
+          purchaseId = purchase.id
+        }
 
         // 2. Insert sale (Include delivery_cost from Step 3)
-        const { data: sale, error: saleError } = await supabase.from('sales').insert({
-          tenant_id: tenant.id,
-          rpa_id: step2Data.rpa_id,
-          purchase_id: purchaseId,
-          quantity: step2Data.quantity,
-          avg_weight_kg: step2Data.avg_weight_kg,
-          total_weight_kg: step2Data.total_weight_kg,
-          price_per_kg: step2Data.price_per_kg,
-          total_revenue: step2Data.total_revenue,
-          delivery_cost: finalDeliveryCost,
-          payment_status: step2Data.payment_status,
-          paid_amount: step2Data.paid_amount || 0,
-          transaction_date: step2Data.transaction_date,
-          due_date: step2Data.due_date || null,
-          notes: step2Data.notes || null
-        }).select().single()
+        const { data: sale, error: saleError } = await supabase
+          .from('sales')
+          .insert({
+            tenant_id: tenant.id,
+            rpa_id: step2Data.rpa_id,
+            purchase_id: purchaseId,
+            quantity: step2Data.quantity,
+            avg_weight_kg: step2Data.avg_weight_kg,
+            total_weight_kg: step2Data.total_weight_kg,
+            price_per_kg: step2Data.price_per_kg,
+            total_revenue: step2Data.total_revenue,
+            delivery_cost: finalDeliveryCost,
+            payment_status: step2Data.payment_status,
+            paid_amount: step2Data.paid_amount || 0,
+            transaction_date: step2Data.transaction_date,
+            due_date: step2Data.due_date || null,
+            notes: step2Data.notes || null
+          })
+          .select()
+          .maybeSingle()
+
         if (saleError) throw saleError
         saleId = sale.id
       } else {
         // order_first: buy first (step2), then link to sale (step1)
-        const { data: purchase, error: purchaseError } = await supabase.from('purchases').insert({
-          tenant_id: tenant.id,
-          farm_id: step2Data.farm_id,
-          quantity: step2Data.quantity,
-          avg_weight_kg: step2Data.avg_weight_kg,
-          total_weight_kg: step2Data.total_weight_kg,
-          price_per_kg: step2Data.price_per_kg,
-          total_cost: step2Data.total_cost,
-          transport_cost: 0,
-          other_cost: 0,
-          transaction_date: step2Data.transaction_date,
-          notes: step2Data.notes || null
-        }).select().single()
-        if (purchaseError) throw purchaseError
-        purchaseId = purchase.id
+        const { data: purchase, error: purchaseError } = await supabase
+          .from('purchases')
+          .insert({
+            tenant_id: tenant.id,
+            farm_id: step2Data.farm_id,
+            quantity: step2Data.quantity,
+            avg_weight_kg: step2Data.avg_weight_kg,
+            total_weight_kg: step2Data.total_weight_kg,
+            price_per_kg: step2Data.price_per_kg,
+            total_cost: step2Data.total_cost,
+            transport_cost: 0,
+            other_cost: 0,
+            transaction_date: step2Data.transaction_date,
+            notes: step2Data.notes || null
+          })
+          .select()
+          .maybeSingle()
 
-        const { data: sale, error: saleError } = await supabase.from('sales').insert({
-          tenant_id: tenant.id,
-          rpa_id: step1Data.rpa_id,
-          purchase_id: purchaseId,
-          quantity: step1Data.quantity,
-          avg_weight_kg: step1Data.avg_weight_kg,
-          total_weight_kg: step1Data.total_weight_kg,
-          price_per_kg: step1Data.price_per_kg,
-          total_revenue: step1Data.total_revenue,
-          delivery_cost: finalDeliveryCost,
-          payment_status: step1Data.payment_status,
-          paid_amount: step1Data.paid_amount || 0,
-          transaction_date: step1Data.transaction_date,
-          due_date: step1Data.due_date || null,
-          notes: step1Data.notes || null
-        }).select().single()
+        if (purchaseError) {
+          const isMissingTable = purchaseError.message?.includes('relation "purchases" does not exist')
+            || purchaseError.code === 'PGRST116'
+            || purchaseError.code === '42P01'
+            || String(purchaseError.status) === '404'
+          if (isMissingTable) {
+            console.warn('[ResilientMode] Purchases table missing mapping. Skipping link.')
+            purchaseId = null
+          } else {
+            throw purchaseError
+          }
+        } else {
+          purchaseId = purchase.id
+        }
+
+        const { data: sale, error: saleError } = await supabase
+          .from('sales')
+          .insert({
+            tenant_id: tenant.id,
+            rpa_id: step1Data.rpa_id,
+            purchase_id: purchaseId,
+            quantity: step1Data.quantity,
+            avg_weight_kg: step1Data.avg_weight_kg,
+            total_weight_kg: step1Data.total_weight_kg,
+            price_per_kg: step1Data.price_per_kg,
+            total_revenue: step1Data.total_revenue,
+            delivery_cost: finalDeliveryCost,
+            payment_status: step1Data.payment_status,
+            paid_amount: step1Data.paid_amount || 0,
+            transaction_date: step1Data.transaction_date,
+            due_date: step1Data.due_date || null,
+            notes: step1Data.notes || null
+          })
+          .select()
+          .maybeSingle()
+
         if (saleError) throw saleError
         saleId = sale.id
       }
@@ -312,7 +357,7 @@ export default function TransaksiWizard({ isOpen, onClose }) {
         console.log('--- WIZARD SUBMIT DEBUG ---')
         console.log('Mode:', mode)
         console.log('Step 3 Data (Raw):', step3Data)
-        
+
         const deliveryPayload = {
           tenant_id: tenant.id,
           sale_id: saleId,
@@ -338,8 +383,8 @@ export default function TransaksiWizard({ isOpen, onClose }) {
 
         const { error: deliveryError } = await supabase.from('deliveries').insert(deliveryPayload)
         if (deliveryError) {
-           console.error('Delivery Insert Error:', deliveryError)
-           throw deliveryError
+          console.error('Delivery Insert Error:', deliveryError)
+          throw deliveryError
         }
       }
 
@@ -349,22 +394,22 @@ export default function TransaksiWizard({ isOpen, onClose }) {
       queryClient.invalidateQueries({ queryKey: ['deliveries'] })
       queryClient.invalidateQueries({ queryKey: ['rpa-clients'] })
 
-      const buyData  = mode === 'buy_first' ? step1Data : step2Data
+      const buyData = mode === 'buy_first' ? step1Data : step2Data
       const sellData = mode === 'buy_first' ? step2Data : step1Data
-      const profit   = (sellData?.total_revenue || 0) - (buyData?.total_cost || 0) - finalDeliveryCost
+      const profit = (sellData?.total_revenue || 0) - (buyData?.total_cost || 0) - finalDeliveryCost
 
       setSuccessData({
         type: 'recorded',
-        farmName:        buyData?.farm_name  || null,
-        rpaName:         sellData?.rpa_name  || null,
-        rpaPhone:        sellData?.rpa_phone || null,
-        quantity:        buyData?.quantity   || 0,
-        totalWeight:     buyData?.total_weight_kg || 0,
-        buyPrice:        buyData?.total_cost || 0,
-        sellPrice:       sellData?.total_revenue || 0,
-        netProfit:       profit,
+        farmName: buyData?.farm_name || null,
+        rpaName: sellData?.rpa_name || null,
+        rpaPhone: sellData?.rpa_phone || null,
+        quantity: buyData?.quantity || 0,
+        totalWeight: buyData?.total_weight_kg || 0,
+        buyPrice: buyData?.total_cost || 0,
+        sellPrice: sellData?.total_revenue || 0,
+        netProfit: profit,
         transactionDate: buyData?.transaction_date || null,
-        tenant:          tenant,
+        tenant: tenant,
       })
     } catch (err) {
       toast.error('Gagal: ' + err.message)
@@ -424,101 +469,102 @@ export default function TransaksiWizard({ isOpen, onClose }) {
 
   return (
     <>
-    <Sheet open={isOpen && !successData} onOpenChange={handleClose}>
-      <SheetContent
-        side={isDesktop ? 'right' : 'bottom'}
-        className="hide-scrollbar"
-        style={{
-          width: isDesktop ? '520px' : '100%',
-          height: isDesktop ? '100vh' : '100dvh',
-          maxHeight: isDesktop ? '100vh' : '100dvh',
-          padding: 0,
-          background: '#0C1319',
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: 0,
-          display: 'flex', flexDirection: 'column',
-          overflow: 'hidden'
-        }}
-      >
-        {/* Header */}
-        <SheetHeader style={{ 
-          padding: isDesktop ? '20px 20px 0' : 'env(safe-area-inset-top, 20px) 20px 0', 
-          flexShrink: 0 
-        }}>
-          {!isDesktop && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
-              <button 
-                onClick={handleClose}
-                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground hover:text-white"
-              >
-                <X size={20} />
-              </button>
+      <Sheet open={isOpen && !successData} onOpenChange={handleClose}>
+        <SheetContent
+          side={isDesktop ? 'right' : 'bottom'}
+          className="hide-scrollbar"
+          hideClose={true}
+          style={{
+            width: isDesktop ? '520px' : '100%',
+            height: isDesktop ? '100vh' : '100dvh',
+            maxHeight: isDesktop ? '100vh' : '100dvh',
+            padding: 0,
+            background: '#0C1319',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 0,
+            display: 'flex', flexDirection: 'column',
+            overflow: 'hidden'
+          }}
+        >
+          {/* Header */}
+          <SheetHeader style={{
+            padding: isDesktop ? '20px 20px 0' : 'env(safe-area-inset-top, 20px) 20px 0',
+            flexShrink: 0
+          }}>
+            {!isDesktop && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
+                <button
+                  onClick={handleClose}
+                  className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground hover:text-white"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <SheetTitle style={{ fontFamily: 'Sora', fontSize: 22, fontWeight: 800, color: '#F1F5F9', margin: 0 }}>
+                Catat Transaksi
+              </SheetTitle>
+              <SheetDescription className="sr-only">
+                Form wizard transaksi broker untuk mencatat pembelian dan penjualan.
+              </SheetDescription>
+              {isDesktop && (
+                <button
+                  onClick={handleClose}
+                  className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground hover:text-white"
+                >
+                  <X size={20} />
+                </button>
+              )}
+            </div>
+          </SheetHeader>
+
+          {/* Progress */}
+          {currentStep > 0 && mode && (
+            <ProgressIndicator currentStep={currentStep - 1} steps={steps} />
+          )}
+
+          {/* Draft Alert */}
+          {hasDraft && currentStep === 0 && (
+            <div className="mx-5 mb-4 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
+                  <Clock size={16} className="text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-white leading-tight">Lanjutkan draf sebelumnya?</p>
+                  <p className="text-[11px] text-emerald-400/70 font-medium mt-1">Kamu punya transaksi yang belum selesai dicatat.</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button onClick={loadDraft} className="flex-1 h-9 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] rounded-lg">LANJUTKAN</Button>
+                <Button variant="ghost" onClick={() => { localStorage.removeItem(`ternak_os_wizard_draft_${tenant?.id}`); setHasDraft(false) }} className="h-9 px-3 text-[#4B6478] font-bold text-[11px]">MULAI BARU</Button>
+              </div>
             </div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-            <SheetTitle style={{ fontFamily: 'Sora', fontSize: 22, fontWeight: 800, color: '#F1F5F9', margin: 0 }}>
-              Catat Transaksi
-            </SheetTitle>
-            <SheetDescription className="sr-only">
-              Form wizard transaksi broker untuk mencatat pembelian dan penjualan.
-            </SheetDescription>
-            {isDesktop && (
-              <button 
-                onClick={handleClose}
-                className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-muted-foreground hover:text-white"
+
+          {/* Step Content */}
+          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentStep}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.22 }}
               >
-                <X size={20} />
-              </button>
-            )}
+                {renderStep()}
+              </motion.div>
+            </AnimatePresence>
           </div>
-        </SheetHeader>
+        </SheetContent>
+      </Sheet>
 
-        {/* Progress */}
-        {currentStep > 0 && mode && (
-          <ProgressIndicator currentStep={currentStep - 1} steps={steps} />
-        )}
-
-        {/* Draft Alert */}
-        {hasDraft && currentStep === 0 && (
-          <div className="mx-5 mb-4 p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col gap-3">
-             <div className="flex items-start gap-3">
-               <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0">
-                 <Clock size={16} className="text-emerald-400" />
-               </div>
-               <div>
-                 <p className="text-sm font-bold text-white leading-tight">Lanjutkan draf sebelumnya?</p>
-                 <p className="text-[11px] text-emerald-400/70 font-medium mt-1">Kamu punya transaksi yang belum selesai dicatat.</p>
-               </div>
-             </div>
-             <div className="flex gap-2">
-               <Button onClick={loadDraft} className="flex-1 h-9 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[11px] rounded-lg">LANJUTKAN</Button>
-               <Button variant="ghost" onClick={() => { localStorage.removeItem(`ternak_os_wizard_draft_${tenant?.id}`); setHasDraft(false) }} className="h-9 px-3 text-[#4B6478] font-bold text-[11px]">MULAI BARU</Button>
-             </div>
-          </div>
-        )}
-
-        {/* Step Content */}
-        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStep}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.22 }}
-            >
-              {renderStep()}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </SheetContent>
-    </Sheet>
-
-    <TransaksiSuccessCard
-      isOpen={!!successData}
-      onClose={() => { setSuccessData(null); handleClose() }}
-      data={successData}
-    />
+      <TransaksiSuccessCard
+        isOpen={!!successData}
+        onClose={() => { setSuccessData(null); handleClose() }}
+        data={successData}
+      />
     </>
   )
 }

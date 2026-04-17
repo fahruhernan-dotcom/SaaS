@@ -1,6 +1,6 @@
 # TernakOS — Developer Context
 
-> Last updated: 2026-04-11 v6 (Market Intelligence SEO & Sitemaps, Python3 Scraper Support, Peternak Leaderboard, Admin Mobile Dashboard, Mobile UI UX Fixes, Kambing & Domba Penggemukan & Breeding) | Use this as reference for all future implementations.
+> Last updated: 2026-04-17 v7 (File Structure Map sync: egg_broker full dashboard, sembako_broker full dashboard, broiler new pages, kambing_domba flat structure, invoice templates, admin activity/settings, new hooks, public pages, sections) | Use this as reference for all future implementations.
 
 ---
 
@@ -720,16 +720,15 @@ Pattern wajib di semua role dashboard:
 
 ```
 supabase/
-├── migrations/                     ← DB Schema (e.g., 20260405_ai_base_tables.sql)
+├── migrations/                     ← DB Schema SQL files
 └── functions/
-    ├── ai-commit/                  ← Edge fn to securely commit AI staged entries
-    ├── fetch-harga/                ← Auto-scraper edge fn
-    └── verify-invite-code/         ← Rate limiting edge fn
+    ├── ai-commit/                  ← Edge fn: securely commit AI staged entries
+    ├── fetch-harga/                ← Edge fn: auto-scraper for harga pasar
+    └── verify-invite-code/         ← Edge fn: rate-limited invite code check
 
 src/
 ├── main.jsx                        ← Entry point (StrictMode + QueryClient + Toaster)
 ├── App.jsx                         ← All routes, ProtectedRoute, RoleRedirector
-├── App.css
 ├── index.css                       ← Font imports, CSS vars, scrollbar, animations
 │
 ├── lib/
@@ -737,50 +736,80 @@ src/
 │   ├── queryClient.js              ← QueryClient (staleTime 5min, gcTime 10min, retry 1)
 │   ├── utils.js                    ← cn() (clsx + twMerge)
 │   ├── tokens.js                   ← Design tokens (colors, borders)
-│   ├── format.js                   ← Formatting + label maps (see §11)
-│   ├── businessModel.js            ← BUSINESS_MODELS config + getBusinessModel()
+│   ├── format.js                   ← Formatting helpers + label maps (see §12)
+│   ├── animation.js                ← Framer Motion variants (fadeUp, fadeIn, stagger, etc.)
+│   ├── businessModel.js            ← BUSINESS_MODELS config + getBusinessModel(), getVerticalBeranda(), getXBasePath()
+│   ├── faqData.js                  ← FAQ content for FAQPage
+│   ├── quotaUtils.js               ← Transaction quota helpers
+│   ├── subscriptionUtils.js        ← Subscription status helpers
 │   ├── aiPrompt.js                 ← System prompt builder for AI Engine
 │   ├── aiTransactionInserter.js    ← AI staged transaction tools
 │   ├── aiValidation.js             ← Business rules validation for AI
 │   ├── useAIAssistant.jsx          ← Main AI conversation hook (MAIA/GLM)
 │   ├── useBusinessSnapshot.js      ← Context snapshot builder for AI
+│   ├── constants/
+│   │   ├── contact.js              ← WA/email contact constants
+│   │   ├── planGating.js           ← Feature gate definitions per plan
+│   │   ├── regions.js              ← Province/region list
+│   │   └── subroles.js             ← Sub-role definitions
+│   ├── invoice/
+│   │   ├── invoiceUtils.js         ← Invoice formatting helpers
+│   │   └── useInvoice.js           ← Invoice generation hook
 │   └── hooks/
-│       ├── useAuth.jsx             ← AuthProvider (React Context) + useAuth() consumer — getSession() called once
+│       ├── useAuth.jsx             ← AuthProvider (React Context) + useAuth() — getSession() once
 │       ├── useMediaQuery.js        ← Returns boolean for CSS media query
+│       ├── useAntiSpam.jsx         ← Anti-spam / debounce guard for mutations
+│       ├── useDelayedData.js       ← Delayed data reveal (skeleton timing)
 │       ├── useDashboardStats.js    ← Aggregated KPIs (today profit, piutang, etc.)
 │       ├── usePurchases.js         ← Purchases list with farm join
 │       ├── useSales.js             ← Sales list with RPA + purchase + delivery joins
 │       ├── useFarms.js             ← Farm list with all columns
 │       ├── useRPA.js               ← RPA client list
 │       ├── useDeliveries.js        ← Delivery list with nested joins
-│       ├── useCashFlow.js          ← Full cashflow aggregation (sales, purchases, deliveries, losses, expenses)
+│       ├── useCashFlow.js          ← Full cashflow aggregation
 │       ├── useLossReports.js       ← Loss report list with sale/delivery joins
 │       ├── useUpdateDelivery.js    ← updateTiba() mutation + auto loss_report insert
 │       ├── useChickenBatches.js    ← Virtual stock batches with farm join
 │       ├── useForecast.js          ← Supply/demand gap analysis
-│       ├── usePeternakData.js      ← Peternak hooks: usePeternakFarms, useActiveCycles, useAllCycles,
+│       ├── useBrokerConnections.js ← Broker ↔ peternak connection hooks
+│       ├── useTransactionQuota.js  ← Poultry broker transaction quota
+│       ├── useMarket.js            ← useMarketListings, useMyListings, useCreateListing,
+│       │                              useCloseListing, useDeleteListing
+│       ├── useMarketTrends.js      ← Market price trend analytics
+│       ├── useTheme.js             ← Accent color: localStorage 'ternakos_accent_color',
+│       │                              custom event 'ternakos-theme-changed'
+│       │                              Export: { accentColor, setAccentColor, clearAccentColor }
+│       ├── useNotifications.jsx    ← useNotifications (fetch+realtime+mark-read+delete)
+│       │                              useNotificationGenerator (auto piutang/trial/stok alerts)
+│       ├── usePeternakData.js      ← usePeternakFarms, useActiveCycles, useAllCycles,
 │       │                              useCompletedCycles, useDailyRecords, useCreatePeternakFarm,
 │       │                              useCreateCycle, useUpdateCycleStatus, useDeleteCycle,
 │       │                              useCycleById, useUpsertDailyRecord,
 │       │                              useFeedStocks, useUpsertFeedStock, useReduceFeedStock
-│       ├── useKdPenggemukanData.js ← Kambing/Domba Penggemukan hooks: useKdBatches, useKdAnimals,
+│       ├── usePeternakPermissions.js ← Farm-level RBAC checks for peternak
+│       ├── useKdPenggemukanData.js ← useKdBatches, useKdActiveBatches, useKdAnimals,
 │       │                              useKdWeightRecords, useKdHealthLogs, useKdFeedLogs,
 │       │                              useAddKdBatch, useUpdateKdBatch, useAddKdAnimal, useUpdateKdAnimal,
 │       │                              useAddKdWeight, useAddKdHealthLog, useAddKdFeedLog, useAddKdSale;
-│       │                              Pure KPIs: calcADG, calcFCR, calcMortalitas, calcRCRatio, calcROI
-│       └── useKdBreedingData.js   ← Kambing/Domba Breeding hooks: useKdBreedingAnimals,
-│                                     useKdBreedingAnimalWeights, useKdBreedingMatings, useKdBreedingBirths,
-│                                     useKdBreedingHealthLogs, useKdBreedingFeedLogs, useKdBreedingSales,
-│                                     useAddKdBreedingAnimal, useUpdateKdBreedingAnimal, useAddKdBreedingWeight,
-│                                     useAddKdBreedingMating, useUpdateKdBreedingMating, useAddKdBreedingBirth,
-│                                     useAddKdBreedingHealthLog, useAddKdBreedingFeedLog, useAddKdBreedingSale;
-│                                     Pure KPIs: calcBreedingADG, calcConceptionRate, calcLambingRate,
-│                                     calcWeaningRate, calcLitterSize, calcLambingIntervalBulan,
-│                                     calcMortalitasAnakPreSapih, calcBreedingRCRatio, calcAgeInDays
-│       ├── useRPAData.js           ← RPA hooks: useRPAOrders, useRPAHutang, useRPADistribusi,
+│       │                              Pure KPIs: calcADG, calcFCR, calcMortalitasKambing, calcRCRatio, calcROI
+│       ├── useKdBreedingData.js    ← useKdBreedingAnimals, useKdBreedingAnimalWeights,
+│       │                              useKdBreedingMatings, useKdBreedingBirths,
+│       │                              useKdBreedingHealthLogs, useKdBreedingFeedLogs, useKdBreedingSales,
+│       │                              useAddKdBreedingAnimal, useUpdateKdBreedingAnimal, useAddKdBreedingWeight,
+│       │                              useAddKdBreedingMating, useUpdateKdBreedingMating, useAddKdBreedingBirth,
+│       │                              useAddKdBreedingHealthLog, useAddKdBreedingFeedLog, useAddKdBreedingSale;
+│       │                              Pure KPIs: calcBreedingADG, calcConceptionRate, calcLambingRate,
+│       │                              calcWeaningRate, calcLitterSize, calcLambingIntervalBulan,
+│       │                              calcMortalitasAnakPreSapih, calcBreedingRCRatio, calcAgeInDays
+│       ├── useEggCustomers.js      ← Egg broker customer hooks
+│       ├── useEggInventory.js      ← Egg broker inventory hooks
+│       ├── useEggSales.js          ← Egg broker sales hooks
+│       ├── useEggSuppliers.js      ← Egg broker supplier hooks
+│       ├── useRPAData.js           ← useRPAOrders, useRPAHutang, useRPADistribusi,
 │       │                              useRPAProducts, useRPASuppliers, useRPACustomers,
 │       │                              useRPAInvoices, useCreateRPAInvoice, useRPACustomerPayments, etc.
-│       ├── useSembakoData.js       ← Sembako hooks: useSembakoProducts, useSembakoAllBatches, useSembakoStockOut,
+│       ├── useRPATransactionQuota.js ← RPA transaction quota
+│       ├── useSembakoData.js       ← useSembakoProducts, useSembakoAllBatches, useSembakoStockOut,
 │       │                              useSembakoSales, useSembakoCustomers, useSembakoSuppliers,
 │       │                              useSembakoDeliveries, useSembakoEmployees, useSembakoPayrolls,
 │       │                              useSembakoLaporan, useCreateSembakoSale, useRecordSembakoPayment,
@@ -789,197 +818,288 @@ src/
 │       │                              useCreateSembakoSupplier, useUpdateSembakoSupplier,
 │       │                              useCreateSembakoDelivery, useCreateSembakoEmployee, useUpdateSembakoEmployee,
 │       │                              useRecordPayroll, useMarkPayrollPaid
-│       ├── useTheme.js             ← Accent color hook: localStorage 'ternakos_accent_color', custom event 'ternakos-theme-changed'
-│       │                              Export: { accentColor, setAccentColor, clearAccentColor }
-│       ├── useNotifications.js     ← Notif hooks: useNotifications (fetch+realtime+mark-read+delete)
-│       │                              useNotificationGenerator (auto-generate piutang/trial/stok alerts)
-│       ├── useMarket.js            ← Market hooks: useMarketListings, useMyListings,
-│       │                              useCreateListing, useCloseListing, useDeleteListing
-│       └── useAdminData.js         ← Admin hooks: useAllTenants, useAllInvoices, useConfirmInvoice,
+│       └── useSembakoTransactionQuota.js ← Sembako transaction quota
+│           useAdminData.js         ← useAllTenants, useAllInvoices, useConfirmInvoice,
 │                                      usePaymentSettings, useUpsertPaymentSetting, usePricingConfig,
 │                                      useUpdatePricing, useDiscountCodes, useCreateDiscountCode,
 │                                      useToggleDiscountCode, useDeleteDiscountCode, useGlobalStats,
 │                                      usePlanConfigs, useUpdatePlanConfig
 │
 ├── dashboard/
-├── admin/
-├── broker/
-│   ├── ai/                         ← TernakBot UI components (AIChatBubble.jsx)
-│   ├── poultry_broker/             ← broker ayam (full dashboard)
-│   │   ├── Akun.jsx, Armada.jsx, Beranda.jsx, CashFlow.jsx, Kandang.jsx
-│   │   ├── Pengiriman.jsx, RPA.jsx, RPADetail.jsx, Simulator.jsx
-│   │   ├── SopirDashboard.jsx, Tim.jsx, Transaksi.jsx
-│   │   ├── components/             ← Decoupled transaction UI
-│   │   │   ├── EditPurchaseSheet.jsx, SaleAuditSheet.jsx, UnifiedTransactionCard.jsx, UpdateDeliverySheet.jsx
-│   │   └── pengiriman/             ← Decoupled delivery UI
-│   │       ├── CreateLossSheet.jsx, DeliveryCard.jsx, LogisticsDetailSheet.jsx, LossCard.jsx, UpdateArrivalSheet.jsx
-│   ├── egg_broker/        ← broker telur (full dashboard)
-│   ├── sembako_broker/    ← sembako (full dashboard)
-│   └── _shared/           ← BrokerRouter.jsx + komponen shared
-├── peternak/
-│   ├── broiler/           ← full dashboard
-│   ├── layer/             ← placeholder
-│   ├── sapi/              ← placeholder
-│   ├── kambing_domba/     ← Kambing & Domba (shared species, dual model)
-│   │   ├── penggemukan/   ← Penggemukan (batch-based feedlot)
-│   │   │   ├── Beranda.jsx, Ternak.jsx, Pakan.jsx, Kesehatan.jsx, LaporanBatch.jsx
-│   │   └── breeding/      ← Pembibitan (pedigree + reproductive cycle)
-│   │       ├── Beranda.jsx, Ternak.jsx, Reproduksi.jsx, Kesehatan.jsx, Pakan.jsx, LaporanFarm.jsx
-│   ├── babi/              ← coming soon (locked)
-│   └── PeternakRouter.jsx
-├── rumah_potong/
-│   ├── rpa/               ← full dashboard (koleksi komponen RPA)
-│   ├── rph/               ← placeholder
-│   └── RPPageRouter.jsx
-└── _shared/
-    ├── components/
-    ├── forms/
-    ├── layouts/
-    └── pages/
-│   │
-│   ├── components/
-│   │   ├── AppSidebar.jsx          ← Desktop sidebar (nav groups, plan widget, user menu, ThemePicker, Quick Actions)
-│   │   ├── BottomNav.jsx           ← Mobile bottom nav (dynamic tabs, BUSINESS_MODELS priority lookup, accentColor via useTheme)
-│   │   ├── TopBar.jsx              ← Mobile sticky header (title, subtitle, back btn, showBell)
-│   │   ├── DesktopTopBar.jsx       ← Desktop header (breadcrumb, market price, NotificationBell)
-│   │   ├── NotificationBell.jsx    ← Bell icon + badge + dropdown panel (realtime notif, neutral gray palette)
-│   │   ├── TransaksiWizard.jsx     ← Multi-step transaction wizard (Sheet modal)
-│   │   ├── BusinessModelOverlay.jsx ← First-time role selection overlay
-│   │   ├── DrawerLainnya.jsx       ← Mobile "More" menu drawer (+ ThemePicker card)
-│   │   ├── ConfirmDialog.jsx       ← Reusable confirmation modal (delete, etc.)
-│   │   ├── FormBeliModal.jsx       ← Standalone purchase form (Sheet)
-│   │   ├── FormJualModal.jsx       ← Standalone sale form (Sheet)
-│   │   ├── SlideModal.jsx          ← Generic bottom sheet wrapper
-│   │   ├── KPICard.jsx             ← Dashboard KPI card component
-│   │   ├── StatCard.jsx            ← Stat display card
-│   │   ├── LoadingSpinner.jsx      ← Loading indicator
-│   │   ├── EmptyState.jsx          ← Empty state placeholder
-│   │   ├── ComingSoon.jsx          ← Coming soon placeholder page
-│   │   └── wizard/
-│   │       ├── WizardStepBeli.jsx      ← Purchase step form
-│   │       ├── WizardStepJual.jsx      ← Sale step form
-│   │       ├── WizardStepOrder.jsx     ← Order-first sale step
-│   │       └── WizardStepPengiriman.jsx ← Delivery step form
-│   │
-│   ├── forms/
-│   │   ├── FormBeliModal.jsx       ← Purchase form (separate module)
-│   │   ├── FormJualModal.jsx       ← Sale form (separate module)
-│   │   └── FormBayarModal.jsx      ← Payment form
-│   │
 │   ├── admin/                      ← SUPERADMIN PANEL (role=superadmin only)
 │   │   ├── AdminLayout.jsx         ← Layout dengan sidebar/topbar admin
-│   │   ├── AdminBeranda.jsx        ← /admin — Global Overview: KPI, AreaChart, PieChart, alert lists
-│   │   ├── AdminUsers.jsx          ← /admin/users — Tenant management, Detail Sheet
+│   │   ├── AdminBeranda.jsx        ← /admin — Global KPI, AreaChart, PieChart, alert lists
+│   │   ├── AdminUsers.jsx          ← /admin/users — Tenant management + Detail Sheet
 │   │   ├── AdminSubscriptions.jsx  ← /admin/subscriptions — Invoice monitoring + bank settings
-│   │   └── AdminPricing.jsx        ← /admin/pricing — Pricing matrix + Voucher CRUD (Supabase DB)
+│   │   ├── AdminPricing.jsx        ← /admin/pricing — Pricing matrix + Voucher CRUD
+│   │   ├── AdminActivity.jsx       ← /admin/activity — Activity log viewer
+│   │   └── AdminSettings.jsx       ← /admin/settings — Global app settings
 │   │
-│   ├── layouts/
-│   │   ├── BrokerLayout.jsx        ← Responsive layout (mobile/desktop + overlay)
-│   │   └── DesktopSidebarLayout.jsx ← AppSidebar + SidebarInset + DesktopTopBar
+│   ├── broker/
+│   │   ├── _shared/
+│   │   │   └── BrokerRouter.jsx    ← Maps broker pages to vertical-specific components
+│   │   ├── ai/                     ← TernakBot UI
+│   │   │   ├── AIChatBubble.jsx
+│   │   │   ├── AIConfirmCard.jsx
+│   │   │   └── AISuccessCard.jsx
+│   │   ├── poultry_broker/         ← Broker Ayam (full dashboard)
+│   │   │   ├── Akun.jsx, Armada.jsx, Beranda.jsx, CashFlow.jsx, Kandang.jsx
+│   │   │   ├── Pengiriman.jsx, RPA.jsx, RPADetail.jsx, Simulator.jsx
+│   │   │   ├── SopirDashboard.jsx, Tim.jsx, Transaksi.jsx
+│   │   │   ├── components/
+│   │   │   │   ├── EditPurchaseSheet.jsx
+│   │   │   │   ├── ProvinceWarningBanner.jsx
+│   │   │   │   ├── SaleAuditSheet.jsx
+│   │   │   │   ├── UnifiedTransactionCard.jsx
+│   │   │   │   └── UpdateDeliverySheet.jsx
+│   │   │   └── pengiriman/
+│   │   │       ├── Common.jsx
+│   │   │       ├── CreateLossSheet.jsx
+│   │   │       ├── DeliveryCard.jsx
+│   │   │       ├── LogisticsDetailSheet.jsx
+│   │   │       ├── LossCard.jsx
+│   │   │       └── UpdateArrivalSheet.jsx
+│   │   ├── egg_broker/             ← Broker Telur (full dashboard)
+│   │   │   ├── Beranda.jsx
+│   │   │   ├── Customers.jsx
+│   │   │   ├── Inventori.jsx
+│   │   │   ├── POS.jsx
+│   │   │   ├── Suppliers.jsx
+│   │   │   └── Transaksi.jsx
+│   │   └── sembako_broker/         ← Broker Sembako (full dashboard)
+│   │       ├── Akun.jsx, Beranda.jsx, Gudang.jsx, Laporan.jsx, Pegawai.jsx
+│   │       ├── Pengiriman.jsx, Penjualan.jsx, Produk.jsx, Tim.jsx
+│   │       ├── TokoSupplier.jsx, TokoSupplierDetail.jsx
+│   │       ├── SembakoInvoicePreview.jsx
+│   │       └── components/
+│   │           ├── SembakoCreateInvoiceSheet.jsx
+│   │           ├── SembakoInvoiceCard.jsx
+│   │           ├── SembakoNavigation.jsx
+│   │           ├── SembakoPageHeader.jsx
+│   │           ├── SembakoPaymentSheet.jsx
+│   │           ├── SembakoSaleDetailSheet.jsx
+│   │           ├── SembakoSuccessCard.jsx
+│   │           ├── SembakoSummaryStrip.jsx
+│   │           ├── SembakoUiPrimitives.jsx
+│   │           └── sembakoSaleUtils.jsx
 │   │
-│   ├── pages/                      ← Shared / role-agnostic pages
-│   │   └── onboarding/             ← Onboarding modular (4 steps)
-│   │       ├── OnboardingFlow.jsx  ← Orchestrator (4 steps, Flow A + Flow B)
-│   │       ├── shared.jsx          ← Shared: RoleCard, FourStepProgress, BlockedScreen, styles
-│   │       ├── steps/
-│   │       │   ├── Step0TipePilih.jsx    ← Pilih Broker / Peternak / RPA
-│   │       │   ├── Step1SubTipe.jsx      ← 2-level untuk Peternak (Level 1: hewan, Level 2: jenis)
-│   │       │   ├── Step2InfoBisnis.jsx   ← Nama bisnis, lokasi, phone
-│   │       │   └── Step3Setup.jsx        ← Router ke per-vertical form
-│   │       └── forms/
-│   │           ├── BrokerAyamForm.jsx
-│   │           ├── BrokerTelurForm.jsx
-│   │           ├── PeternakAyamForm.jsx
-│   │           ├── PeternakRuminansiaForm.jsx
-│   │           └── RPABuyerForm.jsx
+│   ├── peternak/
+│   │   ├── PeternakRouter.jsx
+│   │   ├── _shared/
+│   │   │   └── components/
+│   │   │       ├── FarmCard.jsx        ← Reusable farm selection card
+│   │   │       ├── FarmContextBar.jsx  ← Active farm context indicator
+│   │   │       ├── InputHarianSheet.jsx ← Daily record input sheet
+│   │   │       └── SiklusSheet.jsx     ← Cycle create/edit sheet
+│   │   ├── broiler/                    ← Peternak Broiler (full dashboard)
+│   │   │   ├── Beranda.jsx             ← Farm list + multi-farm overview
+│   │   │   ├── FarmBeranda.jsx         ← Per-farm dashboard (KPI, siklus aktif)
+│   │   │   ├── FarmSettings.jsx        ← Per-farm settings (nama, kapasitas, etc.)
+│   │   │   ├── InputHarian.jsx         ← Daily record entry
+│   │   │   ├── LaporanSiklus.jsx       ← Cycle report + KPIs
+│   │   │   ├── Pakan.jsx               ← Feed stock management
+│   │   │   ├── SetupFarm.jsx           ← New farm setup wizard
+│   │   │   ├── Siklus.jsx              ← Cycle list + status management
+│   │   │   ├── Tim.jsx                 ← Team / anak kandang management
+│   │   │   ├── Vaksinasi.jsx           ← Vaccination schedule & log
+│   │   │   └── AnakKandang.jsx         ← Anak kandang view (sub-role dashboard)
+│   │   ├── layer/
+│   │   │   └── LayerBeranda.jsx        ← Layer beranda (WIP)
+│   │   └── kambing_domba/             ← Kambing & Domba (dual model: penggemukan + breeding)
+│   │       ├── Beranda.jsx             ← Penggemukan dashboard (KPI, batch aktif, alerts)
+│   │       ├── Batch.jsx               ← Batch list + create/close batch
+│   │       ├── KandangView.jsx         ← Kandang overview
+│   │       ├── Ternak.jsx              ← Individual animal records (penggemukan)
+│   │       ├── Pakan.jsx               ← Feed log (penggemukan)
+│   │       ├── Kesehatan.jsx           ← Health log (penggemukan)
+│   │       ├── LaporanBatch.jsx        ← Batch-level report + KPIs
+│   │       └── breeding/              ← Breeding (pembibitan) sub-vertical
+│   │           ├── Beranda.jsx
+│   │           ├── Ternak.jsx
+│   │           ├── Reproduksi.jsx
+│   │           ├── Kesehatan.jsx
+│   │           ├── Pakan.jsx
+│   │           └── LaporanFarm.jsx
 │   │
-│   └── pages/                      ← Shared / role-agnostic pages (legacy)
-│       ├── Market.jsx              ← /market — Multi-role marketplace (WA contact, 3 listing types)
-│       ├── HargaPasar.jsx          ← Market price view
-│       ├── OnboardingFlow.jsx      ← (legacy path — imports from onboarding/OnboardingFlow.jsx)
-│       ├── Akun.jsx                ← Account (shared across roles, old location)
-│       ├── Beranda.jsx             ← Dashboard redirect (old)
-│       ├── StokVirtual.jsx         ← Virtual stock page (Peternak)
-│       ├── Forecast.jsx            ← Supply/demand forecast
-│       ├── Orders.jsx              ← Order management
-│       ├── Transaksi.jsx           ← Transaction view (old location)
-│       ├── Kandang.jsx             ← Farm view (old location)
-│       ├── CashFlow.jsx            ← Cash flow (old location)
-│       ├── RPA.jsx                 ← RPA (old location)
-│       ├── RPADetail.jsx           ← RPA detail (old location)
-│       ├── Pengiriman.jsx          ← Delivery (old location)
-│       ├── Simulator.jsx           ← Simulator (old location)
-│       ├── LossReport.jsx          ← Loss report (old location)
-│       ├── PeternakDashboard.jsx   ← Peternak dashboard (old)
-│       └── RPADashboard.jsx        ← RPA dashboard (old)
+│   └── rumah_potong/
+│       ├── RPPageRouter.jsx
+│       ├── rpa/                        ← RPA (full dashboard)
+│       │   ├── Akun.jsx, Beranda.jsx, Distribusi.jsx, DistribusiDetail.jsx
+│       │   ├── Hutang.jsx, LaporanMargin.jsx, Order.jsx
+│       └── rph/
+│           └── RPHBeranda.jsx          ← RPH beranda (WIP)
 │
-├── pages/
-│   ├── LandingPage.jsx             ← Landing page (imports sections)
-│   ├── Login.jsx                   ← Login form
-│   ├── Register.jsx                ← Registration form
-│   └── dashboard/                  ← (legacy/unused)
+│   └── _shared/
+│       ├── components/
+│       │   ├── AppSidebar.jsx          ← Desktop sidebar (nav groups, plan widget, ThemePicker)
+│       │   ├── BottomNav.jsx           ← Mobile bottom nav (BUSINESS_MODELS priority, accentColor)
+│       │   ├── TopBar.jsx              ← Mobile sticky header (title, back btn, showBell)
+│       │   ├── DesktopTopBar.jsx       ← Desktop header (breadcrumb, market price, NotificationBell)
+│       │   ├── NotificationBell.jsx    ← Bell + badge + dropdown (realtime, neutral gray)
+│       │   ├── TransaksiWizard.jsx     ← Multi-step transaction wizard (Sheet modal)
+│       │   ├── BusinessModelOverlay.jsx ← First-time role selection overlay
+│       │   ├── BusinessNameWarningBanner.jsx ← Banner warning for missing business name
+│       │   ├── DrawerLainnya.jsx       ← Mobile "More" drawer (+ ThemePicker)
+│       │   ├── ConfirmDialog.jsx       ← Reusable confirmation modal
+│       │   ├── FormBeliModal.jsx       ← Purchase form (Sheet)
+│       │   ├── FormJualModal.jsx       ← Sale form (Sheet)
+│       │   ├── SlideModal.jsx          ← Generic bottom sheet wrapper
+│       │   ├── KPICard.jsx             ← Dashboard KPI card
+│       │   ├── StatCard.jsx            ← Stat display card
+│       │   ├── LoadingSpinner.jsx      ← Loading indicator
+│       │   ├── EmptyState.jsx          ← Empty state placeholder
+│       │   ├── ComingSoon.jsx          ← Coming soon placeholder
+│       │   ├── SmartInsight.jsx        ← AI-powered insight card widget
+│       │   ├── transactions/           ← Shared broker transaction UI primitives
+│       │   │   ├── BrokerAuditNotice.jsx
+│       │   │   ├── BrokerBaseCard.jsx
+│       │   │   ├── BrokerPageHeader.jsx
+│       │   │   └── BrokerSummaryStrip.jsx
+│       │   ├── forms/
+│       │   │   └── FormBayarModal.jsx  ← Payment form
+│       │   └── wizard/
+│       │       ├── WizardStepBeli.jsx
+│       │       ├── WizardStepJual.jsx
+│       │       ├── WizardStepOrder.jsx
+│       │       └── WizardStepPengiriman.jsx
+│       ├── forms/                      ← Duplicate exports for backwards compat
+│       │   ├── FormBeliModal.jsx, FormJualModal.jsx, FormBayarModal.jsx
+│       ├── layouts/
+│       │   ├── BrokerLayout.jsx        ← Responsive layout (mobile/desktop + overlay)
+│       │   ├── PeternakLayout.jsx      ← Peternak layout wrapper
+│       │   ├── RumahPotongLayout.jsx   ← RPA/RPH layout wrapper
+│       │   └── DesktopSidebarLayout.jsx ← AppSidebar + SidebarInset + DesktopTopBar
+│       └── pages/
+│           ├── Akun.jsx                ← Account settings (shared)
+│           ├── AddonPortal.jsx         ← Add-on purchase portal
+│           ├── Beranda.jsx             ← Dashboard redirect
+│           ├── CashFlow.jsx            ← Cash flow
+│           ├── Forecast.jsx            ← Supply/demand forecast
+│           ├── HargaPasar.jsx          ← Market price view (authenticated)
+│           ├── Kandang.jsx             ← Farm view
+│           ├── LossReport.jsx          ← Loss report
+│           ├── Market.jsx              ← Multi-role marketplace
+│           ├── MarketPriceDashboard.jsx ← Market price analytics dashboard
+│           ├── OnboardingFlow.jsx      ← Re-exports onboarding/OnboardingFlow.jsx
+│           ├── Orders.jsx              ← Order management
+│           ├── PeternakDashboard.jsx   ← Peternak dashboard
+│           ├── Pengiriman.jsx          ← Delivery management
+│           ├── RPA.jsx                 ← RPA client view
+│           ├── RPADashboard.jsx        ← RPA dashboard
+│           ├── RPADetail.jsx           ← RPA detail
+│           ├── Simulator.jsx           ← Margin simulator
+│           ├── StokVirtual.jsx         ← Virtual stock
+│           ├── Transaksi.jsx           ← Transaction view
+│           ├── UpgradePlan.jsx         ← Plan upgrade page
+│           └── onboarding/             ← Modular onboarding (4 steps)
+│               ├── OnboardingFlow.jsx  ← Orchestrator (Flow A + Flow B)
+│               ├── shared.jsx          ← RoleCard, FourStepProgress, BlockedScreen
+│               ├── steps/
+│               │   ├── Step0TipePilih.jsx    ← Pilih Broker / Peternak / RPA
+│               │   ├── Step1SubTipe.jsx      ← 2-level pilih hewan + jenis
+│               │   ├── Step2InfoBisnis.jsx   ← Nama bisnis, lokasi, phone
+│               │   └── Step3Setup.jsx        ← Router ke per-vertical setup form
+│               └── forms/
+│                   ├── BrokerAyamForm.jsx, BrokerTelurForm.jsx
+│                   ├── PeternakAyamForm.jsx, PeternakRuminansiaForm.jsx
+│                   └── RPABuyerForm.jsx
 │
-├── sections/                       ← Landing page sections
-│   ├── Hero.jsx                    ← Hero section with CTA
-│   ├── Features.jsx                ← Feature highlights
-│   ├── PainPoints.jsx              ← Problem/pain-point section
-│   ├── HowItWorks.jsx              ← Step-by-step explanation
-│   ├── MarketPrice.jsx             ← Market price showcase
-│   ├── Testimonials.jsx            ← (legacy, replaced)
-│   ├── TestimonialsNew.jsx         ← 3-column infinite scroll testimonials (CSS @keyframes scrollUp)
-│   ├── Comparison.jsx              ← Drag slider: Excel vs TernakOS (sliderPosition clip)
-│   ├── Pricing.jsx                 ← Pricing tiers (DB-driven via pricing_plans, strikethrough originalPrice)
-│   ├── StatsBar.jsx                ← Statistics bar
-│   └── FinalCTA.jsx                ← Final call-to-action
+├── pages/                              ← Public / auth pages
+│   ├── LandingPage.jsx                 ← Landing page (imports sections)
+│   ├── Login.jsx                       ← Login form
+│   ├── Register.jsx                    ← Registration form
+│   ├── MobileRegister.jsx              ← Mobile-optimised register
+│   ├── ForgotPassword.jsx              ← Password reset request
+│   ├── ResetPassword.jsx               ← Password reset confirmation
+│   ├── CheckEmail.jsx                  ← Post-register email check prompt
+│   ├── AuthCallback.jsx                ← Supabase OAuth callback handler
+│   ├── AcceptInvite.jsx                ← Team invite acceptance
+│   ├── Invite.jsx                      ← Invite landing
+│   ├── NotFound.jsx                    ← 404 page
+│   ├── AboutUs.jsx                     ← Company about page
+│   ├── BlogPage.jsx                    ← Blog listing
+│   ├── BlogPostPage.jsx                ← Individual blog post
+│   ├── FAQPage.jsx                     ← FAQ (uses lib/faqData.js)
+│   ├── FiturPage.jsx                   ← Feature showcase page
+│   ├── HargaPage.jsx                   ← Pricing page (public)
+│   ├── HargaPasarPublic.jsx            ← Market price (public, no auth)
+│   ├── HubungiKami.jsx                 ← Contact us
+│   ├── MarketPublic.jsx                ← Marketplace (public view)
+│   ├── PrivacyPage.jsx                 ← Privacy policy
+│   └── TermsPage.jsx                   ← Terms of service
+│
+├── sections/                           ← Landing page section components
+│   ├── Hero.jsx                        ← Hero + CTA
+│   ├── Features.jsx                    ← Feature highlights
+│   ├── PainPoints.jsx                  ← Problem/pain-point
+│   ├── HowItWorks.jsx                  ← Step-by-step
+│   ├── MarketPrice.jsx                 ← Market price showcase
+│   ├── Testimonials.jsx                ← (legacy, replaced by TestimonialsNew)
+│   ├── TestimonialsNew.jsx             ← 3-column infinite scroll testimonials
+│   ├── Comparison.jsx                  ← Drag slider: Excel vs TernakOS
+│   ├── ComparisonTable.jsx             ← Feature comparison table
+│   ├── BeforeAfter.jsx                 ← Before/after visual section
+│   ├── PeopleAlsoAsk.jsx               ← SEO FAQ accordion
+│   ├── Pricing.jsx                     ← Pricing tiers (DB-driven via pricing_plans)
+│   ├── StatsBar.jsx                    ← Statistics bar
+│   └── FinalCTA.jsx                    ← Final call-to-action
 │
 ├── components/
-│   ├── Navbar.jsx                  ← Landing page navbar
-│   ├── Footer.jsx                  ← Landing page footer
-│   ├── ErrorBoundary.jsx           ← React error boundary
-│   ├── LoadingScreen.jsx           ← Full-page loading screen
-│   ├── EmptyState.jsx              ← Landing empty state
-│   ├── CountUp.jsx                 ← Animated number counter
-│   ├── reactbits/                  ← Animated UI effect components
-│   │   ├── AuroraBackground.jsx    ← 3D aurora background (Three.js)
-│   │   ├── AnimatedContent.jsx     ← Scroll-triggered animation wrapper
-│   │   ├── BlurText.jsx            ← Blurred text reveal effect
-│   │   ├── ClickSpark.jsx          ← Click spark particle effect
-│   │   ├── CountUp.jsx             ← Number counting animation
-│   │   ├── Magnet.jsx              ← Magnetic cursor effect
-│   │   ├── Particles.jsx           ← Particle background
-│   │   ├── ShinyText.jsx/css       ← Shiny text animation
-│   │   ├── TiltedCard.jsx          ← 3D tilt card effect
-│   │   ├── ScrollVelocity.jsx      ← Framer Motion scroll velocity ticker (About Us)
-│   │   ├── SplashCursor.jsx        ← WebGL fluid cursor effect
-│   │   └── InfiniteScroll.jsx      ← Infinite horizontal scroll (ResizeObserver + framer-motion)
-│   └── ui/                         ← Shadcn UI components (29+ files)
-│       ├── DatePicker.jsx          ← Custom date picker wrapping Shadcn Calendar
-│       ├── InputRupiah.jsx         ← Currency input (formats IDR, value = Number) — focus ring emerald
-│       ├── InputNumber.jsx         ← Numeric input with formatting
-│       ├── MagicRings.jsx          ← Decorative animation component
-│       ├── ThemePicker.jsx         ← 8-color accent swatch picker (THEME_PRESETS), click to apply/deactivate, uses useTheme
-│       ├── TransaksiSuccessCard.jsx ← Animated success modal (SVG check + spring, post-transaksi)
-│       ├── alert-dialog.jsx        ├── avatar.jsx
-│       ├── badge.jsx               ├── button.jsx
-│       ├── calendar.jsx            ├── card.jsx
-│       ├── chart.jsx               ├── collapsible.jsx
-│       ├── command.jsx             ├── dialog.jsx
-│       ├── dropdown-menu.jsx       ├── input.jsx
-│       ├── label.jsx               ├── popover.jsx
-│       ├── progress.jsx            ├── scroll-area.jsx
-│       ├── select.jsx              ├── separator.jsx
-│       ├── sheet.jsx               ├── sidebar.jsx
-│       ├── skeleton.jsx            ├── table.jsx
-│       ├── tabs.jsx                ├── textarea.jsx
-│       └── tooltip.jsx
+│   ├── Navbar.jsx, Footer.jsx          ← Landing page nav + footer
+│   ├── ErrorBoundary.jsx               ← React error boundary
+│   ├── LoadingScreen.jsx               ← Full-page loading screen
+│   ├── EmptyState.jsx                  ← Landing empty state
+│   ├── CountUp.jsx                     ← Animated number counter
+│   ├── AnimatedPrice.jsx               ← Price tick animation
+│   ├── SplineScene.jsx                 ← Spline 3D embed
+│   ├── StickyCTA.jsx                   ← Sticky CTA button (landing)
+│   ├── invoice/                        ← Print-ready invoice templates
+│   │   ├── InvoicePreviewModal.jsx     ← Modal wrapper for invoice preview
+│   │   └── templates/
+│   │       ├── DeliveryReceipt.jsx
+│   │       ├── PaymentReceipt.jsx
+│   │       ├── PeternakInvoice.jsx
+│   │       ├── PurchaseInvoice.jsx
+│   │       ├── RPATokoInvoice.jsx
+│   │       └── SaleInvoice.jsx
+│   ├── reactbits/                      ← Animated UI effect components
+│   │   ├── AuroraBackground.jsx        ← 3D aurora (Three.js)
+│   │   ├── AnimatedContent.jsx         ← Scroll-triggered animation wrapper
+│   │   ├── BlurText.jsx                ← Blurred text reveal
+│   │   ├── ClickSpark.jsx              ← Click spark particles
+│   │   ├── CountUp.jsx                 ← Number count-up animation
+│   │   ├── InfiniteScroll.jsx          ← Infinite horizontal scroll
+│   │   ├── Magnet.jsx                  ← Magnetic cursor
+│   │   ├── Particles.jsx               ← Particle background
+│   │   ├── ScrollVelocity.jsx          ← Framer Motion scroll ticker
+│   │   ├── ShinyText.jsx               ← Shiny text animation
+│   │   ├── SplashCursor.jsx            ← WebGL fluid cursor
+│   │   └── TiltedCard.jsx              ← 3D tilt card
+│   └── ui/                             ← Shadcn UI primitives + custom extensions
+│       ├── AnimatedCheckmark.jsx       ← SVG animated checkmark
+│       ├── BrokerPageSkeleton.jsx      ← Skeleton loader for broker pages
+│       ├── DatePicker.jsx              ← Custom date picker (wraps Shadcn Calendar)
+│       ├── DateRangePicker.jsx         ← Date range picker
+│       ├── InputNumber.jsx             ← Numeric input with formatting
+│       ├── InputRupiah.jsx             ← IDR currency input (value = Number)
+│       ├── MagicRings.jsx              ← Decorative animation rings
+│       ├── PhoneInput.jsx              ← Phone number input with country code
+│       ├── ThemePicker.jsx             ← 8-color accent swatch picker (THEME_PRESETS)
+│       ├── TimePicker.jsx              ← Time picker component
+│       ├── TransaksiSuccessCard.jsx    ← Animated success modal (post-transaksi)
+│       ├── alert-dialog.jsx, avatar.jsx, badge.jsx, button.jsx
+│       ├── calendar.jsx, card.jsx, chart.jsx, collapsible.jsx
+│       ├── command.jsx, dialog.jsx, dropdown-menu.jsx, input.jsx
+│       ├── label.jsx, popover.jsx, progress.jsx, scroll-area.jsx
+│       ├── select.jsx, separator.jsx, sheet.jsx, sidebar.jsx
+│       ├── skeleton.jsx, switch.jsx, table.jsx, tabs.jsx
+│       ├── textarea.jsx, tooltip.jsx
 │
-├── utils/
-│   └── animations.js               ← Framer Motion variants (fadeUp, fadeIn, stagger, scaleIn, slide)
-│
-├── constants/                       ← (empty)
+├── data/
+│   └── blogPosts.js                    ← Static blog post content
 │
 └── hooks/
-    └── use-mobile.jsx               ← Shadcn isMobile hook
+    └── use-mobile.jsx                  ← Shadcn isMobile hook
 ```
 
 ---

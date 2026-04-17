@@ -333,7 +333,7 @@ export const BUSINESS_MODELS = {
     drawerMenu: [],
     fabPath: null,
   },
-  // ── Sapi (Coming Soon) ──
+  // ── Sapi ──
   peternak_sapi_penggemukan: {
     key: 'peternak_sapi_penggemukan',
     category: 'peternak',
@@ -346,9 +346,20 @@ export const BUSINESS_MODELS = {
     themeColor: 'amber',
     user_type: 'peternak',
     sub_type: 'peternak_sapi_penggemukan',
-    comingSoon: true,
-    bottomNav: [],
-    drawerMenu: [],
+    comingSoon: false,
+    bottomNav: createNav('peternak', 'peternak_sapi_penggemukan', [
+      { slug: 'beranda',   icon: 'Home',      label: 'Beranda'  },
+      { slug: 'batch',     icon: 'RefreshCw', label: 'Batch'    },
+      { slug: 'ternak',    icon: 'Tag',       label: 'Ternak'   },
+      { slug: 'kesehatan', icon: 'Syringe',   label: 'Sehat'    },
+    ]),
+    drawerMenu: [
+      { path: '/peternak/peternak_sapi_penggemukan/stok-pakan', icon: 'Wheat',    label: 'Log Pakan'      },
+      { path: '/peternak/peternak_sapi_penggemukan/laporan',    icon: 'BarChart2',label: 'Laporan Batch'  },
+      { path: '/peternak/peternak_sapi_penggemukan/tim',        icon: 'Users',    label: 'Tim & Akses'    },
+      { path: '/market',                                        icon: 'Store',    label: 'TernakOS Market'},
+      { path: '/peternak/peternak_sapi_penggemukan/akun',       icon: 'User',     label: 'Akun & Profil'  },
+    ],
     fabPath: null,
   },
   peternak_sapi_breeding: {
@@ -489,10 +500,11 @@ export const SUB_TYPE_TO_VERTICAL = VERTICAL_ALIASES
  */
 export function resolveBusinessVertical(profile, tenant) {
   let resolved = null
+  const userType = profile?.user_type
 
   // 1. Forced Sembako logic (Highest priority)
-  const isSembakoName = tenant?.business_name?.toLowerCase().includes('sembako') || 
-                       profile?.business_name?.toLowerCase().includes('sembako')
+  // Only apply if user is NOT explicitly a peternak (to avoid hijacking peternak profiles)
+  const isSembakoName = userType !== 'peternak' && (tenant?.business_name || profile?.business_name || '').toLowerCase().includes('sembako')
   if (isSembakoName) {
     resolved = 'distributor_sembako'
   }
@@ -522,12 +534,15 @@ export function resolveBusinessVertical(profile, tenant) {
   // 5. ENFORCE CATEGORY MATCH (Prevents infinite redirect loops)
   // Ensures a user with user_type="broker" doesn't get routed to a "peternak" dashboard and rejected back repeatedly.
   const model = BUSINESS_MODELS[resolved]
-  const userType = profile?.user_type
   const role = profile?.role
   
   if (model && userType && userType !== 'superadmin' && userType !== 'owner' && role !== 'superadmin' && role !== 'owner') {
     if (model.category !== userType) {
-      if (userType === 'peternak') return 'peternak'        // 'peternak' is the valid BUSINESS_MODELS key
+      // If user is a peternak, return their specific sub_type if it's valid, otherwise fallback to generic broiler
+      if (userType === 'peternak') {
+        if (profile.sub_type?.startsWith('peternak_')) return profile.sub_type
+        return 'peternak' // Broiler
+      }
       if (userType === 'rumah_potong') return 'rumah_potong_rpa'
       return 'poultry_broker'
     }

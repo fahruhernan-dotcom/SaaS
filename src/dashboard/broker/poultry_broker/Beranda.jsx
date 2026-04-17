@@ -133,8 +133,13 @@ export default function BrokerBeranda() {
 
       const unpaidSalesQuery = supabase.from('sales').select('*, rpa_clients(*)').eq('tenant_id', tenant.id).neq('payment_status', 'lunas').eq('is_deleted', false)
 
-      const [salesRes, harvestsRes, deliveriesRes, paymentsRes, unpaidSalesRes] = await Promise.all([
-        salesQuery,
+      let salesRes = await salesQuery
+      if (salesRes.error && salesRes.error.message.includes('relation "purchases" does not exist')) {
+        // Fallback: fetch sales without purchases relation if table is missing
+        salesRes = await supabase.from('sales').select('*, rpa_clients(*)').eq('tenant_id', tenant.id).eq('is_deleted', false).gte('transaction_date', sixtyDaysAgo)
+      }
+
+      const [harvestsRes, deliveriesRes, paymentsRes, unpaidSalesRes] = await Promise.all([
         harvestsQuery,
         deliveriesQuery,
         paymentsQuery,

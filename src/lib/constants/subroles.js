@@ -30,7 +30,7 @@ export const SUB_ROLES = {
   peternak: [
     { id: 'broiler', label: 'Ayam Broiler', disabled: false },
     { id: 'petelur', label: 'Ayam Petelur', disabled: true },
-    { id: 'sapi', label: 'Sapi', disabled: true },
+    { id: 'sapi', label: 'Sapi', disabled: false },
   ],
   rpa: [
     { id: 'buyer', label: 'Rumah Potong Ayam', disabled: false },
