@@ -411,6 +411,12 @@ export const routes = createRoutesFromElements(
       <Route path="harga-pasar"      element={<PeternakPageRouter page="harga-pasar" />} />
       <Route path="kandang-view"     element={<PeternakPageRouter page="kandang-view" />} />
 
+      {/* Kambing & Domba routes */}
+      <Route path="batch"      element={<PeternakPageRouter page="batch" />} />
+      <Route path="ternak"     element={<PeternakPageRouter page="ternak" />} />
+      <Route path="kesehatan"  element={<PeternakPageRouter page="kesehatan" />} />
+      <Route path="reproduksi" element={<PeternakPageRouter page="reproduksi" />} />
+
       {/* Per-farm routes (Level 2) */}
       <Route path="kandang/:farmId"           element={<Navigate to="beranda" replace />} />
       <Route path="kandang/:farmId/beranda"   element={<PeternakPageRouter page="farm-beranda" />} />
