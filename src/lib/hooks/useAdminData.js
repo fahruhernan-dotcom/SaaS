@@ -508,8 +508,8 @@ export const useGlobalStats = () => useQuery({
         byVertical: {
           poultry_broker: tenants.filter(t => t.business_vertical === 'poultry_broker').length,
           egg_broker:     tenants.filter(t => t.business_vertical === 'egg_broker').length,
-          peternak:       tenants.filter(t => t.business_vertical === 'peternak').length,
-          rpa:            tenants.filter(t => t.business_vertical === 'rpa').length,
+          peternak:       tenants.filter(t => ['peternak', 'peternak_layer', 'peternak_kambing_domba_penggemukan', 'peternak_kambing_domba_breeding'].includes(t.business_vertical)).length,
+          rpa:            tenants.filter(t => ['rpa', 'rumah_potong_rpa', 'rpa_ayam'].includes(t.business_vertical)).length,
         },
         growthData
       },

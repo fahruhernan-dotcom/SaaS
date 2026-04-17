@@ -626,7 +626,7 @@ export default function AppSidebar({ open, onClose }) {
         {filteredNavMain.map((group) => {
           const isUtama = group.label === 'UTAMA'
           // Only make UTAMA collapsible for peternak (they have per-farm sections to focus on)
-          const collapsible = isUtama && isPeternak && peternakFarms.length > 0
+          const collapsible = isUtama && isBroiler && peternakFarms.length > 0
           const collapsed   = collapsible && utamaCollapsed
           return (
           <SidebarGroup key={group.label}>
@@ -725,7 +725,7 @@ export default function AppSidebar({ open, onClose }) {
         })}
 
         {/* ── Peternak: per-farm collapsible sections ── */}
-        {isPeternak && peternakFarms.length > 0 && (
+        {isBroiler && peternakFarms.length > 0 && (
           <>
             <SidebarSeparator className="my-1" />
             {peternakFarms.map((farm) => {

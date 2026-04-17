@@ -4,7 +4,7 @@ import { AlertTriangle, Building2, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { getBrokerBasePath } from '@/lib/hooks/useAuth'
-import { resolveBusinessVertical } from '@/lib/businessModel'
+import { resolveBusinessVertical, BUSINESS_MODELS } from '@/lib/businessModel'
 
 /**
  * BusinessNameWarningBanner
@@ -30,16 +30,16 @@ export function BusinessNameWarningBanner() {
   if (!isDefaultName || dismissed || !tenant) return null
 
   const vertical = resolveBusinessVertical(profile, tenant)
+  const model = BUSINESS_MODELS[vertical]
   const getAkunPath = () => {
-    const brokerBase = getBrokerBasePath(tenant)
-    if (vertical === 'peternak') {
+    if (model?.category === 'peternak') {
       return `/peternak/${tenant?.sub_type || 'peternak_broiler'}/akun`
     }
-    if (vertical === 'rumah_potong') {
+    if (model?.category === 'rumah_potong') {
       const rpType = tenant?.sub_type?.startsWith('rpa') ? 'rpa' : 'rph'
       return `/rumah_potong/${rpType}/akun`
     }
-    return `${brokerBase}/akun`
+    return `${getBrokerBasePath(tenant)}/akun`
   }
 
   return (
