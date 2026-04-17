@@ -114,7 +114,15 @@ auth.users
         │                       ├── sembako_sale_items (sale_id, product_id)
         │                       │     └── sembako_stock_out (batch_id, sale_id)
         │                       └── sembako_payments (sale_id, customer_id)
-        ├── 🐄 RUMINANSIA (SAPI/K&D PENGGEMUKAN)
+        ├── 🐃 SAPI PENGGEMUKAN (FATENING)
+        │     ├── sapi_penggemukan_batches (tenant_id)
+        │     │     ├── sapi_penggemukan_feed_logs (batch_id)
+        │     │     └── sapi_kandangs (batch_id)
+        │     └── sapi_penggemukan_animals (batch_id, kandang_id)
+        │           ├── sapi_penggemukan_weight_records (animal_id)
+        │           ├── sapi_penggemukan_health_logs (animal_id)
+        │           └── sapi_penggemukan_sales (animal_id)
+        ├── 🐐 K&D PENGGEMUKAN (GOAT/SHEEP)
         │     ├── kd_penggemukan_batches (tenant_id)
         │     │     └── kd_penggemukan_feed_logs (batch_id)
         │     ├── kd_kandangs (tenant_id, batch_id)
@@ -122,7 +130,7 @@ auth.users
         │           ├── kd_penggemukan_weight_records (animal_id)
         │           ├── kd_penggemukan_health_logs (animal_id)
         │           └── kd_penggemukan_sales (animal_id)
-        └── 🐂 RUMINANSIA (SAPI/K&D BREEDING)
+        └── 🐑 K&D BREEDING
               ├── kd_breeding_animals (tenant_id, kandang_id)
               │     ├── kd_breeding_mating_records (animal_id, ram_id, ewe_id)
               │     │     └── kd_breeding_births (mating_id, parent_id)
@@ -1972,6 +1980,19 @@ kd_penggemukan_animals.origin:         'lokal' | 'impor' | 'hasil_ib'
 kd_penggemukan_health_logs.log_type:   'vaksinasi' | 'obat_cacing' | 'sakit' | 'kematian' | 'lainnya'
 kd_penggemukan_sales.product_type:     'hidup' | 'karkas' | 'potongan' | 'lainnya'
 
+// Sapi Penggemukan Vertical
+sapi_penggemukan_batches.status:       'active' | 'closed' | 'cancelled'
+sapi_penggemukan_animals.species:       'sapi' | 'kerbau'
+sapi_penggemukan_animals.sex:           'jantan' | 'betina' | 'jantan_kastrasi'
+sapi_penggemukan_animals.status:        'active' | 'sold' | 'dead' | 'culled'
+sapi_penggemukan_animals.age_confidence: 'pasti' | 'estimasi' | 'tidak_tahu'
+sapi_penggemukan_animals.acquisition_type: 'beli' | 'lahir_sendiri' | 'hibah'
+sapi_penggemukan_weight_records.weigh_method: 'timbang_langsung' | 'estimasi_pita_ukur' | 'estimasi_visual'
+sapi_penggemukan_health_logs.log_type:  'sakit' | 'vaksinasi' | 'obat_cacing' | 'kematian' | 'lainnya'
+sapi_penggemukan_sales.buyer_type:       'agen_kurban' | 'jagal_rph' | 'katering' | 'pengepul' | 'eceran_langsung' | 'ekspor' | 'lainnya'
+sapi_penggemukan_sales.price_type:       'per_kg' | 'per_ekor'
+sapi_penggemukan_sales.payment_method:   'tunai' | 'transfer' | 'kredit'
+
 // KD Breeding Vertical
 kd_breeding_animals.species:           'kambing' | 'domba'
 kd_breeding_animals.sex:               'jantan' | 'betina' | 'kastrasi'
@@ -1988,6 +2009,122 @@ kd_breeding_births.birth_type:         'tunggal' | 'kembar2' | 'kembar3plus'
 kd_breeding_health_logs.log_type:      'vaksinasi' | 'obat_cacing' | 'sakit' | 'kematian' | 'lainnya'
 kd_breeding_sales.product_type:        'bibit_jantan' | 'bibit_betina' | 'cempe_sapih' | 'afkir' | 'lainnya'
 ```
+
+---
+
+## 🐃 SAPI PENGGEMUKAN VERTICAL (FATENING)
+
+Migration: `supabase/migrations/20260417_sapi_penggemukan.sql`
+Prefix: `sapi_penggemukan_*`
+
+### `sapi_penggemukan_batches`
+> Satu periode penggemukan (target 4-9 bulan).
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `batch_code` | text | UNIQUE, e.g. BATCH-SAPI-2026-01 |
+| `kandang_name` | text | |
+| `start_date` | date | |
+| `target_end_date` | date | |
+| `total_animals` | integer | auto-update via RPC |
+| `mortality_count` | integer | auto-update via trigger |
+| `avg_adg_gram` | numeric | KPI: g/hari (sapi: 800-1200) |
+| `status` | text | `'active'` \| `'closed'` \| `'cancelled'` |
+
+---
+
+### `sapi_penggemukan_animals`
+> Pencatatan per ekor individual (ear tag).
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `batch_id` | uuid FK → sapi_penggemukan_batches | |
+| `kandang_id` | uuid FK → sapi_kandangs | |
+| `ear_tag` | text | NOT NULL |
+| `species` | text | `'sapi'` \| `'kerbau'` |
+| `breed` | text | Limousin, Simmental, PO, dll |
+| `sex` | text | `'jantan'` \| `'betina'` \| `'jantan_kastrasi'` |
+| `entry_date` | date | |
+| `entry_weight_kg` | numeric | |
+| `acquisition_type`| text | `'beli'` \| `'lahir_sendiri'` \| `'hibah'` |
+| `latest_weight_kg`| numeric | ⚠️ **GENERATED** via trigger |
+| `status` | text | `'active'` \| `'sold'` \| `'dead'` \| `'culled'` |
+
+---
+
+### `sapi_penggemukan_weight_records`
+> Riwayat penimbangan rutin per ekor. Sapi wajib timbang min. 1x/bulan.
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `animal_id` | uuid FK → sapi_penggemukan_animals | |
+| `weigh_date` | date | |
+| `weight_kg` | numeric | |
+| `weigh_method` | text | `'timbang_langsung'` \| `'estimasi_pita_ukur'` \| `'estimasi_visual'` |
+| `chest_girth_cm` | numeric | lingkar dada (untuk estimasi pita ukur) |
+| `adg_since_last` | numeric | dikalkulasi di logic |
+
+---
+
+### `sapi_penggemukan_feed_logs`
+> Konsumsi pakan harian per kandang.
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `batch_id` | uuid FK → sapi_penggemukan_batches | |
+| `log_date` | date | |
+| `hijauan_kg` | numeric | rumput / jerami |
+| `konsentrat_kg` | numeric | pelet / konsentrat |
+| `consumed_kg` | numeric | ⚠️ **GENERATED** (`sum(feeds) - sisa`) |
+| `feed_cost_idr` | bigint | |
+
+---
+
+### `sapi_penggemukan_health_logs`
+> Log medis per ekor.
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `animal_id` | uuid FK → sapi_penggemukan_animals | |
+| `log_type` | text | `'sakit'` \| `'vaksinasi'` \| `'obat_cacing'` \| `'kematian'` |
+| `action_taken` | text | |
+| `medicine_name` | text | |
+
+---
+
+### `sapi_penggemukan_sales`
+> Penjualan individual atau lot.
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `batch_id` | uuid FK → sapi_penggemukan_batches | |
+| `animal_ids` | uuid[] | array sapi yang terjual |
+| `buyer_type` | text | `'agen_kurban'` \| `'jagal_rph'` \| `'ekspor'` \| dll |
+| `total_weight_kg`| numeric | |
+| `total_revenue_idr`| bigint | |
+| `payment_status` | boolean | `is_paid` |
+
+---
+
+### `sapi_kandangs`
+> Manajemen kandang khusus Sapi (Fatening View).
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `batch_id` | uuid FK → sapi_penggemukan_batches | |
+| `name` | text | |
+| `capacity` | integer | |
+| `luas_m2` | numeric | ⚠️ **GENERATED** (`panjang * lebar`) |
 
 ---
 
@@ -2494,7 +2631,7 @@ Gunakan data `RPA UD Jaya` dan `RPA Jaya Abadi` sebagai benchmark:
 | sembako_broker    | distributor_sembako| ✅ Full (RLS ✅) |
 | peternak          | peternak_broiler   | ✅ Full (Setup Wizard ✅) |
 | peternak          | peternak_layer     | ✅ Full (Wizard ✅) |
-| peternak          | peternak_sapi      | 🚧 Placeholder   |
+| peternak_sapi_penggemukan | peternak_sapi_penggemukan | ✅ Full (7 tables, Batch Feedlot, EarTagLog ✅) |
 | peternak_kambing_domba_penggemukan | peternak_kambing_domba_penggemukan | ✅ Full (6 tables, Batch Feedlot, LaporanBatch ✅) |
 | peternak_kambing_domba_breeding    | peternak_kambing_domba_breeding    | ✅ Full (7 tables, Pedigree+Reproduksi, LaporanFarm ✅) |
 | peternak          | peternak_babi      | 🔒 Coming Soon   |
@@ -2704,6 +2841,7 @@ USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE auth_user_id = auth.ui
 | `is_superadmin` | - | `boolean` | Verifikasi apakah user punya akses superadmin. |
 | `generate_egg_invoice_number` | `p_tenant_id` | `text` | Generate nomor invoice berurut untuk broker telur. |
 | `aggregate_daily_market_price`| `p_date` | `void` | (Admin) Agregasi data transaksi ke `market_prices`. |
+| `increment_sapi_batch_animal_count` | `p_batch_id` | `void` | Sync animal count di batch sapi setelah insert ekor baru. |
 
 ---
 
