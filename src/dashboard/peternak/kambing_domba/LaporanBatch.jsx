@@ -3,7 +3,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ReferenceLine, ResponsiveContainer,
 } from 'recharts'
-import { ChevronDown, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { ChevronDown, TrendingUp, TrendingDown, Minus, BarChart3, CheckCircle2, XCircle, LayoutGrid } from 'lucide-react'
 import {
   useKdBatches, useKdAnimals, useKdFeedLogs, useKdSales,
   calcHariDiFarm, calcADG, calcFCRKambing, calcMortalitasKambing,
@@ -12,7 +12,7 @@ import {
 import { formatIDRShort } from '@/lib/format'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
 
-// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// —— Helpers ——————————————————————————————————————————————————————
 
 function fmt(dateStr) {
   if (!dateStr) return '—'
@@ -62,7 +62,7 @@ function WeightTooltip({ active, payload, label }) {
   )
 }
 
-// â”€â”€â”€ Main â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// —— Main ————————————————————————————————————————————————————————
 
 export default function KdPenggemukanLaporan() {
   const { data: batches = [], isLoading: loadingBatches } = useKdBatches()
@@ -76,7 +76,7 @@ export default function KdPenggemukanLaporan() {
 
   const isLoading = loadingAnimals || loadingFeed || loadingSales
 
-  // â”€â”€ Computed KPIs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // —— Computed KPIs ——————————————————————————————————————————————
   const kpi = useMemo(() => {
     if (!batch || !animals.length) return null
 
@@ -140,7 +140,7 @@ export default function KdPenggemukanLaporan() {
     }
   }, [batch, animals, feedLogs, sales])
 
-  // â”€â”€ Grafik bobot — rata-rata per tanggal timbang â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // —— Grafik bobot — rata-rata per tanggal timbang ————————————————
   const chartData = useMemo(() => {
     if (!animals.length) return []
 
@@ -175,7 +175,7 @@ export default function KdPenggemukanLaporan() {
       })
   }, [animals, batch, kpi])
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ——————————————————————————————————————————————————————————————————————
 
   if (loadingBatches) return <LoadingSpinner fullPage />
 
@@ -209,7 +209,9 @@ export default function KdPenggemukanLaporan() {
 
       {!selectedBatch && (
         <div className="text-center py-16 px-8">
-          <p className="text-4xl mb-4">ðŸ“Š</p>
+          <div className="w-16 h-16 rounded-3xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
+            <BarChart3 size={32} className="text-green-500" />
+          </div>
           <p className="text-sm font-semibold text-white mb-2">Pilih Batch</p>
           <p className="text-xs text-[#4B6478]">Pilih batch di atas untuk melihat laporan performa dan keuangan</p>
         </div>
@@ -233,7 +235,7 @@ export default function KdPenggemukanLaporan() {
             </div>
           </div>
 
-          {/* â”€â”€ KPI Pertumbuhan â”€â”€ */}
+          {/* —— KPI Pertumbuhan —— */}
           <section className="px-4 mt-5">
             <p className="text-[11px] font-bold uppercase tracking-widest text-[#4B6478] mb-3">Performa Pertumbuhan</p>
             <div className="grid grid-cols-2 gap-2.5">
@@ -272,7 +274,7 @@ export default function KdPenggemukanLaporan() {
             </div>
           </section>
 
-          {/* â”€â”€ KPI Mortalitas â”€â”€ */}
+          {/* —— KPI Mortalitas —— */}
           <section className="px-4 mt-5">
             <p className="text-[11px] font-bold uppercase tracking-widest text-[#4B6478] mb-3">Mortalitas</p>
             <div className="grid grid-cols-3 gap-2.5">
@@ -286,7 +288,7 @@ export default function KdPenggemukanLaporan() {
             </div>
           </section>
 
-          {/* â”€â”€ Grafik Bobot â”€â”€ */}
+          {/* —— Grafik Bobot —— */}
           {chartData.length > 1 && (
             <section className="px-4 mt-5">
               <p className="text-[11px] font-bold uppercase tracking-widest text-[#4B6478] mb-3">Grafik Bobot Rata-rata Batch</p>
@@ -312,7 +314,7 @@ export default function KdPenggemukanLaporan() {
             </section>
           )}
 
-          {/* â”€â”€ Keuangan â”€â”€ */}
+          {/* —— Keuangan —— */}
           <section className="px-4 mt-5">
             <p className="text-[11px] font-bold uppercase tracking-widest text-[#4B6478] mb-3">Keuangan Batch</p>
             <div className="space-y-2">
@@ -377,7 +379,7 @@ export default function KdPenggemukanLaporan() {
             </div>
           </section>
 
-          {/* â”€â”€ Ringkasan KPI vs Target â”€â”€ */}
+          {/* —— Ringkasan KPI vs Target —— */}
           <section className="px-4 mt-5 mb-4">
             <p className="text-[11px] font-bold uppercase tracking-widest text-[#4B6478] mb-3">KPI vs Target</p>
             <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl overflow-hidden">
@@ -396,7 +398,7 @@ export default function KdPenggemukanLaporan() {
                     <p className={`text-xs font-bold min-w-[60px] text-right ${row.ok === true ? 'text-green-400' : row.ok === false ? 'text-red-400' : 'text-[#4B6478]'}`}>
                       {row.value}
                     </p>
-                    <span className="text-base">{row.ok === true ? 'âœ…' : row.ok === false ? 'âŒ' : '—'}</span>
+                    <span className="text-base">{row.ok === true ? <CheckCircle2 size={16} className="text-green-400" /> : row.ok === false ? <XCircle size={16} className="text-red-400" /> : '—'}</span>
                   </div>
                 </div>
               ))}
@@ -407,7 +409,9 @@ export default function KdPenggemukanLaporan() {
 
       {selectedBatch && !isLoading && !kpi && (
         <div className="text-center py-16 px-8">
-          <p className="text-4xl mb-4">ðŸ</p>
+          <div className="w-16 h-16 rounded-3xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
+            <LayoutGrid size={32} className="text-green-500" />
+          </div>
           <p className="text-sm font-semibold text-white mb-2">Data belum cukup</p>
           <p className="text-xs text-[#4B6478]">Tambahkan ternak, log pakan, dan data timbang untuk melihat laporan</p>
         </div>

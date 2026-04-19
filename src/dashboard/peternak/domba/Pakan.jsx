@@ -1,265 +1,338 @@
 import React, { useState, useMemo } from 'react'
-import { motion } from 'framer-motion'
-import { Plus, Wheat, ChevronDown, AlertTriangle } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Plus, X, Wheat, Calendar, Info, Trash2, ArrowLeft } from 'lucide-react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useAuth } from '@/lib/hooks/useAuth'
 import {
-  useDombaBatches, useDombaFeedLogs, useAddDombaFeedLog,
+  useDombaActiveBatches,
+  useDombaFeedLogs,
+  useAddDombaFeedLog,
+  useDeleteDombaFeedLog
 } from '@/lib/hooks/useDombaPenggemukanData'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { DatePicker } from '@/components/ui/DatePicker'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
-import { formatIDRShort } from '@/lib/format'
+import { toast } from 'sonner'
 
-// Stok pakan — state lokal sederhana (Phase 4 bisa dipindah ke DB)
-// Untuk sekarang: peternak input manual estimasi stok
-const DEFAULT_STOK = [
-  { name: 'Rumput Gajah segar',    satuan: 'kg', kebutuhan_per_hari: 200 },
-  { name: 'Jerami fermentasi',     satuan: 'kg', kebutuhan_per_hari: 80  },
-  { name: 'Konsentrat komersial',  satuan: 'kg', kebutuhan_per_hari: 50  },
-  { name: 'Dedak padi',            satuan: 'kg', kebutuhan_per_hari: 30  },
-]
+const BASE = '/peternak/peternak_domba_penggemukan'
 
-function FeedLogCard({ log }) {
-  const total = (log.hijauan_kg || 0) + (log.konsentrat_kg || 0) + (log.dedak_kg || 0) + (log.other_feed_kg || 0)
+export default function DombaPakan() {
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const batchId = searchParams.get('batch')
+  
+  const { profile } = useAuth()
+  const { data: batches = [], isLoading: loadingBatches } = useDombaActiveBatches()
+  const activeBatch = useMemo(() => 
+    batchId ? batches.find(b => b.id === batchId) : batches[0]
+  , [batchId, batches])
 
-  return (
-    <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <p className="font-['Sora'] font-bold text-sm text-white">{log.log_date}</p>
-          <p className="text-[11px] text-[#4B6478]">{log.kandang_name} · {log.animal_count} ekor</p>
-        </div>
-        <div className="text-right">
-          <p className="font-bold text-sm text-white">{log.consumed_kg ?? (total - (log.sisa_pakan_kg || 0)).toFixed(1)} kg</p>
-          <p className="text-[10px] text-[#4B6478]">Dikonsumsi</p>
-        </div>
-      </div>
+  const { data: logs = [], isLoading: loadingLogs } = useDombaFeedLogs(activeBatch?.id)
+  const addLog = useAddDombaFeedLog()
+  const deleteLog = useDeleteDombaFeedLog()
 
-      <div className="grid grid-cols-4 gap-2 text-center pt-2 border-t border-white/[0.04]">
-        <div>
-          <p className="text-[11px] font-bold text-white">{log.hijauan_kg} kg</p>
-          <p className="text-[10px] text-[#4B6478]">Hijauan</p>
-        </div>
-        <div>
-          <p className="text-[11px] font-bold text-white">{log.konsentrat_kg} kg</p>
-          <p className="text-[10px] text-[#4B6478]">Konsentrat</p>
-        </div>
-        <div>
-          <p className="text-[11px] font-bold text-white">{log.dedak_kg} kg</p>
-          <p className="text-[10px] text-[#4B6478]">Dedak</p>
-        </div>
-        <div>
-          <p className="text-[11px] font-bold text-amber-400">{log.sisa_pakan_kg} kg</p>
-          <p className="text-[10px] text-[#4B6478]">Sisa</p>
-        </div>
-      </div>
-
-      {log.feed_cost_idr && (
-        <p className="text-[10px] text-[#4B6478] mt-2">
-          Biaya: <span className="text-white font-semibold">{formatIDRShort(log.feed_cost_idr)}</span>
-        </p>
-      )}
-    </div>
-  )
-}
-
-export default function KdPenggemukanPakan() {
-  const { data: batches = [], isLoading: loadingBatches } = useDombaBatches()
-  const [selectedBatch, setSelectedBatch] = useState('')
-  const [sheetOpen, setSheetOpen] = useState(false)
-
-  const { data: feedLogs = [], isLoading: loadingLogs } = useDombaFeedLogs(selectedBatch)
-  const addFeedLog = useAddDombaFeedLog()
+  const [showAdd, setShowAdd] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [form, setForm] = useState({
     log_date: new Date().toISOString().split('T')[0],
-    kandang_name: '', animal_count: '',
-    hijauan_kg: '', konsentrat_kg: '', dedak_kg: '',
-    other_feed_kg: '0', sisa_pakan_kg: '0',
-    feed_cost_idr: '', notes: '',
+    hijauan_kg: '',
+    konsentrat_kg: '',
+    dedak_kg: '',
+    other_feed_kg: '',
+    sisa_pakan_kg: '',
+    notes: ''
   })
 
-  // Summary konsumsi batch ini
-  const summary = useMemo(() => {
-    const totalHijauan    = feedLogs.reduce((s, l) => s + (l.hijauan_kg || 0), 0)
-    const totalKonsentrat = feedLogs.reduce((s, l) => s + (l.konsentrat_kg || 0), 0)
-    const totalDedak      = feedLogs.reduce((s, l) => s + (l.dedak_kg || 0), 0)
-    const totalConsumed   = feedLogs.reduce((s, l) => s + (parseFloat(l.consumed_kg) || 0), 0)
-    const totalCost       = feedLogs.reduce((s, l) => s + (l.feed_cost_idr || 0), 0)
-    return { totalHijauan, totalKonsentrat, totalDedak, totalConsumed, totalCost, days: feedLogs.length }
-  }, [feedLogs])
+  // Calculations
+  const stats = useMemo(() => {
+    if (!logs.length) return { total: 0, avg: 0 }
+    const total = logs.reduce((sum, l) => sum + (l.consumed_kg || 0), 0)
+    return {
+      total: total.toFixed(1),
+      avg: (total / logs.length).toFixed(1)
+    }
+  }, [logs])
 
-  function handleSave() {
-    if (!form.kandang_name || !form.animal_count || !selectedBatch) return
-    addFeedLog.mutate({
-      batch_id: selectedBatch,
-      log_date: form.log_date,
-      kandang_name: form.kandang_name,
-      animal_count: parseInt(form.animal_count),
-      hijauan_kg:    parseFloat(form.hijauan_kg    || 0),
-      konsentrat_kg: parseFloat(form.konsentrat_kg || 0),
-      dedak_kg:      parseFloat(form.dedak_kg      || 0),
-      other_feed_kg: parseFloat(form.other_feed_kg || 0),
-      sisa_pakan_kg: parseFloat(form.sisa_pakan_kg || 0),
-      feed_cost_idr: form.feed_cost_idr ? parseInt(form.feed_cost_idr) : null,
-      notes: form.notes,
-    }, {
-      onSuccess: () => {
-        setSheetOpen(false)
-        setForm({ log_date: new Date().toISOString().split('T')[0], kandang_name: '', animal_count: '', hijauan_kg: '', konsentrat_kg: '', dedak_kg: '', other_feed_kg: '0', sisa_pakan_kg: '0', feed_cost_idr: '', notes: '' })
-      }
-    })
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!activeBatch) return
+    
+    setIsSubmitting(true)
+    try {
+      await addLog.mutateAsync({
+        batch_id: activeBatch.id,
+        ...form,
+        hijauan_kg: parseFloat(form.hijauan_kg) || 0,
+        konsentrat_kg: parseFloat(form.konsentrat_kg) || 0,
+        dedak_kg: parseFloat(form.dedak_kg) || 0,
+        other_feed_kg: parseFloat(form.other_feed_kg) || 0,
+        sisa_pakan_kg: parseFloat(form.sisa_pakan_kg) || 0
+      })
+      toast.success('Log pakan berhasil disimpan')
+      setShowAdd(false)
+      setForm({
+        log_date: new Date().toISOString().split('T')[0],
+        hijauan_kg: '',
+        konsentrat_kg: '',
+        dedak_kg: '',
+        other_feed_kg: '',
+        sisa_pakan_kg: '',
+        notes: ''
+      })
+    } catch (err) {
+      toast.error('Gagal menyimpan log pakan')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  if (loadingBatches) return <LoadingSpinner fullPage />
+  const handleDelete = async (id) => {
+    if (!confirm('Hapus log pakan ini?')) return
+    try {
+      await deleteLog.mutateAsync(id)
+      toast.success('Log pakan dihapus')
+    } catch (err) {
+      toast.error('Gagal menghapus log')
+    }
+  }
+
+  if (loadingBatches || (activeBatch && loadingLogs)) return <LoadingSpinner fullPage />
 
   return (
     <div className="text-slate-100 pb-24">
-
       {/* Header */}
-      <header className="px-4 pt-6 pb-4 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.04] flex items-center justify-between">
-        <div>
-          <h1 className="font-['Sora'] font-black text-xl text-white mb-0.5">Log Pakan Harian</h1>
-          <p className="text-xs text-[#4B6478]">{feedLogs.length} entri · {summary.days} hari tercatat</p>
+      <header className="px-4 pt-6 pb-5 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.04]">
+        <div className="flex items-center gap-3 mb-4">
+          <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-[#4B6478] hover:text-white transition-colors">
+            <ArrowLeft size={18} />
+          </button>
+          <h1 className="font-['Sora'] font-black text-xl text-white">Log Pakan Domba</h1>
         </div>
-        {selectedBatch && (
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setSheetOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-green-600 rounded-xl text-white text-xs font-extrabold font-['Sora'] shadow-[0_3px_12px_rgba(22,163,74,0.35)]"
-          >
-            <Plus size={13} />
-            Log Pakan
-          </motion.button>
+        
+        {batches.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+            {batches.map(b => (
+              <button
+                key={b.id}
+                onClick={() => navigate(`${BASE}/pakan?batch=${b.id}`)}
+                className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                  activeBatch?.id === b.id 
+                    ? 'bg-green-600 border-green-500 text-white' 
+                    : 'bg-white/[0.03] border-white/[0.06] text-[#4B6478]'
+                }`}
+              >
+                {b.batch_code}
+              </button>
+            ))}
+          </div>
         )}
       </header>
 
-      {/* Pilih Batch */}
-      <div className="px-4 mt-4">
-        <div className="relative">
-          <select value={selectedBatch} onChange={e => setSelectedBatch(e.target.value)}
-            className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:border-green-500/40 appearance-none">
-            <option value="">-- Pilih batch --</option>
-            {batches.map(b => (
-              <option key={b.id} value={b.id}>{b.batch_code} — {b.kandang_name}</option>
-            ))}
-          </select>
-          <ChevronDown size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#4B6478] pointer-events-none" />
+      {!activeBatch ? (
+        <div className="px-4 py-20 text-center">
+          <div className="w-16 h-16 bg-white/[0.03] rounded-full flex items-center justify-center mx-auto mb-4 border border-white/[0.06]">
+            <Wheat size={24} className="text-[#4B6478]" />
+          </div>
+          <p className="text-sm font-bold text-white mb-1">Pilih Batch Terlebih Dahulu</p>
+          <p className="text-xs text-[#4B6478]">Kamu perlu memiliki batch aktif untuk mencatat pakan</p>
         </div>
-      </div>
-
-      {selectedBatch && (
-        <>
-          {/* Summary batch */}
-          <div className="px-4 mt-4 grid grid-cols-2 gap-2">
-            <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
-              <p className="font-['Sora'] font-black text-base text-white leading-none mb-0.5">
-                {summary.totalConsumed.toFixed(0)} kg
-              </p>
-              <p className="text-[10px] text-[#4B6478]">Total Dikonsumsi</p>
+      ) : (
+        <div className="px-4 mt-6">
+          {/* Summary Stats */}
+          <div className="grid grid-cols-2 gap-3 mb-8">
+            <div className="bg-green-600/[0.05] border border-green-600/10 rounded-2xl p-4">
+              <p className="text-[10px] text-green-500/60 font-bold uppercase tracking-wider mb-1">Total Konsumsi</p>
+              <p className="text-xl font-black text-white font-['Sora']">{stats.total} <span className="text-xs font-normal text-[#4B6478]">kg</span></p>
             </div>
-            <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
-              <p className="font-['Sora'] font-black text-base text-white leading-none mb-0.5">
-                {summary.totalCost ? formatIDRShort(summary.totalCost) : '—'}
-              </p>
-              <p className="text-[10px] text-[#4B6478]">Total Biaya Pakan</p>
-            </div>
-            <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
-              <p className="font-['Sora'] font-black text-base text-white leading-none mb-0.5">
-                {summary.totalHijauan.toFixed(0)} kg
-              </p>
-              <p className="text-[10px] text-[#4B6478]">Total Hijauan</p>
-            </div>
-            <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
-              <p className="font-['Sora'] font-black text-base text-white leading-none mb-0.5">
-                {summary.totalKonsentrat.toFixed(0)} kg
-              </p>
-              <p className="text-[10px] text-[#4B6478]">Total Konsentrat</p>
+            <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
+              <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-wider mb-1">Rata-rata/Hari</p>
+              <p className="text-xl font-black text-white font-['Sora']">{stats.avg} <span className="text-xs font-normal text-[#4B6478]">kg</span></p>
             </div>
           </div>
 
-          {/* Log List */}
-          <div className="px-4 mt-4 space-y-3">
-            {loadingLogs ? <LoadingSpinner />
-            : feedLogs.length === 0 ? (
-              <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-                <p className="text-3xl mb-3">ðŸŒ¾</p>
-                <p className="text-sm font-semibold text-white mb-1">Belum ada log pakan</p>
-                <p className="text-xs text-[#4B6478]">Catat konsumsi pakan harian untuk kalkulasi FCR</p>
-              </div>
-            ) : feedLogs.map(log => <FeedLogCard key={log.id} log={log} />)}
+          {/* Logs List */}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-['Sora'] font-bold text-sm text-white">Riwayat Pemberian Pakan</h2>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1.5"
+            >
+              <Plus size={14} /> Catat Pakan
+            </button>
           </div>
-        </>
+
+          <div className="space-y-3">
+            {logs.length === 0 ? (
+              <p className="text-center py-8 text-xs text-[#4B6478]">Belum ada catatan pakan untuk batch ini</p>
+            ) : (
+              logs.map(log => (
+                <div key={log.id} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 transition-all hover:bg-white/[0.05]">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center border border-green-500/20">
+                        <Calendar size={14} className="text-green-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-white">{new Date(log.log_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                        <p className="text-[10px] text-[#4B6478]">Diinput oleh {log.created_by_name || 'Tim'}</p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => handleDelete(log.id)}
+                      className="p-1.5 text-red-500/40 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-2 py-2 border-t border-white/[0.04]">
+                    <div>
+                      <p className="text-[10px] text-[#4B6478] mb-0.5 font-bold uppercase tracking-widest">Input</p>
+                      <p className="text-xs font-bold text-white">{(log.hijauan_kg + log.konsentrat_kg + log.dedak_kg + log.other_feed_kg).toFixed(1)} kg</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-[#4B6478] mb-0.5 font-bold uppercase tracking-widest">Sisa</p>
+                      <p className="text-xs font-bold text-amber-400">{log.sisa_pakan_kg || 0} kg</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-[#4B6478] mb-0.5 font-bold uppercase tracking-widest">Konsumsi</p>
+                      <p className="text-xs font-bold text-green-400">{log.consumed_kg || 0} kg</p>
+                    </div>
+                  </div>
+
+                  {log.notes && (
+                    <div className="mt-2 flex items-start gap-2 p-2 bg-white/[0.02] rounded-lg">
+                      <Info size={12} className="text-[#4B6478] shrink-0 mt-0.5" />
+                      <p className="text-[10px] text-[#4B6478] italic leading-relaxed">{log.notes}</p>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       )}
 
-      {/* Sheet Tambah Log */}
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="bg-[#0C1319] border-t border-white/10 rounded-t-3xl max-h-[90vh] overflow-y-auto">
-          <SheetHeader className="mb-5">
-            <SheetTitle className="font-['Sora'] font-black text-white text-lg">Log Pakan Harian</SheetTitle>
-          </SheetHeader>
-          <div className="space-y-4 pb-8">
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Tanggal *</label>
-                <DatePicker value={form.log_date} onChange={v => setForm(f => ({ ...f, log_date: v }))} />
+      {/* Add Log Modal */}
+      <AnimatePresence>
+        {showAdd && (
+          <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAdd(false)}
+              className="absolute inset-0 bg-[#06090F]/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              className="relative w-full max-w-md bg-[#0C1319] border-t sm:border border-white/[0.06] rounded-t-[32px] sm:rounded-[32px] p-6 pb-10 shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-['Sora'] font-black text-lg text-white">Input Log Pakan</h3>
+                <button onClick={() => setShowAdd(false)} className="p-2 -mr-2 text-[#4B6478]">
+                  <X size={20} />
+                </button>
               </div>
-              <div>
-                <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Nama Kandang *</label>
-                <input value={form.kandang_name} onChange={e => setForm(f => ({ ...f, kandang_name: e.target.value }))}
-                  placeholder="KDG-F2"
-                  className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-              </div>
-            </div>
 
-            <div>
-              <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Jumlah Ternak di Kandang *</label>
-              <input type="number" value={form.animal_count} onChange={e => setForm(f => ({ ...f, animal_count: e.target.value }))}
-                placeholder="12"
-                className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-            </div>
-
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5 space-y-3">
-              <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest">Pakan Diberikan (kg)</p>
-              {[
-                ['hijauan_kg',    'Hijauan (rumput / jerami fermentasi)'],
-                ['konsentrat_kg', 'Konsentrat komersial'],
-                ['dedak_kg',      'Dedak padi / pollard'],
-                ['other_feed_kg', 'Pakan lainnya'],
-                ['sisa_pakan_kg', 'Sisa pakan (tidak dimakan)'],
-              ].map(([key, label]) => (
-                <div key={key} className="flex items-center gap-3">
-                  <label className="text-xs text-[#94A3B8] flex-1">{label}</label>
+              <form onSubmit={handleSubmit} className="space-y-4 font-['DM Sans']">
+                <div>
+                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Tanggal Pemberian</label>
                   <input
-                    type="number" step="0.1"
-                    value={form[key]}
-                    onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                    placeholder="0"
-                    className="w-20 px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white text-right focus:outline-none focus:border-green-500/40"
+                    type="date"
+                    required
+                    value={form.log_date}
+                    onChange={e => setForm({...form, log_date: e.target.value})}
+                    className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-green-500/50 transition-colors"
                   />
                 </div>
-              ))}
-            </div>
 
-            <div>
-              <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Biaya Pakan Hari Ini (Rp)</label>
-              <input type="number" value={form.feed_cost_idr} onChange={e => setForm(f => ({ ...f, feed_cost_idr: e.target.value }))}
-                placeholder="Opsional"
-                className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-            </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Hijauan (kg)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      placeholder="0.0"
+                      value={form.hijauan_kg}
+                      onChange={e => setForm({...form, hijauan_kg: e.target.value})}
+                      className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-green-500/50 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Konsentrat (kg)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      placeholder="0.0"
+                      value={form.konsentrat_kg}
+                      onChange={e => setForm({...form, konsentrat_kg: e.target.value})}
+                      className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-green-500/50 transition-colors"
+                    />
+                  </div>
+                </div>
 
-            <motion.button
-              whileTap={{ scale: 0.97 }}
-              disabled={!form.kandang_name || !form.animal_count || addFeedLog.isPending}
-              onClick={handleSave}
-              className="w-full py-3.5 bg-green-600 disabled:opacity-40 text-white font-bold rounded-xl text-sm"
-            >
-              {addFeedLog.isPending ? 'Menyimpan...' : 'Simpan Log Pakan'}
-            </motion.button>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Dedak (kg)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      placeholder="0.0"
+                      value={form.dedak_kg}
+                      onChange={e => setForm({...form, dedak_kg: e.target.value})}
+                      className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-green-500/50 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-amber-400 uppercase mb-1.5 ml-1 tracking-widest leading-none">Sisa Pakan (kg)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      placeholder="0.0"
+                      value={form.sisa_pakan_kg}
+                      onChange={e => setForm({...form, sisa_pakan_kg: e.target.value})}
+                      className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-amber-400 placeholder:text-[#4B6478] focus:outline-none focus:border-green-500/50 font-black transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Lainnya (kg)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    placeholder="0.0"
+                    value={form.other_feed_kg}
+                    onChange={e => setForm({...form, other_feed_kg: e.target.value})}
+                    className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-green-500/50 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Catatan</label>
+                  <textarea
+                    placeholder="Catatan pakan..."
+                    rows={2}
+                    value={form.notes}
+                    onChange={e => setForm({...form, notes: e.target.value})}
+                    className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-green-500/50 resize-none transition-colors"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-green-600 hover:bg-green-500 disabled:bg-white/[0.03] disabled:text-[#4B6478] text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-green-900/10 flex items-center justify-center gap-2 mt-4"
+                >
+                  {isSubmitting ? 'Menyimpan...' : 'Simpan Log Pakan'}
+                </button>
+              </form>
+            </motion.div>
           </div>
-        </SheetContent>
-      </Sheet>
-
+        )}
+      </AnimatePresence>
     </div>
   )
 }

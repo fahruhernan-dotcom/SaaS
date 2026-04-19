@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, ChevronRight, X, Calendar, Hash, Warehouse, AlignLeft } from 'lucide-react'
+import { Plus, ChevronRight, X, Calendar, Hash, Warehouse, AlignLeft, LayoutGrid } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { DatePicker } from '@/components/ui/DatePicker'
@@ -10,6 +10,7 @@ import {
   calcSapiHariDiFarm,
   calcSapiMortalitas,
 } from '@/lib/hooks/useSapiPenggemukanData'
+import { useAuth } from '@/lib/hooks/useAuth'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
 
 const BASE = '/peternak/peternak_sapi_penggemukan'
@@ -82,6 +83,7 @@ function BatchCard({ batch, onClick }) {
 }
 
 function CreateBatchSheet({ onClose }) {
+  const { tenant } = useAuth()
   const generateBatchCode = () => {
     const d = new Date()
     const dStr = `${String(d.getDate()).padStart(2, '0')}${String(d.getMonth() + 1).padStart(2, '0')}${d.getFullYear().toString().slice(2)}`
@@ -92,6 +94,7 @@ function CreateBatchSheet({ onClose }) {
   const { register, handleSubmit, control, formState: { errors } } = useForm({
     defaultValues: {
       batch_code: generateBatchCode(),
+      kandang_name: tenant?.name || '',
       start_date: new Date().toISOString().split('T')[0]
     }
   })
@@ -274,7 +277,9 @@ export default function SapiBatch() {
         </p>
         {active.length === 0 ? (
           <div className="text-center py-10 border border-dashed border-white/10 rounded-2xl">
-            <p className="text-2xl mb-2">ðŸ„</p>
+            <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-4">
+               <LayoutGrid size={32} className="text-amber-500" />
+            </div>
             <p className="text-sm font-semibold text-white mb-1">Belum ada batch aktif</p>
             <p className="text-xs text-[#4B6478]">Tap tombol Buat Batch di atas</p>
           </div>

@@ -1,438 +1,970 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Search, X, Scale, ShoppingCart, ChevronDown } from 'lucide-react'
-import { useSearchParams } from 'react-router-dom'
+import { 
+  Plus, Search, X, Tag, Scale, AlertCircle, ChevronsUpDown, 
+  Check, Trash2, ListPlus, Edit2, Activity, ArrowLeft, 
+  LayoutGrid, ChevronDown, RefreshCw, Filter, Warehouse, AlignLeft, Hash
+} from 'lucide-react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useForm, Controller, useFieldArray } from 'react-hook-form'
+import { DatePicker } from '@/components/ui/DatePicker'
+import { InputRupiah } from '@/components/ui/InputRupiah'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/hooks/useAuth'
 import {
-  useDombaBatches, useDombaAnimals,
-  useAddDombaAnimal, useAddDombaWeightRecord,
-  calcHariDiFarm, calcADGFromRecords,
+  useDombaAnimals,
+  useDombaBatches,
+  useAddDombaAnimal,
+  useUpdateDombaAnimal,
+  useBulkAddDombaAnimals,
+  calcHariDiFarm,
+  calcADGFromRecords,
 } from '@/lib/hooks/useDombaPenggemukanData'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { DatePicker } from '@/components/ui/DatePicker'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
 
-const STATUS_CFG = {
-  active: { label: 'Aktif',    cls: 'text-green-400 bg-green-500/20 border-green-500/30' },
-  sold:   { label: 'Terjual',  cls: 'text-blue-400 bg-blue-500/20 border-blue-500/30' },
-  dead:   { label: 'Mati',     cls: 'text-red-400 bg-red-500/20 border-red-500/30' },
-  culled: { label: 'Afkir',    cls: 'text-slate-400 bg-white/10 border-white/15' },
+const BREED_SUGGESTIONS = [
+  'Garut', 'Priangan', 'Gembong', 'Texel', 'Dorper', 'Merino',
+  'Ekor Gemuk (DEG)', 'Ekor Tipis (DET)', 'Sumbawa', 'Donggala',
+  'Barros', 'Compass Agribisnis', 'Lainnya',
+]
+
+const STATUS_CONFIG = {
+  active:  { label: 'Aktif',    color: 'text-green-400 bg-green-500/10 border-green-500/20' },
+  sold:    { label: 'Terjual',  color: 'text-blue-400 bg-blue-500/10 border-blue-500/20'  },
+  dead:    { label: 'Mati',     color: 'text-red-400 bg-red-500/10 border-red-500/20'   },
+  culled:  { label: 'Afkir',    color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
 }
 
-const SPECIES_LABEL = { kambing: 'ðŸ Kambing', domba: 'ðŸ‘ Domba' }
+const WEIGH_METHOD_LABEL = {
+  timbang_langsung:   { label: 'Timbang',  color: 'text-green-400' },
+  estimasi_pita_ukur: { label: 'Pita Ukur',color: 'text-amber-400' },
+  estimasi_visual:    { label: 'Estimasi', color: 'text-slate-400'  },
+}
 
-function AnimalCard({ animal, onTimbang }) {
-  const hari = calcHariDiFarm(animal.entry_date, animal.exit_date)
-  const adg = calcADGFromRecords(
-    animal.kd_penggemukan_weight_records ?? [],
+function AnimalCard({ animal, onClick }) {
+  const hari   = calcHariDiFarm(animal.entry_date, animal.exit_date)
+  const adg    = calcADGFromRecords(
+    animal.domba_penggemukan_weight_records ?? [],
     animal.entry_date,
     animal.entry_weight_kg
   )
   const latestW = animal.latest_weight_kg ?? animal.entry_weight_kg
-  const gain = latestW - animal.entry_weight_kg
-  const cfg = STATUS_CFG[animal.status] ?? STATUS_CFG.active
+  const gain    = (latestW - animal.entry_weight_kg).toFixed(1)
+  const st      = STATUS_CONFIG[animal.status] ?? STATUS_CONFIG.active
 
   return (
-    <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
-      <div className="flex items-start justify-between mb-2">
+    <motion.div
+      whileTap={{ scale: 0.98 }}
+      onClick={onClick}
+      className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 cursor-pointer active:bg-white/[0.05] transition-colors"
+    >
+      <div className="flex items-start justify-between mb-3">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
             <span className="font-['Sora'] font-bold text-sm text-white">{animal.ear_tag}</span>
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-semibold ${cfg.cls}`}>
-              {cfg.label}
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-bold ${st.color}`}>
+              {st.label}
             </span>
           </div>
-          <p className="text-[11px] text-[#4B6478]">
-            {SPECIES_LABEL[animal.species]} · {animal.breed ?? 'Ras tidak diisi'} · {animal.sex ?? '—'}
+          <p className="text-[11px] text-[#4B6478] font-bold uppercase tracking-tight">
+            {animal.breed || 'Breed tidak diketahui'} · {animal.sex === 'betina' ? 'BETINA' : 'JANTAN'}
           </p>
         </div>
-        {animal.status === 'active' && (
-          <motion.button
-            whileTap={{ scale: 0.94 }}
-            onClick={() => onTimbang(animal)}
-            className="flex items-center gap-1 px-2.5 py-1.5 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400 text-[10px] font-bold"
-          >
-            <Scale size={11} />
-            Timbang
-          </motion.button>
-        )}
+        <div className="text-right">
+          <p className="text-sm font-black text-white font-['Sora'] leading-tight">
+            {latestW} <span className="text-[10px] text-[#4B6478]">kg</span>
+          </p>
+          <p className={`text-[10px] font-bold ${parseFloat(gain) > 0 ? 'text-green-400' : 'text-[#4B6478]'}`}>
+            {parseFloat(gain) > 0 ? `+${gain} kg` : gain === '0.0' ? 'Netral' : `${gain} kg`}
+          </p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-2 pt-2 border-t border-white/[0.04]">
+      <div className="grid grid-cols-3 gap-2 text-center mt-3 pt-3 border-t border-white/[0.04]">
         <div>
-          <p className="text-[11px] font-bold text-white">{animal.entry_weight_kg} kg</p>
-          <p className="text-[10px] text-[#4B6478]">Masuk</p>
+          <p className="text-[11px] font-black text-white">{hari}</p>
+          <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-wider">Hari</p>
         </div>
-        <div>
-          <p className="text-[11px] font-bold text-white">{latestW} kg</p>
-          <p className="text-[10px] text-[#4B6478]">Terakhir</p>
-        </div>
-        <div>
-          <p className={`text-[11px] font-bold ${gain > 0 ? 'text-green-400' : 'text-[#4B6478]'}`}>
-            +{gain.toFixed(1)} kg
-          </p>
-          <p className="text-[10px] text-[#4B6478]">PBBH</p>
-        </div>
-        <div>
-          <p className={`text-[11px] font-bold ${adg >= 150 ? 'text-green-400' : adg ? 'text-amber-400' : 'text-[#4B6478]'}`}>
+        <div className="border-x border-white/[0.06]">
+          <p className={`text-[11px] font-black ${adg >= 150 ? 'text-green-400' : adg ? 'text-amber-400' : 'text-[#4B6478]'}`}>
             {adg ? `${adg}g` : '—'}
           </p>
-          <p className="text-[10px] text-[#4B6478]">ADG</p>
+          <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-wider">ADG/hr</p>
+        </div>
+        <div>
+          <p className="text-[11px] font-black text-white">
+            {animal.entry_age_months ? `${animal.entry_age_months} bln` : '—'}
+          </p>
+          <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-wider">Usia</p>
         </div>
       </div>
 
-      {animal.status === 'active' && (
-        <p className="text-[10px] text-[#4B6478] mt-2">
-          Hari ke-{hari} · Kandang: {animal.kandang_slot ?? '—'}
-          {animal.latest_weight_date && ` · Timbang terakhir: ${animal.latest_weight_date}`}
-        </p>
+      {animal.latest_weight_date && animal.domba_penggemukan_weight_records?.length > 0 && (
+        <div className="mt-2.5 pt-2.5 border-t border-white/[0.04] flex justify-between items-center">
+          <span className="text-[10px] text-[#4B6478] font-medium">
+            Timbang: {new Date(animal.latest_weight_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+          </span>
+          {(() => {
+            const lastRecord = animal.domba_penggemukan_weight_records?.sort(
+              (a, b) => new Date(b.weigh_date) - new Date(a.weigh_date)
+            )[0]
+            const methodCfg = lastRecord ? WEIGH_METHOD_LABEL[lastRecord.weigh_method] : null
+            return methodCfg ? (
+              <span className={`text-[9px] font-black uppercase tracking-widest ${methodCfg.color}`}>
+                {methodCfg.label}
+              </span>
+            ) : null
+          })()}
+        </div>
       )}
-    </div>
+    </motion.div>
   )
 }
 
-export default function KdPenggemukanTernak() {
-  const [searchParams] = useSearchParams()
-  const defaultBatch = searchParams.get('batch') ?? ''
+function AddAnimalSheet({ batchId, animals = [], onClose }) {
   const { tenant } = useAuth()
+  const [openBreed, setOpenBreed] = useState(false)
+  
+  const generateEarTag = () => {
+    const name = tenant?.business_name || 'Domba'
+    const initials = name.split(' ').map(w => w[0]).join('').slice(0, 3).toUpperCase()
+    const seq = String(animals.length + 1).padStart(4, '0')
+    return `${initials}-${new Date().getFullYear()}-${seq}`
+  }
+
+  const { register, handleSubmit, watch, control, formState: { errors } } = useForm({
+    defaultValues: { 
+      ear_tag: generateEarTag(),
+      sex: 'jantan', 
+      entry_date: new Date().toISOString().split('T')[0],
+      acquisition_type: 'beli',
+      age_confidence: 'estimasi'
+    }
+  })
+  const { mutate: addAnimal, isPending } = useAddDombaAnimal()
+  const acquisitionType = watch('acquisition_type')
+
+  const onSubmit = (data) => {
+    addAnimal(
+      {
+        batch_id:           batchId,
+        ear_tag:            data.ear_tag.trim(),
+        breed:              data.breed?.trim() || null,
+        sex:                data.sex,
+        entry_age_months:   data.entry_age_months ? parseInt(data.entry_age_months) : null,
+        age_confidence:     data.age_confidence,
+        acquisition_type:   data.acquisition_type,
+        entry_date:         data.entry_date,
+        entry_weight_kg:    parseFloat(data.entry_weight_kg),
+        entry_bcs:          data.entry_bcs ? parseFloat(data.entry_bcs) : null,
+        entry_condition:    data.entry_condition || null,
+        purchase_price_idr: acquisitionType === 'beli' && data.purchase_price_idr
+          ? parseInt(data.purchase_price_idr)
+          : 0,
+        source:             data.source?.trim() || null,
+        kandang_slot:       data.kandang_slot?.trim() || null,
+        notes:              data.notes?.trim() || null,
+      },
+      { onSuccess: onClose }
+    )
+  }
+
+  const labelStyle = "flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-green-500/80 mb-2 ml-1"
+  const inputContainerStyle = "relative transition-all duration-300 group/input"
+  const inputClass = "w-full h-11 bg-[#111C24] border border-white/5 focus:border-green-500/40 rounded-xl text-[14px] font-bold text-white placeholder:text-[#4B6478] focus:bg-[#15232d] focus:outline-none transition-all shadow-inner"
+
+  return (
+    <motion.div
+      initial={{ x: '100%', opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: '100%', opacity: 0 }}
+      transition={{ type: 'spring', damping: 28, stiffness: 250 }}
+      className="fixed inset-y-0 right-0 w-[420px] max-w-full z-50 bg-[#0A1015]/95 backdrop-blur-xl border-l border-white/[0.08] shadow-[-10px_0_40px_rgba(0,0,0,0.5)] flex flex-col"
+    >
+      <div className="px-6 pt-8 pb-4 flex items-center justify-between border-b border-white/5 relative">
+        <div className="absolute -top-10 right-10 w-32 h-32 bg-green-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10">
+          <h2 className="font-['Sora'] font-extrabold text-[22px] text-white tracking-tight leading-none mb-1">Tambah Domba</h2>
+          <p className="text-[11px] text-[#4B6478] font-medium">Tambah record ternak baru</p>
+        </div>
+        <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#94A3B8] hover:text-white hover:bg-white/10 transition-colors relative z-10">
+          <X size={16} />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-6 py-5 custom-scrollbar relative">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+
+          <div className={inputContainerStyle}>
+            <label className={labelStyle}>
+              <Tag size={12} className="text-green-500" />
+              Ear Tag / ID <span className="text-green-500/50">*</span>
+            </label>
+            <div className="relative">
+              <input
+                {...register('ear_tag', { required: true })}
+                placeholder="e.g. DM-2026-0001"
+                className={`pl-11 pr-4 ${inputClass}`}
+              />
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-green-500/40 group-focus-within/input:text-green-500 transition-colors text-lg">#</div>
+            </div>
+            {errors.ear_tag && <p className="text-red-400 text-[10px] mt-1.5 ml-1 font-medium">ID wajib diisi</p>}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className={inputContainerStyle}>
+              <label className={labelStyle}>
+                <Warehouse size={12} className="text-green-500" />
+                Breed
+              </label>
+              <Controller
+                control={control}
+                name="breed"
+                render={({ field }) => (
+                  <Popover open={openBreed} onOpenChange={setOpenBreed}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn(
+                          "w-full px-4 h-11 bg-[#111C24] border border-white/5 rounded-xl text-sm justify-between hover:bg-white/5 transition-all text-left font-normal",
+                          !field.value ? "text-[#4B6478]" : "text-white"
+                        )}
+                      >
+                        <span className="truncate">{field.value ? field.value : "Garut, Texel..."}</span>
+                        <ChevronsUpDown size={14} className="opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0 bg-[#111C24] border-white/10 shadow-2xl z-[5000]">
+                      <Command className="bg-transparent">
+                        <CommandInput placeholder="Cari breed..." className="h-11 border-none focus:ring-0 text-white" />
+                        <CommandList className="max-h-[300px] scrollbar-thin">
+                          <CommandEmpty className="py-4 text-center text-xs opacity-50 font-bold uppercase">Tidak ditemukan.</CommandEmpty>
+                          <CommandGroup>
+                            {BREED_SUGGESTIONS.map(b => (
+                              <CommandItem
+                                key={b}
+                                value={b}
+                                onSelect={() => {
+                                  field.onChange(b)
+                                  setOpenBreed(false)
+                                }}
+                                className="flex items-center justify-between py-2.5 px-3 cursor-pointer hover:bg-green-500/10 rounded-lg text-xs font-bold uppercase tracking-widest"
+                              >
+                                <span className={cn(field.value === b ? "text-green-400" : "text-white")}>{b}</span>
+                                {field.value === b && <Check size={14} className="text-green-400" />}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              />
+            </div>
+
+            <div className={inputContainerStyle}>
+              <label className={labelStyle}>
+                <Activity size={12} className="text-green-500" />
+                Kelamin <span className="text-green-500/50">*</span>
+              </label>
+              <Controller
+                control={control}
+                name="sex"
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full px-4 h-11 bg-[#111C24] border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-green-500/50 outline-none transition-all shadow-inner">
+                      <SelectValue placeholder="Pilih Kelamin" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#111C24] border border-white/10 rounded-xl shadow-xl z-[5000]">
+                      <SelectItem value="jantan" className="text-white hover:bg-white/5 cursor-pointer py-2.5 px-3 rounded-lg mx-1 my-0.5">Jantan</SelectItem>
+                      <SelectItem value="betina" className="text-white hover:bg-white/5 cursor-pointer py-2.5 px-3 rounded-lg mx-1 my-0.5">Betina</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className={inputContainerStyle}>
+              <label className={labelStyle}>
+                <Hash size={12} className="text-green-500" />
+                Usia Masuk (bln)
+              </label>
+              <input
+                {...register('entry_age_months')}
+                type="number"
+                placeholder="e.g. 12"
+                className={`px-4 text-center ${inputClass}`}
+              />
+            </div>
+            <div className={inputContainerStyle}>
+              <label className={labelStyle}>
+                <Scale size={12} className="text-green-500" />
+                Akurasi Usia
+              </label>
+              <Controller
+                control={control}
+                name="age_confidence"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full h-11 bg-[#111C24] border-white/5 rounded-xl text-[12px] text-white outline-none appearance-none focus:border-green-500/40 transition-all shadow-inner">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#111C24] border border-white/10 rounded-xl">
+                      <SelectItem value="pasti">Pasti (Gigian)</SelectItem>
+                      <SelectItem value="estimasi">Estimasi</SelectItem>
+                      <SelectItem value="tidak_tahu">Tidak Tahu</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className={inputContainerStyle}>
+              <label className={labelStyle}>
+                <Warehouse size={12} className="text-green-500" />
+                Asal Ternak
+              </label>
+              <Controller
+                control={control}
+                name="acquisition_type"
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full h-11 bg-[#111C24] border-white/5 rounded-xl text-[12px] text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#111C24] border border-white/10 rounded-xl">
+                      <SelectItem value="beli">Beli / Pasar</SelectItem>
+                      <SelectItem value="lahir_sendiri">Lahir Sendiri</SelectItem>
+                      <SelectItem value="hibah">Hibah</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+            <div className={inputContainerStyle}>
+              <label className={labelStyle}>
+                <AlertCircle size={12} className="text-green-500" />
+                Kondisi Masuk
+              </label>
+              <Controller
+                control={control}
+                name="entry_condition"
+                render={({ field }) => (
+                  <Select value={field.value || undefined} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full h-11 bg-[#111C24] border-white/5 rounded-xl text-[12px] text-white">
+                      <SelectValue placeholder="Pilih Kondisi" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#111C24] border border-white/10 rounded-xl">
+                      <SelectItem value="sehat">Sehat</SelectItem>
+                      <SelectItem value="kurus">Kurus</SelectItem>
+                      <SelectItem value="cacat">Cacat Minor</SelectItem>
+                      <SelectItem value="sakit">Sakit</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className={inputContainerStyle}>
+              <label className={labelStyle}>
+                <Calendar size={12} className="text-green-500" />
+                Tanggal Masuk <span className="text-green-500/50">*</span>
+              </label>
+              <Controller
+                control={control}
+                name="entry_date"
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <DatePicker value={field.value} onChange={field.onChange} className="h-11 bg-[#111C24] border-white/5 shadow-inner" />
+                )}
+              />
+            </div>
+            <div className={inputContainerStyle}>
+              <label className={labelStyle}>
+                <Scale size={12} className="text-green-500" />
+                Berat Masuk (kg) <span className="text-green-500/50">*</span>
+              </label>
+              <input
+                {...register('entry_weight_kg', { required: true })}
+                type="number"
+                step="0.1"
+                placeholder="e.g. 25"
+                className={`px-4 text-center ${inputClass}`}
+              />
+            </div>
+          </div>
+
+          {acquisitionType === 'beli' && (
+            <div className={inputContainerStyle}>
+              <label className={labelStyle}>
+                <Hash size={12} className="text-green-500" />
+                Harga Beli (Rp)
+              </label>
+              <Controller
+                control={control}
+                name="purchase_price_idr"
+                render={({ field }) => (
+                  <InputRupiah
+                    value={field.value}
+                    onChange={field.onChange}
+                    className="h-11 bg-[#111C24] border-white/5 shadow-inner rounded-xl"
+                  />
+                )}
+              />
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className={inputContainerStyle}>
+              <label className={labelStyle}>
+                <Activity size={12} className="text-green-500" />
+                BCS (1-5)
+              </label>
+              <input
+                {...register('entry_bcs')}
+                type="number"
+                step="0.5"
+                placeholder="e.g. 2.5"
+                className={`px-4 text-center ${inputClass}`}
+              />
+            </div>
+            <div className={inputContainerStyle}>
+              <label className={labelStyle}>
+                <Warehouse size={12} className="text-green-500" />
+                Sumber / Pasar
+              </label>
+              <input
+                {...register('source')}
+                placeholder="e.g. Pasar Wonosari"
+                className={`px-4 ${inputClass}`}
+              />
+            </div>
+          </div>
+
+          <div className={inputContainerStyle}>
+            <label className={labelStyle}>
+              <AlignLeft size={12} className="text-green-500" />
+              Catatan
+            </label>
+            <textarea
+              {...register('notes')}
+              rows={2}
+              placeholder="Catatan tambahan..."
+              className="w-full px-4 py-3 bg-[#111C24] border border-white/5 rounded-xl text-sm font-medium text-white placeholder:text-[#4B6478] focus:bg-[#15232d] shadow-inner focus:outline-none transition-all resize-none"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isPending}
+            className="w-full h-[52px] bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 disabled:opacity-50 text-white font-['Sora'] font-extrabold text-[15px] rounded-xl transition-all shadow-[0_4px_20px_rgba(22,163,74,0.25)] flex items-center justify-center gap-2 mt-2"
+          >
+            {isPending ? 'Menyimpan...' : 'Tambah Domba Ke Batch'}
+            {!isPending && <ChevronRight size={18} strokeWidth={3} className="opacity-80" />}
+          </button>
+        </form>
+      </div>
+    </motion.div>
+  )
+}
+
+function AnimalDetailSheet({ animal, onClose }) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [openBreedDetail, setOpenBreedDetail] = useState(false)
+  const { mutate: updateAnimal, isPending } = useUpdateDombaAnimal()
+
+  const hari   = calcHariDiFarm(animal.entry_date, animal.exit_date)
+  const adg    = calcADGFromRecords(animal.domba_penggemukan_weight_records ?? [], animal.entry_date, animal.entry_weight_kg)
+  const latestW = animal.latest_weight_kg ?? animal.entry_weight_kg
+  const gain    = (latestW - animal.entry_weight_kg).toFixed(1)
+  
+  const ST = STATUS_CONFIG[animal.status] ?? STATUS_CONFIG.active
+
+  const { register, handleSubmit, control } = useForm({
+    defaultValues: {
+      ear_tag: animal.ear_tag,
+      breed: animal.breed || '',
+      sex: animal.sex,
+      entry_weight_kg: animal.entry_weight_kg,
+      entry_age_months: animal.entry_age_months || '',
+      acquisition_type: animal.acquisition_type || 'beli',
+      source: animal.source || '',
+      notes: animal.notes || '',
+      purchase_price_idr: animal.purchase_price_idr || '',
+    }
+  })
+
+  const onSave = (data) => {
+    updateAnimal({
+      animalId: animal.id,
+      batchId: animal.batch_id,
+      updates: {
+        ear_tag: data.ear_tag.trim(),
+        breed: data.breed?.trim() || null,
+        sex: data.sex,
+        entry_weight_kg: parseFloat(data.entry_weight_kg),
+        entry_age_months: data.entry_age_months ? parseInt(data.entry_age_months) : null,
+        acquisition_type: data.acquisition_type,
+        source: data.source?.trim() || null,
+        notes: data.notes?.trim() || null,
+        purchase_price_idr: data.purchase_price_idr ? parseInt(data.purchase_price_idr) : 0,
+      }
+    }, { onSuccess: () => setIsEditing(false) })
+  }
+
+  const inputCls = 'w-full h-10 px-3 bg-[#111C24] border border-white/10 rounded-xl text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-green-500/50'
+
+  return (
+    <motion.div
+      initial={{ x: '100%', opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: '100%', opacity: 0 }}
+      transition={{ type: 'spring', damping: 28, stiffness: 250 }}
+      className="fixed inset-y-0 right-0 w-[420px] max-w-full z-50 bg-[#0A1015]/95 backdrop-blur-xl border-l border-white/[0.08] shadow-[-10px_0_40px_rgba(0,0,0,0.5)] flex flex-col"
+    >
+      <div className="px-6 pt-8 pb-4 border-b border-white/5 relative shrink-0">
+        <div className="absolute -top-10 right-10 w-32 h-32 bg-green-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="flex items-start justify-between relative z-10">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="font-['Sora'] font-extrabold text-[22px] text-white tracking-tight leading-none">{animal.ear_tag}</h2>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${ST.color}`}>
+                {ST.label}
+              </span>
+            </div>
+            <p className="text-[11px] text-[#4B6478] font-bold uppercase">{animal.breed || 'Breed tidak diketahui'} · {animal.sex === 'betina' ? 'Betina' : 'Jantan'}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsEditing(e => !e)}
+              className={cn('w-8 h-8 rounded-full border flex items-center justify-center transition-colors', isEditing ? 'bg-green-500/20 border-green-500/40 text-green-400' : 'bg-white/5 border-white/10 text-[#94A3B8] hover:text-white hover:bg-white/10')}
+            >
+              <Edit2 size={14} />
+            </button>
+            <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#94A3B8] hover:text-white hover:bg-white/10 transition-colors">
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 custom-scrollbar">
+        {/* KPI Row */}
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: 'Hari di Farm', value: `${hari} hari` },
+            { label: 'ADG/hr', value: adg ? `${adg}g` : '—' },
+            { label: 'Pertambahan', value: `${gain} kg` },
+          ].map(kpi => (
+            <div key={kpi.label} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3 text-center">
+              <p className="font-['Sora'] font-black text-sm text-white">{kpi.value}</p>
+              <p className="text-[9px] font-bold text-[#4B6478] uppercase mt-0.5 tracking-tight">{kpi.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Berat */}
+        <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
+          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mb-3 flex items-center gap-1.5 font-['Sora']"><Activity size={12} /> Progress Berat</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-[11px] font-bold text-[#4B6478] mb-0.5">Masuk</p>
+              <p className="text-lg font-black text-white font-['Sora']">{animal.entry_weight_kg} <span className="text-[10px] text-[#4B6478]">kg</span></p>
+            </div>
+            <div>
+              <p className="text-[11px] font-bold text-[#4B6478] mb-0.5">Terakhir</p>
+              <p className={cn('text-lg font-black font-["Sora"]', parseFloat(gain) > 0 ? 'text-green-400' : 'text-white')}>
+                {latestW} <span className="text-[10px] text-[#4B6478]">kg</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {!isEditing ? (
+          <div className="space-y-1">
+            {[
+              { label: 'Tanggal Masuk', value: animal.entry_date ? new Date(animal.entry_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '—' },
+              { label: 'Usia Masuk', value: animal.entry_age_months ? `${animal.entry_age_months} bulan` : '—' },
+              { label: 'Akurasi Usia', value: animal.age_confidence || '—' },
+              { label: 'Cara Perolehan', value: animal.acquisition_type === 'beli' ? 'Beli / Pasar' : animal.acquisition_type === 'lahir_sendiri' ? 'Lahir sendiri' : 'Hibah' },
+              { label: 'Asal / Sumber', value: animal.source || '—' },
+              { label: 'Harga Beli', value: animal.purchase_price_idr ? `Rp ${Number(animal.purchase_price_idr).toLocaleString('id-ID')}` : '—' },
+              { label: 'BCS Masuk', value: animal.entry_bcs ? `${animal.entry_bcs} / 5` : '—' },
+              { label: 'Kondisi Awal', value: animal.entry_condition || '—' },
+              { label: 'Catatan', value: animal.notes || '—' },
+            ].map(row => (
+              <div key={row.label} className="flex justify-between items-center py-2.5 border-b border-white/[0.03]">
+                <span className="text-[11px] font-bold text-[#4B6478] uppercase tracking-tight">{row.label}</span>
+                <span className="text-[11px] font-black text-white text-right max-w-[55%] truncate">{row.value}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <form id="edit-animal-form" onSubmit={handleSubmit(onSave)} className="space-y-4">
+            <p className="text-[10px] font-black text-green-400 uppercase tracking-widest bg-green-500/10 px-2 py-1 rounded inline-block">Mode Edit</p>
+            {[
+              { label: 'Ear Tag', name: 'ear_tag', placeholder: 'e.g. DM-2026-0001' },
+              { label: 'Usia Masuk (bln)', name: 'entry_age_months', placeholder: 'e.g. 12', type: 'number' },
+              { label: 'Berat Masuk (kg)', name: 'entry_weight_kg', placeholder: 'e.g. 25', type: 'number', step: '0.1' },
+              { label: 'Sumber', name: 'source', placeholder: 'e.g. Pasar Wonosari' },
+            ].map(f => (
+              <div key={f.name}>
+                <label className="block text-[10px] font-bold text-[#4B6478] uppercase tracking-widest mb-1.5 ml-1">{f.label}</label>
+                <input {...register(f.name)} type={f.type || 'text'} step={f.step} placeholder={f.placeholder} className={inputCls} />
+              </div>
+            ))}
+            <div>
+              <label className="block text-[10px] font-bold text-[#4B6478] uppercase tracking-widest mb-1.5 ml-1">Breed</label>
+              <Controller control={control} name="breed"
+                render={({ field: fld }) => (
+                  <Popover open={openBreedDetail} onOpenChange={setOpenBreedDetail}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox"
+                        className={cn('w-full h-10 px-3 bg-[#111C24] border border-white/10 rounded-xl text-sm justify-between hover:bg-white/5 font-normal', !fld.value ? 'text-[#4B6478]' : 'text-white')}
+                      >
+                        <span className="truncate">{fld.value || 'Pilih breed...'}</span>
+                        <ChevronsUpDown size={13} className="opacity-40" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0 bg-[#111C24] border-white/10 shadow-2xl z-[5000]">
+                      <Command className="bg-transparent">
+                        <CommandInput placeholder="Cari breed..." className="h-10 text-white border-none focus:ring-0" />
+                        <CommandList className="max-h-[240px]">
+                          <CommandEmpty className="py-4 text-center text-xs opacity-50 font-bold">Breed tidak ditemukan.</CommandEmpty>
+                          <CommandGroup>
+                            {BREED_SUGGESTIONS.map(b => (
+                              <CommandItem key={b} value={b} onSelect={() => { fld.onChange(b); setOpenBreedDetail(false) }}
+                                className="flex items-center justify-between py-2.5 px-3 cursor-pointer hover:bg-green-500/10 rounded-lg text-xs font-bold uppercase tracking-widest"
+                              >
+                                <span className={cn(fld.value === b ? 'text-green-400' : 'text-white')}>{b}</span>
+                                {fld.value === b && <Check size={13} className="text-green-400" />}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-[#4B6478] uppercase tracking-widest mb-1.5 ml-1">Catatan</label>
+              <textarea {...register('notes')} rows={2} className="w-full px-3 py-2 bg-[#111C24] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-green-500/50 resize-none font-medium" />
+            </div>
+          </form>
+        )}
+      </div>
+
+      {isEditing && (
+        <div className="px-6 py-4 border-t border-white/5 flex gap-2 shrink-0 bg-[#0C1319]">
+          <button type="button" onClick={() => setIsEditing(false)} className="flex-1 h-11 bg-white/5 border border-white/10 hover:bg-white/10 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-colors">
+            Batal
+          </button>
+          <button form="edit-animal-form" type="submit" disabled={isPending} className="flex-1 h-11 bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-colors">
+            {isPending ? 'Menyimpan...' : 'Simpan'}
+          </button>
+        </div>
+      )}
+    </motion.div>
+  )
+}
+
+function BreedComboboxInTable({ value, onChange }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className={cn("w-full h-8 px-2 bg-[#111C24] border-white/5 rounded-lg text-[11px] justify-between text-left", !value ? "text-[#4B6478]" : "text-white")}>
+          <span className="truncate">{value || '-- Breed --'}</span>
+          <ChevronDown size={11} className="opacity-40" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] p-0 bg-[#111C24] border-white/10 shadow-2xl z-50">
+        <Command className="bg-transparent">
+          <CommandInput placeholder="Cari..." className="h-8 text-[11px]" />
+          <CommandList>
+            <CommandEmpty className="py-2 text-[10px] text-center opacity-50 uppercase font-black">Kosong</CommandEmpty>
+            <CommandGroup>
+              {BREED_SUGGESTIONS.map(b => (
+                <CommandItem key={b} value={b} onSelect={() => { onChange(b); setOpen(false) }} className="py-2 px-3 text-[11px] font-bold uppercase tracking-widest">
+                  {b}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+function BulkAddSheet({ batchId, animalsCount, onClose }) {
+  const { tenant } = useAuth()
+  const { mutate: bulkAdd, isPending } = useBulkAddDombaAnimals()
+
+  const getEarTag = (idx) => {
+    const pfx = (tenant?.business_name || 'DOM').split(' ').map(w => w[0]).join('').slice(0, 3).toUpperCase()
+    const seq = String(animalsCount + idx + 1).padStart(4, '0')
+    return `${pfx}-${new Date().getFullYear()}-${seq}`
+  }
+
+  const { control, register, handleSubmit } = useForm({
+    defaultValues: {
+      rows: [
+        { ear_tag: getEarTag(0), sex: 'jantan', entry_date: new Date().toISOString().split('T')[0], entry_weight_kg: '', breed: '' },
+        { ear_tag: getEarTag(1), sex: 'jantan', entry_date: new Date().toISOString().split('T')[0], entry_weight_kg: '', breed: '' },
+        { ear_tag: getEarTag(2), sex: 'jantan', entry_date: new Date().toISOString().split('T')[0], entry_weight_kg: '', breed: '' },
+      ]
+    }
+  })
+  const { fields, append, remove } = useFieldArray({ control, name: 'rows' })
+
+  const onSubmit = (data) => {
+    const valid = data.rows.filter(r => r.ear_tag && r.entry_weight_kg)
+    if (!valid.length) return
+    bulkAdd({ batch_id: batchId, animals: valid }, { onSuccess: onClose })
+  }
+
+  return (
+    <motion.div
+      initial={{ y: '100%', opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: '100%', opacity: 0 }}
+      className="fixed inset-0 z-[60] bg-[#0A1015] flex flex-col"
+    >
+      <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between shrink-0 bg-[#0C1319]">
+        <div>
+           <h2 className="font-['Sora'] font-black text-lg text-white">Input Massal (Bulk)</h2>
+           <p className="text-[10px] text-[#4B6478] font-black uppercase tracking-widest">Masukkan banyak domba sekaligus untuk mempercepat proses</p>
+        </div>
+        <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors">
+          <X size={18} />
+        </button>
+      </div>
+      <div className="flex-1 overflow-auto custom-scrollbar">
+        <div className="min-w-[1000px] p-6">
+          <table className="w-full">
+            <thead>
+              <tr className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] border-b border-white/5">
+                <th className="pb-4 px-3 text-left">Ear Tag *</th>
+                <th className="pb-4 px-3 text-left">Breed</th>
+                <th className="pb-4 px-3 text-left w-28">Kelamin</th>
+                <th className="pb-4 px-3 text-left w-24">Berat *</th>
+                <th className="pb-4 px-3 text-left w-44">Tgl Masuk *</th>
+                <th className="pb-4 px-3 text-left">Harga Beli</th>
+                <th className="pb-4 px-3 text-center w-20">Hapus</th>
+              </tr>
+            </thead>
+            <tbody>
+              {fields.map((f, i) => (
+                <tr key={f.id} className="border-b border-white/[0.03] hover:bg-white/[0.01]">
+                  <td className="py-2.5 px-3">
+                    <input {...register(`rows.${i}.ear_tag`)} placeholder="ID Domba" className="bg-transparent text-white text-[13px] font-black outline-none border-b border-white/5 focus:border-green-500/50 w-full font-['Sora']" />
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <Controller control={control} name={`rows.${i}.breed`} render={({ field }) => (
+                      <BreedComboboxInTable value={field.value} onChange={field.onChange} />
+                    )} />
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <Controller control={control} name={`rows.${i}.sex`} render={({ field }) => (
+                      <select value={field.value} onChange={e => field.onChange(e.target.value)} className="bg-[#111C24] border border-white/10 rounded-lg text-[11px] font-bold text-white px-2 py-1.5 outline-none w-full appearance-none">
+                        <option value="jantan">JANTAN</option>
+                        <option value="betina">BETINA</option>
+                      </select>
+                    )} />
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <div className="relative">
+                      <input {...register(`rows.${i}.entry_weight_kg`)} type="number" step="0.1" className="bg-transparent text-white text-[13px] font-black outline-none border-b border-white/5 focus:border-green-500/50 w-full text-right pr-4 font-['Sora']" placeholder="0" />
+                      <span className="absolute right-0 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#4B6478]">kg</span>
+                    </div>
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <Controller control={control} name={`rows.${i}.entry_date`} render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} className="h-9 px-2 text-[11px] font-bold" />} />
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <Controller control={control} name={`rows.${i}.purchase_price_idr`} render={({ field }) => <InputRupiah value={field.value} onChange={field.onChange} className="h-9 text-[11px] font-bold bg-transparent border-0 border-b border-white/5 rounded-none px-0" />} />
+                  </td>
+                  <td className="py-2.5 px-3 text-center">
+                    <button onClick={() => remove(i)} className="w-8 h-8 flex items-center justify-center text-[#4B6478] hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all mx-auto">
+                      <Trash2 size={15} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <button 
+            onClick={() => append({ ear_tag: getEarTag(fields.length), sex: 'jantan', entry_date: new Date().toISOString().split('T')[0], entry_weight_kg: '', breed: '' })} 
+            className="mt-6 flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[11px] font-black text-green-400 uppercase tracking-widest hover:bg-white/10 transition-all"
+          >
+            <Plus size={14} strokeWidth={3} /> Tambah Baris Baru
+          </button>
+        </div>
+      </div>
+      <div className="p-6 border-t border-white/5 flex justify-end gap-3 bg-[#0C1319]">
+        <button onClick={onClose} className="px-6 py-2.5 rounded-xl border border-white/10 text-white text-xs font-black uppercase tracking-widest hover:bg-white/5 transition-all">Batal</button>
+        <button onClick={handleSubmit(onSubmit)} disabled={isPending} className="px-8 py-2.5 rounded-xl bg-green-600 hover:bg-green-500 text-white text-xs font-black uppercase tracking-widest shadow-[0_4px_20px_rgba(22,163,74,0.3)] disabled:opacity-50">
+           {isPending ? 'Menyimpan Semua...' : 'Simpan Semua Data'}
+        </button>
+      </div>
+    </motion.div>
+  )
+}
+
+export default function DombaTernak() {
+  const [params] = useSearchParams()
+  const defaultBatchId = params.get('batch') || ''
+  const navigate = useNavigate()
 
   const { data: batches = [], isLoading: loadingBatches } = useDombaBatches()
-  const [selectedBatch, setSelectedBatch] = useState(defaultBatch)
+  const [selectedBatchId, setSelectedBatchId] = useState(defaultBatchId)
+  
+  useEffect(() => {
+    if (defaultBatchId) setSelectedBatchId(defaultBatchId)
+  }, [defaultBatchId])
+
   const [search, setSearch] = useState('')
-  const [filterStatus, setFilterStatus] = useState('active')
+  const [filter, setFilter] = useState('active')
 
-  const { data: animals = [], isLoading: loadingAnimals } = useDombaAnimals(selectedBatch)
-  const addAnimal = useAddDombaAnimal()
-  const addWeight = useAddDombaWeightRecord()
-
-  // Sheet states
-  const [addSheetOpen, setAddSheetOpen]     = useState(false)
-  const [timbangSheet, setTimbangSheet]     = useState(null) // animal object
-
-  // Add animal form
-  const [form, setForm] = useState({
-    ear_tag: '', species: 'kambing', breed: '', sex: 'jantan',
-    age_estimate: '', entry_date: new Date().toISOString().split('T')[0],
-    entry_weight_kg: '', entry_bcs: '', entry_condition: 'sehat',
-    purchase_price_idr: '', source: '', kandang_slot: '',
-    quarantine_start: '', quarantine_end: '',
-  })
-
-  // Timbang form
-  const [tForm, setTForm] = useState({
-    weigh_date: new Date().toISOString().split('T')[0],
-    weight_kg: '', bcs: '', notes: '',
-  })
+  const { data: animals = [], isLoading: loadingAnimals } = useDombaAnimals(selectedBatchId)
+  const [sheet, setSheet] = useState(null) 
 
   const filtered = useMemo(() => {
     let list = animals
-    if (filterStatus !== 'all') list = list.filter(a => a.status === filterStatus)
+    if (filter !== 'all') list = list.filter(a => a.status === filter)
     if (search.trim()) {
       const q = search.toLowerCase()
-      list = list.filter(a =>
-        a.ear_tag.toLowerCase().includes(q) ||
-        (a.breed ?? '').toLowerCase().includes(q) ||
-        a.species.toLowerCase().includes(q)
-      )
+      list = list.filter(a => a.ear_tag.toLowerCase().includes(q) || (a.breed || '').toLowerCase().includes(q))
     }
     return list
-  }, [animals, filterStatus, search])
-
-  const activeBatch = batches.find(b => b.id === selectedBatch)
-
-  function handleAddAnimal() {
-    if (!form.ear_tag || !form.entry_weight_kg || !selectedBatch) return
-    addAnimal.mutate({
-      ...form,
-      batch_id: selectedBatch,
-      entry_weight_kg: parseFloat(form.entry_weight_kg),
-      entry_bcs: form.entry_bcs ? parseFloat(form.entry_bcs) : null,
-      purchase_price_idr: form.purchase_price_idr ? parseInt(form.purchase_price_idr) : null,
-    }, {
-      onSuccess: () => {
-        setAddSheetOpen(false)
-        setForm({ ear_tag: '', species: 'kambing', breed: '', sex: 'jantan', age_estimate: '', entry_date: new Date().toISOString().split('T')[0], entry_weight_kg: '', entry_bcs: '', entry_condition: 'sehat', purchase_price_idr: '', source: '', kandang_slot: '', quarantine_start: '', quarantine_end: '' })
-      }
-    })
-  }
-
-  function handleTimbang() {
-    if (!timbangSheet || !tForm.weight_kg) return
-    addWeight.mutate({
-      animal_id: timbangSheet.id,
-      batch_id: timbangSheet.batch_id,
-      entry_date: timbangSheet.entry_date,
-      entry_weight_kg: timbangSheet.entry_weight_kg,
-      weigh_date: tForm.weigh_date,
-      weight_kg: parseFloat(tForm.weight_kg),
-      bcs: tForm.bcs ? parseFloat(tForm.bcs) : null,
-      notes: tForm.notes,
-    }, {
-      onSuccess: () => {
-        setTimbangSheet(null)
-        setTForm({ weigh_date: new Date().toISOString().split('T')[0], weight_kg: '', bcs: '', notes: '' })
-      }
-    })
-  }
+  }, [animals, filter, search])
 
   if (loadingBatches) return <LoadingSpinner fullPage />
 
   return (
     <div className="text-slate-100 pb-24">
-
       {/* Header */}
-      <header className="px-4 pt-6 pb-4 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.04] flex items-center justify-between">
-        <div>
-          <h1 className="font-['Sora'] font-black text-xl text-white mb-0.5">Data Ternak</h1>
-          <p className="text-xs text-[#4B6478]">{animals.length} ekor total · {animals.filter(a => a.status === 'active').length} aktif</p>
+      <header className="px-4 pt-6 pb-5 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.04]">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="font-['Sora'] font-black text-xl text-white tracking-tight">Data Ternak</h1>
+            <p className="text-[11px] text-[#4B6478] font-black uppercase tracking-widest mt-0.5">{animals.length} TOTAL UNIT</p>
+          </div>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setSheet('bulk')} 
+              className="w-10 h-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-xl text-[#4B6478] hover:text-white hover:bg-white/10 transition-all shadow-inner"
+            >
+              <ListPlus size={18} />
+            </button>
+            <button
+              disabled={!selectedBatchId}
+              onClick={() => setSheet('add')}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-40 rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(22,163,74,0.3)] active:scale-[0.98] transition-all"
+            >
+              <Plus size={14} strokeWidth={3} />
+              Tambah
+            </button>
+          </div>
         </div>
-        {selectedBatch && activeBatch?.status === 'active' && (
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setAddSheetOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-green-600 rounded-xl text-white text-xs font-extrabold font-['Sora'] shadow-[0_3px_12px_rgba(22,163,74,0.35)]"
-          >
-            <Plus size={13} />
-            Tambah Ekor
-          </motion.button>
-        )}
-      </header>
 
-      {/* Pilih Batch */}
-      <div className="px-4 mt-4">
-        <label className="text-[11px] font-semibold text-[#4B6478] mb-1.5 block">Pilih Batch</label>
-        <div className="relative">
-          <select
-            value={selectedBatch}
-            onChange={e => setSelectedBatch(e.target.value)}
-            className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:border-green-500/40 appearance-none"
+        <div className="relative group/batch">
+          <select 
+            value={selectedBatchId} 
+            onChange={e => { setSelectedBatchId(e.target.value); navigate(`/peternak/peternak_domba_penggemukan/ternak?batch=${e.target.value}`) }} 
+            className="w-full h-12 px-4 bg-white/[0.03] border border-white/[0.08] focus:border-green-500/40 rounded-2xl text-sm font-bold text-white outline-none appearance-none transition-all shadow-inner"
           >
-            <option value="">-- Pilih batch --</option>
+            <option value="" className="bg-[#0C1319]">-- Pilih Batch Penggemukan --</option>
             {batches.map(b => (
-              <option key={b.id} value={b.id}>
-                {b.batch_code} — {b.kandang_name} ({b.status === 'active' ? 'Aktif' : 'Selesai'})
-              </option>
+              <option key={b.id} value={b.id} className="bg-[#0C1319]">{b.batch_code} · {b.kandang_name} ({b.status === 'active' ? 'Aktif' : 'Selesai'})</option>
             ))}
           </select>
-          <ChevronDown size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#4B6478] pointer-events-none" />
+          <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4B6478] pointer-events-none group-focus-within/batch:text-green-500 transition-colors" />
         </div>
-      </div>
+      </header>
 
-      {selectedBatch && (
-        <>
-          {/* Filter & Search */}
-          <div className="px-4 mt-3 flex gap-2">
-            {['active','sold','dead','all'].map(s => (
-              <button
-                key={s}
-                onClick={() => setFilterStatus(s)}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
-                  filterStatus === s
-                    ? 'bg-green-500/20 text-green-300 border border-green-500/30'
-                    : 'text-[#4B6478]'
-                }`}
-              >
-                {s === 'active' ? 'Aktif' : s === 'sold' ? 'Terjual' : s === 'dead' ? 'Mati' : 'Semua'}
-              </button>
-            ))}
+      {!selectedBatchId ? (
+        <div className="px-6 py-28 text-center">
+           <div className="w-20 h-20 rounded-[32px] bg-white/[0.02] border border-white/[0.06] flex items-center justify-center mx-auto mb-6 relative">
+              <RefreshCw size={32} className="text-white/10 animate-spin-slow" />
+              <Warehouse size={20} className="absolute inset-0 m-auto text-white/5" />
+           </div>
+           <p className="font-['Sora'] font-black text-white text-base">Pilih Batch Penggemukan</p>
+           <p className="text-[12px] text-[#4B6478] mt-2 font-medium max-w-[240px] mx-auto leading-relaxed">Tentukan batch terlebih dahulu untuk mengelola data ternak di dalamnya.</p>
+        </div>
+      ) : (
+        <div className="px-4 pt-5">
+          {/* Controls */}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="relative flex-1 group/search">
+              <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#4B6478] group-focus-within/search:text-green-500 transition-colors" />
+              <input 
+                value={search} 
+                onChange={e => setSearch(e.target.value)} 
+                placeholder="Cari ear tag / ras domba..." 
+                className="w-full h-11 pl-10 pr-4 bg-white/[0.03] border border-white/[0.06] focus:border-green-500/40 rounded-xl text-xs font-bold text-white placeholder-[#4B6478] outline-none transition-all shadow-inner" 
+              />
+            </div>
+            <div className="w-11 h-11 flex items-center justify-center bg-white/[0.03] border border-white/[0.06] rounded-xl text-[#4B6478]">
+               <Filter size={16} />
+            </div>
           </div>
 
-          <div className="px-4 mt-2 relative">
-            <Search size={13} className="absolute left-7 top-1/2 -translate-y-1/2 text-[#4B6478]" />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Cari ear tag / ras..."
-              className="w-full pl-8 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40"
-            />
+          <div className="flex gap-2 overflow-x-auto pb-5 custom-scrollbar no-scrollbar">
+             {['active','sold','dead','culled','all'].map(s => (
+               <button 
+                 key={s} 
+                 onClick={() => setFilter(s)} 
+                 className={cn(
+                   'px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] border transition-all whitespace-nowrap shadow-sm', 
+                   filter === s ? 'bg-green-600/10 border-green-600/30 text-green-400' : 'bg-white/[0.02] border-white/[0.06] text-[#4B6478] hover:border-white/10'
+                 )}
+               >
+                  {s === 'active' ? 'Aktif' : s === 'sold' ? 'Terjual' : s === 'dead' ? 'Mati' : s === 'culled' ? 'Afkir' : 'Seluruhnya'}
+               </button>
+             ))}
           </div>
 
-          {/* Animal List */}
-          <div className="px-4 mt-4 space-y-3">
-            {loadingAnimals ? (
-              <LoadingSpinner />
-            ) : filtered.length === 0 ? (
-              <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-                <p className="text-3xl mb-3">ðŸ</p>
-                <p className="text-sm font-semibold text-white mb-1">Belum ada ternak</p>
-                <p className="text-xs text-[#4B6478]">Tambahkan ekor pertama ke batch ini</p>
-              </div>
-            ) : (
-              filtered.map(animal => (
-                <AnimalCard
-                  key={animal.id}
-                  animal={animal}
-                  onTimbang={a => { setTimbangSheet(a); setTForm({ weigh_date: new Date().toISOString().split('T')[0], weight_kg: '', bcs: '', notes: '' }) }}
-                />
-              ))
-            )}
-          </div>
-        </>
-      )}
-
-      {/* Sheet Tambah Ekor */}
-      <Sheet open={addSheetOpen} onOpenChange={setAddSheetOpen}>
-        <SheetContent side="bottom" className="bg-[#0C1319] border-t border-white/10 rounded-t-3xl max-h-[90vh] overflow-y-auto">
-          <SheetHeader className="mb-5">
-            <SheetTitle className="font-['Sora'] font-black text-white text-lg">Tambah Ekor Baru</SheetTitle>
-          </SheetHeader>
-          <div className="space-y-4 pb-8">
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Ear Tag *</label>
-                <input value={form.ear_tag} onChange={e => setForm(f => ({ ...f, ear_tag: e.target.value }))}
-                  placeholder="GEM-2024-0301"
-                  className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Spesies *</label>
-                <select value={form.species} onChange={e => setForm(f => ({ ...f, species: e.target.value }))}
-                  className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:border-green-500/40">
-                  <option value="kambing">ðŸ Kambing</option>
-                  <option value="domba">ðŸ‘ Domba</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Ras / Tipe</label>
-                <input value={form.breed} onChange={e => setForm(f => ({ ...f, breed: e.target.value }))}
-                  placeholder="Boer Cross, Garut..."
-                  className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Jenis Kelamin</label>
-                <select value={form.sex} onChange={e => setForm(f => ({ ...f, sex: e.target.value }))}
-                  className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:border-green-500/40">
-                  <option value="jantan">Jantan</option>
-                  <option value="betina">Betina</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Bobot Masuk (kg) *</label>
-                <input type="number" step="0.1" value={form.entry_weight_kg} onChange={e => setForm(f => ({ ...f, entry_weight_kg: e.target.value }))}
-                  placeholder="18.5"
-                  className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Harga Beli (Rp)</label>
-                <input type="number" value={form.purchase_price_idr} onChange={e => setForm(f => ({ ...f, purchase_price_idr: e.target.value }))}
-                  placeholder="1450000"
-                  className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Tanggal Masuk *</label>
-                <DatePicker value={form.entry_date} onChange={v => setForm(f => ({ ...f, entry_date: v }))} />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Kondisi Masuk</label>
-                <select value={form.entry_condition} onChange={e => setForm(f => ({ ...f, entry_condition: e.target.value }))}
-                  className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:border-green-500/40">
-                  <option value="sehat">Sehat</option>
-                  <option value="kurus">Kurus</option>
-                  <option value="cacat">Cacat</option>
-                  <option value="sakit">Sakit</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Asal Ternak</label>
-                <input value={form.source} onChange={e => setForm(f => ({ ...f, source: e.target.value }))}
-                  placeholder="Pasar Hewan Sleman"
-                  className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Slot Kandang</label>
-                <input value={form.kandang_slot} onChange={e => setForm(f => ({ ...f, kandang_slot: e.target.value }))}
-                  placeholder="KDG-F2"
-                  className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Estimasi Umur</label>
-              <input value={form.age_estimate} onChange={e => setForm(f => ({ ...f, age_estimate: e.target.value }))}
-                placeholder="6-8 bulan"
-                className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-            </div>
-
-            <motion.button
-              whileTap={{ scale: 0.97 }}
-              disabled={!form.ear_tag || !form.entry_weight_kg || addAnimal.isPending}
-              onClick={handleAddAnimal}
-              className="w-full py-3.5 bg-green-600 disabled:opacity-40 text-white font-bold rounded-xl text-sm"
-            >
-              {addAnimal.isPending ? 'Menyimpan...' : 'Tambah Ekor'}
-            </motion.button>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      {/* Sheet Timbang */}
-      <Sheet open={!!timbangSheet} onOpenChange={v => !v && setTimbangSheet(null)}>
-        <SheetContent side="bottom" className="bg-[#0C1319] border-t border-white/10 rounded-t-3xl">
-          <SheetHeader className="mb-5">
-            <SheetTitle className="font-['Sora'] font-black text-white text-lg">
-              Timbang — {timbangSheet?.ear_tag}
-            </SheetTitle>
-          </SheetHeader>
-          {timbangSheet && (
-            <div className="space-y-4 pb-8">
-              <div className="flex gap-2 px-3 py-2.5 bg-green-500/10 border border-green-500/20 rounded-xl text-xs text-green-300">
-                Bobot terakhir: <span className="font-bold ml-1">{timbangSheet.latest_weight_kg ?? timbangSheet.entry_weight_kg} kg</span>
-                <span className="text-[#4B6478] ml-1">({calcHariDiFarm(timbangSheet.entry_date)} hari di farm)</span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Bobot Sekarang (kg) *</label>
-                  <input type="number" step="0.1" value={tForm.weight_kg} onChange={e => setTForm(f => ({ ...f, weight_kg: e.target.value }))}
-                    placeholder="22.5"
-                    className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">BCS (1–5)</label>
-                  <input type="number" step="0.5" min="1" max="5" value={tForm.bcs} onChange={e => setTForm(f => ({ ...f, bcs: e.target.value }))}
-                    placeholder="3.0"
-                    className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Tanggal Timbang *</label>
-                <DatePicker value={tForm.weigh_date} onChange={v => setTForm(f => ({ ...f, weigh_date: v }))} />
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Catatan</label>
-                <input value={tForm.notes} onChange={e => setTForm(f => ({ ...f, notes: e.target.value }))}
-                  placeholder="Menjelang jual..."
-                  className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-              </div>
-
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                disabled={!tForm.weight_kg || addWeight.isPending}
-                onClick={handleTimbang}
-                className="w-full py-3.5 bg-green-600 disabled:opacity-40 text-white font-bold rounded-xl text-sm"
-              >
-                {addWeight.isPending ? 'Menyimpan...' : 'Simpan Timbangan'}
-              </motion.button>
+          {loadingAnimals ? (
+            <div className="py-20 flex justify-center"><LoadingSpinner /></div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3.5 mt-1">
+               {filtered.map(a => (
+                 <AnimalCard key={a.id} animal={a} onClick={() => setSheet(a)} />
+               ))}
+               {filtered.length === 0 && (
+                 <div className="text-center py-20 border-2 border-dashed border-white/[0.03] rounded-[32px] bg-white/[0.01]">
+                    <Search size={32} className="mx-auto text-white/5 mb-3" />
+                    <p className="text-xs font-black text-[#4B6478] uppercase tracking-widest">Data Tidak Ditemukan</p>
+                 </div>
+               )}
             </div>
           )}
-        </SheetContent>
-      </Sheet>
+        </div>
+      )}
 
+      {/* Sheets */}
+      <AnimatePresence>
+        {sheet === 'add' && <AddAnimalSheet batchId={selectedBatchId} animals={animals} onClose={() => setSheet(null)} />}
+        {sheet === 'bulk' && <BulkAddSheet batchId={selectedBatchId} animalsCount={animals.length} onClose={() => setSheet(null)} />}
+        {typeof sheet === 'object' && sheet !== null && <AnimalDetailSheet animal={sheet} onClose={() => setSheet(null)} />}
+      </AnimatePresence>
     </div>
   )
 }

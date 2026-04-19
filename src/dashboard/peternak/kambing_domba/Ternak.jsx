@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Search, X, Scale, ShoppingCart, ChevronDown } from 'lucide-react'
+import { Plus, Search, X, Scale, ShoppingCart, ChevronDown, LayoutGrid } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/lib/hooks/useAuth'
 import {
@@ -19,7 +19,7 @@ const STATUS_CFG = {
   culled: { label: 'Afkir',    cls: 'text-slate-400 bg-white/10 border-white/15' },
 }
 
-const SPECIES_LABEL = { kambing: 'ðŸ Kambing', domba: 'ðŸ‘ Domba' }
+const SPECIES_LABEL = { kambing: '🐐 Kambing', domba: '🐑 Domba' }
 
 function AnimalCard({ animal, onTimbang }) {
   const hari = calcHariDiFarm(animal.entry_date, animal.exit_date)
@@ -253,7 +253,9 @@ export default function KdPenggemukanTernak() {
               <LoadingSpinner />
             ) : filtered.length === 0 ? (
               <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-                <p className="text-3xl mb-3">ðŸ</p>
+                <div className="w-16 h-16 rounded-3xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
+                  <LayoutGrid size={32} className="text-green-500" />
+                </div>
                 <p className="text-sm font-semibold text-white mb-1">Belum ada ternak</p>
                 <p className="text-xs text-[#4B6478]">Tambahkan ekor pertama ke batch ini</p>
               </div>

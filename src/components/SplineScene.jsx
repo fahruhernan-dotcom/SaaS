@@ -51,7 +51,7 @@ const SplineScene = ({ scene, className, style }) => {
     if (!document.querySelector('script[src*="spline-viewer"]')) {
       const script = document.createElement('script');
       script.type = 'module';
-      script.src = 'https://unpkg.com/@splinetool/viewer@1.0.94/build/spline-viewer.js';
+      script.src = 'https://unpkg.com/@splinetool/viewer@1.9.92/build/spline-viewer.js';
       script.onload = () => setIsScriptLoaded(true);
       document.head.appendChild(script);
     } else {

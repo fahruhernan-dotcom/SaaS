@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { CheckCircle2, XCircle } from 'lucide-react'
+import { CheckCircle2, XCircle, BarChart3 } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
 import {
   useSapiBreedingAnimals,
@@ -202,7 +202,9 @@ export default function SapiBreedingLaporanFarm() {
   if (!kpi || (animals.length === 0 && matings.length === 0)) {
     return (
       <div className="flex flex-col items-center gap-3 py-20 px-8 text-center">
-        <span className="text-5xl">ðŸ“Š</span>
+        <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-4">
+          <BarChart3 size={32} className="text-amber-500" />
+        </div>
         <p className="text-sm font-bold text-[#F1F5F9]">Belum ada data untuk dilaporkan</p>
         <p className="text-xs text-[#4B6478]">Tambahkan indukan dan catat IB untuk melihat laporan KPI reproduksi.</p>
       </div>

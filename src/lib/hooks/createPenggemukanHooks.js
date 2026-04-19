@@ -158,6 +158,26 @@ export function createPenggemukanHooks(prefix) {
     })
   }
 
+  function useBatchWeightHistory(batchId) {
+    const { tenant } = useAuth()
+    return useQuery({
+      queryKey: [`${K}-batch-weight-history`, tenant?.id, batchId],
+      queryFn: async () => {
+        if (!batchId) return []
+        const { data, error } = await supabase
+          .from(T.weights)
+          .select('*')
+          .eq('tenant_id', tenant.id)
+          .eq('batch_id', batchId)
+          .eq('is_deleted', false)
+          .order('weigh_date', { ascending: true })
+        if (error) throw error
+        return data ?? []
+      },
+      enabled: !!batchId && !!tenant?.id,
+    })
+  }
+
   function useSales(batchId) {
     return useQuery({
       queryKey: [`${K}-sales`, batchId],
@@ -269,6 +289,64 @@ export function createPenggemukanHooks(prefix) {
         toast.success('Ternak berhasil ditambahkan')
       },
       onError: (err) => toast.error('Gagal tambah ternak: ' + err.message),
+    })
+  }
+
+  function useBulkAddAnimals() {
+    const qc = useQueryClient()
+    const { tenant } = useAuth()
+    return useMutation({
+      mutationFn: async ({ batch_id, animals }) => {
+        const rows = animals.map(a => ({
+          tenant_id: tenant.id,
+          batch_id,
+          ear_tag: a.ear_tag,
+          breed: a.breed || null,
+          sex: a.sex,
+          entry_date: a.entry_date,
+          entry_weight_kg: parseFloat(a.entry_weight_kg),
+          entry_age_months: a.entry_age_months ? parseInt(a.entry_age_months) : null,
+          notes: a.notes || null,
+          status: 'active',
+          latest_weight_kg: parseFloat(a.entry_weight_kg),
+          latest_weight_date: a.entry_date,
+          kandang_id: a.kandang_id || null,
+          kandang_slot: a.kandang_slot || null,
+        }))
+
+        const { error } = await supabase
+          .from(T.animals)
+          .insert(rows)
+        if (error) throw error
+      },
+      onSuccess: (_, { batch_id }) => {
+        qc.invalidateQueries({ queryKey: [`${K}-animals`, batch_id] })
+        qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
+        toast.success('Semua ternak berhasil ditambahkan!')
+      },
+      onError: (err) => toast.error('Gagal tambah bulk: ' + err.message),
+    })
+  }
+
+  function useUpdateAnimal() {
+    const qc = useQueryClient()
+    const { tenant } = useAuth()
+    return useMutation({
+      mutationFn: async ({ animalId, batchId, updates }) => {
+        const { error } = await supabase
+          .from(T.animals)
+          .update(updates)
+          .eq('id', animalId)
+          .eq('tenant_id', tenant.id)
+        if (error) throw error
+      },
+      onSuccess: (_, { animalId, batchId }) => {
+        qc.invalidateQueries({ queryKey: [`${K}-animals`, batchId] })
+        qc.invalidateQueries({ queryKey: [`${K}-animal-detail`, animalId] })
+        qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
+        toast.success('Data ternak diperbarui')
+      },
+      onError: (err) => toast.error('Gagal update ternak: ' + err.message),
     })
   }
 
@@ -539,6 +617,26 @@ export function createPenggemukanHooks(prefix) {
     })
   }
 
+  function useDeleteHealthLog() {
+    const qc = useQueryClient()
+    const { tenant } = useAuth()
+    return useMutation({
+      mutationFn: async ({ logId, batch_id }) => {
+        const { error } = await supabase
+          .from(T.health)
+          .update({ is_deleted: true })
+          .eq('id', logId)
+          .eq('tenant_id', tenant.id)
+        if (error) throw error
+      },
+      onSuccess: (_, { batch_id }) => {
+        qc.invalidateQueries({ queryKey: [`${K}-health-logs`, batch_id] })
+        toast.success('Log kesehatan dihapus')
+      },
+      onError: (err) => toast.error('Gagal hapus: ' + err.message),
+    })
+  }
+
   function useEnsureHoldingPen() {
     const qc = useQueryClient()
     const { tenant } = useAuth()
@@ -585,12 +683,15 @@ export function createPenggemukanHooks(prefix) {
     useWeightRecords,
     useFeedLogs,
     useHealthLogs,
+    useBatchWeightHistory,
     useSales,
     useKandangs,
     // Mutations
     useCreateBatch,
     useCloseBatch,
     useAddAnimal,
+    useBulkAddAnimals,
+    useUpdateAnimal,
     useUpdateAnimalStatus,
     useAddWeightRecord,
     useAddFeedLog,
@@ -598,6 +699,7 @@ export function createPenggemukanHooks(prefix) {
     useAddSale,
     useDeleteFeedLog,
     useDeleteWeightRecord,
+    useDeleteHealthLog,
     useCreateKandang,
     useMoveAnimalToKandang,
     useEnsureHoldingPen,

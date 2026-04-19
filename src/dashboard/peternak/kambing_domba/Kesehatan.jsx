@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, ChevronDown, AlertTriangle, Shield, Bug, Skull, Activity } from 'lucide-react'
+import { Plus, ChevronDown, AlertTriangle, Shield, Bug, Skull, Activity, Syringe } from 'lucide-react'
 import {
   useKdBatches, useKdHealthLogs, useKdAnimals, useAddKdHealthLog,
 } from '@/lib/hooks/useKdPenggemukanData'
@@ -206,7 +206,9 @@ export default function KdPenggemukanKesehatan() {
           <div className="px-4 mt-4 space-y-3">
             {!selectedBatch ? (
               <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-                <p className="text-3xl mb-3">ðŸ’‰</p>
+                <div className="w-16 h-16 rounded-3xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
+          <Syringe size={32} className="text-green-500" />
+        </div>
                 <p className="text-sm text-[#4B6478]">Pilih batch untuk melihat log kesehatan</p>
               </div>
             ) : loadingLogs ? <LoadingSpinner />

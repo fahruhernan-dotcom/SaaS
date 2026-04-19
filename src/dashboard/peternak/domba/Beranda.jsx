@@ -1,15 +1,34 @@
-import React, { useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
-import { Plus, AlertTriangle, TrendingUp, Activity, Tag, Wheat, ChevronRight } from 'lucide-react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import { 
+  Users, TrendingUp, AlertTriangle, ArrowRight, 
+  Calendar, MapPin, Search, PlusCircle, LayoutGrid,
+  ChevronRight, ArrowUpRight, BarChart3, Activity, Tag,
+  BarChart2, CheckCircle2, RefreshCw, MousePointer2,
+  Scale, Plus, Wheat
+} from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import {
-  useDombaActiveBatches, useDombaBatches,
-  calcHariDiFarm, calcADG, calcMortalitasDomba,
+  useDombaActiveBatches, useDombaBatches, useDombaAnimals,
+  useDombaBatchWeightHistory,
+  calcHariDiFarm, calcMortalitasDomba,
 } from '@/lib/hooks/useDombaPenggemukanData'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer
+} from 'recharts'
+import { format } from 'date-fns'
+import { id } from 'date-fns/locale'
+import { toast } from 'sonner'
 
 const BASE = '/peternak/peternak_domba_penggemukan'
+
+const CHART_COLORS = [
+  '#22C55E', '#10B981', '#34D399', '#4ADE80', '#059669',
+  '#16A34A', '#84CC16', '#A3E635', '#2DD4BF', '#009688'
+]
 
 function getGreeting() {
   const h = new Date().getHours()
@@ -32,9 +51,10 @@ function KPICard({ label, value, sub, color = 'text-white', icon: Icon }) {
 
 function BatchCard({ batch, onClick }) {
   const hari = calcHariDiFarm(batch.start_date)
-  const progress = Math.min(100, Math.round((hari / 90) * 100))
+  const TARGET_HARI = 90
+  const progress = Math.min(100, Math.round((hari / TARGET_HARI) * 100))
   const mortalitasPct = calcMortalitasDomba(batch.mortality_count, batch.total_animals)
-  const isOverdue = hari > 90
+  const isOverdue = hari > TARGET_HARI
   const isCritical = mortalitasPct > 3
 
   return (
@@ -47,8 +67,16 @@ function BatchCard({ batch, onClick }) {
         <div>
           <div className="flex items-center gap-2 mb-0.5">
             <span className="font-['Sora'] font-bold text-sm text-white">{batch.batch_code}</span>
-            {isOverdue && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400 font-bold">OVERDUE</span>}
-            {isCritical && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-bold">MORTALITAS</span>}
+            {isOverdue && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400 font-bold">
+                OVERDUE
+              </span>
+            )}
+            {isCritical && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-bold">
+                MORTALITAS
+              </span>
+            )}
           </div>
           <p className="text-[11px] text-[#4B6478]">{batch.kandang_name}</p>
         </div>
@@ -62,11 +90,13 @@ function BatchCard({ batch, onClick }) {
       <div className="mb-3">
         <div className="flex justify-between text-[10px] text-[#4B6478] mb-1">
           <span>Hari ke-{hari}</span>
-          <span>Target 90 hari</span>
+          <span>Target {TARGET_HARI} hari</span>
         </div>
         <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all ${isOverdue ? 'bg-red-500' : progress > 80 ? 'bg-amber-500' : 'bg-green-500'}`}
+            className={`h-full rounded-full transition-all ${
+              isOverdue ? 'bg-red-500' : progress > 80 ? 'bg-amber-500' : 'bg-green-500'
+            }`}
             style={{ width: `${Math.min(100, progress)}%` }}
           />
         </div>
@@ -78,7 +108,9 @@ function BatchCard({ batch, onClick }) {
           <p className="text-[10px] text-[#4B6478]">Mati</p>
         </div>
         <div className="text-center border-x border-white/[0.06]">
-          <p className="text-[11px] font-bold text-white">{mortalitasPct}%</p>
+          <p className={`text-[11px] font-bold ${mortalitasPct > 3 ? 'text-red-400' : 'text-green-400'}`}>
+            {mortalitasPct}%
+          </p>
           <p className="text-[10px] text-[#4B6478]">Mortalitas</p>
         </div>
         <div className="text-center">
@@ -99,7 +131,57 @@ export default function DombaPenggemukanBeranda() {
   const { data: activeBatches = [], isLoading: loadingActive } = useDombaActiveBatches()
   const { data: allBatches = [], isLoading: loadingAll } = useDombaBatches()
 
-  const isLoading = loadingActive || loadingAll
+  const [selectedBatchId, setSelectedBatchId] = useState('')
+  const [activeAnimalIds, setActiveAnimalIds] = useState(new Set())
+
+  // Set default batch
+  useEffect(() => {
+    if (!selectedBatchId && activeBatches.length > 0) {
+      setSelectedBatchId(activeBatches[0].id)
+    }
+  }, [activeBatches, selectedBatchId])
+
+  const { data: animals = [], isLoading: loadingAnimals } = useDombaAnimals(selectedBatchId)
+  const { data: weightHistory = [], isLoading: loadingHistory } = useDombaBatchWeightHistory(selectedBatchId)
+
+  const isLoading = loadingActive || loadingAll || loadingAnimals || loadingHistory
+
+  // Data transformation for Recharts
+  const chartData = useMemo(() => {
+    if (!weightHistory.length) return []
+    // 1. Group by date
+    const dateGroups = {}
+    weightHistory.forEach(reg => {
+      const dStr = reg.weigh_date
+      if (!dateGroups[dStr]) dateGroups[dStr] = { date: dStr }
+      dateGroups[dStr][reg.animal_id] = reg.weight_kg
+    })
+    // 2. Convert to sorted array
+    return Object.values(dateGroups).sort((a, b) => new Date(a.date) - new Date(b.date))
+  }, [weightHistory])
+
+  // Mapping animalId to color
+  const animalColors = useMemo(() => {
+    const mapping = {}
+    animals.forEach((a, i) => {
+      mapping[a.id] = CHART_COLORS[i % CHART_COLORS.length]
+    })
+    return mapping
+  }, [animals])
+
+  const toggleAnimal = (id) => {
+    const next = new Set(activeAnimalIds)
+    if (next.has(id)) {
+      next.delete(id)
+    } else {
+      if (next.size >= 10) {
+        toast.warning("Maksimal 10 ekor dapat ditampilkan sekaligus")
+        return
+      }
+      next.add(id)
+    }
+    setActiveAnimalIds(next)
+  }
 
   const kpi = useMemo(() => {
     const totalEkor = activeBatches.reduce((s, b) => s + (b.total_animals || 0), 0)
@@ -138,7 +220,7 @@ export default function DombaPenggemukanBeranda() {
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 gap-2.5 px-4 mt-4">
-        <KPICard label="Batch Aktif"  value={kpi.activeBatchCount} icon={Activity}  color="text-green-400" />
+        <KPICard label="Batch Aktif"  value={kpi.activeBatchCount} icon={Activity}   color="text-green-400" />
         <KPICard label="Total Ekor"   value={kpi.totalEkor}        icon={Tag}        color="text-white" />
         <KPICard
           label="ADG Rata-rata"
@@ -155,6 +237,130 @@ export default function DombaPenggemukanBeranda() {
           color={parseFloat(kpi.mortalitasPct) > 3 ? 'text-red-400' : 'text-green-400'}
         />
       </div>
+
+      {/* Grafik Pertumbuhan */}
+      <section className="px-4 mt-6">
+        <div className="bg-white/[0.03] border border-white/[0.06] rounded-3xl p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+            <div>
+              <h2 className="font-['Sora'] font-bold text-sm text-white flex items-center gap-2">
+                <BarChart2 size={16} className="text-green-400" />
+                Grafik Pertumbuhan
+              </h2>
+              <p className="text-[10px] text-[#4B6478] mt-1 uppercase tracking-wider font-bold">Bobot Badan (kg)</p>
+            </div>
+
+            {activeBatches.length > 1 && (
+              <select
+                value={selectedBatchId}
+                onChange={(e) => {
+                  setSelectedBatchId(e.target.value)
+                  setActiveAnimalIds(new Set())
+                }}
+                className="bg-[#0C1319] border border-white/10 rounded-xl px-3 py-1.5 text-[11px] font-bold text-white outline-none focus:border-green-500/50"
+              >
+                {activeBatches.map(b => (
+                  <option key={b.id} value={b.id}>{b.batch_code} ({b.kandang_name})</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {/* Animal Selector Pills */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {animals.length > 0 ? (
+              <>
+                {animals.map((a) => {
+                  const isActive = activeAnimalIds.has(a.id)
+                  const color = animalColors[a.id]
+                  return (
+                    <button
+                      key={a.id}
+                      onClick={() => toggleAnimal(a.id)}
+                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border flex items-center gap-1.5 ${
+                        isActive
+                          ? 'text-white border-transparent'
+                          : 'bg-white/5 border-white/10 text-[#4B6478] hover:bg-white/10'
+                      }`}
+                      style={isActive ? { backgroundColor: color } : {}}
+                    >
+                      {isActive ? <CheckCircle2 size={10} /> : <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />}
+                      {a.ear_tag}
+                    </button>
+                  )
+                })}
+                {activeAnimalIds.size > 0 && (
+                  <button
+                    onClick={() => setActiveAnimalIds(new Set())}
+                    className="px-3 py-1.5 rounded-full text-[10px] font-bold border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-all flex items-center gap-1"
+                  >
+                    <RefreshCw size={10} />
+                    Reset
+                  </button>
+                )}
+              </>
+            ) : (
+              <p className="text-[11px] text-[#4B6478]">Tidak ada ternak di batch ini</p>
+            )}
+           {/* Chart Area */}
+          <div className="h-[300px] w-full relative">
+            {activeAnimalIds.size === 0 ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-white/5 rounded-2xl">
+                <MousePointer2 size={32} className="text-white/10 mb-3" />
+                <p className="text-xs font-bold text-white">Pilih ekor di atas</p>
+                <p className="text-[10px] text-[#4B6478] mt-1">Bandingkan pertumbuhan antar domba dalam satu grafik</p>
+              </div>
+            ) : weightHistory.length === 0 ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-white/[0.01] rounded-2xl">
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mb-3">
+                   <Scale size={24} className="text-[#4B6478]" />
+                 </div>
+                <p className="text-xs font-bold text-white">Belum ada data timbang</p>
+                <p className="text-[10px] text-[#4B6478] mt-1">Segera catat timbangan untuk melihat grafik</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    hide
+                  />
+                  <YAxis
+                    domain={['dataMin - 2', 'dataMax + 2']}
+                    tick={{ fontSize: 10, fill: '#4B6478', fontWeight: 'bold' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#0C1319', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '11px' }}
+                    itemStyle={{ fontSize: '11px', fontWeight: 'bold' }}
+                    labelFormatter={(val) => format(new Date(val), 'd MMMM yyyy', { locale: id })}
+                    labelStyle={{ marginBottom: '4px', color: '#94A3B8' }}
+                  />
+                  {[...activeAnimalIds].map(id => {
+                    const animal = animals.find(a => a.id === id)
+                    return (
+                      <Line
+                        key={id}
+                        type="monotone"
+                        dataKey={id}
+                        name={animal?.ear_tag || 'Domba'}
+                        stroke={animalColors[id]}
+                        strokeWidth={4}
+                        dot={false}
+                        activeDot={{ r: 5, strokeWidth: 0 }}
+                        animationDuration={1000}
+                      />
+                    )
+                  })}
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+          </div>
+        </div>
+      </section>
 
       {/* Alerts */}
       {alerts.length > 0 && (
@@ -186,9 +392,11 @@ export default function DombaPenggemukanBeranda() {
 
         {activeBatches.length === 0 ? (
           <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-            <p className="text-3xl mb-3">ðŸ</p>
+            <div className="w-16 h-16 rounded-3xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
+               <LayoutGrid size={32} className="text-green-500" />
+            </div>
             <p className="text-sm font-semibold text-white mb-1">Belum ada batch aktif</p>
-            <p className="text-xs text-[#4B6478] mb-4">Mulai batch penggemukan pertama kamu</p>
+            <p className="text-xs text-[#4B6478] mb-4">Mulai batch penggemukan domba pertama kamu</p>
             <button
               onClick={() => navigate(`${BASE}/batch`)}
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-xs font-bold rounded-xl transition-colors"

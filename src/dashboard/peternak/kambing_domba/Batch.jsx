@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Search, X, ChevronDown } from 'lucide-react'
+import { Plus, Search, X, ChevronDown, ClipboardList } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import {
   useKdBatches, useCreateKdBatch, useCloseKdBatch,
@@ -91,6 +91,7 @@ function BatchRow({ batch, onClick }) {
 
 export default function KdPenggemukanBatch() {
   const navigate = useNavigate()
+  const { tenant } = useAuth()
   const { data: allBatches = [], isLoading } = useKdBatches()
   const createBatch = useCreateKdBatch()
 
@@ -100,9 +101,11 @@ export default function KdPenggemukanBatch() {
 
   // Form state
   const [form, setForm] = useState({
-    batch_code: '', kandang_name: '',
+    batch_code: '', 
+    kandang_name: tenant?.name || '',
     start_date: new Date().toISOString().split('T')[0],
-    target_end_date: '', notes: '',
+    target_end_date: '', 
+    notes: '',
   })
 
   const stats = useMemo(() => ({
@@ -128,7 +131,7 @@ export default function KdPenggemukanBatch() {
   function handleCreate() {
     if (!form.batch_code || !form.kandang_name || !form.start_date) return
     createBatch.mutate(form, {
-      onSuccess: () => { setSheetOpen(false); setForm({ batch_code: '', kandang_name: '', start_date: new Date().toISOString().split('T')[0], target_end_date: '', notes: '' }) }
+      onSuccess: () => { setSheetOpen(false); setForm({ batch_code: '', kandang_name: tenant?.name || '', start_date: new Date().toISOString().split('T')[0], target_end_date: '', notes: '' }) }
     })
   }
 
@@ -193,7 +196,9 @@ export default function KdPenggemukanBatch() {
       <div className="px-4 mt-4 space-y-3">
         {filtered.length === 0 ? (
           <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-            <p className="text-3xl mb-3">ðŸ“‹</p>
+            <div className="w-16 h-16 rounded-3xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
+          <ClipboardList size={32} className="text-green-500" />
+        </div>
             <p className="text-sm text-[#4B6478]">Belum ada batch di kategori ini</p>
           </div>
         ) : filtered.map(batch => (
@@ -207,12 +212,12 @@ export default function KdPenggemukanBatch() {
 
       {/* Sheet Tambah Batch */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="bg-[#0C1319] border-t border-white/10 rounded-t-3xl max-h-[85vh] overflow-y-auto">
-          <SheetHeader className="mb-5">
-            <SheetTitle className="font-['Sora'] font-black text-white text-lg">Batch Baru</SheetTitle>
+        <SheetContent side="right" className="bg-[#0A1015]/95 backdrop-blur-xl border-l border-white/[0.08] w-full sm:w-[440px] p-0 flex flex-col h-full">
+          <SheetHeader className="px-6 pt-8 pb-5 border-b border-white/5">
+            <SheetTitle className="font-['Sora'] font-black text-white text-xl">Batch Baru</SheetTitle>
           </SheetHeader>
-
-          <div className="space-y-4 pb-6">
+          
+          <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
             <div>
               <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Kode Batch *</label>
               <input

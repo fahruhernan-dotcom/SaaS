@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { Plus, X, Search } from 'lucide-react'
+import { Plus, X, Search, Pill } from 'lucide-react'
 import {
   useDombaBreedingHealthLogs,
   useDombaBreedingAnimals,
@@ -281,7 +281,9 @@ export default function BreedingKesehatan() {
 
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-16 text-center">
-          <span className="text-4xl">ðŸ’Š</span>
+          <div className="w-16 h-16 rounded-3xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
+          <Pill size={32} className="text-green-500" />
+        </div>
           <p className="text-sm font-bold text-[#F1F5F9]">Tidak ada log kesehatan</p>
         </div>
       ) : (

@@ -264,62 +264,43 @@ export default function AppSidebar({ open, onClose }) {
           { title: 'Riwayat Transaksi', url: `${brokerBase}/transaksi`,  icon: BarChart2,  roles: ['owner', 'staff'] },
         ] : []),
 
-        // Peternak Broiler — global links (farm-specific sections rendered separately below)
+        // Peternak Broiler — global links
         ...(isBroiler ? [
           { title: 'Semua Siklus',   url: `${peternakBase}/siklus`,       icon: RefreshCw,  show: pp?.canViewSiklus      ?? true },
-          { title: 'Program Vaksin', url: `${peternakBase}/vaksinasi`,     icon: Syringe,    show: pp?.canViewVaksinasi   ?? true },
-          { title: 'Laporan Siklus', url: `${peternakBase}/laporan`,       icon: FileText,   show: pp?.canViewLaporan     ?? true },
-          { title: 'Stok Pakan',     url: `${peternakBase}/pakan`,         icon: Warehouse,  show: pp?.canViewPakan       ?? true },
           { title: 'Anak Kandang',   url: `${peternakBase}/anak-kandang`,  icon: Users,      show: pp?.canViewAnakKandang ?? true },
-          { title: 'Tim & Akses',    url: `${peternakBase}/tim`,           icon: Users,      show: pp?.canViewTim         ?? false },
         ].filter(item => item.show !== false) : []),
 
         // Domba Penggemukan
         ...(isDombaPenggemukan ? [
           { title: 'Batch Aktif',    url: `${peternakBase}/batch`,       icon: RefreshCw },
           { title: 'Data Ternak',    url: `${peternakBase}/ternak`,      icon: Tag },
-          { title: 'Kesehatan',      url: `${peternakBase}/kesehatan`,   icon: Syringe },
-          { title: 'Stok Pakan',     url: `${peternakBase}/pakan`,       icon: Warehouse },
-          { title: 'Laporan Batch',  url: `${peternakBase}/laporan`,     icon: FileText },
           { title: 'Denah Kandang',  url: `${peternakBase}/kandang-view`,icon: LayoutGrid },
-          { title: 'Tim & Akses',    url: `${peternakBase}/tim`,         icon: Users },
         ] : []),
 
         // Domba Breeding
         ...(isDombaBreeding ? [
           { title: 'Data Ternak',    url: `${peternakBase}/ternak`,      icon: Tag },
           { title: 'Reproduksi',     url: `${peternakBase}/reproduksi`,  icon: Heart },
-          { title: 'Kesehatan',      url: `${peternakBase}/kesehatan`,   icon: Syringe },
-          { title: 'Stok Pakan',     url: `${peternakBase}/pakan`,       icon: Warehouse },
-          { title: 'Laporan Farm',   url: `${peternakBase}/laporan`,     icon: FileText },
-          { title: 'Tim & Akses',    url: `${peternakBase}/tim`,         icon: Users },
         ] : []),
 
         // Kambing Penggemukan
         ...(isKambingPenggemukan ? [
           { title: 'Batch Aktif',    url: `${peternakBase}/batch`,       icon: RefreshCw },
           { title: 'Data Ternak',    url: `${peternakBase}/ternak`,      icon: Tag },
-          { title: 'Kesehatan',      url: `${peternakBase}/kesehatan`,   icon: Syringe },
-          { title: 'Stok Pakan',     url: `${peternakBase}/pakan`,       icon: Warehouse },
-          { title: 'Laporan Batch',  url: `${peternakBase}/laporan`,     icon: FileText },
           { title: 'Denah Kandang',  url: `${peternakBase}/kandang-view`,icon: LayoutGrid },
-          { title: 'Tim & Akses',    url: `${peternakBase}/tim`,         icon: Users },
         ] : []),
 
         // Kambing Breeding
         ...(isKambingBreeding ? [
           { title: 'Data Ternak',    url: `${peternakBase}/ternak`,      icon: Tag },
           { title: 'Reproduksi',     url: `${peternakBase}/reproduksi`,  icon: Heart },
-          { title: 'Kesehatan',      url: `${peternakBase}/kesehatan`,   icon: Syringe },
-          { title: 'Stok Pakan',     url: `${peternakBase}/pakan`,       icon: Warehouse },
-          { title: 'Laporan Farm',   url: `${peternakBase}/laporan`,     icon: FileText },
-          { title: 'Tim & Akses',    url: `${peternakBase}/tim`,         icon: Users },
         ] : []),
 
         ...(isSapiPenggemukan || isSapiBreeding ? [
-          { title: 'Sapi Aktif',    url: `${peternakBase}/batch`,        icon: RefreshCw, show: isSapiPenggemukan },
+          { title: 'Sapi Aktif',    url: `${peternakBase}/batch`,        icon: RefreshCw,  show: isSapiPenggemukan },
           { title: 'Data Ternak',   url: `${peternakBase}/ternak`,       icon: Tag },
-          { title: 'Reproduksi',    url: `${peternakBase}/reproduksi`,   icon: Heart,     show: isSapiBreeding },
+          { title: 'Denah Kandang', url: `${peternakBase}/kandang-view`, icon: LayoutGrid, show: isSapiPenggemukan },
+          { title: 'Reproduksi',    url: `${peternakBase}/reproduksi`,   icon: Heart,      show: isSapiBreeding },
         ].filter(item => item.show !== false) : []),
 
         // RPA
@@ -353,7 +334,7 @@ export default function AppSidebar({ open, onClose }) {
       label: 'TUGAS',
       items: [
         { title: 'Tugas Harian',     url: `${peternakBase}/daily_task`,   icon: ClipboardList },
-        ...(isSapiPenggemukan || isSapiBreeding ? [
+        ...((isSapiPenggemukan || isSapiBreeding || isDombaPenggemukan || isKambingPenggemukan || isBroiler) ? [
           { title: 'Penugasan',        url: `${peternakBase}/task_assign`,  icon: Users2, roles: ['owner', 'manajer'] },
           { title: 'Pengaturan Tugas', url: `${peternakBase}/task_settings`,icon: Settings2, roles: ['owner', 'manajer'] },
         ] : []),
@@ -361,14 +342,14 @@ export default function AppSidebar({ open, onClose }) {
       ]
     }] : []),
 
-    // ── LAINNYA ───────────────────────────────────────────
-    ...(isSapiPenggemukan || isSapiBreeding ? [{
-      label: 'KANDANG',
+    // ── OPERASIONAL ───────────────────────────────────────
+    ...((isPeternak && !isPoultry && !isEgg) ? [{
+      label: 'OPERASIONAL',
       items: [
-        { title: 'Laporan',       url: `${peternakBase}/laporan`,      icon: FileText },
-        { title: 'Stok Pakan',    url: `${peternakBase}/stok-pakan`,   icon: Warehouse },
-        { title: 'Kesehatan',     url: `${peternakBase}/kesehatan`,    icon: Syringe },
-      ]
+        { title: isBroiler ? 'Program Vaksin' : 'Kesehatan', url: `${peternakBase}/${isBroiler ? 'vaksinasi' : 'kesehatan'}`, icon: Syringe, show: isBroiler ? (pp?.canViewVaksinasi ?? true) : true },
+        { title: 'Stok Pakan',    url: `${peternakBase}/pakan`,        icon: Warehouse, show: isBroiler ? (pp?.canViewPakan ?? true) : true },
+        { title: isBroiler ? 'Laporan Siklus' : 'Laporan', url: `${peternakBase}/laporan`, icon: FileText, show: isBroiler ? (pp?.canViewLaporan ?? true) : true },
+      ].filter(item => item.show !== false)
     }] : []),
 
     // ── OPERASIONAL — Sembako ───────────────────────────────

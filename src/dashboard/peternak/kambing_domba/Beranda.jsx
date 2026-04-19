@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, AlertTriangle, TrendingUp, Activity, Tag, Wheat, ChevronRight } from 'lucide-react'
+import { Plus, AlertTriangle, TrendingUp, Activity, Tag, Wheat, ChevronRight, LayoutGrid } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/lib/hooks/useAuth'
 import {
@@ -186,7 +186,9 @@ export default function KdPenggemukanBeranda() {
 
         {activeBatches.length === 0 ? (
           <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-            <p className="text-3xl mb-3">ðŸ</p>
+            <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-4">
+               <LayoutGrid size={32} className="text-amber-500" />
+            </div>
             <p className="text-sm font-semibold text-white mb-1">Belum ada batch aktif</p>
             <p className="text-xs text-[#4B6478] mb-4">Mulai batch penggemukan pertama kamu</p>
             <button

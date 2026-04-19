@@ -1,374 +1,339 @@
 import React, { useState, useMemo } from 'react'
-import { motion } from 'framer-motion'
-import { Plus, ChevronDown, AlertTriangle, Shield, Bug, Skull, Activity } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Plus, X, Syringe, Calendar, Info, Trash2, ArrowLeft, HeartPulse, Activity } from 'lucide-react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useAuth } from '@/lib/hooks/useAuth'
 import {
-  useDombaBatches, useDombaHealthLogs, useDombaAnimals, useAddDombaHealthLog,
+  useDombaActiveBatches,
+  useDombaHealthLogs,
+  useDombaAnimals,
+  useAddDombaHealthLog,
+  useDeleteDombaHealthLog
 } from '@/lib/hooks/useDombaPenggemukanData'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { DatePicker } from '@/components/ui/DatePicker'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
+import { toast } from 'sonner'
+import {
+  Select, SelectContent, SelectItem,
+  SelectTrigger, SelectValue
+} from '@/components/ui/select'
 
-const LOG_TYPE_CFG = {
-  sakit:       { label: 'Sakit',       icon: AlertTriangle, cls: 'text-red-400 bg-red-500/15 border-red-500/25' },
-  vaksinasi:   { label: 'Vaksinasi',   icon: Shield,        cls: 'text-blue-400 bg-blue-500/15 border-blue-500/25' },
-  obat_cacing: { label: 'Obat Cacing', icon: Bug,           cls: 'text-amber-400 bg-amber-500/15 border-amber-500/25' },
-  kematian:    { label: 'Kematian',    icon: Skull,         cls: 'text-slate-400 bg-white/10 border-white/15' },
-  lainnya:     { label: 'Lainnya',     icon: Activity,      cls: 'text-[#4B6478] bg-white/5 border-white/10' },
-}
+const BASE = '/peternak/peternak_domba_penggemukan'
 
-// Jadwal vaksin standar kambing/domba
-const VACC_SCHEDULE = [
-  { name: 'Obat Cacing (Masuk)',       interval: 'Saat masuk' },
-  { name: 'Vaksin PMK',               interval: 'Saat masuk & H-90' },
-  { name: 'Vaksin Clostridial (CDT)', interval: 'Saat masuk & H-90' },
-  { name: 'Obat Cacing Rutin',        interval: 'H-30, H-60 (jika siklus panjang)' },
-  { name: 'Vaksin Anthrax',           interval: 'Daerah endemik — awal kemarau' },
-]
+export default function DombaKesehatan() {
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const batchId = searchParams.get('batch')
+  
+  const { profile } = useAuth()
+  const { data: batches = [], isLoading: loadingBatches } = useDombaActiveBatches()
+  const activeBatch = useMemo(() => 
+    batchId ? batches.find(b => b.id === batchId) : batches[0]
+  , [batchId, batches])
 
-function HealthLogCard({ log }) {
-  const cfg = LOG_TYPE_CFG[log.log_type] ?? LOG_TYPE_CFG.lainnya
-  const Icon = cfg.icon
-  const earTag = log.kd_penggemukan_animals?.ear_tag ?? '—'
-  const species = log.kd_penggemukan_animals?.species
-
-  return (
-    <div className={`border rounded-2xl p-4 ${cfg.cls}`}>
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <Icon size={14} className="shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-bold text-white leading-none">{cfg.label}</p>
-            <p className="text-[11px] text-[#4B6478] mt-0.5">
-              {species === 'kambing' ? 'ðŸ' : 'ðŸ‘'} {earTag} · {log.log_date}
-            </p>
-          </div>
-        </div>
-        {log.outcome && (
-          <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold border ${
-            log.outcome === 'sembuh' ? 'text-green-400 bg-green-500/15 border-green-500/25'
-            : log.outcome === 'mati'  ? 'text-red-400 bg-red-500/15 border-red-500/25'
-            : 'text-[#4B6478] bg-white/5 border-white/10'
-          }`}>
-            {log.outcome}
-          </span>
-        )}
-      </div>
-
-      {log.symptoms && <p className="text-xs text-[#94A3B8] mb-1">Gejala: {log.symptoms}</p>}
-      {log.vaccine_name && <p className="text-xs text-[#94A3B8] mb-1">Vaksin: {log.vaccine_name}</p>}
-      {log.medicine_name && (
-        <p className="text-xs text-[#94A3B8] mb-1">Obat: {log.medicine_name} {log.medicine_dose && `— ${log.medicine_dose}`}</p>
-      )}
-      {log.action_taken && <p className="text-xs text-[#94A3B8] mb-1">Tindakan: {log.action_taken}</p>}
-      {log.handled_by && <p className="text-[10px] text-[#4B6478] mt-1">Petugas: {log.handled_by}</p>}
-      {log.vaccine_next_due && <p className="text-[10px] text-blue-400 mt-1">Booster berikutnya: {log.vaccine_next_due}</p>}
-      {log.loss_value_idr && (
-        <p className="text-[10px] text-red-400 mt-1">
-          Kerugian: Rp {parseInt(log.loss_value_idr).toLocaleString('id-ID')}
-        </p>
-      )}
-    </div>
-  )
-}
-
-export default function KdPenggemukanKesehatan() {
-  const { data: batches = [], isLoading: loadingBatches } = useDombaBatches()
-  const [selectedBatch, setSelectedBatch] = useState('')
-  const [tab, setTab] = useState('log')   // 'log' | 'jadwal'
-  const [filterType, setFilterType] = useState('all')
-  const [sheetOpen, setSheetOpen] = useState(false)
-
-  const { data: logs = [], isLoading: loadingLogs } = useDombaHealthLogs(selectedBatch)
-  const { data: animals = [] } = useDombaAnimals(selectedBatch)
+  const { data: logs = [], isLoading: loadingLogs } = useDombaHealthLogs(activeBatch?.id)
+  const { data: animals = [] } = useDombaAnimals(activeBatch?.id)
   const addLog = useAddDombaHealthLog()
+  const deleteLog = useDeleteDombaHealthLog()
 
-  const activeAnimals = animals.filter(a => a.status === 'active')
+  const [showAdd, setShowAdd] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [form, setForm] = useState({
-    animal_id: '', log_date: new Date().toISOString().split('T')[0],
+    log_date: new Date().toISOString().split('T')[0],
+    animal_id: '',
     log_type: 'sakit',
-    symptoms: '', action_taken: '', medicine_name: '', medicine_dose: '',
-    handled_by: '', outcome: '',
-    vaccine_name: '', vaccine_next_due: '',
-    death_cause: '', death_weight_kg: '', loss_value_idr: '',
-    notes: '',
+    symptoms: '',
+    diagnosis: '',
+    treatment: '',
+    medication_used: '',
+    notes: ''
   })
 
-  const filteredLogs = useMemo(() => {
-    if (filterType === 'all') return logs
-    return logs.filter(l => l.log_type === filterType)
-  }, [logs, filterType])
-
-  const stats = useMemo(() => ({
-    sakit:     logs.filter(l => l.log_type === 'sakit').length,
-    vaksinasi: logs.filter(l => l.log_type === 'vaksinasi').length,
-    kematian:  logs.filter(l => l.log_type === 'kematian').length,
-  }), [logs])
-
-  function handleSave() {
-    if (!form.animal_id || !selectedBatch) return
-    addLog.mutate({
-      ...form,
-      batch_id: selectedBatch,
-      death_weight_kg: form.death_weight_kg ? parseFloat(form.death_weight_kg) : null,
-      loss_value_idr: form.loss_value_idr ? parseInt(form.loss_value_idr) : null,
-    }, {
-      onSuccess: () => {
-        setSheetOpen(false)
-        setForm({ animal_id: '', log_date: new Date().toISOString().split('T')[0], log_type: 'sakit', symptoms: '', action_taken: '', medicine_name: '', medicine_dose: '', handled_by: '', outcome: '', vaccine_name: '', vaccine_next_due: '', death_cause: '', death_weight_kg: '', loss_value_idr: '', notes: '' })
-      }
-    })
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!activeBatch) return
+    
+    setIsSubmitting(true)
+    try {
+      await addLog.mutateAsync({
+        batch_id: activeBatch.id,
+        ...form,
+        animal_id: form.animal_id === 'null' || !form.animal_id ? null : form.animal_id
+      })
+      toast.success('Log kesehatan berhasil disimpan')
+      setShowAdd(false)
+      setForm({
+        log_date: new Date().toISOString().split('T')[0],
+        animal_id: '',
+        log_type: 'sakit',
+        symptoms: '',
+        diagnosis: '',
+        treatment: '',
+        medication_used: '',
+        notes: ''
+      })
+    } catch (err) {
+      toast.error('Gagal menyimpan log kesehatan')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  if (loadingBatches) return <LoadingSpinner fullPage />
+  const handleDelete = async (id) => {
+    if (!confirm('Hapus log kesehatan ini?')) return
+    try {
+      await deleteLog.mutateAsync({ logId: id, batch_id: activeBatch?.id })
+      toast.success('Log kesehatan dihapus')
+    } catch (err) {
+      toast.error('Gagal menghapus log')
+    }
+  }
+
+  if (loadingBatches || (activeBatch && loadingLogs)) return <LoadingSpinner fullPage />
 
   return (
     <div className="text-slate-100 pb-24">
-
       {/* Header */}
-      <header className="px-4 pt-6 pb-4 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.04] flex items-center justify-between">
-        <div>
-          <h1 className="font-['Sora'] font-black text-xl text-white mb-0.5">Kesehatan & Vaksinasi</h1>
-          <p className="text-xs text-[#4B6478]">{stats.kematian} kematian · {stats.vaksinasi} vaksinasi · {stats.sakit} sakit</p>
+      <header className="px-4 pt-6 pb-5 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.04]">
+        <div className="flex items-center gap-3 mb-4">
+          <button onClick={() => navigate('/peternak/peternak_domba_penggemukan/beranda')} className="p-2 -ml-2 text-[#4B6478] hover:text-white transition-colors">
+            <ArrowLeft size={18} />
+          </button>
+          <h1 className="font-['Sora'] font-black text-xl text-white">Layanan Kesehatan Domba</h1>
         </div>
-        {selectedBatch && (
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setSheetOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-green-600 rounded-xl text-white text-xs font-extrabold font-['Sora'] shadow-[0_3px_12px_rgba(22,163,74,0.35)]"
-          >
-            <Plus size={13} />
-            Log Baru
-          </motion.button>
+        
+        {batches.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+            {batches.map(b => (
+              <button
+                key={b.id}
+                onClick={() => navigate(`${BASE}/kesehatan?batch=${b.id}`)}
+                className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                  activeBatch?.id === b.id 
+                    ? 'bg-green-600 border-green-500 text-white shadow-lg shadow-green-600/20' 
+                    : 'bg-white/[0.03] border-white/[0.06] text-[#4B6478]'
+                }`}
+              >
+                {b.batch_code}
+              </button>
+            ))}
+          </div>
         )}
       </header>
 
-      {/* Pilih Batch */}
-      <div className="px-4 mt-4">
-        <div className="relative">
-          <select
-            value={selectedBatch}
-            onChange={e => setSelectedBatch(e.target.value)}
-            className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:border-green-500/40 appearance-none"
-          >
-            <option value="">-- Pilih batch --</option>
-            {batches.map(b => (
-              <option key={b.id} value={b.id}>
-                {b.batch_code} — {b.kandang_name}
-              </option>
-            ))}
-          </select>
-          <ChevronDown size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#4B6478] pointer-events-none" />
-        </div>
-      </div>
-
-      {/* Tab: Log | Jadwal Vaksin */}
-      <div className="flex gap-1 px-4 mt-3">
-        {[['log','Log Kesehatan'],['jadwal','Jadwal Vaksin']].map(([k,l]) => (
-          <button key={k} onClick={() => setTab(k)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-              tab === k ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'text-[#4B6478]'
-            }`}>
-            {l}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'jadwal' ? (
-        <div className="px-4 mt-4 space-y-2">
-          <p className="text-xs text-[#4B6478] mb-3">Protokol standar penggemukan kambing & domba:</p>
-          {VACC_SCHEDULE.map((v, i) => (
-            <div key={i} className="flex items-center justify-between px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl">
-              <div className="flex items-center gap-2.5">
-                <Shield size={13} className="text-blue-400 shrink-0" />
-                <span className="text-sm font-semibold text-white">{v.name}</span>
-              </div>
-              <span className="text-[10px] text-[#4B6478] text-right max-w-[120px]">{v.interval}</span>
-            </div>
-          ))}
+      {!activeBatch ? (
+        <div className="px-4 py-20 text-center">
+          <div className="w-16 h-16 bg-white/[0.03] rounded-full flex items-center justify-center mx-auto mb-4 border border-white/[0.06]">
+            <HeartPulse size={24} className="text-[#4B6478]" />
+          </div>
+          <p className="text-sm font-bold text-white mb-1">Pilih Batch Terlebih Dahulu</p>
+          <p className="text-xs text-[#4B6478]">Kamu perlu memiliki batch aktif untuk mencatat kesehatan</p>
         </div>
       ) : (
-        <>
-          {/* Filter type */}
-          {selectedBatch && (
-            <div className="flex gap-1 px-4 mt-3 overflow-x-auto scrollbar-none">
-              {['all','sakit','vaksinasi','obat_cacing','kematian'].map(t => (
-                <button key={t} onClick={() => setFilterType(t)}
-                  className={`shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-colors ${
-                    filterType === t ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'text-[#4B6478]'
-                  }`}>
-                  {t === 'all' ? 'Semua' : t === 'obat_cacing' ? 'Cacing' : LOG_TYPE_CFG[t]?.label}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div className="px-4 mt-4 space-y-3">
-            {!selectedBatch ? (
-              <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-                <p className="text-3xl mb-3">ðŸ’‰</p>
-                <p className="text-sm text-[#4B6478]">Pilih batch untuk melihat log kesehatan</p>
-              </div>
-            ) : loadingLogs ? <LoadingSpinner />
-            : filteredLogs.length === 0 ? (
-              <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-                <p className="text-sm text-[#4B6478]">Belum ada log kesehatan</p>
-              </div>
-            ) : filteredLogs.map(log => <HealthLogCard key={log.id} log={log} />)}
+        <div className="px-4 mt-6">
+          {/* Logs List */}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-['Sora'] font-bold text-sm text-white">Riwayat Terapi & Vaksin</h2>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-lg shadow-green-600/10"
+            >
+              <Plus size={14} /> Catat Penanganan
+            </button>
           </div>
-        </>
+
+          <div className="space-y-4">
+            {logs.length === 0 ? (
+              <div className="text-center py-12 bg-white/[0.02] border border-dashed border-white/10 rounded-[32px]">
+                <Activity size={24} className="text-[#4B6478] mx-auto mb-2 opacity-20" />
+                <p className="text-xs text-[#4B6478]">Belum ada catatan kesehatan untuk batch ini</p>
+              </div>
+            ) : (
+              logs.map(log => (
+                <div key={log.id} className="bg-white/[0.03] border border-white/[0.06] rounded-[24px] p-5 transition-all hover:bg-white/[0.05]">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center border border-green-500/20 shadow-inner">
+                        <Syringe size={18} className="text-green-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-white">{new Date(log.log_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                        <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-wider">
+                          {log.animal_id ? `Ekor ID: ${log.kd_penggemukan_animals?.ear_tag || 'Unknown'}` : 'Seluruh Batch'}
+                        </p>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => handleDelete(log.id)}
+                      className="p-1.5 text-red-500/40 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 py-4 border-t border-white/[0.04] mb-1">
+                    <div>
+                      <p className="text-[10px] text-[#4B6478] font-black uppercase mb-1.5 tracking-widest leading-none">Gejala</p>
+                      <p className="text-xs text-white leading-relaxed font-medium">{log.symptoms || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-[#4B6478] font-black uppercase mb-1.5 tracking-widest leading-none">Diagnosa</p>
+                      <p className="text-xs text-green-200 leading-relaxed font-bold">{log.diagnosis || '-'}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="p-4 bg-white/[0.02] rounded-2xl border border-white/5 shadow-inner">
+                      <p className="text-[10px] text-[#4B6478] font-black uppercase mb-1.5 tracking-widest leading-none">Penanganan & Obat</p>
+                      <div className="flex items-center gap-2 mb-1.5">
+                         <span className="text-xs font-black text-green-400 uppercase">{log.medication_used || 'Tanpa Obat'}</span>
+                      </div>
+                      <p className="text-[11px] text-[#94A3B8] leading-relaxed font-medium">{log.treatment || '-'}</p>
+                    </div>
+                  </div>
+
+                  {log.notes && (
+                    <div className="mt-4 flex items-start gap-2 pt-4 border-t border-white/[0.04]">
+                      <Info size={12} className="text-[#4B6478] shrink-0 mt-0.5" />
+                      <p className="text-[10px] text-[#4B6478] italic leading-relaxed font-bold">{log.notes}</p>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       )}
 
-      {/* Sheet Tambah Log */}
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="bg-[#0C1319] border-t border-white/10 rounded-t-3xl max-h-[90vh] overflow-y-auto">
-          <SheetHeader className="mb-5">
-            <SheetTitle className="font-['Sora'] font-black text-white text-lg">Log Kesehatan Baru</SheetTitle>
-          </SheetHeader>
-          <div className="space-y-4 pb-8">
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Pilih Ekor *</label>
-                <select value={form.animal_id} onChange={e => setForm(f => ({ ...f, animal_id: e.target.value }))}
-                  className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:border-green-500/40">
-                  <option value="">-- Pilih --</option>
-                  {animals.map(a => (
-                    <option key={a.id} value={a.id}>{a.ear_tag} ({a.species})</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Jenis Log *</label>
-                <select value={form.log_type} onChange={e => setForm(f => ({ ...f, log_type: e.target.value }))}
-                  className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:border-green-500/40">
-                  {Object.entries(LOG_TYPE_CFG).map(([k, v]) => (
-                    <option key={k} value={k}>{v.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Tanggal *</label>
-              <DatePicker value={form.log_date} onChange={v => setForm(f => ({ ...f, log_date: v }))} />
-            </div>
-
-            {(form.log_type === 'sakit' || form.log_type === 'lainnya') && (
-              <>
-                <div>
-                  <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Tanda Klinis / Gejala</label>
-                  <input value={form.symptoms} onChange={e => setForm(f => ({ ...f, symptoms: e.target.value }))}
-                    placeholder="Diare, lemas, nafsu makan turun..."
-                    className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Tindakan</label>
-                  <input value={form.action_taken} onChange={e => setForm(f => ({ ...f, action_taken: e.target.value }))}
-                    placeholder="Isolasi, injeksi, dll"
-                    className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Nama Obat</label>
-                    <input value={form.medicine_name} onChange={e => setForm(f => ({ ...f, medicine_name: e.target.value }))}
-                      placeholder="Sulfa, Penisilin..."
-                      className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Dosis</label>
-                    <input value={form.medicine_dose} onChange={e => setForm(f => ({ ...f, medicine_dose: e.target.value }))}
-                      placeholder="5 ml IM"
-                      className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Hasil Akhir</label>
-                  <select value={form.outcome} onChange={e => setForm(f => ({ ...f, outcome: e.target.value }))}
-                    className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:border-green-500/40">
-                    <option value="">-- Pilih --</option>
-                    <option value="sembuh">Sembuh</option>
-                    <option value="masih_diobati">Masih Diobati</option>
-                    <option value="mati">Mati</option>
-                  </select>
-                </div>
-              </>
-            )}
-
-            {(form.log_type === 'vaksinasi' || form.log_type === 'obat_cacing') && (
-              <>
-                <div>
-                  <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">
-                    {form.log_type === 'vaksinasi' ? 'Nama Vaksin' : 'Nama Obat Cacing'}
-                  </label>
-                  <input
-                    value={form.log_type === 'vaksinasi' ? form.vaccine_name : form.medicine_name}
-                    onChange={e => setForm(f => form.log_type === 'vaksinasi'
-                      ? { ...f, vaccine_name: e.target.value }
-                      : { ...f, medicine_name: e.target.value }
-                    )}
-                    placeholder={form.log_type === 'vaksinasi' ? 'PMK, CDT, Anthrax...' : 'Albendazole 10%...'}
-                    className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Dosis</label>
-                  <input value={form.medicine_dose} onChange={e => setForm(f => ({ ...f, medicine_dose: e.target.value }))}
-                    placeholder="2 ml IM"
-                    className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-                </div>
-                {form.log_type === 'vaksinasi' && (
-                  <div>
-                    <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Jadwal Booster Berikutnya</label>
-                    <DatePicker value={form.vaccine_next_due} onChange={v => setForm(f => ({ ...f, vaccine_next_due: v }))} />
-                  </div>
-                )}
-              </>
-            )}
-
-            {form.log_type === 'kematian' && (
-              <>
-                <div>
-                  <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Dugaan Penyebab Kematian</label>
-                  <input value={form.death_cause} onChange={e => setForm(f => ({ ...f, death_cause: e.target.value }))}
-                    placeholder="Pneumonia, kecelakaan..."
-                    className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Bobot Saat Mati (kg)</label>
-                    <input type="number" step="0.1" value={form.death_weight_kg} onChange={e => setForm(f => ({ ...f, death_weight_kg: e.target.value }))}
-                      placeholder="28.0"
-                      className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Nilai Kerugian (Rp)</label>
-                    <input type="number" value={form.loss_value_idr} onChange={e => setForm(f => ({ ...f, loss_value_idr: e.target.value }))}
-                      placeholder="1800000"
-                      className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-                  </div>
-                </div>
-              </>
-            )}
-
-            <div>
-              <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Petugas</label>
-              <input value={form.handled_by} onChange={e => setForm(f => ({ ...f, handled_by: e.target.value }))}
-                placeholder="Nama petugas / drh."
-                className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40" />
-            </div>
-
-            <motion.button
-              whileTap={{ scale: 0.97 }}
-              disabled={!form.animal_id || addLog.isPending}
-              onClick={handleSave}
-              className="w-full py-3.5 bg-green-600 disabled:opacity-40 text-white font-bold rounded-xl text-sm"
+      {/* Add Log Modal */}
+      <AnimatePresence>
+        {showAdd && (
+          <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAdd(false)}
+              className="absolute inset-0 bg-[#06090F]/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              className="relative w-full max-w-md bg-[#0C1319] border-t sm:border border-white/[0.06] rounded-t-[32px] sm:rounded-[40px] p-8 pb-10 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar"
             >
-              {addLog.isPending ? 'Menyimpan...' : 'Simpan Log'}
-            </motion.button>
-          </div>
-        </SheetContent>
-      </Sheet>
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                   <h3 className="font-['Sora'] font-black text-xl text-white mb-1">Catat Penanganan</h3>
+                   <p className="text-[11px] text-[#4B6478] font-bold uppercase tracking-widest">Input Data Medis & Vaksin</p>
+                </div>
+                <button onClick={() => setShowAdd(false)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-[#4B6478] hover:text-white transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
 
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-2 ml-1 tracking-widest leading-none">Tanggal</label>
+                  <input
+                    type="date"
+                    required
+                    value={form.log_date}
+                    onChange={e => setForm({...form, log_date: e.target.value})}
+                    className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-green-500/50 transition-colors shadow-inner"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-2 ml-1 tracking-widest leading-none">Pilih Ternak (Opsional)</label>
+                  <Select value={form.animal_id} onValueChange={v => setForm({...form, animal_id: v})}>
+                    <SelectTrigger className="w-full h-14 bg-white/[0.03] border-white/10 rounded-2xl text-white px-5 shadow-inner">
+                      <SelectValue placeholder="Pilih ekor... (biarkan kosong jika seluruh batch)" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0C1319] border-white/10 rounded-2xl shadow-2xl">
+                      <SelectItem value="null">-- Seluruh Batch --</SelectItem>
+                      {animals.map(a => (
+                        <SelectItem key={a.id} value={a.id} className="py-3 px-4 border-b border-white/5 last:border-0">
+                           <div className="flex flex-col">
+                              <span className="font-black text-sm">{a.ear_tag}</span>
+                              <span className="text-[10px] text-[#4B6478] font-bold uppercase">{a.breed || 'No Breed'}</span>
+                           </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-2 ml-1 tracking-widest leading-none">Gejala Teramati</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Diare, lemas, nafsu makan turun..."
+                    value={form.symptoms}
+                    onChange={e => setForm({...form, symptoms: e.target.value})}
+                    className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-green-500/50 transition-colors shadow-inner"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-2 ml-1 tracking-widest leading-none">Diagnosa Sementara</label>
+                  <input
+                    type="text"
+                    placeholder="Cacingan, Kembung, dll..."
+                    value={form.diagnosis}
+                    onChange={e => setForm({...form, diagnosis: e.target.value})}
+                    className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-green-200 placeholder:text-[#4B6478]/50 focus:outline-none focus:border-green-500/50 transition-colors shadow-inner"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-2 ml-1 tracking-widest leading-none">Obat Digunakan</label>
+                    <input
+                      type="text"
+                      placeholder="Albendazole, B-Complex..."
+                      value={form.medication_used}
+                      onChange={e => setForm({...form, medication_used: e.target.value})}
+                      className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-green-500/50 transition-colors shadow-inner"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-2 ml-1 tracking-widest leading-none">Penanganan</label>
+                    <input
+                      type="text"
+                      placeholder="Suntik IM, Karantina..."
+                      value={form.treatment}
+                      onChange={e => setForm({...form, treatment: e.target.value})}
+                      className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-green-500/50 transition-colors shadow-inner"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-2 ml-1 tracking-widest leading-none">Catatan Tambahan</label>
+                  <textarea
+                    rows={2}
+                    placeholder="Tambahkan detail lainnya..."
+                    value={form.notes}
+                    onChange={e => setForm({...form, notes: e.target.value})}
+                    className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-green-500/50 resize-none transition-colors shadow-inner"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-green-600 hover:bg-green-500 disabled:bg-white/[0.03] disabled:text-[#4B6478] text-white font-black py-5 rounded-2xl transition-all shadow-xl shadow-green-900/20 flex items-center justify-center gap-2 mt-4 active:scale-[0.98]"
+                >
+                  <HeartPulse size={18} className={isSubmitting ? 'animate-pulse' : ''} />
+                  {isSubmitting ? 'Menyimpan...' : 'Simpan Log Kesehatan'}
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

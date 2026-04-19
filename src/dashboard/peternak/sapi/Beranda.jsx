@@ -1,10 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  Plus, AlertTriangle, TrendingUp, Activity, Tag, 
-  Wheat, ChevronRight, BarChart2, MousePointer2, RefreshCw,
-  CheckCircle2
-} from 'lucide-react'
+import { Plus, AlertTriangle, TrendingUp, Activity, Tag, Wheat, ChevronRight, BarChart2, MousePointer2, RefreshCw, CheckCircle2, Scale, LayoutGrid } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/lib/hooks/useAuth'
 import {
@@ -20,6 +16,7 @@ import {
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { toast } from 'sonner'
+import KandangMiniMap from './KandangMiniMap'
 
 const BASE = '/peternak/peternak_sapi_penggemukan'
 
@@ -38,11 +35,11 @@ function getGreeting() {
 
 function KPICard({ label, value, sub, color = 'text-white', icon: Icon }) {
   return (
-    <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
-      {Icon && <Icon size={14} className="text-[#4B6478] mb-2" />}
-      <p className={`font-['Sora'] font-black text-xl leading-none mb-1 ${color}`}>{value}</p>
-      <p className="text-[11px] text-[#4B6478] font-semibold">{label}</p>
-      {sub && <p className="text-[10px] text-[#4B6478] mt-0.5">{sub}</p>}
+    <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
+      {Icon && <Icon size={12} className="text-[#4B6478] mb-2" />}
+      <p className={`font-['Sora'] font-black text-lg leading-none mb-1 ${color}`}>{value}</p>
+      <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-tight">{label}</p>
+      {sub && <p className="text-[9px] text-[#4B6478] mt-0.5 font-medium tracking-tighter">{sub}</p>}
     </div>
   )
 }
@@ -63,63 +60,74 @@ function BatchCard({ batch, onClick }) {
     <motion.div
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 cursor-pointer active:bg-white/[0.06] transition-colors"
+      className="group bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.12] rounded-3xl p-6 cursor-pointer transition-all duration-300"
     >
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="font-['Sora'] font-bold text-sm text-white">{batch.batch_code}</span>
-            {isOverdue && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400 font-bold">
-                OVERDUE
-              </span>
-            )}
-            {isCritical && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-bold">
-                MORTALITAS
-              </span>
-            )}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left Side: Stats & Info */}
+        <div className="flex-1 flex flex-col justify-between min-w-0">
+          <div>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-['Sora'] font-black text-lg text-white group-hover:text-amber-400 transition-colors uppercase tracking-tight">{batch.batch_code}</span>
+                  {isOverdue && (
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-black tracking-tighter uppercase">OVERDUE</span>
+                  )}
+                  {isCritical && (
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-black tracking-tighter uppercase">CRITICAL</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 text-[#4B6478]">
+                   <LayoutGrid size={12} />
+                   <p className="text-[11px] font-bold uppercase tracking-wider">{batch.kandang_name}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-2xl font-black text-white font-['Sora'] leading-none mb-1">{batch.total_animals}</p>
+                <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-widest">Ekor</p>
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div className="mb-6 bg-white/[0.02] border border-white/[0.04] p-3 rounded-2xl">
+              <div className="flex justify-between text-[10px] font-bold uppercase tracking-wide text-[#4B6478] mb-1.5">
+                <span>Hari ke-{hari}</span>
+                <span>Target {TARGET_HARI} hari</span>
+              </div>
+              <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-1000 ${
+                    isOverdue ? 'bg-red-500' : progress > 80 ? 'bg-amber-500' : 'bg-amber-400'
+                  }`}
+                  style={{ width: `${Math.min(100, progress)}%` }}
+                />
+              </div>
+            </div>
           </div>
-          <p className="text-[11px] text-[#4B6478]">{batch.kandang_name}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-lg font-black text-white font-['Sora']">{batch.total_animals}</p>
-          <p className="text-[10px] text-[#4B6478]">ekor</p>
-        </div>
-      </div>
 
-      {/* Progress bar hari penggemukan */}
-      <div className="mb-3">
-        <div className="flex justify-between text-[10px] text-[#4B6478] mb-1">
-          <span>Hari ke-{hari}</span>
-          <span>Target {TARGET_HARI} hari</span>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white/[0.02] border border-white/[0.04] rounded-2xl p-2.5 text-center">
+              <p className="text-[11px] font-black text-white leading-none mb-1">{batch.mortality_count}</p>
+              <p className="text-[9px] text-[#4B6478] font-bold uppercase tracking-widest">Mati</p>
+            </div>
+            <div className="bg-white/[0.02] border border-white/[0.04] rounded-2xl p-2.5 text-center">
+              <p className={`text-[11px] font-black leading-none mb-1 ${mortalitasPct > 2 ? 'text-red-400' : 'text-green-400'}`}>
+                {mortalitasPct}%
+              </p>
+              <p className="text-[9px] text-[#4B6478] font-bold uppercase tracking-widest">Mortalitas</p>
+            </div>
+            <div className="bg-white/[0.02] border border-white/[0.04] rounded-2xl p-2.5 text-center">
+              <p className={`text-[11px] font-black leading-none mb-1 ${adgKg ? 'text-amber-400' : 'text-[#4B6478]'}`}>
+                {adgKg ? `${adgKg}kg` : '—'}
+              </p>
+              <p className="text-[9px] text-[#4B6478] font-bold uppercase tracking-widest">ADG/Hr</p>
+            </div>
+          </div>
         </div>
-        <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${
-              isOverdue ? 'bg-red-500' : progress > 80 ? 'bg-amber-500' : 'bg-amber-400'
-            }`}
-            style={{ width: `${Math.min(100, progress)}%` }}
-          />
-        </div>
-      </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        <div className="text-center">
-          <p className="text-[11px] font-bold text-white">{batch.mortality_count}</p>
-          <p className="text-[10px] text-[#4B6478]">Mati</p>
-        </div>
-        <div className="text-center border-x border-white/[0.06]">
-          <p className={`text-[11px] font-bold ${mortalitasPct > 2 ? 'text-red-400' : 'text-green-400'}`}>
-            {mortalitasPct}%
-          </p>
-          <p className="text-[10px] text-[#4B6478]">Mortalitas</p>
-        </div>
-        <div className="text-center">
-          <p className={`text-[11px] font-bold ${adgKg ? 'text-amber-400' : 'text-[#4B6478]'}`}>
-            {adgKg ? `${adgKg}kg` : '—'}
-          </p>
-          <p className="text-[10px] text-[#4B6478]">ADG/hari</p>
+        {/* Right Side: Map Visualization */}
+        <div className="w-full lg:w-[50%] xl:w-[60%] shrink-0">
+          <KandangMiniMap batchId={batch.id} className="mt-0" />
         </div>
       </div>
     </motion.div>
@@ -236,23 +244,23 @@ export default function SapiBeranda() {
       </header>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-2 gap-2.5 px-4 mt-4">
+      <div className="grid grid-cols-4 gap-2 px-4 mt-4">
         <KPICard
-          label="Batch Aktif"
+          label="Batch"
           value={kpi.activeBatchCount}
           icon={Activity}
           color="text-amber-400"
         />
         <KPICard
-          label="Total Ekor"
+          label="Sapi"
           value={kpi.totalEkor}
           icon={Tag}
           color="text-white"
         />
         <KPICard
-          label="ADG Rata-rata"
-          value={kpi.avgADGKg ? `${kpi.avgADGKg} kg/hr` : '—'}
-          sub="Target ≥0.8 kg/hari"
+          label="ADG"
+          value={kpi.avgADGKg ? `${kpi.avgADGKg}` : '—'}
+          sub="kg/hr"
           icon={TrendingUp}
           color={
             kpi.avgADGKg >= 0.8 ? 'text-green-400'
@@ -261,15 +269,73 @@ export default function SapiBeranda() {
           }
         />
         <KPICard
-          label="Mortalitas"
+          label="Mati"
           value={`${kpi.mortalitasPct}%`}
-          sub="Target ≤2%"
           icon={Activity}
           color={parseFloat(kpi.mortalitasPct) > 2 ? 'text-red-400' : 'text-green-400'}
         />
       </div>
 
-      {/* Grafik Pertumbuhan */}
+      {/* 1. Batch Aktif (Moved UP) */}
+      <section className="px-4 mt-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-['Sora'] font-bold text-sm text-white">Batch Aktif</h2>
+          <button
+            onClick={() => navigate(`${BASE}/batch`)}
+            className="flex items-center gap-1 text-[11px] text-amber-400 font-semibold"
+          >
+            Lihat semua <ChevronRight size={13} />
+          </button>
+        </div>
+
+        {activeBatches.length === 0 ? (
+          <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
+            <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-4">
+               <LayoutGrid size={32} className="text-amber-500" />
+            </div>
+            <p className="text-sm font-semibold text-white mb-1">Belum ada batch aktif</p>
+            <p className="text-xs text-[#4B6478] mb-4">Mulai batch penggemukan sapi pertama kamu</p>
+            <button
+              onClick={() => navigate(`${BASE}/batch`)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl transition-colors"
+            >
+              <Plus size={13} />
+              Buat Batch Baru
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {activeBatches.map(batch => (
+              <BatchCard
+                key={batch.id}
+                batch={batch}
+                onClick={() => navigate(`${BASE}/ternak?batch=${batch.id}`)}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Alerts (Placed below Batch Aktif) */}
+      {alerts.length > 0 && (
+        <div className="px-4 mt-4 space-y-2">
+          {alerts.map((a, i) => (
+            <div
+              key={i}
+              className={`flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold border ${
+                a.type === 'danger'
+                  ? 'bg-red-500/10 border-red-500/20 text-red-300'
+                  : 'bg-amber-500/10 border-amber-500/20 text-amber-300'
+              }`}
+            >
+              <AlertTriangle size={13} className="shrink-0 mt-0.5" />
+              <span>{a.msg}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 2. Grafik Pertumbuhan (Moved DOWN) */}
       <section className="px-4 mt-6">
         <div className="bg-white/[0.03] border border-white/[0.06] rounded-3xl p-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
@@ -345,7 +411,9 @@ export default function SapiBeranda() {
               </div>
             ) : weightHistory.length === 0 ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-white/[0.01] rounded-2xl">
-                <p className="text-2xl mb-2">âš–ï¸</p>
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mb-3">
+                   <Scale size={24} className="text-[#4B6478]" />
+                </div>
                 <p className="text-xs font-bold text-white">Belum ada data timbang</p>
                 <p className="text-[10px] text-[#4B6478] mt-1">Segera catat timbangan pertama Anda untuk melihat grafik ini</p>
               </div>
@@ -392,64 +460,7 @@ export default function SapiBeranda() {
         </div>
       </section>
 
-      {/* Alerts */}
-      {alerts.length > 0 && (
-        <div className="px-4 mt-4 space-y-2">
-          {alerts.map((a, i) => (
-            <div
-              key={i}
-              className={`flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold border ${
-                a.type === 'danger'
-                  ? 'bg-red-500/10 border-red-500/20 text-red-300'
-                  : 'bg-amber-500/10 border-amber-500/20 text-amber-300'
-              }`}
-            >
-              <AlertTriangle size={13} className="shrink-0 mt-0.5" />
-              <span>{a.msg}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Batch Aktif */}
-      <section className="px-4 mt-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-['Sora'] font-bold text-sm text-white">Batch Aktif</h2>
-          <button
-            onClick={() => navigate(`${BASE}/batch`)}
-            className="flex items-center gap-1 text-[11px] text-amber-400 font-semibold"
-          >
-            Lihat semua <ChevronRight size={13} />
-          </button>
-        </div>
-
-        {activeBatches.length === 0 ? (
-          <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-            <p className="text-3xl mb-3">ðŸ„</p>
-            <p className="text-sm font-semibold text-white mb-1">Belum ada batch aktif</p>
-            <p className="text-xs text-[#4B6478] mb-4">Mulai batch penggemukan sapi pertama kamu</p>
-            <button
-              onClick={() => navigate(`${BASE}/batch`)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl transition-colors"
-            >
-              <Plus size={13} />
-              Buat Batch Baru
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {activeBatches.map(batch => (
-              <BatchCard
-                key={batch.id}
-                batch={batch}
-                onClick={() => navigate(`${BASE}/ternak?batch=${batch.id}`)}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Riwayat ringkas */}
+      {/* 3. Riwayat ringkas */}
       {kpi.closedCount > 0 && (
         <section className="px-4 mt-6">
           <button

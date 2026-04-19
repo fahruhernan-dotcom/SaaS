@@ -766,6 +766,47 @@ export function useMoveSapiAnimalToKandang() {
   })
 }
 
+// ── useUpdateSapiKandangPosition ─────────────────────────────────────────────
+export function useUpdateSapiKandangPosition() {
+  const qc = useQueryClient()
+  const { tenant } = useAuth()
+  return useMutation({
+    mutationFn: async ({ kandangId, grid_x, grid_y }) => {
+      const { error } = await supabase
+        .from('sapi_kandangs')
+        .update({ grid_x, grid_y })
+        .eq('id', kandangId)
+        .eq('tenant_id', tenant.id)
+      if (error) throw error
+    },
+    onSuccess: (_, { batchId }) => {
+      qc.invalidateQueries({ queryKey: ['sapi-kandangs', batchId] })
+    },
+    onError: (err) => toast.error('Gagal simpan posisi: ' + err.message),
+  })
+}
+
+// ── useUpdateSapiKandang ──────────────────────────────────────────────────────
+export function useUpdateSapiKandang() {
+  const qc = useQueryClient()
+  const { tenant } = useAuth()
+  return useMutation({
+    mutationFn: async ({ kandangId, batchId, updates }) => {
+      const { error } = await supabase
+        .from('sapi_kandangs')
+        .update(updates)
+        .eq('id', kandangId)
+        .eq('tenant_id', tenant.id)
+      if (error) throw error
+    },
+    onSuccess: (_, { batchId }) => {
+      qc.invalidateQueries({ queryKey: ['sapi-kandangs', batchId] })
+      toast.success('Data kandang diperbarui')
+    },
+    onError: (err) => toast.error('Gagal update kandang: ' + err.message),
+  })
+}
+
 // ── useEnsureSapiHoldingPen ───────────────────────────────────────────────────
 export function useEnsureSapiHoldingPen() {
   const qc = useQueryClient()

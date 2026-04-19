@@ -3,7 +3,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ReferenceLine, ResponsiveContainer,
 } from 'recharts'
-import { ChevronDown, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { ChevronDown, TrendingUp, TrendingDown, Minus, BarChart3, CheckCircle2, XCircle, LayoutGrid } from 'lucide-react'
 import {
   useKambingBatches, useKambingAnimals, useKambingFeedLogs, useKambingSales,
   calcHariDiFarm, calcADG, calcFCRKambing, calcMortalitasKambing,
@@ -12,7 +12,7 @@ import {
 import { formatIDRShort } from '@/lib/format'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
 
-// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Helpers ------------------------------------------------------------------
 
 function fmt(dateStr) {
   if (!dateStr) return '—'
@@ -62,7 +62,7 @@ function WeightTooltip({ active, payload, label }) {
   )
 }
 
-// â”€â”€â”€ Main â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// --- Main --------------------------------------------------------------------
 
 export default function KdPenggemukanLaporan() {
   const { data: batches = [], isLoading: loadingBatches } = useKambingBatches()
@@ -70,13 +70,13 @@ export default function KdPenggemukanLaporan() {
 
   const batch = batches.find(b => b.id === selectedBatch)
 
-  const { data: animals = [],  isLoading: loadingAnimals  } = useKambingAnimals(selectedBatch)
-  const { data: feedLogs = [], isLoading: loadingFeed     } = useKambingFeedLogs(selectedBatch)
-  const { data: sales = [],    isLoading: loadingSales    } = useKambingSales(selectedBatch)
+  const { data: animals = [], isLoading: loadingAnimals } = useKambingAnimals(selectedBatch)
+  const { data: feedLogs = [], isLoading: loadingFeed } = useKambingFeedLogs(selectedBatch)
+  const { data: sales = [], isLoading: loadingSales } = useKambingSales(selectedBatch)
 
   const isLoading = loadingAnimals || loadingFeed || loadingSales
 
-  // â”€â”€ Computed KPIs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // --- Computed KPIs ----------------------------------------------------------
   const kpi = useMemo(() => {
     if (!batch || !animals.length) return null
 
@@ -115,12 +115,12 @@ export default function KdPenggemukanLaporan() {
     const mortalitasPct = calcMortalitasKambing(batch.mortality_count, batch.total_animals)
 
     // Keuangan
-    const totalRevenue  = sales.reduce((s, t) => s + (t.total_revenue_idr || 0), 0)
-    const totalCOGS     = animals.reduce((s, a) => s + (a.purchase_price_idr || 0), 0)
+    const totalRevenue = sales.reduce((s, t) => s + (t.total_revenue_idr || 0), 0)
+    const totalCOGS = animals.reduce((s, a) => s + (a.purchase_price_idr || 0), 0)
     const totalFeedCost = feedLogs.reduce((s, l) => s + (l.feed_cost_idr || 0), 0)
-    const totalBiaya    = totalCOGS + totalFeedCost
-    const netProfit     = totalRevenue - totalBiaya
-    const rcRatio       = calcRCRatio(totalRevenue, totalBiaya)
+    const totalBiaya = totalCOGS + totalFeedCost
+    const netProfit = totalRevenue - totalBiaya
+    const rcRatio = calcRCRatio(totalRevenue, totalBiaya)
 
     // BEP harga jual per kg (pakai bobot rata-rata jual)
     const bep = avgExitW && totalBiaya
@@ -140,7 +140,7 @@ export default function KdPenggemukanLaporan() {
     }
   }, [batch, animals, feedLogs, sales])
 
-  // â”€â”€ Grafik bobot — rata-rata per tanggal timbang â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // --- Grafik bobot — rata-rata per tanggal timbang ----------------------------
   const chartData = useMemo(() => {
     if (!animals.length) return []
 
@@ -175,7 +175,7 @@ export default function KdPenggemukanLaporan() {
       })
   }, [animals, batch, kpi])
 
-  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ------------------------------------------------------------------------------
 
   if (loadingBatches) return <LoadingSpinner fullPage />
 
@@ -209,7 +209,9 @@ export default function KdPenggemukanLaporan() {
 
       {!selectedBatch && (
         <div className="text-center py-16 px-8">
-          <p className="text-4xl mb-4">ðŸ“Š</p>
+          <div className="w-16 h-16 rounded-3xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
+            <BarChart3 size={32} className="text-green-500" />
+          </div>
           <p className="text-sm font-semibold text-white mb-2">Pilih Batch</p>
           <p className="text-xs text-[#4B6478]">Pilih batch di atas untuk melihat laporan performa dan keuangan</p>
         </div>
@@ -233,7 +235,7 @@ export default function KdPenggemukanLaporan() {
             </div>
           </div>
 
-          {/* â”€â”€ KPI Pertumbuhan â”€â”€ */}
+          {/* KPI Pertumbuhan */}
           <section className="px-4 mt-5">
             <p className="text-[11px] font-bold uppercase tracking-widest text-[#4B6478] mb-3">Performa Pertumbuhan</p>
             <div className="grid grid-cols-2 gap-2.5">
@@ -272,12 +274,12 @@ export default function KdPenggemukanLaporan() {
             </div>
           </section>
 
-          {/* â”€â”€ KPI Mortalitas â”€â”€ */}
+          {/* KPI Mortalitas */}
           <section className="px-4 mt-5">
             <p className="text-[11px] font-bold uppercase tracking-widest text-[#4B6478] mb-3">Mortalitas</p>
             <div className="grid grid-cols-3 gap-2.5">
-              <SummaryCard label="Ekor Masuk"  value={kpi.totalAnimals} />
-              <SummaryCard label="Terjual"     value={kpi.soldCount} />
+              <SummaryCard label="Ekor Masuk" value={kpi.totalAnimals} />
+              <SummaryCard label="Terjual" value={kpi.soldCount} />
               <SummaryCard
                 label="Mati"
                 value={kpi.deadCount}
@@ -286,7 +288,7 @@ export default function KdPenggemukanLaporan() {
             </div>
           </section>
 
-          {/* â”€â”€ Grafik Bobot â”€â”€ */}
+          {/* Grafik Bobot */}
           {chartData.length > 1 && (
             <section className="px-4 mt-5">
               <p className="text-[11px] font-bold uppercase tracking-widest text-[#4B6478] mb-3">Grafik Bobot Rata-rata Batch</p>
@@ -312,7 +314,7 @@ export default function KdPenggemukanLaporan() {
             </section>
           )}
 
-          {/* â”€â”€ Keuangan â”€â”€ */}
+          {/* Keuangan */}
           <section className="px-4 mt-5">
             <p className="text-[11px] font-bold uppercase tracking-widest text-[#4B6478] mb-3">Keuangan Batch</p>
             <div className="space-y-2">
@@ -377,17 +379,17 @@ export default function KdPenggemukanLaporan() {
             </div>
           </section>
 
-          {/* â”€â”€ Ringkasan KPI vs Target â”€â”€ */}
+          {/* Ringkasan KPI vs Target */}
           <section className="px-4 mt-5 mb-4">
             <p className="text-[11px] font-bold uppercase tracking-widest text-[#4B6478] mb-3">KPI vs Target</p>
             <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl overflow-hidden">
               {[
-                { label: 'ADG',            value: kpi.avgADG ? `${kpi.avgADG} g/hr` : '—', target: '≥ 150 g/hr', ok: kpi.avgADG >= 150 },
-                { label: 'Bobot Jual',     value: kpi.avgExitW ? `${kpi.avgExitW} kg` : '—', target: '≥ 30 kg',    ok: parseFloat(kpi.avgExitW) >= 30 },
-                { label: 'FCR',            value: kpi.fcr?.toFixed(2) ?? '—',   target: '≤ 8',        ok: kpi.fcr && kpi.fcr <= 8 },
-                { label: 'Mortalitas',     value: `${kpi.mortalitasPct}%`,       target: '≤ 3%',       ok: kpi.mortalitasPct <= 3 },
-                { label: 'R/C Ratio',      value: kpi.rcRatio?.toFixed(2) ?? '—', target: '≥ 1.2',    ok: kpi.rcRatio >= 1.2 },
-                { label: 'Lama Gemuk',     value: `${kpi.hari} hari`,            target: '60–90 hari', ok: kpi.hari >= 60 && kpi.hari <= 90 },
+                { label: 'ADG', value: kpi.avgADG ? `${kpi.avgADG} g/hr` : '—', target: '≥ 150 g/hr', ok: kpi.avgADG >= 150 },
+                { label: 'Bobot Jual', value: kpi.avgExitW ? `${kpi.avgExitW} kg` : '—', target: '≥ 30 kg', ok: parseFloat(kpi.avgExitW) >= 30 },
+                { label: 'FCR', value: kpi.fcr?.toFixed(2) ?? '—', target: '≤ 8', ok: kpi.fcr && kpi.fcr <= 8 },
+                { label: 'Mortalitas', value: `${kpi.mortalitasPct}%`, target: '≤ 3%', ok: kpi.mortalitasPct <= 3 },
+                { label: 'R/C Ratio', value: kpi.rcRatio?.toFixed(2) ?? '—', target: '≥ 1.2', ok: kpi.rcRatio >= 1.2 },
+                { label: 'Lama Gemuk', value: `${kpi.hari} hari`, target: '60–90 hari', ok: kpi.hari >= 60 && kpi.hari <= 90 },
               ].map((row, i) => (
                 <div key={i} className={`flex items-center justify-between px-4 py-3 ${i % 2 === 0 ? '' : 'bg-white/[0.02]'}`}>
                   <p className="text-xs font-semibold text-[#94A3B8]">{row.label}</p>
@@ -396,7 +398,7 @@ export default function KdPenggemukanLaporan() {
                     <p className={`text-xs font-bold min-w-[60px] text-right ${row.ok === true ? 'text-green-400' : row.ok === false ? 'text-red-400' : 'text-[#4B6478]'}`}>
                       {row.value}
                     </p>
-                    <span className="text-base">{row.ok === true ? 'âœ…' : row.ok === false ? 'âŒ' : '—'}</span>
+                    <span className="text-base">{row.ok === true ? <CheckCircle2 size={16} className="text-green-400" /> : row.ok === false ? <XCircle size={16} className="text-red-400" /> : '—'}</span>
                   </div>
                 </div>
               ))}
@@ -407,7 +409,9 @@ export default function KdPenggemukanLaporan() {
 
       {selectedBatch && !isLoading && !kpi && (
         <div className="text-center py-16 px-8">
-          <p className="text-4xl mb-4">ðŸ</p>
+          <div className="w-16 h-16 rounded-3xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-4">
+            <LayoutGrid size={32} className="text-green-500" />
+          </div>
           <p className="text-sm font-semibold text-white mb-2">Data belum cukup</p>
           <p className="text-xs text-[#4B6478]">Tambahkan ternak, log pakan, dan data timbang untuk melihat laporan</p>
         </div>

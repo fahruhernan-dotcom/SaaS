@@ -731,7 +731,7 @@ export default function UniversalDailyTask({ livestockType = 'sapi_penggemukan' 
                                     {t.status === 'selesai' && t.completed_by?.full_name ? (
                                       <div className="flex flex-col gap-0.5">
                                         <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1.5"><CheckCircle2 size={11} /> {t.completed_by.full_name}</span>
-                                        {t.completed_at && <span className="text-[10px] text-[#64748B]">{format(new Date(t.completed_at), 'HH:mm')} WIB</span>}
+                                        {t.completed_at && <span className="text-[10px] text-[#64748B] uppercase tracking-wider">{format(new Date(t.completed_at), 'EEEE, d MMM HH:mm', { locale: idLocale })}</span>}
                                       </div>
                                     ) : (
                                       <span className="text-[11px] text-[#4B6478]">—</span>
@@ -847,11 +847,32 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
   const [reportData, setReportData] = useState({})
   const [weighingData, setWeighingData] = useState({ animal_id: '', weight_kg: '', girth_cm: '' })
   const [weighingEntries, setWeighingEntries] = useState([])
+  const [healthData, setHealthData] = useState({ animal_id: '', medicine_name: '', dosage: '', notes: '' })
+  const [healthEntries, setHealthEntries] = useState([])
+
+  const NoBatchWarning = () => (
+    <div className="p-6 rounded-[32px] bg-amber-500/[0.03] border border-amber-500/10 space-y-4 animate-in fade-in zoom-in-95 duration-500">
+       <div className="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center border border-amber-500/20 shadow-xl shadow-amber-900/10">
+          <AlertTriangle size={20} className="text-amber-400" />
+       </div>
+       <div>
+          <h4 className="text-sm font-black text-white uppercase tracking-widest mb-1 items-center flex gap-2">Belum Ada Batch Aktif</h4>
+          <p className="text-[11px] text-[#64748B] leading-relaxed font-medium">Tugas ini memerlukan data populasi ternak untuk mencatat aktivitas secara individu. Pastikan Batch telah dimulai di kandang <span className="text-amber-400/80 font-bold underline decoration-amber-500/20">{task.kandang_name || 'ini'}</span>.</p>
+       </div>
+       <Button 
+         onClick={() => navigate(`${getPeternakBasePath(livestockType)}/ternak/batch`)}
+         className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 rounded-xl h-10 px-5 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
+       >
+          Kelola Data Batch
+       </Button>
+    </div>
+  )
 
   const hooks = LIVESTOCK_HOOKS_MAP[livestockType] || LIVESTOCK_HOOKS_MAP.sapi_penggemukan
 
   const updateStatus = useUpdateTaskStatus()
   const addWeight = hooks.useAddWeight()
+  const addHealth = hooks.useAddHealth()
   const linkRecord = useLinkTaskRecord()
 
   // FALLBACK: If task.batch_id is missing, find active batch matching kandang_name
@@ -870,13 +891,19 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
 
   const { data: animals = [] } = hooks.useAnimals(effectiveBatchId)
 
-  const needsLinkedEntry = task.task_type === 'timbang' && config.usesIndividualAnimals
-  // When needsLinkedEntry, don't show the generic reportConfig fields (weight is captured per-animal)
-  const reportConfig = needsLinkedEntry ? null : TASK_REPORT_CONFIG[task.task_type]
-  const hasForm = !!reportConfig || needsLinkedEntry
+  const isMultiAnimalTask = (task.task_type === 'timbang' || task.task_type === 'vaksinasi' || task.task_type === 'obat_cacing') && config.usesIndividualAnimals
+  const isHealthTask = task.task_type === 'vaksinasi' || task.task_type === 'obat_cacing'
+  
+  // When isMultiAnimalTask, we don't show the generic reportConfig fields (data is captured per-animal in sub-form)
+  const reportConfig = isMultiAnimalTask ? null : TASK_REPORT_CONFIG[task.task_type]
+  const hasForm = !!reportConfig || isMultiAnimalTask
   const isCarryover = task.status === 'in_progress' && task.due_date < format(new Date(), 'yyyy-MM-dd')
+  
+  const entriesCount = task.task_type === 'timbang' ? weighingEntries.length : healthEntries.length
+  const animalsDone = animals.length > 0 && entriesCount >= animals.length
+  
   const unweighedAnimals = animals.filter(a => !weighingEntries.find(e => e.animal_id === a.id))
-  const allWeighed = animals.length > 0 && weighingEntries.length >= animals.length
+  const untreatedAnimals = animals.filter(a => !healthEntries.find(e => e.animal_id === a.id))
 
   useEffect(() => {
     if (task.notes) {
@@ -885,10 +912,18 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
         if (parsed._version === '2.0') {
           setReportData(parsed.report || {})
           setWeighingEntries(parsed.weighing_entries || [])
+          setHealthEntries(parsed.health_entries || [])
+          
+          // Pre-fill health metadata from first entry if available (Global Medicine UX)
+          if (parsed.health_entries?.length > 0 && !healthData.medicine_name) {
+            const last = parsed.health_entries[parsed.health_entries.length - 1]
+            setHealthData(h => ({ ...h, medicine_name: last.medicine_name, dosage: last.dosage }))
+          }
         }
       } catch (e) {}
     } else {
       setWeighingEntries([])
+      setHealthEntries([])
     }
   }, [task.notes])
 
@@ -897,12 +932,12 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
     if (hasForm && !isExpanded) { onToggle(); return }
     if (isSelesai) { if (isExpanded) onToggle(); return }
 
-    // Timbang multi-animal: toggle unless all animals weighed → then complete
-    if (needsLinkedEntry) {
-      if (allWeighed) {
+    // Multi-animal: toggle unless all animals done → then complete
+    if (isMultiAnimalTask) {
+      if (animalsDone) {
         try {
           await updateStatus.mutateAsync({ id: task.id, status: 'selesai' })
-          toast.success(`Semua ${config.animalLabelPlural} ditimbang! Tugas selesai 🎉`)
+          toast.success(`Semua ${config.animalLabelPlural} selesai! Tugas berhasil 🎉`)
           onToggle()
         } catch (err) { toast.error('Gagal menyelesaikan tugas') }
       } else {
@@ -974,6 +1009,60 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
     } catch (err) { console.error(err); toast.error('Gagal menyimpan timbangan') }
   }
 
+  const handleAddHealth = async (e) => {
+    e.stopPropagation()
+    const isVax = task.task_type === 'vaksinasi'
+    const name = healthData.medicine_name || healthData.vaccine_name
+    const dose = healthData.dosage
+    
+    if (!healthData.animal_id || !name) {
+      return toast.error(`Pilih ${config.animalLabel} dan isi nama ${isVax ? 'vaksin' : 'obat'}`)
+    }
+    
+    try {
+      const selectedAnimal = animals.find(a => a.id === healthData.animal_id)
+      const record = await addHealth.mutateAsync({
+        animal_id: healthData.animal_id,
+        batch_id: effectiveBatchId,
+        log_date: format(new Date(), 'yyyy-MM-dd'),
+        log_type: isVax ? 'vaksin' : 'medis',
+        medicine_name: !isVax ? name : undefined,
+        vaccine_name: isVax ? name : undefined,
+        medicine_dose: dose,
+        action_taken: isVax ? 'Vaksinasi Terjadwal' : 'Pemberian Obat Cacing',
+        notes: `Auto: ${task.title}`,
+        handled_by: profile?.full_name || 'Staff'
+      })
+
+      const newEntry = {
+        animal_id: healthData.animal_id,
+        eartag: selectedAnimal?.name || selectedAnimal?.ear_tag || selectedAnimal?.id?.substring(0, 8),
+        medicine_name: name,
+        dosage: dose,
+        recorded_at: new Date().toISOString(),
+        record_id: record?.id
+      }
+
+      const newEntries = [...healthEntries, newEntry]
+      const isDone = newEntries.length >= animals.length
+      const newNotes = JSON.stringify({
+        _version: '2.0',
+        report: {},
+        weighing_entries: weighingEntries,
+        health_entries: newEntries,
+        batch_id: effectiveBatchId
+      })
+
+      await updateStatus.mutateAsync({ id: task.id, status: isDone ? 'selesai' : 'in_progress', notes: newNotes })
+      setHealthEntries(newEntries)
+      // Keep medicine_name/dosage for next animal (Global UX)
+      setHealthData(h => ({ ...h, animal_id: '' }))
+      
+      if (isDone) { toast.success(`Semua ${config.animalLabelPlural} selesai divaksin/diobati! 🎉`); onToggle() }
+      else toast.success(`${newEntry.eartag} tercatat (${newEntries.length}/${animals.length})`)
+    } catch (err) { console.error(err); toast.error('Gagal menyimpan record kesehatan') }
+  }
+
   const handleUnlock = async (e) => {
     e.stopPropagation()
     try {
@@ -1007,7 +1096,7 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
                 : "border-r border-white/5 text-slate-500 hover:text-purple-400 hover:bg-purple-500/10"
           )}
         >
-          {updateStatus.isPending || addWeight.isPending ? (
+          {updateStatus.isPending || addWeight.isPending || addHealth.isPending ? (
              <LoadingSpinner className="w-5 h-5" />
           ) : isSelesai ? (
              <div className="flex flex-col items-center gap-1 group-hover:scale-110 transition-transform">
@@ -1017,13 +1106,13 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
           ) : (
             <div className={cn(
               "w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-all",
-              (hasForm && isExpanded) || (needsLinkedEntry && weighingEntries.length > 0)
+              (hasForm && isExpanded) || (isMultiAnimalTask && entriesCount > 0)
                 ? "border-purple-500 bg-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]" 
                 : "border-current bg-transparent"
             )}>
-              {needsLinkedEntry && (weighingEntries.length > 0 || isExpanded)
-                ? <span className="text-[11px] font-black leading-none">{weighingEntries.length}<span className="text-[8px] font-bold opacity-60">/{animals.length}</span></span>
-                : hasForm && isExpanded ? <Save size={18} strokeWidth={3} /> : <CheckCircle2 size={20} strokeWidth={3} />}
+              {isMultiAnimalTask && (entriesCount > 0 || isExpanded) && animals.length > 0
+                ? <span className="text-[11px] font-black leading-none">{entriesCount}<span className="text-[8px] font-bold opacity-60">/{animals.length}</span></span>
+                : (hasForm && isExpanded) ? <Save size={18} strokeWidth={3} /> : <CheckCircle2 size={20} strokeWidth={3} />}
             </div>
           )}
         </button>
@@ -1057,7 +1146,11 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
                   <MapPin size={11} className={isSelesai ? "text-emerald-600" : "text-[#A78BFA]"} /> {task.kandang_name || 'Farm'}
                </span>
                <span className="text-[10px] font-semibold flex items-center gap-1.5 uppercase tracking-wider">
-                  <Clock size={11} className={isSelesai ? "text-emerald-600/50" : "text-white/40"} /> {task.due_time?.substring(0, 5)} WIB
+                  <Clock size={11} className={isSelesai ? "text-emerald-600/50" : "text-white/40"} /> 
+                  {isSelesai && task.completed_at 
+                    ? `Selesai: ${format(new Date(task.completed_at), "eeee, d MMM HH:mm", { locale: idLocale })}`
+                    : `${task.due_time?.substring(0, 5)} WIB`
+                  }
                </span>
             </div>
           </div>
@@ -1082,12 +1175,95 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
                   <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 mb-2">
                      <div className="flex items-center gap-2">
                         <CheckCircle2 size={16} className="text-emerald-500" />
-                        <span className="text-xs font-bold text-emerald-400 uppercase tracking-tight">Laporan Terkirim & Terkunci</span>
+                        <div className="flex flex-col">
+                           <span className="text-xs font-bold text-emerald-400 uppercase tracking-tight">Laporan Terkirim & Terkunci</span>
+                           {task.completed_at && (
+                              <span className="text-[10px] text-emerald-500/60 font-medium -mt-0.5 lowercase">
+                                selesai pada {format(new Date(task.completed_at), "eeee, d MMMM yyyy 'pukul' HH:mm", { locale: idLocale })}
+                              </span>
+                           )}
+                        </div>
                      </div>
                      <button onClick={handleUnlock} className="text-[9px] font-black uppercase text-emerald-500 hover:underline bg-emerald-500/10 px-2 py-1 rounded">Buka Kunci Untuk Edit</button>
                   </div>
                )}
-               {needsLinkedEntry && (
+                {/* No Active Batch Warning */}
+                {isMultiAnimalTask && animals.length === 0 && <NoBatchWarning />}
+
+               {/* Multi-Animal Reporting: Health (Vaksin/Obat Cacing) */}
+               {isMultiAnimalTask && isHealthTask && animals.length > 0 && (
+                 <div className="space-y-6">
+                   <div className="p-6 rounded-3xl bg-white/5 border border-white/5 space-y-5">
+                     <div className="flex items-center gap-3 pb-4 border-b border-white/5">
+                        <Activity size={18} className="text-purple-400" />
+                        <span className="text-xs font-black uppercase tracking-widest text-white">Record Health Action</span>
+                     </div>
+                     
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                         <label className="text-[10px] font-black text-[#64748B] uppercase tracking-wider block ml-1">Nama {task.task_type === 'vaksinasi' ? 'Vaksin' : 'Obat'}</label>
+                         <input 
+                           value={healthData.medicine_name} 
+                           onChange={e => setHealthData(h => ({ ...h, medicine_name: e.target.value }))}
+                           placeholder={task.task_type === 'vaksinasi' ? "Contoh: Anthrax B-12" : "Contoh: Albendazole"}
+                           className="w-full h-12 rounded-xl bg-black/40 border border-white/5 px-4 text-sm text-white focus:border-purple-500/50 outline-none transition-all"
+                         />
+                       </div>
+                       <div className="space-y-2">
+                         <label className="text-[10px] font-black text-[#64748B] uppercase tracking-wider block ml-1">Dosis (ml/unit)</label>
+                         <input 
+                           value={healthData.dosage} 
+                           onChange={e => setHealthData(h => ({ ...h, dosage: e.target.value }))}
+                           placeholder="0.0"
+                           className="w-full h-12 rounded-xl bg-black/40 border border-white/5 px-4 text-sm text-white focus:border-purple-500/50 outline-none transition-all"
+                         />
+                       </div>
+                     </div>
+
+                     <div className="space-y-2">
+                       <label className="text-[10px] font-black text-[#64748B] uppercase tracking-wider block ml-1">Pilih {config.animalLabel}</label>
+                       <div className="flex gap-2">
+                         <Select value={healthData.animal_id} onValueChange={v => setHealthData(h => ({ ...h, animal_id: v }))}>
+                           <SelectTrigger className="flex-1 h-14 rounded-2xl bg-black/40 border-white/5 text-sm text-white focus:ring-0">
+                             <SelectValue placeholder={`Pilih Eartag ${config.animalLabel}...`} />
+                           </SelectTrigger>
+                           <SelectContent className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-2xl max-h-[250px]">
+                             {untreatedAnimals.map(a => (
+                               <SelectItem key={a.id} value={a.id} className="rounded-xl">
+                                 {a.name || a.ear_tag || `ID: ${a.id.substring(0,8)}`}
+                               </SelectItem>
+                             ))}
+                           </SelectContent>
+                         </Select>
+                         <Button 
+                           onClick={handleAddHealth}
+                           className="h-14 aspect-square rounded-2xl bg-purple-600 hover:bg-purple-500 text-white shadow-lg active:scale-95 transition-all"
+                           disabled={addHealth.isPending}
+                         >
+                           {addHealth.isPending ? <LoadingSpinner className="w-5 h-5" /> : <Plus size={24} />}
+                         </Button>
+                       </div>
+                     </div>
+                   </div>
+
+                   {healthEntries.length > 0 && (
+                     <div className="space-y-3">
+                       <p className="text-[10px] font-black text-[#64748B] uppercase tracking-widest ml-1">Record Success ({healthEntries.length})</p>
+                       <div className="flex flex-wrap gap-2">
+                          {healthEntries.map((e, idx) => (
+                            <div key={idx} className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                              <CheckCircle2 size={10} className="text-emerald-400" />
+                              <span className="text-[10px] font-bold text-white tracking-widest">{e.eartag}</span>
+                              <span className="text-[9px] text-emerald-400/60 font-black">{e.dosage || '-'}ml</span>
+                            </div>
+                          ))}
+                       </div>
+                     </div>
+                   )}
+                 </div>
+               )}
+
+               {isMultiAnimalTask && task.task_type === 'timbang' && animals.length > 0 && (
                   <div className="space-y-4">
                      {/* Progress header */}
                      <div className="flex items-center justify-between p-3 rounded-xl bg-blue-500/10 border border-blue-500/20">
@@ -1113,7 +1289,7 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
                      )}
 
                      {/* Form for next animal */}
-                     {!isSelesai && !allWeighed && (
+                     {!isSelesai && !animalsDone && (
                         <>
                            <div className="space-y-2">
                               <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.2em] ml-2">
@@ -1158,7 +1334,7 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
                      )}
 
                      {/* All done state */}
-                     {allWeighed && !isSelesai && (
+                     {animalsDone && !isSelesai && (
                         <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
                            <p className="text-[11px] font-black text-emerald-400">Semua {config.animalLabelPlural} sudah ditimbang!</p>
                            <p className="text-[9px] text-emerald-600 mt-0.5">Tekan angka di kiri untuk menyelesaikan tugas</p>
@@ -1175,7 +1351,7 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
                      {f.type === 'select' && (
                         <Select disabled={isSelesai} value={reportData[f.id]} onValueChange={v => setReportData(rd => ({ ...rd, [f.id]: v }))}>
                            <SelectTrigger className="h-11 rounded-xl bg-white/5 border border-white/5 px-4 text-[13px] text-white"><SelectValue placeholder={f.placeholder} /></SelectTrigger>
-                           <SelectContent className="bg-[#0C1319]/95 border-white/10 rounded-xl">{f.options.map(opt => (<SelectItem key={opt} value={opt} className="rounded-lg text-[13px]">{opt}</SelectItem>))}</SelectContent>
+                           <SelectContent className="bg-[#0C1319]/95 border-white/10 rounded-xl">{f.options.map(opt => (<SelectItem key={opt} value={opt} className="rounded-xl text-[13px]">{opt}</SelectItem>))}</SelectContent>
                         </Select>
                      )}
                      {f.type === 'multi-checkbox' && (
@@ -1199,7 +1375,7 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
                ))}
                
                <div className="pt-4 mt-2 border-t border-white/[0.03]">
-                 {needsLinkedEntry
+                 {isMultiAnimalTask
                    ? (
                      <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-blue-500/5 border border-blue-500/10 text-blue-400">
                        <Scale size={13} className="opacity-70" />
@@ -1265,14 +1441,14 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
 
   if (!task) return null
   const isAuditMode = isOwnerView && task.status === 'selesai'
-  const needsLinkedEntry = task.task_type === 'timbang' && config.usesIndividualAnimals && !isAuditMode
-  // Suppress generic reportConfig fields when needsLinkedEntry (weight captured per-animal)
-  const reportConfig = needsLinkedEntry ? null : TASK_REPORT_CONFIG[task.task_type]
+  const isMultiAnimalTask = (task.task_type === 'timbang' || task.task_type === 'vaksinasi' || task.task_type === 'obat_cacing') && config.usesIndividualAnimals && !isAuditMode
+  // Suppress generic reportConfig fields when isMultiAnimalTask (weight captured per-animal)
+  const reportConfig = isMultiAnimalTask ? null : TASK_REPORT_CONFIG[task.task_type]
 
   async function handleComplete() {
     try {
       let linkedId = null
-      if (needsLinkedEntry) {
+      if (isMultiAnimalTask) {
         if (!weighingData.animal_id || !weighingData.weight_kg) return toast.error('Data timbangan wajib diisi')
         const animal = animals.find(a => a.id === weighingData.animal_id)
         if (!animal) return toast.error(`${config.animalLabel} tidak ditemukan`)
@@ -1345,17 +1521,24 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
                       </div>
                       <div>
                         <h4 className="font-bold text-xl text-white line-clamp-2">{task.title}</h4>
-                        <p className="text-xs font-semibold text-slate-400 mt-1 flex items-center gap-2"><MapPin size={12} /> {task.kandang_name || 'Global Farm'} • {task.due_time?.substring(0, 5)} WIB</p>
+                        <p className="text-xs font-semibold text-slate-400 mt-1 flex items-center gap-2">
+                          <MapPin size={12} /> {task.kandang_name || 'Global Farm'} 
+                          • {task.status === 'selesai' && task.completed_at 
+                              ? `Selesai: ${format(new Date(task.completed_at), "eeee, d MMM HH:mm", { locale: idLocale })}`
+                              : `${task.due_time?.substring(0, 5)} WIB`
+                            }
+                        </p>
                       </div>
                 </div>
 
-                {(reportConfig || needsLinkedEntry || (isAuditMode && Object.keys(reportData).length > 0)) && (
+                {(reportConfig || isMultiAnimalTask || (isAuditMode && Object.keys(reportData).length > 0)) && (
                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                       <div className="flex items-center gap-4 px-4 text-[#64748B]">
                          <div className="h-[1px] flex-1 bg-white/5" /><span className="text-[9px] font-black uppercase tracking-[0.4em]">{isAuditMode ? 'Data Laporan' : 'Reporting Schema'}</span><div className="h-[1px] flex-1 bg-white/5" />
                       </div>
                       <div className="grid grid-cols-1 gap-8">
-                         {needsLinkedEntry && (
+                         {isMultiAnimalTask && animals.length === 0 && <NoBatchWarning />}
+                         {isMultiAnimalTask && animals.length > 0 && (
                             <div className="space-y-6 pt-2 pb-6 border-b border-white/5">
                                <div className="space-y-4">
                                   <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">Pilih {config.animalLabel} (Identitas) *</label>

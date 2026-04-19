@@ -26,6 +26,7 @@ import SapiPakan      from './sapi/Pakan'
 import SapiLaporan    from './sapi/LaporanBatch'
 import SapiTaskSettings from './sapi/TaskSettings'
 import SapiTaskAssign from './sapi/TaskAssign'
+import SapiKandangView from './sapi/KandangView'
 import UniversalDailyTask from './_shared/UniversalDailyTask'
 import { getLivestockTypeFromSubType } from '@/lib/constants/taskTemplates'
 
@@ -62,6 +63,9 @@ import DombaKesehatan     from './domba/Kesehatan'
 import DombaPakan         from './domba/Pakan'
 import DombaLaporan       from './domba/LaporanBatch'
 import DombaKandangView   from './domba/KandangView'
+import DombaTaskSettings  from './domba/TaskSettings'
+import DombaTaskAssign    from './domba/TaskAssign'
+import DombaDailyTask     from './domba/DailyTask'
 
 // New Domba — Breeding
 import DombaBreedingBeranda    from './domba/breeding/Beranda'
@@ -167,18 +171,19 @@ export function PeternakPageRouter({ page }) {
       akun:         <Akun />,
     },
     peternak_sapi_penggemukan: {
-      beranda:       <SapiBeranda />,
-      batch:         <SapiBatch />,
-      ternak:        <SapiTernak />,
-      kesehatan:     <SapiKesehatan />,
-      'stok-pakan':  <SapiPakan />,
-      laporan:       <SapiLaporan />,
-      daily_task:    <UniversalDailyTask livestockType={livestockType} />,
-      task_settings: <PeternakAdminGuard><SapiTaskSettings /></PeternakAdminGuard>,
-      task_assign:   <PeternakAdminGuard><SapiTaskAssign /></PeternakAdminGuard>,
-      'harga-pasar': <HargaPasar />,
-      tim:           <BroilerTim />,
-      akun:          <Akun />,
+      beranda:        <SapiBeranda />,
+      batch:          <SapiBatch />,
+      ternak:         <SapiTernak />,
+      kesehatan:      <SapiKesehatan />,
+      'stok-pakan':   <SapiPakan />,
+      laporan:        <SapiLaporan />,
+      'kandang-view': <SapiKandangView />,
+      daily_task:     <UniversalDailyTask livestockType={livestockType} />,
+      task_settings:  <PeternakAdminGuard><SapiTaskSettings /></PeternakAdminGuard>,
+      task_assign:    <PeternakAdminGuard><SapiTaskAssign /></PeternakAdminGuard>,
+      'harga-pasar':  <HargaPasar />,
+      tim:            <BroilerTim />,
+      akun:           <Akun />,
     },
     peternak_sapi_breeding: {
       beranda:       <SapiBreedingBeranda />,
@@ -215,8 +220,10 @@ export function PeternakPageRouter({ page }) {
       kesehatan:     <DombaKesehatan />,
       'stok-pakan':   <DombaPakan />,
       laporan:       <DombaLaporan />,
-      'kandang-view':<DombaKandangView />,
-      daily_task:    <UniversalDailyTask livestockType={livestockType} />,
+      'kandang-view': <DombaKandangView />,
+      daily_task:    <DombaDailyTask />,
+      task_settings: <PeternakAdminGuard><DombaTaskSettings /></PeternakAdminGuard>,
+      task_assign:   <PeternakAdminGuard><DombaTaskAssign /></PeternakAdminGuard>,
       'harga-pasar': <HargaPasar />,
       tim:           <BroilerTim />,
       akun:          <Akun />,

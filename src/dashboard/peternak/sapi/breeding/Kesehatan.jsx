@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { Plus, X, Search } from 'lucide-react'
+import { Plus, X, Search, Syringe } from 'lucide-react'
 import {
   useSapiBreedingHealthLogs,
   useSapiBreedingAnimals,
@@ -339,7 +339,9 @@ export default function SapiBreedingKesehatan() {
 
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-16 text-center">
-          <span className="text-4xl">ðŸ’‰</span>
+          <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mx-auto mb-4">
+          <Syringe size={32} className="text-amber-500" />
+        </div>
           <p className="text-sm font-bold text-[#F1F5F9]">Tidak ada log kesehatan</p>
           <p className="text-xs text-[#4B6478]">Catat vaksinasi, obat cacing, atau pengobatan dari tombol + Log</p>
         </div>
