@@ -826,7 +826,7 @@ export default function AdminPricing() {
           <section className="space-y-10">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shadow-lg shadow-purple-500/5">
-                <Infinity size={22} className="text-purple-400" />
+                <InfinityIcon size={22} className="text-purple-400" />
               </div>
               <div>
                 <h2 className="text-xl font-black text-white uppercase tracking-tight">Diskon Billing Tahunan</h2>
@@ -955,7 +955,7 @@ export default function AdminPricing() {
               <div className="relative z-10">
                 <h2 className="text-2xl font-black text-white uppercase tracking-tight">Buat Voucher</h2>
                 <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mt-2 flex items-center gap-2">
-                   <div className="w-1 h-1 rounded-full bg-emerald-500" />
+                   <span className="w-1 h-1 rounded-full bg-emerald-500 block" />
                    Loyalty & Promo Engine
                 </p>
               </div>

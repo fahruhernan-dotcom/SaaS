@@ -352,7 +352,7 @@ export default function AdminUsers() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <PlanBadge plan={t.plan} />
+                          <PlanBadge tenant={t} />
                         </td>
                         <td className="px-6 py-4 text-center">
                           <TrialDisplay tenant={t} />
@@ -729,63 +729,67 @@ export default function AdminUsers() {
                   <section className="space-y-4">
                     <h3 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em]">STATUS LANGGANAN</h3>
 
-                    {/* Trial (hanya untuk starter) */}
-                    {selectedTenant.plan === 'starter' && (
-                      <div className="bg-white/[0.03] p-5 rounded-2xl border border-white/5 flex items-center justify-between">
+                    <div className="bg-white/[0.03] p-5 rounded-2xl border border-white/5 flex flex-col gap-4">
+                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-                            <Clock size={18} className="text-amber-400" />
-                          </div>
-                          <div>
-                            {(() => {
-                              const detailSub = getSubscriptionStatus(selectedTenant)
-                              return (
-                                <>
+                          {(() => {
+                            const detailSub = getSubscriptionStatus(selectedTenant)
+                            const isPro = detailSub.plan === 'pro'
+                            const isBusiness = detailSub.plan === 'business'
+                            const isTrial = detailSub.status === 'trial'
+                            const bg = isTrial ? 'rgba(245,158,11,0.1)' : isPro ? 'rgba(16,185,129,0.1)' : isBusiness ? 'rgba(99,102,241,0.1)' : 'rgba(255,255,255,0.05)'
+                            const border = isTrial ? 'rgba(245,158,11,0.2)' : isPro ? 'rgba(16,185,129,0.2)' : isBusiness ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.1)'
+                            const color = isTrial ? '#F59E0B' : isPro ? '#10B981' : isBusiness ? '#6366F1' : '#4B6478'
+
+                            return (
+                              <>
+                                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: bg, border: `1px solid ${border}` }}>
+                                  <Clock size={18} style={{ color }} />
+                                </div>
+                                <div>
                                   <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-wider mb-1">
-                                    {detailSub.status === 'trial' ? 'Trial Berakhir' : 'Status Plan'}
+                                    {detailSub.status === 'trial' ? 'Masa Trial' : 'Status Plan'}
                                   </p>
                                   <p className="text-[13px] font-bold text-white">
                                     {detailSub.expiresAt ? format(new Date(detailSub.expiresAt), 'dd MMMM yyyy', { locale: localeId }) : 'Gratis Selamanya'}
                                   </p>
                                   <p className="text-[10px] font-bold uppercase mt-0.5 tracking-wider" style={{ color: getStatusColor(detailSub.status).color }}>
-                                    {detailSub.status === 'trial' ? 'Masa Trial' : detailSub.status === 'expired' ? 'Expired' : 'Aktif'}
+                                    {detailSub.status === 'trial' ? `Trial Berakhir (${detailSub.daysLeft} Hari)` : detailSub.status === 'expired' ? 'Expired — Perlu Renewal' : 'Aktif'}
                                   </p>
-                                </>
-                              )
-                            })()}
-                          </div>
+                                </div>
+                              </>
+                            )
+                          })()}
                         </div>
+                      </div>
+
+                      {/* Admin Controls */}
+                      <div className="flex gap-2 pt-4 border-t border-white/5">
                         <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => handleExtendTrial(selectedTenant)}
-                          className="bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest px-4 h-9 shadow-lg shadow-amber-500/20"
+                          className="flex-1 h-9 rounded-xl border-white/10 hover:bg-white/5 text-[10px] font-black uppercase tracking-widest text-[#4B6478] hover:text-white"
                         >
-                          Extend 14 Hari
+                          +14 Hari Trial
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            const newDate = new Date()
+                            newDate.setFullYear(newDate.getFullYear() + 1)
+                            updateTenant.mutate({
+                              tenantId: selectedTenant.id,
+                              updates: { plan_expires_at: newDate.toISOString(), trial_ends_at: null }
+                            })
+                            setSelectedTenant({ ...selectedTenant, plan_expires_at: newDate.toISOString(), trial_ends_at: null })
+                          }}
+                          className={`${selectedTenant.plan === 'starter' ? 'hidden' : 'flex-1'} h-9 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/10 transition-all`}
+                        >
+                          Aktivasi 1 Tahun
                         </Button>
                       </div>
-                    )}
-
-                    {/* Plan berbayar */}
-                    {(selectedTenant.plan === 'pro' || selectedTenant.plan === 'business') && (
-                      <div className="bg-white/[0.03] p-5 rounded-2xl border border-white/5 flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: selectedTenant.plan === 'pro' ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)', border: `1px solid ${selectedTenant.plan === 'pro' ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)'}` }}>
-                            <Clock size={18} style={{ color: selectedTenant.plan === 'pro' ? '#10B981' : '#F59E0B' }} />
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-wider mb-1">
-                              {selectedTenant.plan === 'pro' ? 'Pro' : 'Business'} Berakhir
-                            </p>
-                            <p className="text-[13px] font-bold text-white">
-                              {selectedTenant.plan_expires_at ? format(new Date(selectedTenant.plan_expires_at), 'dd MMMM yyyy', { locale: localeId }) : '—'}
-                            </p>
-                            <p className="text-[10px] font-bold uppercase mt-0.5 tracking-wider" style={{ color: selectedTenant.plan_expires_at && new Date(selectedTenant.plan_expires_at) > new Date() ? '#10B981' : '#F87171' }}>
-                              {selectedTenant.plan_expires_at && new Date(selectedTenant.plan_expires_at) > new Date() ? 'Aktif' : 'Expired — Perlu Renewal'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                    </div>
                   </section>
 
                   {/* Members List */}
@@ -899,7 +903,7 @@ function TenantMobileCard({ tenant, onDetail, onStatusChange }) {
                    <span className="text-[8px] font-black text-[#4B6478] uppercase tracking-widest bg-white/5 px-1.5 py-0.5 rounded">
                       {toTitleCase(tenant.business_vertical)}
                    </span>
-                   <PlanBadge plan={tenant.plan} />
+                   <PlanBadge tenant={tenant} />
                 </div>
              </div>
           </div>
@@ -998,16 +1002,23 @@ function StatCard({ label, value, icon: Icon, color, compact = false }) {
   )
 }
 
-function PlanBadge({ plan }) {
+function PlanBadge({ tenant }) {
+  if (!tenant) return null;
+  const sub = getSubscriptionStatus(tenant)
+  const isTrial = sub.status === 'trial'
+  const plan = tenant.plan || 'starter'
+
   const styles = {
     starter: "bg-white/[0.03] text-slate-400 border-white/10",
     pro: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
     business: "bg-amber-500/10 text-amber-400 border-amber-500/20"
   }
+  
+  const trialStyle = "bg-amber-500/10 text-amber-500 border-amber-500/30 shadow-amber-500/10"
 
   return (
-    <Badge className={`px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm ${styles[plan] || styles.starter}`}>
-      {toTitleCase(plan)}
+    <Badge className={`px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm ${isTrial ? trialStyle : styles[plan] || styles.starter}`}>
+      {isTrial ? `TRIAL ${toTitleCase(plan)}` : toTitleCase(plan)}
     </Badge>
   )
 }

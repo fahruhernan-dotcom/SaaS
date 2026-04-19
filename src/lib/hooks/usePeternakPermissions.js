@@ -78,6 +78,12 @@ export function peternakPermissions(role) {
     // ── SETTINGS ─────────────────────────────────────────────────────────
     canEditSettings: isOwner,
 
+    // ── ROLE FLAGS ──────────────────────────────────────────────────────────
+    isOwner,
+    isManajer,
+    isStaff,
+    isViewOnly,
+
     // ── FAB (tombol input cepat di bottom nav) ───────────────────────────
     showFab: canWrite,
   }

@@ -214,7 +214,7 @@ function AddHealthSheet({ open, onClose, animals }) {
 
           <button onClick={handleSubmit} disabled={!form.animal_id || addLog.isPending}
             className="mt-2 w-full bg-teal-500 disabled:opacity-50 text-white font-bold rounded-xl py-3 text-sm">
-            {addLog.isPending ? 'Menyimpan…' : 'Simpan Log'}
+            {addLog.isPending ? 'Menyimpan—¦' : 'Simpan Log'}
           </button>
         </div>
       </div>
@@ -262,7 +262,7 @@ export default function BreedingKesehatan() {
       <div className="relative">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4B6478]" />
         <input value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Cari ear tag, vaksin, diagnosa…"
+          placeholder="Cari ear tag, vaksin, diagnosa—¦"
           className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl pl-9 pr-3 py-2.5 text-sm text-white placeholder-[#4B6478]" />
       </div>
 
@@ -281,7 +281,7 @@ export default function BreedingKesehatan() {
 
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-16 text-center">
-          <span className="text-4xl">💊</span>
+          <span className="text-4xl">ðŸ’Š</span>
           <p className="text-sm font-bold text-[#F1F5F9]">Tidak ada log kesehatan</p>
         </div>
       ) : (

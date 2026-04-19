@@ -193,7 +193,7 @@ export default function KdPenggemukanBatch() {
       <div className="px-4 mt-4 space-y-3">
         {filtered.length === 0 ? (
           <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-            <p className="text-3xl mb-3">📋</p>
+            <p className="text-3xl mb-3">ðŸ“‹</p>
             <p className="text-sm text-[#4B6478]">Belum ada batch di kategori ini</p>
           </div>
         ) : filtered.map(batch => (

@@ -114,16 +114,15 @@ serve(async (req) => {
       }
     }
 
-    // 2. Query Invitation (bypass RLS)
+    // 2. Query Invitation (bypass RLS) — no join to avoid FK dependency
     const { data: invitation, error } = await supabase
       .from('team_invitations')
-      .select('id, tenant_id, role, email, token, status, expires_at, tenants(business_name, plan)')
+      .select('id, tenant_id, role, email, token, status, expires_at')
       .eq('token', sanitizedCode)
       .eq('status', 'pending')
-      .single()
+      .maybeSingle()
 
     if (error || !invitation) {
-      // Kode tidak ditemukan — rate limit sudah naik di DB
       return new Response(
         JSON.stringify({ error: 'Kode undangan tidak valid atau sudah kadaluarsa' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -138,10 +137,16 @@ serve(async (req) => {
       )
     }
 
-    // Kode valid — reset (delete) rate limit untuk IP ini
+    // 3. Fetch tenant info separately (safe, no FK required)
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('business_name, plan')
+      .eq('id', invitation.tenant_id)
+      .maybeSingle()
+
+    // Kode valid — reset rate limit untuk IP ini
     await supabase.from('invite_rate_limits').delete().eq('ip_address', ip)
 
-    // Return invitation data (tanpa expose raw token lagi)
     return new Response(
       JSON.stringify({
         success: true,
@@ -151,7 +156,7 @@ serve(async (req) => {
           role: invitation.role,
           email: invitation.email,
           token: invitation.token,
-          tenants: invitation.tenants,
+          tenants: tenant ?? null,
         }
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

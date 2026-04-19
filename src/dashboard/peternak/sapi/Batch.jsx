@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, ChevronRight, X, Calendar, Hash } from 'lucide-react'
+import { Plus, ChevronRight, X, Calendar, Hash, Warehouse, AlignLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
+import { DatePicker } from '@/components/ui/DatePicker'
 import {
   useSapiBatches,
   useCreateSapiBatch,
@@ -81,7 +82,19 @@ function BatchCard({ batch, onClick }) {
 }
 
 function CreateBatchSheet({ onClose }) {
-  const { register, handleSubmit, formState: { errors } } = useForm()
+  const generateBatchCode = () => {
+    const d = new Date()
+    const dStr = `${String(d.getDate()).padStart(2, '0')}${String(d.getMonth() + 1).padStart(2, '0')}${d.getFullYear().toString().slice(2)}`
+    const rnd = Math.random().toString(36).substring(2, 5).toUpperCase()
+    return `SAPI-${dStr}-${rnd}`
+  }
+
+  const { register, handleSubmit, control, formState: { errors } } = useForm({
+    defaultValues: {
+      batch_code: generateBatchCode(),
+      start_date: new Date().toISOString().split('T')[0]
+    }
+  })
   const { mutate: createBatch, isPending } = useCreateSapiBatch()
 
   const onSubmit = (data) => {
@@ -97,100 +110,133 @@ function CreateBatchSheet({ onClose }) {
     )
   }
 
+  // Styles
+  const labelStyle = "flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-amber-500/80 mb-2 ml-1"
+  const inputContainerStyle = "relative transition-all duration-300 group/input"
+  const inputClass = "w-full h-12 bg-[#111C24] border border-white/5 focus:border-amber-500/40 rounded-xl text-[14px] font-bold text-white placeholder:text-[#4B6478] focus:bg-[#15232d] focus:outline-none transition-all shadow-inner"
+  
   return (
     <motion.div
-      initial={{ y: '100%' }}
-      animate={{ y: 0 }}
-      exit={{ y: '100%' }}
-      transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-      className="fixed inset-x-0 bottom-0 z-50 bg-[#0C1319] rounded-t-[24px] border-t border-white/[0.08] p-5 pb-10"
+      initial={{ x: '100%', opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: '100%', opacity: 0 }}
+      transition={{ type: 'spring', damping: 28, stiffness: 250 }}
+      className="fixed inset-y-0 right-0 w-[420px] max-w-full z-50 bg-[#0A1015]/95 backdrop-blur-xl border-l border-white/[0.08] shadow-[-10px_0_40px_rgba(0,0,0,0.5)] flex flex-col"
     >
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="font-['Sora'] font-bold text-base text-white">Buat Batch Baru</h2>
-        <button onClick={onClose} className="p-1.5 rounded-xl bg-white/5 text-[#94A3B8]">
+      <div className="px-6 pt-8 pb-4 flex items-center justify-between border-b border-white/5 relative">
+        <div className="absolute -top-10 right-10 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="relative z-10">
+          <h2 className="font-['Sora'] font-extrabold text-[22px] text-white tracking-tight leading-none mb-1">Buat Batch Baru</h2>
+          <p className="text-[11px] text-[#4B6478] font-medium">Mulai siklus penggemukan baru Anda.</p>
+        </div>
+        <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#94A3B8] hover:text-white hover:bg-white/10 transition-colors relative z-10">
           <X size={16} />
         </button>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div>
-          <label className="block text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mb-1.5">
-            Kode Batch
-          </label>
-          <div className="relative">
-            <Hash size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4B6478]" />
-            <input
-              {...register('batch_code', { required: true })}
-              placeholder="e.g. SAPI-2026-01"
-              className="w-full pl-9 pr-4 h-12 bg-[#111C24] border border-white/10 rounded-xl text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-amber-500/50"
+      <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar relative">
+        <form id="createBatchForm" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          
+          <div className={inputContainerStyle}>
+            <label className={labelStyle}>
+              <Hash size={12} className="text-amber-500" />
+              Kode Batch <span className="text-amber-500/50">*</span>
+            </label>
+            <div className="relative">
+              <input
+                {...register('batch_code', { required: true })}
+                placeholder="e.g. SAPI-2026-01"
+                className={`pl-11 pr-4 ${inputClass}`}
+              />
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-amber-500/40 group-focus-within/input:text-amber-500 transition-colors text-lg">#</div>
+            </div>
+            {errors.batch_code && <p className="text-red-400 text-[10px] mt-1.5 ml-1 font-medium">Kode wajib diisi</p>}
+          </div>
+
+          <div className={inputContainerStyle}>
+            <label className={labelStyle}>
+              <Warehouse size={12} className="text-amber-500" />
+              Nama Kandang <span className="text-amber-500/50">*</span>
+            </label>
+            <div className="relative">
+              <Warehouse size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-500/40 group-focus-within/input:text-amber-500 transition-colors" />
+              <input
+                {...register('kandang_name', { required: true })}
+                placeholder="e.g. Kandang A"
+                className={`pl-11 pr-4 ${inputClass}`}
+              />
+            </div>
+            {errors.kandang_name && <p className="text-red-400 text-[10px] mt-1.5 ml-1 font-medium">Kandang wajib diisi</p>}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className={inputContainerStyle}>
+              <label className={labelStyle}>
+                <Calendar size={12} className="text-amber-500" />
+                Tanggal Mulai <span className="text-amber-500/50">*</span>
+              </label>
+              <Controller
+                name="start_date"
+                control={control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <DatePicker 
+                    value={field.value} 
+                    onChange={field.onChange} 
+                    placeholder="Pilih Tanggal"
+                    className="h-12 bg-[#111C24] border-white/5 shadow-inner text-[14px] w-full"
+                  />
+                )}
+              />
+              {errors.start_date && <p className="text-red-400 text-[10px] mt-1.5 ml-1 font-medium">Wajib diisi</p>}
+            </div>
+
+            <div className={inputContainerStyle}>
+              <label className={labelStyle}>
+                <Calendar size={12} className="text-amber-500" />
+                Target Selesai
+              </label>
+              <Controller
+                name="target_end_date"
+                control={control}
+                render={({ field }) => (
+                  <DatePicker 
+                    value={field.value} 
+                    onChange={field.onChange} 
+                    placeholder="Opsional"
+                    className="h-12 bg-[#111C24] border-white/5 shadow-inner text-[14px] w-full"
+                  />
+                )}
+              />
+            </div>
+          </div>
+
+          <div className={inputContainerStyle}>
+            <label className={labelStyle}>
+              <AlignLeft size={12} className="text-amber-500" />
+              Catatan <span className="text-[#4B6478] ml-1 font-semibold normal-case tracking-normal">(opsional)</span>
+            </label>
+            <textarea
+              {...register('notes')}
+              rows={2}
+              placeholder="Breed dominan, asal ternak, dll."
+              className="w-full px-4 py-3 bg-[#111C24] border border-white/5 focus:border-amber-500/40 rounded-xl text-sm font-medium text-white placeholder:text-[#4B6478] focus:bg-[#15232d] shadow-inner focus:outline-none transition-all resize-none"
             />
           </div>
-          {errors.batch_code && <p className="text-red-400 text-[11px] mt-1">Wajib diisi</p>}
-        </div>
+        </form>
+      </div>
 
-        <div>
-          <label className="block text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mb-1.5">
-            Nama Kandang
-          </label>
-          <input
-            {...register('kandang_name', { required: true })}
-            placeholder="e.g. Kandang A"
-            className="w-full px-4 h-12 bg-[#111C24] border border-white/10 rounded-xl text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-amber-500/50"
-          />
-          {errors.kandang_name && <p className="text-red-400 text-[11px] mt-1">Wajib diisi</p>}
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mb-1.5">
-              Tanggal Mulai
-            </label>
-            <div className="relative">
-              <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4B6478]" />
-              <input
-                {...register('start_date', { required: true })}
-                type="date"
-                className="w-full pl-9 pr-3 h-12 bg-[#111C24] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500/50"
-              />
-            </div>
-            {errors.start_date && <p className="text-red-400 text-[11px] mt-1">Wajib diisi</p>}
-          </div>
-
-          <div>
-            <label className="block text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mb-1.5">
-              Target Selesai
-            </label>
-            <div className="relative">
-              <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4B6478]" />
-              <input
-                {...register('target_end_date')}
-                type="date"
-                className="w-full pl-9 pr-3 h-12 bg-[#111C24] border border-white/10 rounded-xl text-sm text-white focus:outline-none focus:border-amber-500/50"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mb-1.5">
-            Catatan (opsional)
-          </label>
-          <textarea
-            {...register('notes')}
-            rows={2}
-            placeholder="Breed dominan, asal ternak, dll."
-            className="w-full px-4 py-3 bg-[#111C24] border border-white/10 rounded-xl text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-amber-500/50 resize-none"
-          />
-        </div>
-
+      <div className="px-6 py-5 border-t border-white/5 bg-[#0C1319]">
         <button
+          form="createBatchForm"
           type="submit"
           disabled={isPending}
-          className="w-full h-12 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white font-bold text-sm rounded-xl transition-colors"
+          className="w-full h-[52px] bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:opacity-50 text-white font-['Sora'] font-extrabold text-[15px] rounded-xl transition-all shadow-[0_4px_20px_rgba(245,158,11,0.25)] active:scale-[0.98] flex items-center justify-center gap-2"
         >
-          {isPending ? 'Menyimpan...' : 'Buat Batch'}
+          {isPending ? 'Menyimpan...' : 'Mulai Batch Sekarang'}
+          {!isPending && <ChevronRight size={18} strokeWidth={3} className="opacity-80" />}
         </button>
-      </form>
+      </div>
     </motion.div>
   )
 }
@@ -228,7 +274,7 @@ export default function SapiBatch() {
         </p>
         {active.length === 0 ? (
           <div className="text-center py-10 border border-dashed border-white/10 rounded-2xl">
-            <p className="text-2xl mb-2">🐄</p>
+            <p className="text-2xl mb-2">ðŸ„</p>
             <p className="text-sm font-semibold text-white mb-1">Belum ada batch aktif</p>
             <p className="text-xs text-[#4B6478]">Tap tombol Buat Batch di atas</p>
           </div>

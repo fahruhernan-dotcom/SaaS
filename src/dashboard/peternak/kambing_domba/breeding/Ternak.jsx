@@ -293,7 +293,7 @@ function AddAnimalSheet({ open, onClose, animals }) {
             disabled={!form.ear_tag || addAnimal.isPending}
             className="mt-2 w-full bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-white font-bold rounded-xl py-3 text-sm"
           >
-            {addAnimal.isPending ? 'Menyimpan…' : 'Simpan Ternak'}
+            {addAnimal.isPending ? 'Menyimpan—¦' : 'Simpan Ternak'}
           </button>
         </div>
       </div>
@@ -372,7 +372,7 @@ function TimbangSheet({ animal, onClose }) {
             disabled={!form.weight_kg || addWeight.isPending}
             className="mt-2 w-full bg-teal-500 disabled:opacity-50 text-white font-bold rounded-xl py-3 text-sm"
           >
-            {addWeight.isPending ? 'Menyimpan…' : 'Simpan Timbangan'}
+            {addWeight.isPending ? 'Menyimpan—¦' : 'Simpan Timbangan'}
           </button>
         </div>
       </div>
@@ -420,7 +420,7 @@ export default function BreedingTernak() {
       <div className="relative">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4B6478]" />
         <input value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Cari ear tag atau nama…"
+          placeholder="Cari ear tag atau nama—¦"
           className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl pl-9 pr-3 py-2.5 text-sm text-white placeholder-[#4B6478]" />
       </div>
 

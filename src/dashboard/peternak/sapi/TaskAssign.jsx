@@ -42,7 +42,7 @@ import { cn } from '@/lib/utils'
 import { format, parseISO, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
 
-// ─── Config ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const TASK_TYPE_CFG = {
   pakan:             { label: 'Pakan',      icon: Utensils,     color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/30' },
@@ -62,7 +62,7 @@ const STATUS_CFG = {
   terlambat:   { label: 'Terlambat', color: 'text-red-400',    bg: 'bg-red-500/10',     border: 'border-red-500/30' },
 }
 
-// ─── DraggableTaskCard ─────────────────────────────────────────────────────────
+// â”€â”€â”€ DraggableTaskCard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function DraggableTaskCard({ task, assignmentOverride, isDragOverlay = false }) {
   const [isUnlocked, setIsUnlocked] = useState(false)
@@ -149,7 +149,7 @@ function DraggableTaskCard({ task, assignmentOverride, isDragOverlay = false }) 
   )
 }
 
-// ─── WorkerColumn ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ WorkerColumn â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function WorkerColumn({ worker, tasks, assignmentOverrides }) {
   const { setNodeRef, isOver } = useDroppable({ id: `worker-${worker.id}` })
@@ -215,7 +215,7 @@ function WorkerColumn({ worker, tasks, assignmentOverrides }) {
   )
 }
 
-// ─── UnassignedDropZone ────────────────────────────────────────────────────────
+// â”€â”€â”€ UnassignedDropZone â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function UnassignedDropZone({ tasks, assignmentOverrides }) {
   const { setNodeRef, isOver } = useDroppable({ id: 'unassigned' })
@@ -267,7 +267,7 @@ function UnassignedDropZone({ tasks, assignmentOverrides }) {
   )
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function TaskAssign() {
   const today = new Date().toISOString().split('T')[0]
@@ -334,7 +334,7 @@ export default function TaskAssign() {
 
   const activeTask = useMemo(() => tasks.find(t => t.id === activeId), [tasks, activeId])
 
-  // ── Drag handlers ────────────────────────────────────────────────────────────
+  // â”€â”€ Drag handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function handleDragStart({ active }) {
     setActiveId(active.id)
@@ -397,7 +397,7 @@ export default function TaskAssign() {
     }
   }
 
-  // ── Auto-assign ──────────────────────────────────────────────────────────────
+  // â”€â”€ Auto-assign â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   function handleAutoAssign() {
     if (!workers.length) return
@@ -451,7 +451,7 @@ export default function TaskAssign() {
 
   const isLoading = tasksLoading || workersLoading
 
-  // ── Entrance Animation ────────────────────────────────────────────────────────
+  // â”€â”€ Entrance Animation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   useEffect(() => {
     if (!isLoading) {
@@ -479,7 +479,7 @@ export default function TaskAssign() {
     }
   }, [isLoading])
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   if (isLoading) return <LoadingSpinner fullPage />
 

@@ -18,7 +18,7 @@ import {
 } from '@/lib/hooks/useKdBreedingData'
 import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
 
-// ─── KPI Targets ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ KPI Targets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const TARGETS = {
   conceptionRate: 80,   // %
   lambingRate:    130,  // %
@@ -28,7 +28,7 @@ const TARGETS = {
   rcRatio:        1.5,
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function SectionTitle({ children }) {
   return (
@@ -87,7 +87,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   )
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function BreedingLaporanFarm() {
   const { data: animals = [], isLoading: lA } = useKdBreedingAnimals()
@@ -208,7 +208,7 @@ export default function BreedingLaporanFarm() {
   if (!kpi || (animals.length === 0 && matings.length === 0)) {
     return (
       <div className="flex flex-col items-center gap-3 py-20 px-8 text-center">
-        <span className="text-5xl">📊</span>
+        <span className="text-5xl">ðŸ“Š</span>
         <p className="text-sm font-bold text-[#F1F5F9]">Belum ada data untuk dilaporkan</p>
         <p className="text-xs text-[#4B6478]">Tambahkan ternak dan catat perkawinan untuk melihat laporan KPI.</p>
       </div>
@@ -270,7 +270,7 @@ export default function BreedingLaporanFarm() {
             note="Bunting / total dikawinkan" />
           <KPIRow label="Lambing Rate"
             value={kpi.lambingRate} target={TARGETS.lambingRate} unit="%"
-            note="Anak lahir / induk kawin × 100" />
+            note="Anak lahir / induk kawin Ã— 100" />
           <KPIRow label="Litter Size"
             value={kpi.litterSize} target={TARGETS.litterSize}
             note="Rata-rata anak lahir hidup per kelahiran" />

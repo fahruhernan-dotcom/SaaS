@@ -1,7 +1,7 @@
 import {
   ArrowLeftRight, Home, Truck, Users, BarChart2, Package,
   ShoppingCart, UserCheck, FileText, RefreshCw, ClipboardList,
-  TrendingUp, ShoppingBag, CreditCard, Building, Network, Zap, Shield, Bot
+  TrendingUp, ShoppingBag, CreditCard, Building, Network, Zap, Shield, Bot, Milk
 } from 'lucide-react'
 
 /**
@@ -29,8 +29,13 @@ export const SUB_ROLES = {
   ],
   peternak: [
     { id: 'broiler', label: 'Ayam Broiler', disabled: false },
+    { id: 'domba_penggemukan', label: 'Penggemukan Domba', disabled: false },
+    { id: 'domba_breeding', label: 'Breeding Domba', disabled: false },
+    { id: 'kambing_penggemukan', label: 'Penggemukan Kambing', disabled: false },
+    { id: 'kambing_breeding', label: 'Breeding Kambing', disabled: false },
+    { id: 'kambing_perah', label: 'Kambing Perah', disabled: false },
+    { id: 'sapi', label: 'Sapi (Coming Soon)', disabled: false },
     { id: 'petelur', label: 'Ayam Petelur', disabled: true },
-    { id: 'sapi', label: 'Sapi', disabled: false },
   ],
   rpa: [
     { id: 'buyer', label: 'Rumah Potong Ayam', disabled: false },
@@ -541,6 +546,72 @@ export const SUB_ROLE_CONFIGS = {
     faq: [
       { q: 'Bagaimana TernakOS membantu mengurangi dispute dengan broker?', a: 'Data transaksi di TernakOS tercatat transparan untuk semua pihak.' },
       { q: 'Apakah ada laporan margin keuntungan per produk di RPA?', a: 'Ada. Laporan profitabilitas menampilkan margin per produk, top customer by revenue, dan grafik Revenue vs HPP vs Profit.' },
+    ]
+  },
+  
+  peternak_kambing_perah: {
+    hero: {
+      eyebrow: 'Solusi Kambing Perah',
+      headline: 'Monitor Produksi Susu Harian & Kualitas Laktasi dalam Satu Genggaman.',
+      sub: 'Pantau volume per ekor, jadwal perah, dan grafik penjualan susu secara otomatis.',
+      cta: 'Coba Manajemen Kambing Perah',
+    },
+    features: {
+      starter: [
+        '10 ekor kambing laktasi',
+        'Log produksi harian harian',
+        'Laporan produksi dasar',
+        'Akses mobile dashboard',
+      ],
+      pro: [
+        'Ternak laktasi unlimited',
+        'Log kualitas susu (Fat/SNF)',
+        'Tracking reproduksi & breeding',
+        'Inventori pakan & kesehatan',
+        'Laporan laba/rugi per ekor',
+        'Tim maks 3 anggota',
+        'TernakOS Market access',
+      ],
+      business: [
+        'TernakBot AI',
+        'Analisis kurva laktasi AI',
+        'Prediksi masa kering otomatis',
+        'Laporan PDF/Excel otomatis',
+        'Tim unlimited',
+        'Priority support',
+      ],
+    },
+    groups: [
+      {
+        Icon: Milk,
+        title: 'Recording Produksi Susu Presisi',
+        features: [
+          'Log volume per sesi (Pagi/Sore)',
+          'Recording per individu ear-tag',
+          'Input parameter kualitas (Fat, SNF, Grade)',
+          'Grafik kurva laktasi otomatis',
+          'Total produksi harian & bulanan',
+        ],
+      },
+      {
+        Icon: RefreshCw,
+        title: 'Manajemen Masa Kering & Laktasi',
+        features: [
+          'Alert jadwal pengeringan (Dry-off)',
+          'Status laktasi real-time',
+          'Tracking hari laktasi (DIM - Days in Milk)',
+          'Prediksi puncak produksi',
+        ],
+      },
+    ],
+    beforeAfter: [
+      { before: 'Volume susu dicatat di papan tulis, susah direkap', after: 'Data volume tersimpan per individu, rekap instan' },
+      { before: 'Lupa kapan kambing harus dikeringkan', after: 'Reminder otomatis jadwal Dry-off dan Partus' },
+      { before: 'Tidak tahu kambing mana yang paling produktif', after: 'Ranking kambing berdasarkan total yield laktasi' },
+    ],
+    faq: [
+      { q: 'Apakah bisa mencatat kualitas susu seperti kadar lemak?', a: 'Bisa. Di paket Pro, kamu bisa mencatat Fat%, SNF%, dan kualitas grade susu.' },
+      { q: 'Apakah sistem ini terhubung dengan modul breeding?', a: 'Ya. Modul perah terintegrasi penuh dengan siklus reproduksi (mating & partus).' },
     ]
   },
 }

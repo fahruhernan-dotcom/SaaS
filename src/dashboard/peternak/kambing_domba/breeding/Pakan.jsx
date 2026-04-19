@@ -160,7 +160,7 @@ function AddFeedSheet({ open, onClose }) {
 
           <button onClick={handleSubmit} disabled={!form.log_date || !form.group_name || addFeed.isPending}
             className="mt-2 w-full bg-teal-500 disabled:opacity-50 text-white font-bold rounded-xl py-3 text-sm">
-            {addFeed.isPending ? 'Menyimpan…' : 'Simpan Log Pakan'}
+            {addFeed.isPending ? 'Menyimpan—¦' : 'Simpan Log Pakan'}
           </button>
         </div>
       </div>

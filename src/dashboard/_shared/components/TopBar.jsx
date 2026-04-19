@@ -1,27 +1,42 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Search, User } from 'lucide-react'
+import { ArrowLeft, Search, User, Menu } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { resolveBusinessVertical, BUSINESS_MODELS } from '@/lib/businessModel'
 import NotificationBell from './NotificationBell'
+import { usePageTitle } from '@/lib/hooks/usePageTitle'
 
-export default function TopBar({ title, subtitle, showBack = false, rightAction, showBell = true }) {
+export default function TopBar({ title, subtitle, showBack = false, rightAction, showBell = true, onMenuClick }) {
   const navigate = useNavigate()
   const { profile, tenant } = useAuth()
+  const pageTitle = usePageTitle()
   const vertical = resolveBusinessVertical(profile, tenant)
   const model = BUSINESS_MODELS[vertical]
   const color = model?.color || '#10B981'
 
+  const displayTitle = title || pageTitle
+  const isBeranda = displayTitle === 'Beranda'
+  const greeting = `Halo, ${profile?.full_name?.split(' ')[0] ?? 'Peternak'} 👋`
+
   return (
     <motion.header 
-      // ... (keeping previous animation props)
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.2 }}
       className="px-5 lg:px-6 pt-10 lg:pt-4 pb-4 lg:pb-5 flex items-center justify-between sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-50 border-b border-white/5 min-h-[60px] lg:min-h-[64px]"
     >
       <div className="flex items-center gap-4 flex-1 min-w-0">
+        {!showBack && onMenuClick && (
+           <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onMenuClick}
+            className="w-10 h-10 lg:hidden rounded-xl bg-white/5 border border-white/10 active:scale-95 transition-transform"
+          >
+            <Menu size={20} className="text-[#94A3B8]" />
+          </Button>
+        )}
         {showBack && (
           <Button 
             variant="ghost" 
@@ -34,7 +49,9 @@ export default function TopBar({ title, subtitle, showBack = false, rightAction,
           </Button>
         )}
         <div className="text-left flex-1 min-w-0">
-          <h1 className="font-display text-lg lg:text-xl font-black text-white tracking-tight uppercase leading-none truncate">{title}</h1>
+          <h1 className="font-display text-lg lg:text-xl font-black text-white tracking-tight uppercase leading-none truncate">
+            {isBeranda ? greeting : displayTitle}
+          </h1>
           {subtitle && (
             <p className="text-[10px] lg:text-xs font-bold text-[#4B6478] uppercase mt-1 lg:mt-1.5 tracking-widest truncate">{subtitle}</p>
           )}

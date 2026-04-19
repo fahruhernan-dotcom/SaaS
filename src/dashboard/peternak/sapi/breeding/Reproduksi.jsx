@@ -75,7 +75,7 @@ function MatingCard({ mating, onConfirmPregnancy, onRecordBirth }) {
           <p className="text-[10px] text-[#4B6478]">Menuju Partus</p>
         </div>
         <div>
-          <p className="text-[11px] font-bold text-white">{mating.repeat_ib_count}×</p>
+          <p className="text-[11px] font-bold text-white">{mating.repeat_ib_count}Ã—</p>
           <p className="text-[10px] text-[#4B6478]">S/C</p>
         </div>
       </div>
@@ -129,7 +129,7 @@ function BirthCard({ birth }) {
       <div className="flex gap-2 flex-wrap mt-1">
         {birth.pedet_sex && (
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-[#94A3B8]">
-            {birth.pedet_sex === 'jantan' ? '♂ Jantan' : birth.pedet_sex === 'betina' ? '♀ Betina' : '♂♀ Campuran'}
+            {birth.pedet_sex === 'jantan' ? 'â™‚ Jantan' : birth.pedet_sex === 'betina' ? 'â™€ Betina' : 'â™‚â™€ Campuran'}
           </span>
         )}
         {birth.pedet_birth_weight_kg && (
@@ -146,7 +146,7 @@ function BirthCard({ birth }) {
         )}
         {birth.is_freemartin_risk && (
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400">
-            ⚠ Freemartin Risk
+            âš  Freemartin Risk
           </span>
         )}
         {birth.retentio_placenta && (
@@ -159,7 +159,7 @@ function BirthCard({ birth }) {
   )
 }
 
-// ── Sheet: Catat IB Baru ──────────────────────────────────────────────────────
+// â”€â”€ Sheet: Catat IB Baru â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function AddMatingSheet({ animals, onClose }) {
   const { register, handleSubmit, watch, formState: { errors } } = useForm({
     defaultValues: { method: 'ib', repeat_ib_count: 1 }
@@ -264,7 +264,7 @@ function AddMatingSheet({ animals, onClose }) {
             </div>
             <div>
               <label className={labelCls}>Protokol Sinkronisasi (Opsional)</label>
-              <input {...register('sync_protocol')} placeholder="CIDR, PGF2α, Ovsynch..."
+              <input {...register('sync_protocol')} placeholder="CIDR, PGF2Î±, Ovsynch..."
                 className={fieldCls} />
             </div>
           </>
@@ -298,7 +298,7 @@ function AddMatingSheet({ animals, onClose }) {
   )
 }
 
-// ── Sheet: Konfirmasi PKB ─────────────────────────────────────────────────────
+// â”€â”€ Sheet: Konfirmasi PKB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ConfirmPregnancySheet({ mating, onClose }) {
   const { register, handleSubmit, watch } = useForm({
     defaultValues: { status: 'bunting', pregnancy_method: 'usg' }
@@ -339,7 +339,7 @@ function ConfirmPregnancySheet({ mating, onClose }) {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-2 gap-2">
-          {[['bunting', 'Bunting ✅'], ['gagal', 'Tidak Bunting ❌']].map(([v, l]) => (
+          {[['bunting', 'Bunting âœ…'], ['gagal', 'Tidak Bunting âŒ']].map(([v, l]) => (
             <label key={v} className={`flex items-center justify-center gap-2 px-3.5 py-3 rounded-xl border cursor-pointer transition-colors ${
               status === v
                 ? v === 'bunting' ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
@@ -384,7 +384,7 @@ function ConfirmPregnancySheet({ mating, onClose }) {
   )
 }
 
-// ── Sheet: Catat Kelahiran ────────────────────────────────────────────────────
+// â”€â”€ Sheet: Catat Kelahiran â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function RecordBirthSheet({ mating, onClose }) {
   const { register, handleSubmit, watch, setValue } = useForm({
     defaultValues: {
@@ -490,7 +490,7 @@ function RecordBirthSheet({ mating, onClose }) {
         <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3.5 space-y-3">
           <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest">Detail Pedet</p>
           <div className="grid grid-cols-3 gap-2">
-            {[['jantan','♂ Jantan'],['betina','♀ Betina'],['campuran','♂♀ Campuran']].map(([v,l]) => (
+            {[['jantan','â™‚ Jantan'],['betina','â™€ Betina'],['campuran','â™‚â™€ Campuran']].map(([v,l]) => (
               <label key={v} className={`flex items-center justify-center px-2 py-2 rounded-lg border cursor-pointer text-[10px] font-semibold transition-colors ${
                 pedetSex === v
                   ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
@@ -576,7 +576,7 @@ function RecordBirthSheet({ mating, onClose }) {
   )
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
+// â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function SapiBreedingReproduksi() {
   const [tab, setTab]                     = useState('aktif')
   const [showAdd, setShowAdd]             = useState(false)
@@ -628,7 +628,7 @@ export default function SapiBreedingReproduksi() {
         {tab === 'aktif' && (
           activeMatings.length === 0
             ? <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-                <p className="text-3xl mb-3">🐄</p>
+                <p className="text-3xl mb-3">ðŸ„</p>
                 <p className="text-sm text-[#4B6478]">Belum ada IB/kawin aktif</p>
               </div>
             : activeMatings.map(m => (
@@ -653,7 +653,7 @@ export default function SapiBreedingReproduksi() {
         {tab === 'kelahiran' && (
           births.length === 0
             ? <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-                <p className="text-3xl mb-3">🐮</p>
+                <p className="text-3xl mb-3">ðŸ®</p>
                 <p className="text-sm text-[#4B6478]">Belum ada catatan kelahiran</p>
               </div>
             : births.map(b => <BirthCard key={b.id} birth={b} />)

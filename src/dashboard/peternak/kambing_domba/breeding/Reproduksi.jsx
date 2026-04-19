@@ -37,7 +37,7 @@ function MatingCard({ mating, onConfirmPreg, onRecordBirth }) {
             {mating.dam?.name ? ` (${mating.dam.name})` : ''}
           </p>
           <p className="text-[11px] text-[#4B6478]">
-            × {mating.sire ? mating.sire.ear_tag : (mating.semen_code ? `IB: ${mating.semen_code}` : 'IB')}
+            Ã— {mating.sire ? mating.sire.ear_tag : (mating.semen_code ? `IB: ${mating.semen_code}` : 'IB')}
           </p>
         </div>
         <span className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-bold ${cfg.color}`}>
@@ -220,7 +220,7 @@ function AddMatingSheet({ open, onClose, animals }) {
 
           <button onClick={handleSubmit} disabled={!form.dam_id || !form.mating_date || addMating.isPending}
             className="mt-2 w-full bg-teal-500 disabled:opacity-50 text-white font-bold rounded-xl py-3 text-sm">
-            {addMating.isPending ? 'Menyimpan…' : 'Simpan Perkawinan'}
+            {addMating.isPending ? 'Menyimpan—¦' : 'Simpan Perkawinan'}
           </button>
         </div>
       </div>
@@ -286,7 +286,7 @@ function ConfirmPregSheet({ mating, onClose }) {
           </div>
           <button onClick={handleSubmit} disabled={updateMating.isPending}
             className="w-full bg-teal-500 disabled:opacity-50 text-white font-bold rounded-xl py-3 text-sm">
-            {updateMating.isPending ? 'Menyimpan…' : 'Konfirmasi Bunting'}
+            {updateMating.isPending ? 'Menyimpan—¦' : 'Konfirmasi Bunting'}
           </button>
         </div>
       </div>
@@ -401,7 +401,7 @@ function RecordBirthSheet({ mating, onClose }) {
 
           <button onClick={handleSubmit} disabled={addBirth.isPending}
             className="mt-2 w-full bg-teal-500 disabled:opacity-50 text-white font-bold rounded-xl py-3 text-sm">
-            {addBirth.isPending ? 'Menyimpan…' : 'Simpan Kelahiran'}
+            {addBirth.isPending ? 'Menyimpan—¦' : 'Simpan Kelahiran'}
           </button>
         </div>
       </div>

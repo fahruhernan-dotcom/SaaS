@@ -29,7 +29,7 @@ const BREED_SUGGESTIONS = [
   'Limousin', 'Simmental', 'Brahman', 'Brangus', 'Angus', 'Wagyu',
   'Hereford', 'Droughtmaster', 'Belgian Blue',
   'PO (Peranakan Ongole)', 'Bali', 'Madura', 'Aceh', 'Pesisir',
-  'Limpo (Limousin×PO)', 'Simpo (Simmental×PO)', 'Brahman×PO', 'Lainnya',
+  'Limpo (LimousinÃ—PO)', 'Simpo (SimmentalÃ—PO)', 'BrahmanÃ—PO', 'Lainnya',
 ]
 
 function AnimalCard({ animal }) {
@@ -58,7 +58,7 @@ function AnimalCard({ animal }) {
             )}
           </div>
           <p className="text-[11px] text-[#4B6478]">
-            {animal.breed ?? '—'} · {animal.sex === 'betina' ? '♀' : '♂'} · Parity {animal.parity}
+            {animal.breed ?? '—'} · {animal.sex === 'betina' ? 'â™€' : 'â™‚'} · Parity {animal.parity}
           </p>
         </div>
         <div className="text-right">
@@ -430,7 +430,7 @@ export default function SapiBreedingTernak() {
       <div className="px-4 mt-4 space-y-3">
         {filtered.length === 0 ? (
           <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-            <p className="text-3xl mb-3">🐄</p>
+            <p className="text-3xl mb-3">ðŸ„</p>
             <p className="text-sm font-semibold text-white mb-1">
               {animals.length === 0 ? 'Belum ada ternak' : 'Tidak ada hasil'}
             </p>

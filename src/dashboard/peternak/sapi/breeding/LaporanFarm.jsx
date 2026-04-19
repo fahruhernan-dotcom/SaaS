@@ -12,7 +12,7 @@ import {
 } from '@/lib/hooks/useSapiBreedingData'
 import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
 
-// ─── KPI Targets — Sapi Breeding ─────────────────────────────────────────────
+// â”€â”€â”€ KPI Targets — Sapi Breeding â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const TARGETS = {
   conceptionRate:  70,   // % (bunting / total IB)
   scRatio:        1.7,   // S/C — lower is better
@@ -21,7 +21,7 @@ const TARGETS = {
   mortalitasPerdet: 5,   // % — lower is better
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function SectionTitle({ children }) {
   return (
@@ -85,7 +85,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   )
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function SapiBreedingLaporanFarm() {
   const { data: animals  = [], isLoading: lA } = useSapiBreedingAnimals()
@@ -117,7 +117,7 @@ export default function SapiBreedingLaporanFarm() {
       ? (totalIBAttempts / buntingCount).toFixed(2)
       : null
 
-    // Calving rate: births / bunting confirmed × 100
+    // Calving rate: births / bunting confirmed Ã— 100
     const totalKelahiran = births.length
     const calvingRate = buntingCount > 0
       ? ((totalKelahiran / buntingCount) * 100).toFixed(1)
@@ -144,7 +144,7 @@ export default function SapiBreedingLaporanFarm() {
       ? Math.round(intervals.reduce((s, d) => s + d, 0) / intervals.length)
       : null
 
-    // Pedet mortality: total born dead / total born × 100
+    // Pedet mortality: total born dead / total born Ã— 100
     const totalLahirHidup = births.reduce((s, b) => s + (b.total_born_alive ?? 0), 0)
     const totalLahirMati  = births.reduce((s, b) => s + ((b.total_born ?? 0) - (b.total_born_alive ?? 0)), 0)
     const totalLahir      = totalLahirHidup + totalLahirMati
@@ -202,7 +202,7 @@ export default function SapiBreedingLaporanFarm() {
   if (!kpi || (animals.length === 0 && matings.length === 0)) {
     return (
       <div className="flex flex-col items-center gap-3 py-20 px-8 text-center">
-        <span className="text-5xl">📊</span>
+        <span className="text-5xl">ðŸ“Š</span>
         <p className="text-sm font-bold text-[#F1F5F9]">Belum ada data untuk dilaporkan</p>
         <p className="text-xs text-[#4B6478]">Tambahkan indukan dan catat IB untuk melihat laporan KPI reproduksi.</p>
       </div>
@@ -292,7 +292,7 @@ export default function SapiBreedingLaporanFarm() {
               value={kpi.calvingRate}
               target={TARGETS.calvingRate}
               unit="%"
-              note="Kelahiran / bunting dikonfirmasi × 100"
+              note="Kelahiran / bunting dikonfirmasi Ã— 100"
             />
           )}
           {kpi.avgCalvingInterval && (
@@ -321,7 +321,7 @@ export default function SapiBreedingLaporanFarm() {
       {/* Freemartin alert */}
       {kpi.freemartinRisk > 0 && (
         <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3">
-          <p className="text-sm font-bold text-amber-300">⚠ {kpi.freemartinRisk} Pedet Berisiko Freemartin</p>
+          <p className="text-sm font-bold text-amber-300">âš  {kpi.freemartinRisk} Pedet Berisiko Freemartin</p>
           <p className="text-[11px] text-[#4B6478] mt-1">
             Kelahiran kembar jantan+betina — periksa kesuburan pedet betina sebelum dijadikan calon bibit.
           </p>

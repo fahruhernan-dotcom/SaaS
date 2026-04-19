@@ -1,12 +1,19 @@
-import React from 'react'
-import { PawPrint, Scale, Hash, Calendar, Info, Calculator, BadgePercent, Warehouse } from 'lucide-react'
+import React, { useState } from 'react'
+import { PawPrint, Scale, Hash, Calendar, Info, Calculator, BadgePercent, Warehouse, Sparkles, Check } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { DatePicker } from '@/components/ui/DatePicker'
+import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
+
+const TEMPLATE_PACKAGES = [
+  { key: '150', label: '150 Hari — Intensif', desc: 'Konsentrat penuh, target ADG ~1 kg/hari' },
+  { key: '180', label: '180 Hari — Semi-Intensif', desc: 'Hijauan + konsentrat, target ADG ~0.8 kg/hari' },
+]
 
 export default function PeternakSapiForm({ data, onChange }) {
   const set = (key, val) => onChange({ ...data, [key]: val })
+  const [templateEnabled, setTemplateEnabled] = useState(false)
 
   const fieldLabelStyle = "flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.15em] text-amber-500/80 mb-1.5 ml-1"
   const inputContainerStyle = "relative transition-all duration-300"
@@ -128,6 +135,64 @@ export default function PeternakSapiForm({ data, onChange }) {
             "Untuk menghitung <span className="text-amber-400 font-bold not-italic">ADG</span> & <span className="text-emerald-400 font-bold not-italic">profit</span> secara otomatis."
           </p>
         </div>
+      </div>
+
+      {/* Template TernakOS — Opsional */}
+      <div className="border border-[#7C3AED]/20 rounded-2xl overflow-hidden">
+        <div className="flex items-center justify-between p-4 bg-[#7C3AED]/[0.06]">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-[#7C3AED]/20 border border-[#7C3AED]/30 flex items-center justify-center">
+              <Sparkles size={15} className="text-[#A78BFA]" />
+            </div>
+            <div>
+              <p className="text-sm font-black text-white">Mulai dengan Template TernakOS</p>
+              <p className="text-[10px] text-[#4B6478] font-medium mt-0.5">Jadwal tugas otomatis sesuai SNI feedlot</p>
+            </div>
+          </div>
+          <Switch
+            checked={templateEnabled}
+            onCheckedChange={v => {
+              setTemplateEnabled(v)
+              if (!v) set('templateType', null)
+            }}
+          />
+        </div>
+
+        {templateEnabled && (
+          <div className="p-4 space-y-2 border-t border-[#7C3AED]/10 bg-[#7C3AED]/[0.03]">
+            {TEMPLATE_PACKAGES.map(pkg => {
+              const active = data.templateType === pkg.key
+              return (
+                <button
+                  key={pkg.key}
+                  type="button"
+                  onClick={() => set('templateType', pkg.key)}
+                  className={cn(
+                    'w-full text-left p-3 rounded-xl border transition-all duration-150',
+                    active
+                      ? 'bg-[#7C3AED]/15 border-[#7C3AED]/50'
+                      : 'bg-white/[0.02] border-white/5 hover:border-white/10'
+                  )}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <p className={cn('text-xs font-black', active ? 'text-white' : 'text-slate-300')}>
+                        {pkg.label}
+                      </p>
+                      <p className="text-[10px] text-[#4B6478] font-medium mt-0.5">{pkg.desc}</p>
+                    </div>
+                    <div className={cn(
+                      'w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
+                      active ? 'border-[#7C3AED] bg-[#7C3AED]' : 'border-white/20'
+                    )}>
+                      {active && <Check size={10} className="text-white" />}
+                    </div>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
 
     </div>

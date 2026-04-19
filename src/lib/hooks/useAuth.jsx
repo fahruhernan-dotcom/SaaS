@@ -79,7 +79,7 @@ export function AuthProvider({ children }) {
     return false
   }
 
-  const isSuperadmin = profiles.some(p => p.role === 'superadmin' || p.user_type === 'superadmin')
+  const isSuperadmin = user?.app_metadata?.is_superadmin === true
 
   const value = {
     user,
@@ -105,12 +105,16 @@ export function useAuth() {
     }
     return {
       user: null, profile: null, tenant: null, tenants: [],
-      loading: true, switchTenant: async () => {}, refetchProfile: () => {},
+      loading: true, switchTenant: async () => { }, refetchProfile: () => { },
     }
   }
   return ctx
 }
 
 export const getBrokerBasePath = (tenant, profile) => {
+  return getXBasePath(tenant, profile)
+}
+
+export const getPeternakBasePath = (tenant, profile) => {
   return getXBasePath(tenant, profile)
 }

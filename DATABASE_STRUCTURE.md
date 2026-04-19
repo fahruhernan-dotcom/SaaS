@@ -1,7 +1,5 @@
-# TernakOS — Database Structure
-> Generated from Supabase schema. Gunakan sebagai referensi Antigravity.
-> Last updated: 2026-04-17 v5.1 (Supabase Deep Audit & Automation Edition: Added Edge Functions, Arboge Scrapers, and Bulletproof RLS Documentation)
-> Previous updates: 2026-04-17 v5 (Deep Audit), 2026-04-10 v4 (Kambing & Domba overhaul), 2026-04-05 v3 (Documentation Overhaul)
+> Last updated: 2026-04-19 v6.1 (Livestock Decoupling Edition: Decoupled Kambing & Domba into independent 'domba_' and 'kambing_' tables with full KPI parity)
+> Previous updates: 2026-04-19 v6.0 (Breeding Sapi & Task System), 2026-04-17 v5 (Deep Audit), 2026-04-10 v4 (Kambing & Domba overhaul)
 
 ---
 
@@ -122,22 +120,46 @@ auth.users
         │           ├── sapi_penggemukan_weight_records (animal_id)
         │           ├── sapi_penggemukan_health_logs (animal_id)
         │           └── sapi_penggemukan_sales (animal_id)
-        ├── 🐐 K&D PENGGEMUKAN (GOAT/SHEEP)
-        │     ├── kd_penggemukan_batches (tenant_id)
-        │     │     └── kd_penggemukan_feed_logs (batch_id)
-        │     ├── kd_kandangs (tenant_id, batch_id)
-        │     └── kd_penggemukan_animals (batch_id, kandang_id)
-        │           ├── kd_penggemukan_weight_records (animal_id)
-        │           ├── kd_penggemukan_health_logs (animal_id)
-        │           └── kd_penggemukan_sales (animal_id)
-        └── 🐑 K&D BREEDING
-              ├── kd_breeding_animals (tenant_id, kandang_id)
-              │     ├── kd_breeding_mating_records (animal_id, ram_id, ewe_id)
-              │     │     └── kd_breeding_births (mating_id, parent_id)
-              │     ├── kd_breeding_health_logs (animal_id)
-              │     ├── kd_breeding_feed_logs (animal_id)
-              │     └── kd_breeding_sales (animal_id)
-              └── kd_kandangs (tenant_id)
+        ├── 🐃 SAPI BREEDING
+        │     ├── sapi_breeding_animals (tenant_id)
+        │     │     ├── sapi_breeding_mating_records (dam_id, sire_id)
+        │     │     │     └── sapi_breeding_births (mating_id, dam_id)
+        │     │     ├── sapi_breeding_weight_records (animal_id)
+        │     │     ├── sapi_breeding_health_logs (animal_id)
+        │     │     └── sapi_breeding_sales (animal_id)
+        │     └── sapi_breeding_feed_logs (tenant_id)
+        ├── 🐑 DOMBA VERTICAL (Sheep)
+        │     ├── domba_penggemukan_batches (tenant_id)
+        │     │     └── domba_penggemukan_feed_logs (batch_id)
+        │     ├── domba_kandangs (tenant_id, batch_id)
+        │     ├── domba_penggemukan_animals (batch_id, kandang_id)
+        │     │     ├── domba_penggemukan_weight_records (animal_id)
+        │     │     ├── domba_penggemukan_health_logs (animal_id)
+        │     │     └── domba_penggemukan_sales (animal_id)
+        │     └── domba_breeding_animals (tenant_id)
+        │           ├── domba_breeding_mating_records (dam_id, sire_id)
+        │           │     └── domba_breeding_births (mating_id)
+        │           ├── domba_breeding_weight_records (animal_id)
+        │           ├── domba_breeding_health_logs (animal_id)
+        │           └── domba_breeding_sales (animal_id)
+        ├── 🐐 KAMBING VERTICAL (Goat)
+        │     ├── kambing_penggemukan_batches (tenant_id)
+        │     │     └── kambing_penggemukan_feed_logs (batch_id)
+        │     ├── kambing_kandangs (tenant_id, batch_id)
+        │     ├── kambing_penggemukan_animals (batch_id, kandang_id)
+        │     │     ├── kambing_penggemukan_weight_records (animal_id)
+        │     │     ├── kambing_penggemukan_health_logs (animal_id)
+        │     │     └── kambing_penggemukan_sales (animal_id)
+        │     └── kambing_breeding_animals (tenant_id)
+        │           ├── kambing_breeding_mating_records (dam_id, sire_id)
+        │           │     └── kambing_breeding_births (mating_id)
+        │           ├── kambing_breeding_weight_records (animal_id)
+        │           ├── kambing_breeding_health_logs (animal_id)
+        │           └── kambing_breeding_sales (animal_id)
+        └── 📋 PETERNAK TASK SYSTEM
+              ├── kandang_workers (tenant_id, peternak_farm_id)
+              ├── peternak_task_templates (tenant_id)
+              └── peternak_task_instances (template_id)
 ```
 
 ---
@@ -215,28 +237,21 @@ auth.users
 - `sembako_deliveries` (tenant_id, sale_id, employee_id)
 - `sembako_expenses` (tenant_id)
 
-### `Kambing & Domba Penggemukan` Tables
-- `kd_penggemukan_batches` (tenant_id) — batch penggemukan; auto-updates `actual_out_date` on harvest
-- `kd_penggemukan_animals` (tenant_id, batch_id) — per-ekor in a batch; `status`: aktif/terjual/mati/afkir
-- `kd_penggemukan_weight_records` (tenant_id, animal_id) — timbang per ekor; trigger syncs `latest_weight_*` back to animal
-- `kd_penggemukan_health_logs` (tenant_id, animal_id) — vaksinasi/obat_cacing/sakit/kematian/lainnya; kematian trigger → animal.status='mati'
-- `kd_penggemukan_feed_logs` (tenant_id, batch_id) — log pakan per-batch/kandang; `consumed_kg` is GENERATED
-- `kd_penggemukan_sales` (tenant_id, animal_id) — penjualan ekor; insert → animal.status='terjual'
-
-### `Kambing & Domba Breeding` Tables
-- `kd_breeding_animals` (tenant_id) — master per-ekor + pedigree (self-ref `dam_id`/`sire_id`); cached `latest_weight_kg/date/bcs`
-- `kd_breeding_weight_records` (tenant_id, animal_id) — timbang per ekor; trigger syncs `latest_weight_*` back to animal
-- `kd_breeding_mating_records` (tenant_id, dam_id, sire_id) — estrus→kawin→bunting→melahirkan; `est_partus_date` auto-set by trigger (mating_date + 150 days)
-- `kd_breeding_births` (tenant_id, mating_record_id, dam_id) — partus; `total_born_dead` is GENERATED; insert → mating.status='melahirkan'
-- `kd_breeding_health_logs` (tenant_id, animal_id) — vaksinasi/obat_cacing/sakit/kematian/lainnya; kematian trigger → animal.status='mati'
-- `kd_breeding_feed_logs` (tenant_id) — log pakan per kandang/kelompok (bukan per-ekor); `consumed_kg` is GENERATED
-- `kd_breeding_sales` (tenant_id, animal_id) — penjualan bibit/afkir; insert → animal.status='terjual'
+### `DOMBA` & `KAMBING` Tables (Decoupled)
+- `[prefix]_penggemukan_batches` — batch penggemukan; `prefix` is `domba` or `kambing`.
+- `[prefix]_penggemukan_animals` — per-ekor in a batch; `status`: aktif/terjual/mati/afkir.
+- `[prefix]_penggemukan_weight_records` — timbang per ekor; sync back to animal.
+- `[prefix]_breeding_animals` — master per-ekor + pedigree (self-ref `dam_id`/`sire_id`).
+- `[prefix]_breeding_mating_records` — estrus→kawin→bunting→melahirkan.
+- `[prefix]_breeding_births` — partus record.
+- `[prefix]_kandangs` — management of pens/cages for both models.
 
 ### `System & Billing` Tables
 - `pricing_plans` (GLOBAL)
 - `discount_codes` (GLOBAL)
 - `plan_configs` (GLOBAL)
 - `subscription_invoices` (tenant_id)
+- `generated_invoices` (tenant_id) — general pdf/document records
 - `global_audit_logs` (tenant_id, user_id)
 
 ---
@@ -268,6 +283,7 @@ auth.users
 | `is_hidden_beta` | boolean | default false |
 | `is_active` | boolean | default true |
 | `trial_ends_at` | timestamptz | default now()+14 days |
+| `province` | text | nullable — (Provinsi lokasi bisnis) |
 | `created_at` | timestamptz | |
 | `updated_at` | timestamptz | |
 
@@ -390,15 +406,15 @@ auth.users
 | `tenant_id` | uuid FK → tenants | NOT NULL |
 | `auth_user_id` | uuid FK → auth.users | NOT NULL (Bisa duplikat antar tenant) |
 | `full_name` | text | nullable |
-| `role` | text | `'owner'` `'staff'` `'superadmin'` `'view_only'` `'sopir'` |
-| `user_type` | text | `'broker'` `'peternak'` `'rpa'` `'superadmin'` |
-| `phone` | text | nullable |
-| `avatar_url` | text | nullable |
-| `is_active` | boolean | default true |
-| `onboarded` | boolean | default false |
-| `business_model_selected` | boolean | default false |
 | `last_seen_at` | timestamptz | nullable |
-| `onboarding_completed_at` | timestamptz | nullable — diisi saat Flow A selesai |
+| `role` | text | `'owner'` `'staff'` `'superadmin'` `'view_only'` `'sopir'` \| **[Planned]** `'anak_buah'` |
+| `user_type` | text | nullable — `'broker'` \| `'peternak'` \| `'rpa'` |
+| `avatar_url` | text | nullable |
+| `phone` | text | nullable |
+| `business_model_selected` | text | nullable |
+| `onboarded` | boolean | default false |
+| `is_active` | boolean | default true |
+| `onboarding_completed_at` | timestamptz | nullable |
 | `created_at` | timestamptz | |
 | `updated_at` | timestamptz | |
 
@@ -431,6 +447,8 @@ auth.users
 | `last_transaction_date` | date | nullable |
 | `notes` | text | nullable |
 | `is_deleted` | boolean | default false |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
 
 **Hook**: `useFarms()` — queryKey `['farms', tenant.id]`
 
@@ -456,6 +474,8 @@ auth.users
 | `transaction_date` | date | NOT NULL |
 | `notes` | text | nullable |
 | `is_deleted` | boolean | default false |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
 
 **Hook**: `usePurchases()` — queryKey `['purchases', tenant.id]`
 **Join**: `.select('*, farms(farm_name)')`
@@ -486,6 +506,8 @@ auth.users
 | `due_date` | date | nullable |
 | `notes` | text | nullable |
 | `is_deleted` | boolean | default false |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
 
 **Hook**: `useSales()` — queryKey `['sales', tenant.id]`
 **Join**: `.select('*, rpa_clients(rpa_name), purchases(total_cost, farm_id, farms(farm_name)), deliveries(status)')`
@@ -519,6 +541,8 @@ auth.users
 | `status` | text | `'preparing'` `'loading'` `'on_route'` `'arrived'` `'completed'` |
 | `notes` | text | nullable |
 | `is_deleted` | boolean | default false |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
 
 **Hook**: `useDeliveries(statusFilter)` — queryKey `['deliveries', statusFilter]`
 **Note**: `load_time` & `departure_time` simpan sebagai timestamptz — hati-hati timezone WIB (UTC+7)
@@ -548,6 +572,8 @@ auth.users
 | `reliability_score` | smallint | 1–5, nullable |
 | `notes` | text | nullable |
 | `is_deleted` | boolean | default false |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
 
 **Hook**: `useRPA()` — queryKey `['rpa-clients', tenant.id]`
 
@@ -573,6 +599,8 @@ auth.users
 | `last_service_date` | date | nullable |
 | `notes` | text | nullable |
 | `is_deleted` | boolean | default false |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
 
 ---
 
@@ -593,6 +621,8 @@ auth.users
 | `address` | text | nullable |
 | `notes` | text | nullable |
 | `is_deleted` | boolean | default false |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
 
 ---
 
@@ -827,6 +857,9 @@ auth.users
 | `mitra_company` | text | nullable — nama perusahaan mitra |
 | `mitra_contract_price` | integer | nullable — harga kontrak per kg dari mitra |
 | `mitra_contract_notes` | text | nullable |
+| `catatan` | text | nullable |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
 | `is_active` | boolean | default true |
 | `is_deleted` | boolean | default false |
 | `notes` | text | nullable |
@@ -956,6 +989,7 @@ auth.users
 | `id` | uuid PK | |
 | `tenant_id` | uuid FK → tenants | |
 | `peternak_farm_id` | uuid FK → peternak_farms | |
+| `profile_id` | uuid FK → profiles | nullable — (Untuk Task System) |
 | `full_name` | text | NOT NULL |
 | `phone` | text | nullable |
 | `join_date` | date | nullable |
@@ -1201,6 +1235,9 @@ Hasil di-transform ke `{ broker: { pro: { price, originalPrice, id }, business: 
 | `target_volume_monthly` | integer | nullable |
 | `mitra_peternak_count` | integer | nullable — jumlah kandang mitra |
 | `kapasitas_harian_butir` | integer | nullable — untuk broker telur |
+| `catatan` | text | nullable |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
 
 ---
 
@@ -1218,7 +1255,10 @@ Hasil di-transform ke `{ broker: { pro: { price, originalPrice, id }, business: 
 | `doc_capacity` | integer | nullable — kapasitas DOC per siklus |
 | `total_ternak` | integer | nullable |
 | `luas_lahan_m2` | integer | nullable |
-| `sistem_pemeliharaan` | text | nullable — `'mandiri'` \| `'kemitraan'` |
+| `sistem_pemeliharaan` | text | nullable — **[Planned]** (`'mandiri'` \| `'kemitraan'`) |
+| `catatan` | text | nullable |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
 
 ---
 
@@ -1534,6 +1574,24 @@ Hasil di-transform ke `{ broker: { pro: { price, originalPrice, id }, business: 
 
 ---
 
+### `sembako_supplier_payments`
+> Pembayaran hutang ke supplier sembako
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `supplier_id` | uuid FK → sembako_suppliers | |
+| `amount` | bigint | jumlah bayar (IDR) |
+| `payment_date` | date | DEFAULT CURRENT_DATE |
+| `payment_method` | text | `'cash'` \| `'transfer'` \| `'qris'` \| `'giro'` |
+| `reference_number` | text | nullable |
+| `notes` | text | nullable |
+| `is_deleted` | boolean | default false |
+| `created_at` | timestamptz | |
+
+---
+
 ### `sembako_employees`
 > Daftar pegawai (supir, penjual, admin)
 
@@ -1680,6 +1738,42 @@ Hasil di-transform ke `{ broker: { pro: { price, originalPrice, id }, business: 
 | `locked_until` | timestamptz | expiry waktu lockout (30 menit jika count >= 5) |
 | `last_attempt_at` | timestamptz | updated on every attempt |
 
+---
+
+### `xendit_config` (GLOBAL)
+> Konfigurasi integrasi payment gateway Xendit
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `is_active` | boolean | default false |
+| `secret_key_encrypted` | text | |
+| `webhook_token` | text | |
+| `success_redirect_url` | text | |
+| `failure_redirect_url` | text | |
+| `created_at` | timestamptz | |
+| `updated_at` | timestamptz | |
+
+---
+
+### `generated_invoices`
+> Record invoice PDF/dokumen yang di-generate sistem
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `invoice_type` | text | `'sale'` \| `'purchase'` \| `'delivery'` \| `'peternak_invoice'` \| `'rpa_to_toko'` |
+| `reference_id` | uuid | ID dari record sumber (e.g. `sale_id`) |
+| `invoice_number` | text | NOT NULL |
+| `recipient_name` | text | nullable |
+| `total_amount` | bigint | |
+| `status` | text | `'draft'` \| `'sent'` \| `'paid'` |
+| `pdf_url` | text | URL ke Supabase Storage |
+| `metadata` | jsonb | nullable |
+| `created_by` | uuid FK → profiles | |
+| `created_at` | timestamptz | |
+
 **GLOBAL** — tidak ada `tenant_id`, tidak ada `is_deleted`
 **Tujuan**: Mencegah brute-force kode undangan 6 digit. Record dihapus jika kode valid.
 
@@ -1805,10 +1899,10 @@ Hasil di-transform ke `{ broker: { pro: { price, originalPrice, id }, business: 
 | cycle_expenses | cycle_id | breeding_cycles.id |
 | harvest_records | tenant_id | tenants.id |
 | harvest_records | cycle_id | breeding_cycles.id |
-| farm_workers | tenant_id | tenants.id |
-| farm_workers | peternak_farm_id | peternak_farms.id |
+| kandang_workers | tenant_id | tenants.id |
+| kandang_workers | peternak_farm_id | peternak_farms.id |
 | worker_payments | tenant_id | tenants.id |
-| worker_payments | worker_id | farm_workers.id |
+| worker_payments | worker_id | kandang_workers.id |
 | broker_profiles | tenant_id | tenants.id |
 | peternak_profiles | tenant_id | tenants.id |
 | rpa_products | tenant_id | tenants.id |
@@ -1932,8 +2026,8 @@ peternak_farms.business_model:    'mandiri_murni' | 'mandiri_semi' | 'mitra_penu
 breeding_cycles.status:           'active' | 'harvested' | 'failed' | 'cancelled'
 cycle_expenses.expense_type:      'doc' | 'pakan' | 'obat' | 'vaksin' | 'listrik' | 'air' | 'litter' | 'lainnya'
 feed_stocks.feed_type:            'starter' | 'grower' | 'finisher' | 'konsentrat' | 'jagung' | 'dedak' | 'lainnya'
-farm_workers.status:              'aktif' | 'nonaktif'
-farm_workers.salary_system:       'flat_bonus' | 'borongan' | 'persentase'
+kandang_workers.status:              'aktif' | 'nonaktif'
+kandang_workers.salary_system:       'flat_bonus' | 'borongan' | 'persentase'
 worker_payments.payment_type:     'gaji' | 'bonus' | 'makan' | 'lain'
 
 // Market (Multi-Role)
@@ -1970,15 +2064,14 @@ sembako_deliveries.status:         'pending' | 'on_route' | 'delivered'
 sembako_expenses.category:         'bbm' | 'sewa' | 'perawatan' | 'listrik' | 'lainnya'
 sembako_stock_out.reason:          'sale' | 'expired' | 'adjustment'
 
-// KD Penggemukan Vertical
-kd_penggemukan_batches.species:        'kambing' | 'domba'
-kd_penggemukan_batches.status:         'aktif' | 'selesai' | 'dibatalkan'
-kd_penggemukan_animals.species:        'kambing' | 'domba'
-kd_penggemukan_animals.sex:            'jantan' | 'betina' | 'kastrasi'
-kd_penggemukan_animals.status:         'aktif' | 'terjual' | 'mati' | 'afkir'
-kd_penggemukan_animals.origin:         'lokal' | 'impor' | 'hasil_ib'
-kd_penggemukan_health_logs.log_type:   'vaksinasi' | 'obat_cacing' | 'sakit' | 'kematian' | 'lainnya'
-kd_penggemukan_sales.product_type:     'hidup' | 'karkas' | 'potongan' | 'lainnya'
+// DOMBA & KAMBING Vertical (Common)
+[prefix]_penggemukan_batches.status:    'aktif' | 'selesai' | 'dibatalkan'
+[prefix]_penggemukan_animals.sex:        'jantan' | 'betina' | 'kastrasi'
+[prefix]_penggemukan_animals.status:     'aktif' | 'terjual' | 'mati' | 'afkir'
+[prefix]_health_logs.log_type:            'vaksinasi' | 'obat_cacing' | 'sakit' | 'kematian' | 'lainnya'
+[prefix]_breeding_animals.status:        'aktif' | 'afkir' | 'mati' | 'terjual'
+[prefix]_breeding_mating_records.status: 'menunggu' | 'bunting' | 'gagal' | 'melahirkan'
+[prefix]_breeding_births.birth_type:     'tunggal' | 'kembar2' | 'kembar3plus'
 
 // Sapi Penggemukan Vertical
 sapi_penggemukan_batches.status:       'active' | 'closed' | 'cancelled'
@@ -1992,22 +2085,6 @@ sapi_penggemukan_health_logs.log_type:  'sakit' | 'vaksinasi' | 'obat_cacing' | 
 sapi_penggemukan_sales.buyer_type:       'agen_kurban' | 'jagal_rph' | 'katering' | 'pengepul' | 'eceran_langsung' | 'ekspor' | 'lainnya'
 sapi_penggemukan_sales.price_type:       'per_kg' | 'per_ekor'
 sapi_penggemukan_sales.payment_method:   'tunai' | 'transfer' | 'kredit'
-
-// KD Breeding Vertical
-kd_breeding_animals.species:           'kambing' | 'domba'
-kd_breeding_animals.sex:               'jantan' | 'betina' | 'kastrasi'
-kd_breeding_animals.birth_type:        'tunggal' | 'kembar2' | 'kembar3plus'
-kd_breeding_animals.origin:            'lokal' | 'impor' | 'hasil_ib'
-kd_breeding_animals.generation:        'F1' | 'F2' | 'F3' | 'murni'
-kd_breeding_animals.purpose:           'pejantan_unggul' | 'indukan' | 'calon_bibit' | 'afkir'
-kd_breeding_animals.selection_class:   'elite' | 'grade_a' | 'grade_b' | 'afkir'
-kd_breeding_animals.status:            'aktif' | 'afkir' | 'mati' | 'terjual'
-kd_breeding_mating_records.method:     'alami' | 'ib'
-kd_breeding_mating_records.status:     'menunggu' | 'bunting' | 'gagal' | 'melahirkan'
-kd_breeding_mating_records.pregnancy_method: 'usg' | 'palpasi' | 'visual'
-kd_breeding_births.birth_type:         'tunggal' | 'kembar2' | 'kembar3plus'
-kd_breeding_health_logs.log_type:      'vaksinasi' | 'obat_cacing' | 'sakit' | 'kematian' | 'lainnya'
-kd_breeding_sales.product_type:        'bibit_jantan' | 'bibit_betina' | 'cempe_sapih' | 'afkir' | 'lainnya'
 ```
 
 ---
@@ -2128,145 +2205,39 @@ Prefix: `sapi_penggemukan_*`
 
 ---
 
-## 🐐 KAMBING & DOMBA PENGGEMUKAN VERTICAL
+## 🐑 DOMBA & 🐐 KAMBING VERTICALS
 
-Migration: `supabase/migrations/20260409_feedlot_kambing_domba.sql`
-Hooks: `src/lib/hooks/useKdPenggemukanData.js`
-Pages: `src/dashboard/peternak/kambing_domba/penggemukan/`
+Migration: `supabase/migrations/domba_tables.sql` & `supabase/migrations/kambing_tables.sql`
+Hooks: `useDombaPenggemukanData.js`, `useKambingPenggemukanData.js`, etc.
 
-### `kd_penggemukan_batches`
-> Batch penggemukan (kandang/kelompok masuk-keluar)
+TernakOS uses a decoupled architecture for livestock. Both Domba and Kambing share the same table schema but with different prefixes. 
 
-| Kolom | Tipe | Notes |
-|-------|------|-------|
-| `id` | uuid PK | |
-| `tenant_id` | uuid NOT NULL | FK → tenants(id) CASCADE |
-| `batch_name` | text NOT NULL | nama batch |
-| `species` | text NOT NULL | `'kambing'` \| `'domba'` |
-| `target_head` | int | target jumlah ekor |
-| `start_date` | date NOT NULL | tanggal masuk batch |
-| `target_out_date` | date | target keluar |
-| `actual_out_date` | date | tanggal keluar aktual |
-| `purchase_cost_total` | numeric(14,2) | total biaya beli |
-| `status` | text NOT NULL DEFAULT `'aktif'` | `'aktif'` \| `'selesai'` \| `'dibatalkan'` |
-| `notes` | text | |
-| `is_deleted` | boolean DEFAULT false | |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | auto-set by trigger |
+### Tables (replacing [prefix] with `domba` or `kambing`):
 
-### `kd_penggemukan_animals`
-> Per-ekor dalam batch; status auto-update via trigger
+#### `[prefix]_penggemukan_batches`
+| Batch penggemukan | KPI: ADG, FCR, RC-Ratio, Mortality, Profitability |
 
-| Kolom | Tipe | Notes |
-|-------|------|-------|
-| `id` | uuid PK | |
-| `tenant_id` | uuid NOT NULL | FK → tenants(id) CASCADE |
-| `batch_id` | uuid NOT NULL | FK → kd_penggemukan_batches(id) CASCADE |
-| `ear_tag` | text NOT NULL | nomor telinga |
-| `name` | text | |
-| `species` | text NOT NULL | `'kambing'` \| `'domba'` |
-| `sex` | text NOT NULL | `'jantan'` \| `'betina'` \| `'kastrasi'` |
-| `birth_date` | date | |
-| `entry_date` | date NOT NULL | tanggal masuk batch |
-| `entry_weight_kg` | numeric(6,2) | berat masuk |
-| `entry_price` | numeric(12,2) | harga beli per ekor |
-| `breed` | text | |
-| `origin` | text | `'lokal'` \| `'impor'` \| `'hasil_ib'` |
-| `status` | text NOT NULL DEFAULT `'aktif'` | `'aktif'` \| `'terjual'` \| `'mati'` \| `'afkir'` |
-| `latest_weight_kg` | numeric(6,2) | cached — updated by trigger |
-| `latest_weight_date` | date | cached |
-| `latest_bcs` | numeric(3,1) | cached |
-| `is_deleted` | boolean DEFAULT false | |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | auto-set by trigger |
+#### `[prefix]_penggemukan_animals`
+| Per-ekor record | status: `aktif`, `terjual`, `mati`, `afkir`. includes `quarantine_notes`. |
 
-### `kd_penggemukan_weight_records`
-> Timbang per-ekor; trigger syncs latest_weight back to animal
+#### `[prefix]_penggemukan_weight_records`
+| Penimbangan | Trigger syncs to `latest_weight` in animal table. |
 
-| Kolom | Tipe | Notes |
-|-------|------|-------|
-| `id` | uuid PK | |
-| `tenant_id` | uuid NOT NULL | |
-| `animal_id` | uuid NOT NULL | FK → kd_penggemukan_animals(id) CASCADE |
-| `weigh_date` | date NOT NULL | |
-| `weight_kg` | numeric(6,2) NOT NULL | |
-| `age_days` | int | |
-| `adg_since_last` | numeric(7,2) | g/hari sejak timbang sebelumnya |
-| `bcs` | numeric(3,1) | Body Condition Score 1–5 |
-| `notes` | text | |
-| `recorded_by` | text | |
-| `is_deleted` | boolean DEFAULT false | |
-| `created_at` | timestamptz | |
+#### `[prefix]_breeding_animals`
+| Master Breeding | Pedigree record (`dam_id`, `sire_id`), purpose class. |
 
-### `kd_penggemukan_health_logs`
-> Log kesehatan per-ekor; kematian → auto update animal.status='mati'
+#### `[prefix]_breeding_mating_records`
+| Reproduksi | `est_partus_date` (+150 days). Status: `bunting`, `melahirkan`, `gagal`. |
 
-| Kolom | Tipe | Notes |
-|-------|------|-------|
-| `id` | uuid PK | |
-| `tenant_id` | uuid NOT NULL | |
-| `animal_id` | uuid NOT NULL | FK → kd_penggemukan_animals(id) CASCADE |
-| `log_date` | date NOT NULL | |
-| `log_type` | text NOT NULL | `'vaksinasi'` \| `'obat_cacing'` \| `'sakit'` \| `'kematian'` \| `'lainnya'` |
-| `vaccine_name` | text | |
-| `drug_name` | text | |
-| `dose` | text | |
-| `route` | text | |
-| `symptoms` | text | |
-| `diagnosis` | text | |
-| `treatment` | text | |
-| `outcome` | text | |
-| `notes` | text | |
-| `recorded_by` | text | |
-| `is_deleted` | boolean DEFAULT false | |
-| `created_at` | timestamptz | |
+#### `[prefix]_breeding_births`
+| Partus | Records `total_born_alive` and `total_born_dead`. |
 
-### `kd_penggemukan_feed_logs`
-> Log pakan per-batch; consumed_kg is GENERATED
-
-| Kolom | Tipe | Notes |
-|-------|------|-------|
-| `id` | uuid PK | |
-| `tenant_id` | uuid NOT NULL | |
-| `batch_id` | uuid NOT NULL | FK → kd_penggemukan_batches(id) CASCADE |
-| `log_date` | date NOT NULL | |
-| `head_count` | int | |
-| `hijauan_kg` | numeric(8,2) DEFAULT 0 | |
-| `konsentrat_kg` | numeric(8,2) DEFAULT 0 | |
-| `dedak_kg` | numeric(8,2) DEFAULT 0 | |
-| `mineral_kg` | numeric(8,2) DEFAULT 0 | |
-| `sisa_kg` | numeric(8,2) DEFAULT 0 | |
-| `consumed_kg` | numeric GENERATED | `GREATEST(0, hijauan+konsentrat+dedak+mineral-sisa)` — **JANGAN INSERT** |
-| `notes` | text | |
-| `is_deleted` | boolean DEFAULT false | |
-| `created_at` | timestamptz | |
-
-### `kd_penggemukan_sales`
-> Penjualan per-ekor; insert → animal.status='terjual'
-
-| Kolom | Tipe | Notes |
-|-------|------|-------|
-| `id` | uuid PK | |
-| `tenant_id` | uuid NOT NULL | |
-| `animal_id` | uuid NOT NULL | FK → kd_penggemukan_animals(id) |
-| `sale_date` | date NOT NULL | |
-| `product_type` | text NOT NULL | `'hidup'` \| `'karkas'` \| `'potongan'` \| `'lainnya'` |
-| `buyer_name` | text | |
-| `price_per_head` | numeric(12,2) NOT NULL | |
-| `weight_at_sale_kg` | numeric(6,2) | |
-| `notes` | text | |
-| `is_deleted` | boolean DEFAULT false | |
-| `created_at` | timestamptz | |
+#### `[prefix]_kandangs`
+| Manajemen Kandang | Capacity and location management. |
 
 ---
 
-## 🐑 KAMBING & DOMBA BREEDING VERTICAL
-
-Migration: `supabase/migrations/20260410_breeding_kambing_domba.sql`
-Hooks: `src/lib/hooks/useKdBreedingData.js`
-Pages: `src/dashboard/peternak/kambing_domba/breeding/`
-
-### `kd_breeding_animals`
+### `[prefix]_breeding_animals` (Master)
 > Master per-ekor + pedigree (self-referential); status auto-update via health/sale triggers
 
 | Kolom | Tipe | Notes |
@@ -2280,8 +2251,8 @@ Pages: `src/dashboard/peternak/kambing_domba/breeding/`
 | `birth_date` | date | |
 | `birth_weight_kg` | numeric(5,2) | |
 | `birth_type` | text | `'tunggal'` \| `'kembar2'` \| `'kembar3plus'` |
-| `dam_id` | uuid | FK → kd_breeding_animals(id) — ibu (self-ref) |
-| `sire_id` | uuid | FK → kd_breeding_animals(id) — bapak (self-ref) |
+| `dam_id` | uuid | FK → [prefix]_breeding_animals(id) — ibu (self-ref) |
+| `sire_id` | uuid | FK → [prefix]_breeding_animals(id) — bapak (self-ref) |
 | `breed` | text | |
 | `breed_composition` | text | |
 | `generation` | text | `'F1'` \| `'F2'` \| `'F3'` \| `'murni'` |
@@ -2298,57 +2269,15 @@ Pages: `src/dashboard/peternak/kambing_domba/breeding/`
 | `created_at` | timestamptz | |
 | `updated_at` | timestamptz | auto-set by trigger |
 
-### `kd_breeding_weight_records`
-> Timbang per-ekor; trigger syncs latest_weight back to animal; adg_since_last calculated client-side in useAddKdBreedingWeight
-
-| Kolom | Tipe | Notes |
-|-------|------|-------|
-| `id` | uuid PK | |
-| `tenant_id` | uuid NOT NULL | |
-| `animal_id` | uuid NOT NULL | FK → kd_breeding_animals(id) CASCADE |
-| `weigh_date` | date NOT NULL | |
-| `weight_kg` | numeric(6,2) NOT NULL | |
-| `age_days` | int | auto-calculated from birth_date if not provided |
-| `adg_since_last` | numeric(7,2) | g/hari sejak timbang sebelumnya — calculated client-side |
-| `bcs` | numeric(3,1) | Body Condition Score 1–5 |
-| `notes` | text | |
-| `recorded_by` | text | |
-| `is_deleted` | boolean DEFAULT false | |
-| `created_at` | timestamptz | |
-
-### `kd_breeding_mating_records`
-> Perkawinan: estrus → kawin → bunting → melahirkan; est_partus_date auto-set by trigger
-
-| Kolom | Tipe | Notes |
-|-------|------|-------|
-| `id` | uuid PK | |
-| `tenant_id` | uuid NOT NULL | FK → tenants(id) CASCADE |
-| `dam_id` | uuid NOT NULL | FK → kd_breeding_animals(id) — induk betina |
-| `sire_id` | uuid | FK → kd_breeding_animals(id) — pejantan (null jika IB) |
-| `semen_code` | text | kode semen IB |
-| `estrus_date` | date | |
-| `mating_date` | date NOT NULL | |
-| `method` | text NOT NULL | `'alami'` \| `'ib'` |
-| `est_partus_date` | date | **AUTO-SET by trigger**: `mating_date + 150 days` |
-| `pregnancy_confirmed` | boolean DEFAULT false | |
-| `pregnancy_confirm_date` | date | |
-| `pregnancy_method` | text | `'usg'` \| `'palpasi'` \| `'visual'` |
-| `fetus_count` | int | |
-| `status` | text NOT NULL DEFAULT `'menunggu'` | `'menunggu'` \| `'bunting'` \| `'gagal'` \| `'melahirkan'` |
-| `notes` | text | |
-| `is_deleted` | boolean DEFAULT false | |
-| `created_at` | timestamptz | |
-| `updated_at` | timestamptz | auto-set by trigger |
-
-### `kd_breeding_births`
+### `[prefix]_breeding_births` (Partus)
 > Catatan partus; insert → auto-updates mating_record.status='melahirkan'; total_born_dead GENERATED
 
 | Kolom | Tipe | Notes |
 |-------|------|-------|
 | `id` | uuid PK | |
 | `tenant_id` | uuid NOT NULL | FK → tenants(id) CASCADE |
-| `mating_record_id` | uuid | FK → kd_breeding_mating_records(id) |
-| `dam_id` | uuid NOT NULL | FK → kd_breeding_animals(id) |
+| `mating_record_id` | uuid | FK → [prefix]_breeding_mating_records(id) |
+| `dam_id` | uuid NOT NULL | FK → [prefix]_breeding_animals(id) |
 | `partus_date` | date NOT NULL | |
 | `partus_time` | time | |
 | `birth_type` | text | `'tunggal'` \| `'kembar2'` \| `'kembar3plus'` |
@@ -2363,57 +2292,42 @@ Pages: `src/dashboard/peternak/kambing_domba/breeding/`
 | `is_deleted` | boolean DEFAULT false | |
 | `created_at` | timestamptz | |
 
-### `kd_breeding_health_logs`
-> Log kesehatan per-ekor; kematian → auto update animal.status='mati'
+### `[prefix]_penggemukan_weight_records` (Timbang)
+> Timbang per-ekor; trigger syncs latest_weight back to animal; adg_since_last calculated client-side
 
 | Kolom | Tipe | Notes |
 |-------|------|-------|
 | `id` | uuid PK | |
 | `tenant_id` | uuid NOT NULL | |
-| `animal_id` | uuid NOT NULL | FK → kd_breeding_animals(id) CASCADE |
-| `log_date` | date NOT NULL | |
-| `log_type` | text NOT NULL | `'vaksinasi'` \| `'obat_cacing'` \| `'sakit'` \| `'kematian'` \| `'lainnya'` |
-| `vaccine_name` | text | |
-| `drug_name` | text | |
-| `dose` | text | |
-| `route` | text | |
-| `symptoms` | text | |
-| `diagnosis` | text | |
-| `treatment` | text | |
-| `outcome` | text | |
+| `animal_id` | uuid NOT NULL | FK → [prefix]_penggemukan_animals(id) CASCADE |
+| `weigh_date` | date NOT NULL | |
+| `weight_kg` | numeric(6,2) NOT NULL | |
+| `age_days` | int | auto-calculated from birth_date if not provided |
+| `adg_since_last` | numeric(7,2) | g/hari sejak timbang sebelumnya — calculated client-side |
+| `bcs` | numeric(3,1) | Body Condition Score 1–5 |
 | `notes` | text | |
 | `recorded_by` | text | |
 | `is_deleted` | boolean DEFAULT false | |
 | `created_at` | timestamptz | |
 
-### `kd_breeding_feed_logs`
-> Log pakan per kandang/kelompok (BUKAN per-ekor); consumed_kg GENERATED
+### Triggers Summary
 
-| Kolom | Tipe | Notes |
-|-------|------|-------|
-| `id` | uuid PK | |
-| `tenant_id` | uuid NOT NULL | FK → tenants(id) CASCADE |
-| `log_date` | date NOT NULL | |
-| `group_name` | text NOT NULL | nama kandang / kelompok |
-| `head_count` | int | |
-| `hijauan_kg` | numeric(8,2) DEFAULT 0 | |
-| `konsentrat_kg` | numeric(8,2) DEFAULT 0 | |
-| `dedak_kg` | numeric(8,2) DEFAULT 0 | |
-| `mineral_kg` | numeric(8,2) DEFAULT 0 | |
-| `sisa_kg` | numeric(8,2) DEFAULT 0 | |
-| `consumed_kg` | numeric GENERATED | `GREATEST(0, hijauan+konsentrat+dedak+mineral-sisa)` — **JANGAN INSERT** |
-| `notes` | text | |
-| `is_deleted` | boolean DEFAULT false | |
-| `created_at` | timestamptz | |
+| Trigger | Prefix | Event | Action |
+|---------|--------|-------|--------|
+| `trg_[prefix]_penggemukan_weight_sync` | `domba`/`kambing` | AFTER INSERT/UPDATE | Syncs `latest_weight_*` on animal |
+| `trg_[prefix]_breeding_weight_sync` | `domba`/`kambing` | AFTER INSERT/UPDATE | Syncs `latest_weight_*` on animal |
+| `trg_[prefix]_mating_defaults` | `domba`/`kambing` | BEFORE INSERT | Sets `est_partus_date = mating_date + 150 days` |
 
-### `kd_breeding_sales`
+---
+
+### `[prefix]_breeding_sales` (Penjualan)
 > Penjualan bibit/afkir per-ekor; insert → animal.status='terjual' (client-side in hook)
 
 | Kolom | Tipe | Notes |
 |-------|------|-------|
 | `id` | uuid PK | |
 | `tenant_id` | uuid NOT NULL | FK → tenants(id) CASCADE |
-| `animal_id` | uuid NOT NULL | FK → kd_breeding_animals(id) |
+| `animal_id` | uuid NOT NULL | FK → [prefix]_breeding_animals(id) |
 | `sale_date` | date NOT NULL | |
 | `product_type` | text NOT NULL | `'bibit_jantan'` \| `'bibit_betina'` \| `'cempe_sapih'` \| `'afkir'` \| `'lainnya'` |
 | `buyer_name` | text | |
@@ -2423,30 +2337,99 @@ Pages: `src/dashboard/peternak/kambing_domba/breeding/`
 | `is_deleted` | boolean DEFAULT false | |
 | `created_at` | timestamptz | |
 
-### KD Triggers Summary
+---
 
-| Trigger | Table | Event | Action |
-|---------|-------|-------|--------|
-| `trg_kd_penggemukan_weight_sync` | `kd_penggemukan_weight_records` | AFTER INSERT/UPDATE | Syncs `latest_weight_*` on animal if newer date |
-| `trg_kd_penggemukan_health_mark_dead` | `kd_penggemukan_health_logs` | AFTER INSERT | `animal.status='mati'` if `log_type='kematian'` |
-| `trg_kd_breeding_weight_sync` | `kd_breeding_weight_records` | AFTER INSERT/UPDATE | Syncs `latest_weight_*` on animal if newer date |
-| `trg_kd_breeding_health_mark_dead` | `kd_breeding_health_logs` | AFTER INSERT | `animal.status='mati'` if `log_type='kematian'` |
-| `trg_kd_breeding_mating_defaults` | `kd_breeding_mating_records` | BEFORE INSERT | Sets `est_partus_date = mating_date + 150 days` if null |
-| `trg_kd_breeding_birth_mating` | `kd_breeding_births` | AFTER INSERT | Sets `mating_record.status='melahirkan'` |
+## 🐃 SAPI BREEDING VERTICAL
 
-### KD KPI Targets
+Migration: `supabase/migrations/20260418_sapi_breeding.sql`
+Hooks: `src/lib/hooks/usePeternakSapiBreedingData.js`
+Pages: `src/dashboard/peternak/sapi/breeding/`
 
-| KPI | Target Penggemukan | Target Breeding |
-|-----|-------------------|-----------------|
-| ADG | ≥ 120 g/hari | ≥ 120 g/hari (indukan/anak) |
-| FCR | ≤ 8.0 | N/A |
-| Mortalitas | ≤ 3% | ≤ 5% induk, ≤ 10% anak pre-sapih |
-| Conception Rate | N/A | ≥ 80% |
-| Lambing Rate | N/A | ≥ 130% |
-| Litter Size | N/A | ≥ 1.5 |
-| Weaning Rate | N/A | ≥ 90% |
-| Lambing Interval | N/A | ≤ 8 bulan |
-| R/C Ratio | ≥ 1.2 | ≥ 1.2 |
+### `sapi_breeding_animals`
+> Master per-ekor individual (indukan, pejantan, pedet) + pedigree.
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `ear_tag` | text | UNIQUE per tenant |
+| `sex` | text | `'jantan'` \| `'betina'` |
+| `dam_id` | uuid | FK → sapi_breeding_animals(id) — ibu |
+| `sire_id` | uuid | FK → sapi_breeding_animals(id) — bapak |
+| `parity` | integer | Jumlah kebuntingan indukan (0 = dara) |
+| `status` | text | `'aktif'` \| `'bunting'` \| `'afkir'` \| `'mati'` \| `'terjual'` |
+| `latest_weight_kg`| numeric | ⚠️ **GENERATED** via trigger |
+
+### `sapi_breeding_mating_records`
+> Siklus reproduksi: Estrus → IB/Alami → Bunting → Melahirkan.
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `dam_id` | uuid | FK → sapi_breeding_animals(id) |
+| `method` | text | `'alami'` \| `'ib'` |
+| `mating_date` | date | |
+| `est_partus_date` | date | ⚠️ **GENERATED** (`mating_date + 285 days`) |
+| `status` | text | `'menunggu'` \| `'bunting'` \| `'gagal'` \| `'melahirkan'` |
+
+### `sapi_breeding_births`
+> Catatan kelahiran pedet.
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `mating_record_id`| uuid | FK → sapi_breeding_mating_records(id) |
+| `dam_id` | uuid | FK → sapi_breeding_animals(id) |
+| `partus_date` | date | |
+| `birth_assistance` | text | `'normal'` \| `'bantuan_tangan'` \| `'alat_obstetri'` \| `'sc'` |
+| `is_freemartin_risk`| boolean | True jika lahir kembar beda jenis kelamin |
+
+### `sapi_breeding_health_logs`
+> Log kesehatan per ekor.
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `animal_id` | uuid | FK → sapi_breeding_animals(id) |
+| `log_type` | text | `'vaksinasi'` \| `'obat_cacing'` \| `'sakit'` \| `'kematian'` |
+| `diagnosis` | text | |
+
+---
+
+## 📋 PETERNAK TASK SYSTEM
+
+Migration: `supabase/migrations/20260418_peternak_task_system.sql`
+Hooks: `src/lib/hooks/usePeternakTaskData.js`
+
+### 📋 PETERNAK TASK SYSTEM **[PLANNED / DRAFT]**
+> Modul manajemen tugas harian yang belum di-deploy ke Live DB.
+
+### `peternak_task_templates` **[PLANNED]**
+> Definisi tugas berulang (blueprint).
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK → tenants | |
+| `kandang_name` | text | Nama kandang target |
+| `task_type` | text | `'timbang'`, `'vaksinasi'`, `'pakan'`, dll |
+| `recurring_type` | text | `'harian'`, `'mingguan'`, `'dua_mingguan'`, `'bulanan'`, `'custom'`, `'sekali'` |
+| `due_time` | time | Jam mulai tugas (default 08:00) |
+| `is_active` | boolean | |
+
+### `peternak_task_instances`
+> Catatan eksekusi tugas harian hasil generate template.
+
+| Kolom | Tipe | Notes |
+|-------|------|-------|
+| `id` | uuid PK | |
+| `template_id` | uuid | FK → peternak_task_templates(id) |
+| `due_date` | date | |
+| `assigned_profile_id`| uuid | FK → profiles(id) |
+| `status` | text | `'pending'`, `'in_progress'`, `'selesai'`, `'dilewati'`, `'terlambat'` |
 
 ---
 
@@ -2460,6 +2443,7 @@ Pages: `src/dashboard/peternak/kambing_domba/breeding/`
 | staff | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | view_only | ✅ | ✅ (read) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | sopir | ❌ | ❌ | ❌ | ✅ (own only) | ❌ | ❌ | ❌ | ❌ | ❌ |
+| anak_buah | ❌ | ❌ | ✅ (tasks only) | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ### Route per role setelah login:
 
@@ -2501,13 +2485,13 @@ Pages: `src/dashboard/peternak/kambing_domba/breeding/`
 3. Edge Function handle rate limit + validasi + return invitation data
 4. Jika 429 → lock UI input 30 menit
 5. Jika 200 → setInvitation(data.invitation) → tampilkan choice (register/login)
-6. `signUp` dengan `options.data.invite_token = kode`
+6. `signUp` with `options.data.invite_token = kode`
 7. Trigger DB handle sisanya otomatis
    ✗ JANGAN query `team_invitations` langsung dari frontend — selalu via Edge Function
 
 ### RLS yang dibutuhkan:
-- `team_invitations`: anon dan authenticated bisa SELECT
-- `tenants`: anon dan authenticated bisa SELECT
+- `team_invitations`: anon and authenticated bisa SELECT
+- `tenants`: anon and authenticated bisa SELECT
 
 ---
 
@@ -2631,40 +2615,12 @@ Gunakan data `RPA UD Jaya` dan `RPA Jaya Abadi` sebagai benchmark:
 | sembako_broker    | distributor_sembako| ✅ Full (RLS ✅) |
 | peternak          | peternak_broiler   | ✅ Full (Setup Wizard ✅) |
 | peternak          | peternak_layer     | ✅ Full (Wizard ✅) |
-| peternak_sapi_penggemukan | peternak_sapi_penggemukan | ✅ Full (7 tables, Batch Feedlot, EarTagLog ✅) |
-| peternak_kambing_domba_penggemukan | peternak_kambing_domba_penggemukan | ✅ Full (6 tables, Batch Feedlot, LaporanBatch ✅) |
-| peternak_kambing_domba_breeding    | peternak_kambing_domba_breeding    | ✅ Full (7 tables, Pedigree+Reproduksi, LaporanFarm ✅) |
+| peternak_sapi_penggemukan | peternak_sapi_penggemukan | ✅ Full (7 tables) |
+| peternak_domba           | peternak_domba           | ✅ Full (14 tables, Decoupled ✅) |
+| peternak_kambing         | peternak_kambing         | ✅ Full (14 tables, Decoupled ✅) |
 | peternak          | peternak_babi      | 🔒 Coming Soon   |
 | rumah_potong      | rpa                | ✅ Full (RPH sub ✅) |
 | rumah_potong      | rph                | 🚧 Placeholder   |
-
----
-
-## ⚡ SUPABASE EDGE FUNCTIONS
-
-| Function | Path | Purpose | Deploy Command |
-|----------|------|---------|----------------|
-| `fetch-harga` | `supabase/functions/fetch-harga/index.ts` | Auto-scrape harga broiler dari chickin.id → insert `market_prices` | `supabase functions deploy fetch-harga --no-verify-jwt` |
-| `verify-invite-code` | `supabase/functions/verify-invite-code/index.ts` | Rate-limit verifikasi kode undangan (max 5×/15min, lockout 30min) | `supabase functions deploy verify-invite-code --no-verify-jwt` |
-
-### Rate Limit Detail (`verify-invite-code`)
-| Parameter | Nilai |
-|-----------|-------|
-| Max attempts | 5 per IP per window |
-| Window | 15 menit |
-| Lockout duration | 30 menit |
-| Reset on success | Ya — counter reset jika kode valid |
-| Storage | In-memory (Map) — direset saat cold start |
-
-### Response Codes (`verify-invite-code`)
-| Code | Kondisi | Frontend Action |
-|------|---------|-----------------|
-| `200` | Kode valid | `setInvitation(data.invitation)` → lanjut |
-| `400` | Format kode salah | `toast.error` |
-| `404` | Kode tidak ditemukan / bukan pending | `toast.error` |
-| `410` | Kode expired | `toast.error` |
-| `429` | Rate limit tercapai | `setIsLocked(true)` → disable input |
-| `500` | Server error | `toast.error('Server error')` |
 
 ---
 
@@ -2787,6 +2743,34 @@ Gunakan data `RPA UD Jaya` dan `RPA Jaya Abadi` sebagai benchmark:
 
 ---
 
+## ⚡ SUPABASE EDGE FUNCTIONS
+
+| Function | Path | Purpose | Deploy Command |
+|----------|------|---------|----------------|
+| `fetch-harga` | `supabase/functions/fetch-harga/index.ts` | Auto-scrape harga broiler dari chickin.id → insert `market_prices` | `supabase functions deploy fetch-harga --no-verify-jwt` |
+| `verify-invite-code` | `supabase/functions/verify-invite-code/index.ts` | Rate-limit verifikasi kode undangan (max 5×/15min, lockout 30min) | `supabase functions deploy verify-invite-code --no-verify-jwt` |
+
+### Rate Limit Detail (`verify-invite-code`)
+| Parameter | Nilai |
+|-----------|-------|
+| Max attempts | 5 per IP per window |
+| Window | 15 menit |
+| Lockout duration | 30 menit |
+| Reset on success | Ya — counter reset jika kode valid |
+| Storage | In-memory (Map) — direset saat cold start |
+
+### Response Codes (`verify-invite-code`)
+| Code | Kondisi | Frontend Action |
+|------|---------|-----------------|
+| `200` | Kode valid | `setInvitation(data.invitation)` → lanjut |
+| `400` | Format kode salah | `toast.error` |
+| `404` | Kode tidak ditemukan / bukan pending | `toast.error` |
+| `410` | Kode expired | `toast.error` |
+| `429` | Rate limit tercapai | `setIsLocked(true)` → disable input |
+| `500` | Server error | `toast.error('Server error')` |
+
+---
+
 ## 🛡️ ROW LEVEL SECURITY (RLS) POLICIES
 > TernakOS menggunakan "Bulletproof Pattern" untuk memastikan isolasi multi-tenant yang aman.
 
@@ -2845,4 +2829,4 @@ USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE auth_user_id = auth.ui
 
 ---
 
-*TernakOS Database Structure — **updated 2026-04-17 v5.1** — Supabase Deep Audit & Automation Edition; Synced all vertical columns (Poultry, Sapi, Sembako, Egg); Documented AI Infrastructure; Refined Generated Columns logic; Added RPC Function listing; Documented Edge Functions & Scrapers; Standardized Bulletproof RLS Patterns; Standardized `public.` schema qualification rules.*
+*TernakOS Database Structure — **updated 2026-04-19 v6.1** — Livestock Decoupling Edition; Decoupled Kambing & Domba into 14 independent tables each; Sync structural parity between all livestock verticals; Standardized Bulletproof RLS Patterns.*

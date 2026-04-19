@@ -201,7 +201,7 @@ export default function BreedingBeranda() {
       {/* Empty state */}
       {animals.length === 0 && (
         <div className="flex flex-col items-center gap-3 py-12 text-center">
-          <span className="text-5xl">🐑</span>
+          <span className="text-5xl">ðŸ‘</span>
           <p className="text-sm font-bold text-[#F1F5F9]">Belum ada ternak</p>
           <p className="text-xs text-[#4B6478] max-w-xs">Tambahkan ternak di menu Ternak untuk mulai memantau kawanan breeding Anda.</p>
         </div>

@@ -52,16 +52,17 @@ export default function AuthCallback() {
         return
       }
 
+      // Superadmin: cek langsung dari JWT app_metadata (paling reliable)
+      if (session.user?.app_metadata?.is_superadmin === true) {
+        navigate('/admin', { replace: true })
+        toast.success('Selamat datang kembali, Admin!')
+        return
+      }
+
       const profile = profiles.find(p => p.onboarded) || profiles[0]
 
       if (!profile.onboarded) {
         navigate('/onboarding', { replace: true })
-        return
-      }
-
-      if (profile.role === 'superadmin' || profile.user_type === 'superadmin') {
-        navigate('/admin', { replace: true })
-        toast.success('Selamat datang kembali, Admin!')
         return
       }
 

@@ -39,7 +39,7 @@ function HealthLogCard({ log }) {
           <div>
             <p className="text-sm font-bold text-white leading-none">{cfg.label}</p>
             <p className="text-[11px] text-[#4B6478] mt-0.5">
-              {species === 'kambing' ? '🐐' : '🐑'} {earTag} · {log.log_date}
+              {species === 'kambing' ? 'ðŸ' : 'ðŸ‘'} {earTag} · {log.log_date}
             </p>
           </div>
         </div>
@@ -206,7 +206,7 @@ export default function KdPenggemukanKesehatan() {
           <div className="px-4 mt-4 space-y-3">
             {!selectedBatch ? (
               <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-                <p className="text-3xl mb-3">💉</p>
+                <p className="text-3xl mb-3">ðŸ’‰</p>
                 <p className="text-sm text-[#4B6478]">Pilih batch untuk melihat log kesehatan</p>
               </div>
             ) : loadingLogs ? <LoadingSpinner />

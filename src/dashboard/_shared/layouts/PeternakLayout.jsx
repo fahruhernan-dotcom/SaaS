@@ -1,28 +1,27 @@
-import React, { useState, useRef } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import React, { useState, useRef, useEffect } from 'react'
+import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import DesktopSidebarLayout from './DesktopSidebarLayout'
 import AppSidebar from '../components/AppSidebar'
-import { Menu } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useNotificationGenerator } from '@/lib/hooks/useNotifications.jsx'
 import { BusinessNameWarningBanner } from '../components/BusinessNameWarningBanner'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import TopBar from '../components/TopBar'
 
-/**
- * Common Layout for Peternak (Broiler/Layer)
- * Handles both Mobile (BottomNav + AppSidebar) and Desktop (DesktopSidebarLayout)
- */
 export default function PeternakLayout() {
   const { profile, loading, tenant } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   useNotificationGenerator()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [rightAction, setRightAction] = useState(null)
 
-  const initials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'PT'
-  const getAkunPath = () => `/peternak/${tenant?.sub_type || 'peternak_broiler'}/akun`
+  // Reset rightAction on every navigation
+  useEffect(() => {
+    setRightAction(null)
+  }, [location.pathname])
 
   // Swipe-right-from-left-edge to open sidebar
   const swipeStartX = useRef(null)
@@ -59,35 +58,14 @@ export default function PeternakLayout() {
           overflowX: 'hidden',
           overscrollBehaviorX: 'none'
         }}>
-          <div className="md:hidden fixed top-0 w-full max-w-[480px] z-[60] h-14 flex items-center justify-between px-4 bg-[#06090F]/95 backdrop-blur-xl border-b border-white/[0.05]">
-            <div className="flex items-center gap-3 min-w-0">
-              <button
-                onPointerDown={(e) => { 
-                  e.preventDefault(); 
-                  e.stopPropagation(); 
-                  setSidebarOpen(true); 
-                }}
-                className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
-              >
-                <Menu size={17} className="text-[#94A3B8]" />
-              </button>
-              <h1 className="font-display font-black text-[15px] text-[#F1F5F9] leading-tight truncate min-w-0">
-                Halo, {profile?.full_name?.split(' ')[0] ?? 'Peternak'} <span>👋</span>
-              </h1>
-            </div>
-            <Avatar className="h-9 w-9 border border-purple-500/30 shrink-0 cursor-pointer" onClick={() => navigate(getAkunPath())}>
-              <AvatarFallback className="bg-purple-500/10 text-purple-400 font-black text-xs">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-          </div>
-          
-          {/* Spacer to push content below the fixed TopBar */}
-          <div className="md:hidden h-14" />
+          <TopBar 
+            onMenuClick={() => setSidebarOpen(true)} 
+            rightAction={rightAction}
+          />
 
           <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           <BusinessNameWarningBanner />
-          <Outlet context={{ setSidebarOpen }} />
+          <Outlet context={{ setSidebarOpen, setRightAction }} />
 
           <BottomNav />
         </div>
@@ -97,7 +75,7 @@ export default function PeternakLayout() {
     return (
       <DesktopSidebarLayout>
         <BusinessNameWarningBanner />
-        <Outlet />
+        <Outlet context={{ setSidebarOpen, setRightAction }} />
       </DesktopSidebarLayout>
     )
   }

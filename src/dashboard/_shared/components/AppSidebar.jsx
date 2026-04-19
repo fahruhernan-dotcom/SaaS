@@ -15,6 +15,7 @@ import {
   ChevronDown,
   User,
   Users,
+  Users2,
   LogOut,
   Bell,
   Check,
@@ -34,6 +35,7 @@ import {
   Tag,
   Heart,
   X,
+  Settings2,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -177,8 +179,10 @@ export default function AppSidebar({ open, onClose }) {
   const isEgg      = vertical === 'egg_broker'
   const isPeternak = model?.category === 'peternak'   // true for ALL peternak verticals
   const isBroiler  = vertical === 'peternak'
-  const isKambingPenggemukan = vertical === 'peternak_kambing_domba_penggemukan'
-  const isKambingBreeding    = vertical === 'peternak_kambing_domba_breeding'
+  const isDombaPenggemukan = vertical === 'peternak_domba_penggemukan'
+  const isDombaBreeding    = vertical === 'peternak_domba_breeding'
+  const isKambingPenggemukan = vertical === 'peternak_kambing_penggemukan'
+  const isKambingBreeding    = vertical === 'peternak_kambing_breeding'
   const isSapiPenggemukan    = vertical === 'peternak_sapi_penggemukan'
   const isSapiBreeding       = vertical === 'peternak_sapi_breeding'
   const isRPA      = vertical === 'rumah_potong_rpa' || model?.category === 'rumah_potong'
@@ -211,8 +215,10 @@ export default function AppSidebar({ open, onClose }) {
       case 'egg_broker':                        return { icon: '🥚', label: 'Broker Telur' }
       case 'peternak':                          return { icon: '🐔', label: 'Peternak Broiler' }
       case 'peternak_layer':                    return { icon: '🥚', label: 'Peternak Layer' }
-      case 'peternak_kambing_domba_penggemukan':return { icon: '🐐', label: 'Penggemukan Kambing' }
-      case 'peternak_kambing_domba_breeding':   return { icon: '🐑', label: 'Breeding Kambing' }
+      case 'peternak_domba_penggemukan':        return { icon: '🐑', label: 'Penggemukan Domba' }
+      case 'peternak_domba_breeding':           return { icon: '🐑', label: 'Breeding Domba' }
+      case 'peternak_kambing_penggemukan':      return { icon: '🐐', label: 'Penggemukan Kambing' }
+      case 'peternak_kambing_breeding':         return { icon: '🐐', label: 'Breeding Kambing' }
       case 'rumah_potong_rpa':
       case 'rpa':                               return { icon: '🏭', label: 'RPA' }
       case 'distributor_sembako':
@@ -268,17 +274,39 @@ export default function AppSidebar({ open, onClose }) {
           { title: 'Tim & Akses',    url: `${peternakBase}/tim`,           icon: Users,      show: pp?.canViewTim         ?? false },
         ].filter(item => item.show !== false) : []),
 
-        // Kambing & Domba Penggemukan
+        // Domba Penggemukan
+        ...(isDombaPenggemukan ? [
+          { title: 'Batch Aktif',    url: `${peternakBase}/batch`,       icon: RefreshCw },
+          { title: 'Data Ternak',    url: `${peternakBase}/ternak`,      icon: Tag },
+          { title: 'Kesehatan',      url: `${peternakBase}/kesehatan`,   icon: Syringe },
+          { title: 'Stok Pakan',     url: `${peternakBase}/pakan`,       icon: Warehouse },
+          { title: 'Laporan Batch',  url: `${peternakBase}/laporan`,     icon: FileText },
+          { title: 'Denah Kandang',  url: `${peternakBase}/kandang-view`,icon: LayoutGrid },
+          { title: 'Tim & Akses',    url: `${peternakBase}/tim`,         icon: Users },
+        ] : []),
+
+        // Domba Breeding
+        ...(isDombaBreeding ? [
+          { title: 'Data Ternak',    url: `${peternakBase}/ternak`,      icon: Tag },
+          { title: 'Reproduksi',     url: `${peternakBase}/reproduksi`,  icon: Heart },
+          { title: 'Kesehatan',      url: `${peternakBase}/kesehatan`,   icon: Syringe },
+          { title: 'Stok Pakan',     url: `${peternakBase}/pakan`,       icon: Warehouse },
+          { title: 'Laporan Farm',   url: `${peternakBase}/laporan`,     icon: FileText },
+          { title: 'Tim & Akses',    url: `${peternakBase}/tim`,         icon: Users },
+        ] : []),
+
+        // Kambing Penggemukan
         ...(isKambingPenggemukan ? [
           { title: 'Batch Aktif',    url: `${peternakBase}/batch`,       icon: RefreshCw },
           { title: 'Data Ternak',    url: `${peternakBase}/ternak`,      icon: Tag },
           { title: 'Kesehatan',      url: `${peternakBase}/kesehatan`,   icon: Syringe },
           { title: 'Stok Pakan',     url: `${peternakBase}/pakan`,       icon: Warehouse },
           { title: 'Laporan Batch',  url: `${peternakBase}/laporan`,     icon: FileText },
+          { title: 'Denah Kandang',  url: `${peternakBase}/kandang-view`,icon: LayoutGrid },
           { title: 'Tim & Akses',    url: `${peternakBase}/tim`,         icon: Users },
         ] : []),
 
-        // Kambing & Domba Breeding
+        // Kambing Breeding
         ...(isKambingBreeding ? [
           { title: 'Data Ternak',    url: `${peternakBase}/ternak`,      icon: Tag },
           { title: 'Reproduksi',     url: `${peternakBase}/reproduksi`,  icon: Heart },
@@ -288,25 +316,11 @@ export default function AppSidebar({ open, onClose }) {
           { title: 'Tim & Akses',    url: `${peternakBase}/tim`,         icon: Users },
         ] : []),
 
-        // Sapi Penggemukan
-        ...(isSapiPenggemukan ? [
-          { title: 'Batch Aktif',   url: `${peternakBase}/batch`,      icon: RefreshCw },
-          { title: 'Data Ternak',   url: `${peternakBase}/ternak`,     icon: Tag },
-          { title: 'Kesehatan',     url: `${peternakBase}/kesehatan`,  icon: Syringe },
-          { title: 'Stok Pakan',    url: `${peternakBase}/stok-pakan`, icon: Warehouse },
-          { title: 'Laporan Batch', url: `${peternakBase}/laporan`,    icon: FileText },
-          { title: 'Tim & Akses',   url: `${peternakBase}/tim`,        icon: Users },
-        ] : []),
-
-        // Sapi Breeding
-        ...(isSapiBreeding ? [
-          { title: 'Data Ternak',   url: `${peternakBase}/ternak`,     icon: Tag },
-          { title: 'Reproduksi',    url: `${peternakBase}/reproduksi`, icon: Heart },
-          { title: 'Kesehatan',     url: `${peternakBase}/kesehatan`,  icon: Syringe },
-          { title: 'Stok Pakan',    url: `${peternakBase}/stok-pakan`, icon: Warehouse },
-          { title: 'Laporan Farm',  url: `${peternakBase}/laporan`,    icon: FileText },
-          { title: 'Tim & Akses',   url: `${peternakBase}/tim`,        icon: Users },
-        ] : []),
+        ...(isSapiPenggemukan || isSapiBreeding ? [
+          { title: 'Sapi Aktif',    url: `${peternakBase}/batch`,        icon: RefreshCw, show: isSapiPenggemukan },
+          { title: 'Data Ternak',   url: `${peternakBase}/ternak`,       icon: Tag },
+          { title: 'Reproduksi',    url: `${peternakBase}/reproduksi`,   icon: Heart,     show: isSapiBreeding },
+        ].filter(item => item.show !== false) : []),
 
         // RPA
         // Rumah Potong
@@ -333,6 +347,29 @@ export default function AppSidebar({ open, onClose }) {
         ] : []),
       ]
     },
+
+    // ── TUGAS ──────────────────────────────────────────────
+    ...(isPeternak ? [{
+      label: 'TUGAS',
+      items: [
+        { title: 'Tugas Harian',     url: `${peternakBase}/daily_task`,   icon: ClipboardList },
+        ...(isSapiPenggemukan || isSapiBreeding ? [
+          { title: 'Penugasan',        url: `${peternakBase}/task_assign`,  icon: Users2, roles: ['owner', 'manajer'] },
+          { title: 'Pengaturan Tugas', url: `${peternakBase}/task_settings`,icon: Settings2, roles: ['owner', 'manajer'] },
+        ] : []),
+        { title: 'Tim & Akses',      url: `${peternakBase}/tim`,          icon: Users, roles: ['owner'] },
+      ]
+    }] : []),
+
+    // ── LAINNYA ───────────────────────────────────────────
+    ...(isSapiPenggemukan || isSapiBreeding ? [{
+      label: 'KANDANG',
+      items: [
+        { title: 'Laporan',       url: `${peternakBase}/laporan`,      icon: FileText },
+        { title: 'Stok Pakan',    url: `${peternakBase}/stok-pakan`,   icon: Warehouse },
+        { title: 'Kesehatan',     url: `${peternakBase}/kesehatan`,    icon: Syringe },
+      ]
+    }] : []),
 
     // ── OPERASIONAL — Sembako ───────────────────────────────
     ...(isSembako ? [{
@@ -361,8 +398,6 @@ export default function AppSidebar({ open, onClose }) {
         { title: 'Cash Flow', url: `${brokerBase}/cashflow`, icon: Wallet, roles: ['owner'] },
       ]
     }] : []),
-
-    // LAINNYA removed from here to be rendered manually at the bottom
   ]
 
   const filteredNavMain = navMain.map(group => ({

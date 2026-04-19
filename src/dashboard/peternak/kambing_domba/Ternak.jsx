@@ -19,7 +19,7 @@ const STATUS_CFG = {
   culled: { label: 'Afkir',    cls: 'text-slate-400 bg-white/10 border-white/15' },
 }
 
-const SPECIES_LABEL = { kambing: '🐐 Kambing', domba: '🐑 Domba' }
+const SPECIES_LABEL = { kambing: 'ðŸ Kambing', domba: 'ðŸ‘ Domba' }
 
 function AnimalCard({ animal, onTimbang }) {
   const hari = calcHariDiFarm(animal.entry_date, animal.exit_date)
@@ -253,7 +253,7 @@ export default function KdPenggemukanTernak() {
               <LoadingSpinner />
             ) : filtered.length === 0 ? (
               <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-                <p className="text-3xl mb-3">🐐</p>
+                <p className="text-3xl mb-3">ðŸ</p>
                 <p className="text-sm font-semibold text-white mb-1">Belum ada ternak</p>
                 <p className="text-xs text-[#4B6478]">Tambahkan ekor pertama ke batch ini</p>
               </div>
@@ -289,8 +289,8 @@ export default function KdPenggemukanTernak() {
                 <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Spesies *</label>
                 <select value={form.species} onChange={e => setForm(f => ({ ...f, species: e.target.value }))}
                   className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white focus:outline-none focus:border-green-500/40">
-                  <option value="kambing">🐐 Kambing</option>
-                  <option value="domba">🐑 Domba</option>
+                  <option value="kambing">ðŸ Kambing</option>
+                  <option value="domba">ðŸ‘ Domba</option>
                 </select>
               </div>
             </div>

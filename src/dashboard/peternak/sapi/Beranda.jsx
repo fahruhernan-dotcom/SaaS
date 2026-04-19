@@ -1,15 +1,32 @@
-import React, { useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, AlertTriangle, TrendingUp, Activity, Tag, Wheat, ChevronRight } from 'lucide-react'
+import { 
+  Plus, AlertTriangle, TrendingUp, Activity, Tag, 
+  Wheat, ChevronRight, BarChart2, MousePointer2, RefreshCw,
+  CheckCircle2
+} from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/lib/hooks/useAuth'
 import {
-  useSapiActiveBatches, useSapiBatches,
+  useSapiActiveBatches, useSapiBatches, useSapiAnimals,
+  useSapiWeightHistory,
   calcSapiHariDiFarm, calcSapiMortalitas,
 } from '@/lib/hooks/useSapiPenggemukanData'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, 
+  Tooltip, ResponsiveContainer, Legend 
+} from 'recharts'
+import { format } from 'date-fns'
+import { id } from 'date-fns/locale'
+import { toast } from 'sonner'
 
 const BASE = '/peternak/peternak_sapi_penggemukan'
+
+const CHART_COLORS = [
+  '#10B981', '#7C3AED', '#F59E0B', '#F87171', '#60A5FA',
+  '#34D399', '#A78BFA', '#FBBF24', '#F472B6', '#4ADE80'
+]
 
 function getGreeting() {
   const h = new Date().getHours()
@@ -116,7 +133,59 @@ export default function SapiBeranda() {
   const { data: activeBatches = [], isLoading: loadingActive } = useSapiActiveBatches()
   const { data: allBatches = [],    isLoading: loadingAll    } = useSapiBatches()
 
-  const isLoading = loadingActive || loadingAll
+  const [selectedBatchId, setSelectedBatchId] = useState('')
+  const [activeAnimalIds, setActiveAnimalIds] = useState(new Set())
+
+  // Set default batch
+  useEffect(() => {
+    if (!selectedBatchId && activeBatches.length > 0) {
+      setSelectedBatchId(activeBatches[0].id)
+    }
+  }, [activeBatches, selectedBatchId])
+
+  const { data: animals = [], isLoading: loadingAnimals } = useSapiAnimals(selectedBatchId)
+  const { data: weightHistory = [], isLoading: loadingHistory } = useSapiWeightHistory(selectedBatchId)
+
+  const isLoading = loadingActive || loadingAll || loadingAnimals || loadingHistory
+
+  // Data transformation for Recharts
+  const chartData = useMemo(() => {
+    if (!weightHistory.length) return []
+    
+    // 1. Group by date
+    const dateGroups = {}
+    weightHistory.forEach(reg => {
+      const dStr = reg.weigh_date
+      if (!dateGroups[dStr]) dateGroups[dStr] = { date: dStr }
+      dateGroups[dStr][reg.animal_id] = reg.weight_kg
+    })
+
+    // 2. Convert to sorted array
+    return Object.values(dateGroups).sort((a, b) => new Date(a.date) - new Date(b.date))
+  }, [weightHistory])
+
+  // Mapping animalId to color
+  const animalColors = useMemo(() => {
+    const mapping = {}
+    animals.forEach((a, i) => {
+      mapping[a.id] = CHART_COLORS[i % CHART_COLORS.length]
+    })
+    return mapping
+  }, [animals])
+
+  const toggleAnimal = (id) => {
+    const next = new Set(activeAnimalIds)
+    if (next.has(id)) {
+      next.delete(id)
+    } else {
+      if (next.size >= 10) {
+        toast.warning("Maksimal 10 ekor dapat ditampilkan sekaligus")
+        return
+      }
+      next.add(id)
+    }
+    setActiveAnimalIds(next)
+  }
 
   const kpi = useMemo(() => {
     const totalEkor    = activeBatches.reduce((s, b) => s + (b.total_animals    || 0), 0)
@@ -200,6 +269,129 @@ export default function SapiBeranda() {
         />
       </div>
 
+      {/* Grafik Pertumbuhan */}
+      <section className="px-4 mt-6">
+        <div className="bg-white/[0.03] border border-white/[0.06] rounded-3xl p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+            <div>
+              <h2 className="font-['Sora'] font-bold text-sm text-white flex items-center gap-2">
+                <BarChart2 size={16} className="text-amber-400" />
+                Grafik Pertumbuhan PBBH
+              </h2>
+              <p className="text-[10px] text-[#4B6478] mt-1 uppercase tracking-wider font-bold">Bobot Badan Harian (kg)</p>
+            </div>
+            
+            {activeBatches.length > 1 && (
+              <select
+                value={selectedBatchId}
+                onChange={(e) => {
+                  setSelectedBatchId(e.target.value)
+                  setActiveAnimalIds(new Set())
+                }}
+                className="bg-[#0C1319] border border-white/10 rounded-xl px-3 py-1.5 text-[11px] font-bold text-white outline-none focus:border-amber-500/50"
+              >
+                {activeBatches.map(b => (
+                  <option key={b.id} value={b.id}>{b.batch_code} ({b.kandang_name})</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {/* Animal Selector Pills */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {animals.length > 0 ? (
+              <>
+                {animals.map((a) => {
+                  const isActive = activeAnimalIds.has(a.id)
+                  const color = animalColors[a.id]
+                  return (
+                    <button
+                      key={a.id}
+                      onClick={() => toggleAnimal(a.id)}
+                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border flex items-center gap-1.5 ${
+                        isActive 
+                          ? 'text-white border-transparent' 
+                          : 'bg-white/5 border-white/10 text-[#4B6478] hover:bg-white/10'
+                      }`}
+                      style={isActive ? { backgroundColor: color } : {}}
+                    >
+                      {isActive ? <CheckCircle2 size={10} /> : <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />}
+                      {a.ear_tag}
+                    </button>
+                  )
+                })}
+                {activeAnimalIds.size > 0 && (
+                  <button
+                    onClick={() => setActiveAnimalIds(new Set())}
+                    className="px-3 py-1.5 rounded-full text-[10px] font-bold border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-all flex items-center gap-1"
+                  >
+                    <RefreshCw size={10} />
+                    Reset
+                  </button>
+                )}
+              </>
+            ) : (
+              <p className="text-[11px] text-[#4B6478]">Tidak ada ternak di batch ini</p>
+            )}
+          </div>
+
+          {/* Chart Area */}
+          <div className="h-[300px] w-full relative">
+            {activeAnimalIds.size === 0 ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-white/5 rounded-2xl">
+                <MousePointer2 size={32} className="text-white/10 mb-3" />
+                <p className="text-xs font-bold text-white">Pilih ekor di atas</p>
+                <p className="text-[10px] text-[#4B6478] mt-1">Gunakan tombol pill untuk membandingkan pertumbuhan antar sapi</p>
+              </div>
+            ) : weightHistory.length === 0 ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-white/[0.01] rounded-2xl">
+                <p className="text-2xl mb-2">âš–ï¸</p>
+                <p className="text-xs font-bold text-white">Belum ada data timbang</p>
+                <p className="text-[10px] text-[#4B6478] mt-1">Segera catat timbangan pertama Anda untuk melihat grafik ini</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis 
+                    dataKey="date" 
+                    hide 
+                  />
+                  <YAxis 
+                    domain={['dataMin - 10', 'dataMax + 10']}
+                    tick={{ fontSize: 10, fill: '#4B6478', fontWeight: 'bold' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#0C1319', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '11px' }}
+                    itemStyle={{ fontSize: '11px', fontWeight: 'bold' }}
+                    labelFormatter={(val) => format(new Date(val), 'd MMMM yyyy', { locale: id })}
+                    labelStyle={{ marginBottom: '4px', color: '#94A3B8' }}
+                  />
+                  {[...activeAnimalIds].map(id => {
+                    const animal = animals.find(a => a.id === id)
+                    return (
+                      <Line
+                        key={id}
+                        type="monotone"
+                        dataKey={id}
+                        name={animal?.ear_tag || 'Sapi'}
+                        stroke={animalColors[id]}
+                        strokeWidth={3}
+                        dot={false}
+                        activeDot={{ r: 5, strokeWidth: 0 }}
+                        animationDuration={1000}
+                      />
+                    )
+                  })}
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* Alerts */}
       {alerts.length > 0 && (
         <div className="px-4 mt-4 space-y-2">
@@ -233,7 +425,7 @@ export default function SapiBeranda() {
 
         {activeBatches.length === 0 ? (
           <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-            <p className="text-3xl mb-3">🐄</p>
+            <p className="text-3xl mb-3">ðŸ„</p>
             <p className="text-sm font-semibold text-white mb-1">Belum ada batch aktif</p>
             <p className="text-xs text-[#4B6478] mb-4">Mulai batch penggemukan sapi pertama kamu</p>
             <button

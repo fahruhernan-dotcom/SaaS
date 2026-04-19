@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,11 +9,12 @@ import { toast } from 'sonner';
 
 export default function AcceptInvite() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [loading, setLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [view, setView] = useState('input'); // 'input', 'choice', 'register', 'login'
-  const [inviteCode, setInviteCode] = useState('');
+  const [inviteCode, setInviteCode] = useState(searchParams.get('code') ?? '');
   const [invitation, setInvitation] = useState(null);
 
   // Fix Bug 1: confirmation state when existing user is switching tenants
@@ -31,6 +32,22 @@ export default function AcceptInvite() {
     confirmPassword: ''
   });
 
+  // Detect already-authenticated session (e.g. Google OAuth)
+  const [currentUser, setCurrentUser] = useState(null);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) setCurrentUser(data.user);
+    });
+  }, []);
+
+  // Auto-verify if code came pre-filled from onboarding URL param
+  useEffect(() => {
+    const codeFromUrl = searchParams.get('code')
+    if (codeFromUrl && codeFromUrl.length === 6) {
+      verifyCode(null, codeFromUrl)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Fix Bug 3: email match helper ──────────────────────────────────────────
   const checkEmailMatch = () => {
     if (invitation?.email?.trim()) {
@@ -45,16 +62,17 @@ export default function AcceptInvite() {
     return true;
   };
 
-  const verifyCode = async (e) => {
+  const verifyCode = async (e, overrideCode) => {
     if (e) e.preventDefault();
-    if (inviteCode.length !== 6) {
+    const code = overrideCode ?? inviteCode
+    if (code.length !== 6) {
       return toast.error('Kode harus 6 karakter');
     }
 
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('verify-invite-code', {
-        body: { code: inviteCode.trim().toUpperCase() }
+        body: { code: code.trim().toUpperCase() }
       });
 
       if (error) {
@@ -85,6 +103,59 @@ export default function AcceptInvite() {
       toast.error('Gagal memverifikasi kode');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ── Accept invite with already-authenticated account (e.g. Google OAuth) ───
+  const handleAcceptWithCurrentAccount = async () => {
+    if (!currentUser || !invitation) return;
+    setIsSubmitting(true);
+    try {
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('tenant_id, role')
+        .eq('auth_user_id', currentUser.id)
+        .maybeSingle();
+
+      // Block only if they already own THIS specific tenant
+      if (existingProfile?.role === 'owner' && existingProfile?.tenant_id === invitation.tenant_id) {
+        toast.error('Kamu sudah menjadi owner di bisnis ini.');
+        return;
+      }
+
+      const { data: ownerProfile } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('tenant_id', invitation.tenant_id)
+        .eq('role', 'owner')
+        .limit(1)
+        .maybeSingle();
+
+      const userType = ownerProfile?.user_type || 'peternak';
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          tenant_id: invitation.tenant_id,
+          role: invitation.role || 'staff',
+          user_type: userType,
+          business_model_selected: true,
+          onboarded: true,
+        })
+        .eq('auth_user_id', currentUser.id);
+      if (profileError) throw profileError;
+
+      await supabase
+        .from('team_invitations')
+        .update({ status: 'accepted' })
+        .eq('id', invitation.id);
+
+      toast.success('Berhasil bergabung dengan tim!');
+      navigate(`/${userType === 'rpa' ? 'rpa-buyer' : userType}/beranda`);
+    } catch (err) {
+      toast.error(err.message || 'Gagal bergabung');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -173,13 +244,10 @@ export default function AcceptInvite() {
         .eq('auth_user_id', user.id)
         .maybeSingle();
 
-      // 2a. Block owner accounts from being hijacked
-      if (existingProfile?.role === 'owner') {
+      // 2a. Block only if they already own THIS specific tenant
+      if (existingProfile?.role === 'owner' && existingProfile?.tenant_id === invitation.tenant_id) {
         await supabase.auth.signOut();
-        toast.error(
-          'Akun owner tidak bisa bergabung via kode undangan. ' +
-          'Gunakan akun baru atau hubungi admin.'
-        );
+        toast.error('Kamu sudah menjadi owner di bisnis ini.');
         return;
       }
 
@@ -343,10 +411,42 @@ export default function AcceptInvite() {
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
+            {/* Already logged in — show primary CTA */}
+            {currentUser && (
+              <Button
+                onClick={handleAcceptWithCurrentAccount}
+                disabled={isSubmitting}
+                className="w-full h-14 bg-[#10B981] hover:bg-[#34D399] text-white font-bold rounded-xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-emerald-500/20"
+              >
+                {isSubmitting
+                  ? <Loader2 size={20} className="animate-spin" />
+                  : <ShieldCheck size={20} />}
+                Terima dengan Akun Ini
+              </Button>
+            )}
+            {currentUser && (
+              <p className="text-center text-[11px] text-[#4B6478]">
+                {currentUser.email}
+              </p>
+            )}
+
+            {/* Divider if showing both sections */}
+            {currentUser && (
+              <div className="flex items-center gap-3 py-1">
+                <div className="flex-1 h-px bg-white/5" />
+                <span className="text-[10px] text-[#4B6478] uppercase tracking-widest">atau</span>
+                <div className="flex-1 h-px bg-white/5" />
+              </div>
+            )}
+
             <Button
               onClick={() => setView('register')}
-              className="w-full h-14 bg-[#10B981] hover:bg-[#34D399] text-white font-bold rounded-xl flex items-center justify-center gap-3 transition-all"
+              className={`w-full h-14 font-bold rounded-xl flex items-center justify-center gap-3 transition-all ${
+                currentUser
+                  ? 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/8'
+                  : 'bg-[#10B981] hover:bg-[#34D399] text-white shadow-lg shadow-emerald-500/20'
+              }`}
             >
               <UserPlus size={20} /> Buat Akun Baru
             </Button>

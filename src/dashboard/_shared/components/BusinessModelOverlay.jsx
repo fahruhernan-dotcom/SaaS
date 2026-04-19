@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Lock, ArrowLeft, Building2, MapPin, ChevronDown, X } from 'lucide-react'
+import { Check, Lock, ArrowLeft, Building2, MapPin, ChevronDown, X, Key, ChevronRight } from 'lucide-react'
+import { useNavigate as useNav } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { BUSINESS_MODELS, BUSINESS_CATEGORIES, ANIMAL_GROUPS, resolveBusinessVertical } from '@/lib/businessModel'
 import { toTitleCase } from '@/lib/format'
@@ -33,6 +34,9 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
     purchase_price_per_kg: '',
   })
   const debounceRef = useRef(null)
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const [inviteInput, setInviteInput] = useState('')
+  const nav = useNav()
 
   // Verticals that need extra setup step
   const needsSetupStep = SETUP_REQUIRED_VERTICALS.has(selected)
@@ -259,6 +263,11 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
   // Legacy alias used by the name step's confirm button
   const handleConfirm = handleNameConfirm
 
+  const handleInviteSubmit = () => {
+    if (inviteInput.length !== 6) return
+    nav(`/invite?code=${inviteInput.trim().toUpperCase()}`)
+  }
+
   const handleCategorySelect = (key) => {
     setCategory(key)
     setAnimalGroup(null)
@@ -439,6 +448,62 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               {BUSINESS_CATEGORIES.map((cat) => (
                 <CategoryCard key={cat.key} cat={cat} onClick={() => handleCategorySelect(cat.key)} />
               ))}
+
+              {/* ── Invite code entry ── */}
+              <div className="mt-1">
+                <button
+                  type="button"
+                  onClick={() => setInviteOpen(v => !v)}
+                  className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] hover:bg-white/[0.04] text-[#4B6478] hover:text-slate-300 transition-all"
+                >
+                  <span className="flex items-center gap-2 text-[13px] font-medium">
+                    <Key size={14} />
+                    Punya kode undangan?
+                  </span>
+                  <ChevronRight
+                    size={14}
+                    className={cn('transition-transform duration-200', inviteOpen && 'rotate-90')}
+                  />
+                </button>
+
+                <AnimatePresence>
+                  {inviteOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-2 flex gap-2">
+                        <input
+                          type="text"
+                          maxLength={6}
+                          value={inviteInput}
+                          onChange={e => setInviteInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                          placeholder="KODE6X"
+                          className="flex-1 h-11 rounded-xl bg-[#111C24] border border-white/8 px-4 font-mono font-black text-base tracking-[0.25em] text-white placeholder:text-white/20 focus:outline-none focus:border-emerald-500/50 transition-colors uppercase"
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' && inviteInput.length === 6) handleInviteSubmit()
+                          }}
+                          autoFocus
+                        />
+                        <button
+                          type="button"
+                          disabled={inviteInput.length !== 6}
+                          onClick={handleInviteSubmit}
+                          className="h-11 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-[#052c1e] font-black text-sm transition-all"
+                        >
+                          Masuk
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-[#4B6478] mt-1.5 px-1">
+                        Kode diberikan oleh pemilik bisnis / farm yang mengundangmu.
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </motion.div>
           ) : isAnimalStep ? (
             <motion.div

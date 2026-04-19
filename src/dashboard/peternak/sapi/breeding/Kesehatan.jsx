@@ -126,7 +126,7 @@ function AddHealthSheet({ open, onClose, animals }) {
               <option value="">— Pilih Ternak —</option>
               {activeAnimals.map(a => (
                 <option key={a.id} value={a.id}>
-                  {a.ear_tag}{a.name ? ` (${a.name})` : ''} · {a.sex === 'betina' ? '♀' : '♂'} {a.breed ?? ''}
+                  {a.ear_tag}{a.name ? ` (${a.name})` : ''} · {a.sex === 'betina' ? 'â™€' : 'â™‚'} {a.breed ?? ''}
                 </option>
               ))}
             </select>
@@ -267,7 +267,7 @@ function AddHealthSheet({ open, onClose, animals }) {
 
           <button onClick={handleSubmit} disabled={!form.animal_id || addLog.isPending}
             className="mt-2 w-full bg-amber-600 disabled:opacity-50 text-white font-bold rounded-xl py-3 text-sm">
-            {addLog.isPending ? 'Menyimpan…' : 'Simpan Log'}
+            {addLog.isPending ? 'Menyimpan—¦' : 'Simpan Log'}
           </button>
         </div>
       </div>
@@ -320,7 +320,7 @@ export default function SapiBreedingKesehatan() {
       <div className="relative">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4B6478]" />
         <input value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Cari ear tag, vaksin, diagnosa…"
+          placeholder="Cari ear tag, vaksin, diagnosa—¦"
           className="w-full bg-white/[0.05] border border-white/[0.08] rounded-xl pl-9 pr-3 py-2.5 text-sm text-white placeholder-[#4B6478]" />
       </div>
 
@@ -339,7 +339,7 @@ export default function SapiBreedingKesehatan() {
 
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-16 text-center">
-          <span className="text-4xl">💉</span>
+          <span className="text-4xl">ðŸ’‰</span>
           <p className="text-sm font-bold text-[#F1F5F9]">Tidak ada log kesehatan</p>
           <p className="text-xs text-[#4B6478]">Catat vaksinasi, obat cacing, atau pengobatan dari tombol + Log</p>
         </div>

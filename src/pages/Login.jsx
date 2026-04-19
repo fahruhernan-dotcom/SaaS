@@ -78,15 +78,20 @@ export default function Login() {
         return
       }
 
+      // Superadmin: cek langsung dari JWT app_metadata (paling reliable)
+      if (data.user?.app_metadata?.is_superadmin === true) {
+        navigate('/admin')
+        toast.success('Selamat datang kembali, Admin!')
+        return
+      }
+
       // Cek profile ada sebelum redirect — cegah login loop
-      // Gunakan select() biasa karena user bisa punya banyak profile (multi-tenant)
       const { data: profiles } = await supabase
         .from('profiles')
         .select('*, tenants(sub_type, business_vertical)')
         .eq('auth_user_id', data.user.id)
 
       if (!profiles || profiles.length === 0) {
-        // Profile belum ada (trigger delay atau belum setup) — arahkan ke onboarding
         navigate('/onboarding')
         toast.info('Yuk lengkapi profil bisnismu dulu!')
         return
@@ -97,13 +102,6 @@ export default function Login() {
 
       if (!profile.onboarded) {
         navigate('/onboarding')
-        return
-      }
-
-      // Superadmin → admin panel
-      if (profile.role === 'superadmin' || profile.user_type === 'superadmin') {
-        navigate('/admin')
-        toast.success('Selamat datang kembali, Admin!')
         return
       }
 

@@ -51,7 +51,7 @@ export function usePeternakTaskTemplates(filters = {}) {
  */
 export function usePeternakTaskInstances(filters = {}) {
   const { tenant } = useAuth()
-  const { due_date_from, due_date_to, status, kandangName, workerProfileId } = filters
+  const { due_date_from, due_date_to, status, kandangName, workerProfileId, livestockType } = filters
 
   return useQuery({
     queryKey: ['peternak-task-instances', tenant?.id, filters],
@@ -61,7 +61,9 @@ export function usePeternakTaskInstances(filters = {}) {
         .select(`
           *,
           template:peternak_task_templates(title, task_type, recurring_type),
-          worker:kandang_workers!assigned_worker_id(id, full_name, profile_id)
+          worker:kandang_workers!assigned_worker_id(id, full_name, profile_id),
+          assigned_profile:profiles!assigned_profile_id(id, full_name),
+          completed_by:profiles!completed_by_profile_id(id, full_name)
         `)
         .eq('tenant_id', tenant.id)
         .eq('is_deleted', false)
@@ -119,6 +121,37 @@ export function useTodayTaskInstances() {
         .eq('due_date', today)
         .eq('is_deleted', false)
         .order('created_at', { ascending: true })
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: !!tenant?.id,
+  })
+}
+
+/**
+ * In-progress timbang tasks from past dates (multi-day weighing carryover).
+ */
+export function useInProgressTimbangCarryover() {
+  const today = new Date().toISOString().split('T')[0]
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['peternak-task-instances-timbang-carryover', tenant?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('peternak_task_instances')
+        .select(`
+          *,
+          template:peternak_task_templates(title, task_type, recurring_type),
+          worker:kandang_workers!assigned_worker_id(id, full_name, profile_id),
+          assigned_profile:profiles!assigned_profile_id(id, full_name),
+          completed_by:profiles!completed_by_profile_id(id, full_name)
+        `)
+        .eq('tenant_id', tenant.id)
+        .eq('status', 'in_progress')
+        .eq('task_type', 'timbang')
+        .lt('due_date', today)
+        .eq('is_deleted', false)
+        .order('due_date', { ascending: true })
       if (error) throw error
       return data ?? []
     },

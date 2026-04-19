@@ -182,7 +182,7 @@ export default function KdPenggemukanPakan() {
             {loadingLogs ? <LoadingSpinner />
             : feedLogs.length === 0 ? (
               <div className="text-center py-12 border border-dashed border-white/10 rounded-2xl">
-                <p className="text-3xl mb-3">🌾</p>
+                <p className="text-3xl mb-3">ðŸŒ¾</p>
                 <p className="text-sm font-semibold text-white mb-1">Belum ada log pakan</p>
                 <p className="text-xs text-[#4B6478]">Catat konsumsi pakan harian untuk kalkulasi FCR</p>
               </div>

@@ -1,354 +1,794 @@
-import React, { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/lib/hooks/useAuth'
-import usePeternakPermissions, {
-  PETERNAK_ROLE_BADGE,
-  PETERNAK_INVITE_ROLES,
-} from '@/lib/hooks/usePeternakPermissions'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { toast } from 'sonner'
-import { Loader2, Plus, UserPlus, Users, Copy, Trash2, Clock } from 'lucide-react'
-import { formatDistanceToNow } from 'date-fns'
-import { id } from 'date-fns/locale'
+import React, { useState } from 'react';
+import { useOutletContext, Link } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/hooks/useAuth';
+import { getSubscriptionStatus } from '@/lib/subscriptionUtils';
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { PhoneInput } from '@/components/ui/PhoneInput';
+import { 
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter 
+} from '@/components/ui/sheet';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
+import { Loader2, Trash2, X, Plus, UserPlus, Users, Clock, Copy, Pencil, Save, AlertCircle, Menu, Shield } from 'lucide-react';
+import { formatDistanceToNow, differenceInDays } from 'date-fns';
+import { id } from 'date-fns/locale';
+import { TimSkeleton } from '@/components/ui/BrokerPageSkeleton'
+
+const ROLE_BADGE_MAP = {
+  owner:          { label: 'Owner',           class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+  manajer:        { label: 'Manajer',          class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+  staff:          { label: 'Staff Kandang',    class: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  anak_buah:      { label: 'Anak Buah Kandang',class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
+  view_only:      { label: 'Lihat Saja',       class: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+};
 
 export default function Tim() {
-  const { profile, tenant } = useAuth()
-  const p = usePeternakPermissions()
-  const queryClient = useQueryClient()
-  const [inviteOpen, setInviteOpen] = useState(false)
-  const [inviteCode, setInviteCode] = useState(null)
+  const { profile, tenant: authTenant } = useAuth();
+  const sub = getSubscriptionStatus(authTenant);
+  const queryClient = useQueryClient();
+  const [isInviteSheetOpen, setIsInviteSheetOpen] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    business_name: '',
+    phone: '',
+    location: ''
+  });
+  
+  const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin';
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const { setSidebarOpen } = useOutletContext() || {};
 
-  const { data: members = [], isLoading } = useQuery({
-    queryKey: ['peternak-team', profile?.tenant_id],
+  // --- QUERIES ---
+  const { data: tenant, isLoading: loadingTenant } = useQuery({
+    queryKey: ['tenants', profile?.tenant_id],
     queryFn: async () => {
-      if (!profile?.tenant_id) return []
+      if (!profile?.tenant_id) return null;
       const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, role, created_at')
-        .eq('tenant_id', profile.tenant_id)
-        .order('created_at', { ascending: true })
-      if (error) throw error
-      return data ?? []
+        .from('tenants')
+        .select('*')
+        .eq('id', profile.tenant_id)
+        .single();
+        
+      if (error) throw error;
+      return data;
     },
     enabled: !!profile?.tenant_id,
-  })
+  });
 
-  const { data: pendingInvites = [] } = useQuery({
+  // Sync form when tenant data loads or edit mode starts
+  React.useEffect(() => {
+    if (tenant) {
+      setProfileForm({
+        business_name: tenant.business_name || '',
+        phone: tenant.phone || '',
+        location: tenant.location || ''
+      });
+      
+      // Auto-edit if name is missing (new user)
+      if (!tenant.business_name && isOwner) {
+        setIsEditingProfile(true);
+      }
+    }
+  }, [tenant, isOwner]);
+
+  const { data: members = [], isLoading: loadingMembers } = useQuery({
+    queryKey: ['peternak-team', profile?.tenant_id],
+    queryFn: async () => {
+      if (!profile?.tenant_id) return [];
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('tenant_id', profile.tenant_id)
+        .order('full_name', { ascending: true });
+        
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!profile?.tenant_id,
+  });
+
+  const { data: invitations = [], isLoading: loadingInvitations } = useQuery({
     queryKey: ['peternak-invites', profile?.tenant_id],
     queryFn: async () => {
-      if (!profile?.tenant_id) return []
+      if (!profile?.tenant_id) return [];
       const { data, error } = await supabase
-        .from('invitations')
-        .select('id, role, invite_code, expires_at, created_at')
+        .from('team_invitations')
+        .select('*')
         .eq('tenant_id', profile.tenant_id)
         .eq('status', 'pending')
-        .order('created_at', { ascending: false })
-      if (error) throw error
-      return data ?? []
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      return data;
     },
-    enabled: !!profile?.tenant_id && p.canUndangAnggota,
-  })
+    enabled: !!profile?.tenant_id,
+  });
 
-  const generateInvite = useMutation({
-    mutationFn: async ({ role }) => {
-      const code = Math.random().toString(36).substring(2, 10).toUpperCase()
-      const expires = new Date()
-      expires.setDate(expires.getDate() + 7)
-      const { error } = await supabase.from('invitations').insert({
-        tenant_id: profile.tenant_id,
-        role,
-        invite_code: code,
-        expires_at: expires.toISOString(),
-        status: 'pending',
-      })
-      if (error) throw error
-      return code
-    },
-    onSuccess: (code) => {
-      setInviteCode(code)
-      queryClient.invalidateQueries({ queryKey: ['peternak-invites', profile?.tenant_id] })
-    },
-    onError: (err) => toast.error('Gagal buat undangan: ' + err.message),
-  })
+  const [inviteCode, setInviteCode] = useState(null);
+  const [showCode, setShowCode] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(null);   // member object
+  const [confirmCancel, setConfirmCancel] = useState(null);   // invite object
 
-  const revokeInvite = useMutation({
-    mutationFn: async (id) => {
-      const { error } = await supabase.from('invitations').delete().eq('id', id)
-      if (error) throw error
+  // --- MUTATIONS ---
+  const inviteMutation = useMutation({
+    mutationFn: async (payload) => {
+      // Generate kode 6 karakter uppercase alphanumeric
+      const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      const { data, error } = await supabase
+        .from('team_invitations')
+        .insert([{
+          tenant_id: profile.tenant_id,
+          invited_by: profile.id,
+          token: code,
+          role: payload.role,
+          status: 'pending',
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+        }])
+        .select()
+        .single();
+        
+      if (error) throw error;
+      return { ...data, code };
+    },
+    onSuccess: (data) => {
+      setInviteCode(data.code);
+      setShowCode(true);
+      toast.success('Kode undangan berhasil dibuat');
+      queryClient.invalidateQueries(['peternak-invites']);
+    },
+    onError: (error) => {
+      toast.error('Gagal membuat kode undangan', { description: error.message });
+    }
+  });
+
+  const updateTenantMutation = useMutation({
+    mutationFn: async (payload) => {
+      const { error } = await supabase
+        .from('tenants')
+        .update(payload)
+        .eq('id', profile.tenant_id);
+      if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['peternak-invites', profile?.tenant_id] })
-      toast.success('Undangan dicabut')
+      toast.success('Profil bisnis berhasil disimpan');
+      queryClient.invalidateQueries(['tenants']);
+      setIsEditingProfile(false);
     },
-  })
+    onError: (error) => {
+      toast.error('Gagal menyimpan profil', { description: error.message });
+    }
+  });
 
-  const removeMember = useMutation({
+  const removeMemberMutation = useMutation({
     mutationFn: async (memberId) => {
       const { error } = await supabase
         .from('profiles')
         .update({ tenant_id: null, role: null })
         .eq('id', memberId)
-      if (error) throw error
+        .eq('tenant_id', profile.tenant_id);
+      if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['peternak-team', profile?.tenant_id] })
-      toast.success('Anggota dihapus dari tim')
+      toast.success('Anggota berhasil dihapus');
+      queryClient.invalidateQueries(['peternak-team']);
     },
-    onError: (err) => toast.error('Gagal hapus anggota: ' + err.message),
-  })
+    onError: (error) => {
+      toast.error('Gagal menghapus anggota', { description: error.message });
+    }
+  });
+
+  const cancelInviteMutation = useMutation({
+    mutationFn: async (inviteId) => {
+      // Set status to expired instead of deleting row completely
+      const { error } = await supabase
+        .from('team_invitations')
+        .update({ status: 'expired' })
+        .eq('id', inviteId)
+        .eq('tenant_id', profile.tenant_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Undangan dibatalkan');
+      queryClient.invalidateQueries(['peternak-invites']);
+    },
+    onError: (error) => {
+      toast.error('Gagal membatalkan undangan', { description: error.message });
+    }
+  });
+
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  };
+
+  if (loadingTenant || loadingMembers) return <TimSkeleton />
+
+  const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
+  const memberLimit = isStarter ? 1 : sub.plan === 'business' ? Infinity : 3
+
+  const handleInviteClick = () => {
+    const totalMembers = members.length + invitations.length;
+    if (isStarter) {
+      toast.error('Fitur Tim tidak tersedia di Starter', { description: 'Upgrade ke Pro untuk mengundang hingga 3 anggota tim.' });
+      return;
+    }
+    if (sub.plan !== 'business' && totalMembers >= 3) {
+      toast.error('Kapasitas Tim Penuh', { description: 'Plan Pro dibatasi maksimal 3 anggota. Upgrade ke Business untuk anggota unlimited!' });
+      return;
+    }
+    setIsInviteSheetOpen(true);
+  };
 
   return (
-    <div className="text-slate-100 pb-10">
-      <header className="px-4 pt-6 pb-5 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.04] flex justify-between items-center">
-        <div>
-          <h1 className="font-['Sora'] font-extrabold text-xl text-slate-100">Tim & Akses</h1>
-          <p className="text-xs text-[#4B6478] mt-0.5">{tenant?.business_name ?? 'Kandang Saya'}</p>
-        </div>
-        {p.canUndangAnggota && (
-          <button
-            onClick={() => { setInviteCode(null); setInviteOpen(true) }}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-[#7C3AED] border-none rounded-xl text-white text-xs font-extrabold font-['Sora'] shadow-[0_3px_12px_rgba(124,58,237,0.35)] cursor-pointer"
-          >
-            <UserPlus size={13} strokeWidth={2.5} />
-            Undang
-          </button>
-        )}
-      </header>
-
-      <div className="px-4 mt-5 flex flex-col gap-5">
-
-        {/* ── Non-owner notice ── */}
-        {!p.canUndangAnggota && (
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-amber-400 text-sm">
-            Anda masuk sebagai <strong>{PETERNAK_ROLE_BADGE[profile?.role]?.label ?? profile?.role}</strong>.
-            Hanya Owner yang dapat mengelola undangan dan akses tim.
+    <div className={cn("max-w-5xl mx-auto", isDesktop ? "p-8 space-y-8 pb-32" : "space-y-5 pb-24")}>
+      {/* Mobile sticky header */}
+      {!isDesktop && (
+        <header className="h-14 px-4 flex items-center gap-3 justify-between sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 border-b border-white/5">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen?.(true)}
+              className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+            >
+              <Menu size={16} className="text-[#94A3B8]" />
+            </button>
+            <h1 className="font-display text-[15px] font-black text-white uppercase tracking-tight">Tim & Akses</h1>
           </div>
-        )}
+          {isOwner && (
+            <button
+              onClick={handleInviteClick}
+              className="h-9 px-3 text-[11px] font-black bg-em-500 hover:bg-em-600 text-white rounded-xl flex items-center gap-1.5 uppercase tracking-widest transition-all active:scale-95"
+            >
+              <UserPlus size={13} /> Undang
+            </button>
+          )}
+        </header>
+      )}
 
-        {/* ── Anggota aktif ── */}
-        <section>
-          <div className="flex items-center gap-2 mb-3">
-            <Users size={13} className="text-[#4B6478]" />
-            <p className="text-[11px] font-bold uppercase tracking-widest text-[#4B6478]">
-              Anggota ({members.length})
+      {/* Desktop Header */}
+      {isDesktop && (
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="font-display text-2xl md:text-3xl font-bold text-tx-1">Tim & Akses</h1>
+            <p className="text-tx-3 mt-1 text-sm">
+              {members.length} anggota aktif {invitations.length > 0 && `• ${invitations.length} undangan tertunda`}
+              {sub.plan !== 'business' && (
+                <span className={`ml-2 font-bold ${isStarter ? 'text-red-400' : 'text-amber-500'}`}>
+                  {isStarter
+                    ? '(Starter: hanya owner)'
+                    : `(Kapasitas Plan: ${members.length + invitations.length} / 3)`}
+                </span>
+              )}
             </p>
           </div>
-          <div className="bg-[#0C1319] border border-white/[0.08] rounded-2xl overflow-hidden">
-            {isLoading ? (
-              <div className="py-8 flex justify-center">
-                <Loader2 size={18} className="animate-spin text-[#4B6478]" />
+          <Button
+            onClick={handleInviteClick}
+            className="bg-em-500 hover:bg-em-600 text-white font-semibold rounded-xl"
+          >
+            <UserPlus size={18} className="mr-2" />
+            Undang Anggota
+          </Button>
+        </div>
+      )}
+
+      {/* Mobile subtitle */}
+      {!isDesktop && (
+        <p className="text-tx-3 text-xs px-4 pt-1">
+          {members.length} anggota aktif {invitations.length > 0 && `• ${invitations.length} undangan tertunda`}
+          {sub.plan !== 'business' && (
+            <span className={`ml-2 font-bold ${isStarter ? 'text-red-400' : 'text-amber-500'}`}>
+              {isStarter ? '(Starter: hanya owner)' : `(${members.length + invitations.length}/3)`}
+            </span>
+          )}
+        </p>
+      )}
+
+      {isStarter && (
+        <div className={cn("flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-red-500/8 border border-red-500/20", isDesktop ? "" : "mx-4")}>
+          <div className="flex items-center gap-2.5">
+            <AlertCircle size={14} className="text-red-400 shrink-0" />
+            <p className="text-[12px] font-bold text-red-400">
+              Plan Starter hanya untuk 1 akun (owner). Upgrade ke Pro untuk mengundang tim.
+            </p>
+          </div>
+          <Link to="/upgrade" className="shrink-0 text-[10px] font-black text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors whitespace-nowrap">
+            Upgrade
+          </Link>
+        </div>
+      )}
+
+      <div className={cn(isDesktop ? "" : "px-4")}>
+      {!isOwner && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-amber-500 text-sm">
+          Anda masuk sebagai <strong>{ROLE_BADGE_MAP[profile?.role]?.label || profile?.role}</strong>. Hanya owner yang dapat mengelola undangan dan akses.
+        </div>
+      )}
+
+      {/* Section: Profil Bisnis */}
+      {isOwner && !tenant?.business_name && (
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
+          <AlertCircle size={18} className="text-amber-500 mt-0.5 flex-shrink-0" />
+          <p className="text-amber-500 text-sm font-medium">
+            Lengkapi profil bisnis kamu agar semua fitur dapat digunakan.
+          </p>
+        </div>
+      )}
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display font-semibold text-lg text-tx-2 flex items-center gap-2">
+            <Badge variant="outline" className="bg-em-500/10 text-em-400 border-em-500/20 p-1 rounded-md">
+              <Users size={16} />
+            </Badge>
+            Profil Bisnis
+          </h2>
+          {isOwner && !isEditingProfile && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsEditingProfile(true)}
+              className={cn("text-tx-3 hover:text-tx-1 hover:bg-white/5 rounded-lg px-2", isDesktop ? "h-8" : "h-10")}
+            >
+              <Pencil size={14} className="mr-2" />
+              Edit Profil
+            </Button>
+          )}
+        </div>
+
+        <div className={cn("bg-[#0C1319] rounded-2xl border border-white/8 shadow-sm transition-all duration-300", isDesktop ? "p-6" : "p-4")}>
+          {loadingTenant ? (
+            <div className="py-8 flex justify-center text-tx-3"><Loader2 className="animate-spin" /></div>
+          ) : isEditingProfile ? (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">Nama Bisnis</Label>
+                  <Input 
+                    value={profileForm.business_name}
+                    onChange={(e) => setProfileForm({...profileForm, business_name: e.target.value})}
+                    placeholder="Contoh: UD Ayam Jaya"
+                    className="bg-[#111C24] border-white/10 h-12 rounded-xl text-[16px] focus:border-em-500/50"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">No HP Bisnis</Label>
+                  <PhoneInput 
+                    value={profileForm.phone}
+                    onChange={(e) => setProfileForm({...profileForm, phone: e.target.value})}
+                    placeholder="0812..."
+                    className="bg-[#111C24] border-white/10 h-12 rounded-xl text-[16px] focus:border-em-500/50"
+                  />
+                </div>
               </div>
-            ) : members.map((m, idx, arr) => {
-              const badge = PETERNAK_ROLE_BADGE[m.role] ?? { label: m.role, cls: 'bg-white/10 text-slate-400' }
-              const isMe = m.id === profile?.id
-              return (
-                <div
-                  key={m.id}
-                  className={`px-4 py-3 flex items-center justify-between gap-3 ${idx < arr.length - 1 ? 'border-b border-white/[0.04]' : ''}`}
+              <div className="space-y-2">
+                <Label className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">Lokasi / Kota</Label>
+                <Input 
+                  value={profileForm.location}
+                  onChange={(e) => setProfileForm({...profileForm, location: e.target.value})}
+                  placeholder="Contoh: Boyolali, Jawa Tengah"
+                  className="bg-[#111C24] border-white/10 h-12 rounded-xl text-[16px] focus:border-em-500/50"
+                />
+              </div>
+              <div className="flex items-center gap-3 pt-2">
+                <Button 
+                  onClick={() => updateTenantMutation.mutate(profileForm)}
+                  disabled={updateTenantMutation.isPending || !profileForm.business_name}
+                  className="bg-em-500 hover:bg-em-600 text-white font-bold h-11 px-6 rounded-xl flex-1 md:flex-none"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-full bg-[#7C3AED]/20 border border-[#7C3AED]/30 flex items-center justify-center flex-shrink-0">
-                      <span className="text-[13px] font-bold text-[#A78BFA]">
-                        {(m.full_name || m.email || '?')[0].toUpperCase()}
-                      </span>
+                  {updateTenantMutation.isPending ? <Loader2 size={18} className="animate-spin mr-2" /> : <Save size={18} className="mr-2" />}
+                  Simpan Perubahan
+                </Button>
+                <Button 
+                  variant="ghost"
+                  onClick={() => {
+                    setIsEditingProfile(false);
+                    // Reset form to latest data
+                    if (tenant) {
+                      setProfileForm({
+                        business_name: tenant.business_name || '',
+                        phone: tenant.phone || '',
+                        location: tenant.location || ''
+                      });
+                    }
+                  }}
+                  disabled={updateTenantMutation.isPending}
+                  className="text-tx-3 hover:text-tx-1 h-11 px-6 rounded-xl"
+                >
+                  Batal
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="space-y-1">
+                <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">Nama Bisnis</p>
+                <p className="text-[16px] font-semibold text-tx-1">{tenant?.business_name || '-'}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">No HP Bisnis</p>
+                <p className="text-[16px] font-semibold text-tx-1">{tenant?.phone || '-'}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">Lokasi / Kota</p>
+                <p className="text-[16px] font-semibold text-tx-1">{tenant?.location || '-'}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Section: Pemilik Bisnis */}
+      {(() => {
+        const ownerMember = members.find(m => m.role === 'owner')
+        if (!ownerMember) return null
+        return (
+          <section className="space-y-4">
+            <h2 className="font-display font-semibold text-lg text-tx-2 flex items-center gap-2">
+              <Shield size={18} className="text-em-400" />
+              Pemilik Bisnis
+            </h2>
+            <div className="bg-bg-2 border border-border-def rounded-2xl overflow-hidden shadow-sm">
+              <div className="p-4 md:px-6 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-bg-3 border border-border-def flex items-center justify-center font-display font-bold text-tx-2 text-sm flex-shrink-0">
+                    {getInitials(ownerMember.full_name || ownerMember.email)}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-tx-1">{ownerMember.full_name || 'User Baru'}</span>
+                    <span className="text-sm text-tx-3">{ownerMember.email}</span>
+                  </div>
+                </div>
+                <Badge variant="outline" className={ROLE_BADGE_MAP['owner']?.class || ''}>
+                  {ROLE_BADGE_MAP['owner']?.label || 'Owner'}
+                </Badge>
+              </div>
+            </div>
+          </section>
+        )
+      })()}
+
+      {/* Section: Anggota Aktif */}
+      <section className="space-y-4">
+        <h2 className="font-display font-semibold text-lg text-tx-2 flex items-center gap-2">
+          <Users size={18} className="text-em-400" />
+          Anggota Aktif
+        </h2>
+
+        <div className="bg-bg-2 border border-border-def rounded-2xl overflow-hidden shadow-sm">
+          {loadingMembers ? (
+            <div className="p-12 flex justify-center text-tx-3"><Loader2 className="animate-spin" /></div>
+          ) : members.filter(m => m.role !== 'owner').length === 0 ? (
+            <div className="p-8 text-center text-tx-3 italic rounded-2xl">Belum ada anggota lain.</div>
+          ) : (
+            <div className="divide-y divide-border-sub">
+              {members.filter(m => m.role !== 'owner').map(member => (
+                <div key={member.id} className="p-4 md:px-6 flex items-center justify-between hover:bg-white/[0.02] transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-bg-3 border border-border-def flex items-center justify-center font-display font-bold text-tx-2 text-sm flex-shrink-0">
+                      {getInitials(member.full_name || member.email)}
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-semibold text-slate-100 truncate">
-                        {m.full_name || m.email || 'Pengguna'}
-                        {isMe && <span className="text-[10px] text-[#4B6478] ml-1.5">(Anda)</span>}
-                      </p>
-                      {m.full_name && (
-                        <p className="text-[11px] text-[#4B6478] truncate">{m.email}</p>
-                      )}
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-tx-1">{member.full_name || 'User Baru'}</span>
+                      <span className="text-sm text-tx-3">{member.email}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Badge variant="outline" className={`text-[10px] font-bold px-2 py-0.5 ${badge.cls}`}>
-                      {badge.label}
+                  <div className="flex items-center gap-4">
+                    <Badge variant="outline" className={ROLE_BADGE_MAP[member.role]?.class || 'bg-gray-500/10 text-gray-400'}>
+                      {ROLE_BADGE_MAP[member.role]?.label || member.role}
                     </Badge>
-                    {p.canHapusAnggota && !isMe && m.role !== 'owner' && (
-                      <button
-                        onClick={() => removeMember.mutate(m.id)}
-                        className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer bg-transparent border-none"
-                        title="Hapus dari tim"
+                    {isOwner && member.id !== profile.id && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-tx-3 hover:text-red hover:bg-red/10 rounded-xl transition-colors"
+                        onClick={() => setConfirmRemove(member)}
+                        disabled={removeMemberMutation.isPending}
                       >
-                        <Trash2 size={13} />
-                      </button>
+                        <Trash2 size={16} />
+                      </Button>
                     )}
                   </div>
                 </div>
-              )
-            })}
-          </div>
-        </section>
-
-        {/* ── Undangan pending ── */}
-        {p.canUndangAnggota && pendingInvites.length > 0 && (
-          <section>
-            <div className="flex items-center gap-2 mb-3">
-              <Clock size={13} className="text-[#4B6478]" />
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#4B6478]">
-                Undangan Pending ({pendingInvites.length})
-              </p>
+              ))}
             </div>
-            <div className="bg-[#0C1319] border border-white/[0.08] rounded-2xl overflow-hidden">
-              {pendingInvites.map((inv, idx, arr) => {
-                const badge = PETERNAK_ROLE_BADGE[inv.role] ?? { label: inv.role, cls: 'bg-white/10 text-slate-400' }
-                const expired = new Date(inv.expires_at) < new Date()
-                return (
-                  <div
-                    key={inv.id}
-                    className={`px-4 py-3 flex items-center justify-between gap-3 ${idx < arr.length - 1 ? 'border-b border-white/[0.04]' : ''}`}
-                  >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <code className="text-[13px] font-bold text-[#A78BFA] tracking-widest">{inv.invite_code}</code>
-                        <button
-                          onClick={() => { navigator.clipboard.writeText(inv.invite_code); toast.success('Kode disalin') }}
-                          className="p-1 text-[#4B6478] hover:text-slate-300 cursor-pointer bg-transparent border-none"
-                        >
-                          <Copy size={11} />
-                        </button>
-                      </div>
-                      <p className="text-[10px] text-[#4B6478] mt-0.5">
-                        {expired ? '⚠️ Kadaluarsa' : `Berlaku ${formatDistanceToNow(new Date(inv.expires_at), { locale: id, addSuffix: true })}`}
-                      </p>
+          )}
+        </div>
+      </section>
+
+      {/* Section: Undangan Tertunda */}
+      <section className="space-y-4">
+        <h2 className="font-display font-semibold text-lg text-tx-2 flex items-center gap-2">
+          <Clock size={18} className="text-gold" />
+          Undangan Tertunda
+          {invitations.length > 0 && (
+            <span className="text-[10px] font-black bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full px-2 py-0.5 ml-1">
+              {invitations.length} slot
+            </span>
+          )}
+        </h2>
+
+        <div className="space-y-2">
+          {loadingInvitations ? (
+            <div className="p-12 flex justify-center text-tx-3 bg-bg-2 border border-border-def rounded-2xl">
+              <Loader2 className="animate-spin" />
+            </div>
+          ) : invitations.length === 0 ? (
+            <div className="p-6 text-center text-tx-3 text-sm bg-bg-2 border border-dashed border-white/8 rounded-2xl">
+              Belum ada undangan aktif.
+            </div>
+          ) : (
+            invitations.map(invite => {
+              const daysLeft = differenceInDays(new Date(invite.expires_at), new Date());
+              const isExpiringSoon = daysLeft <= 2;
+              const roleInfo = ROLE_BADGE_MAP[invite.role];
+
+              return (
+                <div
+                  key={invite.id}
+                  className="flex items-center gap-3 p-3.5 rounded-2xl border border-dashed border-amber-500/20 bg-amber-500/[0.03] hover:bg-amber-500/[0.06] transition-colors"
+                >
+                  {/* Ghost avatar */}
+                  <div className="relative shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-[#1A2535] border-2 border-dashed border-amber-500/30 flex items-center justify-center">
+                      <UserPlus size={15} className="text-amber-500/60" />
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <Badge variant="outline" className={`text-[10px] font-bold px-2 py-0.5 ${badge.cls}`}>
-                        {badge.label}
+                    {/* Pulse dot */}
+                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-400 border-2 border-[#06090F] animate-pulse" />
+                  </div>
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-bold text-white/60 italic">Menunggu pendaftaran…</span>
+                      <Badge variant="outline" className={cn('text-[10px] py-0', roleInfo?.class ?? 'bg-gray-500/10 text-gray-400')}>
+                        {roleInfo?.label ?? invite.role}
                       </Badge>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
                       <button
-                        onClick={() => revokeInvite.mutate(inv.id)}
-                        className="p-1.5 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer bg-transparent border-none"
-                        title="Cabut undangan"
+                        onClick={() => { navigator.clipboard.writeText(invite.token); toast.success('Kode disalin') }}
+                        className="flex items-center gap-1.5 group"
+                        title="Salin kode undangan"
                       >
-                        <Trash2 size={13} />
+                        <span className="font-mono text-xs font-black tracking-[0.2em] text-amber-400 group-hover:text-amber-300 transition-colors">
+                          {invite.token}
+                        </span>
+                        <Copy size={11} className="text-[#4B6478] group-hover:text-amber-400 transition-colors" />
                       </button>
+                      <span className="text-[#4B6478] text-[10px]">·</span>
+                      <span className={cn('text-[10px] font-medium', isExpiringSoon ? 'text-red-400' : 'text-[#4B6478]')}>
+                        {daysLeft > 0 ? `sisa ${daysLeft} hari` : 'berakhir hari ini'}
+                      </span>
                     </div>
                   </div>
-                )
-              })}
-            </div>
-          </section>
-        )}
 
-        {/* ── Role guide ── */}
-        <section>
-          <p className="text-[11px] font-bold uppercase tracking-widest text-[#4B6478] mb-3">Panduan Role</p>
-          <div className="flex flex-col gap-2">
-            {PETERNAK_INVITE_ROLES.map(r => {
-              const badge = PETERNAK_ROLE_BADGE[r.value]
-              return (
-                <div key={r.value} className="bg-[#111C24] border border-white/[0.06] rounded-xl px-4 py-3 flex items-start gap-3">
-                  <Badge variant="outline" className={`text-[10px] font-bold px-2 py-0.5 flex-shrink-0 mt-0.5 ${badge?.cls ?? ''}`}>
-                    {r.label}
-                  </Badge>
-                  <p className="text-[12px] text-[#4B6478] leading-relaxed">{r.desc}</p>
+                  {/* Cancel */}
+                  {isOwner && (
+                    <button
+                      onClick={() => setConfirmCancel(invite)}
+                      disabled={cancelInviteMutation.isPending}
+                      className="w-8 h-8 rounded-xl flex items-center justify-center text-[#4B6478] hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
+                      title="Batalkan undangan"
+                    >
+                      <X size={15} />
+                    </button>
+                  )}
                 </div>
               )
-            })}
-          </div>
-        </section>
+            })
+          )}
+        </div>
+      </section>
 
       </div>
 
-      {/* ── Invite Sheet ── */}
+      {/* Confirm: hapus anggota */}
+      <AlertDialog open={!!confirmRemove} onOpenChange={v => !v && setConfirmRemove(null)}>
+        <AlertDialogContent className="bg-[#0C1319] border border-white/8 rounded-2xl max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Hapus Anggota?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#4B6478]">
+              <span className="font-bold text-white/70">{confirmRemove?.full_name || confirmRemove?.email}</span> akan dihapus dari tim dan kehilangan akses ke bisnis ini.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/8 text-slate-300 hover:bg-white/10 rounded-xl">
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-500/90 hover:bg-red-500 text-white rounded-xl"
+              onClick={() => { removeMemberMutation.mutate(confirmRemove.id); setConfirmRemove(null) }}
+            >
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Confirm: batalkan undangan */}
+      <AlertDialog open={!!confirmCancel} onOpenChange={v => !v && setConfirmCancel(null)}>
+        <AlertDialogContent className="bg-[#0C1319] border border-white/8 rounded-2xl max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Batalkan Undangan?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#4B6478]">
+              Kode <span className="font-mono font-black text-amber-400">{confirmCancel?.token}</span> akan dinonaktifkan dan tidak bisa digunakan lagi.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/8 text-slate-300 hover:bg-white/10 rounded-xl">
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-500/90 hover:bg-red-500 text-white rounded-xl"
+              onClick={() => { cancelInviteMutation.mutate(confirmCancel.id); setConfirmCancel(null) }}
+            >
+              Batalkan Undangan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <InviteSheet
-        isOpen={inviteOpen}
-        onClose={() => setInviteOpen(false)}
+        isOpen={isInviteSheetOpen}
+        onClose={() => {
+          setIsInviteSheetOpen(false);
+          setShowCode(false);
+          setInviteCode(null);
+        }}
+        onSubmit={(data) => inviteMutation.mutate(data)}
+        isPending={inviteMutation.isPending}
+        showCode={showCode}
         inviteCode={inviteCode}
-        onSubmit={({ role }) => generateInvite.mutate({ role })}
-        isPending={generateInvite.isPending}
       />
+
     </div>
-  )
+  );
 }
 
-// ── Invite Sheet ──────────────────────────────────────────────────────────────
+function InviteSheet({ isOpen, onClose, onSubmit, isPending, showCode, inviteCode }) {
+  const [role, setRole] = useState('staff');
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
 
-function InviteSheet({ isOpen, onClose, onSubmit, isPending, inviteCode }) {
-  const [role, setRole] = useState('staff')
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit({ role });
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(inviteCode);
+    toast.success('Kode disalin');
+  };
 
   return (
-    <Sheet open={isOpen} onOpenChange={open => { if (!open) onClose() }}>
-      <SheetContent
-        side="bottom"
-        className="bg-[#0C1319] border-t border-border/10 flex flex-col"
-        style={{ maxHeight: '92vh', padding: 0, borderRadius: '24px 24px 0 0' }}
+    <Sheet open={isOpen} onOpenChange={(open) => {
+      if (!open) onClose();
+    }}>
+      <SheetContent 
+        side={isDesktop ? 'right' : 'bottom'} 
+        className="bg-[#0C1319] border-l border-border/10 flex flex-col"
+        style={{
+          width: isDesktop ? '520px' : '100%',
+          maxWidth: '100vw',
+          maxHeight: isDesktop ? '100vh' : '90dvh',
+          padding: 0,
+          borderRadius: isDesktop ? '0' : '24px 24px 0 0',
+        }}
       >
-        <SheetHeader className="text-left p-6 pb-0">
-          <SheetTitle className="font-display text-xl font-bold text-tx-1">Undang Anggota Tim</SheetTitle>
+        <SheetHeader className={cn("text-left pb-0", isDesktop ? "p-8" : "p-5")}>
+          <SheetTitle className="font-display text-xl font-bold text-tx-1">Undang Anggota</SheetTitle>
           <SheetDescription className="text-tx-3 text-sm">
-            {inviteCode
-              ? 'Kode berhasil dibuat. Bagikan ke anggota yang ingin diundang.'
-              : 'Pilih role lalu generate kode undangan.'}
+            {showCode
+              ? "Kode berhasil dibuat. Bagikan ke anggota yang ingin diundang."
+              : "Generate kode undangan untuk anggota baru bergabung ke bisnis Anda."}
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 flex flex-col gap-6 p-6 pt-4 overflow-y-auto">
-          {!inviteCode ? (
-            <form
-              onSubmit={e => { e.preventDefault(); onSubmit({ role }) }}
-              className="space-y-6 flex-1 flex flex-col"
-            >
+        <div className={cn("flex-1 flex flex-col gap-6 pt-4", isDesktop ? "p-8" : "p-5")}>
+          {!showCode ? (
+            <form onSubmit={handleSubmit} className="space-y-6 flex-1 flex flex-col">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-tx-3 uppercase tracking-wider">Role *</label>
+                <Label className="text-xs font-bold text-tx-3 uppercase tracking-wider">Level Akses (Role) <span className="text-red">*</span></Label>
                 <Select value={role} onValueChange={setRole}>
-                  <SelectTrigger className="w-full bg-bg-2 border-border-def h-12 rounded-xl text-tx-1">
+                  <SelectTrigger className="w-full bg-bg-2 border-border-def h-12 rounded-xl text-tx-1 focus-visible:ring-1 focus-visible:ring-em-400">
                     <SelectValue placeholder="Pilih Role" />
                   </SelectTrigger>
                   <SelectContent className="bg-bg-1 border border-border-def rounded-xl shadow-xl">
-                    {PETERNAK_INVITE_ROLES.map(r => (
-                      <SelectItem key={r.value} value={r.value} className="focus:bg-bg-2 cursor-pointer py-3 rounded-lg mx-1 my-0.5">
-                        <div className="flex flex-col gap-1">
-                          <span className="font-semibold text-tx-1">{r.label}</span>
-                          <span className="text-[11px] text-tx-3">{r.desc}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="manajer" className="focus:bg-bg-2 cursor-pointer py-3 rounded-lg mx-1 my-0.5">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-semibold text-tx-1">Manajer Kandang</span>
+                        <span className="text-[11px] text-tx-3">Kelola semua data transaksi & siklus, tidak bisa akses profil bisnis.</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="staff" className="focus:bg-bg-2 cursor-pointer py-3 rounded-lg mx-1 my-0.5">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-semibold text-tx-1">Staff Kandang</span>
+                        <span className="text-[11px] text-tx-3">Input data harian & tugas. Tidak bisa melihat keuangan.</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="anak_buah" className="focus:bg-bg-2 cursor-pointer py-3 rounded-lg mx-1 my-0.5">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-semibold text-tx-1">Anak Buah Kandang</span>
+                        <span className="text-[11px] text-tx-3">Hanya bisa melihat & menyelesaikan tugas yang ditugaskan padanya.</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="view_only" className="focus:bg-bg-2 cursor-pointer py-3 rounded-lg mx-1 my-0.5">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-semibold text-tx-1">Lihat Saja</span>
+                        <span className="text-[11px] text-tx-3">Akses terbatas: hanya melihat statistik & laporan.</span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="mt-auto pt-6 border-t border-border-sub">
-                <button
+                <Button
                   type="submit"
+                  className={cn("w-full bg-em-500 hover:bg-em-600 text-white font-bold rounded-xl transition-all", isDesktop ? "h-12 text-[15px]" : "h-11 text-[14px]")}
                   disabled={isPending}
-                  className="w-full flex items-center justify-center gap-2 bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-bold h-12 rounded-xl text-[15px] transition-all cursor-pointer border-none disabled:opacity-60"
                 >
-                  {isPending ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
-                  {isPending ? 'Generating...' : 'Generate Kode Undangan'}
-                </button>
+                  {isPending ? <Loader2 className="animate-spin mr-2" /> : <Plus size={18} className="mr-2" />}
+                  {isPending ? "Generating..." : "Generate Kode Undangan"}
+                </Button>
               </div>
             </form>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center gap-6">
-              <div className="w-full bg-[#111C24] border border-[#7C3AED]/30 rounded-2xl p-8 text-center">
-                <p className="text-[11px] text-[#4B6478] uppercase tracking-widest mb-3">Kode Undangan</p>
-                <p className="font-['Sora'] text-3xl font-extrabold text-[#A78BFA] tracking-[0.2em] mb-4">{inviteCode}</p>
-                <button
-                  onClick={() => { navigator.clipboard.writeText(inviteCode); toast.success('Kode disalin!') }}
-                  className="flex items-center gap-2 mx-auto px-5 py-2.5 bg-[#7C3AED]/20 border border-[#7C3AED]/30 rounded-xl text-[#A78BFA] text-sm font-bold cursor-pointer hover:bg-[#7C3AED]/30 transition-colors"
+            <div className="flex-1 flex flex-col items-center justify-center space-y-8 animate-in fade-in zoom-in duration-300">
+              <div className="w-full bg-[#0C1319] border border-[#10B981]/30 rounded-2xl p-8 text-center space-y-6 shadow-xl shadow-emerald-500/5">
+                <h3 className="text-tx-3 text-xs font-bold uppercase tracking-[0.2em]">Kode Undangan Tim</h3>
+                
+                <div className="font-display text-4xl font-black text-[#10B981] tracking-[0.4em] py-6 bg-[#10B981]/5 rounded-2xl border border-[#10B981]/10">
+                  {inviteCode}
+                </div>
+
+                <div className="space-y-1">
+                  <p className="text-[#4B6478] text-xs font-medium">Berlaku 7 hari · Hanya 1x pakai</p>
+                </div>
+
+                <Button
+                  onClick={copyToClipboard}
+                  className={cn("w-full bg-[#10B981] hover:bg-em-600 text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20", isDesktop ? "h-12" : "h-11")}
                 >
-                  <Copy size={14} />
+                  <Copy size={16} className="mr-2" />
                   Salin Kode
-                </button>
-                <p className="text-[11px] text-[#4B6478] mt-4">Berlaku 7 hari. Anggota masukkan kode ini saat bergabung.</p>
+                </Button>
               </div>
-              <button
+
+              <div className="space-y-4 px-4 text-center">
+                <p className="text-[#94A3B8] text-sm leading-relaxed">
+                  Bagikan kode ini via <strong>WhatsApp atau chat</strong> ke anggota yang ingin diundang.
+                </p>
+                <div className="p-3 bg-bg-2 border border-border-sub rounded-xl text-xs text-tx-3 text-left">
+                  <p>💡 Calon staff dapat mendaftar sendiri menggunakan kode ini tanpa perlu input data bisnis.</p>
+                </div>
+              </div>
+
+              <Button 
+                variant="ghost" 
                 onClick={onClose}
-                className="w-full py-3 border border-white/10 rounded-xl text-[#4B6478] text-sm font-semibold cursor-pointer hover:bg-white/5 transition-colors bg-transparent"
+                className="text-tx-3 hover:text-tx-1"
               >
                 Selesai
-              </button>
+              </Button>
             </div>
           )}
         </div>
       </SheetContent>
     </Sheet>
-  )
+  );
 }

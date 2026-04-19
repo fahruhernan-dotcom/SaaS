@@ -370,7 +370,7 @@ function AgendaSection({ sales, deliveries, selectedDate, setSelectedDate, curre
     let list = allEvents.filter(e => e.date && isSameDay(new Date(e.date), selectedDate))
     if (agendaFilter !== 'Semua') list = list.filter(e => e.type === agendaFilter)
     return list
-  }, [allEvents, selectedDate, agendaFilter]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [allEvents, selectedDate, agendaFilter])  
 
   const mStr = format(currentMonth, 'yyyy-MM')
   const monthPiutang = piutangEvents.filter(e => e.date?.startsWith(mStr)).reduce((s, e) => s + (e.remaining_amount || 0), 0)

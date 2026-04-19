@@ -116,7 +116,7 @@ const STATUS_CFG = {
   dilewati: { label: 'Dilewati', icon: MoreHorizontal, color: 'text-slate-500', border: 'border-white/10', bg: 'bg-white/5' },
 }
 
-// ── HELPERS ─────────────────────────────────────────────────────────────
+// â”€â”€ HELPERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function getUrgencyLabel(task) {
   if (task.status === 'selesai' || task.status === 'dilewati') return null
@@ -133,7 +133,7 @@ function getUrgencyLabel(task) {
   return { label: 'HARI INI', color: 'bg-[#7C3AED]/20 text-[#A78BFA] border-[#7C3AED]/30 shadow-lg shadow-purple-900/20' }
 }
 
-// ── ATMOSPHERIC SCENE ──────────────────────────────────────────────────────────
+// â”€â”€ ATMOSPHERIC SCENE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const Scene = ({ children }) => (
   <div className="relative min-h-screen bg-[#06090F] overflow-hidden selection:bg-purple-500/30">
@@ -157,7 +157,7 @@ const GlassCard = ({ children, className, glowColor }) => (
   </div>
 )
 
-// ── SHARED COMPONENTS ─────────────────────────────────────────────────────────
+// â”€â”€ SHARED COMPONENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const SummaryTiles = ({ stats }) => (
   <div className="px-5 py-6 grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -178,7 +178,7 @@ const SummaryTiles = ({ stats }) => (
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#64748B] group-hover:text-[#A78BFA] transition-colors">{tile.label}</span>
             {tile.trend !== undefined && (
               <span className={cn("text-[10px] font-black tracking-widest", tile.trend >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
-                {tile.trend >= 0 ? '↑' : '↓'} {Math.abs(tile.trend).toFixed(0)}%
+                {tile.trend >= 0 ? 'â†‘' : 'â†“'} {Math.abs(tile.trend).toFixed(0)}%
               </span>
             )}
           </div>
@@ -299,7 +299,7 @@ const CustomCalendar = ({ currentMonth, selectedDate, onMonthChange, onDateSelec
   )
 }
 
-// ── MAIN COMPONENT ────────────────────────────────────────────────────────────
+// â”€â”€ MAIN COMPONENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function SapiDailyTask() {
   const { profile } = useAuth()
@@ -341,18 +341,21 @@ export default function SapiDailyTask() {
         t.kandang_name?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     }
-    
-    // For Staff, we want to show Pending first, then Selesai
-    if (isStaffView) {
-      return [...list].sort((a, b) => {
-        if (a.status === 'selesai' && b.status !== 'selesai') return 1
-        if (a.status !== 'selesai' && b.status === 'selesai') return -1
-        return 0
-      })
-    }
-    
-    return list
-  }, [tasks, tab, searchQuery, isStaffView])
+
+    // Sorting priority: 
+    // 1. In Progress (Active effort)
+    // 2. Pending / Overdue (Waiting)
+    // 3. Selesai (Completed)
+    return [...list].sort((a, b) => {
+      const getPriority = (s) => {
+        if (s === 'in_progress') return 0
+        if (s === 'terlambat') return 1
+        if (s === 'pending') return 2
+        return 3
+      }
+      return getPriority(a.status) - getPriority(b.status)
+    })
+  }, [tasks, tab, searchQuery])
 
   const stats = useMemo(() => {
     const total = tasks.length
@@ -484,37 +487,90 @@ export default function SapiDailyTask() {
           <CriticalOverdueAlert tasks={tasks} />
           <AnimatePresence mode="wait">
             {!isDesktop ? (
-              <motion.div key="mobile" ref={listRef} initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="grid gap-5">
-                {filteredTasks.length === 0 ? <EmptyState isStaff={isStaffView} /> : filteredTasks.map(t => (
-                  <div key={t.id} className="task-card-anim">
-                    {isStaffView ? (
-                      <InteractiveCheckCard 
-                        task={t} 
-                        isExpanded={expandedTaskId === t.id}
-                        onToggle={() => setExpandedTaskId(expandedTaskId === t.id ? null : t.id)}
-                        onCheck={() => handleQuickComplete(t)} 
-                        onClick={() => { setSelectedTask(t); setCompleteSheetOpen(true); }}
-                      />
-                    ) : (
-                      <TaskCard task={t} onClick={() => { setSelectedTask(t); setCompleteSheetOpen(true); }} />
+              <motion.div key="mobile" ref={listRef} initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-8">
+                {filteredTasks.length === 0 ? <EmptyState isStaff={isStaffView} /> : (
+                  <>
+                    {filteredTasks.some(t => t.status === 'in_progress') && (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3 px-2">
+                           <Activity size={14} className="text-blue-400" />
+                           <h2 className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em]">Sedang Berjalan / Belum Selesai</h2>
+                           <div className="h-[1px] flex-1 bg-blue-500/10" />
+                        </div>
+                        <div className="grid gap-4">
+                          {filteredTasks.filter(t => t.status === 'in_progress').map(t => (
+                            <div key={t.id} className="task-card-anim">
+                              {isStaffView ? (
+                                <InteractiveCheckCard task={t} isExpanded={expandedTaskId === t.id} onToggle={() => setExpandedTaskId(expandedTaskId === t.id ? null : t.id)} onCheck={() => handleQuickComplete(t)} />
+                              ) : (
+                                <TaskCard task={t} onClick={() => { setSelectedTask(t); setCompleteSheetOpen(true); }} />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
-                  </div>
-                ))}
+
+                    <div className="space-y-4">
+                      {filteredTasks.some(t => t.status === 'in_progress') && (
+                        <div className="flex items-center gap-3 px-2">
+                           <ClipboardList size={14} className="text-[#4B6478]" />
+                           <h2 className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em]">Daftar Tugas</h2>
+                           <div className="h-[1px] flex-1 bg-white/5" />
+                        </div>
+                      )}
+                      <div className="grid gap-4">
+                        {filteredTasks.filter(t => t.status !== 'in_progress').map(t => (
+                          <div key={t.id} className="task-card-anim">
+                            {isStaffView ? (
+                              <InteractiveCheckCard task={t} isExpanded={expandedTaskId === t.id} onToggle={() => setExpandedTaskId(expandedTaskId === t.id ? null : t.id)} onCheck={() => handleQuickComplete(t)} />
+                            ) : (
+                              <TaskCard task={t} onClick={() => { setSelectedTask(t); setCompleteSheetOpen(true); }} />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </motion.div>
             ) : (
               <motion.div key="desktop" ref={listRef} initial={{ opacity: 0, y: 0 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', damping: 25 }}>
                 {isStaffView ? (
-                   <div className="flex flex-col gap-3 max-w-4xl">
-                      {filteredTasks.length === 0 ? <EmptyState isStaff={isStaffView} /> : filteredTasks.map(t => (
-                        <div key={t.id} className="task-card-anim">
-                          <InteractiveCheckCard 
-                            task={t} 
-                            isExpanded={expandedTaskId === t.id}
-                            onToggle={() => setExpandedTaskId(expandedTaskId === t.id ? null : t.id)}
-                            onCheck={() => handleQuickComplete(t)} 
-                          />
-                        </div>
-                      ))}
+                   <div className="flex flex-col gap-8 max-w-4xl">
+                      {filteredTasks.length === 0 ? <EmptyState isStaff={isStaffView} /> : (
+                        <>
+                          {filteredTasks.some(t => t.status === 'in_progress') && (
+                            <div className="space-y-4">
+                              <div className="flex items-center gap-3 px-2">
+                                 <Activity size={14} className="text-blue-400" />
+                                 <h2 className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em]">Sedang Berjalan / Belum Selesai</h2>
+                                 <div className="h-[1px] flex-1 bg-blue-500/10" />
+                              </div>
+                              {filteredTasks.filter(t => t.status === 'in_progress').map(t => (
+                                <div key={t.id} className="task-card-anim">
+                                  <InteractiveCheckCard task={t} isExpanded={expandedTaskId === t.id} onToggle={() => setExpandedTaskId(expandedTaskId === t.id ? null : t.id)} onCheck={() => handleQuickComplete(t)} />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="space-y-4">
+                            {filteredTasks.some(t => t.status === 'in_progress') && (
+                              <div className="flex items-center gap-3 px-2 pt-4">
+                                 <ClipboardList size={14} className="text-[#4B6478]" />
+                                 <h2 className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em]">Daftar Tugas</h2>
+                                 <div className="h-[1px] flex-1 bg-white/5" />
+                              </div>
+                            )}
+                            {filteredTasks.filter(t => t.status !== 'in_progress').map(t => (
+                              <div key={t.id} className="task-card-anim">
+                                <InteractiveCheckCard task={t} isExpanded={expandedTaskId === t.id} onToggle={() => setExpandedTaskId(expandedTaskId === t.id ? null : t.id)} onCheck={() => handleQuickComplete(t)} />
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
                    </div>
                 ) : (
                   <GlassCard className="rounded-2xl overflow-x-auto">
@@ -985,7 +1041,7 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle }) {
 
 
 
-// ── FULL LOGIC RESTORATION SHEET: COMPLETE ─────────────────────────────────────
+// â”€â”€ FULL LOGIC RESTORATION SHEET: COMPLETE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, showSuccessAnimation }) {
   const [notes, setNotes] = useState('')

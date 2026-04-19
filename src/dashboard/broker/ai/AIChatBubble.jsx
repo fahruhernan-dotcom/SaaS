@@ -75,7 +75,7 @@ export default function AIChatBubble() {
     const ty = cy > vh / 2 ? vh - FAB_SIZE - BOTTOM_CLEAR : TOP_CLEAR
     animate(fabX, tx, { type: 'spring', stiffness: 400, damping: 30 })
     animate(fabY, ty, { type: 'spring', stiffness: 400, damping: 30 })
-  }, [fabX, fabY]) // eslint-disable-line
+  }, [fabX, fabY])  
 
   const {
     messages,

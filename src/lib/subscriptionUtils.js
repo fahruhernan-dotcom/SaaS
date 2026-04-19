@@ -19,9 +19,9 @@ export function getSubscriptionStatus(tenant) {
   const now = new Date()
   const plan = tenant.plan || 'starter'
   
-  // 1. Check for Active Trial (Any plan can have a trial)
+  // 1. Check for Active Trial (Only for Pro/Business)
   const trialEnd = tenant.trial_ends_at ? new Date(tenant.trial_ends_at) : null
-  if (trialEnd && trialEnd > now) {
+  if (trialEnd && trialEnd > now && plan !== 'starter') {
     const daysLeft = Math.ceil((trialEnd - now) / 86400000)
     return {
       status: 'trial',

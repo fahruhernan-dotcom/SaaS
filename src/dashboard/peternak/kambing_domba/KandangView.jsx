@@ -15,7 +15,7 @@ import LoadingSpinner from '../../_shared/components/LoadingSpinner'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-const SPECIES_EMOJI = { kambing: '🐐', domba: '🐑' }
+const SPECIES_EMOJI = { kambing: 'ðŸ', domba: 'ðŸ‘' }
 
 // Component: Hewan yang bisa di-drag
 function AnimalToken({ animal, onDragStart }) {
@@ -29,7 +29,7 @@ function AnimalToken({ animal, onDragStart }) {
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95, opacity: 0.8 }}
     >
-      <span>{SPECIES_EMOJI[animal.species] || '🐏'}</span>
+      <span>{SPECIES_EMOJI[animal.species] || 'ðŸ'}</span>
       <span className="font-semibold text-white truncate max-w-[80px]" title={animal.ear_tag}>
         {animal.ear_tag}
       </span>

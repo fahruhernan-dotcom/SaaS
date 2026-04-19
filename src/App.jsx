@@ -119,13 +119,13 @@ const AuthHashRedirect = () => {
 };
 
 function ProtectedRoute({ children, requiredType, requiredVertical }) {
-  const { user, profile, tenant, loading } = useAuth();
+  const { user, profile, tenant, isSuperadmin, loading } = useAuth();
   const location = useLocation();
 
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
 
-  if (profile?.role === 'superadmin') return children;
+  if (isSuperadmin) return children;
 
   if (profile && !profile.onboarded && location.pathname !== '/onboarding' && profile.role === 'owner') {
     return <Navigate to="/onboarding" replace />;
@@ -419,6 +419,9 @@ export const routes = createRoutesFromElements(
         <PeternakLayout />
       </ProtectedRoute>
     }>
+      <Route path="daily_task"    element={<PeternakPageRouter page="daily_task" />} />
+      <Route path="task_settings" element={<PeternakPageRouter page="task_settings" />} />
+      <Route path="task_assign"   element={<PeternakPageRouter page="task_assign" />} />
       <Route path="beranda"          element={<PeternakPageRouter page="beranda" />} />
       <Route path="siklus"           element={<PeternakPageRouter page="siklus" />} />
       <Route path="vaksinasi"        element={<PeternakPageRouter page="vaksinasi" />} />
@@ -433,12 +436,11 @@ export const routes = createRoutesFromElements(
       <Route path="tim"              element={<PeternakPageRouter page="tim" />} />
       <Route path="harga-pasar"      element={<PeternakPageRouter page="harga-pasar" />} />
       <Route path="kandang-view"     element={<PeternakPageRouter page="kandang-view" />} />
-
-      {/* Kambing & Domba routes */}
       <Route path="batch"      element={<PeternakPageRouter page="batch" />} />
       <Route path="ternak"     element={<PeternakPageRouter page="ternak" />} />
       <Route path="kesehatan"  element={<PeternakPageRouter page="kesehatan" />} />
       <Route path="reproduksi" element={<PeternakPageRouter page="reproduksi" />} />
+
 
       {/* Per-farm routes (Level 2) */}
       <Route path="kandang/:farmId"           element={<Navigate to="beranda" replace />} />
