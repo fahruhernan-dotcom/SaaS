@@ -13,7 +13,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, Legend 
 } from 'recharts'
-import { format } from 'date-fns'
+import { format, addDays } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { toast } from 'sonner'
 import KandangMiniMap from './KandangMiniMap'
@@ -48,33 +48,46 @@ function BatchCard({ batch, onClick }) {
   // Sapi: target penggemukan 4–6 bulan (120–180 hari)
   const hari = calcSapiHariDiFarm(batch.start_date)
   const TARGET_HARI = 150
+  const sisaHari = Math.max(0, TARGET_HARI - hari)
+  const estimasiPanen = addDays(new Date(batch.start_date), TARGET_HARI)
+  
   const progress = Math.min(100, Math.round((hari / TARGET_HARI) * 100))
   const mortalitasPct = calcSapiMortalitas(batch.mortality_count, batch.total_animals)
   const isOverdue = hari > TARGET_HARI
   const isCritical = mortalitasPct > 2   // sapi: threshold mortalitas 2%
 
-  // ADG dalam kg/hari untuk display (bukan gram seperti kambing)
+  // Extract unique breeds for family summary
+  const breeds = useMemo(() => {
+    if (!batch.animals) return []
+    const set = new Set(batch.animals.map(a => a.breed).filter(Boolean))
+    return Array.from(set)
+  }, [batch.animals])
+
+  // ADG dalam kg/hari untuk display
   const adgKg = batch.avg_adg_gram ? (batch.avg_adg_gram / 1000).toFixed(2) : null
 
   return (
     <motion.div
-      whileTap={{ scale: 0.98 }}
-      onClick={onClick}
-      className="group bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.12] rounded-3xl p-6 cursor-pointer transition-all duration-300"
+      className="group bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.12] rounded-3xl p-6 transition-all duration-300"
     >
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Left Side: Stats & Info */}
         <div className="flex-1 flex flex-col justify-between min-w-0">
           <div>
             <div className="flex items-start justify-between mb-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-['Sora'] font-black text-lg text-white group-hover:text-amber-400 transition-colors uppercase tracking-tight">{batch.batch_code}</span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span 
+                    onClick={onClick}
+                    className="font-['Sora'] font-black text-lg text-white hover:text-amber-400 cursor-pointer transition-colors uppercase tracking-tight truncate max-w-full"
+                  >
+                    {batch.batch_code}
+                  </span>
                   {isOverdue && (
-                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-black tracking-tighter uppercase">OVERDUE</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-black tracking-tighter uppercase whitespace-nowrap">OVERDUE</span>
                   )}
                   {isCritical && (
-                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-black tracking-tighter uppercase">CRITICAL</span>
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-black tracking-tighter uppercase whitespace-nowrap">CRITICAL</span>
                   )}
                 </div>
                 <div className="flex items-center gap-1.5 text-[#4B6478]">
@@ -82,11 +95,34 @@ function BatchCard({ batch, onClick }) {
                    <p className="text-[11px] font-bold uppercase tracking-wider">{batch.kandang_name}</p>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="text-right shrink-0">
                 <p className="text-2xl font-black text-white font-['Sora'] leading-none mb-1">{batch.total_animals}</p>
                 <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-widest">Ekor</p>
               </div>
             </div>
+
+            {/* Summary Info Row */}
+            <div className="grid grid-cols-2 gap-4 mb-3">
+               <div>
+                  <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest mb-1">Sisa Waktu</p>
+                  <p className="text-xs font-black text-white uppercase">{sisaHari} Hari Lagi</p>
+               </div>
+               <div>
+                  <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest mb-1">Estimasi Panen</p>
+                  <p className="text-xs font-black text-amber-400 uppercase">{format(estimasiPanen, 'dd MMM yyyy', { locale: id })}</p>
+               </div>
+            </div>
+
+            {/* Keluarga Ternak (Breeds) */}
+            {breeds.length > 0 && (
+              <div className="mb-4 flex flex-wrap gap-1.5">
+                {breeds.map((b, i) => (
+                  <span key={i} className="text-[9px] px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[#4B6478] font-black uppercase tracking-widest">
+                    {b}
+                  </span>
+                ))}
+              </div>
+            )}
 
             {/* Progress bar */}
             <div className="mb-6 bg-white/[0.02] border border-white/[0.04] p-3 rounded-2xl">

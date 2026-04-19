@@ -116,7 +116,12 @@ export function useSapiActiveBatches() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sapi_penggemukan_batches')
-        .select('*')
+        .select(`
+          *,
+          animals:sapi_penggemukan_animals(
+            id, breed
+          )
+        `)
         .eq('tenant_id', tenant.id)
         .eq('status', 'active')
         .eq('is_deleted', false)
