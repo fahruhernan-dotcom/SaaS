@@ -89,14 +89,18 @@ export default function Tim() {
     queryKey: ['peternak-team', profile?.tenant_id],
     queryFn: async () => {
       if (!profile?.tenant_id) return [];
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('tenant_id', profile.tenant_id)
-        .order('full_name', { ascending: true });
-        
+      const [{ data: profileMembers, error }, { data: membershipMembers }] = await Promise.all([
+        supabase.from('profiles').select('*').eq('tenant_id', profile.tenant_id),
+        supabase.from('tenant_memberships').select('*').eq('tenant_id', profile.tenant_id),
+      ]);
       if (error) throw error;
-      return data;
+      const combined = [...(profileMembers || [])];
+      for (const m of (membershipMembers || [])) {
+        if (!combined.some(p => p.auth_user_id === m.auth_user_id)) {
+          combined.push(m);
+        }
+      }
+      return combined.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
     },
     enabled: !!profile?.tenant_id,
   });
@@ -134,7 +138,7 @@ export default function Tim() {
         .from('team_invitations')
         .insert([{
           tenant_id: profile.tenant_id,
-          invited_by: profile.id,
+          invited_by: profile.profile_id ?? profile.id,
           token: code,
           role: payload.role,
           status: 'pending',
@@ -176,13 +180,18 @@ export default function Tim() {
   });
 
   const removeMemberMutation = useMutation({
-    mutationFn: async (memberId) => {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ tenant_id: null, role: null })
-        .eq('id', memberId)
+    mutationFn: async (member) => {
+      const authUserId = member.auth_user_id;
+      // Remove from tenant_memberships (no RLS, always works)
+      await supabase.from('tenant_memberships')
+        .delete()
+        .eq('auth_user_id', authUserId)
         .eq('tenant_id', profile.tenant_id);
-      if (error) throw error;
+      // Remove profiles row for this tenant (only if user has multiple tenants)
+      await supabase.from('profiles')
+        .delete()
+        .eq('auth_user_id', authUserId)
+        .eq('tenant_id', profile.tenant_id);
     },
     onSuccess: () => {
       toast.success('Anggota berhasil dihapus');
@@ -612,7 +621,7 @@ export default function Tim() {
             </AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-500/90 hover:bg-red-500 text-white rounded-xl"
-              onClick={() => { removeMemberMutation.mutate(confirmRemove.id); setConfirmRemove(null) }}
+              onClick={() => { removeMemberMutation.mutate(confirmRemove); setConfirmRemove(null) }}
             >
               Hapus
             </AlertDialogAction>

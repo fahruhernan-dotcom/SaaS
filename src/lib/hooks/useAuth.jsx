@@ -43,16 +43,21 @@ export function AuthProvider({ children }) {
     const mdSafe = memberData || []
     const masterProfile = lpSafe.find(p => p.full_name) || lpSafe[0] || mdSafe[0] || {}
     
-    let combined = mdSafe.map(m => ({
-      ...m,
-      // Inject metadata from master profile into membership-only rows
-      full_name: m.full_name || masterProfile.full_name,
-      avatar_url: m.avatar_url || masterProfile.avatar_url,
-      onboarded: m.onboarded ?? masterProfile.onboarded,
-      business_model_selected: m.business_model_selected ?? masterProfile.business_model_selected,
-      is_onboarded: m.is_onboarded ?? masterProfile.is_onboarded, // handle both naming conventions
-      last_seen_at: m.last_seen_at || masterProfile.last_seen_at
-    }))
+    let combined = mdSafe.map(m => {
+      const legacyMatch = lpSafe.find(lp => lp.tenant_id === m.tenant_id)
+      return {
+        ...m,
+        // profiles.id from legacyProfiles — needed for FKs that reference profiles.id (e.g. team_invitations.invited_by)
+        profile_id: legacyMatch?.id ?? null,
+        // Inject metadata from master profile into membership-only rows
+        full_name: m.full_name || masterProfile.full_name,
+        avatar_url: m.avatar_url || masterProfile.avatar_url,
+        onboarded: m.onboarded ?? masterProfile.onboarded,
+        business_model_selected: m.business_model_selected ?? masterProfile.business_model_selected,
+        is_onboarded: m.is_onboarded ?? masterProfile.is_onboarded, // handle both naming conventions
+        last_seen_at: m.last_seen_at || masterProfile.last_seen_at
+      }
+    })
 
     legacyProfiles.forEach(lp => {
       if (!combined.some(c => c.tenant_id === lp.tenant_id)) {
