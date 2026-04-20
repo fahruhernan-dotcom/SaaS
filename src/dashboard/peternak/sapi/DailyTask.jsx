@@ -323,7 +323,7 @@ export default function SapiDailyTask() {
   const { data: monthTasks = [], isLoading } = usePeternakTaskInstances({ 
     due_date_from: monthStart, 
     due_date_to: monthEnd,
-    workerProfileId: isStaffView ? profile?.id : undefined
+    workerProfileId: isStaffView ? (profile?.profile_id ?? profile?.id) : undefined
   })
 
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd')

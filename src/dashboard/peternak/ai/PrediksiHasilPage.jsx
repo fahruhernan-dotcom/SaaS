@@ -310,7 +310,7 @@ export default function PrediksiHasilPage() {
         .from('ai_conversations')
         .insert({
           tenant_id:  tenant.id,
-          profile_id: profile.id,
+          profile_id: profile.profile_id ?? profile.id,
           title: `Prediksi: ${batchLabel(selectedBatch, mode)}`,
         })
         .select('id')
