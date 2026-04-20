@@ -95,9 +95,24 @@ export default function Tim() {
       ]);
       if (error) throw error;
       const combined = [...(profileMembers || [])];
+      const membershipOnly = [];
       for (const m of (membershipMembers || [])) {
         if (!combined.some(p => p.auth_user_id === m.auth_user_id)) {
           combined.push(m);
+          membershipOnly.push(m.auth_user_id);
+        }
+      }
+      // Enrich membership-only members with full_name from their profiles in other tenants
+      if (membershipOnly.length > 0) {
+        const { data: nameData } = await supabase
+          .from('profiles')
+          .select('auth_user_id, full_name, avatar_url')
+          .in('auth_user_id', membershipOnly);
+        for (const m of combined) {
+          if (!m.full_name) {
+            const np = nameData?.find(n => n.auth_user_id === m.auth_user_id);
+            if (np) { m.full_name = np.full_name; m.avatar_url = np.avatar_url; }
+          }
         }
       }
       return combined.sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
