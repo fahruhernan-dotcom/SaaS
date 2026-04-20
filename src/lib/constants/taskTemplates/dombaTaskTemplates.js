@@ -104,6 +104,32 @@ export const TEMPLATE_DOMBA_PENGGEMUKAN_90 = [
     phase_end_offset: 5,
     phase_label: 'Adaptasi',
   },
+  {
+    title: 'Pemberian vitamin & booster nafsu makan',
+    description: 'Injeksi vitamin B-kompleks atau suplemen pendukung untuk pemulihan stres perjalanan.',
+    task_type: 'kesehatan',
+    recurring_type: 'sekali',
+    recurring_days_of_week: null,
+    recurring_interval_days: null,
+    due_time: '09:00:00',
+    linked_data_entry: true,
+    phase_start_offset: 7,
+    phase_end_offset: 7,
+    phase_label: 'Adaptasi',
+  },
+  {
+    title: 'Cukur bulu awal (Shearing)',
+    description: 'Cukur bulu gimbal/kotor agar domba lebih nyaman, tidak kegerahan, dan mempermudah penetrasi obat kutu.',
+    task_type: 'wool_check',
+    recurring_type: 'sekali',
+    recurring_days_of_week: null,
+    recurring_interval_days: null,
+    due_time: '08:00:00',
+    linked_data_entry: false,
+    phase_start_offset: 10,
+    phase_end_offset: 10,
+    phase_label: 'Adaptasi',
+  },
 
   // ── FASE GROWING (Hari 15–75, offset 14–74) ──────────────────────────────
 
@@ -160,8 +186,8 @@ export const TEMPLATE_DOMBA_PENGGEMUKAN_90 = [
     phase_label: 'Growing',
   },
   {
-    title: 'Cek kondisi bulu/wool',
-    description: 'Periksa bulu: ada kutu, tungau, atau tanda jamur kulit (ringworm)? Domba perlu perhatian ekstra.',
+    title: 'Cek kondisi bulu & kulit',
+    description: 'Periksa adanya parasit atau jamur (scabies/ringworm). Domba perlu perhatian ekstra di balik wool.',
     task_type: 'wool_check',
     recurring_type: 'mingguan',
     recurring_days_of_week: [3],
@@ -170,6 +196,19 @@ export const TEMPLATE_DOMBA_PENGGEMUKAN_90 = [
     linked_data_entry: true,
     phase_start_offset: 14,
     phase_end_offset: 74,
+    phase_label: 'Growing',
+  },
+  {
+    title: 'Potong kuku (Hoof Trim)',
+    description: 'Periksa dan potong kuku yang mulai memanjang untuk mencegah busuk kuku (foot rot).',
+    task_type: 'kesehatan',
+    recurring_type: 'sekali',
+    recurring_days_of_week: null,
+    recurring_interval_days: null,
+    due_time: '09:00:00',
+    linked_data_entry: true,
+    phase_start_offset: 45,
+    phase_end_offset: 45,
     phase_label: 'Growing',
   },
 
@@ -324,3 +363,109 @@ export const TEMPLATE_DOMBA_BREEDING = [
     phase_label: 'Kelahiran',
   },
 ]
+
+// ── TEMPLATE DOMBA PENGGEMUKAN INTENSIF (PRECISION 1-45-90) ──────────────────
+
+export const TRIGGERED_MEDICAL_INTERVENTION = {
+  title: 'Intervensi Medis: Obat Cacing & Vitamin',
+  description: 'Urgent: Skor FAMACHA 4/5 Terdeteksi. Pemberian B-Drench & Injeksi Vitamin B-Complex.',
+  task_type: 'kesehatan',
+  recurring_type: 'sekali',
+  due_time: '09:00:00',
+  linked_data_entry: true,
+  phase_label: 'Kesehatan Khusus',
+  is_conditional: true,
+}
+
+export const TEMPLATE_DOMBA_INTENSIF_90 = [
+  // ── TITIK KRITIS TIMBANG TOTAL (1-45-90) ──
+  {
+    title: 'Timbang Bakalan (Total 100%)',
+    description: 'Recording berat awal semua populasi sebagai baseline ADG.',
+    task_type: 'timbang',
+    recurring_type: 'sekali',
+    due_time: '08:00:00',
+    linked_data_entry: true,
+    phase_start_offset: 0,
+    phase_end_offset: 0,
+    phase_label: 'Bakalan Masuk',
+  },
+  {
+    title: 'Timbang Evaluasi (Total 100%)',
+    description: 'Evaluasi pertumbuhan tengah periode untuk penyesuaian pakan/suplemen.',
+    task_type: 'timbang',
+    recurring_type: 'sekali',
+    due_time: '08:00:00',
+    linked_data_entry: true,
+    phase_start_offset: 45,
+    phase_end_offset: 45,
+    phase_label: 'Evaluasi 45 Hari',
+  },
+  {
+    title: 'Timbang Final Panen (Total 100%)',
+    description: 'Recording bobot akhir dan grading kualitas untuk penentuan harga jual.',
+    task_type: 'timbang',
+    recurring_type: 'sekali',
+    due_time: '08:00:00',
+    linked_data_entry: true,
+    phase_start_offset: 90,
+    phase_end_offset: 90,
+    phase_label: 'Panen',
+  },
+
+  // ── MONITORING RUTIN (Randomized Sampling 10%) ──
+  {
+    title: 'Timbang Sampling (Random 10%) & FAMACHA',
+    description: 'Monitor ADG populasi & skor anemia kelopak mata tanpa membuat stress domba.',
+    task_type: 'timbang',
+    recurring_type: 'dua_mingguan',
+    due_time: '08:00:00',
+    linked_data_entry: true,
+    phase_start_offset: 14,
+    phase_end_offset: 89,
+    phase_label: 'Monitoring Akurasi',
+  },
+
+  // ── OPERASIONAL HARIAN (Batch Oriented) ──
+  {
+    title: 'Manajemen Pakan Pagi (The 70/30 Rule)',
+    description: 'Cek sisa pakan (Habis/Sedikit/Banyak) & pemberian porsi pagi (60%).',
+    task_type: 'pakan',
+    recurring_type: 'harian',
+    due_time: '07:00:00',
+    linked_data_entry: true,
+    phase_start_offset: 0,
+    phase_end_offset: 90,
+    phase_label: 'Operasional',
+  },
+  {
+    title: 'Manajemen Pakan Sore',
+    description: 'Pemberian porsi serat/hijauan (40%) dan monitoring kebersihan air minum.',
+    task_type: 'pakan',
+    recurring_type: 'harian',
+    due_time: '16:00:00',
+    linked_data_entry: true,
+    phase_start_offset: 0,
+    phase_end_offset: 90,
+    phase_label: 'Operasional',
+  },
+  {
+    title: 'Pembersihan Palung & Sanitasi',
+    description: 'Pengangkatan sisa pakan (orts) dan pembersihan area pakan untuk hygiene maksimal.',
+    task_type: 'kebersihan_kandang',
+    recurring_type: 'harian',
+    due_time: '06:30:00',
+    linked_data_entry: false,
+    phase_start_offset: 0,
+    phase_end_offset: 90,
+    phase_label: 'Operasional',
+  },
+
+  // ── MEDICAL INTERVENTION (Conditional / Automated) ──
+  {
+    ...TRIGGERED_MEDICAL_INTERVENTION,
+    phase_start_offset: 0,
+    phase_end_offset: 90,
+  },
+]
+

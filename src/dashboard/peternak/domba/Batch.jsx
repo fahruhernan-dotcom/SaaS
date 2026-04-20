@@ -1,9 +1,13 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, ChevronRight, X, Calendar, Hash, Warehouse, AlignLeft, LayoutGrid, Search, Target, TrendingUp, Activity, ArrowRight } from 'lucide-react'
+import { 
+  Plus, ChevronRight, X, Calendar, Hash, Warehouse, AlignLeft, 
+  LayoutGrid, Search, Target, TrendingUp, Activity, ArrowRight, Lock, LockOpen 
+} from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { DatePicker } from '@/components/ui/DatePicker'
+import { cn } from '@/lib/utils'
 import {
   useDombaBatches,
   useCreateDombaBatch,
@@ -14,7 +18,9 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
 import { BrokerPageHeader } from '../../_shared/components/transactions/BrokerPageHeader'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { format, addDays } from 'date-fns'
+import { id } from 'date-fns/locale'
+import KandangMiniMap from './KandangMiniMap'
 
 const BASE = '/peternak/peternak_domba_penggemukan'
 
@@ -25,67 +31,131 @@ const STATUS_LABEL = {
 }
 
 function BatchCard({ batch, onClick }) {
+  // Domba: target penggemukan ~90 hari
   const hari   = calcHariDiFarm(batch.start_date, batch.end_date)
+  const TARGET_HARI = 90
+  const sisaHari = Math.max(0, TARGET_HARI - hari)
+  const estimasiPanen = addDays(new Date(batch.start_date), TARGET_HARI)
+  
   const mort   = calcMortalitasDomba(batch.mortality_count, batch.total_animals)
   const st     = STATUS_LABEL[batch.status] ?? STATUS_LABEL.active
   
+  const progress = Math.min(100, Math.round((hari / TARGET_HARI) * 100))
+  const isOverdue = hari > TARGET_HARI
+  const isCritical = mort > 3
+  
+  // ADG dalam gram/hari
+  const adgVal = batch.avg_adg_gram ? Math.round(batch.avg_adg_gram) : null
+  
   return (
     <motion.div
-      whileTap={{ scale: 0.98 }}
-      onClick={onClick}
-      className="group relative bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] hover:border-green-500/30 rounded-[2rem] p-6 cursor-pointer transition-all duration-300 overflow-hidden"
+      className="group bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.12] rounded-3xl p-6 transition-all duration-300"
     >
-      {/* Glow Effect */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 blur-[50px] opacity-0 group-hover:opacity-100 transition-opacity rounded-full -translate-y-1/2 translate-x-1/2" />
-      
-      <div className="flex items-start justify-between mb-6 relative z-10">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <span className="font-['Sora'] font-black text-lg text-white tracking-tight uppercase">{batch.batch_code}</span>
-            <span className={cn("text-[8px] px-2.5 py-1 rounded-lg border font-black tracking-[0.2em]", st.color)}>
-              {st.label}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-             <Warehouse size={12} className="text-[#4B6478]" />
-             <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.1em]">{batch.kandang_name || 'Tanpa Kandang'}</p>
-          </div>
-        </div>
-        <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-green-500/20 group-hover:text-green-400 transition-all shadow-inner">
-           <ChevronRight size={18} />
-        </div>
-      </div>
+      <div className={cn("flex flex-col gap-6", batch.status === 'active' && "lg:flex-row")}>
+        {/* Left Side: Stats & Info */}
+        <div className="flex-1 flex flex-col justify-between min-w-0">
+          <div>
+            <div className="flex items-start justify-between mb-4">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span 
+                    onClick={onClick}
+                    className="font-['Sora'] font-black text-lg text-white hover:text-green-400 cursor-pointer transition-colors uppercase tracking-tight truncate max-w-full"
+                  >
+                    {batch.batch_code}
+                  </span>
+                  <span className={cn("text-[9px] px-2 py-0.5 rounded-lg border font-black tracking-widest uppercase", st.color)}>
+                    {st.label}
+                  </span>
+                  {isOverdue && batch.status === 'active' && (
+                    <span className="text-[9px] px-2 py-0.5 rounded-lg bg-red-500/20 text-red-400 font-black tracking-widest uppercase">OVERDUE</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 text-[#4B6478]">
+                   <Warehouse size={12} />
+                   <p className="text-[11px] font-bold uppercase tracking-wider">{batch.kandang_name || 'Tanpa Kandang'}</p>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-2xl font-black text-white font-['Sora'] leading-none mb-1">{batch.total_animals}</p>
+                <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-widest">Ekor</p>
+              </div>
+            </div>
 
-      <div className="grid grid-cols-4 gap-4 relative z-10">
-        <div className="bg-white/[0.02] rounded-2xl p-3 border border-white/5">
-          <p className="text-[14px] font-black text-white font-['Sora']">{batch.total_animals}</p>
-          <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider mt-0.5">Ekor</p>
+            {/* Summary Info Row */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-3">
+               <div>
+                  <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest mb-1">Durasi</p>
+                  <p className="text-xs font-black text-white uppercase">{hari} Hari</p>
+               </div>
+               {batch.status === 'active' && (
+                 <div>
+                    <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest mb-1">Estimasi Panen</p>
+                    <p className="text-xs font-black text-green-400 uppercase">{format(estimasiPanen, 'dd MMM yyyy', { locale: id })}</p>
+                 </div>
+               )}
+               {batch.status !== 'active' && batch.end_date && (
+                 <div>
+                    <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest mb-1">Tanggal Selesai</p>
+                    <p className="text-xs font-black text-slate-400 uppercase">{format(new Date(batch.end_date), 'dd MMM yyyy', { locale: id })}</p>
+                 </div>
+               )}
+            </div>
+
+            {/* Progress bar */}
+            {batch.status === 'active' && (
+              <div className="mb-6 bg-white/[0.02] border border-white/[0.04] p-3 rounded-2xl">
+                <div className="flex justify-between text-[10px] font-bold uppercase tracking-wide text-[#4B6478] mb-1.5">
+                  <span>Sisa {sisaHari} Hari</span>
+                  <span>Target {TARGET_HARI} hari</span>
+                </div>
+                <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-1000 ${
+                      isOverdue ? 'bg-red-500' : progress > 80 ? 'bg-amber-500' : 'bg-green-500'
+                    }`}
+                    style={{ width: `${Math.min(100, progress)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white/[0.02] border border-white/[0.04] rounded-2xl p-2.5 text-center">
+              <p className="text-[11px] font-black text-white leading-none mb-1">{batch.mortality_count}</p>
+              <p className="text-[9px] text-[#4B6478] font-bold uppercase tracking-widest">Mati</p>
+            </div>
+            <div className="bg-white/[0.02] border border-white/[0.04] rounded-2xl p-2.5 text-center">
+              <p className={`text-[11px] font-black leading-none mb-1 ${mort > 3 ? 'text-red-400' : 'text-green-400'}`}>
+                {mort}%
+              </p>
+              <p className="text-[9px] text-[#4B6478] font-bold uppercase tracking-widest">Mortalitas</p>
+            </div>
+            <div className="bg-white/[0.02] border border-white/[0.04] rounded-2xl p-2.5 text-center">
+              <p className={`text-[11px] font-black leading-none mb-1 ${adgVal ? 'text-green-400' : 'text-[#4B6478]'}`}>
+                {adgVal ? `${adgVal}g` : '—'}
+              </p>
+              <p className="text-[9px] text-[#4B6478] font-bold uppercase tracking-widest">ADG/Hr</p>
+            </div>
+          </div>
         </div>
-        <div className="bg-white/[0.02] rounded-2xl p-3 border border-white/5">
-          <p className="text-[14px] font-black text-white font-['Sora']">{hari}</p>
-          <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider mt-0.5">Hari</p>
-        </div>
-        <div className="bg-white/[0.02] rounded-2xl p-3 border border-white/5">
-          <p className={cn("text-[14px] font-black font-['Sora']", mort > 3 ? 'text-red-400' : 'text-white')}>
-            {mort}%
-          </p>
-          <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider mt-0.5">Mort.</p>
-        </div>
-        <div className="bg-white/[0.02] rounded-2xl p-3 border border-white/5">
-          <p className={cn("text-[14px] font-black font-['Sora']", batch.avg_adg_gram >= 150 ? 'text-green-400' : batch.avg_adg_gram ? 'text-amber-400' : 'text-[#4B6478]')}>
-            {batch.avg_adg_gram ? `${batch.avg_adg_gram}g` : '—'}
-          </p>
-          <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider mt-0.5">ADG</p>
-        </div>
+
+        {/* Right Side: Map Visualization (Only for Active) */}
+        {batch.status === 'active' && (
+          <div className="w-full lg:w-[50%] xl:w-[60%] shrink-0">
+            <KandangMiniMap batchId={batch.id} className="mt-0" />
+          </div>
+        )}
       </div>
 
       {batch.status === 'closed' && batch.net_profit_idr != null && (
-        <div className="mt-5 pt-5 border-t border-white/[0.06] flex justify-between items-center relative z-10">
+        <div className="mt-6 pt-6 border-t border-white/[0.06] flex justify-between items-center relative z-10">
           <div className="flex items-center gap-2">
              <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
              <span className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">NET PROFIT</span>
           </div>
-          <span className={cn("text-base font-black font-['Sora'] tabular-nums", batch.net_profit_idr >= 0 ? 'text-green-400' : 'text-red-400')}>
+          <span className={cn("text-lg font-black font-['Sora'] tabular-nums", batch.net_profit_idr >= 0 ? 'text-green-400' : 'text-red-400')}>
             {batch.net_profit_idr >= 0 ? '+' : ''}
             Rp {(Math.abs(batch.net_profit_idr) / 1_000_000).toFixed(1)} jt
           </span>
@@ -104,13 +174,21 @@ function CreateBatchSheet({ onClose }) {
   }
 
   const { tenant } = useAuth()
-  const { register, handleSubmit, control, formState: { errors } } = useForm({
+  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm({
     defaultValues: {
       batch_code: generateBatchCode(),
-      kandang_name: tenant?.name || '',
+      kandang_name: tenant?.business_name || '',
       start_date: new Date().toISOString().split('T')[0]
     }
   })
+  const [isKandangLocked, setIsKandangLocked] = useState(true)
+  
+  useEffect(() => {
+    if (tenant?.business_name && isKandangLocked) {
+      setValue('kandang_name', tenant.business_name)
+    }
+  }, [tenant?.business_name, isKandangLocked, setValue])
+
   const { mutate: createBatch, isPending } = useCreateDombaBatch()
 
   const onSubmit = (data) => {
@@ -143,7 +221,7 @@ function CreateBatchSheet({ onClose }) {
         <div className="relative z-10 flex items-center justify-between">
             <div>
               <h2 className="font-['Sora'] font-black text-2xl text-white tracking-tight leading-none mb-1.5">New Batch Cycle</h2>
-              <p className="text-[11px] text-[#4B6478] font-black uppercase tracking-widest">Inisialisasi sistem penggemukan domba</p>
+              <p className="text-[11px] text-[#4B6478] font-black uppercase tracking-widest">Inisialisasi sistem fattening domba</p>
             </div>
             <button onClick={onClose} className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-[#4B6478] hover:text-white transition-all">
               <X size={18} />
@@ -174,11 +252,37 @@ function CreateBatchSheet({ onClose }) {
               <Warehouse size={14} className="text-green-500" />
               Gudang / Kandang Produksi <span className="text-red-500/50">*</span>
             </label>
-            <input
-              {...register('kandang_name', { required: true })}
-              placeholder="Contoh: Kandang Area Timur"
-              className={inputClass}
-            />
+            <div className="relative">
+              <input
+                {...register('kandang_name', { required: true })}
+                readOnly={isKandangLocked}
+                placeholder={isKandangLocked ? "Otomatis (Nama Bisnis)" : "Ketik Nama Kandang..."}
+                className={cn(
+                  inputClass, 
+                  "pr-14",
+                  isKandangLocked ? "opacity-70 cursor-not-allowed" : "border-green-500/30 bg-green-500/5"
+                )}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const nextState = !isKandangLocked
+                  setIsKandangLocked(nextState)
+                  if (!nextState) {
+                    // When unlocking, we might want to let user type. 
+                    // When locking back, default it back to tenant name? 
+                  } else {
+                    setValue('kandang_name', tenant?.business_name || '')
+                  }
+                }}
+                className={cn(
+                  "absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-xl flex items-center justify-center transition-all",
+                  isKandangLocked ? "bg-white/5 text-[#4B6478] hover:text-white" : "bg-green-500 text-white shadow-[0_0_15px_rgba(34,197,94,0.3)]"
+                )}
+              >
+                {isKandangLocked ? <Lock size={14} /> : <LockOpen size={14} />}
+              </button>
+            </div>
             {errors.kandang_name && <p className="text-red-400 text-[10px] mt-2 ml-1 font-black uppercase">Wajib Diisi</p>}
           </div>
 
@@ -272,7 +376,7 @@ export default function DombaBatch() {
     <div className="flex flex-col h-full bg-[#06090F]">
       <BrokerPageHeader 
         title="Batch Cycle"
-        subtitle="Manajemen siklus penggemukan dan tracking performa per kelompok."
+        subtitle="Manajemen siklus fattening dan tracking performa per kelompok."
         icon={<TrendingUp size={20} className="text-green-400" />}
         actionButton={
           <div className="flex items-center gap-3">
@@ -309,7 +413,7 @@ export default function DombaBatch() {
                <Button variant="outline" onClick={() => setShowCreate(true)} className="border-white/10 text-white/40 hover:text-white rounded-xl uppercase text-[10px] font-black h-9">Start New Batch</Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="space-y-6">
               {active.map(b => (
                 <BatchCard
                   key={b.id}
@@ -321,7 +425,6 @@ export default function DombaBatch() {
           )}
         </section>
 
-        {/* History Grid */}
         {closed.length > 0 && (
           <section>
             <div className="flex items-center gap-4 mb-6 px-1">
@@ -329,7 +432,7 @@ export default function DombaBatch() {
                <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
                <span className="text-[10px] font-black text-[#4B6478] border border-white/10 px-2.5 py-1 rounded-lg bg-white/5">{closed.length} DATA</span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 opacity-80">
+            <div className="space-y-6">
               {closed.map(b => (
                 <BatchCard
                   key={b.id}

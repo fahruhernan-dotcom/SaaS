@@ -13,7 +13,7 @@ import { useDraggable, useDroppable } from '@dnd-kit/core'
 import {
   Users2, Wand2, GripVertical, Clock, CheckCircle2,
   User as UserIcon, ClipboardList, Utensils, Scale,
-  Syringe, Trash2, Activity, Heart, Lock
+  Syringe, Trash2, Activity, Heart, Lock, Plus
 } from 'lucide-react'
 import { createTimeline, stagger } from 'animejs'
 import {
@@ -115,17 +115,24 @@ function DraggableTaskCard({ task, assignmentOverride, isDragOverlay = false }) 
       <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-inner', typeCfg.bg, typeCfg.border, 'border')}>
         <TypeIcon size={14} className={typeCfg.color} />
       </div>
-
+  
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-['Sora'] font-bold text-white truncate leading-tight">{task.template?.title ?? task.title ?? '—'}</p>
+        <div className="flex items-center gap-2">
+          <p className="text-xs font-['Sora'] font-bold text-white truncate leading-tight">{task.template?.title ?? task.title ?? '—'}</p>
+          {task.status === 'selesai' && task.report_data?.feed_orts_category && (
+            <span className="text-[14px]">
+              {task.report_data.feed_orts_category === 'habis' ? '👍' : task.report_data.feed_orts_category === 'sedikit' ? '🟡' : '🔴'}
+            </span>
+          )}
+        </div>
         <div className="flex items-center gap-2 mt-1">
           {task.kandang_name && (
             <span className="text-[10px] text-[#4B6478] font-bold uppercase tracking-wider truncate">{task.kandang_name}</span>
           )}
           {task.due_time && (
             <span className="flex items-center gap-1 text-[10px] text-[#4B6478] font-bold">
-              <Clock size={10} />
-              {task.due_time.slice(0, 5)}
+              <Clock size={10} className={cn(task.status === 'terlambat' ? "text-red-500" : "text-[#4B6478]")} />
+              <span className={cn(task.status === 'terlambat' && "text-red-400 font-black")}>{task.due_time.slice(0, 5)}</span>
             </span>
           )}
         </div>
@@ -297,11 +304,31 @@ export default function DombaTaskAssign() {
 
   const [assignmentOverrides, setAssignmentOverrides] = useState(new Map())
 
-  const { data: tasks = [], isLoading: tasksLoading } = usePeternakTaskInstances({
+  const { data: rawTasks = [], isLoading: tasksLoading } = usePeternakTaskInstances({
     due_date_from: dateFrom,
     due_date_to: dateTo,
     livestockType // Ensure we filter for domba
   })
+
+  const tasks = useMemo(() => {
+    return [...rawTasks].sort((a, b) => {
+      // Priority 1: Overdue > 24h & Sampling (Emergency)
+      const aIsEmergency = a.status === 'terlambat' && a.title?.includes('Sampling')
+      const bIsEmergency = b.status === 'terlambat' && b.title?.includes('Sampling')
+      
+      if (aIsEmergency && !bIsEmergency) return -1
+      if (!aIsEmergency && bIsEmergency) return 1
+
+      // Priority 2: Status
+      const statusOrder = { terlambat: 0, pending: 1, in_progress: 2, selesai: 3 }
+      if (statusOrder[a.status] !== statusOrder[b.status]) {
+        return statusOrder[a.status] - statusOrder[b.status]
+      }
+
+      // Priority 3: Time
+      return (a.due_time || '').localeCompare(b.due_time || '')
+    })
+  }, [rawTasks])
   const { data: workers = [], isLoading: workersLoading } = useAssignableMembers()
   const updateAssignment = useUpdateTaskAssignment()
   const autoAssignBatch = useAutoAssignBatch()
@@ -400,12 +427,25 @@ export default function DombaTaskAssign() {
 
   useEffect(() => {
     if (!tasksLoading && !workersLoading) {
-      createTimeline({
-        defaults: { easing: 'spring(1, 80, 10, 0)', duration: 800 }
-      })
-      .add('.anime-worker-column', { translateY: [40, 0], opacity: [0, 1], delay: stagger(100) })
-      .add('.anime-unassigned-pool', { translateX: [40, 0], opacity: [0, 1] }, '-=600')
-      .add('.anime-task-card', { scale: [0.9, 1], opacity: [0, 1], delay: stagger(40) }, '-=500')
+      // Small timeout to ensure DOM is fully painted
+      const timeout = setTimeout(() => {
+        const tl = createTimeline({
+          defaults: { easing: 'spring(1, 80, 10, 0)', duration: 800 }
+        })
+
+        if (document.querySelector('.anime-worker-column')) {
+          tl.add('.anime-worker-column', { translateY: [40, 0], opacity: [0, 1], delay: stagger(100) })
+        }
+        
+        if (document.querySelector('.anime-unassigned-pool')) {
+          tl.add('.anime-unassigned-pool', { translateX: [40, 0], opacity: [0, 1] }, '-=600')
+        }
+        
+        if (document.querySelector('.anime-task-card')) {
+          tl.add('.anime-task-card', { scale: [0.9, 1], opacity: [0, 1], delay: stagger(40) }, '-=500')
+        }
+      }, 100)
+      return () => clearTimeout(timeout)
     }
   }, [tasksLoading, workersLoading])
 

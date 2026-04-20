@@ -215,8 +215,8 @@ export default function SembakoAkun() {
                           <AlertDialogCancel className="bg-secondary/10 border-none text-[#F1F5F9] rounded-2xl h-14 font-black uppercase tracking-widest text-[11px]">Batal</AlertDialogCancel>
                           <AlertDialogAction 
                               onClick={async () => {
-                                  await supabase.from('profiles').update({ business_model_selected: false }).eq('auth_user_id', user.id)
-                                  window.location.reload()
+                                   await supabase.from('profiles').update({ business_model_selected: false }).eq('auth_user_id', user.id).eq('tenant_id', profile?.tenant_id)
+                                   window.location.reload()
                               }}
                               className="bg-[#EA580C] hover:bg-[#D44E0A] text-white rounded-2xl h-14 font-black uppercase tracking-widest text-[11px] border-none"
                           >

@@ -36,6 +36,11 @@ import {
   Heart,
   X,
   Settings2,
+  Brain,
+  Zap,
+  Bot,
+  TrendingUp,
+  MessageSquareText,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -80,7 +85,7 @@ import { useTheme } from '@/lib/hooks/useTheme'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 
 export default function AppSidebar({ open, onClose }) {
-  const { user, profile, profiles, tenant, isSuperadmin, switchTenant, loading } = useAuth()
+  const { user, profile, profiles, tenant, ownerTenant, isSuperadmin, switchTenant, loading } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -128,15 +133,15 @@ export default function AppSidebar({ open, onClose }) {
   const [quota, setQuota] = useState({ usage: 0, limit: 0, canAdd: false })
   useEffect(() => {
     async function loadQuota() {
-      if (!tenant || !profile) return
-      const res = await checkQuotaUsage(tenant, profile, 'business')
+      if (!ownerTenant || !profile) return
+      const res = await checkQuotaUsage(ownerTenant, profile, 'business')
       setQuota(res)
     }
     loadQuota()
-  }, [tenant, profile, profiles])
+  }, [ownerTenant, profile, profiles])
 
   const canAddBusiness = isSuperadmin || quota.canAdd
-  const hasPaidPlan = profiles?.some(p => ['pro', 'business'].includes(p.tenants?.plan))
+  const hasPaidPlan = isSuperadmin || ['pro', 'business'].includes(ownerTenant?.plan)
 
   const [activeProfileId, setActiveProfileId] = useState(null)
 
@@ -215,9 +220,9 @@ export default function AppSidebar({ open, onClose }) {
       case 'egg_broker':                        return { icon: '🥚', label: 'Broker Telur' }
       case 'peternak':                          return { icon: '🐔', label: 'Peternak Broiler' }
       case 'peternak_layer':                    return { icon: '🥚', label: 'Peternak Layer' }
-      case 'peternak_domba_penggemukan':        return { icon: '🐑', label: 'Penggemukan Domba' }
+      case 'peternak_domba_penggemukan':        return { icon: '🐑', label: 'Fattening Domba' }
       case 'peternak_domba_breeding':           return { icon: '🐑', label: 'Breeding Domba' }
-      case 'peternak_kambing_penggemukan':      return { icon: '🐐', label: 'Penggemukan Kambing' }
+      case 'peternak_kambing_penggemukan':      return { icon: '🐐', label: 'Fattening Kambing' }
       case 'peternak_kambing_breeding':         return { icon: '🐐', label: 'Breeding Kambing' }
       case 'rumah_potong_rpa':
       case 'rpa':                               return { icon: '🏭', label: 'RPA' }
@@ -379,6 +384,16 @@ export default function AppSidebar({ open, onClose }) {
         { title: 'Cash Flow', url: `${brokerBase}/cashflow`, icon: Wallet, roles: ['owner'] },
       ]
     }] : []),
+
+    // ── INTELIGENSI AI ────────────────────────────────────
+    ...(isPeternak ? [{
+      label: 'INTELIGENSI AI',
+      items: [
+        { title: 'Tanya AI Assistant', url: `${peternakBase}/ai-chat`,      icon: MessageSquareText, badge: 'PRO' },
+        { title: 'Analisis Performa',  url: `${peternakBase}/ai-analysis`,  icon: Brain,             planRequired: 'pro' },
+        { title: 'Prediksi Hasil',    url: `${peternakBase}/ai-prediction`,icon: TrendingUp,        planRequired: 'business' },
+      ]
+    }] : []),
   ]
 
   const filteredNavMain = navMain.map(group => ({
@@ -419,6 +434,9 @@ export default function AppSidebar({ open, onClose }) {
     }
   }
 
+  // ── Subscription: use active working TENANT for feature gating within the dashboard ──
+  // Staff invited to a Pro tenant should get Pro features while working INSIDE that tenant.
+  // ownerTenant is only used for quota (how many businesses you can create yourself).
   const sub = getSubscriptionStatus(tenant)
   const isAccountActive = isSuperadmin || sub.status === 'active' || sub.status === 'trial'
   const daysLeft = isSuperadmin ? 0 : sub.daysLeft
@@ -478,9 +496,9 @@ export default function AppSidebar({ open, onClose }) {
                 align="start"
                 className="w-64 bg-[#0C1319] border border-border rounded-xl p-1.5 shadow-2xl"
               >
-                <div className="px-2 py-1.5 mb-1">
+                <div className="px-2 py-1.5 mb-1 flex items-center justify-between">
                   <p className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
-                    Bisnis Anda
+                    Bisnis Anda ({quota.usage})
                   </p>
                 </div>
                 <ScrollArea className={`${profiles.length > 3 ? 'h-64' : 'h-auto'} pr-2`}>
@@ -489,14 +507,15 @@ export default function AppSidebar({ open, onClose }) {
                     return (
                       <DropdownMenuItem
                         key={p.id}
-                        onClick={() => {
+                        onClick={async () => {
                           const targetVertical = p.tenants?.business_vertical
                           const targetPath = getBerandaPath(targetVertical, p.tenants)
                           
-                          // 1. Switch tenant state
-                          switchTenant(p.tenant_id)
+                          // 1. Switch tenant state (including DB persist)
+                          const ok = await switchTenant(p.tenant_id)
+                          if (!ok) return
                           
-                          // 2. Clear ONLY tenant-specific cache (preserve global data like market-prices)
+                          // 2. Clear ONLY tenant-specific cache
                           queryClient.invalidateQueries({
                             predicate: (query) => {
                               const key = query.queryKey
@@ -515,6 +534,7 @@ export default function AppSidebar({ open, onClose }) {
                           
                           // 3. Navigate to the correct vertical dashboard
                           navigate(targetPath)
+                          setTenantMenuOpen(false)
                         }}
                         className={`gap-3 rounded-lg p-2 cursor-pointer transition-colors focus:bg-accent focus:text-foreground mb-1 ${
                           isActive ? 'bg-opacity-10' : 'hover:bg-accent text-foreground'

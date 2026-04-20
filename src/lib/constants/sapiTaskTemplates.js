@@ -96,7 +96,7 @@ export const TEMPLATE_150_HARI = [
   {
     title: 'Obat cacing (Albendazole)',
     description: 'Berikan Albendazole sesuai bobot badan untuk eliminasi parasit internal bakalan.',
-    task_type: 'kesehatan',
+    task_type: 'obat_cacing',
     recurring_type: 'sekali',
     recurring_days_of_week: null,
     recurring_interval_days: null,
@@ -229,7 +229,7 @@ export const TEMPLATE_150_HARI = [
   {
     title: 'Obat cacing ulang (hari ke-60)',
     description: 'Pemberian obat cacing kedua untuk memastikan efektivitas program deworming.',
-    task_type: 'kesehatan',
+    task_type: 'obat_cacing',
     recurring_type: 'sekali',
     recurring_days_of_week: null,
     recurring_interval_days: null,
@@ -409,7 +409,7 @@ export const TEMPLATE_180_HARI = [
   {
     title: 'Obat cacing (Albendazole)',
     description: 'Berikan Albendazole sesuai bobot badan untuk eliminasi parasit internal bakalan.',
-    task_type: 'kesehatan',
+    task_type: 'obat_cacing',
     recurring_type: 'sekali',
     recurring_days_of_week: null,
     recurring_interval_days: null,
@@ -542,7 +542,7 @@ export const TEMPLATE_180_HARI = [
   {
     title: 'Obat cacing ulang (hari ke-60)',
     description: 'Pemberian obat cacing kedua untuk memastikan efektivitas program deworming.',
-    task_type: 'kesehatan',
+    task_type: 'obat_cacing',
     recurring_type: 'sekali',
     recurring_days_of_week: null,
     recurring_interval_days: null,
@@ -555,7 +555,7 @@ export const TEMPLATE_180_HARI = [
   {
     title: 'Obat cacing ulang (hari ke-120)',
     description: 'Pemberian obat cacing ketiga — tambahan khusus paket 180 hari untuk perlindungan penuh.',
-    task_type: 'kesehatan',
+    task_type: 'obat_cacing',
     recurring_type: 'sekali',
     recurring_days_of_week: null,
     recurring_interval_days: null,

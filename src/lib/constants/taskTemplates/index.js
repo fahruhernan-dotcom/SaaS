@@ -26,6 +26,7 @@ const COMMON_TYPES = {
   pemberian_pakan:   { label: 'Pakan',       icon: Utensils,     color: 'text-orange-400', border: 'border-orange-500/20', bg: 'bg-orange-500/5',   shadow: 'shadow-orange-500/10' },
   timbang:           { label: 'Timbang',     icon: Scale,        color: 'text-blue-400',   border: 'border-blue-500/20',   bg: 'bg-blue-500/5',     shadow: 'shadow-blue-500/10' },
   vaksinasi:         { label: 'Vaksin',      icon: Syringe,      color: 'text-purple-400', border: 'border-purple-500/20', bg: 'bg-purple-500/5',   shadow: 'shadow-purple-500/10' },
+  obat_cacing:       { label: 'Deworming',   icon: Activity,     color: 'text-indigo-400', border: 'border-indigo-500/20', bg: 'bg-indigo-500/5',   shadow: 'shadow-indigo-500/10' },
   kebersihan_kandang:{ label: 'Kebersihan',  icon: Trash2,       color: 'text-emerald-400',border: 'border-emerald-500/20',bg: 'bg-emerald-500/5',  shadow: 'shadow-emerald-500/10' },
   kebersihan:        { label: 'Kebersihan',  icon: Trash2,       color: 'text-emerald-400',border: 'border-emerald-500/20',bg: 'bg-emerald-500/5',  shadow: 'shadow-emerald-500/10' },
   kesehatan:         { label: 'Kesehatan',   icon: Activity,     color: 'text-rose-400',   border: 'border-rose-500/20',   bg: 'bg-rose-500/5',     shadow: 'shadow-rose-500/10' },

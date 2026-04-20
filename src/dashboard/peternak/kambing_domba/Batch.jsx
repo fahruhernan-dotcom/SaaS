@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Search, X, ChevronDown, ClipboardList } from 'lucide-react'
+import { Plus, Search, X, ChevronDown, ClipboardList, Lock, LockOpen } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import {
   useKdBatches, useCreateKdBatch, useCloseKdBatch,
@@ -8,6 +8,7 @@ import {
 } from '@/lib/hooks/useKdPenggemukanData'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
+import { cn } from '@/lib/utils'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
 import { useNavigate } from 'react-router-dom'
 
@@ -100,13 +101,21 @@ export default function KdPenggemukanBatch() {
   const [sheetOpen, setSheetOpen] = useState(false)
 
   // Form state
+  const [isKandangLocked, setIsKandangLocked] = useState(true)
   const [form, setForm] = useState({
     batch_code: '', 
-    kandang_name: tenant?.name || '',
+    kandang_name: tenant?.business_name || '',
     start_date: new Date().toISOString().split('T')[0],
     target_end_date: '', 
     notes: '',
   })
+
+  useEffect(() => {
+    if (tenant?.business_name && isKandangLocked) {
+      setForm(prev => ({ ...prev, kandang_name: tenant.business_name }))
+    }
+  }, [tenant?.business_name, isKandangLocked])
+
 
   const stats = useMemo(() => ({
     total:   allBatches.length,
@@ -131,7 +140,7 @@ export default function KdPenggemukanBatch() {
   function handleCreate() {
     if (!form.batch_code || !form.kandang_name || !form.start_date) return
     createBatch.mutate(form, {
-      onSuccess: () => { setSheetOpen(false); setForm({ batch_code: '', kandang_name: tenant?.name || '', start_date: new Date().toISOString().split('T')[0], target_end_date: '', notes: '' }) }
+      onSuccess: () => { setSheetOpen(false); setForm({ batch_code: '', kandang_name: tenant?.business_name || '', start_date: new Date().toISOString().split('T')[0], target_end_date: '', notes: '' }) }
     })
   }
 
@@ -230,12 +239,28 @@ export default function KdPenggemukanBatch() {
 
             <div>
               <label className="text-xs font-semibold text-[#4B6478] mb-1.5 block">Nama Kandang *</label>
-              <input
-                value={form.kandang_name}
-                onChange={e => setForm(f => ({ ...f, kandang_name: e.target.value }))}
-                placeholder="contoh: KDG-F2"
-                className="w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none focus:border-green-500/40"
-              />
+              <div className="relative">
+                <input
+                  value={form.kandang_name}
+                  onChange={e => setForm(f => ({ ...f, kandang_name: e.target.value }))}
+                  readOnly={isKandangLocked}
+                  placeholder={isKandangLocked ? "Otomatis" : "Nama Kandang..."}
+                  className={cn(
+                    "w-full px-3.5 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-sm text-white placeholder-[#4B6478] focus:outline-none transition-all pr-12",
+                    isKandangLocked ? "opacity-70 cursor-not-allowed" : "border-green-500/30 bg-green-500/5"
+                  )}
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsKandangLocked(!isKandangLocked)}
+                  className={cn(
+                    "absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+                    isKandangLocked ? "bg-white/5 text-[#4B6478] hover:text-white" : "bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.3)]"
+                  )}
+                >
+                  {isKandangLocked ? <Lock size={13} /> : <LockOpen size={13} />}
+                </button>
+              </div>
             </div>
 
             <div>

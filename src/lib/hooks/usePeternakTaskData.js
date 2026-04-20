@@ -242,6 +242,44 @@ export function useUpdateTaskTemplate() {
 }
 
 /**
+ * Soft delete multiple task templates.
+ */
+export function useBulkDeleteTaskTemplates() {
+  const qc = useQueryClient()
+  const { tenant } = useAuth()
+
+  return useMutation({
+    mutationFn: async (ids) => {
+      if (!ids?.length) return
+      
+      // 1. Soft delete templates
+      const { error: errTemplate } = await supabase
+        .from('peternak_task_templates')
+        .update({ is_deleted: true, is_active: false })
+        .in('id', ids)
+        .eq('tenant_id', tenant.id)
+      if (errTemplate) throw errTemplate
+
+      // 2. Soft delete associated uncompleted instances
+      const { error: errInstance } = await supabase
+        .from('peternak_task_instances')
+        .update({ is_deleted: true })
+        .in('template_id', ids)
+        .eq('tenant_id', tenant.id)
+        .neq('status', 'selesai')
+      
+      if (errInstance) throw errInstance
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['peternak-task-templates', tenant?.id] })
+      qc.invalidateQueries({ queryKey: ['peternak-task-instances'] })
+      toast.success('Beberapa template berhasil dihapus')
+    },
+    onError: (err) => toast.error('Gagal menghapus template: ' + err.message)
+  })
+}
+
+/**
  * Soft delete a task template.
  */
 export function useDeleteTaskTemplate() {
@@ -250,12 +288,23 @@ export function useDeleteTaskTemplate() {
 
   return useMutation({
     mutationFn: async (id) => {
-      const { error } = await supabase
+      // 1. Soft delete template
+      const { error: errTemplate } = await supabase
         .from('peternak_task_templates')
         .update({ is_deleted: true, is_active: false })
         .eq('id', id)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (errTemplate) throw errTemplate
+
+      // 2. Soft delete associated uncompleted instances
+      const { error: errInstance } = await supabase
+        .from('peternak_task_instances')
+        .update({ is_deleted: true })
+        .eq('template_id', id)
+        .eq('tenant_id', tenant.id)
+        .neq('status', 'selesai')
+
+      if (errInstance) throw errInstance
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['peternak-task-templates', tenant?.id] })
@@ -430,8 +479,8 @@ export function useApplyDombaTaskTemplate() {
 
   return useMutation({
     mutationFn: async ({ templateType, batchStartDate, kandangName }) => {
-      // For now we only have one type '90' but we use key to be safe
-      const templates = templateType === '90' ? TEMPLATE_DOMBA_PENGGEMUKAN_90 : TEMPLATE_DOMBA_PENGGEMUKAN_90
+      // Map '90' to intensive if it's the package applied
+      const templates = templateType === '90' ? TEMPLATE_DOMBA_INTENSIF_90 : TEMPLATE_DOMBA_PENGGEMUKAN_90
       const baseDate = new Date(batchStartDate)
 
       const rows = templates.map(t => ({

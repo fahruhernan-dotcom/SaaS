@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Plus, Search, X, Tag, Scale, AlertCircle, ChevronsUpDown, 
   Check, Trash2, ListPlus, Edit2, Activity, ArrowLeft, 
-  LayoutGrid, ChevronDown, RefreshCw, Filter, Warehouse, AlignLeft, Hash
+  LayoutGrid, ChevronDown, RefreshCw, Filter, Warehouse, AlignLeft, Hash,
+  Calendar, ChevronRight
 } from 'lucide-react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useForm, Controller, useFieldArray } from 'react-hook-form'
@@ -136,13 +137,15 @@ function AddAnimalSheet({ batchId, animals = [], onClose }) {
     return `${initials}-${new Date().getFullYear()}-${seq}`
   }
 
-  const { register, handleSubmit, watch, control, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, control, setValue, formState: { errors } } = useForm({
     defaultValues: { 
       ear_tag: generateEarTag(),
       sex: 'jantan', 
       entry_date: new Date().toISOString().split('T')[0],
       acquisition_type: 'beli',
-      age_confidence: 'estimasi'
+      age_confidence: 'estimasi',
+      price_per_kg: 0,
+      purchase_price_idr: 0
     }
   })
   const { mutate: addAnimal, isPending } = useAddDombaAnimal()
@@ -173,7 +176,35 @@ function AddAnimalSheet({ batchId, animals = [], onClose }) {
     )
   }
 
-  const labelStyle = "flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-green-500/80 mb-2 ml-1"
+  const entryWeight    = watch('entry_weight_kg')
+  const purchasePrice  = watch('purchase_price_idr')
+  const pricePerKg    = watch('price_per_kg')
+
+  // Reflexive Logic: Weight * Price/Kg = Total
+  useEffect(() => {
+    const w = parseFloat(entryWeight)
+    const p = parseFloat(pricePerKg)
+    if (!isNaN(w) && !isNaN(p) && w > 0 && p > 0) {
+      const total = Math.round(w * p)
+      if (Math.abs(total - purchasePrice) > 1) {
+        setValue('purchase_price_idr', total)
+      }
+    }
+  }, [entryWeight, pricePerKg, setValue, purchasePrice])
+
+  // Reflexive Logic: Total / Weight = Price/Kg
+  useEffect(() => {
+    const w = parseFloat(entryWeight)
+    const t = parseFloat(purchasePrice)
+    if (!isNaN(w) && !isNaN(t) && w > 0 && t > 0) {
+      const perKg = Math.round(t / w)
+      if (Math.abs(perKg - pricePerKg) > 1) {
+        setValue('price_per_kg', perKg)
+      }
+    }
+  }, [purchasePrice, entryWeight, setValue, pricePerKg])
+
+  const labelStyle = "flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.2em] text-green-500/80 mb-2 ml-1"
   const inputContainerStyle = "relative transition-all duration-300 group/input"
   const inputClass = "w-full h-11 bg-[#111C24] border border-white/5 focus:border-green-500/40 rounded-xl text-[14px] font-bold text-white placeholder:text-[#4B6478] focus:bg-[#15232d] focus:outline-none transition-all shadow-inner"
 
@@ -239,7 +270,7 @@ function AddAnimalSheet({ batchId, animals = [], onClose }) {
                         <ChevronsUpDown size={14} className="opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0 bg-[#111C24] border-white/10 shadow-2xl z-[5000]">
+                    <PopoverContent className="w-[300px] p-0 bg-[#111C24] border-white/10 shadow-2xl z-[9999]">
                       <Command className="bg-transparent">
                         <CommandInput placeholder="Cari breed..." className="h-11 border-none focus:ring-0 text-white" />
                         <CommandList className="max-h-[300px] scrollbar-thin">
@@ -282,7 +313,7 @@ function AddAnimalSheet({ batchId, animals = [], onClose }) {
                     <SelectTrigger className="w-full px-4 h-11 bg-[#111C24] border border-white/5 rounded-xl text-sm text-white focus:outline-none focus:border-green-500/50 outline-none transition-all shadow-inner">
                       <SelectValue placeholder="Pilih Kelamin" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#111C24] border border-white/10 rounded-xl shadow-xl z-[5000]">
+                    <SelectContent className="bg-[#111C24] border border-white/10 rounded-xl shadow-xl z-[9999]">
                       <SelectItem value="jantan" className="text-white hover:bg-white/5 cursor-pointer py-2.5 px-3 rounded-lg mx-1 my-0.5">Jantan</SelectItem>
                       <SelectItem value="betina" className="text-white hover:bg-white/5 cursor-pointer py-2.5 px-3 rounded-lg mx-1 my-0.5">Betina</SelectItem>
                     </SelectContent>
@@ -318,7 +349,7 @@ function AddAnimalSheet({ batchId, animals = [], onClose }) {
                     <SelectTrigger className="w-full h-11 bg-[#111C24] border-white/5 rounded-xl text-[12px] text-white outline-none appearance-none focus:border-green-500/40 transition-all shadow-inner">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#111C24] border border-white/10 rounded-xl">
+                    <SelectContent className="bg-[#111C24] border border-white/10 rounded-xl z-[9999]">
                       <SelectItem value="pasti">Pasti (Gigian)</SelectItem>
                       <SelectItem value="estimasi">Estimasi</SelectItem>
                       <SelectItem value="tidak_tahu">Tidak Tahu</SelectItem>
@@ -343,7 +374,7 @@ function AddAnimalSheet({ batchId, animals = [], onClose }) {
                     <SelectTrigger className="w-full h-11 bg-[#111C24] border-white/5 rounded-xl text-[12px] text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#111C24] border border-white/10 rounded-xl">
+                    <SelectContent className="bg-[#111C24] border border-white/10 rounded-xl z-[9999]">
                       <SelectItem value="beli">Beli / Pasar</SelectItem>
                       <SelectItem value="lahir_sendiri">Lahir Sendiri</SelectItem>
                       <SelectItem value="hibah">Hibah</SelectItem>
@@ -365,7 +396,7 @@ function AddAnimalSheet({ batchId, animals = [], onClose }) {
                     <SelectTrigger className="w-full h-11 bg-[#111C24] border-white/5 rounded-xl text-[12px] text-white">
                       <SelectValue placeholder="Pilih Kondisi" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#111C24] border border-white/10 rounded-xl">
+                    <SelectContent className="bg-[#111C24] border border-white/10 rounded-xl z-[9999]">
                       <SelectItem value="sehat">Sehat</SelectItem>
                       <SelectItem value="kurus">Kurus</SelectItem>
                       <SelectItem value="cacat">Cacat Minor</SelectItem>
@@ -408,22 +439,39 @@ function AddAnimalSheet({ batchId, animals = [], onClose }) {
           </div>
 
           {acquisitionType === 'beli' && (
-            <div className={inputContainerStyle}>
-              <label className={labelStyle}>
-                <Hash size={12} className="text-green-500" />
-                Harga Beli (Rp)
-              </label>
-              <Controller
-                control={control}
-                name="purchase_price_idr"
-                render={({ field }) => (
-                  <InputRupiah
-                    value={field.value}
-                    onChange={field.onChange}
-                    className="h-11 bg-[#111C24] border-white/5 shadow-inner rounded-xl"
-                  />
-                )}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className={inputContainerStyle}>
+                <label className={labelStyle}>
+                  <Scale size={12} className="text-green-500" />
+                  Harga Per Kg (Rp)
+                </label>
+                <InputRupiah
+                  value={watch('price_per_kg')}
+                  onChange={(val) => {
+                    setValue('price_per_kg', val)
+                    const w = parseFloat(watch('entry_weight_kg'))
+                    if (!isNaN(w) && w > 0) setValue('purchase_price_idr', Math.round(w * val))
+                  }}
+                  placeholder="0"
+                  className="h-11 bg-[#111C24] border-white/5 shadow-inner rounded-xl"
+                />
+              </div>
+              <div className={inputContainerStyle}>
+                <label className={labelStyle}>
+                  <Tag size={12} className="text-green-500" />
+                  Total Harga Beli (Rp)
+                </label>
+                <InputRupiah
+                  value={watch('purchase_price_idr')}
+                  onChange={(val) => {
+                    setValue('purchase_price_idr', val)
+                    const w = parseFloat(watch('entry_weight_kg'))
+                    if (!isNaN(w) && w > 0) setValue('price_per_kg', Math.round(val / w))
+                  }}
+                  placeholder="0"
+                  className="h-11 bg-[#111C24] border-white/5 shadow-inner rounded-xl"
+                />
+              </div>
             </div>
           )}
 
@@ -693,7 +741,7 @@ function BreedComboboxInTable({ value, onChange }) {
           <ChevronDown size={11} className="opacity-40" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0 bg-[#111C24] border-white/10 shadow-2xl z-50">
+      <PopoverContent className="w-[200px] p-0 bg-[#111C24] border-white/10 shadow-2xl z-[9999]">
         <Command className="bg-transparent">
           <CommandInput placeholder="Cari..." className="h-8 text-[11px]" />
           <CommandList>
@@ -714,27 +762,38 @@ function BreedComboboxInTable({ value, onChange }) {
 
 function BulkAddSheet({ batchId, animalsCount, onClose }) {
   const { tenant } = useAuth()
-  const { mutate: bulkAdd, isPending } = useBulkAddDombaAnimals()
-
   const getEarTag = (idx) => {
     const pfx = (tenant?.business_name || 'DOM').split(' ').map(w => w[0]).join('').slice(0, 3).toUpperCase()
     const seq = String(animalsCount + idx + 1).padStart(4, '0')
     return `${pfx}-${new Date().getFullYear()}-${seq}`
   }
 
-  const { control, register, handleSubmit } = useForm({
+  const [globalPrice, setGlobalPrice] = useState(0)
+
+  const { control, register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     defaultValues: {
       rows: [
-        { ear_tag: getEarTag(0), sex: 'jantan', entry_date: new Date().toISOString().split('T')[0], entry_weight_kg: '', breed: '' },
-        { ear_tag: getEarTag(1), sex: 'jantan', entry_date: new Date().toISOString().split('T')[0], entry_weight_kg: '', breed: '' },
-        { ear_tag: getEarTag(2), sex: 'jantan', entry_date: new Date().toISOString().split('T')[0], entry_weight_kg: '', breed: '' },
+        { ear_tag: getEarTag(0), sex: 'jantan', entry_date: new Date().toISOString().split('T')[0], entry_weight_kg: '', breed: '', price_per_kg: globalPrice, purchase_price_idr: 0 },
+        { ear_tag: getEarTag(1), sex: 'jantan', entry_date: new Date().toISOString().split('T')[0], entry_weight_kg: '', breed: '', price_per_kg: globalPrice, purchase_price_idr: 0 },
+        { ear_tag: getEarTag(2), sex: 'jantan', entry_date: new Date().toISOString().split('T')[0], entry_weight_kg: '', breed: '', price_per_kg: globalPrice, purchase_price_idr: 0 },
       ]
     }
   })
-  const { fields, append, remove } = useFieldArray({ control, name: 'rows' })
+  const { fields, append, remove } = useFieldArray({ control, name: "rows" })
+  const { mutate: bulkAdd, isPending } = useBulkAddDombaAnimals()
+
+  // Apply Global Price to all rows
+  const applyGlobalPrice = (val) => {
+    setGlobalPrice(val)
+    fields.forEach((_, i) => {
+      setValue(`rows.${i}.price_per_kg`, val)
+      const w = parseFloat(watch(`rows.${i}.entry_weight_kg`))
+      if (!isNaN(w) && w > 0) setValue(`rows.${i}.purchase_price_idr`, Math.round(w * val))
+    })
+  }
 
   const onSubmit = (data) => {
-    const valid = data.rows.filter(r => r.ear_tag && r.entry_weight_kg)
+    const valid = data.rows.filter(r => r.ear_tag && (r.entry_weight_kg || r.purchase_price_idr))
     if (!valid.length) return
     bulkAdd({ batch_id: batchId, animals: valid }, { onSuccess: onClose })
   }
@@ -746,27 +805,48 @@ function BulkAddSheet({ batchId, animalsCount, onClose }) {
       exit={{ y: '100%', opacity: 0 }}
       className="fixed inset-0 z-[60] bg-[#0A1015] flex flex-col"
     >
+      {/* Header section */}
       <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between shrink-0 bg-[#0C1319]">
-        <div>
-           <h2 className="font-['Sora'] font-black text-lg text-white">Input Massal (Bulk)</h2>
-           <p className="text-[10px] text-[#4B6478] font-black uppercase tracking-widest">Masukkan banyak domba sekaligus untuk mempercepat proses</p>
+        <div className="flex flex-col gap-1">
+          <h3 className="text-[18px] font-black tracking-tight text-white font-['Sora']">Input Massal (Bulk)</h3>
+          <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-[0.1em]">Masukkan banyak domba sekaligus untuk mempercepat proses</p>
         </div>
-        <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors">
-          <X size={18} />
-        </button>
+
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 bg-white/[0.03] border border-white/5 p-2 px-4 rounded-2xl shadow-xl">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[9px] font-black uppercase tracking-[0.15em] text-green-500/80">Set Harga per Kg All</span>
+              <InputRupiah 
+                value={globalPrice} 
+                onChange={applyGlobalPrice}
+                className="h-8 w-36 bg-[#0D151C] border-white/5 rounded-xl text-xs font-bold shadow-inner"
+                placeholder="Rp 0"
+              />
+            </div>
+          </div>
+          
+          <button 
+            onClick={onClose} 
+            className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-red-500/10 hover:text-red-400 transition-all hover:border-red-500/20"
+          >
+            <X size={20} />
+          </button>
+        </div>
       </div>
-      <div className="flex-1 overflow-auto custom-scrollbar">
-        <div className="min-w-[1000px] p-6">
+
+      <div className="flex-1 overflow-auto bg-[#0A1015] p-6 lg:p-8 scrollbar-thin">
+        <div className="min-w-[1200px] max-w-[1600px] mx-auto">
           <table className="w-full">
             <thead>
               <tr className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] border-b border-white/5">
                 <th className="pb-4 px-3 text-left">Ear Tag *</th>
-                <th className="pb-4 px-3 text-left">Breed</th>
-                <th className="pb-4 px-3 text-left w-28">Kelamin</th>
+                <th className="pb-4 px-3 text-left">Breed *</th>
+                <th className="pb-4 px-3 text-left w-24">Kelamin *</th>
                 <th className="pb-4 px-3 text-left w-24">Berat *</th>
-                <th className="pb-4 px-3 text-left w-44">Tgl Masuk *</th>
-                <th className="pb-4 px-3 text-left">Harga Beli</th>
-                <th className="pb-4 px-3 text-center w-20">Hapus</th>
+                <th className="pb-4 px-3 text-left w-28">Harga Per Kg</th>
+                <th className="pb-4 px-3 text-left w-36">Harga Beli</th>
+                <th className="pb-4 px-3 text-left w-36">Tgl Masuk *</th>
+                <th className="pb-4 px-3 text-center w-16">Hapus</th>
               </tr>
             </thead>
             <tbody>
@@ -790,15 +870,59 @@ function BulkAddSheet({ batchId, animalsCount, onClose }) {
                   </td>
                   <td className="py-2.5 px-3">
                     <div className="relative">
-                      <input {...register(`rows.${i}.entry_weight_kg`)} type="number" step="0.1" className="bg-transparent text-white text-[13px] font-black outline-none border-b border-white/5 focus:border-green-500/50 w-full text-right pr-4 font-['Sora']" placeholder="0" />
+                      <Controller
+                        control={control}
+                        name={`rows.${i}.entry_weight_kg`}
+                        render={({ field }) => (
+                          <input 
+                            {...field}
+                            type="number" 
+                            step="0.1" 
+                            onChange={(e) => {
+                              const val = e.target.value
+                              field.onChange(val)
+                              const pkg = parseFloat(watch(`rows.${i}.price_per_kg`))
+                              const w = parseFloat(val)
+                              if (!isNaN(w) && !isNaN(pkg) && w > 0 && pkg > 0) {
+                                setValue(`rows.${i}.purchase_price_idr`, Math.round(w * pkg))
+                              }
+                            }}
+                            className="bg-transparent text-white text-[13px] font-black outline-none border-b border-white/5 focus:border-green-500/50 w-full text-right pr-4 font-['Sora']" 
+                            placeholder="0" 
+                          />
+                        )}
+                      />
                       <span className="absolute right-0 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#4B6478]">kg</span>
                     </div>
                   </td>
                   <td className="py-2.5 px-3">
-                    <Controller control={control} name={`rows.${i}.entry_date`} render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} className="h-9 px-2 text-[11px] font-bold" />} />
+                    <Controller control={control} name={`rows.${i}.price_per_kg`} render={({ field }) => (
+                      <InputRupiah 
+                        value={field.value} 
+                        onChange={v => {
+                          field.onChange(v)
+                          const w = parseFloat(watch(`rows.${i}.entry_weight_kg`))
+                          if (!isNaN(w) && w > 0) setValue(`rows.${i}.purchase_price_idr`, Math.round(w * v))
+                        }} 
+                        className="h-8 text-[11px] font-bold bg-transparent border-0 border-b border-white/5 rounded-none px-0" 
+                      />
+                    )} />
                   </td>
                   <td className="py-2.5 px-3">
-                    <Controller control={control} name={`rows.${i}.purchase_price_idr`} render={({ field }) => <InputRupiah value={field.value} onChange={field.onChange} className="h-9 text-[11px] font-bold bg-transparent border-0 border-b border-white/5 rounded-none px-0" />} />
+                    <Controller control={control} name={`rows.${i}.purchase_price_idr`} render={({ field }) => (
+                      <InputRupiah 
+                        value={field.value} 
+                        onChange={v => {
+                          field.onChange(v)
+                          const w = parseFloat(watch(`rows.${i}.entry_weight_kg`))
+                          if (!isNaN(w) && w > 0) setValue(`rows.${i}.price_per_kg`, Math.round(v / w))
+                        }} 
+                        className="h-8 text-[11px] font-bold bg-transparent border-0 border-b border-white/5 rounded-none px-0" 
+                      />
+                    )} />
+                  </td>
+                  <td className="py-2.5 px-3">
+                    <Controller control={control} name={`rows.${i}.entry_date`} render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} className="h-8 px-2 text-[10px] font-bold border-0 border-b border-white/5 bg-transparent rounded-none" />} />
                   </td>
                   <td className="py-2.5 px-3 text-center">
                     <button onClick={() => remove(i)} className="w-8 h-8 flex items-center justify-center text-[#4B6478] hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all mx-auto">
@@ -810,8 +934,16 @@ function BulkAddSheet({ batchId, animalsCount, onClose }) {
             </tbody>
           </table>
           <button 
-            onClick={() => append({ ear_tag: getEarTag(fields.length), sex: 'jantan', entry_date: new Date().toISOString().split('T')[0], entry_weight_kg: '', breed: '' })} 
-            className="mt-6 flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[11px] font-black text-green-400 uppercase tracking-widest hover:bg-white/10 transition-all"
+            onClick={() => append({ 
+              ear_tag: getEarTag(fields.length), 
+              sex: 'jantan', 
+              entry_date: new Date().toISOString().split('T')[0], 
+              entry_weight_kg: '', 
+              breed: '',
+              price_per_kg: globalPrice,
+              purchase_price_idr: 0
+            })}
+            className="mt-6 flex items-center gap-2 px-6 py-3 bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 rounded-2xl text-[12px] font-black text-green-500 uppercase tracking-widest transition-all group shadow-lg"
           >
             <Plus size={14} strokeWidth={3} /> Tambah Baris Baru
           </button>
@@ -845,15 +977,38 @@ export default function DombaTernak() {
   const { data: animals = [], isLoading: loadingAnimals } = useDombaAnimals(selectedBatchId)
   const [sheet, setSheet] = useState(null) 
 
+  const isSamplingMode = params.get('sampling') === 'true'
+  const selectedBatch = useMemo(() => batches.find(b => b.id === selectedBatchId), [batches, selectedBatchId])
+
   const filtered = useMemo(() => {
     let list = animals
+    
+    // 1. Status & Search filter
     if (filter !== 'all') list = list.filter(a => a.status === filter)
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(a => a.ear_tag.toLowerCase().includes(q) || (a.breed || '').toLowerCase().includes(q))
     }
+
+    // 2. Intensive v2.0 Sampling Logic (Deterministic 10%)
+    if (isSamplingMode && selectedBatch) {
+      const hari = calcHariDiFarm(selectedBatch.start_date)
+      const periodIndex = Math.floor(hari / 14)
+      const sampleSize = Math.max(1, Math.ceil(animals.length * 0.1))
+      
+      const seed = selectedBatch.id + periodIndex
+      const samplingList = [...animals].sort((a, b) => {
+        const hashA = (a.id + seed).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+        const hashB = (b.id + seed).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+        return hashA - hashB
+      }).slice(0, sampleSize)
+
+      const sampleIds = new Set(samplingList.map(s => s.id))
+      list = list.filter(a => sampleIds.has(a.id))
+    }
+
     return list
-  }, [animals, filter, search])
+  }, [animals, filter, search, isSamplingMode, selectedBatch])
 
   if (loadingBatches) return <LoadingSpinner fullPage />
 

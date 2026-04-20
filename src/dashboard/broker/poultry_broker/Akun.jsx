@@ -265,7 +265,7 @@ export default function Akun() {
                           <AlertDialogCancel className="bg-secondary/10 border-none text-[#F1F5F9] rounded-2xl h-14 font-black uppercase tracking-widest text-[11px]">Batal</AlertDialogCancel>
                           <AlertDialogAction 
                               onClick={async () => {
-                                  await supabase.from('profiles').update({ business_model_selected: false }).eq('auth_user_id', user.id)
+                                  await supabase.from('profiles').update({ business_model_selected: false }).eq('auth_user_id', user.id).eq('tenant_id', profile?.tenant_id)
                                   window.location.reload()
                               }}
                               className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl h-14 font-black uppercase tracking-widest text-[11px] border-none"

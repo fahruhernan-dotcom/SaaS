@@ -304,11 +304,13 @@ export function createPenggemukanHooks(prefix) {
           breed: a.breed || null,
           sex: a.sex,
           entry_date: a.entry_date,
-          entry_weight_kg: parseFloat(a.entry_weight_kg),
-          entry_age_months: a.entry_age_months ? parseInt(a.entry_age_months) : null,
+          entry_weight_kg: a.entry_weight_kg ? parseFloat(a.entry_weight_kg) : 0,
+          age_estimate: a.entry_age_months || a.age_estimate || null,
+          purchase_price_idr: a.purchase_price_idr ? parseInt(a.purchase_price_idr) : 0,
+          source: a.source || null,
           notes: a.notes || null,
           status: 'active',
-          latest_weight_kg: parseFloat(a.entry_weight_kg),
+          latest_weight_kg: a.entry_weight_kg ? parseFloat(a.entry_weight_kg) : 0,
           latest_weight_date: a.entry_date,
           kandang_id: a.kandang_id || null,
           kandang_slot: a.kandang_slot || null,
@@ -377,7 +379,7 @@ export function createPenggemukanHooks(prefix) {
     return useMutation({
       mutationFn: async ({
         animal_id, batch_id, entry_date, entry_weight_kg,
-        weigh_date, weight_kg, bcs, notes,
+        weigh_date, weight_kg, bcs, famacha_score, notes,
       }) => {
         const days_in_farm = calcHariDiFarm(entry_date, weigh_date)
 
@@ -402,7 +404,7 @@ export function createPenggemukanHooks(prefix) {
           .insert({
             tenant_id: tenant.id,
             animal_id, batch_id,
-            weigh_date, weight_kg, bcs,
+            weigh_date, weight_kg, bcs, famacha_score,
             days_in_farm, adg_since_last, notes,
           })
         if (error) throw error
@@ -424,7 +426,7 @@ export function createPenggemukanHooks(prefix) {
       mutationFn: async ({
         batch_id, log_date, kandang_name, animal_count,
         hijauan_kg, konsentrat_kg, dedak_kg, other_feed_kg,
-        sisa_pakan_kg, feed_cost_idr, notes,
+        sisa_pakan_kg, feed_orts_category, feed_cost_idr, notes,
       }) => {
         const { error } = await supabase
           .from(T.feed)
@@ -436,6 +438,7 @@ export function createPenggemukanHooks(prefix) {
             dedak_kg: dedak_kg ?? 0,
             other_feed_kg: other_feed_kg ?? 0,
             sisa_pakan_kg: sisa_pakan_kg ?? 0,
+            feed_orts_category,
             feed_cost_idr, notes,
           }, {
             onConflict: 'batch_id,kandang_name,log_date',
@@ -598,6 +601,64 @@ export function createPenggemukanHooks(prefix) {
     })
   }
 
+  function useUpdateKandangPosition() {
+    const qc = useQueryClient()
+    const { tenant } = useAuth()
+    return useMutation({
+      mutationFn: async ({ kandangId, grid_x, grid_y, batchId }) => {
+        const { error } = await supabase
+          .from(T.kandangs)
+          .update({ grid_x, grid_y })
+          .eq('id', kandangId)
+          .eq('tenant_id', tenant.id)
+        if (error) throw error
+      },
+      onSuccess: (_, { batchId }) => {
+        qc.invalidateQueries({ queryKey: [`${K}-kandangs`, batchId] })
+      }
+    })
+  }
+
+  function useUpdateKandang() {
+    const qc = useQueryClient()
+    const { tenant } = useAuth()
+    return useMutation({
+      mutationFn: async ({ kandangId, updates, batchId }) => {
+        const { error } = await supabase
+          .from(T.kandangs)
+          .update(updates)
+          .eq('id', kandangId)
+          .eq('tenant_id', tenant.id)
+        if (error) throw error
+      },
+      onSuccess: (_, { batchId }) => {
+        qc.invalidateQueries({ queryKey: [`${K}-kandangs`, batchId] })
+        toast.success('Kandang diperbarui')
+      },
+      onError: (err) => toast.error('Gagal update: ' + err.message),
+    })
+  }
+
+  function useDeleteKandang() {
+    const qc = useQueryClient()
+    const { tenant } = useAuth()
+    return useMutation({
+      mutationFn: async ({ kandangId, batchId }) => {
+        const { error } = await supabase
+          .from(T.kandangs)
+          .delete()
+          .eq('id', kandangId)
+          .eq('tenant_id', tenant.id)
+        if (error) throw error
+      },
+      onSuccess: (_, { batchId }) => {
+        qc.invalidateQueries({ queryKey: [`${K}-kandangs`, batchId] })
+        toast.success('Kandang dihapus')
+      },
+      onError: (err) => toast.error('Gagal hapus: ' + err.message),
+    })
+  }
+
   function useMoveAnimalToKandang() {
     const qc = useQueryClient()
     const { tenant } = useAuth()
@@ -701,6 +762,9 @@ export function createPenggemukanHooks(prefix) {
     useDeleteWeightRecord,
     useDeleteHealthLog,
     useCreateKandang,
+    useUpdateKandang,
+    useUpdateKandangPosition,
+    useDeleteKandang,
     useMoveAnimalToKandang,
     useEnsureHoldingPen,
   }

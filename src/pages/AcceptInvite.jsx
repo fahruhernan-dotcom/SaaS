@@ -133,16 +133,29 @@ export default function AcceptInvite() {
 
       const userType = ownerProfile?.user_type || 'peternak';
 
+      // 1. Create/Update membership association
+      const { error: memberError } = await supabase
+        .from('tenant_memberships')
+        .upsert({
+          tenant_id: invitation.tenant_id,
+          auth_user_id: currentUser.id,
+          role: invitation.role || 'staff',
+          full_name: currentUser.user_metadata?.full_name || '',
+        }, { onConflict: 'auth_user_id,tenant_id' });
+
+      if (memberError) throw memberError;
+
+      // 2. Update/Create profile session for this tenant
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({
+        .upsert({
+          auth_user_id: currentUser.id,
           tenant_id: invitation.tenant_id,
           role: invitation.role || 'staff',
           user_type: userType,
           business_model_selected: true,
           onboarded: true,
-        })
-        .eq('auth_user_id', currentUser.id);
+        }, { onConflict: 'auth_user_id,tenant_id' });
       if (profileError) throw profileError;
 
       await supabase
@@ -284,16 +297,29 @@ export default function AcceptInvite() {
 
         const userType = ownerProfile?.user_type || 'broker';
 
+        // 1. Create/Update membership association
+        const { error: memberError } = await supabase
+          .from('tenant_memberships')
+          .upsert({
+            tenant_id: invitation.tenant_id,
+            auth_user_id: user.id,
+            role: invitation.role || 'staff',
+            full_name: user.user_metadata?.full_name || '',
+          }, { onConflict: 'auth_user_id,tenant_id' });
+
+        if (memberError) throw memberError;
+
+        // 2. Update/Create profile session for this tenant
         const { error: profileError } = await supabase
           .from('profiles')
-          .update({
+          .upsert({
+            auth_user_id: user.id,
             tenant_id: invitation.tenant_id,
             role: invitation.role || 'staff',
             user_type: userType,
             business_model_selected: true,
             onboarded: true
-          })
-          .eq('auth_user_id', user.id);
+          }, { onConflict: 'auth_user_id,tenant_id' });
         if (profileError) throw profileError;
 
         await supabase

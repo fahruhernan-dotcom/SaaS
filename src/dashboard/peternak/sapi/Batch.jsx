@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, ChevronRight, X, Calendar, Hash, Warehouse, AlignLeft, LayoutGrid } from 'lucide-react'
+import { Plus, ChevronRight, X, Calendar, Hash, Warehouse, AlignLeft, LayoutGrid, Lock, LockOpen } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
 import { DatePicker } from '@/components/ui/DatePicker'
+import { cn } from '@/lib/utils'
 import {
   useSapiBatches,
   useCreateSapiBatch,
@@ -91,13 +92,22 @@ function CreateBatchSheet({ onClose }) {
     return `SAPI-${dStr}-${rnd}`
   }
 
-  const { register, handleSubmit, control, formState: { errors } } = useForm({
+  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm({
     defaultValues: {
       batch_code: generateBatchCode(),
-      kandang_name: tenant?.name || '',
+      kandang_name: tenant?.business_name || '',
       start_date: new Date().toISOString().split('T')[0]
     }
   })
+
+  const [isKandangLocked, setIsKandangLocked] = useState(true)
+
+  useEffect(() => {
+    if (tenant?.business_name && isKandangLocked) {
+      setValue('kandang_name', tenant.business_name)
+    }
+  }, [tenant?.business_name, isKandangLocked, setValue])
+
   const { mutate: createBatch, isPending } = useCreateSapiBatch()
 
   const onSubmit = (data) => {
@@ -165,9 +175,25 @@ function CreateBatchSheet({ onClose }) {
               <Warehouse size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-500/40 group-focus-within/input:text-amber-500 transition-colors" />
               <input
                 {...register('kandang_name', { required: true })}
-                placeholder="e.g. Kandang A"
-                className={`pl-11 pr-4 ${inputClass}`}
+                readOnly={isKandangLocked}
+                placeholder={isKandangLocked ? "Otomatis" : "Nama Kandang..."}
+                className={`pl-11 pr-14 ${inputClass} ${isKandangLocked ? 'opacity-70 cursor-not-allowed' : 'border-amber-500/30'}`}
               />
+              <button
+                type="button"
+                onClick={() => {
+                  const nextState = !isKandangLocked
+                  setIsKandangLocked(nextState)
+                  if (nextState) {
+                    setValue('kandang_name', tenant?.business_name || '')
+                  }
+                }}
+                className={`absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+                  isKandangLocked ? 'bg-white/5 text-[#4B6478] hover:text-white' : 'bg-amber-500 text-white shadow-[0_0_10px_rgba(245,158,11,0.3)]'
+                }`}
+              >
+                {isKandangLocked ? <Lock size={13} /> : <LockOpen size={13} />}
+              </button>
             </div>
             {errors.kandang_name && <p className="text-red-400 text-[10px] mt-1.5 ml-1 font-medium">Kandang wajib diisi</p>}
           </div>

@@ -1,7 +1,9 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Search, X, Tag, ChevronDown, Heart } from 'lucide-react'
+import { Plus, Search, X, Tag, ChevronDown, Heart, Lock, LockOpen } from 'lucide-react'
 import { useForm } from 'react-hook-form'
+import { useAuth } from '@/lib/hooks/useAuth'
+import { cn } from '@/lib/utils'
 import {
   useSapiBreedingAnimals,
   useAddSapiBreedingAnimal,
@@ -104,12 +106,23 @@ function AnimalCard({ animal }) {
 }
 
 function AddAnimalSheet({ animals, onClose }) {
-  const { register, handleSubmit, watch, formState: { errors } } = useForm({
+  const { tenant } = useAuth()
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     defaultValues: {
       species: 'sapi', acquisition_type: 'beli', parity: 0,
       entry_date: new Date().toISOString().split('T')[0],
+      kandang_name: tenant?.business_name || '',
     }
   })
+
+  const [isKandangLocked, setIsKandangLocked] = useState(true)
+
+  useEffect(() => {
+    if (tenant?.business_name && isKandangLocked) {
+      setValue('kandang_name', tenant.business_name)
+    }
+  }, [tenant?.business_name, isKandangLocked, setValue])
+
   const { mutate: addAnimal, isPending } = useAddSapiBreedingAnimal()
   const acquisitionType = watch('acquisition_type')
   const sex             = watch('sex')
@@ -346,8 +359,26 @@ function AddAnimalSheet({ animals, onClose }) {
           </div>
           <div>
             <label className={labelCls}>Kandang / Kelompok</label>
-            <input {...register('kandang_name')} placeholder="Kandang Indukan A"
-              className={fieldCls} />
+            <div className="relative">
+              <input {...register('kandang_name')} 
+                readOnly={isKandangLocked}
+                placeholder={isKandangLocked ? "Otomatis" : "Nama Kandang..."}
+                className={cn(
+                  fieldCls,
+                  "pr-12",
+                  isKandangLocked ? "opacity-70 cursor-not-allowed" : "border-amber-500/30 bg-amber-500/5"
+                )} />
+              <button
+                type="button"
+                onClick={() => setIsKandangLocked(!isKandangLocked)}
+                className={cn(
+                  "absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+                  isKandangLocked ? "bg-white/5 text-[#4B6478] hover:text-white" : "bg-amber-600 text-white shadow-[0_0_10px_rgba(217,119,6,0.5)]"
+                )}
+              >
+                {isKandangLocked ? <Lock size={13} /> : <LockOpen size={13} />}
+              </button>
+            </div>
           </div>
         </div>
 

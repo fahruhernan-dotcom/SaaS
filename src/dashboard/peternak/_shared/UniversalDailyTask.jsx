@@ -30,21 +30,24 @@ import {
   useAddSapiWeightRecord, 
   useSapiBatches,
   useSapiActiveBatches,
-  useAddSapiHealthLog
+  useAddSapiHealthLog,
+  useAddSapiFeedLog
 } from '@/lib/hooks/useSapiPenggemukanData'
 import {
   useDombaAnimals,
   useAddDombaWeightRecord,
   useDombaBatches,
   useDombaActiveBatches,
-  useAddDombaHealthLog
+  useAddDombaHealthLog,
+  useAddDombaFeedLog
 } from '@/lib/hooks/useDombaPenggemukanData'
 import {
   useKambingAnimals,
   useAddKambingWeightRecord,
   useKambingBatches,
   useKambingActiveBatches,
-  useAddKambingHealthLog
+  useAddKambingHealthLog,
+  useAddKambingFeedLog
 } from '@/lib/hooks/useKambingPenggemukanData'
 import {
   useDombaBreedingAnimals,
@@ -58,6 +61,7 @@ import {
 } from '@/lib/hooks/useKambingBreedingData'
 import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 import { useAuth, getPeternakBasePath } from '@/lib/hooks/useAuth'
+import { TRIGGERED_MEDICAL_INTERVENTION } from '@/lib/constants/taskTemplates/dombaTaskTemplates'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/DatePicker'
@@ -80,6 +84,32 @@ import { id as idLocale } from 'date-fns/locale'
 import { createTimeline, stagger } from 'animejs'
 import { cn } from '@/lib/utils'
 import { getLivestockConfig, CONTAINER_PRESETS } from '@/lib/constants/taskTemplates'
+
+/**
+ * Returns a deterministic sample of animals based on a seed.
+ * Used for 14-day sampling in intensive programs.
+ */
+function getRandomizedSample(animals, seed, percentage = 0.1) {
+  if (!animals.length) return [];
+  const count = Math.max(1, Math.ceil(animals.length * percentage));
+  
+  // Deterministic shuffle using task seed
+  const seededRandom = (str) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return () => {
+      hash = (hash * 16807) % 2147483647;
+      return (hash - 1) / 2147483646;
+    };
+  };
+
+  const rng = seededRandom(seed);
+  const shuffled = [...animals].sort(() => rng() - 0.5);
+  return shuffled.slice(0, count);
+}
 
 // ── CONTAINER CALC FIELD ──────────────────────────────────────────────────────
 // Renders [Wadah ▼] × [Qty] → auto-fills targetKgField in reportData
@@ -187,6 +217,7 @@ const LIVESTOCK_HOOKS_MAP = {
     useBatches: useSapiBatches,
     useActiveBatches: useSapiActiveBatches,
     useAddHealth: useAddSapiHealthLog,
+    useAddFeed: useAddSapiFeedLog,
     weightTable: 'sapi_weight_records'
   },
   domba_penggemukan: {
@@ -195,6 +226,7 @@ const LIVESTOCK_HOOKS_MAP = {
     useBatches: useDombaBatches,
     useActiveBatches: useDombaActiveBatches,
     useAddHealth: useAddDombaHealthLog,
+    useAddFeed: useAddDombaFeedLog,
     weightTable: 'domba_weight_records'
   },
   kambing_penggemukan: {
@@ -203,6 +235,7 @@ const LIVESTOCK_HOOKS_MAP = {
     useBatches: useKambingBatches,
     useActiveBatches: useKambingActiveBatches,
     useAddHealth: useAddKambingHealthLog,
+    useAddFeed: useAddKambingFeedLog,
     weightTable: 'kambing_weight_records'
   },
   domba_breeding: {
@@ -246,6 +279,66 @@ function getUrgencyLabel(task) {
   if (isBefore(dueDateTime, now)) return { label: 'MENDESAK', color: 'bg-rose-500/20 text-rose-400 border-rose-500/30 shadow-lg shadow-rose-900/20' }
   if (diffHours <= 2) return { label: 'SEGERA', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30 shadow-lg shadow-orange-900/20' }
   return { label: 'HARI INI', color: 'bg-[#7C3AED]/20 text-[#A78BFA] border-[#7C3AED]/30 shadow-lg shadow-purple-900/20' }
+}
+
+const getTaskSummarySnippet = (task, reportData, weighingEntries = [], healthEntries = []) => {
+  if (task.status !== 'selesai' && task.status !== 'terlambat') return 'Belum dikerjakan'
+  
+  if (task.task_type === 'pakan') {
+    const feedback = reportData.feed_orts_category;
+    if (feedback === 'habis') return '👍 Selesai (Habis)';
+    if (feedback === 'sedikit') return '🟡 Selesai (Sisa)';
+    if (feedback === 'banyak') return '🔴 Selesai (Sisa)';
+    return 'Selesai';
+  }
+
+  if (task.task_type === 'timbang' && weighingEntries.length > 0) {
+    return `${weighingEntries.length} ekor ditimbang`
+  }
+  
+  try {
+    const rawNotes = task.notes || ''
+    if (!rawNotes.trim().startsWith('{')) {
+      return rawNotes.substring(0, 40)
+    }
+
+    const parsed = JSON.parse(rawNotes)
+    if (parsed._version !== '2.0') return (parsed.notes || '').substring(0, 40)
+
+    const { report = {}, weighing_entries = [], health_entries = [], notes: userNote } = parsed
+
+    // 1. Priority: Multi-animal entries
+    if (task.task_type === 'timbang' && weighing_entries.length > 0) {
+      return `${weighing_entries.length} ${config.animalLabel} ditimbang`
+    }
+    if ((task.task_type === 'vaksinasi' || task.task_type === 'obat_cacing') && health_entries.length > 0) {
+      const first = health_entries[0]
+      const medName = first.medicine_name || first.vaccine_name || 'Obat'
+      return `${health_entries.length} ${config.animalLabel} — ${medName}`
+    }
+
+    // 2. Report Fields (Pakan, etc)
+    const entries = Object.entries(report)
+    if (entries.length > 0) {
+      // Pick fields with units/values
+      const prioritized = entries.filter(([k]) => k.includes('_kg') || k.includes('_liter') || k.includes('jumlah') || k.includes('suhu'))
+      if (prioritized.length > 0) {
+        return prioritized.map(([k, v]) => {
+          const unit = k.includes('_kg') ? 'kg' : k.includes('_liter') ? 'L' : k.includes('suhu') ? '°C' : ''
+          const label = k.replace('_kg', '').replace('_liter', '').replace('_', ' ')
+          return `${v}${unit}`
+        }).join(', ')
+      }
+      return entries[0][1] // Fallback to first field value
+    }
+
+    // 3. User Notes
+    if (userNote) return userNote.substring(0, 40)
+    
+    return null
+  } catch (e) {
+    return task.notes?.substring(0, 40)
+  }
 }
 
 // ── ATMOSPHERIC SCENE ──────────────────────────────────────────────────────────
@@ -421,7 +514,8 @@ export default function UniversalDailyTask({ livestockType = 'sapi_penggemukan' 
   const isStaffView = p.isStaff && !p.isOwner && !p.isManajer
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [currentMonth, setCurrentMonth] = useState(new Date())
-  const [tab, setTab] = useState(isStaffView ? 'semua' : 'pending')
+  const [tab, setTab] = useState('semua')
+  const [auditRange, setAuditRange] = useState('day') // 'day' | 'week' | 'month'
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTask, setSelectedTask] = useState(null)
   const [completeSheetOpen, setCompleteSheetOpen] = useState(false)
@@ -443,11 +537,33 @@ export default function UniversalDailyTask({ livestockType = 'sapi_penggemukan' 
 
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd')
   const tasks = useMemo(() => {
-    const todayTasks = monthTasks.filter(t => t.due_date === selectedDateStr)
-    const todayIds = new Set(todayTasks.map(t => t.id))
-    const carryover = carryoverTasks.filter(t => !todayIds.has(t.id))
-    return [...carryover, ...todayTasks]
-  }, [monthTasks, carryoverTasks, selectedDateStr])
+    if (auditRange === 'day') {
+      const todayTasks = monthTasks.filter(t => t.due_date === selectedDateStr)
+      const todayIds = new Set(todayTasks.map(t => t.id))
+      const carryover = carryoverTasks.filter(t => !todayIds.has(t.id))
+      return [...carryover, ...todayTasks]
+    }
+
+    if (auditRange === 'week') {
+      const start = startOfWeek(selectedDate, { weekStartsOn: 1 })
+      const end = endOfWeek(selectedDate, { weekStartsOn: 1 })
+      return monthTasks.filter(t => {
+        const d = parseISO(t.due_date)
+        return d >= start && d <= end
+      })
+    }
+
+    if (auditRange === 'month') {
+      const start = startOfMonth(selectedDate)
+      const end = endOfMonth(selectedDate)
+      return monthTasks.filter(t => {
+        const d = parseISO(t.due_date)
+        return d >= start && d <= end
+      })
+    }
+
+    return []
+  }, [monthTasks, carryoverTasks, selectedDateStr, auditRange, selectedDate])
 
   const filteredTasks = useMemo(() => {
     let list = tasks
@@ -476,6 +592,7 @@ export default function UniversalDailyTask({ livestockType = 'sapi_penggemukan' 
       return getPriority(a.status) - getPriority(b.status)
     })
   }, [tasks, tab, searchQuery])
+
 
   const stats = useMemo(() => {
     const total = tasks.length
@@ -569,6 +686,53 @@ export default function UniversalDailyTask({ livestockType = 'sapi_penggemukan' 
           </Button>
         )}
       />
+
+      <div className="px-5 max-w-[1700px] mx-auto mb-8">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button 
+            onClick={() => { setAuditRange('day'); setTab('selesai'); setSelectedDate(new Date()); }}
+            className={cn(
+              "h-11 px-6 rounded-2xl transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest",
+              auditRange === 'day' && tab === 'selesai'
+                ? "bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.2)]"
+                : "bg-white/[0.02] border border-white/5 text-[#64748B] hover:bg-white/[0.05] hover:text-white"
+            )}
+          >
+            <Activity size={14} /> Audit Hari Ini
+          </Button>
+          <Button 
+            onClick={() => { setAuditRange('week'); setTab('selesai'); }}
+            className={cn(
+              "h-11 px-6 rounded-2xl transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest",
+              auditRange === 'week' && tab === 'selesai'
+                ? "bg-blue-500/20 border border-blue-500/30 text-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.2)]"
+                : "bg-white/[0.02] border border-white/5 text-[#64748B] hover:bg-white/[0.05] hover:text-white"
+            )}
+          >
+            <CalendarIcon size={14} /> Audit Minggu Ini
+          </Button>
+          <Button 
+            onClick={() => { setAuditRange('month'); setTab('selesai'); }}
+            className={cn(
+              "h-11 px-6 rounded-2xl transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest",
+              auditRange === 'month' && tab === 'selesai'
+                ? "bg-purple-500/20 border border-purple-500/30 text-purple-400 shadow-[0_0_30px_rgba(168,85,247,0.2)]"
+                : "bg-white/[0.02] border border-white/5 text-[#64748B] hover:bg-white/[0.05] hover:text-white"
+            )}
+          >
+            <ClipboardList size={14} /> Audit Bulan Ini
+          </Button>
+
+          {(auditRange !== 'day' || tab !== 'semua') && (
+            <button 
+              onClick={() => { setAuditRange('day'); setTab('semua'); }}
+              className="ml-auto text-[9px] font-black uppercase tracking-[0.3em] text-[#4B6478] hover:text-white transition-colors"
+            >
+              Reset Filter
+            </button>
+          )}
+        </div>
+      </div>
 
       <SummaryTiles stats={stats} />
 
@@ -694,6 +858,7 @@ export default function UniversalDailyTask({ livestockType = 'sapi_penggemukan' 
                            <th className="px-6 py-3.5 text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Aktivitas</th>
                            <th className="px-6 py-3.5 text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Kandang / Ditugaskan</th>
                            <th className="px-6 py-3.5 text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Dikerjakan oleh</th>
+                           <th className="px-6 py-3.5 text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Ringkasan</th>
                            <th className="px-6 py-3.5 text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Waktu</th>
                            <th className="px-6 py-3.5 text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Status</th>
                            <th className="px-6 py-3.5 text-center text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Aksi</th>
@@ -819,6 +984,11 @@ const TaskCard = ({ task, onClick, TASK_TYPE_CFG }) => {
                     <span className="text-[9.5px] font-black text-emerald-400 uppercase tracking-wider">{task.completed_by.full_name}</span>
                     {task.completed_at && <span className="text-[9px] text-emerald-600">{format(new Date(task.completed_at), 'HH:mm')}</span>}
                   </div>
+                )}
+                {task.status === 'selesai' && (
+                  <p className="text-[10px] font-medium text-purple-400/80 mt-1.5 line-clamp-1 italic px-0.5">
+                    {getTaskSummarySnippet(task, config)}
+                  </p>
                 )}
                 {urgency && (
                   <div className={cn("inline-flex items-center gap-1.5 mt-3 px-2 py-0.5 rounded-lg text-[8.5px] font-black border uppercase tracking-[0.15em] shadow-lg", urgency.color)}>
@@ -1403,13 +1573,18 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
 function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, showSuccessAnimation, isOwnerView, config, TASK_TYPE_CFG, TASK_REPORT_CONFIG, livestockType }) {
   const [notes, setNotes] = useState('')
   const [reportData, setReportData] = useState({})
-  const [weighingData, setWeighingData] = useState({ animal_id: '', weight_kg: '', girth_cm: '' })
+  const [weighingData, setWeighingData] = useState({ animal_id: '', weight_kg: '', girth_cm: '', famacha_score: '' })
   const [weighingEntries, setWeighingEntries] = useState([])
+  const [healthEntries, setHealthEntries] = useState([])
+  const [showFamachaGuide, setShowFamachaGuide] = useState(false)
+  const [ortsCategory, setOrtsCategory] = useState(null)
+  const [capturedPhoto, setCapturedPhoto] = useState(null)
 
   const hooks = LIVESTOCK_HOOKS_MAP[livestockType] || LIVESTOCK_HOOKS_MAP.sapi_penggemukan
 
   const updateStatus = useUpdateTaskStatus()
   const addWeight = hooks.useAddWeight()
+  const addFeed = hooks.useAddFeed()
   const linkRecord = useLinkTaskRecord()
 
   const { data: activeBatches = [] } = hooks.useActiveBatches()
@@ -1423,7 +1598,18 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
     return activeBatches[0].id
   }, [task?.batch_id, task?.kandang_name, activeBatches])
 
-  const { data: animals = [] } = hooks.useAnimals(effectiveBatchId)
+  const animalsQuery = hooks.useAnimals(effectiveBatchId)
+  const animals = useMemo(() => {
+    const rawAnimals = animalsQuery.data || []
+    if (!task) return rawAnimals
+    const isSampling = task.title?.includes('Sampling')
+    if (isSampling && rawAnimals.length > 0) {
+      // Use batch_id + due_date as seed to ensure consistency for that specific day
+      const seed = `${task.batch_id || effectiveBatchId}-${task.due_date}`
+      return getRandomizedSample(rawAnimals, seed, 0.1)
+    }
+    return rawAnimals
+  }, [animalsQuery.data, task?.title, task?.batch_id, task?.due_date, effectiveBatchId])
 
   useEffect(() => {
     if (open && task) {
@@ -1433,41 +1619,114 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
           setReportData(parsed.report || {})
           setNotes(parsed.notes || '')
           setWeighingEntries(parsed.weighing_entries || [])
-        } else { setNotes(task.notes || ''); setReportData({}); setWeighingEntries([]) }
-      } catch (e) { setNotes(task.notes || ''); setReportData({}); setWeighingEntries([]) }
-      setWeighingData({ animal_id: '', weight_kg: '', girth_cm: '' })
-    } else if (!open) { setNotes(''); setReportData({}); setWeighingData({ animal_id: '', weight_kg: '', girth_cm: '' }); setWeighingEntries([]) }
+          setHealthEntries(parsed.health_entries || [])
+        } else {
+          setNotes(task.notes || '')
+          setReportData({})
+          setWeighingEntries([])
+          setHealthEntries([])
+        }
+      } catch (e) {
+        setNotes(task.notes || '')
+        setReportData({})
+        setWeighingEntries([])
+        setHealthEntries([])
+      }
+      setWeighingData({ animal_id: '', weight_kg: '', girth_cm: '', famacha_score: '' })
+    } else if (!open) {
+      setNotes('')
+      setReportData({})
+      setWeighingData({ animal_id: '', weight_kg: '', girth_cm: '', famacha_score: '' })
+      setWeighingEntries([])
+      setHealthEntries([])
+      setOrtsCategory(null)
+      setCapturedPhoto(null)
+    }
   }, [open, task])
 
   if (!task) return null
   const isAuditMode = isOwnerView && task.status === 'selesai'
   const isMultiAnimalTask = (task.task_type === 'timbang' || task.task_type === 'vaksinasi' || task.task_type === 'obat_cacing') && config.usesIndividualAnimals && !isAuditMode
-  // Suppress generic reportConfig fields when isMultiAnimalTask (weight captured per-animal)
   const reportConfig = isMultiAnimalTask ? null : TASK_REPORT_CONFIG[task.task_type]
 
+  const createTask = useCreateTaskInstance()
+
   async function handleComplete() {
+    // 1. Photo check
+    const isPakan = task.task_type === 'pakan'
+    if (config?.photoRequired && !capturedPhoto && !isAuditMode) {
+      // Feed task: No photo needed per user decision
+      if (!isPakan) {
+        return toast.error('Foto bukti lapangan wajib dilampirkan')
+      }
+    }
+
+    // 2. Jempol check (Quick Feed)
+    if (isPakan && !ortsCategory && !isAuditMode) {
+      return toast.error('Mohon berikan feedback sisa pakan (Habis/Sedikit/Banyak)')
+    }
+
     try {
       let linkedId = null
       if (isMultiAnimalTask) {
         if (!weighingData.animal_id || !weighingData.weight_kg) return toast.error('Data timbangan wajib diisi')
         const animal = animals.find(a => a.id === weighingData.animal_id)
         if (!animal) return toast.error(`${config.animalLabel} tidak ditemukan`)
+        
         const record = await addWeight.mutateAsync({ 
           animal_id: weighingData.animal_id, 
           batch_id: effectiveBatchId, 
           entry_date: animal.entry_date, 
-          entry_weight_kg: animal.entry_weight_kg, weigh_date: format(new Date(), 'yyyy-MM-dd'), 
+          entry_weight_kg: animal.entry_weight_kg, 
+          weigh_date: format(new Date(), 'yyyy-MM-dd'), 
           weight_kg: parseFloat(weighingData.weight_kg), 
-          girth_cm: weighingData.girth_cm ? parseFloat(weighingData.girth_cm) : null, 
-          weigh_method: 'timbang_langsung', notes: `Auto: ${task.title}` 
+          girth_cm: weighingData.girth_cm ? parseFloat(weighingData.girth_cm) : null,
+          famacha_score: weighingData.famacha_score ? parseInt(weighingData.famacha_score) : null,
+          weigh_method: 'timbang_langsung', 
+          notes: `Auto: ${task.title}` 
         })
+        
         if (record?.id) linkedId = record.id
+
+        // ── AUTO-TASKING LOGIC (FAMACHA 4/5) ──
+        if (livestockType === 'domba_penggemukan' && weighingData.famacha_score >= 4) {
+          await createTask.mutateAsync({
+            ...TRIGGERED_MEDICAL_INTERVENTION,
+            batch_id: effectiveBatchId,
+            due_date: format(new Date(), 'yyyy-MM-dd'),
+            description: `${TRIGGERED_MEDICAL_INTERVENTION.description} (Deteksi: ${animal.ear_tag})`,
+            livestock_type: 'domba_penggemukan'
+          })
+          toast.warning(`Peringatan: Skor FAMACHA Tinggi (${weighingData.famacha_score}). Tugas Intervensi Medis telah ditambahkan secara otomatis.`, {
+            duration: 6000,
+            icon: <AlertTriangle className="text-amber-500" />
+          })
+        }
       }
+
+      if (task.task_type === 'pakan') {
+        if (!ortsCategory) return toast.error('Pilih kategori sisa pakan (jempol) terlebih dahulu')
+        
+        await addFeed.mutateAsync({
+          batch_id: effectiveBatchId,
+          log_date: format(new Date(), 'yyyy-MM-dd'),
+          feed_orts_category: ortsCategory,
+          hijauan_kg: parseFloat(reportData.hijauan_kg || 0),
+          konsentrat_kg: parseFloat(reportData.konsentrat_kg || 0),
+          notes: notes.trim() || `Auto: ${task.title}`
+        })
+      }
+
       const finalNotes = JSON.stringify({ 
         _version: '2.0', 
-        report: reportData, 
+        report: { 
+          ...reportData,
+          ...(task.task_type === 'pakan' ? { feed_orts_category: ortsCategory } : {})
+        }, 
         notes: notes.trim(),
-        batch_id: effectiveBatchId 
+        batch_id: effectiveBatchId,
+        weighing_entries: weighingEntries,
+        health_entries: healthEntries
       })
       await updateStatus.mutateAsync({ id: task.id, status: 'selesai', notes: finalNotes })
       if (linkedId) await linkRecord.mutateAsync({ id: task.id, linked_record_id: linkedId, linked_record_table: hooks.weightTable })
@@ -1516,29 +1775,77 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
 
               <div className="space-y-8">
                 <div className="p-6 border border-white/5 bg-white/[0.02] rounded-3xl flex items-center gap-5">
-                      <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center", TASK_TYPE_CFG[task.task_type]?.bg)}>
-                        {React.createElement(TASK_TYPE_CFG[task.task_type]?.icon || ClipboardList, { size: 24, className: TASK_TYPE_CFG[task.task_type]?.color })}
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-xl text-white line-clamp-2">{task.title}</h4>
-                        <p className="text-xs font-semibold text-slate-400 mt-1 flex items-center gap-2">
-                          <MapPin size={12} /> {task.kandang_name || 'Global Farm'} 
-                          • {task.status === 'selesai' && task.completed_at 
-                              ? `Selesai: ${format(new Date(task.completed_at), "eeee, d MMM HH:mm", { locale: idLocale })}`
-                              : `${task.due_time?.substring(0, 5)} WIB`
-                            }
-                        </p>
-                      </div>
+                  <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center", TASK_TYPE_CFG[task.task_type]?.bg)}>
+                    {React.createElement(TASK_TYPE_CFG[task.task_type]?.icon || ClipboardList, { size: 24, className: TASK_TYPE_CFG[task.task_type]?.color })}
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-xl text-white line-clamp-2 leading-tight">{task.title}</h4>
+                    <p className="text-xs font-semibold text-slate-400 mt-1.5 flex items-center gap-2">
+                      <MapPin size={12} className="text-slate-500" /> {task.kandang_name || 'Global Farm'} 
+                      <span className="text-white/10">•</span>
+                      {task.status === 'selesai' && task.completed_at 
+                          ? `Selesai: ${format(new Date(task.completed_at), "HH:mm", { locale: idLocale })}`
+                          : `${task.due_time?.substring(0, 5)} WIB`
+                        }
+                    </p>
+                  </div>
                 </div>
 
-                {(reportConfig || isMultiAnimalTask || (isAuditMode && Object.keys(reportData).length > 0)) && (
+                {(reportConfig || isMultiAnimalTask || (isAuditMode && (Object.keys(reportData).length > 0 || weighingEntries.length > 0 || healthEntries.length > 0))) && (
                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                       <div className="flex items-center gap-4 px-4 text-[#64748B]">
-                         <div className="h-[1px] flex-1 bg-white/5" /><span className="text-[9px] font-black uppercase tracking-[0.4em]">{isAuditMode ? 'Data Laporan' : 'Reporting Schema'}</span><div className="h-[1px] flex-1 bg-white/5" />
+                         <div className="h-[1px] flex-1 bg-white/5" /><span className="text-[9px] font-black uppercase tracking-[0.4em]">{isAuditMode ? 'Data Laporan Lapangan' : 'Reporting Schema'}</span><div className="h-[1px] flex-1 bg-white/5" />
                       </div>
+
+                      {isAuditMode && (weighingEntries.length > 0 || healthEntries.length > 0) && (
+                         <div className="space-y-6">
+                            {weighingEntries.length > 0 && (
+                              <div className="space-y-3">
+                                <div className="flex items-center gap-2 ml-2">
+                                  <Scale size={14} className="text-blue-400" />
+                                  <span className="text-[10px] font-black text-blue-300 uppercase tracking-widest">Detail Timbangan</span>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                  {weighingEntries.map((e, idx) => (
+                                    <div key={idx} className="p-3 rounded-2xl bg-white/[0.03] border border-white/5 flex flex-col gap-1">
+                                      <span className="text-[10px] font-black text-white">{e.eartag}</span>
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-sm font-display font-black text-blue-400">{e.weight_kg}kg</span>
+                                        {e.girth_cm && <span className="text-[10px] text-[#4B6478]">{e.girth_cm}cm</span>}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {healthEntries.length > 0 && (
+                              <div className="space-y-3">
+                                <div className="flex items-center gap-2 ml-2">
+                                  <Activity size={14} className="text-emerald-400" />
+                                  <span className="text-[10px] font-black text-emerald-300 uppercase tracking-widest">Detail Penanganan</span>
+                                </div>
+                                <div className="grid grid-cols-1 gap-2">
+                                  {healthEntries.map((e, idx) => (
+                                    <div key={idx} className="p-3 px-4 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-between">
+                                      <div className="flex flex-col gap-0.5">
+                                        <span className="text-[10px] font-black text-white uppercase tracking-wider">{e.eartag}</span>
+                                        <span className="text-[11px] font-medium text-emerald-400/80">{e.medicine_name || 'Obat/Vaksin'}</span>
+                                      </div>
+                                      <div className="text-right">
+                                        <span className="text-xs font-bold text-white">{e.dosage || '1'}ml</span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                         </div>
+                      )}
+
                       <div className="grid grid-cols-1 gap-8">
-                         {isMultiAnimalTask && animals.length === 0 && <NoBatchWarning />}
-                         {isMultiAnimalTask && animals.length > 0 && (
+                         {isMultiAnimalTask && !isAuditMode && animals.length === 0 && <NoBatchWarning />}
+                         {isMultiAnimalTask && !isAuditMode && animals.length > 0 && (
                             <div className="space-y-6 pt-2 pb-6 border-b border-white/5">
                                <div className="space-y-4">
                                   <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">Pilih {config.animalLabel} (Identitas) *</label>
@@ -1560,18 +1867,79 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
                                   <div className="space-y-4"><label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">Berat Aktual *</label><InputNumber value={weighingData.weight_kg} onChange={v => setWeighingData(w => ({ ...w, weight_kg: v }))} suffix=" kg" placeholder="0.0" className="h-16 rounded-[28px] bg-black/40 border-white/5 font-display text-xl px-8 focus:bg-black/60 transition-all border-none shadow-inner w-full" /></div>
                                   <div className="space-y-4"><label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">Lingkar Dada</label><InputNumber value={weighingData.girth_cm} onChange={v => setWeighingData(w => ({ ...w, girth_cm: v }))} suffix=" cm" placeholder="0.0" className="h-16 rounded-[28px] bg-black/40 border-white/5 font-display text-xl px-8 focus:bg-black/60 transition-all border-none shadow-inner w-full" /></div>
                                </div>
+
+                               {livestockType === 'domba_penggemukan' && (
+                                 <div className="space-y-5 animate-in slide-in-from-top-2 duration-500">
+                                   <div className="flex items-center justify-between ml-4">
+                                      <label className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em]">Skor FAMACHA (Wana Kelopak Mata)</label>
+                                      <button onClick={() => setShowFamachaGuide(true)} className="flex items-center gap-1.5 px-3 py-1 bg-white/5 hover:bg-white/10 rounded-full text-[9px] font-bold text-slate-400 transition-all">
+                                        <Info size={10} /> Panduan Visual
+                                      </button>
+                                   </div>
+                                   <div className="grid grid-cols-5 gap-2">
+                                     {[1, 2, 3, 4, 5].map((score) => {
+                                       const colors = [
+                                         '', // Unused
+                                         'bg-rose-500 border-rose-400 text-white', // 1: Merah (Normal)
+                                         'bg-pink-400 border-pink-300 text-white', // 2: Merah Jambu (Aman)
+                                         'bg-rose-200 border-rose-100 text-rose-800', // 3: Pucat Sedikit (Waspada)
+                                         'bg-slate-200 border-white text-slate-700', // 4: Pucat (Bahaya/Anemia)
+                                         'bg-white border-slate-200 text-slate-900', // 5: Putih (Kritis/Parasit)
+                                       ]
+                                       const isSelected = weighingData.famacha_score === score.toString()
+                                       return (
+                                         <button
+                                           key={score}
+                                           onClick={() => setWeighingData(w => ({ ...w, famacha_score: score.toString() }))}
+                                           className={cn(
+                                             "h-12 rounded-2xl flex items-center justify-center text-lg font-black transition-all border-2",
+                                             isSelected ? colors[score] : "bg-black/20 border-white/5 text-[#4B6478] hover:bg-black/40"
+                                           )}
+                                         >
+                                           {score}
+                                         </button>
+                                       )
+                                     })}
+                                   </div>
+                                   <p className="text-[10px] text-center text-[#4B6478] uppercase font-bold tracking-widest px-4">
+                                      {weighingData.famacha_score === '1' && '1: Optimal (Merah)'}
+                                      {weighingData.famacha_score === '2' && '2: Aman (Pink)'}
+                                      {weighingData.famacha_score === '3' && '3: Waspada (Pink Pucat)'}
+                                      {weighingData.famacha_score === '4' && '4: Bahaya (Pucat/Anemia)'}
+                                      {weighingData.famacha_score === '5' && '5: Kritis (Putih/Cacingan)'}
+                                      {!weighingData.famacha_score && 'Pilih skor 1-5 berdasarkan cek fisik'}
+                                   </p>
+                                 </div>
+                               )}
                             </div>
                          )}
-                         {isAuditMode && Object.keys(reportData).length > 0 && !reportConfig && (
-                           <div className="space-y-3">
-                             {Object.entries(reportData).map(([k, v]) => (
-                               <div key={k} className="flex justify-between items-center px-4 py-3 rounded-xl bg-white/[0.03] border border-white/5">
-                                 <span className="text-[10px] font-black text-[#64748B] uppercase tracking-wider">{k}</span>
-                                 <span className="text-sm font-bold text-white">{Array.isArray(v) ? v.join(', ') : v}</span>
+
+                                                   {isAuditMode && task.task_type === 'pakan' && (reportData.feed_orts_category || ortsCategory) && (
+                             <div className="flex flex-col gap-1 p-6 rounded-3xl bg-orange-500/5 border border-orange-500/10">
+                               <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest leading-none mb-2">Kondisi Sisa Pakan Sebelumnya</span>
+                               <div className="flex items-center gap-3">
+                                 <span className="text-2xl animate-pulse">
+                                   {(reportData.feed_orts_category || ortsCategory) === 'habis' ? '👍' : (reportData.feed_orts_category || ortsCategory) === 'sedikit' ? '🟡' : '🔴'}
+                                 </span>
+                                 <span className="text-xl font-display font-black text-white uppercase tracking-tight">
+                                   {(reportData.feed_orts_category || ortsCategory) === 'habis' ? 'Habis / Puas' : (reportData.feed_orts_category || ortsCategory) === 'sedikit' ? 'Sisa Sedikit' : 'Sisa Banyak'}
+                                 </span>
                                </div>
-                             ))}
-                           </div>
+                             </div>
+                          )}
+
+                          {isAuditMode && Object.keys(reportData).length > 0 && !reportConfig && (
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {Object.entries(reportData).map(([k, v]) => (
+                                <div key={k} className="flex flex-col gap-1 p-5 rounded-3xl bg-white/[0.03] border border-white/5">
+                                  <span className="text-[9px] font-black text-[#64748B] uppercase tracking-widest">{k.replace('_', ' ')}</span>
+                                  <span className="text-lg font-bold text-white leading-tight">{Array.isArray(v) ? v.join(', ') : v}</span>
+                                </div>
+                              ))}
+                            </div>
                          )}
+
                          {reportConfig?.fields.map(f => (
                             <div key={f.id} className="space-y-4">
                                <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">{f.label} {f.required && !isAuditMode && '*'}</label>
@@ -1595,14 +1963,49 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
                    </div>
                 )}
 
-                {(notes || !isAuditMode) && (
+                                 {task.task_type === 'pakan' && !isAuditMode && (
+                    <div className="space-y-6 pt-2 animate-in slide-in-from-top-4 duration-700">
+                       <div className="flex flex-col gap-2 ml-4">
+                          <label className="text-[10px] font-black text-orange-400 uppercase tracking-[0.4em]">Feedback Sisa Pakan Sebelumnya *</label>
+                          <p className="text-[9px] font-medium text-slate-500 uppercase tracking-widest">Wajib diisi untuk akurasi monitoring pakan</p>
+                       </div>
+                       
+                       <div className="grid grid-cols-3 gap-3">
+                        {[
+                          { id: 'habis', label: 'Habis/Puas', icon: '👍', active: 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_30px_rgba(16,185,129,0.3)]' },
+                          { id: 'sedikit', label: 'Sisa Sedikit', icon: '🟡', active: 'bg-amber-500 border-amber-400 text-slate-900 shadow-[0_0_30px_rgba(245,158,11,0.3)]' },
+                          { id: 'banyak', label: 'Sisa Banyak', icon: '🔴', active: 'bg-rose-500 border-rose-400 text-white shadow-[0_0_30px_rgba(244,63,94,0.3)]' },
+                        ].map((opt) => {
+                          const isSelected = ortsCategory === opt.id
+                          return (
+                            <button
+                              key={opt.id}
+                              onClick={() => setOrtsCategory(opt.id)}
+                              className={cn(
+                                "flex flex-col items-center justify-center py-6 rounded-[32px] border-2 transition-all duration-300 active:scale-95 group",
+                                isSelected ? opt.active : "bg-black/20 border-white/5 text-slate-500 hover:bg-black/40 hover:border-white/10"
+                              )}
+                            >
+                              <span className={cn("text-3xl mb-2 transition-transform duration-500", isSelected ? "scale-125 rotate-[12deg]" : "group-hover:scale-110")}>
+                                {opt.icon}
+                              </span>
+                              <span className="text-[10px] font-black uppercase tracking-[0.1em]">{opt.label}</span>
+                            </button>
+                          )
+                        })}
+                       </div>
+                    </div>
+                 )}
+
+                 {(notes || !isAuditMode) && (
+
                   <div className="space-y-4">
                     <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">
                       {isAuditMode ? 'Catatan dari Lapangan' : 'Observation Notes'}
                     </label>
                     {isAuditMode ? (
                       notes ? (
-                        <div className="w-full bg-black/20 border border-white/5 rounded-[40px] p-8 text-sm text-white min-h-[80px]">{notes}</div>
+                        <div className="w-full bg-black/20 border border-white/5 rounded-[40px] p-8 text-sm text-white min-h-[80px] leading-relaxed">{notes}</div>
                       ) : (
                         <div className="w-full bg-black/20 border border-white/5 rounded-[40px] p-8 text-sm text-[#4B6478] min-h-[80px]">Tidak ada catatan.</div>
                       )
@@ -1630,6 +2033,51 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
           </div>
         )}
       </SheetContent>
+
+      <Sheet open={showFamachaGuide} onOpenChange={setShowFamachaGuide}>
+        <SheetContent side="bottom" className="bg-[#0C1319]/98 border-white/5 outline-none p-0 flex flex-col z-[10000] rounded-t-[32px] h-fit max-h-[90vh]">
+          <div className="p-6 md:p-10 space-y-6 overflow-y-auto custom-scrollbar">
+            <header className="space-y-1">
+              <div className="w-10 h-1 bg-white/10 rounded-full mx-auto mb-3" />
+              <h2 className="font-display font-black text-2xl text-white tracking-tight">Panduan FAMACHA</h2>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Gunakan standar visual cek anemia.</p>
+            </header>
+            
+            <div className="p-3 bg-white/5 rounded-[24px] border border-white/10 overflow-hidden shadow-2xl">
+              <img 
+                src="/famacha_guide.png" 
+                alt="FAMACHA Guide" 
+                className="w-full h-auto rounded-xl opacity-90 hover:opacity-100 transition-opacity"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&q=80&w=800";
+                }}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20">
+                  <span className="text-[9px] font-black text-rose-400 uppercase tracking-widest block mb-1">Skor 1 & 2</span>
+                  <p className="text-[10px] font-medium text-white/70 leading-tight">Optimal. Mata merah/pink segar. Tidak perlu obat.</p>
+                </div>
+                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                  <span className="text-[9px] font-black text-amber-400 uppercase tracking-widest block mb-1">Skor 3</span>
+                  <p className="text-[10px] font-medium text-white/70 leading-tight">Waspada. Mulai pucat. Monitor pakan & parasit.</p>
+                </div>
+              </div>
+              <div className="p-4 rounded-xl bg-red-500/20 border border-red-500/30">
+                <span className="text-[9px] font-black text-red-400 uppercase tracking-widest block mb-1">Skor 4 & 5 (Kritis)</span>
+                <p className="text-[10px] font-medium text-white/70 leading-tight">Indikasi anemia berat. Sistem otomatis memicu **Intervensi Medis**.</p>
+              </div>
+            </div>
+
+            <Button onClick={() => setShowFamachaGuide(false)} className="w-full h-14 rounded-2xl bg-white text-black font-black text-sm uppercase tracking-widest shadow-2xl hover:bg-slate-200 transition-all">
+              Tutup Panduan
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </Sheet>
   )
 }

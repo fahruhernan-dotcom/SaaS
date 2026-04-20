@@ -146,7 +146,7 @@ function TabPerforma({ batches, navigate }) {
         </div>
         <div>
           <p className="text-xs font-black text-blue-300 mb-1 uppercase tracking-widest">Tips Analisa</p>
-          <p className="text-[11px] text-slate-400 leading-relaxed font-medium">Target ADG domba penggemukan (Feedlot) ideal adalah di atas 150g/hari. Jika realita di bawah target, periksa palatabilitas pakan dan manajemen stres lingkungan.</p>
+          <p className="text-[11px] text-slate-400 leading-relaxed font-medium">Target ADG domba fattening (Feedlot) ideal adalah di atas 150g/hari. Jika realita di bawah target, periksa palatabilitas pakan dan manajemen stres lingkungan.</p>
         </div>
       </div>
     </div>

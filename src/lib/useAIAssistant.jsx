@@ -14,6 +14,8 @@ import { toast } from 'sonner'
 import { validateBusinessRules } from './aiValidation'
 import { useBusinessSnapshot } from './useBusinessSnapshot'
 import { insertBusinessData } from './aiTransactionInserter'
+import { useAIQuota } from './hooks/useAIQuota'
+import { AI_PLAN_CONFIG } from './constants/planGating'
 
 const GLM_API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions'
 
@@ -95,6 +97,7 @@ const UNDO_WINDOW_MS = 8000
 export function useAIAssistant({ userType, contextPage }) {
   const { profile, tenant } = useAuth()
   const { getAccumulatedTotal, getParentContext } = useBusinessSnapshot()
+  const aiQuota = useAIQuota(tenant)
 
   // ── Core State ────────────────────────────────────────────
   const [messages, setMessages] = useState([])
@@ -486,6 +489,15 @@ export function useAIAssistant({ userType, contextPage }) {
 
     if (!checkRateLimit()) { toast.error('Pelan-pelan boss! Max 15 pesan/menit.'); return }
 
+    // ── QUOTA CHECK ───────────────────────────────────────
+    if (aiQuota.quotaStatus === 'exceeded') {
+      const errMsg = 'Kuota AI bulan ini sudah habis. Silakan upgrade plan untuk lanjut.'
+      setMessages(prev => [...prev, { role: 'user', content: userMessage.trim(), timestamp: new Date().toISOString() }])
+      setMessages(prev => [...prev, { role: 'assistant', content: errMsg, timestamp: new Date().toISOString(), isQuotaBlocked: true }])
+      setAgentState(AGENT_STATE.IDLE)
+      return
+    }
+
     const userMsg = { role: 'user', content: userMessage.trim(), timestamp: new Date().toISOString() }
     setMessages(prev => [...prev, userMsg])
     setAgentState(AGENT_STATE.PRE_CHECKING)
@@ -534,6 +546,8 @@ export function useAIAssistant({ userType, contextPage }) {
       const systemPrompt = buildSystemPrompt({
         userType, businessName: tenant.business_name || '', userName: profile.full_name || '',
         contextPage, snapshot, today: new Date().toISOString().split('T')[0],
+        vertical: tenant?.business_vertical || 'generic',
+        businessModel: 'generic',
       })
 
       // ── SHARED REQUEST BODY ───────────────────────────────

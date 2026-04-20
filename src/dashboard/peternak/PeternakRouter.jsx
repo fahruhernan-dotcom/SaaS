@@ -99,9 +99,15 @@ import KambingPerahTernak     from './kambing_perah/Ternak'
 import KambingPerahInventory  from './kambing_perah/Inventory'
 import KambingPerahPenjualan  from './kambing_perah/Penjualan'
 
+// AI pages
+import TanyaAIPage from './ai/TanyaAIPage'
+import AnalisisPerformaPage from './ai/AnalisisPerformaPage'
+import PrediksiHasilPage from './ai/PrediksiHasilPage'
+
 // Shared pages
 import HargaPasar from '../_shared/pages/HargaPasar'
 import Akun from '../_shared/pages/Akun'
+import ComingSoon from '../_shared/components/ComingSoon'
 import { useAuth } from '@/lib/hooks/useAuth'
 import LoadingSpinner from '../_shared/components/LoadingSpinner'
 
@@ -148,6 +154,9 @@ export function PeternakPageRouter({ page }) {
       'akun':         <Akun />,
       'tim':          <BroilerTim />,
       'atur':         <PeternakAdminGuard><BroilerFarmSettings /></PeternakAdminGuard>,
+      'ai-chat':      <TanyaAIPage />,
+      'ai-analysis':  <AnalisisPerformaPage />,
+      'ai-prediction':<PrediksiHasilPage />,
     },
     peternak_layer: {
       beranda:      <LayerBeranda />,
@@ -157,6 +166,9 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar':<HargaPasar />,
       tim:           <BroilerTim />,
       'akun':       <Akun />,
+      'ai-chat':      <TanyaAIPage />,
+      'ai-analysis':  <AnalisisPerformaPage />,
+      'ai-prediction':<PrediksiHasilPage />,
     },
     peternak_kambing_domba_breeding: {
       beranda:      <BreedingBeranda />,
@@ -169,6 +181,9 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar':<HargaPasar />,
       tim:          <BroilerTim />,
       akun:         <Akun />,
+      'ai-chat':      <TanyaAIPage />,
+      'ai-analysis':  <AnalisisPerformaPage />,
+      'ai-prediction':<PrediksiHasilPage />,
     },
     peternak_sapi_penggemukan: {
       beranda:        <SapiBeranda />,
@@ -184,6 +199,9 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar':  <HargaPasar />,
       tim:            <BroilerTim />,
       akun:           <Akun />,
+      'ai-chat':      <TanyaAIPage />,
+      'ai-analysis':  <AnalisisPerformaPage />,
+      'ai-prediction':<PrediksiHasilPage />,
     },
     peternak_sapi_breeding: {
       beranda:       <SapiBreedingBeranda />,
@@ -198,6 +216,9 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar': <HargaPasar />,
       tim:           <BroilerTim />,
       akun:          <Akun />,
+      'ai-chat':      <TanyaAIPage />,
+      'ai-analysis':  <AnalisisPerformaPage />,
+      'ai-prediction':<PrediksiHasilPage />,
     },
     peternak_kambing_domba_penggemukan: {
       beranda:       <KambingBeranda />,
@@ -211,6 +232,9 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar': <HargaPasar />,
       tim:           <BroilerTim />,
       akun:          <Akun />,
+      'ai-chat':      <TanyaAIPage />,
+      'ai-analysis':  <AnalisisPerformaPage />,
+      'ai-prediction':<PrediksiHasilPage />,
     },
     // ─── NEW DOMBA ROUTES ───────────────────────────────────────────────────
     peternak_domba_penggemukan: {
@@ -227,6 +251,9 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar': <HargaPasar />,
       tim:           <BroilerTim />,
       akun:          <Akun />,
+      'ai-chat':      <TanyaAIPage />,
+      'ai-analysis':  <AnalisisPerformaPage />,
+      'ai-prediction':<PrediksiHasilPage />,
     },
     peternak_domba_breeding: {
       beranda:      <DombaBreedingBeranda />,
@@ -239,6 +266,9 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar':<HargaPasar />,
       tim:          <BroilerTim />,
       akun:         <Akun />,
+      'ai-chat':      <TanyaAIPage />,
+      'ai-analysis':  <AnalisisPerformaPage />,
+      'ai-prediction':<PrediksiHasilPage />,
     },
     // ─── KAMBING ROUTES (Phase 2) ──────────────────────────────────────────
     peternak_kambing_penggemukan: {
@@ -253,6 +283,9 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar': <HargaPasar />,
       tim:           <BroilerTim />,
       akun:          <Akun />,
+      'ai-chat':      <TanyaAIPage />,
+      'ai-analysis':  <AnalisisPerformaPage />,
+      'ai-prediction':<PrediksiHasilPage />,
     },
     peternak_kambing_breeding: {
       beranda:      <NewKambingBreedingBeranda />,
@@ -265,6 +298,9 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar':<HargaPasar />,
       tim:          <BroilerTim />,
       akun:         <Akun />,
+      'ai-chat':      <TanyaAIPage />,
+      'ai-analysis':  <AnalisisPerformaPage />,
+      'ai-prediction':<PrediksiHasilPage />,
     },
     peternak_kambing_perah: {
       beranda:       <KambingPerahBeranda />,
@@ -278,6 +314,9 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar': <HargaPasar />,
       tim:           <BroilerTim />,
       akun:          <Akun />,
+      'ai-chat':      <TanyaAIPage />,
+      'ai-analysis':  <AnalisisPerformaPage />,
+      'ai-prediction':<PrediksiHasilPage />,
     },
   }
   

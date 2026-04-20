@@ -163,3 +163,52 @@ export const SEMBAKO_BROKER_PLAN_CONFIG = {
     laporan: true,
   },
 }
+
+// ─── AI Plan Config ───────────────────────────────────────────────────────────
+// Single source of truth for AI feature limits and feature flags.
+// Read by useAIQuota — do NOT duplicate these numbers elsewhere.
+export const AI_PLAN_CONFIG = {
+  starter: {
+    chat_sessions_per_month: 10,
+    features: {
+      chat_assistant:    true,
+      drafting:          true,
+      analisis_performa: false,
+      prediksi_hasil:    false,
+      ai_audit_logs:     false,
+    },
+  },
+  pro: {
+    chat_sessions_per_month: 500,
+    features: {
+      chat_assistant:    true,
+      drafting:          true,
+      analisis_performa: true,
+      prediksi_hasil:    false,
+      ai_audit_logs:     false,
+    },
+  },
+  business: {
+    chat_sessions_per_month: Infinity,
+    features: {
+      chat_assistant:    true,
+      drafting:          true,
+      analisis_performa: true,
+      prediksi_hasil:    true,
+      ai_audit_logs:     true,
+    },
+  },
+}
+
+export const PLAN_LABELS = {
+  starter:  { name: 'Starter',  badge: null,    color: 'gray' },
+  pro:      { name: 'Pro',      badge: 'PRO',   color: 'amber' },
+  business: { name: 'Business', badge: 'BIZ',   color: 'emerald' },
+}
+
+export const UPGRADE_MESSAGES = {
+  analisis_performa: 'Analisis performa tersedia di plan Pro. Pantau ADG dan FCR ternakmu secara otomatis.',
+  prediksi_hasil:    'Prediksi waktu jual optimal tersedia di plan Business. Maksimalkan keuntungan tiap siklus.',
+  ai_audit_logs:     'Riwayat aksi AI tersedia di plan Business. Audit semua pencatatan staf kapan saja.',
+  chat_exceeded:     'Kuota AI bulan ini habis. Upgrade ke Pro untuk 500 sesi/bulan.',
+}

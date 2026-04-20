@@ -146,14 +146,28 @@ export default function AdminUsers() {
         groups[key] = {
           name: u.full_name,
           id: key,
+          auth_user_id: u.auth_user_id,
+          email: u.email,
           avatar: u.avatar_url,
           profiles: [],
+          uniqueTenants: new Set(),
           last_active: u.last_seen_at,
           created_at: u.created_at,
           _refTime: fiveMinutesAgo
         }
       }
-      groups[key].profiles.push(u)
+      
+      // Update metadata from any row that has it (profiles row has more data than membership row)
+      if (!groups[key].name && u.full_name) groups[key].name = u.full_name
+      if (!groups[key].avatar && u.avatar_url) groups[key].avatar = u.avatar_url
+      if (!groups[key].email && u.email) groups[key].email = u.email
+      if (!groups[key].created_at && u.created_at) groups[key].created_at = u.created_at
+
+      // Prevent duplicate associations for the same tenant
+      if (u.tenant_id && !groups[key].uniqueTenants.has(u.tenant_id)) {
+        groups[key].uniqueTenants.add(u.tenant_id)
+        groups[key].profiles.push(u)
+      }
 
       // Keep track of most recent activity
       if (u.last_seen_at && (!groups[key].last_active || new Date(u.last_seen_at) > new Date(groups[key].last_active))) {
@@ -472,7 +486,9 @@ export default function AdminUsers() {
                         </td>
                         <td className="px-6 py-4">
                            <div className="flex items-center gap-2">
-                             <span className="text-[12px] font-bold text-slate-400">Terdaftar di {u.profiles.length} Bisnis</span>
+                             <span className="text-[12px] font-bold text-slate-400">
+                               Terdaftar di {u.uniqueTenants?.size || 0} Bisnis
+                             </span>
                            </div>
                         </td>
                         <td className="px-6 py-4 text-center">
@@ -542,7 +558,7 @@ export default function AdminUsers() {
                   <section className="space-y-4">
                     <h3 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em] flex items-center justify-between">
                       BISNIS TERKAIT
-                      <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-black">{selectedUser.profiles.length}</Badge>
+                      <Badge className="bg-emerald-500/10 text-emerald-500 border-none font-black">{selectedUser.uniqueTenants?.size || 0}</Badge>
                     </h3>
 
                     <div className="space-y-3">
@@ -561,21 +577,26 @@ export default function AdminUsers() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-emerald-400">
-                                {renderVerticalIcon(p.tenants?.business_vertical)}
-                              </div>
-                              <div>
-                                <p className="text-[13px] font-bold text-white group-hover:text-emerald-400 transition-colors">
-                                  {p.tenants?.business_name || 'Tanpa Nama'}
-                                </p>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <RoleBadge role={p.user_type === 'superadmin' ? 'superadmin' : p.role} />
-                                  <span className="text-[10px] font-bold text-[#4B6478] uppercase">
-                                    {toTitleCase(p.tenants?.business_vertical)}
-                                  </span>
+                                  {renderVerticalIcon(p.tenants?.business_vertical)}
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-[13px] font-bold text-white group-hover:text-emerald-400 transition-colors">
+                                      {p.tenants?.business_name || 'Tanpa Nama'}
+                                    </p>
+                                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest ${p.is_membership ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}`}>
+                                      {p.is_membership ? 'TIM' : 'OWN'}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <RoleBadge role={p.user_type === 'superadmin' ? 'superadmin' : p.role} />
+                                    <span className="text-[10px] font-bold text-[#4B6478] uppercase">
+                                      {toTitleCase(p.tenants?.business_vertical)}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                            <ArrowRight size={14} className="text-[#4B6478] group-hover:text-white transition-all transform group-hover:translate-x-1" />
+                              <ArrowRight size={14} className="text-[#4B6478] group-hover:text-white transition-all transform group-hover:translate-x-1" />
                           </div>
                         </div>
                       ))}
@@ -955,7 +976,7 @@ function UserMobileCard({ user, onClick }) {
                 {Array.from(new Set(user.profiles.map(p => p.role))).slice(0, 2).map(role => (
                   <RoleBadge key={role} role={role} />
                 ))}
-                <span className="text-[9px] font-bold text-[#4B6478] uppercase">{user.profiles.length} Bisnis</span>
+                <span className="text-[9px] font-bold text-[#4B6478] uppercase">{user.uniqueTenants?.size || 0} Bisnis</span>
              </div>
           </div>
        </div>

@@ -2,34 +2,35 @@ import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, LayoutGrid, Box, Scale } from 'lucide-react'
 import {
-  useSapiAnimals,
-  useSapiKandangs,
-  calcSapiADGFromRecords,
-} from '@/lib/hooks/useSapiPenggemukanData'
+  useDombaAnimals,
+  useDombaKandangs,
+  calcADGFromRecords,
+} from '@/lib/hooks/useDombaPenggemukanData'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
 import { cn } from '@/lib/utils'
 
 const CELL_PX = 32
 const PALETTE = [
-  { bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.3)',  text: '#FCD34D', dotColor: '#FBBF24' },
-  { bg: 'rgba(59,130,246,0.08)',  border: 'rgba(59,130,246,0.3)',  text: '#93C5FD', dotColor: '#60A5FA' },
-  { bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.3)',  text: '#6EE7B7', dotColor: '#4ADE80' },
-  { bg: 'rgba(139,92,246,0.08)',  border: 'rgba(139,92,246,0.3)',  text: '#C4B5FD', dotColor: '#A78BFA' },
-  { bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.3)',   text: '#FCA5A5', dotColor: '#F87171' },
+  { bg: 'rgba(34,197,94,0.08)',   border: 'rgba(34,197,94,0.3)',   text: '#86EFAC', dotColor: '#22C55E' },
+  { bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.3)',  text: '#6EE7B7', dotColor: '#10B981' },
+  { bg: 'rgba(52,211,153,0.08)',  border: 'rgba(52,211,153,0.3)',  text: '#A7F3D0', dotColor: '#34D399' },
+  { bg: 'rgba(132,204,22,0.08)',  border: 'rgba(132,204,22,0.3)',  text: '#BEF264', dotColor: '#84CC16' },
+  { bg: 'rgba(20,184,166,0.08)',  border: 'rgba(20,184,166,0.3)',  text: '#5EEAD4', dotColor: '#14B8A6' },
 ]
 
-function getADGTierColor(adgKg) {
-  if (adgKg === null || adgKg === undefined) return '#4B6478' // Neutral Grey
-  if (adgKg >= 0.8) return '#4ADE80' // Green
-  if (adgKg >= 0.5) return '#FBBF24' // Amber
-  if (adgKg === 0) return '#4B6478'  // Still new/zero
-  return '#F87171' // Red (Only for actual low performance)
+function getADGTierColor(adgGram) {
+  if (adgGram === null || adgGram === undefined) return '#4B6478' // Neutral Grey
+  if (adgGram >= 150) return '#4ADE80' // Green
+  if (adgGram >= 100) return '#FBBF24' // Amber
+  if (adgGram === 0) return '#4B6478'  // Still new/zero
+  return '#F87171' // Red
 }
 
-const MiniCow = ({ animal, bounds, dotColor }) => {
-  const weight = animal.latest_weight_kg || 250
-  const lengthMeters = Math.pow(weight, 1 / 3) * 0.195
-  const iconSize = Math.max(20, lengthMeters * CELL_PX)
+const MiniSheep = ({ animal, bounds, dotColor }) => {
+  const weight = animal.latest_weight_kg || 25
+  // Scaling for sheep (smaller than cow)
+  const lengthMeters = Math.pow(weight, 1 / 3) * 0.28 
+  const iconSize = Math.max(18, lengthMeters * CELL_PX)
 
   const [target, setTarget] = useState({
     x: Math.random() * (bounds.w - lengthMeters),
@@ -74,7 +75,7 @@ const MiniCow = ({ animal, bounds, dotColor }) => {
         transform: isFlipped ? 'scaleX(-1)' : 'scaleX(1)',
         transition: 'transform 0.4s ease-out'
       }}>
-        🐄
+        🐑
       </div>
       <div style={{
         position: 'absolute',
@@ -91,12 +92,11 @@ const MiniCow = ({ animal, bounds, dotColor }) => {
 }
 
 export default function KandangMiniMap({ batchId, className }) {
-  const { data: kandangs = [], isLoading: loadKdg } = useSapiKandangs(batchId)
-  const { data: animals = [], isLoading: loadAni } = useSapiAnimals(batchId)
+  const { data: kandangs = [], isLoading: loadKdg } = useDombaKandangs(batchId)
+  const { data: animals = [], isLoading: loadAni } = useDombaAnimals(batchId)
   const containerRef = useRef(null)
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 })
   
-  // Interactive States
   const [activeKandangId, setActiveKandangId] = useState(null)
   const hoverTimerRef = useRef(null)
 
@@ -190,7 +190,7 @@ export default function KandangMiniMap({ batchId, className }) {
       className={cn("w-full relative overflow-hidden rounded-2xl bg-white/[0.015] border border-white/[0.04] p-4 min-h-[280px] max-h-[600px] cursor-default", className)}
       style={{ aspectRatio }}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(245,158,11,0.03),transparent_70%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(34,197,94,0.03),transparent_70%)] pointer-events-none" />
       
       <div className="w-full h-full relative" ref={containerRef}>
         {viewport && (
@@ -237,11 +237,10 @@ export default function KandangMiniMap({ batchId, className }) {
 
                   <div className="relative w-full h-full">
                     {kAnimals.map(a => {
-                      const adg = calcSapiADGFromRecords(a.sapi_penggemukan_weight_records, a.entry_date, a.entry_weight_kg)
-                      const adgKg = adg ? adg / 1000 : null
-                      const dotColor = getADGTierColor(adgKg)
+                      const adgGram = calcADGFromRecords(a.domba_penggemukan_weight_records, a.entry_date, a.entry_weight_kg)
+                      const dotColor = getADGTierColor(adgGram)
                       return (
-                        <MiniCow
+                        <MiniSheep
                           key={a.id}
                           animal={a}
                           bounds={{ w: kw, h: kh }}
@@ -257,7 +256,6 @@ export default function KandangMiniMap({ batchId, className }) {
         )}
       </div>
 
-      {/* Detail Overlay - Floating Style */}
       <AnimatePresence>
         {activeKandang && (
           <motion.div
@@ -268,8 +266,8 @@ export default function KandangMiniMap({ batchId, className }) {
           >
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-amber-400/10 flex items-center justify-center">
-                   <Box className="text-amber-400" size={14} />
+                <div className="w-8 h-8 rounded-lg bg-green-400/10 flex items-center justify-center">
+                   <Box className="text-green-400" size={14} />
                 </div>
                 <div>
                    <h3 className="font-['Sora'] font-black text-[11px] text-white uppercase tracking-tight leading-none mb-0.5">{activeKandang.name}</h3>
@@ -288,7 +286,7 @@ export default function KandangMiniMap({ batchId, className }) {
               {(groupedAnimals[activeKandang.id] || []).map(a => (
                 <div key={a.id} className="flex items-center justify-between p-2.5 bg-white/[0.02] border border-white/[0.04] rounded-xl">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px]">🐄</span>
+                    <span className="text-[10px]">🐑</span>
                     <span className="text-[10px] font-black text-white uppercase tracking-tight">{a.ear_tag}</span>
                   </div>
                   <div className="flex items-center gap-1 opacity-60">

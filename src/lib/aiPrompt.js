@@ -4,6 +4,114 @@
 // File: src/lib/aiPrompt.js
 // =============================================================
 
+// ── Intent catalog (internal, tidak di-export) ────────────────
+const INTENT_CATALOG = [
+  {
+    name: 'CATAT_HARIAN',
+    description: 'Mencatat data harian kandang: kematian, sakit, bobot rata-rata.',
+    required_entities: ['farm_id', 'record_date'],
+  },
+  {
+    name: 'CATAT_PAKAN',
+    description: 'Mencatat pemakaian atau pembelian pakan untuk kandang.',
+    required_entities: ['farm_id', 'feed_type', 'qty_kg', 'record_date'],
+  },
+  {
+    name: 'CATAT_VAKSIN_OBAT',
+    description: 'Mencatat pemberian vaksin atau obat ke ternak.',
+    required_entities: ['farm_id', 'item_name', 'record_date'],
+  },
+  {
+    name: 'CATAT_BELI_TERNAK',
+    description: 'Mencatat pembelian bibit atau ternak baru ke kandang.',
+    required_entities: ['farm_id', 'qty', 'price_per_head', 'purchase_date'],
+  },
+  {
+    name: 'CATAT_JUAL_TERNAK',
+    description: 'Mencatat penjualan atau panen ternak dari kandang.',
+    required_entities: ['farm_id', 'qty', 'total_weight_kg', 'sale_date'],
+  },
+  {
+    name: 'CATAT_PENGELUARAN',
+    description: 'Mencatat pengeluaran operasional siklus kandang.',
+    required_entities: ['farm_id', 'amount', 'category', 'expense_date'],
+  },
+  {
+    name: 'TANYA_DATA',
+    description: 'Menjawab pertanyaan user tentang data bisnis.',
+    required_entities: ['query'],
+  },
+  {
+    name: 'KOREKSI',
+    description: 'Mengoreksi data yang baru saja dikirim.',
+    required_entities: ['target_intent', 'target_id', 'field_to_correct', 'new_value'],
+  },
+  {
+    name: 'TIDAK_DIKENALI',
+    description: 'Pesan tidak relevan dengan operasi TernakOS.',
+    required_entities: [],
+  },
+]
+
+// ── Context snapshot — kompresi 3-tier, guard ≤6000 char ──────
+function buildContextSnapshot(snapshot, userMessage = '') {
+  const { farms = [], rpas = [], customers = [], suppliers = [], products = [] } = snapshot
+  const msgLower = userMessage.toLowerCase()
+
+  // Tier 1: ringkasan jumlah entitas
+  const counts = [
+    farms.length      ? `${farms.length} farm`     : '',
+    rpas.length       ? `${rpas.length} RPA`        : '',
+    customers.length  ? `${customers.length} cust`  : '',
+    suppliers.length  ? `${suppliers.length} supp`  : '',
+    products.length   ? `${products.length} produk` : '',
+  ].filter(Boolean).join(', ')
+  const tier1 = counts ? `[${counts}]` : '[belum ada entitas]'
+
+  // Tier 2: compact ID map string
+  const compactList = (arr, label, limit = Infinity) => {
+    if (!arr.length) return ''
+    const items = limit < Infinity ? arr.slice(0, limit) : arr
+    const suffix = limit < Infinity && arr.length > limit ? ` ...(+${arr.length - limit})` : ''
+    return `${label}: ${items.map(i => `${i.name}(id:${i.id})`).join(', ')}${suffix}`
+  }
+  const buildTier2 = (limit = Infinity) => [
+    compactList(farms,     'Farms',     limit),
+    compactList(rpas,      'RPAs',      limit),
+    compactList(customers, 'Customers', limit),
+    compactList(suppliers, 'Suppliers', limit),
+    compactList(products,  'Produk',    limit),
+  ].filter(Boolean).join('\n')
+
+  // Tier 3: detail item yang namanya muncul di userMessage
+  const allEntities = [
+    ...farms.map(i => ({ ...i, _type: 'Farm' })),
+    ...rpas.map(i => ({ ...i, _type: 'RPA' })),
+    ...customers.map(i => ({ ...i, _type: 'Customer' })),
+    ...suppliers.map(i => ({ ...i, _type: 'Supplier' })),
+    ...products.map(i => ({ ...i, _type: 'Produk' })),
+  ]
+  const tier3 = allEntities
+    .filter(i => i.name && msgLower.includes(i.name.toLowerCase()))
+    .map(i => {
+      const extra = i.sell_price ? `, harga:${i.sell_price}` : ''
+      return `[Detail] ${i._type} "${i.name}" → id:${i.id}${extra}`
+    })
+    .join('\n')
+
+  let tier2 = buildTier2()
+  let result = [tier1, tier2, tier3].filter(Boolean).join('\n')
+
+  if (result.length > 6000) {
+    console.warn('[aiPrompt] buildContextSnapshot: snapshot melebihi 6000 char, Tier 2 dipangkas ke 10 item.')
+    tier2 = buildTier2(10)
+    result = [tier1, tier2, tier3].filter(Boolean).join('\n')
+  }
+
+  return result
+}
+
+
 /**
  * Membangun system prompt dinamis berdasarkan konteks user.
  * Dipanggil setiap kali conversation baru dimulai atau context berubah.
@@ -20,6 +128,9 @@
  * @param {Array}  ctx.snapshot.suppliers  - [{ id, name }] daftar supplier/peternak
  * @param {Array}  ctx.snapshot.products   - [{ id, name, sell_price }] produk RPA
  * @param {string} ctx.today            - Tanggal hari ini ISO, e.g. '2026-04-05'
+ * @param {string} [ctx.vertical]       - Business vertical, e.g. 'sapi_penggemukan'
+ * @param {string} [ctx.businessModel]  - Business model, e.g. 'penggemukan' | 'breeding'
+ * @param {string} [ctx.userMessage]    - Pesan user untuk Tier 3 context injection
  */
 export function buildSystemPrompt(ctx) {
   const {
@@ -29,31 +140,42 @@ export function buildSystemPrompt(ctx) {
     contextPage = '',
     snapshot = {},
     today,
+    vertical = 'generic',
+    businessModel = 'generic',
+    userMessage = '',
   } = ctx
 
   const todayStr = today ?? new Date().toISOString().split('T')[0]
 
-  // ── Render daftar entitas ke string ───────────────────────
-  const renderList = (arr = [], label) => {
-    if (!arr.length) return `  (belum ada ${label})`
-    return arr.map(i => `  - "${i.name}" (id: ${i.id})`).join('\n')
-  }
-
-  // ── Bagian prompt khusus per role ─────────────────────────
+  // ── Role section ──────────────────────────────────────────
   const roleSection = {
-    broker: buildBrokerSection(snapshot),
-    peternak: buildPeternakSection(snapshot),
-    rpa: buildRPASection(snapshot),
+    broker: buildBrokerSection(),
+    peternak: buildPeternakSection(),
+    rpa: buildRPASection(),
   }[userType] ?? ''
 
-  // Only render non-empty entity lists to save tokens
-  const dataLines = [
-    snapshot.farms?.length    ? `Farms/kandang:\n${renderList(snapshot.farms)}` : '',
-    snapshot.rpas?.length     ? `RPA clients:\n${renderList(snapshot.rpas)}` : '',
-    snapshot.customers?.length? `Customers:\n${renderList(snapshot.customers)}` : '',
-    snapshot.suppliers?.length? `Suppliers:\n${renderList(snapshot.suppliers)}` : '',
-    snapshot.products?.length ? `Produk:\n${renderList(snapshot.products)}` : '',
-  ].filter(Boolean).join('\n')
+  // ── Vertical sub-prompt ───────────────────────────────────
+  let verticalSection = ''
+  if (vertical === 'sapi_penggemukan') {
+    verticalSection = `
+KONTEKS VERTICAL: Sapi Penggemukan
+Pada CATAT_HARIAN, prioritaskan field: avg_weight_kg (bobot rata-rata sapi per ekor, kg)
+dan dead_count (deplesi/kematian). Jika user menyebut bobot total tanpa rata-rata,
+hitung avg_weight_kg = bobot_total / populasi_aktif. Tidak ada field reproduksi.`
+  } else if (vertical === 'domba_penggemukan') {
+    verticalSection = `
+KONTEKS VERTICAL: Domba Penggemukan
+Pada CATAT_HARIAN, prioritaskan field: avg_weight_kg (bobot rata-rata domba per ekor, kg)
+dan dead_count (deplesi/kematian). Jika user menyebut bobot total tanpa rata-rata,
+hitung avg_weight_kg = bobot_total / populasi_aktif. Tidak ada field reproduksi.`
+  } else {
+    if (vertical !== 'generic') {
+      console.warn('[aiPrompt] vertical not in pilot: ' + vertical)
+    }
+  }
+
+  // ── Context snapshot (compressed, ≤6000 char) ────────────
+  const contextData = buildContextSnapshot(snapshot, userMessage)
 
   return `
 Kamu adalah asisten pencatatan TernakOS untuk ${userName} (${businessName}, role: ${userType}).
@@ -63,11 +185,11 @@ TUGASMU: Ekstrak data dari pesan dan kembalikan JSON terstruktur.
 Pengguna bicara bahasa Indonesia sehari-hari, tidak formal, sering singkat.
 Cerdas mengisi yang bisa diinfer. Tanya jika ada data kritis yang ambigu.
 Jika satu pesan mengandung lebih dari 1 transaksi, ekstrak SEMUA sebagai array intents[].
-
+${verticalSection}
 ${roleSection}
 
 DATA ENTITAS (gunakan untuk resolve nama ke ID):
-${dataLines || '(belum ada data entitas)'}
+${contextData || '(belum ada data entitas)'}
 
 ATURAN TANGGAL:
 - "tadi/barusan/mau" → ${todayStr}
@@ -77,6 +199,9 @@ ATURAN TANGGAL:
 - Tidak disebutkan → ${todayStr}
 
 ATURAN ANGKA: "28rb"→28000, "1,5jt"→1500000, "1ton"→1000kg, "½kw"→50kg.
+
+ATURAN KOREKSI: Jika intent KOREKSI dan target_id null,
+set confidence: 0.4 dan clarification: [pertanyaan spesifik + maks 3 pilihan].
 
 FORMAT OUTPUT — kembalikan HANYA JSON ini:
 {"intents":[{"id":"1","intent":"<INTENT>","data":{...},"dependency":null,"confidence":0.95,"clarification":null}],"display_summary":"<balasan natural 1-2 kalimat, TANPA markdown>"}
@@ -89,10 +214,28 @@ GAYA: DILARANG markdown bold/bullet di display_summary.
 }
 
 
+/**
+ * Routes parsed AI intents based on confidence and clarification state.
+ * @param {Array} parsedIntents - Array of intent objects from parsed AI response
+ * @returns {Array} Array of routed results, same length as input
+ */
+export function routeByConfidence(parsedIntents) {
+  return parsedIntents.map(intent => {
+    if (intent.intent === 'TIDAK_DIKENALI') {
+      return { action: 'FALLBACK', reason: 'Intent tidak dikenali' }
+    }
+    if (intent.confidence >= 0.85 && !intent.clarification) {
+      return { action: 'STAGE', data: intent }
+    }
+    return { action: 'CLARIFY', question: intent.clarification }
+  })
+}
+
+
 // =============================================================
 // BROKER SECTION
 // =============================================================
-function buildBrokerSection(snapshot) {
+function buildBrokerSection() {
   return `
 ROLE: BROKER AYAM — mencatat transaksi jual beli ayam hidup.
 
@@ -194,7 +337,7 @@ INTENT YANG DIKENALI:
 // =============================================================
 // PETERNAK SECTION
 // =============================================================
-function buildPeternakSection(snapshot) {
+function buildPeternakSection() {
   return `
 ROLE: PETERNAK
 Kamu membantu mencatat data harian kandang, pakan, panen, dan pengeluaran siklus.
@@ -283,7 +426,7 @@ INTENT YANG DIKENALI:
 // =============================================================
 // RPA SECTION
 // =============================================================
-function buildRPASection(snapshot) {
+function buildRPASection() {
   return `
 ROLE: RUMAH POTONG AYAM (RPA)
 Kamu membantu mencatat order pembelian ayam, invoice ke customer, dan produk.
@@ -363,44 +506,3 @@ function offsetDate(isoDate, days) {
   d.setDate(d.getDate() + days)
   return d.toISOString().split('T')[0]
 }
-
-
-// =============================================================
-// CONTOH PEMAKAIAN
-// =============================================================
-//
-// import { buildSystemPrompt } from '@/lib/aiPrompt'
-//
-// const systemPrompt = buildSystemPrompt({
-//   userType: 'broker',
-//   businessName: 'UD Maju Jaya',
-//   userName: 'Pak Hendra',
-//   contextPage: '/broker/pembelian',
-//   today: '2026-04-05',
-//   snapshot: {
-//     farms: [],
-//     rpas: [{ id: 'uuid-1', name: 'RPA Jaya Abadi' }],
-//     customers: [],
-//     suppliers: [{ id: 'uuid-2', name: 'Peternak Pak Ahmad' }],
-//     products: [],
-//   }
-// })
-//
-// // Kirim ke GLM:
-// const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
-//   method: 'POST',
-//   headers: {
-//     'Content-Type': 'application/json',
-//     'Authorization': `Bearer ${import.meta.env.VITE_GLM_API_KEY}`,
-//   },
-//   body: JSON.stringify({
-//     model: 'glm-4-flash',
-//     temperature: 0.1,       // rendah = lebih deterministik untuk ekstraksi
-//     max_tokens: 800,
-//     messages: [
-//       { role: 'system', content: systemPrompt },
-//       ...conversationHistory,  // array { role, content } dari ai_conversations
-//       { role: 'user', content: userMessage },
-//     ],
-//   }),
-// })

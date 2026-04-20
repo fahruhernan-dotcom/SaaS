@@ -92,8 +92,18 @@ export async function checkQuotaUsage(tenant, profile, type) {
 
   let currentUsage = 0
   if (type === 'business') {
-    // Current usage is just the number of profiles (businesses) this user has
-    currentUsage = userProfiles?.length || 0
+    // Current usage is the unique number of businesses this user belongs to (owner or staff)
+    const [pRes, mRes] = await Promise.all([
+      supabase.from('profiles').select('tenant_id').eq('auth_user_id', profile.auth_user_id),
+      supabase.from('tenant_memberships').select('tenant_id').eq('auth_user_id', profile.auth_user_id)
+    ])
+
+    const uniqueTenants = new Set([
+      ...(pRes.data || []).map(p => p.tenant_id),
+      ...(mRes.data || []).map(m => m.tenant_id)
+    ].filter(Boolean))
+
+    currentUsage = uniqueTenants.size
   }
 
   return {

@@ -1213,7 +1213,60 @@ create index idx_notif_unread on notifications(tenant_id) where not is_read;
 create index idx_invoice_tenant on subscription_invoices(tenant_id, status);
 
 -- ============================================================
--- 13. SEED DATA — untuk testing
+-- 13. TASK SYSTEM — Peternak Vertical
+-- ============================================================
+
+create table if not exists peternak_task_templates (
+    id              uuid primary key default gen_random_uuid(),
+    tenant_id       uuid references tenants(id) on delete cascade not null,
+    kandang_name    text, -- null for all kandangs
+    title           text not null,
+    description     text,
+    task_type       text not null,
+    recurring_type  text not null,
+    recurring_days_of_week integer[],
+    recurring_interval_days integer,
+    due_time        time not null default '08:00:00',
+    start_date      date not null default current_date,
+    end_date        date,
+    linked_data_entry boolean default false,
+    default_assignee_worker_id uuid references kandang_workers(id),
+    is_active       boolean default true,
+    is_deleted      boolean default false,
+    created_at      timestamptz default now(),
+    updated_at      timestamptz default now()
+);
+
+create table if not exists peternak_task_instances (
+    id              uuid primary key default gen_random_uuid(),
+    tenant_id       uuid references tenants(id) on delete cascade not null,
+    template_id     uuid references peternak_task_templates(id) on delete set null,
+    kandang_name    text,
+    task_type       text not null,
+    due_date        date not null,
+    due_time        time,
+    status          text not null default 'pending',
+    notes           text,
+    assigned_worker_id uuid references kandang_workers(id),
+    assigned_profile_id uuid references profiles(id),
+    completed_at    timestamptz,
+    completed_by_profile_id uuid references profiles(id),
+    linked_record_id uuid,
+    linked_record_table text,
+    is_deleted      boolean default false,
+    created_at      timestamptz default now(),
+    updated_at      timestamptz default now()
+);
+
+-- RLS — Task System
+alter table peternak_task_templates enable row level security;
+alter table peternak_task_instances enable row level security;
+
+-- NOTE: Policies were already run via SQL Editor with permissive 'OR' logic
+-- to avoid conflicts with existing Sapi policies while enabling Domba access.
+
+-- ============================================================
+-- 14. SEED DATA — untuk testing
 -- ============================================================
 
 -- Seed market prices 7 hari terakhir

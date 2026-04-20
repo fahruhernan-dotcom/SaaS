@@ -2,16 +2,16 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  Users, TrendingUp, AlertTriangle, ArrowRight, 
+  Users, TrendingUp, AlertTriangle, 
   Calendar, MapPin, Search, PlusCircle, LayoutGrid,
   ChevronRight, ArrowUpRight, BarChart3, Activity, Tag,
   BarChart2, CheckCircle2, RefreshCw, MousePointer2,
-  Scale, Plus, Wheat
+  Wheat, AlertCircle, Zap, Plus, Scale
 } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import {
   useDombaActiveBatches, useDombaBatches, useDombaAnimals,
-  useDombaBatchWeightHistory,
+  useDombaBatchWeightHistory, useDombaFeedLogs,
   calcHariDiFarm, calcMortalitasDomba,
 } from '@/lib/hooks/useDombaPenggemukanData'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
@@ -19,9 +19,10 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer
 } from 'recharts'
-import { format } from 'date-fns'
+import { format, addDays } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { toast } from 'sonner'
+import KandangMiniMap from './KandangMiniMap'
 
 const BASE = '/peternak/peternak_domba_penggemukan'
 
@@ -49,76 +50,106 @@ function KPICard({ label, value, sub, color = 'text-white', icon: Icon }) {
   )
 }
 
+
 function BatchCard({ batch, onClick }) {
   const hari = calcHariDiFarm(batch.start_date)
   const TARGET_HARI = 90
+  const sisaHari = Math.max(0, TARGET_HARI - hari)
+  const estimasiPanen = addDays(new Date(batch.start_date), TARGET_HARI)
+
   const progress = Math.min(100, Math.round((hari / TARGET_HARI) * 100))
   const mortalitasPct = calcMortalitasDomba(batch.mortality_count, batch.total_animals)
   const isOverdue = hari > TARGET_HARI
   const isCritical = mortalitasPct > 3
 
+  const adgVal = batch.avg_adg_gram ? Math.round(batch.avg_adg_gram) : null
+
   return (
     <motion.div
-      whileTap={{ scale: 0.98 }}
-      onClick={onClick}
-      className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 cursor-pointer active:bg-white/[0.06] transition-colors"
+      className="group bg-white/[0.03] hover:bg-white/[0.05] border border-white/[0.06] hover:border-white/[0.12] rounded-3xl p-6 transition-all duration-300"
     >
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="font-['Sora'] font-bold text-sm text-white">{batch.batch_code}</span>
-            {isOverdue && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400 font-bold">
-                OVERDUE
-              </span>
-            )}
-            {isCritical && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-bold">
-                MORTALITAS
-              </span>
-            )}
+      <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex-1 flex flex-col justify-between min-w-0">
+          <div>
+            <div className="flex items-start justify-between mb-4">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span 
+                    onClick={onClick}
+                    className="font-['Sora'] font-bold text-lg text-white hover:text-green-400 cursor-pointer transition-colors uppercase tracking-tight truncate max-w-full"
+                  >
+                    {batch.batch_code}
+                  </span>
+                  {isOverdue && (
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-black tracking-tighter uppercase whitespace-nowrap">OVERDUE</span>
+                  )}
+                  {isCritical && (
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-black tracking-tighter uppercase whitespace-nowrap">CRITICAL</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 text-[#4B6478]">
+                   <Activity size={12} />
+                   <p className="text-[11px] font-bold uppercase tracking-wider">{batch.kandang_name}</p>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <p className="text-2xl font-black text-white font-['Sora'] leading-none mb-1">{batch.total_animals}</p>
+                <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-widest">Ekor</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-3">
+               <div>
+                  <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest mb-1">Sisa Waktu</p>
+                  <p className="text-xs font-black text-white uppercase">{sisaHari} Hari Lagi</p>
+               </div>
+               <div>
+                  <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest mb-1">Estimasi Panen</p>
+                  <p className="text-xs font-black text-green-400 uppercase">{format(estimasiPanen, 'dd MMM yyyy', { locale: id })}</p>
+               </div>
+            </div>
+
+            <div className="mb-6 bg-white/[0.02] border border-white/[0.04] p-3 rounded-2xl">
+              <div className="flex justify-between text-[10px] font-bold uppercase tracking-wide text-[#4B6478] mb-1.5">
+                <span>Hari ke-{hari}</span>
+                <span>Target {TARGET_HARI} hari</span>
+              </div>
+              <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-1000 ${
+                    isOverdue ? 'bg-red-500' : progress > 80 ? 'bg-amber-500' : 'bg-green-500'
+                  }`}
+                  style={{ width: `${Math.min(100, progress)}%` }}
+                />
+              </div>
+            </div>
           </div>
-          <p className="text-[11px] text-[#4B6478]">{batch.kandang_name}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-lg font-black text-white font-['Sora']">{batch.total_animals}</p>
-          <p className="text-[10px] text-[#4B6478]">ekor</p>
-        </div>
-      </div>
 
-      {/* Progress bar hari penggemukan */}
-      <div className="mb-3">
-        <div className="flex justify-between text-[10px] text-[#4B6478] mb-1">
-          <span>Hari ke-{hari}</span>
-          <span>Target {TARGET_HARI} hari</span>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white/[0.02] border border-white/[0.04] rounded-2xl p-2.5 text-center">
+              <p className="text-[11px] font-black text-white leading-none mb-1">{batch.mortality_count}</p>
+              <p className="text-[9px] text-[#4B6478] font-bold uppercase tracking-widest">Mati</p>
+            </div>
+            <div className="bg-white/[0.02] border border-white/[0.04] rounded-2xl p-2.5 text-center">
+              <p className={`text-[11px] font-black leading-none mb-1 ${mortalitasPct > 3 ? 'text-red-400' : 'text-green-400'}`}>
+                {mortalitasPct}%
+              </p>
+              <p className="text-[9px] text-[#4B6478] font-bold uppercase tracking-widest">Mortalitas</p>
+            </div>
+            <div className="bg-white/[0.02] border border-white/[0.04] rounded-2xl p-2.5 text-center">
+              <p className={`text-[11px] font-black leading-none mb-1 ${adgVal ? 'text-green-400' : 'text-[#4B6478]'}`}>
+                {adgVal ? `${adgVal}g` : '—'}
+              </p>
+              <p className="text-[9px] text-[#4B6478] font-bold uppercase tracking-widest">ADG/Hr</p>
+            </div>
+          </div>
         </div>
-        <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${
-              isOverdue ? 'bg-red-500' : progress > 80 ? 'bg-amber-500' : 'bg-green-500'
-            }`}
-            style={{ width: `${Math.min(100, progress)}%` }}
-          />
-        </div>
-      </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        <div className="text-center">
-          <p className="text-[11px] font-bold text-white">{batch.mortality_count}</p>
-          <p className="text-[10px] text-[#4B6478]">Mati</p>
-        </div>
-        <div className="text-center border-x border-white/[0.06]">
-          <p className={`text-[11px] font-bold ${mortalitasPct > 3 ? 'text-red-400' : 'text-green-400'}`}>
-            {mortalitasPct}%
-          </p>
-          <p className="text-[10px] text-[#4B6478]">Mortalitas</p>
-        </div>
-        <div className="text-center">
-          <p className={`text-[11px] font-bold ${batch.avg_adg_gram ? 'text-green-400' : 'text-[#4B6478]'}`}>
-            {batch.avg_adg_gram ? `${batch.avg_adg_gram}g` : '—'}
-          </p>
-          <p className="text-[10px] text-[#4B6478]">ADG/hari</p>
-        </div>
+        {batch.status === 'active' && (
+          <div className="w-full lg:w-[50%] xl:w-[60%] shrink-0">
+            <KandangMiniMap batchId={batch.id} className="mt-0" />
+          </div>
+        )}
       </div>
     </motion.div>
   )
@@ -134,19 +165,18 @@ export default function DombaPenggemukanBeranda() {
   const [selectedBatchId, setSelectedBatchId] = useState('')
   const [activeAnimalIds, setActiveAnimalIds] = useState(new Set())
 
-  // Set default batch
   useEffect(() => {
     if (!selectedBatchId && activeBatches.length > 0) {
       setSelectedBatchId(activeBatches[0].id)
     }
   }, [activeBatches, selectedBatchId])
 
-  const { data: animals = [], isLoading: loadingAnimals } = useDombaAnimals(selectedBatchId)
+  const { data: animals = [], isLoading: isLoadingAnimals } = useDombaAnimals(selectedBatchId)
   const { data: weightHistory = [], isLoading: loadingHistory } = useDombaBatchWeightHistory(selectedBatchId)
+  const { data: feedLogs = [] } = useDombaFeedLogs(selectedBatchId)
 
-  const isLoading = loadingActive || loadingAll || loadingAnimals || loadingHistory
+  const isLoading = loadingActive || loadingAll || isLoadingAnimals || loadingHistory
 
-  // Data transformation for Recharts
   const chartData = useMemo(() => {
     if (!weightHistory.length) return []
     // 1. Group by date
@@ -195,6 +225,8 @@ export default function DombaPenggemukanBeranda() {
 
   const alerts = useMemo(() => {
     const list = []
+    
+    // 1. Logic Standar (Hari & Mortalitas)
     activeBatches.forEach(b => {
       const hari = calcHariDiFarm(b.start_date)
       const mort = calcMortalitasDomba(b.mortality_count, b.total_animals)
@@ -202,8 +234,26 @@ export default function DombaPenggemukanBeranda() {
       if (mort > 3) list.push({ type: 'danger', msg: `${b.batch_code}: Mortalitas ${mort}% — di atas batas 3%` })
       else if (mort > 1.5) list.push({ type: 'warning', msg: `${b.batch_code}: Mortalitas ${mort}% — perlu dipantau` })
     })
+
+    // 2. Logic Intensive v2.0 (2-Day Consecutive Waste)
+    // Hanya cek feed logs dari selected batch untuk performa UI
+    if (feedLogs.length >= 2) {
+      // Ambil 2 log terakhir (sudah order descending di hook)
+      const last = feedLogs[0]
+      const prev = feedLogs[1]
+      
+      if (last.feed_orts_category === 'banyak' && prev.feed_orts_category === 'banyak') {
+        const batch = activeBatches.find(b => b.id === selectedBatchId)
+        list.push({ 
+          type: 'danger', 
+          icon: Zap,
+          msg: `KRITIS: 2 Hari berturut-turut pakan Sisa Banyak di ${batch?.batch_code || 'Batch ini'}. Potensi masalah palatabilitas atau kesehatan kelompok.` 
+        })
+      }
+    }
+
     return list
-  }, [activeBatches])
+  }, [activeBatches, feedLogs, selectedBatchId])
 
   if (isLoading) return <LoadingSpinner fullPage />
 
@@ -215,8 +265,9 @@ export default function DombaPenggemukanBeranda() {
         <p className="text-[11px] text-[#4B6478] font-semibold mb-0.5">
           Selamat {getGreeting()}, {profile?.full_name?.split(' ')[0] ?? 'Peternak'} 👋
         </p>
-        <h1 className="font-['Sora'] font-black text-xl text-white">Penggemukan Domba</h1>
+        <h1 className="font-['Sora'] font-black text-xl text-white">Fattening Domba</h1>
       </header>
+
 
       {/* KPI Grid */}
       <div className="grid grid-cols-2 gap-2.5 px-4 mt-4">
@@ -396,7 +447,7 @@ export default function DombaPenggemukanBeranda() {
                <LayoutGrid size={32} className="text-green-500" />
             </div>
             <p className="text-sm font-semibold text-white mb-1">Belum ada batch aktif</p>
-            <p className="text-xs text-[#4B6478] mb-4">Mulai batch penggemukan domba pertama kamu</p>
+            <p className="text-xs text-[#4B6478] mb-4">Mulai batch fattening domba pertama kamu</p>
             <button
               onClick={() => navigate(`${BASE}/batch`)}
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-xs font-bold rounded-xl transition-colors"
@@ -406,7 +457,7 @@ export default function DombaPenggemukanBeranda() {
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {activeBatches.map(batch => (
               <BatchCard
                 key={batch.id}

@@ -566,14 +566,32 @@ export const useAllUsers = () => {
   return useQuery({
     queryKey: ['admin-all-users'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // 1. Fetch primary associations from profiles
+      const { data: profiles, error: pErr } = await supabase
         .from('profiles')
         .select('*, tenants(id, business_name, business_vertical)')
         .order('created_at', { ascending: false })
-        .limit(200)
       
-      if (error) throw error
-      return data
+      if (pErr) throw pErr
+
+      // 2. Fetch staff associations from tenant_memberships
+      const { data: members, error: mErr } = await supabase
+        .from('tenant_memberships')
+        .select('*, tenants(id, business_name, business_vertical)')
+      
+      if (mErr) throw mErr
+
+      // 3. Map memberships to include source context
+      const memberAssociations = (members || []).map(m => ({
+        ...m,
+        is_membership: true,
+        // Since memberships don't have full_name, we rely on the grouping logic 
+        // to find a matching profiles row with the same auth_user_id.
+        full_name: m.full_name || null,
+        email: m.email || null
+      }))
+
+      return [...profiles, ...memberAssociations]
     }
   })
 }

@@ -17,13 +17,15 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { resolveBusinessVertical, BUSINESS_MODELS } from '@/lib/businessModel'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { Loader2, Send } from 'lucide-react'
 
 export default function Akun() {
-  const { profile, user, tenant, isSuperadmin } = useAuth()
+  const { profile, user, tenant, ownerTenant, isSuperadmin } = useAuth()
   const navigate = useNavigate()
 
-  const sub = getSubscriptionStatus(tenant)
-  const expiryLabel = getExpiryLabel(tenant)
+  // Use ownerTenant for subscription display — shows the user's OWN plan, not the invited tenant's.
+  const sub = getSubscriptionStatus(ownerTenant)
+  const expiryLabel = getExpiryLabel(ownerTenant)
   
   const vertical = resolveBusinessVertical(profile, tenant)
   const activeModel = BUSINESS_MODELS[vertical]
@@ -39,6 +41,113 @@ export default function Akun() {
   }
 
   const initials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
+
+  // Invitation & Membership State
+  const [inviteCode, setInviteCode] = React.useState('')
+  const [isJoining, setIsJoining] = React.useState(false)
+  const [memberships, setMemberships] = React.useState([])
+  const [loadingMemberships, setLoadingMemberships] = React.useState(true)
+
+  const fetchMemberships = React.useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tenant_memberships')
+        .select('*, tenants(*)')
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      setMemberships(data || [])
+    } catch (err) {
+      console.error('Err fetching memberships:', err)
+    } finally {
+      setLoadingMemberships(false)
+    }
+  }, [user.id])
+
+  React.useEffect(() => {
+    fetchMemberships()
+  }, [fetchMemberships])
+
+  const handleJoinTeam = async () => {
+    if (!inviteCode || inviteCode.length < 6) {
+      toast.error('Masukkan kode undangan yang valid')
+      return
+    }
+
+    setIsJoining(true)
+    try {
+      // 1. Cari undangan yang valid
+      const { data: invite, error: inviteError } = await supabase
+        .from('team_invitations')
+        .select('*')
+        .eq('token', inviteCode.toUpperCase())
+        .eq('status', 'pending')
+        .gt('expires_at', new Date().toISOString())
+        .maybeSingle()
+
+      if (inviteError) throw inviteError
+      if (!invite) throw new Error('Kode undangan tidak valid atau sudah kadaluarsa')
+
+      // 2. Add to memberships (UPSERT)
+      const { error: memberError } = await supabase
+        .from('tenant_memberships')
+        .upsert({
+          auth_user_id: user.id,
+          tenant_id: invite.tenant_id,
+          role: invite.role
+        }, { onConflict: 'auth_user_id,tenant_id' })
+
+      if (memberError) throw memberError
+
+      // 3. Upsert profile session for this specific tenant
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          auth_user_id: user.id,
+          tenant_id: invite.tenant_id,
+          role: invite.role,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'auth_user_id,tenant_id' })
+
+      if (profileError) throw profileError
+
+      // 4. Mark invite as accepted
+      await supabase
+        .from('team_invitations')
+        .update({ status: 'accepted' })
+        .eq('id', invite.id)
+
+      toast.success('Berhasil bergabung ke tim baru!')
+      setTimeout(() => window.location.href = '/dashboard', 1500)
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setIsJoining(false)
+    }
+  }
+
+  const handleSwitchTeam = async (targetTenantId, targetRole) => {
+    if (targetTenantId === profile?.tenant_id) return
+    
+    const toastId = toast.loading('Berpindah peternakan...')
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          role: targetRole,
+          updated_at: new Date().toISOString(),
+          last_seen_at: new Date().toISOString()
+        })
+        .eq('auth_user_id', user.id)
+        .eq('tenant_id', targetTenantId)
+      
+      if (error) throw error
+      toast.success('Berhasil pindah peternakan', { id: toastId })
+      setTimeout(() => window.location.href = '/dashboard', 1000)
+    } catch (err) {
+      toast.error('Gagal berpindah: ' + err.message, { id: toastId })
+    }
+  }
 
   return (
     <div style={{ padding: '24px 20px', color: '#F1F5F9' }}>
@@ -120,7 +229,7 @@ export default function Akun() {
           <button 
             onClick={async () => {
               if (window.confirm('Ganti bisnis model? Data Anda tetap aman.')) {
-                await supabase.from('profiles').update({ business_model_selected: false }).eq('auth_user_id', user.id)
+                await supabase.from('profiles').update({ business_model_selected: false }).eq('auth_user_id', user.id).eq('tenant_id', profile?.tenant_id)
                 window.location.reload()
               }
             }}
@@ -137,6 +246,116 @@ export default function Akun() {
           >
             Ganti
           </button>
+        </div>
+      </section>
+
+      {/* Gabung Tim Section */}
+      <section style={{ marginTop: '24px' }}>
+        <p style={labelStyle}>Punya Kode Undangan?</p>
+        <div style={{ ...cardStyle, marginTop: '8px', padding: '16px' }}>
+          <p style={{ fontSize: '11px', color: '#4B6478', marginBottom: '12px' }}>
+            Masukkan 6 digit kode dari Owner untuk bergabung ke peternakan mereka.
+          </p>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <input 
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+              placeholder="CONTOH: AB1234"
+              maxLength={8}
+              style={{
+                flex: 1,
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '12px',
+                padding: '0 16px',
+                color: '#10B981',
+                fontFamily: 'Sora, sans-serif',
+                fontWeight: 800,
+                letterSpacing: '2px',
+                fontSize: '15px'
+              }}
+            />
+            <button 
+              onClick={handleJoinTeam}
+              disabled={isJoining || inviteCode.length < 5}
+              style={{
+                background: isJoining ? 'rgba(255,255,255,0.05)' : '#10B981',
+                color: '#FFF',
+                border: 'none',
+                borderRadius: '12px',
+                width: '48px',
+                height: '48px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: isJoining ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              {isJoining ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Daftar Tim / Peternakan Section */}
+      <section style={{ marginTop: '24px' }}>
+        <p style={labelStyle}>Peternakan Saya</p>
+        <div style={{ ...menuContainerStyle, marginTop: '8px' }}>
+          {loadingMemberships ? (
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+              <Loader2 size={24} className="animate-spin text-green-500 mx-auto" />
+            </div>
+          ) : memberships.length === 0 ? (
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+              <p style={{ fontSize: '11px', color: '#4B6478' }}>Belum ada tim lain.</p>
+            </div>
+          ) : (
+            memberships.map((m) => (
+              <div 
+                key={m.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '16px',
+                  borderBottom: '1px solid rgba(255,255,255,0.03)',
+                  background: m.tenant_id === profile?.tenant_id ? 'rgba(16,185,129,0.05)' : 'transparent'
+                }}
+              >
+                <div style={{
+                  width: '36px', height: '36px', borderRadius: '10px',
+                  background: 'rgba(255,255,255,0.05)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px'
+                }}>
+                  {m.tenants?.business_name?.[0]?.toUpperCase() || '🏠'}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '14px', fontWeight: 700 }}>{m.tenants?.business_name}</p>
+                  <p style={{ fontSize: '10px', color: '#4B6478', textTransform: 'uppercase', fontWeight: 800 }}>{m.role}</p>
+                </div>
+                {m.tenant_id === profile?.tenant_id ? (
+                  <span style={{ fontSize: '10px', color: '#10B981', fontWeight: 800, textTransform: 'uppercase' }}>Aktif</span>
+                ) : (
+                  <button 
+                    onClick={() => handleSwitchTeam(m.tenant_id, m.role)}
+                    style={{
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: '8px',
+                      padding: '6px 12px',
+                      color: '#F1F5F9',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Masuk
+                  </button>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </section>
 

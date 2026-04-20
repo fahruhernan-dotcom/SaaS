@@ -25,13 +25,6 @@ const CHART_COLORS = [
   '#34D399', '#A78BFA', '#FBBF24', '#F472B6', '#4ADE80'
 ]
 
-function getGreeting() {
-  const h = new Date().getHours()
-  if (h < 11) return 'pagi'
-  if (h < 15) return 'siang'
-  if (h < 19) return 'sore'
-  return 'malam'
-}
 
 function KPICard({ label, value, sub, color = 'text-white', icon: Icon }) {
   return (
@@ -174,6 +167,15 @@ export default function SapiBeranda() {
   const { profile } = useAuth()
   const navigate = useNavigate()
 
+  // Utility to get current greeting
+  const getGreeting = () => {
+    const h = new Date().getHours()
+    if (h < 11) return 'pagi'
+    if (h < 15) return 'siang'
+    if (h < 19) return 'sore'
+    return 'malam'
+  }
+
   const { data: activeBatches = [], isLoading: loadingActive } = useSapiActiveBatches()
   const { data: allBatches = [],    isLoading: loadingAll    } = useSapiBatches()
 
@@ -276,7 +278,7 @@ export default function SapiBeranda() {
         <p className="text-[11px] text-[#4B6478] font-semibold mb-0.5">
           Selamat {getGreeting()}, {profile?.full_name?.split(' ')[0] ?? 'Peternak'} 👋
         </p>
-        <h1 className="font-['Sora'] font-black text-xl text-white">Penggemukan Sapi</h1>
+        <h1 className="font-['Sora'] font-black text-xl text-white">Fattening Sapi</h1>
       </header>
 
       {/* KPI Grid */}
@@ -330,7 +332,7 @@ export default function SapiBeranda() {
                <LayoutGrid size={32} className="text-amber-500" />
             </div>
             <p className="text-sm font-semibold text-white mb-1">Belum ada batch aktif</p>
-            <p className="text-xs text-[#4B6478] mb-4">Mulai batch penggemukan sapi pertama kamu</p>
+            <p className="text-xs text-[#4B6478] mb-4">Mulai batch fattening sapi pertama kamu</p>
             <button
               onClick={() => navigate(`${BASE}/batch`)}
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl transition-colors"
