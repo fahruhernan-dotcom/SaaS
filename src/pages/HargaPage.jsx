@@ -1,7 +1,5 @@
-
-
 import React, { useState, useMemo } from 'react'
-import { useSEO } from '@/lib/hooks/useSEO'
+import SEO from '../components/SEO'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, ChevronDown, ArrowRight, Star, X as XIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -609,12 +607,6 @@ export default function HargaPage() {
   const { data: dbPricing } = usePricingConfig()
   const { data: dbConfigs } = usePlanConfigs()
 
-  useSEO({
-    title: 'Harga & Paket TernakOS - Mulai Gratis, Pro dari Rp 499.000/bln',
-    description: 'Lihat paket harga TernakOS. Starter gratis selamanya. Pro dari Rp 499.000/bln. Business dengan TernakBot AI. Untuk peternak, broker, dan RPA.',
-    path: '/harga',
-  })
-
   const dynamicPricingData = useMemo(() => {
     const newData = JSON.parse(JSON.stringify(PRICING_DATA))
 
@@ -660,6 +652,11 @@ export default function HargaPage() {
 
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] overflow-x-hidden">
+      <SEO
+        title="Daftar Harga Paket TernakOS | Murah & Transparan"
+        description="Pilih paket Starter (Gratis), Pro, atau Business sesuai kebutuhan peternakan Anda. Mulai dari Rp 49rb/bulan. Tanpa biaya admin, tanpa biaya setup."
+        path="/harga"
+      />
       <Navbar />
 
       {/* Global Background Elements */}

@@ -7,7 +7,6 @@ import { queryClient } from './lib/queryClient';
 import { TooltipProvider } from './components/ui/tooltip';
 import { AuthProvider, useAuth } from './lib/hooks/useAuth';
 import { NotificationsProvider, useNotificationGenerator } from './lib/hooks/useNotifications.jsx';
-import { HelmetProvider, Helmet } from 'react-helmet-async';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -270,47 +269,40 @@ function AppContentLayout() {
 
 function RootLayout() {
   return (
-    <HelmetProvider>
-      <Helmet>
-        <link rel="icon" type="image/png" href="/logo.png?v=2" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
-        <link rel="shortcut icon" href="/logo.png?v=2" />
-      </Helmet>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
-            <NotificationsProvider>
-              <ScrollToTop />
-              <AuthHashRedirect />
-              <AppContentLayout />
-            </NotificationsProvider>
-          </TooltipProvider>
-          <Toaster
-            theme="dark"
-            position="top-center"
-            richColors
-            expand={false}
-            duration={3000}
-            toastOptions={{
-              style: {
-                background: '#111C24',
-                border: '1px solid rgba(255,255,255,0.10)',
-                color: '#F1F5F9',
-                fontFamily: 'DM Sans',
-                fontSize: '14px',
-                borderRadius: '12px',
-                padding: '14px 16px',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-              },
-              classNames: {
-                success: 'border-emerald-500/20',
-                error: 'border-red-500/20',
-              }
-            }}
-          />
-        </AuthProvider>
-      </QueryClientProvider>
-    </HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <NotificationsProvider>
+            <ScrollToTop />
+            <AuthHashRedirect />
+            <AppContentLayout />
+          </NotificationsProvider>
+        </TooltipProvider>
+        <Toaster
+          theme="dark"
+          position="top-center"
+          richColors
+          expand={false}
+          duration={3000}
+          toastOptions={{
+            style: {
+              background: '#111C24',
+              border: '1px solid rgba(255,255,255,0.10)',
+              color: '#F1F5F9',
+              fontFamily: 'DM Sans',
+              fontSize: '14px',
+              borderRadius: '12px',
+              padding: '14px 16px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            },
+            classNames: {
+              success: 'border-emerald-500/20',
+              error: 'border-red-500/20',
+            }
+          }}
+        />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

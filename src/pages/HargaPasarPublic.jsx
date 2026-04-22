@@ -43,6 +43,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import SEO from '@/components/SEO'
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth } from 'date-fns'
 import Particles from '@/components/reactbits/Particles'
 import { id as idLocale } from 'date-fns/locale'
@@ -186,42 +187,16 @@ export default function HargaPasarPublic() {
   const [hybridPeriod, setHybridPeriod] = useState('weekly')
   const currentProvince = useMemo(() => slugToProvince(provinceSlug), [provinceSlug])
 
-  // ── SEO: Title + Meta Description + Canonical ────────────────────
-  useEffect(() => {
-    const province = currentProvince
-    const todayFmt = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
-
-    // Title — include exact keyword
-    document.title = province
-      ? `Harga Ayam Broiler Hidup Hari Ini di ${province} — Update ${todayFmt} | TernakOS`
-      : `Harga Ayam Broiler Hidup Hari Ini — Update Harian Real Data | TernakOS`
-
-    // Meta description
-    const desc = province
-      ? `Harga ayam broiler hidup hari ini di ${province} — ${todayFmt}. Data dari transaksi nyata broker + referensi Chickin.id. Update otomatis setiap hari.`
-      : `Harga ayam broiler hidup hari ini — ${todayFmt}. Data dari transaksi nyata broker aktif seluruh Indonesia. Bandingkan harga kandang vs pasar per provinsi.`
-    let metaDesc = document.querySelector('meta[name="description"]')
-    if (!metaDesc) { metaDesc = document.createElement('meta'); metaDesc.name = 'description'; document.head.appendChild(metaDesc) }
-    metaDesc.content = desc
-
-    // Canonical
-    let canonical = document.querySelector('link[rel="canonical"]')
-    if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical) }
-    canonical.href = province
-      ? `https://ternakos.com/harga-pasar/${provinceToSlug(province)}`
-      : 'https://ternakos.com/harga-pasar'
-
-    // Open Graph
-    const setMeta = (prop, content, attr = 'property') => {
-      let el = document.querySelector(`meta[${attr}="${prop}"]`)
-      if (!el) { el = document.createElement('meta'); el.setAttribute(attr, prop); document.head.appendChild(el) }
-      el.content = content
-    }
-    setMeta('og:title', document.title)
-    setMeta('og:description', desc)
-    setMeta('og:url', canonical.href)
-    setMeta('og:type', 'website')
-  }, [currentProvince])
+  const todayFmt = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+  const seoTitle = currentProvince
+    ? `Harga Ayam Broiler Hidup Hari Ini di ${currentProvince} — Update ${todayFmt} | TernakOS`
+    : `Harga Ayam Broiler Hidup Hari Ini — Update Harian Real Data | TernakOS`
+  const seoDesc = currentProvince
+    ? `Harga ayam broiler hidup hari ini di ${currentProvince} — ${todayFmt}. Data dari transaksi nyata broker + referensi Chickin.id. Update otomatis setiap hari.`
+    : `Harga ayam broiler hidup hari ini — ${todayFmt}. Data dari transaksi nyata broker aktif seluruh Indonesia. Bandingkan harga kandang vs pasar per provinsi.`
+  const seoPath = currentProvince
+    ? `/harga-pasar/${provinceToSlug(currentProvince)}`
+    : '/harga-pasar'
 
   // ── Market Prices (Scraper – for stat cards & history table) ─────────────
   const { data: result, isLoading } = useQuery({
@@ -502,6 +477,11 @@ export default function HargaPasarPublic() {
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="bg-[#06090F] min-h-screen text-white font-body relative overflow-hidden">
+      <SEO
+        title={seoTitle}
+        description={seoDesc}
+        path={seoPath}
+      />
       {/* JSON-LD Structured Data */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 

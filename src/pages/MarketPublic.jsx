@@ -8,6 +8,7 @@ import { id as idLocale } from 'date-fns/locale'
 
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import SEO from '../components/SEO'
 import {
   Select,
   SelectContent,
@@ -233,6 +234,11 @@ export default function MarketPublic() {
 
   return (
     <div className="bg-bg-base min-h-screen text-text-primary font-body overflow-x-hidden pt-20">
+      <SEO
+        title="Market TernakOS - Jual Beli Stok Ayam & Komoditas Peternakan"
+        description="Temukan stok ayam broiler, pakan, dan komoditas peternakan lainnya. Hubungi penjual langsung via WhatsApp. Gratis pasang iklan untuk pengguna TernakOS."
+        path="/market"
+      />
       <Navbar />
 
       <div className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto pb-24">

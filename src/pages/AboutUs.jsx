@@ -5,6 +5,7 @@ import {
   Handshake, Bird, Factory, FileX, BarChart2, TrendingDown, Wrench, Check,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import SEO from '../components/SEO';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import SplineScene from '../components/SplineScene';
@@ -14,7 +15,6 @@ import AnimatedContent from '../components/reactbits/AnimatedContent';
 import Particles from '../components/reactbits/Particles';
 import CountUp from '../components/reactbits/CountUp';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
-import { useSEO } from '@/lib/hooks/useSEO';
 import '../components/reactbits/ShinyText.css';
 
 // ─── Animation helper ─────────────────────────────────────────────────────────
@@ -38,15 +38,13 @@ function FadeUp({ children, delay = 0, className }) {
 export default function AboutUs() {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
 
-  useSEO({
-    title: 'Tentang Kami - TernakOS | Platform Peternakan Digital Indonesia',
-    description: 'Kenali TernakOS, platform digital yang dibangun oleh peternak untuk peternak. Visi, misi, dan cerita di balik solusi manajemen peternakan #1 Indonesia.',
-    path: '/tentang-kami',
-  });
-
-
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans selection:bg-emerald-500/30 overflow-x-hidden">
+      <SEO
+        title="Tentang Kami - TernakOS | Revolusi Digital Peternakan Indonesia"
+        description="Pelajari visi TernakOS dalam mendigitalisasi rantai pasok peternakan Indonesia. Solusi terintegrasi untuk peternak mandiri, broker ayam, dan pengusaha RPA."
+        path="/tentang-kami"
+      />
       <Navbar />
 
       <main className="w-full">

@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, Search, X, ChevronLeft } from 'lucide-react'
+import SEO from '../components/SEO'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
-import { useSEO } from '@/lib/hooks/useSEO'
 import { FAQ_DATA, FAQ_CATEGORIES, getAllFAQForSchema } from '../lib/faqData'
 import Footer from '../components/Footer'
 
@@ -96,12 +96,6 @@ export default function FAQPage() {
     }
   }, [])
 
-  useSEO({
-    title: 'FAQ & Help Center TernakOS - Pertanyaan Seputar Peternakan Digital',
-    description: 'Temukan jawaban seputar fitur, harga, keamanan, dan cara kerja TernakOS. Pusat bantuan lengkap untuk peternak, broker, dan RPA Indonesia.',
-    path: '/faq',
-  })
-
   // Filtered results across all categories
   const trimmed = query.trim().toLowerCase()
   const filtered = trimmed
@@ -127,7 +121,12 @@ export default function FAQPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans selection:bg-emerald-500/30">
+    <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans selection:bg-emerald-500/30 overflow-x-hidden">
+      <SEO
+        title="FAQ - Tanya Jawab TernakOS | Semua yang Perlu Anda Tahu"
+        description="Punya pertanyaan tentang TernakOS? Temukan jawaban lengkap tentang cara penggunaan, keamanan data, hingga paket harga di halaman FAQ kami."
+        path="/faq"
+      />
 
       {/* ── Header ── */}
       <header className="border-b border-white/5 bg-[#0C1319]/60 backdrop-blur-xl sticky top-0 z-50">

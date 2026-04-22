@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { useSEO } from '@/lib/hooks/useSEO'
+import SEO from '../components/SEO'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowLeftRight, Home, Truck, Users, BarChart2, Package,
@@ -758,14 +758,13 @@ export default function FiturPage() {
   const faqItems = [...FAQ_COMMON, ...(FAQ_ROLE[contentKey] ?? [])].slice(0, 4)
   const isSembako = contentKey === 'broker_sembako'
 
-  useSEO({
-    title: `${hero.eyebrow} - Fitur TernakOS | Platform Peternakan Digital #1 Indonesia`,
-    description: `${hero.sub} Setup kurang dari 15 menit, berjalan di HP Android, tanpa instalasi apapun.`,
-    path: '/fitur',
-  })
-
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] overflow-x-hidden">
+      <SEO
+        title={`${hero.eyebrow} - Fitur TernakOS | Platform Peternakan Digital #1 Indonesia`}
+        description={`${hero.sub} Setup kurang dari 15 menit, berjalan di HP Android, tanpa instalasi apapun.`}
+        path="/fitur"
+      />
       <Navbar />
 
       <main>

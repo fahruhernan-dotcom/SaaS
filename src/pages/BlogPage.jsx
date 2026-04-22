@@ -4,8 +4,8 @@ import { motion } from 'framer-motion';
 import { Calendar, Clock, ArrowRight, BookOpen, Tag } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 import { getAllPosts, formatDate } from '../data/blogPosts';
-import { useSEO } from '@/lib/hooks/useSEO';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
@@ -113,14 +113,13 @@ export default function BlogPage() {
     [allPosts, activeCategory]
   );
 
-  useSEO({
-    title: 'Blog & Panduan Peternakan Indonesia - TernakOS',
-    description: 'Tips manajemen kandang, cara hitung FCR & IP Score, panduan broker ayam, dan strategi bisnis peternakan Indonesia dari praktisi nyata di lapangan.',
-    path: '/blog',
-  });
-
   return (
-    <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans selection:bg-emerald-500/30 overflow-x-hidden">
+      <SEO
+        title="Blog & Wawasan Peternakan - TernakOS"
+        description="Temukan tips manajemen kandang, strategi bisnis broker ayam, hingga analisis pasar peternakan terbaru di Blog TernakOS."
+        path="/blog"
+      />
       <Navbar />
 
       <main className="pt-20">

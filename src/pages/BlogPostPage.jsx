@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, Tag, ChevronRight, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Calendar, Clock, Tag, ChevronRight, ArrowLeft, ArrowRight, Share2, Facebook, Twitter, MessageCircle, BarChart2, CheckCircle2 } from 'lucide-react';
+import SEO from '../components/SEO';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { getPostBySlug, getRelatedPosts, formatDate } from '../data/blogPosts';
-import { useSEO } from '@/lib/hooks/useSEO';
 
 // ─── Category colors (mirrored from BlogPage) ────────────────────────────────
 
@@ -53,15 +53,14 @@ export default function BlogPostPage() {
   const cat = CATEGORY_COLORS[post.category] ?? CATEGORY_COLORS.umum;
   const related = getRelatedPosts(post.relatedSlugs ?? []);
 
-  useSEO({
-    title: `${post.metaTitle} | TernakOS`,
-    description: post.metaDescription,
-    path: `/blog/${post.slug}`,
-    type: 'article',
-  });
-
   return (
-    <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans overflow-x-hidden">
+    <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans selection:bg-emerald-500/30 overflow-x-hidden">
+      <SEO
+        title={`${post.title} - Blog TernakOS`}
+        description={post.metaDescription}
+        path={`/blog/${post.slug}`}
+        type="article"
+      />
       <Navbar />
 
       <main className="pt-20">
