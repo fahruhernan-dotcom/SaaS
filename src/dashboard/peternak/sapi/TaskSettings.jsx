@@ -140,7 +140,7 @@ export default function SapiTaskSettings() {
   const [templateModalOpen, setTemplateModalOpen] = useState(false)
   
   // Data
-  const { data: templates = [], isLoading } = usePeternakTaskTemplates()
+  const { data: templates = [], isLoading } = usePeternakTaskTemplates({ livestockType: 'sapi_penggemukan' })
   const deleteTask = useDeleteTaskTemplate()
   const refresh = useGenerateInstancesFromTemplate()
 

@@ -4,7 +4,7 @@ import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
 import { TEMPLATE_150_HARI, TEMPLATE_180_HARI } from '../constants/sapiTaskTemplates'
-import { TEMPLATE_DOMBA_PENGGEMUKAN_90 } from '../constants/taskTemplates/dombaTaskTemplates'
+import { TEMPLATE_DOMBA_PENGGEMUKAN_90, TEMPLATE_DOMBA_INTENSIF_90 } from '../constants/taskTemplates/dombaTaskTemplates'
 
 /**
  * Hook mirror: useSapiPenggemukanData.js
@@ -19,10 +19,10 @@ import { TEMPLATE_DOMBA_PENGGEMUKAN_90 } from '../constants/taskTemplates/dombaT
  */
 export function usePeternakTaskTemplates(filters = {}) {
   const { tenant } = useAuth()
-  const { kandangName } = filters
+  const { kandangName, livestockType } = filters
 
   return useQuery({
-    queryKey: ['peternak-task-templates', tenant?.id, kandangName],
+    queryKey: ['peternak-task-templates', tenant?.id, kandangName, livestockType],
     queryFn: async () => {
       let query = supabase
         .from('peternak_task_templates')
@@ -35,9 +35,8 @@ export function usePeternakTaskTemplates(filters = {}) {
         .eq('is_active', true)
         .order('created_at', { ascending: false })
 
-      if (kandangName) {
-        query = query.eq('kandang_name', kandangName)
-      }
+      if (kandangName) query = query.eq('kandang_name', kandangName)
+      if (livestockType) query = query.eq('livestock_type', livestockType)
 
       const { data, error } = await query
       if (error) throw error
@@ -75,7 +74,8 @@ export function usePeternakTaskInstances(filters = {}) {
       if (due_date_to) query = query.lte('due_date', due_date_to)
       if (status) query = query.eq('status', status)
       if (kandangName) query = query.eq('kandang_name', kandangName)
-      
+      if (livestockType) query = query.eq('livestock_type', livestockType)
+
       if (workerProfileId) {
         // Fetch worker record first to get the ID (to avoid complex cross-table OR filters that cause 400 errors)
         const { data: workerData } = await supabase
@@ -360,7 +360,7 @@ export function useUpdateTaskStatus() {
 
       if (status === 'selesai') {
         payload.completed_at = new Date().toISOString()
-        payload.completed_by_profile_id = profile?.id
+        payload.completed_by_profile_id = profile?.profile_id ?? profile?.id
       }
 
       const { error } = await supabase
@@ -441,6 +441,7 @@ export function useApplySapiTaskTemplate() {
       const rows = templates.map(t => ({
         tenant_id: tenant.id,
         kandang_name: kandangName,
+        livestock_type: 'sapi_penggemukan',
         title: t.title,
         description: t.description,
         task_type: t.task_type,
@@ -486,6 +487,7 @@ export function useApplyDombaTaskTemplate() {
       const rows = templates.map(t => ({
         tenant_id: tenant.id,
         kandang_name: kandangName,
+        livestock_type: 'domba_penggemukan',
         title: t.title,
         description: t.description,
         task_type: t.task_type,
@@ -579,15 +581,34 @@ export function useAssignableMembers() {
   return useQuery({
     queryKey: ['assignable-members', profile?.tenant_id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, role')
-        .eq('tenant_id', profile.tenant_id)
-        .neq('role', 'owner')
-        .order('full_name', { ascending: true })
+      const [{ data: profilesData, error }, { data: memberships }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, auth_user_id, full_name, role')
+          .eq('tenant_id', profile.tenant_id)
+          .neq('role', 'owner'),
+        supabase
+          .from('tenant_memberships')
+          .select('auth_user_id, full_name, role')
+          .eq('tenant_id', profile.tenant_id)
+          .neq('role', 'owner'),
+      ])
       if (error) throw error
-      // Normalize shape: profile_id = id, so TaskAssign assignment logic is consistent
-      return (data ?? []).map(p => ({ ...p, profile_id: p.id }))
+
+      const membershipMap = new Map(
+        (memberships ?? []).map(m => [m.auth_user_id, m])
+      )
+
+      return (profilesData ?? [])
+        .map(p => {
+          if (!p.full_name && p.auth_user_id) {
+            const m = membershipMap.get(p.auth_user_id)
+            if (m?.full_name) p = { ...p, full_name: m.full_name }
+          }
+          return { ...p, profile_id: p.id }
+        })
+        .filter(p => p.full_name)
+        .sort((a, b) => (a.full_name ?? '').localeCompare(b.full_name ?? ''))
     },
     enabled: !!profile?.tenant_id,
   })

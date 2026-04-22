@@ -201,7 +201,7 @@ export default function DombaTaskSettings() {
   const [templateModalOpen, setTemplateModalOpen] = useState(false)
   
   const { profile } = useAuth()
-  const { data: templates = [], isLoading } = usePeternakTaskTemplates()
+  const { data: templates = [], isLoading } = usePeternakTaskTemplates({ livestockType: 'domba_penggemukan' })
   const bulkDelete = useBulkDeleteTaskTemplates()
   const refresh = useGenerateInstancesFromTemplate()
 

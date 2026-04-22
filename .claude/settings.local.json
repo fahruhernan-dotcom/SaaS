@@ -21,7 +21,9 @@
       "Bash(ls docs/)",
       "Bash(ls *.md)",
       "Bash(npm install *)",
-      "Bash(npx supabase *)"
+      "Bash(npx supabase *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

@@ -1644,12 +1644,12 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
     }
   }, [open, task])
 
+  const createTask = useCreateTaskInstance()
+
   if (!task) return null
   const isAuditMode = isOwnerView && task.status === 'selesai'
   const isMultiAnimalTask = (task.task_type === 'timbang' || task.task_type === 'vaksinasi' || task.task_type === 'obat_cacing') && config.usesIndividualAnimals && !isAuditMode
   const reportConfig = isMultiAnimalTask ? null : TASK_REPORT_CONFIG[task.task_type]
-
-  const createTask = useCreateTaskInstance()
 
   async function handleComplete() {
     // 1. Photo check

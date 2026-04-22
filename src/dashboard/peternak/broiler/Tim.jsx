@@ -97,9 +97,14 @@ export default function Tim() {
       const combined = [...(profileMembers || [])];
       const membershipOnly = [];
       for (const m of (membershipMembers || [])) {
-        if (!combined.some(p => p.auth_user_id === m.auth_user_id)) {
+        const existing = combined.find(p => p.auth_user_id === m.auth_user_id);
+        if (!existing) {
           combined.push(m);
           membershipOnly.push(m.auth_user_id);
+        } else if (!existing.full_name && m.full_name) {
+          // Profile row exists but has no name — patch from membership
+          existing.full_name = m.full_name;
+          if (!existing.avatar_url) existing.avatar_url = m.avatar_url;
         }
       }
       // Enrich membership-only members with full_name from their profiles in other tenants

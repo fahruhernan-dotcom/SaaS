@@ -218,13 +218,22 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         if (profError) throw profError
 
         if (profile.tenant_id && model.sub_type) {
+          const subType = model.sub_type
+          const baseType = subType.includes('sapi') ? 'sapi'
+            : subType.includes('domba') && !subType.includes('kambing') ? 'domba'
+            : subType.includes('kambing') && !subType.includes('domba') ? 'kambing'
+            : subType.includes('bebek') ? 'bebek'
+            : subType.includes('babi') ? 'babi'
+            : ['peternak_broiler','peternak_layer','broker_ayam','broker_telur','rpa_ayam','rph'].includes(subType) ? 'ayam'
+            : null
           const { error: tenError } = await supabase
             .from('tenants')
-            .update({ 
+            .update({
               sub_type: model.sub_type,
               business_vertical: model.key,
               business_name: formattedName,
               province: province || null,
+              base_livestock_type: baseType,
             })
             .eq('id', profile.tenant_id)
           
