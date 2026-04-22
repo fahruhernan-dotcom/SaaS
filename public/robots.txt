@@ -1,12 +1,19 @@
 User-agent: *
+
+# ─── Public Pages (Izinkan diindex) ────────────────────────────────────────
 Allow: /
-Allow: /harga-pasar
-Allow: /tentang-kami
 Allow: /fitur
 Allow: /harga
+Allow: /harga-pasar
+Allow: /tentang-kami
+Allow: /hubungi-kami
+Allow: /blog
+Allow: /faq
 Allow: /market
+Allow: /terms
+Allow: /privacy
 
-# Disallow auth and dashboard routes for better SEO hygiene
+# ─── Auth & Dashboard (Blokir dari index) ───────────────────────────────────
 Disallow: /login
 Disallow: /register
 Disallow: /auth/
@@ -15,9 +22,11 @@ Disallow: /check-email
 Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /invite
+Disallow: /dashboard/
 Disallow: /broker/
 Disallow: /peternak/
 Disallow: /rumah_potong/
 Disallow: /admin/
 
+# Sitemap
 Sitemap: https://ternakos.my.id/sitemap.xml

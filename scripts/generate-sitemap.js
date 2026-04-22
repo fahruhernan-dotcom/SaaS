@@ -30,6 +30,7 @@ function provinceToSlug(name) {
 const staticRoutes = [
   '',
   '/harga-pasar',
+  '/market',
   '/fitur',
   '/harga',
   '/tentang-kami',
