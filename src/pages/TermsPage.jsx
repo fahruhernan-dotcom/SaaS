@@ -2,10 +2,17 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronLeft } from 'lucide-react';
+import SEO from '../components/SEO';
 
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans selection:bg-emerald-500/30">
+      <SEO
+        title="Syarat & Ketentuan Penggunaan TernakOS | Platform SaaS Peternakan"
+        description="Baca syarat dan ketentuan penggunaan platform TernakOS. Ketentuan layanan, privasi, pembayaran, dan hak pengguna platform manajemen bisnis peternakan Indonesia."
+        path="/terms"
+        type="article"
+      />
       {/* Navbar Area */}
       <header className="border-b border-white/5 bg-[#0C1319]/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-6 h-20 flex items-center justify-between">

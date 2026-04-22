@@ -65,19 +65,53 @@ BING_RESP=$(curl -s -o /dev/null -w "%{http_code}" \
 echo "    Bing ping:   HTTP $BING_RESP"
 
 # Quick canonical check on key pages
+# NOTE: react-helmet-async renders tags as:
+#   <link data-rh="true" rel="canonical" href="...">
+# So we search for 'canonical' (case-insensitive) anywhere in the HTML
 echo ""
-echo "==> Verifying canonical tags on key pages..."
-for path in "" "harga" "fitur" "tentang-kami" "faq" "blog"; do
-  URL="https://ternakos.my.id${path:+/$path}"
-  CANONICAL=$(curl -sL "$URL" 2>/dev/null | grep -o '<link rel="canonical"[^>]*>' | head -1)
+echo "==> Verifying canonical & title tags on key pages..."
+PAGES=(
+  "/"
+  "/harga"
+  "/fitur"
+  "/tentang-kami"
+  "/faq"
+  "/blog"
+  "/harga-pasar"
+  "/market"
+  "/terms"
+  "/privacy"
+)
+ALL_OK=true
+for path in "${PAGES[@]}"; do
+  URL="https://ternakos.my.id${path}"
+  HTML=$(curl -sL "$URL" 2>/dev/null)
+
+  # Check canonical (react-helmet-async uses data-rh, so grep loosely)
+  CANONICAL=$(echo "$HTML" | grep -i 'canonical' | grep -v 'rel="' | head -1)
+  CANONICAL=$(echo "$HTML" | grep -i 'canonical' | head -1)
+
+  # Check title tag
+  TITLE=$(echo "$HTML" | grep -oP '(?<=<title>)[^<]+' | head -1)
+
   if [ -n "$CANONICAL" ]; then
     echo "    ✓ $URL"
+    echo "      title: ${TITLE:-[tidak ada]}"
   else
     echo "    ✗ MISSING canonical: $URL"
+    echo "      title: ${TITLE:-[tidak ada]}"
+    ALL_OK=false
   fi
 done
 
 echo ""
 echo "======================================================"
-echo " Deploy selesai! Semua halaman sudah ada canonical."
+if [ "$ALL_OK" = true ]; then
+  echo " Deploy selesai! Semua halaman sudah ada canonical."
+else
+  echo " Deploy selesai! Cek halaman yang MISSING di atas."
+  echo " CATATAN: 'MISSING' bisa false-positive jika server"
+  echo " masih menyajikan cache lama. Tunggu 1-2 menit lalu"
+  echo " cek langsung via Google Search Console 'Test Live URL'"
+fi
 echo "======================================================"
