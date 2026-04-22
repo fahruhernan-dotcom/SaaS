@@ -87,16 +87,20 @@ for path in "${PAGES[@]}"; do
   URL="https://ternakos.my.id${path}"
   HTML=$(curl -sL "$URL" 2>/dev/null)
 
-  # Check canonical (react-helmet-async uses data-rh, so grep loosely)
-  CANONICAL=$(echo "$HTML" | grep -i 'canonical' | grep -v 'rel="' | head -1)
-  CANONICAL=$(echo "$HTML" | grep -i 'canonical' | head -1)
+  # react-helmet-async injects: <link data-rh="true" rel="canonical" href="...">
+  CANONICAL=$(echo "$HTML" | grep -o 'rel="canonical"' | head -1)
 
-  # Check title tag
-  TITLE=$(echo "$HTML" | grep -oP '(?<=<title>)[^<]+' | head -1)
+  # react-helmet-async injects: <title data-rh="true">Title Here</title>
+  # Since we removed hardcoded title from index.html, only Helmet title exists now
+  TITLE=$(echo "$HTML" | grep -oP '(?<=<title data-rh="true">)[^<]+' | head -1)
+  # Fallback: plain <title> without attribute
+  if [ -z "$TITLE" ]; then
+    TITLE=$(echo "$HTML" | grep -oP '(?<=<title>)[^<]+' | head -1)
+  fi
 
   if [ -n "$CANONICAL" ]; then
     echo "    ✓ $URL"
-    echo "      title: ${TITLE:-[tidak ada]}"
+    echo "      title: ${TITLE:-[MISSING - cek SEO component!]}"
   else
     echo "    ✗ MISSING canonical: $URL"
     echo "      title: ${TITLE:-[tidak ada]}"
