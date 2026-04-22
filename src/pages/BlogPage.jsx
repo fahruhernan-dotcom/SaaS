@@ -112,6 +112,13 @@ export default function BlogPage() {
     () => activeCategory === 'all' ? allPosts : allPosts.filter(p => p.category === activeCategory),
     [allPosts, activeCategory]
   );
+  const blogSchema = {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "url": "https://ternakos.my.id/blog",
+    "name": "Blog & Wawasan Peternakan - TernakOS",
+    "description": "Temukan tips manajemen kandang, strategi bisnis broker ayam, hingga analisis pasar peternakan terbaru di Blog TernakOS."
+  };
 
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans selection:bg-emerald-500/30 overflow-x-hidden">
@@ -119,6 +126,7 @@ export default function BlogPage() {
         title="Blog & Wawasan Peternakan - TernakOS"
         description="Temukan tips manajemen kandang, strategi bisnis broker ayam, hingga analisis pasar peternakan terbaru di Blog TernakOS."
         path="/blog"
+        schema={blogSchema}
       />
       <Navbar />
 

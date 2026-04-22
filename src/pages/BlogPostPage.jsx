@@ -53,6 +53,32 @@ export default function BlogPostPage() {
   const cat = CATEGORY_COLORS[post.category] ?? CATEGORY_COLORS.umum;
   const related = getRelatedPosts(post.relatedSlugs ?? []);
 
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": `https://ternakos.my.id/blog/${post.slug}`
+    },
+    "headline": post.title,
+    "description": post.metaDescription,
+    "image": post.image ? `https://ternakos.my.id${post.image}` : "https://ternakos.my.id/logo.png",  
+    "author": {
+      "@type": "Organization",
+      "name": "TernakOS",
+      "url": "https://ternakos.my.id"
+    },  
+    "publisher": {
+      "@type": "Organization",
+      "name": "TernakOS",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://ternakos.my.id/logo.png"
+      }
+    },
+    "datePublished": post.date || "2026-04-20"
+  };
+
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans selection:bg-emerald-500/30 overflow-x-hidden">
       <SEO
@@ -60,6 +86,7 @@ export default function BlogPostPage() {
         description={post.metaDescription}
         path={`/blog/${post.slug}`}
         type="article"
+        schema={articleSchema}
       />
       <Navbar />
 

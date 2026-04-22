@@ -232,12 +232,21 @@ export default function MarketPublic() {
   const stokAyam = listings.filter(l => l.listing_type === 'stok_ayam').length
   const permintaan = listings.filter(l => l.listing_type === 'permintaan_rpa').length
 
+  const marketSchema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Market TernakOS - Jual Beli Stok Ayam & Komoditas Peternakan",
+    "description": "Temukan stok ayam broiler, pakan, dan komoditas peternakan lainnya. Hubungi penjual langsung via WhatsApp. Gratis pasang iklan untuk pengguna TernakOS.",
+    "url": "https://ternakos.my.id/market"
+  };
+
   return (
     <div className="bg-bg-base min-h-screen text-text-primary font-body overflow-x-hidden pt-20">
       <SEO
         title="Market TernakOS - Jual Beli Stok Ayam & Komoditas Peternakan"
         description="Temukan stok ayam broiler, pakan, dan komoditas peternakan lainnya. Hubungi penjual langsung via WhatsApp. Gratis pasang iklan untuk pengguna TernakOS."
         path="/market"
+        schema={marketSchema}
       />
       <Navbar />
 

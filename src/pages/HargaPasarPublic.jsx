@@ -481,9 +481,8 @@ export default function HargaPasarPublic() {
         title={seoTitle}
         description={seoDesc}
         path={seoPath}
+        schema={jsonLd}
       />
-      {/* JSON-LD Structured Data */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Global Background Elements */}
       <div

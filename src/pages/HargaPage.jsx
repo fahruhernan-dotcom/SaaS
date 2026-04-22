@@ -649,6 +649,20 @@ export default function HargaPage() {
   const data = dynamicPricingData[contentKey]
   const annualDiscount = dbConfigs?.annual_discount || { discount_percent: 20, badge_text: 'Hemat 2 bln!' }
 
+  const softwareSchema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "TernakOS",
+    "operatingSystem": "Web, Android, iOS",
+    "applicationCategory": "BusinessApplication",
+    "offers": {
+      "@type": "AggregateOffer",
+      "priceCurrency": "IDR",
+      "lowPrice": "0",
+      "highPrice": "1499000",
+      "offerCount": "4"
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] overflow-x-hidden">
@@ -656,6 +670,7 @@ export default function HargaPage() {
         title="Daftar Harga Paket TernakOS | Murah & Transparan"
         description="Pilih paket Starter (Gratis), Pro, atau Business sesuai kebutuhan peternakan Anda. Mulai dari Rp 49rb/bulan. Tanpa biaya admin, tanpa biaya setup."
         path="/harga"
+        schema={softwareSchema}
       />
       <Navbar />
 

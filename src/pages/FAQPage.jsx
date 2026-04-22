@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, Search, X, ChevronLeft } from 'lucide-react'
@@ -78,23 +78,11 @@ export default function FAQPage() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const sectionRefs = useRef({})
 
-  // Inject JSON-LD FAQ schema
-  useEffect(() => {
-    const schema = {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: getAllFAQForSchema(),
-    }
-    const script = document.createElement('script')
-    script.type = 'application/ld+json'
-    script.id = 'faq-schema'
-    script.textContent = JSON.stringify(schema)
-    document.head.appendChild(script)
-    return () => {
-      const el = document.getElementById('faq-schema')
-      if (el) el.remove()
-    }
-  }, [])
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: getAllFAQForSchema(),
+  }
 
   // Filtered results across all categories
   const trimmed = query.trim().toLowerCase()
@@ -126,6 +114,7 @@ export default function FAQPage() {
         title="FAQ - Tanya Jawab TernakOS | Semua yang Perlu Anda Tahu"
         description="Punya pertanyaan tentang TernakOS? Temukan jawaban lengkap tentang cara penggunaan, keamanan data, hingga paket harga di halaman FAQ kami."
         path="/faq"
+        schema={faqSchema}
       />
 
       {/* ── Header ── */}

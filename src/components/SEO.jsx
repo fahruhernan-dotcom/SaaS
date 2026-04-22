@@ -17,12 +17,19 @@ const BASE_URL = 'https://ternakos.my.id';
  * @param {string} [type]      - OG type: 'website' atau 'article'
  * @param {string} [image]     - URL gambar OG (opsional)
  */
-const SEO = ({ title, description, path, type = 'website', image }) => {
+const SEO = ({ title, description, path, type = 'website', image, schema }) => {
   const canonicalUrl = `${BASE_URL}${path}`;
   const ogImage = image || `${BASE_URL}/logo.png`;
 
   return (
     <Head>
+      {/* ── JSON-LD Structured Data ──────────────────────────────── */}
+      {schema && (
+        <script type="application/ld+json">
+          {JSON.stringify(schema)}
+        </script>
+      )}
+
       {/* ── Title ────────────────────────────────────────────────── */}
       <title>{title}</title>
       <meta name="title" content={title} />

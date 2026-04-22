@@ -758,12 +758,22 @@ export default function FiturPage() {
   const faqItems = [...FAQ_COMMON, ...(FAQ_ROLE[contentKey] ?? [])].slice(0, 4)
   const isSembako = contentKey === 'broker_sembako'
 
+  const softwareSchema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "TernakOS",
+    "operatingSystem": "Web, Android, iOS",
+    "applicationCategory": "BusinessApplication",
+    "featureList": hero.sub
+  };
+
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] overflow-x-hidden">
       <SEO
         title={`${hero.eyebrow} - Fitur TernakOS | Platform Peternakan Digital #1 Indonesia`}
         description={`${hero.sub} Setup kurang dari 15 menit, berjalan di HP Android, tanpa instalasi apapun.`}
         path="/fitur"
+        schema={softwareSchema}
       />
       <Navbar />
 
