@@ -14,6 +14,7 @@ import AnimatedContent from '../components/reactbits/AnimatedContent';
 import Particles from '../components/reactbits/Particles';
 import CountUp from '../components/reactbits/CountUp';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
+import { useSEO } from '@/lib/hooks/useSEO';
 import '../components/reactbits/ShinyText.css';
 
 // ─── Animation helper ─────────────────────────────────────────────────────────
@@ -37,10 +38,12 @@ function FadeUp({ children, delay = 0, className }) {
 export default function AboutUs() {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
 
-  React.useEffect(() => {
-    document.title = 'Tentang Kami - TernakOS';
-    return () => { document.title = 'TernakOS | Solusi Digital Peternakan Indonesia' };
-  }, []);
+  useSEO({
+    title: 'Tentang Kami - TernakOS | Platform Peternakan Digital Indonesia',
+    description: 'Kenali TernakOS, platform digital yang dibangun oleh peternak untuk peternak. Visi, misi, dan cerita di balik solusi manajemen peternakan #1 Indonesia.',
+    path: '/tentang-kami',
+  });
+
 
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans selection:bg-emerald-500/30 overflow-x-hidden">

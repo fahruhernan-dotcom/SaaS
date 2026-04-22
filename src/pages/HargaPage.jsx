@@ -1,6 +1,7 @@
 
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
+import { useSEO } from '@/lib/hooks/useSEO'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, ChevronDown, ArrowRight, Star, X as XIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -608,10 +609,11 @@ export default function HargaPage() {
   const { data: dbPricing } = usePricingConfig()
   const { data: dbConfigs } = usePlanConfigs()
 
-  useEffect(() => {
-    document.title = 'Pricing - TernakOS'
-    return () => { document.title = 'TernakOS' }
-  }, [])
+  useSEO({
+    title: 'Harga & Paket TernakOS - Mulai Gratis, Pro dari Rp 499.000/bln',
+    description: 'Lihat paket harga TernakOS. Starter gratis selamanya. Pro dari Rp 499.000/bln. Business dengan TernakBot AI. Untuk peternak, broker, dan RPA.',
+    path: '/harga',
+  })
 
   const dynamicPricingData = useMemo(() => {
     const newData = JSON.parse(JSON.stringify(PRICING_DATA))

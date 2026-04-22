@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { useSEO } from '@/lib/hooks/useSEO'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowLeftRight, Home, Truck, Users, BarChart2, Package,
@@ -757,11 +758,11 @@ export default function FiturPage() {
   const faqItems = [...FAQ_COMMON, ...(FAQ_ROLE[contentKey] ?? [])].slice(0, 4)
   const isSembako = contentKey === 'broker_sembako'
 
-  // Update document title dynamically (no react-helmet-async needed)
-  useEffect(() => {
-    document.title = `${hero.eyebrow} — TernakOS | Solusi Digital Peternakan Indonesia`
-    return () => { document.title = 'TernakOS | Solusi Digital Peternakan Indonesia' }
-  }, [hero.eyebrow])
+  useSEO({
+    title: `${hero.eyebrow} - Fitur TernakOS | Platform Peternakan Digital #1 Indonesia`,
+    description: `${hero.sub} Setup kurang dari 15 menit, berjalan di HP Android, tanpa instalasi apapun.`,
+    path: '/fitur',
+  })
 
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] overflow-x-hidden">

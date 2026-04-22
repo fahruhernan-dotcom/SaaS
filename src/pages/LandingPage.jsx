@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
+import { useSEO } from '@/lib/hooks/useSEO';
 import Hero from '../sections/Hero';
 import StatsBar from '../sections/StatsBar';
 import PainPoints from '../sections/PainPoints';
@@ -18,6 +19,12 @@ import StickyCTA from '../components/StickyCTA';
 
 const LandingPage = () => {
   const [activeRole, setActiveRole] = useState('peternak');
+
+  useSEO({
+    title: 'TernakOS - Platform SaaS Manajemen Ternak #1 Indonesia',
+    description: 'Kelola kandang, harga pasar, dan laporan keuangan peternakan Anda dalam satu platform digital. Untuk peternak, broker, dan RPA. Coba gratis 14 hari.',
+    path: '/',
+  });
 
   return (
     <div className="bg-bg-base min-h-screen text-text-primary font-body overflow-x-hidden">

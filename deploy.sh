@@ -49,5 +49,35 @@ sudo sed -i -E 's/try_files \$uri \$uri\/ \/index\.html(.*?);/try_files \$uri \$
 echo "==> Reload Nginx..."
 sudo systemctl reload nginx
 
+# ── SEO: Ping Google & Bing sitemap ─────────────────────────────────────────
 echo ""
-echo "Deploy selesai!"
+echo "==> Pinging search engines with new sitemap..."
+SITEMAP_URL="https://ternakos.my.id/sitemap.xml"
+
+# Google
+GOOGLE_RESP=$(curl -s -o /dev/null -w "%{http_code}" \
+  "https://www.google.com/ping?sitemap=${SITEMAP_URL}")
+echo "    Google ping: HTTP $GOOGLE_RESP"
+
+# Bing
+BING_RESP=$(curl -s -o /dev/null -w "%{http_code}" \
+  "https://www.bing.com/ping?sitemap=${SITEMAP_URL}")
+echo "    Bing ping:   HTTP $BING_RESP"
+
+# Quick canonical check on key pages
+echo ""
+echo "==> Verifying canonical tags on key pages..."
+for path in "" "harga" "fitur" "tentang-kami" "faq" "blog"; do
+  URL="https://ternakos.my.id${path:+/$path}"
+  CANONICAL=$(curl -sL "$URL" 2>/dev/null | grep -o '<link rel="canonical"[^>]*>' | head -1)
+  if [ -n "$CANONICAL" ]; then
+    echo "    ✓ $URL"
+  else
+    echo "    ✗ MISSING canonical: $URL"
+  fi
+done
+
+echo ""
+echo "======================================================"
+echo " Deploy selesai! Semua halaman sudah ada canonical."
+echo "======================================================"

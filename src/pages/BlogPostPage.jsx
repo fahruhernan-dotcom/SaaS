@@ -5,6 +5,7 @@ import { Calendar, Clock, Tag, ChevronRight, ArrowLeft, ArrowRight } from 'lucid
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { getPostBySlug, getRelatedPosts, formatDate } from '../data/blogPosts';
+import { useSEO } from '@/lib/hooks/useSEO';
 
 // ─── Category colors (mirrored from BlogPage) ────────────────────────────────
 
@@ -52,33 +53,12 @@ export default function BlogPostPage() {
   const cat = CATEGORY_COLORS[post.category] ?? CATEGORY_COLORS.umum;
   const related = getRelatedPosts(post.relatedSlugs ?? []);
 
-  // Update document meta dynamically
-  useEffect(() => {
-    document.title = post.metaTitle + ' | TernakOS';
-
-    // Update meta description
-    let meta = document.querySelector('meta[name="description"]');
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.name = 'description';
-      document.head.appendChild(meta);
-    }
-    meta.setAttribute('content', post.metaDescription);
-
-    // OG tags
-    const setOg = (prop, val) => {
-      let og = document.querySelector(`meta[property="${prop}"]`);
-      if (!og) { og = document.createElement('meta'); og.setAttribute('property', prop); document.head.appendChild(og); }
-      og.setAttribute('content', val);
-    };
-    setOg('og:title', post.metaTitle + ' | TernakOS');
-    setOg('og:description', post.metaDescription);
-    setOg('og:type', 'article');
-
-    return () => {
-      document.title = 'TernakOS | Solusi Digital Peternakan Indonesia';
-    };
-  }, [post]);
+  useSEO({
+    title: `${post.metaTitle} | TernakOS`,
+    description: post.metaDescription,
+    path: `/blog/${post.slug}`,
+    type: 'article',
+  });
 
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans overflow-x-hidden">

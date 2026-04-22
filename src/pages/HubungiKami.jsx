@@ -5,6 +5,7 @@ import {
   ChevronRight, Phone, MessageSquare, ShieldCheck
 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+import { useSEO } from '@/lib/hooks/useSEO';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Particles from '../components/reactbits/Particles';
@@ -40,13 +41,14 @@ export default function HubungiKami() {
     window.open(`${WA_URL}?text=${waMsg}`, '_blank');
   };
 
+  useSEO({
+    title: 'Hubungi Kami - TernakOS | Konsultasi Peternakan Digital',
+    description: 'Hubungi tim TernakOS via WhatsApp atau email. Kami siap membantu peternak, broker, dan agen sembako Indonesia dengan respons cepat kurang dari 30 menit.',
+    path: '/hubungi-kami',
+  });
+
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans selection:bg-emerald-500/30 overflow-x-hidden">
-      <Helmet>
-        <title>Hubungi Kami | TernakOS</title>
-        <meta name="description" content="Hubungi tim TernakOS via WhatsApp atau email. Siap membantu peternak, broker, dan agen sembako Indonesia." />
-      </Helmet>
-
       <Navbar />
 
       <main className="pt-20">

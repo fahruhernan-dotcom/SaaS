@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, Search, X, ChevronLeft } from 'lucide-react'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import { useSEO } from '@/lib/hooks/useSEO'
 import { FAQ_DATA, FAQ_CATEGORIES, getAllFAQForSchema } from '../lib/faqData'
 import Footer from '../components/Footer'
 
@@ -95,11 +96,11 @@ export default function FAQPage() {
     }
   }, [])
 
-  // Page title
-  useEffect(() => {
-    document.title = 'FAQ & Help Center - TernakOS'
-    return () => { document.title = 'TernakOS' }
-  }, [])
+  useSEO({
+    title: 'FAQ & Help Center TernakOS - Pertanyaan Seputar Peternakan Digital',
+    description: 'Temukan jawaban seputar fitur, harga, keamanan, dan cara kerja TernakOS. Pusat bantuan lengkap untuk peternak, broker, dan RPA Indonesia.',
+    path: '/faq',
+  })
 
   // Filtered results across all categories
   const trimmed = query.trim().toLowerCase()

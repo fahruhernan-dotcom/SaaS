@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, ArrowRight, BookOpen, Tag } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { getAllPosts, formatDate } from '../data/blogPosts';
+import { useSEO } from '@/lib/hooks/useSEO';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
@@ -112,15 +113,11 @@ export default function BlogPage() {
     [allPosts, activeCategory]
   );
 
-  // Update document meta
-  useEffect(() => {
-    document.title = 'Blog & Panduan | TernakOS';
-    const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute('content', 'Tips manajemen kandang, cara hitung FCR, panduan broker ayam, dan strategi bisnis peternakan Indonesia.');
-    return () => {
-      document.title = 'TernakOS | Solusi Digital Peternakan Indonesia';
-    };
-  }, []);
+  useSEO({
+    title: 'Blog & Panduan Peternakan Indonesia - TernakOS',
+    description: 'Tips manajemen kandang, cara hitung FCR & IP Score, panduan broker ayam, dan strategi bisnis peternakan Indonesia dari praktisi nyata di lapangan.',
+    path: '/blog',
+  });
 
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans overflow-x-hidden">
