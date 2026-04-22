@@ -24,7 +24,7 @@ const LandingPage = () => {
     <div className="bg-bg-base min-h-screen text-text-primary font-body overflow-x-hidden">
       <SEO
         title="TernakOS - Platform SaaS Manajemen Ternak #1 Indonesia"
-        description="Kelola kandang, harga pasar, dan laporan keuangan peternakan Anda dalam satu platform digital. Untuk peternak, broker, dan RPA. Coba gratis 14 hari."
+        description="Kelola kandang, harga pasar, dan laporan keuangan peternakan Anda dalam satu platform digital. Untuk peternak, broker, dan RPA. Paket Starter GRATIS selamanya, tanpa kartu kredit."
         path="/"
       />
       <Navbar />
