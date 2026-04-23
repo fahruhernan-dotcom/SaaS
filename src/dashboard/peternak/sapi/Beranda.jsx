@@ -200,19 +200,27 @@ export default function SapiBeranda() {
 
   // Data transformation for Recharts
   const chartData = useMemo(() => {
-    if (!weightHistory.length) return []
-    
-    // 1. Group by date
     const dateGroups = {}
+    
+    // 1. Tambahkan titik awal (entry_date & entry_weight_kg) dari setiap ternak
+    animals.forEach(a => {
+      if (a.entry_date && a.entry_weight_kg) {
+        const dStr = a.entry_date.split('T')[0]
+        if (!dateGroups[dStr]) dateGroups[dStr] = { date: dStr }
+        dateGroups[dStr][a.id] = parseFloat(a.entry_weight_kg)
+      }
+    })
+
+    // 2. Tambahkan data dari record timbang
     weightHistory.forEach(reg => {
       const dStr = reg.weigh_date
       if (!dateGroups[dStr]) dateGroups[dStr] = { date: dStr }
-      dateGroups[dStr][reg.animal_id] = reg.weight_kg
+      dateGroups[dStr][reg.animal_id] = parseFloat(reg.weight_kg)
     })
 
-    // 2. Convert to sorted array
+    // 3. Convert to sorted array
     return Object.values(dateGroups).sort((a, b) => new Date(a.date) - new Date(b.date))
-  }, [weightHistory])
+  }, [weightHistory, animals])
 
   // Mapping animalId to color
   const animalColors = useMemo(() => {
@@ -457,7 +465,7 @@ export default function SapiBeranda() {
                 <p className="text-xs font-bold text-white">Pilih ekor di atas</p>
                 <p className="text-[10px] text-[#4B6478] mt-1">Gunakan tombol pill untuk membandingkan pertumbuhan antar sapi</p>
               </div>
-            ) : weightHistory.length === 0 ? (
+            ) : chartData.length === 0 ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-white/[0.01] rounded-2xl">
                 <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mb-3">
                    <Scale size={24} className="text-[#4B6478]" />
@@ -495,7 +503,7 @@ export default function SapiBeranda() {
                         name={animal?.ear_tag || 'Sapi'}
                         stroke={animalColors[id]}
                         strokeWidth={3}
-                        dot={false}
+                        dot={chartData.length === 1 ? { r: 5, strokeWidth: 0 } : false}
                         activeDot={{ r: 5, strokeWidth: 0 }}
                         animationDuration={1000}
                       />

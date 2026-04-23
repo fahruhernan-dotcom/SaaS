@@ -66,6 +66,7 @@ import DombaKandangView   from './domba/KandangView'
 import DombaTaskSettings  from './domba/TaskSettings'
 import DombaTaskAssign    from './domba/TaskAssign'
 import DombaDailyTask     from './domba/DailyTask'
+import DombaPenjualan     from './domba/Penjualan'
 
 // New Domba — Breeding
 import DombaBreedingBeranda    from './domba/breeding/Beranda'
@@ -248,6 +249,7 @@ export function PeternakPageRouter({ page }) {
       daily_task:    <DombaDailyTask />,
       task_settings: <PeternakAdminGuard><DombaTaskSettings /></PeternakAdminGuard>,
       task_assign:   <PeternakAdminGuard><DombaTaskAssign /></PeternakAdminGuard>,
+      penjualan:     <DombaPenjualan />,
       'harga-pasar': <HargaPasar />,
       tim:           <BroilerTim />,
       akun:          <Akun />,

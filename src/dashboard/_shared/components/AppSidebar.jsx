@@ -279,6 +279,7 @@ export default function AppSidebar({ open, onClose }) {
         ...(isDombaPenggemukan ? [
           { title: 'Batch Aktif',    url: `${peternakBase}/batch`,       icon: RefreshCw },
           { title: 'Data Ternak',    url: `${peternakBase}/ternak`,      icon: Tag },
+          { title: 'Penjualan',      url: `${peternakBase}/penjualan`,   icon: ShoppingCart },
           { title: 'Denah Kandang',  url: `${peternakBase}/kandang-view`,icon: LayoutGrid },
         ] : []),
 
@@ -389,9 +390,9 @@ export default function AppSidebar({ open, onClose }) {
     ...(isPeternak ? [{
       label: 'INTELIGENSI AI',
       items: [
-        { title: 'Tanya AI Assistant', url: `${peternakBase}/ai-chat`,      icon: MessageSquareText, badge: 'PRO' },
-        { title: 'Analisis Performa',  url: `${peternakBase}/ai-analysis`,  icon: Brain,             planRequired: 'pro' },
-        { title: 'Prediksi Hasil',    url: `${peternakBase}/ai-prediction`,icon: TrendingUp,        planRequired: 'business' },
+        { title: 'Tanya AI Assistant', url: `${peternakBase}/ai-chat`,      icon: MessageSquareText, badge: 'DEV', locked: true },
+        { title: 'Analisis Performa',  url: `${peternakBase}/ai-analysis`,  icon: Brain,             badge: 'DEV', locked: true },
+        { title: 'Prediksi Hasil',    url: `${peternakBase}/ai-prediction`,icon: TrendingUp,        badge: 'DEV', locked: true },
       ]
     }] : []),
   ]
@@ -757,7 +758,11 @@ export default function AppSidebar({ open, onClose }) {
                             <span className="font-body text-[14px] flex-1 font-medium text-muted-foreground">
                               {item.title}
                             </span>
-                            {isPlanLocked ? (
+                            {item.badge ? (
+                              <span className="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                                {item.badge}
+                              </span>
+                            ) : isPlanLocked ? (
                               <span className="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500/60 border border-emerald-500/15">
                                 PRO
                               </span>

@@ -14,6 +14,7 @@ import {
   useDombaBatchWeightHistory, useDombaFeedLogs,
   calcHariDiFarm, calcMortalitasDomba,
 } from '@/lib/hooks/useDombaPenggemukanData'
+import { usePeternakTaskInstances } from '@/lib/hooks/usePeternakTaskData'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -41,11 +42,11 @@ function getGreeting() {
 
 function KPICard({ label, value, sub, color = 'text-white', icon: Icon }) {
   return (
-    <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
-      {Icon && <Icon size={14} className="text-[#4B6478] mb-2" />}
-      <p className={`font-['Sora'] font-black text-xl leading-none mb-1 ${color}`}>{value}</p>
-      <p className="text-[11px] text-[#4B6478] font-semibold">{label}</p>
-      {sub && <p className="text-[10px] text-[#4B6478] mt-0.5">{sub}</p>}
+    <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
+      {Icon && <Icon size={12} className="text-[#4B6478] mb-2" />}
+      <p className={`font-['Sora'] font-black text-lg leading-none mb-1 ${color}`}>{value}</p>
+      <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-tight">{label}</p>
+      {sub && <p className="text-[9px] text-[#4B6478] mt-0.5 font-medium tracking-tighter">{sub}</p>}
     </div>
   )
 }
@@ -175,20 +176,37 @@ export default function DombaPenggemukanBeranda() {
   const { data: weightHistory = [], isLoading: loadingHistory } = useDombaBatchWeightHistory(selectedBatchId)
   const { data: feedLogs = [] } = useDombaFeedLogs(selectedBatchId)
 
-  const isLoading = loadingActive || loadingAll || isLoadingAnimals || loadingHistory
+  const todayStr = new Date().toISOString().split('T')[0]
+  const { data: todayTasks = [], isLoading: loadTasks } = usePeternakTaskInstances({ 
+    due_date_from: todayStr, 
+    due_date_to: todayStr,
+    livestockType: 'domba_penggemukan' 
+  })
+
+  const isLoading = loadingActive || loadingAll || isLoadingAnimals || loadingHistory || loadTasks
 
   const chartData = useMemo(() => {
-    if (!weightHistory.length) return []
-    // 1. Group by date
     const dateGroups = {}
+    
+    // 1. Tambahkan titik awal (entry_date & entry_weight_kg) dari setiap ternak
+    animals.forEach(a => {
+      if (a.entry_date && a.entry_weight_kg) {
+        const dStr = a.entry_date.split('T')[0]
+        if (!dateGroups[dStr]) dateGroups[dStr] = { date: dStr }
+        dateGroups[dStr][a.id] = parseFloat(a.entry_weight_kg)
+      }
+    })
+
+    // 2. Tambahkan data dari record timbang
     weightHistory.forEach(reg => {
       const dStr = reg.weigh_date
       if (!dateGroups[dStr]) dateGroups[dStr] = { date: dStr }
-      dateGroups[dStr][reg.animal_id] = reg.weight_kg
+      dateGroups[dStr][reg.animal_id] = parseFloat(reg.weight_kg)
     })
-    // 2. Convert to sorted array
+
+    // 3. Convert to sorted array
     return Object.values(dateGroups).sort((a, b) => new Date(a.date) - new Date(b.date))
-  }, [weightHistory])
+  }, [weightHistory, animals])
 
   // Mapping animalId to color
   const animalColors = useMemo(() => {
@@ -230,9 +248,9 @@ export default function DombaPenggemukanBeranda() {
     activeBatches.forEach(b => {
       const hari = calcHariDiFarm(b.start_date)
       const mort = calcMortalitasDomba(b.mortality_count, b.total_animals)
-      if (hari > 90) list.push({ type: 'danger', msg: `${b.batch_code}: Hari ke-${hari} — melewati target 90 hari` })
-      if (mort > 3) list.push({ type: 'danger', msg: `${b.batch_code}: Mortalitas ${mort}% — di atas batas 3%` })
-      else if (mort > 1.5) list.push({ type: 'warning', msg: `${b.batch_code}: Mortalitas ${mort}% — perlu dipantau` })
+      if (hari > 90) list.push({ type: 'danger', isCritical: true, msg: `${b.batch_code}: Hari ke-${hari} — melewati target 90 hari`, action: () => navigate(`${BASE}/ternak?batch=${b.id}`) })
+      if (mort > 3) list.push({ type: 'danger', isCritical: true, msg: `${b.batch_code}: Mortalitas ${mort}% — di atas batas 3%`, action: () => navigate(`${BASE}/kesehatan`) })
+      else if (mort > 1.5) list.push({ type: 'warning', msg: `${b.batch_code}: Mortalitas ${mort}% — perlu dipantau`, action: () => navigate(`${BASE}/kesehatan`) })
     })
 
     // 2. Logic Intensive v2.0 (2-Day Consecutive Waste)
@@ -247,13 +265,32 @@ export default function DombaPenggemukanBeranda() {
         list.push({ 
           type: 'danger', 
           icon: Zap,
-          msg: `KRITIS: 2 Hari berturut-turut pakan Sisa Banyak di ${batch?.batch_code || 'Batch ini'}. Potensi masalah palatabilitas atau kesehatan kelompok.` 
+          msg: `KRITIS: 2 Hari berturut-turut pakan Sisa Banyak di ${batch?.batch_code || 'Batch ini'}. Potensi masalah palatabilitas atau kesehatan kelompok.`,
+          action: () => navigate(`${BASE}/input-harian`)
         })
       }
     }
 
+    // 3. Today Tasks Status
+    const tasksDone = todayTasks.filter(t => t.status === 'selesai').length
+    const tasksTotal = todayTasks.length
+    if (tasksTotal > 0 && tasksDone < tasksTotal && new Date().getHours() >= 15) {
+       list.push({
+         type: 'warning',
+         msg: `${tasksTotal - tasksDone} Tugas Harian belum selesai menjelang sore.`,
+         action: () => navigate(`${BASE}/daily_task`)
+       })
+    }
+
     return list
-  }, [activeBatches, feedLogs, selectedBatchId])
+  }, [activeBatches, feedLogs, selectedBatchId, todayTasks, navigate])
+
+  const taskStats = useMemo(() => {
+    const total = todayTasks.length
+    const done = todayTasks.filter(t => t.status === 'selesai').length
+    const pct = total === 0 ? 100 : Math.round((done / total) * 100)
+    return { total, done, pct }
+  }, [todayTasks])
 
   if (isLoading) return <LoadingSpinner fullPage />
 
@@ -268,168 +305,26 @@ export default function DombaPenggemukanBeranda() {
         <h1 className="font-['Sora'] font-black text-xl text-white">Fattening Domba</h1>
       </header>
 
-
-      {/* KPI Grid */}
-      <div className="grid grid-cols-2 gap-2.5 px-4 mt-4">
-        <KPICard label="Batch Aktif"  value={kpi.activeBatchCount} icon={Activity}   color="text-green-400" />
-        <KPICard label="Total Ekor"   value={kpi.totalEkor}        icon={Tag}        color="text-white" />
+      {/* KPI Grid — 4-col on wider screens, 2-col on mobile */}
+      <div className="grid grid-cols-4 gap-2 px-4 mt-4">
+        <KPICard label="Batch"  value={kpi.activeBatchCount} icon={Activity}   color="text-green-400" />
+        <KPICard label="Ekor"   value={kpi.totalEkor}        icon={Tag}        color="text-white" />
         <KPICard
-          label="ADG Rata-rata"
-          value={kpi.avgADG ? `${kpi.avgADG} g/hr` : '—'}
-          sub="Target ≥150 g/hari"
+          label="ADG"
+          value={kpi.avgADG ? `${kpi.avgADG}` : '—'}
+          sub="g/hr"
           icon={TrendingUp}
           color={kpi.avgADG >= 150 ? 'text-green-400' : kpi.avgADG ? 'text-amber-400' : 'text-[#4B6478]'}
         />
         <KPICard
-          label="Mortalitas"
+          label="Mati"
           value={`${kpi.mortalitasPct}%`}
-          sub="Target ≤3%"
           icon={Activity}
           color={parseFloat(kpi.mortalitasPct) > 3 ? 'text-red-400' : 'text-green-400'}
         />
       </div>
 
-      {/* Grafik Pertumbuhan */}
-      <section className="px-4 mt-6">
-        <div className="bg-white/[0.03] border border-white/[0.06] rounded-3xl p-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-            <div>
-              <h2 className="font-['Sora'] font-bold text-sm text-white flex items-center gap-2">
-                <BarChart2 size={16} className="text-green-400" />
-                Grafik Pertumbuhan
-              </h2>
-              <p className="text-[10px] text-[#4B6478] mt-1 uppercase tracking-wider font-bold">Bobot Badan (kg)</p>
-            </div>
-
-            {activeBatches.length > 1 && (
-              <select
-                value={selectedBatchId}
-                onChange={(e) => {
-                  setSelectedBatchId(e.target.value)
-                  setActiveAnimalIds(new Set())
-                }}
-                className="bg-[#0C1319] border border-white/10 rounded-xl px-3 py-1.5 text-[11px] font-bold text-white outline-none focus:border-green-500/50"
-              >
-                {activeBatches.map(b => (
-                  <option key={b.id} value={b.id}>{b.batch_code} ({b.kandang_name})</option>
-                ))}
-              </select>
-            )}
-          </div>
-
-          {/* Animal Selector Pills */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            {animals.length > 0 ? (
-              <>
-                {animals.map((a) => {
-                  const isActive = activeAnimalIds.has(a.id)
-                  const color = animalColors[a.id]
-                  return (
-                    <button
-                      key={a.id}
-                      onClick={() => toggleAnimal(a.id)}
-                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition-all border flex items-center gap-1.5 ${
-                        isActive
-                          ? 'text-white border-transparent'
-                          : 'bg-white/5 border-white/10 text-[#4B6478] hover:bg-white/10'
-                      }`}
-                      style={isActive ? { backgroundColor: color } : {}}
-                    >
-                      {isActive ? <CheckCircle2 size={10} /> : <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />}
-                      {a.ear_tag}
-                    </button>
-                  )
-                })}
-                {activeAnimalIds.size > 0 && (
-                  <button
-                    onClick={() => setActiveAnimalIds(new Set())}
-                    className="px-3 py-1.5 rounded-full text-[10px] font-bold border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-all flex items-center gap-1"
-                  >
-                    <RefreshCw size={10} />
-                    Reset
-                  </button>
-                )}
-              </>
-            ) : (
-              <p className="text-[11px] text-[#4B6478]">Tidak ada ternak di batch ini</p>
-            )}
-           {/* Chart Area */}
-          <div className="h-[300px] w-full relative">
-            {activeAnimalIds.size === 0 ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-white/5 rounded-2xl">
-                <MousePointer2 size={32} className="text-white/10 mb-3" />
-                <p className="text-xs font-bold text-white">Pilih ekor di atas</p>
-                <p className="text-[10px] text-[#4B6478] mt-1">Bandingkan pertumbuhan antar domba dalam satu grafik</p>
-              </div>
-            ) : weightHistory.length === 0 ? (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-white/[0.01] rounded-2xl">
-                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mb-3">
-                   <Scale size={24} className="text-[#4B6478]" />
-                 </div>
-                <p className="text-xs font-bold text-white">Belum ada data timbang</p>
-                <p className="text-[10px] text-[#4B6478] mt-1">Segera catat timbangan untuk melihat grafik</p>
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                  <XAxis
-                    dataKey="date"
-                    hide
-                  />
-                  <YAxis
-                    domain={['dataMin - 2', 'dataMax + 2']}
-                    tick={{ fontSize: 10, fill: '#4B6478', fontWeight: 'bold' }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#0C1319', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '11px' }}
-                    itemStyle={{ fontSize: '11px', fontWeight: 'bold' }}
-                    labelFormatter={(val) => format(new Date(val), 'd MMMM yyyy', { locale: id })}
-                    labelStyle={{ marginBottom: '4px', color: '#94A3B8' }}
-                  />
-                  {[...activeAnimalIds].map(id => {
-                    const animal = animals.find(a => a.id === id)
-                    return (
-                      <Line
-                        key={id}
-                        type="monotone"
-                        dataKey={id}
-                        name={animal?.ear_tag || 'Domba'}
-                        stroke={animalColors[id]}
-                        strokeWidth={4}
-                        dot={false}
-                        activeDot={{ r: 5, strokeWidth: 0 }}
-                        animationDuration={1000}
-                      />
-                    )
-                  })}
-                </LineChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Alerts */}
-      {alerts.length > 0 && (
-        <div className="px-4 mt-4 space-y-2">
-          {alerts.map((a, i) => (
-            <div key={i} className={`flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold border ${
-              a.type === 'danger'
-                ? 'bg-red-500/10 border-red-500/20 text-red-300'
-                : 'bg-amber-500/10 border-amber-500/20 text-amber-300'
-            }`}>
-              <AlertTriangle size={13} className="shrink-0 mt-0.5" />
-              <span>{a.msg}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Batch Aktif */}
+      {/* 1. Batch Aktif (Mobile-first: most actionable section) */}
       <section className="px-4 mt-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-['Sora'] font-bold text-sm text-white">Batch Aktif</h2>
@@ -469,7 +364,198 @@ export default function DombaPenggemukanBeranda() {
         )}
       </section>
 
-      {/* Riwayat ringkas */}
+      {/* 2. Ringkasan Operasional Hari Ini & Alerts */}
+      <section className="px-4 mt-6 grid lg:grid-cols-2 gap-4">
+        
+        {/* Ringkasan Tugas */}
+        <div 
+          onClick={() => navigate(`${BASE}/daily_task`)}
+          className="bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-colors rounded-3xl p-5 cursor-pointer relative overflow-hidden group"
+        >
+          <div className="flex items-start justify-between mb-4">
+            <h2 className="font-['Sora'] font-bold text-sm text-white flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-emerald-400" />
+              Tugas Hari Ini
+            </h2>
+            <ChevronRight size={14} className="text-[#4B6478] group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
+          </div>
+
+          <div className="flex items-end justify-between mb-2">
+            <div>
+              <p className="text-3xl font-black text-white font-['Sora'] leading-none mb-1">{taskStats.done} <span className="text-sm text-[#4B6478]">/ {taskStats.total}</span></p>
+              <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-widest">Tugas Selesai</p>
+            </div>
+            <p className={`text-2xl font-black font-['Sora'] leading-none ${taskStats.pct === 100 ? 'text-emerald-400' : 'text-emerald-400/50'}`}>
+              {taskStats.pct}%
+            </p>
+          </div>
+          
+          <div className="h-1.5 w-full bg-white/[0.04] rounded-full overflow-hidden">
+            <div className={`h-full transition-all duration-1000 ${taskStats.pct === 100 ? 'bg-emerald-500' : 'bg-emerald-500/50'}`} style={{ width: `${taskStats.pct}%` }} />
+          </div>
+        </div>
+
+        {/* Alerts List */}
+        <div>
+          {alerts.length > 0 ? (
+            <div className="space-y-2 h-[120px] overflow-y-auto custom-scrollbar pr-2">
+              <h2 className="font-['Sora'] font-bold text-xs text-[#4B6478] mb-2 uppercase tracking-widest pl-1">Perhatian Khusus</h2>
+              {alerts.map((a, i) => (
+                <button 
+                  key={i} 
+                  onClick={a.action}
+                  className={`w-full text-left flex items-start justify-between gap-3 px-4 py-3 rounded-2xl transition hover:brightness-110 border cursor-pointer ${
+                    a.type === 'danger'
+                      ? 'bg-red-500/5 border-red-500/20 hover:bg-red-500/10'
+                      : 'bg-amber-500/5 border-amber-500/20 hover:bg-amber-500/10'
+                  }`}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <AlertTriangle size={15} className={`shrink-0 mt-0.5 ${a.type === 'danger' ? 'text-red-400' : 'text-amber-400'}`} />
+                    <span className={`text-xs font-bold font-['Sora'] leading-tight ${a.type === 'danger' ? 'text-red-200' : 'text-amber-200'}`}>{a.msg}</span>
+                  </div>
+                  <ChevronRight size={14} className="opacity-40 shrink-0 mt-0.5" />
+                </button>
+              ))}
+            </div>
+          ) : (
+             <div className="h-full bg-emerald-500/[0.02] border border-emerald-500/10 rounded-3xl p-5 flex flex-col items-center justify-center text-center">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center mb-3">
+                  <CheckCircle2 size={20} className="text-emerald-500" />
+                </div>
+                <p className="text-xs font-bold text-emerald-400">Seluruh Kondisi Aman</p>
+                <p className="text-[10px] text-[#4B6478] mt-1">Tidak ada peringatan kritis saat ini</p>
+             </div>
+          )}
+        </div>
+      </section>
+
+      {/* 3. Grafik Pertumbuhan (below batch cards) */}
+      <section className="px-4 mt-6">
+        <div className="bg-white/[0.03] border border-white/[0.06] rounded-3xl p-4 sm:p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 className="font-['Sora'] font-bold text-sm text-white flex items-center gap-2">
+                <BarChart2 size={16} className="text-green-400" />
+                Grafik Pertumbuhan
+              </h2>
+              <p className="text-[10px] text-[#4B6478] mt-1 uppercase tracking-wider font-bold">Bobot Badan (kg)</p>
+            </div>
+
+            {activeBatches.length > 1 && (
+              <select
+                value={selectedBatchId}
+                onChange={(e) => {
+                  setSelectedBatchId(e.target.value)
+                  setActiveAnimalIds(new Set())
+                }}
+                className="bg-[#0C1319] border border-white/10 rounded-xl px-3 py-1.5 text-[11px] font-bold text-white outline-none focus:border-green-500/50"
+              >
+                {activeBatches.map(b => (
+                  <option key={b.id} value={b.id}>{b.batch_code} ({b.kandang_name})</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {/* Animal Selector Pills */}
+          <div className="flex flex-wrap gap-1.5 mb-4 max-h-[120px] overflow-y-auto custom-scrollbar">
+            {animals.length > 0 ? (
+              <>
+                {animals.map((a) => {
+                  const isActive = activeAnimalIds.has(a.id)
+                  const color = animalColors[a.id]
+                  return (
+                    <button
+                      key={a.id}
+                      onClick={() => toggleAnimal(a.id)}
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-all border flex items-center gap-1.5 shrink-0 ${
+                        isActive
+                          ? 'text-white border-transparent'
+                          : 'bg-white/5 border-white/10 text-[#4B6478] hover:bg-white/10'
+                      }`}
+                      style={isActive ? { backgroundColor: color } : {}}
+                    >
+                      {isActive ? <CheckCircle2 size={10} /> : <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />}
+                      {a.ear_tag}
+                    </button>
+                  )
+                })}
+                {activeAnimalIds.size > 0 && (
+                  <button
+                    onClick={() => setActiveAnimalIds(new Set())}
+                    className="px-2.5 py-1 rounded-full text-[10px] font-bold border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-all flex items-center gap-1 shrink-0"
+                  >
+                    <RefreshCw size={10} />
+                    Reset
+                  </button>
+                )}
+              </>
+            ) : (
+              <p className="text-[11px] text-[#4B6478]">Tidak ada ternak di batch ini</p>
+            )}
+          </div>
+
+          {/* Chart Area */}
+          <div className="h-[260px] sm:h-[300px] w-full relative">
+            {activeAnimalIds.size === 0 ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-white/5 rounded-2xl">
+                <MousePointer2 size={32} className="text-white/10 mb-3" />
+                <p className="text-xs font-bold text-white">Pilih ekor di atas</p>
+                <p className="text-[10px] text-[#4B6478] mt-1">Bandingkan pertumbuhan antar domba dalam satu grafik</p>
+              </div>
+            ) : chartData.length === 0 ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-white/[0.01] rounded-2xl">
+                <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center mb-3">
+                   <Scale size={24} className="text-[#4B6478]" />
+                 </div>
+                <p className="text-xs font-bold text-white">Belum ada data timbang</p>
+                <p className="text-[10px] text-[#4B6478] mt-1">Segera catat timbangan untuk melihat grafik</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 10, right: 5, left: -25, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    hide
+                  />
+                  <YAxis
+                    domain={['dataMin - 2', 'dataMax + 2']}
+                    tick={{ fontSize: 10, fill: '#4B6478', fontWeight: 'bold' }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#0C1319', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '11px' }}
+                    itemStyle={{ fontSize: '11px', fontWeight: 'bold' }}
+                    labelFormatter={(val) => format(new Date(val), 'd MMMM yyyy', { locale: id })}
+                    labelStyle={{ marginBottom: '4px', color: '#94A3B8' }}
+                  />
+                  {[...activeAnimalIds].map(id => {
+                    const animal = animals.find(a => a.id === id)
+                    return (
+                      <Line
+                        key={id}
+                        type="monotone"
+                        dataKey={id}
+                        name={animal?.ear_tag || 'Domba'}
+                        stroke={animalColors[id]}
+                        strokeWidth={3}
+                        dot={chartData.length === 1 ? { r: 4, strokeWidth: 0 } : false}
+                        activeDot={{ r: 4, strokeWidth: 0 }}
+                        animationDuration={1000}
+                      />
+                    )
+                  })}
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Riwayat ringkas */}
       {kpi.closedCount > 0 && (
         <section className="px-4 mt-6">
           <button

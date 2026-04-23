@@ -309,12 +309,12 @@ const getTaskSummarySnippet = (task, reportData, weighingEntries = [], healthEnt
 
     // 1. Priority: Multi-animal entries
     if (task.task_type === 'timbang' && weighing_entries.length > 0) {
-      return `${weighing_entries.length} ${config.animalLabel} ditimbang`
+      return `${weighing_entries.length} ekor ditimbang`
     }
     if ((task.task_type === 'vaksinasi' || task.task_type === 'obat_cacing') && health_entries.length > 0) {
       const first = health_entries[0]
       const medName = first.medicine_name || first.vaccine_name || 'Obat'
-      return `${health_entries.length} ${config.animalLabel} — ${medName}`
+      return `${health_entries.length} ekor — ${medName}`
     }
 
     // 2. Report Fields (Pakan, etc)
@@ -339,6 +339,83 @@ const getTaskSummarySnippet = (task, reportData, weighingEntries = [], healthEnt
   } catch (e) {
     return task.notes?.substring(0, 40)
   }
+}
+
+// ── PARSE TASK REPORT (structured extract from task.notes JSON) ───────────────
+const parseTaskReport = (task) => {
+  const result = {
+    completedBy: task.completed_by?.full_name || task.worker?.full_name || null,
+    completedAt: task.completed_at ? format(new Date(task.completed_at), 'HH:mm') : null,
+    feedOrts: null,      // 'habis' | 'sedikit' | 'banyak'
+    weighingCount: 0,
+    weighingAvg: null,
+    healthCount: 0,
+    healthMed: null,
+    reportFields: [],    // [{ label, value, unit }]
+    userNote: null,
+    snippet: null,       // single-line summary string
+  }
+  if (task.status !== 'selesai' && task.status !== 'terlambat') {
+    result.snippet = 'Menunggu laporan'
+    return result
+  }
+  try {
+    const raw = task.notes || ''
+    if (!raw.trim().startsWith('{')) {
+      result.snippet = raw.substring(0, 50) || 'Selesai'
+      return result
+    }
+    const parsed = JSON.parse(raw)
+    if (parsed._version !== '2.0') {
+      result.snippet = (parsed.notes || 'Selesai').substring(0, 50)
+      return result
+    }
+    const { report = {}, weighing_entries = [], health_entries = [], notes: uNote } = parsed
+    result.userNote = uNote || null
+
+    // Feed orts
+    if (report.feed_orts_category) result.feedOrts = report.feed_orts_category
+
+    // Weighing
+    if (weighing_entries.length > 0) {
+      result.weighingCount = weighing_entries.length
+      const totalW = weighing_entries.reduce((s, e) => s + (parseFloat(e.weight_kg) || 0), 0)
+      result.weighingAvg = totalW > 0 ? (totalW / weighing_entries.length).toFixed(1) : null
+    }
+
+    // Health
+    if (health_entries.length > 0) {
+      result.healthCount = health_entries.length
+      result.healthMed = health_entries[0]?.medicine_name || health_entries[0]?.vaccine_name || 'Obat'
+    }
+
+    // Report fields
+    Object.entries(report).forEach(([k, v]) => {
+      if (k === 'feed_orts_category' || k === '_version') return
+      const unit = k.includes('_kg') ? 'kg' : k.includes('_liter') ? 'L' : k.includes('suhu') ? '°C' : ''
+      const label = k.replace(/_kg|_liter|_cm/g, '').replace(/_/g, ' ')
+      result.reportFields.push({ label, value: v, unit })
+    })
+
+    // Build snippet
+    if (task.task_type === 'pakan' && result.feedOrts) {
+      const ortsMap = { habis: '👍 Habis', sedikit: '🟡 Sisa Sedikit', banyak: '🔴 Sisa Banyak' }
+      result.snippet = ortsMap[result.feedOrts] || 'Selesai'
+    } else if (result.weighingCount > 0) {
+      result.snippet = `${result.weighingCount} ekor ditimbang${result.weighingAvg ? ` · avg ${result.weighingAvg}kg` : ''}`
+    } else if (result.healthCount > 0) {
+      result.snippet = `${result.healthCount} ekor · ${result.healthMed}`
+    } else if (result.reportFields.length > 0) {
+      result.snippet = result.reportFields.slice(0, 2).map(f => `${f.value}${f.unit}`).join(', ')
+    } else if (result.userNote) {
+      result.snippet = result.userNote.substring(0, 50)
+    } else {
+      result.snippet = 'Selesai'
+    }
+  } catch (e) {
+    result.snippet = task.notes?.substring(0, 50) || 'Selesai'
+  }
+  return result
 }
 
 // ── ATMOSPHERIC SCENE ──────────────────────────────────────────────────────────
@@ -367,12 +444,12 @@ const GlassCard = ({ children, className, glowColor }) => (
 // ── SHARED COMPONENTS ─────────────────────────────────────────────────────────
 
 const SummaryTiles = ({ stats }) => (
-  <div className="px-5 py-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+  <div className="px-4 py-3 grid grid-cols-4 gap-2">
     {[
-      { label: 'Total Task', value: stats.total, color: 'text-white' },
+      { label: 'Total', value: stats.total, color: 'text-white' },
       { label: 'Selesai', value: stats.selesai, color: 'text-emerald-400', trend: stats.complianceTrend },
       { label: 'Pending', value: stats.pending, color: 'text-amber-400' },
-      { label: 'Terlambat', value: stats.terlambat, color: 'text-rose-400' },
+      { label: 'Lambat', value: stats.terlambat, color: 'text-rose-400' },
     ].map((tile, idx) => (
       <motion.div
         key={tile.label}
@@ -380,17 +457,18 @@ const SummaryTiles = ({ stats }) => (
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: idx * 0.1, type: 'spring', damping: 20 }}
       >
-        <GlassCard className="p-6 border-white/5 bg-white/[0.01] group hover:bg-white/[0.03]">
-          <div className="flex justify-between items-start mb-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#64748B] group-hover:text-[#A78BFA] transition-colors">{tile.label}</span>
-            {tile.trend !== undefined && (
-              <span className={cn("text-[10px] font-black tracking-widest", tile.trend >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
-                {tile.trend >= 0 ? '↑' : '↓'} {Math.abs(tile.trend).toFixed(0)}%
-              </span>
-            )}
-          </div>
-          <div className={cn("text-3xl font-display font-black tracking-tighter tabular-nums", tile.color)}>{tile.value}</div>
-        </GlassCard>
+        <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-3 text-center relative overflow-hidden">
+          {tile.trend !== undefined && (
+            <span className={cn(
+              "absolute top-1.5 right-1.5 text-[8px] font-black",
+              tile.trend >= 0 ? 'text-emerald-400' : 'text-rose-400'
+            )}>
+              {tile.trend >= 0 ? '↑' : '↓'}{Math.abs(tile.trend).toFixed(0)}%
+            </span>
+          )}
+          <div className={cn("text-xl font-display font-black tracking-tighter tabular-nums leading-none mb-1", tile.color)}>{tile.value}</div>
+          <div className="text-[9px] font-black uppercase tracking-wide text-[#4B6478]">{tile.label}</div>
+        </div>
       </motion.div>
     ))}
   </div>
@@ -404,9 +482,9 @@ const WeekOrbit = ({ selectedDate, onSelect, monthTasks }) => {
   }, [selectedDate])
 
   return (
-    <GlassCard className="p-4 mb-6 rounded-[32px] bg-white/[0.02] border-white/5">
-      <div className="flex items-center gap-2">
-        <button onClick={() => navigateWeek(-1)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-slate-500 hover:text-white shrink-0"><ChevronLeft size={16} /></button>
+    <GlassCard className="p-3 mb-4 rounded-[24px] bg-white/[0.02] border-white/5">
+      <div className="flex items-center gap-1.5">
+        <button onClick={() => navigateWeek(-1)} className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-slate-500 hover:text-white shrink-0"><ChevronLeft size={14} /></button>
         <div className="flex-1 flex gap-1 items-stretch">
           {days.map((day) => {
             const active = isSameDay(day, selectedDate)
@@ -419,19 +497,19 @@ const WeekOrbit = ({ selectedDate, onSelect, monthTasks }) => {
                 key={day.toISOString()} 
                 onClick={() => onSelect(day)}
                 className={cn(
-                  "flex-1 max-h-[64px] flex flex-col items-center justify-center py-2 rounded-xl transition-all duration-300 relative group",
+                  "flex-1 max-h-[56px] flex flex-col items-center justify-center py-1 rounded-xl transition-all duration-300 relative group",
                   active ? "bg-[#7C3AED] text-white shadow-lg" : "text-slate-500 hover:bg-white/5",
                   !active && isToday ? "border border-[#7C3AED]/40" : ""
                 )}
               >
-                <span className={cn("text-[10px] font-bold uppercase tracking-tighter mb-0.5", active ? "text-white/80" : "text-[#4B6478]")}>{format(day, 'EEEEEE', { locale: idLocale })}</span>
-                <span className="text-lg font-bold leading-none">{format(day, 'd')}</span>
-                {dayHasTask && !active && <div className="absolute bottom-1.5 w-1 h-1 bg-purple-500 rounded-full" />}
+                <span className={cn("text-[9px] font-bold uppercase tracking-tighter mb-0.5", active ? "text-white/80" : "text-[#4B6478]")}>{format(day, 'EEEEEE', { locale: idLocale })}</span>
+                <span className="text-base font-bold leading-none">{format(day, 'd')}</span>
+                {dayHasTask && !active && <div className="absolute bottom-1 w-1 h-1 bg-purple-500 rounded-full" />}
               </button>
             )
           })}
         </div>
-        <button onClick={() => navigateWeek(1)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-slate-500 hover:text-white shrink-0"><ChevronRight size={16} /></button>
+        <button onClick={() => navigateWeek(1)} className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-slate-500 hover:text-white shrink-0"><ChevronRight size={14} /></button>
       </div>
     </GlassCard>
   )
@@ -687,9 +765,56 @@ export default function UniversalDailyTask({ livestockType = 'sapi_penggemukan' 
         )}
       />
 
-      <div className="px-5 max-w-[1700px] mx-auto mb-8">
-        <div className="flex flex-wrap items-center gap-3">
-          <Button 
+      {/* Audit Controls — horizontal scroll chips on mobile, full buttons on desktop */}
+      <div className="max-w-[1700px] mx-auto mb-4 lg:mb-8 lg:px-5">
+        {/* Mobile: compact horizontal scrollable chips */}
+        <div className="flex gap-2 px-4 lg:hidden overflow-x-auto no-scrollbar pb-1">
+          <button
+            onClick={() => { setAuditRange('day'); setTab('selesai'); setSelectedDate(new Date()); }}
+            className={cn(
+              "h-9 px-4 rounded-2xl transition-all flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest shrink-0",
+              auditRange === 'day' && tab === 'selesai'
+                ? "bg-emerald-500/20 border border-emerald-500/30 text-emerald-400"
+                : "bg-white/[0.03] border border-white/[0.06] text-[#64748B]"
+            )}
+          >
+            <Activity size={12} /> Hari Ini
+          </button>
+          <button
+            onClick={() => { setAuditRange('week'); setTab('selesai'); }}
+            className={cn(
+              "h-9 px-4 rounded-2xl transition-all flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest shrink-0",
+              auditRange === 'week' && tab === 'selesai'
+                ? "bg-blue-500/20 border border-blue-500/30 text-blue-400"
+                : "bg-white/[0.03] border border-white/[0.06] text-[#64748B]"
+            )}
+          >
+            <CalendarIcon size={12} /> Minggu
+          </button>
+          <button
+            onClick={() => { setAuditRange('month'); setTab('selesai'); }}
+            className={cn(
+              "h-9 px-4 rounded-2xl transition-all flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest shrink-0",
+              auditRange === 'month' && tab === 'selesai'
+                ? "bg-purple-500/20 border border-purple-500/30 text-purple-400"
+                : "bg-white/[0.03] border border-white/[0.06] text-[#64748B]"
+            )}
+          >
+            <ClipboardList size={12} /> Bulan
+          </button>
+          {(auditRange !== 'day' || tab !== 'semua') && (
+            <button
+              onClick={() => { setAuditRange('day'); setTab('semua'); }}
+              className="h-9 px-3 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] text-[#4B6478] border border-white/[0.06] bg-white/[0.02] shrink-0"
+            >
+              Reset
+            </button>
+          )}
+        </div>
+
+        {/* Desktop: full-size buttons */}
+        <div className="hidden lg:flex flex-wrap items-center gap-3">
+          <Button
             onClick={() => { setAuditRange('day'); setTab('selesai'); setSelectedDate(new Date()); }}
             className={cn(
               "h-11 px-6 rounded-2xl transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest",
@@ -700,7 +825,7 @@ export default function UniversalDailyTask({ livestockType = 'sapi_penggemukan' 
           >
             <Activity size={14} /> Audit Hari Ini
           </Button>
-          <Button 
+          <Button
             onClick={() => { setAuditRange('week'); setTab('selesai'); }}
             className={cn(
               "h-11 px-6 rounded-2xl transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest",
@@ -711,7 +836,7 @@ export default function UniversalDailyTask({ livestockType = 'sapi_penggemukan' 
           >
             <CalendarIcon size={14} /> Audit Minggu Ini
           </Button>
-          <Button 
+          <Button
             onClick={() => { setAuditRange('month'); setTab('selesai'); }}
             className={cn(
               "h-11 px-6 rounded-2xl transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest",
@@ -722,9 +847,8 @@ export default function UniversalDailyTask({ livestockType = 'sapi_penggemukan' 
           >
             <ClipboardList size={14} /> Audit Bulan Ini
           </Button>
-
           {(auditRange !== 'day' || tab !== 'semua') && (
-            <button 
+            <button
               onClick={() => { setAuditRange('day'); setTab('semua'); }}
               className="ml-auto text-[9px] font-black uppercase tracking-[0.3em] text-[#4B6478] hover:text-white transition-colors"
             >
@@ -736,29 +860,36 @@ export default function UniversalDailyTask({ livestockType = 'sapi_penggemukan' 
 
       <SummaryTiles stats={stats} />
 
-      <main className={cn("p-5 max-w-[1700px] mx-auto", isDesktop ? "grid grid-cols-[380px_1fr] gap-12 items-start" : "flex flex-col")}>
-        <aside className="space-y-8 lg:sticky lg:top-36 mb-8 lg:mb-0">
+      <main className={cn("px-4 pb-5 lg:px-5 max-w-[1700px] mx-auto", isDesktop ? "grid grid-cols-[380px_1fr] gap-12 items-start" : "flex flex-col")}>
+        <aside className="space-y-4 lg:space-y-8 lg:sticky lg:top-36 mb-4 lg:mb-0">
+           {/* Week strip — always visible on all devices */}
            <WeekOrbit selectedDate={selectedDate} onSelect={setSelectedDate} monthTasks={monthTasks} />
-           <GlassCard className="rounded-[40px] bg-white/[0.01]">
-              <div className="p-7 border-b border-white/5 flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#64748B]">Kalender Kerja</span>
-                <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10"><CalendarIcon size={16} className="text-[#A78BFA]" /></div>
-              </div>
-              <div className="p-8">
-                <CustomCalendar 
-                  currentMonth={currentMonth} 
-                  selectedDate={selectedDate}
-                  onMonthChange={setCurrentMonth}
-                  onDateSelect={setSelectedDate}
-                  monthTasks={monthTasks}
-                />
-              </div>
-           </GlassCard>
-           
-           <div className="mt-10 p-8 bg-purple-500/[0.03] rounded-[48px] border border-purple-500/10 backdrop-blur-2xl transition-all hover:bg-purple-500/[0.06]">
-              <div className="flex items-center gap-4 mb-4"><div className="w-10 h-10 rounded-2xl bg-purple-500/20 flex items-center justify-center"><Info size={20} className="text-[#A78BFA]" /></div><span className="text-xs font-black text-white uppercase tracking-[0.2em]">Operational Insight</span></div>
-              <p className="text-[11px] text-[#64748B] leading-relaxed font-medium">Pastikan selalu menyelesaikan tugas harian tepat waktu untuk menjaga performa skor KPI Anda tetap optimal.</p>
-           </div>
+
+           {/* Full calendar + insight — desktop only to save vertical space on mobile */}
+           {isDesktop && (
+             <>
+               <GlassCard className="rounded-[40px] bg-white/[0.01]">
+                  <div className="p-7 border-b border-white/5 flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#64748B]">Kalender Kerja</span>
+                    <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10"><CalendarIcon size={16} className="text-[#A78BFA]" /></div>
+                  </div>
+                  <div className="p-8">
+                    <CustomCalendar
+                      currentMonth={currentMonth}
+                      selectedDate={selectedDate}
+                      onMonthChange={setCurrentMonth}
+                      onDateSelect={setSelectedDate}
+                      monthTasks={monthTasks}
+                    />
+                  </div>
+               </GlassCard>
+
+               <div className="mt-10 p-8 bg-purple-500/[0.03] rounded-[48px] border border-purple-500/10 backdrop-blur-2xl transition-all hover:bg-purple-500/[0.06]">
+                  <div className="flex items-center gap-4 mb-4"><div className="w-10 h-10 rounded-2xl bg-purple-500/20 flex items-center justify-center"><Info size={20} className="text-[#A78BFA]" /></div><span className="text-xs font-black text-white uppercase tracking-[0.2em]">Operational Insight</span></div>
+                  <p className="text-[11px] text-[#64748B] leading-relaxed font-medium">Pastikan selalu menyelesaikan tugas harian tepat waktu untuk menjaga performa skor KPI Anda tetap optimal.</p>
+               </div>
+             </>
+           )}
         </aside>
 
         <section className="space-y-8 min-w-0">
@@ -852,68 +983,72 @@ export default function UniversalDailyTask({ livestockType = 'sapi_penggemukan' 
                    </div>
                 ) : (
                   <GlassCard className="rounded-2xl overflow-x-auto">
-                    <table className="w-full min-w-[700px] text-left">
+                    <table className="w-full min-w-[600px] text-left">
                       <thead>
                          <tr className="bg-white/5 border-b border-white/10">
-                           <th className="px-6 py-3.5 text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Aktivitas</th>
-                           <th className="px-6 py-3.5 text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Kandang / Ditugaskan</th>
-                           <th className="px-6 py-3.5 text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Dikerjakan oleh</th>
-                           <th className="px-6 py-3.5 text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Ringkasan</th>
-                           <th className="px-6 py-3.5 text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Waktu</th>
-                           <th className="px-6 py-3.5 text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Status</th>
-                           <th className="px-6 py-3.5 text-center text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Aksi</th>
+                           <th className="px-5 py-3.5 text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Aktivitas</th>
+                           <th className="px-5 py-3.5 text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Pelapor</th>
+                           <th className="px-5 py-3.5 text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Ringkasan</th>
+                           <th className="px-5 py-3.5 text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Status</th>
+                           <th className="px-5 py-3.5 text-center text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em]">Aksi</th>
                          </tr>
                       </thead>
                       <tbody className="divide-y divide-white/[0.03]">
                          {filteredTasks.length === 0 ? (
-                           <tr><td colSpan={6} className="py-24 text-center"><div className="flex flex-col items-center gap-4 opacity-30"><LayoutGrid size={36} className="text-white/20" /><span className="text-sm font-black text-[#4B6478] uppercase tracking-[0.5em]">No task records found.</span></div></td></tr>
+                           <tr><td colSpan={5} className="py-24 text-center"><div className="flex flex-col items-center gap-4 opacity-30"><LayoutGrid size={36} className="text-white/20" /><span className="text-sm font-black text-[#4B6478] uppercase tracking-[0.5em]">No task records found.</span></div></td></tr>
                          ) : (
                            filteredTasks.map(t => {
                              const cfg = TASK_TYPE_CFG[t.task_type] || TASK_TYPE_CFG.lainnya
                              const st = STATUS_CFG[t.status] || STATUS_CFG.pending
                              const urgency = getUrgencyLabel(t)
+                             const rpt = parseTaskReport(t)
                              return (
                                <tr key={t.id} className="group hover:bg-white/[0.02] transition-all duration-200 cursor-pointer" onClick={() => { setSelectedTask(t); setCompleteSheetOpen(true); }}>
-                                 <td className="px-6 py-4">
+                                 <td className="px-5 py-4">
                                    <div className="flex items-center gap-3">
                                      <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center border shrink-0 transition-all group-hover:scale-105", cfg.bg, cfg.border, cfg.shadow)}><cfg.icon size={18} className={cfg.color} /></div>
                                      <div className="flex flex-col gap-1 min-w-0">
                                        <span className="font-bold text-white text-sm leading-tight truncate max-w-[280px]">{t.title}</span>
-                                       <div className="flex items-center gap-2">
+                                       <div className="flex items-center gap-1.5">
                                          <span className={cn("inline-flex items-center px-2 py-0.5 rounded-lg text-[9px] font-black border uppercase tracking-widest", cfg.color, cfg.bg, cfg.border)}>{cfg.label}</span>
+                                         <span className="text-[10px] font-bold text-[#64748B] flex items-center gap-1"><MapPin size={9} className="text-[#A78BFA]" />{t.kandang_name || 'Global'}</span>
                                          {urgency && <span className={cn("inline-block px-2 py-0.5 rounded-lg text-[9px] font-black border uppercase tracking-widest", urgency.color)}>{urgency.label}</span>}
                                        </div>
                                      </div>
                                    </div>
                                  </td>
-                                 <td className="px-6 py-4">
-                                    <div className="flex flex-col gap-1">
-                                       <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5 uppercase tracking-wider"><MapPin size={11} className="text-[#A78BFA]" /> {t.kandang_name || 'Global Farm'}</span>
-                                       <span className="text-[11px] font-bold text-[#64748B] flex items-center gap-1.5 uppercase tracking-wider"><UserIcon size={11} /> {t.worker?.full_name || t.assigned_profile_id ? '—' : 'Unassigned'}</span>
-                                    </div>
-                                 </td>
-                                 <td className="px-6 py-4">
-                                    {t.status === 'selesai' && t.completed_by?.full_name ? (
+                                 <td className="px-5 py-4">
+                                    {rpt.completedBy ? (
                                       <div className="flex flex-col gap-0.5">
-                                        <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1.5"><CheckCircle2 size={11} /> {t.completed_by.full_name}</span>
-                                        {t.completed_at && <span className="text-[10px] text-[#64748B] uppercase tracking-wider">{format(new Date(t.completed_at), 'EEEE, d MMM HH:mm', { locale: idLocale })}</span>}
+                                        <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1.5"><CheckCircle2 size={11} /> {rpt.completedBy}</span>
+                                        <span className="text-[10px] text-[#64748B] tabular-nums">{rpt.completedAt || t.due_time?.substring(0, 5) || '--:--'} WIB</span>
                                       </div>
                                     ) : (
-                                      <span className="text-[11px] text-[#4B6478]">—</span>
+                                      <div className="flex flex-col gap-0.5">
+                                        <span className="text-[11px] text-[#4B6478]">Belum dikerjakan</span>
+                                        <span className="text-[10px] text-[#64748B] tabular-nums">{t.due_time?.substring(0, 5) || '--:--'} WIB</span>
+                                      </div>
                                     )}
                                  </td>
-                                 <td className="px-6 py-4">
-                                    <div className="flex flex-col">
-                                       <span className="text-base font-display font-black text-white tracking-tighter tabular-nums">{t.due_time?.substring(0, 5) || '--:--'}</span>
-                                       <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mt-0.5">WIB</span>
-                                    </div>
+                                 <td className="px-5 py-4 max-w-[200px]">
+                                    {(() => {
+                                      if (rpt.feedOrts) {
+                                        const ortsStyle = { habis: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20', sedikit: 'bg-amber-500/15 text-amber-400 border-amber-500/20', banyak: 'bg-rose-500/15 text-rose-400 border-rose-500/20' }
+                                        const ortsLabel = { habis: 'Habis', sedikit: 'Sisa Sedikit', banyak: 'Sisa Banyak' }
+                                        return <span className={cn('inline-flex px-2.5 py-1 rounded-lg text-[10px] font-black border', ortsStyle[rpt.feedOrts] || 'bg-white/5 text-slate-400 border-white/10')}>{ortsLabel[rpt.feedOrts] || rpt.feedOrts}</span>
+                                      }
+                                      if (rpt.weighingCount > 0) return <span className="text-[11px] font-bold text-blue-400">{rpt.snippet}</span>
+                                      if (rpt.healthCount > 0) return <span className="text-[11px] font-bold text-emerald-400">{rpt.snippet}</span>
+                                      if (rpt.snippet && rpt.snippet !== 'Menunggu laporan') return <span className="text-[11px] font-medium text-slate-400 line-clamp-1">{rpt.snippet}</span>
+                                      return <span className="text-[10px] text-[#4B6478] italic">Menunggu laporan</span>
+                                    })()}
                                  </td>
-                                 <td className="px-6 py-4">
+                                 <td className="px-5 py-4">
                                    <div className={cn("inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] border", st.color, st.bg, st.border)}>
                                      <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", st.color.replace('text-', 'bg-'))} /> {st.label}
                                    </div>
                                  </td>
-                                 <td className="px-6 py-4 text-center" onClick={e => e.stopPropagation()}>
+                                 <td className="px-5 py-4 text-center" onClick={e => e.stopPropagation()}>
                                    {t.status === 'selesai' ? (
                                      <Button onClick={() => { setSelectedTask(t); setCompleteSheetOpen(true); }} className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-black uppercase tracking-[0.2em] text-[10px] rounded-xl h-8 px-4 active:scale-95 transition-all hover:bg-emerald-500/20">Audit</Button>
                                    ) : t.status !== 'dilewati' ? (
@@ -954,7 +1089,12 @@ const TaskCard = ({ task, onClick, TASK_TYPE_CFG }) => {
   const cfg = TASK_TYPE_CFG[task.task_type] || TASK_TYPE_CFG.lainnya
   const st = STATUS_CFG[task.status] || STATUS_CFG.pending
   const urgency = getUrgencyLabel(task)
-  
+  const rpt = parseTaskReport(task)
+
+  // Feed orts badge style
+  const ortsStyle = { habis: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20', sedikit: 'bg-amber-500/15 text-amber-400 border-amber-500/20', banyak: 'bg-rose-500/15 text-rose-400 border-rose-500/20' }
+  const ortsLabel = { habis: '👍 Habis', sedikit: '🟡 Sisa', banyak: '🔴 Banyak' }
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
@@ -964,40 +1104,55 @@ const TaskCard = ({ task, onClick, TASK_TYPE_CFG }) => {
       onClick={onClick}
       className="group"
     >
-      <div className="relative p-[1px] rounded-[32px] overflow-hidden transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(124,58,237,0.15)]">
+      <div className="relative p-[1px] rounded-2xl lg:rounded-[32px] overflow-hidden transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(124,58,237,0.15)]">
         <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        <GlassCard className="p-5 border-white/5 bg-[#0C1319]/40 backdrop-blur-3xl rounded-[31px] relative z-10">
-          <div className="flex justify-between items-start gap-4">
-            <div className="flex items-start gap-4 min-w-0">
-              <div className={cn("w-12 h-12 rounded-2xl border flex items-center justify-center shrink-0 transition-transform duration-500 group-hover:rotate-3 shadow-2xl", cfg.bg, cfg.border, cfg.shadow)}>
-                <cfg.icon size={22} className={cfg.color} />
+        <GlassCard className="p-3 lg:p-5 border-white/5 bg-[#0C1319]/40 backdrop-blur-3xl rounded-[calc(1rem-1px)] lg:rounded-[31px] relative z-10">
+          <div className="flex justify-between items-start gap-2 lg:gap-4">
+            <div className="flex items-center lg:items-start gap-2.5 lg:gap-4 min-w-0">
+              <div className={cn("w-9 h-9 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl border flex items-center justify-center shrink-0 transition-transform duration-500 group-hover:rotate-3 shadow-2xl", cfg.bg, cfg.border, cfg.shadow)}>
+                <cfg.icon size={16} className={cn(cfg.color, "lg:hidden")} />
+                <cfg.icon size={22} className={cn(cfg.color, "hidden lg:block")} />
               </div>
-              <div className="min-w-0">
-                <h3 className="font-bold text-white tracking-tight leading-tight truncate group-hover:text-purple-300 transition-colors">{task.title}</h3>
-                <div className="hidden sm:flex flex-wrap gap-2 mt-1.5 items-center">
-                   <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/5"><MapPin size={10} className="text-[#64748B]" /><span className="text-[9.5px] font-black text-[#64748B] uppercase tracking-wider">{task.kandang_name || 'Global'}</span></div>
-                   <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/5"><Clock size={10} className="text-[#64748B]" /><span className="text-[9.5px] font-black text-[#64748B] uppercase tracking-wider">{task.due_time?.substring(0, 5)} WIB</span></div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-xs lg:text-sm text-white tracking-tight leading-snug lg:leading-tight group-hover:text-purple-300 transition-colors line-clamp-1">{task.title}</h3>
+                {/* Row 2: metadata chips */}
+                <div className="flex flex-wrap gap-1 lg:gap-1.5 mt-1 items-center">
+                   <div className="flex items-center gap-0.5 px-1 lg:px-1.5 py-0.5 rounded-md bg-white/5 border border-white/5"><MapPin size={8} className="text-[#64748B]" /><span className="text-[8px] lg:text-[9px] font-black text-[#64748B] uppercase tracking-wider">{task.kandang_name || 'Global'}</span></div>
+                   {task.due_time && <div className="flex items-center gap-0.5 px-1 lg:px-1.5 py-0.5 rounded-md bg-white/5 border border-white/5"><Clock size={8} className="text-[#64748B]" /><span className="text-[8px] lg:text-[9px] font-black text-[#64748B] uppercase tracking-wider">{task.due_time.substring(0, 5)}</span></div>}
+                   {rpt.completedBy && <div className="flex items-center gap-0.5 px-1 lg:px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20"><CheckCircle2 size={8} className="text-emerald-400" /><span className="text-[8px] lg:text-[9px] font-black text-emerald-400 uppercase tracking-wider">{rpt.completedBy}</span>{rpt.completedAt && <span className="text-[7px] lg:text-[8px] text-emerald-600 ml-0.5">{rpt.completedAt}</span>}</div>}
                 </div>
-                {task.status === 'selesai' && task.completed_by?.full_name && (
-                  <div className="flex items-center gap-1.5 mt-2 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 w-fit">
-                    <UserIcon size={9} className="text-emerald-400" />
-                    <span className="text-[9.5px] font-black text-emerald-400 uppercase tracking-wider">{task.completed_by.full_name}</span>
-                    {task.completed_at && <span className="text-[9px] text-emerald-600">{format(new Date(task.completed_at), 'HH:mm')}</span>}
+                {/* Row 3: Rich summary — only for completed tasks */}
+                {(task.status === 'selesai' || task.status === 'terlambat') && (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    {rpt.feedOrts && (
+                      <span className={cn('inline-flex px-2 py-0.5 rounded-md text-[8px] lg:text-[9px] font-black border', ortsStyle[rpt.feedOrts] || 'bg-white/5 text-slate-400 border-white/10')}>{ortsLabel[rpt.feedOrts] || rpt.feedOrts}</span>
+                    )}
+                    {rpt.weighingCount > 0 && (
+                      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-[8px] lg:text-[9px] font-black text-blue-400">
+                        <Scale size={9} /> {rpt.weighingCount} ekor{rpt.weighingAvg && <span className="text-blue-300 ml-0.5">· avg {rpt.weighingAvg}kg</span>}
+                      </span>
+                    )}
+                    {rpt.healthCount > 0 && (
+                      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-[8px] lg:text-[9px] font-black text-emerald-400">
+                        <Activity size={9} /> {rpt.healthCount} ekor · {rpt.healthMed}
+                      </span>
+                    )}
+                    {!rpt.feedOrts && rpt.weighingCount === 0 && rpt.healthCount === 0 && rpt.snippet && rpt.snippet !== 'Selesai' && rpt.snippet !== 'Menunggu laporan' && (
+                      <span className="text-[8px] lg:text-[9px] font-medium text-purple-400/80 italic line-clamp-1">{rpt.snippet}</span>
+                    )}
+                    {rpt.userNote && rpt.userNote.length > 0 && (rpt.feedOrts || rpt.weighingCount > 0 || rpt.healthCount > 0) && (
+                      <span className="text-[7px] lg:text-[8px] text-slate-500 italic line-clamp-1 max-w-[150px] lg:max-w-[200px]">"{ rpt.userNote.substring(0, 40) }"</span>
+                    )}
                   </div>
                 )}
-                {task.status === 'selesai' && (
-                  <p className="text-[10px] font-medium text-purple-400/80 mt-1.5 line-clamp-1 italic px-0.5">
-                    {getTaskSummarySnippet(task, config)}
-                  </p>
-                )}
                 {urgency && (
-                  <div className={cn("inline-flex items-center gap-1.5 mt-3 px-2 py-0.5 rounded-lg text-[8.5px] font-black border uppercase tracking-[0.15em] shadow-lg", urgency.color)}>
-                    <Sparkles size={10} /> {urgency.label}
+                  <div className={cn("inline-flex items-center gap-1 mt-1.5 lg:mt-2 px-1.5 lg:px-2 py-0.5 rounded-lg text-[8px] lg:text-[8.5px] font-black border uppercase tracking-[0.15em] shadow-lg", urgency.color)}>
+                    <Sparkles size={9} /> {urgency.label}
                   </div>
                 )}
               </div>
             </div>
-            <div className={cn("px-3 py-1 rounded-full text-[8.5px] font-black uppercase border tracking-widest whitespace-nowrap shadow-sm", st.color, st.bg, st.border)}>
+            <div className={cn("px-2 lg:px-3 py-0.5 lg:py-1 rounded-full text-[7.5px] lg:text-[8.5px] font-black uppercase border tracking-widest whitespace-nowrap shadow-sm", st.color, st.bg, st.border)}>
               {st.label}
             </div>
           </div>
@@ -1253,12 +1408,12 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
           : isExpanded ? "bg-[#0C1319] border-[#7C3AED]/40 ring-1 ring-[#7C3AED]/20 shadow-xl" : "bg-[#0C1319] border-white/5 hover:border-purple-500/30 hover:bg-[#06090F]"
       )}
     >
-      <div className="flex items-stretch min-h-[80px]">
+      <div className="flex items-stretch min-h-[64px] lg:min-h-[80px]">
         <button 
           onClick={isSelesai ? handleUnlock : handleAction}
           disabled={(!isSelesai && (updateStatus.isPending || addWeight.isPending))}
           className={cn(
-            "w-16 shrink-0 flex flex-col items-center justify-center transition-all relative z-10",
+            "w-12 lg:w-16 shrink-0 flex flex-col items-center justify-center transition-all relative z-10",
             isSelesai 
               ? "bg-slate-900 text-slate-500 hover:text-emerald-400 border-r border-white/5" 
               : hasForm && isExpanded 
@@ -1289,9 +1444,9 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
 
         <div 
           onClick={handleAction}
-          className="flex-1 p-4 flex items-center justify-between transition-colors cursor-pointer"
+          className="flex-1 p-3 lg:p-4 flex items-center justify-between transition-colors cursor-pointer"
         >
-          <div className="flex-1 min-w-0 pr-4">
+          <div className="flex-1 min-w-0 pr-2 lg:pr-4">
             <div className="flex items-center gap-2 mb-1.5">
                <span className={cn("text-[9px] font-black uppercase py-0.5 px-1.5 rounded bg-white/5", cfg.color)}>{cfg.label}</span>
                {isCarryover && (
@@ -1306,19 +1461,19 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
                )}
             </div>
             <h3 className={cn(
-              "text-[13px] font-bold leading-relaxed mb-2.5 line-clamp-2 transition-colors",
+              "text-[12px] lg:text-[13px] font-bold leading-snug mb-1.5 lg:mb-2.5 line-clamp-2 transition-colors",
               isSelesai ? "text-emerald-500 line-through opacity-70" : "text-white"
             )}>
               {task.title}
             </h3>
-            <div className="flex items-center gap-4 text-[#64748B]">
-               <span className="text-[10px] font-semibold flex items-center gap-1.5 uppercase tracking-wider">
-                  <MapPin size={11} className={isSelesai ? "text-emerald-600" : "text-[#A78BFA]"} /> {task.kandang_name || 'Farm'}
+            <div className="flex flex-col gap-1 lg:flex-row lg:items-center lg:gap-4 text-[#64748B]">
+               <span className="text-[9px] lg:text-[10px] font-semibold flex items-center gap-1 lg:gap-1.5 uppercase tracking-wider">
+                  <MapPin size={10} className={isSelesai ? "text-emerald-600" : "text-[#A78BFA]"} /> {task.kandang_name || 'Farm'}
                </span>
-               <span className="text-[10px] font-semibold flex items-center gap-1.5 uppercase tracking-wider">
-                  <Clock size={11} className={isSelesai ? "text-emerald-600/50" : "text-white/40"} /> 
+               <span className="text-[9px] lg:text-[10px] font-semibold flex items-center gap-1 lg:gap-1.5 uppercase tracking-wider">
+                  <Clock size={10} className={isSelesai ? "text-emerald-600/50" : "text-white/40"} /> 
                   {isSelesai && task.completed_at 
-                    ? `Selesai: ${format(new Date(task.completed_at), "eeee, d MMM HH:mm", { locale: idLocale })}`
+                    ? `Selesai: ${format(new Date(task.completed_at), "d MMM HH:mm", { locale: idLocale })}`
                     : `${task.due_time?.substring(0, 5)} WIB`
                   }
                </span>
@@ -1340,7 +1495,7 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
             exit={{ height: 0, opacity: 0 }}
             className={cn("overflow-hidden border-t border-white/5", isSelesai ? "bg-emerald-500/[0.03]" : "bg-black/20")}
           >
-            <div className={cn("p-5 pl-[80px] space-y-6", isSelesai && "opacity-90")} onClick={(e) => e.stopPropagation()}>
+            <div className={cn("p-3 lg:p-5 pl-14 lg:pl-[80px] space-y-4 lg:space-y-6", isSelesai && "opacity-90")} onClick={(e) => e.stopPropagation()}>
                {isSelesai && (
                   <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 mb-2">
                      <div className="flex items-center gap-2">
@@ -1363,7 +1518,7 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
                {/* Multi-Animal Reporting: Health (Vaksin/Obat Cacing) */}
                {isMultiAnimalTask && isHealthTask && animals.length > 0 && (
                  <div className="space-y-6">
-                   <div className="p-6 rounded-3xl bg-white/5 border border-white/5 space-y-5">
+                   <div className="p-4 lg:p-6 rounded-2xl lg:rounded-3xl bg-white/5 border border-white/5 space-y-4 lg:space-y-5">
                      <div className="flex items-center gap-3 pb-4 border-b border-white/5">
                         <Activity size={18} className="text-purple-400" />
                         <span className="text-xs font-black uppercase tracking-widest text-white">Record Health Action</span>
@@ -1376,7 +1531,7 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
                            value={healthData.medicine_name} 
                            onChange={e => setHealthData(h => ({ ...h, medicine_name: e.target.value }))}
                            placeholder={task.task_type === 'vaksinasi' ? "Contoh: Anthrax B-12" : "Contoh: Albendazole"}
-                           className="w-full h-12 rounded-xl bg-black/40 border border-white/5 px-4 text-sm text-white focus:border-purple-500/50 outline-none transition-all"
+                           className="w-full h-11 lg:h-12 rounded-xl bg-black/40 border border-white/5 px-4 text-sm text-white focus:border-purple-500/50 outline-none transition-all"
                          />
                        </div>
                        <div className="space-y-2">
@@ -1385,7 +1540,7 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
                            value={healthData.dosage} 
                            onChange={e => setHealthData(h => ({ ...h, dosage: e.target.value }))}
                            placeholder="0.0"
-                           className="w-full h-12 rounded-xl bg-black/40 border border-white/5 px-4 text-sm text-white focus:border-purple-500/50 outline-none transition-all"
+                           className="w-full h-11 lg:h-12 rounded-xl bg-black/40 border border-white/5 px-4 text-sm text-white focus:border-purple-500/50 outline-none transition-all"
                          />
                        </div>
                      </div>
@@ -1394,7 +1549,7 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
                        <label className="text-[10px] font-black text-[#64748B] uppercase tracking-wider block ml-1">Pilih {config.animalLabel}</label>
                        <div className="flex gap-2">
                          <Select value={healthData.animal_id} onValueChange={v => setHealthData(h => ({ ...h, animal_id: v }))}>
-                           <SelectTrigger className="flex-1 h-14 rounded-2xl bg-black/40 border-white/5 text-sm text-white focus:ring-0">
+                           <SelectTrigger className="flex-1 h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-black/40 border-white/5 text-sm text-white focus:ring-0">
                              <SelectValue placeholder={`Pilih Eartag ${config.animalLabel}...`} />
                            </SelectTrigger>
                            <SelectContent className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-2xl max-h-[250px]">
@@ -1737,7 +1892,7 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side={isDesktop ? 'right' : 'bottom'} className={cn("bg-[#0C1319]/98 border-white/5 outline-none p-0 flex flex-col z-[5000]", isDesktop ? "w-[600px] border-l backdrop-blur-2xl" : "rounded-t-[40px] border-t max-h-[95vh] backdrop-blur-xl")}>
-        <div className="flex-1 overflow-y-auto p-8 md:p-12 space-y-10 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-5 lg:p-12 space-y-6 lg:space-y-10 custom-scrollbar">
           {showSuccessAnimation ? (
             <div className="flex-1 flex items-center justify-center min-h-[400px]">
                <div className="flex flex-col items-center gap-6 animate-in zoom-in duration-500">
@@ -1749,12 +1904,15 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
             <>
               <SheetHeader className="text-left space-y-2">
                 {!isDesktop && <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-4" />}
-                <SheetTitle className="font-display font-bold text-4xl text-white tracking-tight">
+                <SheetTitle className="font-display font-bold text-2xl lg:text-4xl text-white tracking-tight">
                   {isAuditMode ? 'Audit Tugas' : 'Detail Laporan'}
                 </SheetTitle>
                 <p className="text-sm font-medium text-slate-400">
                   {isAuditMode ? 'Laporan yang dikirim oleh anggota tim.' : 'Lengkapi data verifikasi operasional.'}
                 </p>
+                <SheetDescription className="sr-only">
+                  {isAuditMode ? 'Panel audit tugas operasional' : 'Panel detail laporan tugas harian'}
+                </SheetDescription>
               </SheetHeader>
 
               {isAuditMode && (
@@ -1774,12 +1932,12 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
               )}
 
               <div className="space-y-8">
-                <div className="p-6 border border-white/5 bg-white/[0.02] rounded-3xl flex items-center gap-5">
-                  <div className={cn("w-14 h-14 rounded-2xl flex items-center justify-center", TASK_TYPE_CFG[task.task_type]?.bg)}>
+                <div className="p-4 lg:p-6 border border-white/5 bg-white/[0.02] rounded-2xl lg:rounded-3xl flex items-center gap-3 lg:gap-5">
+                  <div className={cn("w-11 h-11 lg:w-14 lg:h-14 rounded-xl lg:rounded-2xl flex items-center justify-center shrink-0", TASK_TYPE_CFG[task.task_type]?.bg)}>
                     {React.createElement(TASK_TYPE_CFG[task.task_type]?.icon || ClipboardList, { size: 24, className: TASK_TYPE_CFG[task.task_type]?.color })}
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-bold text-xl text-white line-clamp-2 leading-tight">{task.title}</h4>
+                    <h4 className="font-bold text-base lg:text-xl text-white line-clamp-2 leading-tight">{task.title}</h4>
                     <p className="text-xs font-semibold text-slate-400 mt-1.5 flex items-center gap-2">
                       <MapPin size={12} className="text-slate-500" /> {task.kandang_name || 'Global Farm'} 
                       <span className="text-white/10">•</span>
@@ -1853,7 +2011,7 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
                                       const animal = animals.find(a => a.id === v);
                                       setWeighingData(w => ({ ...w, animal_id: v, weight_kg: animal?.entry_weight_kg ? animal.entry_weight_kg.toString() : w.weight_kg }));
                                   }}>
-                                     <SelectTrigger className="h-16 rounded-[28px] bg-black/40 border border-white/5 px-8 text-white focus:ring-0"><SelectValue placeholder={`Pilih Tag/Eartag ${config.animalLabel}...`} /></SelectTrigger>
+                                     <SelectTrigger className="h-12 lg:h-16 rounded-xl lg:rounded-[28px] bg-black/40 border border-white/5 px-4 lg:px-8 text-white focus:ring-0"><SelectValue placeholder={`Pilih Tag/Eartag ${config.animalLabel}...`} /></SelectTrigger>
                                      <SelectContent className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-3xl max-h-[300px]">
                                         {animals.map(a => (
                                           <SelectItem key={a.id} value={a.id} className="rounded-xl focus:bg-purple-500/10 focus:text-purple-300">
@@ -1864,8 +2022,8 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
                                   </Select>
                                </div>
                                <div className="grid grid-cols-2 gap-4">
-                                  <div className="space-y-4"><label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">Berat Aktual *</label><InputNumber value={weighingData.weight_kg} onChange={v => setWeighingData(w => ({ ...w, weight_kg: v }))} suffix=" kg" placeholder="0.0" className="h-16 rounded-[28px] bg-black/40 border-white/5 font-display text-xl px-8 focus:bg-black/60 transition-all border-none shadow-inner w-full" /></div>
-                                  <div className="space-y-4"><label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">Lingkar Dada</label><InputNumber value={weighingData.girth_cm} onChange={v => setWeighingData(w => ({ ...w, girth_cm: v }))} suffix=" cm" placeholder="0.0" className="h-16 rounded-[28px] bg-black/40 border-white/5 font-display text-xl px-8 focus:bg-black/60 transition-all border-none shadow-inner w-full" /></div>
+                                  <div className="space-y-3 lg:space-y-4"><label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-2 lg:ml-4">Berat Aktual *</label><InputNumber value={weighingData.weight_kg} onChange={v => setWeighingData(w => ({ ...w, weight_kg: v }))} suffix=" kg" placeholder="0.0" className="h-12 lg:h-16 rounded-xl lg:rounded-[28px] bg-black/40 border-white/5 font-display text-lg lg:text-xl px-4 lg:px-8 focus:bg-black/60 transition-all border-none shadow-inner w-full" /></div>
+                                  <div className="space-y-3 lg:space-y-4"><label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-2 lg:ml-4">Lingkar Dada</label><InputNumber value={weighingData.girth_cm} onChange={v => setWeighingData(w => ({ ...w, girth_cm: v }))} suffix=" cm" placeholder="0.0" className="h-12 lg:h-16 rounded-xl lg:rounded-[28px] bg-black/40 border-white/5 font-display text-lg lg:text-xl px-4 lg:px-8 focus:bg-black/60 transition-all border-none shadow-inner w-full" /></div>
                                </div>
 
                                {livestockType === 'domba_penggemukan' && (
@@ -1982,11 +2140,11 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
                               key={opt.id}
                               onClick={() => setOrtsCategory(opt.id)}
                               className={cn(
-                                "flex flex-col items-center justify-center py-6 rounded-[32px] border-2 transition-all duration-300 active:scale-95 group",
+                                "flex flex-col items-center justify-center py-4 lg:py-6 rounded-2xl lg:rounded-[32px] border-2 transition-all duration-300 active:scale-95 group",
                                 isSelected ? opt.active : "bg-black/20 border-white/5 text-slate-500 hover:bg-black/40 hover:border-white/10"
                               )}
                             >
-                              <span className={cn("text-3xl mb-2 transition-transform duration-500", isSelected ? "scale-125 rotate-[12deg]" : "group-hover:scale-110")}>
+                              <span className={cn("text-2xl lg:text-3xl mb-1.5 lg:mb-2 transition-transform duration-500", isSelected ? "scale-125 rotate-[12deg]" : "group-hover:scale-110")}>
                                 {opt.icon}
                               </span>
                               <span className="text-[10px] font-black uppercase tracking-[0.1em]">{opt.label}</span>
@@ -2010,7 +2168,7 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
                         <div className="w-full bg-black/20 border border-white/5 rounded-[40px] p-8 text-sm text-[#4B6478] min-h-[80px]">Tidak ada catatan.</div>
                       )
                     ) : (
-                      <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Tuliskan detail temuan atau kendala lapangan di sini..." className="w-full bg-black/30 border border-white/5 rounded-[40px] p-8 text-sm text-white focus:border-[#7C3AED]/50 outline-none min-h-[180px] resize-none shadow-2xl transition-all hover:bg-black/40" />
+                      <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Tuliskan detail temuan atau kendala lapangan di sini..." className="w-full bg-black/30 border border-white/5 rounded-2xl lg:rounded-[40px] p-5 lg:p-8 text-sm text-white focus:border-[#7C3AED]/50 outline-none min-h-[120px] lg:min-h-[180px] resize-none shadow-2xl transition-all hover:bg-black/40" />
                     )}
                   </div>
                 )}
@@ -2019,13 +2177,13 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
           )}
         </div>
         {!showSuccessAnimation && (
-          <div className="p-8 border-t border-white/5 bg-[#0C1319] shrink-0 flex items-center gap-4">
+          <div className="p-5 lg:p-8 border-t border-white/5 bg-[#0C1319] shrink-0 flex items-center gap-3 lg:gap-4">
             {isAuditMode ? (
-              <Button onClick={() => onOpenChange(false)} className="flex-1 h-14 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-sm transition-all">Tutup</Button>
+              <Button onClick={() => onOpenChange(false)} className="flex-1 h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-sm transition-all">Tutup</Button>
             ) : (
               <>
-                <Button variant="ghost" onClick={() => onOpenChange(false)} className="h-14 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-transparent px-8">Batal</Button>
-                <Button onClick={handleComplete} disabled={updateStatus.isPending} className="flex-1 h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 border-none shadow-[0_0_20px_rgba(16,185,129,0.3)] text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
+                <Button variant="ghost" onClick={() => onOpenChange(false)} className="h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-transparent px-5 lg:px-8">Batal</Button>
+                <Button onClick={handleComplete} disabled={updateStatus.isPending} className="flex-1 h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-emerald-500 hover:bg-emerald-600 border-none shadow-[0_0_20px_rgba(16,185,129,0.3)] text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
                   {updateStatus.isPending ? 'Menyimpan...' : 'Selesaikan Tugas'}
                 </Button>
               </>
@@ -2037,11 +2195,11 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
       <Sheet open={showFamachaGuide} onOpenChange={setShowFamachaGuide}>
         <SheetContent side="bottom" className="bg-[#0C1319]/98 border-white/5 outline-none p-0 flex flex-col z-[10000] rounded-t-[32px] h-fit max-h-[90vh]">
           <div className="p-6 md:p-10 space-y-6 overflow-y-auto custom-scrollbar">
-            <header className="space-y-1">
+            <SheetHeader className="space-y-1">
               <div className="w-10 h-1 bg-white/10 rounded-full mx-auto mb-3" />
-              <h2 className="font-display font-black text-2xl text-white tracking-tight">Panduan FAMACHA</h2>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Gunakan standar visual cek anemia.</p>
-            </header>
+              <SheetTitle className="font-display font-black text-2xl text-white tracking-tight">Panduan FAMACHA</SheetTitle>
+              <SheetDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Gunakan standar visual cek anemia.</SheetDescription>
+            </SheetHeader>
             
             <div className="p-3 bg-white/5 rounded-[24px] border border-white/10 overflow-hidden shadow-2xl">
               <img 
@@ -2131,7 +2289,7 @@ function AdHocTaskSheet({ open, onOpenChange, isDesktop, TASK_TYPE_CFG, livestoc
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side={isDesktop ? 'right' : 'bottom'} className={cn("bg-[#06090F]/95 border-white/5 outline-none p-0 flex flex-col", isDesktop ? "w-[480px] border-l backdrop-blur-xl" : "rounded-t-3xl border-t max-h-[90vh] backdrop-blur-xl")}>
-        <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-5 lg:p-8 space-y-6 lg:space-y-8 custom-scrollbar">
           <SheetHeader className="text-left space-y-1">
             <div className="w-10 h-10 rounded-xl bg-[#7C3AED]/20 flex items-center justify-center border border-[#7C3AED]/30 mb-2"><Plus size={20} className="text-[#A78BFA]" /></div>
             <SheetTitle className="font-display font-black text-2xl text-white tracking-tight">Buka Tugas Baru</SheetTitle>
@@ -2192,7 +2350,7 @@ function AdHocTaskSheet({ open, onOpenChange, isDesktop, TASK_TYPE_CFG, livestoc
             </div>
           </div>
         </div>
-        <div className="p-6 md:p-8 pt-4 border-t border-white/10 bg-[#06090F]">
+        <div className="p-5 lg:p-8 pt-4 border-t border-white/10 bg-[#06090F]">
           <Button onClick={handleSave} disabled={createTask.isPending} className="w-full h-12 bg-white text-black hover:bg-white/90 font-bold text-sm rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all">
             {createTask.isPending ? 'Menyimpan...' : 'Buat Tugas'}
           </Button>
@@ -2208,13 +2366,13 @@ function CriticalOverdueAlert({ tasks, TASK_TYPE_CFG }) {
   const criticals = tasks.filter(t => t.status === 'terlambat' && (t.task_type === 'vaksinasi' || t.task_type === 'timbang'))
   if (criticals.length === 0) return null
   return (
-    <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} className="mb-10 p-10 rounded-[56px] border border-rose-500/20 bg-rose-500/[0.03] backdrop-blur-3xl flex items-start gap-8 relative overflow-hidden group shadow-2xl shadow-rose-900/20">
+    <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} className="mb-4 lg:mb-10 p-5 lg:p-10 rounded-2xl lg:rounded-[56px] border border-rose-500/20 bg-rose-500/[0.03] backdrop-blur-3xl flex items-start gap-4 lg:gap-8 relative overflow-hidden group shadow-2xl shadow-rose-900/20">
       <div className="absolute top-0 right-0 w-80 h-80 bg-rose-500/[0.04] blur-[100px] -mr-40 -mt-40 pointer-events-none" />
-      <div className="w-16 h-16 rounded-[28px] bg-rose-500/10 border border-rose-500/30 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(244,63,94,0.3)]"><AlertTriangle size={32} className="text-rose-400" /></div>
+      <div className="w-10 h-10 lg:w-16 lg:h-16 rounded-xl lg:rounded-[28px] bg-rose-500/10 border border-rose-500/30 flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(244,63,94,0.3)]"><AlertTriangle size={20} className="text-rose-400 lg:hidden" /><AlertTriangle size={32} className="text-rose-400 hidden lg:block" /></div>
       <div className="flex-1">
-        <p className="text-[11px] font-black text-rose-400 uppercase tracking-[0.6em] mb-3 font-display">System Overdue Alert</p>
-        <p className="text-2xl font-black text-white leading-tight tracking-tight">Menunggu Tindakan: {criticals.length} Tugas Medis Terhambat.</p>
-        <div className="flex flex-wrap gap-2 mt-4">{criticals.map(t => <span key={t.id} className="text-[11px] font-black text-rose-400/80 bg-rose-500/10 border border-rose-500/20 px-3 py-1 rounded-xl uppercase tracking-widest">{t.title}</span>)}</div>
+        <p className="text-[10px] lg:text-[11px] font-black text-rose-400 uppercase tracking-[0.3em] lg:tracking-[0.6em] mb-1.5 lg:mb-3 font-display">Overdue Alert</p>
+        <p className="text-base lg:text-2xl font-black text-white leading-tight tracking-tight">{criticals.length} Tugas Medis Terhambat</p>
+        <div className="flex flex-wrap gap-1.5 lg:gap-2 mt-2 lg:mt-4">{criticals.map(t => <span key={t.id} className="text-[10px] lg:text-[11px] font-black text-rose-400/80 bg-rose-500/10 border border-rose-500/20 px-2 lg:px-3 py-0.5 lg:py-1 rounded-lg lg:rounded-xl uppercase tracking-widest">{t.title}</span>)}</div>
       </div>
     </motion.div>
   )
@@ -2222,18 +2380,19 @@ function CriticalOverdueAlert({ tasks, TASK_TYPE_CFG }) {
 
 function EmptyState({ isStaff }) {
   return (
-    <div className="py-32 px-10 flex flex-col items-center text-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
-       <div className="relative mb-12 group">
+    <div className="py-16 lg:py-32 px-6 lg:px-10 flex flex-col items-center text-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
+       <div className="relative mb-6 lg:mb-12 group">
           <div className="absolute inset-0 bg-purple-500/10 blur-[100px] group-hover:bg-purple-500/20 transition-colors" />
-          <div className="w-24 h-24 rounded-[36px] bg-white/[0.03] border border-white/5 flex items-center justify-center relative z-10 shadow-2xl">
-             <Wand2 size={40} className="text-white/10 group-hover:text-purple-400/40 transition-all duration-700 group-hover:rotate-12" />
+          <div className="w-16 h-16 lg:w-24 lg:h-24 rounded-2xl lg:rounded-[36px] bg-white/[0.03] border border-white/5 flex items-center justify-center relative z-10 shadow-2xl">
+             <Wand2 size={28} className="text-white/10 group-hover:text-purple-400/40 transition-all duration-700 group-hover:rotate-12 lg:hidden" />
+             <Wand2 size={40} className="text-white/10 group-hover:text-purple-400/40 transition-all duration-700 group-hover:rotate-12 hidden lg:block" />
           </div>
        </div>
-       <h3 className="text-2xl font-black text-white tracking-tight mb-4">{isStaff ? 'Sistem Teroptimal' : 'Operational Status: Clear'}</h3>
-       <p className="text-sm text-[#64748B] max-w-[280px] mx-auto font-black uppercase tracking-widest opacity-60 leading-relaxed">
-          {isStaff ? 'Seluruh tugas operasional telah diversifikasi ke cloud server.' : 'Belum ada tugas terjadwal untuk unit operasional ini.'}
+       <h3 className="text-lg lg:text-2xl font-black text-white tracking-tight mb-2 lg:mb-4">{isStaff ? 'Sistem Teroptimal' : 'Status: Clear'}</h3>
+       <p className="text-xs lg:text-sm text-[#64748B] max-w-[280px] mx-auto font-black uppercase tracking-widest opacity-60 leading-relaxed">
+          {isStaff ? 'Seluruh tugas telah diversifikasi.' : 'Belum ada tugas terjadwal.'}
        </p>
-       <div className="mt-12 flex items-center gap-3"><div className="w-10 h-[1px] bg-white/5" /><span className="text-[9px] font-black text-[#64748B] uppercase tracking-[0.5em]">TernakOS Elite</span><div className="w-10 h-[1px] bg-white/5" /></div>
+       <div className="mt-6 lg:mt-12 flex items-center gap-3"><div className="w-10 h-[1px] bg-white/5" /><span className="text-[9px] font-black text-[#64748B] uppercase tracking-[0.5em]">TernakOS Elite</span><div className="w-10 h-[1px] bg-white/5" /></div>
     </div>
   )
 }
@@ -2263,20 +2422,21 @@ function IncidentReportSheet({ open, onOpenChange, isDesktop, config, livestockT
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side={isDesktop ? 'right' : 'bottom'} className={cn("bg-[#0C1319]/98 border-white/10 outline-none p-0 flex flex-col z-[6000]", isDesktop ? "w-[540px] border-l backdrop-blur-xl" : "rounded-t-[64px] border-t max-h-[95vh] backdrop-blur-3xl")}>
-        <div className="flex-1 overflow-y-auto p-12 space-y-12 no-scrollbar">
+        <div className="flex-1 overflow-y-auto p-6 lg:p-12 space-y-8 lg:space-y-12 no-scrollbar">
           <SheetHeader className="text-left space-y-4">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-[22px] bg-rose-500/20 flex items-center justify-center border border-rose-500/30"><AlertTriangle size={24} className="text-rose-400" /></div>
               <span className="text-[11px] font-black uppercase tracking-[0.5em] text-rose-500/60">Emergent Signal</span>
             </div>
-            <SheetTitle className="text-5xl font-black text-white tracking-tighter">Lapor Masalah</SheetTitle>
+            <SheetTitle className="text-2xl lg:text-5xl font-black text-white tracking-tighter">Lapor Masalah</SheetTitle>
+            <SheetDescription className="sr-only">Panel laporan insiden darurat ternak</SheetDescription>
           </SheetHeader>
 
           <div className="space-y-10">
             <div className="space-y-4">
               <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">Select Target Unit *</label>
               <Select value={form.batch_id} onValueChange={v => setForm(f => ({ ...f, batch_id: v }))}>
-                <SelectTrigger className="w-full h-18 bg-black/40 border border-white/5 rounded-[32px] px-10 text-lg text-white focus:bg-black/60 outline-none transition-all shadow-inner ring-0">
+                <SelectTrigger className="w-full h-12 lg:h-18 bg-black/40 border border-white/5 rounded-xl lg:rounded-[32px] px-5 lg:px-10 text-sm lg:text-lg text-white focus:bg-black/60 outline-none transition-all shadow-inner ring-0">
                   <SelectValue placeholder="Pilih unit batch/kandang..." />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-[32px] p-2">
@@ -2293,16 +2453,16 @@ function IncidentReportSheet({ open, onOpenChange, isDesktop, config, livestockT
             </div>
             <div className="space-y-4">
               <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">Identitas {config.animalLabel} (Opsional)</label>
-              <input value={form.animal_id} onChange={e => setForm(f => ({ ...f, animal_id: e.target.value }))} placeholder={`Contoh: ${config.animalLabel.toUpperCase()}-01 / Tag Biru`} className="w-full h-18 bg-black/40 border border-white/5 rounded-[32px] px-10 text-lg text-white focus:bg-black/60 outline-none" />
+              <input value={form.animal_id} onChange={e => setForm(f => ({ ...f, animal_id: e.target.value }))} placeholder={`Contoh: ${config.animalLabel.toUpperCase()}-01 / Tag Biru`} className="w-full h-12 lg:h-18 bg-black/40 border border-white/5 rounded-xl lg:rounded-[32px] px-5 lg:px-10 text-sm lg:text-lg text-white focus:bg-black/60 outline-none" />
             </div>
             <div className="space-y-4">
               <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">Symptom Details *</label>
-              <textarea value={form.symptoms} onChange={e => setForm(f => ({ ...f, symptoms: e.target.value }))} placeholder={`Jelaskan kondisi ${config.animalLabel.toLowerCase()} (pincang, lemas, nafsu makan turun, dll)...`} className="w-full bg-black/40 border border-white/5 rounded-[40px] p-8 text-lg text-white focus:border-rose-500/50 outline-none min-h-[160px] resize-none" />
+              <textarea value={form.symptoms} onChange={e => setForm(f => ({ ...f, symptoms: e.target.value }))} placeholder={`Jelaskan kondisi ${config.animalLabel.toLowerCase()} (pincang, lemas, nafsu makan turun, dll)...`} className="w-full bg-black/40 border border-white/5 rounded-2xl lg:rounded-[40px] p-5 lg:p-8 text-sm lg:text-lg text-white focus:border-rose-500/50 outline-none min-h-[120px] lg:min-h-[160px] resize-none" />
             </div>
           </div>
         </div>
-        <div className="p-8 border-t border-rose-500/10 bg-[#0C1319]">
-          <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full h-14 bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm rounded-2xl shadow-[0_10px_30px_rgba(225,29,72,0.3)] transition-all outline-none border-none">
+        <div className="p-5 lg:p-8 border-t border-rose-500/10 bg-[#0C1319]">
+          <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full h-12 lg:h-14 bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm rounded-xl lg:rounded-2xl shadow-[0_10px_30px_rgba(225,29,72,0.3)] transition-all outline-none border-none">
             {isSubmitting ? 'Mengirim...' : 'Laporkan Kondisi'}
           </Button>
         </div>

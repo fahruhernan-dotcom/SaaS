@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Plus, ChevronRight, X, Calendar, Hash, Warehouse, AlignLeft, 
-  LayoutGrid, Search, Target, TrendingUp, Activity, ArrowRight, Lock, LockOpen 
+  LayoutGrid, Search, Target, TrendingUp, Activity, ArrowRight, Lock, LockOpen,
+  ShoppingCart, Archive, AlertTriangle, DollarSign, CheckCircle2, ChevronDown
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
@@ -11,6 +12,9 @@ import { cn } from '@/lib/utils'
 import {
   useDombaBatches,
   useCreateDombaBatch,
+  useCloseDombaBatch,
+  useDombaAnimals,
+  useDombaSales,
   calcHariDiFarm,
   calcMortalitasDomba,
 } from '@/lib/hooks/useDombaPenggemukanData'
@@ -149,6 +153,26 @@ function BatchCard({ batch, onClick }) {
         )}
       </div>
 
+      {/* Action Footer — Only for Active Batch */}
+      {batch.status === 'active' && (
+        <div className="mt-5 pt-4 border-t border-white/[0.05] flex gap-2">
+          <button
+            onClick={(e) => { e.stopPropagation(); onClick() }}
+            className="flex-1 flex items-center justify-center gap-2 h-9 bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.07] rounded-xl text-[11px] font-black text-white uppercase tracking-widest transition-all"
+          >
+            <ChevronRight size={14} />
+            Kelola Ternak
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onCloseBatch && onCloseBatch(batch) }}
+            className="flex items-center justify-center gap-1.5 px-4 h-9 bg-white/[0.03] border border-amber-500/30 hover:bg-amber-500/10 rounded-xl text-[11px] font-black text-amber-400 uppercase tracking-widest transition-all"
+          >
+            <Archive size={13} />
+            Tutup
+          </button>
+        </div>
+      )}
+
       {batch.status === 'closed' && batch.net_profit_idr != null && (
         <div className="mt-6 pt-6 border-t border-white/[0.06] flex justify-between items-center relative z-10">
           <div className="flex items-center gap-2">
@@ -161,6 +185,214 @@ function BatchCard({ batch, onClick }) {
           </span>
         </div>
       )}
+    </motion.div>
+  )
+}
+
+// ── CLOSE BATCH WIZARD ────────────────────────────────────────────────────────
+
+function CloseBatchWizard({ batch, onClose }) {
+  const { data: animals = [] } = useDombaAnimals(batch.id)
+  const { data: sales = [] } = useDombaSales(batch.id)
+  const { data: feedLogs = [] } = useDombaFeedLogs(batch.id)
+  const { mutate: closeBatch, isPending } = useCloseDombaBatch()
+
+  // Additional Operational Costs
+  const [laborCost, setLaborCost] = React.useState(0)
+  const [otherCost, setOtherCost] = React.useState(0)
+  const [manualFeedCost, setManualFeedCost] = React.useState(0)
+
+  // Auto-calculate feed cost from logs on mount
+  React.useEffect(() => {
+    const totalLoggedFeed = feedLogs.reduce((s, l) => s + (parseFloat(l.feed_cost_idr) || 0), 0)
+    setManualFeedCost(totalLoggedFeed)
+  }, [feedLogs])
+
+  const kpi = React.useMemo(() => {
+    const soldAnimals  = animals.filter(a => a.status === 'sold')
+    const activeAnimals = animals.filter(a => a.status === 'active')
+    const deadAnimals  = animals.filter(a => a.status === 'dead')
+
+    const sold_count   = soldAnimals.length
+    const alive_count  = activeAnimals.length
+    const total_revenue_idr = sales.reduce((s, t) => s + (parseFloat(t.total_revenue_idr) || 0), 0)
+    const total_cogs_idr    = animals.reduce((s, a) => s + (parseFloat(a.purchase_price_idr) || 0), 0)
+    
+    // Total Expenses = HPP Beli + Pakan + Tenaga Kerja + Lainnya
+    const total_expenses = total_cogs_idr + parseFloat(manualFeedCost || 0) + parseFloat(laborCost || 0) + parseFloat(otherCost || 0)
+    
+    const net_profit_idr    = total_revenue_idr - total_expenses
+    const rc_ratio          = total_expenses > 0 ? (total_revenue_idr / total_expenses) : null
+
+    const avgExitW = soldAnimals.length > 0
+      ? soldAnimals.reduce((s, a) => s + (parseFloat(a.latest_weight_kg ?? a.entry_weight_kg) || 0), 0) / soldAnimals.length
+      : null
+    const avgEntryW = animals.length > 0
+      ? animals.reduce((s, a) => s + (parseFloat(a.entry_weight_kg) || 0), 0) / animals.length
+      : null
+
+    return {
+      sold_count, alive_count, deadCount: deadAnimals.length,
+      total_revenue_idr, total_cogs_idr, net_profit_idr, rc_ratio,
+      total_expenses, manualFeedCost, laborCost, otherCost,
+      avg_exit_weight_kg: avgExitW, avg_entry_weight_kg: avgEntryW,
+      end_date: new Date().toISOString().split('T')[0],
+    }
+  }, [animals, sales, manualFeedCost, laborCost, otherCost])
+
+  const handleClose = () => {
+    closeBatch({
+      batchId: batch.id,
+      kpiFinal: {
+        end_date: kpi.end_date,
+        sold_count: kpi.sold_count,
+        alive_count: kpi.alive_count,
+        total_revenue_idr: kpi.total_revenue_idr,
+        total_cogs_idr: kpi.total_cogs_idr,
+        total_feed_cost_idr: parseFloat(manualFeedCost) || 0,
+        net_profit_idr: kpi.net_profit_idr,
+        rc_ratio: kpi.rc_ratio,
+        avg_exit_weight_kg: kpi.avg_exit_weight_kg,
+        avg_entry_weight_kg: kpi.avg_entry_weight_kg,
+      }
+    }, { onSuccess: onClose })
+  }
+
+  const isProfit = kpi.net_profit_idr >= 0
+
+  return (
+    <motion.div
+      initial={{ x: '100%', opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: '100%', opacity: 0 }}
+      transition={{ type: 'spring', damping: 28, stiffness: 250 }}
+      className="fixed inset-y-0 right-0 w-[420px] max-w-full z-50 bg-[#0A1015]/95 backdrop-blur-xl border-l border-white/[0.08] shadow-[-10px_0_40px_rgba(0,0,0,0.5)] flex flex-col"
+    >
+      <div className="px-6 pt-8 pb-4 flex items-center justify-between border-b border-white/5">
+        <div>
+          <h2 className="font-['Sora'] font-extrabold text-xl text-white tracking-tight mb-1">Tutup Batch</h2>
+          <p className="text-[11px] text-amber-400 font-black uppercase tracking-widest">{batch.batch_code}</p>
+        </div>
+        <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#94A3B8] hover:text-white transition-colors">
+          <X size={16} />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
+
+        {/* Warning if masih ada aktif */}
+        {kpi.alive_count > 0 && (
+          <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 flex gap-3">
+            <AlertTriangle size={18} className="text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-black text-amber-300">Masih ada {kpi.alive_count} ekor aktif!</p>
+              <p className="text-[11px] text-[#4B6478] mt-0.5 leading-relaxed">Domba yang belum terjual statusnya akan tetap 'aktif' setelah batch ditutup. Pastikan sudah dicatat dengan benar.</p>
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4 space-y-3">
+          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest border-b border-white/[0.06] pb-2 mb-3">Ringkasan KPI Final</p>
+          {[
+            { label: 'Tgl Selesai', value: format(new Date(), 'dd MMMM yyyy', { locale: id }) },
+            { label: 'Total Ekor', value: `${animals.length} Ekor` },
+            { label: 'Terjual', value: `${kpi.sold_count} Ekor`, color: 'text-blue-400' },
+            { label: 'Mati / Afkir', value: `${kpi.deadCount} Ekor`, color: kpi.deadCount > 0 ? 'text-red-400' : 'text-white' },
+          ].map(r => (
+            <div key={r.label} className="flex justify-between items-center text-[11px]">
+              <span className="font-bold text-[#4B6478]">{r.label}</span>
+              <span className={cn('font-black', r.color || 'text-white')}>{r.value}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Operational Costs Inputs */}
+        <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4 space-y-4">
+          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest border-b border-white/[0.06] pb-2 mb-1">Audit Biaya Operasional</p>
+          
+          <div className="space-y-3">
+            <div>
+              <label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mb-1.5 block">Biaya Pakan (Otomatis dari Log)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-[#4B6478]">RP</span>
+                <input 
+                  type="number"
+                  value={manualFeedCost}
+                  onChange={e => setManualFeedCost(e.target.value)}
+                  className="w-full h-10 bg-white/[0.03] border border-white/10 rounded-xl pl-9 pr-4 text-xs font-black text-white focus:border-amber-500/50 outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mb-1.5 block text-xs">Tenaga Kerja</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-[#4B6478]">RP</span>
+                  <input 
+                    type="number"
+                    value={laborCost}
+                    onChange={e => setLaborCost(e.target.value)}
+                    className="w-full h-10 bg-white/[0.03] border border-white/10 rounded-xl pl-9 pr-4 text-xs font-black text-white focus:border-amber-500/50 outline-none transition-all"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mb-1.5 block text-xs">Biaya Lainnya</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-[#4B6478]">RP</span>
+                  <input 
+                    type="number"
+                    value={otherCost}
+                    onChange={e => setOtherCost(e.target.value)}
+                    className="w-full h-10 bg-white/[0.03] border border-white/10 rounded-xl pl-9 pr-4 text-xs font-black text-white focus:border-amber-500/50 outline-none transition-all"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* P&L Summary */}
+        <div className={cn('border rounded-[28px] p-5 relative overflow-hidden', isProfit ? 'bg-emerald-900/20 border-emerald-500/20' : 'bg-red-900/20 border-red-500/20')}>
+          <div className="text-center">
+            <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em] mb-2">Net Profit / Loss</p>
+            <p className={cn('text-4xl font-black font-[\'Sora\'] tracking-tight', isProfit ? 'text-emerald-400' : 'text-red-400')}>
+              {isProfit ? '+' : ''}Rp {(Math.abs(kpi.net_profit_idr) / 1_000_000).toFixed(2)} jt
+            </p>
+            {kpi.rc_ratio && (
+              <p className="text-[11px] text-[#4B6478] mt-2">
+                R/C Ratio: <span className={cn('font-black', kpi.rc_ratio >= 1.2 ? 'text-emerald-400' : 'text-amber-400')}>{kpi.rc_ratio.toFixed(2)}</span>
+              </p>
+            )}
+          </div>
+          <div className="flex justify-between mt-4 pt-3 border-t border-white/[0.08]">
+            <div className="text-center">
+              <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mb-0.5">Revenue</p>
+              <p className="text-xs font-black text-emerald-400 text-[10px]">Rp {(kpi.total_revenue_idr / 1_000_000).toFixed(1)} jt</p>
+            </div>
+            <div className="text-center">
+              <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mb-0.5">Expenses</p>
+              <p className="text-xs font-black text-red-400 text-[10px]">Rp {(kpi.total_expenses / 1_000_000).toFixed(1)} jt</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-5 py-4 border-t border-white/5 bg-[#0C1319] space-y-2">
+        <button
+          onClick={handleClose}
+          disabled={isPending}
+          className="w-full h-12 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all"
+        >
+          {isPending ? 'Menutup Batch...' : 'Konfirmasi & Tutup Batch'}
+        </button>
+        <button onClick={onClose} className="w-full h-10 bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] text-[#4B6478] text-xs font-black uppercase tracking-widest rounded-xl transition-colors">
+          Batal
+        </button>
+      </div>
     </motion.div>
   )
 }
@@ -359,6 +591,7 @@ function CreateBatchSheet({ onClose }) {
 export default function DombaBatch() {
   const navigate = useNavigate()
   const [showCreate, setShowCreate] = useState(false)
+  const [closingBatch, setClosingBatch] = useState(null)
   const [search, setSearch] = useState('')
   const { data: batches = [], isLoading } = useDombaBatches()
 
@@ -419,6 +652,7 @@ export default function DombaBatch() {
                   key={b.id}
                   batch={b}
                   onClick={() => navigate(`${BASE}/ternak?batch=${b.id}`)}
+                  onCloseBatch={(batch) => setClosingBatch(batch)}
                 />
               ))}
             </div>
@@ -454,6 +688,16 @@ export default function DombaBatch() {
               onClick={() => setShowCreate(false)}
             />
             <CreateBatchSheet onClose={() => setShowCreate(false)} />
+          </>
+        )}
+        {closingBatch && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 z-40 backdrop-blur-md"
+              onClick={() => setClosingBatch(null)}
+            />
+            <CloseBatchWizard batch={closingBatch} onClose={() => setClosingBatch(null)} />
           </>
         )}
       </AnimatePresence>
