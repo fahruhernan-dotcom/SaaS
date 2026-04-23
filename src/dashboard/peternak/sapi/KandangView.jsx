@@ -87,7 +87,9 @@ const RoamingCow = ({ animal, bounds, dotColor, onClick }) => {
         ease: "linear"
       }}
       onAnimationComplete={() => setIsIdle(true)}
-      onClick={(e) => { e.stopPropagation(); onClick(animal) }}
+      onClick={(e) => { e.stopPropagation(); onClick(animal); }}
+      onMouseDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
       style={{
         position: 'absolute',
         width: iconSize, height: iconSize,
@@ -96,6 +98,7 @@ const RoamingCow = ({ animal, bounds, dotColor, onClick }) => {
         fontSize: iconSize,
         zIndex: 20,
         filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+        pointerEvents: 'auto',
       }}
     >
         <div style={{

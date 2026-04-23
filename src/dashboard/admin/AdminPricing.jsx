@@ -359,7 +359,7 @@ export default function AdminPricing() {
               vertical="poultry_broker"
             />
             <RolePricingCard
-              roleName="Peternak"
+              roleName="Peternak Ayam"
               roleId="peternak"
               icon={Home}
               color="purple"
@@ -368,6 +368,39 @@ export default function AdminPricing() {
               onSave={() => handleSavePricing('peternak')}
               isSaving={savingRole === 'peternak'}
               vertical="peternak"
+            />
+            <RolePricingCard
+              roleName="Sapi Potong"
+              roleId="peternak_sapi_potong"
+              icon={Home}
+              color="emerald"
+              data={editingPricing.peternak_sapi_potong ?? { pro: { price: 499000, originalPrice: 699000 }, business: { price: 999000, originalPrice: 1999000 } }}
+              onChange={handlePriceChange}
+              onSave={() => handleSavePricing('peternak_sapi_potong')}
+              isSaving={savingRole === 'peternak_sapi_potong'}
+              vertical="peternak_sapi_potong"
+            />
+            <RolePricingCard
+              roleName="Kambing & Domba"
+              roleId="peternak_kambing_domba"
+              icon={Home}
+              color="amber"
+              data={editingPricing.peternak_kambing_domba ?? { pro: { price: 499000, originalPrice: 699000 }, business: { price: 999000, originalPrice: 1999000 } }}
+              onChange={handlePriceChange}
+              onSave={() => handleSavePricing('peternak_kambing_domba')}
+              isSaving={savingRole === 'peternak_kambing_domba'}
+              vertical="peternak_kambing_domba"
+            />
+            <RolePricingCard
+              roleName="Sapi Perah"
+              roleId="peternak_sapi_perah"
+              icon={Home}
+              color="sky"
+              data={editingPricing.peternak_sapi_perah ?? { pro: { price: 499000, originalPrice: 699000 }, business: { price: 999000, originalPrice: 1999000 } }}
+              onChange={handlePriceChange}
+              onSave={() => handleSavePricing('peternak_sapi_perah')}
+              isSaving={savingRole === 'peternak_sapi_perah'}
+              vertical="peternak_sapi_perah"
             />
             <RolePricingCard
               roleName="Rumah Potong (RPA)"

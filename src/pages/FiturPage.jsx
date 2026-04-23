@@ -108,9 +108,10 @@ const SUBS = {
     { id: 'sembako', label: 'Distributor Sembako', disabled: false },
   ],
   peternak: [
-    { id: 'broiler', label: 'Ayam Broiler', disabled: false },
-    { id: 'petelur', label: 'Ayam Petelur', disabled: true },
-    { id: 'sapi', label: 'Sapi', disabled: true },
+    { id: 'ayam', label: 'Ayam Broiler & Layer', disabled: false },
+    { id: 'sapi_potong', label: 'Sapi Potong (Fattening & Breeding)', disabled: false },
+    { id: 'sapi_perah', label: 'Sapi Perah', disabled: true },
+    { id: 'kambing_domba', label: 'Kambing & Domba', disabled: false },
   ],
   rpa: [],
 }
@@ -292,7 +293,7 @@ const GROUPS = {
     },
   ],
 
-  peternak: [
+  peternak_ayam: [
     {
       Icon: Home,
       title: 'Multi-Kandang, Multi-Model Bisnis',
@@ -365,6 +366,78 @@ const GROUPS = {
         'Catat pemakaian manual',
         'Alert stok < 100 kg',
         'Integrasi ke cycle_expenses',
+      ],
+    },
+  ],
+
+  peternak_sapi_potong: [
+    {
+      Icon: Home,
+      title: 'Manajemen Feedlot & Breeding',
+      desc: null,
+      features: [
+        'Dukung Fattening (Penggemukan) & Breeding',
+        'Database sapi dengan ear tag & silsilah',
+        'Tracking ADG (Average Daily Gain)',
+        'Limit kandang per plan (Starter:1, Pro:2, Business:∞)',
+      ],
+    },
+    {
+      Icon: TrendingUp,
+      title: 'Log ADG & Performa Bobot',
+      desc: null,
+      features: [
+        'Catat penimbangan bobot rutin',
+        'Perhitungan ADG otomatis per ekor',
+        'Prediksi waktu panen berdasarkan target bobot',
+        'Breakdown biaya per ekor',
+      ],
+    },
+    {
+      Icon: ClipboardList,
+      title: 'Log Pakan & Kesehatan',
+      desc: null,
+      features: [
+        'Pencatatan konsumsi hijauan & konsentrat',
+        'Log vaksinasi & pengobatan',
+        'Histori medis per individu sapi',
+        'Kartu ternak digital terintegrasi',
+      ],
+    },
+  ],
+
+  peternak_kambing_domba: [
+    {
+      Icon: Home,
+      title: 'Manajemen Populasi Massal',
+      desc: null,
+      features: [
+        'Dukung sistem koloni / batch',
+        'Pencatatan populasi per kandang',
+        'Efisiensi FCR untuk feedlot domba',
+        'Limit kandang per plan (Starter:1, Pro:2, Business:∞)',
+      ],
+    },
+    {
+      Icon: RefreshCw,
+      title: 'Siklus Feedlot & Breeding',
+      desc: null,
+      features: [
+        'Penjadwalan panen massal',
+        'Log kelahiran & kematian',
+        'Prediksi kebutuhan pakan per batch',
+        'Pemantauan mortalitas real-time',
+      ],
+    },
+    {
+      Icon: Package,
+      title: 'Stok Pakan & Gudang',
+      desc: null,
+      features: [
+        'Stok bahan baku & konsentrat',
+        'Peringatan otomatis stok menipis',
+        'Laporan biaya pakan vs bobot',
+        'Hitung HPP otomatis per ekor',
       ],
     },
   ],
@@ -462,11 +535,29 @@ const HERO_CONTENT = {
     sub: 'Kelola ribuan item sembako — beras, minyak, telur — dalam satu invoice tanpa salah hitung.',
     cta: 'Coba Manajemen Stok Sembako',
   },
-  peternak: {
-    eyebrow: 'Solusi Peternak Mandiri',
+  peternak_ayam: {
+    eyebrow: 'Solusi Peternak Ayam',
     headline: 'Cetak Indeks Performa (IP) Tertinggi dengan Manajemen Kandang Berbasis Data.',
     sub: 'Catat FCR, mortality, dan pemakaian obat harian. Bandingkan performa antar siklus kandang.',
-    cta: 'Mulai Kelola Kandang Saya',
+    cta: 'Mulai Kelola Kandang Ayam',
+  },
+  peternak_sapi_potong: {
+    eyebrow: 'Solusi Peternak Sapi Potong',
+    headline: 'Pantau ADG Sapi dan Optimalkan Pencapaian Bobot Panen dengan Presisi.',
+    sub: 'Manajemen ear-tag, pakan, rekaman kesehatan, dan prediksi panen profitabel.',
+    cta: 'Mulai Kelola Kandang Sapi',
+  },
+  peternak_sapi_perah: {
+    eyebrow: 'Solusi Peternak Sapi Perah',
+    headline: 'Tingkatkan Produksi Susu Harian & Manajemen Laktasi.',
+    sub: 'Pencatatan susu harian, siklus IB, kesehatan sapi laktasi dan histori pedet.',
+    cta: 'Mulai Kelola Sapi Perah',
+  },
+  peternak_kambing_domba: {
+    eyebrow: 'Solusi Peternak Kambing & Domba',
+    headline: 'Efisiensi Penggemukan Koloni Domba & Kambing Lebih Mudah.',
+    sub: 'Sistem batch tracking, hitung mortalitas, efisiensi pakan, dan laporan siap panen massal.',
+    cta: 'Mulai Kelola Kandang Domba',
   },
   rpa: {
     eyebrow: 'Solusi Rumah Potong Ayam',
@@ -496,11 +587,23 @@ const BEFORE_AFTER = {
     { before: 'Hitung untung rugi di akhir bulan saja', after: 'Laporan profit bersih tersedia kapan saja' },
     { before: 'Input faktur satu per satu tiap item', after: 'Multi-item entry dalam satu invoice' },
   ],
-  peternak: [
+  peternak_ayam: [
     { before: 'Catat kematian ayam di kertas, mudah hilang', after: 'Recording harian digital, tersimpan per siklus' },
     { before: 'Hitung FCR manual, sering tidak akurat', after: 'Kalkulator FCR otomatis dari data pakan & bobot' },
     { before: 'Tidak bisa bandingkan performa antar siklus', after: 'Analisis siklus otomatis dengan grafik tren' },
     { before: 'Tidak tahu profit sebelum panen selesai', after: 'Estimasi keuntungan tersedia real-time' },
+  ],
+  peternak_sapi_potong: [
+    { before: 'Catat bobot sapi di buku & susah cari histori', after: 'Kartu Ternak digital berbasis ear-tag' },
+    { before: 'Hitung ADG dan HPP pakan terpisah-pisah', after: 'ADG & biaya per ekor otomatis terhitung' },
+    { before: 'Jadwal kesehatan & target bobot asal tebak', after: 'Tracking target harvest yang jelas' },
+    { before: 'Data pedet dan indukan tercecer', after: 'Manajemen silsilah breeding terintegrasi' },
+  ],
+  peternak_kambing_domba: [
+    { before: 'Catat populasi & mati di whiteboard kandang', after: 'Pencatatan batch populasi di aplikasi' },
+    { before: 'Biaya pembelian konsentrat campur aduk', after: 'Sistem inventori stok terukur akurat' },
+    { before: 'Pemantauan penyakit massal lambat', after: 'Aler & log medik koloni lebih tertib' },
+    { before: 'Kesulitan hitung break-even point (BEP)', after: 'ROI / BEP pengereman otomatis di akhir siklus' },
   ],
   rpa: [
     { before: 'Dokumen timbang manual, rawan dispute', after: 'Timbangan digital tercatat otomatis' },
@@ -629,7 +732,7 @@ const FAQ_ROLE = {
       a: 'Bisa. Paket Business mendukung unlimited pengguna, multi-gudang, dan konsolidasi laporan seluruh cabang. Cocok untuk distributor sembako yang punya jaringan agen dan toko mitra.',
     },
   ],
-  peternak: [
+  peternak_ayam: [
     {
       q: 'Apa itu FCR dan kenapa penting untuk peternak ayam broiler?',
       a: 'FCR (Feed Conversion Ratio) adalah rasio kg pakan yang dibutuhkan untuk menghasilkan 1 kg bobot ayam. FCR 1,6 artinya butuh 1,6 kg pakan untuk 1 kg ayam. Semakin rendah FCR, semakin efisien dan menguntungkan. TernakOS menghitung FCR otomatis setiap hari.',
@@ -657,6 +760,18 @@ const FAQ_ROLE = {
     {
       q: 'Apakah ada fitur recording harian untuk peternak?',
       a: 'Ada. Input harian bisa diselesaikan kurang dari 2 menit: mortalitas, pakan terpakai, sampel bobot rata-rata. Sistem otomatis menghitung FCR harian dan menampilkan grafik tren bobot vs pakan.',
+    },
+  ],
+  peternak_sapi_potong: [
+    {
+      q: 'Apa itu fitur ADG?',
+      a: 'ADG (Average Daily Gain) adalah pertambahan bobot harian sapi Anda. Sangat krusial dalam Fattening.',
+    },
+  ],
+  peternak_kambing_domba: [
+    {
+      q: 'Apakah mendukung pencatatan batch massal?',
+      a: 'Ya, cocok untuk domba penggemukan massal tanpa harus mendata satu persatu.',
     },
   ],
   rpa: [
@@ -732,7 +847,7 @@ export default function FiturPage() {
 
   const handleRoleChange = (role) => {
     setSelectedRole(role)
-    const defaults = { broker: 'ayam', peternak: 'broiler', rpa: null }
+    const defaults = { broker: 'ayam', peternak: 'ayam', rpa: null }
     setSelectedSub(defaults[role])
   }
 
@@ -747,9 +862,7 @@ export default function FiturPage() {
     return () => observer.disconnect()
   }, [])
 
-  const contentKey = selectedRole === 'rpa' ? 'rpa'
-    : selectedRole === 'peternak' ? 'peternak'
-      : `broker_${selectedSub}`
+  const contentKey = selectedRole === 'rpa' ? 'rpa' : `${selectedRole}_${selectedSub}`
   const groups = GROUPS[contentKey] ?? []
   const cols = groups.length <= 4 ? 'md:grid-cols-2' : 'md:grid-cols-2 lg:grid-cols-3'
 

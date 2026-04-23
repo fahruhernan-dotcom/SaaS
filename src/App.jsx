@@ -17,6 +17,7 @@ import LoadingScreen from './components/LoadingScreen';
 
 // Components (always synchronous — used in layout shell & initial load)
 import ErrorBoundary from './components/ErrorBoundary';
+import GlobalRouteError from './components/GlobalRouteError';
 import BottomNav from './dashboard/_shared/components/BottomNav';
 import AppSidebar from './dashboard/_shared/components/AppSidebar';
 import DesktopSidebarLayout from './dashboard/_shared/layouts/DesktopSidebarLayout';
@@ -317,7 +318,7 @@ const AdminComingSoon = () => (
 );
 
 export const routes = createRoutesFromElements(
-  <Route>
+  <Route errorElement={<GlobalRouteError />}>
     {/* SPA Fallback route to avoid SSG pollution on Dashboard */}
     <Route path="/_spa_fallback" element={null} />
 

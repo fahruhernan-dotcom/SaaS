@@ -37,7 +37,7 @@ function KPICard({ label, value, sub, color = 'text-white', icon: Icon }) {
   )
 }
 
-function BatchCard({ batch, onClick }) {
+function BatchCard({ batch, onClick, onAnimalClick }) {
   // Sapi: target penggemukan 4–6 bulan (120–180 hari)
   const hari = calcSapiHariDiFarm(batch.start_date)
   const TARGET_HARI = 150
@@ -156,7 +156,11 @@ function BatchCard({ batch, onClick }) {
 
         {/* Right Side: Map Visualization */}
         <div className="w-full lg:w-[50%] xl:w-[60%] shrink-0">
-          <KandangMiniMap batchId={batch.id} className="mt-0" />
+          <KandangMiniMap 
+            batchId={batch.id} 
+            className="mt-0" 
+            onAnimalClick={onAnimalClick}
+          />
         </div>
       </div>
     </motion.div>
@@ -348,6 +352,12 @@ export default function SapiBeranda() {
                 key={batch.id}
                 batch={batch}
                 onClick={() => navigate(`${BASE}/ternak?batch=${batch.id}`)}
+                onAnimalClick={(animal) => {
+                  setSelectedBatchId(batch.id);
+                  toggleAnimal(animal.id);
+                  // scroll to chart
+                  window.scrollBy({ top: 300, behavior: 'smooth' });
+                }}
               />
             ))}
           </div>

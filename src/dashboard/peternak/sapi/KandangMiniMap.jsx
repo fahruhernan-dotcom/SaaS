@@ -26,7 +26,7 @@ function getADGTierColor(adgKg) {
   return '#F87171' // Red (Only for actual low performance)
 }
 
-const MiniCow = ({ animal, bounds, dotColor }) => {
+const MiniCow = ({ animal, bounds, dotColor, onAnimalClick }) => {
   const weight = animal.latest_weight_kg || 250
   const lengthMeters = Math.pow(weight, 1 / 3) * 0.195
   const iconSize = Math.max(20, lengthMeters * CELL_PX)
@@ -61,13 +61,21 @@ const MiniCow = ({ animal, bounds, dotColor }) => {
         ease: "linear"
       }}
       onAnimationComplete={() => setIsIdle(true)}
+      onClick={(e) => {
+        if (onAnimalClick) {
+          e.stopPropagation()
+          onAnimalClick(animal)
+        }
+      }}
+      onPointerDown={(e) => { if (onAnimalClick) e.stopPropagation() }}
       style={{
         position: 'absolute',
         width: iconSize, height: iconSize,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: iconSize,
-        zIndex: 20,
-        pointerEvents: 'none'
+        zIndex: onAnimalClick ? 30 : 20,
+        pointerEvents: onAnimalClick ? 'auto' : 'none',
+        cursor: onAnimalClick ? 'pointer' : 'default',
       }}
     >
       <div style={{
@@ -90,7 +98,7 @@ const MiniCow = ({ animal, bounds, dotColor }) => {
   )
 }
 
-export default function KandangMiniMap({ batchId, className }) {
+export default function KandangMiniMap({ batchId, className, onAnimalClick, onKandangClick }) {
   const { data: kandangs = [], isLoading: loadKdg } = useSapiKandangs(batchId)
   const { data: animals = [], isLoading: loadAni } = useSapiAnimals(batchId)
   const containerRef = useRef(null)
@@ -181,10 +189,15 @@ export default function KandangMiniMap({ batchId, className }) {
     if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
   }
 
-  const handleManualClick = (e, id) => {
+  const handleManualClick = (e, kandang) => {
     e.stopPropagation()
     handleEndHover()
-    setActiveKandangId(id)
+    // If external handler provided, use it. Otherwise use internal overlay.
+    if (onKandangClick) {
+      onKandangClick(kandang)
+    } else {
+      setActiveKandangId(kandang.id)
+    }
   }
 
   const aspectRatio = viewport ? `${viewport.wM} / ${viewport.hM}` : '1 / 1'
@@ -235,7 +248,7 @@ export default function KandangMiniMap({ batchId, className }) {
                   key={k.id}
                   onMouseEnter={() => handleStartHover(k.id)}
                   onMouseLeave={handleEndHover}
-                  onClick={(e) => handleManualClick(e, k.id)}
+                  onClick={(e) => handleManualClick(e, k)}
                   className="transition-all duration-300 hover:brightness-125 cursor-pointer"
                   style={{
                     position: 'absolute',
@@ -264,6 +277,7 @@ export default function KandangMiniMap({ batchId, className }) {
                           animal={a}
                           bounds={{ w: kw, h: kh }}
                           dotColor={dotColor}
+                          onAnimalClick={onAnimalClick}
                         />
                       )
                     })}
@@ -304,7 +318,19 @@ export default function KandangMiniMap({ batchId, className }) {
 
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1">
               {(groupedAnimals[activeKandang.id] || []).map(a => (
-                <div key={a.id} className="flex items-center justify-between p-2.5 bg-white/[0.02] border border-white/[0.04] rounded-xl">
+                <div 
+                  key={a.id} 
+                  className={cn(
+                    "flex items-center justify-between p-2.5 bg-white/[0.02] border border-white/[0.04] rounded-xl transition-colors",
+                    onAnimalClick ? "cursor-pointer hover:bg-white/[0.05]" : ""
+                  )}
+                  onClick={(e) => {
+                    if (onAnimalClick) {
+                      e.stopPropagation();
+                      onAnimalClick(a);
+                    }
+                  }}
+                >
                   <div className="flex items-center gap-2">
                     <span className="text-[10px]">🐄</span>
                     <span className="text-[10px] font-black text-white uppercase tracking-tight">{a.ear_tag}</span>

@@ -43,11 +43,28 @@ npm run sitemap
 echo "==> Build..."
 npm run build
 
-echo "==> Patching Nginx Fallback..."
-sudo sed -i -E 's/try_files \$uri \$uri\/ \/index\.html(.*?);/try_files \$uri \$uri\/ \/200.html\1;/g' /etc/nginx/sites-enabled/* || true
+echo "==> Applying Nginx Hardening Config..."
+if [ -f "nginx/ternakos.conf" ]; then
+    sudo cp nginx/ternakos.conf /etc/nginx/sites-available/ternakos
+    # Ensure it is linked
+    if [ ! -f "/etc/nginx/sites-enabled/ternakos" ]; then
+        sudo ln -s /etc/nginx/sites-available/ternakos /etc/nginx/sites-enabled/ternakos
+    fi
+    # Patch the 200.html fallback specifically in the target config
+    sudo sed -i -E 's/try_files \$uri \$uri\/ \/index\.html(.*?);/try_files \$uri \$uri\/ \/200.html\1;/g' /etc/nginx/sites-available/ternakos || true
+    echo "    Nginx config applied."
+else
+    echo "    Warning: nginx/ternakos.conf not found!"
+fi
 
-echo "==> Reload Nginx..."
-sudo systemctl reload nginx
+echo "==> Testing & Reloading Nginx..."
+if sudo nginx -t; then
+    sudo systemctl reload nginx
+    echo "    Nginx reloaded successfully."
+else
+    echo "    ERROR: Nginx config test failed! Not reloading."
+    exit 1
+fi
 
 # ── SEO: Ping Google & Bing sitemap ─────────────────────────────────────────
 echo ""
