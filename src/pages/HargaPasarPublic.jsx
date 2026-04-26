@@ -481,7 +481,7 @@ export default function HargaPasarPublic() {
         title={seoTitle}
         description={seoDesc}
         path={seoPath}
-        schema={jsonLd}
+        schema={isLoading ? null : jsonLd}
       />
 
       {/* Global Background Elements */}
@@ -874,6 +874,9 @@ export default function HargaPasarPublic() {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
+                  <span className="text-xs md:text-sm font-semibold text-tx-1" suppressHydrationWarning>
+                    {TODAY}
+                  </span>
                   <table className="w-full text-sm min-w-[480px]">
                     <thead>
                       <tr className="border-b border-white/5 text-[10px] text-[#4B6478] font-black uppercase tracking-widest">
@@ -1003,6 +1006,9 @@ export default function HargaPasarPublic() {
           <div className="text-center mb-10">
             <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-2">Transparansi</p>
             <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">Perbandingan Data</h2>
+            <span className="text-[10px] md:text-xs font-medium text-tx-3 ml-2" suppressHydrationWarning>
+              Update: {todayFmt}
+            </span>
           </div>
           <Card className="bg-[#0C1319] border-white/5 overflow-hidden rounded-[24px]">
             <CardContent className="p-0">

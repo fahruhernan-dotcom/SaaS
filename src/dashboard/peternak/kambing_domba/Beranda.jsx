@@ -130,7 +130,7 @@ export default function KdPenggemukanBeranda() {
 
       {/* Header */}
       <header className="px-4 pt-6 pb-5 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.04]">
-        <p className="text-[11px] text-[#4B6478] font-semibold mb-0.5">
+        <p className="text-[11px] text-[#4B6478] font-semibold mb-0.5" suppressHydrationWarning>
           Selamat {getGreeting()}, {profile?.full_name?.split(' ')[0] ?? 'Peternak'} 👋
         </p>
         <h1 className="font-['Sora'] font-black text-xl text-white">Penggemukan Kambing & Domba</h1>

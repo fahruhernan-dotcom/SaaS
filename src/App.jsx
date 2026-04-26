@@ -23,6 +23,7 @@ import AppSidebar from './dashboard/_shared/components/AppSidebar';
 import DesktopSidebarLayout from './dashboard/_shared/layouts/DesktopSidebarLayout';
 import { useMediaQuery } from './lib/hooks/useMediaQuery';
 import { Menu } from 'lucide-react';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 // Public pages — kept static for SSG pre-rendering
 import HargaPasarPublic from '@/pages/HargaPasarPublic';
@@ -230,7 +231,9 @@ function DashboardLayout({ children }) {
         <Menu className="w-5 h-5 text-[#94A3B8]" />
       </button>
 
-      <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <SidebarProvider>
+        <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      </SidebarProvider>
 
       {children}
       <BottomNav />

@@ -107,7 +107,7 @@ export default function BreedingBeranda() {
     <div className="flex flex-col gap-5 p-4 pb-28">
       {/* Header */}
       <div>
-        <p className="text-xs text-[#4B6478] font-medium">
+        <p className="text-xs text-[#4B6478] font-medium" suppressHydrationWarning>
           Selamat {getGreeting()}, {profile?.name?.split(' ')[0] ?? 'Peternak'} 👋
         </p>
         <h1 className="font-['Sora'] font-bold text-xl text-white mt-0.5">Breeding Farm</h1>

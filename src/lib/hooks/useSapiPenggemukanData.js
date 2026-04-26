@@ -275,23 +275,44 @@ export function useSapiSales(batchId) {
 }
 
 // ── useSapiKandangs ───────────────────────────────────────────────────────────
-export function useSapiKandangs(batchId) {
+export function useSapiKandangs() {
   const { tenant } = useAuth()
   return useQuery({
-    queryKey: ['sapi-kandangs', batchId],
+    queryKey: ['sapi-kandangs', tenant?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sapi_kandangs')
         .select('*')
         .eq('tenant_id', tenant.id)
-        .eq('batch_id', batchId)
         .eq('is_active', true)
         .order('is_holding', { ascending: false })
         .order('created_at', { ascending: true })
       if (error) throw error
       return data ?? []
     },
-    enabled: !!batchId && !!tenant?.id,
+    enabled: !!tenant?.id,
+  })
+}
+
+// ── useSapiAnimalsByBatches ───────────────────────────────────────────────────
+export function useSapiAnimalsByBatches(batchIds) {
+  const { tenant } = useAuth()
+  const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+  return useQuery({
+    queryKey: ['sapi-animals-multi', ids],
+    queryFn: async () => {
+      if (ids.length === 0) return []
+      const { data, error } = await supabase
+        .from('sapi_penggemukan_animals')
+        .select('*, sapi_penggemukan_weight_records(*)')
+        .eq('tenant_id', tenant.id)
+        .in('batch_id', ids)
+        .eq('is_deleted', false)
+        .order('entry_date', { ascending: true })
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: ids.length > 0 && !!tenant?.id,
   })
 }
 
@@ -737,14 +758,14 @@ export function useCreateSapiKandang() {
   const { tenant } = useAuth()
   return useMutation({
     mutationFn: async (payload) => {
-      // payload: { batch_id, name, capacity, panjang_m, lebar_m, is_holding, notes }
+      const { batch_id: _ignored, ...rest } = payload
       const { error } = await supabase
         .from('sapi_kandangs')
-        .insert({ tenant_id: tenant.id, ...payload })
+        .insert({ tenant_id: tenant.id, ...rest })
       if (error) throw error
     },
-    onSuccess: (_, { batch_id }) => {
-      qc.invalidateQueries({ queryKey: ['sapi-kandangs', batch_id] })
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sapi-kandangs', tenant?.id] })
       toast.success('Kandang berhasil ditambahkan')
     },
     onError: (err) => toast.error('Gagal buat kandang: ' + err.message),
@@ -784,8 +805,8 @@ export function useUpdateSapiKandangPosition() {
         .eq('tenant_id', tenant.id)
       if (error) throw error
     },
-    onSuccess: (_, { batchId }) => {
-      qc.invalidateQueries({ queryKey: ['sapi-kandangs', batchId] })
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sapi-kandangs', tenant?.id] })
     },
     onError: (err) => toast.error('Gagal simpan posisi: ' + err.message),
   })
@@ -796,7 +817,7 @@ export function useUpdateSapiKandang() {
   const qc = useQueryClient()
   const { tenant } = useAuth()
   return useMutation({
-    mutationFn: async ({ kandangId, batchId, updates }) => {
+    mutationFn: async ({ kandangId, updates }) => {
       const { error } = await supabase
         .from('sapi_kandangs')
         .update(updates)
@@ -804,8 +825,8 @@ export function useUpdateSapiKandang() {
         .eq('tenant_id', tenant.id)
       if (error) throw error
     },
-    onSuccess: (_, { batchId }) => {
-      qc.invalidateQueries({ queryKey: ['sapi-kandangs', batchId] })
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sapi-kandangs', tenant?.id] })
       toast.success('Data kandang diperbarui')
     },
     onError: (err) => toast.error('Gagal update kandang: ' + err.message),
@@ -817,12 +838,11 @@ export function useEnsureSapiHoldingPen() {
   const qc = useQueryClient()
   const { tenant } = useAuth()
   return useMutation({
-    mutationFn: async (batchId) => {
+    mutationFn: async () => {
       const { data, error: checkErr } = await supabase
         .from('sapi_kandangs')
         .select('id')
         .eq('tenant_id', tenant.id)
-        .eq('batch_id', batchId)
         .eq('is_holding', true)
         .limit(1)
 
@@ -833,7 +853,6 @@ export function useEnsureSapiHoldingPen() {
           .from('sapi_kandangs')
           .insert({
             tenant_id: tenant.id,
-            batch_id: batchId,
             name: 'Kandang Holding',
             capacity: 9999,
             is_holding: true,
@@ -842,8 +861,8 @@ export function useEnsureSapiHoldingPen() {
         if (insertErr) throw insertErr
       }
     },
-    onSuccess: (_, batchId) => {
-      qc.invalidateQueries({ queryKey: ['sapi-kandangs', batchId] })
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sapi-kandangs', tenant?.id] })
     },
   })
 }

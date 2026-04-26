@@ -184,7 +184,7 @@ export default function Beranda() {
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <p style={{ fontSize: '13px', color: '#4B6478', marginBottom: '2px' }}>
+            <p style={{ fontSize: '13px', color: '#4B6478', marginBottom: '2px' }} suppressHydrationWarning>
               Selamat {getGreeting()},
             </p>
             <h1 style={{ 
@@ -196,7 +196,7 @@ export default function Beranda() {
             }}>
               {firstName}! 👋
             </h1>
-            <p style={{ fontSize: '12px', color: '#4B6478', fontFamily: 'DM Sans' }}>
+            <p style={{ fontSize: '12px', color: '#4B6478', fontFamily: 'DM Sans' }} suppressHydrationWarning>
               {formatDateFull(new Date())}
             </p>
           </div>

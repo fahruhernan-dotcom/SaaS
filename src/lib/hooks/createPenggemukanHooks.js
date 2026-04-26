@@ -27,6 +27,7 @@ export function createPenggemukanHooks(prefix) {
     health:   `${prefix}_penggemukan_health_logs`,
     sales:    `${prefix}_penggemukan_sales`,
     kandangs: `${prefix}_kandangs`,
+    costs:    `${prefix}_penggemukan_operational_costs`,
   }
 
   // Query key prefix for cache isolation
@@ -219,23 +220,60 @@ export function createPenggemukanHooks(prefix) {
     })
   }
 
-  function useKandangs(batchId) {
+  function useOperationalCosts(batchId) {
+    return useQuery({
+      queryKey: [`${K}-operational-costs`, batchId],
+      queryFn: async () => {
+        const { data, error } = await supabase
+          .from(T.costs)
+          .select('*')
+          .eq('batch_id', batchId)
+          .eq('is_deleted', false)
+          .order('log_date', { ascending: false })
+        if (error) throw error
+        return data ?? []
+      },
+      enabled: !!batchId,
+    })
+  }
+
+  function useKandangs() {
     const { tenant } = useAuth()
     return useQuery({
-      queryKey: [`${K}-kandangs`, batchId],
+      queryKey: [`${K}-kandangs`, tenant?.id],
       queryFn: async () => {
         const { data, error } = await supabase
           .from(T.kandangs)
           .select('*')
           .eq('tenant_id', tenant.id)
-          .eq('batch_id', batchId)
           .eq('is_active', true)
           .order('is_holding', { ascending: false })
           .order('created_at', { ascending: true })
         if (error) throw error
         return data ?? []
       },
-      enabled: !!batchId && !!tenant?.id,
+      enabled: !!tenant?.id,
+    })
+  }
+
+  function useAnimalsByBatches(batchIds) {
+    const { tenant } = useAuth()
+    const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+    return useQuery({
+      queryKey: [`${K}-animals-multi`, ids],
+      queryFn: async () => {
+        if (ids.length === 0) return []
+        const { data, error } = await supabase
+          .from(T.animals)
+          .select(`*, ${T.weights}(*)`)
+          .eq('tenant_id', tenant.id)
+          .in('batch_id', ids)
+          .eq('is_deleted', false)
+          .order('entry_date', { ascending: true })
+        if (error) throw error
+        return data ?? []
+      },
+      enabled: ids.length > 0 && !!tenant?.id,
     })
   }
 
@@ -692,13 +730,15 @@ export function createPenggemukanHooks(prefix) {
     const { tenant } = useAuth()
     return useMutation({
       mutationFn: async (payload) => {
+        // strip batch_id if accidentally passed — kandangs are now tenant-level
+        const { batch_id: _ignored, ...rest } = payload
         const { error } = await supabase
           .from(T.kandangs)
-          .insert({ tenant_id: tenant.id, ...payload })
+          .insert({ tenant_id: tenant.id, ...rest })
         if (error) throw error
       },
-      onSuccess: (_, { batch_id }) => {
-        qc.invalidateQueries({ queryKey: [`${K}-kandangs`, batch_id] })
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: [`${K}-kandangs`, tenant?.id] })
         toast.success('Kandang berhasil ditambahkan')
       },
       onError: (err) => toast.error('Gagal buat kandang: ' + err.message),
@@ -709,7 +749,7 @@ export function createPenggemukanHooks(prefix) {
     const qc = useQueryClient()
     const { tenant } = useAuth()
     return useMutation({
-      mutationFn: async ({ kandangId, grid_x, grid_y, batchId }) => {
+      mutationFn: async ({ kandangId, grid_x, grid_y }) => {
         const { error } = await supabase
           .from(T.kandangs)
           .update({ grid_x, grid_y })
@@ -717,8 +757,8 @@ export function createPenggemukanHooks(prefix) {
           .eq('tenant_id', tenant.id)
         if (error) throw error
       },
-      onSuccess: (_, { batchId }) => {
-        qc.invalidateQueries({ queryKey: [`${K}-kandangs`, batchId] })
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: [`${K}-kandangs`, tenant?.id] })
       }
     })
   }
@@ -727,7 +767,7 @@ export function createPenggemukanHooks(prefix) {
     const qc = useQueryClient()
     const { tenant } = useAuth()
     return useMutation({
-      mutationFn: async ({ kandangId, updates, batchId }) => {
+      mutationFn: async ({ kandangId, updates }) => {
         const { error } = await supabase
           .from(T.kandangs)
           .update(updates)
@@ -735,8 +775,8 @@ export function createPenggemukanHooks(prefix) {
           .eq('tenant_id', tenant.id)
         if (error) throw error
       },
-      onSuccess: (_, { batchId }) => {
-        qc.invalidateQueries({ queryKey: [`${K}-kandangs`, batchId] })
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: [`${K}-kandangs`, tenant?.id] })
         toast.success('Kandang diperbarui')
       },
       onError: (err) => toast.error('Gagal update: ' + err.message),
@@ -747,7 +787,7 @@ export function createPenggemukanHooks(prefix) {
     const qc = useQueryClient()
     const { tenant } = useAuth()
     return useMutation({
-      mutationFn: async ({ kandangId, batchId }) => {
+      mutationFn: async ({ kandangId }) => {
         const { error } = await supabase
           .from(T.kandangs)
           .delete()
@@ -755,8 +795,8 @@ export function createPenggemukanHooks(prefix) {
           .eq('tenant_id', tenant.id)
         if (error) throw error
       },
-      onSuccess: (_, { batchId }) => {
-        qc.invalidateQueries({ queryKey: [`${K}-kandangs`, batchId] })
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: [`${K}-kandangs`, tenant?.id] })
         toast.success('Kandang dihapus')
       },
       onError: (err) => toast.error('Gagal hapus: ' + err.message),
@@ -802,16 +842,53 @@ export function createPenggemukanHooks(prefix) {
     })
   }
 
+  function useAddOperationalCost() {
+    const qc = useQueryClient()
+    const { tenant } = useAuth()
+    return useMutation({
+      mutationFn: async (payload) => {
+        const { error } = await supabase
+          .from(T.costs)
+          .insert({ tenant_id: tenant.id, ...payload })
+        if (error) throw error
+      },
+      onSuccess: (_, { batch_id }) => {
+        qc.invalidateQueries({ queryKey: [`${K}-operational-costs`, batch_id] })
+        toast.success('Biaya operasional dicatat')
+      },
+      onError: (err) => toast.error('Gagal catat biaya: ' + err.message),
+    })
+  }
+
+  function useDeleteOperationalCost() {
+    const qc = useQueryClient()
+    const { tenant } = useAuth()
+    return useMutation({
+      mutationFn: async ({ costId }) => {
+        const { error } = await supabase
+          .from(T.costs)
+          .update({ is_deleted: true })
+          .eq('id', costId)
+          .eq('tenant_id', tenant.id)
+        if (error) throw error
+      },
+      onSuccess: (_, { batchId }) => {
+        qc.invalidateQueries({ queryKey: [`${K}-operational-costs`, batchId] })
+        toast.success('Biaya operasional dihapus')
+      },
+      onError: (err) => toast.error('Gagal hapus: ' + err.message),
+    })
+  }
+
   function useEnsureHoldingPen() {
     const qc = useQueryClient()
     const { tenant } = useAuth()
     return useMutation({
-      mutationFn: async (batchId) => {
+      mutationFn: async () => {
         const { data, error: checkErr } = await supabase
           .from(T.kandangs)
           .select('id')
           .eq('tenant_id', tenant.id)
-          .eq('batch_id', batchId)
           .eq('is_holding', true)
           .limit(1)
 
@@ -822,7 +899,6 @@ export function createPenggemukanHooks(prefix) {
             .from(T.kandangs)
             .insert({
               tenant_id: tenant.id,
-              batch_id: batchId,
               name: 'Kandang Holding',
               capacity: 9999,
               is_holding: true,
@@ -831,8 +907,8 @@ export function createPenggemukanHooks(prefix) {
           if (insertErr) throw insertErr
         }
       },
-      onSuccess: (_, batchId) => {
-        qc.invalidateQueries({ queryKey: [`${K}-kandangs`, batchId] })
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: [`${K}-kandangs`, tenant?.id] })
       },
     })
   }
@@ -873,5 +949,9 @@ export function createPenggemukanHooks(prefix) {
     useDeleteKandang,
     useMoveAnimalToKandang,
     useEnsureHoldingPen,
+    useAnimalsByBatches,
+    useOperationalCosts,
+    useAddOperationalCost,
+    useDeleteOperationalCost,
   }
 }

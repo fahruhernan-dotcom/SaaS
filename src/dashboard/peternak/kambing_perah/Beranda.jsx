@@ -90,7 +90,7 @@ export default function KambingPerahBeranda() {
           <p className="text-xs font-bold text-green-400 mb-1.5 uppercase tracking-[0.2em]">
             Dairy Enterprise
           </p>
-          <h1 className="text-3xl font-black font-['Sora'] text-white leading-tight">
+          <h1 className="text-3xl font-black font-['Sora'] text-white leading-tight" suppressHydrationWarning>
             Selamat {getGreeting()},<br />
             {profile?.full_name?.split(' ')[0] ?? 'Partner'}
           </h1>

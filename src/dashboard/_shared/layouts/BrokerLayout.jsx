@@ -12,6 +12,7 @@ import { useNotificationGenerator } from '@/lib/hooks/useNotifications.jsx'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { BusinessNameWarningBanner } from '../components/BusinessNameWarningBanner'
+import { SidebarProvider } from '@/components/ui/sidebar'
 import {
   useSembakoDashboardStats, useSembakoSales, useSembakoProducts,
   useSembakoAllBatches, useSembakoSuppliers, useSembakoCustomers,
@@ -192,7 +193,9 @@ export default function BrokerLayout() {
             overscrollBehaviorX: 'none'
           }}
         >
-          <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          <SidebarProvider style={{ minHeight: 0 }}>
+            <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          </SidebarProvider>
           <BusinessNameWarningBanner />
           <Outlet context={{ setSidebarOpen }} />
           <BottomNav />

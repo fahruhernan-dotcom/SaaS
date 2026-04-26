@@ -18,15 +18,16 @@ import BroilerTim from './broiler/Tim'
 import LayerBeranda from './layer/LayerBeranda'
 
 // Sapi — Penggemukan
-import SapiBeranda    from './sapi/Beranda'
-import SapiBatch      from './sapi/Batch'
-import SapiTernak     from './sapi/Ternak'
-import SapiKesehatan  from './sapi/Kesehatan'
-import SapiPakan      from './sapi/Pakan'
-import SapiLaporan    from './sapi/LaporanBatch'
-import SapiTaskSettings from './sapi/TaskSettings'
-import SapiTaskAssign from './sapi/TaskAssign'
-import SapiKandangView from './sapi/KandangView'
+import SapiBeranda    from './sapi/fattening/Beranda'
+import SapiBatch      from './sapi/fattening/Batch'
+import SapiTernak     from './sapi/fattening/Ternak'
+import SapiKesehatan  from './sapi/fattening/Kesehatan'
+import SapiPakan      from './sapi/fattening/Pakan'
+import SapiLaporan    from './sapi/fattening/LaporanBatch'
+import SapiDailyTask from './sapi/fattening/DailyTask'
+import SapiTaskSettings from './sapi/fattening/TaskSettings'
+import SapiTaskAssign from './sapi/fattening/TaskAssign'
+import SapiKandangView from './sapi/fattening/KandangView'
 import UniversalDailyTask from './_shared/UniversalDailyTask'
 import { getLivestockTypeFromSubType } from '@/lib/constants/taskTemplates'
 
@@ -56,17 +57,17 @@ import BreedingPakan      from './kambing_domba/breeding/Pakan'
 import BreedingLaporan    from './kambing_domba/breeding/LaporanFarm'
 
 // New Domba — Penggemukan
-import DombaBeranda       from './domba/Beranda'
-import DombaBatch         from './domba/Batch'
-import DombaTernak        from './domba/Ternak'
-import DombaKesehatan     from './domba/Kesehatan'
-import DombaPakan         from './domba/Pakan'
-import DombaLaporan       from './domba/LaporanBatch'
-import DombaKandangView   from './domba/KandangView'
-import DombaTaskSettings  from './domba/TaskSettings'
-import DombaTaskAssign    from './domba/TaskAssign'
-import DombaDailyTask     from './domba/DailyTask'
-import DombaPenjualan     from './domba/Penjualan'
+import DombaBeranda       from './domba/fattening/Beranda'
+import DombaBatch         from './domba/fattening/Batch'
+import DombaTernak        from './domba/fattening/Ternak'
+import DombaKesehatan     from './domba/fattening/Kesehatan'
+import DombaPakan         from './domba/fattening/Pakan'
+import DombaLaporan       from './domba/fattening/LaporanBatch'
+import DombaKandangView   from './domba/fattening/KandangView'
+import DombaTaskSettings  from './domba/fattening/TaskSettings'
+import DombaTaskAssign    from './domba/fattening/TaskAssign'
+import DombaDailyTask     from './domba/fattening/DailyTask'
+import DombaPenjualan     from './domba/fattening/Penjualan'
 
 // New Domba — Breeding
 import DombaBreedingBeranda    from './domba/breeding/Beranda'
@@ -77,13 +78,14 @@ import DombaBreedingPakan      from './domba/breeding/Pakan'
 import DombaBreedingLaporan    from './domba/breeding/LaporanFarm'
 
 // New Kambing — Penggemukan (Phase 2)
-import NewKambingBeranda       from './kambing/Beranda'
-import NewKambingBatch         from './kambing/Batch'
-import NewKambingTernak        from './kambing/Ternak'
-import NewKambingKesehatan     from './kambing/Kesehatan'
-import NewKambingPakan         from './kambing/Pakan'
-import NewKambingLaporan       from './kambing/LaporanBatch'
-import NewKambingKandangView   from './kambing/KandangView'
+import NewKambingBeranda       from './kambing/fattening/Beranda'
+import NewKambingBatch         from './kambing/fattening/Batch'
+import NewKambingTernak        from './kambing/fattening/Ternak'
+import NewKambingKesehatan     from './kambing/fattening/Kesehatan'
+import NewKambingPakan         from './kambing/fattening/Pakan'
+import NewKambingLaporan       from './kambing/fattening/LaporanBatch'
+import NewKambingKandangView   from './kambing/fattening/KandangView'
+import KambingDailyTask     from './kambing/fattening/DailyTask'
 
 // New Kambing — Breeding (Phase 2)
 import NewKambingBreedingBeranda    from './kambing/breeding/Beranda'
@@ -194,7 +196,7 @@ export function PeternakPageRouter({ page }) {
       'stok-pakan':   <SapiPakan />,
       laporan:        <SapiLaporan />,
       'kandang-view': <SapiKandangView />,
-      daily_task:     <UniversalDailyTask livestockType={livestockType} />,
+      daily_task:     <SapiDailyTask />,
       task_settings:  <PeternakAdminGuard><SapiTaskSettings /></PeternakAdminGuard>,
       task_assign:    <PeternakAdminGuard><SapiTaskAssign /></PeternakAdminGuard>,
       'harga-pasar':  <HargaPasar />,
@@ -281,7 +283,7 @@ export function PeternakPageRouter({ page }) {
       'stok-pakan':   <NewKambingPakan />,
       laporan:       <NewKambingLaporan />,
       'kandang-view':<NewKambingKandangView />,
-      daily_task:    <UniversalDailyTask livestockType={livestockType} />,
+      daily_task:    <KambingDailyTask />,
       'harga-pasar': <HargaPasar />,
       tim:           <BroilerTim />,
       akun:          <Akun />,

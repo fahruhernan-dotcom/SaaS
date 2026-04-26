@@ -1336,13 +1336,11 @@ export default function AppSidebar({ open, onClose }) {
               <SheetTitle>Navigasi Sidebar</SheetTitle>
               <SheetDescription>Menu navigasi utama aplikasi TernakOS.</SheetDescription>
             </SheetHeader>
-            <SidebarProvider defaultOpen={true}>
-              <Sidebar collapsible="none" className="border-none bg-transparent" style={{ width: '100%', height: '100%' }}>
-                <div style={{ paddingBottom: '32px', height: '100%', overflowY: 'auto', overscrollBehavior: 'contain' }}>
-                  {sidebarContent}
-                </div>
-              </Sidebar>
-            </SidebarProvider>
+            <Sidebar collapsible="none" className="border-none bg-transparent" style={{ width: '100%', height: '100%' }}>
+              <div style={{ paddingBottom: '32px', height: '100%', overflowY: 'auto', overscrollBehavior: 'contain' }}>
+                {sidebarContent}
+              </div>
+            </Sidebar>
           </SheetContent>
         </Sheet>
         {renderMobileSwitcher()}

@@ -71,7 +71,7 @@ import {
 import { InputNumber } from '@/components/ui/InputNumber'
 import AnimatedCheckmark from '@/components/ui/AnimatedCheckmark'
 import LoadingSpinner from '../../_shared/components/LoadingSpinner'
-import { BrokerPageHeader } from '../../_shared/components/transactions/BrokerPageHeader'
+import { TaskHeader } from './components/TaskHeader'
 import { toast } from 'sonner'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { 
@@ -444,30 +444,30 @@ const GlassCard = ({ children, className, glowColor }) => (
 // ── SHARED COMPONENTS ─────────────────────────────────────────────────────────
 
 const SummaryTiles = ({ stats }) => (
-  <div className="px-4 py-3 grid grid-cols-4 gap-2">
+  <div className="px-4 py-3 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
     {[
-      { label: 'Total', value: stats.total, color: 'text-white' },
-      { label: 'Selesai', value: stats.selesai, color: 'text-emerald-400', trend: stats.complianceTrend },
-      { label: 'Pending', value: stats.pending, color: 'text-amber-400' },
-      { label: 'Lambat', value: stats.terlambat, color: 'text-rose-400' },
+      { label: 'Total Task',  value: stats.total,     color: 'text-white',      bg: 'bg-white/[0.03]',       border: 'border-white/[0.07]' },
+      { label: 'Selesai',     value: stats.selesai,   color: 'text-emerald-400', bg: 'bg-emerald-500/[0.06]', border: 'border-emerald-500/[0.15]', trend: stats.complianceTrend },
+      { label: 'Pending',     value: stats.pending,   color: 'text-amber-400',   bg: 'bg-amber-500/[0.06]',   border: 'border-amber-500/[0.15]' },
+      { label: 'Terlambat',   value: stats.terlambat, color: 'text-rose-400',    bg: 'bg-rose-500/[0.06]',    border: 'border-rose-500/[0.15]' },
     ].map((tile, idx) => (
       <motion.div
         key={tile.label}
-        initial={{ opacity: 0, scale: 0.9 }}
+        initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: idx * 0.1, type: 'spring', damping: 20 }}
+        transition={{ delay: idx * 0.08, type: 'spring', damping: 20 }}
       >
-        <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-3 text-center relative overflow-hidden">
+        <div className={cn("rounded-2xl p-4 relative overflow-hidden border", tile.bg, tile.border)}>
           {tile.trend !== undefined && (
             <span className={cn(
-              "absolute top-1.5 right-1.5 text-[8px] font-black",
+              "absolute top-2 right-2.5 text-[8px] font-black",
               tile.trend >= 0 ? 'text-emerald-400' : 'text-rose-400'
             )}>
               {tile.trend >= 0 ? '↑' : '↓'}{Math.abs(tile.trend).toFixed(0)}%
             </span>
           )}
-          <div className={cn("text-xl font-display font-black tracking-tighter tabular-nums leading-none mb-1", tile.color)}>{tile.value}</div>
-          <div className="text-[9px] font-black uppercase tracking-wide text-[#4B6478]">{tile.label}</div>
+          <div className={cn("text-3xl font-display font-black tracking-tighter tabular-nums leading-none mb-1.5", tile.color)}>{tile.value}</div>
+          <div className="text-[9px] font-bold uppercase tracking-[0.12em] text-[#4B6478]">{tile.label}</div>
         </div>
       </motion.div>
     ))}
@@ -749,7 +749,7 @@ export default function UniversalDailyTask({ livestockType = 'sapi_penggemukan' 
 
   return (
     <Scene>
-      <BrokerPageHeader 
+      <TaskHeader 
         title="Tugas Harian"
         subtitle={format(selectedDate, 'EEEE, d MMMM yyyy', { locale: idLocale })}
         isDesktop={isDesktop}
@@ -910,9 +910,26 @@ export default function UniversalDailyTask({ livestockType = 'sapi_penggemukan' 
                           {filteredTasks.filter(t => t.status === 'in_progress').map(t => (
                             <div key={t.id} className="task-card-anim">
                               {isStaffView ? (
-                                <InteractiveCheckCard task={t} isExpanded={expandedTaskId === t.id} onToggle={() => setExpandedTaskId(expandedTaskId === t.id ? null : t.id)} onCheck={() => handleQuickComplete(t)} config={config} TASK_TYPE_CFG={TASK_TYPE_CFG} TASK_REPORT_CONFIG={TASK_REPORT_CONFIG} livestockType={livestockType} />
+                                 <InteractiveCheckCard 
+                                  task={t} 
+                                  isExpanded={expandedTaskId === t.id} 
+                                  onToggle={() => setExpandedTaskId(expandedTaskId === t.id ? null : t.id)} 
+                                  onCheck={() => handleQuickComplete(t)} 
+                                  config={config} 
+                                  TASK_TYPE_CFG={TASK_TYPE_CFG} 
+                                  TASK_REPORT_CONFIG={TASK_REPORT_CONFIG} 
+                                  livestockType={livestockType}
+                                  updateStatus={updateStatus}
+                                  profile={profile}
+                                  hooks={hooks}
+                                />
                               ) : (
-                                <TaskCard task={t} onClick={() => { setSelectedTask(t); setCompleteSheetOpen(true); }} TASK_TYPE_CFG={TASK_TYPE_CFG} />
+                                <TaskCard 
+                                  task={t} 
+                                  onClick={() => { setSelectedTask(t); setCompleteSheetOpen(true); }} 
+                                  TASK_TYPE_CFG={TASK_TYPE_CFG} 
+                                  STATUS_CFG={STATUS_CFG}
+                                />
                               )}
                             </div>
                           ))}
@@ -932,9 +949,26 @@ export default function UniversalDailyTask({ livestockType = 'sapi_penggemukan' 
                         {filteredTasks.filter(t => t.status !== 'in_progress').map(t => (
                           <div key={t.id} className="task-card-anim">
                             {isStaffView ? (
-                              <InteractiveCheckCard task={t} isExpanded={expandedTaskId === t.id} onToggle={() => setExpandedTaskId(expandedTaskId === t.id ? null : t.id)} onCheck={() => handleQuickComplete(t)} config={config} TASK_TYPE_CFG={TASK_TYPE_CFG} TASK_REPORT_CONFIG={TASK_REPORT_CONFIG} livestockType={livestockType} />
-                            ) : (
-                              <TaskCard task={t} onClick={() => { setSelectedTask(t); setCompleteSheetOpen(true); }} TASK_TYPE_CFG={TASK_TYPE_CFG} />
+                             <InteractiveCheckCard 
+                              task={t} 
+                              isExpanded={expandedTaskId === t.id} 
+                              onToggle={() => setExpandedTaskId(expandedTaskId === t.id ? null : t.id)} 
+                              onCheck={() => handleQuickComplete(t)} 
+                              config={config} 
+                              TASK_TYPE_CFG={TASK_TYPE_CFG} 
+                              TASK_REPORT_CONFIG={TASK_REPORT_CONFIG} 
+                              livestockType={livestockType}
+                              updateStatus={updateStatus}
+                              profile={profile}
+                              hooks={hooks}
+                            />
+                          ) : (
+                            <TaskCard 
+                              task={t} 
+                              onClick={() => { setSelectedTask(t); setCompleteSheetOpen(true); }} 
+                              TASK_TYPE_CFG={TASK_TYPE_CFG} 
+                              STATUS_CFG={STATUS_CFG}
+                            />
                             )}
                           </div>
                         ))}
@@ -958,7 +992,19 @@ export default function UniversalDailyTask({ livestockType = 'sapi_penggemukan' 
                               </div>
                               {filteredTasks.filter(t => t.status === 'in_progress').map(t => (
                                 <div key={t.id} className="task-card-anim">
-                                  <InteractiveCheckCard task={t} isExpanded={expandedTaskId === t.id} onToggle={() => setExpandedTaskId(expandedTaskId === t.id ? null : t.id)} onCheck={() => handleQuickComplete(t)} config={config} TASK_TYPE_CFG={TASK_TYPE_CFG} TASK_REPORT_CONFIG={TASK_REPORT_CONFIG} livestockType={livestockType} />
+                                  <InteractiveCheckCard 
+                                    task={t} 
+                                    isExpanded={expandedTaskId === t.id} 
+                                    onToggle={() => setExpandedTaskId(expandedTaskId === t.id ? null : t.id)} 
+                                    onCheck={() => handleQuickComplete(t)} 
+                                    config={config} 
+                                    TASK_TYPE_CFG={TASK_TYPE_CFG} 
+                                    TASK_REPORT_CONFIG={TASK_REPORT_CONFIG} 
+                                    livestockType={livestockType}
+                                    updateStatus={updateStatus}
+                                    profile={profile}
+                                    hooks={hooks}
+                                  />
                                 </div>
                               ))}
                             </div>
@@ -974,7 +1020,19 @@ export default function UniversalDailyTask({ livestockType = 'sapi_penggemukan' 
                             )}
                             {filteredTasks.filter(t => t.status !== 'in_progress').map(t => (
                               <div key={t.id} className="task-card-anim">
-                                <InteractiveCheckCard task={t} isExpanded={expandedTaskId === t.id} onToggle={() => setExpandedTaskId(expandedTaskId === t.id ? null : t.id)} onCheck={() => handleQuickComplete(t)} config={config} TASK_TYPE_CFG={TASK_TYPE_CFG} TASK_REPORT_CONFIG={TASK_REPORT_CONFIG} livestockType={livestockType} />
+                                <InteractiveCheckCard 
+                                  task={t} 
+                                  isExpanded={expandedTaskId === t.id} 
+                                  onToggle={() => setExpandedTaskId(expandedTaskId === t.id ? null : t.id)} 
+                                  onCheck={() => handleQuickComplete(t)} 
+                                  config={config} 
+                                  TASK_TYPE_CFG={TASK_TYPE_CFG} 
+                                  TASK_REPORT_CONFIG={TASK_REPORT_CONFIG} 
+                                  livestockType={livestockType}
+                                  updateStatus={updateStatus}
+                                  profile={profile}
+                                  hooks={hooks}
+                                />
                               </div>
                             ))}
                           </div>
@@ -1091,72 +1149,121 @@ const TaskCard = ({ task, onClick, TASK_TYPE_CFG }) => {
   const urgency = getUrgencyLabel(task)
   const rpt = parseTaskReport(task)
 
-  // Feed orts badge style
   const ortsStyle = { habis: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20', sedikit: 'bg-amber-500/15 text-amber-400 border-amber-500/20', banyak: 'bg-rose-500/15 text-rose-400 border-rose-500/20' }
   const ortsLabel = { habis: '👍 Habis', sedikit: '🟡 Sisa', banyak: '🔴 Banyak' }
 
+  const isDone = task.status === 'selesai' || task.status === 'terlambat'
+  const isPending = task.status === 'pending' || task.status === 'in_progress'
+
+  // Safe time display — guard against "undefined" stored as string
+  const safeTime = task.due_time && !task.due_time.startsWith('undef') && !task.due_time.startsWith('null')
+    ? task.due_time.substring(0, 5)
+    : null
+
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }} 
+      whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className="group"
     >
-      <div className="relative p-[1px] rounded-2xl lg:rounded-[32px] overflow-hidden transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(124,58,237,0.15)]">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        <GlassCard className="p-3 lg:p-5 border-white/5 bg-[#0C1319]/40 backdrop-blur-3xl rounded-[calc(1rem-1px)] lg:rounded-[31px] relative z-10">
-          <div className="flex justify-between items-start gap-2 lg:gap-4">
-            <div className="flex items-center lg:items-start gap-2.5 lg:gap-4 min-w-0">
-              <div className={cn("w-9 h-9 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl border flex items-center justify-center shrink-0 transition-transform duration-500 group-hover:rotate-3 shadow-2xl", cfg.bg, cfg.border, cfg.shadow)}>
-                <cfg.icon size={16} className={cn(cfg.color, "lg:hidden")} />
-                <cfg.icon size={22} className={cn(cfg.color, "hidden lg:block")} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-bold text-xs lg:text-sm text-white tracking-tight leading-snug lg:leading-tight group-hover:text-purple-300 transition-colors line-clamp-1">{task.title}</h3>
-                {/* Row 2: metadata chips */}
-                <div className="flex flex-wrap gap-1 lg:gap-1.5 mt-1 items-center">
-                   <div className="flex items-center gap-0.5 px-1 lg:px-1.5 py-0.5 rounded-md bg-white/5 border border-white/5"><MapPin size={8} className="text-[#64748B]" /><span className="text-[8px] lg:text-[9px] font-black text-[#64748B] uppercase tracking-wider">{task.kandang_name || 'Global'}</span></div>
-                   {task.due_time && <div className="flex items-center gap-0.5 px-1 lg:px-1.5 py-0.5 rounded-md bg-white/5 border border-white/5"><Clock size={8} className="text-[#64748B]" /><span className="text-[8px] lg:text-[9px] font-black text-[#64748B] uppercase tracking-wider">{task.due_time.substring(0, 5)}</span></div>}
-                   {rpt.completedBy && <div className="flex items-center gap-0.5 px-1 lg:px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20"><CheckCircle2 size={8} className="text-emerald-400" /><span className="text-[8px] lg:text-[9px] font-black text-emerald-400 uppercase tracking-wider">{rpt.completedBy}</span>{rpt.completedAt && <span className="text-[7px] lg:text-[8px] text-emerald-600 ml-0.5">{rpt.completedAt}</span>}</div>}
-                </div>
-                {/* Row 3: Rich summary — only for completed tasks */}
-                {(task.status === 'selesai' || task.status === 'terlambat') && (
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                    {rpt.feedOrts && (
-                      <span className={cn('inline-flex px-2 py-0.5 rounded-md text-[8px] lg:text-[9px] font-black border', ortsStyle[rpt.feedOrts] || 'bg-white/5 text-slate-400 border-white/10')}>{ortsLabel[rpt.feedOrts] || rpt.feedOrts}</span>
-                    )}
-                    {rpt.weighingCount > 0 && (
-                      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-[8px] lg:text-[9px] font-black text-blue-400">
-                        <Scale size={9} /> {rpt.weighingCount} ekor{rpt.weighingAvg && <span className="text-blue-300 ml-0.5">· avg {rpt.weighingAvg}kg</span>}
-                      </span>
-                    )}
-                    {rpt.healthCount > 0 && (
-                      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-[8px] lg:text-[9px] font-black text-emerald-400">
-                        <Activity size={9} /> {rpt.healthCount} ekor · {rpt.healthMed}
-                      </span>
-                    )}
-                    {!rpt.feedOrts && rpt.weighingCount === 0 && rpt.healthCount === 0 && rpt.snippet && rpt.snippet !== 'Selesai' && rpt.snippet !== 'Menunggu laporan' && (
-                      <span className="text-[8px] lg:text-[9px] font-medium text-purple-400/80 italic line-clamp-1">{rpt.snippet}</span>
-                    )}
-                    {rpt.userNote && rpt.userNote.length > 0 && (rpt.feedOrts || rpt.weighingCount > 0 || rpt.healthCount > 0) && (
-                      <span className="text-[7px] lg:text-[8px] text-slate-500 italic line-clamp-1 max-w-[150px] lg:max-w-[200px]">"{ rpt.userNote.substring(0, 40) }"</span>
-                    )}
-                  </div>
-                )}
-                {urgency && (
-                  <div className={cn("inline-flex items-center gap-1 mt-1.5 lg:mt-2 px-1.5 lg:px-2 py-0.5 rounded-lg text-[8px] lg:text-[8.5px] font-black border uppercase tracking-[0.15em] shadow-lg", urgency.color)}>
-                    <Sparkles size={9} /> {urgency.label}
-                  </div>
-                )}
+      <div className={cn(
+        "relative rounded-2xl lg:rounded-3xl border overflow-hidden transition-all duration-200",
+        task.status === 'selesai'    ? "bg-[#0B1310] border-emerald-500/[0.12]" :
+        task.status === 'terlambat'  ? "bg-[#150C0E] border-rose-500/[0.20]"   :
+        task.status === 'in_progress'? "bg-[#0B0F18] border-blue-500/[0.20]"   :
+        "bg-[#0C1319] border-white/[0.06] hover:border-white/[0.12]"
+      )}>
+        {/* Main content row */}
+        <div className="p-3.5 lg:p-5 flex items-start gap-3 lg:gap-4">
+          {/* Icon — 44px touch target */}
+          <div className={cn(
+            "w-11 h-11 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl border flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105",
+            cfg.bg, cfg.border, cfg.shadow
+          )}>
+            <cfg.icon size={20} className={cn(cfg.color, "lg:hidden")} />
+            <cfg.icon size={22} className={cn(cfg.color, "hidden lg:block")} />
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            {/* Title row with status badge */}
+            <div className="flex items-start justify-between gap-2 mb-1.5">
+              <h3 className={cn(
+                "font-bold text-[13px] lg:text-sm leading-snug line-clamp-2 flex-1 min-w-0",
+                isDone ? "text-white/50 line-through" : "text-white group-hover:text-purple-200 transition-colors"
+              )}>
+                {task.title}
+              </h3>
+              <div className={cn(
+                "shrink-0 px-2 py-0.5 rounded-full text-[8px] lg:text-[8.5px] font-black uppercase border tracking-widest whitespace-nowrap",
+                st.color, st.bg, st.border
+              )}>
+                {st.label}
               </div>
             </div>
-            <div className={cn("px-2 lg:px-3 py-0.5 lg:py-1 rounded-full text-[7.5px] lg:text-[8.5px] font-black uppercase border tracking-widest whitespace-nowrap shadow-sm", st.color, st.bg, st.border)}>
-              {st.label}
+
+            {/* Metadata chips */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="flex items-center gap-1 text-[9px] text-[#4B6478] font-semibold uppercase tracking-wider">
+                <MapPin size={9} className="text-[#A78BFA]" />
+                {task.kandang_name || 'Global'}
+              </span>
+              {safeTime && (
+                <span className="flex items-center gap-1 text-[9px] text-[#4B6478] font-semibold uppercase tracking-wider">
+                  <Clock size={9} />
+                  {safeTime}
+                </span>
+              )}
+              {rpt.completedBy && (
+                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-black text-emerald-400">
+                  <CheckCircle2 size={8} /> {rpt.completedBy}
+                  {rpt.completedAt && <span className="text-emerald-600 ml-0.5">{rpt.completedAt}</span>}
+                </span>
+              )}
+              {urgency && (
+                <span className={cn("flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[8px] font-black border uppercase tracking-wider", urgency.color)}>
+                  <Sparkles size={8} /> {urgency.label}
+                </span>
+              )}
+            </div>
+
+            {/* Completion summary */}
+            {isDone && (
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                {rpt.feedOrts && (
+                  <span className={cn('inline-flex px-2 py-0.5 rounded-md text-[8px] lg:text-[9px] font-black border', ortsStyle[rpt.feedOrts] || 'bg-white/5 text-slate-400 border-white/10')}>
+                    {ortsLabel[rpt.feedOrts] || rpt.feedOrts}
+                  </span>
+                )}
+                {rpt.weighingCount > 0 && (
+                  <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-[8px] font-black text-blue-400">
+                    <Scale size={8} /> {rpt.weighingCount} ekor{rpt.weighingAvg && <span className="text-blue-300 ml-0.5">· avg {rpt.weighingAvg}kg</span>}
+                  </span>
+                )}
+                {rpt.healthCount > 0 && (
+                  <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-black text-emerald-400">
+                    <Activity size={8} /> {rpt.healthCount} ekor · {rpt.healthMed}
+                  </span>
+                )}
+                {!rpt.feedOrts && rpt.weighingCount === 0 && rpt.healthCount === 0 && rpt.snippet && rpt.snippet !== 'Selesai' && rpt.snippet !== 'Menunggu laporan' && (
+                  <span className="text-[9px] text-[#64748B] italic line-clamp-1">{rpt.snippet}</span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* CTA bar — only for pending/in-progress tasks on mobile */}
+        {isPending && (
+          <div className="px-3.5 pb-3.5 lg:hidden">
+            <div className="flex items-center justify-between h-9 px-4 rounded-xl bg-[#7C3AED]/[0.08] border border-[#7C3AED]/20 text-[#A78BFA] text-[10px] font-black uppercase tracking-widest">
+              <span>Lapor Selesai</span>
+              <ChevronRight size={14} className="opacity-60" />
             </div>
           </div>
-        </GlassCard>
+        )}
       </div>
     </motion.div>
   )
@@ -1472,9 +1579,11 @@ function InteractiveCheckCard({ task, onCheck, isExpanded, onToggle, config, TAS
                </span>
                <span className="text-[9px] lg:text-[10px] font-semibold flex items-center gap-1 lg:gap-1.5 uppercase tracking-wider">
                   <Clock size={10} className={isSelesai ? "text-emerald-600/50" : "text-white/40"} /> 
-                  {isSelesai && task.completed_at 
+                  {isSelesai && task.completed_at
                     ? `Selesai: ${format(new Date(task.completed_at), "d MMM HH:mm", { locale: idLocale })}`
-                    : `${task.due_time?.substring(0, 5)} WIB`
+                    : task.due_time && !task.due_time.startsWith('undef') && !task.due_time.startsWith('null')
+                      ? `${task.due_time.substring(0, 5)} WIB`
+                      : '--:-- WIB'
                   }
                </span>
             </div>
@@ -1808,7 +1917,7 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
 
   async function handleComplete() {
     // 1. Photo check
-    const isPakan = task.task_type === 'pakan'
+    const isPakan = task.task_type === 'pakan' || task.task_type === 'pemberian_pakan'
     if (config?.photoRequired && !capturedPhoto && !isAuditMode) {
       // Feed task: No photo needed per user decision
       if (!isPakan) {
@@ -1859,7 +1968,7 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
         }
       }
 
-      if (task.task_type === 'pakan') {
+      if (isPakan) {
         if (!ortsCategory) return toast.error('Pilih kategori sisa pakan (jempol) terlebih dahulu')
         
         await addFeed.mutateAsync({
@@ -1876,7 +1985,7 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
         _version: '2.0', 
         report: { 
           ...reportData,
-          ...(task.task_type === 'pakan' ? { feed_orts_category: ortsCategory } : {})
+          ...(isPakan ? { feed_orts_category: ortsCategory } : {})
         }, 
         notes: notes.trim(),
         batch_id: effectiveBatchId,
@@ -2072,7 +2181,7 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
                             </div>
                          )}
 
-                                                   {isAuditMode && task.task_type === 'pakan' && (reportData.feed_orts_category || ortsCategory) && (
+                         {isAuditMode && (task.task_type === 'pakan' || task.task_type === 'pemberian_pakan') && (reportData.feed_orts_category || ortsCategory) && (
                              <div className="flex flex-col gap-1 p-6 rounded-3xl bg-orange-500/5 border border-orange-500/10">
                                <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest leading-none mb-2">Kondisi Sisa Pakan Sebelumnya</span>
                                <div className="flex items-center gap-3">
@@ -2121,7 +2230,7 @@ function CompleteTaskSheet({ open, onOpenChange, task, isDesktop, onSuccess, sho
                    </div>
                 )}
 
-                                 {task.task_type === 'pakan' && !isAuditMode && (
+                                 {(task.task_type === 'pakan' || task.task_type === 'pemberian_pakan') && !isAuditMode && (
                     <div className="space-y-6 pt-2 animate-in slide-in-from-top-4 duration-700">
                        <div className="flex flex-col gap-2 ml-4">
                           <label className="text-[10px] font-black text-orange-400 uppercase tracking-[0.4em]">Feedback Sisa Pakan Sebelumnya *</label>

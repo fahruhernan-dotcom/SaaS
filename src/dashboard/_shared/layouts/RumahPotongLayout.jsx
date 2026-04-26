@@ -8,6 +8,7 @@ import { Menu } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useNotificationGenerator } from '@/lib/hooks/useNotifications.jsx'
 import { BusinessNameWarningBanner } from '../components/BusinessNameWarningBanner'
+import { SidebarProvider } from '@/components/ui/sidebar'
 
 /**
  * Common Layout for Rumah Potong (RPA/RPH)
@@ -41,7 +42,9 @@ export default function RumahPotongLayout() {
             <Menu className="w-5 h-5 text-[#94A3B8]" />
           </button>
           
-          <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          <SidebarProvider style={{ minHeight: 0 }}>
+            <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          </SidebarProvider>
           <BusinessNameWarningBanner />
           <Outlet />
 

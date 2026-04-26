@@ -116,7 +116,9 @@ export function useTodayTaskInstances() {
         .select(`
           *,
           template:peternak_task_templates(title, task_type, recurring_type),
-          worker:kandang_workers!assigned_worker_id(id, full_name, profile_id)
+          worker:kandang_workers!assigned_worker_id(id, full_name, profile_id),
+          assigned_profile:profiles!assigned_profile_id(id, full_name),
+          completed_by:profiles!completed_by_profile_id(id, full_name)
         `)
         .eq('tenant_id', tenant.id)
         .eq('due_date', today)

@@ -25,7 +25,7 @@ const SEO = ({ title, description, path, type = 'website', image, schema }) => {
     <Head>
       {/* ── JSON-LD Structured Data ──────────────────────────────── */}
       {schema && (
-        <script type="application/ld+json">
+        <script type="application/ld+json" id="json-ld-schema" suppressHydrationWarning>
           {JSON.stringify(schema)}
         </script>
       )}

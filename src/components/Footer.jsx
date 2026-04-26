@@ -127,7 +127,7 @@ const Footer = () => {
 
         {/* Bottom Bar */}
         <div className="border-t border-border-sub pt-[24px] flex flex-col md:flex-row justify-center md:justify-between items-center gap-[8px] md:gap-[16px] text-center">
-          <p className="font-body text-[11px] text-tx-3">© {new Date().getFullYear()} TernakOS. All rights reserved.</p>
+          <p className="font-body text-[11px] text-tx-3" suppressHydrationWarning>© {new Date().getFullYear()} TernakOS. All rights reserved.</p>
           <div className="flex items-center gap-[12px] text-[11px] text-tx-3">
             <Link to="/privacy" className="hover:text-tx-1 transition-colors">Kebijakan Privasi</Link>
             <span>·</span>

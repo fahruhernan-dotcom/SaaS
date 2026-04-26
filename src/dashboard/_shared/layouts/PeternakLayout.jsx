@@ -7,6 +7,7 @@ import AppSidebar from '../components/AppSidebar'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useNotificationGenerator } from '@/lib/hooks/useNotifications.jsx'
 import { BusinessNameWarningBanner } from '../components/BusinessNameWarningBanner'
+import { SidebarProvider } from '@/components/ui/sidebar'
 import TopBar from '../components/TopBar'
 
 export default function PeternakLayout() {
@@ -63,7 +64,9 @@ export default function PeternakLayout() {
             rightAction={rightAction}
           />
 
-          <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          <SidebarProvider style={{ minHeight: 0 }}>
+            <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          </SidebarProvider>
           <BusinessNameWarningBanner />
           <Outlet context={{ setSidebarOpen, setRightAction }} />
 

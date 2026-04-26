@@ -66,6 +66,26 @@ export function peternakPermissions(role) {
     canInputBiaya:    ownerOrMgr,
     canHapusBiaya:    isOwner,
 
+    // ── TERNAK ────────────────────────────────────────────────────────────
+    canViewTernak:    true,
+    canAddTernak:     ownerOrMgr,
+    canEditTernak:    ownerOrMgr,
+
+    // ── PAKAN ─────────────────────────────────────────────────────────────
+    canInputPakan:    canWrite,            // owner | manajer | staff
+    canHapusPakan:    isOwner,
+    canViewBiayaTab:  ownerOrMgr,          // Tab "Belanja & Biaya" hanya owner/manajer
+
+    // ── PENJUALAN ─────────────────────────────────────────────────────────
+    canViewPenjualan: !isStaff,            // Staff tidak perlu lihat data sales
+    canInputPenjualan: ownerOrMgr,
+    canEditPenjualan:  ownerOrMgr,
+    canHapusPenjualan: isOwner,
+
+    // ── LAPORAN ───────────────────────────────────────────────────────────
+    canViewLaporanBatch: !isStaff,
+    canExportLaporan:    ownerOrMgr,
+
     // ── VAKSINASI ────────────────────────────────────────────────────────
     canCatatVaksinasi: canWrite,
     canHapusVaksinasi: isOwner,
