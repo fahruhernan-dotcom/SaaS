@@ -1,11 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Plus, Search, X, Tag, Scale, AlertCircle, ChevronsUpDown, 
   Check, Trash2, ListPlus, Edit2, Activity, ArrowLeft, 
   LayoutGrid, ChevronDown, RefreshCw, Filter, Warehouse, AlignLeft, Hash,
   Calendar, ChevronRight, ShoppingBag, Users, Phone, CreditCard,
-  FileText, Package, ArrowRight
+  FileText, Package, ArrowRight, Clock, Target
 } from 'lucide-react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useForm, Controller, useFieldArray } from 'react-hook-form'
@@ -24,9 +24,12 @@ import {
   useUpdateDombaAnimal,
   useBulkAddDombaAnimals,
   useAddDombaSale,
+} from '@/lib/hooks/useDombaPenggemukanData'
+import {
   calcHariDiFarm,
   calcADGFromRecords,
-} from '@/lib/hooks/useDombaPenggemukanData'
+  calcADG,
+} from '@/lib/hooks/useKdPenggemukanData'
 import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
 
 const BASE = '/peternak/peternak_domba_penggemukan'
@@ -257,11 +260,13 @@ const WEIGH_METHOD_LABEL = {
 
 function AnimalCard({ animal, onClick }) {
   const hari   = calcHariDiFarm(animal.entry_date, animal.exit_date)
-  const adg    = calcADGFromRecords(
-    animal.domba_penggemukan_weight_records ?? [],
+  const weightRecords = animal.weight_records || animal.domba_penggemukan_weight_records || []
+  const adg = calcADGFromRecords(
+    weightRecords,
     animal.entry_date,
     animal.entry_weight_kg
-  )
+  ) || (animal.latest_weight_kg > animal.entry_weight_kg && hari > 0 ? calcADG(animal.entry_weight_kg, animal.latest_weight_kg, hari) : 0)
+
   const latestW = animal.latest_weight_kg ?? animal.entry_weight_kg
   const gain    = (latestW - animal.entry_weight_kg).toFixed(1)
   const st      = STATUS_CONFIG[animal.status] ?? STATUS_CONFIG.active
@@ -300,14 +305,14 @@ function AnimalCard({ animal, onClick }) {
           <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-wider">Hari</p>
         </div>
         <div className="border-x border-white/[0.06]">
-          <p className={`text-[11px] font-black ${adg >= 150 ? 'text-green-400' : adg ? 'text-amber-400' : 'text-[#4B6478]'}`}>
-            {adg ? `${adg}g` : '—'}
+          <p className={`text-[11px] font-black ${adg >= 150 ? 'text-green-400' : adg > 0 ? 'text-amber-400' : 'text-[#4B6478]'}`}>
+            {adg !== null && adg !== undefined && adg !== 0 ? (adg >= 1000 ? `${(adg/1000).toFixed(2)}kg` : `${adg.toFixed(0)}g`) : '—'}
           </p>
           <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-wider">ADG/hr</p>
         </div>
         <div>
           <p className="text-[11px] font-black text-white">
-            {animal.entry_age_months ? `${animal.entry_age_months} bln` : '—'}
+            {animal.entry_age_months || animal.age_estimate || '—'} { (animal.entry_age_months || animal.age_estimate) ? 'bln' : ''}
           </p>
           <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-wider">Usia</p>
         </div>
@@ -619,6 +624,44 @@ function AddAnimalSheet({ batchId, animals = [], onClose }) {
           <div className="grid grid-cols-2 gap-3">
             <div className={inputContainerStyle}>
               <label className={labelStyle}>
+                <Clock size={12} className="text-green-500" />
+                Usia Masuk (bln)
+              </label>
+              <input
+                {...register('entry_age_months')}
+                type="number"
+                placeholder="e.g. 6"
+                className={`px-4 text-center ${inputClass}`}
+              />
+            </div>
+            <div className={inputContainerStyle}>
+              <label className={labelStyle}>
+                <Target size={12} className="text-green-500" />
+                Akurasi Usia
+              </label>
+              <Controller
+                control={control}
+                name="age_confidence"
+                render={({ field }) => (
+                  <Select value={field.value || undefined} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full h-11 bg-[#111C24] border-white/5 rounded-xl text-[12px] text-white">
+                      <SelectValue placeholder="Pilih Akurasi" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#111C24] border border-white/10 rounded-xl z-[9999]">
+                      <SelectItem value="pasti">Pasti (Tgl Lahir)</SelectItem>
+                      <SelectItem value="estimasi_gigi">Estimasi Gigi (Poel)</SelectItem>
+                      <SelectItem value="estimasi_fisik">Estimasi Fisik</SelectItem>
+                      <SelectItem value="klaim_penjual">Klaim Penjual</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className={inputContainerStyle}>
+              <label className={labelStyle}>
                 <Calendar size={12} className="text-green-500" />
                 Tanggal Masuk <span className="text-green-500/50">*</span>
               </label>
@@ -756,7 +799,10 @@ function AnimalDetailSheet({ animal, onClose }) {
       sex: animal.sex,
       entry_weight_kg: animal.entry_weight_kg,
       entry_age_months: animal.entry_age_months || '',
+      age_confidence: animal.age_confidence || 'estimasi',
       acquisition_type: animal.acquisition_type || 'beli',
+      entry_bcs: animal.entry_bcs || '',
+      entry_condition: animal.entry_condition || 'sehat',
       source: animal.source || '',
       notes: animal.notes || '',
       purchase_price_idr: animal.purchase_price_idr || '',
@@ -771,11 +817,13 @@ function AnimalDetailSheet({ animal, onClose }) {
         ear_tag: data.ear_tag.trim(),
         breed: data.breed?.trim() || null,
         sex: data.sex,
-        entry_weight_kg: parseFloat(data.entry_weight_kg),
-        entry_age_months: data.entry_age_months ? parseInt(data.entry_age_months) : null,
+        entry_weight_kg: Number(data.entry_weight_kg) || 0,
+        entry_age_months: data.entry_age_months || null,
+        entry_bcs: data.entry_bcs || null,
+        entry_condition: data.entry_condition,
         source: data.source?.trim() || null,
         notes: data.notes?.trim() || null,
-        purchase_price_idr: data.purchase_price_idr ? parseInt(data.purchase_price_idr) : 0,
+        purchase_price_idr: Number(data.purchase_price_idr) || 0,
       }
     }, { onSuccess: () => setIsEditing(false) })
   }
@@ -874,6 +922,7 @@ function AnimalDetailSheet({ animal, onClose }) {
               { label: 'Ear Tag', name: 'ear_tag', placeholder: 'e.g. DM-2026-0001' },
               { label: 'Usia Masuk (bln)', name: 'entry_age_months', placeholder: 'e.g. 12', type: 'number' },
               { label: 'Berat Masuk (kg)', name: 'entry_weight_kg', placeholder: 'e.g. 25', type: 'number', step: '0.1' },
+              { label: 'BCS Masuk', name: 'entry_bcs', placeholder: 'e.g. 3.0', type: 'number', step: '0.1' },
               { label: 'Sumber', name: 'source', placeholder: 'e.g. Pasar Wonosari' },
             ].map(f => (
               <div key={f.name}>
@@ -881,6 +930,52 @@ function AnimalDetailSheet({ animal, onClose }) {
                 <input {...register(f.name)} type={f.type || 'text'} step={f.step} placeholder={f.placeholder} className={inputCls} />
               </div>
             ))}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[10px] font-bold text-[#4B6478] uppercase tracking-widest mb-1.5 ml-1">Akurasi Usia</label>
+                <Controller control={control} name="age_confidence" render={({ field }) => (
+                  <select {...field} className={inputCls}>
+                    <option value="pasti">Pasti (Gigian)</option>
+                    <option value="estimasi">Estimasi</option>
+                    <option value="tidak_tahu">Tidak Tahu</option>
+                  </select>
+                )} />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-[#4B6478] uppercase tracking-widest mb-1.5 ml-1">Perolehan</label>
+                <Controller control={control} name="acquisition_type" render={({ field }) => (
+                  <select {...field} className={inputCls}>
+                    <option value="beli">Beli / Pasar</option>
+                    <option value="lahir_sendiri">Lahir Sendiri</option>
+                    <option value="hibah">Hibah</option>
+                  </select>
+                )} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[10px] font-bold text-[#4B6478] uppercase tracking-widest mb-1.5 ml-1">Kelamin</label>
+                <Controller control={control} name="sex" render={({ field }) => (
+                  <select {...field} className={inputCls}>
+                    <option value="jantan">Jantan</option>
+                    <option value="betina">Betina</option>
+                  </select>
+                )} />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-[#4B6478] uppercase tracking-widest mb-1.5 ml-1">Kondisi</label>
+                <Controller control={control} name="entry_condition" render={({ field }) => (
+                  <select {...field} className={inputCls}>
+                    <option value="sehat">Sehat</option>
+                    <option value="kurus">Kurus</option>
+                    <option value="cacat">Cacat</option>
+                    <option value="sakit">Sakit</option>
+                  </select>
+                )} />
+              </div>
+            </div>
             <div>
               <label className="block text-[10px] font-bold text-[#4B6478] uppercase tracking-widest mb-1.5 ml-1">Breed</label>
               <Controller control={control} name="breed"
@@ -1052,6 +1147,7 @@ function BulkAddSheet({ batchId, animalsCount, onClose }) {
                 <th className="pb-4 px-3 text-left w-24">Berat *</th>
                 <th className="pb-4 px-3 text-left w-28">Harga Per Kg</th>
                 <th className="pb-4 px-3 text-left w-36">Harga Beli</th>
+                <th className="pb-4 px-3 text-left w-24">Usia (bln)</th>
                 <th className="pb-4 px-3 text-left w-36">Tgl Masuk *</th>
                 <th className="pb-4 px-3 text-center w-16">Hapus</th>
               </tr>
@@ -1129,6 +1225,9 @@ function BulkAddSheet({ batchId, animalsCount, onClose }) {
                     )} />
                   </td>
                   <td className="py-2.5 px-3">
+                    <input {...register(`rows.${i}.entry_age_months`)} type="number" placeholder="0" className="bg-transparent text-white text-[13px] font-bold outline-none border-b border-white/5 focus:border-green-500/50 w-full text-center" />
+                  </td>
+                  <td className="py-2.5 px-3">
                     <Controller control={control} name={`rows.${i}.entry_date`} render={({ field }) => <DatePicker value={field.value} onChange={field.onChange} className="h-8 px-2 text-[10px] font-bold border-0 border-b border-white/5 bg-transparent rounded-none" />} />
                   </td>
                   <td className="py-2.5 px-3 text-center">
@@ -1147,6 +1246,7 @@ function BulkAddSheet({ batchId, animalsCount, onClose }) {
               entry_date: new Date().toISOString().split('T')[0], 
               entry_weight_kg: '', 
               breed: '',
+              entry_age_months: '',
               price_per_kg: globalPrice,
               purchase_price_idr: 0
             })}
@@ -1180,6 +1280,21 @@ export default function DombaTernak() {
 
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('active')
+  const [batchOpen, setBatchOpen]       = useState(false)
+  const [batchRect, setBatchRect]       = useState(null)
+  const batchTriggerRef = useRef(null)
+  const batchWrapperRef = useRef(null)
+
+  // Click-outside to close batch dropdown
+  useEffect(() => {
+    if (!batchOpen) return
+    const handler = (e) => {
+      if (!batchWrapperRef.current?.contains(e.target) && !batchTriggerRef.current?.contains(e.target))
+        setBatchOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [batchOpen])
 
   const { data: animals = [], isLoading: loadingAnimals } = useDombaAnimals(selectedBatchId)
   const [sheet, setSheet] = useState(null) 
@@ -1226,7 +1341,11 @@ export default function DombaTernak() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="font-['Sora'] font-black text-xl text-white tracking-tight">Data Ternak</h1>
-            <p className="text-[11px] text-[#4B6478] font-black uppercase tracking-widest mt-0.5">{animals.length} TOTAL UNIT</p>
+            <p className="text-[11px] text-[#4B6478] font-black uppercase tracking-widest mt-0.5">
+              {filter === 'all'
+                ? `${animals.length} TOTAL UNIT`
+                : `${filtered.length} ${filter === 'active' ? 'AKTIF' : filter === 'sold' ? 'TERJUAL' : filter === 'dead' ? 'MATI' : 'AFKIR'} · ${animals.length} TERDAFTAR`}
+            </p>
           </div>
           <div className="flex gap-2">
             <button 
@@ -1254,18 +1373,40 @@ export default function DombaTernak() {
           </div>
         </div>
 
-        <div className="relative group/batch">
-          <select 
-            value={selectedBatchId} 
-            onChange={e => { setSelectedBatchId(e.target.value); navigate(`/peternak/peternak_domba_penggemukan/ternak?batch=${e.target.value}`) }} 
-            className="w-full h-12 px-4 bg-white/[0.03] border border-white/[0.08] focus:border-green-500/40 rounded-2xl text-sm font-bold text-white outline-none appearance-none transition-all shadow-inner"
+        {/* ── Custom Batch Dropdown ── */}
+        <div ref={batchWrapperRef}>
+          <button
+            ref={batchTriggerRef}
+            onClick={() => {
+              const rect = batchTriggerRef.current?.getBoundingClientRect()
+              setBatchRect(rect ?? null)
+              setBatchOpen(o => !o)
+            }}
+            className={cn(
+              'w-full h-12 px-4 flex items-center gap-3 bg-white/[0.03] border rounded-2xl text-sm font-bold text-white transition-all shadow-inner',
+              batchOpen ? 'border-green-500/40 bg-white/[0.06]' : 'border-white/[0.08] hover:border-white/[0.14] hover:bg-white/[0.05]'
+            )}
           >
-            <option value="" className="bg-[#0C1319]">-- Pilih Batch Penggemukan --</option>
-            {batches.map(b => (
-              <option key={b.id} value={b.id} className="bg-[#0C1319]">{b.batch_code} · {b.kandang_name} ({b.status === 'active' ? 'Aktif' : 'Selesai'})</option>
-            ))}
-          </select>
-          <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4B6478] pointer-events-none group-focus-within/batch:text-green-500 transition-colors" />
+            {selectedBatchId ? (
+              <>
+                <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
+                <span className="flex-1 text-left">
+                  {batches.find(b => b.id === selectedBatchId)?.batch_code ?? '—'}
+                  <span className="text-[#4B6478] font-medium ml-2 text-xs">
+                    {batches.find(b => b.id === selectedBatchId)?.kandang_name}
+                  </span>
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="w-2 h-2 rounded-full bg-white/10 shrink-0" />
+                <span className="flex-1 text-left text-[#4B6478]">-- Pilih Batch Penggemukan --</span>
+              </>
+            )}
+            <motion.div animate={{ rotate: batchOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+              <ChevronDown size={14} className="text-[#4B6478] shrink-0" />
+            </motion.div>
+          </button>
         </div>
       </header>
 
@@ -1328,6 +1469,66 @@ export default function DombaTernak() {
           )}
         </div>
       )}
+
+      {/* ── Batch Dropdown Panel (fixed, escapes overflow) ── */}
+      <AnimatePresence>
+        {batchOpen && batchRect && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.97 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            style={{
+              position: 'fixed',
+              top: batchRect.bottom + 6,
+              left: batchRect.left,
+              width: batchRect.width,
+              zIndex: 9999,
+            }}
+            className="bg-[#0C1319]/95 backdrop-blur-2xl border border-white/[0.1] rounded-2xl shadow-2xl shadow-black/60 overflow-hidden"
+          >
+            {/* Empty option */}
+            <button
+              onClick={() => { setSelectedBatchId(''); navigate('/peternak/peternak_domba_penggemukan/ternak'); setBatchOpen(false) }}
+              className={cn(
+                'flex items-center gap-3 w-full px-4 py-3 text-left transition-colors',
+                !selectedBatchId ? 'bg-white/[0.04] text-white' : 'text-[#8CA0B3] hover:bg-white/[0.04] hover:text-white'
+              )}
+            >
+              <span className="w-2 h-2 rounded-full bg-white/10 shrink-0" />
+              <span className="text-[11px] font-black uppercase tracking-widest flex-1 italic">-- Pilih Batch --</span>
+            </button>
+
+            {batches.length > 0 && <div className="mx-4 h-px bg-white/[0.06]" />}
+
+            {batches.map(b => {
+              const isActive = selectedBatchId === b.id
+              const isRunning = b.status === 'active'
+              return (
+                <button
+                  key={b.id}
+                  onClick={() => {
+                    setSelectedBatchId(b.id)
+                    navigate(`/peternak/peternak_domba_penggemukan/ternak?batch=${b.id}`)
+                    setBatchOpen(false)
+                  }}
+                  className={cn(
+                    'flex items-center gap-3 w-full px-4 py-3 text-left transition-colors',
+                    isActive ? 'bg-green-500/10 text-white' : 'text-[#8CA0B3] hover:bg-white/[0.04] hover:text-white'
+                  )}
+                >
+                  <span className={cn('w-2 h-2 rounded-full shrink-0', isRunning ? 'bg-green-400' : 'bg-[#4B6478]')} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-black uppercase tracking-widest leading-none">{b.batch_code}</p>
+                    <p className="text-[10px] text-[#4B6478] mt-0.5 truncate">{b.kandang_name} · {isRunning ? 'Aktif' : 'Selesai'}</p>
+                  </div>
+                  {isActive && <Check size={12} className="text-green-400 shrink-0" />}
+                </button>
+              )
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Sheets */}
       <AnimatePresence>

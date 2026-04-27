@@ -8,19 +8,20 @@ import DesktopTopBar from '../components/DesktopTopBar'
 
 export default function DesktopSidebarLayout({ children }) {
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={true} style={{ height: '100svh', overflow: 'hidden' }}>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', flex: 1 }}>
         <DesktopTopBar />
         <main style={{
           flex: 1,
+          minHeight: 0,
           overflowY: 'auto',
           padding: '24px 32px',
+          display: 'flex',
+          flexDirection: 'column',
           background: 'hsl(var(--background))'
         }}>
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
+          {children}
         </main>
       </SidebarInset>
     </SidebarProvider>

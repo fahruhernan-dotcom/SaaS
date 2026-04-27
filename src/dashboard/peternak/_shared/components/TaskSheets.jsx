@@ -663,75 +663,275 @@ export function AdHocTaskSheet({
   )
 }
 
-export function IncidentReportSheet({ 
-  open, onOpenChange, isDesktop, 
+// ── Disease reference — common sheep/goat diseases in Indonesia ──────────────
+const SHEEP_DISEASES = [
+  { name: 'PMK (Penyakit Mulut & Kuku)',      contagious: true,  severity: 'kritis', symptoms: 'Luka lepuh di mulut, kaki, puting; air liur berlebih',        action: 'KARANTINA SEGERA, lapor Dinas Peternakan' },
+  { name: 'Scabies (Kudis)',                   contagious: true,  severity: 'tinggi', symptoms: 'Gatal hebat, keropeng, bulu rontok, kulit menebal',            action: 'Ivermectin/doramectin injeksi, isolasi ternak' },
+  { name: 'Orf (Ecthyma Contagiosum)',         contagious: true,  severity: 'sedang', symptoms: 'Luka keropeng di bibir, moncong, dan kaki',                   action: 'Isolasi, bersihkan luka, vaksin tersedia' },
+  { name: 'Brucellosis',                       contagious: true,  severity: 'tinggi', symptoms: 'Keguguran, orchitis, sendi bengkak',                          action: 'Karantina ketat, konsultasi drh (zoonosis!)' },
+  { name: 'Pasteurellosis (Snot)',             contagious: true,  severity: 'tinggi', symptoms: 'Demam tinggi, sulit napas, leleran hidung kental',            action: 'Antibiotik (oksitetrasiklin), isolasi batch' },
+  { name: 'Pink Eye (Keratokonjungtivitis)',   contagious: true,  severity: 'rendah', symptoms: 'Mata merah, berair, bengkak, sensitif cahaya',                action: 'Salep mata antibiotik, isolasi dari sinar' },
+  { name: 'Cacingan (Helminthiasis)',          contagious: false, severity: 'sedang', symptoms: 'Kurus, anemia, diare, bulu kusam, rahang bawah bengkak',      action: 'Albendazole/ivermectin, rotasi kandang' },
+  { name: 'Kembung (Bloat)',                   contagious: false, severity: 'kritis', symptoms: 'Perut kiri membesar tiba-tiba, gelisah, sulit napas',          action: 'DARURAT: trokar/selang lambung, sirup antibuih' },
+  { name: 'Diare / Enteritis',                 contagious: false, severity: 'sedang', symptoms: 'Feses encer atau berdarah, lemas, dehidrasi',                 action: 'Rehidrasi oral, probiotik, evaluasi pakan' },
+  { name: 'Pneumonia',                         contagious: false, severity: 'tinggi', symptoms: 'Batuk, sesak napas, demam, hidung berair',                    action: 'Antibiotik, jauhkan dari hujan dan angin' },
+  { name: 'Anemia',                            contagious: false, severity: 'sedang', symptoms: 'Selaput lendir pucat, lemas, lesu',                           action: 'Suplemen zat besi, vitamin B12, cek cacing' },
+  { name: 'Defisiensi Mineral (White Muscle)', contagious: false, severity: 'sedang', symptoms: 'Lemah, kaku, sulit berdiri, otot gemetar',                    action: 'Injeksi selenium + vitamin E' },
+  { name: 'Luka / Cedera Fisik',               contagious: false, severity: 'rendah', symptoms: 'Luka terbuka, pincang, bengkak lokal',                       action: 'Bersihkan, betadine, verban; pisahkan jika perlu' },
+  { name: 'Keracunan Pakan',                   contagious: false, severity: 'tinggi', symptoms: 'Kolik, tremor, kejang, air liur berlebih',                    action: 'Arang aktif, ganti pakan, panggil dokter hewan' },
+]
+
+const SEVERITY_CFG = {
+  kritis: { label: 'Kritis',  cls: 'bg-rose-500/20 text-rose-400 border-rose-500/30' },
+  tinggi: { label: 'Tinggi',  cls: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+  sedang: { label: 'Sedang',  cls: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
+  rendah: { label: 'Rendah',  cls: 'bg-slate-500/20 text-slate-400 border-slate-500/30' },
+}
+
+const REPORT_CATEGORIES = [
+  { id: 'kesehatan', label: 'Kesehatan',  icon: '🩺', logType: 'medis',          color: 'rose' },
+  { id: 'pakan',     label: 'Pakan',      icon: '🌿', logType: 'insiden_pakan',   color: 'green' },
+  { id: 'kandang',   label: 'Kandang',    icon: '🏠', logType: 'insiden_kandang', color: 'amber' },
+  { id: 'lainnya',   label: 'Lainnya',    icon: '📝', logType: 'insiden',         color: 'slate' },
+]
+
+export function IncidentReportSheet({
+  open, onOpenChange, isDesktop,
   config, hooks, livestockType
 }) {
   const { data: batches = [] } = hooks.useActiveBatches()
   const addLog = hooks.useAddHealth()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [form, setForm] = useState({ batch_id: '', animal_id: '', symptoms: '', notes: '', log_date: new Date().toISOString().split('T')[0] })
+  const [category, setCategory] = useState('kesehatan')
+  const [diseaseSearch, setDiseaseSearch] = useState('')
+  const [selectedDisease, setSelectedDisease] = useState(null)
+  const [form, setForm] = useState({
+    batch_id: '', animal_id: '', symptoms: '', action_taken: '', notes: '',
+    log_date: new Date().toISOString().split('T')[0],
+  })
+
+  const { data: animals = [] } = hooks.useAnimals?.(form.batch_id) ?? { data: [] }
 
   useEffect(() => {
-    if (batches.length > 0 && !form.batch_id) { setForm(f => ({ ...f, batch_id: batches[0].id })) }
+    if (batches.length > 0 && !form.batch_id) setForm(f => ({ ...f, batch_id: batches[0].id }))
   }, [batches, form.batch_id])
 
+  useEffect(() => {
+    if (!open) {
+      setCategory('kesehatan')
+      setDiseaseSearch('')
+      setSelectedDisease(null)
+      setForm({ batch_id: '', animal_id: '', symptoms: '', action_taken: '', notes: '', log_date: new Date().toISOString().split('T')[0] })
+    }
+  }, [open])
+
+  const filteredDiseases = useMemo(() => {
+    if (!diseaseSearch.trim()) return SHEEP_DISEASES
+    const q = diseaseSearch.toLowerCase()
+    return SHEEP_DISEASES.filter(d => d.name.toLowerCase().includes(q) || d.symptoms.toLowerCase().includes(q))
+  }, [diseaseSearch])
+
+  function selectDisease(d) {
+    setSelectedDisease(d)
+    setDiseaseSearch(d.name)
+    setForm(f => ({ ...f, symptoms: d.symptoms, action_taken: d.action }))
+  }
+
   async function handleSubmit() {
-    if (!form.batch_id || !form.symptoms) return toast.error('Batch dan Gejala wajib diisi')
+    if (!form.batch_id) return toast.error('Pilih batch terlebih dahulu')
+    if (!form.symptoms) return toast.error('Deskripsi / gejala wajib diisi')
+    const cat = REPORT_CATEGORIES.find(c => c.id === category)
     setIsSubmitting(true)
     try {
-      await addLog.mutateAsync({ ...form, log_type: 'medis', diagnosis: 'Ambigu (Menunggu Observasi)', treatment: 'Observasi Terpadu' })
-      toast.success('Laporan darurat berhasil dikirim!', { icon: <Activity size={16} /> })
+      await addLog.mutateAsync({
+        batch_id: form.batch_id,
+        log_date: form.log_date,
+        log_type: cat.logType,
+        animal_id: form.animal_id || null,
+        symptoms: form.symptoms,
+        action_taken: form.action_taken,
+        diagnosis: category === 'kesehatan' ? (selectedDisease?.name || 'Menunggu Observasi') : cat.label,
+        notes: form.notes,
+      })
+      toast.success('Laporan berhasil dikirim!')
       onOpenChange(false)
-      setForm(f => ({ ...f, symptoms: '', notes: '', animal_id: '' }))
-    } catch (err) { toast.error('Gagal mengirim laporan') } finally { setIsSubmitting(false) }
+    } catch { toast.error('Gagal mengirim laporan') } finally { setIsSubmitting(false) }
   }
+
+  const activeCat = REPORT_CATEGORIES.find(c => c.id === category)
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className={cn("bg-[#0C1319]/98 border-white/10 outline-none p-0 flex flex-col z-[6000]", isDesktop ? "w-[540px] border-l backdrop-blur-xl" : "w-full border-l backdrop-blur-3xl")}>
-        <div className="flex-1 overflow-y-auto p-6 lg:p-12 space-y-8 lg:space-y-12 no-scrollbar">
-          <SheetHeader className="text-left space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-[22px] bg-rose-500/20 flex items-center justify-center border border-rose-500/30"><AlertTriangle size={24} className="text-rose-400" /></div>
-              <span className="text-[11px] font-black uppercase tracking-[0.5em] text-rose-500/60">Emergent Signal</span>
-            </div>
-            <SheetTitle className="text-2xl lg:text-5xl font-black text-white tracking-tighter">Lapor Masalah</SheetTitle>
-            <SheetDescription className="sr-only">Panel laporan insiden darurat ternak</SheetDescription>
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+          <SheetHeader className="text-left space-y-1">
+            <SheetTitle className="text-xl font-black text-white tracking-tight">Buat Laporan</SheetTitle>
+            <SheetDescription className="text-[11px] text-[#4B6478] font-bold uppercase tracking-widest">Dokumentasikan masalah di lapangan</SheetDescription>
           </SheetHeader>
 
-          <div className="space-y-10">
-            <div className="space-y-4">
-              <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">Select Target Unit *</label>
-              <Select value={form.batch_id} onValueChange={v => setForm(f => ({ ...f, batch_id: v }))}>
-                <SelectTrigger className="w-full h-12 lg:h-18 bg-black/40 border border-white/5 rounded-xl lg:rounded-[32px] px-5 lg:px-10 text-sm lg:text-lg text-white focus:bg-black/60 outline-none transition-all shadow-inner ring-0">
-                  <SelectValue placeholder="Pilih unit batch/kandang..." />
+          {/* Category selector */}
+          <div className="grid grid-cols-4 gap-2">
+            {REPORT_CATEGORIES.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => { setCategory(cat.id); setSelectedDisease(null); setDiseaseSearch('') }}
+                className={cn(
+                  'flex flex-col items-center gap-1.5 py-3 rounded-2xl border text-center transition-all',
+                  category === cat.id
+                    ? 'bg-white/10 border-white/20 text-white'
+                    : 'bg-white/[0.02] border-white/[0.06] text-[#4B6478] hover:text-white'
+                )}
+              >
+                <span className="text-xl leading-none">{cat.icon}</span>
+                <span className="text-[9px] font-black uppercase tracking-wider leading-none">{cat.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Batch + date */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest block mb-1.5 ml-1">Batch</label>
+              <Select value={form.batch_id} onValueChange={v => setForm(f => ({ ...f, batch_id: v, animal_id: '' }))}>
+                <SelectTrigger className="h-11 bg-black/40 border border-white/5 rounded-xl text-sm text-white outline-none ring-0">
+                  <SelectValue placeholder="Pilih batch..." />
                 </SelectTrigger>
-                <SelectContent className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-[32px] p-2">
-                  {batches.map(b => (
-                    <SelectItem key={b.id} value={b.id} className="rounded-2xl py-4 focus:bg-rose-500/10 focus:text-rose-300">
-                      <div className="flex flex-col gap-1">
-                        <span className="font-bold text-base">{b.batch_code}</span>
-                        <span className="text-[10px] uppercase tracking-widest text-[#4B6478]">{b.kandang_name}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
+                <SelectContent className="bg-[#0C1319] border-white/10 rounded-2xl">
+                  {batches.map(b => <SelectItem key={b.id} value={b.id}>{b.batch_code}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-4">
-              <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">Identitas {config.animalLabel} (Opsional)</label>
-              <input value={form.animal_id} onChange={e => setForm(f => ({ ...f, animal_id: e.target.value }))} placeholder={`Contoh: ${config.animalLabel.toUpperCase()}-01 / Tag Biru`} className="w-full h-12 lg:h-18 bg-black/40 border border-white/5 rounded-xl lg:rounded-[32px] px-5 lg:px-10 text-sm lg:text-lg text-white focus:bg-black/60 outline-none" />
-            </div>
-            <div className="space-y-4">
-              <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">Symptom Details *</label>
-              <textarea value={form.symptoms} onChange={e => setForm(f => ({ ...f, symptoms: e.target.value }))} placeholder={`Jelaskan kondisi ${config.animalLabel.toLowerCase()} (pincang, lemas, nafsu makan turun, dll)...`} className="w-full bg-black/40 border border-white/5 rounded-2xl lg:rounded-[40px] p-5 lg:p-8 text-sm lg:text-lg text-white focus:border-rose-500/50 outline-none min-h-[120px] lg:min-h-[160px] resize-none" />
+            <div>
+              <label className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest block mb-1.5 ml-1">Tanggal</label>
+              <input
+                type="date"
+                value={form.log_date}
+                onChange={e => setForm(f => ({ ...f, log_date: e.target.value }))}
+                className="w-full h-11 bg-black/40 border border-white/5 rounded-xl px-3 text-sm text-white outline-none"
+              />
             </div>
           </div>
+
+          {/* Kesehatan: animal + disease picker */}
+          {category === 'kesehatan' && (
+            <>
+              <div>
+                <label className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest block mb-1.5 ml-1">Ternak (opsional)</label>
+                <Select value={form.animal_id || 'all'} onValueChange={v => setForm(f => ({ ...f, animal_id: v === 'all' ? '' : v }))}>
+                  <SelectTrigger className="h-11 bg-black/40 border border-white/5 rounded-xl text-sm text-white outline-none ring-0">
+                    <SelectValue placeholder="Seluruh batch / pilih ekor..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#0C1319] border-white/10 rounded-2xl max-h-48 overflow-y-auto">
+                    <SelectItem value="all">— Seluruh Batch —</SelectItem>
+                    {animals.map(a => (
+                      <SelectItem key={a.id} value={a.id}>
+                        <span className="font-black">{a.ear_tag}</span>
+                        {a.breed && <span className="text-[#4B6478] ml-2 text-[10px]">{a.breed}</span>}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="relative">
+                <label className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest block mb-1.5 ml-1">Diagnosa / Penyakit</label>
+                <input
+                  value={diseaseSearch}
+                  onChange={e => { setDiseaseSearch(e.target.value); setSelectedDisease(null) }}
+                  placeholder="Ketik nama penyakit atau gejala..."
+                  className="w-full h-11 bg-black/40 border border-white/5 rounded-xl px-3 text-sm text-white placeholder:text-[#4B6478] outline-none"
+                />
+                {/* Disease dropdown */}
+                {diseaseSearch && !selectedDisease && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-[#111C24] border border-white/10 rounded-2xl shadow-2xl z-50 max-h-52 overflow-y-auto">
+                    {filteredDiseases.length === 0
+                      ? <p className="text-xs text-[#4B6478] p-3 text-center">Tidak ditemukan</p>
+                      : filteredDiseases.map(d => (
+                        <button
+                          key={d.name}
+                          onClick={() => selectDisease(d)}
+                          className="w-full px-4 py-3 text-left hover:bg-white/5 transition-colors border-b border-white/[0.04] last:border-0"
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-0.5">
+                            <span className="text-xs font-bold text-white leading-tight">{d.name}</span>
+                            <div className="flex items-center gap-1 shrink-0">
+                              {d.contagious
+                                ? <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-rose-500/20 text-rose-400 border border-rose-500/30">⚠ Menular</span>
+                                : <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-slate-500/20 text-slate-400 border border-slate-500/30">Tidak Menular</span>
+                              }
+                              <span className={cn('text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md border', SEVERITY_CFG[d.severity].cls)}>{d.severity}</span>
+                            </div>
+                          </div>
+                          <p className="text-[10px] text-[#4B6478] leading-tight">{d.symptoms}</p>
+                        </button>
+                      ))
+                    }
+                  </div>
+                )}
+              </div>
+
+              {/* Contagion alert */}
+              {selectedDisease?.contagious && (
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20">
+                  <AlertTriangle size={16} className="text-rose-400 shrink-0 mt-0.5 animate-pulse" />
+                  <div>
+                    <p className="text-xs font-black text-rose-400 mb-0.5">Penyakit Menular!</p>
+                    <p className="text-[10px] text-rose-300/70 leading-relaxed">Pertimbangkan isolasi ternak yang terinfeksi. Tindakan: {selectedDisease.action}</p>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Symptoms / description */}
+          <div>
+            <label className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest block mb-1.5 ml-1">
+              {category === 'kesehatan' ? 'Gejala Teramati' : 'Deskripsi Masalah'} *
+            </label>
+            <textarea
+              value={form.symptoms}
+              onChange={e => setForm(f => ({ ...f, symptoms: e.target.value }))}
+              placeholder={
+                category === 'kesehatan' ? 'Jelaskan gejala yang terlihat...'
+                : category === 'pakan'   ? 'Jelaskan masalah pakan (kualitas, kuantitas, jenis)...'
+                : category === 'kandang' ? 'Jelaskan kondisi kandang (kerusakan, kebersihan, dll)...'
+                : 'Jelaskan masalah lainnya...'
+              }
+              rows={3}
+              className="w-full bg-black/40 border border-white/5 rounded-2xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] outline-none resize-none"
+            />
+          </div>
+
+          {/* Action taken */}
+          <div>
+            <label className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest block mb-1.5 ml-1">Tindakan yang Dilakukan</label>
+            <input
+              value={form.action_taken}
+              onChange={e => setForm(f => ({ ...f, action_taken: e.target.value }))}
+              placeholder="Langkah yang sudah / akan diambil..."
+              className="w-full h-11 bg-black/40 border border-white/5 rounded-xl px-3 text-sm text-white placeholder:text-[#4B6478] outline-none"
+            />
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest block mb-1.5 ml-1">Catatan Tambahan</label>
+            <input
+              value={form.notes}
+              onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+              placeholder="Info lain yang relevan..."
+              className="w-full h-11 bg-black/40 border border-white/5 rounded-xl px-3 text-sm text-white placeholder:text-[#4B6478] outline-none"
+            />
+          </div>
         </div>
-        <div className="p-5 lg:p-8 border-t border-rose-500/10 bg-[#0C1319]">
-          <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full h-12 lg:h-14 bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm rounded-xl lg:rounded-2xl shadow-[0_10px_30px_rgba(225,29,72,0.3)] transition-all outline-none border-none">
-            {isSubmitting ? 'Mengirim...' : 'Laporkan Kondisi'}
+
+        <div className="p-5 border-t border-white/[0.06] bg-[#0C1319] shrink-0">
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="w-full h-12 bg-rose-600 hover:bg-rose-500 text-white font-black text-sm rounded-2xl transition-all outline-none border-none shadow-lg shadow-rose-900/30"
+          >
+            {isSubmitting ? 'Mengirim...' : `Kirim Laporan ${activeCat?.icon}`}
           </Button>
         </div>
       </SheetContent>

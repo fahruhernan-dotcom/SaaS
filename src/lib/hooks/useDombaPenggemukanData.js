@@ -34,6 +34,11 @@ export const useDombaHealthLogs           = hooks.useHealthLogs
 export const useDombaSales                = hooks.useSales
 export const useDombaKandangs             = hooks.useKandangs
 export const useDombaAnimalsByBatches     = hooks.useAnimalsByBatches
+export const useDombaBatchWeightHistoryByBatches = hooks.useBatchWeightHistoryByBatches
+export const useDombaSalesByBatches              = hooks.useSalesByBatches
+export const useDombaFeedLogsByBatches           = hooks.useFeedLogsByBatches
+export const useDombaOperationalCostsByBatches   = hooks.useOperationalCostsByBatches
+export const useDombaHealthLogsByBatches         = hooks.useHealthLogsByBatches
 export const useDombaOperationalCosts     = hooks.useOperationalCosts
 
 // Mutations

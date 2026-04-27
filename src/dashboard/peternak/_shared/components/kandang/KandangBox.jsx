@@ -85,14 +85,20 @@ export default function KandangBox({
     <motion.div
       variants={{ shake: { x: [-5, 5, -5, 5, 0], transition: { duration: 0.4 } }, idle: { x: 0 } }}
       animate={isOver && isFull && !isHolding ? 'shake' : 'idle'}
+      data-kandang-id={kandang.id}
       onDragOver={(e) => onDragOver(e, kandang)}
       onDragLeave={onDragLeave}
       onDrop={(e) => onDrop(e, kandang)}
       onDoubleClick={() => onKandangDoubleClick(kandang)}
-      className={cn('group h-full flex flex-col rounded-[2.5rem] border-2 transition-all duration-300 relative overflow-hidden shadow-2xl cursor-pointer', borderColor, bgGradient)}
+      className={cn('group h-full flex flex-col rounded-[2.5rem] border-2 transition-all duration-300 relative shadow-2xl cursor-pointer isolate', borderColor, bgGradient)}
     >
-      <div className="absolute -bottom-6 -right-6 text-[90px] font-black text-white/[0.02] pointer-events-none select-none italic">
-        {kandang.name.split('-').pop()}
+      {/* Clipped background elements (Watermark) */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-[2.5rem] z-0">
+        <div 
+          className="absolute -bottom-6 -right-6 text-[90px] font-black text-white/[0.04] leading-none select-none italic"
+        >
+          {kandang.name.split('-').pop()}
+        </div>
       </div>
 
       {/* Header */}

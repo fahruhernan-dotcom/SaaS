@@ -70,8 +70,8 @@ import {
 } from '@/components/ui/select'
 import { InputNumber } from '@/components/ui/InputNumber'
 import AnimatedCheckmark from '@/components/ui/AnimatedCheckmark'
-import LoadingSpinner from '../../_shared/components/LoadingSpinner'
-import { TaskHeader } from './components/TaskHeader'
+import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import { TaskHeader } from './TaskHeader'
 import { toast } from 'sonner'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { 
@@ -731,17 +731,20 @@ export default function UniversalDailyTask({ livestockType = 'sapi_penggemukan' 
 
   const { setRightAction } = useOutletContext()
   useEffect(() => {
-    if (isStaffView) {
+    if (p.canEditSettings || isStaffView) {
       setRightAction(
-        <Button 
-          onClick={() => setIncidentSheetOpen(true)} 
-          className="bg-rose-500 hover:bg-rose-600 text-white rounded-full h-12 px-6 flex items-center gap-2 shadow-xl shadow-rose-900/20 active:scale-95 transition-all text-xs font-black uppercase tracking-widest"
-        >
-          <AlertTriangle size={18} /> Lapor Masalah
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setIncidentSheetOpen(true)}
+            className="bg-rose-500 hover:bg-rose-600 text-white rounded-full h-10 px-4 flex items-center gap-1.5 shadow-xl shadow-rose-900/20 active:scale-95 transition-all text-[10px] font-black uppercase tracking-widest"
+          >
+            <AlertTriangle size={15} /> Lapor
+          </Button>
+          {!isDesktop && p.canEditSettings && (
+            <Button size="icon" onClick={() => setAdHocSheetOpen(true)} className="w-10 h-10 rounded-[18px] bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] text-white shadow-2xl shadow-purple-900/40"><Plus size={20} /></Button>
+          )}
+        </div>
       )
-    } else if (!isDesktop && p.canEditSettings) {
-      setRightAction(<Button size="icon" onClick={() => setAdHocSheetOpen(true)} className="w-12 h-12 rounded-[22px] bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] text-white shadow-2xl shadow-purple-900/40"><Plus size={24} /></Button>)
     } else setRightAction(null)
   }, [setRightAction, p.canEditSettings, isDesktop, isStaffView])
 
@@ -2511,7 +2514,7 @@ function IncidentReportSheet({ open, onOpenChange, isDesktop, config, livestockT
   const { data: batches = [] } = hooks.useActiveBatches()
   const addLog = hooks.useAddHealth()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [form, setForm] = useState({ batch_id: '', animal_id: '', symptoms: '', notes: '', log_date: new Date().toISOString().split('T')[0] })
+  const [form, setForm] = useState({ batch_id: '', animal_tag: '', symptoms: '', notes: '', log_date: new Date().toISOString().split('T')[0] })
 
   useEffect(() => {
     if (batches.length > 0 && !form.batch_id) { setForm(f => ({ ...f, batch_id: batches[0].id })) }
@@ -2520,12 +2523,25 @@ function IncidentReportSheet({ open, onOpenChange, isDesktop, config, livestockT
   async function handleSubmit() {
     if (!form.batch_id || !form.symptoms) return toast.error('Batch dan Gejala wajib diisi')
     setIsSubmitting(true)
+    const notesWithTag = [
+      form.animal_tag ? `Identitas ternak: ${form.animal_tag}` : '',
+      form.notes,
+    ].filter(Boolean).join('\n')
     try {
-      await addLog.mutateAsync({ ...form, log_type: 'medis', diagnosis: 'Ambigu (Menunggu Observasi)', treatment: 'Observasi Terpadu' })
+      await addLog.mutateAsync({
+        batch_id:     form.batch_id,
+        animal_id:    null,
+        log_date:     form.log_date,
+        log_type:     'medis',
+        symptoms:     form.symptoms,
+        notes:        notesWithTag,
+        diagnosis:    'Ambigu (Menunggu Observasi)',
+        action_taken: 'Observasi Terpadu',
+      })
       toast.success('Laporan darurat berhasil dikirim!', { icon: <Activity size={16} /> })
       onOpenChange(false)
-      setForm(f => ({ ...f, symptoms: '', notes: '', animal_id: '' }))
-    } catch (err) { toast.error('Gagal mengirim laporan') } finally { setIsSubmitting(false) }
+      setForm(f => ({ ...f, symptoms: '', notes: '', animal_tag: '' }))
+    } catch (err) { toast.error('Gagal mengirim laporan: ' + err.message) } finally { setIsSubmitting(false) }
   }
 
   return (
@@ -2562,7 +2578,7 @@ function IncidentReportSheet({ open, onOpenChange, isDesktop, config, livestockT
             </div>
             <div className="space-y-4">
               <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">Identitas {config.animalLabel} (Opsional)</label>
-              <input value={form.animal_id} onChange={e => setForm(f => ({ ...f, animal_id: e.target.value }))} placeholder={`Contoh: ${config.animalLabel.toUpperCase()}-01 / Tag Biru`} className="w-full h-12 lg:h-18 bg-black/40 border border-white/5 rounded-xl lg:rounded-[32px] px-5 lg:px-10 text-sm lg:text-lg text-white focus:bg-black/60 outline-none" />
+              <input value={form.animal_tag} onChange={e => setForm(f => ({ ...f, animal_tag: e.target.value }))} placeholder={`Contoh: ${config.animalLabel.toUpperCase()}-01 / Tag Biru`} className="w-full h-12 lg:h-18 bg-black/40 border border-white/5 rounded-xl lg:rounded-[32px] px-5 lg:px-10 text-sm lg:text-lg text-white focus:bg-black/60 outline-none" />
             </div>
             <div className="space-y-4">
               <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">Symptom Details *</label>

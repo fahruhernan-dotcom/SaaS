@@ -20,14 +20,14 @@ import {
 export function createPenggemukanHooks(prefix) {
   // Table names
   const T = {
-    batches:  `${prefix}_penggemukan_batches`,
-    animals:  `${prefix}_penggemukan_animals`,
-    weights:  `${prefix}_penggemukan_weight_records`,
-    feed:     `${prefix}_penggemukan_feed_logs`,
-    health:   `${prefix}_penggemukan_health_logs`,
-    sales:    `${prefix}_penggemukan_sales`,
+    batches: `${prefix}_penggemukan_batches`,
+    animals: `${prefix}_penggemukan_animals`,
+    weights: `${prefix}_penggemukan_weight_records`,
+    feed: `${prefix}_penggemukan_feed_logs`,
+    health: `${prefix}_penggemukan_health_logs`,
+    sales: `${prefix}_penggemukan_sales`,
     kandangs: `${prefix}_kandangs`,
-    costs:    `${prefix}_penggemukan_operational_costs`,
+    costs: `${prefix}_penggemukan_operational_costs`,
   }
 
   // Query key prefix for cache isolation
@@ -101,6 +101,7 @@ export function createPenggemukanHooks(prefix) {
     return useQuery({
       queryKey: [`${K}-animals`, batchId],
       queryFn: async () => {
+        const parseW = (v) => v ? Number(String(v).replace(',', '.')) || 0 : 0
         const { data, error } = await supabase
           .from(T.animals)
           .select(`*, ${T.weights}(*)`)
@@ -109,7 +110,13 @@ export function createPenggemukanHooks(prefix) {
           .eq('is_deleted', false)
           .order('entry_date', { ascending: true })
         if (error) throw error
-        return data ?? []
+        return (data ?? []).map(a => ({ 
+          ...a, 
+          entry_weight_kg: parseW(a.entry_weight_kg),
+          latest_weight_kg: parseW(a.latest_weight_kg) || parseW(a.entry_weight_kg),
+          entry_age_months: a.age_estimate || '',
+          weight_records: a[`${prefix}_penggemukan_weight_records`] || a.weight_records || []
+        }))
       },
       enabled: !!batchId && !!tenant?.id,
     })
@@ -126,7 +133,12 @@ export function createPenggemukanHooks(prefix) {
           .eq('is_deleted', false)
           .single()
         if (error) throw error
-        return data
+        if (!data) return null
+        return { 
+          ...data, 
+          entry_age_months: data.age_estimate,
+          weight_records: data[`${prefix}_penggemukan_weight_records`] || data.weight_records || []
+        }
       },
       enabled: !!animalId,
     })
@@ -263,6 +275,7 @@ export function createPenggemukanHooks(prefix) {
       queryKey: [`${K}-animals-multi`, ids],
       queryFn: async () => {
         if (ids.length === 0) return []
+        const parseW = (v) => v ? Number(String(v).replace(',', '.')) || 0 : 0
         const { data, error } = await supabase
           .from(T.animals)
           .select(`*, ${T.weights}(*)`)
@@ -270,6 +283,117 @@ export function createPenggemukanHooks(prefix) {
           .in('batch_id', ids)
           .eq('is_deleted', false)
           .order('entry_date', { ascending: true })
+        if (error) throw error
+        return (data ?? []).map(a => ({ 
+          ...a, 
+          entry_weight_kg: parseW(a.entry_weight_kg),
+          latest_weight_kg: parseW(a.latest_weight_kg) || parseW(a.entry_weight_kg),
+          entry_age_months: a.age_estimate || '',
+          weight_records: a[`${prefix}_penggemukan_weight_records`] || a.weight_records || []
+        }))
+      },
+      enabled: ids.length > 0 && !!tenant?.id,
+    })
+  }
+
+  function useBatchWeightHistoryByBatches(batchIds) {
+    const { tenant } = useAuth()
+    const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+    return useQuery({
+      queryKey: [`${K}-batch-weight-history-multi`, tenant?.id, ids],
+      queryFn: async () => {
+        if (ids.length === 0) return []
+        const { data, error } = await supabase
+          .from(T.weights)
+          .select('*')
+          .eq('tenant_id', tenant.id)
+          .in('batch_id', ids)
+          .eq('is_deleted', false)
+          .order('weigh_date', { ascending: true })
+        if (error) throw error
+        return data ?? []
+      },
+      enabled: ids.length > 0 && !!tenant?.id,
+    })
+  }
+
+  function useSalesByBatches(batchIds) {
+    const { tenant } = useAuth()
+    const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+    return useQuery({
+      queryKey: [`${K}-sales-multi`, ids],
+      queryFn: async () => {
+        if (ids.length === 0) return []
+        const { data, error } = await supabase
+          .from(T.sales)
+          .select('*')
+          .eq('tenant_id', tenant.id)
+          .in('batch_id', ids)
+          .eq('is_deleted', false)
+          .order('sale_date', { ascending: false })
+        if (error) throw error
+        return data ?? []
+      },
+      enabled: ids.length > 0 && !!tenant?.id,
+    })
+  }
+
+  function useFeedLogsByBatches(batchIds) {
+    const { tenant } = useAuth()
+    const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+    return useQuery({
+      queryKey: [`${K}-feed-logs-multi`, ids],
+      queryFn: async () => {
+        if (ids.length === 0) return []
+        const { data, error } = await supabase
+          .from(T.feed)
+          .select('*')
+          .eq('tenant_id', tenant.id)
+          .in('batch_id', ids)
+          .eq('is_deleted', false)
+          .order('log_date', { ascending: false })
+        if (error) throw error
+        return data ?? []
+      },
+      enabled: ids.length > 0 && !!tenant?.id,
+    })
+  }
+
+  function useOperationalCostsByBatches(batchIds) {
+    const { tenant } = useAuth()
+    const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+    return useQuery({
+      queryKey: [`${K}-operational-costs-multi`, ids],
+      queryFn: async () => {
+        if (ids.length === 0) return []
+        const { data, error } = await supabase
+          .from(T.costs)
+          .select('*')
+          .eq('tenant_id', tenant.id)
+          .in('batch_id', ids)
+          .eq('is_deleted', false)
+          .order('log_date', { ascending: false })
+        if (error) throw error
+        return data ?? []
+      },
+      enabled: ids.length > 0 && !!tenant?.id,
+    })
+  }
+
+  function useHealthLogsByBatches(batchIds) {
+    const { tenant } = useAuth()
+    const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+    return useQuery({
+      queryKey: [`${K}-health-logs-multi`, ids],
+      queryFn: async () => {
+        if (ids.length === 0) return []
+        const { data, error } = await supabase
+          .from(T.health)
+          .select(`*, ${T.animals}(ear_tag, breed)`)
+          .eq('tenant_id', tenant.id)
+          .in('batch_id', ids)
+          .eq('is_deleted', false)
+          .order('log_date', { ascending: false })
         if (error) throw error
         return data ?? []
       },
@@ -327,17 +451,20 @@ export function createPenggemukanHooks(prefix) {
     return useMutation({
       mutationFn: async ({
         batch_id, ear_tag, breed, sex, age_estimate,
+        entry_age_months, age_confidence, acquisition_type,
         entry_date, entry_weight_kg, entry_bcs, entry_condition,
-        purchase_price_idr, source, kandang_slot,
-        quarantine_start, quarantine_end, quarantine_notes, notes,
+        purchase_price_idr, source, kandang_slot, notes,
+        quarantine_start, quarantine_end, quarantine_notes,
       }) => {
         const { error: animalErr } = await supabase
           .from(T.animals)
           .insert({
             tenant_id: tenant.id,
-            batch_id, ear_tag, breed, sex, age_estimate,
+            batch_id, ear_tag, breed, sex,
+            age_estimate: age_estimate || entry_age_months ? String(age_estimate || entry_age_months) : null,
             entry_date, entry_weight_kg, entry_bcs, entry_condition,
-            purchase_price_idr, source, kandang_slot, notes,
+            purchase_price_idr: purchase_price_idr || 0,
+            source, kandang_slot, notes,
             quarantine_start, quarantine_end, quarantine_notes,
             status: 'active',
             latest_weight_kg: entry_weight_kg,
@@ -351,7 +478,7 @@ export function createPenggemukanHooks(prefix) {
           .select('*', { count: 'exact', head: true })
           .eq('batch_id', batch_id)
           .eq('is_deleted', false)
-          
+
         if (!countErr && count !== null) {
           await supabase
             .from(T.batches)
@@ -360,7 +487,8 @@ export function createPenggemukanHooks(prefix) {
         }
       },
       onSuccess: (_, { batch_id }) => {
-        qc.invalidateQueries({ queryKey: [`${K}-animals`, batch_id] })
+        qc.invalidateQueries({ queryKey: [`${K}-animals`] })
+        qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
         toast.success('Ternak berhasil ditambahkan')
       },
@@ -373,24 +501,21 @@ export function createPenggemukanHooks(prefix) {
     const { tenant } = useAuth()
     return useMutation({
       mutationFn: async ({ batch_id, animals }) => {
-        const rows = animals.map(a => ({
-          tenant_id: tenant.id,
-          batch_id,
-          ear_tag: a.ear_tag,
-          breed: a.breed || null,
-          sex: a.sex,
-          entry_date: a.entry_date,
-          entry_weight_kg: a.entry_weight_kg ? parseFloat(a.entry_weight_kg) : 0,
-          age_estimate: a.entry_age_months || a.age_estimate || null,
-          purchase_price_idr: a.purchase_price_idr ? parseInt(a.purchase_price_idr) : 0,
-          source: a.source || null,
-          notes: a.notes || null,
-          status: 'active',
-          latest_weight_kg: a.entry_weight_kg ? parseFloat(a.entry_weight_kg) : 0,
-          latest_weight_date: a.entry_date,
-          kandang_id: a.kandang_id || null,
-          kandang_slot: a.kandang_slot || null,
-        }))
+        const parseW = (v) => v ? Number(String(v).replace(',', '.')) || 0 : 0
+        const rows = animals.map(a => {
+          const { entry_age_months, age_confidence, acquisition_type, ...rest } = a
+          return {
+            ...rest,
+            tenant_id: tenant.id,
+            batch_id,
+            entry_weight_kg: parseW(a.entry_weight_kg),
+            entry_bcs: a.entry_bcs ? String(a.entry_bcs).replace(',', '.') : null,
+            age_estimate: entry_age_months ? String(entry_age_months) : null,
+            latest_weight_kg: parseW(a.entry_weight_kg),
+            latest_weight_date: a.entry_date,
+            status: 'active'
+          }
+        })
 
         const { error: insertErr } = await supabase
           .from(T.animals)
@@ -403,7 +528,7 @@ export function createPenggemukanHooks(prefix) {
           .select('*', { count: 'exact', head: true })
           .eq('batch_id', batch_id)
           .eq('is_deleted', false)
-          
+
         if (!countErr && count !== null) {
           await supabase
             .from(T.batches)
@@ -412,7 +537,8 @@ export function createPenggemukanHooks(prefix) {
         }
       },
       onSuccess: (_, { batch_id }) => {
-        qc.invalidateQueries({ queryKey: [`${K}-animals`, batch_id] })
+        qc.invalidateQueries({ queryKey: [`${K}-animals`] })
+        qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
         toast.success('Semua ternak berhasil ditambahkan!')
       },
@@ -425,15 +551,22 @@ export function createPenggemukanHooks(prefix) {
     const { tenant } = useAuth()
     return useMutation({
       mutationFn: async ({ animalId, batchId, updates }) => {
+        const { entry_age_months, age_confidence, acquisition_type, ...rest } = updates
+        const finalUpdates = { ...rest }
+        if (entry_age_months !== undefined) {
+          finalUpdates.age_estimate = entry_age_months ? String(entry_age_months) : null
+        }
+        
         const { error } = await supabase
           .from(T.animals)
-          .update(updates)
+          .update(finalUpdates)
           .eq('id', animalId)
           .eq('tenant_id', tenant.id)
         if (error) throw error
       },
       onSuccess: (_, { animalId, batchId }) => {
-        qc.invalidateQueries({ queryKey: [`${K}-animals`, batchId] })
+        qc.invalidateQueries({ queryKey: [`${K}-animals`] })
+        qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-animal-detail`, animalId] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
         toast.success('Data ternak diperbarui')
@@ -456,6 +589,7 @@ export function createPenggemukanHooks(prefix) {
       },
       onSuccess: (_, { batchId }) => {
         qc.invalidateQueries({ queryKey: [`${K}-animals`, batchId] })
+        qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-animal-detail`] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
       },
@@ -518,16 +652,24 @@ export function createPenggemukanHooks(prefix) {
         hijauan_kg, konsentrat_kg, dedak_kg, other_feed_kg,
         sisa_pakan_kg, feed_orts_category, feed_cost_idr, notes,
       }) => {
+        const h = hijauan_kg ?? 0
+        const k = konsentrat_kg ?? 0
+        const d = dedak_kg ?? 0
+        const o = other_feed_kg ?? 0
+        const s = sisa_pakan_kg ?? 0
+        const consumed_kg = Math.max(0, h + k + d + o - s)
+
         const { error } = await supabase
           .from(T.feed)
           .upsert({
             tenant_id: tenant.id,
             batch_id, log_date, kandang_name, animal_count,
-            hijauan_kg: hijauan_kg ?? 0,
-            konsentrat_kg: konsentrat_kg ?? 0,
-            dedak_kg: dedak_kg ?? 0,
-            other_feed_kg: other_feed_kg ?? 0,
-            sisa_pakan_kg: sisa_pakan_kg ?? 0,
+            hijauan_kg: h,
+            konsentrat_kg: k,
+            dedak_kg: d,
+            other_feed_kg: o,
+            sisa_pakan_kg: s,
+            consumed_kg,
             feed_orts_category,
             feed_cost_idr, notes,
           }, {
@@ -550,7 +692,7 @@ export function createPenggemukanHooks(prefix) {
     return useMutation({
       mutationFn: async ({
         animal_id, batch_id, log_date, log_type,
-        symptoms, action_taken, medicine_name, medicine_dose,
+        diagnosis, symptoms, action_taken, medicine_name, medicine_dose,
         handled_by, outcome,
         vaccine_name, vaccine_next_due,
         death_cause, death_weight_kg, loss_value_idr,
@@ -561,7 +703,7 @@ export function createPenggemukanHooks(prefix) {
           .insert({
             tenant_id: tenant.id,
             animal_id, batch_id, log_date, log_type,
-            symptoms, action_taken, medicine_name, medicine_dose,
+            diagnosis, symptoms, action_taken, medicine_name, medicine_dose,
             handled_by, outcome,
             vaccine_name, vaccine_next_due,
             death_cause, death_weight_kg, loss_value_idr,
@@ -577,10 +719,33 @@ export function createPenggemukanHooks(prefix) {
             .eq('tenant_id', tenant.id)
         }
       },
-      onSuccess: (_, { batch_id, animal_id }) => {
-        qc.invalidateQueries({ queryKey: [`${K}-health-logs`, batch_id] })
-        qc.invalidateQueries({ queryKey: [`${K}-animals`, batch_id] })
-        qc.invalidateQueries({ queryKey: [`${K}-animal-detail`, animal_id] })
+      onSuccess: async (_, vars) => {
+        const NOTIF_CFG = {
+          kematian:        { type: 'laporan_kematian',  title: 'Laporan Kematian Ternak' },
+          medis:           { type: 'laporan_kesehatan', title: 'Laporan Kesehatan Masuk' },
+          sakit:           { type: 'laporan_kesehatan', title: 'Laporan Kesehatan Masuk' },
+          insiden:         { type: 'laporan_insiden',   title: 'Laporan Insiden Masuk' },
+          insiden_pakan:   { type: 'laporan_insiden',   title: 'Laporan Insiden Pakan' },
+          insiden_kandang: { type: 'laporan_insiden',   title: 'Laporan Insiden Kandang' },
+        }
+        const cfg = NOTIF_CFG[vars.log_type]
+        if (cfg) {
+          const subject = vars.diagnosis || vars.symptoms || 'Tidak ada keterangan'
+          const body = `${subject}. Tindakan: ${vars.action_taken || 'Belum ditangani'}.`
+          await supabase.from('notifications').insert({
+            tenant_id: tenant.id,
+            type: cfg.type,
+            title: cfg.title,
+            body,
+            action_url: `/peternak/peternak_${prefix}_penggemukan/kesehatan`,
+            metadata: { batch_id: vars.batch_id, animal_id: vars.animal_id, log_type: vars.log_type },
+          })
+        }
+
+        qc.invalidateQueries({ queryKey: [`${K}-health-logs`, vars.batch_id] })
+        qc.invalidateQueries({ queryKey: [`${K}-animals`, vars.batch_id] })
+        qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
+        qc.invalidateQueries({ queryKey: [`${K}-animal-detail`, vars.animal_id] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`] })
         toast.success('Log kesehatan disimpan')
       },
@@ -625,6 +790,7 @@ export function createPenggemukanHooks(prefix) {
       onSuccess: (_, { batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-sales`, batch_id] })
         qc.invalidateQueries({ queryKey: [`${K}-animals`, batch_id] })
+        qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`] })
         toast.success('Penjualan berhasil dicatat')
       },
@@ -697,6 +863,7 @@ export function createPenggemukanHooks(prefix) {
       onSuccess: (_, { batchId }) => {
         qc.invalidateQueries({ queryKey: [`${K}-sales`, batchId] })
         qc.invalidateQueries({ queryKey: [`${K}-animals`, batchId] })
+        qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`] })
         toast.success('Penjualan dihapus & ternak kembali aktif')
       },
@@ -807,7 +974,7 @@ export function createPenggemukanHooks(prefix) {
     const qc = useQueryClient()
     const { tenant } = useAuth()
     return useMutation({
-      mutationFn: async ({ animalId, kandangId, kandangSlot, batchId }) => {
+      mutationFn: async ({ animalId, kandangId, kandangSlot }) => {
         const { error } = await supabase
           .from(T.animals)
           .update({ kandang_id: kandangId, kandang_slot: kandangSlot })
@@ -815,10 +982,33 @@ export function createPenggemukanHooks(prefix) {
           .eq('tenant_id', tenant.id)
         if (error) throw error
       },
-      onSuccess: (_, { batchId }) => {
+      onMutate: async ({ animalId, kandangId, kandangSlot }) => {
+        // Cancel in-flight refetches so they don't overwrite our optimistic update
+        await qc.cancelQueries({ queryKey: [`${K}-animals-multi`] })
+
+        // Snapshot every matching cache entry for rollback
+        const snapshots = qc.getQueriesData({ queryKey: [`${K}-animals-multi`] })
+
+        // Optimistically move the animal in every animals-multi cache entry
+        qc.setQueriesData({ queryKey: [`${K}-animals-multi`] }, (old) => {
+          if (!Array.isArray(old)) return old
+          return old.map(a =>
+            a.id === animalId ? { ...a, kandang_id: kandangId, kandang_slot: kandangSlot } : a
+          )
+        })
+
+        return { snapshots }
+      },
+      onError: (err, _vars, context) => {
+        // Roll back to the snapshotted values
+        context?.snapshots?.forEach(([key, data]) => qc.setQueryData(key, data))
+        toast.error('Gagal memindahkan ternak: ' + err.message)
+      },
+      onSettled: (_, _err, { batchId }) => {
+        // Always re-sync with the server after the mutation resolves
+        qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-animals`, batchId] })
       },
-      onError: (err) => toast.error('Gagal memindahkan ternak: ' + err.message),
     })
   }
 
@@ -950,8 +1140,14 @@ export function createPenggemukanHooks(prefix) {
     useMoveAnimalToKandang,
     useEnsureHoldingPen,
     useAnimalsByBatches,
+    useBatchWeightHistoryByBatches,
+    useSalesByBatches,
+    useFeedLogsByBatches,
+    useOperationalCostsByBatches,
+    useHealthLogsByBatches,
     useOperationalCosts,
     useAddOperationalCost,
     useDeleteOperationalCost,
   }
 }
+

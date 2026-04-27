@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Users, TrendingUp, AlertTriangle,
   Calendar, MapPin, Search, PlusCircle, LayoutGrid,
-  ChevronRight, ChevronLeft, ArrowUpRight, BarChart3, Activity, Tag,
+  ChevronRight, ChevronLeft, ChevronDown, ArrowUpRight, BarChart3, Activity, Tag,
   BarChart2, CheckCircle2, RefreshCw, MousePointer2,
   Wheat, AlertCircle, Zap, Plus, Scale,
   Wallet, Utensils, Trash2, Heart, Clock, CircleDashed, MoreHorizontal
@@ -13,6 +13,8 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import {
   useDombaActiveBatches, useDombaBatches, useDombaAnimals,
   useDombaBatchWeightHistory, useDombaFeedLogs, useDombaOperationalCosts, useDombaSales,
+  useDombaAnimalsByBatches, useDombaBatchWeightHistoryByBatches,
+  useDombaFeedLogsByBatches, useDombaOperationalCostsByBatches, useDombaSalesByBatches,
   calcHariDiFarm, calcMortalitasDomba,
 } from '@/lib/hooks/useDombaPenggemukanData'
 import { usePeternakTaskInstances } from '@/lib/hooks/usePeternakTaskData'
@@ -24,7 +26,9 @@ import {
 import { format, addDays } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import KandangMiniMap from './KandangMiniMap'
+import sheepSticker from '@/assets/sheep_sticker.png'
 
 const BASE = '/peternak/peternak_domba_penggemukan'
 
@@ -93,7 +97,6 @@ function TaskCategoryAudit({ tasks, onNavigate }) {
   return (
     <section className="px-4 mt-2">
       <div className="bg-gradient-to-br from-[#1A3331] to-[#121E23] border border-white/[0.03] rounded-3xl p-5 sm:p-6 relative overflow-hidden shadow-2xl">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8 relative z-10">
           <h2 className="font-['Sora'] font-bold text-base sm:text-lg text-white">Daily Task Audit</h2>
           <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] transition-colors border border-white/5 text-xs text-[#94A3B8] font-semibold cursor-pointer">
@@ -272,9 +275,9 @@ function KPICard({ label, value, sub, color = 'text-white', icon: Icon, glow }) 
     <div className={`bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 transition-all duration-300 shadow-lg ${glowClass}`}>
       {Icon && (
         <div className={`inline-flex items-center justify-center w-6 h-6 rounded-lg mb-2.5 ${glow === 'green' ? 'bg-green-500/10' :
-            glow === 'amber' ? 'bg-amber-500/10' :
-              glow === 'red' ? 'bg-red-500/10' :
-                glow === 'emerald' ? 'bg-emerald-500/10' : 'bg-white/5'
+          glow === 'amber' ? 'bg-amber-500/10' :
+            glow === 'red' ? 'bg-red-500/10' :
+              glow === 'emerald' ? 'bg-emerald-500/10' : 'bg-white/5'
           }`}>
           <Icon size={12} className={color} />
         </div>
@@ -286,7 +289,7 @@ function KPICard({ label, value, sub, color = 'text-white', icon: Icon, glow }) 
   )
 }
 
-function BatchCard({ batch, onClick }) {
+function BatchCard({ batch, activeCount, onClick }) {
   const hari = calcHariDiFarm(batch.start_date)
   const TARGET_HARI = 90
   const sisaHari = Math.max(0, TARGET_HARI - hari)
@@ -303,14 +306,17 @@ function BatchCard({ batch, onClick }) {
   const progressColor = isOverdue ? 'bg-red-500' : progress > 80 ? 'bg-amber-500' : 'bg-green-500'
   const sisaColor = isOverdue ? 'text-red-400' : isNearHarvest ? 'text-amber-400' : 'text-white'
 
+  // Gunakan activeCount jika diberikan, jika tidak fallback ke total_animals
+  const displayCount = activeCount !== undefined ? activeCount : batch.total_animals
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className={`group bg-white/[0.03] hover:bg-white/[0.05] border rounded-3xl p-5 transition-all duration-300 ${isCritical ? 'border-red-500/20 hover:border-red-500/30' :
-          isNearHarvest ? 'border-amber-500/20 hover:border-amber-500/30' :
-            'border-white/[0.06] hover:border-white/[0.12]'
+        isNearHarvest ? 'border-amber-500/20 hover:border-amber-500/30' :
+          'border-white/[0.06] hover:border-white/[0.12]'
         }`}
     >
       <div className="flex flex-col lg:flex-row gap-5">
@@ -342,7 +348,7 @@ function BatchCard({ batch, onClick }) {
                 </div>
               </div>
               <div className="text-right shrink-0 ml-4">
-                <p className="text-2xl font-black text-white font-['Sora'] leading-none mb-0.5">{batch.total_animals}</p>
+                <p className="text-2xl font-black text-white font-['Sora'] leading-none mb-0.5">{displayCount}</p>
                 <p className="text-[9px] text-[#4B6478] font-black uppercase tracking-[0.15em]">Ekor</p>
               </div>
             </div>
@@ -409,21 +415,32 @@ export default function DombaPenggemukanBeranda() {
 
   const { data: activeBatches = [], isLoading: loadingActive } = useDombaActiveBatches()
   const { data: allBatches = [], isLoading: loadingAll } = useDombaBatches()
-
-  const [selectedBatchId, setSelectedBatchId] = useState('')
+  const [selectedBatchId, setSelectedBatchId] = useState('all')
   const [activeAnimalIds, setActiveAnimalIds] = useState(new Set())
+  const [batchOpen, setBatchOpen] = useState(false)
 
-  useEffect(() => {
-    if (!selectedBatchId && activeBatches.length > 0) {
-      setSelectedBatchId(activeBatches[0].id)
-    }
-  }, [activeBatches, selectedBatchId])
+  const isAllBatches = selectedBatchId === 'all'
+  const activeBatchIds = useMemo(() => activeBatches.map(b => b.id), [activeBatches])
 
-  const { data: animals = [], isLoading: isLoadingAnimals } = useDombaAnimals(selectedBatchId)
-  const { data: weightHistory = [], isLoading: loadingHistory } = useDombaBatchWeightHistory(selectedBatchId)
-  const { data: feedLogs = [] } = useDombaFeedLogs(selectedBatchId)
-  const { data: operationalCosts = [] } = useDombaOperationalCosts(selectedBatchId)
-  const { data: sales = [] } = useDombaSales(selectedBatchId)
+  // Data fetching logic: switch between single batch and all batches
+  const { data: allActiveAnimals = [], isLoading: isLoadingAnimals } = useDombaAnimalsByBatches(activeBatchIds)
+  const animals = isAllBatches ? allActiveAnimals : allActiveAnimals.filter(a => a.batch_id === selectedBatchId)
+
+  const { data: weightHistory = [], isLoading: loadingHistory } = isAllBatches
+    ? useDombaBatchWeightHistoryByBatches(activeBatchIds)
+    : useDombaBatchWeightHistory(selectedBatchId)
+
+  const { data: feedLogs = [] } = isAllBatches
+    ? useDombaFeedLogsByBatches(activeBatchIds)
+    : useDombaFeedLogs(selectedBatchId)
+
+  const { data: operationalCosts = [] } = isAllBatches
+    ? useDombaOperationalCostsByBatches(activeBatchIds)
+    : useDombaOperationalCosts(selectedBatchId)
+
+  const { data: sales = [] } = isAllBatches
+    ? useDombaSalesByBatches(activeBatchIds)
+    : useDombaSales(selectedBatchId)
 
   const todayStr = new Date().toISOString().split('T')[0]
   const { data: todayTasks = [], isLoading: loadTasks } = usePeternakTaskInstances({
@@ -481,7 +498,8 @@ export default function DombaPenggemukanBeranda() {
   }
 
   const kpi = useMemo(() => {
-    const totalEkor = activeBatches.reduce((s, b) => s + (b.total_animals || 0), 0)
+    // Total populasi hanya menghitung domba yang masih aktif (belum terjual)
+    const totalEkor = allActiveAnimals.filter(a => a.status !== 'sold' && !a.is_sold && !a.is_sale).length
     const totalMati = activeBatches.reduce((s, b) => s + (b.mortality_count || 0), 0)
     const mortalitasPct = totalEkor > 0 ? ((totalMati / totalEkor) * 100).toFixed(1) : '0.0'
 
@@ -510,7 +528,7 @@ export default function DombaPenggemukanBeranda() {
       closedCount: allBatches.filter(b => b.status === 'closed').length,
       harvestSoonCount
     }
-  }, [activeBatches, allBatches])
+  }, [activeBatches, allBatches, allActiveAnimals])
 
   const alerts = useMemo(() => {
     const list = []
@@ -730,13 +748,17 @@ export default function DombaPenggemukanBeranda() {
               </div>
             ) : (
               <div className="space-y-4 relative z-10">
-                {activeBatches.map(batch => (
-                  <BatchCard
-                    key={batch.id}
-                    batch={batch}
-                    onClick={() => navigate(`${BASE}/ternak?batch=${batch.id}`)}
-                  />
-                ))}
+                {activeBatches.map(batch => {
+                  const activeCount = allActiveAnimals.filter(a => a.batch_id === batch.id && a.status !== 'sold' && !a.is_sold && !a.is_sale).length
+                  return (
+                    <BatchCard
+                      key={batch.id}
+                      batch={batch}
+                      activeCount={activeCount}
+                      onClick={() => navigate(`${BASE}/ternak?batch=${batch.id}`)}
+                    />
+                  )
+                })}
               </div>
             )}
           </section>
@@ -751,8 +773,8 @@ export default function DombaPenggemukanBeranda() {
                     key={i}
                     onClick={a.action}
                     className={`w-full text-left flex items-start justify-between gap-3 px-4 py-3 rounded-2xl transition hover:brightness-110 border cursor-pointer ${a.type === 'danger'
-                        ? 'bg-red-500/5 border-red-500/20 hover:bg-red-500/10'
-                        : 'bg-amber-500/5 border-amber-500/20 hover:bg-amber-500/10'
+                      ? 'bg-red-500/5 border-red-500/20 hover:bg-red-500/10'
+                      : 'bg-amber-500/5 border-amber-500/20 hover:bg-amber-500/10'
                       }`}
                   >
                     <div className="flex items-start gap-2.5">
@@ -814,19 +836,92 @@ export default function DombaPenggemukanBeranda() {
                   <p className="text-[10px] text-[#4B6478] mt-1.5 uppercase tracking-wider font-bold pl-8">Bobot Badan Individual (kg)</p>
                 </div>
 
-                {activeBatches.length > 1 && (
-                  <select
-                    value={selectedBatchId}
-                    onChange={(e) => {
-                      setSelectedBatchId(e.target.value)
-                      setActiveAnimalIds(new Set())
-                    }}
-                    className="bg-[#0C1319] border border-white/10 rounded-xl px-3 py-1.5 text-[11px] font-bold text-white outline-none focus:border-green-500/50 cursor-pointer"
-                  >
-                    {activeBatches.map(b => (
-                      <option key={b.id} value={b.id}>{b.batch_code} ({b.kandang_name})</option>
-                    ))}
-                  </select>
+                {activeBatches.length > 0 && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setBatchOpen(!batchOpen)}
+                      className="flex items-center gap-3 bg-[#0C1319] border border-white/10 rounded-2xl px-4 py-2.5 min-w-[180px] transition-all hover:border-green-500/30 group"
+                    >
+                      <div className="w-8 h-8 rounded-xl bg-green-500/10 flex items-center justify-center border border-green-500/20 group-hover:scale-110 transition-transform">
+                        <Wheat size={16} className="text-green-400" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-[11px] font-black text-white uppercase tracking-wider leading-none mb-1">
+                          {selectedBatchId === 'all' ? '🌾 SEMUA BATCH' : activeBatches.find(b => b.id === selectedBatchId)?.batch_code ?? 'Pilih Batch'}
+                        </p>
+                        <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest leading-none">
+                          {selectedBatchId === 'all' ? `${animals.length} EKOR` : `${activeBatches.find(b => b.id === selectedBatchId)?.total_animals ?? 0} EKOR`}
+                        </p>
+                      </div>
+                      <ChevronDown size={14} className={cn("text-[#4B6478] transition-transform duration-300", batchOpen && "rotate-180")} />
+                    </button>
+
+                    <AnimatePresence>
+                      {batchOpen && (
+                        <>
+                          <div className="fixed inset-0 z-[100]" onClick={() => setBatchOpen(false)} />
+                          <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            className="absolute right-0 top-full mt-2 w-full min-w-[220px] bg-[#0C1319]/90 backdrop-blur-xl border border-white/10 rounded-2xl p-1.5 shadow-2xl z-[101] overflow-hidden"
+                          >
+                            <button
+                              onClick={() => {
+                                setSelectedBatchId('all')
+                                setActiveAnimalIds(new Set())
+                                setBatchOpen(false)
+                              }}
+                              className={cn(
+                                "w-full flex items-center justify-between p-3 rounded-xl transition-all group/opt",
+                                selectedBatchId === 'all' ? "bg-green-500/10 border border-green-500/20" : "hover:bg-white/5 border border-transparent"
+                              )}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span className="text-sm">🌾</span>
+                                <div className="text-left">
+                                  <p className={cn("text-[11px] font-black uppercase tracking-wider leading-none mb-1", selectedBatchId === 'all' ? "text-green-400" : "text-white")}>SEMUA BATCH</p>
+                                  <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest leading-none">Agregat Data</p>
+                                </div>
+                              </div>
+                              {selectedBatchId === 'all' && <CheckCircle2 size={12} className="text-green-400" />}
+                            </button>
+
+                            <div className="h-px bg-white/5 my-1" />
+
+                            <div className="max-h-[200px] overflow-y-auto custom-scrollbar">
+                              {activeBatches.map(b => {
+                                const isSel = selectedBatchId === b.id
+                                return (
+                                  <button
+                                    key={b.id}
+                                    onClick={() => {
+                                      setSelectedBatchId(b.id)
+                                      setActiveAnimalIds(new Set())
+                                      setBatchOpen(false)
+                                    }}
+                                    className={cn(
+                                      "w-full flex items-center justify-between p-3 rounded-xl transition-all group/opt mt-1",
+                                      isSel ? "bg-green-500/10 border border-green-500/20" : "hover:bg-white/5 border border-transparent"
+                                    )}
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-sm">🐏</span>
+                                      <div className="text-left">
+                                        <p className={cn("text-[11px] font-black uppercase tracking-wider leading-none mb-1", isSel ? "text-green-400" : "text-white")}>{b.batch_code}</p>
+                                        <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest leading-none">{b.kandang_name}</p>
+                                      </div>
+                                    </div>
+                                    {isSel && <CheckCircle2 size={12} className="text-green-400" />}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 )}
               </div>
 
@@ -842,8 +937,8 @@ export default function DombaPenggemukanBeranda() {
                           key={a.id}
                           onClick={() => toggleAnimal(a.id)}
                           className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition-all border flex items-center gap-1.5 shrink-0 ${isActive
-                              ? 'text-white border-transparent'
-                              : 'bg-white/5 border-white/10 text-[#4B6478] hover:bg-white/10'
+                            ? 'text-white border-transparent'
+                            : 'bg-white/5 border-white/10 text-[#4B6478] hover:bg-white/10'
                             }`}
                           style={isActive ? { backgroundColor: color } : {}}
                         >

@@ -23,7 +23,7 @@ export function TaskHeader({
 }) {
   return (
     <header className={cn(
-      "sticky top-0 bg-[#06090F]/90 backdrop-blur-md z-30 border-b border-white/[0.04]",
+      "border-b border-white/[0.04]",
       isDesktop ? "px-5 pt-6 pb-4 space-y-4" : "px-4 pt-2 pb-2.5 space-y-2"
     )}>
 

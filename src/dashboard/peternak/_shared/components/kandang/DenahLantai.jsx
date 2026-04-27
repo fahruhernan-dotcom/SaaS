@@ -15,7 +15,7 @@ function PlacedKandang({
   const { weightRecordsKey, calcADG, adgThresholds, emoji, weightScaling } = speciesConfig
   const isDraggingThis = dragging?.kandang.id === kandang.id
   const kw = kandang.panjang_m || 5
-  const kh = kandang.lebar_m   || 4
+  const kh = kandang.lebar_m || 4
   const gx = isDraggingThis ? dragging.currentX : (kandang.grid_x ?? 0)
   const gy = isDraggingThis ? dragging.currentY : (kandang.grid_y ?? 0)
 
@@ -29,17 +29,34 @@ function PlacedKandang({
   }
 
   return (
-    <div
+    <motion.div
+      layoutId={`kandang-${kandang.id}`}
+      initial={false}
+      animate={{
+        left: gx * CELL_PX,
+        top: gy * CELL_PX,
+        scale: isDraggingThis ? 1.02 : 1,
+        boxShadow: isDraggingThis
+          ? '0 20px 50px rgba(0,0,0,0.5)'
+          : '0 4px 12px rgba(0,0,0,0.1)'
+      }}
+      transition={{
+        type: 'spring',
+        stiffness: 400,
+        damping: 30,
+        mass: 0.8,
+        // Make the drag follow closely but with a tiny bit of "smoothness"
+        left: { duration: isDraggingThis ? 0.05 : 0.4 },
+        top: { duration: isDraggingThis ? 0.05 : 0.4 }
+      }}
       style={{
         position: 'absolute',
-        left: gx * CELL_PX, top: gy * CELL_PX,
         width: kw * CELL_PX, height: kh * CELL_PX,
         border: `1.5px solid ${pal.border}`,
         background: pal.bg, borderRadius: 6, overflow: 'hidden',
         cursor: isDraggingThis ? 'grabbing' : 'grab',
         zIndex: isDraggingThis ? 30 : 10,
-        transition: isDraggingThis ? 'none' : 'left 0.1s ease, top 0.1s ease',
-        boxShadow: isDraggingThis ? '0 8px 30px rgba(0,0,0,0.5)' : undefined,
+        transformStyle: 'preserve-3d',
       }}
       onMouseDown={(e) => onKandangMouseDown(e, kandang)}
       onClick={(e) => { if (e.detail === 1) onKandangClick(kandang) }}
@@ -53,10 +70,10 @@ function PlacedKandang({
       </div>
       <div style={{ position: 'relative', width: '100%', height: kh * CELL_PX - 20, marginTop: 0 }}>
         {animals.map(a => {
-          const records  = a[weightRecordsKey] ?? []
-          const adg      = calcADG(records, a.entry_date, a.entry_weight_kg)
-          const adgKg    = adg ? adg / 1000 : null
-          const tier     = getADGTier(adgKg, adgThresholds)
+          const records = a[weightRecordsKey] ?? []
+          const adg = calcADG(records, a.entry_date, a.entry_weight_kg)
+          const adgKg = adg ? adg / 1000 : null
+          const tier = getADGTier(adgKg, adgThresholds)
           const dotColor = batchColorMap?.[a.batch_id]?.dotColor ?? tier.dotColor
           return (
             <RoamingAnimal
@@ -72,7 +89,7 @@ function PlacedKandang({
         })}
       </div>
       <div style={{ position: 'absolute', bottom: 2, right: 4, fontSize: 8, color: 'rgba(255,255,255,0.2)', pointerEvents: 'none' }}>{kw}×{kh}m</div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -117,26 +134,26 @@ export default function DenahLantai({
   dragging, setDragging,
   hooks, speciesConfig, batchColorMap,
 }) {
-  const containerRef   = useRef(null)
-  const createKandang  = hooks.useCreateKandang()
+  const containerRef = useRef(null)
+  const createKandang = hooks.useCreateKandang()
   const updatePosition = hooks.useUpdateKandangPosition()
 
-  const [viewport,  setViewport]  = useState({ x: 24, y: 24, scale: 1 })
+  const [viewport, setViewport] = useState({ x: 24, y: 24, scale: 1 })
   const [isPanning, setIsPanning] = useState(false)
-  const [panStart,  setPanStart]  = useState({ mx: 0, my: 0, vx: 0, vy: 0 })
+  const [panStart, setPanStart] = useState({ mx: 0, my: 0, vx: 0, vy: 0 })
   const [spaceHeld, setSpaceHeld] = useState(false)
 
   const handleWheel = useCallback((e) => {
     e.preventDefault()
     const el = containerRef.current
     if (!el) return
-    const rect   = el.getBoundingClientRect()
+    const rect = el.getBoundingClientRect()
     const mouseX = e.clientX - rect.left
     const mouseY = e.clientY - rect.top
     const factor = Math.exp(-e.deltaY * 0.0012)
     setViewport(prev => {
       const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, prev.scale * factor))
-      const ratio    = newScale / prev.scale
+      const ratio = newScale / prev.scale
       return { scale: newScale, x: mouseX - (mouseX - prev.x) * ratio, y: mouseY - (mouseY - prev.y) * ratio }
     })
   }, [])
@@ -152,9 +169,9 @@ export default function DenahLantai({
 
   useEffect(() => {
     const down = (e) => { if (e.code === 'Space' && !e.target.closest('input,textarea')) { e.preventDefault(); setSpaceHeld(true) } }
-    const up   = (e) => { if (e.code === 'Space') setSpaceHeld(false) }
+    const up = (e) => { if (e.code === 'Space') setSpaceHeld(false) }
     window.addEventListener('keydown', down)
-    window.addEventListener('keyup',   up)
+    window.addEventListener('keyup', up)
     return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up) }
   }, [])
 
@@ -165,7 +182,7 @@ export default function DenahLantai({
     return () => el.removeEventListener('wheel', handleWheel)
   }, [handleWheel])
 
-  const placedKandangs   = kandangs.filter(k => !k.is_holding && k.grid_x != null && k.grid_y != null)
+  const placedKandangs = kandangs.filter(k => !k.is_holding && k.grid_x != null && k.grid_y != null)
   const unplacedKandangs = kandangs.filter(k => !k.is_holding && (k.grid_x == null || k.grid_y == null))
 
   const getCell = (e) => {
@@ -173,8 +190,8 @@ export default function DenahLantai({
     if (!el) return { x: 0, y: 0 }
     const rect = el.getBoundingClientRect()
     return {
-      x: Math.max(0, Math.min(Math.floor((e.clientX - rect.left  - viewport.x) / (CELL_PX * viewport.scale)), GRID_W - 1)),
-      y: Math.max(0, Math.min(Math.floor((e.clientY - rect.top   - viewport.y) / (CELL_PX * viewport.scale)), GRID_H - 1)),
+      x: Math.max(0, Math.min(Math.floor((e.clientX - rect.left - viewport.x) / (CELL_PX * viewport.scale)), GRID_W - 1)),
+      y: Math.max(0, Math.min(Math.floor((e.clientY - rect.top - viewport.y) / (CELL_PX * viewport.scale)), GRID_H - 1)),
     }
   }
 
@@ -193,7 +210,7 @@ export default function DenahLantai({
     if (isPanning) { setViewport(prev => ({ ...prev, x: panStart.vx + e.clientX - panStart.mx, y: panStart.vy + e.clientY - panStart.my })); return }
     if (dragging) {
       const cell = getCell(e)
-      const kw   = dragging.kandang.panjang_m || 5; const kh = dragging.kandang.lebar_m || 4
+      const kw = dragging.kandang.panjang_m || 5; const kh = dragging.kandang.lebar_m || 4
       setDragging(prev => ({ ...prev, currentX: Math.max(0, Math.min(cell.x - prev.offsetX, GRID_W - kw)), currentY: Math.max(0, Math.min(cell.y - prev.offsetY, GRID_H - kh)) })); return
     }
     if (floorMode === 'draw' && drawStart) setDrawCurrent(getCell(e))

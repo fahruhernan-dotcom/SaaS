@@ -65,12 +65,22 @@ export default function DombaPakan() {
   })
 
   // Calculations
+  const getConsumed = (l) => {
+    if (l.consumed_kg != null && l.consumed_kg > 0) return l.consumed_kg
+    const input = (l.hijauan_kg || 0) + (l.konsentrat_kg || 0) + (l.dedak_kg || 0) + (l.other_feed_kg || 0)
+    return Math.max(0, input - (l.sisa_pakan_kg || 0))
+  }
+
   const stats = useMemo(() => {
-    if (!logs.length) return { total: 0, avg: 0 }
-    const total = logs.reduce((sum, l) => sum + (l.consumed_kg || 0), 0)
+    if (!logs.length) return { total: 0, avg: 0, hijauan: 0, konsentrat: 0 }
+    const total = logs.reduce((sum, l) => sum + getConsumed(l), 0)
+    const hijauan = logs.reduce((sum, l) => sum + (l.hijauan_kg || 0), 0)
+    const konsentrat = logs.reduce((sum, l) => sum + (l.konsentrat_kg || 0), 0)
     return {
       total: total.toFixed(1),
-      avg: (total / logs.length).toFixed(1)
+      avg: (total / logs.length).toFixed(1),
+      hijauan: hijauan.toFixed(1),
+      konsentrat: konsentrat.toFixed(1),
     }
   }, [logs])
 
@@ -256,6 +266,14 @@ export default function DombaPakan() {
                   <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-wider mb-1">Rata-rata/Hari</p>
                   <p className="text-xl font-black text-white font-['Sora']">{stats.avg} <span className="text-xs font-normal text-[#4B6478]">kg</span></p>
                 </div>
+                <div className="bg-emerald-600/[0.04] border border-emerald-600/10 rounded-2xl p-4">
+                  <p className="text-[10px] text-emerald-500/60 font-bold uppercase tracking-wider mb-1">Total Hijauan</p>
+                  <p className="text-xl font-black text-white font-['Sora']">{stats.hijauan} <span className="text-xs font-normal text-[#4B6478]">kg</span></p>
+                </div>
+                <div className="bg-blue-600/[0.04] border border-blue-600/10 rounded-2xl p-4">
+                  <p className="text-[10px] text-blue-500/60 font-bold uppercase tracking-wider mb-1">Total Konsentrat</p>
+                  <p className="text-xl font-black text-white font-['Sora']">{stats.konsentrat} <span className="text-xs font-normal text-[#4B6478]">kg</span></p>
+                </div>
               </div>
 
               {/* Logs List */}
@@ -297,18 +315,29 @@ export default function DombaPakan() {
                         )}
                       </div>
                       
-                      <div className="grid grid-cols-3 gap-2 py-2 border-t border-white/[0.04]">
+                      <div className="grid grid-cols-4 gap-2 py-2 border-t border-white/[0.04]">
                         <div>
-                          <p className="text-[10px] text-[#4B6478] mb-0.5 font-bold uppercase tracking-widest">Input</p>
-                          <p className="text-xs font-bold text-white">{(log.hijauan_kg + log.konsentrat_kg + log.dedak_kg + log.other_feed_kg).toFixed(1)} kg</p>
+                          <p className="text-[9px] text-[#4B6478] mb-0.5 font-bold uppercase tracking-widest">Hijauan</p>
+                          <p className="text-xs font-bold text-emerald-300">{(log.hijauan_kg || 0).toFixed(1)} kg</p>
                         </div>
                         <div>
-                          <p className="text-[10px] text-[#4B6478] mb-0.5 font-bold uppercase tracking-widest">Sisa</p>
-                          <p className="text-xs font-bold text-amber-400">{log.sisa_pakan_kg || 0} kg</p>
+                          <p className="text-[9px] text-[#4B6478] mb-0.5 font-bold uppercase tracking-widest">Konsentrat</p>
+                          <p className="text-xs font-bold text-blue-300">{(log.konsentrat_kg || 0).toFixed(1)} kg</p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] text-[#4B6478] mb-0.5 font-bold uppercase tracking-widest">Sisa</p>
+                          {log.feed_orts_category === 'habis'
+                            ? <p className="text-xs font-bold text-emerald-400">👍 Habis</p>
+                            : log.feed_orts_category === 'sedikit'
+                            ? <p className="text-xs font-bold text-amber-400">🟡 Sedikit</p>
+                            : log.feed_orts_category === 'banyak'
+                            ? <p className="text-xs font-bold text-rose-400">🔴 Banyak</p>
+                            : <p className="text-xs font-bold text-[#4B6478]">—</p>
+                          }
                         </div>
                         <div className="text-right">
-                          <p className="text-[10px] text-[#4B6478] mb-0.5 font-bold uppercase tracking-widest">Konsumsi</p>
-                          <p className="text-xs font-bold text-green-400">{log.consumed_kg || 0} kg</p>
+                          <p className="text-[9px] text-[#4B6478] mb-0.5 font-bold uppercase tracking-widest">Konsumsi</p>
+                          <p className="text-xs font-bold text-green-400">{getConsumed(log).toFixed(1)} kg</p>
                         </div>
                       </div>
 

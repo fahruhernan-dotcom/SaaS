@@ -13,7 +13,7 @@ import { id as idLocale } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 
 export const Scene = ({ children }) => (
-  <div className="relative min-h-screen bg-[#06090F] overflow-hidden selection:bg-purple-500/30">
+  <div className="relative min-h-screen bg-[#06090F] overflow-x-clip selection:bg-purple-500/30">
     <div className="absolute top-0 right-0 w-[1000px] h-[1000px] bg-[#7C3AED]/[0.05] blur-[180px] -mr-96 -mt-96 animate-pulse pointer-events-none" />
     <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-emerald-500/[0.04] blur-[140px] -ml-48 -mb-48 pointer-events-none" />
     <div className="absolute top-1/2 left-1/4 w-[600px] h-[600px] bg-indigo-500/[0.03] blur-[120px] -translate-y-1/2 pointer-events-none" />

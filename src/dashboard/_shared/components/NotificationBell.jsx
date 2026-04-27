@@ -12,6 +12,9 @@ import {
   Clock,
   ShoppingBag,
   Check,
+  HeartPulse,
+  Skull,
+  FileWarning,
 } from 'lucide-react'
 import { useNotifications } from '@/lib/hooks/useNotifications'
 import { formatRelative } from '@/lib/format'
@@ -48,6 +51,21 @@ const TYPE_CONFIG = {
     Icon: ShoppingBag,
     bg: 'rgba(167,139,250,0.12)',
     color: '#A78BFA',
+  },
+  laporan_kesehatan: {
+    Icon: HeartPulse,
+    bg: 'rgba(251,113,133,0.12)',
+    color: '#FB7185',
+  },
+  laporan_kematian: {
+    Icon: Skull,
+    bg: 'rgba(148,163,184,0.12)',
+    color: '#94A3B8',
+  },
+  laporan_insiden: {
+    Icon: FileWarning,
+    bg: 'rgba(251,191,36,0.12)',
+    color: '#FBBF24',
   },
 }
 

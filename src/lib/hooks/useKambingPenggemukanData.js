@@ -31,7 +31,13 @@ export const useKambingWeightRecords   = hooks.useWeightRecords
 export const useKambingFeedLogs        = hooks.useFeedLogs
 export const useKambingHealthLogs      = hooks.useHealthLogs
 export const useKambingSales           = hooks.useSales
-export const useKambingKandangs        = hooks.useKandangs
+export const useKambingKandangs                        = hooks.useKandangs
+export const useKambingAnimalsByBatches                = hooks.useAnimalsByBatches
+export const useKambingBatchWeightHistoryByBatches     = hooks.useBatchWeightHistoryByBatches
+export const useKambingSalesByBatches                  = hooks.useSalesByBatches
+export const useKambingFeedLogsByBatches               = hooks.useFeedLogsByBatches
+export const useKambingOperationalCostsByBatches       = hooks.useOperationalCostsByBatches
+export const useKambingHealthLogsByBatches             = hooks.useHealthLogsByBatches
 
 // Mutations
 export const useCreateKambingBatch         = hooks.useCreateBatch
@@ -44,6 +50,9 @@ export const useAddKambingHealthLog        = hooks.useAddHealthLog
 export const useAddKambingSale             = hooks.useAddSale
 export const useDeleteKambingFeedLog       = hooks.useDeleteFeedLog
 export const useDeleteKambingWeightRecord  = hooks.useDeleteWeightRecord
-export const useCreateKambingKandang       = hooks.useCreateKandang
-export const useMoveKambingToKandang       = hooks.useMoveAnimalToKandang
-export const useEnsureKambingHoldingPen    = hooks.useEnsureHoldingPen
+export const useCreateKambingKandang         = hooks.useCreateKandang
+export const useUpdateKambingKandang         = hooks.useUpdateKandang
+export const useUpdateKambingKandangPosition = hooks.useUpdateKandangPosition
+export const useDeleteKambingKandang         = hooks.useDeleteKandang
+export const useMoveKambingToKandang         = hooks.useMoveAnimalToKandang
+export const useEnsureKambingHoldingPen      = hooks.useEnsureHoldingPen

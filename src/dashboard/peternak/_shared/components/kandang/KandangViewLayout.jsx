@@ -1,21 +1,23 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, LayoutGrid, Box, HelpCircle, ArrowRightLeft, Info,
-  X, Map, Ruler,
+  X, Map, Ruler, ChevronDown, Check,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { PALETTE } from './constants'
-import LoadingSpinner from '../LoadingSpinner'
-import { BrokerPageHeader } from '../transactions/BrokerPageHeader'
+import LoadingSpinner from '../../../../_shared/components/LoadingSpinner'
+import { BrokerPageHeader } from '../../../../_shared/components/transactions/BrokerPageHeader'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import AnimalDetailSheet from './AnimalDetailSheet'
-import BatchSummaryBar   from './BatchSummaryBar'
-import KandangBox        from './KandangBox'
-import DenahLantai       from './DenahLantai'
+import BatchSummaryBar from './BatchSummaryBar'
+import KandangBox from './KandangBox'
+import DenahLantai from './DenahLantai'
+import StickerPeel from '@/dashboard/peternak/_shared/components/StickerPeel'
+import sheepSticker from '@/assets/sheep_sticker.png'
 
 /**
  * Full kandang management page — supports any livestock species.
@@ -39,19 +41,19 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
   const [selectedBatch, setSelectedBatch] = useState('all')
   const [viewMode, setViewMode] = useState('helicopter')
 
-  const isAllBatches   = selectedBatch === 'all'
+  const isAllBatches = selectedBatch === 'all'
   const batchIdsToLoad = useMemo(
     () => isAllBatches ? batches.map(b => b.id) : (selectedBatch ? [selectedBatch] : []),
     [isAllBatches, batches, selectedBatch]
   )
 
   const { data: kandangs = [], isLoading: loadKdg } = hooks.useKandangs()
-  const { data: animals  = [], isLoading: loadAni } = hooks.useAnimalsByBatches(batchIdsToLoad)
+  const { data: animals = [], isLoading: loadAni } = hooks.useAnimalsByBatches(batchIdsToLoad)
   const ensureHoldingPen = hooks.useEnsureHoldingPen()
-  const createKandang    = hooks.useCreateKandang()
-  const updateKdg        = hooks.useUpdateKandang()
-  const moveAnimal       = hooks.useMoveToKandang()
-  const deleteKandang    = hooks.useDeleteKandang?.()
+  const createKandang = hooks.useCreateKandang()
+  const updateKdg = hooks.useUpdateKandang()
+  const moveAnimal = hooks.useMoveToKandang()
+  const deleteKandang = hooks.useDeleteKandang?.()
 
   useEffect(() => { ensureHoldingPen.mutate() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -68,37 +70,75 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
   const groupedAnimals = useMemo(() => {
     const map = {}
     kandangs.forEach(k => { map[k.id] = [] })
-    animals.filter(a => a.status === 'active').forEach(a => {
+    animals.filter(a => a.status === 'active' && !a.is_sold && !a.is_sale).forEach(a => {
       if (a.kandang_id && map[a.kandang_id]) map[a.kandang_id].push(a)
       else { const hp = kandangs.find(k => k.is_holding); if (hp) map[hp.id].push(a) }
     })
     return map
   }, [animals, kandangs])
 
-  const holdingPen   = kandangs.find(k => k.is_holding)
+  const holdingPen = kandangs.find(k => k.is_holding)
   const holdingCount = holdingPen ? (groupedAnimals[holdingPen.id]?.length || 0) : 0
 
   // ── UI state ─────────────────────────────────────────────────────────────
-  const [dragOverKandang,    setDragOverKandang]    = useState(null)
-  const [addSheet,           setAddSheet]           = useState(false)
-  const [editingKandang,     setEditingKandang]     = useState(null)
-  const [activeDetailKandang,setActiveDetailKandang]= useState(null)
-  const [selectedAnimal,     setSelectedAnimal]     = useState(null)
-  const [calcMode,           setCalcMode]           = useState('dimensi')
-  const [form,               setForm]               = useState({ name: '', capacity: '', panjang: '', lebar: '', standard: '1.5' })
+  const [dragOverKandang, setDragOverKandang] = useState(null)
+  const [addSheet, setAddSheet] = useState(false)
+  const [editingKandang, setEditingKandang] = useState(null)
+  const [activeDetailKandang, setActiveDetailKandang] = useState(null)
+  const [selectedAnimal, setSelectedAnimal] = useState(null)
+  const [calcMode, setCalcMode] = useState('dimensi')
+  const [form, setForm] = useState({ name: '', capacity: '', panjang: '', lebar: '', standard: '1.5' })
+  const [batchDropdownOpen, setBatchDropdownOpen] = useState(false)
+  const [triggerRect, setTriggerRect] = useState(null)
+  const batchDropdownRef = useRef(null)
+  const batchTriggerRef = useRef(null)
 
   // Denah Lantai lifted state
-  const [floorMode,      setFloorMode]      = useState('view')
+  const [floorMode, setFloorMode] = useState('view')
   const [placingKandang, setPlacingKandang] = useState(null)
-  const [drawStart,      setDrawStart]      = useState(null)
-  const [drawCurrent,    setDrawCurrent]    = useState(null)
-  const [pendingRect,    setPendingRect]    = useState(null)
-  const [pendingName,    setPendingName]    = useState('')
-  const [dragging,       setDragging]       = useState(null)
+  const [drawStart, setDrawStart] = useState(null)
+  const [drawCurrent, setDrawCurrent] = useState(null)
+  const [pendingRect, setPendingRect] = useState(null)
+  const [pendingName, setPendingName] = useState('')
+  const [dragging, setDragging] = useState(null)
+
+  // Click-outside to close batch dropdown
+  useEffect(() => {
+    if (!batchDropdownOpen) return
+    const handler = (e) => {
+      const inWrapper = batchDropdownRef.current?.contains(e.target)
+      const inTrigger = batchTriggerRef.current?.contains(e.target)
+      if (!inWrapper && !inTrigger) setBatchDropdownOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [batchDropdownOpen])
+
+  useEffect(() => {
+    const handleCustomDrop = (e) => {
+      const { animalId, kandangId } = e.detail
+      const targetK = kandangs.find(k => k.id === kandangId)
+      if (!targetK) return
+
+      const animal = animals.find(a => a.id === animalId)
+      if (!animal || animal.kandang_id === targetK.id) return
+
+      if (!targetK.is_holding && targetK.capacity > 0 && (groupedAnimals[targetK.id]?.length || 0) >= targetK.capacity) {
+        return toast.error(`Kandang ${targetK.name} penuh!`)
+      }
+
+      moveAnimal.mutate(
+        { animalId, kandangId: targetK.id, kandangSlot: targetK.name, batchId: animal.batch_id ?? activeBatchId },
+        { onSuccess: () => toast.success(`${animal.ear_tag} dipindah ke ${targetK.name}`) }
+      )
+    }
+    window.addEventListener('animalDrop', handleCustomDrop)
+    return () => window.removeEventListener('animalDrop', handleCustomDrop)
+  }, [kandangs, animals, groupedAnimals, activeBatchId, moveAnimal])
 
   // ── Drag handlers ─────────────────────────────────────────────────────────
   const handleDragOver = (e, k) => { e.preventDefault(); if (dragOverKandang !== k.id) setDragOverKandang(k.id) }
-  const handleDrop     = (e, targetK) => {
+  const handleDrop = (e, targetK) => {
     e.preventDefault(); setDragOverKandang(null)
     const animalId = e.dataTransfer.getData('animalId')
     if (!animalId) return
@@ -164,33 +204,129 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
   const normalKandangs = kandangs.filter(k => !k.is_holding)
 
   return (
-    <div className="flex flex-col bg-[#06090F]" style={{ height: 'calc(100svh - 60px)', margin: '-24px -32px', overflow: 'hidden' }}>
-      <BrokerPageHeader
-        title={viewMode === 'helicopter' ? (pageTitle ?? 'Helicopter View') : 'Denah Lantai'}
-        subtitle={viewMode === 'helicopter' ? 'Manajemen visual alokasi kandang.' : 'Skala riil 1:1 (1 kotak = 1 meter).'}
-        icon={<LayoutGrid size={20} className="text-emerald-400" />}
-        actionButton={
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 p-1 bg-white/[0.03] border border-white/[0.08] rounded-xl">
-              <button onClick={() => { setViewMode('helicopter'); setFloorMode('view') }} className={cn('flex items-center gap-1.5 px-3 h-8 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all', viewMode === 'helicopter' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-[#4B6478] hover:text-white')}><LayoutGrid size={11} /> Grid</button>
-              <button onClick={() => setViewMode('denah')} className={cn('flex items-center gap-1.5 px-3 h-8 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all', viewMode === 'denah' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-[#4B6478] hover:text-white')}><Map size={11} /> Denah</button>
+    <div className="flex flex-col bg-[#06090F]" style={{ flex: 1, minHeight: 0, margin: '-24px -32px', overflow: 'hidden' }}>
+      <div className="relative">
+        <BrokerPageHeader
+          title={viewMode === 'helicopter' ? (pageTitle ?? 'Helicopter View') : 'Denah Lantai'}
+          subtitle={viewMode === 'helicopter' ? 'Manajemen visual alokasi kandang.' : 'Skala riil 1:1 (1 kotak = 1 meter).'}
+          icon={<LayoutGrid size={20} className="text-emerald-400" />}
+          actionButton={
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1 p-1 bg-white/[0.03] border border-white/[0.08] rounded-xl">
+                <button onClick={() => { setViewMode('helicopter'); setFloorMode('view') }} className={cn('flex items-center gap-1.5 px-3 h-8 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all', viewMode === 'helicopter' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-[#4B6478] hover:text-white')}><LayoutGrid size={11} /> Grid</button>
+                <button onClick={() => setViewMode('denah')} className={cn('flex items-center gap-1.5 px-3 h-8 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all', viewMode === 'denah' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-[#4B6478] hover:text-white')}><Map size={11} /> Denah</button>
+              </div>
+              {/* ── Batch Selector Dropdown ── */}
+              <div ref={batchDropdownRef}>
+                <button
+                  ref={batchTriggerRef}
+                  onClick={() => {
+                    const rect = batchTriggerRef.current?.getBoundingClientRect()
+                    setTriggerRect(rect ?? null)
+                    setBatchDropdownOpen(o => !o)
+                  }}
+                  className={cn(
+                    'flex items-center gap-2.5 h-9 pl-3 pr-2.5 rounded-xl border transition-all duration-200',
+                    'bg-white/[0.03] border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.14]',
+                    batchDropdownOpen && 'bg-white/[0.06] border-white/[0.14]'
+                  )}
+                >
+                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 whitespace-nowrap">
+                    {selectedBatch === 'all'
+                      ? '🌾 Semua Batch'
+                      : batches.find(b => b.id === selectedBatch)?.batch_code ?? '—'}
+                  </span>
+                  <div className="w-px h-3.5 bg-white/10" />
+                  <span className="text-[10px] font-black text-[#4B6478] uppercase whitespace-nowrap">
+                    {animals.filter(a => a.status === 'active').length} Ekor
+                  </span>
+                  <motion.div animate={{ rotate: batchDropdownOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                    <ChevronDown size={13} className="text-[#4B6478]" />
+                  </motion.div>
+                </button>
+              </div>
+
+              {!isAllBatches && (
+                <Button onClick={() => setAddSheet(true)} className="bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[10px] tracking-widest h-10 px-5 rounded-xl shadow-lg shadow-emerald-500/30 gap-2">
+                  <Plus size={16} /> Kandang
+                </Button>
+              )}
             </div>
-            <div className="flex items-center gap-2 p-1 bg-white/[0.03] border border-white/[0.08] rounded-xl pr-3">
-              <select value={selectedBatch} onChange={e => setSelectedBatch(e.target.value)} className="bg-transparent h-8 pl-3 text-[11px] font-black uppercase tracking-widest text-emerald-400 focus:outline-none cursor-pointer">
-                <option value="all" className="bg-[#121A21]">🌾 Semua Batch</option>
-                {batches.map(b => <option key={b.id} value={b.id} className="bg-[#121A21]">{b.batch_code}</option>)}
-              </select>
-              <div className="w-px h-4 bg-white/10" />
-              <span className="text-[10px] font-black text-[#4B6478] uppercase min-w-[80px]">{animals.filter(a => a.status === 'active').length} EKOR</span>
-            </div>
-            {!isAllBatches && (
-              <Button onClick={() => setAddSheet(true)} className="bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[10px] tracking-widest h-10 px-5 rounded-xl shadow-lg shadow-emerald-500/30 gap-2">
-                <Plus size={16} /> Kandang
-              </Button>
-            )}
-          </div>
-        }
-      />
+          }
+        />
+
+        {/* Decorative Sticker */}
+        <div className="absolute top-[100px] right-[40px] z-[50] hidden lg:block pointer-events-auto">
+          <StickerPeel
+            imageSrc={sheepSticker}
+            width={120}
+            rotate={20}
+            peelBackHoverPct={30}
+            peelBackActivePct={50}
+            initialPosition={{ x: 0, y: 0 }}
+            className="opacity-70 hover:opacity-100 transition-opacity"
+          />
+        </div>
+      </div>
+      {/* ── Batch Dropdown Panel (fixed, escapes overflow:hidden) ── */}
+      <AnimatePresence>
+        {batchDropdownOpen && triggerRect && (
+          <motion.div
+            initial={{ opacity: 0, y: -6, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -6, scale: 0.97 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+            style={{
+              position: 'fixed',
+              top: triggerRect.bottom + 8,
+              right: window.innerWidth - triggerRect.right,
+              zIndex: 9999,
+            }}
+            className="min-w-[210px] bg-[#0C1319]/95 backdrop-blur-2xl border border-white/[0.1] rounded-2xl shadow-2xl shadow-black/60 overflow-hidden"
+          >
+            {/* All batches option */}
+            <button
+              onClick={() => { setSelectedBatch('all'); setBatchDropdownOpen(false) }}
+              className={cn(
+                'flex items-center gap-3 w-full px-4 py-3 text-left transition-colors',
+                selectedBatch === 'all'
+                  ? 'bg-emerald-500/10 text-emerald-400'
+                  : 'text-[#8CA0B3] hover:bg-white/[0.04] hover:text-white'
+              )}
+            >
+              <span className="text-base leading-none">🌾</span>
+              <span className="text-[11px] font-black uppercase tracking-widest flex-1">Semua Batch</span>
+              {selectedBatch === 'all' && <Check size={12} className="text-emerald-400 shrink-0" />}
+            </button>
+
+            {batches.length > 0 && <div className="mx-4 my-1 h-px bg-white/[0.06]" />}
+
+            {batches.map(b => {
+              const color = batchColorMap[b.id]
+              const isActive = selectedBatch === b.id
+              return (
+                <button
+                  key={b.id}
+                  onClick={() => { setSelectedBatch(b.id); setBatchDropdownOpen(false) }}
+                  className={cn(
+                    'flex items-center gap-3 w-full px-4 py-3 text-left transition-colors',
+                    isActive
+                      ? 'bg-white/[0.04] text-white'
+                      : 'text-[#8CA0B3] hover:bg-white/[0.04] hover:text-white'
+                  )}
+                >
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: color?.dotColor ?? '#4B6478' }}
+                  />
+                  <span className="text-[11px] font-black uppercase tracking-widest flex-1">{b.batch_code}</span>
+                  {isActive && <Check size={12} className="text-emerald-400 shrink-0" />}
+                </button>
+              )
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Animal detail overlay */}
       <AnimatePresence>
@@ -201,30 +337,33 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
           </>
         )}
         {activeDetailKandang && (
-          <div className="fixed bottom-10 right-10 z-[60] w-72 pointer-events-none">
-            <motion.div initial={{ opacity: 0, y: 20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.95 }} className="bg-[#0C1319]/80 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl pointer-events-auto">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h3 className="font-['Sora'] font-black text-white uppercase tracking-tight text-lg leading-tight">{activeDetailKandang.name}</h3>
-                  <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-1">Detail Inventaris</p>
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="fixed bottom-10 right-10 z-[60] w-72 bg-[#0C1319]/80 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl pointer-events-auto"
+          >
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h3 className="font-['Sora'] font-black text-white uppercase tracking-tight text-lg leading-tight">{activeDetailKandang.name}</h3>
+                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mt-1">Detail Inventaris</p>
+              </div>
+              <button onClick={() => setActiveDetailKandang(null)} className="p-2 hover:bg-white/10 rounded-full transition text-[#4B6478] hover:text-white"><X size={16} /></button>
+            </div>
+            <div className="space-y-4 max-h-60 overflow-y-auto no-scrollbar pr-2 mb-6">
+              {(groupedAnimals[activeDetailKandang.id] || []).map(a => (
+                <div key={a.id} onClick={() => setSelectedAnimal(a)} className="flex items-center justify-between p-3.5 bg-white/[0.03] border border-white/[0.05] rounded-2xl hover:bg-white/[0.06] transition cursor-pointer group">
+                  <div className="flex items-center gap-3"><span className="text-sm">{emoji}</span><span className="text-xs font-black text-white uppercase group-hover:text-emerald-400 transition">{a.ear_tag}</span></div>
+                  <span className="text-[10px] font-bold text-[#4B6478]">{a.latest_weight_kg || a.entry_weight_kg} kg</span>
                 </div>
-                <button onClick={() => setActiveDetailKandang(null)} className="p-2 hover:bg-white/10 rounded-full transition text-[#4B6478] hover:text-white"><X size={16} /></button>
-              </div>
-              <div className="space-y-4 max-h-60 overflow-y-auto no-scrollbar pr-2 mb-6">
-                {(groupedAnimals[activeDetailKandang.id] || []).map(a => (
-                  <div key={a.id} onClick={() => setSelectedAnimal(a)} className="flex items-center justify-between p-3.5 bg-white/[0.03] border border-white/[0.05] rounded-2xl hover:bg-white/[0.06] transition cursor-pointer group">
-                    <div className="flex items-center gap-3"><span className="text-sm">{emoji}</span><span className="text-xs font-black text-white uppercase group-hover:text-emerald-400 transition">{a.ear_tag}</span></div>
-                    <span className="text-[10px] font-bold text-[#4B6478]">{a.latest_weight_kg || a.entry_weight_kg} kg</span>
-                  </div>
-                ))}
-                {(groupedAnimals[activeDetailKandang.id] || []).length === 0 && <p className="text-center py-8 text-[10px] font-black text-[#4B6478] uppercase tracking-widest opacity-40">Kosong</p>}
-              </div>
-              <div className="pt-4 border-t border-white/5 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-[#4B6478]">
-                <span>Populasi</span>
-                <span className="text-white">{(groupedAnimals[activeDetailKandang.id] || []).length} / {activeDetailKandang.capacity} Ekor</span>
-              </div>
-            </motion.div>
-          </div>
+              ))}
+              {(groupedAnimals[activeDetailKandang.id] || []).length === 0 && <p className="text-center py-8 text-[10px] font-black text-[#4B6478] uppercase tracking-widest opacity-40">Kosong</p>}
+            </div>
+            <div className="pt-4 border-t border-white/5 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-[#4B6478]">
+              <span>Populasi</span>
+              <span className="text-white">{(groupedAnimals[activeDetailKandang.id] || []).length} / {activeDetailKandang.capacity} Ekor</span>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -241,13 +380,13 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
             onKandangClick={setActiveDetailKandang}
             onKandangDoubleClick={setEditingKandang}
             activeDetailKandang={activeDetailKandang}
-            floorMode={floorMode}       setFloorMode={setFloorMode}
+            floorMode={floorMode} setFloorMode={setFloorMode}
             placingKandang={placingKandang} setPlacingKandang={setPlacingKandang}
-            drawStart={drawStart}       setDrawStart={setDrawStart}
-            drawCurrent={drawCurrent}   setDrawCurrent={setDrawCurrent}
-            pendingRect={pendingRect}   setPendingRect={setPendingRect}
-            pendingName={pendingName}   setPendingName={setPendingName}
-            dragging={dragging}         setDragging={setDragging}
+            drawStart={drawStart} setDrawStart={setDrawStart}
+            drawCurrent={drawCurrent} setDrawCurrent={setDrawCurrent}
+            pendingRect={pendingRect} setPendingRect={setPendingRect}
+            pendingName={pendingName} setPendingName={setPendingName}
+            dragging={dragging} setDragging={setDragging}
             hooks={hooks}
             speciesConfig={speciesConfig}
             batchColorMap={batchColorMap}
@@ -278,29 +417,39 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
                   <p className="text-xs font-black text-[#4B6478] uppercase tracking-widest mb-4">Belum ada kandang produksi</p>
                   <Button variant="outline" onClick={() => setAddSheet(true)} className="border-white/10 text-[#4B6478] hover:text-white rounded-xl uppercase text-[10px] font-black h-10">Buat Kandang Baru</Button>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
-                  <AnimatePresence mode="popLayout">
-                    {normalKandangs.map((k, i) => (
-                      <motion.div key={k.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }} className="h-[460px]">
-                        <KandangBox
-                          kandang={k}
-                          animalsInKandang={groupedAnimals[k.id] || []}
-                          dragOver={dragOverKandang}
-                          onDragOver={handleDragOver}
-                          onDragLeave={() => setDragOverKandang(null)}
-                          onDrop={handleDrop}
-                          onAnimalClick={setSelectedAnimal}
-                          onKandangDoubleClick={setEditingKandang}
-                          speciesConfig={speciesConfig}
-                          batchColorMap={batchColorMap}
-                          isAllBatches={isAllBatches}
-                        />
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
-              )}
+              ) : (() => {
+                // 1-3 kandang → fit exactly in one row; 4+ → lock at 3 per row and wrap
+                const cols = Math.min(normalKandangs.length, 3)
+                return (
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+                      gap: '2rem',
+                    }}
+                  >
+                    <AnimatePresence mode="popLayout">
+                      {normalKandangs.map((k, i) => (
+                        <motion.div key={k.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }} className="h-[460px]">
+                          <KandangBox
+                            kandang={k}
+                            animalsInKandang={groupedAnimals[k.id] || []}
+                            dragOver={dragOverKandang}
+                            onDragOver={handleDragOver}
+                            onDragLeave={() => setDragOverKandang(null)}
+                            onDrop={handleDrop}
+                            onAnimalClick={setSelectedAnimal}
+                            onKandangDoubleClick={setEditingKandang}
+                            speciesConfig={speciesConfig}
+                            batchColorMap={batchColorMap}
+                            isAllBatches={isAllBatches}
+                          />
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                )
+              })()}
             </div>
 
             {holdingPen && (
@@ -337,7 +486,7 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
 
       {/* Edit Kandang Sheet */}
       <Sheet open={!!editingKandang} onOpenChange={() => setEditingKandang(null)}>
-        <SheetContent side="bottom" className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 p-0 flex flex-col rounded-t-[40px] max-h-[92vh]">
+        <SheetContent side="right" className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 p-0 flex flex-col w-full sm:max-w-[440px]">
           <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
             <SheetHeader className="text-left text-white">
               <SheetTitle className="font-['Sora'] font-black text-2xl">Edit Kandang: {editingKandang?.name}</SheetTitle>
@@ -345,19 +494,66 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
             </SheetHeader>
             {editingKandang && (
               <div className="space-y-6">
-                <div className="space-y-2"><label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Identitas Kandang *</label><input value={editingKandang.name} onChange={e => setEditingKandang(k => ({ ...k, name: e.target.value }))} className="w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 transition-all uppercase" /></div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2"><label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Panjang (m)</label><input type="number" value={editingKandang.panjang_m || ''} onChange={e => setEditingKandang(k => ({ ...k, panjang_m: parseFloat(e.target.value) }))} className="w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50" /></div>
-                  <div className="space-y-2"><label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Lebar (m)</label><input type="number" value={editingKandang.lebar_m || ''} onChange={e => setEditingKandang(k => ({ ...k, lebar_m: parseFloat(e.target.value) }))} className="w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50" /></div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Identitas Kandang *</label>
+                  <input
+                    value={editingKandang.name}
+                    onChange={e => setEditingKandang(k => ({ ...k, name: e.target.value }))}
+                    className="w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 transition-all uppercase"
+                  />
                 </div>
-                <div className="space-y-2"><label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Limit Kapasitas (Ekor)</label><input type="number" value={editingKandang.capacity || ''} onChange={e => setEditingKandang(k => ({ ...k, capacity: parseInt(e.target.value) }))} className="w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50" /></div>
-                {deleteKandang && <button onClick={() => handleDeleteKandang(editingKandang.id)} className="text-[11px] font-black text-red-500/60 hover:text-red-500 uppercase tracking-[0.2em] transition-colors py-2">Hapus Kandang</button>}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Panjang (m)</label>
+                    <input
+                      type="number"
+                      value={editingKandang.panjang_m || ''}
+                      onChange={e => setEditingKandang(k => ({ ...k, panjang_m: parseFloat(e.target.value) }))}
+                      className="w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Lebar (m)</label>
+                    <input
+                      type="number"
+                      value={editingKandang.lebar_m || ''}
+                      onChange={e => setEditingKandang(k => ({ ...k, lebar_m: parseFloat(e.target.value) }))}
+                      className="w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Limit Kapasitas (Ekor)</label>
+                  <input
+                    type="number"
+                    value={editingKandang.capacity || ''}
+                    onChange={e => setEditingKandang(k => ({ ...k, capacity: parseInt(e.target.value) }))}
+                    className="w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50"
+                  />
+                </div>
+                {deleteKandang && (
+                  <button
+                    onClick={() => handleDeleteKandang(editingKandang.id)}
+                    className="text-[11px] font-black text-red-500/60 hover:text-red-500 uppercase tracking-[0.2em] transition-colors py-2"
+                  >
+                    Hapus Kandang
+                  </button>
+                )}
               </div>
             )}
           </div>
           <div className="p-8 border-t border-white/[0.04] bg-[#06090F]">
             <Button
-              onClick={() => updateKdg.mutate({ kandangId: editingKandang.id, batchId: activeBatchId, updates: { name: editingKandang.name, panjang_m: editingKandang.panjang_m, lebar_m: editingKandang.lebar_m, capacity: editingKandang.capacity } }, { onSuccess: () => setEditingKandang(null) })}
+              onClick={() => updateKdg.mutate({
+                kandangId: editingKandang.id,
+                batchId: activeBatchId,
+                updates: {
+                  name: editingKandang.name,
+                  panjang_m: editingKandang.panjang_m,
+                  lebar_m: editingKandang.lebar_m,
+                  capacity: editingKandang.capacity
+                }
+              }, { onSuccess: () => setEditingKandang(null) })}
               disabled={updateKdg.isPending}
               className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[11px] tracking-widest rounded-[2rem] shadow-xl shadow-emerald-500/30"
             >
@@ -378,7 +574,7 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
             <Tabs value={calcMode} onValueChange={setCalcMode} className="w-full">
               <TabsList className="bg-white/[0.03] border border-white/[0.08] p-1.5 mb-8 rounded-2xl w-full">
                 <TabsTrigger value="dimensi" className="flex-1 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-emerald-500 data-[state=active]:text-white rounded-xl h-10 transition-all">Smart Capacity</TabsTrigger>
-                <TabsTrigger value="manual"  className="flex-1 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-white/10 rounded-xl h-10 transition-all">Manual Input</TabsTrigger>
+                <TabsTrigger value="manual" className="flex-1 text-[10px] font-black uppercase tracking-widest data-[state=active]:bg-white/10 rounded-xl h-10 transition-all">Manual Input</TabsTrigger>
               </TabsList>
               <div className="space-y-6">
                 <div className="space-y-2"><label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Nama Kandang *</label><input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="KANDANG-A1" className="w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-5 text-sm font-bold text-white focus:outline-none focus:border-emerald-500/50 uppercase" /></div>

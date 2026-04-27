@@ -61,9 +61,11 @@ const STATUS_CFG = {
   terlambat:   { label: 'Terlambat', color: 'text-red-400',    bg: 'bg-red-500/10',     border: 'border-red-500/30' },
 }
 
+import { useSpring, useMotionValue, animate } from 'framer-motion'
+
 // ─── DraggableTaskCard ───────────────────────────────────────────────────────
 
-function DraggableTaskCard({ task, assignmentOverride, isDragOverlay = false }) {
+function DraggableTaskCard({ task, assignmentOverride, isDragOverlay = false, dragRotation = 0 }) {
   const [isUnlocked, setIsUnlocked] = useState(false)
   const isComplete = task.status === 'selesai'
   const isEffectivelyLocked = isComplete && !isUnlocked
@@ -74,7 +76,13 @@ function DraggableTaskCard({ task, assignmentOverride, isDragOverlay = false }) 
   })
   
   const style = transform
-    ? { transform: CSS.Translate.toString(transform) }
+    ? { 
+        transform: CSS.Translate.toString(transform),
+        ...(isDragOverlay && { 
+          transform: `${CSS.Translate.toString(transform)} rotate(${dragRotation}deg) scale(1.05)`,
+          transition: 'transform 0.1s ease-out'
+        })
+      }
     : undefined
 
   const typeCfg = TASK_TYPE_CFG[task.template?.task_type] ?? TASK_TYPE_CFG.lainnya
@@ -94,7 +102,7 @@ function DraggableTaskCard({ task, assignmentOverride, isDragOverlay = false }) 
         isComplete ? 'bg-white/[0.02] border-white/5 opacity-80' : 'bg-white/[0.03]',
         !isDragOverlay && 'anime-task-card',
         isDragOverlay
-          ? 'shadow-2xl shadow-black/60 rotate-1 scale-105 border-green-500/40 bg-[#0C1521]'
+          ? 'shadow-2xl shadow-black/60 border-green-500/40 bg-[#0C1521]'
           : isDragging
             ? 'opacity-30'
             : !isEffectivelyLocked && 'border-white/5 hover:border-white/10 cursor-grab active:cursor-grabbing',
@@ -283,6 +291,7 @@ export default function DombaTaskAssign() {
   const [selectedDate, setSelectedDate] = useState(today)
   const [viewRange, setViewRange] = useState('hari_ini')
   const [activeId, setActiveId] = useState(null)
+  const [dragRotation, setDragRotation] = useState(0)
   
   const { dateFrom, dateTo } = useMemo(() => {
     let d = new Date(selectedDate)
@@ -361,10 +370,18 @@ export default function DombaTaskAssign() {
 
   function handleDragStart({ active }) {
     setActiveId(active.id)
+    setDragRotation(0)
+  }
+
+  function handleDragMove({ delta }) {
+    // Rotation based on horizontal delta, clamped for smoothness
+    const targetRot = Math.max(-8, Math.min(8, delta.x * 0.15))
+    setDragRotation(targetRot)
   }
 
   async function handleDragEnd({ active, over }) {
     setActiveId(null)
+    setDragRotation(0)
     if (!over) return
 
     const taskId = active.id
@@ -528,7 +545,7 @@ export default function DombaTaskAssign() {
       />
 
       <div className="flex-1 overflow-hidden flex gap-5 p-5">
-        <DndContext collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <DndContext collisionDetection={pointerWithin} onDragStart={handleDragStart} onDragMove={handleDragMove} onDragEnd={handleDragEnd}>
           <div className="flex-1 min-w-0 overflow-y-auto pr-2 custom-scrollbar">
             {workers.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center opacity-40">
@@ -581,7 +598,14 @@ export default function DombaTaskAssign() {
           </div>
 
           <DragOverlay>
-            {activeTask ? <DraggableTaskCard task={activeTask} assignmentOverride={assignmentOverrides.get(activeTask.id)} isDragOverlay /> : null}
+            {activeTask ? (
+              <DraggableTaskCard 
+                task={activeTask} 
+                assignmentOverride={assignmentOverrides.get(activeTask.id)} 
+                isDragOverlay 
+                dragRotation={dragRotation}
+              />
+            ) : null}
           </DragOverlay>
         </DndContext>
       </div>

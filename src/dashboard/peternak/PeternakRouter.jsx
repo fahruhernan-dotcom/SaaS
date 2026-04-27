@@ -1,46 +1,35 @@
 import React from 'react'
 import { useParams } from 'react-router-dom'
 
-// Broiler pages
-import BroilerBeranda from './broiler/Beranda'
-import BroilerSiklus from './broiler/Siklus'
-import BroilerInputHarian from './broiler/InputHarian'
-import BroilerPakan from './broiler/Pakan'
-import BroilerAnakKandang from './broiler/AnakKandang'
+// ─── Broiler ──────────────────────────────────────────────────────────────────
+import BroilerBeranda      from './broiler/Beranda'
+import BroilerSiklus       from './broiler/Siklus'
+import BroilerInputHarian  from './broiler/InputHarian'
+import BroilerPakan        from './broiler/Pakan'
+import BroilerAnakKandang  from './broiler/AnakKandang'
 import BroilerLaporanSiklus from './broiler/LaporanSiklus'
-import BroilerFarmBeranda from './broiler/FarmBeranda'
-import BroilerSetupFarm from './broiler/SetupFarm'
-import BroilerFarmSettings from './broiler/FarmSettings' // [NEW]
-import BroilerVaksinasi from './broiler/Vaksinasi'
-import BroilerTim from './broiler/Tim'
+import BroilerFarmBeranda  from './broiler/FarmBeranda'
+import BroilerSetupFarm    from './broiler/SetupFarm'
+import BroilerFarmSettings from './broiler/FarmSettings'
+import BroilerVaksinasi    from './broiler/Vaksinasi'
+import BroilerTim          from './broiler/Tim'
 
-// Layer pages (placeholder)
+// ─── Layer ────────────────────────────────────────────────────────────────────
 import LayerBeranda from './layer/LayerBeranda'
 
-// Sapi — Penggemukan
-import SapiBeranda    from './sapi/fattening/Beranda'
-import SapiBatch      from './sapi/fattening/Batch'
-import SapiTernak     from './sapi/fattening/Ternak'
-import SapiKesehatan  from './sapi/fattening/Kesehatan'
-import SapiPakan      from './sapi/fattening/Pakan'
-import SapiLaporan    from './sapi/fattening/LaporanBatch'
-import SapiDailyTask from './sapi/fattening/DailyTask'
+// ─── Sapi — Penggemukan ───────────────────────────────────────────────────────
+import SapiBeranda      from './sapi/fattening/Beranda'
+import SapiBatch        from './sapi/fattening/Batch'
+import SapiTernak       from './sapi/fattening/Ternak'
+import SapiKesehatan    from './sapi/fattening/Kesehatan'
+import SapiPakan        from './sapi/fattening/Pakan'
+import SapiLaporan      from './sapi/fattening/LaporanBatch'
+import SapiDailyTask    from './sapi/fattening/DailyTask'
 import SapiTaskSettings from './sapi/fattening/TaskSettings'
-import SapiTaskAssign from './sapi/fattening/TaskAssign'
-import SapiKandangView from './sapi/fattening/KandangView'
-import UniversalDailyTask from './_shared/UniversalDailyTask'
-import { getLivestockTypeFromSubType } from '@/lib/constants/taskTemplates'
+import SapiTaskAssign   from './sapi/fattening/TaskAssign'
+import SapiKandangView  from './sapi/fattening/KandangView'
 
-// Kambing & Domba — Penggemukan
-import KambingBeranda   from './kambing_domba/Beranda'
-import KambingBatch     from './kambing_domba/Batch'
-import KambingTernak    from './kambing_domba/Ternak'
-import KambingKesehatan from './kambing_domba/Kesehatan'
-import KambingPakan     from './kambing_domba/Pakan'
-import KambingLaporan   from './kambing_domba/LaporanBatch'
-import KandangView      from './kambing_domba/KandangView'
-
-// Sapi — Breeding
+// ─── Sapi — Breeding ──────────────────────────────────────────────────────────
 import SapiBreedingBeranda    from './sapi/breeding/Beranda'
 import SapiBreedingTernak     from './sapi/breeding/Ternak'
 import SapiBreedingReproduksi from './sapi/breeding/Reproduksi'
@@ -48,28 +37,20 @@ import SapiBreedingKesehatan  from './sapi/breeding/Kesehatan'
 import SapiBreedingPakan      from './sapi/breeding/Pakan'
 import SapiBreedingLaporan    from './sapi/breeding/LaporanFarm'
 
-// Kambing & Domba — Breeding
-import BreedingBeranda    from './kambing_domba/breeding/Beranda'
-import BreedingTernak     from './kambing_domba/breeding/Ternak'
-import BreedingReproduksi from './kambing_domba/breeding/Reproduksi'
-import BreedingKesehatan  from './kambing_domba/breeding/Kesehatan'
-import BreedingPakan      from './kambing_domba/breeding/Pakan'
-import BreedingLaporan    from './kambing_domba/breeding/LaporanFarm'
+// ─── Domba — Penggemukan ──────────────────────────────────────────────────────
+import DombaBeranda      from './domba/fattening/Beranda'
+import DombaBatch        from './domba/fattening/Batch'
+import DombaTernak       from './domba/fattening/Ternak'
+import DombaKesehatan    from './domba/fattening/Kesehatan'
+import DombaPakan        from './domba/fattening/Pakan'
+import DombaLaporan      from './domba/fattening/LaporanBatch'
+import DombaKandangView  from './domba/fattening/KandangView'
+import DombaTaskSettings from './domba/fattening/TaskSettings'
+import DombaTaskAssign   from './domba/fattening/TaskAssign'
+import DombaDailyTask    from './domba/fattening/DailyTask'
+import DombaPenjualan    from './domba/fattening/Penjualan'
 
-// New Domba — Penggemukan
-import DombaBeranda       from './domba/fattening/Beranda'
-import DombaBatch         from './domba/fattening/Batch'
-import DombaTernak        from './domba/fattening/Ternak'
-import DombaKesehatan     from './domba/fattening/Kesehatan'
-import DombaPakan         from './domba/fattening/Pakan'
-import DombaLaporan       from './domba/fattening/LaporanBatch'
-import DombaKandangView   from './domba/fattening/KandangView'
-import DombaTaskSettings  from './domba/fattening/TaskSettings'
-import DombaTaskAssign    from './domba/fattening/TaskAssign'
-import DombaDailyTask     from './domba/fattening/DailyTask'
-import DombaPenjualan     from './domba/fattening/Penjualan'
-
-// New Domba — Breeding
+// ─── Domba — Breeding ─────────────────────────────────────────────────────────
 import DombaBreedingBeranda    from './domba/breeding/Beranda'
 import DombaBreedingTernak     from './domba/breeding/Ternak'
 import DombaBreedingReproduksi from './domba/breeding/Reproduksi'
@@ -77,49 +58,61 @@ import DombaBreedingKesehatan  from './domba/breeding/Kesehatan'
 import DombaBreedingPakan      from './domba/breeding/Pakan'
 import DombaBreedingLaporan    from './domba/breeding/LaporanFarm'
 
-// New Kambing — Penggemukan (Phase 2)
-import NewKambingBeranda       from './kambing/fattening/Beranda'
-import NewKambingBatch         from './kambing/fattening/Batch'
-import NewKambingTernak        from './kambing/fattening/Ternak'
-import NewKambingKesehatan     from './kambing/fattening/Kesehatan'
-import NewKambingPakan         from './kambing/fattening/Pakan'
-import NewKambingLaporan       from './kambing/fattening/LaporanBatch'
-import NewKambingKandangView   from './kambing/fattening/KandangView'
-import KambingDailyTask     from './kambing/fattening/DailyTask'
+// ─── Kambing — Penggemukan ────────────────────────────────────────────────────
+import KambingBeranda      from './kambing/fattening/Beranda'
+import KambingBatch        from './kambing/fattening/Batch'
+import KambingTernak       from './kambing/fattening/Ternak'
+import KambingKesehatan    from './kambing/fattening/Kesehatan'
+import KambingPakan        from './kambing/fattening/Pakan'
+import KambingLaporan      from './kambing/fattening/LaporanBatch'
+import KambingKandangView  from './kambing/fattening/KandangView'
+import KambingDailyTask    from './kambing/fattening/DailyTask'
 
-// New Kambing — Breeding (Phase 2)
-import NewKambingBreedingBeranda    from './kambing/breeding/Beranda'
-import NewKambingBreedingTernak     from './kambing/breeding/Ternak'
-import NewKambingBreedingReproduksi from './kambing/breeding/Reproduksi'
-import NewKambingBreedingKesehatan  from './kambing/breeding/Kesehatan'
-import NewKambingBreedingPakan      from './kambing/breeding/Pakan'
-import NewKambingBreedingLaporan    from './kambing/breeding/LaporanFarm'
+// ─── Kambing — Breeding ───────────────────────────────────────────────────────
+import KambingBreedingBeranda    from './kambing/breeding/Beranda'
+import KambingBreedingTernak     from './kambing/breeding/Ternak'
+import KambingBreedingReproduksi from './kambing/breeding/Reproduksi'
+import KambingBreedingKesehatan  from './kambing/breeding/Kesehatan'
+import KambingBreedingPakan      from './kambing/breeding/Pakan'
+import KambingBreedingLaporan    from './kambing/breeding/LaporanFarm'
 
-// ─── KAMBING PERAH (Phase 3) ──────────────────────────────────────────
-import KambingPerahBeranda    from './kambing_perah/Beranda'
-import KambingPerahProduksi   from './kambing_perah/Produksi'
-import KambingPerahTernak     from './kambing_perah/Ternak'
-import KambingPerahInventory  from './kambing_perah/Inventory'
-import KambingPerahPenjualan  from './kambing_perah/Penjualan'
+// ─── Kambing Perah ────────────────────────────────────────────────────────────
+import KambingPerahBeranda   from './kambing_perah/Beranda'
+import KambingPerahProduksi  from './kambing_perah/Produksi'
+import KambingPerahTernak    from './kambing_perah/Ternak'
+import KambingPerahInventory from './kambing_perah/Inventory'
+import KambingPerahPenjualan from './kambing_perah/Penjualan'
 
-// AI pages
-import TanyaAIPage from './ai/TanyaAIPage'
+// ─── KambingDomba (legacy — akan dihapus) ────────────────────────────────────
+import KdBeranda         from './kambing_domba/Beranda'
+import KdBatch           from './kambing_domba/Batch'
+import KdTernak          from './kambing_domba/Ternak'
+import KdKesehatan       from './kambing_domba/Kesehatan'
+import KdPakan           from './kambing_domba/Pakan'
+import KdLaporan         from './kambing_domba/LaporanBatch'
+import KdKandangView     from './kambing_domba/KandangView'
+import KdBreedingBeranda    from './kambing_domba/breeding/Beranda'
+import KdBreedingTernak     from './kambing_domba/breeding/Ternak'
+import KdBreedingReproduksi from './kambing_domba/breeding/Reproduksi'
+import KdBreedingKesehatan  from './kambing_domba/breeding/Kesehatan'
+import KdBreedingPakan      from './kambing_domba/breeding/Pakan'
+import KdBreedingLaporan    from './kambing_domba/breeding/LaporanFarm'
+
+// ─── Shared ───────────────────────────────────────────────────────────────────
+import UniversalDailyTask   from './_shared/components/UniversalDailyTask'
+import HargaPasar           from '../_shared/pages/HargaPasar'
+import Akun                 from '../_shared/pages/Akun'
+import LoadingSpinner       from '../_shared/components/LoadingSpinner'
+import TanyaAIPage          from './ai/TanyaAIPage'
 import AnalisisPerformaPage from './ai/AnalisisPerformaPage'
-import PrediksiHasilPage from './ai/PrediksiHasilPage'
-
-// Shared pages
-import HargaPasar from '../_shared/pages/HargaPasar'
-import Akun from '../_shared/pages/Akun'
-import ComingSoon from '../_shared/components/ComingSoon'
+import PrediksiHasilPage    from './ai/PrediksiHasilPage'
+import { getLivestockTypeFromSubType } from '@/lib/constants/taskTemplates'
 import { useAuth } from '@/lib/hooks/useAuth'
-import LoadingSpinner from '../_shared/components/LoadingSpinner'
 
 // ─── Route Guard ──────────────────────────────────────────────────────────────
-
 function PeternakAdminGuard({ children }) {
   const { profile, loading } = useAuth()
   if (loading) return <LoadingSpinner fullPage />
-  
   const isAllowed = profile?.role === 'owner' || profile?.role === 'superadmin'
   if (!isAllowed) {
     return (
@@ -140,53 +133,40 @@ function PeternakAdminGuard({ children }) {
 export function PeternakPageRouter({ page }) {
   const { peternakType } = useParams()
   const livestockType = getLivestockTypeFromSubType(peternakType)
-  
+
+  const AI = {
+    'ai-chat':       <TanyaAIPage />,
+    'ai-analysis':   <AnalisisPerformaPage />,
+    'ai-prediction': <PrediksiHasilPage />,
+  }
+
   const pages = {
     peternak_broiler: {
-      beranda:       <BroilerBeranda />,
-      siklus:        <BroilerSiklus />,
+      beranda:        <BroilerBeranda />,
+      siklus:         <BroilerSiklus />,
       'input-harian': <BroilerInputHarian />,
       'stok-pakan':   <BroilerPakan />,
       'anak-kandang': <BroilerAnakKandang />,
-      'laporan':      <BroilerLaporanSiklus />,
+      laporan:        <BroilerLaporanSiklus />,
       'farm-beranda': <BroilerFarmBeranda />,
       'setup-farm':   <BroilerSetupFarm />,
-      'vaksinasi':    <BroilerVaksinasi />,
-      daily_task:    <UniversalDailyTask livestockType={livestockType} />,
+      vaksinasi:      <BroilerVaksinasi />,
+      daily_task:     <UniversalDailyTask livestockType={livestockType} />,
       'harga-pasar':  <HargaPasar />,
-      'akun':         <Akun />,
-      'tim':          <BroilerTim />,
-      'atur':         <PeternakAdminGuard><BroilerFarmSettings /></PeternakAdminGuard>,
-      'ai-chat':      <TanyaAIPage />,
-      'ai-analysis':  <AnalisisPerformaPage />,
-      'ai-prediction':<PrediksiHasilPage />,
+      akun:           <Akun />,
+      tim:            <BroilerTim />,
+      atur:           <PeternakAdminGuard><BroilerFarmSettings /></PeternakAdminGuard>,
+      ...AI,
     },
     peternak_layer: {
-      beranda:      <LayerBeranda />,
-      'stok-pakan': <LayerBeranda />, // placeholder
-      'laporan':    <LayerBeranda />, // placeholder
-      daily_task:   <UniversalDailyTask livestockType={livestockType} />,
-      'harga-pasar':<HargaPasar />,
+      beranda:       <LayerBeranda />,
+      'stok-pakan':  <LayerBeranda />,
+      laporan:       <LayerBeranda />,
+      daily_task:    <UniversalDailyTask livestockType={livestockType} />,
+      'harga-pasar': <HargaPasar />,
       tim:           <BroilerTim />,
-      'akun':       <Akun />,
-      'ai-chat':      <TanyaAIPage />,
-      'ai-analysis':  <AnalisisPerformaPage />,
-      'ai-prediction':<PrediksiHasilPage />,
-    },
-    peternak_kambing_domba_breeding: {
-      beranda:      <BreedingBeranda />,
-      ternak:       <BreedingTernak />,
-      reproduksi:   <BreedingReproduksi />,
-      kesehatan:    <BreedingKesehatan />,
-      'stok-pakan': <BreedingPakan />,
-      laporan:      <BreedingLaporan />,
-      daily_task:   <UniversalDailyTask livestockType={livestockType} />,
-      'harga-pasar':<HargaPasar />,
-      tim:          <BroilerTim />,
-      akun:         <Akun />,
-      'ai-chat':      <TanyaAIPage />,
-      'ai-analysis':  <AnalisisPerformaPage />,
-      'ai-prediction':<PrediksiHasilPage />,
+      akun:          <Akun />,
+      ...AI,
     },
     peternak_sapi_penggemukan: {
       beranda:        <SapiBeranda />,
@@ -202,9 +182,7 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar':  <HargaPasar />,
       tim:            <BroilerTim />,
       akun:           <Akun />,
-      'ai-chat':      <TanyaAIPage />,
-      'ai-analysis':  <AnalisisPerformaPage />,
-      'ai-prediction':<PrediksiHasilPage />,
+      ...AI,
     },
     peternak_sapi_breeding: {
       beranda:       <SapiBreedingBeranda />,
@@ -219,92 +197,64 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar': <HargaPasar />,
       tim:           <BroilerTim />,
       akun:          <Akun />,
-      'ai-chat':      <TanyaAIPage />,
-      'ai-analysis':  <AnalisisPerformaPage />,
-      'ai-prediction':<PrediksiHasilPage />,
+      ...AI,
     },
-    peternak_kambing_domba_penggemukan: {
-      beranda:       <KambingBeranda />,
-      batch:         <KambingBatch />,
-      ternak:        <KambingTernak />,
-      kesehatan:     <KambingKesehatan />,
-      'stok-pakan':   <KambingPakan />,
-      laporan:       <KambingLaporan />,
-      'kandang-view':<KandangView />,
+    peternak_domba_penggemukan: {
+      beranda:        <DombaBeranda />,
+      batch:          <DombaBatch />,
+      ternak:         <DombaTernak />,
+      kesehatan:      <DombaKesehatan />,
+      'stok-pakan':   <DombaPakan />,
+      laporan:        <DombaLaporan />,
+      'kandang-view': <DombaKandangView />,
+      daily_task:     <DombaDailyTask />,
+      task_settings:  <PeternakAdminGuard><DombaTaskSettings /></PeternakAdminGuard>,
+      task_assign:    <PeternakAdminGuard><DombaTaskAssign /></PeternakAdminGuard>,
+      penjualan:      <DombaPenjualan />,
+      'harga-pasar':  <HargaPasar />,
+      tim:            <BroilerTim />,
+      akun:           <Akun />,
+      ...AI,
+    },
+    peternak_domba_breeding: {
+      beranda:       <DombaBreedingBeranda />,
+      ternak:        <DombaBreedingTernak />,
+      reproduksi:    <DombaBreedingReproduksi />,
+      kesehatan:     <DombaBreedingKesehatan />,
+      'stok-pakan':  <DombaBreedingPakan />,
+      laporan:       <DombaBreedingLaporan />,
       daily_task:    <UniversalDailyTask livestockType={livestockType} />,
       'harga-pasar': <HargaPasar />,
       tim:           <BroilerTim />,
       akun:          <Akun />,
-      'ai-chat':      <TanyaAIPage />,
-      'ai-analysis':  <AnalisisPerformaPage />,
-      'ai-prediction':<PrediksiHasilPage />,
+      ...AI,
     },
-    // ─── NEW DOMBA ROUTES ───────────────────────────────────────────────────
-    peternak_domba_penggemukan: {
-      beranda:       <DombaBeranda />,
-      batch:         <DombaBatch />,
-      ternak:        <DombaTernak />,
-      kesehatan:     <DombaKesehatan />,
-      'stok-pakan':   <DombaPakan />,
-      laporan:       <DombaLaporan />,
-      'kandang-view': <DombaKandangView />,
-      daily_task:    <DombaDailyTask />,
-      task_settings: <PeternakAdminGuard><DombaTaskSettings /></PeternakAdminGuard>,
-      task_assign:   <PeternakAdminGuard><DombaTaskAssign /></PeternakAdminGuard>,
-      penjualan:     <DombaPenjualan />,
-      'harga-pasar': <HargaPasar />,
-      tim:           <BroilerTim />,
-      akun:          <Akun />,
-      'ai-chat':      <TanyaAIPage />,
-      'ai-analysis':  <AnalisisPerformaPage />,
-      'ai-prediction':<PrediksiHasilPage />,
-    },
-    peternak_domba_breeding: {
-      beranda:      <DombaBreedingBeranda />,
-      ternak:       <DombaBreedingTernak />,
-      reproduksi:   <DombaBreedingReproduksi />,
-      kesehatan:    <DombaBreedingKesehatan />,
-      'stok-pakan': <DombaBreedingPakan />,
-      laporan:      <DombaBreedingLaporan />,
-      daily_task:   <UniversalDailyTask livestockType={livestockType} />,
-      'harga-pasar':<HargaPasar />,
-      tim:          <BroilerTim />,
-      akun:         <Akun />,
-      'ai-chat':      <TanyaAIPage />,
-      'ai-analysis':  <AnalisisPerformaPage />,
-      'ai-prediction':<PrediksiHasilPage />,
-    },
-    // ─── KAMBING ROUTES (Phase 2) ──────────────────────────────────────────
     peternak_kambing_penggemukan: {
-      beranda:       <NewKambingBeranda />,
-      batch:         <NewKambingBatch />,
-      ternak:        <NewKambingTernak />,
-      kesehatan:     <NewKambingKesehatan />,
-      'stok-pakan':   <NewKambingPakan />,
-      laporan:       <NewKambingLaporan />,
-      'kandang-view':<NewKambingKandangView />,
-      daily_task:    <KambingDailyTask />,
-      'harga-pasar': <HargaPasar />,
-      tim:           <BroilerTim />,
-      akun:          <Akun />,
-      'ai-chat':      <TanyaAIPage />,
-      'ai-analysis':  <AnalisisPerformaPage />,
-      'ai-prediction':<PrediksiHasilPage />,
+      beranda:        <KambingBeranda />,
+      batch:          <KambingBatch />,
+      ternak:         <KambingTernak />,
+      kesehatan:      <KambingKesehatan />,
+      'stok-pakan':   <KambingPakan />,
+      laporan:        <KambingLaporan />,
+      'kandang-view': <KambingKandangView />,
+      daily_task:     <KambingDailyTask />,
+      'harga-pasar':  <HargaPasar />,
+      tim:            <BroilerTim />,
+      akun:           <Akun />,
+      ...AI,
     },
     peternak_kambing_breeding: {
-      beranda:      <NewKambingBreedingBeranda />,
-      ternak:       <NewKambingBreedingTernak />,
-      reproduksi:   <NewKambingBreedingReproduksi />,
-      kesehatan:    <NewKambingBreedingKesehatan />,
-      'stok-pakan': <NewKambingBreedingPakan />,
-      laporan:      <NewKambingBreedingLaporan />,
-      daily_task:   <UniversalDailyTask livestockType={livestockType} />,
-      'harga-pasar':<HargaPasar />,
-      tim:          <BroilerTim />,
-      akun:         <Akun />,
-      'ai-chat':      <TanyaAIPage />,
-      'ai-analysis':  <AnalisisPerformaPage />,
-      'ai-prediction':<PrediksiHasilPage />,
+      beranda:       <KambingBreedingBeranda />,
+      ternak:        <KambingBreedingTernak />,
+      reproduksi:    <KambingBreedingReproduksi />,
+      kesehatan:     <KambingBreedingKesehatan />,
+      'stok-pakan':  <KambingBreedingPakan />,
+      laporan:       <KambingBreedingLaporan />,
+      daily_task:    <UniversalDailyTask livestockType={livestockType} />,
+      'harga-pasar': <HargaPasar />,
+      tim:           <BroilerTim />,
+      akun:          <Akun />,
+      ...AI,
     },
     peternak_kambing_perah: {
       beranda:       <KambingPerahBeranda />,
@@ -313,17 +263,43 @@ export function PeternakPageRouter({ page }) {
       inventory:     <KambingPerahInventory />,
       penjualan:     <KambingPerahPenjualan />,
       laporan:       <div className="p-8"><h2 className="text-xl font-bold text-white">Laporan</h2><p className="text-slate-400">Coming soon</p></div>,
-      'stok-pakan':   <KambingPerahInventory />,
+      'stok-pakan':  <KambingPerahInventory />,
       daily_task:    <UniversalDailyTask livestockType={livestockType} />,
       'harga-pasar': <HargaPasar />,
       tim:           <BroilerTim />,
       akun:          <Akun />,
-      'ai-chat':      <TanyaAIPage />,
-      'ai-analysis':  <AnalisisPerformaPage />,
-      'ai-prediction':<PrediksiHasilPage />,
+      ...AI,
+    },
+    // ─── Legacy: kambing_domba (akan dihapus setelah migrasi selesai) ─────────
+    peternak_kambing_domba_penggemukan: {
+      beranda:        <KdBeranda />,
+      batch:          <KdBatch />,
+      ternak:         <KdTernak />,
+      kesehatan:      <KdKesehatan />,
+      'stok-pakan':   <KdPakan />,
+      laporan:        <KdLaporan />,
+      'kandang-view': <KdKandangView />,
+      daily_task:     <UniversalDailyTask livestockType={livestockType} />,
+      'harga-pasar':  <HargaPasar />,
+      tim:            <BroilerTim />,
+      akun:           <Akun />,
+      ...AI,
+    },
+    peternak_kambing_domba_breeding: {
+      beranda:       <KdBreedingBeranda />,
+      ternak:        <KdBreedingTernak />,
+      reproduksi:    <KdBreedingReproduksi />,
+      kesehatan:     <KdBreedingKesehatan />,
+      'stok-pakan':  <KdBreedingPakan />,
+      laporan:       <KdBreedingLaporan />,
+      daily_task:    <UniversalDailyTask livestockType={livestockType} />,
+      'harga-pasar': <HargaPasar />,
+      tim:           <BroilerTim />,
+      akun:          <Akun />,
+      ...AI,
     },
   }
-  
+
   return pages[peternakType]?.[page]
     ?? <div className="p-8 text-[#94A3B8]">Halaman tidak ditemukan</div>
 }
