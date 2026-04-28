@@ -8,7 +8,7 @@ import {
   useSapiWeightHistory,
   calcSapiHariDiFarm, calcSapiMortalitas,
 } from '@/lib/hooks/useSapiPenggemukanData'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, Legend 

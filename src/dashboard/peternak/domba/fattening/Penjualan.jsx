@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react'
+import React, { useState, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ShoppingBag, TrendingUp, DollarSign, Users, AlertCircle,
   Plus, X, ChevronRight, ChevronDown, ChevronLeft, Check, CheckCircle2, Clock,
-  Calendar, Wallet, FileText, ArrowLeft, Filter, Package,
-  Tag, Phone, CreditCard, Scale, Hash
+  Calendar, FileText, ArrowLeft, Filter, Package,
+  Tag, Phone, CreditCard, Scale, Calculator,
+  TrendingDown, ArrowUpDown, ChevronUp
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useForm, Controller } from 'react-hook-form'
@@ -19,13 +20,14 @@ import {
   useAddDombaSale,
   useUpdateDombaSale,
   useDeleteDombaSale,
+  useDombaHppBatch,
 } from '@/lib/hooks/useDombaPenggemukanData'
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
-import { Lock, Unlock, Trash2, Save, MoreVertical, Edit2 } from 'lucide-react'
+import { Lock, Unlock, Trash2, Save } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 const BASE = '/peternak/peternak_domba_penggemukan'
 
@@ -36,11 +38,234 @@ const PRICE_TYPES = [
 ]
 const PAYMENT_METHODS = ['Cash', 'Transfer', 'Hutang']
 
+const fmt = (n) => Math.round(n).toLocaleString('id-ID')
+
+// ── HPP PANEL ─────────────────────────────────────────────────────────────────
+
+function HppPanel({ batchId }) {
+  const [expanded, setExpanded] = useState(false)
+  const hpp = useDombaHppBatch(batchId)
+
+  if (hpp.isLoading) return (
+    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4 animate-pulse h-20" />
+  )
+
+  const { totalModalBeli, totalBiayaPakan, totalBiayaOps, totalHpp,
+    aktifCount, terjualCount, matiCount, totalPendapatan,
+    bepPerEkor, bepSisa, profitLoss, produksiCount } = hpp
+
+  const isProfitable = profitLoss >= 0
+  const hasRevenue = totalPendapatan > 0
+  const costParts = [
+    { label: 'Modal Beli', value: totalModalBeli, color: 'bg-blue-500' },
+    { label: 'Biaya Pakan', value: totalBiayaPakan, color: 'bg-emerald-500' },
+    { label: 'Biaya Ops', value: totalBiayaOps, color: 'bg-violet-500' },
+  ]
+  const totalForBar = totalHpp || 1
+
+  return (
+    <div className="bg-[#0C1421] border border-white/[0.07] rounded-2xl overflow-hidden">
+      {/* Header row */}
+      <button
+        onClick={() => setExpanded(v => !v)}
+        className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-white/[0.02] transition"
+      >
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+            <Calculator size={14} className="text-amber-400" />
+          </div>
+          <div className="text-left">
+            <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest leading-none">Kalkulasi HPP</p>
+            <p className="text-sm font-black text-white font-['Sora']">Rp {fmt(totalHpp)}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {hasRevenue && (
+            <div className={cn(
+              'px-2 py-1 rounded-lg text-[10px] font-black border',
+              isProfitable
+                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                : 'bg-red-500/10 border-red-500/20 text-red-400'
+            )}>
+              {isProfitable ? '+' : ''}Rp {fmt(Math.abs(profitLoss))}
+            </div>
+          )}
+          {expanded ? <ChevronUp size={14} className="text-[#4B6478]" /> : <ChevronDown size={14} className="text-[#4B6478]" />}
+        </div>
+      </button>
+
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 space-y-4 border-t border-white/[0.05]">
+
+              {/* Cost breakdown bar */}
+              <div className="pt-3">
+                <div className="flex h-2 rounded-full overflow-hidden gap-px mb-3">
+                  {costParts.map(p => (
+                    <div
+                      key={p.label}
+                      className={p.color}
+                      style={{ width: `${(p.value / totalForBar) * 100}%` }}
+                    />
+                  ))}
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {costParts.map(p => (
+                    <div key={p.label} className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-2.5">
+                      <div className={cn('w-2 h-2 rounded-full mb-1.5', p.color)} />
+                      <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">{p.label}</p>
+                      <p className="text-xs font-black text-white">Rp {fmt(p.value)}</p>
+                      <p className="text-[9px] text-[#4B6478]">{totalHpp > 0 ? Math.round((p.value / totalHpp) * 100) : 0}%</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Key metrics */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-amber-500/5 border border-amber-500/15 rounded-xl p-3">
+                  <p className="text-[9px] font-black text-amber-400/70 uppercase tracking-widest mb-1">BEP / Ekor</p>
+                  <p className="text-sm font-black text-amber-300 font-['Sora']">Rp {fmt(bepPerEkor)}</p>
+                  <p className="text-[9px] text-[#4B6478] mt-0.5">{produksiCount} ekor hidup + terjual</p>
+                </div>
+                <div className={cn(
+                  'rounded-xl p-3 border',
+                  aktifCount > 0
+                    ? 'bg-orange-500/5 border-orange-500/15'
+                    : 'bg-white/[0.02] border-white/[0.05]'
+                )}>
+                  <p className="text-[9px] font-black text-orange-400/70 uppercase tracking-widest mb-1">BEP Sisa</p>
+                  <p className={cn('text-sm font-black font-["Sora"]', aktifCount > 0 ? 'text-orange-300' : 'text-[#4B6478]')}>
+                    {aktifCount > 0 ? `Rp ${fmt(bepSisa)}` : '—'}
+                  </p>
+                  <p className="text-[9px] text-[#4B6478] mt-0.5">{aktifCount} ekor aktif sisa</p>
+                </div>
+              </div>
+
+              {/* Status ekor */}
+              <div className="flex gap-2">
+                {[
+                  { label: 'Aktif', count: aktifCount, color: 'text-emerald-400' },
+                  { label: 'Terjual', count: terjualCount, color: 'text-blue-400' },
+                  { label: 'Mati/Afkir', count: matiCount, color: 'text-red-400' },
+                ].map(s => (
+                  <div key={s.label} className="flex-1 bg-white/[0.02] border border-white/[0.05] rounded-xl p-2 text-center">
+                    <p className={cn('text-sm font-black', s.color)}>{s.count}</p>
+                    <p className="text-[9px] text-[#4B6478] uppercase font-bold tracking-wider">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* BEP sisa explanation */}
+              {aktifCount > 0 && bepSisa > 0 && (
+                <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-3 flex gap-2">
+                  <ArrowUpDown size={12} className="text-orange-400 shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-[#4B6478] leading-relaxed">
+                    Jual <span className="text-white font-black">{aktifCount} ekor sisa</span> minimal{' '}
+                    <span className="text-orange-300 font-black">Rp {fmt(bepSisa)}/ekor</span> agar semua biaya batch ini tertutup.
+                  </p>
+                </div>
+              )}
+
+              {aktifCount === 0 && hasRevenue && (
+                <div className={cn(
+                  'p-3 rounded-xl flex gap-2 border',
+                  isProfitable ? 'bg-emerald-500/5 border-emerald-500/15' : 'bg-red-500/5 border-red-500/15'
+                )}>
+                  {isProfitable ? <TrendingUp size={12} className="text-emerald-400 shrink-0 mt-0.5" /> : <TrendingDown size={12} className="text-red-400 shrink-0 mt-0.5" />}
+                  <p className={cn('text-[10px] leading-relaxed', isProfitable ? 'text-emerald-300' : 'text-red-300')}>
+                    {isProfitable
+                      ? `Batch ini untung Rp ${fmt(profitLoss)} dari seluruh penjualan.`
+                      : `Batch ini rugi Rp ${fmt(Math.abs(profitLoss))}. Pendapatan tidak menutup HPP.`}
+                  </p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+// ── MARGIN ANALYZER (inside SaleSheet Step 2) ─────────────────────────────────
+
+function MarginAnalyzer({ bepSisa, pricePerEkor }) {
+  if (!bepSisa || bepSisa === 0) return null
+
+  const margin = pricePerEkor > 0 ? ((pricePerEkor - bepSisa) / bepSisa) * 100 : null
+  const diff = pricePerEkor - bepSisa
+
+  const status =
+    margin === null ? 'idle'
+    : margin >= 15 ? 'good'
+    : margin >= 0 ? 'warning'
+    : 'danger'
+
+  const statusCfg = {
+    idle:    { bg: 'bg-white/[0.02]',      border: 'border-white/[0.06]',    label: '—',          icon: ArrowUpDown, iconColor: 'text-[#4B6478]' },
+    good:    { bg: 'bg-emerald-500/5',     border: 'border-emerald-500/20',  label: 'Untung',     icon: TrendingUp,  iconColor: 'text-emerald-400' },
+    warning: { bg: 'bg-amber-500/5',       border: 'border-amber-500/20',    label: 'Tipis',      icon: ArrowUpDown, iconColor: 'text-amber-400' },
+    danger:  { bg: 'bg-red-500/5',         border: 'border-red-500/20',      label: 'Rugi',       icon: TrendingDown, iconColor: 'text-red-400' },
+  }[status]
+
+  const Icon = statusCfg.icon
+
+  return (
+    <div className={cn('rounded-2xl p-4 border', statusCfg.bg, statusCfg.border)}>
+      <div className="flex items-center gap-2 mb-3">
+        <Icon size={14} className={statusCfg.iconColor} />
+        <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Analisis Margin</p>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p className="text-[9px] text-[#4B6478] uppercase font-bold tracking-widest mb-1">BEP Sisa</p>
+          <p className="text-sm font-black text-orange-300">Rp {fmt(bepSisa)}</p>
+          <p className="text-[9px] text-[#4B6478]">min. harga/ekor</p>
+        </div>
+        <div>
+          <p className="text-[9px] text-[#4B6478] uppercase font-bold tracking-widest mb-1">Harga Jual</p>
+          <p className={cn('text-sm font-black', pricePerEkor > 0 ? 'text-white' : 'text-[#4B6478]')}>
+            {pricePerEkor > 0 ? `Rp ${fmt(pricePerEkor)}` : '—'}
+          </p>
+        </div>
+      </div>
+      {margin !== null && (
+        <div className={cn(
+          'mt-3 pt-3 border-t flex items-center justify-between',
+          status === 'good' ? 'border-emerald-500/15' : status === 'warning' ? 'border-amber-500/15' : 'border-red-500/15'
+        )}>
+          <span className={cn(
+            'text-xs font-black',
+            status === 'good' ? 'text-emerald-400' : status === 'warning' ? 'text-amber-400' : 'text-red-400'
+          )}>
+            {statusCfg.label} {diff > 0 ? '+' : ''}Rp {fmt(Math.abs(diff))}/ekor
+          </span>
+          <span className={cn(
+            'text-[11px] font-black px-2 py-1 rounded-lg border',
+            status === 'good' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+            : status === 'warning' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+            : 'bg-red-500/10 border-red-500/20 text-red-400'
+          )}>
+            {margin > 0 ? '+' : ''}{margin.toFixed(1)}%
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── SALE SHEET (Form Catat Penjualan) ─────────────────────────────────────────
 
-function SaleSheet({ batchId, animals, onClose }) {
-  const perm = usePeternakPermissions()
-  const [step, setStep] = useState(1) // 1 = pilih ternak, 2 = isi data transaksi
+function SaleSheet({ batchId, animals, hppData, onClose }) {
+  const [step, setStep] = useState(1)
   const [selectedIds, setSelectedIds] = useState(new Set())
   const { mutate: addSale, isPending } = useAddDombaSale()
 
@@ -73,6 +298,13 @@ function SaleSheet({ batchId, animals, onClose }) {
     const p = parseFloat(priceAmount) || 0
     if (priceType === 'per_ekor') return p * selectedIds.size
     if (priceType === 'per_kg') return p * totalWeightKg
+    return 0
+  }, [priceType, priceAmount, selectedIds.size, totalWeightKg])
+
+  const pricePerEkor = useMemo(() => {
+    const p = parseFloat(priceAmount) || 0
+    if (priceType === 'per_ekor') return p
+    if (priceType === 'per_kg' && selectedIds.size > 0) return p * (totalWeightKg / selectedIds.size)
     return 0
   }, [priceType, priceAmount, selectedIds.size, totalWeightKg])
 
@@ -172,7 +404,6 @@ function SaleSheet({ batchId, animals, onClose }) {
                 </div>
               ) : (
                 <>
-                  {/* Select All */}
                   <button
                     onClick={() => {
                       if (selectedIds.size === activeAnimals.length) setSelectedIds(new Set())
@@ -217,6 +448,9 @@ function SaleSheet({ batchId, animals, onClose }) {
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-sm font-black text-white">{w.toFixed(1)} <span className="text-[10px] text-[#4B6478]">kg</span></p>
+                          {hppData && hppData.bepPerEkor > 0 && (
+                            <p className="text-[9px] text-[#4B6478]">BEP Rp {fmt(hppData.bepPerEkor)}</p>
+                          )}
                         </div>
                       </button>
                     )
@@ -312,9 +546,14 @@ function SaleSheet({ batchId, animals, onClose }) {
                 <div className="bg-gradient-to-br from-emerald-900/40 to-green-900/30 border border-emerald-500/20 rounded-2xl p-4">
                   <p className="text-[10px] font-black text-emerald-400/60 uppercase tracking-widest mb-1">Estimasi Total Pendapatan</p>
                   <p className="text-3xl font-black text-emerald-400 font-['Sora']">
-                    Rp {Math.round(totalRevenue).toLocaleString('id-ID')}
+                    Rp {fmt(totalRevenue)}
                   </p>
                 </div>
+
+                {/* Margin Analyzer */}
+                {hppData && (
+                  <MarginAnalyzer bepSisa={hppData.bepSisa} pricePerEkor={pricePerEkor} />
+                )}
 
                 {/* Pembayaran */}
                 <div>
@@ -401,8 +640,8 @@ function SaleDetailSheet({ sale, onClose }) {
   const [isLocked, setIsLocked] = useState(true)
   const { mutate: updateSale, isPending: isUpdating } = useUpdateDombaSale()
   const { mutate: deleteSale, isPending: isDeleting } = useDeleteDombaSale()
-  
-  const { register, handleSubmit, control, watch, setValue, formState: { isDirty } } = useForm({
+
+  const { register, handleSubmit, control, watch, formState: { isDirty } } = useForm({
     defaultValues: {
       buyer_name: sale.buyer_name,
       buyer_type: sale.buyer_type,
@@ -442,7 +681,6 @@ function SaleDetailSheet({ sale, onClose }) {
       exit={{ x: '100%', opacity: 0 }}
       className="fixed inset-y-0 right-0 w-[440px] max-w-full z-50 bg-[#0A1015]/95 backdrop-blur-xl border-l border-white/[0.08] shadow-[-10px_0_40px_rgba(0,0,0,0.5)] flex flex-col"
     >
-      {/* Header */}
       <div className="px-6 pt-8 pb-4 flex items-center justify-between border-b border-white/5">
         <div>
           <h2 className="font-['Sora'] font-extrabold text-xl text-white tracking-tight">Detail Transaksi</h2>
@@ -454,8 +692,7 @@ function SaleDetailSheet({ sale, onClose }) {
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
-        
-        {/* Lock/Unlock Banner */}
+
         <div className={cn(
           "p-4 rounded-2xl flex items-center justify-between transition-all duration-500",
           isLocked ? "bg-white/[0.03] border border-white/[0.06]" : "bg-amber-500/10 border border-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.05)]"
@@ -472,7 +709,7 @@ function SaleDetailSheet({ sale, onClose }) {
             </div>
           </div>
           {perm.canEditPenjualan && (
-            <button 
+            <button
               onClick={() => setIsLocked(!isLocked)}
               className={cn(
                 "px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95",
@@ -485,7 +722,6 @@ function SaleDetailSheet({ sale, onClose }) {
         </div>
 
         <form className="space-y-4">
-           {/* Item Info (Static) */}
            <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-white/[0.02] border border-white/[0.05] rounded-xl">
                  <p className="text-[9px] font-black text-[#4B6478] uppercase mb-1">JUMLAH EKOR</p>
@@ -502,7 +738,7 @@ function SaleDetailSheet({ sale, onClose }) {
                 <label className={labelCls}>Nama Pembeli</label>
                 <input {...register('buyer_name')} disabled={isLocked} className={inputCls} />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelCls}>Tipe Pembeli</label>
@@ -581,7 +817,6 @@ function SaleDetailSheet({ sale, onClose }) {
         )}
       </div>
 
-      {/* Footer Info */}
       {isLocked && (
         <div className="px-6 py-4 bg-white/[0.02] border-t border-white/5">
            <div className="flex items-center gap-2 text-[#4B6478]">
@@ -599,7 +834,7 @@ function SaleDetailSheet({ sale, onClose }) {
 function SaleCard({ sale, onClick }) {
   const date = new Date(sale.sale_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
   return (
-    <motion.div 
+    <motion.div
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
       onClick={() => onClick(sale)}
@@ -608,7 +843,7 @@ function SaleCard({ sale, onClick }) {
       <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
         <ChevronRight size={16} className="text-[#4B6478]" />
       </div>
-      
+
       <div className="flex items-start justify-between mb-3 pr-6">
         <div>
           <div className="flex items-center gap-2 mb-0.5">
@@ -656,6 +891,7 @@ export default function DombaPenjualan() {
   const { data: batches = [], isLoading: loadBatches } = useDombaBatches()
   const { data: sales = [], isLoading: loadSales } = useDombaSales(selectedBatchId)
   const { data: animals = [] } = useDombaAnimals(selectedBatchId)
+  const hppData = useDombaHppBatch(selectedBatchId)
 
   const selectedBatch = useMemo(() => batches.find(b => b.id === selectedBatchId), [batches, selectedBatchId])
 
@@ -703,7 +939,7 @@ export default function DombaPenjualan() {
                 Jual
               </button>
             )}
-            <button 
+            <button
               onClick={() => navigate('/peternak/peternak_domba_penggemukan/beranda')}
               className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#4B6478] hover:text-white transition-colors"
             >
@@ -714,7 +950,7 @@ export default function DombaPenjualan() {
 
         {/* CUSTOM DROPDOWN SELECTOR */}
         <div className="relative" ref={selectRef}>
-          <button 
+          <button
             onClick={() => setIsSelectOpen(!isSelectOpen)}
             className={cn(
               "w-full h-12 px-5 rounded-2xl flex items-center justify-between transition-all duration-300",
@@ -746,21 +982,21 @@ export default function DombaPenjualan() {
 
           <AnimatePresence>
             {isSelectOpen && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
                 className="absolute top-full left-0 right-0 mt-2 z-50 bg-[#111C24] border border-white/10 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl"
               >
                 <div className="max-h-[300px] overflow-y-auto custom-scrollbar pt-2 pb-2">
-                  <div 
+                  <div
                     onClick={() => { setSelectedBatchId(''); setIsSelectOpen(false) }}
                     className="px-5 py-3 hover:bg-white/5 cursor-pointer border-b border-white/[0.03]"
                   >
                     <p className="text-[11px] font-black text-[#4B6478] uppercase">Kosongkan Pilihan</p>
                   </div>
                   {batches.map(b => (
-                    <div 
+                    <div
                       key={b.id}
                       onClick={() => { setSelectedBatchId(b.id); setIsSelectOpen(false) }}
                       className={cn(
@@ -802,10 +1038,10 @@ export default function DombaPenjualan() {
           {/* KPI Cards */}
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: 'Total Pendapatan', value: `Rp ${Math.round(kpi.total).toLocaleString('id-ID')}`, icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+              { label: 'Total Pendapatan', value: `Rp ${fmt(kpi.total)}`, icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
               { label: 'Ekor Terjual', value: `${kpi.ekor} Ekor`, icon: Package, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
-              { label: 'Rata-rata / Ekor', value: kpi.avgPerEkor > 0 ? `Rp ${Math.round(kpi.avgPerEkor).toLocaleString('id-ID')}` : '—', icon: TrendingUp, color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20' },
-              { label: 'Piutang Belum Lunas', value: kpi.piutang > 0 ? `Rp ${Math.round(kpi.piutang).toLocaleString('id-ID')}` : 'Nihil', icon: kpi.piutang > 0 ? AlertCircle : CheckCircle2, color: kpi.piutang > 0 ? 'text-amber-400' : 'text-emerald-400', bg: kpi.piutang > 0 ? 'bg-amber-500/10' : 'bg-emerald-500/10', border: kpi.piutang > 0 ? 'border-amber-500/20' : 'border-emerald-500/20' },
+              { label: 'Rata-rata / Ekor', value: kpi.avgPerEkor > 0 ? `Rp ${fmt(kpi.avgPerEkor)}` : '—', icon: TrendingUp, color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20' },
+              { label: 'Piutang Belum Lunas', value: kpi.piutang > 0 ? `Rp ${fmt(kpi.piutang)}` : 'Nihil', icon: kpi.piutang > 0 ? AlertCircle : CheckCircle2, color: kpi.piutang > 0 ? 'text-amber-400' : 'text-emerald-400', bg: kpi.piutang > 0 ? 'bg-amber-500/10' : 'bg-emerald-500/10', border: kpi.piutang > 0 ? 'border-amber-500/20' : 'border-emerald-500/20' },
             ].map(({ label, value, icon: Icon, color, bg, border }) => (
               <div key={label} className={cn('rounded-2xl p-4 border', bg, border)}>
                 <Icon size={16} className={cn(color, 'mb-2')} />
@@ -814,6 +1050,9 @@ export default function DombaPenjualan() {
               </div>
             ))}
           </div>
+
+          {/* HPP Panel */}
+          {perm.canViewBiayaTab && <HppPanel batchId={selectedBatchId} />}
 
           {/* Piutang Warning */}
           {kpi.piutang > 0 && (
@@ -855,7 +1094,12 @@ export default function DombaPenjualan() {
         {showSaleSheet && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/70 z-40 backdrop-blur-sm" onClick={() => setShowSaleSheet(false)} />
-            <SaleSheet batchId={selectedBatchId} animals={animals} onClose={() => setShowSaleSheet(false)} />
+            <SaleSheet
+              batchId={selectedBatchId}
+              animals={animals}
+              hppData={hppData.isLoading ? null : hppData}
+              onClose={() => setShowSaleSheet(false)}
+            />
           </>
         )}
         {selectedSale && (

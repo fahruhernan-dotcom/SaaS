@@ -218,18 +218,26 @@ function DashboardLayout({ children }) {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
+  // Allow child pages to trigger mobile sidebar open via CustomEvent
+  React.useEffect(() => {
+    const openHandler = () => setSidebarOpen(true)
+    // 'toggleMobileSidebar' is dispatched by BottomNav's Menu tab
+    const toggleHandler = () => setSidebarOpen(prev => !prev)
+    window.addEventListener('open-mobile-sidebar', openHandler)
+    window.addEventListener('toggleMobileSidebar', toggleHandler)
+    return () => {
+      window.removeEventListener('open-mobile-sidebar', openHandler)
+      window.removeEventListener('toggleMobileSidebar', toggleHandler)
+    }
+  }, [])
+
   if (isDesktop) {
     return <DesktopSidebarLayout>{children}</DesktopSidebarLayout>;
   }
 
   return (
     <div className="bg-background min-h-screen max-w-[480px] mx-auto relative pb-[80px] shadow-2xl overflow-x-hidden">
-      <button
-        className="md:hidden fixed top-4 left-4 z-50 w-10 h-10 bg-[#0C1319] border border-white/10 rounded-xl flex items-center justify-center shadow-lg"
-        onClick={() => setSidebarOpen(true)}
-      >
-        <Menu className="w-5 h-5 text-[#94A3B8]" />
-      </button>
+      {/* Global hamburger — hidden on mobile, pages handle their own header */}
 
       <SidebarProvider>
         <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -437,6 +445,7 @@ export const routes = createRoutesFromElements(
       <Route path="kesehatan"  element={<PeternakPageRouter page="kesehatan" />} />
       <Route path="reproduksi" element={<PeternakPageRouter page="reproduksi" />} />
       <Route path="penjualan"  element={<PeternakPageRouter page="penjualan" />} />
+      <Route path="quick-add"  element={<PeternakPageRouter page="quick-add" />} />
 
 
       {/* Per-farm routes (Level 2) */}

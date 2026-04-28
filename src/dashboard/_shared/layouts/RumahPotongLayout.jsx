@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
@@ -19,6 +19,18 @@ export default function RumahPotongLayout() {
   useNotificationGenerator()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Listen to sidebar open events from BottomNav (Menu tab) and MobileHeader
+  useEffect(() => {
+    const openHandler = () => setSidebarOpen(true)
+    const toggleHandler = () => setSidebarOpen(prev => !prev)
+    window.addEventListener('open-mobile-sidebar', openHandler)
+    window.addEventListener('toggleMobileSidebar', toggleHandler)
+    return () => {
+      window.removeEventListener('open-mobile-sidebar', openHandler)
+      window.removeEventListener('toggleMobileSidebar', toggleHandler)
+    }
+  }, [])
 
   if (loading) return null
 

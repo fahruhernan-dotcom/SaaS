@@ -1,4 +1,4 @@
-import KandangViewLayout from '../../_shared/components/kandang/KandangViewLayout'
+import KandangViewLayout from '@/dashboard/peternak/_shared/components/kandang/KandangViewLayout'
 import {
   useKambingActiveBatches,
   useKambingAnimalsByBatches,

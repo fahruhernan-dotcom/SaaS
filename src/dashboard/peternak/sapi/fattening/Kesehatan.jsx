@@ -9,7 +9,7 @@ import {
   useAddSapiHealthLog,
   useDeleteSapiHealthLog
 } from '@/lib/hooks/useSapiPenggemukanData'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { toast } from 'sonner'
 
 const BASE = '/peternak/peternak_sapi_penggemukan'

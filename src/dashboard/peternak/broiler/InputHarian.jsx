@@ -2,13 +2,13 @@ import React, { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Edit3, CheckCircle2, AlertCircle, Save } from 'lucide-react'
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom'
-import FarmContextBar from '../_shared/components/FarmContextBar'
+import FarmContextBar from '@/dashboard/peternak/_shared/components/FarmContextBar'
 import { DatePicker } from '@/components/ui/DatePicker'
 import {
   useActiveCycles, useUpsertDailyRecord, calcCurrentAge,
 } from '@/lib/hooks/usePeternakData'
 import { useAuth } from '@/lib/hooks/useAuth'
-import LoadingSpinner from '../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

@@ -10,7 +10,8 @@ import {
 } from '@/lib/hooks/useKambingPenggemukanData'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
+import { useTernakLimit } from '@/lib/hooks/useTernakLimit'
 
 const STATUS_CFG = {
   active: { label: 'Aktif',    cls: 'text-green-400 bg-green-500/20 border-green-500/30' },
@@ -95,6 +96,7 @@ export default function KdPenggemukanTernak() {
   const [searchParams] = useSearchParams()
   const defaultBatch = searchParams.get('batch') ?? ''
   const { tenant } = useAuth()
+  const { canAdd, currentCount, limit, isUnlimited } = useTernakLimit('domba_kambing')
 
   const { data: batches = [], isLoading: loadingBatches } = useKambingBatches()
   const [selectedBatch, setSelectedBatch] = useState(defaultBatch)
@@ -184,13 +186,18 @@ export default function KdPenggemukanTernak() {
       <header className="px-4 pt-6 pb-4 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.04] flex items-center justify-between">
         <div>
           <h1 className="font-['Sora'] font-black text-xl text-white mb-0.5">Data Ternak</h1>
-          <p className="text-xs text-[#4B6478]">{animals.length} ekor total · {animals.filter(a => a.status === 'active').length} aktif</p>
+          <p className="text-xs text-[#4B6478]">
+            {animals.length} ekor total · {animals.filter(a => a.status === 'active').length} aktif
+            {!isUnlimited && <span className={`ml-1 ${!canAdd ? 'text-red-400' : ''}`}>· {currentCount}/{limit}</span>}
+          </p>
         </div>
         {selectedBatch && activeBatch?.status === 'active' && (
           <motion.button
             whileTap={{ scale: 0.95 }}
+            disabled={!canAdd}
+            title={!canAdd ? `Limit ${limit} ekor tercapai. Upgrade ke Pro/Business.` : undefined}
             onClick={() => setAddSheetOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-green-600 rounded-xl text-white text-xs font-extrabold font-['Sora'] shadow-[0_3px_12px_rgba(22,163,74,0.35)]"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-green-600 rounded-xl text-white text-xs font-extrabold font-['Sora'] shadow-[0_3px_12px_rgba(22,163,74,0.35)] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Plus size={13} />
             Tambah Ekor

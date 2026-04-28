@@ -24,6 +24,8 @@ import {
   Syringe,
   Tag,
   Heart,
+  Menu,
+  Wheat,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
@@ -36,7 +38,7 @@ const ICON_MAP = {
   Home, ArrowLeftRight, Building2, User, Users, MoreHorizontal,
   RefreshCw, ClipboardList, ShoppingCart, CreditCard, Package,
   Truck, Wallet, Car, BarChart2, Calculator, Shield, LayoutGrid, Store,
-  Syringe, Tag, Heart,
+  Syringe, Tag, Heart, Menu, Wheat
 }
 
 // ── Single tab button ──────────────────────────────────────────────────────────
@@ -173,6 +175,52 @@ function CenterFAB({ color, onClick }) {
   )
 }
 
+// ── Peternak-specific Tab (Handoff styling) ──────────────────────────────────
+function PeternakNavItem({ tab, active, color, onClick }) {
+  const Icon = ICON_MAP[tab.icon] || Home
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: 'none', border: 'none', cursor: 'pointer',
+        padding: '8px 4px',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+        color: active ? color : 'rgba(255,255,255,0.4)',
+        transition: 'color 0.2s',
+        flex: 1,
+        WebkitTapHighlightColor: 'transparent',
+      }}
+    >
+      <Icon size={22} strokeWidth={active ? 2.5 : 2} />
+      <span style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.01em' }}>
+        {tab.label}
+      </span>
+    </button>
+  )
+}
+
+// ── Peternak-specific Center FAB (Handoff styling) ───────────────────────────
+function PeternakCenterFAB({ color, onClick }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <button
+        onClick={onClick}
+        style={{
+          width: 48, height: 48, borderRadius: 999,
+          background: color, color: '#0A0E0C',
+          border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: `0 4px 14px ${color}40`,
+          transform: 'translateY(-8px)',
+          WebkitTapHighlightColor: 'transparent',
+        }}
+      >
+        <Plus size={24} color="white" strokeWidth={2.5} />
+      </button>
+    </div>
+  )
+}
+
 // ── Root component ─────────────────────────────────────────────────────────────
 export default function BottomNav() {
   const { user, profile, profiles, tenant, switchTenant } = useAuth()
@@ -299,8 +347,9 @@ export default function BottomNav() {
   const rightTabs = hasFab ? finalTabs.slice(mid)      : []
 
   const handleTabClick = (tab) => {
-    const isMore = tab.path === '/lainnya'
-    if (isMore) {
+    if (tab.slug === 'menu' || tab.label === 'Menu') {
+      window.dispatchEvent(new Event('toggleMobileSidebar'))
+    } else if (tab.path === '/lainnya') {
       setDrawerOpen(true)
     } else if (tab.label === 'Admin') {
       const adminProfile = profiles?.find(
@@ -318,6 +367,19 @@ export default function BottomNav() {
   const renderTab = (tab) => {
     const active   = location.pathname === tab.path || location.pathname.startsWith(tab.path + '/')
     const tabColor = tab.label === 'Admin' ? '#F59E0B' : color
+    
+    if (isPeternakUser) {
+      return (
+        <PeternakNavItem
+          key={tab.path}
+          tab={tab}
+          active={active}
+          color={tabColor}
+          onClick={() => handleTabClick(tab)}
+        />
+      )
+    }
+
     return (
       <NavItem
         key={tab.path}
@@ -339,26 +401,42 @@ export default function BottomNav() {
           transform: 'translateX(-50%)',
           width: '100%',
           maxWidth: '480px',
-          height: '64px',
+          height: isPeternakUser ? 'auto' : '64px',
           background: 'rgba(10,15,22,0.96)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
           borderTop: '1px solid rgba(255,255,255,0.07)',
-          display: 'flex',
+          display: isPeternakUser ? 'grid' : 'flex',
+          gridTemplateColumns: isPeternakUser ? (hasFab ? `repeat(${finalTabs.length + 1}, 1fr)` : `repeat(${finalTabs.length}, 1fr)`) : undefined,
           alignItems: 'stretch',
           zIndex: 3500,
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          paddingBottom: isPeternakUser ? 'calc(24px + env(safe-area-inset-bottom, 0px))' : 'env(safe-area-inset-bottom, 0px)',
+          paddingTop: isPeternakUser ? '8px' : '0px',
+          paddingLeft: isPeternakUser ? '8px' : '0px',
+          paddingRight: isPeternakUser ? '8px' : '0px',
           overflow: 'visible',
         }}
       >
-        {hasFab ? (
-          <>
-            {leftTabs.map(renderTab)}
-            <CenterFAB color={color} onClick={() => navigate(fabPath)} />
-            {rightTabs.map(renderTab)}
-          </>
+        {isPeternakUser ? (
+          hasFab ? (
+            <>
+              {leftTabs.map(renderTab)}
+              <PeternakCenterFAB color={color} onClick={() => navigate(fabPath)} />
+              {rightTabs.map(renderTab)}
+            </>
+          ) : (
+            finalTabs.map(renderTab)
+          )
         ) : (
-          finalTabs.map(renderTab)
+          hasFab ? (
+            <>
+              {leftTabs.map(renderTab)}
+              <CenterFAB color={color} onClick={() => navigate(fabPath)} />
+              {rightTabs.map(renderTab)}
+            </>
+          ) : (
+            finalTabs.map(renderTab)
+          )
         )}
       </nav>
 

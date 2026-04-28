@@ -15,7 +15,7 @@ import { formatIDRShort } from '@/lib/format'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { toast } from 'sonner'
-import LoadingSpinner from '../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 const sheetLabelStyle = {
   display: 'block', fontSize: 10, fontWeight: 800,

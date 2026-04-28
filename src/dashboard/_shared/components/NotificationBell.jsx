@@ -119,7 +119,11 @@ export default function NotificationBell() {
       }
     }
     document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    document.addEventListener('touchstart', handler)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      document.removeEventListener('touchstart', handler)
+    }
   }, [])
 
   const handleItemClick = async (notif) => {
@@ -135,18 +139,23 @@ export default function NotificationBell() {
   return (
     <div style={{ position: 'relative' }}>
       {/* ── Trigger Button ── */}
-      <button
+      <motion.button
         ref={buttonRef}
-        onClick={() => setIsOpen((p) => !p)}
+        whileTap={{ scale: 0.92 }}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsOpen((p) => !p);
+        }}
         style={{
-          width: 36,
-          height: 36,
+          width: 40,
+          height: 40,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          borderRadius: 10,
-          border: '1px solid rgba(255,255,255,0.08)',
-          background: 'transparent',
+          borderRadius: 12,
+          border: '1px solid rgba(255,255,255,0.1)',
+          background: 'rgba(255,255,255,0.05)',
           cursor: 'pointer',
           color: '#94A3B8',
           position: 'relative',
@@ -187,7 +196,7 @@ export default function NotificationBell() {
             </motion.div>
           )}
         </AnimatePresence>
-      </button>
+      </motion.button>
 
       {/* ── Dropdown Panel ── */}
       <AnimatePresence>

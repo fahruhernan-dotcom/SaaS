@@ -11,7 +11,7 @@ import {
   useLogKambingPerahSale
 } from '@/lib/hooks/useKambingPerahData'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import LoadingSpinner from '../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 export default function KambingPerahPenjualan() {
   const { tenant } = useAuth()

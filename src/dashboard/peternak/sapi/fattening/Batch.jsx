@@ -12,7 +12,7 @@ import {
   calcSapiMortalitas,
 } from '@/lib/hooks/useSapiPenggemukanData'
 import { useAuth } from '@/lib/hooks/useAuth'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 const BASE = '/peternak/peternak_sapi_penggemukan'
 

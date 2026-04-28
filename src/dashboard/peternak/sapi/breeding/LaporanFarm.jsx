@@ -10,7 +10,7 @@ import {
   calcConceptionRate,
   calcCalvingInterval,
 } from '@/lib/hooks/useSapiBreedingData'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 // â”€â”€â”€ KPI Targets — Sapi Breeding â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const TARGETS = {

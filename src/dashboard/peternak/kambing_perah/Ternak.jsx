@@ -11,7 +11,7 @@ import {
 } from '@/lib/hooks/useKambingPerahData'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
-import LoadingSpinner from '../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 const STATUS_MAP = {
   laktasi:  { label: 'Laktasi',  cls: 'bg-green-500/10 text-green-400 border-green-500/20' },

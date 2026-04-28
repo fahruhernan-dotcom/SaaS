@@ -30,7 +30,8 @@ import {
   calcADGFromRecords,
   calcADG,
 } from '@/lib/hooks/useKdPenggemukanData'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
+import { useTernakLimit } from '@/lib/hooks/useTernakLimit'
 
 const BASE = '/peternak/peternak_domba_penggemukan'
 
@@ -1271,6 +1272,10 @@ export default function DombaTernak() {
   const defaultBatchId = params.get('batch') || ''
   const navigate = useNavigate()
 
+  const { canAdd, currentCount, limit, isUnlimited } = useTernakLimit('domba_kambing')
+  const limitLabel = !isUnlimited ? `${currentCount}/${limit} ekor` : null
+  const upgradeTitle = !canAdd ? `Limit ${limit} ekor tercapai. Upgrade ke Pro/Business untuk tambah lebih banyak.` : undefined
+
   const { data: batches = [], isLoading: loadingBatches } = useDombaBatches()
   const [selectedBatchId, setSelectedBatchId] = useState(defaultBatchId)
   
@@ -1347,10 +1352,17 @@ export default function DombaTernak() {
                 : `${filtered.length} ${filter === 'active' ? 'AKTIF' : filter === 'sold' ? 'TERJUAL' : filter === 'dead' ? 'MATI' : 'AFKIR'} · ${animals.length} TERDAFTAR`}
             </p>
           </div>
-          <div className="flex gap-2">
-            <button 
-              onClick={() => setSheet('bulk')} 
-              className="w-10 h-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-xl text-[#4B6478] hover:text-white hover:bg-white/10 transition-all shadow-inner"
+          <div className="flex items-center gap-2">
+            {limitLabel && (
+              <span className={`text-[10px] font-black px-2 py-1 rounded-lg border ${!canAdd ? 'text-red-400 bg-red-500/10 border-red-500/20' : 'text-[#4B6478] bg-white/5 border-white/5'}`}>
+                {limitLabel}
+              </span>
+            )}
+            <button
+              disabled={!canAdd}
+              title={upgradeTitle}
+              onClick={() => setSheet('bulk')}
+              className="w-10 h-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-xl text-[#4B6478] hover:text-white hover:bg-white/10 transition-all shadow-inner disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ListPlus size={18} />
             </button>
@@ -1363,9 +1375,10 @@ export default function DombaTernak() {
               Jual
             </button>
             <button
-              disabled={!selectedBatchId}
+              disabled={!selectedBatchId || !canAdd}
+              title={upgradeTitle}
               onClick={() => setSheet('add')}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-40 rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(22,163,74,0.3)] active:scale-[0.98] transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(22,163,74,0.3)] active:scale-[0.98] transition-all"
             >
               <Plus size={14} strokeWidth={3} />
               Tambah

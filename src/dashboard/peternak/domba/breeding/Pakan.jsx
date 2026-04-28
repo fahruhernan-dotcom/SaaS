@@ -4,7 +4,7 @@ import {
   useDombaBreedingFeedLogs,
   useAddDombaBreedingFeedLog,
 } from '@/lib/hooks/useDombaBreedingData'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 function FeedCard({ log }) {
   const date = new Date(log.log_date).toLocaleDateString('id-ID', {

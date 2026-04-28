@@ -409,6 +409,7 @@ export function useAddSapiAnimal() {
     onSuccess: (_, { batch_id }) => {
       qc.invalidateQueries({ queryKey: ['sapi-animals', batch_id] })
       qc.invalidateQueries({ queryKey: ['sapi-batches', tenant?.id] })
+      qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'sapi'] })
       toast.success('Ternak berhasil ditambahkan')
     },
     onError: (err) => toast.error('Gagal tambah ternak: ' + err.message),
@@ -453,6 +454,7 @@ export function useBulkAddSapiAnimals() {
     onSuccess: (_, { batch_id }) => {
       qc.invalidateQueries({ queryKey: ['sapi-animals', batch_id] })
       qc.invalidateQueries({ queryKey: ['sapi-batches', tenant?.id] })
+      qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'sapi'] })
       toast.success('Semua ternak berhasil ditambahkan!')
     },
     onError: (err) => toast.error('Gagal tambah bulk: ' + err.message),
@@ -498,6 +500,7 @@ export function useUpdateSapiAnimalStatus() {
       qc.invalidateQueries({ queryKey: ['sapi-animals', batchId] })
       qc.invalidateQueries({ queryKey: ['sapi-animal-detail'] })
       qc.invalidateQueries({ queryKey: ['sapi-batches', tenant?.id] })
+      qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'sapi'] })
     },
     onError: (err) => toast.error('Gagal update status: ' + err.message),
   })

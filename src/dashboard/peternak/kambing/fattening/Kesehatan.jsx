@@ -6,7 +6,7 @@ import {
 } from '@/lib/hooks/useKambingPenggemukanData'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 const LOG_TYPE_CFG = {
   sakit:       { label: 'Sakit',       icon: AlertTriangle, cls: 'text-red-400 bg-red-500/15 border-red-500/25' },

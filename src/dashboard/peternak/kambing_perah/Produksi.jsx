@@ -13,7 +13,7 @@ import {
 } from '@/lib/hooks/useKambingPerahData'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
-import LoadingSpinner from '../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 export default function KambingPerahProduksi() {
   const { tenant } = useAuth()

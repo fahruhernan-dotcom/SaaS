@@ -197,6 +197,7 @@ export function createBreedingHooks(prefix) {
       },
       onSuccess: () => {
         qc.invalidateQueries(KEYS.animals(tenant.id))
+        qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'domba_kambing'] })
         toast.success('Ternak berhasil ditambahkan')
       },
       onError: (e) => toast.error(e.message),

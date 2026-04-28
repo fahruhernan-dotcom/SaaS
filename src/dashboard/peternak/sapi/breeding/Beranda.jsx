@@ -11,7 +11,7 @@ import {
   calcCalvingInterval,
   calcHariMenujuPartus,
 } from '@/lib/hooks/useSapiBreedingData'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 const BASE = '/peternak/peternak_sapi_breeding'
 

@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useFeedStocks, useUpsertFeedStock, useReduceFeedStock, usePeternakFarms, useActiveCycles } from '@/lib/hooks/usePeternakData'
 import { useAuth } from '@/lib/hooks/useAuth'
-import FarmContextBar from '../_shared/components/FarmContextBar'
+import FarmContextBar from '@/dashboard/peternak/_shared/components/FarmContextBar'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

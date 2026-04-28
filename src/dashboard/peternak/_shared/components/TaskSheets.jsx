@@ -15,7 +15,7 @@ import { InputNumber } from '@/components/ui/InputNumber'
 import { DatePicker } from '@/components/ui/DatePicker'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { toast } from 'sonner'
-import { getRandomizedSample } from '../utils/taskUtils'
+import { getRandomizedSample } from '@/dashboard/peternak/_shared/utils/taskUtils'
 import { CONTAINER_PRESETS } from '@/lib/constants/taskTemplates'
 
 export function ContainerCalcField({ field, reportData, setReportData, disabled }) {

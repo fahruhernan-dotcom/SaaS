@@ -49,6 +49,7 @@ import DombaTaskSettings from './domba/fattening/TaskSettings'
 import DombaTaskAssign   from './domba/fattening/TaskAssign'
 import DombaDailyTask    from './domba/fattening/DailyTask'
 import DombaPenjualan    from './domba/fattening/Penjualan'
+import DombaQuickAdd     from './domba/fattening/QuickAdd'
 
 // ─── Domba — Breeding ─────────────────────────────────────────────────────────
 import DombaBreedingBeranda    from './domba/breeding/Beranda'
@@ -83,26 +84,11 @@ import KambingPerahTernak    from './kambing_perah/Ternak'
 import KambingPerahInventory from './kambing_perah/Inventory'
 import KambingPerahPenjualan from './kambing_perah/Penjualan'
 
-// ─── KambingDomba (legacy — akan dihapus) ────────────────────────────────────
-import KdBeranda         from './kambing_domba/Beranda'
-import KdBatch           from './kambing_domba/Batch'
-import KdTernak          from './kambing_domba/Ternak'
-import KdKesehatan       from './kambing_domba/Kesehatan'
-import KdPakan           from './kambing_domba/Pakan'
-import KdLaporan         from './kambing_domba/LaporanBatch'
-import KdKandangView     from './kambing_domba/KandangView'
-import KdBreedingBeranda    from './kambing_domba/breeding/Beranda'
-import KdBreedingTernak     from './kambing_domba/breeding/Ternak'
-import KdBreedingReproduksi from './kambing_domba/breeding/Reproduksi'
-import KdBreedingKesehatan  from './kambing_domba/breeding/Kesehatan'
-import KdBreedingPakan      from './kambing_domba/breeding/Pakan'
-import KdBreedingLaporan    from './kambing_domba/breeding/LaporanFarm'
-
 // ─── Shared ───────────────────────────────────────────────────────────────────
 import UniversalDailyTask   from './_shared/components/UniversalDailyTask'
-import HargaPasar           from '../_shared/pages/HargaPasar'
-import Akun                 from '../_shared/pages/Akun'
-import LoadingSpinner       from '../_shared/components/LoadingSpinner'
+import HargaPasar           from '@/dashboard/_shared/pages/HargaPasar'
+import Akun                 from '@/dashboard/_shared/pages/Akun'
+import LoadingSpinner       from '@/dashboard/_shared/components/LoadingSpinner'
 import TanyaAIPage          from './ai/TanyaAIPage'
 import AnalisisPerformaPage from './ai/AnalisisPerformaPage'
 import PrediksiHasilPage    from './ai/PrediksiHasilPage'
@@ -211,6 +197,7 @@ export function PeternakPageRouter({ page }) {
       task_settings:  <PeternakAdminGuard><DombaTaskSettings /></PeternakAdminGuard>,
       task_assign:    <PeternakAdminGuard><DombaTaskAssign /></PeternakAdminGuard>,
       penjualan:      <DombaPenjualan />,
+      'quick-add':    <DombaQuickAdd />,
       'harga-pasar':  <HargaPasar />,
       tim:            <BroilerTim />,
       akun:           <Akun />,
@@ -264,34 +251,6 @@ export function PeternakPageRouter({ page }) {
       penjualan:     <KambingPerahPenjualan />,
       laporan:       <div className="p-8"><h2 className="text-xl font-bold text-white">Laporan</h2><p className="text-slate-400">Coming soon</p></div>,
       'stok-pakan':  <KambingPerahInventory />,
-      daily_task:    <UniversalDailyTask livestockType={livestockType} />,
-      'harga-pasar': <HargaPasar />,
-      tim:           <BroilerTim />,
-      akun:          <Akun />,
-      ...AI,
-    },
-    // ─── Legacy: kambing_domba (akan dihapus setelah migrasi selesai) ─────────
-    peternak_kambing_domba_penggemukan: {
-      beranda:        <KdBeranda />,
-      batch:          <KdBatch />,
-      ternak:         <KdTernak />,
-      kesehatan:      <KdKesehatan />,
-      'stok-pakan':   <KdPakan />,
-      laporan:        <KdLaporan />,
-      'kandang-view': <KdKandangView />,
-      daily_task:     <UniversalDailyTask livestockType={livestockType} />,
-      'harga-pasar':  <HargaPasar />,
-      tim:            <BroilerTim />,
-      akun:           <Akun />,
-      ...AI,
-    },
-    peternak_kambing_domba_breeding: {
-      beranda:       <KdBreedingBeranda />,
-      ternak:        <KdBreedingTernak />,
-      reproduksi:    <KdBreedingReproduksi />,
-      kesehatan:     <KdBreedingKesehatan />,
-      'stok-pakan':  <KdBreedingPakan />,
-      laporan:       <KdBreedingLaporan />,
       daily_task:    <UniversalDailyTask livestockType={livestockType} />,
       'harga-pasar': <HargaPasar />,
       tim:           <BroilerTim />,

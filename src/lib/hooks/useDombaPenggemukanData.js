@@ -40,6 +40,7 @@ export const useDombaFeedLogsByBatches           = hooks.useFeedLogsByBatches
 export const useDombaOperationalCostsByBatches   = hooks.useOperationalCostsByBatches
 export const useDombaHealthLogsByBatches         = hooks.useHealthLogsByBatches
 export const useDombaOperationalCosts     = hooks.useOperationalCosts
+export const useDombaHppBatch             = hooks.useHppBatch
 
 // Mutations
 export const useCreateDombaBatch         = hooks.useCreateBatch

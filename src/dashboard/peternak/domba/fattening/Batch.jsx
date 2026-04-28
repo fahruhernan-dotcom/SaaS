@@ -22,8 +22,10 @@ import {
 } from '@/lib/hooks/useDombaPenggemukanData'
 import { useAuth } from '@/lib/hooks/useAuth'
 import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
-import { BrokerPageHeader } from '../../../_shared/components/transactions/BrokerPageHeader'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
+import { BrokerPageHeader } from '@/dashboard/_shared/components/transactions/BrokerPageHeader'
+import { MobileHeader } from '@/dashboard/peternak/_shared/components/MobileViewPeternak/MobileHeader'
 import { Button } from '@/components/ui/button'
 import { format, addDays } from 'date-fns'
 import { id } from 'date-fns/locale'
@@ -627,33 +629,53 @@ export default function DombaBatch() {
   const active = filtered.filter(b => b.status === 'active')
   const closed = filtered.filter(b => b.status !== 'active')
 
+  const isMobile = useMediaQuery('(max-width: 1024px)')
+
   if (isLoading) return <LoadingSpinner fullPage />
 
   return (
     <div className="flex flex-col h-full bg-[#06090F]">
-      <BrokerPageHeader 
-        title="Batch Cycle"
-        subtitle="Manajemen siklus fattening dan tracking performa per kelompok."
-        icon={<TrendingUp size={20} className="text-green-400" />}
-        actionButton={
-          <div className="flex items-center gap-3">
-             <div className="relative h-10 border border-white/[0.08] rounded-xl bg-white/[0.03] overflow-hidden hidden md:block w-64 group/search">
-                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4B6478] group-focus-within/search:text-green-400 transition-colors" />
-                 <input 
-                    value={search} 
-                    onChange={e => setSearch(e.target.value)}
-                    placeholder="Search Batch ID..." 
-                    className="w-full h-full pl-9 pr-4 bg-transparent text-[11px] font-black uppercase tracking-widest text-white focus:outline-none" 
-                 />
-             </div>
-             {perm.canBuatSiklus && (
-               <Button onClick={() => setShowCreate(true)} className="h-10 px-5 bg-green-500 hover:bg-green-600 text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-[0_4px_15px_rgba(34,197,94,0.3)] gap-2 transition-all active:scale-95">
-                 <Plus size={16} /> Batch
-               </Button>
-             )}
-          </div>
-        }
-      />
+      {isMobile ? (
+        <MobileHeader 
+          title="Batch Cycle" 
+          rightElement={
+            <div className="flex items-center gap-2">
+              {perm.canBuatSiklus && (
+                <button 
+                  onClick={() => setShowCreate(true)}
+                  className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center text-white active:scale-95 transition-transform"
+                >
+                  <Plus size={20} />
+                </button>
+              )}
+            </div>
+          }
+        />
+      ) : (
+        <BrokerPageHeader 
+          title="Batch Cycle"
+          subtitle="Manajemen siklus fattening dan tracking performa per kelompok."
+          icon={<TrendingUp size={20} className="text-green-400" />}
+          actionButton={
+            <div className="flex items-center gap-3">
+               <div className="relative h-10 border border-white/[0.08] rounded-xl bg-white/[0.03] overflow-hidden hidden md:block w-64 group/search">
+                   <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4B6478] group-focus-within/search:text-green-400 transition-colors" />
+                   <input 
+                      value={search} 
+                      onChange={e => setSearch(e.target.value)}
+                      placeholder="Search Batch ID..." 
+                      className="w-full h-full pl-9 pr-4 bg-transparent text-[11px] font-black uppercase tracking-widest text-white focus:outline-none" 
+                   />
+               </div>
+               {perm.canBuatSiklus && (
+                 <Button onClick={() => setShowCreate(true)} className="h-10 px-5 bg-green-500 hover:bg-green-600 text-white font-black uppercase text-[10px] tracking-widest rounded-xl shadow-[0_4px_15px_rgba(34,197,94,0.3)] gap-2 transition-all active:scale-95">
+                   <Plus size={16} /> Batch
+                 </Button>
+               )}
+            </div>
+          }
+        />
+      )}
 
       <main className="flex-1 overflow-y-auto px-5 pt-4 pb-12 custom-scrollbar space-y-10">
         

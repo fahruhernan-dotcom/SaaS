@@ -8,7 +8,8 @@ import {
   useSapiBreedingAnimals,
   useAddSapiBreedingAnimal,
 } from '@/lib/hooks/useSapiBreedingData'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
+import { useTernakLimit } from '@/lib/hooks/useTernakLimit'
 
 const BASE = '/peternak/peternak_sapi_breeding'
 
@@ -398,6 +399,7 @@ function AddAnimalSheet({ animals, onClose }) {
 }
 
 export default function SapiBreedingTernak() {
+  const { canAdd, currentCount, limit, isUnlimited } = useTernakLimit('sapi')
   const [filterPurpose, setFilterPurpose] = useState('all')
   const [search, setSearch]               = useState('')
   const [showAdd, setShowAdd]             = useState(false)
@@ -425,12 +427,17 @@ export default function SapiBreedingTernak() {
       <header className="px-4 pt-6 pb-4 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.04] flex items-center justify-between">
         <div>
           <h1 className="font-['Sora'] font-black text-xl text-white mb-0.5">Data Ternak</h1>
-          <p className="text-xs text-[#4B6478]">{animals.length} ekor terdaftar</p>
+          <p className="text-xs text-[#4B6478]">
+            {animals.length} ekor terdaftar
+            {!isUnlimited && <span className={`ml-1 ${!canAdd ? 'text-red-400' : ''}`}>· {currentCount}/{limit}</span>}
+          </p>
         </div>
         <motion.button
           whileTap={{ scale: 0.95 }}
+          disabled={!canAdd}
+          title={!canAdd ? `Limit ${limit} ekor tercapai. Upgrade ke Pro/Business.` : undefined}
           onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 px-3.5 py-2.5 bg-amber-600 rounded-xl text-white text-xs font-extrabold font-['Sora']"
+          className="flex items-center gap-1.5 px-3.5 py-2.5 bg-amber-600 rounded-xl text-white text-xs font-extrabold font-['Sora'] disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Plus size={13} /> Tambah
         </motion.button>

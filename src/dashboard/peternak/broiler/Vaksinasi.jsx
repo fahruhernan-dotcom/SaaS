@@ -12,7 +12,7 @@ import {
   useAllCycles, useVaccinationRecords, calcCurrentAge,
 } from '@/lib/hooks/usePeternakData'
 import { toast } from 'sonner'
-import LoadingSpinner from '../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 

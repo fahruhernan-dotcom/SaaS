@@ -12,7 +12,7 @@ import {
   useKambingPerahAnimals,
   useKambingPerahInventory
 } from '@/lib/hooks/useKambingPerahData'
-import LoadingSpinner from '../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 const BASE = '/peternak/peternak_kambing_perah'
 

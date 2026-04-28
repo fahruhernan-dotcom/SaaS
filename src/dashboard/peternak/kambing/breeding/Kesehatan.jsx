@@ -5,7 +5,7 @@ import {
   useKambingBreedingAnimals,
   useAddKambingBreedingHealthLog,
 } from '@/lib/hooks/useKambingBreedingData'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 const LOG_TYPE_LABEL = {
   vaksinasi:   'Vaksinasi',

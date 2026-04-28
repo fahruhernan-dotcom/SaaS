@@ -35,10 +35,10 @@ import { useDombaBatches, useDombaActiveBatches } from '@/lib/hooks/useDombaPeng
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { Switch } from '@/components/ui/switch'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
-import EmptyState from '../../../_shared/components/EmptyState'
-import { BrokerPageHeader } from '../../../_shared/components/transactions/BrokerPageHeader'
-import { BrokerBaseCard } from '../../../_shared/components/transactions/BrokerBaseCard'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
+import EmptyState from '@/dashboard/_shared/components/EmptyState'
+import { BrokerPageHeader } from '@/dashboard/_shared/components/transactions/BrokerPageHeader'
+import { BrokerBaseCard } from '@/dashboard/_shared/components/transactions/BrokerBaseCard'
 
 const TASK_TYPE_CFG = {
   pemberian_pakan: { label: 'Pakan', icon: Utensils, color: 'text-orange-400', bg: 'bg-orange-500/15', border: 'border-orange-500/20' },

@@ -7,7 +7,7 @@ import {
   calcSapiHariDiFarm
 } from '@/lib/hooks/useSapiPenggemukanData'
 import { usePeternakTaskInstances } from '@/lib/hooks/usePeternakTaskData'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { getLivestockConfig } from '@/lib/constants/taskTemplates'
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, subMonths, addMonths, isSameMonth } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'

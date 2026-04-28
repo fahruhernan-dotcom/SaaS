@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { InputNumber } from '@/components/ui/InputNumber'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { toast } from 'sonner'
-import { getUrgencyLabel } from '../utils/taskUtils'
+import { getUrgencyLabel } from '@/dashboard/peternak/_shared/utils/taskUtils'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

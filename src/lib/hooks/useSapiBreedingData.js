@@ -335,6 +335,7 @@ export function useAddSapiBreedingAnimal() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sapi-breeding-animals', tenant?.id] })
+      qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'sapi'] })
       toast.success('Ternak berhasil ditambahkan')
     },
     onError: (err) => toast.error('Gagal tambah ternak: ' + err.message),

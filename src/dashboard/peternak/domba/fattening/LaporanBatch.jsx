@@ -1,4 +1,4 @@
-import LaporanBatchPage from '../../_shared/components/laporan/LaporanBatchPage'
+import LaporanBatchPage from '@/dashboard/peternak/_shared/components/laporan/LaporanBatchPage'
 import {
   useDombaBatches,
   useDombaAnimalsByBatches,

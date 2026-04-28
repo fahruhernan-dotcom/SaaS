@@ -24,6 +24,18 @@ export default function PeternakLayout() {
     setRightAction(null)
   }, [location.pathname])
 
+  // Listen to sidebar open events from BottomNav (Menu tab) and MobileHeader
+  useEffect(() => {
+    const openHandler = () => setSidebarOpen(true)
+    const toggleHandler = () => setSidebarOpen(prev => !prev)
+    window.addEventListener('open-mobile-sidebar', openHandler)
+    window.addEventListener('toggleMobileSidebar', toggleHandler)
+    return () => {
+      window.removeEventListener('open-mobile-sidebar', openHandler)
+      window.removeEventListener('toggleMobileSidebar', toggleHandler)
+    }
+  }, [])
+
   // Swipe-right-from-left-edge to open sidebar
   const swipeStartX = useRef(null)
   const handleTouchStart = (e) => {
@@ -59,11 +71,8 @@ export default function PeternakLayout() {
           overflowX: 'hidden',
           overscrollBehaviorX: 'none'
         }}>
-          <TopBar 
-            onMenuClick={() => setSidebarOpen(true)} 
-            rightAction={rightAction}
-          />
-
+          {/* TopBar removed from mobile branch because pages use MobileHeader for better control/overlap */}
+          
           <SidebarProvider style={{ minHeight: 0 }}>
             <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           </SidebarProvider>

@@ -24,7 +24,7 @@ export default function TopBar({ title, subtitle, showBack = false, rightAction,
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.2 }}
-      className="px-5 lg:px-6 pt-10 lg:pt-4 pb-4 lg:pb-5 flex items-center justify-between sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-50 border-b border-white/5 min-h-[60px] lg:min-h-[64px]"
+      className="hidden md:flex px-5 lg:px-6 pt-10 lg:pt-4 pb-4 lg:pb-5 items-center justify-between sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-50 border-b border-white/5 min-h-[60px] lg:min-h-[64px]"
     >
       <div className="flex items-center gap-4 flex-1 min-w-0">
         {!showBack && onMenuClick && (

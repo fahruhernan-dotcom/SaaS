@@ -7,7 +7,8 @@ import {
   useAddDombaBreedingWeight,
   calcAgeInDays,
 } from '@/lib/hooks/useDombaBreedingData'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
+import { useTernakLimit } from '@/lib/hooks/useTernakLimit'
 
 const STATUS_LABEL = { aktif: 'Aktif', afkir: 'Afkir', mati: 'Mati', terjual: 'Terjual' }
 const STATUS_COLOR = {
@@ -381,6 +382,7 @@ function TimbangSheet({ animal, onClose }) {
 }
 
 export default function BreedingTernak() {
+  const { canAdd, currentCount, limit, isUnlimited } = useTernakLimit('domba_kambing')
   const { data: animals = [], isLoading } = useDombaBreedingAnimals()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('aktif')
@@ -408,10 +410,16 @@ export default function BreedingTernak() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-['Sora'] font-bold text-xl text-white">Data Ternak</h1>
-          <p className="text-[11px] text-[#4B6478]">{animals.filter(a => a.status === 'aktif').length} ekor aktif</p>
+          <p className="text-[11px] text-[#4B6478]">
+            {animals.filter(a => a.status === 'aktif').length} ekor aktif
+            {!isUnlimited && <span className={`ml-2 ${!canAdd ? 'text-red-400' : ''}`}>· {currentCount}/{limit}</span>}
+          </p>
         </div>
-        <button onClick={() => setShowAdd(true)}
-          className="flex items-center gap-1.5 bg-teal-500 text-white text-xs font-bold px-3 py-2 rounded-xl">
+        <button
+          disabled={!canAdd}
+          title={!canAdd ? `Limit ${limit} ekor tercapai. Upgrade ke Pro/Business.` : undefined}
+          onClick={() => setShowAdd(true)}
+          className="flex items-center gap-1.5 bg-teal-500 text-white text-xs font-bold px-3 py-2 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed">
           <Plus size={14} /> Tambah
         </button>
       </div>

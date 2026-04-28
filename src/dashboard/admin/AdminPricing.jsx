@@ -78,6 +78,10 @@ export default function AdminPricing() {
   const [businessLimits, setBusinessLimits] = useState({
     starter: 1, pro: 3, business: 999, enterprise: 999
   })
+  const [ternakLimits, setTernakLimits] = useState({
+    domba_kambing: { starter: 20, pro: 100, business: null },
+    sapi:          { starter: 10, pro: 50,  business: null },
+  })
   const [addonPricing, setAddonPricing] = useState({
     price_per_type: 99000,
     max_addons_before_upgrade: 2,
@@ -118,6 +122,7 @@ export default function AdminPricing() {
       if (configs.trial_config) setTrialConfig(v => ({ ...v, ...configs.trial_config }))
       if (configs.annual_discount) setAnnualDiscount(v => ({ ...v, ...configs.annual_discount }))
       if (configs.transaction_quota) setTrxQuota(v => ({ ...v, ...configs.transaction_quota }))
+      if (configs.ternak_limit) setTernakLimits(v => ({ ...v, ...configs.ternak_limit }))
       setConfigsInited(true)
     }
   }, [configs, configsInited])
@@ -231,6 +236,16 @@ export default function AdminPricing() {
       await updateConfig.mutateAsync({ config_key: 'kandang_limit', config_value: kandangLimits })
       await updateConfig.mutateAsync({ config_key: 'team_limit', config_value: teamLimits })
       await updateConfig.mutateAsync({ config_key: 'business_limit', config_value: businessLimits })
+    } catch { /* toast shown in hook */ } finally {
+      setSavingLimits(false)
+    }
+  }
+
+  const handleSaveTernakLimits = async () => {
+    setSavingLimits(true)
+    try {
+      await updateConfig.mutateAsync({ config_key: 'ternak_limit', config_value: ternakLimits })
+      toast.success('Limit ternak berhasil disimpan!')
     } catch { /* toast shown in hook */ } finally {
       setSavingLimits(false)
     }
@@ -576,7 +591,78 @@ export default function AdminPricing() {
 
           <div className="h-px w-full bg-gradient-to-r from-transparent via-white/5 to-transparent my-4" />
 
-          {/* Section B — Transaction Quota */}
+          {/* Section B — Ternak Limit */}
+          <section className="space-y-5">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478] font-display flex items-center gap-2">
+                <Settings2 size={13} /> LIMIT TERNAK AKTIF PER PLAN
+              </p>
+              <p className="text-xs text-[#4B6478] mt-1">Jumlah ekor ternak aktif maksimal per tenant. Business = tidak terbatas.</p>
+            </div>
+
+            <div className="space-y-4">
+              {[
+                { key: 'domba_kambing', label: 'Domba & Kambing', emoji: '🐑' },
+                { key: 'sapi', label: 'Sapi', emoji: '🐃' },
+              ].map(({ key, label, emoji }) => (
+                <div key={key} className="bg-white/[0.03] rounded-[24px] p-6 border border-white/5 space-y-4">
+                  <p className="text-xs font-black uppercase tracking-widest text-white/60">{emoji} {label}</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {/* Starter */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Starter</label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={ternakLimits[key]?.starter ?? ''}
+                        onChange={e => setTernakLimits(p => ({
+                          ...p,
+                          [key]: { ...p[key], starter: parseInt(e.target.value) || 0 }
+                        }))}
+                        className="w-full bg-black/40 border border-white/5 h-11 rounded-2xl px-4 text-sm text-white font-black focus:outline-none focus:border-emerald-500/40 focus:bg-emerald-500/5 transition-all"
+                      />
+                    </div>
+                    {/* Pro */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-emerald-500/60">Pro</label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={ternakLimits[key]?.pro ?? ''}
+                        onChange={e => setTernakLimits(p => ({
+                          ...p,
+                          [key]: { ...p[key], pro: parseInt(e.target.value) || 0 }
+                        }))}
+                        className="w-full bg-black/40 border border-emerald-500/20 h-11 rounded-2xl px-4 text-sm text-white font-black focus:outline-none focus:border-emerald-500/40 focus:bg-emerald-500/5 transition-all"
+                      />
+                    </div>
+                    {/* Business */}
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-amber-500/60">Business</label>
+                      <div className="h-11 rounded-2xl bg-amber-500/5 border border-amber-500/20 flex items-center px-4 gap-2 text-sm font-black text-amber-400">
+                        <InfinityIcon size={15} /> Unlimited
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={handleSaveTernakLimits}
+              disabled={savingLimits}
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-12 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(16,185,129,0.3)] border border-emerald-400/20 active:scale-[0.98]"
+            >
+              {savingLimits
+                ? <><Loader2 size={16} className="animate-spin" /> MENYIMPAN...</>
+                : 'SIMPAN LIMIT TERNAK'
+              }
+            </button>
+          </section>
+
+          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/5 to-transparent my-4" />
+
+          {/* Section C — Transaction Quota */}
           <section className="space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">

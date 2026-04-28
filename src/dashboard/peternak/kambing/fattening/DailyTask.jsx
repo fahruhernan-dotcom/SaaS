@@ -18,14 +18,14 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 // UI Components
 import { Button } from '@/components/ui/button'
-import { TaskHeader } from '../../_shared/components/TaskHeader'
+import { TaskHeader } from '@/dashboard/peternak/_shared/components/TaskHeader'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 // Shared Task Components
-import { Scene, GlassCard, SummaryTiles, WeekOrbit, CustomCalendar, EmptyState, CriticalOverdueAlert } from '../../_shared/components/TaskBaseUI'
-import { TaskCard, InteractiveCheckCard } from '../../_shared/components/TaskCards'
-import { CompleteTaskSheet, AdHocTaskSheet, IncidentReportSheet } from '../../_shared/components/TaskSheets'
-import { getUrgencyLabel, sortTasksByPriority } from '../../_shared/utils/taskUtils'
+import { Scene, GlassCard, SummaryTiles, WeekOrbit, CustomCalendar, EmptyState, CriticalOverdueAlert } from '@/dashboard/peternak/_shared/components/TaskBaseUI'
+import { TaskCard, InteractiveCheckCard } from '@/dashboard/peternak/_shared/components/TaskCards'
+import { CompleteTaskSheet, AdHocTaskSheet, IncidentReportSheet } from '@/dashboard/peternak/_shared/components/TaskSheets'
+import { getUrgencyLabel, sortTasksByPriority } from '@/dashboard/peternak/_shared/utils/taskUtils'
 
 // Hooks
 import { useAuth } from '@/lib/hooks/useAuth'

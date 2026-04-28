@@ -17,7 +17,7 @@ import { PROVINCES } from '@/lib/constants/regions'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandList, CommandItem, CommandInput as CommandSearchInput } from '@/components/ui/command'
 import { InputNumber } from '@/components/ui/InputNumber'
-import LoadingSpinner from '../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { toast } from 'sonner'
 
 // ─── Constants ────────────────────────────────────────────────────────────────

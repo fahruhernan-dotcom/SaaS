@@ -7,8 +7,10 @@ import {
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { PALETTE } from './constants'
-import LoadingSpinner from '../../../../_shared/components/LoadingSpinner'
-import { BrokerPageHeader } from '../../../../_shared/components/transactions/BrokerPageHeader'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
+import { MobileHeader } from '@/dashboard/peternak/_shared/components/MobileViewPeternak/MobileHeader'
+import { MobileBatchRow } from '@/dashboard/peternak/_shared/components/MobileViewPeternak/MobileBatchRow'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -18,6 +20,7 @@ import KandangBox from './KandangBox'
 import DenahLantai from './DenahLantai'
 import StickerPeel from '@/dashboard/peternak/_shared/components/StickerPeel'
 import sheepSticker from '@/assets/sheep_sticker.png'
+import { BrokerPageHeader } from '@/dashboard/_shared/components/transactions/BrokerPageHeader'
 
 /**
  * Full kandang management page — supports any livestock species.
@@ -200,60 +203,80 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
+  const isMobile = useMediaQuery('(max-width: 1024px)')
+
   if (loadingBatches) return <LoadingSpinner fullPage />
   const normalKandangs = kandangs.filter(k => !k.is_holding)
 
   return (
-    <div className="flex flex-col bg-[#06090F]" style={{ flex: 1, minHeight: 0, margin: '-24px -32px', overflow: 'hidden' }}>
+    <div className="flex flex-col bg-[#06090F]" style={{ flex: 1, minHeight: 0, margin: isMobile ? '0' : '-24px -32px', overflow: 'hidden' }}>
       <div className="relative">
-        <BrokerPageHeader
-          title={viewMode === 'helicopter' ? (pageTitle ?? 'Helicopter View') : 'Denah Lantai'}
-          subtitle={viewMode === 'helicopter' ? 'Manajemen visual alokasi kandang.' : 'Skala riil 1:1 (1 kotak = 1 meter).'}
-          icon={<LayoutGrid size={20} className="text-emerald-400" />}
-          actionButton={
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 p-1 bg-white/[0.03] border border-white/[0.08] rounded-xl">
-                <button onClick={() => { setViewMode('helicopter'); setFloorMode('view') }} className={cn('flex items-center gap-1.5 px-3 h-8 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all', viewMode === 'helicopter' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-[#4B6478] hover:text-white')}><LayoutGrid size={11} /> Grid</button>
-                <button onClick={() => setViewMode('denah')} className={cn('flex items-center gap-1.5 px-3 h-8 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all', viewMode === 'denah' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-[#4B6478] hover:text-white')}><Map size={11} /> Denah</button>
+        {isMobile ? (
+          <MobileHeader 
+            title={viewMode === 'helicopter' ? (pageTitle ?? 'Helicopter View') : 'Denah Lantai'}
+            rightElement={
+              <div className="flex items-center gap-2">
+                {!isAllBatches && (
+                  <button 
+                    onClick={() => setAddSheet(true)}
+                    className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white active:scale-95 transition-transform"
+                  >
+                    <Plus size={20} />
+                  </button>
+                )}
               </div>
-              {/* ── Batch Selector Dropdown ── */}
-              <div ref={batchDropdownRef}>
-                <button
-                  ref={batchTriggerRef}
-                  onClick={() => {
-                    const rect = batchTriggerRef.current?.getBoundingClientRect()
-                    setTriggerRect(rect ?? null)
-                    setBatchDropdownOpen(o => !o)
-                  }}
-                  className={cn(
-                    'flex items-center gap-2.5 h-9 pl-3 pr-2.5 rounded-xl border transition-all duration-200',
-                    'bg-white/[0.03] border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.14]',
-                    batchDropdownOpen && 'bg-white/[0.06] border-white/[0.14]'
-                  )}
-                >
-                  <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 whitespace-nowrap">
-                    {selectedBatch === 'all'
-                      ? '🌾 Semua Batch'
-                      : batches.find(b => b.id === selectedBatch)?.batch_code ?? '—'}
-                  </span>
-                  <div className="w-px h-3.5 bg-white/10" />
-                  <span className="text-[10px] font-black text-[#4B6478] uppercase whitespace-nowrap">
-                    {animals.filter(a => a.status === 'active').length} Ekor
-                  </span>
-                  <motion.div animate={{ rotate: batchDropdownOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                    <ChevronDown size={13} className="text-[#4B6478]" />
-                  </motion.div>
-                </button>
-              </div>
+            }
+          />
+        ) : (
+          <BrokerPageHeader
+            title={viewMode === 'helicopter' ? (pageTitle ?? 'Helicopter View') : 'Denah Lantai'}
+            subtitle={viewMode === 'helicopter' ? 'Manajemen visual alokasi kandang.' : 'Skala riil 1:1 (1 kotak = 1 meter).'}
+            icon={<LayoutGrid size={20} className="text-emerald-400" />}
+            actionButton={
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 p-1 bg-white/[0.03] border border-white/[0.08] rounded-xl">
+                  <button onClick={() => { setViewMode('helicopter'); setFloorMode('view') }} className={cn('flex items-center gap-1.5 px-3 h-8 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all', viewMode === 'helicopter' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-[#4B6478] hover:text-white')}><LayoutGrid size={11} /> Grid</button>
+                  <button onClick={() => setViewMode('denah')} className={cn('flex items-center gap-1.5 px-3 h-8 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all', viewMode === 'denah' ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'text-[#4B6478] hover:text-white')}><Map size={11} /> Denah</button>
+                </div>
+                {/* ── Batch Selector Dropdown ── */}
+                <div ref={batchDropdownRef}>
+                  <button
+                    ref={batchTriggerRef}
+                    onClick={() => {
+                      const rect = batchTriggerRef.current?.getBoundingClientRect()
+                      setTriggerRect(rect ?? null)
+                      setBatchDropdownOpen(o => !o)
+                    }}
+                    className={cn(
+                      'flex items-center gap-2.5 h-9 pl-3 pr-2.5 rounded-xl border transition-all duration-200',
+                      'bg-white/[0.03] border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.14]',
+                      batchDropdownOpen && 'bg-white/[0.06] border-white/[0.14]'
+                    )}
+                  >
+                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 whitespace-nowrap">
+                      {selectedBatch === 'all'
+                        ? '🌾 Semua Batch'
+                        : batches.find(b => b.id === selectedBatch)?.batch_code ?? '—'}
+                    </span>
+                    <div className="w-px h-3.5 bg-white/10" />
+                    <span className="text-[10px] font-black text-[#4B6478] uppercase whitespace-nowrap">
+                      {animals.filter(a => a.status === 'active').length} Ekor
+                    </span>
+                    <motion.div animate={{ rotate: batchDropdownOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                      <ChevronDown size={13} className="text-[#4B6478]" />
+                    </motion.div>
+                  </button>
+                </div>
 
-              {!isAllBatches && (
-                <Button onClick={() => setAddSheet(true)} className="bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[10px] tracking-widest h-10 px-5 rounded-xl shadow-lg shadow-emerald-500/30 gap-2">
-                  <Plus size={16} /> Kandang
-                </Button>
-              )}
-            </div>
-          }
-        />
+                {!isAllBatches && (
+                  <Button onClick={() => setAddSheet(true)} className="bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[10px] tracking-widest h-10 px-5 rounded-xl shadow-lg shadow-emerald-500/30 gap-2">
+                    <Plus size={16} /> Kandang
+                  </Button>
+                )}
+              </div>
+            }
+          />
+        )}
 
         {/* Decorative Sticker */}
         <div className="absolute top-[100px] right-[40px] z-[50] hidden lg:block pointer-events-auto">

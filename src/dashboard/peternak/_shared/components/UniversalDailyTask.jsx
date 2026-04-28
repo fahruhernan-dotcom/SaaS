@@ -70,7 +70,7 @@ import {
 } from '@/components/ui/select'
 import { InputNumber } from '@/components/ui/InputNumber'
 import AnimatedCheckmark from '@/components/ui/AnimatedCheckmark'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { TaskHeader } from './TaskHeader'
 import { toast } from 'sonner'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'

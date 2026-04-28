@@ -13,7 +13,7 @@ import { formatIDRShort } from '@/lib/format'
 import { useNavigate, useLocation, useOutletContext } from 'react-router-dom'
 import { toast } from 'sonner'
 import SetupFarm from './SetupFarm'
-import FarmCard from '../_shared/components/FarmCard'
+import FarmCard from '@/dashboard/peternak/_shared/components/FarmCard'
 import {
   usePeternakFarms, useActiveCycles, useCompletedCycles,
   useAllActiveVaccinationRecords, calcCurrentAge,

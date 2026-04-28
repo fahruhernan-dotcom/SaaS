@@ -1697,7 +1697,7 @@ Hasil di-transform ke `{ broker: { pro: { price, originalPrice, id }, business: 
 | Kolom | Tipe | Notes |
 |-------|------|-------|
 | `id` | uuid PK | |
-| `config_key` | text | UNIQUE — `'kandang_limit'` \| `'addon_pricing'` \| `'trial_config'` \| `'annual_discount'` \| `'team_limit'` |
+| `config_key` | text | UNIQUE — `'kandang_limit'` \| `'addon_pricing'` \| `'trial_config'` \| `'annual_discount'` \| `'team_limit'` \| `'ternak_limit'` |
 | `config_value` | jsonb | NOT NULL |
 | `description` | text | nullable |
 | `updated_at` | timestamptz | |
@@ -1831,6 +1831,7 @@ Hasil di-transform ke `{ broker: { pro: { price, originalPrice, id }, business: 
 
 **Config keys & value shape**:
 - `kandang_limit`: `{ starter: 1, pro: 2, business: 99 }`
+- `ternak_limit`: `{ domba_kambing: { starter: 20, pro: 100, business: null }, sapi: { starter: 10, pro: 50, business: null } }` — null = unlimited
 - `addon_pricing`: `{ price_per_addon: 99000, max_addons: 2 }`
 - `trial_config`: `{ starter_days: 14, pro_days: 14, business_days: 14 }`
 - `annual_discount`: `{ discount_percent: 20 }`
@@ -2820,6 +2821,8 @@ USING (tenant_id IN (SELECT tenant_id FROM profiles WHERE auth_user_id = auth.ui
 | `get_public_market_stats` | - | `json` | Statistik agregat untuk landing page/halaman publik. |
 | `create_new_business` | `p_business_name`, `p_vertical`, `p_phone`, `p_location` | `uuid` | Helper untuk membuat tenant baru + profile owner. |
 | `get_kandang_limit` | `p_tenant_id` | `integer` | Cek batas kandang berdasarkan plan aktif. |
+| `get_active_ternak_count` | `p_tenant_id`, `p_species_group` | `integer` | Hitung ternak aktif per tenant. species_group: `'domba_kambing'` \| `'sapi'` |
+| `get_ternak_limit` | `p_tenant_id`, `p_species_group` | `integer` (nullable) | Limit ternak berdasarkan plan. NULL = unlimited. |
 | `my_role` | - | `text` | Mendapatkan role user saat ini di tenant aktif. |
 | `my_tenant_id` | - | `uuid` | Mendapatkan tenant_id dari profil user yang aktif. |
 | `is_superadmin` | - | `boolean` | Verifikasi apakah user punya akses superadmin. |

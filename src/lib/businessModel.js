@@ -264,9 +264,9 @@ export const BUSINESS_MODELS = {
     comingSoon: false,
     bottomNav: createNav('peternak', 'peternak_domba_penggemukan', [
       { slug: 'beranda',    icon: 'Home',           label: 'Beranda'  },
-      { slug: 'batch',      icon: 'RefreshCw',      label: 'Batch'    },
-      { slug: 'daily_task', icon: 'ClipboardList',   label: 'Tugas'    },
-      { slug: 'ternak',     icon: 'Tag',             label: 'Ternak'   },
+      { slug: 'daily_task', icon: 'ClipboardList',  label: 'Tugas'    },
+      { slug: 'pakan',      icon: 'Wheat',          label: 'Pakan'    },
+      { slug: 'menu',       icon: 'Menu',           label: 'Menu'     },
     ]),
     drawerMenu: [
       { path: '/peternak/peternak_domba_penggemukan/kesehatan', icon: 'Syringe',  label: 'Kesehatan'      },
@@ -276,7 +276,7 @@ export const BUSINESS_MODELS = {
       { path: '/market',                                       icon: 'Store',    label: 'TernakOS Market'},
       { path: '/peternak/peternak_domba_penggemukan/akun',     icon: 'User',     label: 'Akun & Profil'  },
     ],
-    fabPath: null,
+    fabPath: '/peternak/peternak_domba_penggemukan/quick-add',
   },
   peternak_domba_breeding: {
     key: 'peternak_domba_breeding',

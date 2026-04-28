@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { usePeternakFarms } from '@/lib/hooks/usePeternakData'
 import { toast } from 'sonner'
-import LoadingSpinner from '../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 

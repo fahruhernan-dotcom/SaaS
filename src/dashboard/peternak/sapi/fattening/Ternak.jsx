@@ -11,6 +11,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { useTernakLimit } from '@/lib/hooks/useTernakLimit'
 import {
   useSapiAnimals,
   useSapiBatches,
@@ -20,7 +21,7 @@ import {
   calcSapiHariDiFarm,
   calcSapiADGFromRecords,
 } from '@/lib/hooks/useSapiPenggemukanData'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 // Breed suggestions untuk autocomplete di UI
 const BREED_SUGGESTIONS = [
@@ -943,6 +944,7 @@ export default function SapiTernak() {
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const batchId = searchParams.get('batch')
+  const { canAdd, currentCount, limit, isUnlimited } = useTernakLimit('sapi')
   const [search, setSearch]       = useState('')
   const [filterStatus, setFilter] = useState('active')
   const [showAdd, setShowAdd]     = useState(false)
@@ -1020,16 +1022,25 @@ export default function SapiTernak() {
             <h1 className="font-['Sora'] font-black text-xl text-white">Data Ternak</h1>
           </div>
           <div className="flex items-center gap-2">
+            {!isUnlimited && (
+              <span className={`text-[10px] font-black px-2 py-1 rounded-lg border ${!canAdd ? 'text-red-400 bg-red-500/10 border-red-500/20' : 'text-[#4B6478] bg-white/5 border-white/5'}`}>
+                {currentCount}/{limit}
+              </span>
+            )}
             <button
+              disabled={!canAdd}
+              title={!canAdd ? `Limit ${limit} ekor tercapai. Upgrade ke Pro/Business.` : undefined}
               onClick={() => setShowBulkAdd(true)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white text-xs font-bold rounded-xl transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <ListPlus size={13} />
               Banyak
             </button>
             <button
+              disabled={!canAdd}
+              title={!canAdd ? `Limit ${limit} ekor tercapai. Upgrade ke Pro/Business.` : undefined}
               onClick={() => setShowAdd(true)}
-              className="flex items-center gap-1.5 px-3 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl transition-colors"
+              className="flex items-center gap-1.5 px-3 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Plus size={13} />
               Tambah

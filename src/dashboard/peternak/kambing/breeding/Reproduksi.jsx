@@ -9,7 +9,7 @@ import {
   useUpdateKambingBreedingMating,
   useAddKambingBreedingBirth,
 } from '@/lib/hooks/useKambingBreedingData'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 const STATUS_CONFIG = {
   menunggu:    { label: 'Menunggu',    color: 'bg-slate-500/20 text-slate-300',  icon: Clock },

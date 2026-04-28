@@ -1,20 +1,22 @@
 import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, X, Wheat, Calendar, Info, Trash2, ArrowLeft } from 'lucide-react'
+import { Plus, X, Wheat, Calendar, Info, Trash2, ArrowLeft, Share2 } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/lib/hooks/useAuth'
 import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 import {
   useDombaActiveBatches,
   useDombaFeedLogs,
+  useDombaFeedLogsByBatches,
   useAddDombaFeedLog,
   useDeleteDombaFeedLog,
   useDombaOperationalCosts,
+  useDombaOperationalCostsByBatches,
   useAddDombaOperationalCost,
   useDeleteDombaOperationalCost
 } from '@/lib/hooks/useDombaPenggemukanData'
 import { Receipt, Wallet, TrendingUp, Package, ChevronRight } from 'lucide-react'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { toast } from 'sonner'
 
 const BASE = '/peternak/peternak_domba_penggemukan'
@@ -22,27 +24,51 @@ const BASE = '/peternak/peternak_domba_penggemukan'
 export default function DombaPakan() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const batchId = searchParams.get('batch')
+  const initialBatchId = searchParams.get('batch')
   
   const { profile } = useAuth()
   const perm = usePeternakPermissions()
   const { data: batches = [], isLoading: loadingBatches } = useDombaActiveBatches()
-  const activeBatch = useMemo(() => 
-    batchId ? batches.find(b => b.id === batchId) : batches[0]
-  , [batchId, batches])
 
-  const { data: logs = [], isLoading: loadingLogs } = useDombaFeedLogs(activeBatch?.id)
+  // Default to 'all' unless URL specifies a batch
+  const [selectedBatchId, setSelectedBatchId] = useState(initialBatchId || 'all')
+  const isAllBatches = selectedBatchId === 'all'
+  const activeBatch = useMemo(() =>
+    isAllBatches ? batches[0] : batches.find(b => b.id === selectedBatchId)
+  , [isAllBatches, selectedBatchId, batches])
+
+  // Fetch feed logs — all batches or single batch
+  const allBatchIds = useMemo(() => batches.map(b => b.id), [batches])
+  const { data: allLogs = [], isLoading: loadingAllLogs } = useDombaFeedLogsByBatches(isAllBatches ? allBatchIds : [])
+  const { data: singleLogs = [], isLoading: loadingSingleLogs } = useDombaFeedLogs(isAllBatches ? null : selectedBatchId)
+  const logs = isAllBatches ? allLogs : singleLogs
+  const loadingLogs = isAllBatches ? loadingAllLogs : loadingSingleLogs
+
   const addLog = useAddDombaFeedLog()
   const deleteLog = useDeleteDombaFeedLog()
 
   const [activeTab, setActiveTab] = useState('konsumsi') // 'konsumsi' or 'biaya'
-  const { data: costs = [], isLoading: loadingCosts } = useDombaOperationalCosts(activeBatch?.id)
+
+  // Fetch operational costs — all batches or single batch
+  const { data: allCosts = [], isLoading: loadingAllCosts } = useDombaOperationalCostsByBatches(isAllBatches ? allBatchIds : [])
+  const { data: singleCosts = [], isLoading: loadingSingleCosts } = useDombaOperationalCosts(isAllBatches ? null : selectedBatchId)
+  const costs = isAllBatches ? allCosts : singleCosts
+  const loadingCosts = isAllBatches ? loadingAllCosts : loadingSingleCosts
+
   const addCost = useAddDombaOperationalCost()
   const deleteCost = useDeleteDombaOperationalCost()
 
   const [showAdd, setShowAdd] = useState(false)
   const [showAddCost, setShowAddCost] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formBatchId, setFormBatchId] = useState(null) // batch for add forms
+
+  // Quick lookup: batch_id → batch_code
+  const batchCodeMap = useMemo(() => {
+    const m = {}
+    batches.forEach(b => { m[b.id] = b.batch_code })
+    return m
+  }, [batches])
 
   const [form, setForm] = useState({
     log_date: new Date().toISOString().split('T')[0],
@@ -61,7 +87,8 @@ export default function DombaPakan() {
     amount_idr: '',
     quantity: '',
     unit: 'sak',
-    notes: ''
+    notes: '',
+    is_shared: false,
   })
 
   // Calculations
@@ -110,14 +137,17 @@ export default function DombaPakan() {
     }
   }, [costs])
 
+  const targetBatch = formBatchId ? batches.find(b => b.id === formBatchId) : activeBatch
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!activeBatch) return
+    const batchForSubmit = targetBatch || batches[0]
+    if (!batchForSubmit) return
     
     setIsSubmitting(true)
     try {
       await addLog.mutateAsync({
-        batch_id: activeBatch.id,
+        batch_id: batchForSubmit.id,
         ...form,
         hijauan_kg: parseFloat(form.hijauan_kg) || 0,
         konsentrat_kg: parseFloat(form.konsentrat_kg) || 0,
@@ -155,15 +185,40 @@ export default function DombaPakan() {
 
   const handleAddCost = async (e) => {
     e.preventDefault()
-    if (!activeBatch) return
+    const batchForCost = targetBatch || batches[0]
+    if (!batchForCost) return
     setIsSubmitting(true)
+    const totalAmount = parseInt(costForm.amount_idr) || 0
+    const basePayload = {
+      log_date: costForm.log_date,
+      item_name: costForm.item_name,
+      category: costForm.category,
+      quantity: parseFloat(costForm.quantity) || 0,
+      unit: costForm.unit,
+      notes: costForm.notes,
+    }
     try {
-      await addCost.mutateAsync({
-        batch_id: activeBatch.id,
-        ...costForm,
-        amount_idr: parseInt(costForm.amount_idr) || 0,
-        quantity: parseFloat(costForm.quantity) || 0
-      })
+      if (costForm.is_shared && batches.length > 1) {
+        const totalAnimals = batches.reduce((s, b) => s + (b.total_animals || 0), 0)
+        if (totalAnimals === 0) {
+          await addCost.mutateAsync({ batch_id: batchForCost.id, ...basePayload, amount_idr: totalAmount })
+        } else {
+          let remaining = totalAmount
+          for (let i = 0; i < batches.length; i++) {
+            const b = batches[i]
+            const proportion = (b.total_animals || 0) / totalAnimals
+            const allocated = i === batches.length - 1
+              ? remaining
+              : Math.round(totalAmount * proportion)
+            remaining -= allocated
+            if (allocated > 0) {
+              await addCost.mutateAsync({ batch_id: b.id, ...basePayload, amount_idr: allocated })
+            }
+          }
+        }
+      } else {
+        await addCost.mutateAsync({ batch_id: batchForCost.id, ...basePayload, amount_idr: totalAmount })
+      }
       setShowAddCost(false)
       setCostForm({
         log_date: new Date().toISOString().split('T')[0],
@@ -172,7 +227,8 @@ export default function DombaPakan() {
         amount_idr: '',
         quantity: '',
         unit: 'sak',
-        notes: ''
+        notes: '',
+        is_shared: false,
       })
     } catch (err) {
       toast.error('Gagal mencatat biaya')
@@ -181,10 +237,10 @@ export default function DombaPakan() {
     }
   }
 
-  const handleDeleteCost = async (id) => {
+  const handleDeleteCost = async (id, costBatchId) => {
     if (!confirm('Hapus catatan biaya ini?')) return
     try {
-      await deleteCost.mutateAsync({ costId: id, batchId: activeBatch.id })
+      await deleteCost.mutateAsync({ costId: id, batchId: costBatchId || activeBatch?.id })
     } catch (err) {
       toast.error('Gagal menghapus biaya')
     }
@@ -205,12 +261,22 @@ export default function DombaPakan() {
         
         {batches.length > 0 && (
           <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
+            <button
+              onClick={() => setSelectedBatchId('all')}
+              className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                isAllBatches
+                  ? 'bg-green-600 border-green-500 text-white' 
+                  : 'bg-white/[0.03] border-white/[0.06] text-[#4B6478]'
+              }`}
+            >
+              Semua
+            </button>
             {batches.map(b => (
               <button
                 key={b.id}
-                onClick={() => navigate(`${BASE}/pakan?batch=${b.id}`)}
+                onClick={() => setSelectedBatchId(b.id)}
                 className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
-                  activeBatch?.id === b.id 
+                  selectedBatchId === b.id 
                     ? 'bg-green-600 border-green-500 text-white' 
                     : 'bg-white/[0.03] border-white/[0.06] text-[#4B6478]'
                 }`}
@@ -244,12 +310,12 @@ export default function DombaPakan() {
         </div>
       </header>
 
-      {!activeBatch ? (
+      {batches.length === 0 ? (
         <div className="px-4 py-20 text-center">
           <div className="w-16 h-16 bg-white/[0.03] rounded-full flex items-center justify-center mx-auto mb-4 border border-white/[0.06]">
             <Wheat size={24} className="text-[#4B6478]" />
           </div>
-          <p className="text-sm font-bold text-white mb-1">Pilih Batch Terlebih Dahulu</p>
+          <p className="text-sm font-bold text-white mb-1">Belum Ada Batch Aktif</p>
           <p className="text-xs text-[#4B6478]">Kamu perlu memiliki batch aktif untuk mencatat pakan</p>
         </div>
       ) : (
@@ -302,7 +368,12 @@ export default function DombaPakan() {
                           </div>
                           <div>
                             <p className="text-xs font-bold text-white">{new Date(log.log_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-                            <p className="text-[10px] text-[#4B6478]">Diinput oleh {log.created_by_name || 'Tim'}</p>
+                            <p className="text-[10px] text-[#4B6478]">
+                              {isAllBatches && log.batch_id && batchCodeMap[log.batch_id] && (
+                                <span className="text-emerald-400/80 mr-1">{batchCodeMap[log.batch_id]} ·</span>
+                              )}
+                              Diinput oleh {log.created_by_name || 'Tim'}
+                            </p>
                           </div>
                         </div>
                         {perm.canHapusPakan && (
@@ -430,12 +501,17 @@ export default function DombaPakan() {
                           </div>
                           <div>
                             <p className="text-xs font-bold text-white">{cost.item_name}</p>
-                            <p className="text-[10px] text-[#4B6478] uppercase font-bold tracking-widest">{cost.category} · {new Date(cost.log_date).toLocaleDateString('id-ID')}</p>
+                            <p className="text-[10px] text-[#4B6478] uppercase font-bold tracking-widest">
+                              {isAllBatches && cost.batch_id && batchCodeMap[cost.batch_id] && (
+                                <span className="text-emerald-400/80 mr-1">{batchCodeMap[cost.batch_id]} · </span>
+                              )}
+                              {cost.category} · {new Date(cost.log_date).toLocaleDateString('id-ID')}
+                            </p>
                           </div>
                         </div>
                         {perm.canHapusBiaya && (
                           <button 
-                            onClick={() => handleDeleteCost(cost.id)}
+                            onClick={() => handleDeleteCost(cost.id, cost.batch_id)}
                             className="p-1 text-red-500/30 hover:text-red-500 transition-colors"
                           >
                             <Trash2 size={14} />
@@ -484,6 +560,23 @@ export default function DombaPakan() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4 font-['DM Sans']">
+                {isAllBatches && (
+                  <div>
+                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Pilih Batch</label>
+                    <select
+                      required
+                      value={formBatchId || batches[0]?.id}
+                      onChange={e => setFormBatchId(e.target.value)}
+                      className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-green-500/50 transition-colors"
+                    >
+                      {batches.map(b => (
+                        <option key={b.id} value={b.id} className="bg-[#0C1319] text-white">
+                          {b.batch_code}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div>
                   <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Tanggal Pemberian</label>
                   <input
@@ -606,6 +699,26 @@ export default function DombaPakan() {
               </div>
 
               <form onSubmit={handleAddCost} className="space-y-4 font-['DM Sans']">
+                {isAllBatches && (
+                  <div>
+                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Pilih Batch Target</label>
+                    <select
+                      value={formBatchId || batches[0]?.id}
+                      onChange={e => {
+                        setFormBatchId(e.target.value)
+                        if (costForm.is_shared) setCostForm(prev => ({...prev, is_shared: false}))
+                      }}
+                      disabled={costForm.is_shared}
+                      className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-colors disabled:opacity-50"
+                    >
+                      {batches.map(b => (
+                        <option key={b.id} value={b.id} className="bg-[#0C1319] text-white">
+                          {b.batch_code}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div>
                   <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Nama Barang / Item</label>
                   <input
@@ -657,6 +770,59 @@ export default function DombaPakan() {
                     className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-violet-500/50 font-bold transition-colors"
                   />
                 </div>
+
+                {/* Biaya Bersama toggle — hanya tampil jika ada >1 batch aktif */}
+                {batches.length > 1 && (
+                  <div>
+                    <label className="flex items-center justify-between px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl cursor-pointer hover:bg-white/[0.05] transition">
+                      <div className="flex items-center gap-2">
+                        <Share2 size={14} className={costForm.is_shared ? 'text-violet-400' : 'text-[#4B6478]'} />
+                        <div>
+                          <p className="text-xs font-black text-white">Biaya Bersama</p>
+                          <p className="text-[10px] text-[#4B6478]">Bagi proporsional ke semua batch aktif</p>
+                        </div>
+                      </div>
+                      <div
+                        onClick={() => setCostForm(f => ({ ...f, is_shared: !f.is_shared }))}
+                        className={`w-11 h-6 rounded-full border flex items-center relative transition-all duration-300 cursor-pointer ${
+                          costForm.is_shared ? 'bg-violet-600 border-violet-500' : 'bg-white/10 border-white/20'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 bg-white rounded-full shadow absolute transition-all duration-300 ${costForm.is_shared ? 'left-[26px]' : 'left-1'}`} />
+                      </div>
+                    </label>
+
+                    {/* Preview split proporsional */}
+                    {costForm.is_shared && costForm.amount_idr && (
+                      <div className="mt-2 bg-violet-500/5 border border-violet-500/15 rounded-xl p-3 space-y-1.5">
+                        <p className="text-[9px] font-black text-violet-400/70 uppercase tracking-widest mb-2">Preview Alokasi</p>
+                        {(() => {
+                          const total = parseInt(costForm.amount_idr) || 0
+                          const totalAnimals = batches.reduce((s, b) => s + (b.total_animals || 0), 0)
+                          return batches.map((b, i) => {
+                            const proportion = totalAnimals > 0 ? (b.total_animals || 0) / totalAnimals : 1 / batches.length
+                            const pct = Math.round(proportion * 100)
+                            const allocated = i === batches.length - 1
+                              ? total - batches.slice(0, -1).reduce((s, bb, j) => {
+                                  const p = totalAnimals > 0 ? (bb.total_animals || 0) / totalAnimals : 1 / batches.length
+                                  return s + Math.round(total * p)
+                                }, 0)
+                              : Math.round(total * proportion)
+                            return (
+                              <div key={b.id} className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-[10px] font-black ${b.id === activeBatch?.id ? 'text-white' : 'text-[#4B6478]'}`}>{b.batch_code}</span>
+                                  <span className="text-[9px] text-[#4B6478]">{b.total_animals || 0} ekor · {pct}%</span>
+                                </div>
+                                <span className="text-[11px] font-black text-violet-300">Rp {allocated.toLocaleString('id-ID')}</span>
+                              </div>
+                            )
+                          })
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>

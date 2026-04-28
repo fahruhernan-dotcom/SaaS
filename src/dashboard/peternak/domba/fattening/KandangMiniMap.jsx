@@ -6,7 +6,7 @@ import {
   useDombaAnimalsByBatches,
   calcADGFromRecords,
 } from '@/lib/hooks/useDombaPenggemukanData'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { cn } from '@/lib/utils'
 
 const CELL_PX = 32
@@ -123,7 +123,7 @@ export default function KandangMiniMap({ batchIds, className }) {
   }, [ids])
 
   const [activeKandangId, setActiveKandangId] = useState(null)
-  const [fitMode, setFitMode] = useState(false)
+  const [fitMode, setFitMode] = useState(true)
   const [is3D, setIs3D] = useState(false)
   const hoverTimerRef = useRef(null)
 
@@ -180,10 +180,12 @@ export default function KandangMiniMap({ batchIds, className }) {
     if (!viewport || !containerSize.w) return 1
     const sX = containerSize.w / (viewport.wM * CELL_PX)
     const sY = containerSize.h / (viewport.hM * CELL_PX)
-    const natural = Math.min(sX, sY)
-    // fitMode = true: fill container (no cap)
-    // fitMode = false: cap at 1.2x to avoid over-zoom
-    return fitMode ? natural : Math.min(1.2, natural)
+    
+    const fitScale = Math.min(sX, sY) * 0.98
+    // Normal mode: slightly zoomed out to show context
+    const normalScale = Math.min(1, fitScale * 0.85)
+
+    return fitMode ? fitScale : normalScale
   }, [viewport, containerSize, fitMode])
 
   const activeKandang = useMemo(() =>
@@ -220,9 +222,16 @@ export default function KandangMiniMap({ batchIds, className }) {
 
   return (
     <div
-      className={cn("w-full relative overflow-hidden rounded-2xl bg-white/[0.015] border border-white/[0.04] p-4 min-h-[200px] lg:min-h-[280px] max-h-[600px] cursor-default", className)}
+      className={cn(
+        "w-full relative overflow-hidden rounded-2xl bg-white/[0.015] p-4 cursor-default transition-all duration-500",
+        fitMode
+          ? "border border-emerald-500/20 min-h-[320px] lg:min-h-[400px] max-h-[700px]"
+          : "border border-white/[0.04] min-h-[200px] lg:min-h-[280px] max-h-[600px]",
+        className
+      )}
       style={{
-        aspectRatio,
+        // Lock aspect ratio only in normal mode; fill parent height in fit mode
+        aspectRatio: fitMode ? undefined : aspectRatio,
         backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.02) 1px, transparent 1px)`,
         backgroundSize: `${CELL_PX * scale}px ${CELL_PX * scale}px`,
         backgroundPosition: 'center center'
@@ -247,9 +256,17 @@ export default function KandangMiniMap({ batchIds, className }) {
         <button
           onClick={(e) => { e.stopPropagation(); setFitMode(f => !f); }}
           title={fitMode ? 'Reset zoom (normal)' : 'Fit ke layar'}
-          className="w-full h-7 rounded-lg bg-black/40 backdrop-blur-sm border border-white/10 flex items-center justify-center text-[#94A3B8] hover:text-white hover:bg-white/10 transition-all active:scale-90"
+          className={cn(
+            "w-full h-7 px-2.5 rounded-lg backdrop-blur-sm border flex items-center gap-1.5 justify-center transition-all active:scale-90",
+            fitMode
+              ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30"
+              : "bg-black/40 border-white/10 text-[#94A3B8] hover:text-white hover:bg-white/10"
+          )}
         >
           {fitMode ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+          <span className="text-[9px] font-bold uppercase tracking-wide">
+            {fitMode ? 'Normal' : 'Fit'}
+          </span>
         </button>
       </div>
 

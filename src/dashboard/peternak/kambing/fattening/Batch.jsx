@@ -9,7 +9,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { cn } from '@/lib/utils'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { useNavigate } from 'react-router-dom'
 
 const BASE = '/peternak/peternak_kambing_penggemukan'

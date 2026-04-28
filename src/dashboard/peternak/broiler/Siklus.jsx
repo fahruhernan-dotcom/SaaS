@@ -5,7 +5,7 @@ import {
   CheckCircle2, XCircle, AlertTriangle, ChevronDown, FileText,
 } from 'lucide-react'
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom'
-import FarmContextBar from '../_shared/components/FarmContextBar'
+import FarmContextBar from '@/dashboard/peternak/_shared/components/FarmContextBar'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { InputRupiah } from '@/components/ui/InputRupiah'
@@ -15,9 +15,9 @@ import {
   calcCurrentAge, calcFCR, calcIPScore, calcMortalityPct,
 } from '@/lib/hooks/usePeternakData'
 import { formatIDRShort } from '@/lib/format'
-import LoadingSpinner from '../../_shared/components/LoadingSpinner'
-import SiklusSheet from '../_shared/components/SiklusSheet'
-import InputHarianSheet from '../_shared/components/InputHarianSheet'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
+import SiklusSheet from '@/dashboard/peternak/_shared/components/SiklusSheet'
+import InputHarianSheet from '@/dashboard/peternak/_shared/components/InputHarianSheet'
 import InvoicePreviewModal from '@/components/invoice/InvoicePreviewModal'
 import { useAuth } from '@/lib/hooks/useAuth'
 import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'

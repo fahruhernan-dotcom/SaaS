@@ -7,7 +7,7 @@ import {
   useKambingActiveBatches, useKambingBatches,
   calcHariDiFarm, calcADG, calcMortalitasKambing,
 } from '@/lib/hooks/useKambingPenggemukanData'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 const BASE = '/peternak/peternak_kambing_penggemukan'
 

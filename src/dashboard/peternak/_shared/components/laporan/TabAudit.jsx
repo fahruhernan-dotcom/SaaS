@@ -9,7 +9,7 @@ import { id as idLocale } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { getLivestockConfig } from '@/lib/constants/taskTemplates'
 import { usePeternakTaskInstances } from '@/lib/hooks/usePeternakTaskData'
-import LoadingSpinner from '../../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 // ─── ComplianceDot ────────────────────────────────────────────────────────────
 

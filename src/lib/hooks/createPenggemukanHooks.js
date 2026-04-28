@@ -9,6 +9,7 @@
  * Each call generates hooks that target the correct table prefix.
  */
 
+import React from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
@@ -490,6 +491,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-animals`] })
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
+        qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'domba_kambing'] })
         toast.success('Ternak berhasil ditambahkan')
       },
       onError: (err) => toast.error('Gagal tambah ternak: ' + err.message),
@@ -540,6 +542,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-animals`] })
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
+        qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'domba_kambing'] })
         toast.success('Semua ternak berhasil ditambahkan!')
       },
       onError: (err) => toast.error('Gagal tambah bulk: ' + err.message),
@@ -592,6 +595,7 @@ export function createPenggemukanHooks(prefix) {
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-animal-detail`] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
+        qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'domba_kambing'] })
       },
       onError: (err) => toast.error('Gagal update status: ' + err.message),
     })
@@ -657,7 +661,6 @@ export function createPenggemukanHooks(prefix) {
         const d = dedak_kg ?? 0
         const o = other_feed_kg ?? 0
         const s = sisa_pakan_kg ?? 0
-        const consumed_kg = Math.max(0, h + k + d + o - s)
 
         const { error } = await supabase
           .from(T.feed)
@@ -669,7 +672,6 @@ export function createPenggemukanHooks(prefix) {
             dedak_kg: d,
             other_feed_kg: o,
             sisa_pakan_kg: s,
-            consumed_kg,
             feed_orts_category,
             feed_cost_idr, notes,
           }, {
@@ -1070,6 +1072,44 @@ export function createPenggemukanHooks(prefix) {
     })
   }
 
+  function useHppBatch(batchId) {
+    const { data: animalList = [], isLoading: l1 } = useAnimals(batchId)
+    const { data: feedList = [], isLoading: l2 } = useFeedLogs(batchId)
+    const { data: costList = [], isLoading: l3 } = useOperationalCosts(batchId)
+    const { data: salesList = [], isLoading: l4 } = useSales(batchId)
+
+    const isLoading = l1 || l2 || l3 || l4
+
+    const hpp = React.useMemo(() => {
+      const totalModalBeli = animalList.reduce((s, a) => s + (Number(a.purchase_price_idr) || 0), 0)
+      const totalBiayaPakan = feedList.reduce((s, f) => s + (Number(f.feed_cost_idr) || 0), 0)
+      const totalBiayaOps = costList.reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
+      const totalHpp = totalModalBeli + totalBiayaPakan + totalBiayaOps
+
+      const aktifCount = animalList.filter(a => a.status === 'active').length
+      const terjualCount = animalList.filter(a => a.status === 'sold').length
+      const matiCount = animalList.filter(a => a.status === 'dead' || a.status === 'culled').length
+
+      const totalPendapatan = salesList.reduce((s, t) => s + (Number(t.total_revenue_idr) || 0), 0)
+      const totalPendapatanLunas = salesList.filter(t => t.is_paid).reduce((s, t) => s + (Number(t.total_revenue_idr) || 0), 0)
+
+      const produksiCount = aktifCount + terjualCount
+      const bepPerEkor = produksiCount > 0 ? totalHpp / produksiCount : 0
+      const sisaHpp = totalHpp - totalPendapatan
+      const bepSisa = aktifCount > 0 ? Math.max(0, sisaHpp) / aktifCount : 0
+      const profitLoss = totalPendapatan - totalHpp
+
+      return {
+        totalModalBeli, totalBiayaPakan, totalBiayaOps, totalHpp,
+        aktifCount, terjualCount, matiCount, produksiCount,
+        totalPendapatan, totalPendapatanLunas,
+        bepPerEkor, bepSisa, sisaHpp, profitLoss,
+      }
+    }, [animalList, feedList, costList, salesList])
+
+    return { isLoading, ...hpp }
+  }
+
   function useEnsureHoldingPen() {
     const qc = useQueryClient()
     const { tenant } = useAuth()
@@ -1148,6 +1188,7 @@ export function createPenggemukanHooks(prefix) {
     useOperationalCosts,
     useAddOperationalCost,
     useDeleteOperationalCost,
+    useHppBatch,
   }
 }
 

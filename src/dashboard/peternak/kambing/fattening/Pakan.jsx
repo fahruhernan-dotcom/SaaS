@@ -6,7 +6,7 @@ import {
 } from '@/lib/hooks/useKambingPenggemukanData'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { formatIDRShort } from '@/lib/format'
 
 // Stok pakan — state lokal sederhana (Phase 4 bisa dipindah ke DB)

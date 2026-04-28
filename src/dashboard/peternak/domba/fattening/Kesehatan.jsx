@@ -9,11 +9,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   useDombaActiveBatches,
   useDombaHealthLogs,
+  useDombaHealthLogsByBatches,
   useDombaAnimals,
+  useDombaAnimalsByBatches,
   useAddDombaHealthLog,
   useDeleteDombaHealthLog
 } from '@/lib/hooks/useDombaPenggemukanData'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import {
@@ -455,15 +457,28 @@ function DiseaseCard({ disease }) {
 export default function DombaKesehatan() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const batchId = searchParams.get('batch')
+  const initialBatchId = searchParams.get('batch')
+  const [selectedBatchId, setSelectedBatchId] = useState(initialBatchId || 'all')
 
   const { data: batches = [], isLoading: loadingBatches } = useDombaActiveBatches()
+  const isAllBatches = selectedBatchId === 'all'
   const activeBatch = useMemo(() =>
-    batchId ? batches.find(b => b.id === batchId) : batches[0]
-  , [batchId, batches])
+    isAllBatches ? batches[0] : batches.find(b => b.id === selectedBatchId)
+  , [isAllBatches, selectedBatchId, batches])
 
-  const { data: logs = [], isLoading: loadingLogs } = useDombaHealthLogs(activeBatch?.id)
-  const { data: animals = [] } = useDombaAnimals(activeBatch?.id)
+  // Determine query targets
+  const batchIds = isAllBatches ? batches.map(b => b.id) : selectedBatchId ? [selectedBatchId] : []
+
+  // Logs Hook
+  const { data: singleBatchLogs = [], isLoading: loadingSingleLogs } = useDombaHealthLogs(activeBatch?.id)
+  const { data: multiBatchLogs = [], isLoading: loadingMultiLogs } = useDombaHealthLogsByBatches(batchIds, { enabled: isAllBatches })
+  const logs = isAllBatches ? multiBatchLogs : singleBatchLogs
+  const loadingLogs = isAllBatches ? loadingMultiLogs : loadingSingleLogs
+
+  // Animals Hook
+  const { data: singleBatchAnimals = [] } = useDombaAnimals(activeBatch?.id)
+  const { data: multiBatchAnimals = [] } = useDombaAnimalsByBatches(batchIds, { enabled: isAllBatches })
+  const animals = isAllBatches ? multiBatchAnimals : singleBatchAnimals
   const addLog = useAddDombaHealthLog()
   const deleteLog = useDeleteDombaHealthLog()
 
@@ -475,6 +490,7 @@ export default function DombaKesehatan() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [form, setForm] = useState({
+    batch_id: '',
     log_date: new Date().toISOString().split('T')[0],
     animal_id: '',
     log_type: 'sakit',
@@ -490,6 +506,12 @@ export default function DombaKesehatan() {
     animals.forEach(a => { m[a.id] = a })
     return m
   }, [animals])
+
+  const batchCodeMap = useMemo(() => {
+    const m = {}
+    batches.forEach(b => { m[b.id] = b.batch_code })
+    return m
+  }, [batches])
 
   const filteredLogs = useMemo(() => {
     const tab = LOG_FILTER_TABS.find(t => t.id === activeLogFilter)
@@ -516,17 +538,21 @@ export default function DombaKesehatan() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!activeBatch) return
+    if (!isAllBatches && !activeBatch) return
+    if (isAllBatches && !form.batch_id) {
+      toast.error('Pilih batch terlebih dahulu')
+      return
+    }
     setIsSubmitting(true)
     try {
       await addLog.mutateAsync({
-        batch_id: activeBatch.id,
         ...form,
+        batch_id: isAllBatches ? form.batch_id : activeBatch.id,
         animal_id: form.animal_id === 'null' || !form.animal_id ? null : form.animal_id
       })
       toast.success('Log kesehatan berhasil disimpan')
       setShowAdd(false)
-      setForm({ log_date: new Date().toISOString().split('T')[0], animal_id: '', log_type: 'sakit', symptoms: '', diagnosis: '', treatment: '', medication_used: '', notes: '' })
+      setForm({ batch_id: '', log_date: new Date().toISOString().split('T')[0], animal_id: '', log_type: 'sakit', symptoms: '', diagnosis: '', treatment: '', medication_used: '', notes: '' })
     } catch {
       toast.error('Gagal menyimpan log kesehatan')
     } finally {
@@ -534,17 +560,17 @@ export default function DombaKesehatan() {
     }
   }
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, logBatchId) => {
     if (!confirm('Hapus log ini?')) return
     try {
-      await deleteLog.mutateAsync({ logId: id, batch_id: activeBatch?.id })
+      await deleteLog.mutateAsync({ logId: id, batch_id: logBatchId || activeBatch?.id })
       toast.success('Log dihapus')
     } catch {
       toast.error('Gagal menghapus log')
     }
   }
 
-  if (loadingBatches || (activeBatch && loadingLogs)) return <LoadingSpinner fullPage />
+  if (loadingBatches || loadingLogs) return <LoadingSpinner fullPage />
 
   return (
     <div className="text-slate-100 pb-24">
@@ -560,10 +586,20 @@ export default function DombaKesehatan() {
         {/* Batch selector */}
         {batches.length > 0 && (
           <div className="flex gap-2 overflow-x-auto no-scrollbar py-1 mb-4">
+            <button
+              onClick={() => setSelectedBatchId('all')}
+              className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                isAllBatches
+                  ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400'
+                  : 'bg-white/[0.03] border-white/[0.06] text-[#4B6478] hover:text-white hover:bg-white/[0.06]'
+              }`}
+            >
+              Semua
+            </button>
             {batches.map(b => (
               <button
                 key={b.id}
-                onClick={() => navigate(`${BASE}/kesehatan?batch=${b.id}`)}
+                onClick={() => setSelectedBatchId(b.id)}
                 className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
                   activeBatch?.id === b.id
                     ? 'bg-green-600 border-green-500 text-white shadow-lg shadow-green-600/20'
@@ -631,7 +667,7 @@ export default function DombaKesehatan() {
       {/* ── RIWAYAT VIEW ── */}
       {activeView === 'riwayat' && (
         <>
-          {!activeBatch ? (
+          {!isAllBatches && !activeBatch ? (
             <div className="px-4 py-20 text-center">
               <div className="w-16 h-16 bg-white/[0.03] rounded-full flex items-center justify-center mx-auto mb-4 border border-white/[0.06]">
                 <HeartPulse size={24} className="text-[#4B6478]" />
@@ -684,6 +720,11 @@ export default function DombaKesehatan() {
                                     <AlertTriangle size={9} /> Menular
                                   </span>
                                 )}
+                                {isAllBatches && log.batch_id && batchCodeMap[log.batch_id] && (
+                                  <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border bg-slate-500/10 border-slate-500/20 text-slate-400">
+                                    Batch {batchCodeMap[log.batch_id]}
+                                  </span>
+                                )}
                               </div>
                               <p className="text-[10px] text-[#4B6478] font-bold mt-0.5">
                                 {new Date(log.log_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -693,7 +734,7 @@ export default function DombaKesehatan() {
                             </div>
                           </div>
                           <button
-                            onClick={() => handleDelete(log.id)}
+                            onClick={() => handleDelete(log.id, log.batch_id)}
                             className="p-1.5 text-red-500/30 hover:text-red-500 transition-colors shrink-0"
                           >
                             <Trash2 size={14} />
@@ -831,6 +872,24 @@ export default function DombaKesehatan() {
                   <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-2 ml-1 tracking-widest leading-none">Tanggal</label>
                   <input type="date" required value={form.log_date} onChange={e => setForm({...form, log_date: e.target.value})} className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-green-500/50 transition-colors shadow-inner" />
                 </div>
+
+                {isAllBatches && (
+                  <div>
+                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-2 ml-1 tracking-widest leading-none">Pilih Batch</label>
+                    <Select required value={form.batch_id} onValueChange={v => setForm({...form, batch_id: v})}>
+                      <SelectTrigger className="w-full h-14 bg-white/[0.03] border-white/10 rounded-2xl text-white px-5 shadow-inner">
+                        <SelectValue placeholder="Pilih batch..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#0C1319] border-white/10 rounded-2xl shadow-2xl">
+                        {batches.map(b => (
+                          <SelectItem key={b.id} value={b.id} className="py-3 px-4 border-b border-white/5 last:border-0 font-bold">
+                            {b.batch_code}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-2 ml-1 tracking-widest leading-none">Pilih Ternak (Opsional)</label>

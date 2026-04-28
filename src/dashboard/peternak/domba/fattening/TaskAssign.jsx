@@ -22,7 +22,7 @@ import {
   useUpdateTaskAssignment,
   useAutoAssignBatch,
 } from '@/lib/hooks/usePeternakTaskData'
-import { BrokerPageHeader } from '../../../_shared/components/transactions/BrokerPageHeader'
+import { BrokerPageHeader } from '@/dashboard/_shared/components/transactions/BrokerPageHeader'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { cn } from '@/lib/utils'
 import { format, parseISO, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'

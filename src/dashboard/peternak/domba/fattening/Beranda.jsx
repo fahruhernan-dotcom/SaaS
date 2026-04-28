@@ -1,9 +1,21 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { 
+  MobileFinancePeek, 
+  MobileKandangMap,
+  MobileAlertRow,
+  MobileHeroKPI, 
+  MobileTaskProgress, 
+  MobileAlertSection, 
+  MobileQuickActions, 
+  MobileSectionHeader 
+} from '@/dashboard/peternak/_shared/components/MobileViewPeternak'
+import { MobileHeader } from '@/dashboard/peternak/_shared/components/MobileViewPeternak/MobileHeader'
+import { MobileBatchRow } from '@/dashboard/peternak/_shared/components/MobileViewPeternak/MobileBatchRow'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Users, TrendingUp, AlertTriangle,
-  Calendar, MapPin, Search, PlusCircle, LayoutGrid,
+  Calendar, MapPin, Search, PlusCircle, LayoutGrid, Bell,
   ChevronRight, ChevronLeft, ChevronDown, ArrowUpRight, BarChart3, Activity, Tag,
   BarChart2, CheckCircle2, RefreshCw, MousePointer2,
   Wheat, AlertCircle, Zap, Plus, Scale,
@@ -18,7 +30,7 @@ import {
   calcHariDiFarm, calcMortalitasDomba,
 } from '@/lib/hooks/useDombaPenggemukanData'
 import { usePeternakTaskInstances } from '@/lib/hooks/usePeternakTaskData'
-import LoadingSpinner from '../../../_shared/components/LoadingSpinner'
+import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, BarChart, Bar, Cell, ReferenceLine
@@ -27,7 +39,9 @@ import { format, addDays } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import KandangMiniMap from './KandangMiniMap'
+import NotificationBell from '@/dashboard/_shared/components/NotificationBell'
 import sheepSticker from '@/assets/sheep_sticker.png'
 
 const BASE = '/peternak/peternak_domba_penggemukan'
@@ -412,6 +426,7 @@ function BatchCard({ batch, activeCount, onClick }) {
 export default function DombaPenggemukanBeranda() {
   const { profile } = useAuth()
   const navigate = useNavigate()
+  const isMobile = useMediaQuery('(max-width: 767px)')
 
   const { data: activeBatches = [], isLoading: loadingActive } = useDombaActiveBatches()
   const { data: allBatches = [], isLoading: loadingAll } = useDombaBatches()
@@ -520,10 +535,22 @@ export default function DombaPenggemukanBeranda() {
       return hari >= 60 && hari <= 90 // Sudah jalan 2 bulan, panen bulan depan
     }).reduce((s, b) => s + (b.total_animals || 0), 0)
 
+    // Bobot rata-rata tertimbang
+    let weightedSum = 0
+    let weightedCount = 0
+    activeBatches.forEach(b => {
+      if (b.avg_latest_weight_kg) {
+        weightedSum += parseFloat(b.avg_latest_weight_kg) * (b.total_animals || 0)
+        weightedCount += (b.total_animals || 0)
+      }
+    })
+    const avgWeight = weightedCount > 0 ? (weightedSum / weightedCount).toFixed(1) : null
+
     return {
       totalEkor,
       mortalitasPct,
       avgADG,
+      avgWeight,
       activeBatchCount: activeBatches.length,
       closedCount: allBatches.filter(b => b.status === 'closed').length,
       harvestSoonCount
@@ -581,121 +608,213 @@ export default function DombaPenggemukanBeranda() {
     return { total, done, pct }
   }, [todayTasks])
 
+  const initial = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'L'
+
+  const handleProfileClick = () => {
+    navigate('/dashboard/akun')
+  }
+
   if (isLoading) return <LoadingSpinner fullPage />
 
   return (
-    <div className="text-slate-100 pb-24">
+    <div className="text-slate-100 pb-28">
 
-      {/* Header */}
-      <header className="px-4 pt-10 pb-12 relative overflow-hidden group/header">
-        {/* Premium background image with overlay */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105 group-hover/header:scale-110 transition-transform duration-[10s] ease-linear"
-          style={{ backgroundImage: 'url("/ui-pasture.png")' }}
-        />
-        {/* Dark Overlays for readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#06090F] via-[#06090F]/60 to-transparent pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#06090F] via-transparent to-transparent pointer-events-none" />
+      {/* ── HEADER & MOBILE LAYOUT ─────────────────────────────────────────────────── */}
+      {isMobile ? (
+        <div className="pb-24">
+          <MobileHeader title="Fattening Domba" />
 
-        <div className="relative z-10">
-          <p className="text-[10px] text-green-400/60 font-black uppercase tracking-[0.2em] mb-1">
-            Fattening Domba
-          </p>
-          <div className="flex items-center justify-between">
-            <h1 className="font-['Sora'] font-black text-2xl text-white" suppressHydrationWarning>
-              Selamat {getGreeting()}, <span className="text-green-400/90">{profile?.full_name?.split(' ')[0] ?? 'Peternak'}</span> 👋
-            </h1>
-            <button
-              onClick={() => navigate(`${BASE}/batch`)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 rounded-xl text-[11px] font-bold text-green-400 transition-all active:scale-95"
-            >
-              <Plus size={12} />
-              Batch Baru
-            </button>
-          </div>
-        </div>
-      </header>
+          <div className="space-y-7 relative z-20 pt-4">
+            {/* 2. HERO KPI CARD */}
+            <div className="px-5">
+              <MobileHeroKPI
+                totalEkor={kpi.totalEkor}
+                activeBatchCount={kpi.activeBatchCount}
+                harvestSoonCount={kpi.harvestSoonCount}
+                avgADG={kpi.avgADG}
+                mortalitasPct={kpi.mortalitasPct}
+                avgWeight={kpi.avgWeight}
+              />
+            </div>
 
-      {/* 1. Daily Task Audit */}
-      <TaskCategoryAudit tasks={todayTasks} onNavigate={() => navigate(`${BASE}/daily_task`)} />
-
-      {/* KPI Grid — Owner Centric Hierarchy */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-4 mt-4">
-        {/* Row 1: Scale & Growth (Priority 1) */}
-        <div className="col-span-2 sm:col-span-1">
-          <KPICard
-            label="Total Populasi"
-            value={kpi.totalEkor}
-            sub={`${kpi.activeBatchCount} Batch Aktif`}
-            icon={Users}
-            color="text-white"
-            glow="emerald"
-          />
-        </div>
-
-        <div className="col-span-1">
-          <KPICard
-            label="Performa ADG"
-            value={kpi.avgADG ? `${kpi.avgADG}` : '—'}
-            sub={kpi.avgADG >= 150 ? '🔥 Excellent' : kpi.avgADG >= 100 ? '⚡ On Track' : kpi.avgADG ? '⚠ Perlu Evaluasi' : 'Gram / Hari'}
-            icon={TrendingUp}
-            color={kpi.avgADG >= 150 ? 'text-green-400' : kpi.avgADG >= 100 ? 'text-amber-400' : 'text-red-400'}
-            glow={kpi.avgADG >= 150 ? 'green' : kpi.avgADG >= 100 ? 'amber' : kpi.avgADG ? 'red' : undefined}
-          />
-        </div>
-
-        {/* Row 2: Business & Risk (Priority 2) */}
-        <div className="col-span-1">
-          <KPICard
-            label="Proyeksi Panen"
-            value={kpi.harvestSoonCount > 0 ? kpi.harvestSoonCount : '—'}
-            sub={kpi.harvestSoonCount > 0 ? 'Ekor Siap 30 Hari' : 'Belum Ada'}
-            icon={Calendar}
-            color={kpi.harvestSoonCount > 0 ? 'text-emerald-400' : 'text-[#4B6478]'}
-            glow={kpi.harvestSoonCount > 0 ? 'emerald' : undefined}
-          />
-        </div>
-
-        <div className="col-span-2 sm:col-span-1">
-          <KPICard
-            label="Tingkat Mortalitas"
-            value={`${kpi.mortalitasPct}%`}
-            sub={parseFloat(kpi.mortalitasPct) > 3 ? '🚨 Di atas batas 3%' : parseFloat(kpi.mortalitasPct) > 0 ? '⚠ Dipantau' : '✓ Aman'}
-            icon={Activity}
-            color={parseFloat(kpi.mortalitasPct) > 3 ? 'text-red-400' : parseFloat(kpi.mortalitasPct) > 0 ? 'text-amber-400' : 'text-green-400'}
-            glow={parseFloat(kpi.mortalitasPct) > 3 ? 'red' : parseFloat(kpi.mortalitasPct) > 0 ? 'amber' : 'green'}
-          />
-        </div>
-      </div>
-
-      {/* Denah Kandang Terpadu (Master Map) */}
-      {activeBatches.length > 0 && (
-        <section className="px-4 mt-6">
-          <div className="bg-white/[0.02] border border-white/[0.05] rounded-[2.5rem] p-5 sm:p-6 relative overflow-hidden shadow-2xl backdrop-blur-sm">
-            {/* Subtle Gradient Glow */}
-            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_-20%,rgba(34,197,94,0.05),transparent_70%)] pointer-events-none" />
-
-            <div className="flex items-center justify-between mb-5 relative z-10">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-lg shadow-emerald-500/5">
-                  <LayoutGrid size={18} className="text-emerald-400" />
-                </div>
-                <div>
-                  <h2 className="font-['Sora'] font-black text-base text-white tracking-tight">Denah Kandang Terpadu</h2>
-                  <p className="text-[10px] text-[#4B6478] font-black uppercase tracking-[0.2em] mt-0.5">Monitoring Lokasi Ternak Real-time</p>
-                </div>
+            {/* 3. TUGAS HARI INI */}
+            <div>
+              <MobileSectionHeader
+                label={`Tugas hari ini · ${new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}`}
+                action="Semua"
+                onAction={() => navigate(`${BASE}/daily_task`)}
+              />
+              <div className="px-5">
+                <MobileTaskProgress
+                  tasks={todayTasks}
+                  onNavigate={() => navigate(`${BASE}/daily_task`)}
+                />
               </div>
             </div>
 
-            <div className="relative z-10 rounded-3xl overflow-hidden border border-white/[0.04] bg-black/20">
-              <KandangMiniMap batchIds={activeBatches.map(b => b.id)} className="min-h-[350px] lg:min-h-[450px] border-none bg-transparent" />
+            {/* 4. PERLU PERHATIAN — only if alerts exist */}
+            {alerts.length > 0 && (
+              <div>
+                <MobileSectionHeader
+                  label="Perlu perhatian"
+                  action={`${alerts.length} item`}
+                />
+                <div className="px-5 space-y-2">
+                  {alerts.map((a, i) => (
+                    <button
+                      key={i}
+                      onClick={a.action}
+                      className={`w-full flex items-center gap-3 p-3.5 bg-white/[0.03] border border-white/[0.06] border-l-[3px] ${
+                        a.type === 'danger' ? 'border-l-red-500' : 'border-l-amber-400'
+                      } rounded-xl text-left active:scale-[0.98] transition-transform`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                        a.type === 'danger' ? 'bg-red-500/10' : 'bg-amber-500/10'
+                      }`}>
+                        <AlertTriangle size={15} className={a.type === 'danger' ? 'text-red-400' : 'text-amber-400'} />
+                      </div>
+                      <p className="flex-1 text-[12px] text-white/90 font-medium leading-snug line-clamp-2">{a.msg}</p>
+                      <ChevronRight size={14} className="text-[#4B6478] shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 5. BATCH AKTIF */}
+            {activeBatches.length > 0 && (
+              <div>
+                <MobileSectionHeader
+                  label="Batch aktif"
+                  action="Semua"
+                  onAction={() => navigate(`${BASE}/batch`)}
+                />
+                <div className="px-5 space-y-3">
+                  {activeBatches.map((batch, i) => {
+                    const activeCount = allActiveAnimals.filter(a => a.batch_id === batch.id && a.status !== 'sold' && !a.is_sold && !a.is_sale).length
+                    
+                    // Normalize batch data for MobileBatchRow
+                    const normalizedBatch = {
+                      ...batch,
+                      population: activeCount || batch.total_animals || 0,
+                      mortality: batch.mortality_count || 0,
+                      total_initial: (batch.total_animals || 0) + (batch.mortality_count || 0),
+                      ageInDays: calcHariDiFarm(batch.start_date),
+                      adg: Math.round(batch.avg_adg_gram || 0),
+                      avgWeight: Math.round(batch.avg_weight_kg || 0),
+                      code: batch.batch_code || `Batch ${i + 1}`,
+                      location: batch.kandang_name || 'Kandang Utama'
+                    }
+
+                    return (
+                      <MobileBatchRow
+                        key={batch.id}
+                        batch={normalizedBatch}
+                        targetDays={90}
+                        onClick={() => navigate(`${BASE}/ternak?batch=${batch.id}`)}
+                        index={i}
+                      />
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 6. DENAH KANDANG */}
+            {activeBatches.length > 0 && (
+              <div>
+                <MobileSectionHeader label="Denah kandang" action="Buka penuh" onAction={() => navigate(`${BASE}/ternak`)} />
+                <div className="px-5">
+                  <div className="rounded-2xl overflow-hidden border border-white/[0.06] bg-black/20">
+                    <KandangMiniMap batchIds={activeBatches.map(b => b.id)} className="min-h-[320px] sm:min-h-[400px] border-none bg-transparent" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 7. PROYEKSI KEUANGAN */}
+            <div>
+              <MobileSectionHeader label="Proyeksi keuangan" action="Detail" onAction={() => navigate(`${BASE}/laporan`)} />
+              <div className="px-5">
+                <MobileFinancePeek
+                  batches={activeBatches}
+                  feedLogs={feedLogs}
+                  operationalCosts={operationalCosts}
+                  sales={sales}
+                  onNavigate={() => navigate(`${BASE}/laporan`)}
+                />
+              </div>
+            </div>
+
+            {/* 8. AKSI CEPAT */}
+            <div>
+              <MobileSectionHeader label="Aksi cepat" />
+              <div className="px-5">
+                <MobileQuickActions
+                  onAction={(key) => {
+                    if (key === 'timbang') navigate(`${BASE}/input-harian`)
+                    else if (key === 'pakan') navigate(`${BASE}/input-harian`)
+                    else if (key === 'sehat') navigate(`${BASE}/kesehatan`)
+                    else if (key === 'catatan') navigate(`${BASE}/catatan`)
+                  }}
+                />
+              </div>
+            </div>
+
+          </div>
+        </div>
+      ) : (
+        /* Desktop header: full hero image */
+        <header className="px-4 pt-10 pb-12 relative overflow-hidden group/header">
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105 group-hover/header:scale-110 transition-transform duration-[10s] ease-linear"
+            style={{ backgroundImage: 'url("/ui-pasture.png")' }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#06090F] via-[#06090F]/60 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#06090F] via-transparent to-transparent pointer-events-none" />
+          <div className="relative z-10">
+            <p className="text-[10px] text-green-400/60 font-black uppercase tracking-[0.2em] mb-1">Fattening Domba</p>
+            <div className="flex items-center justify-between">
+              <h1 className="font-['Sora'] font-black text-2xl text-white" suppressHydrationWarning>
+                Selamat {getGreeting()}, <span className="text-green-400/90">{profile?.full_name?.split(' ')[0] ?? 'Peternak'}</span> 👋
+              </h1>
+              <button
+                onClick={() => navigate(`${BASE}/batch`)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 rounded-xl text-[11px] font-bold text-green-400 transition-all active:scale-95"
+              >
+                <Plus size={12} />
+                Batch Baru
+              </button>
             </div>
           </div>
-        </section>
+        </header>
+      )}
+
+      {/* Desktop: Task Audit bar */}
+      {!isMobile && (
+        <TaskCategoryAudit tasks={todayTasks} onNavigate={() => navigate(`${BASE}/daily_task`)} />
+      )}
+
+      {/* Desktop: KPI Grid */}
+      {!isMobile && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-4 mt-4">
+          <div className="col-span-2 sm:col-span-1">
+            <KPICard label="Total Populasi" value={kpi.totalEkor} sub={`${kpi.activeBatchCount} Batch Aktif`} icon={Users} color="text-white" glow="emerald" />
+          </div>
+          <div className="col-span-1">
+            <KPICard label="Performa ADG" value={kpi.avgADG ? `${kpi.avgADG}` : '—'} sub={kpi.avgADG >= 150 ? '🔥 Excellent' : kpi.avgADG >= 100 ? '⚡ On Track' : kpi.avgADG ? '⚠ Perlu Evaluasi' : 'Gram / Hari'} icon={TrendingUp} color={kpi.avgADG >= 150 ? 'text-green-400' : kpi.avgADG >= 100 ? 'text-amber-400' : 'text-red-400'} glow={kpi.avgADG >= 150 ? 'green' : kpi.avgADG >= 100 ? 'amber' : kpi.avgADG ? 'red' : undefined} />
+          </div>
+          <div className="col-span-1">
+            <KPICard label="Proyeksi Panen" value={kpi.harvestSoonCount > 0 ? kpi.harvestSoonCount : '—'} sub={kpi.harvestSoonCount > 0 ? 'Ekor Siap 30 Hari' : 'Belum Ada'} icon={Calendar} color={kpi.harvestSoonCount > 0 ? 'text-emerald-400' : 'text-[#4B6478]'} glow={kpi.harvestSoonCount > 0 ? 'emerald' : undefined} />
+          </div>
+          <div className="col-span-2 sm:col-span-1">
+            <KPICard label="Tingkat Mortalitas" value={`${kpi.mortalitasPct}%`} sub={parseFloat(kpi.mortalitasPct) > 3 ? '🚨 Di atas batas 3%' : parseFloat(kpi.mortalitasPct) > 0 ? '⚠ Dipantau' : '✓ Aman'} icon={Activity} color={parseFloat(kpi.mortalitasPct) > 3 ? 'text-red-400' : parseFloat(kpi.mortalitasPct) > 0 ? 'text-amber-400' : 'text-green-400'} glow={parseFloat(kpi.mortalitasPct) > 3 ? 'red' : parseFloat(kpi.mortalitasPct) > 0 ? 'amber' : 'green'} />
+          </div>
+        </div>
       )}
 
       {/* 2-Column Desktop Layout Wrapper */}
-      <div className="grid lg:grid-cols-[1fr_1fr] gap-6 mt-6 px-4">
+      <div className={`grid lg:grid-cols-[1fr_1fr] gap-6 mt-6 px-4 ${isMobile ? 'hidden' : ''}`}>
 
         {/* === LEFT COLUMN: Operational === */}
         <div className="space-y-6">
@@ -1023,6 +1142,29 @@ export default function DombaPenggemukanBeranda() {
           </section>
         </div>
       </div>
+
+      {/* Desktop: Denah Kandang Terpadu (Master Map) */}
+      {!isMobile && activeBatches.length > 0 && (
+        <section className="px-4 mt-6">
+          <div className="bg-white/[0.02] border border-white/[0.05] rounded-[2.5rem] p-5 sm:p-6 relative overflow-hidden shadow-2xl backdrop-blur-sm">
+            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_-20%,rgba(34,197,94,0.05),transparent_70%)] pointer-events-none" />
+            <div className="flex items-center justify-between mb-5 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shadow-lg shadow-emerald-500/5">
+                  <LayoutGrid size={18} className="text-emerald-400" />
+                </div>
+                <div>
+                  <h2 className="font-['Sora'] font-black text-base text-white tracking-tight">Denah Kandang Terpadu</h2>
+                  <p className="text-[10px] text-[#4B6478] font-black uppercase tracking-[0.2em] mt-0.5">Monitoring Lokasi Ternak Real-time</p>
+                </div>
+              </div>
+            </div>
+            <div className="relative z-10 rounded-3xl overflow-hidden border border-white/[0.04] bg-black/20">
+              <KandangMiniMap batchIds={activeBatches.map(b => b.id)} className="min-h-[350px] lg:min-h-[450px] border-none bg-transparent" />
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 4. Riwayat Batch Selesai */}
       {kpi.closedCount > 0 && (
