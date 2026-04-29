@@ -28,6 +28,7 @@ import { Lock, Unlock, Trash2, Save } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
+import NotificationBell from '@/dashboard/_shared/components/NotificationBell'
 
 const BASE = '/peternak/peternak_domba_penggemukan'
 
@@ -52,7 +53,8 @@ function HppPanel({ batchId }) {
 
   const { totalModalBeli, totalBiayaPakan, totalBiayaOps, totalHpp,
     aktifCount, terjualCount, matiCount, totalPendapatan,
-    bepPerEkor, bepSisa, profitLoss, produksiCount } = hpp
+    hppPerEkor, bepPerEkor, bepSisa, profitLoss, produksiCount,
+    kgPakanTotal, hargaRataPerKg } = hpp
 
   const isProfitable = profitLoss >= 0
   const hasRevenue = totalPendapatan > 0
@@ -123,17 +125,30 @@ function HppPanel({ batchId }) {
                       <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">{p.label}</p>
                       <p className="text-xs font-black text-white">Rp {fmt(p.value)}</p>
                       <p className="text-[9px] text-[#4B6478]">{totalHpp > 0 ? Math.round((p.value / totalHpp) * 100) : 0}%</p>
+                      {p.label === 'Biaya Pakan' && hargaRataPerKg > 0 && (
+                        <p className="text-[9px] text-emerald-400/70 mt-1 leading-tight">
+                          {kgPakanTotal.toFixed(1)} kg × Rp {fmt(hargaRataPerKg)}/kg
+                        </p>
+                      )}
+                      {p.label === 'Biaya Pakan' && hargaRataPerKg === 0 && (
+                        <p className="text-[9px] text-[#4B6478]/60 mt-1 leading-tight italic">Catat beli pakan dulu</p>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Key metrics */}
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-3">
+                  <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mb-1">HPP / Ekor</p>
+                  <p className="text-sm font-black text-white font-['Sora']">Rp {fmt(hppPerEkor)}</p>
+                  <p className="text-[9px] text-[#4B6478] mt-0.5">{produksiCount} ekor</p>
+                </div>
                 <div className="bg-amber-500/5 border border-amber-500/15 rounded-xl p-3">
                   <p className="text-[9px] font-black text-amber-400/70 uppercase tracking-widest mb-1">BEP / Ekor</p>
                   <p className="text-sm font-black text-amber-300 font-['Sora']">Rp {fmt(bepPerEkor)}</p>
-                  <p className="text-[9px] text-[#4B6478] mt-0.5">{produksiCount} ekor hidup + terjual</p>
+                  <p className="text-[9px] text-[#4B6478] mt-0.5">HPP +20% margin</p>
                 </div>
                 <div className={cn(
                   'rounded-xl p-3 border',
@@ -145,7 +160,7 @@ function HppPanel({ batchId }) {
                   <p className={cn('text-sm font-black font-["Sora"]', aktifCount > 0 ? 'text-orange-300' : 'text-[#4B6478]')}>
                     {aktifCount > 0 ? `Rp ${fmt(bepSisa)}` : '—'}
                   </p>
-                  <p className="text-[9px] text-[#4B6478] mt-0.5">{aktifCount} ekor aktif sisa</p>
+                  <p className="text-[9px] text-[#4B6478] mt-0.5">{aktifCount} ekor sisa</p>
                 </div>
               </div>
 
@@ -169,7 +184,7 @@ function HppPanel({ batchId }) {
                   <ArrowUpDown size={12} className="text-orange-400 shrink-0 mt-0.5" />
                   <p className="text-[10px] text-[#4B6478] leading-relaxed">
                     Jual <span className="text-white font-black">{aktifCount} ekor sisa</span> minimal{' '}
-                    <span className="text-orange-300 font-black">Rp {fmt(bepSisa)}/ekor</span> agar semua biaya batch ini tertutup.
+                    <span className="text-orange-300 font-black">Rp {fmt(bepSisa)}/ekor</span> untuk menutup semua biaya + target margin 20%.
                   </p>
                 </div>
               )}
@@ -350,7 +365,7 @@ function SaleSheet({ batchId, animals, hppData, onClose }) {
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: '100%', opacity: 0 }}
       transition={{ type: 'spring', damping: 28, stiffness: 250 }}
-      className="fixed inset-y-0 right-0 w-[440px] max-w-full z-50 bg-[#0A1015]/95 backdrop-blur-xl border-l border-white/[0.08] shadow-[-10px_0_40px_rgba(0,0,0,0.5)] flex flex-col"
+      className="fixed inset-y-0 right-0 w-[440px] max-w-full z-[4000] bg-[#0A1015]/95 backdrop-blur-xl border-l border-white/[0.08] shadow-[-10px_0_40px_rgba(0,0,0,0.5)] flex flex-col"
     >
       {/* Header */}
       <div className="px-6 pt-8 pb-4 flex items-center justify-between border-b border-white/5">
@@ -679,7 +694,7 @@ function SaleDetailSheet({ sale, onClose }) {
       initial={{ x: '100%', opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: '100%', opacity: 0 }}
-      className="fixed inset-y-0 right-0 w-[440px] max-w-full z-50 bg-[#0A1015]/95 backdrop-blur-xl border-l border-white/[0.08] shadow-[-10px_0_40px_rgba(0,0,0,0.5)] flex flex-col"
+      className="fixed inset-y-0 right-0 w-[440px] max-w-full z-[4000] bg-[#0A1015]/95 backdrop-blur-xl border-l border-white/[0.08] shadow-[-10px_0_40px_rgba(0,0,0,0.5)] flex flex-col"
     >
       <div className="px-6 pt-8 pb-4 flex items-center justify-between border-b border-white/5">
         <div>
@@ -929,6 +944,7 @@ export default function DombaPenjualan() {
             <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mt-1">Domba Penggemukan</p>
           </div>
           <div className="flex items-center gap-3">
+            <NotificationBell />
             {perm.canInputPenjualan && (
               <button
                 disabled={!selectedBatchId || selectedBatch?.status !== 'active'}

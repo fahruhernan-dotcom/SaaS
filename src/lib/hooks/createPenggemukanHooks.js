@@ -111,13 +111,19 @@ export function createPenggemukanHooks(prefix) {
           .eq('is_deleted', false)
           .order('entry_date', { ascending: true })
         if (error) throw error
-        return (data ?? []).map(a => ({ 
-          ...a, 
-          entry_weight_kg: parseW(a.entry_weight_kg),
-          latest_weight_kg: parseW(a.latest_weight_kg) || parseW(a.entry_weight_kg),
-          entry_age_months: a.age_estimate || '',
-          weight_records: a[`${prefix}_penggemukan_weight_records`] || a.weight_records || []
-        }))
+        return (data ?? []).map(a => {
+          const wRecords = a[`${prefix}_penggemukan_weight_records`] || a.weight_records || []
+          const sorted = [...wRecords].sort((x, y) => new Date(y.weigh_date) - new Date(x.weigh_date))
+          const latestRecord = sorted[0]
+          return {
+            ...a,
+            entry_weight_kg: parseW(a.entry_weight_kg),
+            latest_weight_kg: latestRecord ? parseW(latestRecord.weight_kg) : (parseW(a.latest_weight_kg) || parseW(a.entry_weight_kg)),
+            latest_weight_date: latestRecord?.weigh_date ?? a.latest_weight_date,
+            entry_age_months: a.age_estimate || '',
+            weight_records: wRecords,
+          }
+        })
       },
       enabled: !!batchId && !!tenant?.id,
     })
@@ -285,13 +291,19 @@ export function createPenggemukanHooks(prefix) {
           .eq('is_deleted', false)
           .order('entry_date', { ascending: true })
         if (error) throw error
-        return (data ?? []).map(a => ({ 
-          ...a, 
-          entry_weight_kg: parseW(a.entry_weight_kg),
-          latest_weight_kg: parseW(a.latest_weight_kg) || parseW(a.entry_weight_kg),
-          entry_age_months: a.age_estimate || '',
-          weight_records: a[`${prefix}_penggemukan_weight_records`] || a.weight_records || []
-        }))
+        return (data ?? []).map(a => {
+          const wRecords = a[`${prefix}_penggemukan_weight_records`] || a.weight_records || []
+          const sorted = [...wRecords].sort((x, y) => new Date(y.weigh_date) - new Date(x.weigh_date))
+          const latestRecord = sorted[0]
+          return {
+            ...a,
+            entry_weight_kg: parseW(a.entry_weight_kg),
+            latest_weight_kg: latestRecord ? parseW(latestRecord.weight_kg) : (parseW(a.latest_weight_kg) || parseW(a.entry_weight_kg)),
+            latest_weight_date: latestRecord?.weigh_date ?? a.latest_weight_date,
+            entry_age_months: a.age_estimate || '',
+            weight_records: wRecords,
+          }
+        })
       },
       enabled: ids.length > 0 && !!tenant?.id,
     })
@@ -636,11 +648,36 @@ export function createPenggemukanHooks(prefix) {
             days_in_farm, adg_since_last, notes,
           })
         if (error) throw error
+
+        // ── Sync latest_weight_kg on the animal record ──
+        // This ensures the DB column stays up-to-date for any query
+        // that reads it directly (e.g. multi-batch hooks, reports).
+        const { data: allW } = await supabase
+          .from(T.weights)
+          .select('weigh_date, weight_kg')
+          .eq('animal_id', animal_id)
+          .eq('is_deleted', false)
+          .order('weigh_date', { ascending: false })
+          .limit(1)
+        const latestW = allW?.[0]
+        if (latestW) {
+          await supabase
+            .from(T.animals)
+            .update({
+              latest_weight_kg: latestW.weight_kg,
+              latest_weight_date: latestW.weigh_date,
+            })
+            .eq('id', animal_id)
+        }
       },
       onSuccess: (_, { animal_id, batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-weight-records`, animal_id] })
         qc.invalidateQueries({ queryKey: [`${K}-animals`, batch_id] })
+        qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-animal-detail`, animal_id] })
+        // Invalidate chart data sources so Beranda growth chart refreshes
+        qc.invalidateQueries({ queryKey: [`${K}-batch-weight-history`] })
+        qc.invalidateQueries({ queryKey: [`${K}-batch-weight-history-multi`] })
         toast.success('Data timbang disimpan')
       },
       onError: (err) => toast.error('Gagal simpan timbang: ' + err.message),
@@ -1074,38 +1111,86 @@ export function createPenggemukanHooks(prefix) {
 
   function useHppBatch(batchId) {
     const { data: animalList = [], isLoading: l1 } = useAnimals(batchId)
-    const { data: feedList = [], isLoading: l2 } = useFeedLogs(batchId)
-    const { data: costList = [], isLoading: l3 } = useOperationalCosts(batchId)
-    const { data: salesList = [], isLoading: l4 } = useSales(batchId)
+    const { data: salesList,        isLoading: l2 } = useSales(batchId)
+    const { data: activeBatches = [], isLoading: l3 } = useActiveBatches()
 
-    const isLoading = l1 || l2 || l3 || l4
+    // Fetch shared farm-level costs across ALL active batches
+    const activeBatchIds = React.useMemo(
+      () => activeBatches.map(b => b.id),
+      [activeBatches]
+    )
+    const { data: allFeedLogs = [], isLoading: l4 } = useFeedLogsByBatches(activeBatchIds)
+    const { data: allOpsCosts = [], isLoading: l5 } = useOperationalCostsByBatches(activeBatchIds)
+
+    const isLoading = l1 || l2 || l3 || l4 || l5
 
     const hpp = React.useMemo(() => {
+      // ── Modal Beli ─────────────────────────────────────────────────────────
       const totalModalBeli = animalList.reduce((s, a) => s + (Number(a.purchase_price_idr) || 0), 0)
-      const totalBiayaPakan = feedList.reduce((s, f) => s + (Number(f.feed_cost_idr) || 0), 0)
-      const totalBiayaOps = costList.reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
-      const totalHpp = totalModalBeli + totalBiayaPakan + totalBiayaOps
 
+      // ── Biaya Pakan (inventory model) ──────────────────────────────────────
+      // Weighted avg purchase price from ALL farm pakan purchases
+      const pakanPurchases = allOpsCosts.filter(c => c.category === 'pakan')
+      const totalKgPurchased = pakanPurchases.reduce((s, c) => s + (Number(c.quantity) || 0), 0)
+      const totalPakanPurchaseCost = pakanPurchases.reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
+      const avgPricePerKg = totalKgPurchased > 0 ? totalPakanPurchaseCost / totalKgPurchased : 0
+
+      // Feed consumed by THIS batch specifically (not all batches)
+      const thisBatchFeedLogs = allFeedLogs.filter(f => f.batch_id === batchId)
+      const kgConsumedThisBatch = thisBatchFeedLogs.reduce((s, f) => {
+        if (f.consumed_kg != null && f.consumed_kg > 0) return s + f.consumed_kg
+        const input = (f.hijauan_kg || 0) + (f.konsentrat_kg || 0) + (f.dedak_kg || 0) + (f.other_feed_kg || 0)
+        return s + Math.max(0, input - (f.sisa_pakan_kg || 0))
+      }, 0)
+
+      // Cost = kg actually consumed × weighted avg purchase price
+      const totalBiayaPakan = Math.round(kgConsumedThisBatch * avgPricePerKg)
+
+      // ── Biaya Ops (Listrik, Gaji, dll — exclude pakan purchases) ───────────
+      // Pakan is already accounted above; only count non-pakan ops costs
+      const totalActiveAnimalsAllBatches = Math.max(1,
+        activeBatches.reduce((s, b) => s + (b.total_animals || 0), 0)
+      )
+      const totalFarmOpsCost = allOpsCosts
+        .filter(c => c.category !== 'pakan')
+        .reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
+      const opsPerEkor = totalFarmOpsCost / totalActiveAnimalsAllBatches
       const aktifCount = animalList.filter(a => a.status === 'active').length
+      const totalBiayaOps = Math.round(opsPerEkor * aktifCount)
+
+      // ── Total HPP & Counts ─────────────────────────────────────────────────
+      const totalHpp = totalModalBeli + totalBiayaPakan + totalBiayaOps
       const terjualCount = animalList.filter(a => a.status === 'sold').length
       const matiCount = animalList.filter(a => a.status === 'dead' || a.status === 'culled').length
-
-      const totalPendapatan = salesList.reduce((s, t) => s + (Number(t.total_revenue_idr) || 0), 0)
-      const totalPendapatanLunas = salesList.filter(t => t.is_paid).reduce((s, t) => s + (Number(t.total_revenue_idr) || 0), 0)
-
       const produksiCount = aktifCount + terjualCount
-      const bepPerEkor = produksiCount > 0 ? totalHpp / produksiCount : 0
+
+      // ── Pendapatan ─────────────────────────────────────────────────────────
+      const salesData = salesList ?? []
+      const totalPendapatan = salesData.reduce((s, t) => s + (Number(t.total_revenue_idr) || 0), 0)
+      const totalPendapatanLunas = salesData.filter(t => t.is_paid).reduce((s, t) => s + (Number(t.total_revenue_idr) || 0), 0)
+
+      // ── BEP (+20% target margin) ───────────────────────────────────────────
+      const hppPerEkor = produksiCount > 0 ? totalHpp / produksiCount : 0
+      const bepPerEkor = hppPerEkor * 1.20
+
+      // BEP sisa: biaya yang belum tertutup revenue / ekor aktif, target +20%
+      const targetRevenue = totalHpp * 1.20
       const sisaHpp = totalHpp - totalPendapatan
-      const bepSisa = aktifCount > 0 ? Math.max(0, sisaHpp) / aktifCount : 0
+      const bepSisa = aktifCount > 0 ? Math.max(0, targetRevenue - totalPendapatan) / aktifCount : 0
       const profitLoss = totalPendapatan - totalHpp
+
+      // Expose feed consumption stats for UI
+      const kgPakanTotal = kgConsumedThisBatch
+      const hargaRataPerKg = Math.round(avgPricePerKg)
 
       return {
         totalModalBeli, totalBiayaPakan, totalBiayaOps, totalHpp,
         aktifCount, terjualCount, matiCount, produksiCount,
         totalPendapatan, totalPendapatanLunas,
-        bepPerEkor, bepSisa, sisaHpp, profitLoss,
+        hppPerEkor, bepPerEkor, bepSisa, sisaHpp, profitLoss,
+        kgPakanTotal, hargaRataPerKg,
       }
-    }, [animalList, feedList, costList, salesList])
+    }, [animalList, salesList, activeBatches, allFeedLogs, allOpsCosts, batchId])
 
     return { isLoading, ...hpp }
   }

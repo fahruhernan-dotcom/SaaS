@@ -191,7 +191,31 @@ export const useNotificationGenerator = () => {
             metadata: { ref_id: stock.id },
           })
         }
+
+        // 4. Tugas terlambat — one summary notif per day
+        const todayStr = today.toISOString().split('T')[0]
+        if (!existingKeys.has('tugas_terlambat' + todayStr)) {
+          const { count: overdueCount } = await supabase
+            .from('peternak_task_instances')
+            .select('*', { count: 'exact', head: true })
+            .eq('tenant_id', tenant.id)
+            .eq('status', 'terlambat')
+
+          if ((overdueCount ?? 0) > 0) {
+            await supabase.from('notifications').insert({
+              tenant_id: tenant.id,
+              type: 'tugas_terlambat',
+              title: `${overdueCount} Tugas Terlambat`,
+              body: `Ada ${overdueCount} tugas yang melewati tenggat waktu dan belum diselesaikan.`,
+              action_url: `${basePath}/daily_task`,
+              metadata: { ref_id: todayStr, count: overdueCount },
+            })
+          }
+        }
       }
+
+      // Always refetch after generation — don't rely solely on realtime
+      context.refetch()
     } catch (err) {
       // Notification generation is non-critical — silently skip on error
     }

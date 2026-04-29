@@ -20,6 +20,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { TaskHeader } from '@/dashboard/peternak/_shared/components/TaskHeader'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
+import NotificationBell from '@/dashboard/_shared/components/NotificationBell'
 
 // Shared Task Components
 import { Scene, GlassCard, SummaryTiles, WeekOrbit, CustomCalendar, EmptyState, CriticalOverdueAlert } from '@/dashboard/peternak/_shared/components/TaskBaseUI'
@@ -289,48 +290,76 @@ export default function DombaDailyTask() {
   }
 
   const { setRightAction } = useOutletContext()
-  useEffect(() => {
-    if (isStaffView) {
-      setRightAction(
-        <Button 
-          onClick={() => setIncidentSheetOpen(true)} 
-          className="bg-rose-500 hover:bg-rose-600 text-white rounded-full h-12 px-6 flex items-center gap-2 shadow-xl shadow-rose-900/20 active:scale-95 transition-all text-xs font-black uppercase tracking-widest"
-        >
-          <AlertTriangle size={18} /> Lapor Masalah
-        </Button>
-      )
-    } else if (!isDesktop && p.canEditSettings) {
-      setRightAction(<Button size="icon" onClick={() => setAdHocSheetOpen(true)} className="w-12 h-12 rounded-[22px] bg-gradient-to-br from-[#7C3AED] to-[#5B21B6] text-white shadow-2xl shadow-purple-900/40"><Plus size={24} /></Button>)
-    } else setRightAction(null)
-  }, [setRightAction, p.canEditSettings, isDesktop, isStaffView])
+  useEffect(() => { setRightAction(null) }, [])
 
   if (isLoading) return <LoadingSpinner fullPage />
 
   return (
     <Scene>
-      <TaskHeader 
+      {!isDesktop && (
+        <div className="px-5 pt-14 pb-4 flex items-end justify-between">
+          <div>
+            <p className="text-[10px] text-violet-400/60 font-black uppercase tracking-[0.2em] mb-1">Fattening Domba</p>
+            <h1 className="font-['Sora'] font-black text-[22px] text-white tracking-tight leading-tight">
+              Tugas <span className="text-violet-400">Harian</span>
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            {/* Laporan insiden — semua role yang bisa write */}
+            <button
+              onClick={() => setIncidentSheetOpen(true)}
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 active:scale-95 transition-transform"
+              title="Lapor Masalah"
+            >
+              <AlertTriangle size={16} />
+            </button>
+            {/* Ad-hoc task — owner/manajer only */}
+            {p.canEditSettings && (
+              <button
+                onClick={() => setAdHocSheetOpen(true)}
+                className="w-10 h-10 flex items-center justify-center rounded-xl bg-violet-500/15 border border-violet-500/25 text-violet-400 active:scale-95 transition-transform"
+                title="Tugas Ad-hoc"
+              >
+                <Plus size={18} strokeWidth={2.5} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      <TaskHeader
         title="Tugas Harian"
-        subtitle={format(selectedDate, 'EEEE, d MMMM yyyy', { locale: idLocale })}
+        subtitle={isDesktop ? format(selectedDate, 'EEEE, d MMMM yyyy', { locale: idLocale }) : undefined}
         isDesktop={isDesktop}
         searchQuery={!isStaffView ? searchQuery : undefined}
         onSearchChange={!isStaffView ? setSearchQuery : undefined}
         filters={!isStaffView ? [{ id: 'pending', label: 'Belum Selesai' }, { id: 'selesai', label: 'Selesai' }, { id: 'terlambat', label: 'Terlambat' }, { id: 'semua', label: 'Semua' }] : undefined}
         activeFilter={tab}
         onFilterChange={setTab}
-        actionButton={isDesktop && p.canEditSettings && (
-          <Button onClick={() => setAdHocSheetOpen(true)} className="bg-gradient-to-r from-[#7C3AED] to-[#6D28D9] hover:scale-105 active:scale-95 text-white font-black uppercase tracking-[0.3em] text-[9px] rounded-full h-12 px-10 shadow-[0_10px_30px_rgba(124,58,237,0.4)] transition-all">
-            <Sparkles size={16} className="mr-3" /> Tugas Ad-hoc
-          </Button>
+        actionButton={isDesktop && (
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setIncidentSheetOpen(true)}
+              className="bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 font-black uppercase tracking-[0.3em] text-[9px] rounded-full h-12 px-6 flex items-center gap-2 transition-all"
+            >
+              <AlertTriangle size={14} /> Laporan
+            </Button>
+            {p.canEditSettings && (
+              <Button onClick={() => setAdHocSheetOpen(true)} className="bg-gradient-to-r from-[#7C3AED] to-[#6D28D9] hover:scale-105 active:scale-95 text-white font-black uppercase tracking-[0.3em] text-[9px] rounded-full h-12 px-10 shadow-[0_10px_30px_rgba(124,58,237,0.4)] transition-all">
+                <Sparkles size={16} className="mr-3" /> Tugas Ad-hoc
+              </Button>
+            )}
+          </div>
         )}
       />
 
       <div className="max-w-[1700px] mx-auto mb-4 lg:mb-8 lg:px-5">
         <div className="flex gap-2 px-4 lg:hidden overflow-x-auto no-scrollbar pb-1">
           <button
-            onClick={() => { setAuditRange('day'); setTab('selesai'); setSelectedDate(new Date()); }}
+            onClick={() => { setAuditRange('day'); setTab('semua'); setSelectedDate(new Date()); }}
             className={cn(
               "h-9 px-4 rounded-2xl transition-all flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest shrink-0",
-              auditRange === 'day' && tab === 'selesai'
+              auditRange === 'day'
                 ? "bg-emerald-500/20 border border-emerald-500/30 text-emerald-400"
                 : "bg-white/[0.03] border border-white/[0.06] text-[#64748B]"
             )}
@@ -341,7 +370,7 @@ export default function DombaDailyTask() {
             onClick={() => { setAuditRange('week'); setTab('selesai'); }}
             className={cn(
               "h-9 px-4 rounded-2xl transition-all flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest shrink-0",
-              auditRange === 'week' && tab === 'selesai'
+              auditRange === 'week'
                 ? "bg-blue-500/20 border border-blue-500/30 text-blue-400"
                 : "bg-white/[0.03] border border-white/[0.06] text-[#64748B]"
             )}
@@ -352,7 +381,7 @@ export default function DombaDailyTask() {
             onClick={() => { setAuditRange('month'); setTab('selesai'); }}
             className={cn(
               "h-9 px-4 rounded-2xl transition-all flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest shrink-0",
-              auditRange === 'month' && tab === 'selesai'
+              auditRange === 'month'
                 ? "bg-purple-500/20 border border-purple-500/30 text-purple-400"
                 : "bg-white/[0.03] border border-white/[0.06] text-[#64748B]"
             )}
@@ -401,11 +430,13 @@ export default function DombaDailyTask() {
       <SummaryTiles stats={stats} />
 
       <main className={cn("px-4 pb-5 lg:px-5 max-w-[1700px] mx-auto", isDesktop ? "grid grid-cols-[380px_1fr] gap-12 items-start" : "flex flex-col")}>
-        <aside className="space-y-4 lg:space-y-8 lg:sticky lg:top-36 mb-4 lg:mb-0">
-           <WeekOrbit selectedDate={selectedDate} onSelect={setSelectedDate} monthTasks={monthTasks} />
+        <aside className="space-y-4 lg:space-y-8 lg:sticky lg:top-36 mb-4 lg:mb-0 lg:z-[5]">
+           <div className="hidden lg:block">
+             <WeekOrbit selectedDate={selectedDate} onSelect={setSelectedDate} monthTasks={monthTasks} />
+           </div>
 
            {isDesktop && (
-             <GlassCard className="rounded-[40px] bg-white/[0.01]">
+             <GlassCard className="rounded-[40px] bg-white/[0.01] overflow-visible">
                 <div className="p-7 border-b border-white/5 flex items-center justify-between">
                   <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#64748B]">Kalender Kerja</span>
                   <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10"><CalendarIcon size={16} className="text-[#A78BFA]" /></div>

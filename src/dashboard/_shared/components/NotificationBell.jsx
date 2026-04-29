@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -66,6 +67,16 @@ const TYPE_CONFIG = {
     Icon: FileWarning,
     bg: 'rgba(251,191,36,0.12)',
     color: '#FBBF24',
+  },
+  tugas_terlambat: {
+    Icon: Clock,
+    bg: 'rgba(251,113,133,0.12)',
+    color: '#FB7185',
+  },
+  kandang_siap_panen: {
+    Icon: TrendingUp,
+    bg: 'rgba(16,185,129,0.12)',
+    color: '#10B981',
   },
 }
 
@@ -136,6 +147,23 @@ export default function NotificationBell() {
 
   const displayCount = unreadCount > 9 ? '9+' : unreadCount
 
+  // Compute panel position from button rect so portal can be positioned absolutely
+  const [panelStyle, setPanelStyle] = useState({})
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      const panelWidth = Math.min(380, window.innerWidth - 32)
+      let right = window.innerWidth - rect.right
+      if (right + panelWidth > window.innerWidth - 16) right = 16
+      setPanelStyle({
+        position: 'fixed',
+        top: rect.bottom + 8,
+        right,
+        width: panelWidth,
+      })
+    }
+  }, [isOpen])
+
   return (
     <div style={{ position: 'relative' }}>
       {/* ── Trigger Button ── */}
@@ -198,31 +226,29 @@ export default function NotificationBell() {
         </AnimatePresence>
       </motion.button>
 
-      {/* ── Dropdown Panel ── */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            ref={panelRef}
-            initial={{ opacity: 0, y: -8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.96 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
-            style={{
-              position: 'absolute',
-              right: 0,
-              top: 'calc(100% + 8px)',
-              width: 'min(380px, calc(100vw - 32px))',
-              background: '#161A20',
-              border: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 16,
-              boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
-              zIndex: 200,
-              maxHeight: 480,
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-            }}
-          >
+      {/* ── Dropdown Panel (portal — escapes backdrop-filter stacking context) ── */}
+      {createPortal(
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              ref={panelRef}
+              initial={{ opacity: 0, y: -8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.96 }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
+              style={{
+                ...panelStyle,
+                background: '#161A20',
+                border: '1px solid rgba(255,255,255,0.06)',
+                borderRadius: 16,
+                boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
+                zIndex: 9999,
+                maxHeight: 480,
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+              }}
+            >
             {/* Header */}
             <div
               style={{
@@ -466,7 +492,9 @@ export default function NotificationBell() {
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+    )}
     </div>
   )
 }

@@ -66,7 +66,7 @@ export default function PeternakLayout() {
           minHeight: '100vh',
           maxWidth: '480px',
           margin: '0 auto',
-          paddingBottom: '80px',
+          paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))',
           position: 'relative',
           overflowX: 'hidden',
           overscrollBehaviorX: 'none'

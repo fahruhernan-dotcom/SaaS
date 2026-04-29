@@ -223,14 +223,13 @@ export default function KandangMiniMap({ batchIds, className }) {
   return (
     <div
       className={cn(
-        "w-full relative overflow-hidden rounded-2xl bg-white/[0.015] p-4 cursor-default transition-all duration-500",
+        "w-full relative overflow-hidden rounded-2xl bg-white/[0.015] cursor-default transition-all duration-500",
         fitMode
           ? "border border-emerald-500/20 min-h-[320px] lg:min-h-[400px] max-h-[700px]"
           : "border border-white/[0.04] min-h-[200px] lg:min-h-[280px] max-h-[600px]",
         className
       )}
       style={{
-        // Lock aspect ratio only in normal mode; fill parent height in fit mode
         aspectRatio: fitMode ? undefined : aspectRatio,
         backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.02) 1px, transparent 1px)`,
         backgroundSize: `${CELL_PX * scale}px ${CELL_PX * scale}px`,
@@ -270,7 +269,7 @@ export default function KandangMiniMap({ batchIds, className }) {
         </button>
       </div>
 
-      <div className="w-full h-full relative" ref={containerRef} style={{ perspective: '1000px' }}>
+      <div className="absolute inset-0" ref={containerRef} style={{ perspective: '1000px' }}>
         {viewport && (
           <div
             style={{

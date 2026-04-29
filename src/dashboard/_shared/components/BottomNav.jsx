@@ -175,48 +175,63 @@ function CenterFAB({ color, onClick }) {
   )
 }
 
-// ── Peternak-specific Tab (Handoff styling) ──────────────────────────────────
+// ── Peternak Dock Tab ─────────────────────────────────────────────────────────
 function PeternakNavItem({ tab, active, color, onClick }) {
   const Icon = ICON_MAP[tab.icon] || Home
   return (
-    <button
+    <motion.button
       onClick={onClick}
+      whileTap={{ scale: 0.88 }}
       style={{
         background: 'none', border: 'none', cursor: 'pointer',
-        padding: '8px 4px',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-        color: active ? color : 'rgba(255,255,255,0.4)',
-        transition: 'color 0.2s',
-        flex: 1,
+        padding: '4px 4px',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
         WebkitTapHighlightColor: 'transparent',
+        position: 'relative',
       }}
     >
-      <Icon size={22} strokeWidth={active ? 2.5 : 2} />
-      <span style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.01em' }}>
-        {tab.label}
-      </span>
-    </button>
+      <motion.div
+        animate={active ? { backgroundColor: `${color}22`, paddingLeft: 14, paddingRight: 14 } : { backgroundColor: 'transparent', paddingLeft: 10, paddingRight: 10 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          borderRadius: 12,
+          paddingTop: 8, paddingBottom: 8,
+          overflow: 'hidden',
+        }}
+      >
+        <Icon size={20} color={active ? color : 'rgba(255,255,255,0.4)'} strokeWidth={active ? 2.5 : 2} style={{ flexShrink: 0 }} />
+        <motion.span
+          animate={{ maxWidth: active ? 80 : 0, opacity: active ? 1 : 0 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          style={{ fontSize: '12px', fontWeight: 700, fontFamily: 'DM Sans', color, whiteSpace: 'nowrap', overflow: 'hidden', display: 'block', lineHeight: 1 }}
+        >
+          {tab.label}
+        </motion.span>
+      </motion.div>
+    </motion.button>
   )
 }
 
-// ── Peternak-specific Center FAB (Handoff styling) ───────────────────────────
+// ── Peternak Dock FAB ─────────────────────────────────────────────────────────
 function PeternakCenterFAB({ color, onClick }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-      <button
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '4px 6px' }}>
+      <motion.button
         onClick={onClick}
+        whileTap={{ scale: 0.90 }}
+        whileHover={{ scale: 1.05 }}
         style={{
-          width: 48, height: 48, borderRadius: 999,
-          background: color, color: '#0A0E0C',
+          width: 44, height: 44, borderRadius: 14,
+          background: color,
           border: 'none', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: `0 4px 14px ${color}40`,
-          transform: 'translateY(-8px)',
+          boxShadow: `0 4px 16px ${color}60`,
           WebkitTapHighlightColor: 'transparent',
         }}
       >
-        <Plus size={24} color="white" strokeWidth={2.5} />
-      </button>
+        <Plus size={22} color="white" strokeWidth={2.5} />
+      </motion.button>
     </div>
   )
 }
@@ -284,8 +299,9 @@ export default function BottomNav() {
     }
   }
 
-  // Role-based filtering
-  const isPeternakUser = profile?.user_type === 'peternak'
+  // Role-based filtering — use model.category (already resolved) rather than profile.user_type
+  // which may be 'superadmin' when an admin browses a peternak dashboard
+  const isPeternakUser = profile?.user_type === 'peternak' || model?.category === 'peternak'
   const pp = isPeternakUser ? peternakPermissions(profile?.role) : null
 
   // Hide FAB for peternak roles that can't input
@@ -394,26 +410,44 @@ export default function BottomNav() {
   return (
     <>
       <nav
-        style={{
+        style={isPeternakUser ? {
+          // Floating dock pill
+          position: 'fixed',
+          bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 'fit-content',
+          maxWidth: 'calc(100vw - 32px)',
+          height: 'auto',
+          background: 'rgba(10,15,22,0.92)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: '1px solid rgba(255,255,255,0.12)',
+          borderRadius: '22px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.60), 0 2px 8px rgba(0,0,0,0.30)',
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: '2px',
+          zIndex: 3500,
+          padding: '6px 8px',
+          overflow: 'visible',
+        } : {
           position: 'fixed',
           bottom: 0,
           left: '50%',
           transform: 'translateX(-50%)',
           width: '100%',
           maxWidth: '480px',
-          height: isPeternakUser ? 'auto' : '64px',
+          height: '64px',
           background: 'rgba(10,15,22,0.96)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
           borderTop: '1px solid rgba(255,255,255,0.07)',
-          display: isPeternakUser ? 'grid' : 'flex',
-          gridTemplateColumns: isPeternakUser ? (hasFab ? `repeat(${finalTabs.length + 1}, 1fr)` : `repeat(${finalTabs.length}, 1fr)`) : undefined,
+          display: 'flex',
           alignItems: 'stretch',
           zIndex: 3500,
-          paddingBottom: isPeternakUser ? 'calc(24px + env(safe-area-inset-bottom, 0px))' : 'env(safe-area-inset-bottom, 0px)',
-          paddingTop: isPeternakUser ? '8px' : '0px',
-          paddingLeft: isPeternakUser ? '8px' : '0px',
-          paddingRight: isPeternakUser ? '8px' : '0px',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           overflow: 'visible',
         }}
       >

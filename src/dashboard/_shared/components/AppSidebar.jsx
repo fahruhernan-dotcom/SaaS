@@ -281,6 +281,7 @@ export default function AppSidebar({ open, onClose }) {
           { title: 'Data Ternak',    url: `${peternakBase}/ternak`,      icon: Tag },
           { title: 'Penjualan',      url: `${peternakBase}/penjualan`,   icon: ShoppingCart },
           { title: 'Denah Kandang',  url: `${peternakBase}/kandang-view`,icon: LayoutGrid },
+          { title: 'Anak Kandang',   url: `${peternakBase}/anak-kandang`,icon: Users, roles: ['owner', 'manajer'] },
         ] : []),
 
         // Domba Breeding

@@ -74,8 +74,16 @@ export const TaskCard = ({ task, onClick, TASK_TYPE_CFG, STATUS_CFG, members = [
         task.status === 'in_progress' ? "bg-[#0B0F18] border-blue-500/[0.20]"   :
         "bg-[#0C1319] border-white/[0.07] hover:border-purple-500/20"
       )}>
+        {/* Left status stripe (mobile only) */}
+        <div className={cn(
+          "lg:hidden absolute left-0 top-0 bottom-0 w-[3px]",
+          task.status === 'selesai'     ? "bg-emerald-500" :
+          task.status === 'terlambat'   ? "bg-rose-500"    :
+          task.status === 'in_progress' ? "bg-blue-500"    :
+          "bg-white/10"
+        )} />
         {/* Main body */}
-        <div className="p-4 lg:p-5 flex items-start gap-4">
+        <div className="p-4 lg:p-5 pl-5 lg:pl-5 flex items-start gap-4">
           {/* Task-type icon */}
           <div className={cn(
             "w-12 h-12 rounded-2xl border flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105 shadow-lg",
@@ -361,12 +369,13 @@ export function InteractiveCheckCard({
   }
 
   return (
-    <motion.div 
+    <motion.div
       layout
+      style={{ position: 'relative', zIndex: isExpanded ? 20 : 1 }}
       className={cn(
-        "group relative flex flex-col rounded-2xl border transition-all duration-200 overflow-hidden",
-        isSelesai 
-          ? "bg-[#06090F] border-emerald-500/20" 
+        "group flex flex-col rounded-2xl border transition-all duration-200 overflow-hidden",
+        isSelesai
+          ? "bg-[#06090F] border-emerald-500/20"
           : isExpanded ? "bg-[#0C1319] border-[#7C3AED]/40 ring-1 ring-[#7C3AED]/20 shadow-xl" : "bg-[#0C1319] border-white/5 hover:border-purple-500/30 hover:bg-[#06090F]"
       )}
     >

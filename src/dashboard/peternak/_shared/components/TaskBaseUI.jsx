@@ -33,35 +33,105 @@ export const GlassCard = ({ children, className, glowColor }) => (
   </div>
 )
 
-export const SummaryTiles = ({ stats }) => (
-  <div className="px-5 py-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-    {[
-      { label: 'Total Task', value: stats.total, color: 'text-white' },
-      { label: 'Selesai', value: stats.selesai, color: 'text-emerald-400', trend: stats.complianceTrend },
-      { label: 'Pending', value: stats.pending, color: 'text-amber-400' },
-      { label: 'Terlambat', value: stats.terlambat, color: 'text-rose-400' },
-    ].map((tile, idx) => (
+export const SummaryTiles = ({ stats }) => {
+  const pct = stats.total > 0 ? Math.round((stats.selesai / stats.total) * 100) : 0
+  const r = 20
+  const circ = 2 * Math.PI * r
+  const ringColor = stats.terlambat > 0 ? '#EF4444' : stats.selesai === stats.total && stats.total > 0 ? '#10B981' : '#7C3AED'
+
+  return (
+    <>
+      {/* ── Mobile hero card ──────────────────────────────────────────────────── */}
       <motion.div
-        key={tile.label}
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: idx * 0.1, type: 'spring', damping: 20 }}
+        className="lg:hidden px-4 pb-4"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: 'spring', damping: 20 }}
       >
-        <GlassCard className="p-6 border-white/5 bg-white/[0.01] group hover:bg-white/[0.03]">
-          <div className="flex justify-between items-start mb-2">
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#64748B] group-hover:text-[#A78BFA] transition-colors">{tile.label}</span>
-            {tile.trend !== undefined && (
-              <span className={cn("text-[10px] font-black tracking-widest", tile.trend >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
-                {tile.trend >= 0 ? '↑' : '↓'} {Math.abs(tile.trend).toFixed(0)}%
-              </span>
-            )}
+        <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
+          {/* Progress ring + numbers */}
+          <div className="flex items-center gap-4 mb-3.5">
+            <div className="relative w-[64px] h-[64px] shrink-0">
+              <svg viewBox="0 0 48 48" className="w-full h-full -rotate-90">
+                <circle cx="24" cy="24" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="4.5" />
+                <motion.circle
+                  cx="24" cy="24" r={r}
+                  fill="none"
+                  stroke={ringColor}
+                  strokeWidth="4.5"
+                  strokeLinecap="round"
+                  strokeDasharray={circ}
+                  initial={{ strokeDashoffset: circ }}
+                  animate={{ strokeDashoffset: circ * (1 - pct / 100) }}
+                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-[12px] font-black text-white tabular-nums">{pct}%</span>
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline gap-1 mb-0.5">
+                <span className="text-[38px] font-black text-white tabular-nums leading-none tracking-tighter">{stats.selesai}</span>
+                <span className="text-[20px] text-[#4B6478] font-bold">/{stats.total}</span>
+              </div>
+              <p className="text-[12px] text-[#4B6478] font-medium leading-tight">tugas selesai</p>
+              {stats.complianceTrend !== undefined && stats.complianceTrend !== 0 && (
+                <span className={cn('text-[10px] font-black mt-1 inline-block', stats.complianceTrend >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
+                  {stats.complianceTrend >= 0 ? '↑' : '↓'} {Math.abs(stats.complianceTrend).toFixed(0)}% vs minggu lalu
+                </span>
+              )}
+            </div>
           </div>
-          <div className={cn("text-3xl font-display font-black tracking-tighter tabular-nums", tile.color)}>{tile.value}</div>
-        </GlassCard>
+          {/* Mini stat row */}
+          <div className="grid grid-cols-3 border-t border-white/[0.06] pt-3">
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[20px] font-black text-emerald-400 tabular-nums leading-none">{stats.selesai}</span>
+              <span className="text-[10px] text-[#4B6478] font-medium mt-0.5">Selesai</span>
+            </div>
+            <div className="flex flex-col items-center gap-0.5 border-l border-white/[0.06]">
+              <span className="text-[20px] font-black text-amber-400 tabular-nums leading-none">{stats.pending}</span>
+              <span className="text-[10px] text-[#4B6478] font-medium mt-0.5">Pending</span>
+            </div>
+            <div className="flex flex-col items-center gap-0.5 border-l border-white/[0.06]">
+              <span className="text-[20px] font-black text-rose-400 tabular-nums leading-none">{stats.terlambat}</span>
+              <span className="text-[10px] text-[#4B6478] font-medium mt-0.5">Terlambat</span>
+            </div>
+          </div>
+        </div>
       </motion.div>
-    ))}
-  </div>
-)
+
+      {/* ── Desktop 4-tile grid ───────────────────────────────────────────────── */}
+      <div className="hidden lg:grid px-5 py-6 grid-cols-4 gap-4">
+        {[
+          { label: 'Total Task', value: stats.total, color: 'text-white' },
+          { label: 'Selesai', value: stats.selesai, color: 'text-emerald-400', trend: stats.complianceTrend },
+          { label: 'Pending', value: stats.pending, color: 'text-amber-400' },
+          { label: 'Terlambat', value: stats.terlambat, color: 'text-rose-400' },
+        ].map((tile, idx) => (
+          <motion.div
+            key={tile.label}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: idx * 0.1, type: 'spring', damping: 20 }}
+          >
+            <GlassCard className="p-6 border-white/5 bg-white/[0.01] group hover:bg-white/[0.03]">
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#64748B] group-hover:text-[#A78BFA] transition-colors">{tile.label}</span>
+                {tile.trend !== undefined && (
+                  <span className={cn('text-[10px] font-black tracking-widest', tile.trend >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
+                    {tile.trend >= 0 ? '↑' : '↓'} {Math.abs(tile.trend).toFixed(0)}%
+                  </span>
+                )}
+              </div>
+              <div className={cn('text-3xl font-display font-black tracking-tighter tabular-nums', tile.color)}>{tile.value}</div>
+            </GlassCard>
+          </motion.div>
+        ))}
+      </div>
+    </>
+  )
+}
 
 export const WeekOrbit = ({ selectedDate, onSelect, monthTasks }) => {
   const navigateWeek = (offset) => onSelect(addWeeks(selectedDate, offset))

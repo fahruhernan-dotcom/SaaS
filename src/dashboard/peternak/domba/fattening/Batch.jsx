@@ -291,7 +291,7 @@ function CloseBatchWizard({ batch, onClose }) {
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: '100%', opacity: 0 }}
       transition={{ type: 'spring', damping: 28, stiffness: 250 }}
-      className="fixed inset-y-0 right-0 w-[420px] max-w-full z-50 bg-[#0A1015]/95 backdrop-blur-xl border-l border-white/[0.08] shadow-[-10px_0_40px_rgba(0,0,0,0.5)] flex flex-col"
+      className="fixed inset-y-0 right-0 w-[420px] max-w-full z-[4000] bg-[#0A1015]/95 backdrop-blur-xl border-l border-white/[0.08] shadow-[-10px_0_40px_rgba(0,0,0,0.5)] flex flex-col"
     >
       <div className="px-6 pt-8 pb-4 flex items-center justify-between border-b border-white/5">
         <div>
@@ -471,7 +471,7 @@ function CreateBatchSheet({ onClose }) {
       animate={{ x: 0, opacity: 1 }}
       exit={{ x: '100%', opacity: 0 }}
       transition={{ type: 'spring', damping: 30, stiffness: 200 }}
-      className="fixed inset-y-0 right-0 w-[500px] max-w-full z-50 bg-[#0A1015]/95 backdrop-blur-3xl border-l border-white/[0.08] shadow-[-20px_0_60px_rgba(0,0,0,0.5)] flex flex-col"
+      className="fixed inset-y-0 right-0 w-[500px] max-w-full z-[4000] bg-[#0A1015]/95 backdrop-blur-3xl border-l border-white/[0.08] shadow-[-20px_0_60px_rgba(0,0,0,0.5)] flex flex-col"
     >
       <div className="px-8 pt-10 pb-6 border-b border-white/[0.05] relative overflow-hidden">
         <div className="absolute top-0 right-0 p-8 opacity-5"><LayoutGrid size={120} /></div>

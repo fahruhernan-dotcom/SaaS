@@ -127,6 +127,7 @@ export function CompleteTaskSheet({
   const [healthEntries, setHealthEntries] = useState([])
   const [ortsCategory, setOrtsCategory] = useState(null)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [batchSplits, setBatchSplits] = useState([])
 
   const addWeight = hooks.useAddWeight()
   const addFeed = hooks.useAddFeed()
@@ -176,6 +177,21 @@ export function CompleteTaskSheet({
         setHealthEntries([])
       }
       setWeighingData({ animal_id: '', weight_kg: '', girth_cm: '' })
+
+      // Init batch splits for farm-wide pakan tasks (no specific batch_id)
+      const isPakanTask = task.task_type === 'pakan' || task.task_type === 'pemberian_pakan'
+      if (isPakanTask && !task.batch_id && activeBatches.length > 1) {
+        const totalAnimals = activeBatches.reduce((sum, b) => sum + (b.total_animals || 1), 0)
+        setBatchSplits(activeBatches.map(b => ({
+          batch_id: b.id,
+          batch_code: b.batch_code,
+          kandang_name: b.kandang_name,
+          animal_count: b.total_animals || 1,
+          pct: Math.round((b.total_animals || 1) / totalAnimals * 100),
+        })))
+      } else {
+        setBatchSplits([])
+      }
     } else if (!open) {
       setNotes('')
       setReportData({})
@@ -184,8 +200,9 @@ export function CompleteTaskSheet({
       setHealthEntries([])
       setOrtsCategory(null)
       setShowSuccess(false)
+      setBatchSplits([])
     }
-  }, [open, task])
+  }, [open, task, activeBatches])
 
   if (!task) return null
   const isAuditMode = isOwnerView && task.status === 'selesai'
@@ -239,15 +256,35 @@ export function CompleteTaskSheet({
 
       if (isPakan) {
         if (!ortsCategory) return toast.error('Pilih kategori sisa pakan (jempol) terlebih dahulu')
-        
-        await addFeed.mutateAsync({
-          batch_id: effectiveBatchId,
-          log_date: format(new Date(), 'yyyy-MM-dd'),
-          feed_orts_category: ortsCategory,
-          hijauan_kg: parseFloat(reportData.hijauan_kg || 0),
-          konsentrat_kg: parseFloat(reportData.konsentrat_kg || 0),
-          notes: notes.trim() || `Auto: ${task.title}`
-        })
+
+        const hijauanTotal = parseFloat(reportData.hijauan_kg || 0)
+        const konsentratTotal = parseFloat(reportData.konsentrat_kg || 0)
+        const logDate = format(new Date(), 'yyyy-MM-dd')
+
+        if (batchSplits.length > 1) {
+          // Normalize splits to 100% then log per batch
+          const pctSum = batchSplits.reduce((s, b) => s + b.pct, 0) || 100
+          for (const split of batchSplits) {
+            const factor = split.pct / pctSum
+            await addFeed.mutateAsync({
+              batch_id: split.batch_id,
+              log_date: logDate,
+              feed_orts_category: ortsCategory,
+              hijauan_kg: Math.round(hijauanTotal * factor * 10) / 10,
+              konsentrat_kg: Math.round(konsentratTotal * factor * 10) / 10,
+              notes: notes.trim() || `Auto: ${task.title}`,
+            })
+          }
+        } else {
+          await addFeed.mutateAsync({
+            batch_id: effectiveBatchId,
+            log_date: logDate,
+            feed_orts_category: ortsCategory,
+            hijauan_kg: hijauanTotal,
+            konsentrat_kg: konsentratTotal,
+            notes: notes.trim() || `Auto: ${task.title}`,
+          })
+        }
       }
 
       const finalNotes = JSON.stringify({ 
@@ -468,6 +505,54 @@ export function CompleteTaskSheet({
                       </div>
                    </div>
                 )}
+
+                 {(task.task_type === 'pakan' || task.task_type === 'pemberian_pakan') && !isAuditMode && batchSplits.length > 1 && (
+                    <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                      <div className="flex items-center gap-4 px-4 text-[#64748B]">
+                        <div className="h-[1px] flex-1 bg-white/5" />
+                        <span className="text-[9px] font-black uppercase tracking-[0.4em]">Alokasi Per Kandang</span>
+                        <div className="h-[1px] flex-1 bg-white/5" />
+                      </div>
+                      <div className="space-y-2">
+                        {batchSplits.map((split, i) => {
+                          const pctSum = batchSplits.reduce((s, b) => s + b.pct, 0) || 100
+                          const factor = split.pct / pctSum
+                          const hijauanKg = Math.round(parseFloat(reportData.hijauan_kg || 0) * factor * 10) / 10
+                          const konsentratKg = Math.round(parseFloat(reportData.konsentrat_kg || 0) * factor * 10) / 10
+                          return (
+                            <div key={split.batch_id} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/[0.03] border border-white/5">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-black text-white truncate">{split.kandang_name || split.batch_code}</p>
+                                <p className="text-[10px] text-[#4B6478]">{split.animal_count} ekor · {hijauanKg} kg H + {konsentratKg} kg K</p>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  value={split.pct}
+                                  onChange={e => {
+                                    const val = Math.max(0, parseInt(e.target.value) || 0)
+                                    setBatchSplits(prev => prev.map((s, idx) => idx === i ? { ...s, pct: val } : s))
+                                  }}
+                                  className="w-14 h-8 rounded-xl bg-black/40 border border-white/10 text-center text-sm font-black text-white outline-none focus:border-emerald-500/40"
+                                />
+                                <span className="text-[11px] font-black text-[#4B6478]">%</span>
+                              </div>
+                            </div>
+                          )
+                        })}
+                        {(() => {
+                          const total = batchSplits.reduce((s, b) => s + b.pct, 0)
+                          return total !== 100 ? (
+                            <p className="text-[10px] font-black text-amber-400 text-center pt-1">
+                              Total: {total}% — sesuaikan hingga 100%
+                            </p>
+                          ) : null
+                        })()}
+                      </div>
+                    </div>
+                 )}
 
                  {(task.task_type === 'pakan' || task.task_type === 'pemberian_pakan') && !isAuditMode && (
                     <div className="space-y-6 pt-2 animate-in slide-in-from-top-4 duration-700">
@@ -738,7 +823,7 @@ export function IncidentReportSheet({
   }
 
   async function handleSubmit() {
-    if (!form.batch_id) return toast.error('Pilih batch terlebih dahulu')
+    if (!form.batch_id) return toast.error(category === 'kandang' ? 'Pilih kandang terlebih dahulu' : 'Pilih batch terlebih dahulu')
     if (!form.symptoms) return toast.error('Deskripsi / gejala wajib diisi')
     const cat = REPORT_CATEGORIES.find(c => c.id === category)
     setIsSubmitting(true)
@@ -788,16 +873,22 @@ export function IncidentReportSheet({
             ))}
           </div>
 
-          {/* Batch + date */}
+          {/* Batch/Kandang + date — label & display adapt to category */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest block mb-1.5 ml-1">Batch</label>
+              <label className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest block mb-1.5 ml-1">
+                {category === 'kandang' ? 'Kandang' : 'Batch'}
+              </label>
               <Select value={form.batch_id} onValueChange={v => setForm(f => ({ ...f, batch_id: v, animal_id: '' }))}>
                 <SelectTrigger className="h-11 bg-black/40 border border-white/5 rounded-xl text-sm text-white outline-none ring-0">
-                  <SelectValue placeholder="Pilih batch..." />
+                  <SelectValue placeholder={category === 'kandang' ? 'Pilih kandang...' : 'Pilih batch...'} />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0C1319] border-white/10 rounded-2xl">
-                  {batches.map(b => <SelectItem key={b.id} value={b.id}>{b.batch_code}</SelectItem>)}
+                  {batches.map(b => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {category === 'kandang' ? (b.kandang_name || b.batch_code) : b.batch_code}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

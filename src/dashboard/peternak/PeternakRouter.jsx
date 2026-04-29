@@ -86,6 +86,7 @@ import KambingPerahPenjualan from './kambing_perah/Penjualan'
 
 // ─── Shared ───────────────────────────────────────────────────────────────────
 import UniversalDailyTask   from './_shared/components/UniversalDailyTask'
+import AnakKandangPage      from './_shared/components/anak-kandang/AnakKandangPage'
 import HargaPasar           from '@/dashboard/_shared/pages/HargaPasar'
 import Akun                 from '@/dashboard/_shared/pages/Akun'
 import LoadingSpinner       from '@/dashboard/_shared/components/LoadingSpinner'
@@ -198,6 +199,7 @@ export function PeternakPageRouter({ page }) {
       task_assign:    <PeternakAdminGuard><DombaTaskAssign /></PeternakAdminGuard>,
       penjualan:      <DombaPenjualan />,
       'quick-add':    <DombaQuickAdd />,
+      'anak-kandang': <PeternakAdminGuard><AnakKandangPage /></PeternakAdminGuard>,
       'harga-pasar':  <HargaPasar />,
       tim:            <BroilerTim />,
       akun:           <Akun />,

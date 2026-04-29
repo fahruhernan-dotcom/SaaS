@@ -103,7 +103,7 @@ export const BUSINESS_MODELS = {
     sub_type: 'broker_ayam',
     comingSoon: false,
     bottomNav: createNav('broker', 'broker_ayam', [
-      { slug: 'beranda',   icon: 'Home',           label: 'Beranda'   },
+      { slug: 'beranda',   icon: 'Home',           label: 'Home'   },
       { slug: 'transaksi', icon: 'ArrowLeftRight', label: 'Transaksi' },
       { slug: 'rpa',       icon: 'Building2',      label: 'RPA'       },
       { slug: 'pengiriman',icon: 'Truck',           label: 'Kirim'     },
@@ -134,7 +134,7 @@ export const BUSINESS_MODELS = {
     sub_type: 'distributor_sembako',
     comingSoon: false,
     bottomNav: createNav('broker', 'distributor_sembako', [
-      { slug: 'beranda',      icon: 'Home',           label: 'Beranda'   },
+      { slug: 'beranda',      icon: 'Home',           label: 'Home'   },
       { slug: 'penjualan',    icon: 'ShoppingCart',   label: 'Jual'      },
       { slug: 'toko-supplier',icon: 'Store',          label: 'Toko'      },
       { slug: 'pengiriman',   icon: 'Truck',          label: 'Kirim'     },
@@ -163,7 +163,7 @@ export const BUSINESS_MODELS = {
     sub_type: 'broker_telur',
     comingSoon: false,
     bottomNav: createNav('broker', 'broker_telur', [
-      { slug: 'beranda',   icon: 'Home',           label: 'Beranda'   },
+      { slug: 'beranda',   icon: 'Home',           label: 'Home'   },
       { slug: 'pos',       icon: 'ShoppingCart',   label: 'POS'       },
       { slug: 'inventori', icon: 'Warehouse',      label: 'Gudang'    },
       { slug: 'transaksi', icon: 'ArrowLeftRight', label: 'Transaksi' },
@@ -188,7 +188,7 @@ export const BUSINESS_MODELS = {
     sub_type: 'peternak_broiler',
     comingSoon: false,
     bottomNav: createNav('peternak', 'peternak_broiler', [
-      { slug: 'beranda',    icon: 'Home',           label: 'Beranda'   },
+      { slug: 'beranda',    icon: 'Home',           label: 'Home'   },
       { slug: 'siklus',     icon: 'RefreshCw',      label: 'Siklus'    },
       { slug: 'daily_task', icon: 'ClipboardList',   label: 'Tugas'     },
       { slug: 'akun',       icon: 'User',            label: 'Profil'    },
@@ -236,7 +236,7 @@ export const BUSINESS_MODELS = {
     sub_type: 'rpa_ayam',
     comingSoon: false,
     bottomNav: createNav('rumah_potong', 'rpa_ayam', [
-      { slug: 'beranda',   icon: 'Home',           label: 'Beranda'   },
+      { slug: 'beranda',   icon: 'Home',           label: 'Home'   },
       { slug: 'transaksi', icon: 'ArrowLeftRight', label: 'Produksi'  },
       { slug: 'stok',      icon: 'Warehouse',      label: 'Gudang'    },
       { slug: 'pengiriman',icon: 'Truck',          label: 'Kirim'     },
@@ -263,18 +263,20 @@ export const BUSINESS_MODELS = {
     sub_type: 'peternak_domba_penggemukan',
     comingSoon: false,
     bottomNav: createNav('peternak', 'peternak_domba_penggemukan', [
-      { slug: 'beranda',    icon: 'Home',           label: 'Beranda'  },
-      { slug: 'daily_task', icon: 'ClipboardList',  label: 'Tugas'    },
-      { slug: 'pakan',      icon: 'Wheat',          label: 'Pakan'    },
-      { slug: 'menu',       icon: 'Menu',           label: 'Menu'     },
+      { slug: 'beranda',    icon: 'Home',          label: 'Home'  },
+      { slug: 'daily_task', icon: 'ClipboardList', label: 'Tugas'    },
+      { slug: 'pakan',      icon: 'Wheat',         label: 'Pakan'    },
+      { slug: 'menu',       icon: 'Menu',          label: 'Menu'     },
     ]),
     drawerMenu: [
-      { path: '/peternak/peternak_domba_penggemukan/kesehatan', icon: 'Syringe',  label: 'Kesehatan'      },
-      { path: '/peternak/peternak_domba_penggemukan/pakan',    icon: 'Wheat',    label: 'Log Pakan'      },
-      { path: '/peternak/peternak_domba_penggemukan/laporan',  icon: 'BarChart2',label: 'Laporan Batch'  },
-      { path: '/peternak/peternak_domba_penggemukan/tim',      icon: 'Users',    label: 'Tim & Akses'    },
-      { path: '/market',                                       icon: 'Store',    label: 'TernakOS Market'},
-      { path: '/peternak/peternak_domba_penggemukan/akun',     icon: 'User',     label: 'Akun & Profil'  },
+      { path: '/peternak/peternak_domba_penggemukan/penjualan',   icon: 'ShoppingCart', label: 'Penjualan'      },
+      { path: '/peternak/peternak_domba_penggemukan/kesehatan',   icon: 'Syringe',      label: 'Kesehatan'      },
+      { path: '/peternak/peternak_domba_penggemukan/stok-pakan',  icon: 'Wheat',        label: 'Stok & Pakan'   },
+      { path: '/peternak/peternak_domba_penggemukan/laporan',     icon: 'BarChart2',    label: 'Laporan Batch'  },
+      { path: '/peternak/peternak_domba_penggemukan/harga-pasar', icon: 'TrendingUp',   label: 'Harga Pasar'    },
+      { path: '/peternak/peternak_domba_penggemukan/tim',         icon: 'Users',        label: 'Tim & Akses'    },
+      { path: '/market',                                          icon: 'Store',        label: 'TernakOS Market'},
+      { path: '/peternak/peternak_domba_penggemukan/akun',        icon: 'User',         label: 'Akun & Profil'  },
     ],
     fabPath: '/peternak/peternak_domba_penggemukan/quick-add',
   },
@@ -292,7 +294,7 @@ export const BUSINESS_MODELS = {
     sub_type: 'peternak_domba_breeding',
     comingSoon: false,
     bottomNav: createNav('peternak', 'peternak_domba_breeding', [
-      { slug: 'beranda',    icon: 'Home',           label: 'Beranda'   },
+      { slug: 'beranda',    icon: 'Home',           label: 'Home'   },
       { slug: 'ternak',     icon: 'Tag',            label: 'Ternak'    },
       { slug: 'daily_task', icon: 'ClipboardList',  label: 'Tugas'     },
       { slug: 'reproduksi', icon: 'Heart',          label: 'Reproduksi'},
@@ -321,7 +323,7 @@ export const BUSINESS_MODELS = {
     sub_type: 'peternak_kambing_penggemukan',
     comingSoon: false,
     bottomNav: createNav('peternak', 'peternak_kambing_penggemukan', [
-      { slug: 'beranda',    icon: 'Home',           label: 'Beranda'  },
+      { slug: 'beranda',    icon: 'Home',           label: 'Home'  },
       { slug: 'batch',      icon: 'RefreshCw',      label: 'Batch'    },
       { slug: 'daily_task', icon: 'ClipboardList',   label: 'Tugas'    },
       { slug: 'ternak',     icon: 'Tag',             label: 'Ternak'   },
@@ -350,7 +352,7 @@ export const BUSINESS_MODELS = {
     sub_type: 'peternak_kambing_breeding',
     comingSoon: false,
     bottomNav: createNav('peternak', 'peternak_kambing_breeding', [
-      { slug: 'beranda',    icon: 'Home',           label: 'Beranda'   },
+      { slug: 'beranda',    icon: 'Home',           label: 'Home'   },
       { slug: 'ternak',     icon: 'Tag',            label: 'Ternak'    },
       { slug: 'daily_task', icon: 'ClipboardList',  label: 'Tugas'     },
       { slug: 'reproduksi', icon: 'Heart',          label: 'Reproduksi'},
@@ -379,7 +381,7 @@ export const BUSINESS_MODELS = {
     sub_type: 'peternak_kambing_perah',
     comingSoon: false,
     bottomNav: createNav('peternak', 'peternak_kambing_perah', [
-      { slug: 'beranda',    icon: 'Home',           label: 'Beranda'  },
+      { slug: 'beranda',    icon: 'Home',           label: 'Home'  },
       { slug: 'produksi',   icon: 'Milk',           label: 'Produksi' },
       { slug: 'daily_task', icon: 'ClipboardList',   label: 'Tugas'    },
       { slug: 'ternak',     icon: 'Tag',             label: 'Ternak'   },
@@ -411,7 +413,7 @@ export const BUSINESS_MODELS = {
     sub_type: 'peternak_kambing_domba_penggemukan',
     comingSoon: false,
     bottomNav: createNav('peternak', 'peternak_kambing_domba_penggemukan', [
-      { slug: 'beranda',    icon: 'Home',           label: 'Beranda'  },
+      { slug: 'beranda',    icon: 'Home',           label: 'Home'  },
       { slug: 'batch',      icon: 'RefreshCw',      label: 'Batch'    },
       { slug: 'daily_task', icon: 'ClipboardList',   label: 'Tugas'    },
       { slug: 'ternak',     icon: 'Tag',             label: 'Ternak'   },
@@ -440,7 +442,7 @@ export const BUSINESS_MODELS = {
     sub_type: 'peternak_kambing_domba_breeding',
     comingSoon: false,
     bottomNav: createNav('peternak', 'peternak_kambing_domba_breeding', [
-      { slug: 'beranda',    icon: 'Home',           label: 'Beranda'   },
+      { slug: 'beranda',    icon: 'Home',           label: 'Home'   },
       { slug: 'ternak',     icon: 'Tag',            label: 'Ternak'    },
       { slug: 'daily_task', icon: 'ClipboardList',  label: 'Tugas'     },
       { slug: 'reproduksi', icon: 'Heart',          label: 'Reproduksi'},
@@ -505,7 +507,7 @@ export const BUSINESS_MODELS = {
     sub_type: 'peternak_sapi_penggemukan',
     comingSoon: false,
     bottomNav: createNav('peternak', 'peternak_sapi_penggemukan', [
-      { slug: 'beranda',    icon: 'Home',           label: 'Beranda' },
+      { slug: 'beranda',    icon: 'Home',           label: 'Home' },
       { slug: 'daily_task', icon: 'ClipboardList',  label: 'Tugas'   },
       { slug: 'batch',      icon: 'RefreshCw',      label: 'Batch'   },
       { slug: 'ternak',     icon: 'Tag',            label: 'Ternak'  },
@@ -535,7 +537,7 @@ export const BUSINESS_MODELS = {
     sub_type: 'peternak_sapi_breeding',
     comingSoon: false,
     bottomNav: createNav('peternak', 'peternak_sapi_breeding', [
-      { slug: 'beranda',    icon: 'Home',           label: 'Beranda'   },
+      { slug: 'beranda',    icon: 'Home',           label: 'Home'   },
       { slug: 'daily_task', icon: 'ClipboardList',  label: 'Tugas'     },
       { slug: 'ternak',     icon: 'Tag',            label: 'Ternak'    },
       { slug: 'reproduksi', icon: 'Heart',          label: 'Reproduksi'},

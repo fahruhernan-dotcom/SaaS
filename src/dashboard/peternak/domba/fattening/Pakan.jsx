@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, X, Wheat, Calendar, Info, Trash2, ArrowLeft, Share2 } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { DatePicker } from '@/components/ui/DatePicker'
 import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 import {
   useDombaActiveBatches,
@@ -61,7 +62,8 @@ export default function DombaPakan() {
   const [showAdd, setShowAdd] = useState(false)
   const [showAddCost, setShowAddCost] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formBatchId, setFormBatchId] = useState(null) // batch for add forms
+  const [formBatchId, setFormBatchId] = useState(null)
+  const [batchTargetLocked, setBatchTargetLocked] = useState(true)
 
   // Quick lookup: batch_id → batch_code
   const batchCodeMap = useMemo(() => {
@@ -84,12 +86,22 @@ export default function DombaPakan() {
     log_date: new Date().toISOString().split('T')[0],
     item_name: '',
     category: 'pakan',
+    feed_type: 'hijauan',
+    harga_per_kg: '',
     amount_idr: '',
     quantity: '',
-    unit: 'sak',
+    unit: 'kg',
     notes: '',
     is_shared: false,
   })
+
+  const isFarmLevelCost = false
+  const isPakanCost = costForm.category === 'pakan'
+
+  // Auto-calculate total pakan cost from kg × harga/kg
+  const pakanTotalAuto = isPakanCost
+    ? Math.round((parseFloat(costForm.quantity) || 0) * (parseFloat(costForm.harga_per_kg) || 0))
+    : 0
 
   // Calculations
   const getConsumed = (l) => {
@@ -188,28 +200,40 @@ export default function DombaPakan() {
     const batchForCost = targetBatch || batches[0]
     if (!batchForCost) return
     setIsSubmitting(true)
-    const totalAmount = parseInt(costForm.amount_idr) || 0
+
+    const finalAmount = isPakanCost && pakanTotalAuto > 0
+      ? pakanTotalAuto
+      : (parseInt(costForm.amount_idr) || 0)
+
+    const autoItemName = isPakanCost
+      ? `Beli Pakan ${costForm.feed_type.charAt(0).toUpperCase() + costForm.feed_type.slice(1)}`
+      : costForm.item_name
+
     const basePayload = {
       log_date: costForm.log_date,
-      item_name: costForm.item_name,
+      item_name: autoItemName || costForm.item_name,
       category: costForm.category,
       quantity: parseFloat(costForm.quantity) || 0,
-      unit: costForm.unit,
-      notes: costForm.notes,
+      unit: isPakanCost ? 'kg' : costForm.unit,
+      notes: isPakanCost && costForm.harga_per_kg
+        ? `Rp ${Number(costForm.harga_per_kg).toLocaleString('id-ID')}/kg${costForm.notes ? ' · ' + costForm.notes : ''}`
+        : costForm.notes,
     }
+
+    const shouldShare = costForm.is_shared || isFarmLevelCost
     try {
-      if (costForm.is_shared && batches.length > 1) {
+      if (shouldShare && batches.length > 1) {
         const totalAnimals = batches.reduce((s, b) => s + (b.total_animals || 0), 0)
         if (totalAnimals === 0) {
-          await addCost.mutateAsync({ batch_id: batchForCost.id, ...basePayload, amount_idr: totalAmount })
+          await addCost.mutateAsync({ batch_id: batchForCost.id, ...basePayload, amount_idr: finalAmount })
         } else {
-          let remaining = totalAmount
+          let remaining = finalAmount
           for (let i = 0; i < batches.length; i++) {
             const b = batches[i]
             const proportion = (b.total_animals || 0) / totalAnimals
             const allocated = i === batches.length - 1
               ? remaining
-              : Math.round(totalAmount * proportion)
+              : Math.round(finalAmount * proportion)
             remaining -= allocated
             if (allocated > 0) {
               await addCost.mutateAsync({ batch_id: b.id, ...basePayload, amount_idr: allocated })
@@ -217,16 +241,20 @@ export default function DombaPakan() {
           }
         }
       } else {
-        await addCost.mutateAsync({ batch_id: batchForCost.id, ...basePayload, amount_idr: totalAmount })
+        await addCost.mutateAsync({ batch_id: batchForCost.id, ...basePayload, amount_idr: finalAmount })
       }
       setShowAddCost(false)
+      setBatchTargetLocked(true)
+      setFormBatchId(null)
       setCostForm({
         log_date: new Date().toISOString().split('T')[0],
         item_name: '',
         category: 'pakan',
+        feed_type: 'hijauan',
+        harga_per_kg: '',
         amount_idr: '',
         quantity: '',
-        unit: 'sak',
+        unit: 'kg',
         notes: '',
         is_shared: false,
       })
@@ -538,7 +566,7 @@ export default function DombaPakan() {
       {/* Add Log Modal */}
       <AnimatePresence>
         {showAdd && (
-          <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
+          <div className="fixed inset-0 z-[4000] flex items-end justify-center sm:items-center sm:p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -579,13 +607,7 @@ export default function DombaPakan() {
                 )}
                 <div>
                   <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Tanggal Pemberian</label>
-                  <input
-                    type="date"
-                    required
-                    value={form.log_date}
-                    onChange={e => setForm({...form, log_date: e.target.value})}
-                    className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-green-500/50 transition-colors"
-                  />
+                  <DatePicker value={form.log_date} onChange={v => setForm({...form, log_date: v})} placeholder="Pilih tanggal" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -677,12 +699,12 @@ export default function DombaPakan() {
       {/* Add Cost Modal */}
       <AnimatePresence>
         {showAddCost && (
-          <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
+          <div className="fixed inset-0 z-[4000] flex items-end justify-center sm:items-center sm:p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setShowAddCost(false)}
+              onClick={() => { setShowAddCost(false); setBatchTargetLocked(true); setFormBatchId(null) }}
               className="absolute inset-0 bg-[#06090F]/80 backdrop-blur-sm"
             />
             <motion.div
@@ -693,86 +715,221 @@ export default function DombaPakan() {
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="font-['Sora'] font-black text-lg text-white">Catat Biaya / Belanja</h3>
-                <button onClick={() => setShowAddCost(false)} className="p-2 -mr-2 text-[#4B6478]">
+                <button onClick={() => { setShowAddCost(false); setBatchTargetLocked(true); setFormBatchId(null) }} className="p-2 -mr-2 text-[#4B6478]">
                   <X size={20} />
                 </button>
               </div>
 
               <form onSubmit={handleAddCost} className="space-y-4 font-['DM Sans']">
-                {isAllBatches && (
-                  <div>
-                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Pilih Batch Target</label>
-                    <select
-                      value={formBatchId || batches[0]?.id}
-                      onChange={e => {
-                        setFormBatchId(e.target.value)
-                        if (costForm.is_shared) setCostForm(prev => ({...prev, is_shared: false}))
-                      }}
-                      disabled={costForm.is_shared}
-                      className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-colors disabled:opacity-50"
-                    >
-                      {batches.map(b => (
-                        <option key={b.id} value={b.id} className="bg-[#0C1319] text-white">
-                          {b.batch_code}
-                        </option>
-                      ))}
-                    </select>
+
+                {/* Tanggal */}
+                <div>
+                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Tanggal</label>
+                  <DatePicker value={costForm.log_date} onChange={v => setCostForm({...costForm, log_date: v})} placeholder="Pilih tanggal" />
+                </div>
+
+                {/* Kategori — pill grid */}
+                <div>
+                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Kategori</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { id: 'pakan',   emoji: '🌿', label: 'Pakan'   },
+                      { id: 'lainnya', emoji: '📦', label: 'Lainnya' },
+                    ].map(c => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => {
+                          setCostForm(f => ({ ...f, category: c.id, is_shared: false, unit: c.id === 'pakan' ? 'kg' : f.unit }))
+                        }}
+                        className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-left transition-all ${
+                          costForm.category === c.id
+                            ? 'bg-violet-500/15 border-violet-500/40 text-violet-300'
+                            : 'bg-white/[0.02] border-white/[0.06] text-[#4B6478]'
+                        }`}
+                      >
+                        <span className="text-sm leading-none">{c.emoji}</span>
+                        <span className="text-[10px] font-black uppercase tracking-wide leading-tight">{c.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Farm-level cost info banner */}
+                {isFarmLevelCost && (
+                  <div className="flex items-center gap-2 px-3 py-2.5 bg-violet-500/8 border border-violet-500/20 rounded-xl">
+                    <Share2 size={13} className="text-violet-400 shrink-0" />
+                    <p className="text-[10px] font-bold text-violet-300">Biaya ini otomatis dibagi proporsional ke semua batch aktif</p>
                   </div>
                 )}
-                <div>
-                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Nama Barang / Item</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Contoh: Beli Pakan Konsentrat"
-                    value={costForm.item_name}
-                    onChange={e => setCostForm({...costForm, item_name: e.target.value})}
-                    className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/10 focus:outline-none focus:border-violet-500/50 transition-colors"
-                  />
-                </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                {/* Pilih Kandang / Batch Target */}
+                {isAllBatches && !isFarmLevelCost && (
                   <div>
-                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Kategori</label>
-                    <select
-                      value={costForm.category}
-                      onChange={e => setCostForm({...costForm, category: e.target.value})}
-                      className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-colors appearance-none"
-                    >
-                      <option value="pakan">Pakan</option>
-                      <option value="obat">Obat/Vaksin</option>
-                      <option value="bibit">Bibit</option>
-                      <option value="tenaga_kerja">Tenaga Kerja</option>
-                      <option value="listrik_air">Listrik & Air</option>
-                      <option value="lainnya">Lainnya</option>
-                    </select>
+                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Batch Target</label>
+                    {batchTargetLocked ? (
+                      <div className="flex items-center justify-between px-4 py-3 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">🏠</span>
+                          <div>
+                            <p className="text-sm font-bold text-white">Seluruh Kandang</p>
+                            <p className="text-[10px] text-[#4B6478]">Dibagi proporsional ke semua batch aktif</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBatchTargetLocked(false)
+                            setFormBatchId(batches[0]?.id || null)
+                            setCostForm(f => ({ ...f, is_shared: false }))
+                          }}
+                          className="text-[10px] font-black text-violet-400 border border-violet-500/30 bg-violet-500/8 px-2.5 py-1 rounded-lg hover:bg-violet-500/15 transition"
+                        >
+                          🔓 Ubah
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <select
+                          value={formBatchId || batches[0]?.id}
+                          onChange={e => setFormBatchId(e.target.value)}
+                          className="flex-1 bg-white/[0.03] border border-violet-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-colors"
+                        >
+                          {batches.map(b => (
+                            <option key={b.id} value={b.id} className="bg-[#0C1319] text-white">
+                              {b.kandang_name || b.batch_code}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBatchTargetLocked(true)
+                            setFormBatchId(null)
+                            setCostForm(f => ({ ...f, is_shared: true }))
+                          }}
+                          className="px-3 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-[#4B6478] hover:text-white hover:border-white/20 transition text-xs font-black"
+                        >
+                          🔒
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Tanggal</label>
-                    <input
-                      type="date"
-                      required
-                      value={costForm.log_date}
-                      onChange={e => setCostForm({...costForm, log_date: e.target.value})}
-                      className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-colors"
-                    />
+                )}
+
+                {/* ── Pakan: detail Hijauan / Konsentrat / Dedak ── */}
+                {isPakanCost ? (
+                  <div className="space-y-3 p-4 bg-emerald-500/5 border border-emerald-500/15 rounded-2xl">
+                    <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Detail Pembelian Pakan</p>
+
+                    {/* Jenis pakan */}
+                    <div>
+                      <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Jenis Pakan</label>
+                      <div className="grid grid-cols-4 gap-2">
+                        {[
+                          { id: 'hijauan',   label: 'Hijauan',    emoji: '🌿' },
+                          { id: 'konsentrat',label: 'Konsentrat', emoji: '🌾' },
+                          { id: 'dedak',     label: 'Dedak',      emoji: '🟤' },
+                          { id: 'lainnya',   label: 'Lainnya',    emoji: '📦' },
+                        ].map(ft => (
+                          <button
+                            key={ft.id}
+                            type="button"
+                            onClick={() => setCostForm(f => ({
+                              ...f,
+                              feed_type: ft.id,
+                              item_name: `Beli Pakan ${ft.label}`,
+                            }))}
+                            className={`flex flex-col items-center py-2.5 rounded-xl border text-center transition-all ${
+                              costForm.feed_type === ft.id
+                                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                                : 'bg-white/[0.02] border-white/[0.06] text-[#4B6478]'
+                            }`}
+                          >
+                            <span className="text-base leading-none mb-1">{ft.emoji}</span>
+                            <span className="text-[9px] font-black uppercase tracking-wide">{ft.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Jumlah kg + harga/kg */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Jumlah (kg)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          placeholder="0"
+                          value={costForm.quantity}
+                          onChange={e => {
+                            const kg = e.target.value
+                            const total = Math.round((parseFloat(kg) || 0) * (parseFloat(costForm.harga_per_kg) || 0))
+                            setCostForm(f => ({ ...f, quantity: kg, unit: 'kg', amount_idr: total > 0 ? String(total) : f.amount_idr }))
+                          }}
+                          className="w-full bg-black/30 border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-emerald-500/50 font-bold transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Harga / kg (Rp)</label>
+                        <input
+                          type="number"
+                          placeholder="0"
+                          value={costForm.harga_per_kg}
+                          onChange={e => {
+                            const harga = e.target.value
+                            const total = Math.round((parseFloat(costForm.quantity) || 0) * (parseFloat(harga) || 0))
+                            setCostForm(f => ({ ...f, harga_per_kg: harga, amount_idr: total > 0 ? String(total) : f.amount_idr }))
+                          }}
+                          className="w-full bg-black/30 border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-emerald-500/50 font-bold transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Total auto */}
+                    <div>
+                      <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">
+                        Total Biaya (Rp) {pakanTotalAuto > 0 && <span className="text-emerald-400 normal-case font-bold">— auto-hitung</span>}
+                      </label>
+                      <input
+                        type="number"
+                        required
+                        placeholder="0"
+                        value={pakanTotalAuto > 0 ? pakanTotalAuto : costForm.amount_idr}
+                        onChange={e => setCostForm(f => ({ ...f, amount_idr: e.target.value }))}
+                        className="w-full bg-black/30 border border-emerald-500/20 rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-emerald-500/50 font-black transition-colors"
+                      />
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Nama / Keterangan</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Keterangan biaya..."
+                        value={costForm.item_name}
+                        onChange={e => setCostForm({...costForm, item_name: e.target.value})}
+                        className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Total Biaya (Rp)</label>
+                      <input
+                        type="number"
+                        required
+                        placeholder="Contoh: 500000"
+                        value={costForm.amount_idr}
+                        onChange={e => setCostForm({...costForm, amount_idr: e.target.value})}
+                        className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-violet-500/50 font-bold transition-colors"
+                      />
+                    </div>
+                  </>
+                )}
 
-                <div>
-                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Total Biaya (Rp)</label>
-                  <input
-                    type="number"
-                    required
-                    placeholder="Contoh: 500000"
-                    value={costForm.amount_idr}
-                    onChange={e => setCostForm({...costForm, amount_idr: e.target.value})}
-                    className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-violet-500/50 font-bold transition-colors"
-                  />
-                </div>
-
-                {/* Biaya Bersama toggle — hanya tampil jika ada >1 batch aktif */}
-                {batches.length > 1 && (
+                {/* Biaya Bersama toggle — hanya untuk non farm-level dan >1 batch */}
+                {batches.length > 1 && !isFarmLevelCost && (
                   <div>
                     <label className="flex items-center justify-between px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl cursor-pointer hover:bg-white/[0.05] transition">
                       <div className="flex items-center gap-2">
@@ -824,29 +981,31 @@ export default function DombaPakan() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Jumlah (Opsional)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      placeholder="0.0"
-                      value={costForm.quantity}
-                      onChange={e => setCostForm({...costForm, quantity: e.target.value})}
-                      className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-colors"
-                    />
+                {!isPakanCost && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Jumlah (Opsional)</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        placeholder="0.0"
+                        value={costForm.quantity}
+                        onChange={e => setCostForm({...costForm, quantity: e.target.value})}
+                        className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Satuan</label>
+                      <input
+                        type="text"
+                        placeholder="sak / kg / ml"
+                        value={costForm.unit}
+                        onChange={e => setCostForm({...costForm, unit: e.target.value})}
+                        className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-colors"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest leading-none">Satuan</label>
-                    <input
-                      type="text"
-                      placeholder="sak / kg / ml"
-                      value={costForm.unit}
-                      onChange={e => setCostForm({...costForm, unit: e.target.value})}
-                      className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-colors"
-                    />
-                  </div>
-                </div>
+                )}
 
                 <button
                   type="submit"
