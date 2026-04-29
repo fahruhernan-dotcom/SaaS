@@ -27,7 +27,7 @@ import {
   useDombaBatchWeightHistory, useDombaFeedLogs, useDombaOperationalCosts, useDombaSales,
   useDombaAnimalsByBatches, useDombaBatchWeightHistoryByBatches,
   useDombaFeedLogsByBatches, useDombaOperationalCostsByBatches, useDombaSalesByBatches,
-  calcHariDiFarm, calcMortalitasDomba,
+  calcHariDiFarm, calcMortalitasDomba, calcADGFromRecords, calcADG,
 } from '@/lib/hooks/useDombaPenggemukanData'
 import { usePeternakTaskInstances } from '@/lib/hooks/usePeternakTaskData'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
@@ -699,14 +699,29 @@ export default function DombaPenggemukanBeranda() {
                     const activeCount = allActiveAnimals.filter(a => a.batch_id === batch.id && a.status !== 'sold' && !a.is_sold && !a.is_sale).length
                     
                     // Normalize batch data for MobileBatchRow
+                    const batchAnimals = allActiveAnimals.filter(a => a.batch_id === batch.id)
+                    const avgWeight = batchAnimals.length
+                      ? Math.round(batchAnimals.reduce((s, a) => s + (parseFloat(a.latest_weight_kg ?? a.entry_weight_kg) || 0), 0) / batchAnimals.length)
+                      : 0
+                    const adgValues = batchAnimals.map(a => {
+                      const wRec = a.weight_records ?? []
+                      const hari = calcHariDiFarm(a.entry_date, a.exit_date)
+                      return calcADGFromRecords(wRec, a.entry_date, a.entry_weight_kg)
+                        || (a.latest_weight_kg > a.entry_weight_kg && hari > 0
+                            ? calcADG(a.entry_weight_kg, a.latest_weight_kg, hari)
+                            : 0)
+                    }).filter(v => v > 0)
+                    const avgAdg = adgValues.length
+                      ? Math.round(adgValues.reduce((s, v) => s + v, 0) / adgValues.length)
+                      : 0
                     const normalizedBatch = {
                       ...batch,
                       population: activeCount || batch.total_animals || 0,
                       mortality: batch.mortality_count || 0,
                       total_initial: (batch.total_animals || 0) + (batch.mortality_count || 0),
                       ageInDays: calcHariDiFarm(batch.start_date),
-                      adg: Math.round(batch.avg_adg_gram || 0),
-                      avgWeight: Math.round(batch.avg_weight_kg || 0),
+                      adg: avgAdg,
+                      avgWeight,
                       code: batch.batch_code || `Batch ${i + 1}`,
                       location: batch.kandang_name || 'Kandang Utama'
                     }
