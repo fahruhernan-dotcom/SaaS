@@ -215,24 +215,23 @@ export default function AppSidebar({ open, onClose }) {
   const akunPath    = getAkunPath(vertical)
 
   const getVerticalInfo = (v) => {
-    switch (v) {
-      case 'poultry_broker':                    return { icon: '🐔', label: 'Broker Ayam' }
-      case 'egg_broker':                        return { icon: '🥚', label: 'Broker Telur' }
-      case 'peternak':                          return { icon: '🐔', label: 'Peternak Broiler' }
-      case 'peternak_layer':                    return { icon: '🥚', label: 'Peternak Layer' }
-      case 'peternak_domba_penggemukan':        return { icon: '🐑', label: 'Fattening Domba' }
-      case 'peternak_domba_breeding':           return { icon: '🐑', label: 'Breeding Domba' }
-      case 'peternak_kambing_penggemukan':      return { icon: '🐐', label: 'Fattening Kambing' }
-      case 'peternak_kambing_breeding':         return { icon: '🐐', label: 'Breeding Kambing' }
-      case 'rumah_potong_rpa':
-      case 'rpa':                               return { icon: '🏭', label: 'RPA' }
-      case 'distributor_sembako':
-      case 'sembako_broker':                    return { icon: '🛒', label: 'Distributor Sembako' }
-      default: {
-        const m = BUSINESS_MODELS[v]
-        return { icon: m ? '🏚️' : '🏢', label: m?.name || 'Bisnis' }
-      }
+    let modelKey = v;
+    if (v === 'poultry_broker') modelKey = 'broker';
+    if (v === 'egg_broker') modelKey = 'broker_telur';
+    if (v === 'peternak') modelKey = 'ayam';
+    if (v === 'peternak_domba_penggemukan') modelKey = 'domba_penggemukan';
+    if (v === 'peternak_domba_breeding') modelKey = 'domba_breeding';
+    if (v === 'peternak_kambing_penggemukan') modelKey = 'kambing_penggemukan';
+    if (v === 'peternak_kambing_breeding') modelKey = 'kambing_breeding';
+    if (v === 'sembako_broker') modelKey = 'distributor_sembako';
+    if (v === 'rpa') modelKey = 'rumah_potong_rpa';
+    
+    const m = BUSINESS_MODELS[modelKey] || BUSINESS_MODELS[v];
+    if (m) {
+      return { icon: m.icon || '🏢', label: m.name || m.label || 'Bisnis' };
     }
+    
+    return { icon: '🏢', label: 'Bisnis' }
   }
 
   const activeVerticalInfo = getVerticalInfo(vertical)
@@ -474,13 +473,17 @@ export default function AppSidebar({ open, onClose }) {
                   className="bg-secondary border border-border rounded-xl group-data-[collapsible=icon]:border-none group-data-[collapsible=icon]:bg-transparent hover:bg-white/[0.03] transition-colors"
                 >
                   <div 
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0 border"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0 border overflow-hidden"
                     style={{ 
                       background: `${color}18`, 
                       borderColor: `${color}25` 
                     }}
                   >
-                    {activeVerticalInfo.icon}
+                    {typeof activeVerticalInfo.icon === 'string' && activeVerticalInfo.icon.endsWith('.png') ? (
+                      <img src={activeVerticalInfo.icon} alt={activeVerticalInfo.label} className="w-full h-full object-cover rounded-[inherit] scale-110" />
+                    ) : (
+                      activeVerticalInfo.icon
+                    )}
                   </div>
                   <div className="flex-1 overflow-hidden text-left ml-2.5">
                     <p className="text-[13px] font-bold truncate leading-tight text-foreground">
@@ -544,10 +547,17 @@ export default function AppSidebar({ open, onClose }) {
                         style={isActive ? { color: color, background: `${color}18` } : {}}
                       >
                         <div 
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0 transition-colors"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0 transition-colors overflow-hidden"
                           style={isActive ? { background: `${color}33`, boxShadow: `0 0 10px ${color}1A` } : { background: 'rgba(255,255,255,0.05)' }}
                         >
-                          {getVerticalInfo(p.tenants?.business_vertical).icon}
+                          {(() => {
+                            const vIcon = getVerticalInfo(p.tenants?.business_vertical).icon
+                            return typeof vIcon === 'string' && vIcon.endsWith('.png') ? (
+                              <img src={vIcon} alt="icon" className="w-full h-full object-cover rounded-[inherit] scale-110" />
+                            ) : (
+                              vIcon
+                            )
+                          })()}
                         </div>
                         <div className="flex-1 overflow-hidden">
                           <p className={`text-[13px] truncate leading-tight ${isActive ? 'font-bold' : 'font-medium'}`}>

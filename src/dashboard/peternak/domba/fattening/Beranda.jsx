@@ -302,7 +302,7 @@ function KPICard({ label, value, sub, color = 'text-white', icon: Icon, glow }) 
   )
 }
 
-function BatchCard({ batch, activeCount, onClick }) {
+function BatchCard({ batch, activeCount, computedAdg, onClick }) {
   const hari = calcHariDiFarm(batch.start_date)
   const TARGET_HARI = 90
   const sisaHari = Math.max(0, TARGET_HARI - hari)
@@ -314,7 +314,7 @@ function BatchCard({ batch, activeCount, onClick }) {
   const isCritical = mortalitasPct > 3
   const isNearHarvest = sisaHari <= 14 && !isOverdue
 
-  const adgVal = batch.avg_adg_gram ? Math.round(batch.avg_adg_gram) : null
+  const adgVal = computedAdg || (batch.avg_adg_gram ? Math.round(batch.avg_adg_gram) : null) || null
   const adgColor = adgVal >= 150 ? 'text-green-400' : adgVal >= 100 ? 'text-amber-400' : adgVal ? 'text-red-400' : 'text-[#4B6478]'
   const progressColor = isOverdue ? 'bg-red-500' : progress > 80 ? 'bg-amber-500' : 'bg-green-500'
   const sisaColor = isOverdue ? 'text-red-400' : isNearHarvest ? 'text-amber-400' : 'text-white'
@@ -613,6 +613,24 @@ export default function DombaPenggemukanBeranda() {
     return { total, done, pct }
   }, [todayTasks])
 
+  // Compute avg ADG per batch from live animal weight records
+  const batchAdgMap = useMemo(() => {
+    const map = {}
+    activeBatches.forEach(b => {
+      const animals = allActiveAnimals.filter(a => a.batch_id === b.id)
+      const vals = animals.map(a => {
+        const wRec = a.weight_records ?? []
+        const hari = calcHariDiFarm(a.entry_date, a.exit_date)
+        return calcADGFromRecords(wRec, a.entry_date, a.entry_weight_kg)
+          || (a.latest_weight_kg > a.entry_weight_kg && hari > 0
+              ? calcADG(a.entry_weight_kg, a.latest_weight_kg, hari)
+              : 0)
+      }).filter(v => v > 0)
+      map[b.id] = vals.length ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length) : 0
+    })
+    return map
+  }, [activeBatches, allActiveAnimals])
+
   const initial = profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : 'L'
 
   const handleProfileClick = () => {
@@ -703,24 +721,13 @@ export default function DombaPenggemukanBeranda() {
                     const avgWeight = batchAnimals.length
                       ? Math.round(batchAnimals.reduce((s, a) => s + (parseFloat(a.latest_weight_kg ?? a.entry_weight_kg) || 0), 0) / batchAnimals.length)
                       : 0
-                    const adgValues = batchAnimals.map(a => {
-                      const wRec = a.weight_records ?? []
-                      const hari = calcHariDiFarm(a.entry_date, a.exit_date)
-                      return calcADGFromRecords(wRec, a.entry_date, a.entry_weight_kg)
-                        || (a.latest_weight_kg > a.entry_weight_kg && hari > 0
-                            ? calcADG(a.entry_weight_kg, a.latest_weight_kg, hari)
-                            : 0)
-                    }).filter(v => v > 0)
-                    const avgAdg = adgValues.length
-                      ? Math.round(adgValues.reduce((s, v) => s + v, 0) / adgValues.length)
-                      : 0
                     const normalizedBatch = {
                       ...batch,
                       population: activeCount || batch.total_animals || 0,
                       mortality: batch.mortality_count || 0,
                       total_initial: (batch.total_animals || 0) + (batch.mortality_count || 0),
                       ageInDays: calcHariDiFarm(batch.start_date),
-                      adg: avgAdg,
+                      adg: batchAdgMap[batch.id] || 0,
                       avgWeight,
                       code: batch.batch_code || `Batch ${i + 1}`,
                       location: batch.kandang_name || 'Kandang Utama'
@@ -892,6 +899,7 @@ export default function DombaPenggemukanBeranda() {
                       key={batch.id}
                       batch={batch}
                       activeCount={activeCount}
+                      computedAdg={batchAdgMap[batch.id]}
                       onClick={() => navigate(`${BASE}/ternak?batch=${batch.id}`)}
                     />
                   )
