@@ -12,10 +12,13 @@ import BroilerFarmBeranda  from './broiler/FarmBeranda'
 import BroilerSetupFarm    from './broiler/SetupFarm'
 import BroilerFarmSettings from './broiler/FarmSettings'
 import BroilerVaksinasi    from './broiler/Vaksinasi'
-import BroilerTim          from './broiler/Tim'
+import BroilerDailyTask    from './broiler/DailyTask'
+import TimManajemenPage    from './_shared/pages/tim/TimManajemenPage'
+import ListrikAirPage      from './_shared/pages/listrik-air/ListrikAirPage'
 
 // ─── Layer ────────────────────────────────────────────────────────────────────
 import LayerBeranda from './layer/LayerBeranda'
+import LayerDailyTask from './layer/DailyTask'
 
 // ─── Sapi — Penggemukan ───────────────────────────────────────────────────────
 import SapiBeranda      from './sapi/fattening/Beranda'
@@ -24,10 +27,12 @@ import SapiTernak       from './sapi/fattening/Ternak'
 import SapiKesehatan    from './sapi/fattening/Kesehatan'
 import SapiPakan        from './sapi/fattening/Pakan'
 import SapiLaporan      from './sapi/fattening/LaporanBatch'
-import SapiDailyTask    from './sapi/fattening/DailyTask'
-import SapiTaskSettings from './sapi/fattening/TaskSettings'
-import SapiTaskAssign   from './sapi/fattening/TaskAssign'
 import SapiKandangView  from './sapi/fattening/KandangView'
+import SapiDailyTask    from './sapi/fattening/DailyTask'
+import SapiTaskAssign   from './sapi/fattening/TaskAssign'
+import SapiTaskSettings from './sapi/fattening/TaskSettings'
+import SapiQuickAdd     from './sapi/fattening/QuickAdd'
+import SapiPenjualan    from './sapi/fattening/Penjualan'
 
 // ─── Sapi — Breeding ──────────────────────────────────────────────────────────
 import SapiBreedingBeranda    from './sapi/breeding/Beranda'
@@ -36,6 +41,9 @@ import SapiBreedingReproduksi from './sapi/breeding/Reproduksi'
 import SapiBreedingKesehatan  from './sapi/breeding/Kesehatan'
 import SapiBreedingPakan      from './sapi/breeding/Pakan'
 import SapiBreedingLaporan    from './sapi/breeding/LaporanFarm'
+import SapiBreedingDailyTask    from './sapi/breeding/DailyTask'
+import SapiBreedingTaskAssign    from './sapi/breeding/TaskAssign'
+import SapiBreedingTaskSettings  from './sapi/breeding/TaskSettings'
 
 // ─── Domba — Penggemukan ──────────────────────────────────────────────────────
 import DombaBeranda      from './domba/fattening/Beranda'
@@ -45,9 +53,9 @@ import DombaKesehatan    from './domba/fattening/Kesehatan'
 import DombaPakan        from './domba/fattening/Pakan'
 import DombaLaporan      from './domba/fattening/LaporanBatch'
 import DombaKandangView  from './domba/fattening/KandangView'
-import DombaTaskSettings from './domba/fattening/TaskSettings'
-import DombaTaskAssign   from './domba/fattening/TaskAssign'
 import DombaDailyTask    from './domba/fattening/DailyTask'
+import DombaTaskAssign   from './domba/fattening/TaskAssign'
+import DombaTaskSettings from './domba/fattening/TaskSettings'
 import DombaPenjualan    from './domba/fattening/Penjualan'
 import DombaQuickAdd     from './domba/fattening/QuickAdd'
 
@@ -58,6 +66,9 @@ import DombaBreedingReproduksi from './domba/breeding/Reproduksi'
 import DombaBreedingKesehatan  from './domba/breeding/Kesehatan'
 import DombaBreedingPakan      from './domba/breeding/Pakan'
 import DombaBreedingLaporan    from './domba/breeding/LaporanFarm'
+import DombaBreedingDailyTask from './domba/breeding/DailyTask'
+import DombaBreedingTaskAssign from './domba/breeding/TaskAssign'
+import DombaBreedingTaskSettings from './domba/breeding/TaskSettings'
 
 // ─── Kambing — Penggemukan ────────────────────────────────────────────────────
 import KambingBeranda      from './kambing/fattening/Beranda'
@@ -68,6 +79,8 @@ import KambingPakan        from './kambing/fattening/Pakan'
 import KambingLaporan      from './kambing/fattening/LaporanBatch'
 import KambingKandangView  from './kambing/fattening/KandangView'
 import KambingDailyTask    from './kambing/fattening/DailyTask'
+import KambingPenjualan    from './kambing/fattening/Penjualan'
+import KambingQuickAdd     from './kambing/fattening/QuickAdd'
 
 // ─── Kambing — Breeding ───────────────────────────────────────────────────────
 import KambingBreedingBeranda    from './kambing/breeding/Beranda'
@@ -76,6 +89,9 @@ import KambingBreedingReproduksi from './kambing/breeding/Reproduksi'
 import KambingBreedingKesehatan  from './kambing/breeding/Kesehatan'
 import KambingBreedingPakan      from './kambing/breeding/Pakan'
 import KambingBreedingLaporan    from './kambing/breeding/LaporanFarm'
+import KambingBreedingDailyTask from './kambing/breeding/DailyTask'
+import KambingBreedingTaskAssign from './kambing/breeding/TaskAssign'
+import KambingBreedingTaskSettings from './kambing/breeding/TaskSettings'
 
 // ─── Kambing Perah ────────────────────────────────────────────────────────────
 import KambingPerahBeranda   from './kambing_perah/Beranda'
@@ -83,10 +99,11 @@ import KambingPerahProduksi  from './kambing_perah/Produksi'
 import KambingPerahTernak    from './kambing_perah/Ternak'
 import KambingPerahInventory from './kambing_perah/Inventory'
 import KambingPerahPenjualan from './kambing_perah/Penjualan'
+import KambingPerahDailyTask from './kambing_perah/DailyTask'
+import KambingPerahTaskAssign from './kambing_perah/TaskAssign'
+import KambingPerahTaskSettings from './kambing_perah/TaskSettings'
 
 // ─── Shared ───────────────────────────────────────────────────────────────────
-import UniversalDailyTask   from './_shared/components/UniversalDailyTask'
-import AnakKandangPage      from './_shared/components/anak-kandang/AnakKandangPage'
 import HargaPasar           from '@/dashboard/_shared/pages/HargaPasar'
 import Akun                 from '@/dashboard/_shared/pages/Akun'
 import LoadingSpinner       from '@/dashboard/_shared/components/LoadingSpinner'
@@ -138,10 +155,10 @@ export function PeternakPageRouter({ page }) {
       'farm-beranda': <BroilerFarmBeranda />,
       'setup-farm':   <BroilerSetupFarm />,
       vaksinasi:      <BroilerVaksinasi />,
-      daily_task:     <UniversalDailyTask livestockType={livestockType} />,
+      daily_task:     <BroilerDailyTask />,
       'harga-pasar':  <HargaPasar />,
       akun:           <Akun />,
-      tim:            <BroilerTim />,
+      tim:            <TimManajemenPage />,
       atur:           <PeternakAdminGuard><BroilerFarmSettings /></PeternakAdminGuard>,
       ...AI,
     },
@@ -149,9 +166,9 @@ export function PeternakPageRouter({ page }) {
       beranda:       <LayerBeranda />,
       'stok-pakan':  <LayerBeranda />,
       laporan:       <LayerBeranda />,
-      daily_task:    <UniversalDailyTask livestockType={livestockType} />,
+      daily_task:    <LayerDailyTask />,
       'harga-pasar': <HargaPasar />,
-      tim:           <BroilerTim />,
+      tim:           <TimManajemenPage />,
       akun:          <Akun />,
       ...AI,
     },
@@ -166,8 +183,11 @@ export function PeternakPageRouter({ page }) {
       daily_task:     <SapiDailyTask />,
       task_settings:  <PeternakAdminGuard><SapiTaskSettings /></PeternakAdminGuard>,
       task_assign:    <PeternakAdminGuard><SapiTaskAssign /></PeternakAdminGuard>,
+      'quick-add':    <SapiQuickAdd />,
+      penjualan:      <SapiPenjualan />,
+      'listrik-air':  <ListrikAirPage />,
       'harga-pasar':  <HargaPasar />,
-      tim:            <BroilerTim />,
+      tim:            <TimManajemenPage />,
       akun:           <Akun />,
       ...AI,
     },
@@ -178,11 +198,12 @@ export function PeternakPageRouter({ page }) {
       kesehatan:     <SapiBreedingKesehatan />,
       'stok-pakan':  <SapiBreedingPakan />,
       laporan:       <SapiBreedingLaporan />,
-      daily_task:    <UniversalDailyTask livestockType={livestockType} />,
-      task_settings: <PeternakAdminGuard><SapiTaskSettings /></PeternakAdminGuard>,
-      task_assign:   <PeternakAdminGuard><SapiTaskAssign /></PeternakAdminGuard>,
+      daily_task:    <SapiBreedingDailyTask />,
+      task_settings: <PeternakAdminGuard><SapiBreedingTaskSettings /></PeternakAdminGuard>,
+      task_assign:   <PeternakAdminGuard><SapiBreedingTaskAssign /></PeternakAdminGuard>,
+      'listrik-air': <ListrikAirPage />,
       'harga-pasar': <HargaPasar />,
-      tim:           <BroilerTim />,
+      tim:           <TimManajemenPage />,
       akun:          <Akun />,
       ...AI,
     },
@@ -199,9 +220,9 @@ export function PeternakPageRouter({ page }) {
       task_assign:    <PeternakAdminGuard><DombaTaskAssign /></PeternakAdminGuard>,
       penjualan:      <DombaPenjualan />,
       'quick-add':    <DombaQuickAdd />,
-      'anak-kandang': <PeternakAdminGuard><AnakKandangPage /></PeternakAdminGuard>,
+      'listrik-air':  <ListrikAirPage />,
       'harga-pasar':  <HargaPasar />,
-      tim:            <BroilerTim />,
+      tim:            <TimManajemenPage />,
       akun:           <Akun />,
       ...AI,
     },
@@ -212,9 +233,9 @@ export function PeternakPageRouter({ page }) {
       kesehatan:     <DombaBreedingKesehatan />,
       'stok-pakan':  <DombaBreedingPakan />,
       laporan:       <DombaBreedingLaporan />,
-      daily_task:    <UniversalDailyTask livestockType={livestockType} />,
+      daily_task:    <DombaBreedingDailyTask />,
       'harga-pasar': <HargaPasar />,
-      tim:           <BroilerTim />,
+      tim:           <TimManajemenPage />,
       akun:          <Akun />,
       ...AI,
     },
@@ -227,8 +248,11 @@ export function PeternakPageRouter({ page }) {
       laporan:        <KambingLaporan />,
       'kandang-view': <KambingKandangView />,
       daily_task:     <KambingDailyTask />,
+      penjualan:      <KambingPenjualan />,
+      'quick-add':    <KambingQuickAdd />,
+      'listrik-air':  <ListrikAirPage />,
       'harga-pasar':  <HargaPasar />,
-      tim:            <BroilerTim />,
+      tim:            <TimManajemenPage />,
       akun:           <Akun />,
       ...AI,
     },
@@ -239,9 +263,9 @@ export function PeternakPageRouter({ page }) {
       kesehatan:     <KambingBreedingKesehatan />,
       'stok-pakan':  <KambingBreedingPakan />,
       laporan:       <KambingBreedingLaporan />,
-      daily_task:    <UniversalDailyTask livestockType={livestockType} />,
+      daily_task:    <KambingBreedingDailyTask />,
       'harga-pasar': <HargaPasar />,
-      tim:           <BroilerTim />,
+      tim:           <TimManajemenPage />,
       akun:          <Akun />,
       ...AI,
     },
@@ -253,9 +277,9 @@ export function PeternakPageRouter({ page }) {
       penjualan:     <KambingPerahPenjualan />,
       laporan:       <div className="p-8"><h2 className="text-xl font-bold text-white">Laporan</h2><p className="text-slate-400">Coming soon</p></div>,
       'stok-pakan':  <KambingPerahInventory />,
-      daily_task:    <UniversalDailyTask livestockType={livestockType} />,
+      daily_task:    <KambingPerahDailyTask />,
       'harga-pasar': <HargaPasar />,
-      tim:           <BroilerTim />,
+      tim:           <TimManajemenPage />,
       akun:          <Akun />,
       ...AI,
     },

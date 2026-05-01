@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { PhoneInput } from '@/components/ui/PhoneInput'
 import { DatePicker } from '@/components/ui/DatePicker'
+import { MobileWheelDatePicker } from '@/components/ui/MobileWheelDatePicker'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { useAssignableMembers } from '@/lib/hooks/usePeternakTaskData'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { MobileWheelSelect } from '@/components/ui/MobileWheelSelect'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { Loader2 } from 'lucide-react'
 
 const labelCls = 'block text-[10px] font-extrabold text-[#4B6478] uppercase tracking-wider mb-1.5'
 const inputCls = 'w-full px-3.5 py-3 bg-[#111C24] border border-white/[0.08] rounded-xl text-slate-100 text-[15px] outline-none focus:border-violet-500/50 transition-colors'
 
 export default function WorkerSheet({ open, onClose, worker, onSubmit, isPending }) {
+  const isMobile = useIsMobile()
   const isEdit = !!worker
   const today = new Date().toISOString().split('T')[0]
   const { data: teamMembers = [] } = useAssignableMembers()
@@ -20,6 +25,13 @@ export default function WorkerSheet({ open, onClose, worker, onSubmit, isPending
     notes: '', status: 'aktif', profile_id: '',
     salary_type: 'bulanan', pay_day: 1,
   })
+
+  const teamOptions = [
+    { value: 'none', label: '— Tidak terhubung —' },
+    ...teamMembers.map(m => ({ value: m.profile_id, label: `${m.full_name} (${m.role})` }))
+  ]
+
+  const dateOptions = Array.from({ length: 31 }, (_, i) => ({ value: String(i + 1), label: `Tanggal ${i + 1}` }))
 
   useEffect(() => {
     if (open) {
@@ -75,6 +87,9 @@ export default function WorkerSheet({ open, onClose, worker, onSubmit, isPending
           <SheetTitle className="text-white font-['Sora'] font-black text-base">
             {isEdit ? 'Edit Anak Kandang' : 'Tambah Anak Kandang'}
           </SheetTitle>
+          <SheetDescription className="text-[#4B6478] text-[10px] font-bold uppercase tracking-wider">
+            Lengkapi data diri dan rincian gaji pekerja
+          </SheetDescription>
         </SheetHeader>
 
         <div className="p-5 pb-8 flex flex-col gap-4">
@@ -91,18 +106,36 @@ export default function WorkerSheet({ open, onClose, worker, onSubmit, isPending
           {/* Link ke Akun Tim */}
           <div>
             <label className={labelCls}>Link ke Akun Tim</label>
-            <select
-              value={form.profile_id} onChange={e => set('profile_id', e.target.value)}
-              className={inputCls}
-            >
-              <option value="">— Tidak terhubung —</option>
-              {teamMembers.map(m => (
-                <option key={m.profile_id} value={m.profile_id}>
-                  {m.full_name} ({m.role})
-                </option>
-              ))}
-            </select>
-            <p className="text-[10px] text-[#4B6478] mt-1">
+            {isMobile ? (
+              <MobileWheelSelect
+                value={form.profile_id || "none"}
+                onChange={v => set('profile_id', v === "none" ? "" : v)}
+                options={teamOptions}
+                placeholder="— Tidak terhubung —"
+                triggerClassName="w-full h-12 px-3.5 bg-[#111C24] border-white/[0.08] text-slate-100 rounded-xl focus:ring-1 focus:ring-violet-500/50"
+              />
+            ) : (
+              <Select
+                value={form.profile_id || "none"}
+                onValueChange={v => set('profile_id', v === "none" ? "" : v)}
+              >
+                <SelectTrigger className="w-full h-12 px-3.5 bg-[#111C24] border-white/[0.08] text-slate-100 rounded-xl focus:ring-1 focus:ring-violet-500/50">
+                  <SelectValue placeholder="— Tidak terhubung —" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1A2634] border-white/10 text-slate-200 rounded-xl">
+                  <SelectItem value="none" className="focus:bg-white/5 focus:text-white">— Tidak terhubung —</SelectItem>
+                  {teamMembers.map(m => (
+                    <SelectItem key={m.profile_id} value={m.profile_id} className="focus:bg-white/5 focus:text-white">
+                      <div className="flex flex-col text-left">
+                        <span className="font-medium">{m.full_name}</span>
+                        <span className="text-[10px] text-slate-400 capitalize">{m.role}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <p className="text-[10px] text-[#4B6478] mt-1.5">
               Hubungkan anak kandang ke akun tim agar bisa menerima tugas otomatis.
             </p>
           </div>
@@ -120,7 +153,11 @@ export default function WorkerSheet({ open, onClose, worker, onSubmit, isPending
           {/* Tanggal gabung */}
           <div>
             <label className={labelCls}>Tanggal Bergabung</label>
-            <DatePicker value={form.join_date} onChange={v => set('join_date', v)} placeholder="Pilih tanggal" />
+            <DatePicker 
+              value={form.join_date} 
+              onChange={v => set('join_date', v)} 
+              placeholder="Pilih tanggal" 
+            />
           </div>
 
           {/* Tipe Gaji */}
@@ -182,16 +219,30 @@ export default function WorkerSheet({ open, onClose, worker, onSubmit, isPending
                   </button>
                 ))}
               </div>
+            ) : isMobile ? (
+              <MobileWheelSelect
+                value={form.pay_day.toString()}
+                onChange={v => set('pay_day', parseInt(v))}
+                options={dateOptions}
+                placeholder="Pilih tanggal"
+                triggerClassName="w-full h-12 px-3.5 bg-[#111C24] border-white/[0.08] text-slate-100 rounded-xl focus:ring-1 focus:ring-violet-500/50"
+              />
             ) : (
-              <select
-                value={form.pay_day}
-                onChange={e => set('pay_day', parseInt(e.target.value))}
-                className={inputCls}
+              <Select
+                value={form.pay_day.toString()}
+                onValueChange={v => set('pay_day', parseInt(v))}
               >
-                {Array.from({ length: 28 }, (_, i) => i + 1).map(d => (
-                  <option key={d} value={d}>Tanggal {d}</option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full h-12 px-3.5 bg-[#111C24] border-white/[0.08] text-slate-100 rounded-xl focus:ring-1 focus:ring-violet-500/50">
+                  <SelectValue placeholder="Pilih tanggal" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1A2634] border-white/10 text-slate-200 rounded-xl max-h-60">
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                    <SelectItem key={d} value={d.toString()} className="focus:bg-white/5 focus:text-white">
+                      Tanggal {d}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           </div>
 

@@ -22,7 +22,7 @@ import PaydayReminder from './PaydayReminder'
 
 const EMPTY_COST_FORM = { log_date: new Date().toISOString().split('T')[0], item_name: '', amount_idr: '', notes: '' }
 
-export default function AnakKandangPage() {
+export default function AnakKandangPage({ hideMobileHeader = false }) {
   const { data: workers = [], isLoading } = useKandangWorkersAll()
   const createWorker = useCreateKandangWorker()
   const updateWorker = useUpdateKandangWorker()
@@ -322,7 +322,8 @@ export default function AnakKandangPage() {
   // ─── MOBILE VIEW ─────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4 pb-24">
-      {/* Mobile Header */}
+      {/* Mobile Header — hidden when embedded inside TimManajemenPage */}
+      {!hideMobileHeader && (
       <header className="h-14 px-4 flex items-center gap-3 justify-between sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 border-b border-white/5">
         <div className="flex items-center gap-3">
           <button
@@ -340,6 +341,7 @@ export default function AnakKandangPage() {
           <Plus size={13} /> Tambah
         </button>
       </header>
+      )}
 
       {/* Subtitle */}
       <p className="text-[#94A3B8] text-xs px-4">

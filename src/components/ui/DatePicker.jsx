@@ -8,9 +8,36 @@ import {
 } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { MobileWheelDatePicker } from '@/components/ui/MobileWheelDatePicker'
 
 export function DatePicker({ id, value, onChange, placeholder, className, allowClear = true }) {
+  const isMobile = useIsMobile()
   const dateValue = value ? (value instanceof Date ? value : new Date(value)) : null
+
+  if (isMobile) {
+    return (
+      <div className="relative w-full">
+        <MobileWheelDatePicker 
+          value={value} 
+          onChange={onChange} 
+          placeholder={placeholder || 'PILIH TANGGAL'}
+        />
+        {value && allowClear && (
+          <div
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onChange(null)
+            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 hover:bg-white/10 rounded-full cursor-pointer transition-colors z-10"
+          >
+            <X size={14} className="text-white/50 hover:text-white" />
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <Popover>

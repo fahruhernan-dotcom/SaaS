@@ -228,7 +228,7 @@ export function createPenggemukanHooks(prefix) {
       queryFn: async () => {
         const { data, error } = await supabase
           .from(T.sales)
-          .select('*')
+          .select(`*, batch:${T.batches}(batch_code)`)
           .eq('batch_id', batchId)
           .eq('is_deleted', false)
           .order('sale_date', { ascending: false })
@@ -339,7 +339,7 @@ export function createPenggemukanHooks(prefix) {
         if (ids.length === 0) return []
         const { data, error } = await supabase
           .from(T.sales)
-          .select('*')
+          .select(`*, batch:${T.batches}(batch_code)`)
           .eq('tenant_id', tenant.id)
           .in('batch_id', ids)
           .eq('is_deleted', false)

@@ -579,6 +579,9 @@ export function useAddSapiBreedingWeightRecord() {
   })
 }
 
+// Alias for consistency with factory-generated hooks
+export const useAddSapiBreedingWeight = useAddSapiBreedingWeightRecord
+
 // ── useAddSapiBreedingHealthLog ───────────────────────────────────────────────
 export function useAddSapiBreedingHealthLog() {
   const qc = useQueryClient()

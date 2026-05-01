@@ -510,7 +510,7 @@ export const BUSINESS_MODELS = {
       { slug: 'beranda',    icon: 'Home',           label: 'Home' },
       { slug: 'daily_task', icon: 'ClipboardList',  label: 'Tugas'   },
       { slug: 'batch',      icon: 'RefreshCw',      label: 'Batch'   },
-      { slug: 'ternak',     icon: 'Tag',            label: 'Ternak'  },
+      { slug: 'menu',       icon: 'Menu',           label: 'Menu'    },
     ]),
     drawerMenu: [
       { path: '/peternak/peternak_sapi_penggemukan/task_settings', icon: 'Settings2',     label: 'Pengaturan Tugas' },
@@ -521,7 +521,7 @@ export const BUSINESS_MODELS = {
       { path: '/market',                                           icon: 'Store',         label: 'TernakOS Market'  },
       { path: '/peternak/peternak_sapi_penggemukan/akun',          icon: 'User',          label: 'Akun & Profil'    },
     ],
-    fabPath: null,
+    fabPath: '/peternak/peternak_sapi_penggemukan/quick-add',
   },
   peternak_sapi_breeding: {
     key: 'peternak_sapi_breeding',
@@ -540,8 +540,7 @@ export const BUSINESS_MODELS = {
       { slug: 'beranda',    icon: 'Home',           label: 'Home'   },
       { slug: 'daily_task', icon: 'ClipboardList',  label: 'Tugas'     },
       { slug: 'ternak',     icon: 'Tag',            label: 'Ternak'    },
-      { slug: 'reproduksi', icon: 'Heart',          label: 'Reproduksi'},
-      { slug: 'kesehatan',  icon: 'Syringe',        label: 'Sehat'     },
+      { slug: 'menu',       icon: 'Menu',           label: 'Menu'      },
     ]),
     drawerMenu: [
       { path: '/peternak/peternak_sapi_breeding/task_settings', icon: 'Settings2', label: 'Pengaturan Tugas' },

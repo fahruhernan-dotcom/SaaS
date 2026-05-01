@@ -280,7 +280,6 @@ export default function AppSidebar({ open, onClose }) {
           { title: 'Data Ternak',    url: `${peternakBase}/ternak`,      icon: Tag },
           { title: 'Penjualan',      url: `${peternakBase}/penjualan`,   icon: ShoppingCart },
           { title: 'Denah Kandang',  url: `${peternakBase}/kandang-view`,icon: LayoutGrid },
-          { title: 'Anak Kandang',   url: `${peternakBase}/anak-kandang`,icon: Users, roles: ['owner', 'manajer'] },
         ] : []),
 
         // Domba Breeding
@@ -293,6 +292,7 @@ export default function AppSidebar({ open, onClose }) {
         ...(isKambingPenggemukan ? [
           { title: 'Batch Aktif',    url: `${peternakBase}/batch`,       icon: RefreshCw },
           { title: 'Data Ternak',    url: `${peternakBase}/ternak`,      icon: Tag },
+          { title: 'Penjualan',      url: `${peternakBase}/penjualan`,   icon: ShoppingCart },
           { title: 'Denah Kandang',  url: `${peternakBase}/kandang-view`,icon: LayoutGrid },
         ] : []),
 
@@ -305,6 +305,7 @@ export default function AppSidebar({ open, onClose }) {
         ...(isSapiPenggemukan || isSapiBreeding ? [
           { title: 'Sapi Aktif',    url: `${peternakBase}/batch`,        icon: RefreshCw,  show: isSapiPenggemukan },
           { title: 'Data Ternak',   url: `${peternakBase}/ternak`,       icon: Tag },
+          { title: 'Penjualan',     url: `${peternakBase}/penjualan`,    icon: ShoppingCart, show: isSapiPenggemukan },
           { title: 'Denah Kandang', url: `${peternakBase}/kandang-view`, icon: LayoutGrid, show: isSapiPenggemukan },
           { title: 'Reproduksi',    url: `${peternakBase}/reproduksi`,   icon: Heart,      show: isSapiBreeding },
         ].filter(item => item.show !== false) : []),
@@ -344,7 +345,14 @@ export default function AppSidebar({ open, onClose }) {
           { title: 'Penugasan',        url: `${peternakBase}/task_assign`,  icon: Users2, roles: ['owner', 'manajer'] },
           { title: 'Pengaturan Tugas', url: `${peternakBase}/task_settings`,icon: Settings2, roles: ['owner', 'manajer'] },
         ] : []),
-        { title: 'Tim & Akses',      url: `${peternakBase}/tim`,          icon: Users, roles: ['owner'] },
+      ]
+    }] : []),
+
+    // ── MANAJEMEN TIM ─────────────────────────────────────
+    ...(isPeternak ? [{
+      label: 'MANAJEMEN',
+      items: [
+        { title: 'Tim & Anak Kandang', url: `${peternakBase}/tim`, icon: Users, roles: ['owner', 'manajer'] },
       ]
     }] : []),
 
@@ -355,6 +363,10 @@ export default function AppSidebar({ open, onClose }) {
         { title: isBroiler ? 'Program Vaksin' : 'Kesehatan', url: `${peternakBase}/${isBroiler ? 'vaksinasi' : 'kesehatan'}`, icon: Syringe, show: isBroiler ? (pp?.canViewVaksinasi ?? true) : true },
         { title: 'Stok Pakan',    url: `${peternakBase}/pakan`,        icon: Warehouse, show: isBroiler ? (pp?.canViewPakan ?? true) : true },
         { title: isBroiler ? 'Laporan Siklus' : 'Laporan', url: `${peternakBase}/laporan`, icon: FileText, show: isBroiler ? (pp?.canViewLaporan ?? true) : true },
+        // Listrik & Air — hanya untuk peternak yang punya data batch (penggemukan)
+        ...((isDombaPenggemukan || isKambingPenggemukan || isSapiPenggemukan || isSapiBreeding) ? [
+          { title: 'Listrik & Air',  url: `${peternakBase}/listrik-air`, icon: Zap },
+        ] : []),
       ].filter(item => item.show !== false)
     }] : []),
 
@@ -740,7 +752,7 @@ export default function AppSidebar({ open, onClose }) {
                     (item.planRequired === 'pro'      && !isPro) ||
                     (item.planRequired === 'business' && !isBusiness)
                   )
-                  const isLocked = !isSuperadmin && (item.locked || !isAccountActive || isPlanLocked)
+                  const isLocked = item.locked || (!isSuperadmin && (!isAccountActive || isPlanLocked))
                   const lockTooltip = isPlanLocked
                     ? `${item.title} — Upgrade ke ${item.planRequired === 'business' ? 'Business' : 'Pro'}`
                     : `${item.title} (Segera Hadir)`

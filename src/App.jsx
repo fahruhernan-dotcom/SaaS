@@ -438,6 +438,7 @@ export const routes = createRoutesFromElements(
       <Route path="laporan/:cycleId" element={<PeternakPageRouter page="laporan" />} />
       <Route path="akun"             element={<PeternakPageRouter page="akun" />} />
       <Route path="tim"              element={<PeternakPageRouter page="tim" />} />
+      <Route path="listrik-air"      element={<PeternakPageRouter page="listrik-air" />} />
       <Route path="harga-pasar"      element={<PeternakPageRouter page="harga-pasar" />} />
       <Route path="kandang-view"     element={<PeternakPageRouter page="kandang-view" />} />
       <Route path="batch"      element={<PeternakPageRouter page="batch" />} />

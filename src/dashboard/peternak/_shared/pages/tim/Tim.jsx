@@ -36,7 +36,7 @@ const ROLE_BADGE_MAP = {
   view_only:      { label: 'Lihat Saja',       class: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
 };
 
-export default function Tim() {
+export default function Tim({ hideMobileHeader = false }) {
   const { profile, tenant: authTenant } = useAuth();
   const sub = getSubscriptionStatus(authTenant);
   const queryClient = useQueryClient();
@@ -266,8 +266,8 @@ export default function Tim() {
 
   return (
     <div className={cn("max-w-5xl mx-auto", isDesktop ? "p-8 space-y-8 pb-32" : "space-y-5 pb-24")}>
-      {/* Mobile sticky header */}
-      {!isDesktop && (
+      {/* Mobile sticky header — hidden when embedded inside TimManajemenPage */}
+      {!hideMobileHeader && (
         <header className="h-14 px-4 flex items-center gap-3 justify-between sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 border-b border-white/5">
           <div className="flex items-center gap-3">
             <button

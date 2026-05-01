@@ -72,7 +72,7 @@ export default function WorkerCard({ worker, onEdit, onPayment, onDelete }) {
             <span className="inline-flex items-center gap-1 text-[10px] text-[#4B6478]">
               <CalendarClock size={10} /> {formatPaySchedule(worker)}
             </span>
-            {isPaydaySoon && (
+            {isPaydaySoon && !worker.isPaid && (
               <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${
                 payInfo.daysLeft <= 1
                   ? 'bg-red-500/10 text-red-400 border border-red-500/20'

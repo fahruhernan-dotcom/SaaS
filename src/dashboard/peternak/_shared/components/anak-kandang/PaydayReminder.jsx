@@ -22,7 +22,7 @@ function getNextPayday(salaryType, payDay) {
     const jsDay = payDay === 7 ? 0 : payDay
     const currentDay = today.getDay()
     let diff = jsDay - currentDay
-    if (diff <= 0) diff += 7
+    if (diff < 0) diff += 7
     const next = new Date(today)
     next.setDate(next.getDate() + diff)
     return { daysLeft: diff, nextDate: next }
@@ -31,7 +31,7 @@ function getNextPayday(salaryType, payDay) {
   // bulanan
   const pd = payDay || 1
   let next = new Date(today.getFullYear(), today.getMonth(), pd)
-  if (next <= today) {
+  if (next < today) {
     next = new Date(today.getFullYear(), today.getMonth() + 1, pd)
   }
   const diffMs = next - today
@@ -56,7 +56,7 @@ export default function PaydayReminder({ workers }) {
   const alerts = useMemo(() => {
     if (!workers?.length) return []
     return workers
-      .filter(w => w.status === 'aktif')
+      .filter(w => w.status === 'aktif' && !w.isPaid)
       .map(w => {
         const info = getPaydayInfo(w)
         return { worker: w, ...info }

@@ -244,6 +244,40 @@ export function useUpdateTaskTemplate() {
 }
 
 /**
+ * Upsert a task template (Create or Update based on ID).
+ */
+export function useUpsertTaskTemplate() {
+  const qc = useQueryClient()
+  const { tenant } = useAuth()
+
+  return useMutation({
+    mutationFn: async ({ id, ...payload }) => {
+      if (id) {
+        const { error } = await supabase
+          .from('peternak_task_templates')
+          .update(payload)
+          .eq('id', id)
+          .eq('tenant_id', tenant.id)
+        if (error) throw error
+      } else {
+        const { error } = await supabase
+          .from('peternak_task_templates')
+          .insert({
+            tenant_id: tenant.id,
+            ...payload
+          })
+        if (error) throw error
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['peternak-task-templates', tenant?.id] })
+      qc.invalidateQueries({ queryKey: ['peternak-task-instances'] })
+    },
+    onError: (err) => toast.error('Gagal menyimpan template: ' + err.message)
+  })
+}
+
+/**
  * Soft delete multiple task templates.
  */
 export function useBulkDeleteTaskTemplates() {
@@ -708,14 +742,48 @@ export function useKandangWorkersAll() {
   return useQuery({
     queryKey: ['kandang-workers-all', tenant?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: workers, error: wErr } = await supabase
         .from('kandang_workers')
         .select('*')
         .eq('tenant_id', tenant.id)
         .eq('is_deleted', false)
         .order('full_name', { ascending: true })
-      if (error) throw error
-      return data ?? []
+      if (wErr) throw wErr
+      
+      // Fetch payments from last 35 days to cover all cycles
+      const thirtyFiveDaysAgo = new Date()
+      thirtyFiveDaysAgo.setDate(thirtyFiveDaysAgo.getDate() - 35)
+      
+      const { data: payments } = await supabase
+        .from('kandang_worker_payments')
+        .select('worker_id, payment_date, payment_type')
+        .eq('tenant_id', tenant.id)
+        .eq('payment_type', 'gaji')
+        .eq('is_deleted', false)
+        .gte('payment_date', thirtyFiveDaysAgo.toISOString())
+
+      const now = new Date()
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+      const fiveDaysBeforeMonth = new Date(startOfMonth)
+      fiveDaysBeforeMonth.setDate(fiveDaysBeforeMonth.getDate() - 5)
+
+      const sixDaysAgo = new Date()
+      sixDaysAgo.setDate(sixDaysAgo.getDate() - 6)
+
+      return (workers ?? []).map(w => {
+        const workerPayments = (payments ?? []).filter(p => p.worker_id === w.id)
+        const isPaid = workerPayments.some(p => {
+          const pDate = new Date(p.payment_date)
+          if (w.salary_type === 'mingguan') {
+            return pDate >= sixDaysAgo
+          } else {
+            // Bulanan: count as paid if payment in current month 
+            // OR in the last 5 days of previous month (pre-payment)
+            return pDate >= fiveDaysBeforeMonth
+          }
+        })
+        return { ...w, isPaid }
+      })
     },
     enabled: !!tenant?.id,
   })
@@ -827,13 +895,14 @@ export function useAddKandangWorkerPayment() {
           worker_id,
           payment_date,
           payment_type,
-          amount: Number(amount),
+          amount: Math.round(Number(amount) || 0),
           notes: notes || null,
         })
       if (error) throw error
     },
     onSuccess: (_, { worker_id }) => {
       qc.invalidateQueries({ queryKey: ['kandang-worker-payments', worker_id] })
+      qc.invalidateQueries({ queryKey: ['kandang-workers-all', tenant?.id] })
       toast.success('Pembayaran berhasil dicatat')
     },
     onError: (err) => toast.error('Gagal catat pembayaran: ' + err.message),
@@ -858,6 +927,7 @@ export function useDeleteKandangWorkerPayment() {
     },
     onSuccess: (workerId) => {
       qc.invalidateQueries({ queryKey: ['kandang-worker-payments', workerId] })
+      qc.invalidateQueries({ queryKey: ['kandang-workers-all', tenant?.id] })
       toast.success('Catatan pembayaran dihapus')
     },
     onError: (err) => toast.error('Gagal hapus: ' + err.message),
@@ -923,5 +993,27 @@ export function useAddFarmOpsCost(animalType) {
       toast.success('Biaya dicatat dan dibagi ke semua batch')
     },
     onError: (err) => toast.error('Gagal: ' + err.message),
+  })
+}
+
+export function useDeleteFarmOpsCost(animalType) {
+  const qc = useQueryClient()
+  const { tenant } = useAuth()
+  const table = animalType ? `${animalType}_penggemukan_operational_costs` : null
+  return useMutation({
+    mutationFn: async (costId) => {
+      if (!table) return
+      const { error } = await supabase
+        .from(table)
+        .update({ is_deleted: true })
+        .eq('id', costId)
+        .eq('tenant_id', tenant.id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['farm-ops-costs', animalType] })
+      toast.success('Catatan dihapus')
+    },
+    onError: (err) => toast.error('Gagal hapus: ' + err.message),
   })
 }

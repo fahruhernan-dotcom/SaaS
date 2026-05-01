@@ -1,3 +1,4 @@
+import React from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
@@ -309,6 +310,93 @@ export function useSapiAnimalsByBatches(batchIds) {
         .in('batch_id', ids)
         .eq('is_deleted', false)
         .order('entry_date', { ascending: true })
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: ids.length > 0 && !!tenant?.id,
+  })
+}
+
+
+// ── useSapiBatchWeightHistoryByBatches ────────────────────────────────────────
+export function useSapiBatchWeightHistoryByBatches(batchIds) {
+  const { tenant } = useAuth()
+  const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+  return useQuery({
+    queryKey: ['sapi-weight-history-multi', ids],
+    queryFn: async () => {
+      if (ids.length === 0) return []
+      const { data, error } = await supabase
+        .from('sapi_penggemukan_weight_records')
+        .select('*')
+        .eq('tenant_id', tenant.id)
+        .in('batch_id', ids)
+        .eq('is_deleted', false)
+        .order('weigh_date', { ascending: true })
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: ids.length > 0 && !!tenant?.id,
+  })
+}
+
+// ── useSapiFeedLogsByBatches ──────────────────────────────────────────────────
+export function useSapiFeedLogsByBatches(batchIds) {
+  const { tenant } = useAuth()
+  const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+  return useQuery({
+    queryKey: ['sapi-feed-logs-multi', ids],
+    queryFn: async () => {
+      if (ids.length === 0) return []
+      const { data, error } = await supabase
+        .from('sapi_penggemukan_feed_logs')
+        .select('*')
+        .eq('tenant_id', tenant.id)
+        .in('batch_id', ids)
+        .eq('is_deleted', false)
+        .order('log_date', { ascending: false })
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: ids.length > 0 && !!tenant?.id,
+  })
+}
+
+// ── useSapiOperationalCosts ───────────────────────────────────────────────────
+// NOTE: sapi does not have a dedicated operational_costs table yet — returns empty list
+export function useSapiOperationalCosts(_batchId) {
+  return useQuery({
+    queryKey: ['sapi-operational-costs-stub'],
+    queryFn: async () => [],
+    staleTime: Infinity,
+  })
+}
+
+// ── useSapiOperationalCostsByBatches ─────────────────────────────────────────
+// NOTE: sapi does not have a dedicated operational_costs table yet — returns empty list
+export function useSapiOperationalCostsByBatches(_batchIds) {
+  return useQuery({
+    queryKey: ['sapi-operational-costs-multi-stub'],
+    queryFn: async () => [],
+    staleTime: Infinity,
+  })
+}
+
+// ── useSapiSalesByBatches ─────────────────────────────────────────────────────
+export function useSapiSalesByBatches(batchIds) {
+  const { tenant } = useAuth()
+  const ids = Array.isArray(batchIds) ? batchIds : [batchIds]
+  return useQuery({
+    queryKey: ['sapi-sales-multi', ids],
+    queryFn: async () => {
+      if (ids.length === 0) return []
+      const { data, error } = await supabase
+        .from('sapi_penggemukan_sales')
+        .select('*')
+        .eq('tenant_id', tenant.id)
+        .in('batch_id', ids)
+        .eq('is_deleted', false)
+        .order('sale_date', { ascending: false })
       if (error) throw error
       return data ?? []
     },
@@ -731,6 +819,130 @@ export function useAddSapiSale() {
     },
     onError: (err) => toast.error('Gagal catat penjualan: ' + err.message),
   })
+}
+
+// ── useUpdateSapiSale ─────────────────────────────────────────────────────────
+export function useUpdateSapiSale() {
+  const qc = useQueryClient()
+  const { tenant } = useAuth()
+  return useMutation({
+    mutationFn: async ({ saleId, batch_id, ...updates }) => {
+      const { error } = await supabase
+        .from('sapi_penggemukan_sales')
+        .update(updates)
+        .eq('id', saleId)
+        .eq('tenant_id', tenant.id)
+      if (error) throw error
+    },
+    onSuccess: (_, { batch_id }) => {
+      qc.invalidateQueries({ queryKey: ['sapi-sales', batch_id] })
+      qc.invalidateQueries({ queryKey: ['sapi-batches'] })
+      toast.success('Data penjualan diperbarui')
+    },
+    onError: (err) => toast.error('Gagal perbarui data: ' + err.message),
+  })
+}
+
+// ── useDeleteSapiSale ─────────────────────────────────────────────────────────
+export function useDeleteSapiSale() {
+  const qc = useQueryClient()
+  const { tenant } = useAuth()
+  return useMutation({
+    mutationFn: async ({ saleId, animalIds, batchId }) => {
+      const { error: saleErr } = await supabase
+        .from('sapi_penggemukan_sales')
+        .update({ is_deleted: true })
+        .eq('id', saleId)
+        .eq('tenant_id', tenant.id)
+      if (saleErr) throw saleErr
+
+      const { error: animalErr } = await supabase
+        .from('sapi_penggemukan_animals')
+        .update({ status: 'active', exit_date: null })
+        .in('id', animalIds)
+        .eq('tenant_id', tenant.id)
+      if (animalErr) throw animalErr
+    },
+    onSuccess: (_, { batchId }) => {
+      qc.invalidateQueries({ queryKey: ['sapi-sales', batchId] })
+      qc.invalidateQueries({ queryKey: ['sapi-animals', batchId] })
+      qc.invalidateQueries({ queryKey: ['sapi-animals-multi'] })
+      qc.invalidateQueries({ queryKey: ['sapi-batches'] })
+      toast.success('Penjualan dihapus & ternak kembali aktif')
+    },
+    onError: (err) => toast.error('Gagal hapus penjualan: ' + err.message),
+  })
+}
+
+// ── useSapiHppBatch ───────────────────────────────────────────────────────────
+export function useSapiHppBatch(batchId) {
+  const { data: animalList = [], isLoading: l1 } = useSapiAnimals(batchId)
+  const { data: salesList,        isLoading: l2 } = useSapiSales(batchId)
+  const { data: activeBatches = [], isLoading: l3 } = useSapiActiveBatches()
+
+  const activeBatchIds = React.useMemo(
+    () => activeBatches.map(b => b.id),
+    [activeBatches]
+  )
+  const { data: allFeedLogs = [], isLoading: l4 } = useSapiFeedLogsByBatches(activeBatchIds)
+  const { data: allOpsCosts = [], isLoading: l5 } = useSapiOperationalCostsByBatches(activeBatchIds)
+
+  const isLoading = l1 || l2 || l3 || l4 || l5
+
+  const hpp = React.useMemo(() => {
+    const totalModalBeli = animalList.reduce((s, a) => s + (Number(a.purchase_price_idr) || 0), 0)
+
+    const pakanPurchases = allOpsCosts.filter(c => c.category === 'pakan')
+    const totalKgPurchased = pakanPurchases.reduce((s, c) => s + (Number(c.quantity) || 0), 0)
+    const totalPakanPurchaseCost = pakanPurchases.reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
+    const avgPricePerKg = totalKgPurchased > 0 ? totalPakanPurchaseCost / totalKgPurchased : 0
+
+    const thisBatchFeedLogs = allFeedLogs.filter(f => f.batch_id === batchId)
+    const kgConsumedThisBatch = thisBatchFeedLogs.reduce((s, f) => {
+      if (f.consumed_kg != null && f.consumed_kg > 0) return s + f.consumed_kg
+      const input = (f.hijauan_kg || 0) + (f.konsentrat_kg || 0) + (f.dedak_kg || 0) + (f.other_feed_kg || 0)
+      return s + Math.max(0, input - (f.sisa_pakan_kg || 0))
+    }, 0)
+    const totalBiayaPakan = Math.round(kgConsumedThisBatch * avgPricePerKg)
+
+    const totalActiveAnimalsAllBatches = Math.max(1,
+      activeBatches.reduce((s, b) => s + (b.total_animals || 0), 0)
+    )
+    const totalFarmOpsCost = allOpsCosts
+      .filter(c => c.category !== 'pakan')
+      .reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
+    const opsPerEkor = totalFarmOpsCost / totalActiveAnimalsAllBatches
+    const aktifCount = animalList.filter(a => a.status === 'active').length
+    const totalBiayaOps = Math.round(opsPerEkor * aktifCount)
+
+    const totalHpp = totalModalBeli + totalBiayaPakan + totalBiayaOps
+    const terjualCount = animalList.filter(a => a.status === 'sold').length
+    const matiCount = animalList.filter(a => a.status === 'dead' || a.status === 'culled').length
+    const produksiCount = aktifCount + terjualCount
+
+    const salesData = salesList ?? []
+    const totalPendapatan = salesData.reduce((s, t) => s + (Number(t.total_revenue_idr) || 0), 0)
+    const totalPendapatanLunas = salesData.filter(t => t.is_paid).reduce((s, t) => s + (Number(t.total_revenue_idr) || 0), 0)
+
+    const hppPerEkor = produksiCount > 0 ? totalHpp / produksiCount : 0
+    const bepPerEkor = hppPerEkor * 1.20
+    const targetRevenue = totalHpp * 1.20
+    const sisaHpp = totalHpp - totalPendapatan
+    const bepSisa = aktifCount > 0 ? Math.max(0, targetRevenue - totalPendapatan) / aktifCount : 0
+    const profitLoss = totalPendapatan - totalHpp
+    const kgPakanTotal = kgConsumedThisBatch
+    const hargaRataPerKg = Math.round(avgPricePerKg)
+
+    return {
+      totalModalBeli, totalBiayaPakan, totalBiayaOps, totalHpp,
+      aktifCount, terjualCount, matiCount, produksiCount,
+      totalPendapatan, totalPendapatanLunas,
+      hppPerEkor, bepPerEkor, bepSisa, sisaHpp, profitLoss,
+      kgPakanTotal, hargaRataPerKg,
+    }
+  }, [animalList, salesList, activeBatches, allFeedLogs, allOpsCosts, batchId])
+
+  return { isLoading, ...hpp }
 }
 
 // ── useDeleteSapiWeightRecord ─────────────────────────────────────────────────

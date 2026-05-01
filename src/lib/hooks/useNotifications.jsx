@@ -10,6 +10,30 @@ const toTitleCase = (str) =>
 const NotificationsContext = createContext()
 
 /**
+ * Helper to calculate days until payday
+ */
+const calculateDaysUntilPayday = (salaryType, payDay) => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  if (salaryType === 'mingguan') {
+    const jsDay = payDay === 7 ? 0 : payDay
+    const currentDay = today.getDay()
+    let diff = jsDay - currentDay
+    if (diff < 0) diff += 7
+    return diff
+  }
+
+  // bulanan
+  const pd = payDay || 1
+  let next = new Date(today.getFullYear(), today.getMonth(), pd)
+  if (next < today) {
+    next = new Date(today.getFullYear(), today.getMonth() + 1, pd)
+  }
+  return Math.ceil((next - today) / (1000 * 60 * 60 * 24))
+}
+
+/**
  * Hook to manage notification state and visibility
  */
 export function NotificationsProvider({ children }) {
@@ -102,6 +126,7 @@ export const useNotificationGenerator = () => {
     if (!tenant?.id) return
     try {
       const today = new Date()
+      const todayStr = today.toISOString().split('T')[0]
       // Use ref to always read latest notifications without stale closure
       const existingKeys = new Set(
         notificationsRef.current.map((n) => n.type + (n.metadata?.ref_id ?? ''))
@@ -125,6 +150,7 @@ export const useNotificationGenerator = () => {
             title: 'Piutang Jatuh Tempo',
             body: `${sale.rpa_clients?.rpa_name ?? 'RPA'} belum bayar dan sudah melewati due date.`,
             action_url: `${basePath}/rpa`,
+            priority: 1, // smallint: 1=low, 2=medium, 3=high
             metadata: { ref_id: sale.id },
           })
         }
@@ -147,6 +173,7 @@ export const useNotificationGenerator = () => {
             title: 'Piutang Jatuh Tempo',
             body: `${sale.sembako_customers?.customer_name ?? 'Customer'} belum bayar dan sudah melewati due date.`,
             action_url: `${basePath}/penjualan`,
+            priority: 1,
             metadata: { ref_id: sale.id },
           })
         }
@@ -167,13 +194,14 @@ export const useNotificationGenerator = () => {
               ? `Trial kamu berakhir dalam ${sub.daysLeft} hari.`
               : `Langganan ${toTitleCase(sub.plan)} kamu berakhir dalam ${sub.daysLeft} hari.`,
             action_url: `${basePath}/akun`,
+            priority: 1,
             metadata: { ref_id: tenant.id, days_left: sub.daysLeft },
           })
         }
       }
 
       // 3. Stok pakan menipis (peternak only)
-      if (vertical === 'peternak') {
+      if (vertical?.startsWith('peternak')) {
         const { data: allStocks } = await supabase
           .from('feed_stocks')
           .select('*, peternak_farms(id, farm_name)')
@@ -188,12 +216,12 @@ export const useNotificationGenerator = () => {
             title: 'Stok Pakan Menipis',
             body: `${stock.feed_type} tinggal ${stock.quantity_kg} kg.`,
             action_url: `${basePath}/pakan`,
+            priority: 1,
             metadata: { ref_id: stock.id },
           })
         }
 
         // 4. Tugas terlambat — one summary notif per day
-        const todayStr = today.toISOString().split('T')[0]
         if (!existingKeys.has('tugas_terlambat' + todayStr)) {
           const { count: overdueCount } = await supabase
             .from('peternak_task_instances')
@@ -208,15 +236,57 @@ export const useNotificationGenerator = () => {
               title: `${overdueCount} Tugas Terlambat`,
               body: `Ada ${overdueCount} tugas yang melewati tenggat waktu dan belum diselesaikan.`,
               action_url: `${basePath}/daily_task`,
+              priority: 1,
               metadata: { ref_id: todayStr, count: overdueCount },
             })
+          }
+        }
+
+        // 5. Pengingat Gajian Pekerja
+        const { data: workers } = await supabase
+          .from('kandang_workers')
+          .select('id, full_name, salary_type, pay_day, base_salary')
+          .eq('tenant_id', tenant.id)
+          .eq('status', 'aktif')
+
+        for (const w of (workers || [])) {
+          const daysUntil = calculateDaysUntilPayday(w.salary_type, w.pay_day)
+          if (daysUntil === 0) {
+            // Check if already paid this month (or week for weekly)
+            const gracePeriod = new Date(today.getFullYear(), today.getMonth(), 1)
+            gracePeriod.setDate(gracePeriod.getDate() - 5)
+            
+            const { data: alreadyPaid } = await supabase
+              .from('kandang_worker_payments')
+              .select('id')
+              .eq('worker_id', w.id)
+              .eq('payment_type', 'gaji')
+              .eq('is_deleted', false)
+              .gte('payment_date', gracePeriod.toISOString())
+              .limit(1)
+
+            if (alreadyPaid?.length > 0) continue // Skip if already paid
+
+            const key = 'payday_reminder' + w.id + todayStr
+            if (!existingKeys.has(key)) {
+              await supabase.from('notifications').insert({
+                tenant_id: tenant.id,
+                type: 'payday_reminder',
+                title: 'Waktunya Gajian!',
+                body: `Hari ini jadwal gajian ${w.full_name}. Segera catat pembayarannya.`,
+                action_url: `${basePath}/tim`,
+                priority: 1,
+                metadata: { ref_id: w.id + todayStr, worker_id: w.id, amount: w.base_salary },
+              })
+            }
           }
         }
       }
 
       // Always refetch after generation — don't rely solely on realtime
-      context.refetch()
+      // context.refetch() - REMOVED to prevent infinite loops
     } catch (err) {
+      console.error('DEBUG: checkAndGenerate ERROR', err)
       // Notification generation is non-critical — silently skip on error
     }
   }
