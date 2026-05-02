@@ -53,32 +53,20 @@ const Navbar = ({ authPage = false }) => {
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}
           >
             {/* Logo Section */}
-            <motion.a
-              href="/"
-              className="nav-logo"
-              initial={{ opacity: 0, y: -20 }}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                cursor: 'pointer',
-                textDecoration: 'none'
-              }}
-              whileHover={{ opacity: 0.85 }}
+              className="group cursor-pointer flex items-center gap-[10px]"
+              onClick={() => navigate('/')}
             >
-              <img src="/favicon.svg" alt="TernakOS Logo" className="w-[32px] h-[32px] rounded-lg" />
-              <span style={{
-                fontFamily: "'Sora', sans-serif",
-                fontSize: '17px',
-                fontWeight: 700,
-                color: '#F1F5F9',
-                letterSpacing: '-0.3px',
-              }}>
-                TernakOS
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center p-1.5 border border-emerald-500/20 group-hover:border-emerald-500/40 transition-all">
+                <img src="/logo.png" alt="TernakOS" className="w-full h-full object-contain" />
+              </div>
+              <span className="font-['Sora'] font-black text-xl text-white tracking-tight leading-none">
+                Ternak<span className="text-emerald-500">OS</span>
               </span>
-            </motion.a>
+            </motion.div>
   
             {/* Desktop Links (Hidden on Mobile) */}
             {!authPage && (

@@ -276,9 +276,9 @@ export default function AppSidebar({ open, onClose }) {
 
         // Domba Penggemukan
         ...(isDombaPenggemukan ? [
-          { title: 'Batch Aktif',    url: `${peternakBase}/batch`,       icon: RefreshCw },
+          { title: 'Batch Aktif',    url: `${peternakBase}/batch`,       icon: RefreshCw,    show: pp?.canViewSiklus    ?? true },
           { title: 'Data Ternak',    url: `${peternakBase}/ternak`,      icon: Tag },
-          { title: 'Penjualan',      url: `${peternakBase}/penjualan`,   icon: ShoppingCart },
+          { title: 'Penjualan',      url: `${peternakBase}/penjualan`,   icon: ShoppingCart, show: pp?.canViewPenjualan ?? true },
           { title: 'Denah Kandang',  url: `${peternakBase}/kandang-view`,icon: LayoutGrid },
         ] : []),
 
@@ -290,9 +290,9 @@ export default function AppSidebar({ open, onClose }) {
 
         // Kambing Penggemukan
         ...(isKambingPenggemukan ? [
-          { title: 'Batch Aktif',    url: `${peternakBase}/batch`,       icon: RefreshCw },
+          { title: 'Batch Aktif',    url: `${peternakBase}/batch`,       icon: RefreshCw,    show: pp?.canViewSiklus    ?? true },
           { title: 'Data Ternak',    url: `${peternakBase}/ternak`,      icon: Tag },
-          { title: 'Penjualan',      url: `${peternakBase}/penjualan`,   icon: ShoppingCart },
+          { title: 'Penjualan',      url: `${peternakBase}/penjualan`,   icon: ShoppingCart, show: pp?.canViewPenjualan ?? true },
           { title: 'Denah Kandang',  url: `${peternakBase}/kandang-view`,icon: LayoutGrid },
         ] : []),
 
@@ -305,7 +305,7 @@ export default function AppSidebar({ open, onClose }) {
         ...(isSapiPenggemukan || isSapiBreeding ? [
           { title: 'Sapi Aktif',    url: `${peternakBase}/batch`,        icon: RefreshCw,  show: isSapiPenggemukan },
           { title: 'Data Ternak',   url: `${peternakBase}/ternak`,       icon: Tag },
-          { title: 'Penjualan',     url: `${peternakBase}/penjualan`,    icon: ShoppingCart, show: isSapiPenggemukan },
+          { title: 'Penjualan',     url: `${peternakBase}/penjualan`,    icon: ShoppingCart, show: isSapiPenggemukan && (pp?.canViewPenjualan ?? true) },
           { title: 'Denah Kandang', url: `${peternakBase}/kandang-view`, icon: LayoutGrid, show: isSapiPenggemukan },
           { title: 'Reproduksi',    url: `${peternakBase}/reproduksi`,   icon: Heart,      show: isSapiBreeding },
         ].filter(item => item.show !== false) : []),
@@ -341,7 +341,7 @@ export default function AppSidebar({ open, onClose }) {
       label: 'TUGAS',
       items: [
         { title: 'Tugas Harian',     url: `${peternakBase}/daily_task`,   icon: ClipboardList },
-        ...((isSapiPenggemukan || isSapiBreeding || isDombaPenggemukan || isKambingPenggemukan || isBroiler) ? [
+        ...((isSapiPenggemukan || isSapiBreeding || isDombaPenggemukan || isDombaBreeding || isKambingPenggemukan || isKambingBreeding || isBroiler) ? [
           { title: 'Penugasan',        url: `${peternakBase}/task_assign`,  icon: Users2, roles: ['owner', 'manajer'] },
           { title: 'Pengaturan Tugas', url: `${peternakBase}/task_settings`,icon: Settings2, roles: ['owner', 'manajer'] },
         ] : []),
@@ -362,10 +362,10 @@ export default function AppSidebar({ open, onClose }) {
       items: [
         { title: isBroiler ? 'Program Vaksin' : 'Kesehatan', url: `${peternakBase}/${isBroiler ? 'vaksinasi' : 'kesehatan'}`, icon: Syringe, show: isBroiler ? (pp?.canViewVaksinasi ?? true) : true },
         { title: 'Stok Pakan',    url: `${peternakBase}/pakan`,        icon: Warehouse, show: isBroiler ? (pp?.canViewPakan ?? true) : true },
-        { title: isBroiler ? 'Laporan Siklus' : 'Laporan', url: `${peternakBase}/laporan`, icon: FileText, show: isBroiler ? (pp?.canViewLaporan ?? true) : true },
+        { title: isBroiler ? 'Laporan Siklus' : 'Laporan', url: `${peternakBase}/laporan`, icon: FileText, show: pp?.canViewLaporan ?? true },
         // Listrik & Air — hanya untuk peternak yang punya data batch (penggemukan)
         ...((isDombaPenggemukan || isKambingPenggemukan || isSapiPenggemukan || isSapiBreeding) ? [
-          { title: 'Listrik & Air',  url: `${peternakBase}/listrik-air`, icon: Zap },
+          { title: 'Listrik & Air',  url: `${peternakBase}/listrik-air`, icon: Zap, roles: ['owner', 'manajer'] },
         ] : []),
       ].filter(item => item.show !== false)
     }] : []),

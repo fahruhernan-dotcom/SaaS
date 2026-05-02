@@ -193,8 +193,8 @@ export default function KandangMiniMap({ batchIds, className, onAnimalClick, onK
     const sY = containerSize.h / (viewport.hM * CELL_PX)
     const fitScale = Math.min(sX, sY) * 0.98
     const base = fitMode ? fitScale : Math.min(1, fitScale * 0.85)
-    // 3D isometric extends ~40% beyond 2D bounds — scale down to keep it inside the container
-    return is3D ? base * 0.55 : base
+    // rotateX(60deg) rotateZ(-45deg) extends the bounding box — scale down to fit
+    return is3D ? base * 0.65 : base
   }, [viewport, containerSize, fitMode, is3D])
 
   const activeKandang = useMemo(() =>
@@ -282,7 +282,7 @@ export default function KandangMiniMap({ batchIds, className, onAnimalClick, onK
       </div>
 
       {/* Canvas */}
-      <div className="absolute inset-0" ref={containerRef} style={{ perspective: '1000px' }}>
+      <div className="absolute inset-0" ref={containerRef} style={{ perspective: '1200px', perspectiveOrigin: is3D ? '50% 40%' : '50% 50%' }}>
         {viewport && (
           <div
             style={{
@@ -291,11 +291,15 @@ export default function KandangMiniMap({ batchIds, className, onAnimalClick, onK
               transformStyle: 'preserve-3d',
               transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
               transformOrigin: 'center center',
-              left: '50%', top: '50%',
+              left: '50%',
+              top: '50%',
               width: viewport.wM * CELL_PX,
               height: viewport.hM * CELL_PX,
               marginLeft: -(viewport.wM * CELL_PX) / 2,
-              marginTop: -(viewport.hM * CELL_PX) / 2,
+              // In 3D, rotateX shifts visual center upward — push canvas down to compensate
+              marginTop: is3D
+                ? -(viewport.hM * CELL_PX) / 2 + containerSize.h * 0.18
+                : -(viewport.hM * CELL_PX) / 2,
             }}
           >
             {placedKandangs.map((k, idx) => {

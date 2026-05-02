@@ -15,9 +15,9 @@ import Particles from '../components/reactbits/Particles'
 import { WA_URL } from '@/lib/constants/contact'
 
 const ROLES = [
-  { id: 'broker', label: 'Broker', emoji: '🐔' },
-  { id: 'peternak', label: 'Peternak', emoji: '🏠' },
-  { id: 'rpa', label: 'RPA', emoji: '🏭' },
+  { id: 'broker', label: 'Broker', icon: '/assets/icons/models/role_broker.png' },
+  { id: 'peternak', label: 'Peternak', icon: '/assets/icons/models/role_peternak.png' },
+  { id: 'rpa', label: 'RPA', icon: '/assets/icons/models/role_rpa.png' },
 ]
 
 const SUBS = {
@@ -763,6 +763,17 @@ export default function HargaPage() {
             >
               HARGA TRANSPARAN
             </motion.p>
+            <motion.div 
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+              className="flex items-center justify-center gap-3 mb-8"
+            >
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center p-1.5 border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+                <img src="/logo.png" alt="TernakOS" className="w-full h-full object-contain" />
+              </div>
+              <span className="font-display font-black text-xl text-white tracking-tight uppercase">TernakOS</span>
+            </motion.div>
             <motion.h1
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -838,7 +849,10 @@ export default function HargaPage() {
                     transition={{ type: 'spring', stiffness: 400, damping: 35 }}
                   />
                 )}
-                <span className="relative">{role.emoji} {role.label}</span>
+                <div className="relative flex items-center gap-2">
+                  <img src={role.icon} alt={role.label} className="w-5 h-5 object-cover rounded-md" />
+                  <span>{role.label}</span>
+                </div>
               </button>
             ))}
           </div>

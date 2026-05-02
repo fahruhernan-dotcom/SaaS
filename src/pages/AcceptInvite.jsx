@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Loader2, UserPlus, LogIn, ArrowLeft, ShieldCheck, Mail, AlertTriangle, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 
+import SEO from '@/components/SEO';
+
 export default function AcceptInvite() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -366,6 +368,11 @@ export default function AcceptInvite() {
 
   return (
     <div className="min-h-screen bg-[#06090F] flex flex-col items-center justify-center p-6 sm:p-8">
+      <SEO 
+        title="Terima Undangan Tim TernakOS | Masuk ke Platform Peternakan"
+        description="Bergabung dengan tim peternakan Anda di platform TernakOS. Kelola operasional, pantau data, dan tingkatkan produktivitas bersama tim."
+        path="/accept-invite"
+      />
 
       {/* ── Input View ── */}
       {view === 'input' && (
@@ -419,8 +426,12 @@ export default function AcceptInvite() {
       {view === 'choice' && (
         <div className="bg-[#0C1319] border border-white/8 rounded-2xl p-8 max-w-md w-full shadow-2xl animate-in fade-in zoom-in duration-300">
           <div className="flex justify-center mb-8">
-            <div className="w-12 h-12 bg-[#10B981] rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <span className="text-2xl">🐔</span>
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+              <img
+                src="/logo.png"
+                alt="TernakOS"
+                className="w-full h-full object-cover rounded-xl"
+              />
             </div>
           </div>
 

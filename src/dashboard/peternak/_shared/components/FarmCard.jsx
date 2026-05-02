@@ -105,17 +105,15 @@ const startBtnStyle = {
   fontFamily: 'Sora',
 }
 
-
-
 // ─── Maps ─────────────────────────────────────────────────────────────────────
 
 const LIVESTOCK_LABELS = {
-  ayam_broiler: '🐔 Ayam Broiler',
-  ayam_petelur: '🥚 Ayam Petelur',
-  domba:        '🐑 Domba',
-  kambing:      '🐐 Kambing',
-  sapi:         '🐄 Sapi',
-  babi:         '🐷 Babi',
+  ayam_broiler: 'Ayam Broiler',
+  ayam_petelur: 'Ayam Petelur',
+  domba:        'Domba',
+  kambing:      'Kambing',
+  sapi:         'Sapi',
+  babi:         'Babi',
 }
 
 const BUSINESS_MODEL_LABELS = {
@@ -202,4 +200,3 @@ export default function FarmCard({ farm, activeCycle, onStart, onView }) {
     </motion.div>
   )
 }
-

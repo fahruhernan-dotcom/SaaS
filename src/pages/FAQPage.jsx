@@ -189,7 +189,7 @@ export default function FAQPage() {
                     : 'border-white/10 bg-white/[0.03] text-[#64748B] hover:text-white hover:border-white/20'
                   }`}
               >
-                <span>{cat.emoji}</span>
+                <img src={cat.icon} alt="" className="w-4 h-4 object-contain" />
                 <span>{cat.label}</span>
                 <span className="text-[10px] opacity-60">({cat.count})</span>
               </button>
@@ -234,7 +234,7 @@ export default function FAQPage() {
           >
             {/* Category heading */}
             <div className="flex items-center gap-3 mb-6">
-              <span className="text-2xl">{cat.emoji}</span>
+              <img src={cat.icon} alt="" className="w-8 h-8 object-contain" />
               <div>
                 <h2 className="font-display text-lg font-bold text-white leading-none">
                   {cat.label}

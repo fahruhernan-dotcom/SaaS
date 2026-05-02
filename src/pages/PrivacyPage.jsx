@@ -36,10 +36,12 @@ export default function PrivacyPage() {
       <header className="border-b border-white/5 bg-[#0C1319]/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-6 h-20 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-lg shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
-              🐔
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center p-1.5 border border-emerald-500/20 shadow-lg shadow-emerald-500/10 group-hover:border-emerald-500/40 transition-all">
+              <img src="/logo.png" alt="TernakOS" className="w-full h-full object-contain" />
             </div>
-            <span className="font-display font-black text-xl tracking-tight">TernakOS</span>
+            <span className="font-['Sora'] font-black text-xl text-white tracking-tight leading-none">
+              Ternak<span className="text-emerald-500">OS</span>
+            </span>
           </Link>
           <button
             onClick={() => navigate(-1)}

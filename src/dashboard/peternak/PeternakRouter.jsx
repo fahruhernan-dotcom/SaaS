@@ -81,6 +81,8 @@ import KambingKandangView  from './kambing/fattening/KandangView'
 import KambingDailyTask    from './kambing/fattening/DailyTask'
 import KambingPenjualan    from './kambing/fattening/Penjualan'
 import KambingQuickAdd     from './kambing/fattening/QuickAdd'
+import KambingTaskAssign   from './kambing/fattening/TaskAssign'
+import KambingTaskSettings from './kambing/fattening/TaskSettings'
 
 // ─── Kambing — Breeding ───────────────────────────────────────────────────────
 import KambingBreedingBeranda    from './kambing/breeding/Beranda'
@@ -127,6 +129,26 @@ function PeternakAdminGuard({ children }) {
         <h2 className="font-['Sora'] font-bold text-white text-lg mb-2">Akses Terbatas</h2>
         <p className="text-[#94A3B8] text-sm max-w-xs mx-auto">
           Hanya Owner atau Admin yang dapat mengakses pengaturan kandang.
+        </p>
+      </div>
+    )
+  }
+  return children
+}
+
+function PeternakManagerGuard({ children }) {
+  const { profile, loading } = useAuth()
+  if (loading) return <LoadingSpinner fullPage />
+  const isAllowed = ['owner', 'manajer', 'superadmin'].includes(profile?.role)
+  if (!isAllowed) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center text-slate-400">
+        <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
+          <span className="text-2xl">🔒</span>
+        </div>
+        <h2 className="font-['Sora'] font-bold text-white text-lg mb-2">Akses Terbatas</h2>
+        <p className="text-[#94A3B8] text-sm max-w-xs mx-auto">
+          Hanya Owner atau Manajer yang dapat mengakses halaman ini.
         </p>
       </div>
     )
@@ -181,8 +203,8 @@ export function PeternakPageRouter({ page }) {
       laporan:        <SapiLaporan />,
       'kandang-view': <SapiKandangView />,
       daily_task:     <SapiDailyTask />,
-      task_settings:  <PeternakAdminGuard><SapiTaskSettings /></PeternakAdminGuard>,
-      task_assign:    <PeternakAdminGuard><SapiTaskAssign /></PeternakAdminGuard>,
+      task_settings:  <PeternakManagerGuard><SapiTaskSettings /></PeternakManagerGuard>,
+      task_assign:    <PeternakManagerGuard><SapiTaskAssign /></PeternakManagerGuard>,
       'quick-add':    <SapiQuickAdd />,
       penjualan:      <SapiPenjualan />,
       'listrik-air':  <ListrikAirPage />,
@@ -199,8 +221,8 @@ export function PeternakPageRouter({ page }) {
       'stok-pakan':  <SapiBreedingPakan />,
       laporan:       <SapiBreedingLaporan />,
       daily_task:    <SapiBreedingDailyTask />,
-      task_settings: <PeternakAdminGuard><SapiBreedingTaskSettings /></PeternakAdminGuard>,
-      task_assign:   <PeternakAdminGuard><SapiBreedingTaskAssign /></PeternakAdminGuard>,
+      task_settings: <PeternakManagerGuard><SapiBreedingTaskSettings /></PeternakManagerGuard>,
+      task_assign:   <PeternakManagerGuard><SapiBreedingTaskAssign /></PeternakManagerGuard>,
       'listrik-air': <ListrikAirPage />,
       'harga-pasar': <HargaPasar />,
       tim:           <TimManajemenPage />,
@@ -216,8 +238,8 @@ export function PeternakPageRouter({ page }) {
       laporan:        <DombaLaporan />,
       'kandang-view': <DombaKandangView />,
       daily_task:     <DombaDailyTask />,
-      task_settings:  <PeternakAdminGuard><DombaTaskSettings /></PeternakAdminGuard>,
-      task_assign:    <PeternakAdminGuard><DombaTaskAssign /></PeternakAdminGuard>,
+      task_settings:  <PeternakManagerGuard><DombaTaskSettings /></PeternakManagerGuard>,
+      task_assign:    <PeternakManagerGuard><DombaTaskAssign /></PeternakManagerGuard>,
       penjualan:      <DombaPenjualan />,
       'quick-add':    <DombaQuickAdd />,
       'listrik-air':  <ListrikAirPage />,
@@ -234,6 +256,8 @@ export function PeternakPageRouter({ page }) {
       'stok-pakan':  <DombaBreedingPakan />,
       laporan:       <DombaBreedingLaporan />,
       daily_task:    <DombaBreedingDailyTask />,
+      task_settings: <PeternakManagerGuard><DombaBreedingTaskSettings /></PeternakManagerGuard>,
+      task_assign:   <PeternakManagerGuard><DombaBreedingTaskAssign /></PeternakManagerGuard>,
       'harga-pasar': <HargaPasar />,
       tim:           <TimManajemenPage />,
       akun:          <Akun />,
@@ -248,6 +272,8 @@ export function PeternakPageRouter({ page }) {
       laporan:        <KambingLaporan />,
       'kandang-view': <KambingKandangView />,
       daily_task:     <KambingDailyTask />,
+      task_settings:  <PeternakManagerGuard><KambingTaskSettings /></PeternakManagerGuard>,
+      task_assign:    <PeternakManagerGuard><KambingTaskAssign /></PeternakManagerGuard>,
       penjualan:      <KambingPenjualan />,
       'quick-add':    <KambingQuickAdd />,
       'listrik-air':  <ListrikAirPage />,
@@ -264,6 +290,8 @@ export function PeternakPageRouter({ page }) {
       'stok-pakan':  <KambingBreedingPakan />,
       laporan:       <KambingBreedingLaporan />,
       daily_task:    <KambingBreedingDailyTask />,
+      task_settings: <PeternakManagerGuard><KambingBreedingTaskSettings /></PeternakManagerGuard>,
+      task_assign:   <PeternakManagerGuard><KambingBreedingTaskAssign /></PeternakManagerGuard>,
       'harga-pasar': <HargaPasar />,
       tim:           <TimManajemenPage />,
       akun:          <Akun />,

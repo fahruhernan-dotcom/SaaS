@@ -24,10 +24,10 @@ import { PhoneInput } from '@/components/ui/PhoneInput'
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const LISTING_TYPES = [
-  { value: 'all',               label: 'Semua',                emoji: '📋' },
-  { value: 'stok_ayam',         label: 'Stok Ayam',            emoji: '🐔' },
-  { value: 'penawaran_broker',  label: 'Penawaran Broker',      emoji: '🤝' },
-  { value: 'permintaan_rpa',    label: 'Permintaan RPA',        emoji: '📋' },
+  { value: 'all',               label: 'Semua',                icon: '/logo.png' },
+  { value: 'stok_ayam',         label: 'Stok Ayam',            icon: '/assets/icons/models/role_peternak.png' },
+  { value: 'penawaran_broker',  label: 'Penawaran Broker',      icon: '/assets/icons/models/role_broker.png' },
+  { value: 'permintaan_rpa',    label: 'Permintaan RPA',        icon: '/assets/icons/models/role_rpa.png' },
 ]
 
 const CHICKEN_TYPES = [
@@ -490,21 +490,21 @@ function SheetPasangIklan({ isOpen, onClose, profile }) {
                 {[
                   {
                     type: 'stok_ayam',
-                    emoji: '🐔',
+                    icon: '/assets/icons/models/role_peternak.png',
                     title: 'Jual Stok Ayam',
                     desc: 'Saya peternak — ingin jual ayam siap panen ke broker atau buyer',
                     color: '#A78BFA',
                   },
                   {
                     type: 'penawaran_broker',
-                    emoji: '🤝',
+                    icon: '/assets/icons/models/role_broker.png',
                     title: 'Tawarkan Ayam',
                     desc: 'Saya broker — ingin tawarkan ayam ke RPA atau buyer',
                     color: '#34D399',
                   },
                   {
                     type: 'permintaan_rpa',
-                    emoji: '📋',
+                    icon: '/assets/icons/models/role_rpa.png',
                     title: 'Cari Ayam',
                     desc: 'Saya RPA/buyer — ingin cari ayam dari broker atau peternak',
                     color: '#FBBF24',
@@ -518,7 +518,7 @@ function SheetPasangIklan({ isOpen, onClose, profile }) {
                     onMouseEnter={e => { e.currentTarget.style.borderColor = opt.color + '50' }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
                   >
-                    <span className="text-2xl">{opt.emoji}</span>
+                    <img src={opt.icon} alt="" className="w-8 h-8 object-contain" />
                     <div>
                       <p className="text-sm font-bold text-[#F1F5F9]">{opt.title}</p>
                       <p className="text-xs text-[#4B6478] mt-0.5 leading-relaxed">{opt.desc}</p>
@@ -864,7 +864,8 @@ export default function Market() {
                 : { background: 'rgba(255,255,255,0.04)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.08)' }
               }
             >
-              {t.emoji} {t.label}
+              <img src={t.icon} alt="" className="w-4 h-4 object-contain" />
+              {t.label}
             </button>
           ))}
         </div>

@@ -17,9 +17,11 @@ export default function TermsPage() {
       <header className="border-b border-white/5 bg-[#0C1319]/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-6 h-20 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-lg shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
-              🐔
-            </div>
+            <img
+              src="/logo.png"
+              alt="TernakOS"
+              className="w-9 h-9 rounded-xl object-cover shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform"
+            />
             <span className="font-display font-black text-xl tracking-tight">TernakOS</span>
           </Link>
           <Link to="/login" className="flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300 transition-colors">

@@ -3,6 +3,7 @@ User-agent: *
 # ─── Public Pages (Izinkan diindex) ────────────────────────────────────────
 Allow: /
 Allow: /fitur
+Allow: /fitur/
 Allow: /harga
 Allow: /harga-pasar
 Allow: /tentang-kami

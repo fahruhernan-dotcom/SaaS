@@ -29,9 +29,13 @@ const Footer = () => {
 
         {/* Brand */}
         <div className="text-center md:text-left mb-8 md:mb-[48px]">
-          <Link to="/" className="flex items-center justify-center md:justify-start gap-[10px] mb-[10px]">
-            <img src="/favicon.svg" alt="TernakOS Logo" className="w-[28px] h-[28px] rounded-[6px]" />
-            <span className="font-display text-sm font-bold text-tx-1 tracking-tight">TernakOS</span>
+          <Link to="/" className="flex items-center justify-center md:justify-start gap-[10px] mb-[10px] group">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center p-1.5 border border-emerald-500/20 group-hover:border-emerald-500/40 transition-all">
+              <img src="/logo.png" alt="TernakOS" className="w-full h-full object-contain" />
+            </div>
+            <span className="font-['Sora'] text-xl font-black text-white tracking-tight leading-none">
+              Ternak<span className="text-emerald-500">OS</span>
+            </span>
           </Link>
           <p className="font-body text-[13px] text-tx-3 leading-[1.6] max-w-[280px] mx-auto md:mx-0">
             Platform manajemen bisnis peternakan terlengkap di Indonesia.

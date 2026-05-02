@@ -10,11 +10,11 @@ import { getAllPosts, formatDate } from '../data/blogPosts';
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { value: 'all', label: 'Semua Artikel', emoji: '📚' },
-  { value: 'peternak', label: 'Peternak', emoji: '🐔' },
-  { value: 'broker', label: 'Broker', emoji: '🤝' },
-  { value: 'sembako', label: 'Sembako', emoji: '🌾' },
-  { value: 'umum', label: 'Umum', emoji: '💡' },
+  { value: 'all',      label: 'Semua Artikel', icon: '/logo.png' },
+  { value: 'peternak', label: 'Peternak',      icon: '/assets/icons/models/role_peternak.png' },
+  { value: 'broker',   label: 'Broker',        icon: '/assets/icons/models/role_broker.png' },
+  { value: 'sembako',  label: 'Sembako',       icon: '/assets/icons/models/distributor_sembako.png' },
+  { value: 'umum',     label: 'Umum',          icon: '/logo.png' },
 ];
 
 const CATEGORY_COLORS = {
@@ -169,7 +169,8 @@ export default function BlogPage() {
                     : { background: 'rgba(255,255,255,0.04)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.08)' }
                   }
                 >
-                  {cat.emoji} {cat.label}
+                  <img src={cat.icon} alt={cat.label} className="w-4 h-4 object-contain" />
+                  <span>{cat.label}</span>
                 </button>
               ))}
             </div>

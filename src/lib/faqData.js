@@ -12,11 +12,11 @@
  */
 
 export const FAQ_CATEGORIES = [
-  { id: 'umum',        label: 'Umum & Branding',                emoji: '💡', count: 25 },
-  { id: 'broker_ayam', label: 'Solusi Broker Ayam',             emoji: '🐔', count: 40 },
-  { id: 'sembako',     label: 'Solusi Agen Sembako',            emoji: '🛒', count: 40 },
-  { id: 'peternak',    label: 'Solusi Peternak Mandiri',        emoji: '🏠', count: 40 },
-  { id: 'teknis',      label: 'Teknis, Keamanan & Langganan',   emoji: '🔐', count: 55 },
+  { id: 'umum',        label: 'Umum & Branding',                icon: '/logo.png', count: 25 },
+  { id: 'broker_ayam', label: 'Solusi Broker Ayam',             icon: '/assets/icons/models/role_broker.png', count: 40 },
+  { id: 'sembako',     label: 'Solusi Agen Sembako',            icon: '/assets/icons/models/distributor_sembako.png', count: 40 },
+  { id: 'peternak',    label: 'Solusi Peternak Mandiri',        icon: '/assets/icons/models/role_peternak.png', count: 40 },
+  { id: 'teknis',      label: 'Teknis, Keamanan & Langganan',   icon: '/logo.png', count: 55 },
 ]
 
 export const FAQ_DATA = {

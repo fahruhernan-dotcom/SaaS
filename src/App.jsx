@@ -346,6 +346,8 @@ export const routes = createRoutesFromElements(
     <Route path="/blog" element={<BlogPage />} />
     <Route path="/blog/:slug" element={<BlogPostPage />} />
     <Route path="/fitur" element={<FiturPage />} />
+    <Route path="/fitur/rpa" element={<FiturPage />} />
+    <Route path="/fitur/:role/:sub" element={<FiturPage />} />
     <Route path="/harga" element={<HargaPage />} />
     <Route path="/market" element={<MarketPublic />} />
     <Route path="/harga-pasar/:province?" element={<HargaPasarPublic />} />

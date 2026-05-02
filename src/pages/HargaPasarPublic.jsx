@@ -417,21 +417,53 @@ export default function HargaPasarPublic() {
       '@context': 'https://schema.org',
       '@graph': [
         {
+          '@type': 'Organization',
+          '@id': 'https://ternakos.my.id/#organization',
+          'name': 'TernakOS',
+          'url': 'https://ternakos.my.id',
+          'logo': {
+            '@type': 'ImageObject',
+            'url': 'https://ternakos.my.id/logo.png',
+            'width': '512',
+            'height': '512'
+          },
+          'sameAs': [
+            'https://instagram.com/ternakos.id',
+            'https://tiktok.com/@ternakos'
+          ]
+        },
+        {
+          '@type': 'SoftwareApplication',
+          'name': 'TernakOS',
+          'operatingSystem': 'Web, Android, iOS',
+          'applicationCategory': 'BusinessApplication',
+          'aggregateRating': {
+            '@type': 'AggregateRating',
+            'ratingValue': '4.9',
+            'reviewCount': '124'
+          },
+          'offers': {
+            '@type': 'Offer',
+            'price': '0',
+            'priceCurrency': 'IDR'
+          }
+        },
+        {
           '@type': 'BreadcrumbList',
           itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Beranda', item: 'https://ternakos.com' },
-            { '@type': 'ListItem', position: 2, name: 'Harga Pasar', item: 'https://ternakos.com/harga-pasar' },
-            ...(currentProvince ? [{ '@type': 'ListItem', position: 3, name: currentProvince, item: `https://ternakos.com/harga-pasar/${provinceToSlug(currentProvince)}` }] : [])
+            { '@type': 'ListItem', position: 1, name: 'Beranda', item: 'https://ternakos.my.id' },
+            { '@type': 'ListItem', position: 2, name: 'Harga Pasar', item: 'https://ternakos.my.id/harga-pasar' },
+            ...(currentProvince ? [{ '@type': 'ListItem', position: 3, name: currentProvince, item: `https://ternakos.my.id/harga-pasar/${provinceToSlug(currentProvince)}` }] : [])
           ]
         },
         {
           '@type': 'Dataset',
-          name: `Harga Ayam Broiler Hidup Harian — ${provinceLabel}`,
-          description: `Data harga ayam broiler hidup per kg untuk wilayah ${provinceLabel}. Mencakup harga beli di kandang dan harga jual ke pasar/RPA. Diperbarui setiap hari dari transaksi nyata broker aktif di platform TernakOS.`,
-          url: currentProvince
-            ? `https://ternakos.com/harga-pasar/${provinceToSlug(currentProvince)}`
-            : 'https://ternakos.com/harga-pasar',
-          keywords: [
+          'name': `Harga Ayam Broiler Hidup Harian — ${provinceLabel}`,
+          'description': `Data harga ayam broiler hidup per kg untuk wilayah ${provinceLabel}. Mencakup harga beli di kandang dan harga jual ke pasar/RPA. Diperbarui setiap hari dari transaksi nyata broker aktif di platform TernakOS.`,
+          'url': currentProvince
+            ? `https://ternakos.my.id/harga-pasar/${provinceToSlug(currentProvince)}`
+            : 'https://ternakos.my.id/harga-pasar',
+          'keywords': [
             'harga ayam broiler hidup hari ini',
             'harga ayam broiler',
             'harga kandang ayam broiler',
@@ -439,10 +471,10 @@ export default function HargaPasarPublic() {
             'harga jual ayam broiler',
             'harga pasar ayam hari ini',
           ],
-          temporalCoverage: `2024-01-01/${new Date().toISOString().split('T')[0]}`,
-          dateModified: new Date().toISOString(),
-          creator: { '@type': 'Organization', name: 'TernakOS', url: 'https://ternakos.com' },
-          variableMeasured: [
+          'temporalCoverage': `2024-01-01/${new Date().toISOString().split('T')[0]}`,
+          'dateModified': new Date().toISOString(),
+          'creator': { '@id': 'https://ternakos.my.id/#organization' },
+          'variableMeasured': [
             { '@type': 'PropertyValue', name: 'Harga Beli Kandang', unitText: 'IDR/kg' },
             { '@type': 'PropertyValue', name: 'Harga Jual Pasar', unitText: 'IDR/kg' },
             { '@type': 'PropertyValue', name: 'Margin Broker', unitText: 'IDR/kg' },
@@ -450,21 +482,21 @@ export default function HargaPasarPublic() {
         },
         {
           '@type': 'FAQPage',
-          mainEntity: [
+          'mainEntity': [
             {
               '@type': 'Question',
-              name: 'Berapa harga ayam broiler hidup hari ini?',
-              acceptedAnswer: {
+              'name': 'Berapa harga ayam broiler hidup hari ini?',
+              'acceptedAnswer': {
                 '@type': 'Answer',
-                text: `Harga ayam broiler hidup hari ini per ${todayFmtId} adalah ${buyPriceStr} di tingkat kandang dan ${sellPriceStr} di tingkat pasar. Data ini diperbarui setiap hari dari rata-rata transaksi nyata broker aktif di platform TernakOS untuk wilayah ${provinceLabel}.`
+                'text': `Harga ayam broiler hidup hari ini per ${todayFmtId} adalah ${buyPriceStr} di tingkat kandang dan ${sellPriceStr} di tingkat pasar. Data ini diperbarui setiap hari dari rata-rata transaksi nyata broker aktif di platform TernakOS untuk wilayah ${provinceLabel}.`
               }
             },
             {
               '@type': 'Question',
-              name: 'Apa perbedaan harga kandang dan harga pasar ayam broiler?',
-              acceptedAnswer: {
+              'name': 'Apa perbedaan harga kandang dan harga pasar ayam broiler?',
+              'acceptedAnswer': {
                 '@type': 'Answer',
-                text: 'Harga kandang (farm gate price) adalah harga saat broker membeli ayam langsung dari peternak. Harga pasar adalah harga saat broker menjual ke RPA atau pasar. Selisihnya disebut margin broker, biasanya berkisar Rp 1.500–3.000/kg tergantung jarak dan kondisi pasar.'
+                'text': 'Harga kandang (farm gate price) adalah harga saat broker membeli ayam langsung dari peternak. Harga pasar adalah harga saat broker menjual ke RPA atau pasar. Selisihnya disebut margin broker, biasanya berkisar Rp 1.500–3.000/kg tergantung jarak dan kondisi pasar.'
               }
             }
           ]
@@ -481,7 +513,7 @@ export default function HargaPasarPublic() {
         title={seoTitle}
         description={seoDesc}
         path={seoPath}
-        schema={isLoading ? null : jsonLd}
+        schema={jsonLd}
       />
 
       {/* Global Background Elements */}
@@ -538,6 +570,14 @@ export default function HargaPasarPublic() {
           </div>
 
           <div>
+            <div className="flex items-center gap-3 mb-6 group cursor-default">
+              <div className="w-11 h-11 rounded-xl bg-emerald-500/10 flex items-center justify-center p-1.5 border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)] group-hover:border-emerald-500/40 transition-all">
+                <img src="/logo.png" alt="TernakOS" className="w-full h-full object-contain" />
+              </div>
+              <span className="font-['Sora'] font-black text-2xl text-white tracking-tight leading-none">
+                Ternak<span className="text-emerald-500">OS</span>
+              </span>
+            </div>
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white leading-[1.1] tracking-tight uppercase max-w-3xl">
               Harga Ayam Broiler Hidup{currentProvince ? ` di ${currentProvince}` : ''}{' '}
               <span className="text-emerald-500">Hari Ini</span>

@@ -4,14 +4,14 @@
     <meta charset="UTF-8" />
     <!-- Security meta tags should be handled via HTTP headers -->
     <meta name="referrer" content="strict-origin-when-cross-origin">
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
-    <link rel="icon" type="image/png" href="/logo.png?v=2" />
-    <link rel="shortcut icon" href="/logo.png?v=2" />
+    <link rel="icon" type="image/png" href="/logo.png?v=3" />
+    <link rel="apple-touch-icon" href="/logo.png?v=3" />
+    <link rel="shortcut icon" href="/logo.png?v=3" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
-    <!-- Title akan di-inject per-halaman oleh SEO component (vite-react-ssg + react-helmet-async) -->
+    <!-- Title akan di-inject per-halaman oleh SEO component (vite-react-ssg) -->
 
     <!-- Schema.org for Sitelinks Search Box / Nested Sitelinks -->
     <script type="application/ld+json">
@@ -50,9 +50,16 @@
         {
           "@type": "SiteNavigationElement",
           "position": 5,
-          "name": "FAQ",
-          "description": "Pertanyaan umum seputar layanan",
-          "url": "https://ternakos.my.id/faq"
+          "name": "Kebijakan Privasi",
+          "description": "Komitmen perlindungan data",
+          "url": "https://ternakos.my.id/privacy"
+        },
+        {
+          "@type": "SiteNavigationElement",
+          "position": 6,
+          "name": "Syarat & Ketentuan",
+          "description": "Ketentuan penggunaan layanan",
+          "url": "https://ternakos.my.id/terms"
         }
       ]
     }

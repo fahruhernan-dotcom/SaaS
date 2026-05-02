@@ -46,6 +46,13 @@ export default defineConfig({
       return [
         '/',
         '/fitur',
+        '/fitur/rpa',
+        '/fitur/broker/ayam',
+        '/fitur/broker/telur',
+        '/fitur/broker/sembako',
+        '/fitur/peternak/ayam',
+        '/fitur/peternak/sapi-potong',
+        '/fitur/peternak/kambing-domba',
         '/harga',
         '/harga-pasar',
         '/market',
