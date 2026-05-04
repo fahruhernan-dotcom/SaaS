@@ -4,6 +4,8 @@ import {
   Plus, X, Wheat, Calendar, Info, Trash2, ArrowLeft, Share2,
   Receipt, Wallet, TrendingUp, Package,
 } from 'lucide-react'
+import { InputRupiah } from '@/components/ui/InputRupiah'
+import { InputNumber } from '@/components/ui/InputNumber'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
@@ -143,6 +145,9 @@ export function PenggemukanPakan({ config, hooks }) {
       toast.error('Isi nama kandang dan jumlah ternak')
       return
     }
+    if (config.logSchema === 'kandang' && !form.feed_cost_idr) {
+      toast.warning('Biaya pakan belum diisi — HPP tidak akan akurat. Isi di form ini atau di tab Biaya.', { duration: 4000 })
+    }
     setIsSubmitting(true)
     try {
       await addLog.mutateAsync({
@@ -192,8 +197,12 @@ export function PenggemukanPakan({ config, hooks }) {
     e.preventDefault()
     const batchForCost = targetBatch || batches[0]
     if (!batchForCost) return
-    setIsSubmitting(true)
     const finalAmount = isPakanCost && pakanTotalAuto > 0 ? pakanTotalAuto : (parseInt(costForm.amount_idr) || 0)
+    if (finalAmount <= 0) {
+      toast.error('Jumlah biaya harus lebih dari 0')
+      return
+    }
+    setIsSubmitting(true)
     const autoItemName = isPakanCost
       ? `Beli Pakan ${costForm.feed_type.charAt(0).toUpperCase() + costForm.feed_type.slice(1)}`
       : costForm.item_name
@@ -543,9 +552,9 @@ export function PenggemukanPakan({ config, hooks }) {
                     </div>
                     <div>
                       <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Jumlah Ternak *</label>
-                      <input type="number" required placeholder="12" value={form.animal_count}
-                        onChange={e => setForm({ ...form, animal_count: e.target.value })}
-                        className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none transition-colors', focusCls)} />
+                      <InputNumber placeholder="12" value={form.animal_count}
+                        onChange={val => setForm({ ...form, animal_count: val })}
+                        className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors', focusCls)} />
                     </div>
                   </div>
                 )}
@@ -554,9 +563,9 @@ export function PenggemukanPakan({ config, hooks }) {
                   {[['hijauan_kg','Hijauan (kg)'],['konsentrat_kg','Konsentrat (kg)']].map(([key, label]) => (
                     <div key={key}>
                       <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">{label}</label>
-                      <input type="number" step="0.1" placeholder="0.0" value={form[key]}
-                        onChange={e => setForm({ ...form, [key]: e.target.value })}
-                        className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none transition-colors', focusCls)} />
+                      <InputNumber step={0.1} placeholder="0.0" value={form[key]} suffix="kg"
+                        onChange={val => setForm({ ...form, [key]: val })}
+                        className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors', focusCls)} />
                     </div>
                   ))}
                 </div>
@@ -564,31 +573,31 @@ export function PenggemukanPakan({ config, hooks }) {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Dedak (kg)</label>
-                    <input type="number" step="0.1" placeholder="0.0" value={form.dedak_kg}
-                      onChange={e => setForm({ ...form, dedak_kg: e.target.value })}
-                      className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none transition-colors', focusCls)} />
+                    <InputNumber step={0.1} placeholder="0.0" value={form.dedak_kg} suffix="kg"
+                      onChange={val => setForm({ ...form, dedak_kg: val })}
+                      className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors', focusCls)} />
                   </div>
                   <div>
                     <label className="block text-[10px] font-black text-amber-400 uppercase mb-1.5 ml-1 tracking-widest">Sisa Pakan (kg)</label>
-                    <input type="number" step="0.1" placeholder="0.0" value={form.sisa_pakan_kg}
-                      onChange={e => setForm({ ...form, sisa_pakan_kg: e.target.value })}
-                      className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-amber-400 placeholder:text-[#4B6478] font-black focus:outline-none transition-colors', focusCls)} />
+                    <InputNumber step={0.1} placeholder="0.0" value={form.sisa_pakan_kg} suffix="kg"
+                      onChange={val => setForm({ ...form, sisa_pakan_kg: val })}
+                      className={cn('bg-white/[0.03] border-white/[0.06] text-amber-400 placeholder:text-[#4B6478] font-black focus:border-violet-500/50 transition-colors', focusCls)} />
                   </div>
                 </div>
 
                 <div>
                   <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Lainnya (kg)</label>
-                  <input type="number" step="0.1" placeholder="0.0" value={form.other_feed_kg}
-                    onChange={e => setForm({ ...form, other_feed_kg: e.target.value })}
-                    className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none transition-colors', focusCls)} />
+                  <InputNumber step={0.1} placeholder="0.0" value={form.other_feed_kg} suffix="kg"
+                    onChange={val => setForm({ ...form, other_feed_kg: val })}
+                    className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors', focusCls)} />
                 </div>
 
                 {config.logSchema === 'kandang' && (
                   <div>
-                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Biaya Pakan Hari Ini (Rp)</label>
-                    <input type="number" placeholder="Opsional" value={form.feed_cost_idr}
-                      onChange={e => setForm({ ...form, feed_cost_idr: e.target.value })}
-                      className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none transition-colors', focusCls)} />
+                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Biaya Pakan Hari Ini (Rp) <span className="normal-case text-amber-400/70 font-medium">— penting untuk HPP</span></label>
+                    <InputRupiah placeholder="0" value={form.feed_cost_idr}
+                      onChange={val => setForm({ ...form, feed_cost_idr: val })}
+                      className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors', focusCls)} />
                   </div>
                 )}
 
@@ -701,33 +710,33 @@ export function PenggemukanPakan({ config, hooks }) {
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Jumlah (kg)</label>
-                          <input type="number" step="0.1" placeholder="0" value={costForm.quantity}
-                            onChange={e => {
-                              const kg = e.target.value
+                          <InputNumber step={0.1} placeholder="0" value={costForm.quantity} suffix="kg"
+                            onChange={val => {
+                              const kg = val
                               const total = Math.round((parseFloat(kg) || 0) * (parseFloat(costForm.harga_per_kg) || 0))
                               setCostForm(f => ({ ...f, quantity: kg, unit: 'kg', amount_idr: total > 0 ? String(total) : f.amount_idr }))
                             }}
-                            className="w-full bg-black/30 border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-emerald-500/50 font-bold transition-colors" />
+                            className="bg-black/30 border-white/[0.06] text-white placeholder:text-[#4B6478] font-bold font-['Sora'] text-right" />
                         </div>
                         <div>
                           <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Harga / kg (Rp)</label>
-                          <input type="number" placeholder="0" value={costForm.harga_per_kg}
-                            onChange={e => {
-                              const harga = e.target.value
+                          <InputRupiah placeholder="0" value={costForm.harga_per_kg}
+                            onChange={val => {
+                              const harga = val
                               const total = Math.round((parseFloat(costForm.quantity) || 0) * (parseFloat(harga) || 0))
                               setCostForm(f => ({ ...f, harga_per_kg: harga, amount_idr: total > 0 ? String(total) : f.amount_idr }))
                             }}
-                            className="w-full bg-black/30 border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-emerald-500/50 font-bold transition-colors" />
+                            className="w-full bg-black/30 border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:border-emerald-500/50 font-bold transition-colors" />
                         </div>
                       </div>
                       <div>
                         <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">
                           Total Biaya (Rp) {pakanTotalAuto > 0 && <span className="text-emerald-400 normal-case font-bold">— auto-hitung</span>}
                         </label>
-                        <input type="number" required placeholder="0"
+                        <InputRupiah placeholder="0"
                           value={pakanTotalAuto > 0 ? pakanTotalAuto : costForm.amount_idr}
-                          onChange={e => setCostForm(f => ({ ...f, amount_idr: e.target.value }))}
-                          className="w-full bg-black/30 border border-emerald-500/20 rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-emerald-500/50 font-black transition-colors" />
+                          onChange={val => setCostForm(f => ({ ...f, amount_idr: String(val) }))}
+                          className="w-full bg-black/30 border-emerald-500/20 rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:border-emerald-500/50 font-black transition-colors" />
                       </div>
                     </div>
                   ) : (
@@ -740,9 +749,9 @@ export function PenggemukanPakan({ config, hooks }) {
                       </div>
                       <div>
                         <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Total Biaya (Rp)</label>
-                        <input type="number" required placeholder="Contoh: 500000" value={costForm.amount_idr}
-                          onChange={e => setCostForm({ ...costForm, amount_idr: e.target.value })}
-                          className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-violet-500/50 font-bold transition-colors" />
+                        <InputRupiah placeholder="Contoh: 500000" value={costForm.amount_idr}
+                          onChange={val => setCostForm({ ...costForm, amount_idr: val })}
+                          className="w-full bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 font-bold transition-colors" />
                       </div>
                     </>
                   )}
@@ -799,9 +808,9 @@ export function PenggemukanPakan({ config, hooks }) {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Jumlah (Opsional)</label>
-                        <input type="number" step="0.1" placeholder="0.0" value={costForm.quantity}
-                          onChange={e => setCostForm({ ...costForm, quantity: e.target.value })}
-                          className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-colors" />
+                        <InputNumber step={0.1} placeholder="0.0" value={costForm.quantity}
+                          onChange={val => setCostForm({ ...costForm, quantity: val })}
+                          className="bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors" />
                       </div>
                       <div>
                         <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Satuan</label>

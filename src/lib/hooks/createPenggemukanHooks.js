@@ -719,6 +719,7 @@ export function createPenggemukanHooks(prefix) {
       },
       onSuccess: (_, { batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-feed-logs`, batch_id] })
+        qc.invalidateQueries({ queryKey: [`${K}-feed-logs-multi`] })
         toast.success('Log pakan disimpan')
       },
       onError: (err) => toast.error('Gagal simpan pakan: ' + err.message),
@@ -735,6 +736,7 @@ export function createPenggemukanHooks(prefix) {
         handled_by, outcome,
         vaccine_name, vaccine_next_due,
         death_cause, death_weight_kg, loss_value_idr,
+        treatment_cost_idr,
         notes,
       }) => {
         const { error } = await supabase
@@ -746,6 +748,7 @@ export function createPenggemukanHooks(prefix) {
             handled_by, outcome,
             vaccine_name, vaccine_next_due,
             death_cause, death_weight_kg, loss_value_idr,
+            treatment_cost_idr: treatment_cost_idr || 0,
             notes,
           })
         if (error) throw error
@@ -782,6 +785,7 @@ export function createPenggemukanHooks(prefix) {
         }
 
         qc.invalidateQueries({ queryKey: [`${K}-health-logs`, vars.batch_id] })
+        qc.invalidateQueries({ queryKey: [`${K}-health-logs-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-animals`, vars.batch_id] })
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-animal-detail`, vars.animal_id] })
@@ -828,6 +832,7 @@ export function createPenggemukanHooks(prefix) {
       },
       onSuccess: (_, { batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-sales`, batch_id] })
+        qc.invalidateQueries({ queryKey: [`${K}-sales-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-animals`, batch_id] })
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`] })
@@ -851,6 +856,7 @@ export function createPenggemukanHooks(prefix) {
       },
       onSuccess: (_, { batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-feed-logs`, batch_id] })
+        qc.invalidateQueries({ queryKey: [`${K}-feed-logs-multi`] })
         toast.success('Log pakan dihapus')
       },
       onError: (err) => toast.error('Gagal hapus: ' + err.message),
@@ -872,6 +878,9 @@ export function createPenggemukanHooks(prefix) {
       onSuccess: (_, { animal_id, batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-weight-records`, animal_id] })
         qc.invalidateQueries({ queryKey: [`${K}-animals`, batch_id] })
+        qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
+        qc.invalidateQueries({ queryKey: [`${K}-batch-weight-history`] })
+        qc.invalidateQueries({ queryKey: [`${K}-batch-weight-history-multi`] })
         toast.success('Data timbang dihapus')
       },
       onError: (err) => toast.error('Gagal hapus: ' + err.message),
@@ -901,6 +910,7 @@ export function createPenggemukanHooks(prefix) {
       },
       onSuccess: (_, { batchId }) => {
         qc.invalidateQueries({ queryKey: [`${K}-sales`, batchId] })
+        qc.invalidateQueries({ queryKey: [`${K}-sales-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-animals`, batchId] })
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`] })
@@ -924,6 +934,7 @@ export function createPenggemukanHooks(prefix) {
       },
       onSuccess: (_, { batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-sales`, batch_id] })
+        qc.invalidateQueries({ queryKey: [`${K}-sales-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`] })
         toast.success('Data penjualan diperbarui')
       },
@@ -1065,6 +1076,7 @@ export function createPenggemukanHooks(prefix) {
       },
       onSuccess: (_, { batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-health-logs`, batch_id] })
+        qc.invalidateQueries({ queryKey: [`${K}-health-logs-multi`] })
         toast.success('Log kesehatan dihapus')
       },
       onError: (err) => toast.error('Gagal hapus: ' + err.message),
@@ -1083,6 +1095,9 @@ export function createPenggemukanHooks(prefix) {
       },
       onSuccess: (_, { batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-operational-costs`, batch_id] })
+        qc.invalidateQueries({ queryKey: [`${K}-operational-costs-multi`] })
+        // Cross-invalidate farm-wide view
+        qc.invalidateQueries({ queryKey: ['farm-ops-costs', K] })
         toast.success('Biaya operasional dicatat')
       },
       onError: (err) => toast.error('Gagal catat biaya: ' + err.message),
@@ -1103,6 +1118,9 @@ export function createPenggemukanHooks(prefix) {
       },
       onSuccess: (_, { batchId }) => {
         qc.invalidateQueries({ queryKey: [`${K}-operational-costs`, batchId] })
+        qc.invalidateQueries({ queryKey: [`${K}-operational-costs-multi`] })
+        // Cross-invalidate farm-wide view
+        qc.invalidateQueries({ queryKey: ['farm-ops-costs', K] })
         toast.success('Biaya operasional dihapus')
       },
       onError: (err) => toast.error('Gagal hapus: ' + err.message),
@@ -1112,15 +1130,14 @@ export function createPenggemukanHooks(prefix) {
   function useHppBatch(batchId) {
     const { data: animalList = [], isLoading: l1 } = useAnimals(batchId)
     const { data: salesList,        isLoading: l2 } = useSales(batchId)
-    const { data: activeBatches = [], isLoading: l3 } = useActiveBatches()
 
-    // Fetch shared farm-level costs across ALL active batches
-    const activeBatchIds = React.useMemo(
-      () => activeBatches.map(b => b.id),
-      [activeBatches]
-    )
-    const { data: allFeedLogs = [], isLoading: l4 } = useFeedLogsByBatches(activeBatchIds)
-    const { data: allOpsCosts = [], isLoading: l5 } = useOperationalCostsByBatches(activeBatchIds)
+    // Fetch costs scoped to THIS batch only (already allocated per-batch at save time)
+    const batchIds = React.useMemo(() => batchId ? [batchId] : [], [batchId])
+    const { data: thisBatchFeedLogs = [], isLoading: l3 } = useFeedLogsByBatches(batchIds)
+    const { data: thisBatchOpsCosts = [], isLoading: l4 } = useOperationalCostsByBatches(batchIds)
+
+    // Fetch health logs for treatment cost (if column exists)
+    const { data: healthLogs = [], isLoading: l5 } = useHealthLogs(batchId)
 
     const isLoading = l1 || l2 || l3 || l4 || l5
 
@@ -1128,55 +1145,69 @@ export function createPenggemukanHooks(prefix) {
       // ── Modal Beli ─────────────────────────────────────────────────────────
       const totalModalBeli = animalList.reduce((s, a) => s + (Number(a.purchase_price_idr) || 0), 0)
 
-      // ── Biaya Pakan (inventory model) ──────────────────────────────────────
-      // Weighted avg purchase price from ALL farm pakan purchases
-      const pakanPurchases = allOpsCosts.filter(c => c.category === 'pakan')
-      const totalKgPurchased = pakanPurchases.reduce((s, c) => s + (Number(c.quantity) || 0), 0)
-      const totalPakanPurchaseCost = pakanPurchases.reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
-      const avgPricePerKg = totalKgPurchased > 0 ? totalPakanPurchaseCost / totalKgPurchased : 0
+      // ── Warning: ada ternak tanpa harga beli ──────────────────────────────
+      const ternakTanpaHarga = animalList.filter(a => !a.purchase_price_idr || Number(a.purchase_price_idr) === 0).length
 
-      // Feed consumed by THIS batch specifically (not all batches)
-      const thisBatchFeedLogs = allFeedLogs.filter(f => f.batch_id === batchId)
+      // ── Biaya Pakan ────────────────────────────────────────────────────────
+      const totalBiayaPakanDirect = thisBatchFeedLogs.reduce(
+        (s, f) => s + (Number(f.feed_cost_idr) || 0), 0
+      )
+
+      // Track consumption volume for display & warning
       const kgConsumedThisBatch = thisBatchFeedLogs.reduce((s, f) => {
         if (f.consumed_kg != null && f.consumed_kg > 0) return s + f.consumed_kg
         const input = (f.hijauan_kg || 0) + (f.konsentrat_kg || 0) + (f.dedak_kg || 0) + (f.other_feed_kg || 0)
         return s + Math.max(0, input - (f.sisa_pakan_kg || 0))
       }, 0)
 
-      // Cost = kg actually consumed × weighted avg purchase price
-      const totalBiayaPakan = Math.round(kgConsumedThisBatch * avgPricePerKg)
+      const totalBiayaPakan = totalBiayaPakanDirect
 
-      // ── Biaya Ops (Listrik, Gaji, dll — exclude pakan purchases) ───────────
-      // Pakan is already accounted above; only count non-pakan ops costs
-      const totalActiveAnimalsAllBatches = Math.max(1,
-        activeBatches.reduce((s, b) => s + (b.total_animals || 0), 0)
-      )
-      const totalFarmOpsCost = allOpsCosts
-        .filter(c => c.category !== 'pakan')
-        .reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
-      const opsPerEkor = totalFarmOpsCost / totalActiveAnimalsAllBatches
+      // Warning: ada log pakan (kg > 0) tapi biaya = 0
+      const warnPakanTanpaBiaya = kgConsumedThisBatch > 0 && totalBiayaPakan === 0
+
+      // Avg price per kg for UI display
+      const avgPricePerKg = kgConsumedThisBatch > 0 ? totalBiayaPakan / kgConsumedThisBatch : 0
+
+      // ── Biaya Ops (Listrik, dll — exclude gaji for separate display) ───────
       const aktifCount = animalList.filter(a => a.status === 'active').length
-      const totalBiayaOps = Math.round(opsPerEkor * aktifCount)
+      const gajiCosts = thisBatchOpsCosts.filter(c => c.category === 'gaji')
+      const nonGajiCosts = thisBatchOpsCosts.filter(c => c.category !== 'gaji')
+      const totalBiayaGaji = gajiCosts.reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
+      const totalBiayaOpsLain = nonGajiCosts.reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
+      const totalBiayaOps = totalBiayaGaji + totalBiayaOpsLain
+
+      // ── Biaya Kesehatan (treatment_cost_idr from health_logs if available) ─
+      const totalBiayaKesehatan = healthLogs.reduce(
+        (s, h) => s + (Number(h.treatment_cost_idr) || 0), 0
+      )
 
       // ── Total HPP & Counts ─────────────────────────────────────────────────
-      const totalHpp = totalModalBeli + totalBiayaPakan + totalBiayaOps
+      const totalHpp = totalModalBeli + totalBiayaPakan + totalBiayaOps + totalBiayaKesehatan
       const terjualCount = animalList.filter(a => a.status === 'sold').length
       const matiCount = animalList.filter(a => a.status === 'dead' || a.status === 'culled').length
       const produksiCount = aktifCount + terjualCount
+
+      // ── Edge case: semua mati ──────────────────────────────────────────────
+      const allDead = animalList.length > 0 && aktifCount === 0 && terjualCount === 0
 
       // ── Pendapatan ─────────────────────────────────────────────────────────
       const salesData = salesList ?? []
       const totalPendapatan = salesData.reduce((s, t) => s + (Number(t.total_revenue_idr) || 0), 0)
       const totalPendapatanLunas = salesData.filter(t => t.is_paid).reduce((s, t) => s + (Number(t.total_revenue_idr) || 0), 0)
+      const totalHutang = totalPendapatan - totalPendapatanLunas
 
       // ── BEP (+20% target margin) ───────────────────────────────────────────
       const hppPerEkor = produksiCount > 0 ? totalHpp / produksiCount : 0
       const bepPerEkor = hppPerEkor * 1.20
 
-      // BEP sisa: biaya yang belum tertutup revenue / ekor aktif, target +20%
+      // BEP Sisa Akrual: termasuk hutang (standard accounting)
       const targetRevenue = totalHpp * 1.20
-      const sisaHpp = totalHpp - totalPendapatan
       const bepSisa = aktifCount > 0 ? Math.max(0, targetRevenue - totalPendapatan) / aktifCount : 0
+
+      // BEP Sisa Kas: hanya yg sudah lunas (cashflow reality)
+      const bepSisaKas = aktifCount > 0 ? Math.max(0, targetRevenue - totalPendapatanLunas) / aktifCount : 0
+
+      const sisaHpp = totalHpp - totalPendapatan
       const profitLoss = totalPendapatan - totalHpp
 
       // Expose feed consumption stats for UI
@@ -1184,13 +1215,16 @@ export function createPenggemukanHooks(prefix) {
       const hargaRataPerKg = Math.round(avgPricePerKg)
 
       return {
-        totalModalBeli, totalBiayaPakan, totalBiayaOps, totalHpp,
+        totalModalBeli, totalBiayaPakan, totalBiayaOps, totalBiayaGaji,
+        totalBiayaOpsLain, totalBiayaKesehatan, totalHpp,
         aktifCount, terjualCount, matiCount, produksiCount,
-        totalPendapatan, totalPendapatanLunas,
-        hppPerEkor, bepPerEkor, bepSisa, sisaHpp, profitLoss,
+        totalPendapatan, totalPendapatanLunas, totalHutang,
+        hppPerEkor, bepPerEkor, bepSisa, bepSisaKas, sisaHpp, profitLoss,
         kgPakanTotal, hargaRataPerKg,
+        // Warning flags
+        warnPakanTanpaBiaya, ternakTanpaHarga, allDead,
       }
-    }, [animalList, salesList, activeBatches, allFeedLogs, allOpsCosts, batchId])
+    }, [animalList, salesList, thisBatchFeedLogs, thisBatchOpsCosts, healthLogs, batchId])
 
     return { isLoading, ...hpp }
   }

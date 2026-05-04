@@ -813,8 +813,10 @@ function CategoryCard({ cat, onClick }) {
       className="group relative bg-[#111C24] border border-white/5 rounded-2xl p-5 cursor-pointer transition-all duration-300 hover:bg-[#15232d] shadow-lg hover:shadow-emerald-500/5"
     >
       <div className="flex items-center gap-5">
-        <div className="w-14 h-14 bg-emerald-500/10 rounded-xl flex items-center justify-center text-3xl flex-shrink-0 group-hover:scale-110 transition-transform duration-500 border border-emerald-500/10 group-hover:border-emerald-500/30 group-hover:bg-emerald-500/20">
-          {cat.icon}
+        <div className="w-14 h-14 bg-emerald-500/10 rounded-xl flex items-center justify-center text-3xl flex-shrink-0 group-hover:scale-110 transition-transform duration-500 border border-emerald-500/10 group-hover:border-emerald-500/30 group-hover:bg-emerald-500/20 overflow-hidden">
+          {typeof cat.icon === 'string' && cat.icon.includes('/')
+            ? <img src={cat.icon} alt={cat.label} className="w-full h-full object-cover scale-110" />
+            : cat.icon}
         </div>
         <div className="flex-1">
           <h4 className="font-display font-bold text-[16px] text-white group-hover:text-emerald-400 transition-colors duration-300">
@@ -847,12 +849,14 @@ function ModelCard({ model, selected, onClick }) {
       )}
     >
       <div className={cn(
-        "w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 transition-all duration-500 border",
-        selected 
-          ? "bg-emerald-500/20 border-emerald-500/30 shadow-inner" 
+        "w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 transition-all duration-500 border overflow-hidden",
+        selected
+          ? "bg-emerald-500/20 border-emerald-500/30 shadow-inner"
           : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10"
       )}>
-        {model.icon}
+        {typeof model.icon === 'string' && model.icon.includes('/')
+          ? <img src={model.icon} alt={model.label} className="w-full h-full object-cover scale-110" />
+          : model.icon}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2.5 mb-1">

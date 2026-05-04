@@ -12,7 +12,7 @@ import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useSembakoDashboardStats, useSembakoSales, useSembakoEmployees, useSembakoDeliveries } from '@/lib/hooks/useSembakoData'
 import { formatIDR, formatIDRShort } from '@/lib/format'
 import NotificationBell from '@/dashboard/_shared/components/NotificationBell'
-import { SembakoMobileBar, SembakoHamburgerDrawer } from './components/SembakoNavigation'
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
@@ -666,7 +666,7 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
 
   return (
     <>
-      <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Dashboard" />
+      <BrokerMobileHeader showGreeting onMenuClick={() => setSidebarOpen(true)} />
 
       <div style={{ padding: '16px 16px 100px' }}>
 

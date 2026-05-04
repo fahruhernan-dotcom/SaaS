@@ -323,7 +323,7 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
   const [step, setStep]           = useState(0)
   const [custId, setCustId]       = useState('')
   const [txnDate, setTxnDate]     = useState(new Date().toISOString().slice(0, 10))
-  const [dueDate, setDueDate]     = useState('')
+  const [dueDate, setDueDate]     = useState(() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10) })
   const [items, setItems]         = useState([{ product_id: '', product_name: '', unit: '', quantity: 0, price_per_unit: 0, cogs_per_unit: 0 }])
   const [deliveryCost, setDeliveryCost] = useState(0)
   const [otherCost, setOtherCost] = useState(0)
@@ -513,7 +513,8 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
 
   const handleClose = useCallback(() => {
     lastPrefillKeyRef.current = null
-    setStep(0); setCustId(''); setTxnDate(new Date().toISOString().slice(0, 10)); setDueDate('')
+    const tomorrow = () => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10) }
+    setStep(0); setCustId(''); setTxnDate(new Date().toISOString().slice(0, 10)); setDueDate(tomorrow())
     setItems([{ product_id: '', product_name: '', unit: '', quantity: 0, price_per_unit: 0, cogs_per_unit: 0 }])
     setDeliveryCost(0); setOtherCost(0); setNotes('')
     setPayAmount(0); setPayMethod('cash')
@@ -537,30 +538,10 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <>
-      {/* Mobile fullscreen customer search */}
-      <AnimatePresence>
-        {showCustSearch && !isDesktop && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.2 }}
-            className="z-[200] fixed inset-0"
-          >
-            <MobileCustomerSearch
-              customers={customers}
-              value={custId}
-              onSelect={handleSelectCustomer}
-              onAddNew={() => { setQuickAddCust(true); setShowCustSearch(false) }}
-              onClose={() => setShowCustSearch(false)}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <Sheet open={open && !successData} onOpenChange={handleSheetOpenChange}>
         <SheetContent
           side={isDesktop ? 'right' : 'bottom'}
+          hideClose
           className="hide-scrollbar"
           style={{
             width: isDesktop ? '480px' : '100%',
@@ -575,6 +556,27 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
             overflow: 'hidden',
           }}
         >
+          {/* Mobile fullscreen customer search — inside Portal so aria-hidden on main app doesn't block it */}
+          <AnimatePresence>
+            {showCustSearch && !isDesktop && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.2 }}
+                style={{ position: 'fixed', inset: 0, zIndex: 4100, pointerEvents: showCustSearch ? 'auto' : 'none' }}
+              >
+                <MobileCustomerSearch
+                  customers={customers}
+                  value={custId}
+                  onSelect={handleSelectCustomer}
+                  onAddNew={() => { setQuickAddCust(true); setShowCustSearch(false) }}
+                  onClose={() => setShowCustSearch(false)}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* ── Header ── */}
           <div style={{ padding: isDesktop ? '20px 20px 0' : 'env(safe-area-inset-top, 16px) 20px 0', flexShrink: 0 }}>
             {!isDesktop && (

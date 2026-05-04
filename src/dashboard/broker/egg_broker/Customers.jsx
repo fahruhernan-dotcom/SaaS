@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Plus, Search, Phone, MapPin, ChevronRight, CheckCircle2, User, Trash2, Users } from 'lucide-react'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import { useEggCustomers } from '@/lib/hooks/useEggCustomers'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -26,6 +28,7 @@ import {
 
 export default function Customers() {
   const { tenant } = useAuth()
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const { data: customers, isLoading } = useEggCustomers()
   const [search, setSearch] = useState('')
   const [openModal, setOpenModal] = useState(false)
@@ -92,22 +95,33 @@ export default function Customers() {
         transition={{ duration: 0.3 }}
         className="bg-[#06090F] min-h-screen pb-24"
     >
-      <header className="px-5 pt-8 pb-4 border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 flex flex-col gap-1 text-left">
-        <div className="flex justify-between items-center text-left">
-            <div>
-                <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight leading-none">Pelanggan Telur</h1>
-                <p className="text-[11px] font-bold text-[#4B6478] uppercase mt-1 tracking-wider">{customers?.length || 0} PEMBELI TERDAFTAR</p>
-            </div>
-            <Button 
-                size="sm" 
-                onClick={() => { setEditingCustomer(null); setOpenModal(true); }}
-                className="bg-[#10B981] hover:bg-[#0D9668] text-white font-black uppercase text-[10px] tracking-widest rounded-xl h-10 px-4 gap-2 border-none shadow-[0_4px_12px_rgba(16,185,129,0.2)]"
+      {!isDesktop && (
+        <BrokerMobileHeader
+          title="Pelanggan Telur"
+          rightElement={
+            <Button size="sm" onClick={() => { setEditingCustomer(null); setOpenModal(true); }}
+              className="h-9 px-3 bg-[#10B981] hover:bg-[#0D9668] text-white font-black uppercase text-xs tracking-widest rounded-xl gap-1.5 border-none active:scale-95 transition-all"
             >
-                <Plus size={16} />
-                Tambah
+              <Plus size={15} /> Tambah
             </Button>
-        </div>
-      </header>
+          }
+        />
+      )}
+      {isDesktop && (
+        <header className="px-5 pt-8 pb-4 border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 flex flex-col gap-1 text-left">
+          <div className="flex justify-between items-center text-left">
+            <div>
+              <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight leading-none">Pelanggan Telur</h1>
+              <p className="text-[11px] font-bold text-[#4B6478] uppercase mt-1 tracking-wider">{customers?.length || 0} PEMBELI TERDAFTAR</p>
+            </div>
+            <Button size="sm" onClick={() => { setEditingCustomer(null); setOpenModal(true); }}
+              className="bg-[#10B981] hover:bg-[#0D9668] text-white font-black uppercase text-[10px] tracking-widest rounded-xl h-10 px-4 gap-2 border-none shadow-[0_4px_12px_rgba(16,185,129,0.2)]"
+            >
+              <Plus size={16} /> Tambah
+            </Button>
+          </div>
+        </header>
+      )}
 
       <div className="mx-5 mt-4 relative group">
         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#4B6478] group-focus-within:text-emerald-400 transition-colors" />

@@ -1,4 +1,4 @@
-import React, { useState, useRef, Component } from 'react'
+import React, { useState, useRef, useEffect, Component } from 'react'
 import { Outlet } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
@@ -149,6 +149,12 @@ export default function BrokerLayout() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  useEffect(() => {
+    const openHandler = () => setSidebarOpen(true)
+    window.addEventListener('open-mobile-sidebar', openHandler)
+    return () => window.removeEventListener('open-mobile-sidebar', openHandler)
+  }, [])
+
   // Swipe-right-from-left-edge to open sidebar
   const swipeStartX = useRef(null)
   const handleTouchStart = (e) => {
@@ -187,7 +193,7 @@ export default function BrokerLayout() {
             minHeight: '100vh',
             maxWidth: '480px',
             margin: '0 auto',
-            paddingBottom: '80px',
+            paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))',
             position: 'relative',
             overflowX: 'hidden',
             overscrollBehaviorX: 'none'
@@ -197,7 +203,7 @@ export default function BrokerLayout() {
             <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           </SidebarProvider>
           <BusinessNameWarningBanner />
-          <Outlet context={{ setSidebarOpen }} />
+          <Outlet context={{ setSidebarOpen, setRightAction: () => {} }} />
           <BottomNav />
         </div>
       )

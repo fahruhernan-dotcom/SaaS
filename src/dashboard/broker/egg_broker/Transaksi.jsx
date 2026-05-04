@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Search, Calendar, ChevronRight, FileText, 
+import {
+  Search, Calendar, ChevronRight, FileText,
   CheckCircle2, Clock, Calculator, Filter,
   ArrowRight
 } from 'lucide-react'
+import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import { useEggSales } from '@/lib/hooks/useEggSales'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -20,6 +22,7 @@ import {
 } from "@/components/ui/sheet"
 
 export default function Transaksi() {
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const { data: sales, isLoading } = useEggSales()
   const [search, setSearch] = useState('')
   const [selectedSale, setSelectedSale] = useState(null)
@@ -37,12 +40,15 @@ export default function Transaksi() {
 
   return (
     <div className="bg-[#06090F] min-h-screen pb-24">
-      <header className="px-5 pt-8 pb-4 border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 flex flex-col gap-1 text-left">
-        <div>
-          <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight leading-none">Riwayat Transaksi</h1>
-          <p className="text-[11px] font-bold text-[#4B6478] uppercase mt-1 tracking-wider">Arsip penjualan telur</p>
-        </div>
-      </header>
+      {!isDesktop && <BrokerMobileHeader title="Riwayat Transaksi" />}
+      {isDesktop && (
+        <header className="px-5 pt-8 pb-4 border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 flex flex-col gap-1 text-left">
+          <div>
+            <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight leading-none">Riwayat Transaksi</h1>
+            <p className="text-[11px] font-bold text-[#4B6478] uppercase mt-1 tracking-wider">Arsip penjualan telur</p>
+          </div>
+        </header>
+      )}
 
       <div className="mx-5 mt-4 flex gap-3">
         <div className="relative flex-1 group">

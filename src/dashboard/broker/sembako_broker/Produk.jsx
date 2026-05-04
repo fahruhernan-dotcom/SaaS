@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { Plus, Search, X, ChevronDown, ToggleLeft, ToggleRight, Trash2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
@@ -8,9 +8,9 @@ import {
   useUpdateSembakoProduct,
   useSoftDeleteSembakoProduct,
 } from '@/lib/hooks/useSembakoData'
-import { useOutletContext } from 'react-router-dom'
+import { useOutletContext, useLocation, useNavigate } from 'react-router-dom'
 import { C } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
-import { SembakoMobileBar } from './components/SembakoNavigation'
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -534,6 +534,8 @@ function StatCard({ label, value, sub, color }) {
 export default function Produk() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const { setSidebarOpen } = useOutletContext()
+  const location = useLocation()
+  const navigate = useNavigate()
   const { data: products = [], isLoading } = useSembakoProducts()
   const deleteMut = useSoftDeleteSembakoProduct()
 
@@ -541,6 +543,14 @@ export default function Produk() {
   const [catFilter, setCatFilter] = useState('Semua')
   const [sheet,     setSheet]     = useState(null) // null | 'new' | product object
   const [showInactive, setShowInactive] = useState(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('action') === 'new') {
+      setSheet('new')
+      navigate(location.pathname, { replace: true })
+    }
+  }, [location.search, location.pathname, navigate])
 
   const categories = useMemo(() => {
     const cats = [...new Set(products.map(p => p.category).filter(Boolean))]
@@ -577,7 +587,7 @@ export default function Produk() {
   return (
     <div style={{ minHeight: '100vh', background: C.bg, paddingBottom: 80 }}>
       {/* Header */}
-      {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Produk" />}
+      {!isDesktop && <BrokerMobileHeader title="Produk" onMenuClick={() => setSidebarOpen(true)} />}
       
       <div style={{ padding: '20px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: isDesktop ? 'block' : 'none' }}>

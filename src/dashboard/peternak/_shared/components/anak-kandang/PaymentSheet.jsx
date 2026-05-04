@@ -18,7 +18,7 @@ const TYPES = [
 function formatIDR(n) { return !n ? 'Rp 0' : 'Rp ' + Number(n).toLocaleString('id-ID') }
 function fmt(d) { return !d ? '—' : new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }
 
-export default function PaymentSheet({ open, onClose, worker, isDesktop }) {
+export default function PaymentSheet({ open, onClose, worker, isDesktop, animalType, activeBatches }) {
   const today = new Date().toISOString().split('T')[0]
   const { data: payments = [], isLoading } = useKandangWorkerPayments(worker?.id)
   const addPayment = useAddKandangWorkerPayment()
@@ -58,6 +58,8 @@ export default function PaymentSheet({ open, onClose, worker, isDesktop }) {
       payment_type: form.payment_type,
       amount: form.amount,
       notes: form.notes,
+      animalType,
+      batches: activeBatches,
     }, {
       onSuccess: () => {
         setForm({ payment_date: today, payment_type: 'gaji', amount: 0, notes: '' })

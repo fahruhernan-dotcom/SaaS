@@ -15,14 +15,18 @@ function WheelColumn({ items, value, onChange }) {
   const isProgrammaticScroll = useRef(false)
   const debounceRef = useRef(null)
 
-  // Scroll to selected item on mount or when value changes externally
+  // Scroll to selected item on mount or when value changes externally (instant — no animation)
   useEffect(() => {
     const index = items.findIndex(item => item.value === value)
-    if (scrollRef.current && index !== -1) {
+    if (index === -1) return
+    const apply = () => {
+      if (!scrollRef.current) return
       isProgrammaticScroll.current = true
-      scrollRef.current.scrollTop = index * ITEM_HEIGHT
-      setTimeout(() => { isProgrammaticScroll.current = false }, 100)
+      scrollRef.current.scrollTo({ top: index * ITEM_HEIGHT, behavior: 'instant' })
+      setTimeout(() => { isProgrammaticScroll.current = false }, 50)
     }
+    // defer one frame so the Sheet open-animation doesn't race with scroll
+    requestAnimationFrame(apply)
   }, [value, items])
 
   const handleScroll = (e) => {
@@ -43,7 +47,7 @@ function WheelColumn({ items, value, onChange }) {
   }
 
   return (
-    <div className="flex-1 relative overflow-hidden touch-none" style={{ height: CONTAINER_HEIGHT, touchAction: 'none' }}>
+    <div className="flex-1 relative overflow-hidden touch-none min-w-0" style={{ height: CONTAINER_HEIGHT, touchAction: 'none' }}>
       {/* Highlight Box */}
       <div 
         className="absolute w-full left-0 right-0 pointer-events-none bg-white/[0.03] border-y border-white/[0.08] z-0"
@@ -51,11 +55,11 @@ function WheelColumn({ items, value, onChange }) {
       />
       
       {/* Scrollable Container */}
-      <div 
+      <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="h-full overflow-y-auto no-scrollbar snap-y snap-mandatory relative z-10"
-        style={{ scrollBehavior: 'smooth' }}
+        className="h-full overflow-y-auto scrollbar-hide snap-y snap-mandatory relative z-10"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {/* Top Padding */}
         <div style={{ height: (CONTAINER_HEIGHT - ITEM_HEIGHT) / 2 }} className="snap-align-none" />
@@ -160,15 +164,15 @@ export function MobileWheelDatePicker({
         </Button>
       </SheetTrigger>
       
-      <SheetContent side="bottom" className="bg-[#111C24] border-t border-white/10 px-0 pb-6 pt-4 rounded-t-3xl">
+      <SheetContent side="bottom" className="bg-[#111C24] border-t border-white/10 px-0 pb-6 pt-4 rounded-t-3xl overflow-hidden">
         <SheetHeader className="px-6 mb-4">
-          <SheetTitle className="text-left text-lg text-white font-bold">{placeholder}</SheetTitle>
+          <SheetTitle className="text-center text-lg text-white font-bold">{placeholder}</SheetTitle>
         </SheetHeader>
         
-        <div className="flex px-4 items-center justify-center relative select-none">
+        <div className="flex px-6 items-center justify-center gap-2 relative select-none">
           {/* Fading Overlays */}
-          <div className="absolute inset-x-0 top-0 h-[60px] bg-gradient-to-b from-[#111C24] via-[#111C24]/80 to-transparent z-20 pointer-events-none" />
-          <div className="absolute inset-x-0 bottom-0 h-[60px] bg-gradient-to-t from-[#111C24] via-[#111C24]/80 to-transparent z-20 pointer-events-none" />
+          <div className="absolute inset-x-0 top-0 h-[36px] bg-gradient-to-b from-[#111C24] to-transparent z-20 pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 h-[36px] bg-gradient-to-t from-[#111C24] to-transparent z-20 pointer-events-none" />
           
           <WheelColumn items={days} value={day} onChange={setDay} />
           <WheelColumn items={months} value={month} onChange={setMonth} />

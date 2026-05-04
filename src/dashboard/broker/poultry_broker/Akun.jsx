@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
+import {
   User, ChevronRight, Bell, Calculator, BarChart3,
   HelpCircle, LogOut, CreditCard, Building,
   ArrowLeftRight, ShieldCheck, Settings, Store,
@@ -98,15 +99,7 @@ export default function Akun() {
     >
       {/* TopBar */}
       {!isDesktop && (
-        <header className="h-14 px-4 border-b border-white/5 sticky top-0 bg-[#06090F]/90 backdrop-blur-md z-30 flex items-center gap-3">
-            <button
-              onClick={() => setSidebarOpen?.(true)}
-              className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
-            >
-              <Menu size={16} className="text-[#94A3B8]" />
-            </button>
-            <h1 className="font-display text-[15px] font-black text-white tracking-tight leading-none uppercase">Akun</h1>
-        </header>
+        <BrokerMobileHeader title="Akun" onMenuClick={() => setSidebarOpen?.(true)} />
       )}
 
       {/* Profil Section */}

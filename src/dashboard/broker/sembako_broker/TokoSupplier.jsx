@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
-import { SembakoMobileBar } from './components/SembakoNavigation'
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import { motion } from 'framer-motion'
 import {
   ChevronRight,
@@ -185,7 +185,7 @@ export default function SembakoTokoSupplier() {
 
   return (
     <div className="min-h-screen bg-[#06090F] pb-24 text-left">
-      {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Toko & Supplier" />}
+      {!isDesktop && <BrokerMobileHeader title="Toko & Supplier" onMenuClick={() => setSidebarOpen(true)} />}
 
       <div className="mx-auto max-w-7xl">
         <SembakoPageHeader

@@ -21,7 +21,7 @@ import { toast } from 'sonner';
 import { Loader2, Trash2, X, Plus, UserPlus, Users, Clock, Copy, Pencil, Save, AlertCircle, Lock } from 'lucide-react';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { id } from 'date-fns/locale';
-import { SembakoMobileBar } from './components/SembakoNavigation';
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 
 const ROLE_BADGE_MAP = {
   owner: { label: 'Owner', class: 'bg-[#EA580C]/10 text-[#EA580C] border-[#EA580C]/20' },
@@ -242,7 +242,7 @@ export default function SembakoTim() {
 
   return (
     <div className="bg-[#06090F] min-h-screen text-left">
-      {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Tim & Akses" />}
+      {!isDesktop && <BrokerMobileHeader title="Tim & Akses" onMenuClick={() => setSidebarOpen(true)} />}
 
       <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8 pb-32">
 

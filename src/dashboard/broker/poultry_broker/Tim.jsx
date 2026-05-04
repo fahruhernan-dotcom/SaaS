@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/hooks/useAuth';
@@ -251,25 +252,18 @@ export default function Tim() {
     <div className={cn("max-w-5xl mx-auto", isDesktop ? "p-8 space-y-8 pb-32" : "space-y-5 pb-24")}>
       {/* Mobile sticky header */}
       {!isDesktop && (
-        <header className="h-14 px-4 flex items-center gap-3 justify-between sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 border-b border-white/5">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setSidebarOpen?.(true)}
-              className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
-            >
-              <Menu size={16} className="text-[#94A3B8]" />
-            </button>
-            <h1 className="font-display text-[15px] font-black text-white uppercase tracking-tight">Tim & Akses</h1>
-          </div>
-          {isOwner && (
+        <BrokerMobileHeader
+          title="Tim & Akses"
+          onMenuClick={() => setSidebarOpen?.(true)}
+          rightElement={isOwner ? (
             <button
               onClick={handleInviteClick}
               className="h-9 px-3 text-[11px] font-black bg-em-500 hover:bg-em-600 text-white rounded-xl flex items-center gap-1.5 uppercase tracking-widest transition-all active:scale-95"
             >
               <UserPlus size={13} /> Undang
             </button>
-          )}
-        </header>
+          ) : null}
+        />
       )}
 
       {/* Desktop Header */}

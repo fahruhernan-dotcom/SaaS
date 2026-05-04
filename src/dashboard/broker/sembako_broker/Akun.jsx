@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/tabs'
 import { cn } from '@/lib/utils'
 import { formatIDR, formatDate } from '@/lib/format'
-import { SembakoMobileBar } from './components/SembakoNavigation'
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 
 const staggerContainer = {
   hidden: {},
@@ -94,7 +94,7 @@ export default function SembakoAkun() {
         className={cn("bg-[#06090F] min-h-screen pb-24 text-left", isDesktop && "pb-10")}
     >
       {/* TopBar */}
-      {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Akun & Profil" />}
+      {!isDesktop && <BrokerMobileHeader title="Akun & Profil" onMenuClick={() => setSidebarOpen(true)} />}
 
       {/* Profil Section */}
       <div className="px-5 mt-6 max-w-2xl mx-auto">

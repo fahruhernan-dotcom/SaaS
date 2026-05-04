@@ -9,18 +9,15 @@ import {
   useCreateKandangWorker,
   useUpdateKandangWorker,
   useDeleteKandangWorker,
-  useFarmOpsCosts,
-  useAddFarmOpsCost,
 } from '@/lib/hooks/usePeternakTaskData'
 import { useDombaActiveBatches } from '@/lib/hooks/useDombaPenggemukanData'
 import { useKambingActiveBatches } from '@/lib/hooks/useKambingPenggemukanData'
+import { useSapiActiveBatches } from '@/lib/hooks/useSapiPenggemukanData'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import WorkerCard from './WorkerCard'
 import WorkerSheet from './WorkerSheet'
 import PaymentSheet from './PaymentSheet'
 import PaydayReminder from './PaydayReminder'
-
-const EMPTY_COST_FORM = { log_date: new Date().toISOString().split('T')[0], item_name: '', amount_idr: '', notes: '' }
 
 export default function AnakKandangPage({ hideMobileHeader = false }) {
   const { data: workers = [], isLoading } = useKandangWorkersAll()
@@ -39,17 +36,12 @@ export default function AnakKandangPage({ hideMobileHeader = false }) {
 
   const { data: dombaBatches = [] } = useDombaActiveBatches()
   const { data: kambingBatches = [] } = useKambingActiveBatches()
-  const activeBatches = animalType === 'domba' ? dombaBatches : animalType === 'kambing' ? kambingBatches : []
-
-  const { data: opsCosts = [] } = useFarmOpsCosts(animalType)
-  const addOpsCost = useAddFarmOpsCost(animalType)
+  const { data: sapiBatches = [] } = useSapiActiveBatches()
+  const activeBatches = animalType === 'domba' ? dombaBatches : animalType === 'kambing' ? kambingBatches : animalType === 'sapi' ? sapiBatches : []
 
   const [workerSheet, setWorkerSheet] = useState({ open: false, worker: null })
   const [paymentSheet, setPaymentSheet] = useState({ open: false, worker: null })
   const [search, setSearch] = useState('')
-  const [showCostSheet, setShowCostSheet] = useState(false)
-  const [costForm, setCostForm] = useState(EMPTY_COST_FORM)
-  const [costExpanded, setCostExpanded] = useState(true)
 
   if (isLoading) return <LoadingSpinner fullPage />
 
@@ -67,123 +59,8 @@ export default function AnakKandangPage({ hideMobileHeader = false }) {
     }
   }
 
-  const handleAddCost = () => {
-    const amount = Number(costForm.amount_idr) || 0
-    if (amount <= 0) return
-    addOpsCost.mutate(
-      { batches: activeBatches, ...costForm, amount_idr: amount },
-      { onSuccess: () => { setShowCostSheet(false); setCostForm(EMPTY_COST_FORM) } }
-    )
-  }
-
-  const totalOpsCost = opsCosts.reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
-
-  // ─── Listrik & Air section — rendered in both desktop & mobile ─────────────
-  const ListrikSection = animalType ? (
-    <div className="bg-[#0C1319] border border-white/[0.06] rounded-2xl overflow-hidden">
-      <div className="px-4 py-3.5 flex items-center justify-between">
-        <div
-          className="flex items-center gap-2.5 flex-1 cursor-pointer"
-          onClick={() => setCostExpanded(v => !v)}
-        >
-          <div className="w-8 h-8 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center">
-            <Zap size={14} className="text-yellow-400" />
-          </div>
-          <div className="text-left">
-            <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest leading-none">Listrik & Air</p>
-            <p className="text-sm font-black text-white font-['Sora']">Rp {totalOpsCost.toLocaleString('id-ID')}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowCostSheet(true)}
-            className="px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-[11px] font-black rounded-lg hover:bg-yellow-500/20 transition"
-          >
-            + Catat
-          </button>
-          <div className="cursor-pointer p-1" onClick={() => setCostExpanded(v => !v)}>
-            {costExpanded ? <ChevronUp size={14} className="text-[#4B6478]" /> : <ChevronDown size={14} className="text-[#4B6478]" />}
-          </div>
-        </div>
-      </div>
-
-      {costExpanded && (
-        <div className="border-t border-white/[0.05]">
-          {opsCosts.length === 0 ? (
-            <p className="text-center py-6 text-xs text-[#4B6478]">Belum ada catatan listrik & air</p>
-          ) : (
-            <div className="divide-y divide-white/[0.04]">
-              {opsCosts.slice(0, 10).map(c => (
-                <div key={c.id} className="px-4 py-3 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-bold text-white">{c.item_name}</p>
-                    <p className="text-[10px] text-[#4B6478]">{new Date(c.log_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-                  </div>
-                  <p className="text-sm font-black text-yellow-300">Rp {Number(c.amount_idr).toLocaleString('id-ID')}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  ) : null
-
-  // ─── Cost Sheet ────────────────────────────────────────────────────────────
-  const CostSheet = showCostSheet ? (
-    <div className="fixed inset-0 z-[4000] flex items-end justify-center sm:items-center sm:p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCostSheet(false)} />
-      <div className="relative w-full max-w-md bg-[#0C1319] border-t sm:border border-white/[0.06] rounded-t-[28px] sm:rounded-[28px] p-6 pb-10 shadow-2xl">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2">
-            <Zap size={16} className="text-yellow-400" />
-            <h3 className="font-['Sora'] font-black text-base text-white">Catat Listrik & Air</h3>
-          </div>
-          <button onClick={() => setShowCostSheet(false)} className="p-1.5 text-[#4B6478]"><X size={18} /></button>
-        </div>
-
-        {activeBatches.length > 0 && (
-          <div className="mb-4 px-3 py-2 bg-yellow-500/5 border border-yellow-500/15 rounded-xl">
-            <p className="text-[10px] text-yellow-400/80 font-bold">
-              ⚡ Dibagi proporsional ke {activeBatches.length} batch aktif ({activeBatches.reduce((s, b) => s + (b.total_animals || 0), 0)} ekor total)
-            </p>
-          </div>
-        )}
-
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 tracking-widest">Tanggal</label>
-              <DatePicker value={costForm.log_date} onChange={v => setCostForm(f => ({ ...f, log_date: v }))} placeholder="Pilih tanggal" />
-            </div>
-            <div>
-              <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 tracking-widest">Total (Rp)</label>
-              <InputRupiah value={costForm.amount_idr} onChange={v => setCostForm(f => ({ ...f, amount_idr: v }))} placeholder="150.000" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 tracking-widest">Keterangan</label>
-            <input type="text" placeholder="cth. Tagihan Listrik Mei 2026" value={costForm.item_name}
-              onChange={e => setCostForm(f => ({ ...f, item_name: e.target.value }))}
-              className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-3 py-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-yellow-500/50 transition-colors"
-            />
-          </div>
-          <button
-            onClick={handleAddCost}
-            disabled={!(Number(costForm.amount_idr) > 0) || addOpsCost.isPending}
-            className="w-full bg-yellow-500 hover:bg-yellow-400 disabled:bg-white/[0.05] disabled:text-[#4B6478] text-black font-black py-3.5 rounded-2xl transition-all text-sm"
-          >
-            {addOpsCost.isPending ? 'Menyimpan...' : 'Simpan & Bagi ke Semua Batch'}
-          </button>
-        </div>
-      </div>
-    </div>
-  ) : null
-
-  // ─── DESKTOP VIEW ────────────────────────────────────────────────────────────
-  if (isDesktop) {
-    return (
-      <div className="max-w-6xl mx-auto p-8 pb-32 space-y-6">
+  if (isDesktop) return (
+    <div className="max-w-6xl mx-auto p-8 pb-32 space-y-6">
         {/* Desktop Header */}
         <div className="flex justify-between items-end gap-6">
           <div>
@@ -297,10 +174,6 @@ export default function AnakKandangPage({ hideMobileHeader = false }) {
             </div>
           </section>
         )}
-
-        {/* Listrik & Air */}
-        {ListrikSection}
-
         <WorkerSheet
           open={workerSheet.open}
           onClose={() => setWorkerSheet({ open: false, worker: null })}
@@ -312,12 +185,12 @@ export default function AnakKandangPage({ hideMobileHeader = false }) {
           open={paymentSheet.open}
           onClose={() => setPaymentSheet({ open: false, worker: null })}
           worker={paymentSheet.worker}
+          animalType={animalType}
+          activeBatches={activeBatches}
           isDesktop
         />
-        {CostSheet}
       </div>
-    )
-  }
+  )
 
   // ─── MOBILE VIEW ─────────────────────────────────────────────────────────────
   return (
@@ -404,9 +277,6 @@ export default function AnakKandangPage({ hideMobileHeader = false }) {
             ))}
           </section>
         )}
-
-        {/* Listrik & Air */}
-        {ListrikSection && <div className="mt-4">{ListrikSection}</div>}
       </div>
 
       <WorkerSheet
@@ -420,8 +290,9 @@ export default function AnakKandangPage({ hideMobileHeader = false }) {
         open={paymentSheet.open}
         onClose={() => setPaymentSheet({ open: false, worker: null })}
         worker={paymentSheet.worker}
+        animalType={animalType}
+        activeBatches={activeBatches}
       />
-      {CostSheet}
     </div>
   )
 }

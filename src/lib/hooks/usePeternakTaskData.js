@@ -887,7 +887,8 @@ export function useAddKandangWorkerPayment() {
   const qc = useQueryClient()
   const { tenant } = useAuth()
   return useMutation({
-    mutationFn: async ({ worker_id, payment_date, payment_type, amount, notes }) => {
+    mutationFn: async ({ worker_id, payment_date, payment_type, amount, notes, animalType, batches }) => {
+      // 1. Save to kandang_worker_payments (always)
       const { error } = await supabase
         .from('kandang_worker_payments')
         .insert({
@@ -899,10 +900,41 @@ export function useAddKandangWorkerPayment() {
           notes: notes || null,
         })
       if (error) throw error
+
+      // 2. Auto-insert into operational_costs for HPP (if animal context provided)
+      if (animalType && batches?.length > 0 && amount > 0) {
+        const table = `${animalType}_penggemukan_operational_costs`
+        const totalAnimals = batches.reduce((s, b) => s + (b.total_animals || 0), 0)
+        const totalAmount = Math.round(Number(amount) || 0)
+        const rows = batches.map((b, i) => {
+          const proportion = totalAnimals > 0 ? (b.total_animals || 0) / totalAnimals : 1 / batches.length
+          const allocated = i === batches.length - 1
+            ? totalAmount - batches.slice(0, -1).reduce((s, bb) => {
+                const p = totalAnimals > 0 ? (bb.total_animals || 0) / totalAnimals : 1 / batches.length
+                return s + Math.round(totalAmount * p)
+              }, 0)
+            : Math.round(totalAmount * proportion)
+          return {
+            tenant_id: tenant.id,
+            batch_id: b.id,
+            log_date: payment_date,
+            item_name: notes || `Gaji Pekerja`,
+            category: 'gaji',
+            amount_idr: allocated,
+            notes: `Auto dari pembayaran gaji`,
+          }
+        })
+        const { error: opsError } = await supabase.from(table).insert(rows)
+        if (opsError) console.error('Gagal sync gaji ke ops costs:', opsError.message)
+      }
     },
-    onSuccess: (_, { worker_id }) => {
+    onSuccess: (_, { worker_id, animalType }) => {
       qc.invalidateQueries({ queryKey: ['kandang-worker-payments', worker_id] })
       qc.invalidateQueries({ queryKey: ['kandang-workers-all', tenant?.id] })
+      // Also invalidate ops costs cache so HPP updates
+      if (animalType) {
+        qc.invalidateQueries({ queryKey: [`${animalType}-operational-costs-multi`] })
+      }
       toast.success('Pembayaran berhasil dicatat')
     },
     onError: (err) => toast.error('Gagal catat pembayaran: ' + err.message),
@@ -981,7 +1013,6 @@ export function useAddFarmOpsCost(animalType) {
           item_name: item_name || 'Listrik & Air',
           category: 'listrik_air',
           amount_idr: allocated,
-          is_shared: true,
           notes: notes || null,
         }
       })
@@ -990,6 +1021,9 @@ export function useAddFarmOpsCost(animalType) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['farm-ops-costs', animalType] })
+      // Cross-invalidate specific livestock hooks
+      qc.invalidateQueries({ queryKey: [`${animalType}-operational-costs`] })
+      qc.invalidateQueries({ queryKey: [`${animalType}-operational-costs-multi`] })
       toast.success('Biaya dicatat dan dibagi ke semua batch')
     },
     onError: (err) => toast.error('Gagal: ' + err.message),
@@ -1012,6 +1046,9 @@ export function useDeleteFarmOpsCost(animalType) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['farm-ops-costs', animalType] })
+      // Cross-invalidate specific livestock hooks
+      qc.invalidateQueries({ queryKey: [`${animalType}-operational-costs`] })
+      qc.invalidateQueries({ queryKey: [`${animalType}-operational-costs-multi`] })
       toast.success('Catatan dihapus')
     },
     onError: (err) => toast.error('Gagal hapus: ' + err.message),

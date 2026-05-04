@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { useLocation, useOutletContext } from 'react-router-dom'
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     Truck, Package, AlertTriangle, CheckCircle2,
@@ -321,15 +322,7 @@ export default function Pengiriman() {
         >
             {/* Header Mobile Only */}
             {!isDesktop && (
-                <header className="h-14 px-4 flex items-center gap-3 sticky top-0 bg-[#06090F]/90 backdrop-blur-md z-40 border-b border-white/5">
-                    <button
-                        onClick={() => setSidebarOpen?.(true)}
-                        className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
-                    >
-                        <Menu size={16} className="text-[#94A3B8]" />
-                    </button>
-                    <h1 className="font-display text-[15px] font-black tracking-tight uppercase">Pengiriman & Loss</h1>
-                </header>
+                <BrokerMobileHeader title="Pengiriman & Loss" onMenuClick={() => setSidebarOpen?.(true)} />
             )}
 
             <div className={cn("max-w-5xl mx-auto", isDesktop ? "px-5 pt-8 space-y-8" : "px-4 pt-4 space-y-5")}>

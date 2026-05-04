@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  ShoppingBag, TrendingUp, DollarSign, Users, AlertCircle,
+  ShoppingBag, TrendingUp, DollarSign, Users, AlertCircle, AlertTriangle,
   Plus, X, ChevronRight, ChevronDown, ChevronLeft, Check, CheckCircle2, Clock,
   Calendar, FileText, ArrowLeft, Filter, Package,
   Tag, Phone, CreditCard, Scale, Calculator,
@@ -80,17 +80,21 @@ function HppPanel({ batchId, useHppBatch }) {
     <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4 animate-pulse h-20" />
   )
 
-  const { totalModalBeli, totalBiayaPakan, totalBiayaOps, totalHpp,
-    aktifCount, terjualCount, matiCount, totalPendapatan,
-    hppPerEkor, bepPerEkor, bepSisa, profitLoss, produksiCount,
-    kgPakanTotal, hargaRataPerKg } = hpp
+  const { totalModalBeli, totalBiayaPakan, totalBiayaOps, totalBiayaGaji = 0,
+    totalBiayaOpsLain = 0, totalBiayaKesehatan = 0, totalHpp,
+    aktifCount, terjualCount, matiCount, totalPendapatan, totalHutang = 0,
+    hppPerEkor, bepPerEkor, bepSisa, bepSisaKas = 0, profitLoss, produksiCount,
+    kgPakanTotal, hargaRataPerKg,
+    warnPakanTanpaBiaya, ternakTanpaHarga = 0, allDead } = hpp
 
   const isProfitable = profitLoss >= 0
   const hasRevenue = totalPendapatan > 0
   const costParts = [
     { label: 'Modal Beli', value: totalModalBeli, color: 'bg-blue-500' },
     { label: 'Biaya Pakan', value: totalBiayaPakan, color: 'bg-emerald-500' },
-    { label: 'Biaya Ops', value: totalBiayaOps, color: 'bg-violet-500' },
+    { label: 'Biaya Ops', value: totalBiayaOpsLain, color: 'bg-violet-500' },
+    ...(totalBiayaGaji > 0 ? [{ label: 'Gaji', value: totalBiayaGaji, color: 'bg-pink-500' }] : []),
+    ...(totalBiayaKesehatan > 0 ? [{ label: 'Kesehatan', value: totalBiayaKesehatan, color: 'bg-rose-500' }] : []),
   ]
   const totalForBar = totalHpp || 1
 
@@ -136,8 +140,39 @@ function HppPanel({ batchId, useHppBatch }) {
           >
             <div className="px-4 pb-4 space-y-4 border-t border-white/[0.05]">
 
+              {/* ── Warning: Pakan tanpa biaya ──────────────────────────────── */}
+              {warnPakanTanpaBiaya && (
+                <div className="mt-3 bg-amber-500/5 border border-amber-500/15 rounded-xl p-3 flex gap-2">
+                  <AlertTriangle size={12} className="text-amber-400 shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-amber-300/80 leading-relaxed">
+                    <span className="font-black">Ada {kgPakanTotal.toFixed(1)} kg pakan tercatat</span> tapi biaya belum diisi.
+                    Isi kolom "Biaya Pakan (Rp)" saat log harian agar HPP akurat.
+                  </p>
+                </div>
+              )}
+
+              {/* ── Warning: Ternak tanpa harga beli ────────────────────────── */}
+              {ternakTanpaHarga > 0 && (
+                <div className={cn(!warnPakanTanpaBiaya && 'mt-3', 'bg-amber-500/5 border border-amber-500/15 rounded-xl p-3 flex gap-2')}>
+                  <AlertTriangle size={12} className="text-amber-400 shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-amber-300/80 leading-relaxed">
+                    <span className="font-black">{ternakTanpaHarga} ekor</span> belum diisi harga beli → HPP bisa understated.
+                  </p>
+                </div>
+              )}
+
+              {/* ── All dead scenario ───────────────────────────────────────── */}
+              {allDead && (
+                <div className={cn(!warnPakanTanpaBiaya && ternakTanpaHarga === 0 && 'mt-3', 'bg-red-500/5 border border-red-500/15 rounded-xl p-3 flex gap-2')}>
+                  <TrendingDown size={12} className="text-red-400 shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-red-300/80 leading-relaxed">
+                    <span className="font-black">Batch ini rugi total Rp {fmt(totalHpp)}.</span> Semua ternak mati/afkir, tidak ada yang bisa dijual.
+                  </p>
+                </div>
+              )}
+
               {/* Cost breakdown bar */}
-              <div className="pt-3">
+              <div className={cn(!warnPakanTanpaBiaya && ternakTanpaHarga === 0 && !allDead && 'pt-3')}>
                 <div className="flex h-2 rounded-full overflow-hidden gap-px mb-3">
                   {costParts.map(p => (
                     <div
@@ -147,7 +182,7 @@ function HppPanel({ batchId, useHppBatch }) {
                     />
                   ))}
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className={cn('grid gap-2', costParts.length <= 3 ? 'grid-cols-3' : costParts.length === 4 ? 'grid-cols-4' : 'grid-cols-3')}>
                   {costParts.map(p => (
                     <div key={p.label} className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-2.5">
                       <div className={cn('w-2 h-2 rounded-full mb-1.5', p.color)} />
@@ -159,7 +194,7 @@ function HppPanel({ batchId, useHppBatch }) {
                           {kgPakanTotal.toFixed(1)} kg × Rp {fmt(hargaRataPerKg)}/kg
                         </p>
                       )}
-                      {p.label === 'Biaya Pakan' && hargaRataPerKg === 0 && (
+                      {p.label === 'Biaya Pakan' && hargaRataPerKg === 0 && !warnPakanTanpaBiaya && (
                         <p className="text-[9px] text-[#4B6478]/60 mt-1 leading-tight italic">Catat beli pakan dulu</p>
                       )}
                     </div>
@@ -193,6 +228,28 @@ function HppPanel({ batchId, useHppBatch }) {
                 </div>
               </div>
 
+              {/* ── Dual BEP: Kas vs Akrual (show only if hutang exists) ──── */}
+              {totalHutang > 0 && aktifCount > 0 && (
+                <div className="bg-cyan-500/5 border border-cyan-500/15 rounded-xl p-3 space-y-2">
+                  <p className="text-[9px] font-black text-cyan-400/70 uppercase tracking-widest">BEP Sisa — Akrual vs Kas</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-white/[0.02] rounded-lg p-2">
+                      <p className="text-[9px] text-[#4B6478] font-bold uppercase">Akrual</p>
+                      <p className="text-xs font-black text-orange-300">Rp {fmt(bepSisa)}</p>
+                      <p className="text-[8px] text-[#4B6478] mt-0.5">Termasuk hutang</p>
+                    </div>
+                    <div className="bg-white/[0.02] rounded-lg p-2">
+                      <p className="text-[9px] text-[#4B6478] font-bold uppercase">Kas</p>
+                      <p className="text-xs font-black text-cyan-300">Rp {fmt(bepSisaKas)}</p>
+                      <p className="text-[8px] text-[#4B6478] mt-0.5">Yang sudah lunas</p>
+                    </div>
+                  </div>
+                  <p className="text-[9px] text-[#4B6478] leading-relaxed">
+                    💰 Piutang belum lunas: <span className="text-cyan-300 font-black">Rp {fmt(totalHutang)}</span>
+                  </p>
+                </div>
+              )}
+
               {/* Status ekor */}
               <div className="flex gap-2">
                 {[
@@ -208,7 +265,7 @@ function HppPanel({ batchId, useHppBatch }) {
               </div>
 
               {/* BEP sisa explanation */}
-              {aktifCount > 0 && bepSisa > 0 && (
+              {aktifCount > 0 && bepSisa > 0 && !allDead && (
                 <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-3 flex gap-2">
                   <ArrowUpDown size={12} className="text-orange-400 shrink-0 mt-0.5" />
                   <p className="text-[10px] text-[#4B6478] leading-relaxed">
@@ -218,7 +275,7 @@ function HppPanel({ batchId, useHppBatch }) {
                 </div>
               )}
 
-              {aktifCount === 0 && hasRevenue && (
+              {aktifCount === 0 && hasRevenue && !allDead && (
                 <div className={cn(
                   'p-3 rounded-xl flex gap-2 border',
                   isProfitable ? 'bg-emerald-500/5 border-emerald-500/15' : 'bg-red-500/5 border-red-500/15'

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import {
   Calculator, ArrowLeft, RefreshCw, Zap,
   TrendingUp, TrendingDown, DollarSign, Scale,
@@ -110,20 +111,7 @@ export default function Simulator() {
   if (isStarter) {
     return (
       <div className="bg-[#06090F] min-h-screen">
-        <header className="px-5 pt-8 pb-4 border-b border-white/5">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(-1)}
-              className="w-11 h-11 rounded-[16px] bg-secondary/10 border border-white/5 flex items-center justify-center text-white/50 hover:text-white transition-colors active:scale-90"
-            >
-              <ArrowLeft size={20} strokeWidth={2.5} />
-            </button>
-            <div>
-              <h1 className="font-display text-xl font-black text-white tracking-tight leading-none uppercase">Simulator Margin</h1>
-              <p className="text-[10px] font-black text-[#4B6478] uppercase mt-1.5 tracking-wider">Simulasi angka sebelum transaksi...</p>
-            </div>
-          </div>
-        </header>
+        {!isDesktop && <BrokerMobileHeader title="Simulator Margin" />}
         <div className="flex flex-col items-center justify-center min-h-[75vh] px-8 text-center">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5 bg-emerald-500/10 border border-emerald-500/20">
             <Calculator size={30} className="text-emerald-400" />
@@ -158,34 +146,7 @@ export default function Simulator() {
         className={cn("bg-[#06090F] min-h-screen pb-24 text-left font-sans", isDesktop && "pb-10")}
     >
       {/* TopBar */}
-      <header className="px-5 pt-8 pb-4 border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30">
-          <div className="flex justify-between items-center">
-              <div className="flex items-center gap-4">
-                  <button 
-                      onClick={() => navigate(-1)} 
-                      className="w-11 h-11 rounded-[16px] bg-secondary/10 border border-white/5 flex items-center justify-center text-white/50 hover:text-white transition-colors active:scale-90"
-                  >
-                      <ArrowLeft size={20} strokeWidth={2.5} />
-                  </button>
-                  <div>
-                      <h1 className="font-display text-xl font-black text-white tracking-tight leading-none uppercase">Simulator Margin</h1>
-                      <p className="text-[10px] font-black text-[#4B6478] uppercase mt-1.5 tracking-wider">Simulasi angka sebelum transaksi...</p>
-                  </div>
-              </div>
-              {marketPrices && (
-                <div className="flex gap-2">
-                    <Badge variant="outline" className="bg-emerald-500/5 border-emerald-500/10 text-emerald-400 text-[9px] font-black px-2 py-1 h-auto flex flex-col items-end">
-                        <span className="opacity-50 text-[7px] uppercase tracking-tighter">Beli (Farm)</span>
-                        {formatIDR(marketPrices.farm_gate_price)}
-                    </Badge>
-                    <Badge variant="outline" className="bg-blue-500/5 border-blue-500/10 text-blue-400 text-[9px] font-black px-2 py-1 h-auto flex flex-col items-end">
-                        <span className="opacity-50 text-[7px] uppercase tracking-tighter">Jual (RPA)</span>
-                        {formatIDR(marketPrices.buyer_price)}
-                    </Badge>
-                </div>
-              )}
-          </div>
-      </header>
+      {!isDesktop && <BrokerMobileHeader title="Simulator Margin" />}
 
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-5 mt-6 pb-20 space-y-6">

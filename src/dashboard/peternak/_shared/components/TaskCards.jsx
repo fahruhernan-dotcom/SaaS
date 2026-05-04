@@ -234,16 +234,9 @@ export function InteractiveCheckCard({
     if (hasForm && !isExpanded) { onToggle(); return }
     if (isSelesai) { if (isExpanded) onToggle(); return }
 
+    // Multi-animal: always just toggle — manual finalization via "Selesaikan Tugas" button
     if (isMultiAnimalTask) {
-      if (animalsDone) {
-        try {
-          await updateStatus.mutateAsync({ id: task.id, status: 'selesai' })
-          toast.success(`Semua ${config.animalLabelPlural} selesai! Tugas berhasil 🎉`)
-          onToggle()
-        } catch (err) { toast.error('Gagal menyelesaikan tugas') }
-      } else {
-        onToggle()
-      }
+      onToggle()
       return
     }
 
@@ -297,19 +290,18 @@ export function InteractiveCheckCard({
         ...weighingData // Also store in notes metadata
       }
       const newEntries = [...weighingEntries, newEntry]
-      const isDone = newEntries.length >= animals.length
       const newNotes = JSON.stringify({ 
         _version: '2.0', 
         report: {}, 
         weighing_entries: newEntries,
         batch_id: effectiveBatchId
       })
-      await updateStatus.mutateAsync({ id: task.id, status: isDone ? 'selesai' : 'in_progress', notes: newNotes })
+      // Always keep in_progress — user must explicitly finalize via "Selesaikan Tugas"
+      await updateStatus.mutateAsync({ id: task.id, status: 'in_progress', notes: newNotes })
       if (record?.id) await linkRecord.mutateAsync({ id: task.id, linked_record_id: record.id, linked_record_table: hooks.weightTable })
       setWeighingEntries(newEntries)
       setWeighingData({ animal_id: '', weight_kg: '', girth_cm: '' })
-      if (isDone) { toast.success(`Semua ${config.animalLabelPlural} selesai ditimbang! 🎉`); onToggle() }
-      else toast.success(`${newEntry.eartag} ditimbang (${newEntries.length}/${animals.length})`)
+      toast.success(`${newEntry.eartag} ditimbang (${newEntries.length}/${animals.length})`)
     } catch (err) { console.error(err); toast.error('Gagal menyimpan timbangan') }
   }
 
@@ -344,7 +336,6 @@ export function InteractiveCheckCard({
         record_id: record?.id
       }
       const newEntries = [...healthEntries, newEntry]
-      const isDone = newEntries.length >= animals.length
       const newNotes = JSON.stringify({
         _version: '2.0',
         report: {},
@@ -352,11 +343,11 @@ export function InteractiveCheckCard({
         health_entries: newEntries,
         batch_id: effectiveBatchId
       })
-      await updateStatus.mutateAsync({ id: task.id, status: isDone ? 'selesai' : 'in_progress', notes: newNotes })
+      // Always keep in_progress — user must explicitly finalize via "Selesaikan Tugas"
+      await updateStatus.mutateAsync({ id: task.id, status: 'in_progress', notes: newNotes })
       setHealthEntries(newEntries)
       setHealthData(h => ({ ...h, animal_id: '' }))
-      if (isDone) { toast.success(`Semua ${config.animalLabelPlural} selesai divaksin/diobati! 🎉`); onToggle() }
-      else toast.success(`${newEntry.eartag} tercatat (${newEntries.length}/${animals.length})`)
+      toast.success(`${newEntry.eartag} tercatat (${newEntries.length}/${animals.length})`)
     } catch (err) { console.error(err); toast.error('Gagal menyimpan record kesehatan') }
   }
 
@@ -508,8 +499,31 @@ export function InteractiveCheckCard({
                           </div>
                        )}
                     </div>
-                 )}
-              </div>
+                  )}
+
+                  {/* Explicit finalize button — appears only when all animals recorded */}
+                  {animalsDone && !isSelesai && (
+                    <div className="space-y-2 pt-2">
+                      <p className="text-[9px] font-black text-emerald-400/70 uppercase tracking-widest text-center">
+                        Semua {config.animalLabelPlural} tercatat — siap diselesaikan
+                      </p>
+                      <Button
+                        onClick={async (ev) => {
+                          ev.stopPropagation()
+                          try {
+                            const finalNotes = JSON.stringify({ _version: '2.0', report: {}, weighing_entries: weighingEntries, health_entries: healthEntries, batch_id: effectiveBatchId })
+                            await updateStatus.mutateAsync({ id: task.id, status: 'selesai', notes: finalNotes })
+                            toast.success(`Tugas selesai! 🎉`)
+                          } catch (err) { toast.error('Gagal menyelesaikan tugas') }
+                        }}
+                        disabled={updateStatus.isPending}
+                        className="w-full h-12 lg:h-14 rounded-xl lg:rounded-[28px] bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest shadow-lg shadow-emerald-900/40 transition-all"
+                      >
+                        {updateStatus.isPending ? <LoadingSpinner /> : '✓ Selesaikan Tugas'}
+                      </Button>
+                    </div>
+                  )}
+               </div>
            )}
 
            {reportConfig && (

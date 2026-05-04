@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import { useLocation, useNavigate, useOutletContext, Link } from 'react-router-dom'
-import { SembakoMobileBar } from './components/SembakoNavigation'
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import {
-  Plus, CreditCard, TrendingUp, CheckCircle2, AlertTriangle,
+  Plus, CreditCard, CheckCircle2, AlertTriangle,
   History, Lock,
 } from 'lucide-react'
 import { useSembakoSales } from '@/lib/hooks/useSembakoData'
@@ -26,6 +26,7 @@ export default function SembakoPenjualan() {
   const navigate = useNavigate()
 
   const { setSidebarOpen } = useOutletContext()
+
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     if (params.get('action') === 'new') {
@@ -33,18 +34,18 @@ export default function SembakoPenjualan() {
     }
   }, [location.search])
 
-  const handleWizardClose = useCallback(() => {
-    setOpenWizard(false)
-    if (location.search.includes('action=new')) {
+  // URL cleanup: when wizard closes, strip ?action=new if present
+  useEffect(() => {
+    if (!openWizard && location.search.includes('action=new')) {
       navigate(location.pathname, { replace: true })
     }
-  }, [location.search, location.pathname, navigate])
+  }, [openWizard, location.search, location.pathname, navigate])
 
   return (
     <div style={{ background: C.bg, minHeight: '100vh', paddingBottom: '96px' }}>
-      {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Penjualan" />}
+      {!isDesktop && <BrokerMobileHeader title="Penjualan" onMenuClick={() => setSidebarOpen(true)} />}
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <TabInvoice isDesktop={isDesktop} openWizard={openWizard} setOpenWizard={handleWizardClose} />
+        <TabInvoice isDesktop={isDesktop} openWizard={openWizard} setOpenWizard={setOpenWizard} />
       </div>
     </div>
   )
@@ -75,7 +76,6 @@ function TabInvoice({ isDesktop, openWizard, setOpenWizard }) {
 
   const summaryItems = useMemo(() => ([
     { label: 'Piutang Aktif', value: stats.piutang, isCurrency: true, color: 'red' },
-    { label: 'Revenue 30 Hari', value: stats.revenue, isCurrency: true, color: 'amber' },
     { label: 'Invoice Lunas', value: stats.lunas, color: 'green' },
     { label: 'Lewat Jatuh Tempo', value: stats.overdue, color: stats.overdue > 0 ? 'red' : 'green' },
   ]), [stats])
@@ -162,12 +162,13 @@ function TabInvoice({ isDesktop, openWizard, setOpenWizard }) {
 
       <SembakoSummaryStrip isDesktop={isDesktop} items={summaryItems} />
 
-      <div style={{ padding: '20px 20px 0', display: 'grid', gridTemplateColumns: isDesktop ? 'repeat(4,1fr)' : 'repeat(2,1fr)', gap: '12px', marginBottom: '20px' }}>
-        <SembakoStatCard icon={CreditCard} label="Piutang" value={formatIDR(stats.piutang)} color="red" subLabel="Sisa tagihan aktif" />
-        <SembakoStatCard icon={TrendingUp} label="Revenue 30 Hari" value={formatIDR(stats.revenue)} color="accent" subLabel="Penjualan berjalan" />
-        <SembakoStatCard icon={CheckCircle2} label="Lunas" value={stats.lunas} color="green" subLabel="Invoice selesai" />
-        <SembakoStatCard icon={AlertTriangle} label="Jatuh Tempo" value={stats.overdue} color={stats.overdue > 0 ? 'red' : 'green'} subLabel="Butuh follow-up" />
-      </div>
+      {isDesktop && (
+        <div style={{ padding: '20px 20px 0', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '12px', marginBottom: '20px' }}>
+          <SembakoStatCard icon={CreditCard} label="Piutang" value={formatIDR(stats.piutang)} color="red" subLabel="Sisa tagihan aktif" />
+          <SembakoStatCard icon={CheckCircle2} label="Lunas" value={stats.lunas} color="green" subLabel="Invoice selesai" />
+          <SembakoStatCard icon={AlertTriangle} label="Jatuh Tempo" value={stats.overdue} color={stats.overdue > 0 ? 'red' : 'green'} subLabel="Butuh follow-up" />
+        </div>
+      )}
 
       {/* Quota Banner — Starter only */}
       {quota.isStarter && (

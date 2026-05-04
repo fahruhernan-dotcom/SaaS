@@ -4,10 +4,12 @@ import { X, Tag, Scale, AlertCircle, Warehouse, AlignLeft, Hash, Activity, Calen
 import { useForm, Controller } from 'react-hook-form'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { InputRupiah } from '@/components/ui/InputRupiah'
+import { InputNumber } from '@/components/ui/InputNumber'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { BreedCombobox } from './BreedCombobox'
+import { toast } from 'sonner'
 
 // Props:
 //   batchId          — string
@@ -61,6 +63,11 @@ export function AddAnimalSheet({ batchId, animals = [], onAdd, isPending, animal
   }, [purchasePrice, entryWeight, setValue, pricePerKg])
 
   const onSubmit = (data) => {
+    if (acquisitionType === 'beli' && (!data.purchase_price_idr || parseInt(data.purchase_price_idr) <= 0)) {
+      toast.error('Harga Beli wajib diisi untuk ternak yang dibeli (Modal awal HPP)')
+      return
+    }
+
     onAdd({
       batch_id:           batchId,
       ear_tag:            data.ear_tag.trim(),
@@ -202,8 +209,24 @@ export function AddAnimalSheet({ batchId, animals = [], onAdd, isPending, animal
               )} />
             </div>
             <div className={grp}>
-              <label className={lCls}><Scale size={12} className="text-green-500" /> Berat Masuk (kg) <span className="text-green-500/50">*</span></label>
-              <input {...register('entry_weight_kg', { required: true })} type="number" step="0.1" placeholder="e.g. 25" className={`px-4 text-center ${iCls}`} />
+              <label className={lCls}><Scale size={12} className="text-green-500" /> Berat Masuk <span className="text-green-500/50">*</span></label>
+              <Controller control={control} name="entry_weight_kg" rules={{ required: true }} render={({ field }) => (
+                <InputNumber
+                  value={field.value}
+                  onChange={val => {
+                    field.onChange(val)
+                    if (acquisitionType === 'beli') {
+                      const p = parseFloat(watch('price_per_kg'))
+                      if (!isNaN(val) && val > 0 && !isNaN(p) && p > 0) {
+                        setValue('purchase_price_idr', Math.round(val * p))
+                      }
+                    }
+                  }}
+                  placeholder="25.0"
+                  suffix="kg"
+                  className="bg-[#111C24] border-white/5 shadow-inner h-11"
+                />
+              )} />
             </div>
           </div>
 

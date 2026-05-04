@@ -15,7 +15,7 @@ import {
 import { useSearchParams, useOutletContext } from 'react-router-dom'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { C, fmtDate } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
-import { SembakoMobileBar } from './components/SembakoNavigation'
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -671,7 +671,7 @@ export default function Gudang() {
   return (
     <div style={{ minHeight: '100vh', background: C.bg, paddingBottom: 80 }}>
       {/* Header */}
-      {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Gudang" />}
+      {!isDesktop && <BrokerMobileHeader title="Gudang" onMenuClick={() => setSidebarOpen(true)} />}
       
       <div style={{ padding: '20px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: isDesktop ? 'block' : 'none' }}>

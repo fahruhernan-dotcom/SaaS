@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Zap, Plus, Menu, ChevronDown, ChevronUp, ChevronRight, Droplets, X, Trash2, Search, Calendar, CreditCard, FileText, ShoppingBag, ArrowLeft, Filter, Info, Clock } from 'lucide-react'
+import React, { useState, useMemo } from 'react'
+import { Zap, Plus, Menu, ChevronDown, ChevronUp, ChevronRight, Droplets, X, Trash2, Search, Calendar, CreditCard, FileText, ShoppingBag, ArrowLeft, Filter, Info, Clock, Check } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLocation, useOutletContext } from 'react-router-dom'
 import { DatePicker } from '@/components/ui/DatePicker'
@@ -59,6 +59,64 @@ export default function ListrikAirPage() {
   const [category, setCategory] = useState('listrik')
   const [filter, setFilter] = useState('semua')
   const [searchQuery, setSearchQuery] = useState('')
+  const [expandedIds, setExpandedIds] = useState([])
+  const [expandedTxIds, setExpandedTxIds] = useState([])
+
+  const filteredCosts = useMemo(() => {
+    return opsCosts
+      .filter(c => filter === 'semua' || (c.notes || '').startsWith(filter))
+      .filter(c => {
+        if (!searchQuery) return true
+        const q = searchQuery.toLowerCase()
+        return (c.item_name || '').toLowerCase().includes(q) || (c.notes || '').toLowerCase().includes(q)
+      })
+  }, [opsCosts, filter, searchQuery])
+
+  const monthGroups = useMemo(() => {
+    const groups = {}
+    filteredCosts.forEach(c => {
+      const d = new Date(c.log_date)
+      const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      
+      if (!groups[monthKey]) {
+        groups[monthKey] = {
+          id: monthKey,
+          label: d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }).toUpperCase(),
+          total: 0,
+          transactions: {} // Sub-group by actual transaction (item+date+notes)
+        }
+      }
+      
+      groups[monthKey].total += Number(c.amount_idr) || 0
+      
+      // Group by date, item_name and category (ignoring batch-specific notes)
+      const categoryMatch = (c.notes || '').match(/^(listrik|air|lainnya)/)
+      const baseCategory = categoryMatch ? categoryMatch[0] : 'lainnya'
+      const txKey = `${c.log_date}_${(c.item_name || '').toLowerCase()}_${baseCategory}`
+      
+      if (!groups[monthKey].transactions[txKey]) {
+        groups[monthKey].transactions[txKey] = {
+          id: txKey,
+          log_date: c.log_date,
+          item_name: c.item_name || 'Listrik & Air',
+          category: baseCategory,
+          notes: c.notes,
+          amount_idr: 0,
+          items: []
+        }
+      }
+      groups[monthKey].transactions[txKey].amount_idr += Number(c.amount_idr) || 0
+      groups[monthKey].transactions[txKey].items.push(c)
+    })
+    
+    return Object.values(groups).sort((a, b) => b.id.localeCompare(a.id)).map(m => ({
+      ...m,
+      records: Object.values(m.transactions).sort((a, b) => new Date(b.log_date) - new Date(a.log_date))
+    }))
+  }, [filteredCosts])
+
+  const toggleExpand = id => setExpandedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
+  const toggleTxExpand = id => setExpandedTxIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id])
 
   if (isLoading) return <LoadingSpinner fullPage />
 
@@ -83,14 +141,6 @@ export default function ListrikAirPage() {
       }
     )
   }
-
-  const filteredCosts = opsCosts
-    .filter(c => filter === 'semua' || (c.notes || '').startsWith(filter))
-    .filter(c => {
-      if (!searchQuery) return true
-      const q = searchQuery.toLowerCase()
-      return (c.item_name || '').toLowerCase().includes(q) || (c.notes || '').toLowerCase().includes(q)
-    })
 
   const totalAll = opsCosts.reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
   const totalListrik = opsCosts.filter(c => (c.notes || '').startsWith('listrik')).reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
@@ -193,6 +243,46 @@ export default function ListrikAirPage() {
                     className="w-full h-12 bg-white/[0.02] border border-white/10 rounded-2xl px-4 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-yellow-500/50 transition-all"
                   />
                 </div>
+
+                {/* Live Preview — like PaymentSheet */}
+                {Number(form.amount_idr) > 0 && (
+                  <div className="p-4 bg-white/[0.03] border border-white/[0.08] rounded-2xl flex flex-col gap-3">
+                    <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Preview Pencatatan</p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={cn('w-10 h-10 rounded-2xl border flex items-center justify-center text-xl', COST_CATEGORIES.find(c => c.value === category)?.bg || 'bg-white/5 border-white/10')}>
+                          {COST_CATEGORIES.find(c => c.value === category)?.label.split(' ')[0]}
+                        </div>
+                        <div>
+                          <p className="text-[13px] font-black text-white leading-tight">
+                            {form.item_name || (category === 'listrik' ? 'Token Listrik' : category === 'air' ? 'Tagihan Air' : 'Biaya Lainnya')}
+                          </p>
+                          <p className={cn('text-[9px] font-black uppercase tracking-widest mt-0.5', COST_CATEGORIES.find(c => c.value === category)?.color)}>
+                            {COST_CATEGORIES.find(c => c.value === category)?.label.split(' ')[1]}
+                            {activeBatches.length > 1 && ` · Dibagi ke ${activeBatches.length} batch`}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-lg font-black text-yellow-400 font-['Sora']">
+                        {formatIDR(Number(form.amount_idr))}
+                      </p>
+                    </div>
+                    {activeBatches.length > 1 && (
+                      <div className="flex flex-col gap-1 pt-2 border-t border-white/5">
+                        {activeBatches.map(b => {
+                          const total = activeBatches.reduce((s, x) => s + (x.total_animals || 0), 0)
+                          const pct = total > 0 ? (b.total_animals || 0) / total : 1 / activeBatches.length
+                          return (
+                            <div key={b.id} className="flex items-center justify-between text-[11px]">
+                              <span className="text-[#4B6478] font-medium">{b.kandang_name || b.batch_code}</span>
+                              <span className="font-black text-white/60">{formatIDR(Math.round(Number(form.amount_idr) * pct))}</span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="pt-2">
                   <button
@@ -351,59 +441,130 @@ export default function ListrikAirPage() {
           ) : (
             <div className="divide-y divide-white/[0.04]">
               <AnimatePresence mode='popLayout'>
-                {filteredCosts.map((c, i) => {
-                  const cat = COST_CATEGORIES.find(ct => (c.notes || '').startsWith(ct.value)) || COST_CATEGORIES[2]
-                  const keterangan = (c.notes || '').replace(/^(listrik|air|lainnya)\s*·?\s*/, '') || c.item_name
+                {monthGroups.map((month, i) => {
+                  const isExpanded = expandedIds.includes(month.id)
+
                   return (
                     <motion.div
-                      key={c.id}
+                      key={month.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, x: -20 }}
                       transition={{ delay: i * 0.05 }}
-                      className="px-8 py-6 flex items-center justify-between hover:bg-white/[0.03] transition-all group"
+                      className="border-b border-white/[0.04] last:border-0"
                     >
-                      <div className="flex items-center gap-6">
-                        <div className={cn('w-14 h-14 rounded-[22px] border flex items-center justify-center text-2xl shadow-inner relative overflow-hidden', cat.bg)}>
-                          <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          <span className="relative">{cat.label.split(' ')[0]}</span>
+                      {/* Month Header Card */}
+                      <div 
+                        className={cn(
+                          "px-8 py-7 flex items-center justify-between cursor-pointer transition-all hover:bg-white/[0.02]",
+                          isExpanded && "bg-white/[0.02]"
+                        )}
+                        onClick={() => toggleExpand(month.id)}
+                      >
+                        <div className="flex items-center gap-6">
+                          <div className="w-14 h-14 rounded-[22px] bg-gradient-to-br from-yellow-400/20 to-orange-400/10 border border-yellow-500/20 flex items-center justify-center shadow-xl">
+                            <Calendar className="text-yellow-400" size={24} strokeWidth={2.5} />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-black text-white tracking-tight font-['Sora']">{month.label}</h3>
+                            <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mt-1">
+                              {month.records.length} Transaksi Terhitung
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-base font-black text-white tracking-tight leading-tight">{c.item_name || keterangan}</p>
-                          <div className="flex items-center gap-3 mt-1.5">
-                            <span className={cn('text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-white/5', cat.color)}>{cat.label.split(' ')[1]}</span>
-                            <div className="w-1 h-1 rounded-full bg-white/10" />
-                            <div className="flex items-center gap-1.5 text-[#4B6478]">
-                              <Calendar size={12} />
-                              <span className="text-[11px] font-bold">{fmtDate(c.log_date)}</span>
-                            </div>
-                            {keterangan && keterangan !== c.item_name && (
-                              <>
-                                <div className="w-1 h-1 rounded-full bg-white/10" />
-                                <div className="flex items-center gap-1.5 text-[#4B6478]">
-                                  <FileText size={12} />
-                                  <span className="text-[11px] font-medium truncate max-w-[280px] italic">{keterangan}</span>
-                                </div>
-                              </>
-                            )}
+
+                        <div className="flex items-center gap-8">
+                          <div className="text-right">
+                            <p className="text-sm font-black text-[#4B6478] uppercase tracking-widest mb-0.5">Total Bulan Ini</p>
+                            <p className="text-2xl font-black text-yellow-400 font-['Sora'] leading-none">{formatIDR(month.total)}</p>
+                          </div>
+                          <div className={cn(
+                            "w-10 h-10 rounded-full border border-white/10 flex items-center justify-center transition-all duration-500",
+                            isExpanded ? "bg-yellow-400 border-yellow-400 text-black rotate-180" : "bg-white/5 text-[#4B6478]"
+                          )}>
+                            <ChevronDown size={20} strokeWidth={3} />
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-8">
-                        <div className="text-right">
-                          <p className="text-xl font-black text-yellow-400 font-['Sora']">{formatIDR(c.amount_idr)}</p>
-                          <p className="text-[10px] font-black text-emerald-500/60 uppercase tracking-[0.15em] mt-1 flex items-center justify-end gap-1.5">
-                            <Check size={10} strokeWidth={4} /> Terdistribusi
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => deleteOpsCost.mutate(c.id)}
-                          className="opacity-0 group-hover:opacity-100 w-10 h-10 rounded-xl flex items-center justify-center text-red-400/30 hover:text-red-400 hover:bg-red-500/10 transition-all active:scale-90"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
+
+                      {/* Transaction Records List */}
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+                            className="overflow-hidden bg-black/20"
+                          >
+                            <div className="px-8 pb-8 pt-2 divide-y divide-white/[0.03]">
+                              {month.records.map((group) => {
+                                const cat = COST_CATEGORIES.find(ct => (group.notes || '').startsWith(ct.value)) || COST_CATEGORIES[2]
+                                const keterangan = (group.notes || '').replace(/^(listrik|air|lainnya)\s*·?\s*/, '') || group.item_name
+                                
+                                return (
+                                  <div key={group.id} className="py-5 first:pt-4 last:pb-0 group/item">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-5">
+                                        <div className={cn('w-12 h-12 rounded-2xl border flex items-center justify-center text-xl shadow-inner relative', cat.bg)}>
+                                          <span>{cat.label.split(' ')[0]}</span>
+                                        </div>
+                                        <div>
+                                          <div className="flex items-center gap-3">
+                                            <p className="text-sm font-black text-white/90">{group.item_name}</p>
+                                            <span className="text-[10px] font-bold text-[#4B6478]">{fmtDate(group.log_date)}</span>
+                                          </div>
+                                          <div className="flex items-center gap-2.5 mt-1.5">
+                                            <span className={cn('text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md bg-white/5', cat.color)}>{cat.label.split(' ')[1]}</span>
+                                            <div className="w-1 h-1 rounded-full bg-white/10" />
+                                            <span className="text-[10px] font-medium text-[#4B6478] italic truncate max-w-[200px]">{keterangan}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <div className="flex items-center gap-6">
+                                        <div className="text-right">
+                                          <p className="text-base font-black text-white/80">{formatIDR(group.amount_idr)}</p>
+                                          <p className="text-[9px] font-bold text-emerald-500/50 uppercase mt-0.5">
+                                            Allocated to {group.items.length} Batch
+                                          </p>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            if (confirm('Hapus transaksi ini?')) {
+                                              group.items.forEach(c => deleteOpsCost.mutate(c.id))
+                                            }
+                                          }}
+                                          className="w-9 h-9 rounded-xl flex items-center justify-center text-red-400/20 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                                        >
+                                          <Trash2 size={16} />
+                                        </button>
+                                      </div>
+                                    </div>
+                                    
+                                    {/* Sub-allocation display */}
+                                    <div className="mt-4 ml-16 flex flex-wrap gap-2">
+                                      {group.items.map(item => {
+                                        const batch = activeBatches.find(b => b.id === item.batch_id)
+                                        return (
+                                          <div key={item.id} className="px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/[0.05] flex items-center gap-2">
+                                            <div className="w-1 h-1 rounded-full bg-emerald-400/40" />
+                                            <span className="text-[10px] font-bold text-[#4B6478] whitespace-nowrap">
+                                              {batch?.kandang_name || batch?.batch_code || 'B-'+item.batch_id}:
+                                            </span>
+                                            <span className="text-[10px] font-black text-white/60">{formatIDR(item.amount_idr)}</span>
+                                          </div>
+                                        )
+                                      })}
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </motion.div>
                   )
                 })}
@@ -541,46 +702,148 @@ export default function ListrikAirPage() {
               <p className="text-[10px] text-[#4B6478]/50 mt-2 leading-relaxed">Belum ada catatan pengeluaran yang ditemukan</p>
             </div>
           ) : (
-            <div className="space-y-3.5">
+            <div className="space-y-4">
               <AnimatePresence initial={false}>
-                {filteredCosts.map(c => {
-                  const cat = COST_CATEGORIES.find(ct => (c.notes || '').startsWith(ct.value)) || COST_CATEGORIES[2]
-                  const keterangan = (c.notes || '').replace(/^(listrik|air|lainnya)\s*·?\s*/, '') || c.item_name
+                {monthGroups.map(month => {
+                  const isExpanded = expandedIds.includes(month.id)
+
                   return (
                     <motion.div
-                      key={c.id}
+                      key={month.id}
                       layout
-                      initial={{ opacity: 0, scale: 0.9 }}
+                      initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      className="p-5 bg-[#0C1319] border border-white/[0.08] rounded-[28px] shadow-xl active:scale-[0.98] transition-all relative overflow-hidden"
+                      className="bg-[#0C1319] border border-white/[0.08] rounded-[32px] overflow-hidden shadow-xl"
                     >
-                      <div className="flex items-start justify-between mb-4">
+                      {/* Mobile Month Header */}
+                      <div 
+                        className={cn("p-5 flex items-center justify-between active:bg-white/[0.02]", isExpanded && "bg-white/[0.01]")}
+                        onClick={() => toggleExpand(month.id)}
+                      >
                         <div className="flex items-center gap-4">
-                          <div className={cn('w-11 h-11 rounded-2xl border flex items-center justify-center text-xl shadow-inner', cat.bg)}>
-                            {cat.label.split(' ')[0]}
+                          <div className="w-11 h-11 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center">
+                            <Calendar className="text-yellow-400" size={20} />
                           </div>
                           <div>
-                            <p className="text-[13px] font-black text-white leading-tight uppercase tracking-tight">{c.item_name || keterangan}</p>
-                            <p className={cn('text-[9px] font-black uppercase tracking-[0.15em] mt-1', cat.color)}>{cat.label.split(' ')[1]}</p>
+                            <h3 className="text-sm font-black text-white font-['Sora']">{month.label}</h3>
+                            <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest mt-0.5">{month.records.length} Transaksi</p>
                           </div>
                         </div>
-                        <button
-                          onClick={() => deleteOpsCost.mutate(c.id)}
-                          className="w-9 h-9 rounded-xl bg-red-500/5 border border-red-500/10 flex items-center justify-center text-red-400/30 active:bg-red-500/20 transition-colors"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                      <div className="flex items-center justify-between pt-4 border-t border-white/[0.04]">
-                        <div className="flex items-center gap-1.5 text-[#4B6478]">
-                          <Calendar size={12} />
-                          <span className="text-[11px] font-bold">{fmtDate(c.log_date)}</span>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-lg font-black text-yellow-400 font-['Sora']">{formatIDR(c.amount_idr)}</p>
+                        <div className="text-right flex items-center gap-3">
+                          <div>
+                            <p className="text-[8px] font-black text-[#4B6478] uppercase tracking-widest text-right mb-0.5">Total</p>
+                            <p className="text-base font-black text-yellow-400 font-['Sora']">{formatIDR(month.total)}</p>
+                          </div>
+                          <ChevronDown size={16} className={cn("text-[#4B6478] transition-transform duration-300", isExpanded && "rotate-180")} />
                         </div>
                       </div>
+
+                      {/* Mobile Transaction List */}
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="p-4 pt-0 space-y-3">
+                              {month.records.map(group => {
+                                const isTxExpanded = expandedTxIds.includes(group.id)
+                                const cat = COST_CATEGORIES.find(ct => group.category === ct.value) || COST_CATEGORIES[2]
+                                
+                                return (
+                                  <div key={group.id} className="p-4 bg-white/[0.02] border border-white/[0.05] rounded-2xl overflow-hidden transition-all">
+                                    <div 
+                                      className="flex items-start justify-between cursor-pointer active:opacity-70"
+                                      onClick={() => toggleTxExpand(group.id)}
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div className={cn('w-9 h-9 rounded-xl border flex items-center justify-center text-base shadow-inner', cat.bg)}>
+                                          {cat.label.split(' ')[0]}
+                                        </div>
+                                        <div>
+                                          <p className="text-[12px] font-black text-white/90 leading-tight">{group.item_name}</p>
+                                          <div className="flex items-center gap-1.5 mt-1">
+                                            <span className={cn('text-[8px] font-black uppercase tracking-[0.1em] px-1.5 py-0.5 rounded bg-white/5', cat.color)}>
+                                              {cat.label.split(' ')[1]}
+                                            </span>
+                                            <span className="text-[9px] font-bold text-[#4B6478] uppercase tracking-tight">{fmtDate(group.log_date)}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div className="text-right flex items-center gap-2">
+                                        <div>
+                                          <p className="text-sm font-black text-yellow-400 font-['Sora']">{formatIDR(group.amount_idr)}</p>
+                                          <p className="text-[8px] font-bold text-[#4B6478] uppercase mt-0.5">{group.items.length} Batch</p>
+                                        </div>
+                                        <ChevronDown size={14} className={cn("text-[#4B6478] transition-transform duration-300", isTxExpanded && "rotate-180")} />
+                                      </div>
+                                    </div>
+                                    
+                                    <AnimatePresence>
+                                      {isTxExpanded && (
+                                        <motion.div
+                                          initial={{ height: 0, opacity: 0 }}
+                                          animate={{ height: 'auto', opacity: 1 }}
+                                          exit={{ height: 0, opacity: 0 }}
+                                          className="overflow-hidden"
+                                        >
+                                          <div className="pt-4 mt-4 border-t border-white/[0.05] space-y-2">
+                                            <div className="flex items-center justify-between mb-2 px-1">
+                                              <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Alokasi Batch</span>
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation()
+                                                  if (confirm('Hapus seluruh transaksi ini?')) {
+                                                    group.items.forEach(c => deleteOpsCost.mutate(c.id))
+                                                  }
+                                                }}
+                                                className="text-[9px] font-black text-red-400 hover:text-red-300 flex items-center gap-1 bg-red-500/10 px-2 py-1 rounded-md transition-colors"
+                                              >
+                                                <Trash2 size={10} /> Hapus Semua
+                                              </button>
+                                            </div>
+                                            {group.items.map(item => {
+                                              const batch = activeBatches.find(b => b.id === item.batch_id)
+                                              const batchName = batch?.kandang_name || batch?.batch_code || `B-${item.batch_id}`
+                                              return (
+                                                <div key={item.id} className="flex items-center justify-between px-3 py-2.5 bg-black/20 rounded-xl border border-white/[0.03]">
+                                                  <div className="flex items-center gap-2 overflow-hidden">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/40 shrink-0" />
+                                                    <div className="truncate">
+                                                      <p className="text-[10px] font-bold text-white/80 truncate">{batchName}</p>
+                                                      {(item.notes || item.item_name) && (
+                                                        <p className="text-[8px] font-medium text-[#4B6478] truncate mt-0.5">{item.notes || item.item_name}</p>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                  <div className="flex items-center gap-3 shrink-0 pl-2">
+                                                    <span className="text-[10px] font-black text-white/60">{formatIDR(item.amount_idr)}</span>
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        if (confirm('Hapus alokasi ini?')) deleteOpsCost.mutate(item.id)
+                                                      }}
+                                                      className="w-6 h-6 rounded-md bg-red-500/5 text-red-400/50 hover:text-red-400 flex items-center justify-center transition-colors"
+                                                    >
+                                                      <Trash2 size={12} />
+                                                    </button>
+                                                  </div>
+                                                </div>
+                                              )
+                                            })}
+                                          </div>
+                                        </motion.div>
+                                      )}
+                                    </AnimatePresence>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </motion.div>
                   )
                 })}

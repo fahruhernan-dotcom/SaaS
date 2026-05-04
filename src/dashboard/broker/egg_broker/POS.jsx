@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Plus, Minus, ShoppingCart, User, Search, 
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
+import {
+  Plus, Minus, ShoppingCart, User, Search,
   Trash2, ChevronRight, CheckCircle2, Loader2,
   Banknote, CreditCard, Clock
 } from 'lucide-react'
@@ -117,14 +118,17 @@ export default function POS() {
 
   return (
     <div className={cn("flex flex-col lg:flex-row bg-[#06090F] min-h-screen", isDesktop ? "h-screen" : "pb-24")}>
+      {!isDesktop && <BrokerMobileHeader title="Point of Sale" />}
       {/* Left: Product Selection */}
-      <div className={cn("flex-1 overflow-y-auto space-y-6", isDesktop ? "p-8" : "p-5 pt-10")}>
-        <header className="flex justify-between items-center text-left">
-          <div>
-            <h2 className={cn("font-black text-white uppercase tracking-tight", isDesktop ? "text-2xl" : "text-xl")}>Catat Penjualan</h2>
-            <p className={cn("font-bold text-[#4B6478] uppercase mt-0.5 tracking-wider", isDesktop ? "text-[11px]" : "text-[10px]")}>Pilih grade telur dari stok</p>
-          </div>
-        </header>
+      <div className={cn("flex-1 overflow-y-auto space-y-6", isDesktop ? "p-8" : "p-5 pt-4")}>
+        {isDesktop && (
+          <header className="flex justify-between items-center text-left">
+            <div>
+              <h2 className="text-2xl font-black text-white uppercase tracking-tight">Catat Penjualan</h2>
+              <p className="text-[11px] font-bold text-[#4B6478] uppercase mt-0.5 tracking-wider">Pilih grade telur dari stok</p>
+            </div>
+          </header>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {loadingInv ? [1,2,3,4].map(i => <Skeleton key={i} className="h-32 rounded-[24px] bg-white/5" />) :

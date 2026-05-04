@@ -613,7 +613,7 @@ export default function AppSidebar({ open, onClose }) {
             </DropdownMenu>
 
             <Sheet open={isAddingBusiness} onOpenChange={setIsAddingBusiness}>
-              <SheetContent hideClose side="right" className="bg-[#090E14] border-border text-foreground w-[400px] p-0 flex flex-col h-full">
+              <SheetContent hideClose side={isDesktop ? 'right' : 'bottom'} className={`bg-[#090E14] border-border text-foreground p-0 flex flex-col ${isDesktop ? 'w-[400px] h-full' : 'w-full rounded-t-[28px] max-h-[90vh]'}`}>
                 {/* Scrollable Container */}
                 <div className="flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar relative">
                   {/* Header with Background Gradient */}

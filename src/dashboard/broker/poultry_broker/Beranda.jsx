@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate, useOutletContext } from 'react-router-dom'
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import {
   TrendingUp,
   AlertCircle,
@@ -628,28 +629,8 @@ function MobileDashboard({
   return (
     <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="flex flex-col min-h-full bg-[#06090F] text-foreground pb-20">
 
-      {/* ── Compact fixed TopBar ── */}
-      <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 h-14 flex items-center justify-between px-4 bg-[#06090F]/95 backdrop-blur-xl border-b border-white/[0.05]">
-        <div className="flex items-center gap-3 min-w-0">
-          <button
-            onClick={() => setSidebarOpen?.(true)}
-            className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
-          >
-            <Menu size={17} className="text-[#94A3B8]" />
-          </button>
-          <h1 className="font-display font-black text-[15px] text-[#F1F5F9] leading-tight truncate min-w-0">
-            Halo, {firstName} <span>👋</span>
-          </h1>
-        </div>
-        <Avatar className="h-9 w-9 border border-emerald-500/30 shrink-0" onClick={() => navigate('/broker/akun')}>
-          <AvatarFallback className="bg-emerald-500/10 text-[#34D399] font-black text-xs">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-      </header>
-
-      {/* spacer for fixed topbar */}
-      <div className="h-14" />
+      {/* ── TopBar ── */}
+      <BrokerMobileHeader showGreeting onMenuClick={() => setSidebarOpen?.(true)} />
 
       {/* ── 1. HERO BALANCE ── */}
       <motion.div variants={fadeUp} className="px-4 pt-5 pb-4">

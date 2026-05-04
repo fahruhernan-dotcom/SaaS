@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate, useLocation, useOutletContext, Link } from 'react-router-dom'
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, Search, History, AlertCircle, Trash2, Loader2, Eye, Menu
@@ -663,42 +664,35 @@ export default function Transaksi() {
     ══════════════════════════════════════════ */}
     {!isDesktop && (
       <>
-        {/* Fixed TopBar */}
-        <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] z-40 h-14 flex items-center justify-between px-4 bg-[#06090F]/95 backdrop-blur-xl border-b border-white/[0.05]">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setSidebarOpen?.(true)}
-              className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
-            >
-              <Menu size={16} className="text-[#94A3B8]" />
-            </button>
-            <h1 className="font-display font-black text-[15px] text-[#F1F5F9] tracking-tight uppercase leading-none">Transaksi</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setSearchOpen(v => !v)}
-              className={cn("w-9 h-9 rounded-xl border flex items-center justify-center transition-all", searchOpen ? "bg-emerald-500/15 border-emerald-500/30" : "bg-white/[0.05] border-white/[0.08]")}
-            >
-              <Search size={16} className={searchOpen ? "text-emerald-400" : "text-[#94A3B8]"} />
-            </button>
-            {canWrite && (
+        <BrokerMobileHeader
+          title="Transaksi"
+          onMenuClick={() => setSidebarOpen?.(true)}
+          rightElement={
+            <div className="flex items-center gap-2">
               <button
-                onClick={handleWizardOpen}
-                disabled={quota.isAtLimit}
-                title={quota.isAtLimit ? 'Kuota transaksi bulan ini habis' : 'Buat transaksi baru'}
-                className={cn(
-                  "w-9 h-9 rounded-xl flex items-center justify-center shadow-lg transition-all",
-                  quota.isAtLimit
-                    ? "bg-white/[0.06] cursor-not-allowed opacity-40"
-                    : "bg-emerald-500 shadow-emerald-500/25 active:scale-90"
-                )}
+                onClick={() => setSearchOpen(v => !v)}
+                className={cn("w-9 h-9 rounded-xl border flex items-center justify-center transition-all", searchOpen ? "bg-emerald-500/15 border-emerald-500/30" : "bg-white/[0.05] border-white/[0.08]")}
               >
-                <Plus size={17} className="text-white" />
+                <Search size={16} className={searchOpen ? "text-emerald-400" : "text-[#94A3B8]"} />
               </button>
-            )}
-          </div>
-        </header>
-        <div className="h-14" />
+              {canWrite && (
+                <button
+                  onClick={handleWizardOpen}
+                  disabled={quota.isAtLimit}
+                  title={quota.isAtLimit ? 'Kuota transaksi bulan ini habis' : 'Buat transaksi baru'}
+                  className={cn(
+                    "w-9 h-9 rounded-xl flex items-center justify-center shadow-lg transition-all",
+                    quota.isAtLimit
+                      ? "bg-white/[0.06] cursor-not-allowed opacity-40"
+                      : "bg-emerald-500 shadow-emerald-500/25 active:scale-90"
+                  )}
+                >
+                  <Plus size={17} className="text-white" />
+                </button>
+              )}
+            </div>
+          }
+        />
 
         {/* Quota Banner — Starter only */}
         {quota.isStarter && (

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useNavigate, useOutletContext, Link } from 'react-router-dom'
-import { SembakoMobileBar } from './components/SembakoNavigation'
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import { motion } from 'framer-motion' // eslint-disable-line no-unused-vars
 import {
   TrendingUp, TrendingDown, DollarSign, Receipt,
@@ -51,7 +51,7 @@ export default function SembakoLaporan() {
   if (isStarter) {
     return (
       <div style={{ background: C.bg, minHeight: '100vh' }}>
-        {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Laporan" />}
+        {!isDesktop && <BrokerMobileHeader title="Laporan" onMenuClick={() => setSidebarOpen(true)} />}
         <div className="flex flex-col items-center justify-center min-h-[80vh] px-6 text-center gap-6">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
             style={{ background: 'rgba(234,88,12,0.12)', border: '1px solid rgba(234,88,12,0.25)' }}>
@@ -114,7 +114,7 @@ export default function SembakoLaporan() {
 
   return (
     <div style={{ background: C.bg, minHeight: '100vh', paddingBottom: '96px' }}>
-      {!isDesktop && <SembakoMobileBar onHamburger={() => setSidebarOpen(true)} title="Laporan" />}
+      {!isDesktop && <BrokerMobileHeader title="Laporan" onMenuClick={() => setSidebarOpen(true)} />}
       <div style={{ padding: isDesktop ? '32px 40px' : '20px 16px', maxWidth: '1200px', margin: '0 auto' }}>
 
         {/* Header + Date picker */}

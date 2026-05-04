@@ -26,6 +26,7 @@ import {
   Heart,
   Menu,
   Wheat,
+  Receipt,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
@@ -213,6 +214,118 @@ function PeternakNavItem({ tab, active, color, onClick }) {
   )
 }
 
+// ── Broker Dock Tab (icon-only, no text) ─────────────────────────────────────
+function BrokerNavItem({ tab, active, color, onClick }) {
+  const Icon = ICON_MAP[tab.icon] || Home
+  return (
+    <motion.button
+      onClick={onClick}
+      whileTap={{ scale: 0.88 }}
+      style={{
+        background: 'none', border: 'none', cursor: 'pointer',
+        padding: '4px 4px',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        WebkitTapHighlightColor: 'transparent',
+      }}
+    >
+      <motion.div
+        animate={active ? { backgroundColor: `${color}22` } : { backgroundColor: 'transparent' }}
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          borderRadius: 12,
+          width: 40, height: 40,
+        }}
+      >
+        <Icon size={20} color={active ? color : 'rgba(255,255,255,0.4)'} strokeWidth={active ? 2.5 : 2} />
+      </motion.div>
+    </motion.button>
+  )
+}
+
+// ── Sembako Speed Dial FAB ────────────────────────────────────────────────────
+function SembakoSpeedDial({ color, open, onToggle, items }) {
+  return (
+    <>
+      {/* Speed dial container */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '4px 6px', position: 'relative', zIndex: 3500 }}>
+        {/* Action items */}
+        <AnimatePresence>
+          {open && (
+            <div style={{
+              position: 'absolute',
+              bottom: 'calc(100% + 10px)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+              alignItems: 'center',
+              zIndex: 3500,
+            }}>
+              {items.map((item, i) => (
+                <motion.button
+                  key={item.label}
+                  initial={{ opacity: 0, y: 12, scale: 0.85 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.9 }}
+                  transition={{ duration: 0.18, delay: i * 0.04, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  onClick={item.onClick}
+                  whileTap={{ scale: 0.93 }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    padding: '10px 14px 10px 12px',
+                    borderRadius: '14px',
+                    background: 'rgba(10,15,22,0.95)',
+                    border: `1px solid ${color}40`,
+                    cursor: 'pointer',
+                    WebkitTapHighlightColor: 'transparent',
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+                    minWidth: '160px',
+                  }}
+                >
+                  <div style={{
+                    width: 28, height: 28, borderRadius: '9px',
+                    background: `${color}18`,
+                    border: `1px solid ${color}30`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    <item.icon size={14} color={color} strokeWidth={2.5} />
+                  </div>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#F1F5F9', letterSpacing: '-0.01em' }}>
+                    {item.label}
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* FAB button */}
+        <motion.button
+          onClick={onToggle}
+          whileTap={{ scale: 0.90 }}
+          whileHover={{ scale: 1.05 }}
+          animate={{ rotate: open ? 45 : 0 }}
+          transition={{ duration: 0.2 }}
+          style={{
+            width: 44, height: 44, borderRadius: 14,
+            background: color,
+            border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: open ? `0 6px 24px ${color}80` : `0 4px 16px ${color}60`,
+            WebkitTapHighlightColor: 'transparent',
+          }}
+        >
+          <Plus size={22} color="white" strokeWidth={2.5} />
+        </motion.button>
+      </div>
+    </>
+  )
+}
+
 // ── Peternak Dock FAB ─────────────────────────────────────────────────────────
 function PeternakCenterFAB({ color, onClick }) {
   return (
@@ -238,10 +351,11 @@ function PeternakCenterFAB({ color, onClick }) {
 
 // ── Root component ─────────────────────────────────────────────────────────────
 export default function BottomNav() {
-  const { user, profile, profiles, tenant, switchTenant } = useAuth()
+  const { profile, profiles, tenant, switchTenant } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [fabMenuOpen, setFabMenuOpen] = useState(false)
   const { accentColor } = useTheme()
 
   // Centralized Business Vertical Resolution (SCALABLE ARCHITECTURE)
@@ -271,37 +385,46 @@ export default function BottomNav() {
     ]
   } else {
     // Dynamically adjust paths for Broker (poultry_broker, egg_broker, etc that use base broker layout)
-    const isBrokerUser = profile?.user_type === 'broker';
+    const isUserBroker = profile?.user_type === 'broker';
     const brokerBase = getBrokerBasePath(tenant);
-    
+
     allTabs = (model.bottomNav || []).map(tab => {
         // If the path already has a vertical segment (e.g. /broker/distributor_sembako/...), use it as is
         if (tab.path.startsWith('/broker/') && tab.path.split('/').length > 3) {
           return tab;
         }
-        
-        if (isBrokerUser && tab.path.startsWith('/broker/') && !tab.path.startsWith(brokerBase)) {
+
+        if (isUserBroker && tab.path.startsWith('/broker/') && !tab.path.startsWith(brokerBase)) {
            return { ...tab, path: tab.path.replace('/broker/', brokerBase + '/') }
         }
         return tab;
     })
   }
 
+  const brokerBase = getBrokerBasePath(tenant)
+
   let fabPath = null
   if (isPeternakFarm) {
     fabPath = `${peternakBase}/kandang/${currentFarmId}/input`
   } else if (model.fabPath) {
     fabPath = model.fabPath
-    
-    const brokerBase = getBrokerBasePath(tenant);
     if (profile?.user_type === 'broker' && fabPath.startsWith('/broker/') && !fabPath.startsWith(brokerBase)) {
       fabPath = fabPath.replace('/broker/', brokerBase + '/')
     }
   }
 
+  const sembakoSpeedItems = isSembako ? [
+    { label: 'Buat Transaksi',     icon: Receipt, onClick: () => { setFabMenuOpen(false); navigate(`${brokerBase}/penjualan?action=new`) } },
+    { label: 'Tambah Produk',      icon: Package, onClick: () => { setFabMenuOpen(false); navigate(`${brokerBase}/produk?action=new`) } },
+    { label: 'Tambah Toko',        icon: Store,   onClick: () => { setFabMenuOpen(false); navigate(`${brokerBase}/toko-supplier`) } },
+    { label: 'Tambah Pengeluaran', icon: Wallet,  onClick: () => { setFabMenuOpen(false); navigate(`${brokerBase}/laporan`) } },
+  ] : null
+
   // Role-based filtering — use model.category (already resolved) rather than profile.user_type
   // which may be 'superadmin' when an admin browses a peternak dashboard
   const isPeternakUser = profile?.user_type === 'peternak' || model?.category === 'peternak'
+  const isBrokerUser = profile?.user_type === 'broker' || model?.category === 'broker'
+  const useFloatingDock = isPeternakUser || isBrokerUser
   const pp = isPeternakUser ? peternakPermissions(profile?.role) : null
 
   // Hide FAB for peternak roles that can't input
@@ -396,6 +519,18 @@ export default function BottomNav() {
       )
     }
 
+    if (isBrokerUser) {
+      return (
+        <BrokerNavItem
+          key={tab.path}
+          tab={tab}
+          active={active}
+          color={tabColor}
+          onClick={() => handleTabClick(tab)}
+        />
+      )
+    }
+
     return (
       <NavItem
         key={tab.path}
@@ -409,8 +544,27 @@ export default function BottomNav() {
 
   return (
     <>
+      {/* Sembako FAB backdrop — rendered outside <nav> so it doesn't get clipped by nav's stacking context */}
+      <AnimatePresence>
+        {fabMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            onClick={() => setFabMenuOpen(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 3490,
+              background: 'rgba(0,0,0,0.55)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+            }}
+          />
+        )}
+      </AnimatePresence>
+
       <nav
-        style={isPeternakUser ? {
+        style={useFloatingDock ? {
           // Floating dock pill
           position: 'fixed',
           bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
@@ -451,11 +605,20 @@ export default function BottomNav() {
           overflow: 'visible',
         }}
       >
-        {isPeternakUser ? (
+        {useFloatingDock ? (
           hasFab ? (
             <>
               {leftTabs.map(renderTab)}
-              <PeternakCenterFAB color={color} onClick={() => navigate(fabPath)} />
+              {isSembako ? (
+                <SembakoSpeedDial
+                  color={color}
+                  open={fabMenuOpen}
+                  onToggle={() => setFabMenuOpen(v => !v)}
+                  items={sembakoSpeedItems}
+                />
+              ) : (
+                <PeternakCenterFAB color={color} onClick={() => navigate(fabPath)} />
+              )}
               {rightTabs.map(renderTab)}
             </>
           ) : (

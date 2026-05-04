@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import {
     Truck, User, Plus, Filter,
     MoreHorizontal, Edit2, Trash2,
@@ -225,43 +226,29 @@ export default function Armada() {
         >
             {/* Header Mobile Only */}
             {!isDesktop && (
-                <header className="h-14 px-4 flex items-center justify-between sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-40 border-b border-white/5">
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => setSidebarOpen?.(true)}
-                            className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+                <BrokerMobileHeader
+                    title="Armada & Sopir"
+                    onMenuClick={() => setSidebarOpen?.(true)}
+                    rightElement={
+                        <Button
+                            size="sm"
+                            disabled={activeTab === 'kendaraan' ? vehicleLimitReached : driverLimitReached}
+                            title={(activeTab === 'kendaraan' ? vehicleLimitReached : driverLimitReached) ? 'Limit Starter: maks 1. Upgrade ke Pro.' : undefined}
+                            className={cn(
+                                "h-9 px-3 rounded-xl text-white font-black text-xs uppercase tracking-widest transition-all active:scale-95",
+                                (activeTab === 'kendaraan' ? vehicleLimitReached : driverLimitReached)
+                                    ? "bg-white/[0.06] opacity-40 cursor-not-allowed"
+                                    : "bg-emerald-500 hover:bg-emerald-600"
+                            )}
+                            onClick={() => {
+                                if (activeTab === 'kendaraan') { setEditingVehicle(null); setIsVehicleSheetOpen(true) }
+                                else { setEditingDriver(null); setIsDriverSheetOpen(true) }
+                            }}
                         >
-                            <Menu size={16} className="text-[#94A3B8]" />
-                        </button>
-                        <h1 className="font-display text-[15px] font-black tracking-tight uppercase">Armada & Sopir</h1>
-                    </div>
-                    <Button
-                        size="sm"
-                        disabled={activeTab === 'kendaraan' ? vehicleLimitReached : driverLimitReached}
-                        title={
-                            (activeTab === 'kendaraan' ? vehicleLimitReached : driverLimitReached)
-                                ? 'Limit Starter: maks 1. Upgrade ke Pro.'
-                                : undefined
-                        }
-                        className={cn(
-                            "h-9 px-3 rounded-xl text-white font-black text-xs uppercase tracking-widest transition-all active:scale-95",
-                            (activeTab === 'kendaraan' ? vehicleLimitReached : driverLimitReached)
-                                ? "bg-white/[0.06] opacity-40 cursor-not-allowed"
-                                : "bg-emerald-500 hover:bg-emerald-600"
-                        )}
-                        onClick={() => {
-                            if (activeTab === 'kendaraan') {
-                                setEditingVehicle(null)
-                                setIsVehicleSheetOpen(true)
-                            } else {
-                                setEditingDriver(null)
-                                setIsDriverSheetOpen(true)
-                            }
-                        }}
-                    >
-                        <Plus size={15} strokeWidth={3} className="mr-1" /> Tambah
-                    </Button>
-                </header>
+                            <Plus size={15} strokeWidth={3} className="mr-1" /> Tambah
+                        </Button>
+                    }
+                />
             )}
 
             <div className={cn("px-5 max-w-5xl mx-auto", isDesktop ? "pt-8 space-y-8" : "pt-4 space-y-5")}>

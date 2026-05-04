@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useOutletContext } from 'react-router-dom'
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import {
   Plus, Search, MapPin, ChevronRight, Warehouse, Menu,
   Trash2, Edit, Star, Calendar, Info, AlertTriangle,
@@ -102,45 +103,34 @@ export default function Kandang() {
         className="bg-[#06090F] min-h-screen pb-24"
     >
       {/* TopBar */}
-      <header className={cn("border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30", isDesktop ? "px-5 pt-8 pb-4 flex flex-col gap-1" : "h-14 px-4 flex items-center justify-between")}>
-        {isDesktop ? (
+      {!isDesktop && (
+        <BrokerMobileHeader
+          title="Kandang"
+          onMenuClick={() => setSidebarOpen?.(true)}
+          rightElement={
+            <Button size="sm" onClick={() => { setEditingFarm(null); setOpenModal(true); }}
+              className="h-9 px-3 bg-[#10B981] hover:bg-emerald-600 text-white font-black rounded-xl gap-1.5 border-none active:scale-95 transition-transform uppercase text-xs tracking-widest"
+            >
+              <Plus size={15} strokeWidth={3} /> Tambah
+            </Button>
+          }
+        />
+      )}
+      {isDesktop && (
+        <header className="px-5 pt-8 pb-4 border-b border-white/5 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 flex flex-col gap-1">
           <div className="flex justify-between items-center">
             <div className="text-left">
               <h1 className="font-display text-2xl font-black text-white tracking-tight uppercase">Kandang</h1>
               <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mt-1">{safeNumber(totalEkor).toLocaleString('id-ID')} ekor tersedia</p>
             </div>
-            <Button
-              size="sm"
-              onClick={() => { setEditingFarm(null); setOpenModal(true); }}
+            <Button size="sm" onClick={() => { setEditingFarm(null); setOpenModal(true); }}
               className="bg-[#10B981] hover:bg-emerald-600 text-white font-black rounded-xl h-10 px-5 gap-2 border-none shadow-[0_4px_20px_rgba(16,185,129,0.15)] active:scale-95 transition-transform uppercase text-xs tracking-widest"
             >
               <Plus size={16} strokeWidth={3} /> Tambah
             </Button>
           </div>
-        ) : (
-          <>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setSidebarOpen?.(true)}
-                className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center shrink-0 active:scale-90 transition-transform"
-              >
-                <Menu size={16} className="text-[#94A3B8]" />
-              </button>
-              <div>
-                <h1 className="font-display text-[15px] font-black text-white tracking-tight uppercase leading-none">Kandang</h1>
-                <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mt-0.5">{safeNumber(totalEkor).toLocaleString('id-ID')} ekor</p>
-              </div>
-            </div>
-            <Button
-              size="sm"
-              onClick={() => { setEditingFarm(null); setOpenModal(true); }}
-              className="h-9 px-3 bg-[#10B981] hover:bg-emerald-600 text-white font-black rounded-xl gap-1.5 border-none active:scale-95 transition-transform uppercase text-xs tracking-widest"
-            >
-              <Plus size={15} strokeWidth={3} /> Tambah
-            </Button>
-          </>
-        )}
-      </header>
+        </header>
+      )}
 
       {/* Province Warning */}
       <ProvinceWarningBanner

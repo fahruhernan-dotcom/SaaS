@@ -76,12 +76,12 @@ export function SembakoSaleDetailSheet({ isOpen, onOpenChange, sale, onEdit }) {
                 <p style={{ fontSize: '11px', color: C.muted, marginTop: '4px' }}>{sale.invoice_number} - {fmtDate(sale.transaction_date)}</p>
               </div>
               <Badge className={cn(
-                "rounded-full px-3 py-1 border-none font-black text-[10px] uppercase tracking-wider",
+                "rounded-full px-3 py-1 border-none font-black text-[10px] uppercase tracking-wider pointer-events-none",
                 sale.payment_status === 'lunas' ? 'bg-emerald-500/10 text-emerald-400' :
-                sale.payment_status === 'sebagian' ? 'bg-amber-500/10 text-amber-500' :
-                'bg-red-500/10 text-red-500'
+                sale.payment_status === 'sebagian' ? 'bg-amber-500/10 text-amber-400' :
+                'bg-red-500/10 text-red-400'
               )}>
-                {sale.payment_status?.toUpperCase() || '-'}
+                {sale.payment_status === 'lunas' ? 'LUNAS' : sale.payment_status === 'sebagian' ? 'SEBAGIAN' : 'BELUM LUNAS'}
               </Badge>
             </div>
           </SheetHeader>

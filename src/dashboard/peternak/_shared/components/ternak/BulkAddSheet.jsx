@@ -4,8 +4,10 @@ import { X, Plus, Trash2 } from 'lucide-react'
 import { useForm, Controller, useFieldArray } from 'react-hook-form'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { InputRupiah } from '@/components/ui/InputRupiah'
+import { InputNumber } from '@/components/ui/InputNumber'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { BreedCombobox } from './BreedCombobox'
+import { toast } from 'sonner'
 
 // Props:
 //   batchId          — string
@@ -49,6 +51,11 @@ export function BulkAddSheet({ batchId, animalsCount, onBulkAdd, isPending, anim
   const onSubmit = (data) => {
     const valid = data.rows.filter(r => r.ear_tag && (r.entry_weight_kg || r.purchase_price_idr))
     if (!valid.length) return
+    const missingPrice = valid.filter(r => !r.purchase_price_idr || r.purchase_price_idr <= 0)
+    if (missingPrice.length > 0) {
+      toast.error('Harga Beli wajib diisi untuk seluruh ternak agar HPP akurat!')
+      return
+    }
     onBulkAdd({ batch_id: batchId, animals: valid }, { onSuccess: onClose })
   }
 
@@ -115,20 +122,19 @@ export function BulkAddSheet({ batchId, animalsCount, onBulkAdd, isPending, anim
                   <td className="py-2.5 px-3">
                     <div className="relative">
                       <Controller control={control} name={`rows.${i}.entry_weight_kg`} render={({ field }) => (
-                        <input
-                          {...field} type="number" step="0.1"
-                          onChange={e => {
-                            field.onChange(e.target.value)
+                        <InputNumber
+                          value={field.value}
+                          onChange={val => {
+                            field.onChange(val)
                             const pkg = parseFloat(watch(`rows.${i}.price_per_kg`))
-                            const w   = parseFloat(e.target.value)
-                            if (!isNaN(w) && !isNaN(pkg) && w > 0 && pkg > 0)
-                              setValue(`rows.${i}.purchase_price_idr`, Math.round(w * pkg))
+                            if (!isNaN(val) && !isNaN(pkg) && val > 0 && pkg > 0)
+                              setValue(`rows.${i}.purchase_price_idr`, Math.round(val * pkg))
                           }}
-                          className="bg-transparent text-white text-[13px] font-black outline-none border-b border-white/5 focus:border-green-500/50 w-full text-right pr-4 font-['Sora']"
+                          className="bg-transparent text-white text-[13px] font-black outline-none border-b border-white/5 focus:border-green-500/50 w-full text-right pr-4 font-['Sora'] h-8 rounded-none px-0"
                           placeholder="0"
+                          suffix="kg"
                         />
                       )} />
-                      <span className="absolute right-0 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#4B6478]">kg</span>
                     </div>
                   </td>
                   <td className="py-2.5 px-3">

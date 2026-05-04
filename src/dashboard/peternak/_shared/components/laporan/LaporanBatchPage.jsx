@@ -142,6 +142,7 @@ export default function LaporanBatchPage({
                 sales={sales}
                 feedLogs={feedLogs}
                 opCosts={opCosts}
+                healthLogs={healthLogs}
               />
             )}
             {tab === 'pakan'     && (

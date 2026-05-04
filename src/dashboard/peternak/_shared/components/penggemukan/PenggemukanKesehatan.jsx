@@ -14,6 +14,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
 import { DISEASE_DB, SEVERITY_CFG } from '../../data/diseaseDatabase'
+import { InputRupiah } from '@/components/ui/InputRupiah'
+import { InputNumber } from '@/components/ui/InputNumber'
 
 // ─── Log type config (covers all species) ─────────────────────────────────────
 
@@ -238,7 +240,7 @@ export function PenggemukanKesehatan({ config, hooks }) {
     medicine_name: '', medicine_dose: '', vaccine_name: '', vaccine_next_due: '',
     action_taken: '', outcome: '', handled_by: '',
     death_cause: '', death_weight_kg: '', loss_value_idr: '',
-    notes: '',
+    notes: '', treatment_cost_idr: '',
   }
   const [form, setForm] = useState(emptyForm)
 
@@ -288,6 +290,7 @@ export function PenggemukanKesehatan({ config, hooks }) {
       payload.animal_id = form.animal_id === 'null' || !form.animal_id ? null : form.animal_id
       if (form.death_weight_kg) payload.death_weight_kg = parseFloat(form.death_weight_kg)
       if (form.loss_value_idr)  payload.loss_value_idr  = parseInt(form.loss_value_idr)
+      if (form.treatment_cost_idr) payload.treatment_cost_idr = parseInt(form.treatment_cost_idr)
       await addLog.mutateAsync(payload)
       toast.success('Log kesehatan berhasil disimpan')
       setShowAdd(false)
@@ -876,21 +879,22 @@ export function PenggemukanKesehatan({ config, hooks }) {
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-2 ml-1 tracking-widest">Bobot Saat Mati (kg)</label>
-                            <input
-                              type="number" step="0.1" placeholder="28.0"
+                            <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-2 ml-1 tracking-widest">Bobot Saat Mati</label>
+                            <InputNumber
                               value={form.death_weight_kg}
-                              onChange={e => setForm({ ...form, death_weight_kg: e.target.value })}
-                              className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-green-500/50"
+                              onChange={val => setForm({ ...form, death_weight_kg: val })}
+                              placeholder="28.0"
+                              suffix="kg"
+                              className="bg-white/[0.03] border-white/10 rounded-2xl h-[52px]"
                             />
                           </div>
                           <div>
                             <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-2 ml-1 tracking-widest">Nilai Kerugian (Rp)</label>
-                            <input
-                              type="number" placeholder="1800000"
+                            <InputRupiah
                               value={form.loss_value_idr}
-                              onChange={e => setForm({ ...form, loss_value_idr: e.target.value })}
-                              className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-green-500/50"
+                              onChange={val => setForm({ ...form, loss_value_idr: val })}
+                              placeholder="1.800.000"
+                              className="bg-white/[0.03] border-white/10 rounded-2xl h-[52px]"
                             />
                           </div>
                         </div>
@@ -908,6 +912,16 @@ export function PenggemukanKesehatan({ config, hooks }) {
                     </div>
                   </>
                 )}
+
+                <div>
+                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-2 ml-1 tracking-widest">Biaya Medis (Rp) <span className="normal-case opacity-70 font-medium">- Opsional</span></label>
+                  <InputRupiah
+                    value={form.treatment_cost_idr}
+                    onChange={val => setForm({ ...form, treatment_cost_idr: val })}
+                    placeholder="0"
+                    className="bg-white/[0.03] border-white/10 rounded-2xl h-[52px]"
+                  />
+                </div>
 
                 <div>
                   <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-2 ml-1 tracking-widest">Catatan Tambahan</label>

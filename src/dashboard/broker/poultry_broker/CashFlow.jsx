@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import { 
     TrendingUp, TrendingDown, Wallet, 
     Calendar, ArrowUpRight, ArrowDownRight, 
@@ -433,8 +434,9 @@ export default function CashFlow() {
             animate={{ opacity: 1 }}
             className={cn("bg-[#06090F] min-h-screen text-[#F1F5F9] pb-24 selection:bg-emerald-500/30", isDesktop && "pb-10")}
         >
+            {!isDesktop && <BrokerMobileHeader title="Cash Flow" />}
 
-            <div className="px-5 pt-8 max-w-5xl mx-auto space-y-8">
+            <div className={cn("px-5 max-w-5xl mx-auto space-y-8", isDesktop ? "pt-8" : "pt-4")}>
                 {/* --- SECTION 1: HEADER --- */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div className="space-y-1.5">

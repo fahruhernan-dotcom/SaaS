@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import { motion } from 'framer-motion'
+import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus, Package, ShoppingCart, History, TrendingUp, Users, Building2, ArrowRight } from 'lucide-react'
@@ -41,7 +42,9 @@ export default function EggBeranda() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   return (
-    <div className={cn("bg-[#06090F] min-h-screen pb-24 text-left", isDesktop ? "p-10 space-y-10" : "p-5 pt-10 space-y-8")}>
+    <div className={cn("bg-[#06090F] min-h-screen pb-24 text-left", isDesktop ? "p-10 space-y-10" : "space-y-8")}>
+      {!isDesktop && <BrokerMobileHeader showGreeting businessLabel="Broker Telur" />}
+      <div className={cn(isDesktop ? "" : "p-5")}>
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -125,6 +128,7 @@ export default function EggBeranda() {
                 color="text-amber-400"
             />
         </Card>
+      </div>
       </div>
     </div>
   )
