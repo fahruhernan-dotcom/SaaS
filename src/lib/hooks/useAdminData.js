@@ -83,7 +83,21 @@ export const useConfirmInvoice = () => {
         confirmedBy = prof?.id ?? null
       }
 
-      // 1. Update invoice status → paid
+      // 1. Capture base date BEFORE updating invoice — must happen before the DB trigger fires
+      //    to avoid double-extend (trigger + frontend both extending from already-extended date)
+      let baseDate = new Date()
+      if (!plan.startsWith('addon_')) {
+        const { data: currentTenant } = await supabase
+          .from('tenants')
+          .select('plan_expires_at')
+          .eq('id', tenantId)
+          .single()
+        if (currentTenant?.plan_expires_at && new Date(currentTenant.plan_expires_at) > new Date()) {
+          baseDate = new Date(currentTenant.plan_expires_at)
+        }
+      }
+
+      // 2. Update invoice status → paid (DB trigger fires here, uses same base date we captured)
       const { error: invoiceErr } = await supabase
         .from('subscription_invoices')
         .update({
@@ -96,7 +110,7 @@ export const useConfirmInvoice = () => {
         .eq('id', invoiceId)
       if (invoiceErr) throw invoiceErr
 
-      // 2. Specialized Fulfillment
+      // 3. Specialized Fulfillment
       // If it's an add-on (e.g. addon_business_slot), we update profiles, not tenants.
       if (plan.startsWith('addon_')) {
         if (plan === 'addon_business_slot') {
@@ -120,16 +134,7 @@ export const useConfirmInvoice = () => {
         return // Stop here for addons
       }
 
-      // 3. Regular Plan Fulfillment (Pro/Business)
-      const { data: currentTenant } = await supabase
-        .from('tenants')
-        .select('plan_expires_at')
-        .eq('id', tenantId)
-        .single()
-
-      const baseDate = currentTenant?.plan_expires_at && new Date(currentTenant.plan_expires_at) > new Date()
-        ? new Date(currentTenant.plan_expires_at)
-        : new Date()
+      // 4. Regular Plan Fulfillment (Pro/Business)
 
       const newExpiry = new Date(baseDate)
       newExpiry.setMonth(newExpiry.getMonth() + billingMonths)
@@ -161,6 +166,29 @@ export const useConfirmInvoice = () => {
     onError: (error) => {
       toast.error('Gagal konfirmasi invoice: ' + error.message)
     }
+  })
+}
+
+export const useActivateTrial = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ tenantId, plan = 'pro', days = 7 }) => {
+      const { error } = await supabase.rpc('activate_plan_trial', {
+        p_tenant_id: tenantId,
+        p_plan:      plan,
+        p_days:      days,
+      })
+      if (error) throw error
+      return { plan, days }
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries(['profile'])
+      queryClient.invalidateQueries(['admin-tenants'])
+      toast.success(`Trial ${result?.plan === 'business' ? 'Business' : 'Pro'} ${result?.days ?? 7} hari berhasil diaktifkan! Selamat mencoba.`)
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Gagal mengaktifkan trial.')
+    },
   })
 }
 

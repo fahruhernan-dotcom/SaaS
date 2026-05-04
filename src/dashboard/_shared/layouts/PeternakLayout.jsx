@@ -7,11 +7,12 @@ import AppSidebar from '../components/AppSidebar'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useNotificationGenerator } from '@/lib/hooks/useNotifications.jsx'
 import { BusinessNameWarningBanner } from '../components/BusinessNameWarningBanner'
+import { PlanExpiryBanner } from '../components/PlanExpiryBanner'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import TopBar from '../components/TopBar'
 
 export default function PeternakLayout() {
-  const { profile, loading, tenant } = useAuth()
+  const { profile, loading, tenant, isSuperadmin } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   useNotificationGenerator()
@@ -77,6 +78,7 @@ export default function PeternakLayout() {
             <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           </SidebarProvider>
           <BusinessNameWarningBanner />
+          {!isSuperadmin && <PlanExpiryBanner tenant={tenant} />}
           <Outlet context={{ setSidebarOpen, setRightAction }} />
 
           <BottomNav />
@@ -87,6 +89,7 @@ export default function PeternakLayout() {
     return (
       <DesktopSidebarLayout>
         <BusinessNameWarningBanner />
+        {!isSuperadmin && <PlanExpiryBanner tenant={tenant} />}
         <Outlet context={{ setSidebarOpen, setRightAction }} />
       </DesktopSidebarLayout>
     )

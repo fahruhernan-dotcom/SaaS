@@ -12,6 +12,7 @@ import { useNotificationGenerator } from '@/lib/hooks/useNotifications.jsx'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { BusinessNameWarningBanner } from '../components/BusinessNameWarningBanner'
+import { PlanExpiryBanner } from '../components/PlanExpiryBanner'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import {
   useSembakoDashboardStats, useSembakoSales, useSembakoProducts,
@@ -203,13 +204,20 @@ export default function BrokerLayout() {
             <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           </SidebarProvider>
           <BusinessNameWarningBanner />
+          {!isSuperadmin && <PlanExpiryBanner tenant={tenant} />}
           <Outlet context={{ setSidebarOpen, setRightAction: () => {} }} />
           <BottomNav />
         </div>
       )
     }
 
-    return <DesktopSidebarLayout><BusinessNameWarningBanner /><Outlet context={{ setSidebarOpen }} /></DesktopSidebarLayout>
+    return (
+      <DesktopSidebarLayout>
+        <BusinessNameWarningBanner />
+        {!isSuperadmin && <PlanExpiryBanner tenant={tenant} />}
+        <Outlet context={{ setSidebarOpen }} />
+      </DesktopSidebarLayout>
+    )
   }
 
   return (

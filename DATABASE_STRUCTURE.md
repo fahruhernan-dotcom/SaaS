@@ -39,8 +39,8 @@
 ✅ Admin UI: Gunakan Lucide icons (Bird, Egg, Home, Factory), JANGAN emoji.
 ✅ sembako_employees: status pegawai pakai kolom `status` (text: `'aktif'` | `'nonaktif'`) — BUKAN `is_active` boolean. Filter aktif: `.eq('status', 'aktif')` atau `e.status === 'aktif'` di frontend.
 ✅ sembako_products: punya kolom `secondary_unit` (text, nullable) dan `conversion_rate` (numeric, nullable) — ditambahkan via migration `20260401_sembako_products_unit_conversion.sql`. Konversi empty string ke null sebelum insert: `conversion_rate: form.conversion_rate ? Number(form.conversion_rate) : null`.
-✅ sembako_stock_out: kolom `qty_keluar` (BUKAN `qty_out`). Kolom `reason` ADA (`'sale'` | `'expired'` | `'adjustment'`). Wajib diinsert saat FIFO penjualan — dipakai untuk reversal saat delete sale.
-⚠️ FIFO penjualan WAJIB insert ke `sembako_stock_out`: Setiap deduction batch di `useCreateSembakoSale` HARUS diikuti insert ke `sembako_stock_out` (batch_id, qty_keluar, sale_id, reason='sale'). Tanpa ini, `useDeleteSembakoSale` tidak bisa restore stok ke batch yang benar.
+✅ sembako_stock_out: kolom `qty_keluar` (BUKAN `qty_out`). Kolom `reason` TIDAK ADA di DB — jangan insert field ini. Kolom aktual: tenant_id, product_id, batch_id, sale_item_id, sale_id, qty_keluar, buy_price, is_deleted.
+⚠️ FIFO penjualan WAJIB insert ke `sembako_stock_out`: Setiap deduction batch di `useCreateSembakoSale` HARUS diikuti insert ke `sembako_stock_out` (batch_id, qty_keluar, sale_id). Tanpa ini, `useDeleteSembakoSale` tidak bisa restore stok ke batch yang benar.
 ⚠️ sembako_deliveries: Sebelumnya punya RLS policy `sembako_deliveries_all` yang memakai `my_tenant_id()` + `my_role()` (berbeda dari `get_my_tenant_id()`). Sudah diganti bulletproof pattern via `20260401_fix_all_rls_bulletproof.sql`.
 ⚠️ broker_connections tidak punya `is_deleted` — delete langsung jika cancel
 ```
@@ -1488,9 +1488,9 @@ Hasil di-transform ke `{ broker: { pro: { price, originalPrice, id }, business: 
 | `is_deleted` | boolean | nullable |
 | `created_at` | timestamptz | |
 
-> ✅ Kolom `reason` ADA (`'sale'` | `'expired'` | `'adjustment'`) — dokumentasi lama SALAH.
+> ❌ Kolom `reason` TIDAK ADA di DB — jangan insert field ini (akan menyebabkan 400 Bad Request).
 > ✅ Kolom `qty_keluar` (BUKAN `qty_out`) — nama kolom ini wajib dipakai di semua query dan insert.
-> ⚠️ **WAJIB insert saat FIFO penjualan**: Setiap kali `useCreateSembakoSale` mengurangi `qty_sisa` di sebuah batch, HARUS insert satu record ke tabel ini (`batch_id`, `sale_id`, `qty_keluar`, `reason: 'sale'`). Tanpa ini, `useDeleteSembakoSale` tidak bisa mengembalikan stok ke batch yang benar saat sale dihapus.
+> ⚠️ **WAJIB insert saat FIFO penjualan**: Setiap kali `useCreateSembakoSale` mengurangi `qty_sisa` di sebuah batch, HARUS insert satu record ke tabel ini (`batch_id`, `sale_id`, `qty_keluar`, `buy_price`). Tanpa ini, `useDeleteSembakoSale` tidak bisa mengembalikan stok ke batch yang benar saat sale dihapus.
 > ⚠️ `is_deleted` ada di tabel ini tapi tidak difilter di query normal. Hapus dengan `.delete()` saat sale di-delete (hard delete record stock_out).
 > ⚠️ **RLS (Bulletproof)**: Memiliki policy `tenant_isolation_sembako_stock_out` via `20260401_fix_all_rls_bulletproof.sql`.
 > ⚠️ **Frontend Hook**: `useSembakoStockOut` wajib `.eq('tenant_id', tenant.id)` via `useAuth()`.

@@ -19,12 +19,12 @@ export function SembakoSuccessCard({ isOpen, onClose, data, onPrint }) {
 
   return (
     <Sheet open={isOpen} onOpenChange={handleSheetClose}>
-      <SheetContent side="bottom" style={{ background: C.bg, maxWidth: '100%', height: 'auto', maxHeight: '90vh', padding: '0', borderRadius: '24px 24px 0 0', display: 'flex', flexDirection: 'column' }}>
+      <SheetContent side="bottom" style={{ background: C.bg, maxWidth: '100%', height: 'auto', maxHeight: '90vh', padding: '0', borderRadius: '24px 24px 0 0', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <SheetHeader className="sr-only">
           <SheetTitle>Penjualan Berhasil</SheetTitle>
           <SheetDescription>Ringkasan transaksi penjualan sembako yang baru saja disimpan.</SheetDescription>
         </SheetHeader>
-        <div style={{ flex: 1, padding: '32px 24px', overflowY: 'auto' }}>
+        <div style={{ flex: 1, minHeight: 0, padding: '32px 24px', overflowY: 'auto' }}>
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}

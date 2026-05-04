@@ -478,7 +478,7 @@ export default function AdminUsers() {
 
                               {/* Membership Role Badges (Subtle) */}
                               <div className="flex flex-wrap gap-2">
-                                {Array.from(new Set(u.profiles.map(p => p.user_type === 'superadmin' ? 'superadmin' : p.role))).map(role => (
+                                {Array.from(new Set(u.profiles.map(p => p.role === 'superadmin' ? 'owner' : p.role))).map(role => (
                                   <RoleBadge key={role} role={role} />
                                 ))}
                               </div>
@@ -589,7 +589,7 @@ export default function AdminUsers() {
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-2 mt-0.5">
-                                    <RoleBadge role={p.user_type === 'superadmin' ? 'superadmin' : p.role} />
+                                    <RoleBadge role={p.role === 'superadmin' ? 'owner' : p.role} />
                                     <span className="text-[10px] font-bold text-[#4B6478] uppercase">
                                       {toTitleCase(p.tenants?.business_vertical)}
                                     </span>
@@ -829,7 +829,7 @@ export default function AdminUsers() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="text-[12px] font-bold text-white truncate">{toTitleCase(p.full_name) || '-'}</p>
-                              <RoleBadge role={p.user_type === 'superadmin' ? 'superadmin' : p.role} />
+                              <RoleBadge role={p.role === 'superadmin' ? 'owner' : p.role} />
                             </div>
                             <p className="text-[10px] text-[#4B6478] font-bold uppercase mt-0.5 tracking-tighter">
                               Aktif {p.last_seen_at ? formatDistanceToNow(new Date(p.last_seen_at), { addSuffix: true, locale: localeId }) : 'Baru-baru ini'}
@@ -903,7 +903,7 @@ export default function AdminUsers() {
 
 function TenantMobileCard({ tenant, onDetail, onStatusChange }) {
   const getOwnerDisplay = () => {
-    const owner = tenant.profiles?.find(p => p.role === 'owner')
+    const owner = tenant.profiles?.find(p => p.role === 'owner' || p.role === 'superadmin')
     if (owner) return toTitleCase(owner.full_name)
     const firstMember = tenant.profiles?.[0]
     if (firstMember) return `${toTitleCase(firstMember.full_name)} (Member)`
@@ -973,7 +973,7 @@ function UserMobileCard({ user, onClick }) {
           <div className="min-w-0">
              <p className="text-[14px] font-black text-white leading-tight truncate">{toTitleCase(user.name) || '(Tanpa Nama)'}</p>
              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                {Array.from(new Set(user.profiles.map(p => p.role))).slice(0, 2).map(role => (
+                {Array.from(new Set(user.profiles.map(p => p.role === 'superadmin' ? 'owner' : p.role))).slice(0, 2).map(role => (
                   <RoleBadge key={role} role={role} />
                 ))}
                 <span className="text-[9px] font-bold text-[#4B6478] uppercase">{user.uniqueTenants?.size || 0} Bisnis</span>
@@ -1154,7 +1154,7 @@ function ConfirmDeleteModal({ isOpen, onClose, onConfirm, user, confirmText, set
     return !lonelyTenants.includes(tenant?.business_name)
   }).map(p => ({ 
     name: p.tenants?.business_name, 
-    role: p.user_type === 'superadmin' ? 'superadmin' : p.role 
+    role: p.role === 'superadmin' ? 'owner' : p.role
   }))
 
   return (

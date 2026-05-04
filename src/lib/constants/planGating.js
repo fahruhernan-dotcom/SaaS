@@ -147,20 +147,23 @@ export const SEMBAKO_BROKER_PLAN_CONFIG = {
     tim: { allowed: false },
     pegawai: false,                    // planRequired: 'pro'
     laporan: false,                    // planRequired: 'pro'
+    multiGudang: false,                // planRequired: 'business'
   },
   pro: {
     penjualan: { allowed: true, quotaPerMonth: null },
     penjualanPdf: true,
-    tim: { allowed: true },
+    tim: { allowed: true, maxMembers: 3 },
     pegawai: true,
     laporan: true,
+    multiGudang: false,                // planRequired: 'business'
   },
   business: {
     penjualan: { allowed: true, quotaPerMonth: null },
     penjualanPdf: true,
-    tim: { allowed: true },
+    tim: { allowed: true, maxMembers: null },  // unlimited
     pegawai: true,
     laporan: true,
+    multiGudang: true,
   },
 }
 

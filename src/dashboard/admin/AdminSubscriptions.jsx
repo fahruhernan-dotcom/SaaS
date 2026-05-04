@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   CreditCard, Banknote, History, Search,
   CheckCircle2, XCircle, Clock, Check, ChevronRight,
-  ExternalLink, Globe, AlertCircle, AlertTriangle, Zap,
+  ExternalLink, Globe, AlertCircle, AlertTriangle, Zap, Loader2,
   Plus, Edit2, Trash2, Download, FileText, X, CalendarDays,
   Eye, EyeOff, Copy, Wifi, WifiOff,
   Bird, Egg, Home, Factory, Building2
@@ -606,241 +606,209 @@ export default function AdminSubscriptions() {
       </Tabs>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent side="right" className="w-full sm:w-[500px] bg-[#0A0F14]/95 backdrop-blur-2xl border-l border-white/5 p-0 overflow-hidden shadow-2xl">
+        <SheetContent side="right" className="w-full sm:w-[460px] bg-[#0A0F14] border-l border-white/5 p-0 overflow-hidden flex flex-col">
           <AnimatePresence>
             {selectedInvoice && (
-              <motion.div 
-                initial={{ opacity: 0, x: 20 }}
+              <motion.div
+                initial={{ opacity: 0, x: 16 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                className="flex flex-col h-full relative"
+                exit={{ opacity: 0, x: 16 }}
+                className="flex flex-col h-full"
               >
-                {/* Background glow for sheet */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 blur-[80px] rounded-full pointer-events-none" />
-
-                {/* Sheet Header — Fixed Top */}
-                <div className="p-8 pb-6 border-b border-white/5 bg-white/[0.01] relative z-20 shrink-0">
-                  <div className="flex items-center justify-between mb-4">
-                    {confirmSuccess ? (
-                      <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                        <Check size={14} className="text-emerald-400" />
-                        <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">Verified</p>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between w-full">
-                        <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em]">Payment Invoice</p>
-                        <StatusBadge status={selectedInvoice.status} />
-                      </div>
-                    )}
+                {/* ── Header ── */}
+                <div className="px-5 pt-5 pb-4 border-b border-white/5 shrink-0">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-widest mb-1">Invoice Pembayaran</p>
+                      <SheetTitle className="font-display font-black text-white text-xl leading-none">
+                        #{selectedInvoice.invoice_number}
+                      </SheetTitle>
+                    </div>
+                    <StatusBadge status={selectedInvoice.status} />
                   </div>
-                  
-                  <SheetTitle className="text-4xl font-display font-black text-white tracking-tighter leading-none mb-1">
-                    #{selectedInvoice.invoice_number}
-                  </SheetTitle>
-                  <SheetDescription className="text-[11px] font-bold text-[#4B6478] uppercase tracking-[0.2em] flex items-center gap-2">
-                    <CalendarDays size={12} /> Issued on {formatDate(selectedInvoice.created_at)}
+
+                  {/* Tenant row */}
+                  <div className="flex items-center gap-2.5 py-2.5 px-3 rounded-xl"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                  >
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[#4B6478]"
+                      style={{ background: 'rgba(255,255,255,0.05)' }}
+                    >
+                      {getVerticalIcon(selectedInvoice.tenants?.business_vertical)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-white text-sm truncate">{toTitleCase(selectedInvoice.tenants?.business_name) || '—'}</p>
+                      <p className="text-[10px] text-[#4B6478]">{selectedInvoice.tenants?.business_vertical?.replace(/_/g, ' ') || '—'}</p>
+                    </div>
+                    <PlanBadge plan={selectedInvoice.plan} />
+                  </div>
+
+                  <SheetDescription className="text-[11px] text-[#4B6478] mt-2 flex items-center gap-1.5">
+                    <CalendarDays size={11} />
+                    Dibuat {formatDate(selectedInvoice.created_at)}
+                    {selectedInvoice.billing_months > 1 && (
+                      <><span className="opacity-30">·</span> {selectedInvoice.billing_months} bulan</>
+                    )}
                   </SheetDescription>
                 </div>
 
-                {/* Scrollable Content Area */}
-                <div className="flex-1 overflow-y-auto p-8 space-y-10 relative z-10 scrollbar-hide bg-gradient-to-b from-white/[0.01] to-transparent">
-                  {/* Amount Section — High Impact Glass */}
-                  <div className="bg-emerald-500/10 border border-emerald-500/30 p-10 rounded-[48px] text-center space-y-4 relative overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] group/amount">
-                    <div className="absolute -right-10 -bottom-10 opacity-[0.03] group-hover/amount:opacity-[0.1] transition-all duration-1000 -rotate-12 group-hover:scale-110">
-                      <Banknote size={240} />
-                    </div>
-                    <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent shadow-[0_0_20px_rgba(16,185,129,0.5)]" />
-                    
-                    <p className="text-[11px] font-black text-emerald-400 uppercase tracking-[0.5em] leading-none mb-1 opacity-80">Total Premium Amount</p>
-                    <p className="text-6xl font-display font-black text-white tracking-tighter drop-shadow-[0_10px_10px_rgba(0,0,0,0.3)]">{formatIDR(selectedInvoice.amount)}</p>
-                    
-                    <div className="flex items-center justify-center gap-3 pt-4">
-                      <PlanBadge plan={selectedInvoice.plan} />
-                      <div className="h-6 w-px bg-white/10" />
-                      <span className="bg-white/5 px-3 py-1.5 rounded-xl text-[10px] font-black text-white/50 uppercase tracking-[0.2em] border border-white/5 shadow-inner">
-                        {selectedInvoice.billing_months} MONTHS
-                      </span>
-                      {selectedInvoice.payment_method && (
-                        <span className="bg-blue-500/15 px-3 py-1.5 rounded-xl text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
-                          {selectedInvoice.payment_method === 'manual' ? 'MANUAL TRANSFER' : selectedInvoice.payment_method.toUpperCase()}
-                        </span>
-                      )}
-                    </div>
+                {/* ── Amount banner ── */}
+                <div className="mx-5 mt-4 mb-1 rounded-2xl p-4 flex items-center justify-between"
+                  style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.2)' }}
+                >
+                  <div>
+                    <p className="text-[10px] font-bold text-emerald-500/60 uppercase tracking-widest mb-0.5">Total Tagihan</p>
+                    <p className="font-display font-black text-white text-3xl leading-none">{formatIDR(selectedInvoice.amount)}</p>
                   </div>
+                  {selectedInvoice.payment_method && (
+                    <span className="text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider"
+                      style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.2)', color: '#60A5FA' }}
+                    >
+                      {selectedInvoice.payment_method === 'manual' ? 'Transfer' : selectedInvoice.payment_method}
+                    </span>
+                  )}
+                </div>
 
-                  {/* Tenant Details Section */}
-                  <section className="space-y-4">
-                    <div className="flex items-center justify-between px-2">
-                      <h3 className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em]">Client Information</h3>
-                      <div className="h-px flex-1 mx-4 bg-white/5" />
-                    </div>
-                    
-                    <div className="bg-white/[0.03] border border-white/5 rounded-[40px] p-8 flex items-center justify-between group transition-all hover:bg-white/[0.05] hover:border-emerald-500/20 shadow-2xl cursor-default relative overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="flex items-center gap-6 relative z-10">
-                        <div className="w-20 h-20 rounded-[28px] bg-black/40 border border-white/5 flex items-center justify-center text-4xl shadow-inner group-hover:scale-105 group-hover:-rotate-3 transition-all duration-700">
-                          {getVerticalIcon(selectedInvoice.tenants?.business_vertical)}
-                        </div>
-                        <div>
-                          <p className="text-xl font-display font-black text-white leading-tight uppercase tracking-tight group-hover:text-emerald-400 transition-colors">
-                            {toTitleCase(selectedInvoice.tenants?.business_name)}
-                          </p>
-                          <div className="flex items-center gap-3 mt-2">
-                             <span className="bg-emerald-500/20 text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-md border border-emerald-500/20 uppercase">Active Client</span>
-                             <div className="w-1 h-1 rounded-full bg-white/20" />
-                             <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-[0.2em]">
-                               ID: {selectedInvoice.tenants?.id?.substring(0, 8)}
-                             </p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-[#4B6478] group-hover:text-emerald-400 group-hover:bg-emerald-500/10 transition-all border border-transparent group-hover:border-emerald-500/20 relative z-10">
-                        <ExternalLink size={18} />
-                      </div>
-                    </div>
-                  </section>
+                {/* ── Scrollable body ── */}
+                <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
 
-                  {/* Payment Proof Section */}
-                  <section className="space-y-4">
-                    <div className="flex items-center justify-between px-2">
-                      <h3 className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em]">Evidence Log</h3>
-                      <div className="h-px flex-1 mx-4 bg-white/5" />
-                    </div>
-                    
-                    <div className="bg-white/[0.03] border border-white/8 rounded-[32px] relative min-h-[220px] flex items-center justify-center overflow-hidden shadow-2xl group/proof">
+                  {/* Bukti Pembayaran */}
+                  <section>
+                    <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-widest mb-2">Bukti Transfer</p>
+                    <div className="rounded-2xl overflow-hidden"
+                      style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', minHeight: '160px' }}
+                    >
                       {selectedInvoice.payment_proof_url ? (
-                        <>
+                        <div className="relative">
                           <img
                             src={selectedInvoice.payment_proof_url}
                             alt="Bukti Pembayaran"
-                            className="w-full h-full absolute inset-0 object-cover opacity-30 group-hover/proof:opacity-60 transition-all duration-700 blur-[2px] group-hover/proof:blur-0"
+                            className="w-full object-cover max-h-48"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-[#0A0F14] via-transparent to-transparent opacity-60" />
-                          
-                          <div className="relative z-10 flex flex-col gap-3">
-                            <Button
-                              variant="secondary"
+                          <div className="flex gap-2 p-3" style={{ background: 'rgba(10,15,20,0.8)', backdropFilter: 'blur(8px)' }}>
+                            <Button size="sm" variant="secondary"
                               onClick={() => window.open(selectedInvoice.payment_proof_url, '_blank')}
-                              className="bg-white/10 hover:bg-emerald-500 hover:text-white backdrop-blur-md text-white border-white/10 h-11 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] transition-all px-6 shadow-2xl"
+                              className="flex-1 h-9 rounded-xl bg-white/10 hover:bg-emerald-500/20 text-white border-white/10 text-[11px] font-bold"
                             >
-                              <Globe size={14} className="mr-2" /> Preview Fullscreen
+                              <Globe size={12} className="mr-1.5" /> Lihat Penuh
                             </Button>
-                            <Button
-                              variant="outline"
+                            <Button size="sm" variant="outline"
                               onClick={() => {
                                 const a = document.createElement('a')
                                 a.href = selectedInvoice.payment_proof_url
-                                a.download = `TERNAKOS-INVOICE-${selectedInvoice.invoice_number}`
+                                a.download = `bukti-${selectedInvoice.invoice_number}`
                                 a.click()
                               }}
-                              className="bg-black/40 hover:bg-white/10 border-white/5 text-white/60 hover:text-white h-11 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] transition-all px-6"
+                              className="h-9 rounded-xl border-white/10 bg-white/5 text-[#4B6478] hover:text-white text-[11px] font-bold px-3"
                             >
-                              <Download size={14} className="mr-2" /> Archive Proof
+                              <Download size={12} />
                             </Button>
                           </div>
-                        </>
+                        </div>
                       ) : (
-                        <div className="text-center space-y-3 opacity-30 group-hover/proof:opacity-50 transition-opacity p-8">
-                          <div className="w-16 h-16 rounded-full border-2 border-dashed border-[#4B6478] flex items-center justify-center mx-auto mb-2">
-                            <AlertCircle size={28} className="text-[#4B6478]" />
-                          </div>
-                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#4B6478] leading-relaxed">Evidence not yet<br/>provided by tenant</p>
+                        <div className="flex flex-col items-center justify-center py-8 opacity-40">
+                          <AlertCircle size={24} className="text-[#4B6478] mb-2" />
+                          <p className="text-[11px] text-[#4B6478] font-bold">Belum ada bukti transfer</p>
                         </div>
                       )}
                     </div>
                   </section>
 
-                  {/* Log Confirmation */}
-                  {selectedInvoice.confirmed_at && (
-                    <section className="space-y-4">
-                      <div className="flex items-center justify-between px-2">
-                        <h3 className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em]">Confirmation Trail</h3>
-                        <div className="h-px flex-1 mx-4 bg-white/5" />
+                  {/* Catatan invoice */}
+                  {selectedInvoice.notes && (
+                    <section>
+                      <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-widest mb-2">Catatan</p>
+                      <div className="rounded-xl px-4 py-3 text-[13px] text-[#94A3B8]"
+                        style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
+                      >
+                        {selectedInvoice.notes}
                       </div>
-                      
-                      <div className="bg-emerald-500/5 border border-emerald-500/15 rounded-[24px] p-6 space-y-4 shadow-inner relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-4 opacity-10">
-                           <CheckCircle2 size={60} className="text-emerald-400" />
+                    </section>
+                  )}
+
+                  {/* Riwayat konfirmasi */}
+                  {selectedInvoice.confirmed_at && (
+                    <section>
+                      <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-widest mb-2">Riwayat Konfirmasi</p>
+                      <div className="flex items-center gap-3 p-3 rounded-xl"
+                        style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)' }}
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                          <Check size={14} strokeWidth={3} />
                         </div>
-                        <div className="flex items-center gap-4 relative z-10">
-                          <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 border border-emerald-500/30 shadow-xl">
-                            <Check size={20} strokeWidth={3} />
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-white uppercase tracking-tight">Invoice Confirmed</p>
-                            <p className="text-[11px] text-emerald-500/80 font-bold uppercase tracking-widest mt-0.5">
-                              {formatDate(selectedInvoice.confirmed_at)} @ {format(new Date(selectedInvoice.confirmed_at), 'HH:mm')}
-                            </p>
-                          </div>
+                        <div>
+                          <p className="text-[13px] font-bold text-white">Pembayaran Dikonfirmasi</p>
+                          <p className="text-[11px] text-emerald-500/70">
+                            {formatDate(selectedInvoice.confirmed_at)} pukul {format(new Date(selectedInvoice.confirmed_at), 'HH:mm')}
+                          </p>
                         </div>
                       </div>
                     </section>
                   )}
+
+                  {/* Paid info */}
+                  {selectedInvoice.status === 'paid' && selectedInvoice.paid_at && (
+                    <section>
+                      <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-widest mb-2">Tanggal Bayar</p>
+                      <p className="text-[13px] text-white px-1">{formatDate(selectedInvoice.paid_at)}</p>
+                    </section>
+                  )}
                 </div>
 
-                {/* Footer Actions — Sticky Bottom with High Gloss Glass */}
+                {/* ── Footer actions ── */}
                 {selectedInvoice.status === 'pending' && (() => {
-                  const isXenditInvoice = selectedInvoice.payment_method === 'xendit' || !!selectedInvoice.xendit_invoice_id
+                  const isXendit = selectedInvoice.payment_method === 'xendit' || !!selectedInvoice.xendit_invoice_id
                   return (
-                    <div className="p-8 border-t border-white/10 bg-[#0A0F14]/90 backdrop-blur-xl relative z-30 shrink-0 shadow-[0_-20px_40px_rgba(0,0,0,0.4)]">
-                      {isXenditInvoice ? (
-                        <div className="flex items-start gap-4 bg-amber-500/5 border border-amber-500/20 rounded-3xl p-5 shadow-inner">
-                          <div className="w-10 h-10 rounded-2xl bg-amber-500/20 flex items-center justify-center shrink-0 border border-amber-500/20 shadow-xl">
-                            <Zap size={18} className="text-amber-400" />
-                          </div>
-                          <div className="space-y-1">
-                            <p className="text-[12px] font-black text-amber-300 uppercase tracking-widest leading-none">Automated Gateway</p>
-                            <p className="text-[11px] font-bold text-amber-400/50 leading-relaxed uppercase tracking-tighter">
-                              Processing via Xendit. Confirmation will trigger via Webhook.
-                            </p>
+                    <div className="px-5 py-4 border-t border-white/5 bg-[#0A0F14] shrink-0 space-y-3">
+                      {isXendit ? (
+                        <div className="flex items-center gap-3 p-3 rounded-xl"
+                          style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)' }}
+                        >
+                          <Zap size={16} className="text-amber-400 shrink-0" />
+                          <div>
+                            <p className="text-[12px] font-bold text-amber-300">Xendit Gateway</p>
+                            <p className="text-[11px] text-amber-400/60">Konfirmasi otomatis via webhook saat pembayaran berhasil.</p>
                           </div>
                         </div>
                       ) : (
                         <>
-                          <div className="space-y-2.5">
-                            <label htmlFor="confirmNotes" className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em] ml-1">
-                              Confirmation Logs
+                          <div>
+                            <label className="text-[10px] font-bold text-[#4B6478] uppercase tracking-widest block mb-1.5">
+                              Catatan Konfirmasi
                             </label>
                             <Textarea
-                              id="confirmNotes"
-                              name="confirmNotes"
-                              placeholder="Add processing notes (e.g. Validated BCA transfer)..."
+                              placeholder="Contoh: Transfer BCA sudah masuk Rp 299.000..."
                               value={confirmNotes}
                               onChange={(e) => setConfirmNotes(e.target.value)}
                               rows={2}
-                              className="bg-white/[0.02] border-white/10 rounded-2xl text-sm font-bold text-white focus:border-emerald-500/50 hover:bg-white/[0.04] transition-all resize-none shadow-inner"
+                              className="bg-white/[0.03] border-white/10 rounded-xl text-sm text-white placeholder:text-[#2A3F52] focus:border-emerald-500/50 resize-none"
                             />
                           </div>
                           <Button
-                            className="w-full h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[12px] tracking-[0.2em] shadow-[0_10px_30px_rgba(16,185,129,0.3)] transition-all active:scale-95 flex items-center justify-center gap-2 group/confirm"
+                            className="w-full h-11 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[13px] gap-2"
                             onClick={handleConfirm}
                             disabled={confirmInvoice.isPending}
                           >
-                            {confirmInvoice.isPending ? 'Validating...' : (
-                              <>
-                                <Check size={18} strokeWidth={3} className="group-hover:scale-110 transition-transform" />
-                                Approve Payment
-                              </>
-                            )}
+                            {confirmInvoice.isPending
+                              ? <><Loader2 size={15} className="animate-spin" /> Memproses...</>
+                              : <><Check size={15} strokeWidth={3} /> Konfirmasi Pembayaran</>
+                            }
                           </Button>
                         </>
                       )}
-                      
-                      <div className="grid grid-cols-2 gap-3">
-                        <Button
-                          variant="outline"
-                          className="h-12 rounded-2xl border-white/5 bg-white/5 text-[#4B6478] hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30 transition-all font-black uppercase text-[10px] tracking-[0.2em]"
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button variant="outline"
+                          className="h-9 rounded-xl border-white/8 bg-white/[0.03] text-[#4B6478] hover:text-red-400 hover:bg-red-500/8 hover:border-red-500/20 text-[12px] font-bold"
                           onClick={handleCancelInvoice}
                         >
-                          Cancel Unit
+                          Batalkan Invoice
                         </Button>
-                        <Button
-                          variant="ghost"
-                          className="h-12 rounded-2xl text-red-500/40 hover:text-red-500 hover:bg-red-500/5 transition-all font-black uppercase text-[10px] tracking-[0.2em]"
+                        <Button variant="ghost"
+                          className="h-9 rounded-xl text-red-500/30 hover:text-red-500 hover:bg-red-500/5 text-[12px] font-bold"
                           onClick={handleDeleteInvoice}
                           disabled={deleteInvoice.isPending}
                         >
-                          Destroy Data
+                          Hapus Data
                         </Button>
                       </div>
                     </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { Lock, Loader2 } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { formatIDR } from '@/lib/format'
@@ -21,14 +22,16 @@ export function SembakoPaymentSheet({ sale, onClose }) {
 
   async function handleSubmit() {
     if (!amount || !sale) return
-    await recordPayment.mutateAsync({
-      sale_id: sale.id,
-      customer_id: sale.customer_id,
-      amount, payment_date: payDate, payment_method: method,
-      reference_number: refNo || null, notes: null,
-    })
-    setAmount(0); setRefNo('')
-    onClose()
+    try {
+      await recordPayment.mutateAsync({
+        sale_id: sale.id,
+        customer_id: sale.customer_id,
+        amount, payment_date: payDate, payment_method: method,
+        reference_number: refNo || null, notes: null,
+      })
+      setAmount(0); setRefNo('')
+      onClose()
+    } catch { /* error handled by hook's onError toast */ }
   }
 
   return (
@@ -56,8 +59,21 @@ export function SembakoPaymentSheet({ sale, onClose }) {
             </div>
             <div><p style={sLabel}>NO REFERENSI</p><input style={sInput} value={refNo} onChange={e => setRefNo(e.target.value)} placeholder="Opsional" /></div>
             <div><p style={sLabel}>TANGGAL</p><DatePicker value={payDate} onChange={setPayDate} placeholder="Pilih tanggal" /></div>
-            <button onClick={handleSubmit} disabled={recordPayment.isPending} style={{ ...sBtn(true), width: '100%', padding: '14px' }}>
-              {recordPayment.isPending ? 'Menyimpan...' : 'Catat Pembayaran'}
+            <button
+              onClick={handleSubmit}
+              disabled={recordPayment.isPending || recordPayment.isError}
+              style={{
+                ...sBtn(!recordPayment.isError),
+                width: '100%', padding: '14px',
+                ...(recordPayment.isError ? { background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#F87171', opacity: 0.85, cursor: 'not-allowed' } : {})
+              }}
+            >
+              {recordPayment.isPending
+                ? <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}><Loader2 size={16} className="animate-spin" />Menyimpan...</span>
+                : recordPayment.isError
+                  ? <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}><Lock size={16} />Simpan Masih Dikunci</span>
+                  : 'Catat Pembayaran'
+              }
             </button>
           </div>
         )}

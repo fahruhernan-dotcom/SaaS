@@ -8,6 +8,7 @@ import { Menu } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useNotificationGenerator } from '@/lib/hooks/useNotifications.jsx'
 import { BusinessNameWarningBanner } from '../components/BusinessNameWarningBanner'
+import { PlanExpiryBanner } from '../components/PlanExpiryBanner'
 import { SidebarProvider } from '@/components/ui/sidebar'
 
 /**
@@ -15,7 +16,7 @@ import { SidebarProvider } from '@/components/ui/sidebar'
  * Handles both Mobile (BottomNav + AppSidebar) and Desktop (DesktopSidebarLayout)
  */
 export default function RumahPotongLayout() {
-  const { profile, loading } = useAuth()
+  const { profile, loading, tenant, isSuperadmin } = useAuth()
   useNotificationGenerator()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -58,6 +59,7 @@ export default function RumahPotongLayout() {
             <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           </SidebarProvider>
           <BusinessNameWarningBanner />
+          {!isSuperadmin && <PlanExpiryBanner tenant={tenant} />}
           <Outlet />
 
           <BottomNav />
@@ -68,6 +70,7 @@ export default function RumahPotongLayout() {
     return (
       <DesktopSidebarLayout>
         <BusinessNameWarningBanner />
+        {!isSuperadmin && <PlanExpiryBanner tenant={tenant} />}
         <Outlet />
       </DesktopSidebarLayout>
     )

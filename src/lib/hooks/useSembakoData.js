@@ -436,7 +436,6 @@ export const useCreateSembakoSale = () => {
             sale_id: sale.id,
             qty_keluar: deduct,
             buy_price: batch.buy_price || 0,
-            reason: 'sale',
           })
           qtyToDeduct -= deduct
         }
@@ -1214,7 +1213,6 @@ export const useAdjustBatchStock = () => {
             product_id: batch.product_id,
             batch_id: batch_id,
             qty_keluar: Math.abs(qty_change),
-            reason: reason || 'adjustment',
             notes: notes || 'Penyesuaian Stok'
           })
         if (outErr) throw outErr

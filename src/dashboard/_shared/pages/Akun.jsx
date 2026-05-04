@@ -218,7 +218,12 @@ export default function Akun() {
             justifyContent: 'center',
             fontSize: '20px'
           }}>
-            {activeModel?.icon || '🏢'}
+            {activeModel?.icon
+              ? activeModel.icon.startsWith('/')
+                ? <img src={activeModel.icon} alt={activeModel.name} style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+                : activeModel.icon
+              : '🏢'
+            }
           </div>
           <div style={{ flex: 1 }}>
             <p style={{ fontSize: '15px', fontWeight: 700 }}>
