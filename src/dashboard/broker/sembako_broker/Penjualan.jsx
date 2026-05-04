@@ -240,7 +240,17 @@ function TabInvoice({ isDesktop, openWizard, setOpenWizard }) {
 
       <div style={{ padding: '0 20px' }}>
         {isLoading ? <LoadingSkeleton /> : paged.length === 0 ? (
-          <EmptyBox icon={History} text="Belum ada invoice yang cocok dengan filter ini" />
+          sales.length === 0 && invoiceFilter === 'all' && !search ? (
+            <EmptyBox
+              icon={History}
+              text="Belum ada transaksi penjualan"
+              hint="Catat penjualan pertama Anda untuk mulai mengelola bisnis"
+              actionLabel="+ Catat Penjualan Pertama"
+              onAction={() => setOpenWizard(true)}
+            />
+          ) : (
+            <EmptyBox icon={History} text="Belum ada invoice yang cocok dengan filter ini" />
+          )
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {paged.map(sale => (

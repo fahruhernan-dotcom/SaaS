@@ -28,7 +28,6 @@ import { SembakoSummaryStrip } from '@/dashboard/broker/sembako_broker/component
 import {
   SembakoEmptyState,
   SembakoFilterPill,
-  SembakoStatCard,
 } from '@/dashboard/broker/sembako_broker/components/SembakoUiPrimitives'
 import {
   Sheet,
@@ -173,14 +172,14 @@ export default function SembakoTokoSupplier() {
 
   const summaryItems = sub === 'toko'
     ? [
-        { label: 'Total Piutang', value: totalPiutang, isCurrency: true, color: 'amber' },
+        { label: 'Total Piutang',  value: totalPiutang,         isCurrency: true, color: 'amber' },
         { label: 'Customer Aktif', value: customers.length },
-        { label: 'Punya Tagihan', value: customersWithDebt, color: 'red' },
+        { label: 'Punya Tagihan', value: customersWithDebt,     color: 'red' },
       ]
     : [
-        { label: 'Total Belanja', value: totalBelanjaSupplier, isCurrency: true, color: 'green' },
-        { label: 'Supplier Aktif', value: suppliers.length },
-        { label: 'Pernah Kirim Batch', value: activeSuppliers, color: 'amber' },
+        { label: 'Total Belanja',  value: totalBelanjaSupplier, isCurrency: true, color: 'green' },
+        { label: 'Supplier',       value: suppliers.length },
+        { label: 'Punya Batch',    value: activeSuppliers,      color: 'amber' },
       ]
 
   return (
@@ -233,85 +232,26 @@ export default function SembakoTokoSupplier() {
           </div>
         )}
 
-        <SembakoSummaryStrip isDesktop={isDesktop} items={summaryItems} />
+        <SembakoSummaryStrip items={summaryItems} />
 
-        <div className="space-y-5 px-5 pt-5">
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {sub === 'toko' ? (
-              <>
-                <SembakoStatCard
-                  label="Estimasi Piutang"
-                  value={formatIDR(totalPiutang)}
-                  icon={TrendingDown}
-                  color="amber"
-                  subLabel="Dihitung dari invoice aktual"
+        <div className="space-y-4 px-5 pt-4">
+          {sub === 'toko' && areas.length > 1 && (
+            <div className="flex flex-wrap gap-2">
+              <SembakoFilterPill
+                label="Semua Area"
+                active={selectedArea === 'Semua Area'}
+                onClick={() => setSelectedArea('Semua Area')}
+              />
+              {areas.slice(1).map((area) => (
+                <SembakoFilterPill
+                  key={area}
+                  label={area}
+                  active={selectedArea === area}
+                  onClick={() => setSelectedArea(area)}
                 />
-                <SembakoStatCard
-                  label="Toko Terdaftar"
-                  value={customers.length}
-                  icon={Store}
-                  subLabel="Semua customer aktif"
-                />
-                <SembakoStatCard
-                  label="Punya Tagihan"
-                  value={customersWithDebt}
-                  icon={Wallet}
-                  color="red"
-                  subLabel="Masih ada sisa piutang"
-                />
-                <div className="col-span-2 xl:col-span-1 rounded-[28px] border border-[#EA580C]/10 bg-[#1C1208] p-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#92400E]">Filter Area</p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <SembakoFilterPill
-                      label="Semua Area"
-                      active={selectedArea === 'Semua Area'}
-                      onClick={() => setSelectedArea('Semua Area')}
-                    />
-                    {areas.slice(1).map((area) => (
-                      <SembakoFilterPill
-                        key={area}
-                        label={area}
-                        active={selectedArea === area}
-                        onClick={() => setSelectedArea(area)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <SembakoStatCard
-                  label="Total Belanja Supplier"
-                  value={formatIDR(totalBelanjaSupplier)}
-                  icon={Package}
-                  color="green"
-                  subLabel="Akumulasi semua batch"
-                />
-                <SembakoStatCard
-                  label="Supplier Terdaftar"
-                  value={suppliers.length}
-                  icon={Store}
-                  subLabel="Partner pengadaan aktif"
-                />
-                <SembakoStatCard
-                  label="Supplier Aktif"
-                  value={activeSuppliers}
-                  icon={Wallet}
-                  color="amber"
-                  subLabel="Sudah punya histori batch"
-                />
-                <div className="col-span-2 xl:col-span-1 rounded-[28px] border border-[#F59E0B]/10 bg-[#1C1208] p-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#92400E]">Riwayat Batch</p>
-                  <p className="mt-3 font-display text-2xl font-black text-[#F59E0B]">
-                    {allBatches.length}
-                  </p>
-                  <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-[#92400E]">
-                    Total batch pembelian
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
 
           {sub === 'toko' ? (
             <TokoList
@@ -329,6 +269,7 @@ export default function SembakoTokoSupplier() {
             />
           )}
         </div>
+
       </div>
     </div>
   )
@@ -657,67 +598,59 @@ function TokoList({ customers, customerStats, search, selectedArea, onlyHutang }
             type="button"
             onClick={() => navigate(`customer/${customer.id}`)}
             whileTap={{ scale: 0.985 }}
-            className="group rounded-[28px] border border-[#EA580C]/10 bg-[#1C1208] p-5 text-left shadow-lg transition-all hover:border-[#EA580C]/25 hover:shadow-orange-950/20"
+            className="group w-full rounded-2xl border border-[#EA580C]/10 bg-[#1C1208] px-4 py-3 text-left transition-all hover:border-[#EA580C]/25 hover:bg-[#221508]"
           >
-            <div className="flex items-start gap-4">
-              <Avatar className="h-14 w-14 rounded-2xl border border-[#EA580C]/10 bg-[#EA580C]/10">
-                <AvatarFallback className="bg-transparent font-display text-xl font-black uppercase text-[#EA580C]">
-                  {(customer.customer_name || '--').slice(0, 2)}
-                </AvatarFallback>
-              </Avatar>
-
+            {/* Row 1: avatar + name + chevron */}
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#EA580C]/10 text-[12px] font-black uppercase text-[#EA580C]">
+                {(customer.customer_name || '--').slice(0, 2)}
+              </div>
               <div className="min-w-0 flex-1">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="truncate font-display text-lg font-black uppercase tracking-tight text-[#FEF3C7]">
-                      {customer.customer_name}
-                    </h3>
-                    <div className="mt-1 flex items-center gap-2">
-                      <Badge className="h-5 border-none bg-[#EA580C]/10 px-2 text-[8px] font-black uppercase tracking-wider text-[#EA580C]">
-                        {customer.customer_type || 'customer'}
-                      </Badge>
-                      <span className="text-[#EA580C]/20">•</span>
-                      <span className="truncate text-[10px] font-bold uppercase text-[#92400E]">
-                        {customer.area || 'Tanpa Area'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <ChevronRight className="mt-1 text-[#92400E] transition-all group-hover:translate-x-1 group-hover:text-[#EA580C]" size={16} />
+                <div className="flex items-center gap-2">
+                  <p className="truncate text-[13px] font-black uppercase tracking-tight text-[#FEF3C7]">
+                    {customer.customer_name}
+                  </p>
+                  <Badge className="h-4 shrink-0 border-none bg-[#EA580C]/10 px-1.5 text-[7px] font-black uppercase tracking-wider text-[#EA580C]">
+                    {customer.customer_type || 'customer'}
+                  </Badge>
                 </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[10px] font-bold text-[#92400E]">{customer.area || 'Tanpa Area'}</span>
+                  {customer.phone && (
+                    <>
+                      <span className="text-[#EA580C]/20">·</span>
+                      <span className="text-[10px] font-bold text-[#92400E]">{customer.phone}</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <ChevronRight className="shrink-0 text-[#92400E] transition-all group-hover:translate-x-0.5 group-hover:text-[#EA580C]" size={14} />
+            </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-3 border-t border-[#EA580C]/10 pt-4">
-                  <MetricBlock
-                    label="Status Piutang"
-                    value={outstanding > 0 ? formatIDR(outstanding) : 'Lunas'}
-                    tone={outstanding > 0 ? 'red' : 'green'}
+            {/* Row 2: metrics strip */}
+            <div className="mt-3 flex items-center justify-between rounded-xl bg-[#EA580C]/[0.04] px-3 py-2">
+              <div>
+                <p className="text-[8px] font-black uppercase tracking-widest text-[#92400E]">Piutang</p>
+                <p className={cn('text-[12px] font-black tabular-nums', outstanding > 0 ? 'text-[#F87171]' : 'text-[#34D399]')}>
+                  {outstanding > 0 ? formatIDR(outstanding) : 'Lunas'}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-[8px] font-black uppercase tracking-widest text-[#92400E]">Invoice</p>
+                <p className="text-[12px] font-black text-[#FEF3C7]">{invoiceCount}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[8px] font-black uppercase tracking-widest text-[#92400E]">Terakhir</p>
+                <p className="text-[11px] font-bold text-[#FEF3C7]">{lastTxDate || '—'}</p>
+              </div>
+              <div className="flex gap-0.5">
+                {[1, 2, 3, 4, 5].map((score) => (
+                  <Star
+                    key={score}
+                    size={9}
+                    className={cn(score <= (customer.reliability_score || 0) ? 'fill-amber-400 text-amber-400' : 'text-[#EA580C]/10')}
                   />
-                  <MetricBlock
-                    label="Total Invoice"
-                    value={invoiceCount}
-                    tone="default"
-                  />
-                </div>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="flex flex-wrap gap-3 text-[10px] font-black uppercase text-[#92400E]">
-                    {customer.phone && <MiniInfo icon={Phone} text={customer.phone} />}
-                    {lastTxDate && <MiniInfo icon={MapPin} text={`Trx ${lastTxDate}`} />}
-                  </div>
-                  <div className="flex gap-0.5">
-                    {[1, 2, 3, 4, 5].map((score) => (
-                      <Star
-                        key={score}
-                        size={10}
-                        className={cn(
-                          score <= (customer.reliability_score || 0)
-                            ? 'fill-amber-400 text-amber-400'
-                            : 'text-[#EA580C]/10'
-                        )}
-                      />
-                    ))}
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </MotionButton>

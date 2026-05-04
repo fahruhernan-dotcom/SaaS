@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
-import { useSembakoDashboardStats, useSembakoSales, useSembakoEmployees, useSembakoDeliveries } from '@/lib/hooks/useSembakoData'
+import { useSembakoDashboardStats, useSembakoSales, useSembakoEmployees, useSembakoDeliveries, useSembakoProducts, useSembakoSuppliers } from '@/lib/hooks/useSembakoData'
 import { formatIDR, formatIDRShort } from '@/lib/format'
 import NotificationBell from '@/dashboard/_shared/components/NotificationBell'
 import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
@@ -23,6 +23,9 @@ import {
 import { id as idLocale } from 'date-fns/locale'
 import { C } from './components/sembakoSaleUtils'
 import SmartInsight from '@/dashboard/_shared/components/SmartInsight'
+import { SembakoTambahStokSheet } from './components/SembakoTambahStokSheet'
+import { SembakoOnboardingChecklist } from './components/SembakoOnboardingChecklist'
+import { useSembakoAllBatches, useSembakoCustomers } from '@/lib/hooks/useSembakoData'
 
 // ── Skeleton ────────────────────────────────────────────────────────────────────
 function Skel({ h = '60px', w = '100%', r = '14px' }) {
@@ -474,7 +477,7 @@ function AgendaSection({ sales, deliveries, selectedDate, setSelectedDate, curre
 }
 
 // ── Desktop version (unchanged layout, just cleaner) ──────────────────────────
-function DesktopBeranda({ stats, sales, employees, navigate, name, salesLoading, insight, kpiTrends, chartPeriod, setChartPeriod, weeklyChartData, monthlyChartData, deliveries, selectedDate, setSelectedDate, currentMonth, setCurrentMonth, agendaFilter, setAgendaFilter }) {
+function DesktopBeranda({ stats, sales, employees, navigate, name, salesLoading, insight, kpiTrends, chartPeriod, setChartPeriod, weeklyChartData, monthlyChartData, deliveries, selectedDate, setSelectedDate, currentMonth, setCurrentMonth, agendaFilter, setAgendaFilter, setStokOpen }) {
   const { brokerType } = useParams()
   const brokerBase = `/broker/${brokerType}`
   const now = new Date()
@@ -499,17 +502,29 @@ function DesktopBeranda({ stats, sales, employees, navigate, name, salesLoading,
           </p>
           <SmartInsight insight={insight} className="mt-2" />
         </div>
-        <button
-          onClick={() => navigate(`${brokerBase}/penjualan?action=new`)}
-          style={{
-            background: '#EA580C', color: '#fff', border: 'none', borderRadius: '12px',
-            padding: '0 20px', height: '40px', fontWeight: 700, fontSize: '13px',
-            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
-            boxShadow: '0 4px 16px rgba(234,88,12,0.3)',
-          }}
-        >
-          <Plus size={16} /> Catat Penjualan
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={() => setStokOpen(true)}
+            style={{
+              background: 'rgba(234,88,12,0.1)', color: C.accent, border: `1px solid rgba(234,88,12,0.2)`, borderRadius: '12px',
+              padding: '0 20px', height: '40px', fontWeight: 700, fontSize: '13px',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
+            }}
+          >
+            <Package size={16} /> Tambah Stok
+          </button>
+          <button
+            onClick={() => navigate(`${brokerBase}/penjualan?action=new`)}
+            style={{
+              background: '#EA580C', color: '#fff', border: 'none', borderRadius: '12px',
+              padding: '0 20px', height: '40px', fontWeight: 700, fontSize: '13px',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
+              boxShadow: '0 4px 16px rgba(234,88,12,0.3)',
+            }}
+          >
+            <Plus size={16} /> Catat Penjualan
+          </button>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '24px', marginTop: '20px' }}>
@@ -650,8 +665,26 @@ function CollectionReminders({ sales, navigate, brokerBase }) {
   )
 }
 
+// ── Onboarding wrapper — fetches batch+customer counts for checklist ──────────
+function OnboardingWrapper({ setStokOpen }) {
+  const { data: products = [] } = useSembakoProducts()
+  const { data: batches = [] } = useSembakoAllBatches()
+  const { data: customers = [] } = useSembakoCustomers()
+  const { data: sales = [] } = useSembakoSales()
+
+  return (
+    <SembakoOnboardingChecklist
+      productsCount={products.length}
+      batchesCount={batches.length}
+      customersCount={customers.length}
+      salesCount={sales.length}
+      onStokOpen={() => setStokOpen(true)}
+    />
+  )
+}
+
 // ── Mobile version ────────────────────────────────────────────────────────────
-function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, profile, tenant, profiles, switchTenant, insight, chartPeriod, setChartPeriod, weeklyChartData, monthlyChartData, deliveries, selectedDate, setSelectedDate, currentMonth, setCurrentMonth, agendaFilter, setAgendaFilter }) {
+function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, profile, tenant, profiles, switchTenant, insight, chartPeriod, setChartPeriod, weeklyChartData, monthlyChartData, deliveries, selectedDate, setSelectedDate, currentMonth, setCurrentMonth, agendaFilter, setAgendaFilter, setStokOpen }) {
   const { brokerType } = useParams()
   const brokerBase = `/broker/${brokerType}`
   const { setSidebarOpen } = useOutletContext()
@@ -683,6 +716,10 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
           </p>
           <SmartInsight insight={insight} className="mt-2" />
         </div>
+
+        {/* Onboarding checklist for new users */}
+        <OnboardingWrapper setStokOpen={setStokOpen} />
+
         {/* Revenue hero card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -754,16 +791,27 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
         {/* Quick actions row */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
           <button
-            onClick={() => navigate(`${brokerBase}/penjualan?action=new`)}
+            onClick={() => setStokOpen(true)}
             style={{
               flex: 1, height: '42px', borderRadius: '12px',
+              background: 'rgba(234,88,12,0.1)', border: '1px solid rgba(234,88,12,0.25)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+              color: C.accent, fontWeight: 700, fontSize: '13px',
+            }}
+          >
+            <Package size={15} /> Stok
+          </button>
+          <button
+            onClick={() => navigate(`${brokerBase}/penjualan?action=new`)}
+            style={{
+              flex: 1.5, height: '42px', borderRadius: '12px',
               background: C.accent, border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
               color: '#fff', fontWeight: 700, fontSize: '13px',
               boxShadow: '0 4px 14px rgba(234,88,12,0.35)',
             }}
           >
-            <Plus size={15} /> Catat Penjualan
+            <Plus size={15} /> Jual
           </button>
           <button
             onClick={() => navigate(`${brokerBase}/gudang`)}
@@ -895,12 +943,15 @@ export default function SembakoBeranda() {
   const { data: sales = [],  isLoading: salesLoading }  = useSembakoSales()
   const { data: employees = [] }                        = useSembakoEmployees()
   const { data: deliveries = [] }                       = useSembakoDeliveries()
+  const { data: products = [] }                         = useSembakoProducts()
+  const { data: suppliers = [] }                        = useSembakoSuppliers()
 
   // Chart + insight state
   const [chartPeriod,   setChartPeriod]   = useState('weekly')
   const [selectedDate,  setSelectedDate]  = useState(new Date())
   const [currentMonth,  setCurrentMonth]  = useState(new Date())
   const [agendaFilter,  setAgendaFilter]  = useState('Semua')
+  const [stokOpen,      setStokOpen]      = useState(false)
 
   const name = profile?.full_name?.split(' ')[0] || 'Pengguna'
 
@@ -993,6 +1044,7 @@ export default function SembakoBeranda() {
     selectedDate, setSelectedDate,
     currentMonth, setCurrentMonth,
     agendaFilter, setAgendaFilter,
+    setStokOpen,
   }
 
   return (
@@ -1002,6 +1054,13 @@ export default function SembakoBeranda() {
       ) : (
         <MobileBeranda {...sharedProps} profile={profile} tenant={tenant} profiles={profiles} switchTenant={switchTenant} />
       )}
+
+      <SembakoTambahStokSheet 
+        isOpen={stokOpen}
+        onClose={() => setStokOpen(false)}
+        products={products}
+        suppliers={suppliers}
+      />
     </div>
   )
 }

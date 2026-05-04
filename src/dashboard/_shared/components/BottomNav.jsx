@@ -27,6 +27,7 @@ import {
   Menu,
   Wheat,
   Receipt,
+  Boxes,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
@@ -414,9 +415,10 @@ export default function BottomNav() {
   }
 
   const sembakoSpeedItems = isSembako ? [
-    { label: 'Buat Transaksi',     icon: Receipt, onClick: () => { setFabMenuOpen(false); navigate(`${brokerBase}/penjualan?action=new`) } },
-    { label: 'Tambah Produk',      icon: Package, onClick: () => { setFabMenuOpen(false); navigate(`${brokerBase}/produk?action=new`) } },
+    { label: 'Transaksi Baru',     icon: Receipt, onClick: () => { setFabMenuOpen(false); navigate(`${brokerBase}/penjualan?action=new`) } },
     { label: 'Tambah Toko',        icon: Store,   onClick: () => { setFabMenuOpen(false); navigate(`${brokerBase}/toko-supplier`) } },
+    { label: 'Tambah Stok',        icon: Boxes,   onClick: () => { setFabMenuOpen(false); navigate(`${brokerBase}/gudang?action=add-stock`) } },
+    { label: 'Tambah Produk',      icon: Package, onClick: () => { setFabMenuOpen(false); navigate(`${brokerBase}/produk?action=new`) } },
     { label: 'Tambah Pengeluaran', icon: Wallet,  onClick: () => { setFabMenuOpen(false); navigate(`${brokerBase}/laporan`) } },
   ] : null
 

@@ -806,7 +806,7 @@ export const useCompleteSembakoDelivery = () => {
     mutationFn: async (deliveryId) => {
       const { error } = await supabase
         .from('sembako_deliveries')
-        .update({ status: 'delivered' })
+        .update({ status: 'delivered', completed_at: new Date().toISOString() })
         .eq('id', deliveryId)
       if (error) throw error
     },
@@ -814,7 +814,7 @@ export const useCompleteSembakoDelivery = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-deliveries'] })
       queryClient.invalidateQueries({ queryKey: ['sembako-sales-pending-delivery'] })
       queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
-      toast.success('Pengiriman ditandai selesai')
+      toast.success('Pengiriman selesai')
     },
     onError: (err) => toast.error('Gagal: ' + err.message),
   })
@@ -826,7 +826,7 @@ export const useStartSembakoDelivery = () => {
     mutationFn: async (deliveryId) => {
       const { error } = await supabase
         .from('sembako_deliveries')
-        .update({ status: 'on_route' })
+        .update({ status: 'on_route', departed_at: new Date().toISOString() })
         .eq('id', deliveryId)
       if (error) throw error
     },
@@ -834,7 +834,47 @@ export const useStartSembakoDelivery = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-deliveries'] })
       queryClient.invalidateQueries({ queryKey: ['sembako-sales-pending-delivery'] })
       queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
-      toast.success('Pengiriman mulai berjalan')
+      toast.success('Pengiriman berangkat')
+    },
+    onError: (err) => toast.error('Gagal: ' + err.message),
+  })
+}
+
+export const useArriveSembakoDelivery = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (deliveryId) => {
+      const { error } = await supabase
+        .from('sembako_deliveries')
+        .update({ status: 'arrived', arrived_at: new Date().toISOString() })
+        .eq('id', deliveryId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sembako-deliveries'] })
+      toast.success('Kedatangan dicatat')
+    },
+    onError: (err) => toast.error('Gagal: ' + err.message),
+  })
+}
+
+export const useUpdateSembakoDeliveryTimestamps = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, departed_at, arrived_at, completed_at }) => {
+      const updates = {}
+      if (departed_at  !== undefined) updates.departed_at  = departed_at
+      if (arrived_at   !== undefined) updates.arrived_at   = arrived_at
+      if (completed_at !== undefined) updates.completed_at = completed_at
+      const { error } = await supabase
+        .from('sembako_deliveries')
+        .update(updates)
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sembako-deliveries'] })
+      toast.success('Waktu pengiriman berhasil diperbarui')
     },
     onError: (err) => toast.error('Gagal: ' + err.message),
   })

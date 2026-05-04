@@ -236,12 +236,34 @@ export function LoadingSkeleton() {
   )
 }
 
-export function EmptyBox({ icon: Icon, text }) {
+export function EmptyBox({ icon: Icon, text, hint, actionLabel, onAction }) {
   const EmptyIcon = Icon
   return (
     <div style={{ padding: '60px 20px', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '24px', border: `1px dashed ${C.border}` }}>
       <EmptyIcon size={40} color={C.muted} style={{ margin: '0 auto 16px', opacity: 0.4 }} />
       <p style={{ color: C.muted, fontSize: '14px', fontWeight: 600 }}>{text}</p>
+      {hint && (
+        <p style={{ color: C.muted, fontSize: '12px', fontWeight: 500, marginTop: '6px', opacity: 0.7, lineHeight: 1.5 }}>{hint}</p>
+      )}
+      {actionLabel && onAction && (
+        <button
+          onClick={onAction}
+          style={{
+            marginTop: '16px',
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            padding: '10px 22px', borderRadius: '12px',
+            background: C.accent, color: '#fff',
+            fontSize: '13px', fontWeight: 700, fontFamily: 'DM Sans',
+            border: 'none', cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(234,88,12,0.3)',
+            transition: 'opacity 0.2s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+        >
+          {actionLabel}
+        </button>
+      )}
     </div>
   )
 }

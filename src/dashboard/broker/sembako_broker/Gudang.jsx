@@ -8,13 +8,12 @@ import {
   useSembakoSuppliers,
   useSembakoAllBatches,
   useSembakoStockOut,
-  useAddStockBatch,
-  useCreateSembakoSupplier,
   useAdjustBatchStock,
+  useUpdateSembakoProduct,
 } from '@/lib/hooks/useSembakoData'
 import { useSearchParams, useOutletContext } from 'react-router-dom'
 import { DatePicker } from '@/components/ui/DatePicker'
-import { C, fmtDate } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
+import { C, fmtDate, CustomSelect, InputRupiah } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
 import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 
@@ -23,6 +22,14 @@ import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 const TEXT_SEC = '#A8764A'
 
 const fmt = (n) => new Intl.NumberFormat('id-ID').format(Math.round(n || 0))
+
+const inputSt = {
+  width: '100%', height: '40px', background: C.input,
+  border: `1px solid ${C.border}`, borderRadius: '10px',
+  padding: '0 12px', color: C.text, fontSize: '13px',
+  fontFamily: 'DM Sans', fontWeight: 600, outline: 'none',
+  boxSizing: 'border-box',
+}
 
 function genBatchCode() {
   const now = new Date()
@@ -33,308 +40,7 @@ function genBatchCode() {
 
 // ── Tambah Stok Sheet ─────────────────────────────────────────────────────────
 
-function TambahStokSheet({ preselectedProductId, products, suppliers, onClose }) {
-  const addBatch  = useAddStockBatch()
-  const createSup = useCreateSembakoSupplier()
-
-  const [form, setForm] = useState({
-    product_id:    preselectedProductId || '',
-    supplier_id:   '',
-    qty_masuk:     '',
-    buy_price:     '',
-    purchase_date: new Date().toISOString().slice(0, 10),
-    expiry_date:   '',
-    notes:         '',
-    batch_code:    genBatchCode(),
-  })
-  const [newSupplier, setNewSupplier] = useState('')
-  const [showAddSup,  setShowAddSup]  = useState(false)
-
-  const set = (key, val) => setForm(f => ({ ...f, [key]: val }))
-
-  const selectedProduct = products.find(p => p.id === form.product_id)
-
-  const handleAddSupplier = async () => {
-    if (!newSupplier.trim()) return
-    try {
-      const sup = await createSup.mutateAsync({ supplier_name: newSupplier.trim() })
-      set('supplier_id', sup.id)
-      setNewSupplier('')
-      setShowAddSup(false)
-    } catch { /* ignore */ }
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!form.product_id) return toast.error('Pilih produk terlebih dahulu')
-    if (!form.qty_masuk || Number(form.qty_masuk) <= 0) return toast.error('Jumlah harus > 0')
-    if (!form.buy_price || Number(String(form.buy_price).replace(/\D/g, '')) <= 0) return toast.error('Harga beli wajib diisi')
-
-    await addBatch.mutateAsync({
-      product_id:    form.product_id,
-      supplier_id:   form.supplier_id || null,
-      qty_masuk:     Number(form.qty_masuk),
-      buy_price:     Number(String(form.buy_price).replace(/\D/g, '')),
-      purchase_date: form.purchase_date,
-      expiry_date:   form.expiry_date || null,
-      notes:         form.notes || null,
-    })
-    onClose()
-  }
-
-  const isLoading = addBatch.isPending || createSup.isPending
-  const canSubmit = form.product_id && Number(form.qty_masuk) > 0 && form.buy_price
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-        transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-        style={{ background: '#100A03', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: '540px', padding: '0 0 32px', borderTop: `1px solid ${C.border}`, maxHeight: '92vh', overflowY: 'auto' }}
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Handle */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 8px' }}>
-          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.15)' }} />
-        </div>
-
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 20px 16px' }}>
-          <h2 style={{ fontFamily: 'Sora', fontSize: 17, fontWeight: 700, color: C.text, margin: 0 }}>Tambah Stok Masuk</h2>
-          <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-            <X size={16} color="#94A3B8" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} style={{ padding: '0 20px 100px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {/* Produk */}
-          <SField label="Produk *">
-            <CustomSelect
-              id="stok-product"
-              value={form.product_id}
-              onChange={val => set('product_id', val)}
-              options={products.map(p => ({ value: p.id, label: `${p.product_name} (${p.unit})` }))}
-              placeholder="-- Pilih produk --"
-            />
-          </SField>
-
-          {/* Batch code (read-only) */}
-          <SField label="Kode Batch">
-            <input
-              id="batch-code" name="batch_code" type="text"
-              value={form.batch_code} readOnly
-              style={{ ...inputSt, opacity: 0.6, cursor: 'not-allowed' }}
-            />
-          </SField>
-
-          {/* Supplier */}
-          <SField label="Supplier">
-            {showAddSup ? (
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  id="new-supplier" name="new_supplier" type="text"
-                  value={newSupplier}
-                  onChange={e => setNewSupplier(e.target.value)}
-                  placeholder="Nama supplier baru"
-                  style={{ ...inputSt, flex: 1 }}
-                />
-                <button type="button" onClick={handleAddSupplier} disabled={createSup.isPending || !newSupplier.trim()}
-                  style={{ background: C.accent, border: 'none', borderRadius: 10, padding: '0 14px', color: 'white', fontFamily: 'DM Sans', fontSize: 13, cursor: 'pointer' }}>
-                  {createSup.isPending ? '...' : 'Tambah'}
-                </button>
-                <button type="button" onClick={() => setShowAddSup(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#6B7280' }}>
-                  <X size={16} />
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', gap: 8 }}>
-                <CustomSelect
-                  id="stok-supplier"
-                  value={form.supplier_id}
-                  onChange={val => set('supplier_id', val)}
-                  options={suppliers.map(s => ({ value: s.id, label: s.supplier_name }))}
-                  placeholder="-- Pilih supplier --"
-                  style={{ flex: 1 }}
-                />
-                <button type="button" onClick={() => setShowAddSup(true)}
-                  style={{ background: 'rgba(234,88,12,0.1)', border: `1px solid ${C.border}`, borderRadius: 10, padding: '0 12px', color: C.accent, fontSize: 13, fontFamily: 'DM Sans', cursor: 'pointer', flexShrink: 0 }}>
-                  + Baru
-                </button>
-              </div>
-            )}
-          </SField>
-
-          {/* Qty + harga */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <SField label={`Jumlah${selectedProduct ? ` (${selectedProduct.unit})` : ''} *`}>
-              <input
-                id="stok-qty" name="qty_masuk" type="number" min="0.01" step="0.01"
-                value={form.qty_masuk}
-                onChange={e => set('qty_masuk', e.target.value)}
-                placeholder="0"
-                style={inputSt}
-              />
-            </SField>
-            <SField label="Harga Beli / satuan *">
-              <input
-                id="stok-price" name="buy_price" type="text" inputMode="numeric"
-                value={form.buy_price ? fmt(form.buy_price) : ''}
-                onChange={e => set('buy_price', e.target.value.replace(/\D/g, ''))}
-                placeholder="0"
-                style={inputSt}
-              />
-            </SField>
-          </div>
-
-          {/* Total preview */}
-          {form.qty_masuk && form.buy_price && (
-            <div style={{ background: 'rgba(234,88,12,0.06)', borderRadius: 10, padding: '10px 14px', display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontFamily: 'DM Sans', fontSize: 13, color: TEXT_SEC }}>Total nilai</span>
-              <span style={{ fontFamily: 'Sora', fontSize: 14, fontWeight: 700, color: C.accent }}>
-                Rp {fmt(Number(form.qty_masuk) * Number(String(form.buy_price).replace(/\D/g, '')))}
-              </span>
-            </div>
-          )}
-
-          {/* Dates — stacked for mobile-friendly calendar opening */}
-          <SField label="Tanggal Masuk *">
-            <DatePicker
-              value={form.purchase_date}
-              onChange={val => set('purchase_date', val)}
-              placeholder="Pilih tanggal"
-            />
-          </SField>
-          <SField label="Tanggal Kadaluarsa">
-            <DatePicker
-              value={form.expiry_date}
-              onChange={val => set('expiry_date', val)}
-              placeholder="Pilih tanggal"
-            />
-          </SField>
-
-          {/* Notes */}
-          <SField label="Catatan">
-            <input
-              id="stok-notes" name="notes" type="text"
-              value={form.notes}
-              onChange={e => set('notes', e.target.value)}
-              placeholder="Opsional"
-              style={inputSt}
-            />
-          </SField>
-
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={!canSubmit || isLoading}
-            style={{
-              marginTop: 4, width: '100%', height: 50,
-              background: canSubmit && !isLoading ? C.accent : 'rgba(234,88,12,0.3)',
-              border: 'none', borderRadius: 14, color: 'white',
-              fontFamily: 'Sora', fontSize: 15, fontWeight: 700,
-              cursor: canSubmit && !isLoading ? 'pointer' : 'not-allowed',
-              boxShadow: canSubmit ? '0 4px 16px rgba(234,88,12,0.3)' : 'none',
-            }}
-          >
-            {isLoading ? 'Menyimpan...' : 'Simpan Stok Masuk'}
-          </button>
-        </form>
-      </motion.div>
-    </motion.div>
-  )
-}
-
-function SField({ label, children }) {
-  return (
-    <div>
-      <label style={{ display: 'block', fontSize: 12, fontFamily: 'DM Sans', color: TEXT_SEC, marginBottom: 6 }}>{label}</label>
-      {children}
-    </div>
-  )
-}
-
-const inputSt = {
-  width: '100%', background: 'rgba(255,255,255,0.04)',
-  border: `1px solid ${C.border}`, borderRadius: 10,
-  padding: '10px 14px', color: C.text, fontSize: 16,
-  fontFamily: 'DM Sans', outline: 'none', boxSizing: 'border-box',
-  appearance: 'none', WebkitAppearance: 'none',
-  minHeight: '44px',
-  colorScheme: 'dark',
-}
-
-function CustomSelect({ value, onChange, options, placeholder, id, style }) {
-  const [open, setOpen] = useState(false)
-  const selected = options.find(o => o.value === value)
-
-  return (
-    <div style={{ position: 'relative', width: '100%', ...style }}>
-      <div
-        id={id}
-        onClick={() => setOpen(!open)}
-        style={{
-          ...inputSt,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          border: open ? `1px solid ${C.accent}` : `1px solid ${C.border}`,
-          transition: 'all 0.2s'
-        }}
-      >
-        <span style={{ color: value ? C.text : TEXT_SEC, fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: 8 }}>
-          {selected ? selected.label : placeholder}
-        </span>
-        <ChevronDown size={16} color={TEXT_SEC} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }} />
-      </div>
-      <AnimatePresence>
-        {open && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              style={{ position: 'fixed', inset: 0, zIndex: 998, background: 'transparent' }}
-              onClick={() => setOpen(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, y: -8, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -8, scale: 0.95 }}
-              style={{
-                position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '8px',
-                background: '#130C06', border: `1px solid ${C.border}`, borderRadius: '14px',
-                zIndex: 999, overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
-                backdropFilter: 'blur(10px)',
-              }}
-            >
-              <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                {options.map(opt => (
-                  <div
-                    key={opt.value}
-                    onClick={() => { onChange(opt.value); setOpen(false) }}
-                    style={{
-                      padding: '12px 16px', fontSize: '14px', color: value === opt.value ? C.accent : C.text,
-                      background: value === opt.value ? 'rgba(234,88,12,0.1)' : 'transparent',
-                      cursor: 'pointer', transition: 'all 0.2s',
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      borderBottom: `1px solid rgba(255,255,255,0.03)`
-                    }}
-                  >
-                    <span>{opt.label}</span>
-                    {value === opt.value && <span style={{ fontSize: '10px' }}>✓</span>}
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </div>
-  )
-}
+import { SembakoTambahStokSheet } from './components/SembakoTambahStokSheet'
 
 // ── Tab: Stok Saat Ini ────────────────────────────────────────────────────────
 
@@ -342,7 +48,6 @@ function StokSaatIni({ products, onTambah, onAdjust, onShowHistory }) {
   const [expanded, setExpanded] = useState(null)
   const [search,   setSearch]   = useState('')
 
-  // For each product, fetch its batches
   const { data: allBatches = [] } = useSembakoAllBatches()
 
   const filtered = useMemo(() => {
@@ -358,7 +63,6 @@ function StokSaatIni({ products, onTambah, onAdjust, onShowHistory }) {
 
   return (
     <div>
-      {/* Search */}
       <div style={{ position: 'relative', marginBottom: 12 }}>
         <Search size={15} color="#6B7280" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }} />
         <input
@@ -375,9 +79,12 @@ function StokSaatIni({ products, onTambah, onAdjust, onShowHistory }) {
       </div>
 
       {filtered.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <Package size={32} color="#4B5563" style={{ margin: '0 auto 12px' }} />
-          <p style={{ fontFamily: 'DM Sans', color: TEXT_SEC }}>Belum ada produk aktif</p>
+        <div style={{ textAlign: 'center', padding: '48px 20px', background: 'rgba(255,255,255,0.02)', borderRadius: 20, border: `1px dashed ${C.border}` }}>
+          <Package size={40} color="#4B5563" style={{ margin: '0 auto 12px', opacity: 0.4 }} />
+          <p style={{ fontFamily: 'DM Sans', fontSize: 14, fontWeight: 600, color: TEXT_SEC }}>Belum ada produk aktif</p>
+          <p style={{ fontFamily: 'DM Sans', fontSize: 12, color: '#4B5563', marginTop: 6, opacity: 0.7 }}>
+            Tambahkan produk terlebih dahulu di halaman Inventori & HPP
+          </p>
         </div>
       )}
 
@@ -385,11 +92,9 @@ function StokSaatIni({ products, onTambah, onAdjust, onShowHistory }) {
         const batches  = batchesForProduct(product.id)
         const isOpen   = expanded === product.id
         const isLow    = product.min_stock_alert > 0 && product.current_stock <= product.min_stock_alert
-        const isFirst  = batches[0] // FIFO next
 
         return (
           <div key={product.id} style={{ marginBottom: 8, background: C.card, border: `1px solid ${isLow ? 'rgba(248,113,113,0.3)' : C.border}`, borderRadius: 14, overflow: 'hidden' }}>
-            {/* Row header */}
             <button
               type="button"
               onClick={() => setExpanded(isOpen ? null : product.id)}
@@ -400,9 +105,14 @@ function StokSaatIni({ products, onTambah, onAdjust, onShowHistory }) {
                   <span style={{ fontFamily: 'Sora', fontSize: 14, fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{product.product_name}</span>
                   {isLow && <span style={{ fontSize: 10, background: 'rgba(248,113,113,0.15)', color: '#F87171', padding: '1px 8px', borderRadius: 20, fontFamily: 'DM Sans', fontWeight: 600 }}>Menipis</span>}
                 </div>
-                <span style={{ fontSize: 13, color: isLow ? '#F87171' : C.accent, fontFamily: 'DM Sans', fontWeight: 600 }}>
-                  {fmt(product.current_stock)} {product.unit}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ fontSize: 13, color: isLow ? '#F87171' : C.accent, fontFamily: 'DM Sans', fontWeight: 600 }}>
+                    {fmt(product.current_stock)} {product.unit}
+                  </span>
+                  <span style={{ fontSize: 13, color: '#6B7280', fontFamily: 'DM Sans' }}>
+                    Jual: Rp {fmt(product.sell_price)}
+                  </span>
+                </div>
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ fontSize: 12, color: '#6B7280', fontFamily: 'DM Sans' }}>{batches.length} batch</div>
@@ -410,7 +120,6 @@ function StokSaatIni({ products, onTambah, onAdjust, onShowHistory }) {
               </div>
             </button>
 
-            {/* Expandable batch rows */}
             <AnimatePresence>
               {isOpen && (
                 <motion.div
@@ -454,7 +163,6 @@ function StokSaatIni({ products, onTambah, onAdjust, onShowHistory }) {
                         </div>
                       ))
                     )}
-                    {/* Quick add stok */}
                     <div className="flex gap-2 mt-2">
                       <button
                         type="button"
@@ -622,6 +330,15 @@ function EmptyState({ label, sub }) {
   )
 }
 
+function Chip({ label, value, color }) {
+  return (
+    <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}`, padding: '8px 14px', borderRadius: 12, flexShrink: 0 }}>
+      <p style={{ fontSize: 10, color: '#6B7280', fontFamily: 'DM Sans', marginBottom: 2 }}>{label}</p>
+      <p style={{ fontSize: 14, fontWeight: 700, color: color, fontFamily: 'Sora' }}>{value}</p>
+    </div>
+  )
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
 
 const TABS = ['Stok Saat Ini', 'Riwayat Masuk', 'Riwayat Keluar']
@@ -636,8 +353,14 @@ export default function Gudang() {
   const { data: suppliers = [] } = useSembakoSuppliers()
 
   const [activeTab,        setActiveTab]        = useState(0)
-  const [showTambahSheet,  setShowTambahSheet]  = useState(!!preProductId)
+  const [showTambahSheet,  setShowTambahSheet]  = useState(!!preProductId || searchParams.get('action') === 'add-stock')
   const [tambahProductId,  setTambahProductId]  = useState(preProductId)
+
+  React.useEffect(() => {
+    if (searchParams.get('action') === 'add-stock') {
+      setShowTambahSheet(true)
+    }
+  }, [searchParams])
   
   const [showAdjustSheet, setShowAdjustSheet] = useState(false)
   const [selectedBatch, setSelectedBatch] = useState(null)
@@ -657,7 +380,6 @@ export default function Gudang() {
     setShowAdjustSheet(true)
   }
 
-  // Summary stats
   const totalStokNilai = useMemo(() =>
     products.filter(p => p.is_active && !p.is_deleted)
       .reduce((s, p) => s + (p.current_stock * (p.avg_buy_price || 0)), 0),
@@ -670,7 +392,6 @@ export default function Gudang() {
 
   return (
     <div style={{ minHeight: '100vh', background: C.bg, paddingBottom: 80 }}>
-      {/* Header */}
       {!isDesktop && <BrokerMobileHeader title="Gudang" onMenuClick={() => setSidebarOpen(true)} />}
       
       <div style={{ padding: '20px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -739,7 +460,7 @@ export default function Gudang() {
       {/* Sheet Stok Masuk */}
       <AnimatePresence>
         {showTambahSheet && (
-          <TambahStokSheet
+          <SembakoTambahStokSheet
             preselectedProductId={tambahProductId}
             products={products.filter(p => p.is_active && !p.is_deleted)}
             suppliers={suppliers}
@@ -987,11 +708,3 @@ function AdjustStokSheet({ batch, product, onClose }) {
   )
 }
 
-function Chip({ label, value, color }) {
-  return (
-    <div style={{ flexShrink: 0, background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: '6px 14px', display: 'flex', alignItems: 'center', gap: 6 }}>
-      <span style={{ fontFamily: 'DM Sans', fontSize: 11, color: TEXT_SEC }}>{label}</span>
-      <span style={{ fontFamily: 'Sora', fontSize: 13, fontWeight: 700, color }}>{value}</span>
-    </div>
-  )
-}

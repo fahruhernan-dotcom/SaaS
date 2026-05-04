@@ -95,18 +95,18 @@ export function SembakoHamburgerDrawer({ open, onClose }) {
       label: 'UTAMA',
       items: [
         { label: 'Beranda',           icon: Home,           path: `${brokerBase}/beranda`       },
+        { label: 'Inventori & HPP',   icon: Package,        path: `${brokerBase}/produk`        },
+        { label: 'Gudang',            icon: Warehouse,      path: `${brokerBase}/gudang`        },
         { label: 'Penjualan',         icon: ArrowLeftRight, path: `${brokerBase}/penjualan`     },
         { label: 'Toko & Supplier',   icon: Store,          path: `${brokerBase}/toko-supplier` },
         { label: 'Pengiriman',        icon: Truck,          path: `${brokerBase}/pengiriman`    },
-        { label: 'Gudang',            icon: Warehouse,      path: `${brokerBase}/gudang`        },
-        { label: 'Inventori & HPP',   icon: Package,        path: `${brokerBase}/produk`        },
-        { label: 'Karyawan',          icon: Users,          path: `${brokerBase}/karyawan`      },
       ],
     },
     {
       label: 'LAPORAN & AKUN',
       items: [
-        { label: 'Laporan',           icon: BarChart2,     path: `${brokerBase}/laporan`        },
+        { label: 'Laporan',           icon: BarChart2,     path: `${brokerBase}/laporan`,  pro: true },
+        { label: 'Karyawan',          icon: Users,         path: `${brokerBase}/karyawan`, pro: true },
         { label: 'Tim & Akses',       icon: Shield,        path: `${brokerBase}/tim`            },
         { label: 'Akun & Profil',     icon: User,          path: `${brokerBase}/akun`           },
       ],
@@ -223,9 +223,21 @@ export function SembakoHamburgerDrawer({ open, onClose }) {
                           fontFamily: 'DM Sans', fontWeight: isActive ? 700 : 500,
                           fontSize: '14px',
                           color: isActive ? C.text : '#A07855',
+                          flex: 1,
                         }}>
                           {item.label}
                         </span>
+                        {item.pro && (
+                          <span style={{
+                            fontSize: '8px', fontWeight: 900,
+                            color: '#F59E0B', background: 'rgba(245,158,11,0.12)',
+                            padding: '2px 6px', borderRadius: '4px',
+                            letterSpacing: '0.08em',
+                            border: '1px solid rgba(245,158,11,0.2)',
+                          }}>
+                            PRO
+                          </span>
+                        )}
                       </button>
                     )
                   })}

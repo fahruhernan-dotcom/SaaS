@@ -7,8 +7,8 @@ import { PhoneInput } from '@/components/ui/PhoneInput'
 import { toast } from 'sonner'
 import { formatIDR } from '@/lib/format'
 import {
-  useSembakoProducts, useSembakoCustomers, useSembakoSales, useSembakoEmployees,
-  useCreateSembakoProduct, useCreateSembakoSale, useCreateSembakoDelivery,
+  useSembakoProducts, useSembakoCustomers, useSembakoSales, useSembakoEmployees, useSembakoDeliveries,
+  useCreateSembakoProduct, useUpdateSembakoProduct, useCreateSembakoSale, useCreateSembakoDelivery,
   useRecordSembakoPayment, useUpdateSembakoSale, useCreateSembakoCustomer,
 } from '@/lib/hooks/useSembakoData'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
@@ -312,11 +312,13 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
   const { data: products = [], isLoading: productsLoading } = useSembakoProducts()
   const { data: employees = [] } = useSembakoEmployees()
   const { data: allSales = [] } = useSembakoSales()
+  const { data: allDeliveries = [] } = useSembakoDeliveries()
 
   const createSale     = useCreateSembakoSale()
   const updateSale     = useUpdateSembakoSale()
   const createCustomer = useCreateSembakoCustomer()
   const createProduct  = useCreateSembakoProduct()
+  const updateProduct  = useUpdateSembakoProduct()
   const createDelivery = useCreateSembakoDelivery()
   const recordPayment  = useRecordSembakoPayment()
 
@@ -343,6 +345,19 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
   const [deliveryPlate, setDeliveryPlate]       = useState('')
   const [deliveryArea, setDeliveryArea]         = useState('')
   const [fuelCost, setFuelCost]                 = useState(0)
+
+  // Auto-prefill kendaraan & plat saat pilih sopir
+  const handleSelectDriver = useCallback((driverId) => {
+    setDeliveryDriver(driverId)
+    if (!driverId) return
+    const lastDelivery = allDeliveries
+      .filter(d => d.employee_id === driverId && d.vehicle_type)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
+    if (lastDelivery) {
+      if (lastDelivery.vehicle_type) setDeliveryVehicle(lastDelivery.vehicle_type)
+      if (lastDelivery.vehicle_plate) setDeliveryPlate(lastDelivery.vehicle_plate)
+    }
+  }, [allDeliveries])
 
   const [successData, setSuccessData] = useState(null)
   const [printData, setPrintData]     = useState(null)
@@ -436,7 +451,22 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
       if (p) {
         next[idx].product_name  = p.product_name
         next[idx].unit          = p.unit
-        next[idx].price_per_unit = p.sell_price || 0
+        
+        // --- Smart Prefill ---
+        // 1. Coba cari harga terakhir ke CUSTOMER ini
+        let lastPrice = 0
+        if (custId) {
+          const lastSale = allSales.find(s => 
+            s.customer_id === custId && 
+            s.sembako_sale_items?.some(it => it.product_id === val)
+          )
+          if (lastSale) {
+            const lastItem = lastSale.sembako_sale_items.find(it => it.product_id === val)
+            lastPrice = lastItem?.price_per_unit
+          }
+        }
+        
+        next[idx].price_per_unit = lastPrice || p.sell_price || 0
         next[idx].cogs_per_unit  = p.avg_buy_price || 0
       }
     }
@@ -493,6 +523,15 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
         })
       }
 
+      // Sync master prices if changed
+      for (const item of validItems) {
+        const p = products.find(x => x.id === item.product_id)
+        if (p && item.price_per_unit > 0 && item.price_per_unit !== p.sell_price) {
+          // Update global master price
+          updateProduct.mutate({ id: p.id, sell_price: item.price_per_unit })
+        }
+      }
+
       setSuccessData({
         id: sale.id, invoiceNumber: sale.invoice_number, invoice_number: sale.invoice_number,
         customerName: custName, customer_name: custName,
@@ -528,9 +567,18 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
   const STEPS = ['Pilih Toko', 'Input Produk', 'Pengiriman', 'Summary']
 
   const goNext = () => {
-    if (step === 0 && !custId) { /* OK — allow anonymous */ }
-    if (step === 1 && items.filter(i => i.product_id && i.quantity > 0).length === 0) {
-      toast.error('Tambahkan minimal 1 produk'); return
+    if (step === 0 && !custId) {
+      toast.error('Pilih toko / customer dulu sebelum lanjut'); return
+    }
+    if (step === 1) {
+      const validItems = items.filter(i => i.product_id && i.quantity > 0)
+      if (validItems.length === 0) {
+        toast.error('Tambahkan minimal 1 produk'); return
+      }
+      const zeroPriceItem = validItems.find(i => !i.price_per_unit || i.price_per_unit <= 0)
+      if (zeroPriceItem) {
+        toast.error('Harga jual per unit wajib diisi (tidak boleh Rp 0)'); return
+      }
     }
     setStep(s => s + 1)
   }
@@ -635,6 +683,22 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
                             <label className={labelCn}>Toko / Customer</label>
                             {customersLoading ? (
                               <div className="h-12 rounded-xl animate-pulse" style={{ background: 'rgba(234,88,12,0.07)' }} />
+                            ) : customers.length === 0 ? (
+                              /* Auto-show Quick Add when no customers exist */
+                              <div
+                                className="rounded-xl px-4 py-3 text-center"
+                                style={{ background: 'rgba(234,88,12,0.04)', border: `1px dashed ${BORDER}` }}
+                              >
+                                <p className="text-sm font-semibold mb-2" style={{ color: TEXT }}>Belum ada toko / customer</p>
+                                <p className="text-xs mb-3" style={{ color: MUTED }}>Tambahkan toko pertama untuk mulai catat penjualan</p>
+                                <button
+                                  onClick={() => setQuickAddCust(true)}
+                                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all"
+                                  style={{ background: ACCENT, color: '#fff', border: 'none', cursor: 'pointer', boxShadow: '0 4px 14px rgba(234,88,12,0.3)' }}
+                                >
+                                  <Plus size={14} /> Tambah Toko Pertama
+                                </button>
+                              </div>
                             ) : isDesktop ? (
                               // Desktop: inline dropdown
                               <CustomSelect
@@ -855,7 +919,7 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
                         >
                           <div>
                             <label className={labelCn}>Sopir / Kurir (Opsional)</label>
-                            <CustomSelect value={deliveryDriver} onChange={setDeliveryDriver} options={employeeOptions} placeholder="Pilih Kurir" />
+                            <CustomSelect value={deliveryDriver} onChange={handleSelectDriver} options={employeeOptions} placeholder="Pilih Kurir" />
                           </div>
                           <div className="grid grid-cols-2 gap-2">
                             <div>
@@ -932,6 +996,20 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
                         )}
                       </div>
                     </div>
+
+                    {/* Margin warning for thin margins */}
+                    {totalAmount > 0 && marginPct < 5 && marginPct >= 0 && (
+                      <div
+                        className="flex items-start gap-2.5 px-4 py-3 rounded-xl"
+                        style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}
+                      >
+                        <span style={{ fontSize: '16px', flexShrink: 0, marginTop: '1px' }}>⚠️</span>
+                        <div>
+                          <p className="text-xs font-bold" style={{ color: '#F59E0B' }}>Margin tipis ({marginPct}%)</p>
+                          <p className="text-[11px] mt-0.5" style={{ color: MUTED }}>Pastikan harga jual sudah benar agar keuntungan optimal</p>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Cost inputs */}
                     <div className="grid grid-cols-2 gap-3">

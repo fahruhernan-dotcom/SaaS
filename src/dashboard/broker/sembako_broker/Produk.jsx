@@ -671,12 +671,28 @@ export default function Produk() {
         <AnimatePresence>
           {filtered.length === 0 ? (
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '48px 0' }}>
+              <Package size={40} color="#4B5563" style={{ margin: '0 auto 12px', opacity: 0.4 }} />
               <p style={{ fontFamily: 'Sora', fontSize: 16, color: TEXT_SEC, marginBottom: 8 }}>
                 {search ? 'Produk tidak ditemukan' : 'Belum ada produk'}
               </p>
-              <p style={{ fontFamily: 'DM Sans', fontSize: 13, color: '#4B5563' }}>
-                {search ? 'Coba kata kunci lain' : 'Klik "+ Tambah" untuk menambahkan produk'}
+              <p style={{ fontFamily: 'DM Sans', fontSize: 13, color: '#4B5563', marginBottom: search ? 0 : 16 }}>
+                {search ? 'Coba kata kunci lain' : 'Mulai dengan menambahkan produk yang Anda jual'}
               </p>
+              {!search && (
+                <button
+                  onClick={() => setSheet('new')}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    padding: '10px 22px', borderRadius: 12,
+                    background: C.accent, color: '#fff',
+                    fontSize: 13, fontWeight: 700, fontFamily: 'DM Sans',
+                    border: 'none', cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(234,88,12,0.3)',
+                  }}
+                >
+                  <Plus size={15} /> Tambah Produk Pertama
+                </button>
+              )}
             </div>
           ) : (
             filtered.map(product => (

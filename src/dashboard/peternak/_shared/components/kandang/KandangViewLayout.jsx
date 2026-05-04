@@ -22,6 +22,9 @@ import StickerPeel from '@/dashboard/peternak/_shared/components/StickerPeel'
 import sheepSticker from '@/assets/sheep_sticker.png'
 import { BrokerPageHeader } from '@/dashboard/_shared/components/transactions/BrokerPageHeader'
 
+// Safety check for BrokerPageHeader
+const SafeBrokerPageHeader = BrokerPageHeader || (() => null);
+
 /**
  * Full kandang management page — supports any livestock species.
  *
@@ -228,7 +231,7 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
             }
           />
         ) : (
-          <BrokerPageHeader
+          <SafeBrokerPageHeader
             title={viewMode === 'helicopter' ? (pageTitle ?? 'Helicopter View') : 'Denah Lantai'}
             subtitle={viewMode === 'helicopter' ? 'Manajemen visual alokasi kandang.' : 'Skala riil 1:1 (1 kotak = 1 meter).'}
             icon={<LayoutGrid size={20} className="text-emerald-400" />}
