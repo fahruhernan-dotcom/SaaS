@@ -22,6 +22,7 @@ const AVATARS = [
 const Pricing = ({ activeRole, setActiveRole }) => {
   const [isAnnual, setIsAnnual] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
+  const [mobilePlanIdx, setMobilePlanIdx] = useState(1); // default PRO
   const switchRef = useRef(null);
 
   const { data: dbPricing } = usePricingConfig();
@@ -263,8 +264,28 @@ const Pricing = ({ activeRole, setActiveRole }) => {
           </AnimatedContent>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid grid-cols-3 md:grid-cols-3 gap-1 md:gap-8 max-w-6xl mx-auto items-center">
+        {/* Mobile Plan Tabs */}
+        <div className="md:hidden flex justify-center mb-6">
+          <div className="inline-flex bg-[#111C24] border border-white/10 p-1 rounded-full">
+            {plans.map((plan, idx) => (
+              <button
+                key={plan.name}
+                onClick={() => setMobilePlanIdx(idx)}
+                className={cn(
+                  'px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-200',
+                  mobilePlanIdx === idx
+                    ? plan.isPopular ? 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30' : 'bg-white/10 text-white'
+                    : 'text-[#4B6478] hover:text-white/70'
+                )}
+              >
+                {plan.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Pricing Cards — Mobile: single card, Desktop: 3-col grid */}
+        <div className="hidden md:grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-center">
           {plans.map((plan, idx) => (
             <motion.div
               key={plan.name}
@@ -453,6 +474,130 @@ const Pricing = ({ activeRole, setActiveRole }) => {
               )}
             </motion.div>
           ))}
+        </div>
+
+        {/* Mobile: Single card display */}
+        <div className="md:hidden max-w-sm mx-auto">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={plans[mobilePlanIdx].name}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+              className={cn(
+                'relative p-6 rounded-2xl border flex flex-col transition-all',
+                plans[mobilePlanIdx].isPopular
+                  ? 'bg-[#0C1319] border-emerald-500 border-2 shadow-[0_16px_40px_-8px_rgba(16,185,129,0.25)]'
+                  : 'bg-[#0C1319] border-white/8'
+              )}
+            >
+              {plans[mobilePlanIdx].isPopular && (
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 whitespace-nowrap z-20">
+                  Paling Populer
+                </div>
+              )}
+
+              <div className="mb-5">
+                <div className="flex items-start justify-between mb-4">
+                  <div>
+                    <span className={cn('text-[10px] font-black uppercase tracking-[0.15em]', plans[mobilePlanIdx].isPopular ? 'text-emerald-500' : 'text-[#4B6478]')}>
+                      {plans[mobilePlanIdx].subtitle}
+                    </span>
+                    <h3 className="font-display text-xl font-black text-white uppercase">{plans[mobilePlanIdx].name}</h3>
+                  </div>
+                  {plans[mobilePlanIdx].isSocial && (
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex -space-x-2">
+                        {AVATARS.slice(0, 3).map((av, i) => (
+                          <div key={i} className="w-6 h-6 rounded-full border-2 border-[#0C1319] flex items-center justify-center text-[7px] font-black text-white shrink-0" style={{ backgroundColor: av.bg }}>
+                            {av.initials}
+                          </div>
+                        ))}
+                      </div>
+                      <span className="text-[9px] font-bold text-[#94A3B8]">+500 bisnis aktif</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Price */}
+                <div className="mb-3">
+                  {plans[mobilePlanIdx].price === 'Gratis' ? (
+                    <span className="text-3xl font-black text-white uppercase">GRATIS</span>
+                  ) : (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-[#4B6478] line-through">
+                          Rp {formatRupiah(plans[mobilePlanIdx].anchorPrice)}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 text-[10px] font-black uppercase">
+                          Hemat {Math.round((1 - (isAnnual ? plans[mobilePlanIdx].annualPrice : plans[mobilePlanIdx].monthlyPrice) / plans[mobilePlanIdx].anchorPrice) * 100)}%
+                        </span>
+                      </div>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-base font-black text-white">Rp</span>
+                        <AnimatedPrice
+                          value={isAnnual ? plans[mobilePlanIdx].annualPrice : plans[mobilePlanIdx].monthlyPrice}
+                          className="text-3xl font-black text-white tabular-nums tracking-tighter"
+                        />
+                        <span className="text-[#4B6478] text-xs font-black uppercase">/Bln</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {isAnnual && plans[mobilePlanIdx].annualPrice > 0 && (
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <TrendingUp size={12} className="text-emerald-500" />
+                    <span className="text-xs font-bold text-emerald-500">
+                      Bayar Rp {formatRupiah(plans[mobilePlanIdx].annualPrice * 12)}/tahun
+                    </span>
+                  </div>
+                )}
+
+                <p className="text-[#94A3B8] text-sm leading-relaxed">{plans[mobilePlanIdx].description}</p>
+              </div>
+
+              {/* Features — ALL shown */}
+              <div className="flex-1 space-y-3 mb-6">
+                {plans[mobilePlanIdx].features.map((feature, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className={cn(
+                      'shrink-0 w-5 h-5 rounded-full flex items-center justify-center',
+                      feature.highlight ? 'bg-emerald-500 text-white' : 'bg-emerald-500/10 text-emerald-500'
+                    )}>
+                      <Check size={12} strokeWidth={3} />
+                    </div>
+                    <span className={cn(
+                      'text-sm leading-relaxed',
+                      feature.highlight ? 'text-white font-bold' : 'text-[#94A3B8] font-medium'
+                    )}>
+                      {feature.text}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA */}
+              <div className="space-y-3">
+                <Button
+                  asChild
+                  className={cn(
+                    'w-full py-4 h-auto font-display text-sm font-black uppercase tracking-widest rounded-xl transition-all duration-300 active:scale-95',
+                    plans[mobilePlanIdx].isPopular
+                      ? 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-500/25'
+                      : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
+                  )}
+                >
+                  <Link to={plans[mobilePlanIdx].href}>{plans[mobilePlanIdx].buttonText}</Link>
+                </Button>
+                <div className="flex items-center justify-center gap-1.5">
+                  <CheckCircle2 size={12} className="text-emerald-500" />
+                  <span className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest">Garansi 30 Hari</span>
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         {/* FAQ Section */}

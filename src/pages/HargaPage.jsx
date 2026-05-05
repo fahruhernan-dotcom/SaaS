@@ -1,12 +1,14 @@
 import React, { useState, useMemo } from 'react'
 import SEO from '../components/SEO'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, ChevronDown, ArrowRight, Star, X as XIcon } from 'lucide-react'
+import { Check, ChevronDown, ArrowRight, Star, X as XIcon, Zap, Shield, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { usePricingConfig, usePlanConfigs } from '@/lib/hooks/useAdminData'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import { useAuth } from '@/lib/hooks/useAuth'
+import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import Particles from '../components/reactbits/Particles'
 
 
@@ -655,6 +657,11 @@ export default function HargaPage() {
   const [billing, setBilling] = useState('monthly')
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 
+  const { user, tenant } = useAuth()
+  const subStatus = tenant ? getSubscriptionStatus(tenant) : null
+  const isLoggedIn = !!user
+  const isStarter = subStatus?.plan === 'starter'
+
   const { data: dbPricing } = usePricingConfig()
   const { data: dbConfigs } = usePlanConfigs()
 
@@ -793,6 +800,29 @@ export default function HargaPage() {
           </div>
         </section>
 
+        {/* ── LOGIN AWARENESS BANNER ── */}
+        {isLoggedIn && isStarter && (
+          <div className="max-w-2xl mx-auto mb-8 px-5">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative overflow-hidden rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent p-4 md:p-5"
+            >
+              <div className="flex items-start gap-3">
+                <div className="shrink-0 w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+                  <Zap size={18} className="text-emerald-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-white mb-0.5">Kamu pakai Starter (Gratis)</p>
+                  <p className="text-xs text-[#94A3B8] leading-relaxed">
+                    Upgrade ke Pro untuk unlock fitur lengkap — trial {data?.trialDays || 14} hari gratis, tanpa kartu kredit.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
         {/* ── BILLING TOGGLE ── */}
         <div className="flex justify-center mb-8 px-5">
           <div className="inline-flex items-center bg-[#111C24] border border-white/8 rounded-full p-1 gap-1">
@@ -820,7 +850,7 @@ export default function HargaPage() {
                   </span>
                 )}
                 {b === 'yearly' && billing !== 'yearly' && (
-                  <span className="relative ml-2 bg-amber-500/10 text-amber-500/60 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  <span className="relative ml-2 bg-amber-500/15 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
                     {annualDiscount.badge_text}
                   </span>
                 )}
@@ -829,58 +859,71 @@ export default function HargaPage() {
           </div>
         </div>
 
-        {/* ── TAB BAR ── */}
-        <div className="flex flex-col items-center gap-2 mb-10 px-4">
+        {/* ── TAB BAR — Progressive Role Selector ── */}
+        <div className="flex flex-col items-center gap-3 mb-10 px-4">
 
-          {/* Level 1 — Role */}
-          <div className="inline-flex bg-[#111C24] border border-white/8 rounded-full p-1 gap-1">
-            {ROLES.map(role => (
-              <button
-                key={role.id}
-                type="button"
-                onClick={() => handleRoleChange(role.id)}
-                className={`relative px-5 md:px-7 py-2 rounded-full text-[11px] md:text-xs font-bold uppercase tracking-wider transition-colors duration-200 cursor-pointer border-none ${selectedRole === role.id ? 'text-emerald-400' : 'text-white/40 hover:text-white/70'
-                  }`}
-              >
-                {selectedRole === role.id && (
-                  <motion.span
-                    layoutId="harga-tab-bg"
-                    className="absolute inset-0 rounded-full bg-emerald-500/10 border border-emerald-500/40"
-                    transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-                  />
-                )}
-                <div className="relative flex items-center gap-2">
-                  <img src={role.icon} alt={role.label} className="w-5 h-5 object-cover rounded-md" />
-                  <span>{role.label}</span>
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {/* Level 2 — Sub-tabs */}
-          {(SUBS[selectedRole]?.length ?? 0) > 0 && (
-            <div className="flex items-center gap-1.5">
-              {SUBS[selectedRole].map(sub => (
+          {/* Level 1 — Role chips with horizontal scroll on mobile */}
+          <div className="w-full max-w-lg overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-1">
+            <div className="inline-flex bg-[#111C24] border border-white/8 rounded-full p-1 gap-1 min-w-max mx-auto">
+              {ROLES.map(role => (
                 <button
-                  key={sub.id}
+                  key={role.id}
                   type="button"
-                  disabled={sub.disabled}
-                  onClick={() => !sub.disabled && setSelectedSub(sub.id)}
-                  className={`flex items-center gap-1 px-3.5 py-1 rounded-full text-[11px] font-semibold border transition-colors duration-150 ${sub.disabled
-                    ? 'opacity-40 cursor-not-allowed border-white/8 text-white/40'
-                    : selectedSub === sub.id
-                      ? 'border-white/20 bg-white/[0.08] text-white cursor-pointer'
-                      : 'border-transparent text-white/50 hover:text-white/70 cursor-pointer'
+                  onClick={() => handleRoleChange(role.id)}
+                  className={`relative px-5 md:px-7 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-colors duration-200 cursor-pointer border-none snap-center shrink-0 ${selectedRole === role.id ? 'text-emerald-400' : 'text-white/40 hover:text-white/70'
                     }`}
                 >
-                  {sub.label}
-                  {sub.disabled && (
-                    <span className="text-[9px] font-bold text-amber-400/80 uppercase ml-0.5">Segera</span>
+                  {selectedRole === role.id && (
+                    <motion.span
+                      layoutId="harga-tab-bg"
+                      className="absolute inset-0 rounded-full bg-emerald-500/10 border border-emerald-500/40"
+                      transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+                    />
                   )}
+                  <div className="relative flex items-center gap-2">
+                    <img src={role.icon} alt={role.label} className="w-5 h-5 object-cover rounded-md" />
+                    <span>{role.label}</span>
+                  </div>
                 </button>
               ))}
             </div>
-          )}
+          </div>
+
+          {/* Level 2 — Sub-tabs with horizontal scroll */}
+          <AnimatePresence mode="wait">
+            {(SUBS[selectedRole]?.length ?? 0) > 0 && (
+              <motion.div
+                key={selectedRole}
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.15 }}
+                className="w-full max-w-lg overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-1"
+              >
+                <div className="flex items-center gap-2 min-w-max px-1 mx-auto w-fit">
+                  {SUBS[selectedRole].map(sub => (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      disabled={sub.disabled}
+                      onClick={() => !sub.disabled && setSelectedSub(sub.id)}
+                      className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-semibold border transition-colors duration-150 snap-center shrink-0 ${sub.disabled
+                        ? 'opacity-40 cursor-not-allowed border-white/8 text-white/40'
+                        : selectedSub === sub.id
+                          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 cursor-pointer'
+                          : 'border-transparent text-white/50 hover:text-white/70 cursor-pointer'
+                        }`}
+                    >
+                      {sub.label}
+                      {sub.disabled && (
+                        <span className="text-[9px] font-bold text-amber-400/80 uppercase ml-0.5">Segera</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
         </div>
 
@@ -935,21 +978,21 @@ export default function HargaPage() {
         </section>
 
         {/* ── CTA FINAL ── */}
-        <section className="py-24 px-5">
+        <section className="py-16 md:py-24 px-5">
           <div className="max-w-2xl mx-auto">
             <FadeUp>
-              <div className="relative rounded-3xl p-12 text-center border border-emerald-500/20 overflow-hidden">
+              <div className="relative rounded-2xl md:rounded-3xl p-6 md:p-12 text-center border border-emerald-500/20 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none rounded-3xl" />
                 <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-24 bg-emerald-500/10 blur-3xl pointer-events-none" />
 
                 <div className="relative z-10">
-                  <h2 className="font-['Sora'] text-3xl font-bold text-white mb-3">Masih ragu?</h2>
-                  <p className="text-[#94A3B8] mb-8">Coba trial gratis untuk paket Pro & Business. Tidak perlu kartu kredit.</p>
+                  <h2 className="font-['Sora'] text-2xl md:text-3xl font-bold text-white mb-3">Masih ragu?</h2>
+                  <p className="text-[#94A3B8] text-sm md:text-base mb-6 md:mb-8">Coba trial gratis untuk paket Pro & Business. Tidak perlu kartu kredit.</p>
 
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
                     <Link
                       to="/register"
-                      className="inline-flex items-center gap-2 px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-all shadow-[0_4px_20px_rgba(16,185,129,0.3)]"
+                      className="inline-flex items-center gap-2 px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-all shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_4px_28px_rgba(16,185,129,0.45)] hover:-translate-y-0.5 active:translate-y-0"
                     >
                       Mulai Sekarang
                       <ArrowRight size={16} />
@@ -962,6 +1005,22 @@ export default function HargaPage() {
                     >
                       Tanya dulu via WhatsApp →
                     </a>
+                  </div>
+
+                  {/* Trust signals */}
+                  <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6 pt-4 border-t border-white/5">
+                    <div className="flex items-center gap-1.5">
+                      <Shield size={14} className="text-emerald-500" />
+                      <span className="text-[11px] text-[#4B6478] font-semibold">Garansi 30 Hari</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Users size={14} className="text-emerald-500" />
+                      <span className="text-[11px] text-[#4B6478] font-semibold">500+ Bisnis Aktif</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Star size={14} className="text-emerald-500 fill-emerald-500/30" />
+                      <span className="text-[11px] text-[#4B6478] font-semibold">Cancel Kapan Saja</span>
+                    </div>
                   </div>
                 </div>
               </div>
