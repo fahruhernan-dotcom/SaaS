@@ -15,6 +15,7 @@ import { DeliveryReceipt } from './templates/DeliveryReceipt'
 import { PaymentReceipt } from './templates/PaymentReceipt'
 import { PeternakInvoice } from './templates/PeternakInvoice'
 import { RPATokoInvoice } from './templates/RPATokoInvoice'
+import { SembakoInvoice } from './templates/SembakoInvoice'
 import { useSaveInvoice } from '@/lib/invoice/useInvoice'
 import { generateInvoiceNumber } from '@/lib/invoice/invoiceUtils'
 
@@ -112,6 +113,20 @@ function buildDocument({ type, invoiceNumber, data }) {
     )
   }
 
+  if (type === 'sembako_sale') {
+    return (
+      <SembakoInvoice
+        tenant={tenant}
+        invoice={invoice}
+        customer={customer}
+        items={items || []}
+        invoiceNumber={invoiceNumber}
+        generatedBy={generatedBy}
+        showProfit={showProfit ?? false}
+      />
+    )
+  }
+
   return null
 }
 
@@ -123,6 +138,7 @@ function getFileName(type, invoiceNumber) {
     payment_receipt:  'Kwitansi',
     peternak_invoice: 'TagihanTernak',
     rpa_to_toko:      'InvoiceRPA',
+    sembako_sale:     'InvoiceSembako',
   }
   return `${prefixes[type] || 'Dokumen'}_${invoiceNumber}.pdf`
 }
@@ -150,6 +166,7 @@ export default function InvoicePreviewModal({ type, data, isOpen, onClose }) {
     sale: 'sale', purchase: 'purchase', delivery: 'delivery',
     payment_receipt: 'payment_receipt',
     peternak_invoice: 'peternak_invoice', rpa_to_toko: 'rpa_to_toko',
+    sembako_sale: 'sembako_sale',
   }
   const [invoiceNumber] = useState(() => generateInvoiceNumber(typeMap[type] || 'sale'))
   const [saved, setSaved] = useState(false)
@@ -174,6 +191,7 @@ export default function InvoicePreviewModal({ type, data, isOpen, onClose }) {
     payment_receipt:  'Kwitansi Pembayaran',
     peternak_invoice: 'Tagihan Penjualan Ternak',
     rpa_to_toko:      'Invoice Penjualan (RPA)',
+    sembako_sale:     'Invoice Penjualan Sembako',
   }
   const title = titles[type] || 'Dokumen'
 
@@ -183,12 +201,14 @@ export default function InvoicePreviewModal({ type, data, isOpen, onClose }) {
     type === 'payment_receipt'  ? data.payment?.id  :
     type === 'peternak_invoice' ? data.cycle?.id    :
     type === 'rpa_to_toko'      ? data.invoice?.id  :
+    type === 'sembako_sale'     ? data.invoice?.id  :
     data.sale?.id
 
   const recipientName =
     type === 'purchase'         ? (data.farm?.farm_name               || '-') :
     type === 'peternak_invoice' ? (data.broker_name                   || '-') :
     type === 'rpa_to_toko'      ? (data.customer?.customer_name       || '-') :
+    type === 'sembako_sale'     ? (data.customer?.customer_name       || '-') :
     (data.rpa?.rpa_name || '-')
 
   const totalAmount =
@@ -196,6 +216,7 @@ export default function InvoicePreviewModal({ type, data, isOpen, onClose }) {
     type === 'payment_receipt'  ? Number(data.payment?.amount         || 0) :
     type === 'peternak_invoice' ? Number(data.cycle?.total_revenue    || 0) :
     type === 'rpa_to_toko'      ? Number(data.invoice?.total_amount   || 0) :
+    type === 'sembako_sale'     ? Number(data.invoice?.total_amount   || 0) :
     Number(data.sale?.total_revenue || 0)
 
   const handleSave = () => {

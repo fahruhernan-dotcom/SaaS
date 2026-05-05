@@ -15,6 +15,7 @@ export const generateInvoiceNumber = (type, date = new Date()) => {
     payment_receipt:  'REC',
     peternak_invoice: 'PET',
     rpa_to_toko:      'RPA',
+    sembako_sale:     'SMB',
   }
   return `${prefixes[type] || 'INV'}-${dateStr}-${rand}`
 }

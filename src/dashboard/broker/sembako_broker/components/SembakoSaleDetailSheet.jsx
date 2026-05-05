@@ -226,7 +226,7 @@ export function SembakoSaleDetailSheet({ isOpen, onOpenChange, sale, onEdit }) {
 
       {sale && invoiceModal.open && (
         <InvoicePreviewModal
-          type={invoiceModal.type === 'sale' ? 'rpa_to_toko' : invoiceModal.type}
+          type={invoiceModal.type === 'sale' ? 'sembako_sale' : invoiceModal.type}
           isOpen={invoiceModal.open}
           onClose={() => setInvoiceModal({ open: false, type: null })}
           data={{
