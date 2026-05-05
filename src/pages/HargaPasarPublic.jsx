@@ -571,8 +571,14 @@ export default function HargaPasarPublic() {
 
           <div>
             <div className="flex items-center gap-3 mb-6 group cursor-default">
-              <div className="w-11 h-11 rounded-xl bg-emerald-500/10 flex items-center justify-center p-1.5 border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)] group-hover:border-emerald-500/40 transition-all">
-                <img src="/logo.png" alt="TernakOS" className="w-full h-full object-contain" />
+              <div className="relative shrink-0">
+                <div className="absolute inset-0 rounded-[12px] bg-emerald-500/20 blur-md opacity-60 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                <img
+                  src="/logo.png"
+                  alt="TernakOS"
+                  style={{ width: 44, height: 44, borderRadius: 12, objectFit: 'cover', display: 'block', border: '1px solid rgba(255,255,255,0.07)' }}
+                  className="group-hover:scale-105 transition-transform duration-200 relative z-10"
+                />
               </div>
               <span className="font-['Sora'] font-black text-2xl text-white tracking-tight leading-none">
                 Ternak<span className="text-emerald-500">OS</span>

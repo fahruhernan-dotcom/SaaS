@@ -85,9 +85,7 @@ function TernakOSMockup() {
     <div className="p-4 h-full flex flex-col gap-3">
       {/* Top bar */}
       <div className="flex items-center gap-2">
-        <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center p-1">
-          <img src="/logo.png" alt="TernakOS" className="w-full h-full object-contain" />
-        </div>
+        <img src="/logo.png" alt="TernakOS" className="w-6 h-6 rounded-md object-cover border border-white/10" />
         <span className="text-[11px] font-bold text-[#F1F5F9]">TernakOS</span>
         <span className="ml-auto text-[9px] text-[#10B981] bg-emerald-500/10 px-1.5 py-0.5 rounded-full">● Live</span>
       </div>
