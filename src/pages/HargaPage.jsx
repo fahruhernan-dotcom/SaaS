@@ -776,8 +776,14 @@ export default function HargaPage() {
               transition={{ duration: 0.4 }}
               className="flex items-center justify-center gap-3 mb-8"
             >
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center p-1.5 border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
-                <img src="/logo.png" alt="TernakOS" className="w-full h-full object-contain" />
+              <div className="relative shrink-0">
+                <div className="absolute inset-0 rounded-[10px] bg-emerald-500/20 blur-md opacity-60 pointer-events-none" />
+                <img
+                  src="/logo.png"
+                  alt="TernakOS"
+                  style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', display: 'block', border: '1px solid rgba(255,255,255,0.07)' }}
+                  className="relative z-10"
+                />
               </div>
               <span className="font-display font-black text-xl text-white tracking-tight uppercase">TernakOS</span>
             </motion.div>

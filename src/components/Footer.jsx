@@ -30,8 +30,14 @@ const Footer = () => {
         {/* Brand */}
         <div className="text-center md:text-left mb-8 md:mb-[48px]">
           <Link to="/" className="flex items-center justify-center md:justify-start gap-[10px] mb-[10px] group">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center p-1.5 border border-emerald-500/20 group-hover:border-emerald-500/40 transition-all">
-              <img src="/logo.png" alt="TernakOS" className="w-full h-full object-contain" />
+            <div className="relative shrink-0">
+              <div className="absolute inset-0 rounded-[10px] bg-emerald-500/10 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+              <img
+                src="/logo.png"
+                alt="TernakOS"
+                style={{ width: 36, height: 36, borderRadius: 10, objectFit: 'cover', display: 'block', border: '1px solid rgba(255,255,255,0.07)' }}
+                className="group-hover:scale-105 transition-transform duration-200 relative z-10"
+              />
             </div>
             <span className="font-['Sora'] text-xl font-black text-white tracking-tight leading-none">
               Ternak<span className="text-emerald-500">OS</span>
