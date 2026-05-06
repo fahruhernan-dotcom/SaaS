@@ -17,20 +17,27 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { Loader2, Trash2, X, Plus, UserPlus, Users, Clock, Copy, Pencil, Save, AlertCircle, Lock } from 'lucide-react';
+import { Loader2, Trash2, X, Plus, UserPlus, Users, Clock, Copy, Pencil, Save, AlertCircle, Lock, Shield } from 'lucide-react';
 import { formatDistanceToNow, differenceInDays } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 
 const ROLE_BADGE_MAP = {
-  owner: { label: 'Owner', class: 'bg-[#EA580C]/10 text-[#EA580C] border-[#EA580C]/20' },
-  staff: { label: 'Staff', class: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  view_only: { label: 'View Only', class: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
-  supir: { label: 'Supir', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+  owner:   { label: 'Owner', class: 'bg-[#EA580C]/10 text-[#EA580C] border-[#EA580C]/20' },
+  admin:   { label: 'Admin', class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+  sales:   { label: 'Sales', class: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  gudang:  { label: 'Gudang', class: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
+  kurir:   { label: 'Kurir / Sopir', class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+  lainnya: { label: 'Lainnya', class: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
 };
 
-export default function SembakoTim() {
+export default function SembakoTim({ hideMobileHeader }) {
   const { profile } = useAuth();
   const { setSidebarOpen } = useOutletContext();
   const isDesktop = useMediaQuery('(min-width: 1024px)');
@@ -135,6 +142,8 @@ export default function SembakoTim() {
 
   const [inviteCode, setInviteCode] = useState(null);
   const [showCode, setShowCode] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(null);
+  const [confirmCancel, setConfirmCancel] = useState(null);
 
   // --- MUTATIONS ---
   const inviteMutation = useMutation({
@@ -242,7 +251,7 @@ export default function SembakoTim() {
 
   return (
     <div className="bg-[#06090F] min-h-screen text-left">
-      {!isDesktop && <BrokerMobileHeader title="Tim & Akses" onMenuClick={() => setSidebarOpen(true)} />}
+      {(!isDesktop && !hideMobileHeader) && <BrokerMobileHeader title="Tim & Akses" onMenuClick={() => setSidebarOpen(true)} />}
 
       <div className="p-4 md:p-8 max-w-5xl mx-auto space-y-8 pb-32">
 
@@ -404,6 +413,38 @@ export default function SembakoTim() {
           </div>
         </section>
 
+        {/* Section: Pemilik Bisnis */}
+        {(() => {
+          const ownerMember = members.find(m => m.role === 'owner')
+          if (!ownerMember) return null
+          return (
+            <section className="space-y-4">
+              <h2 className="font-display font-black text-white text-lg tracking-tight uppercase flex items-center gap-2">
+                 <Badge variant="outline" className="bg-[#EA580C]/10 text-[#EA580C] border-[#EA580C]/20 p-1.5 rounded-xl">
+                  <Shield size={16} />
+                </Badge>
+                Pemilik Bisnis
+              </h2>
+              <div className="bg-[#111C24] border border-white/5 rounded-[28px] overflow-hidden shadow-xl">
+                <div className="p-4 md:px-7 md:py-5 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-[18px] bg-[#EA580C]/10 border border-[#EA580C]/20 flex items-center justify-center font-display font-black text-[#EA580C] text-base flex-shrink-0 shadow-inner">
+                      {getInitials(ownerMember.full_name || ownerMember.email)}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-black text-white uppercase tracking-tight leading-none">{ownerMember.full_name || 'User Baru'}</span>
+                      <span className="text-[11px] text-[#4B6478] font-bold mt-1.5 lowercase">{ownerMember.email}</span>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className={cn("border-none h-6 px-3 rounded-lg text-[9px] font-black uppercase tracking-widest", ROLE_BADGE_MAP['owner']?.class || 'bg-gray-500/10 text-gray-400')}>
+                    {ROLE_BADGE_MAP['owner']?.label || 'Owner'}
+                  </Badge>
+                </div>
+              </div>
+            </section>
+          )
+        })()}
+
         {/* Section: Anggota Aktif */}
         <section className="space-y-4">
           <h2 className="font-display font-black text-white text-lg tracking-tight uppercase flex items-center gap-2">
@@ -416,11 +457,11 @@ export default function SembakoTim() {
           <div className="bg-[#111C24] border border-white/5 rounded-[28px] overflow-hidden shadow-xl">
             {loadingMembers ? (
               <div className="p-12 flex justify-center text-[#4B6478]"><Loader2 className="animate-spin" /></div>
-            ) : members.length === 0 ? (
+            ) : members.filter(m => m.role !== 'owner').length === 0 ? (
               <div className="p-12 text-center text-[#4B6478] font-bold uppercase text-xs tracking-widest italic">Belum ada anggota lain.</div>
             ) : (
               <div className="divide-y divide-white/5">
-                {members.map(member => (
+                {members.filter(m => m.role !== 'owner').map(member => (
                   <div key={member.id} className="p-4 md:px-7 md:py-5 flex items-center justify-between hover:bg-white/[0.02] transition-colors group">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-[18px] bg-[#EA580C]/10 border border-[#EA580C]/20 flex items-center justify-center font-display font-black text-[#EA580C] text-base flex-shrink-0 shadow-inner group-hover:bg-[#EA580C]/20 transition-all">
@@ -440,11 +481,7 @@ export default function SembakoTim() {
                           variant="ghost"
                           size="icon"
                           className="text-[#4B6478] hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all h-9 w-9"
-                          onClick={() => {
-                            if (confirm(`Hapus ${member.full_name || member.email} dari tim?`)) {
-                              removeMemberMutation.mutate(member);
-                            }
-                          }}
+                          onClick={() => setConfirmRemove(member)}
                           disabled={removeMemberMutation.isPending}
                         >
                           <Trash2 size={16} />
@@ -515,11 +552,7 @@ export default function SembakoTim() {
                             variant="outline"
                             size="sm"
                             className="bg-red-400/5 hover:bg-red-400/10 border-red-400/20 text-red-400 font-black text-[10px] uppercase tracking-widest h-10 px-5 rounded-xl transition-all shrink-0"
-                            onClick={() => {
-                              if (confirm(`Batalkan undangan kode ${invite.token}?`)) {
-                                cancelInviteMutation.mutate(invite.id);
-                              }
-                            }}
+                            onClick={() => setConfirmCancel(invite)}
                             disabled={cancelInviteMutation.isPending}
                           >
                             <X size={16} className="mr-2" />
@@ -534,6 +567,52 @@ export default function SembakoTim() {
             )}
           </div>
         </section>
+
+        {/* Confirm: hapus anggota */}
+        <AlertDialog open={!!confirmRemove} onOpenChange={v => !v && setConfirmRemove(null)}>
+          <AlertDialogContent className="bg-[#111C24] border border-white/5 rounded-2xl max-w-sm">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-white">Hapus Anggota?</AlertDialogTitle>
+              <AlertDialogDescription className="text-[#4B6478]">
+                <span className="font-bold text-white/70">{confirmRemove?.full_name || confirmRemove?.email}</span> akan dihapus dari tim dan kehilangan akses ke bisnis ini.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="bg-white/5 border-white/8 text-slate-300 hover:bg-white/10 rounded-xl">
+                Batal
+              </AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-red-500/90 hover:bg-red-500 text-white rounded-xl"
+                onClick={() => { removeMemberMutation.mutate(confirmRemove); setConfirmRemove(null) }}
+              >
+                Hapus
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Confirm: batalkan undangan */}
+        <AlertDialog open={!!confirmCancel} onOpenChange={v => !v && setConfirmCancel(null)}>
+          <AlertDialogContent className="bg-[#111C24] border border-white/5 rounded-2xl max-w-sm">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-white">Batalkan Undangan?</AlertDialogTitle>
+              <AlertDialogDescription className="text-[#4B6478]">
+                Kode <span className="font-mono font-black text-[#EA580C]">{confirmCancel?.token}</span> akan dinonaktifkan dan tidak bisa digunakan lagi.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="bg-white/5 border-white/8 text-slate-300 hover:bg-white/10 rounded-xl">
+                Batal
+              </AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-red-500/90 hover:bg-red-500 text-white rounded-xl"
+                onClick={() => { cancelInviteMutation.mutate(confirmCancel.id); setConfirmCancel(null) }}
+              >
+                Batalkan Undangan
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Invite Sheet remains consistent but themed */}
         <InviteSheet 
@@ -555,7 +634,7 @@ export default function SembakoTim() {
 }
 
 function InviteSheet({ isOpen, onClose, onSubmit, isPending, showCode, inviteCode }) {
-  const [role, setRole] = useState('staff');
+  const [role, setRole] = useState('admin');
   const isDesktop = useMediaQuery('(min-width: 1024px)');
 
   const handleSubmit = (e) => {
@@ -601,22 +680,34 @@ function InviteSheet({ isOpen, onClose, onSubmit, isPending, showCode, inviteCod
                     <SelectValue placeholder="Pilih Role" />
                   </SelectTrigger>
                   <SelectContent className="bg-[#111C24] border border-white/10 rounded-2xl shadow-2xl p-2 z-[9999]">
-                    <SelectItem value="staff" className="focus:bg-white/5 cursor-pointer py-4 px-4 rounded-xl my-1 group">
+                    <SelectItem value="admin" className="focus:bg-white/5 cursor-pointer py-4 px-4 rounded-xl my-1 group">
                       <div className="flex flex-col gap-1.5">
-                        <span className="font-black text-white uppercase tracking-tight group-hover:text-[#EA580C] transition-colors">Staff</span>
-                        <span className="text-[11px] text-[#4B6478] font-bold uppercase tracking-tight group-hover:text-white/40">Bisa input transaksi & akses fitur, tidak bisa hapus data utama</span>
+                        <span className="font-black text-white uppercase tracking-tight group-hover:text-[#EA580C] transition-colors">Admin</span>
+                        <span className="text-[11px] text-[#4B6478] font-bold uppercase tracking-tight group-hover:text-white/40">Akses penuh ke operasional, keuangan, dan laporan.</span>
                       </div>
                     </SelectItem>
-                    <SelectItem value="view_only" className="focus:bg-white/5 cursor-pointer py-4 px-4 rounded-xl my-1 group">
+                    <SelectItem value="sales" className="focus:bg-white/5 cursor-pointer py-4 px-4 rounded-xl my-1 group">
                       <div className="flex flex-col gap-1.5">
-                        <span className="font-black text-white uppercase tracking-tight group-hover:text-[#EA580C] transition-colors">View Only</span>
-                        <span className="text-[11px] text-[#4B6478] font-bold uppercase tracking-tight group-hover:text-white/40">Hanya lihat laporan & data tanpa akses edit atau tambah</span>
+                        <span className="font-black text-white uppercase tracking-tight group-hover:text-[#EA580C] transition-colors">Sales</span>
+                        <span className="text-[11px] text-[#4B6478] font-bold uppercase tracking-tight group-hover:text-white/40">Mengelola penjualan, pelanggan, dan pesanan baru.</span>
                       </div>
                     </SelectItem>
-                    <SelectItem value="supir" className="focus:bg-white/5 cursor-pointer py-4 px-4 rounded-xl my-1 group">
+                    <SelectItem value="gudang" className="focus:bg-white/5 cursor-pointer py-4 px-4 rounded-xl my-1 group">
                       <div className="flex flex-col gap-1.5">
-                        <span className="font-black text-white uppercase tracking-tight group-hover:text-[#EA580C] transition-colors">Supir</span>
-                        <span className="text-[11px] text-[#4B6478] font-bold uppercase tracking-tight group-hover:text-white/40">Akses terbatas: Hanya melihat & update status pengiriman</span>
+                        <span className="font-black text-white uppercase tracking-tight group-hover:text-[#EA580C] transition-colors">Gudang</span>
+                        <span className="text-[11px] text-[#4B6478] font-bold uppercase tracking-tight group-hover:text-white/40">Mengelola stok, inventori, masuk & keluar barang.</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="kurir" className="focus:bg-white/5 cursor-pointer py-4 px-4 rounded-xl my-1 group">
+                      <div className="flex flex-col gap-1.5">
+                        <span className="font-black text-white uppercase tracking-tight group-hover:text-[#EA580C] transition-colors">Kurir / Sopir</span>
+                        <span className="text-[11px] text-[#4B6478] font-bold uppercase tracking-tight group-hover:text-white/40">Akses melihat rute dan update status pengiriman/logistik.</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="lainnya" className="focus:bg-white/5 cursor-pointer py-4 px-4 rounded-xl my-1 group">
+                      <div className="flex flex-col gap-1.5">
+                        <span className="font-black text-white uppercase tracking-tight group-hover:text-[#EA580C] transition-colors">Lainnya</span>
+                        <span className="text-[11px] text-[#4B6478] font-bold uppercase tracking-tight group-hover:text-white/40">Akses khusus atau jabatan lainnya di dalam operasional.</span>
                       </div>
                     </SelectItem>
                   </SelectContent>

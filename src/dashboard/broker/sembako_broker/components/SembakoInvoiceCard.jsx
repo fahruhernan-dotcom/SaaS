@@ -225,6 +225,7 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery, isDes
 
   const topItem = items[0]
   const totalQty = items.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0)
+  const itemUnit = topItem?.unit || 'unit'
 
   const deliveryBadge = getDeliveryBadge(deliveries)
   const allDelivered = deliveries.length > 0 && deliveries.every(d => d.status === 'delivered')
@@ -377,7 +378,7 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery, isDes
           {topItem && (
             <p className="text-[11px] font-medium text-[#94A3B8] truncate">{topItem.product_name}</p>
           )}
-          <p className="text-[11px] font-medium text-[#4B6478]">Total {totalQty} unit</p>
+          <p className="text-[11px] font-medium text-[#4B6478]">Total {totalQty} {itemUnit}</p>
         </div>
       </div>
 
@@ -438,7 +439,7 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery, isDes
           <span className="text-[9px] font-medium text-[#4B6478] leading-none">jenis</span>
           <span className="text-[9px] text-[#4B6478] leading-none mx-0.5">·</span>
           <span className="text-[13px] font-bold text-[#F1F5F9] tabular-nums leading-none">{totalQty}</span>
-          <span className="text-[9px] font-medium text-[#4B6478] leading-none">unit</span>
+          <span className="text-[9px] font-medium text-[#4B6478] leading-none">{itemUnit}</span>
         </div>
         <span className="font-display text-[14px] font-bold text-[#F1F5F9] tabular-nums leading-none shrink-0">
           {formatIDRShort(sale.total_amount || 0)}

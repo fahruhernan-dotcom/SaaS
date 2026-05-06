@@ -9,6 +9,7 @@ import { C, sInput, sBtn, sLabel, CustomSelect, InputRupiah, PAYMENT_METHOD_OPTI
 export function SembakoPaymentSheet({ sale, onClose }) {
   const recordPayment = useRecordSembakoPayment()
   const [amount, setAmount] = useState(0)
+  const [errorMsg, setErrorMsg] = useState('')
   const handleSheetClose = useCallback((v) => { if (!v) onClose() }, [onClose])
 
   useEffect(() => {
@@ -22,6 +23,11 @@ export function SembakoPaymentSheet({ sale, onClose }) {
 
   async function handleSubmit() {
     if (!amount || !sale) return
+    if (amount > sale.remaining_amount) {
+      setErrorMsg(`Nominal melebihi sisa hutang (${formatIDR(sale.remaining_amount)})`)
+      return
+    }
+    setErrorMsg('')
     try {
       await recordPayment.mutateAsync({
         sale_id: sale.id,
@@ -48,7 +54,10 @@ export function SembakoPaymentSheet({ sale, onClose }) {
               <p style={{ fontSize: '11px', color: C.muted }}>{sale.customer_name} - Total: {formatIDR(sale.total_amount)}</p>
               <p style={{ fontSize: '11px', color: C.red, fontWeight: 900, letterSpacing: '0.02em' }}>Sisa tagihan: {formatIDR(sale.remaining_amount)}</p>
             </div>
-            <div><p style={sLabel}>JUMLAH BAYAR</p><InputRupiah value={amount} onChange={setAmount} /></div>
+            <div>
+              <p style={sLabel}>JUMLAH BAYAR</p>
+              <InputRupiah value={amount} onChange={(v) => { setAmount(v); setErrorMsg(''); }} />
+            </div>
             <div><p style={sLabel}>METODE</p>
               <CustomSelect
                 value={method || 'cash'}
@@ -59,6 +68,7 @@ export function SembakoPaymentSheet({ sale, onClose }) {
             </div>
             <div><p style={sLabel}>NO REFERENSI</p><input style={sInput} value={refNo} onChange={e => setRefNo(e.target.value)} placeholder="Opsional" /></div>
             <div><p style={sLabel}>TANGGAL</p><DatePicker value={payDate} onChange={setPayDate} placeholder="Pilih tanggal" /></div>
+            {errorMsg && <p style={{ fontSize: '11px', color: C.red, fontWeight: 700, margin: '4px 0' }}>{errorMsg}</p>}
             <button
               onClick={handleSubmit}
               disabled={recordPayment.isPending || recordPayment.isError}

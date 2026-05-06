@@ -40,12 +40,13 @@ export default function SembakoLaporan() {
   // Compute before useState so initial values are stable regardless of isStarter.
   // Rules of Hooks: all hooks must be called unconditionally before any early return.
   const now = new Date()
-  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
-  const lastOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)
+  
+  const overallStart = tenant?.created_at ? new Date(tenant.created_at).toISOString().slice(0, 10) : '2024-01-01'
+  const overallEnd = now.toISOString().slice(0, 10)
 
-  const [startDate, setStartDate] = useState(firstOfMonth)
-  const [endDate, setEndDate] = useState(lastOfMonth)
-  const [preset, setPreset] = useState('bulan_ini')
+  const [startDate, setStartDate] = useState(overallStart)
+  const [endDate, setEndDate] = useState(overallEnd)
+  const [preset, setPreset] = useState('keseluruhan')
 
   // ── Upgrade wall — must come after all hooks ──────────────────────────────
   if (isStarter) {
@@ -103,8 +104,10 @@ export default function SembakoLaporan() {
       setStartDate(start.toISOString().slice(0, 10))
       setEndDate(end.toISOString().slice(0, 10))
     } else if (val === 'keseluruhan') {
-      setStartDate('')
-      setEndDate('')
+      const start = tenant?.created_at ? new Date(tenant.created_at).toISOString().slice(0, 10) : '2024-01-01'
+      const end = t.toISOString().slice(0, 10)
+      setStartDate(start)
+      setEndDate(end)
     }
   }
 

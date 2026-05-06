@@ -331,7 +331,6 @@ export default function AppSidebar({ open, onClose }) {
           { title: 'Pengiriman',      url: `${brokerBase}/pengiriman`,    icon: Truck },
           { title: 'Gudang',          url: `${brokerBase}/gudang`,        icon: Warehouse },
           { title: 'Inventori & HPP', url: `${brokerBase}/produk`,        icon: Package,        roles: ['owner', 'staff'] },
-          { title: 'Karyawan',        url: `${brokerBase}/karyawan`,      icon: Users,          roles: ['owner'], planRequired: 'pro' },
         ] : []),
       ]
     },
@@ -375,7 +374,7 @@ export default function AppSidebar({ open, onClose }) {
       label: 'LAPORAN & AKUN',
       items: [
         { title: 'Laporan',       url: `${brokerBase}/laporan`, icon: BarChart2, roles: ['owner'], planRequired: 'pro' },
-        { title: 'Tim & Akses',   url: `${brokerBase}/tim`,     icon: Shield,    roles: ['owner'] },
+        { title: 'Tim & Karyawan',url: `${brokerBase}/tim`,     icon: Users,     roles: ['owner'] },
         { title: 'Akun & Profil', url: `${brokerBase}/akun`,    icon: User },
       ]
     }] : []),
@@ -988,14 +987,16 @@ export default function AppSidebar({ open, onClose }) {
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location.pathname === akunPath} className="rounded-xl mb-0.5 hover:bg-white/[0.03]">
-                  <NavLink to={akunPath} className="flex items-center gap-3 w-full">
-                    <User size={18} className="text-muted-foreground" />
-                    <span className="font-body text-[14px] font-medium text-foreground">Akun & Profil</span>
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {!isSembako && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={location.pathname === akunPath} className="rounded-xl mb-0.5 hover:bg-white/[0.03]">
+                    <NavLink to={akunPath} className="flex items-center gap-3 w-full">
+                      <User size={18} className="text-muted-foreground" />
+                      <span className="font-body text-[14px] font-medium text-foreground">Akun & Profil</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -1,6 +1,16 @@
 import React, { useState } from 'react'
 import { Truck, Store, FileText, CreditCard, Smartphone, ArrowRightLeft, Pencil, Trash2 } from 'lucide-react'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -18,6 +28,8 @@ export function SembakoSaleDetailSheet({ isOpen, onOpenChange, sale, onEdit }) {
   const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin'
   const [payTarget, setPayTarget] = useState(null)
   const [invoiceModal, setInvoiceModal] = useState({ open: false, type: null })
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [confirmReturn, setConfirmReturn] = useState(false)
 
   if (!sale) return null
 
@@ -32,36 +44,35 @@ export function SembakoSaleDetailSheet({ isOpen, onOpenChange, sale, onEdit }) {
   }
 
   const handleReturn = async () => {
-    if (window.confirm('Catat RETUR untuk seluruh barang di nota ini? Stok akan dikembalikan ke gudang.')) {
-      try {
-        const returnItems = items.map(it => ({
-          product_id: it.product_id,
-          quantity: it.quantity,
-          batch_id: it.batch_id || it.sembako_stock_out?.[0]?.batch_id
-        })).filter(it => it.product_id && it.batch_id)
+    try {
+      const returnItems = items.map(it => ({
+        product_id: it.product_id,
+        quantity: it.quantity,
+        batch_id: it.batch_id || it.sembako_stock_out?.[0]?.batch_id
+      })).filter(it => it.product_id && it.batch_id)
 
-        if (returnItems.length === 0) {
-          return toast.error('Data batch produk tidak ditemukan. Retur gagal.')
-        }
+      if (returnItems.length === 0) {
+        setConfirmReturn(false)
+        return toast.error('Data batch produk tidak ditemukan. Retur gagal.')
+      }
 
-        await createReturn.mutateAsync({
-          sale_id: sale.id,
-          customer_id: sale.customer_id,
-          items: returnItems
-        })
-        onOpenChange(false)
-      } catch { /* error handled by hook */ }
-    }
+      await createReturn.mutateAsync({
+        sale_id: sale.id,
+        customer_id: sale.customer_id,
+        items: returnItems
+      })
+      setConfirmReturn(false)
+      onOpenChange(false)
+    } catch { /* error handled by hook */ }
   }
 
   const handleDelete = async () => {
-    if (window.confirm('Hapus transaksi ini secara permanen?')) {
-      try {
-        await deleteSale.mutateAsync(sale.id)
-        toast.success('Transaksi dihapus')
-        onOpenChange(false)
-      } catch { /* error handled by hook */ }
-    }
+    try {
+      await deleteSale.mutateAsync(sale.id)
+      toast.success('Transaksi dihapus')
+      setConfirmDelete(false)
+      onOpenChange(false)
+    } catch { /* error handled by hook */ }
   }
 
   return (
@@ -198,7 +209,7 @@ export function SembakoSaleDetailSheet({ isOpen, onOpenChange, sale, onEdit }) {
                 <Smartphone size={16} /> Kirim WA
               </button>
               <button
-                onClick={handleReturn}
+                onClick={() => setConfirmReturn(true)}
                 style={{ ...sBtn(false), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '14px', borderColor: C.amber, color: C.amber }}
               >
                 <ArrowRightLeft size={16} /> Retur Barang
@@ -212,7 +223,7 @@ export function SembakoSaleDetailSheet({ isOpen, onOpenChange, sale, onEdit }) {
                 <Pencil size={16} /> Edit
               </button>
               <button
-                onClick={handleDelete}
+                onClick={() => setConfirmDelete(true)}
                 style={{ ...sBtn(false), color: C.red, border: `1px solid rgba(239,68,68,0.2)`, background: 'rgba(239,68,68,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '14px' }}
               >
                 <Trash2 size={16} /> Hapus
@@ -221,6 +232,54 @@ export function SembakoSaleDetailSheet({ isOpen, onOpenChange, sale, onEdit }) {
           </div>
         </SheetContent>
       </Sheet>
+
+      <AlertDialog open={confirmReturn} onOpenChange={setConfirmReturn}>
+        <AlertDialogContent className="bg-[#0C1319] border border-white/10 rounded-2xl max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-amber-500 font-black text-base uppercase tracking-wide">
+              Konfirmasi Retur
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[#4B6478] text-sm font-medium">
+              Catat RETUR untuk seluruh barang di nota ini? Stok akan dikembalikan ke gudang.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 mt-2">
+            <AlertDialogCancel className="flex-1 h-11 bg-white/5 border-white/10 text-white font-black uppercase text-xs tracking-wider hover:bg-white/10">
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleReturn}
+              className="flex-1 h-11 bg-amber-500 hover:bg-amber-600 text-amber-950 font-black uppercase text-xs tracking-wider border-none"
+            >
+              Ya, Retur
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent className="bg-[#0C1319] border border-white/10 rounded-2xl max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-500 font-black text-base uppercase tracking-wide">
+              Hapus Transaksi?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[#4B6478] text-sm font-medium">
+              Transaksi ini akan dihapus secara permanen. Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 mt-2">
+            <AlertDialogCancel className="flex-1 h-11 bg-white/5 border-white/10 text-white font-black uppercase text-xs tracking-wider hover:bg-white/10">
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="flex-1 h-11 bg-red-500 hover:bg-red-600 text-white font-black uppercase text-xs tracking-wider border-none"
+            >
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <SembakoPaymentSheet sale={payTarget} onClose={() => setPayTarget(null)} />
 

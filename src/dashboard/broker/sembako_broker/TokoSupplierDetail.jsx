@@ -86,6 +86,13 @@ export default function SembakoTokoSupplierDetail() {
   const [openModal, setOpenModal] = useState(null) // 'bayar' | 'edit'
   const [selectedInvoice, setSelectedInvoice] = useState(null)
 
+  const supplierTotalHutang = useMemo(() => {
+    if (isCustomer) return 0;
+    const totalCost = supplierInvoices?.reduce((s, b) => s + (b.total_cost || 0), 0) || 0;
+    const totalPaid = supplierPayments?.reduce((s, p) => s + (p.amount || 0), 0) || 0;
+    return Math.max(0, totalCost - totalPaid);
+  }, [isCustomer, supplierInvoices, supplierPayments])
+
   if (!profileData && !loadingCInvoices && !loadingSInvoices) {
     return (
       <div className="bg-[#06090F] min-h-screen flex items-center justify-center p-6">
@@ -216,7 +223,7 @@ export default function SembakoTokoSupplierDetail() {
                  <div className="space-y-1">
                    <p className="text-[9px] font-black text-[#4B6478] uppercase">Sisa Hutang</p>
                    <p className="text-sm font-black text-red-500">
-                     {formatIDR(Math.max(0, (supplierInvoices?.reduce((s, b) => s + (b.total_cost || 0), 0) || 0) - (supplierPayments?.reduce((s, p) => s + (p.amount || 0), 0) || 0)))}
+                     {formatIDR(supplierTotalHutang)}
                    </p>
                  </div>
               </div>
@@ -269,6 +276,7 @@ export default function SembakoTokoSupplierDetail() {
                invoice={selectedInvoice} 
                isCustomer={isCustomer}
                parentId={id}
+               maxAmount={isCustomer ? selectedInvoice?.remaining_amount : supplierTotalHutang}
                onClose={() => { setOpenModal(null); queryClient.invalidateQueries() }} 
              />
            ) : (
@@ -406,11 +414,11 @@ function PaymentHistory({ payments, isCustomer }) {
   )
 }
 
-function PaymentForm({ invoice, isCustomer, parentId, onClose }) {
+function PaymentForm({ invoice, isCustomer, parentId, maxAmount, onClose }) {
   const recordCustomerPayment = useRecordSembakoPayment()
   const recordSupplierPayment = useRecordSembakoSupplierPayment()
   
-  const [amount, setAmount] = useState(invoice?.remaining_amount || 0)
+  const [amount, setAmount] = useState(maxAmount || 0)
   const [method, setMethod] = useState('transfer')
   const [refNo, setRefNo] = useState('')
   const [loading, setLoading] = useState(false)
@@ -418,6 +426,10 @@ function PaymentForm({ invoice, isCustomer, parentId, onClose }) {
   const handlePay = async () => {
     if (amount <= 0) {
       toast.error('Nominal tidak valid')
+      return
+    }
+    if (maxAmount !== undefined && amount > maxAmount) {
+      toast.error(`Nominal melebihi sisa hutang (${formatIDR(maxAmount)})`)
       return
     }
     setLoading(true)
@@ -450,12 +462,12 @@ function PaymentForm({ invoice, isCustomer, parentId, onClose }) {
 
   return (
     <div className="space-y-8 pt-4">
-       <div className={cn("text-center space-y-1 p-6 rounded-[24px] border", isCustomer ? "bg-red-500/5 border-red-500/10" : "bg-emerald-500/5 border-emerald-500/10")}>
+        <div className={cn("text-center space-y-1 p-6 rounded-[24px] border", isCustomer ? "bg-red-500/5 border-red-500/10" : "bg-emerald-500/5 border-emerald-500/10")}>
           <p className={cn("text-[10px] font-black uppercase tracking-widest leading-none mb-1", isCustomer ? "text-red-400" : "text-emerald-400")}>
-            {isCustomer ? 'Sisa Tagihan Nota' : 'Nominal Pembayaran Hutang'}
+            {isCustomer ? 'Sisa Tagihan Nota' : 'Total Sisa Hutang'}
           </p>
           <p className={cn("font-display text-4xl font-black tracking-tight tabular-nums", isCustomer ? "text-red-500" : "text-emerald-500")}>
-            {formatIDR(amount || invoice?.remaining_amount || 0)}
+            {formatIDR(maxAmount || 0)}
           </p>
        </div>
 

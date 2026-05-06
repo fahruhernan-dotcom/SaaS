@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { PhoneInput } from '@/components/ui/PhoneInput'
+import { supabase } from '@/lib/supabase'
+import { useQuery } from '@tanstack/react-query'
 import {
   C, sInput, sBtn, sLabel, fmtDate, InputRupiah, CustomSelect,
 } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
@@ -32,7 +34,7 @@ const STATUS_COLOR = { aktif: C.green, nonaktif: C.red, cuti: C.amber }
 const ROLES = ['gudang', 'sales', 'kurir', 'admin', 'lainnya']
 
 // ── MAIN ────────────────────────────────────────────────────────────────────
-export default function SembakoPegawai() {
+export default function SembakoPegawai({ hideMobileHeader }) {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const { setSidebarOpen } = useOutletContext()
   const { tenant } = useAuth()
@@ -43,7 +45,7 @@ export default function SembakoPegawai() {
   if (isStarter) {
     return (
       <div style={{ background: C.bg, minHeight: '100vh' }}>
-        {!isDesktop && <BrokerMobileHeader title="Pegawai" onMenuClick={() => setSidebarOpen(true)} />}
+        {(!isDesktop && !hideMobileHeader) && <BrokerMobileHeader title="Pegawai" onMenuClick={() => setSidebarOpen(true)} />}
         <div className="flex flex-col items-center justify-center min-h-[80vh] px-6 text-center gap-6">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
             style={{ background: 'rgba(234,88,12,0.12)', border: '1px solid rgba(234,88,12,0.25)' }}>
@@ -75,7 +77,7 @@ export default function SembakoPegawai() {
 
   return (
     <div style={{ background: C.bg, minHeight: '100vh', paddingBottom: '96px' }}>
-      {!isDesktop && <BrokerMobileHeader title="Pegawai" onMenuClick={() => setSidebarOpen(true)} />}
+      {(!isDesktop && !hideMobileHeader) && <BrokerMobileHeader title="Pegawai" onMenuClick={() => setSidebarOpen(true)} />}
       <div style={{ padding: isDesktop ? '32px 40px' : '20px 16px', maxWidth: '1200px', margin: '0 auto' }}>
         <h1 style={{ display: isDesktop ? 'block' : 'none', fontSize: isDesktop ? '28px' : '22px', fontWeight: 900, color: C.text, fontFamily: 'DM Sans', marginBottom: '20px' }}>
           Pegawai & Payroll
@@ -109,19 +111,33 @@ function TabPegawai({ isDesktop }) {
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState({})
 
+  const { tenant } = useAuth()
+  const { data: teamMembers = [] } = useQuery({
+    queryKey: ['profiles', 'team', tenant?.id],
+    enabled: !!tenant?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('profiles').select('*').eq('tenant_id', tenant.id).order('created_at');
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
   function openNew() {
     setForm({
       full_name: '', role: 'gudang', phone: '', address: '', join_date: new Date().toISOString().slice(0, 10),
       salary_type: 'bulanan', base_salary: 0, commission_pct: 0, trip_rate: 0, notes: '',
+      profile_id: 'none', status: 'aktif', pay_day: 'Tanggal 1'
     })
     setEditing('new')
   }
-  function openEdit(e) { setForm({ ...e }); setEditing(e) }
+  function openEdit(e) { setForm({ ...e, profile_id: e.profile_id || 'none', status: e.status || 'aktif', pay_day: e.pay_day || 'Tanggal 1' }); setEditing(e) }
 
   async function handleSave() {
     if (!form.full_name) return
-    if (editing === 'new') await createEmp.mutateAsync(form)
-    else await updateEmp.mutateAsync({ id: editing.id, ...form })
+    const payload = { ...form }
+    if (payload.profile_id === 'none') payload.profile_id = null
+    if (editing === 'new') await createEmp.mutateAsync(payload)
+    else await updateEmp.mutateAsync({ id: editing.id, ...payload })
     setEditing(null)
   }
 
@@ -190,7 +206,25 @@ function TabPegawai({ isDesktop }) {
             <SheetDescription className="sr-only">Form untuk mengelola data pegawai sembako.</SheetDescription>
           </SheetHeader>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px', paddingBottom: '100px' }}>
-            <div><p style={sLabel}>NAMA</p><input id="emp-name" name="full_name" style={sInput} value={form.full_name || ''} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
+            <div><p style={sLabel}>NAMA LENGKAP *</p><input id="emp-name" name="full_name" style={sInput} value={form.full_name || ''} onChange={e => setForm({ ...form, full_name: e.target.value })} /></div>
+            
+            <div>
+              <p style={sLabel}>LINK KE AKUN TIM</p>
+              <CustomSelect
+                id="emp-profile"
+                value={form.profile_id || 'none'}
+                onChange={val => setForm({ ...form, profile_id: val })}
+                options={[
+                  { value: 'none', label: '— Tidak terhubung —' },
+                  ...teamMembers.map(m => ({ value: m.id, label: `${m.full_name} (${m.role})` }))
+                ]}
+                placeholder="— Tidak terhubung —"
+              />
+              <p style={{ fontSize: '10px', color: '#4B6478', marginTop: '6px' }}>
+                Hubungkan pegawai ke akun tim agar bisa menerima tugas otomatis.
+              </p>
+            </div>
+
             <div><p style={sLabel}>ROLE</p>
               <CustomSelect
                 id="emp-role"
@@ -227,6 +261,38 @@ function TabPegawai({ isDesktop }) {
                 )}
               </>
             )}
+
+            <div><p style={sLabel}>TANGGAL GAJIAN</p>
+              <CustomSelect
+                value={form.pay_day || 'Tanggal 1'}
+                onChange={val => setForm({ ...form, pay_day: val })}
+                options={Array.from({ length: 28 }, (_, i) => ({ value: `Tanggal ${i + 1}`, label: `Tanggal ${i + 1}` }))}
+                placeholder="Pilih tanggal"
+              />
+            </div>
+
+            <div><p style={sLabel}>STATUS</p>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {[
+                  { value: 'aktif', label: '✅ Aktif' },
+                  { value: 'nonaktif', label: '⛔ Nonaktif' },
+                ].map(s => (
+                  <button
+                    key={s.value} type="button"
+                    onClick={() => setForm({ ...form, status: s.value })}
+                    style={{
+                      flex: 1, padding: '10px', borderRadius: '12px', fontSize: '12px', fontWeight: 700,
+                      border: form.status === s.value ? `1.5px solid ${s.value === 'aktif' ? '#34D399' : '#F87171'}` : `1.5px solid rgba(255,255,255,0.07)`,
+                      background: form.status === s.value ? (s.value === 'aktif' ? 'rgba(52,211,153,0.1)' : 'rgba(239,68,68,0.1)') : 'rgba(255,255,255,0.04)',
+                      color: form.status === s.value ? (s.value === 'aktif' ? '#34D399' : '#F87171') : '#4B6478',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             <div><p style={sLabel}>CATATAN</p><textarea rows={2} style={{ ...sInput, resize: 'vertical' }} value={form.notes || ''} onChange={e => setForm({ ...form, notes: e.target.value })} /></div>
             <button onClick={handleSave} style={{ ...sBtn(true), width: '100%', padding: '14px' }}>

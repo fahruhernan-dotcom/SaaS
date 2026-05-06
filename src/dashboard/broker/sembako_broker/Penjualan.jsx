@@ -160,7 +160,7 @@ function TabInvoice({ isDesktop, openWizard, setOpenWizard }) {
         }
       />
 
-      <SembakoSummaryStrip isDesktop={isDesktop} items={summaryItems} />
+      {!isDesktop && <SembakoSummaryStrip isDesktop={isDesktop} items={summaryItems} />}
 
       {isDesktop && (
         <div style={{ padding: '20px 20px 0', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '12px', marginBottom: '20px' }}>

@@ -3,6 +3,16 @@ import { Plus, Search, X, ChevronDown, ToggleLeft, ToggleRight, Trash2 } from 'l
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import {
   useSembakoProducts,
   useCreateSembakoProduct,
   useUpdateSembakoProduct,
@@ -543,6 +553,7 @@ export default function Produk() {
   const [catFilter, setCatFilter] = useState('Semua')
   const [sheet,     setSheet]     = useState(null) // null | 'new' | product object
   const [showInactive, setShowInactive] = useState(false)
+  const [productToDelete, setProductToDelete] = useState(null)
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -574,8 +585,13 @@ export default function Produk() {
   }, [products])
 
   const handleDelete = (product) => {
-    if (!window.confirm(`Hapus "${product.product_name}"? Data tidak bisa dipulihkan.`)) return
-    deleteMut.mutate(product.id)
+    setProductToDelete(product)
+  }
+
+  const confirmDeleteProduct = () => {
+    if (!productToDelete) return
+    deleteMut.mutate(productToDelete.id)
+    setProductToDelete(null)
   }
 
   if (isLoading) return (
@@ -716,6 +732,30 @@ export default function Produk() {
           />
         )}
       </AnimatePresence>
+
+      <AlertDialog open={!!productToDelete} onOpenChange={(v) => !v && setProductToDelete(null)}>
+        <AlertDialogContent className="bg-[#0C1319] border border-white/10 rounded-2xl max-w-sm">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-500 font-black text-base uppercase tracking-wide">
+              Hapus Produk?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[#4B6478] text-sm font-medium">
+              Hapus "{productToDelete?.product_name}"? Data tidak bisa dipulihkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 mt-2">
+            <AlertDialogCancel className="flex-1 h-11 bg-white/5 border-white/10 text-white font-black uppercase text-xs tracking-wider hover:bg-white/10">
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteProduct}
+              className="flex-1 h-11 bg-red-500 hover:bg-red-600 text-white font-black uppercase text-xs tracking-wider border-none"
+            >
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

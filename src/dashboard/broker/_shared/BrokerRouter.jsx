@@ -18,7 +18,7 @@ import SopirDashboard from '../poultry_broker/SopirDashboard'
 // Sembako pages
 import SembakoBeranda from '../sembako_broker/Beranda'
 import SembakoPenjualan from '../sembako_broker/Penjualan'
-import SembakoPegawai from '../sembako_broker/Pegawai'
+// import SembakoPegawai from '../sembako_broker/Pegawai'
 import SembakoLaporan from '../sembako_broker/Laporan'
 import SembakoProduk from '../sembako_broker/Produk'
 import SembakoGudang from '../sembako_broker/Gudang'
@@ -26,7 +26,7 @@ import SembakoTokoSupplier from '../sembako_broker/TokoSupplier'
 import SembakoTokoSupplierDetail from '../sembako_broker/TokoSupplierDetail'
 import SembakoPengiriman from '../sembako_broker/Pengiriman'
 import SembakoAkun from '../sembako_broker/Akun'
-import SembakoTim from '../sembako_broker/Tim'
+import SembakoTimManajemenPage from '../sembako_broker/TimManajemenPage'
 
 // Egg Broker pages
 import EggBeranda from '../egg_broker/Beranda'
@@ -92,10 +92,10 @@ export function BrokerPageRouter({ page }) {
       'toko-supplier': <SembakoTokoSupplier />,
       'toko-supplier-detail': <SembakoTokoSupplierDetail />,
       pengiriman: <SembakoPengiriman />,
-      karyawan: <SembakoPegawai />,
+      karyawan: <SembakoTimManajemenPage />,
       laporan: <SembakoLaporan />,
       akun: <SembakoAkun />,
-      tim: <SembakoTim />
+      tim: <SembakoTimManajemenPage />
     }
   }
   

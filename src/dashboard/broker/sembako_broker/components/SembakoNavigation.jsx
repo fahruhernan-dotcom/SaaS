@@ -106,8 +106,7 @@ export function SembakoHamburgerDrawer({ open, onClose }) {
       label: 'LAPORAN & AKUN',
       items: [
         { label: 'Laporan',           icon: BarChart2,     path: `${brokerBase}/laporan`,  pro: true },
-        { label: 'Karyawan',          icon: Users,         path: `${brokerBase}/karyawan`, pro: true },
-        { label: 'Tim & Akses',       icon: Shield,        path: `${brokerBase}/tim`            },
+        { label: 'Tim & Karyawan',    icon: Users,         path: `${brokerBase}/tim`            },
         { label: 'Akun & Profil',     icon: User,          path: `${brokerBase}/akun`           },
       ],
     },
