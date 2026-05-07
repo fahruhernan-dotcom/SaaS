@@ -58,7 +58,7 @@ export default function HargaPasar() {
       const { data, error } = await supabase
         .from('market_prices')
         .select('*')
-        .eq('is_deleted', false)
+        .or('is_deleted.eq.false,is_deleted.is.null')
         .neq('source', 'arboge_scraper')
         .order('price_date', { ascending: false })
         .order('region', { ascending: false })

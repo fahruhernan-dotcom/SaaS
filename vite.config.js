@@ -82,6 +82,16 @@ export default defineConfig({
       } catch (err) {
         console.error('Error creating SPA fallback:', err);
       }
+      // Fallback manifest for stale-cached clients that reference manifest-undefined.json
+      try {
+        const undefinedManifest = path.resolve(__dirname, 'dist/static-loader-data-manifest-undefined.json');
+        if (!fs.existsSync(undefinedManifest)) {
+          fs.writeFileSync(undefinedManifest, '{}');
+          console.log('✅ Stale manifest fallback created.');
+        }
+      } catch (err) {
+        console.error('Error creating stale manifest fallback:', err);
+      }
       console.log('SSG Prerendering finished.')
     },
   },
