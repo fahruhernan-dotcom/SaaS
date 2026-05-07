@@ -331,10 +331,10 @@ const AdminComingSoon = () => (
 
 export const routes = createRoutesFromElements(
   <Route errorElement={<GlobalRouteError />}>
-    {/* SPA Fallback route to avoid SSG pollution on Dashboard */}
-    <Route path="/_spa_fallback" element={null} />
-
     <Route element={<RootLayout />}>
+      {/* SPA Fallback route to avoid SSG pollution on Dashboard */}
+      <Route path="/_spa_fallback" element={null} />
+
       {/* Public */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login />} />
