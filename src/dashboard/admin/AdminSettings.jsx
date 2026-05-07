@@ -106,9 +106,8 @@ export default function AdminSettings() {
         old_data: oldVal ?? null,
         new_data: newVal ?? null,
       })
-    } catch (e) {
+    } catch {
       // Non-blocking: audit failure should not block config save
-      console.warn('[AuditLog] Failed to log:', e)
     }
   }, [])
 

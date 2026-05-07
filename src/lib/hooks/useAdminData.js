@@ -6,6 +6,7 @@ import { getSubscriptionStatus } from '../subscriptionUtils'
 export const useAllTenants = () => {
   return useQuery({
     queryKey: ['admin-tenants'],
+    staleTime: 30_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tenants')
@@ -15,7 +16,8 @@ export const useAllTenants = () => {
           profiles(id, full_name, role, user_type, is_active, last_seen_at)
         `)
         .order('created_at', { ascending: false })
-      
+        .limit(500)
+
       if (error) throw error
       return data
     }
@@ -50,6 +52,7 @@ export const useAdminUpdateTenant = () => {
 export const useAllInvoices = () => {
   return useQuery({
     queryKey: ['admin-invoices'],
+    staleTime: 30_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('subscription_invoices')
@@ -61,6 +64,7 @@ export const useAllInvoices = () => {
           tenants(id, business_name, business_vertical)
         `)
         .order('created_at', { ascending: false })
+        .limit(500)
       if (error) throw error
       return data
     }
@@ -437,6 +441,7 @@ export const useDeleteDiscountCode = () => {
 
 export const usePlanConfigs = () => useQuery({
   queryKey: ['plan-configs'],
+  staleTime: 60_000,
   queryFn: async () => {
     const { data, error } = await supabase
       .from('plan_configs')
@@ -463,7 +468,7 @@ export const useUpdatePlanConfig = () => {
       if (error) throw error
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['plan-configs'] })
+      queryClient.invalidateQueries(['plan-configs'])
       toast.success('Konfigurasi berhasil disimpan')
     },
     onError: () => toast.error('Gagal menyimpan konfigurasi')
@@ -486,12 +491,14 @@ export const usePlanConfigHistory = (configKey, limit = 5) => useQuery({
 
 export const useMarketPriceReviewQueue = () => useQuery({
   queryKey: ['market-price-review-queue'],
+  staleTime: 15_000,
   queryFn: async () => {
     const { data, error } = await supabase
       .from('market_prices')
       .select('*')
       .eq('needs_review', true)
-      .order('recorded_at', { ascending: false })
+      .order('price_date', { ascending: false })
+      .limit(50)
     if (error) throw error
     return data ?? []
   }
@@ -508,7 +515,7 @@ export const useApproveMarketPrice = () => {
       if (error) throw error
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['market-price-review-queue'] })
+      queryClient.invalidateQueries(['market-price-review-queue'])
       toast.success('Harga disetujui')
     },
     onError: (err) => toast.error('Gagal menyetujui: ' + err.message)
@@ -526,7 +533,7 @@ export const useDeleteMarketPrice = () => {
       if (error) throw error
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['market-price-review-queue'] })
+      queryClient.invalidateQueries(['market-price-review-queue'])
       toast.success('Data harga dihapus')
     },
     onError: (err) => toast.error('Gagal menghapus: ' + err.message)
@@ -535,6 +542,7 @@ export const useDeleteMarketPrice = () => {
 
 export const useGlobalStats = () => useQuery({
   queryKey: ['admin-global-stats'],
+  staleTime: 55_000,
   refetchInterval: 60_000,
   queryFn: async () => {
     const [tenantsRes, invoicesRes] = await Promise.all([
@@ -631,7 +639,8 @@ export const useGlobalStats = () => useQuery({
 })
 export const useAuditLogs = (filters = {}) => {
   return useQuery({
-    queryKey: ['admin-audit-logs', filters],
+    queryKey: ['admin-audit-logs', filters.tenantId, filters.action, filters.entityType],
+    staleTime: 10_000,
     queryFn: async () => {
       let query = supabase
         .from('global_audit_logs')
@@ -657,13 +666,15 @@ export const useAuditLogs = (filters = {}) => {
 export const useAllUsers = () => {
   return useQuery({
     queryKey: ['admin-all-users'],
+    staleTime: 30_000,
     queryFn: async () => {
       // 1. Fetch primary associations from profiles
       const { data: profiles, error: pErr } = await supabase
         .from('profiles')
         .select('*, tenants(id, business_name, business_vertical)')
         .order('created_at', { ascending: false })
-      
+        .limit(500)
+
       if (pErr) throw pErr
 
       // 2. Fetch staff associations from tenant_memberships
@@ -739,36 +750,23 @@ export const useDeleteTenant = () => {
   return useMutation({
     mutationFn: async (tenantId) => {
       const tid = tenantId
-      console.group(`🗑️ [DELETE TENANT] Starting cascade delete for tenant: ${tid}`)
 
-      // Helper: delete with logging
       const del = async (table, filter = { col: 'tenant_id', val: tid }) => {
-        const { error, count } = await supabase
+        const { error } = await supabase
           .from(table)
-          .delete({ count: 'exact' })
+          .delete()
           .eq(filter.col, filter.val)
-        if (error) {
-          console.error(`❌ FAILED: ${table} — ${error.message}`, error)
-        } else {
-          console.log(`✅ ${table}: deleted ${count ?? '?'} rows`)
-        }
+        if (error) throw new Error(`Failed deleting ${table}: ${error.message}`)
       }
 
-      // Helper: nullify with logging
       const nullify = async (table, col) => {
-        const { error, count } = await supabase
+        const { error } = await supabase
           .from(table)
-          .update({ [col]: null }, { count: 'exact' })
+          .update({ [col]: null })
           .eq(col, tid)
-        if (error) {
-          console.error(`❌ FAILED nullify: ${table}.${col} — ${error.message}`, error)
-        } else {
-          console.log(`✅ ${table}.${col} nullified: ${count ?? '?'} rows`)
-        }
+        if (error) throw new Error(`Failed nullifying ${table}.${col}: ${error.message}`)
       }
 
-      // ── Manual cleanup: only tables with NO ACTION delete_rule ────────────
-      console.log('--- Step 1: NO ACTION tables ---')
       await del('ai_anomaly_logs')
       await del('ai_staged_transactions')
       await del('broker_profiles')
@@ -780,29 +778,20 @@ export const useDeleteTenant = () => {
       await del('peternak_profiles')
       await del('worker_payments')
 
-      // broker_connections: 2 NO ACTION cross-ref FKs
-      console.log('--- Step 2: broker_connections cross-refs ---')
       const { error: bcErr } = await supabase
         .from('broker_connections')
         .delete()
         .or(`requester_tenant_id.eq.${tid},target_tenant_id.eq.${tid}`)
-      if (bcErr) console.error(`❌ FAILED: broker_connections — ${bcErr.message}`, bcErr)
-      else console.log(`✅ broker_connections: deleted`)
+      if (bcErr) throw new Error(`Failed deleting broker_connections: ${bcErr.message}`)
 
-      // RPA cross-references: SET NULL to preserve RPA records
-      console.log('--- Step 3: RPA cross-ref nullify ---')
       await nullify('rpa_payments', 'broker_tenant_id')
       await nullify('rpa_purchase_orders', 'broker_tenant_id')
 
-      // RPA own data
-      console.log('--- Step 4: RPA own data ---')
       await del('rpa_customer_payments')
       await del('rpa_invoices')
       await del('rpa_customers')
       await del('rpa_products')
 
-      // Sembako tables
-      console.log('--- Step 5: Sembako tables ---')
       await del('sembako_stock_out')
       await del('sembako_payroll')
       await del('sembako_supplier_payments')
@@ -816,24 +805,12 @@ export const useDeleteTenant = () => {
       await del('sembako_suppliers')
       await del('sembako_employees')
 
-      // ── Final: delete the tenant (CASCADE handles remaining tables) ───────
-      console.log('--- Step 6: DELETE TENANT ---')
       const { error, count } = await supabase
         .from('tenants')
         .delete({ count: 'exact' })
         .eq('id', tid)
-      if (error) {
-        console.error(`❌ FAILED: tenants — ${error.message}`, error)
-        console.groupEnd()
-        throw error
-      }
-      if (count === 0) {
-        console.error(`❌ RLS BLOCK: tenants delete returned 0 rows — superadmin DELETE policy missing`)
-        console.groupEnd()
-        throw new Error('Akses ditolak: Admin tidak punya izin hapus tenant. Tambahkan RLS DELETE policy di Supabase.')
-      }
-      console.log(`✅ tenants: deleted tenant ${tid} (${count} rows)`)
-      console.groupEnd()
+      if (error) throw error
+      if (count === 0) throw new Error('Akses ditolak: superadmin DELETE policy belum diset di Supabase.')
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-tenants'])

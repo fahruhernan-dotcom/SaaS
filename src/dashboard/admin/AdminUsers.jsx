@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Users, Building2, Shield, Search, Filter,
@@ -56,8 +56,18 @@ export default function AdminUsers() {
   const deleteTenant = useDeleteTenant()
 
   const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [tenantsPage, setTenantsPage] = useState(0)
+  const TENANTS_PAGE_SIZE = 50
   const [viewMode, setViewMode] = useState('tenants') // 'tenants' | 'users'
   const [activeTab, setActiveTab] = useState('Semua')
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchQuery), 300)
+    return () => clearTimeout(t)
+  }, [searchQuery])
+
+  useEffect(() => { setTenantsPage(0) }, [debouncedSearch, activeTab])
   const [selectedTenant, setSelectedTenant] = useState(null)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
 
@@ -109,11 +119,12 @@ export default function AdminUsers() {
     if (!tenants) return []
     const now = Date.now()
     const fiveMinutesAgo = now - 5 * 60 * 1000
+    const q = debouncedSearch.toLowerCase()
 
     const filtered = tenants.filter(t => {
       const ownerName = t.profiles?.find(p => p.role === 'owner')?.full_name || ''
-      const matchesSearch = (t.business_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ownerName.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesSearch = (t.business_name || '').toLowerCase().includes(q) ||
+        ownerName.toLowerCase().includes(q)
 
       const sub = getSubscriptionStatus(t)
 
@@ -126,18 +137,21 @@ export default function AdminUsers() {
       return matchesSearch && matchesTab
     })
 
-    // Sort alphabetically by Business Name
-    return filtered.sort((a, b) => {
-      const nameA = (a.business_name || '').toLowerCase()
-      const nameB = (b.business_name || '').toLowerCase()
-      return nameA.localeCompare(nameB)
-    }).map(t => ({ ...t, _refTime: fiveMinutesAgo }))
-  }, [tenants, searchQuery, activeTab])
+    return filtered.sort((a, b) =>
+      (a.business_name || '').toLowerCase().localeCompare((b.business_name || '').toLowerCase())
+    ).map(t => ({ ...t, _refTime: fiveMinutesAgo }))
+  }, [tenants, debouncedSearch, activeTab])
+
+  const paginatedTenants = useMemo(() => {
+    const start = tenantsPage * TENANTS_PAGE_SIZE
+    return filteredTenants.slice(start, start + TENANTS_PAGE_SIZE)
+  }, [filteredTenants, tenantsPage])
 
   const groupedUsers = useMemo(() => {
     if (!allUsers) return []
     const now = Date.now()
     const fiveMinutesAgo = now - 5 * 60 * 1000
+    const q = debouncedSearch.toLowerCase()
 
     const groups = {}
     allUsers.forEach(u => {
@@ -176,11 +190,11 @@ export default function AdminUsers() {
     })
 
     return Object.values(groups).filter(user => {
-      const matchesSearch = (user.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.profiles.some(p => (p.tenants?.business_name || '').toLowerCase().includes(searchQuery.toLowerCase()))
+      const matchesSearch = (user.name || '').toLowerCase().includes(q) ||
+        user.profiles.some(p => (p.tenants?.business_name || '').toLowerCase().includes(q))
       return matchesSearch
     })
-  }, [allUsers, searchQuery])
+  }, [allUsers, debouncedSearch])
 
   const handleDeleteUser = () => {
     if (!selectedUser) return
@@ -333,7 +347,7 @@ export default function AdminUsers() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredTenants.map((t, i) => (
+                    {paginatedTenants.map((t, i) => (
                       <tr
                         key={t.id}
                         className={`border-b border-white/5 hover:bg-white/[0.03] transition-colors group ${i % 2 === 1 ? 'bg-white/[0.01]' : ''}`}
@@ -408,10 +422,21 @@ export default function AdminUsers() {
                   </tbody>
                 </table>
              </div>
+             {filteredTenants.length > TENANTS_PAGE_SIZE && (
+               <div className="flex items-center justify-between px-6 py-4 border-t border-white/5">
+                 <span className="text-[11px] text-[#4B6478] font-bold">
+                   {tenantsPage * TENANTS_PAGE_SIZE + 1}–{Math.min((tenantsPage + 1) * TENANTS_PAGE_SIZE, filteredTenants.length)} dari {filteredTenants.length}
+                 </span>
+                 <div className="flex gap-2">
+                   <Button size="sm" variant="outline" onClick={() => setTenantsPage(p => p - 1)} disabled={tenantsPage === 0} className="h-8 px-3 text-[11px] border-white/10">← Prev</Button>
+                   <Button size="sm" variant="outline" onClick={() => setTenantsPage(p => p + 1)} disabled={(tenantsPage + 1) * TENANTS_PAGE_SIZE >= filteredTenants.length} className="h-8 px-3 text-[11px] border-white/10">Next →</Button>
+                 </div>
+               </div>
+             )}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 pb-8">
-            {filteredTenants.map(t => (
+            {paginatedTenants.map(t => (
               <TenantMobileCard
                 key={t.id}
                 tenant={t}
@@ -424,6 +449,15 @@ export default function AdminUsers() {
                  <Building2 size={32} className="mx-auto mb-2" />
                  <p className="text-xs font-black uppercase tracking-widest text-[#4B6478]">Tidak ada tenant</p>
                </div>
+            )}
+            {filteredTenants.length > TENANTS_PAGE_SIZE && (
+              <div className="flex items-center justify-between py-3">
+                <span className="text-[11px] text-[#4B6478] font-bold">{tenantsPage * TENANTS_PAGE_SIZE + 1}–{Math.min((tenantsPage + 1) * TENANTS_PAGE_SIZE, filteredTenants.length)} / {filteredTenants.length}</span>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setTenantsPage(p => p - 1)} disabled={tenantsPage === 0} className="h-9 px-4 text-[12px] border-white/10">←</Button>
+                  <Button size="sm" variant="outline" onClick={() => setTenantsPage(p => p + 1)} disabled={(tenantsPage + 1) * TENANTS_PAGE_SIZE >= filteredTenants.length} className="h-9 px-4 text-[12px] border-white/10">→</Button>
+                </div>
+              </div>
             )}
           </div>
         )

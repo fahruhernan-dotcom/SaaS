@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { NavLink, Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import ErrorBoundary from '@/components/ErrorBoundary'
 import { 
   Home, Users, CreditCard, Tag, LogOut, Shield, 
   ArrowLeft, Activity, Bird, LayoutGrid, Menu as MenuIcon,
@@ -351,7 +352,7 @@ export default function AdminLayout({ children }) {
                     <main className="lg:pl-[240px] pt-[calc(2rem+env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))] relative z-10 transition-all duration-500">
                         <div className="max-w-[1440px] mx-auto px-4 lg:px-8">
                             <div className="px-2 lg:px-0">
-                                    {children || <Outlet />}
+                                    <ErrorBoundary>{children || <Outlet />}</ErrorBoundary>
                                 </div>
                         </div>
                     </main>
