@@ -62,9 +62,11 @@ function normaliseRow(row) {
   }
 }
 
+const ID_MONTHS_SHORT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des']
+
 function formatShortDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00')
-  return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })
+  return String(d.getDate()).padStart(2, '0') + ' ' + ID_MONTHS_SHORT[d.getMonth()]
 }
 
 function provinceToSlug(name) {
@@ -185,9 +187,11 @@ export default function HargaPasarPublic() {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [hybridPeriod, setHybridPeriod] = useState('weekly')
+  const [isMounted, setIsMounted] = useState(false)
+  useEffect(() => setIsMounted(true), [])
   const currentProvince = useMemo(() => slugToProvince(provinceSlug), [provinceSlug])
 
-  const todayFmt = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+  const todayFmt = (() => { const d = new Date(); return `${d.getDate()} ${['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][d.getMonth()]} ${d.getFullYear()}` })()
   const seoTitle = currentProvince
     ? `Harga Ayam Broiler Hidup Hari Ini di ${currentProvince} — Update ${todayFmt} | TernakOS`
     : `Harga Ayam Broiler Hidup Hari Ini — Update Harian Real Data | TernakOS`
@@ -383,7 +387,7 @@ export default function HargaPasarPublic() {
   const activeProvinces = useMemo(() => Object.keys(activityMap || {}).length, [activityMap])
 
   // ── Derived data ─────────────────────────────────────────────────────────
-  const todayFmtId = useMemo(() => new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }), [])
+  const todayFmtId = useMemo(() => { const d = new Date(); return `${d.getDate()} ${['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][d.getMonth()]} ${d.getFullYear()}` }, [])
   const latestRow = dedupedPrices[0] ?? null
   const prevRow = dedupedPrices[1] ?? null
   const buyTrend = useMemo(() => {
@@ -526,14 +530,16 @@ export default function HargaPasarPublic() {
           maskImage: 'radial-gradient(ellipse 80% 50% at center top, black 30%, transparent 80%)'
         }}
       />
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
-        <Particles
-          particleColors={['#10B981', '#34D399', '#059669']}
-          particleCount={typeof window !== 'undefined' && window.innerWidth < 768 ? 25 : 50}
-          speed={0.2}
-          particleBaseSize={1.4}
-        />
-      </div>
+      {isMounted && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+          <Particles
+            particleColors={['#10B981', '#34D399', '#059669']}
+            particleCount={window.innerWidth < 768 ? 25 : 50}
+            speed={0.2}
+            particleBaseSize={1.4}
+          />
+        </div>
+      )}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -588,7 +594,7 @@ export default function HargaPasarPublic() {
               Harga Ayam Broiler Hidup{currentProvince ? ` di ${currentProvince}` : ''}{' '}
               <span className="text-emerald-500">Hari Ini</span>
             </h1>
-            <p className="text-[#94A3B8] text-sm md:text-base font-medium max-w-2xl leading-relaxed mt-4">
+            <p className="text-[#94A3B8] text-sm md:text-base font-medium max-w-2xl leading-relaxed mt-4" suppressHydrationWarning>
               {currentProvince
                 ? `Update ${todayFmtId}. Data harga ayam broiler hidup hari ini untuk wilayah ${currentProvince} dari transaksi nyata broker + referensi Chickin.id.`
                 : `Update ${todayFmtId}. Harga ayam broiler hidup hari ini nasional — rata-rata transaksi nyata broker aktif di seluruh Indonesia.`}

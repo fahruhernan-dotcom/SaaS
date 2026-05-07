@@ -74,7 +74,7 @@ function normalizeWA(raw) {
 
 function formatRp(n) {
   if (!n && n !== 0) return '—'
-  return 'Rp ' + Number(n).toLocaleString('id-ID')
+  return 'Rp ' + String(Math.round(Number(n))).replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }
 
 function timeAgo(dateStr) {
@@ -157,7 +157,7 @@ function ListingCard({ listing }) {
           <div className="flex items-center justify-between text-xs">
             <span className="text-[#4B6478]">Jumlah Unit/Ekor</span>
             <span className="text-[#94A3B8] font-semibold tabular-nums">
-              {listing.quantity_ekor.toLocaleString('id-ID')} unit
+              {String(listing.quantity_ekor).replace(/\B(?=(\d{3})+(?!\d))/g, '.')} unit
             </span>
           </div>
         )}
