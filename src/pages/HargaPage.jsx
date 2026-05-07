@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import SEO from '../components/SEO'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, ChevronDown, ArrowRight, Star, X as XIcon, Zap, Shield, Users } from 'lucide-react'
