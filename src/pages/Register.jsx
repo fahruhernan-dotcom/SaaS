@@ -129,13 +129,10 @@ export default function Register() {
     setIsLoading(true)
     setAuthError('')
     try {
-      const { data: invite, error: inviteError } = await supabase
-        .from('team_invitations')
-        .select('*')
-        .eq('token', data.inviteCode.toUpperCase().trim())
-        .eq('status', 'pending')
-        .single()
-      if (inviteError || !invite) {
+      const { data: inviteRows, error: inviteError } = await supabase
+        .rpc('get_invitation_by_token', { p_token: data.inviteCode.toUpperCase().trim() })
+      const invite = inviteRows?.[0] ?? null
+      if (inviteError || !invite || invite.status !== 'pending') {
         toast.error('Kode undangan tidak valid atau sudah kadaluarsa')
         return
       }

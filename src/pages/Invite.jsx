@@ -20,11 +20,9 @@ export default function Invite() {
     async function verifyToken() {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from('team_invitations')
-          .select('*, tenants(business_name, sub_type)')
-          .eq('token', token)
-          .single();
+        const { data: rows, error } = await supabase
+          .rpc('get_invitation_by_token', { p_token: token });
+        const data = rows?.[0] ?? null;
 
         if (error || !data) {
           setErrorStatus('invalid');
@@ -82,7 +80,7 @@ export default function Invite() {
       if (inviteError) throw inviteError;
 
       toast.success('Berhasil bergabung ke tim!');
-      navigate(getBrokerBasePath(inviteData.tenants) + '/beranda');
+      navigate(getBrokerBasePath({ sub_type: inviteData.tenant_sub_type }) + '/beranda');
       
     } catch (err) {
       console.error(err);
@@ -138,7 +136,7 @@ export default function Invite() {
 
         <h1 className="font-display text-2xl font-bold text-tx-1 mb-2">Undangan Bergabung</h1>
         <p className="text-tx-3 mb-6">
-          Anda diundang untuk bergabung ke tim bisnis <strong className="text-tx-1">{inviteData?.tenants?.business_name || 'TernakOS'}</strong> sebagai <Badge variant="outline" className="ml-1 uppercase tracking-wider text-[10px] bg-em-500/10 text-em-400">{inviteData?.role}</Badge>
+          Anda diundang untuk bergabung ke tim bisnis <strong className="text-tx-1">{inviteData?.tenant_business_name || 'TernakOS'}</strong> sebagai <Badge variant="outline" className="ml-1 uppercase tracking-wider text-[10px] bg-em-500/10 text-em-400">{inviteData?.role}</Badge>
         </p>
 
         {!user ? (
