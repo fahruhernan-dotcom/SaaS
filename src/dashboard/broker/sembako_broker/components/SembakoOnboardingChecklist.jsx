@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Package, Warehouse, ShoppingCart, Store, Check, ChevronRight, X, Rocket } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -46,9 +46,10 @@ export function SembakoOnboardingChecklist({ productsCount, batchesCount, custom
   const { brokerType } = useParams()
   const brokerBase = `/broker/${brokerType}`
 
-  const [dismissed, setDismissed] = useState(() => {
-    try { return localStorage.getItem(ONBOARDING_KEY) === 'true' } catch { return false }
-  })
+  const [dismissed, setDismissed] = useState(false)
+  useEffect(() => {
+    try { if (localStorage.getItem(ONBOARDING_KEY) === 'true') setDismissed(true) } catch { /* ok */ }
+  }, [])
 
   const completionMap = useMemo(() => ({
     product:  productsCount > 0,

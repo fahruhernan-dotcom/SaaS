@@ -12,8 +12,9 @@ const MUTED = '#64748B'
 const TEXT = '#F1F5F9'
 
 function useIsDesktop() {
-  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768)
+  const [isDesktop, setIsDesktop] = useState(false)
   useEffect(() => {
+    setIsDesktop(window.innerWidth >= 768)
     const handler = () => setIsDesktop(window.innerWidth >= 768)
     window.addEventListener('resize', handler)
     return () => window.removeEventListener('resize', handler)
@@ -117,10 +118,7 @@ export default function PeternakTutorialOverlay() {
 
   const storageKey = `peternak_tutorial_${tenant?.id}`
 
-  const [visible, setVisible] = useState(() => {
-    if (!tenant?.id) return false
-    try { return !localStorage.getItem(`peternak_tutorial_${tenant.id}`) } catch { return false }
-  })
+  const [visible, setVisible] = useState(false)
   const [stepIdx, setStepIdx] = useState(0)
   const [direction, setDirection] = useState(1)
 

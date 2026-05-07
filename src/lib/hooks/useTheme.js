@@ -14,11 +14,10 @@ export const THEME_PRESETS = [
 ]
 
 export function useTheme() {
-  const [accentColor, setAccentColorState] = useState(() =>
-    localStorage.getItem(THEME_KEY) || null
-  )
+  const [accentColor, setAccentColorState] = useState(null)
 
   useEffect(() => {
+    setAccentColorState(localStorage.getItem(THEME_KEY) || null)
     const handler = () =>
       setAccentColorState(localStorage.getItem(THEME_KEY) || null)
     window.addEventListener('ternakos-theme-changed', handler)
