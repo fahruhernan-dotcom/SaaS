@@ -275,7 +275,7 @@ def main():
         if already_exists_today(harga["region"]):
             log.info(f"Data {harga['region']} hari ini sudah ada — skip")
             continue
-            
+
         if insert_to_supabase(harga):
             count_ok += 1
 

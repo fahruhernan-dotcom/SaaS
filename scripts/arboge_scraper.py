@@ -209,7 +209,7 @@ def insert_to_supabase(harga: dict) -> bool:
         "Content-Type":  "application/json",
         "Prefer":        "return=minimal",
     }
-    
+
     try:
         res = requests.post(f"{SUPABASE_URL}/rest/v1/market_prices", headers=headers, data=json.dumps(payload), timeout=10)
         res.raise_for_status()
