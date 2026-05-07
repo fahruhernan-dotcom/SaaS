@@ -2,6 +2,8 @@ import React from 'react'
 import { useParams } from 'react-router-dom'
 
 // RPA pages (dari folder rpa/ yang sudah dipindah)
+import RPATutorial from './rpa/RPATutorial'
+import WelcomeOnlyOverlay from '@/dashboard/_shared/components/WelcomeOnlyOverlay'
 import RPABeranda from './rpa/Beranda'
 import RPAOrder from './rpa/Order'
 import RPAHutang from './rpa/Hutang'
@@ -33,6 +35,18 @@ export function RPPageRouter({ page }) {
     }
   }
   
-  return pages[rpType]?.[page] 
+  const component = pages[rpType]?.[page]
     ?? <div className="p-8 text-[#94A3B8]">Halaman tidak ditemukan</div>
+
+  if (page === 'beranda' && rpType === 'rpa') {
+    return (
+      <>
+        {component}
+        <RPATutorial />
+        <WelcomeOnlyOverlay accent="#F97316" accentDim="rgba(249,115,22,0.12)" />
+      </>
+    )
+  }
+
+  return component
 }

@@ -253,17 +253,17 @@ export default function AppSidebar({ open, onClose }) {
 
         // Broker Ayam
         ...(isPoultry ? [
-          { title: 'Transaksi',     url: `${brokerBase}/transaksi`, icon: ArrowLeftRight },
+          { title: 'Transaksi',     url: `${brokerBase}/transaksi`, icon: ArrowLeftRight, dataTutorial: 'broker-transaksi' },
           { title: 'RPA & Piutang', url: `${brokerBase}/rpa`,       icon: Building2, roles: ['owner', 'staff'] },
-          { title: 'Kandang',       url: `${brokerBase}/kandang`,   icon: Warehouse,  roles: ['owner', 'staff'] },
+          { title: 'Kandang',       url: `${brokerBase}/kandang`,   icon: Warehouse,  roles: ['owner', 'staff'], dataTutorial: 'broker-kandang' },
           { title: 'Tim & Akses',   url: `${brokerBase}/tim`,       icon: Users,      roles: ['owner'] },
         ] : []),
 
         // Broker Telur
         ...(isEgg ? [
-          { title: 'POS / Jual',        url: `${brokerBase}/pos`,        icon: ArrowLeftRight },
-          { title: 'Inventori & HPP',   url: `${brokerBase}/inventori`,  icon: Warehouse,  roles: ['owner', 'staff'] },
-          { title: 'Supplier Telur',    url: `${brokerBase}/suppliers`,  icon: Building2,  roles: ['owner', 'staff'] },
+          { title: 'POS / Jual',        url: `${brokerBase}/pos`,        icon: ArrowLeftRight, dataTutorial: 'egg-pos' },
+          { title: 'Inventori & HPP',   url: `${brokerBase}/inventori`,  icon: Warehouse,  roles: ['owner', 'staff'], dataTutorial: 'egg-inventori' },
+          { title: 'Supplier Telur',    url: `${brokerBase}/suppliers`,  icon: Building2,  roles: ['owner', 'staff'], dataTutorial: 'egg-supplier' },
           { title: 'Pelanggan Telur',   url: `${brokerBase}/customers`,  icon: User,       roles: ['owner', 'staff'] },
           { title: 'Riwayat Transaksi', url: `${brokerBase}/transaksi`,  icon: BarChart2,  roles: ['owner', 'staff'] },
         ] : []),
@@ -314,10 +314,10 @@ export default function AppSidebar({ open, onClose }) {
         // Rumah Potong
         ...(isRPA ? [
           ...(profile?.sub_type?.startsWith('rpa') ? [
-            { title: 'Order',      url: '/rumah_potong/rpa/order',      icon: ArrowLeftRight },
+            { title: 'Order',      url: '/rumah_potong/rpa/order',      icon: ArrowLeftRight, dataTutorial: 'rpa-order' },
             { title: 'Hutang',     url: '/rumah_potong/rpa/hutang',     icon: Wallet },
-            { title: 'Distribusi', url: '/rumah_potong/rpa/distribusi', icon: Truck },
-            { title: 'Laporan',    url: '/rumah_potong/rpa/laporan',    icon: BarChart2, roles: ['owner'], planRequired: 'pro' },
+            { title: 'Distribusi', url: '/rumah_potong/rpa/distribusi', icon: Truck, dataTutorial: 'rpa-distribusi' },
+            { title: 'Laporan',    url: '/rumah_potong/rpa/laporan',    icon: BarChart2, roles: ['owner'], planRequired: 'pro', dataTutorial: 'rpa-laporan' },
           ] : [
             /* RPH placeholder items if any */
             { title: 'Dashboard',   url: '/rumah_potong/rph/beranda',   icon: Home },
@@ -326,10 +326,10 @@ export default function AppSidebar({ open, onClose }) {
 
         // Sembako Broker
         ...(isSembako ? [
-          { title: 'Penjualan',       url: `${brokerBase}/penjualan`,     icon: ArrowLeftRight },
-          { title: 'Toko & Supplier', url: `${brokerBase}/toko-supplier`, icon: Store },
+          { title: 'Penjualan',       url: `${brokerBase}/penjualan`,     icon: ArrowLeftRight, dataTutorial: 'sembako-penjualan' },
+          { title: 'Toko & Supplier', url: `${brokerBase}/toko-supplier`, icon: Store, dataTutorial: 'sembako-toko' },
           { title: 'Pengiriman',      url: `${brokerBase}/pengiriman`,    icon: Truck },
-          { title: 'Gudang',          url: `${brokerBase}/gudang`,        icon: Warehouse },
+          { title: 'Gudang',          url: `${brokerBase}/gudang`,        icon: Warehouse, dataTutorial: 'sembako-gudang' },
           { title: 'Inventori & HPP', url: `${brokerBase}/produk`,        icon: Package,        roles: ['owner', 'staff'] },
         ] : []),
       ]
@@ -373,7 +373,7 @@ export default function AppSidebar({ open, onClose }) {
     ...(isSembako ? [{
       label: 'LAPORAN & AKUN',
       items: [
-        { title: 'Laporan',       url: `${brokerBase}/laporan`, icon: BarChart2, roles: ['owner'], planRequired: 'pro' },
+        { title: 'Laporan',       url: `${brokerBase}/laporan`, icon: BarChart2, roles: ['owner'], planRequired: 'pro', dataTutorial: 'sembako-laporan' },
         { title: 'Tim & Karyawan',url: `${brokerBase}/tim`,     icon: Users,     roles: ['owner'] },
         { title: 'Akun & Profil', url: `${brokerBase}/akun`,    icon: User },
       ]
@@ -383,7 +383,7 @@ export default function AppSidebar({ open, onClose }) {
     ...(isPoultry ? [{
       label: 'OPERASIONAL',
       items: [
-        { title: 'Pengiriman', url: `${brokerBase}/pengiriman`, icon: Truck,      roles: ['owner', 'staff'] },
+        { title: 'Pengiriman', url: `${brokerBase}/pengiriman`, icon: Truck,      roles: ['owner', 'staff'], dataTutorial: 'broker-pengiriman' },
         { title: 'Cash Flow',  url: `${brokerBase}/cashflow`,   icon: Wallet,     roles: ['owner'],          planRequired: 'pro' },
         { title: 'Armada',     url: `${brokerBase}/armada`,     icon: Car,        roles: ['owner'] },
         { title: 'Simulator',  url: `${brokerBase}/simulator`,  icon: Calculator, roles: ['owner'],          planRequired: 'pro' },

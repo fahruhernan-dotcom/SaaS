@@ -115,6 +115,7 @@ import PrediksiHasilPage    from './ai/PrediksiHasilPage'
 import { getLivestockTypeFromSubType } from '@/lib/constants/taskTemplates'
 import { useAuth } from '@/lib/hooks/useAuth'
 import PeternakTutorialOverlay from './_shared/components/PeternakTutorialOverlay'
+import WelcomeOnlyOverlay from '@/dashboard/_shared/components/WelcomeOnlyOverlay'
 
 // ─── Route Guard ──────────────────────────────────────────────────────────────
 function PeternakAdminGuard({ children }) {
@@ -322,6 +323,7 @@ export function PeternakPageRouter({ page }) {
       <>
         {component}
         <PeternakTutorialOverlay />
+        <WelcomeOnlyOverlay accent="#22C55E" accentDim="rgba(34,197,94,0.12)" />
       </>
     )
   }

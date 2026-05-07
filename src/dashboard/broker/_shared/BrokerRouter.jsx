@@ -15,6 +15,10 @@ import RPADetail from '../poultry_broker/RPADetail'
 import SopirDashboard from '../poultry_broker/SopirDashboard'
 import PoultryTimManajemenPage from '../poultry_broker/TimManajemenPage'
 import TelurTimManajemenPage from '../egg_broker/TimManajemenPage'
+import BrokerAyamTutorial from '../poultry_broker/BrokerAyamTutorial'
+import BrokerTelurTutorial from '../egg_broker/BrokerTelurTutorial'
+import SembakoTutorial from '../sembako_broker/SembakoTutorial'
+import WelcomeOnlyOverlay from '@/dashboard/_shared/components/WelcomeOnlyOverlay'
 
 // Sembako pages
 import SembakoBeranda from '../sembako_broker/Beranda'
@@ -116,6 +120,23 @@ export function BrokerPageRouter({ page }) {
   if (!component) {
     return <Navigate to={`/broker/${brokerType}/beranda`} replace />
   }
-  
+
+  if (page === 'beranda') {
+    const isPoultry = resolvedType === 'broker_ayam' || resolvedType === 'distributor_daging' || resolvedType === 'poultry_broker'
+    const isTelur   = resolvedType === 'broker_telur'
+    const isSembako = resolvedType === 'distributor_sembako' || resolvedType === 'sembako_broker'
+    const accent    = isPoultry ? '#0EA5E9' : isTelur ? '#F59E0B' : '#EA580C'
+    const accentDim = isPoultry ? 'rgba(14,165,233,0.12)' : isTelur ? 'rgba(245,158,11,0.12)' : 'rgba(234,88,12,0.12)'
+    return (
+      <>
+        {component}
+        {isPoultry && <BrokerAyamTutorial />}
+        {isTelur   && <BrokerTelurTutorial />}
+        {isSembako && <SembakoTutorial />}
+        <WelcomeOnlyOverlay accent={accent} accentDim={accentDim} />
+      </>
+    )
+  }
+
   return component
 }
