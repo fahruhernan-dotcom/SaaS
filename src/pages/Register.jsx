@@ -140,12 +140,7 @@ export default function Register() {
         toast.error('Kode undangan sudah kadaluarsa')
         return
       }
-      const { data: tenantData } = await supabase
-        .from('tenants')
-        .select('business_name')
-        .eq('id', invite.tenant_id)
-        .single()
-      const businessName = tenantData?.business_name ?? 'Tim'
+      const businessName = invite.tenant_business_name ?? 'Tim'
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
