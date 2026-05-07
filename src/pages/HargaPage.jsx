@@ -375,7 +375,8 @@ const PRICING_DATA = {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmtIDR(n) {
-  return 'Rp\u00a0' + n.toLocaleString('id-ID')
+  // Manual formatting avoids Node.js vs browser ICU differences (React #418 hydration mismatch)
+  return 'Rp\u00a0' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }
 
 // ─── Subcomponents ────────────────────────────────────────────────────────────
