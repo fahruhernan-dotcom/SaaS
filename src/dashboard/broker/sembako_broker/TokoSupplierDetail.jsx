@@ -418,17 +418,29 @@ function PaymentForm({ invoice, isCustomer, parentId, maxAmount, onClose }) {
   const recordCustomerPayment = useRecordSembakoPayment()
   const recordSupplierPayment = useRecordSembakoSupplierPayment()
   
-  const [amount, setAmount] = useState(maxAmount || 0)
+  // Clamp initial value agar tidak melebihi maxAmount
+  const safeMax = maxAmount ?? Infinity
+  const [amount, setAmount] = useState(() => Math.min(maxAmount || 0, safeMax))
   const [method, setMethod] = useState('transfer')
   const [refNo, setRefNo] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // Real-time overpay detection
+  const isOverpay = maxAmount !== undefined && maxAmount !== null && amount > maxAmount
+  const isZeroDebt = !isCustomer && (maxAmount === 0 || maxAmount === null || maxAmount === undefined)
+
   const handlePay = async () => {
     if (amount <= 0) {
-      toast.error('Nominal tidak valid')
+      toast.error('Nominal tidak valid (harus > Rp 0)')
       return
     }
-    if (maxAmount !== undefined && amount > maxAmount) {
+    // Guard: tidak ada hutang
+    if (isZeroDebt) {
+      toast.error('Tidak ada sisa hutang ke supplier ini')
+      return
+    }
+    // Guard: overpay
+    if (isOverpay) {
       toast.error(`Nominal melebihi sisa hutang (${formatIDR(maxAmount)})`)
       return
     }
@@ -469,6 +481,10 @@ function PaymentForm({ invoice, isCustomer, parentId, maxAmount, onClose }) {
           <p className={cn("font-display text-4xl font-black tracking-tight tabular-nums", isCustomer ? "text-red-500" : "text-emerald-500")}>
             {formatIDR(maxAmount || 0)}
           </p>
+          {/* Peringatan jika hutang sudah lunas */}
+          {isZeroDebt && (
+            <p className="text-[11px] font-black text-emerald-400 mt-1">✅ Tidak ada hutang ke supplier ini</p>
+          )}
        </div>
 
        <div className="space-y-6">
@@ -477,8 +493,25 @@ function PaymentForm({ invoice, isCustomer, parentId, maxAmount, onClose }) {
             <InputRupiah 
               value={amount} 
               onChange={setAmount}
-              className="bg-[#111C24] border-white/10 h-16 text-2xl font-black text-white rounded-2xl focus:ring-[#EA580C]/20"
+              className={cn(
+                "bg-[#111C24] h-16 text-2xl font-black text-white rounded-2xl transition-all",
+                isOverpay
+                  ? "border-red-500/50 focus:ring-red-500/20"
+                  : "border-white/10 focus:ring-[#EA580C]/20"
+              )}
             />
+            {/* Real-time overpay feedback */}
+            {isOverpay && (
+              <p className="text-[11px] font-black text-red-400 ml-2 flex items-center gap-1.5">
+                🚨 Melebihi sisa hutang sebesar {formatIDR(amount - maxAmount)}
+              </p>
+            )}
+            {/* Lunas indicator */}
+            {!isOverpay && amount > 0 && maxAmount !== undefined && amount === maxAmount && (
+              <p className="text-[11px] font-black text-emerald-400 ml-2 flex items-center gap-1.5">
+                ✅ Pas — hutang akan lunas setelah pembayaran ini
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -512,10 +545,15 @@ function PaymentForm({ invoice, isCustomer, parentId, maxAmount, onClose }) {
           <div className="pt-4">
              <Button 
                onClick={handlePay} 
-               disabled={loading}
-               className={cn("w-full h-16 rounded-2xl text-sm font-black border-none shadow-xl uppercase tracking-[0.2em] transition-all active:scale-95 text-white", isCustomer ? "bg-emerald-500" : "bg-red-500")}
+               disabled={loading || isOverpay || isZeroDebt || amount <= 0}
+               className={cn(
+                 "w-full h-16 rounded-2xl text-sm font-black border-none shadow-xl uppercase tracking-[0.2em] transition-all active:scale-95 text-white",
+                 (isOverpay || isZeroDebt || amount <= 0)
+                   ? "bg-white/10 text-white/30 cursor-not-allowed"
+                   : isCustomer ? "bg-emerald-500" : "bg-red-500"
+               )}
              >
-               {loading ? 'Memproses...' : 'Konfirmasi Catat'}
+               {loading ? 'Memproses...' : isOverpay ? 'Nominal Terlalu Besar' : isZeroDebt ? 'Hutang Sudah Lunas' : 'Konfirmasi Catat'}
              </Button>
           </div>
        </div>

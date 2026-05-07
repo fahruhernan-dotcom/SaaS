@@ -376,6 +376,10 @@ export const useCreateSembakoSale = () => {
         .map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase().slice(0, 4)
       const invoice_number = `SMB-${dateStr}-${rand}`
 
+      // ATTACK-02 guard: cogs_per_unit tidak boleh negatif (bisa 0 untuk produk tanpa HPP)
+      const badCogs = items.find(i => (i.cogs_per_unit ?? 0) < 0)
+      if (badCogs) throw new Error(`COGS negatif tidak valid untuk produk ${badCogs.product_id}`)
+
       // Hitung totals dari items
       const total_amount = items.reduce((s, i) =>
         s + Math.round(i.quantity * i.price_per_unit), 0)
@@ -436,6 +440,7 @@ export const useCreateSembakoSale = () => {
             sale_id: sale.id,
             qty_keluar: deduct,
             buy_price: batch.buy_price || 0,
+            reason: 'sale', // audit trail: beda dari 'adjustment'
           })
           qtyToDeduct -= deduct
         }
@@ -1106,6 +1111,16 @@ export const useDeleteSembakoSale = () => {
       await supabase.from('sembako_payments')
         .delete()
         .eq('sale_id', id)
+
+      // 5. Hard delete sale items — cegah orphan records di analitik (SIM-04)
+      await supabase.from('sembako_sale_items')
+        .delete()
+        .eq('sale_id', id)
+
+      // 6. Hard delete deliveries terkait — cegah orphan tracking (SIM-04)
+      await supabase.from('sembako_deliveries')
+        .delete()
+        .eq('sale_id', id)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
@@ -1124,6 +1139,32 @@ export const useUpdateSembakoSale = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ id, updates }) => {
+      // SIM-07: Jika total_amount diubah, recalculate remaining_amount & payment_status
+      // agar saldo piutang customer tidak desync setelah edit
+      if (updates.total_amount !== undefined) {
+        const { data: sale } = await supabase
+          .from('sembako_sales')
+          .select('paid_amount')
+          .eq('id', id)
+          .single()
+
+        if (sale) {
+          const paidAmount   = sale.paid_amount || 0
+          const newTotal     = updates.total_amount
+          const newRemaining = Math.max(0, newTotal - paidAmount)
+          const newStatus    =
+            paidAmount <= 0       ? 'belum_lunas'
+            : paidAmount >= newTotal ? 'lunas'
+            : 'sebagian'
+
+          updates = {
+            ...updates,
+            remaining_amount: newRemaining,
+            payment_status:   newStatus,
+          }
+        }
+      }
+
       const { error } = await supabase.from('sembako_sales')
         .update(updates)
         .eq('id', id)
@@ -1132,6 +1173,8 @@ export const useUpdateSembakoSale = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
       queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-customer-invoices'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-customer-payments'] })
       toast.success('Transaksi diperbarui')
     },
     onError: (err) => toast.error('Gagal: ' + err.message),
@@ -1183,7 +1226,7 @@ export const useCreateSembakoReturn = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ sale_id, items }) => {
-      // Reaksi: reverse stock (tambah kembalike sisa qty batch)
+      // 1. Reverse stock: kembalikan qty ke batch masing-masing (FIFO Reversal)
       for (const item of items) {
         if (!item.batch_id) continue
         const { data: batch } = await supabase
@@ -1199,7 +1242,23 @@ export const useCreateSembakoReturn = () => {
         }
       }
 
-      // Soft delete: beri catatan retur di sales header
+      // 2. Hapus stock_out records terkait sale ini
+      //    (mencegah ghost movements di Kartu Stok & Riwayat Keluar)
+      const { error: stockOutErr } = await supabase
+        .from('sembako_stock_out')
+        .delete()
+        .eq('sale_id', sale_id)
+      if (stockOutErr) throw stockOutErr
+
+      // 3. Hapus payment records terkait sale ini
+      //    (mencegah orphan payments setelah retur)
+      const { error: payErr } = await supabase
+        .from('sembako_payments')
+        .delete()
+        .eq('sale_id', sale_id)
+      if (payErr) throw payErr
+
+      // 4. Soft delete: beri catatan retur di sales header
       const { error } = await supabase
         .from('sembako_sales')
         .update({ 
@@ -1215,6 +1274,9 @@ export const useCreateSembakoReturn = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-products'] })
       queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
       queryClient.invalidateQueries({ queryKey: ['sembako-all-batches'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-stock-out'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-customer-payments'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-customer-invoices'] })
       toast.success('Nota Berhasil di-Retur')
     },
     onError: (err) => toast.error('Gagal proses retur: ' + err.message),
@@ -1243,6 +1305,19 @@ export const useAdjustBatchStock = () => {
         .update({ qty_sisa: newQty })
         .eq('id', batch_id)
       if (updErr) throw updErr
+
+      // BUG-05 fix: sync product.current_stock dengan SUM semua batch aktif
+      // agar UI tidak tampilkan stok yang sudah stale
+      const { data: batchTotals } = await supabase
+        .from('sembako_stock_batches')
+        .select('qty_sisa')
+        .eq('product_id', batch.product_id)
+        .gt('qty_sisa', 0)
+      const syncedStock = (batchTotals || []).reduce((s, b) => s + (b.qty_sisa || 0), 0)
+      await supabase
+        .from('sembako_products')
+        .update({ current_stock: syncedStock })
+        .eq('id', batch.product_id)
 
       // Jika pengurangan stok, catat di sembako_stock_out
       if (qty_change < 0) {

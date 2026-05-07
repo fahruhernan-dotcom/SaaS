@@ -997,7 +997,21 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
                       </div>
                     </div>
 
-                    {/* Margin warning for thin margins */}
+                    {/* Margin warning for negative margins (RUGI) */}
+                    {totalAmount > 0 && marginPct < 0 && (
+                      <div
+                        className="flex items-start gap-2.5 px-4 py-3 rounded-xl"
+                        style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)' }}
+                      >
+                        <span style={{ fontSize: '16px', flexShrink: 0, marginTop: '1px' }}>🚨</span>
+                        <div>
+                          <p className="text-xs font-bold" style={{ color: '#EF4444' }}>PERHATIAN: Transaksi ini RUGI ({marginPct}%)</p>
+                          <p className="text-[11px] mt-0.5" style={{ color: MUTED }}>Harga jual lebih rendah dari HPP. Periksa harga atau COGS sebelum menyimpan.</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Margin warning for thin margins (0-5%) */}
                     {totalAmount > 0 && marginPct < 5 && marginPct >= 0 && (
                       <div
                         className="flex items-start gap-2.5 px-4 py-3 rounded-xl"
@@ -1010,6 +1024,7 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
                         </div>
                       </div>
                     )}
+
 
                     {/* Cost inputs */}
                     <div className="grid grid-cols-2 gap-3">

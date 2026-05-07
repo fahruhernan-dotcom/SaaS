@@ -108,6 +108,7 @@ export const useConfirmInvoice = () => {
           ...(notes ? { notes } : {})
         })
         .eq('id', invoiceId)
+        .eq('status', 'pending')
       if (invoiceErr) throw invoiceErr
 
       // 3. Specialized Fulfillment
@@ -466,6 +467,69 @@ export const useUpdatePlanConfig = () => {
       toast.success('Konfigurasi berhasil disimpan')
     },
     onError: () => toast.error('Gagal menyimpan konfigurasi')
+  })
+}
+
+export const usePlanConfigHistory = (configKey, limit = 5) => useQuery({
+  queryKey: ['plan-config-history', configKey],
+  queryFn: async () => {
+    const { data } = await supabase
+      .from('global_audit_logs')
+      .select('*')
+      .eq('entity_type', `plan_configs.${configKey}`)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+    return data ?? []
+  },
+  enabled: !!configKey
+})
+
+export const useMarketPriceReviewQueue = () => useQuery({
+  queryKey: ['market-price-review-queue'],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('market_prices')
+      .select('*')
+      .eq('needs_review', true)
+      .order('recorded_at', { ascending: false })
+    if (error) throw error
+    return data ?? []
+  }
+})
+
+export const useApproveMarketPrice = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id) => {
+      const { error } = await supabase
+        .from('market_prices')
+        .update({ needs_review: false })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['market-price-review-queue'] })
+      toast.success('Harga disetujui')
+    },
+    onError: (err) => toast.error('Gagal menyetujui: ' + err.message)
+  })
+}
+
+export const useDeleteMarketPrice = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id) => {
+      const { error } = await supabase
+        .from('market_prices')
+        .delete()
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['market-price-review-queue'] })
+      toast.success('Data harga dihapus')
+    },
+    onError: (err) => toast.error('Gagal menghapus: ' + err.message)
   })
 }
 

@@ -41,12 +41,13 @@ export default function SembakoLaporan() {
   // Rules of Hooks: all hooks must be called unconditionally before any early return.
   const now = new Date()
   
-  const overallStart = tenant?.created_at ? new Date(tenant.created_at).toISOString().slice(0, 10) : '2024-01-01'
-  const overallEnd = now.toISOString().slice(0, 10)
+  // Default ke bulan berjalan agar first load cepat dan relevan
+  const bulanStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+  const bulanEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)
 
-  const [startDate, setStartDate] = useState(overallStart)
-  const [endDate, setEndDate] = useState(overallEnd)
-  const [preset, setPreset] = useState('keseluruhan')
+  const [startDate, setStartDate] = useState(bulanStart)
+  const [endDate, setEndDate] = useState(bulanEnd)
+  const [preset, setPreset] = useState('bulan_ini')
 
   // ── Upgrade wall — must come after all hooks ──────────────────────────────
   if (isStarter) {

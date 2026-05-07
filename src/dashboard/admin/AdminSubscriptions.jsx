@@ -40,6 +40,10 @@ import {
 } from '@/components/ui/sheet'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { formatIDR, formatDate, toTitleCase } from '@/lib/format'
@@ -84,6 +88,9 @@ export default function AdminSubscriptions() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+  const [cancelDialog, setCancelDialog] = useState(false)
+  const [deleteInvoiceDialog, setDeleteInvoiceDialog] = useState(false)
+  const [deleteBankTarget, setDeleteBankTarget] = useState(null)
 
   const ITEMS_PER_PAGE = 20
   const today = new Date().toISOString().slice(0, 10)
@@ -178,8 +185,7 @@ export default function AdminSubscriptions() {
     })
   }
 
-  const handleCancelInvoice = async () => {
-    if (!confirm('Batalkan invoice ini?')) return
+  const executeCancelInvoice = async () => {
     const { error } = await supabase
       .from('subscription_invoices')
       .update({ status: 'cancelled' })
@@ -193,10 +199,8 @@ export default function AdminSubscriptions() {
     }
   }
 
-  const handleDeleteInvoice = async () => {
+  const executeDeleteInvoice = () => {
     if (!selectedInvoice) return
-    if (!confirm(`HAPUS PERMANEN invoice #${selectedInvoice.invoice_number}?\n\nData ini akan hilang selamanya dan tidak bisa dikembalikan.`)) return
-    
     deleteInvoice.mutate(selectedInvoice.id, {
       onSuccess: () => {
         setIsSheetOpen(false)
@@ -224,8 +228,7 @@ export default function AdminSubscriptions() {
   }
 
   const handleDeleteBank = (bank) => {
-    if (!confirm(`Hapus rekening ${bank.bank_name} - ${bank.account_number}?`)) return
-    deleteBank.mutate(bank.id)
+    setDeleteBankTarget(bank)
   }
 
   const handleGenerateInvoice = (e) => {
@@ -799,13 +802,13 @@ export default function AdminSubscriptions() {
                       <div className="grid grid-cols-2 gap-2">
                         <Button variant="outline"
                           className="h-9 rounded-xl border-white/8 bg-white/[0.03] text-[#4B6478] hover:text-red-400 hover:bg-red-500/8 hover:border-red-500/20 text-[12px] font-bold"
-                          onClick={handleCancelInvoice}
+                          onClick={() => setCancelDialog(true)}
                         >
                           Batalkan Invoice
                         </Button>
                         <Button variant="ghost"
                           className="h-9 rounded-xl text-red-500/30 hover:text-red-500 hover:bg-red-500/5 text-[12px] font-bold"
-                          onClick={handleDeleteInvoice}
+                          onClick={() => setDeleteInvoiceDialog(true)}
                           disabled={deleteInvoice.isPending}
                         >
                           Hapus Data
@@ -819,6 +822,67 @@ export default function AdminSubscriptions() {
           </AnimatePresence>
         </SheetContent>
       </Sheet>
+
+      {/* ─── DESTRUCTIVE ACTION DIALOGS ─── */}
+      <AlertDialog open={cancelDialog} onOpenChange={setCancelDialog}>
+        <AlertDialogContent className="bg-[#0C1319] border border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Batalkan Invoice?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#4B6478]">
+              Invoice #{selectedInvoice?.invoice_number} akan diubah statusnya menjadi <span className="text-white font-bold">cancelled</span>. Tenant tidak akan mendapatkan akses plan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeCancelInvoice}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold"
+            >
+              Ya, Batalkan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteInvoiceDialog} onOpenChange={setDeleteInvoiceDialog}>
+        <AlertDialogContent className="bg-[#0C1319] border border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-500">Hapus Permanen Invoice?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#4B6478]">
+              Invoice <span className="text-white font-bold">#{selectedInvoice?.invoice_number}</span> akan dihapus selamanya dan tidak bisa dikembalikan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeDeleteInvoice}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold"
+            >
+              Hapus Selamanya
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteBankTarget} onOpenChange={(v) => { if (!v) setDeleteBankTarget(null) }}>
+        <AlertDialogContent className="bg-[#0C1319] border border-white/10 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Hapus Rekening?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#4B6478]">
+              Rekening <span className="text-white font-bold">{deleteBankTarget?.bank_name} - {deleteBankTarget?.account_number}</span> akan dihapus permanen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 text-white hover:bg-white/10">Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { deleteBank.mutate(deleteBankTarget.id); setDeleteBankTarget(null) }}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold"
+            >
+              Ya, Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* ─── GENERATE INVOICE SHEET ─── */}
       <Sheet open={isGenerateOpen} onOpenChange={setIsGenerateOpen}>

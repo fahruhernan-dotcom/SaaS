@@ -256,7 +256,7 @@ function RiwayatKeluar() {
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontFamily: 'Sora', fontSize: 13, fontWeight: 700, color: '#F87171' }}>
-              -{fmt(s.qty_out)} {s.sembako_products?.unit}
+              -{fmt(s.qty_keluar)} {s.sembako_products?.unit}
             </div>
           </div>
         </div>
@@ -521,7 +521,7 @@ function KartuStokSheet({ product, onClose }) {
         id: `out-${s.id}`,
         date: s.created_at,
         type: s.reason === 'adjustment' ? 'ADJ' : 'OUT',
-        qty: -s.qty_out,
+        qty: -s.qty_keluar,
         ref: s.sembako_sales?.invoice_number || s.sembako_stock_batches?.batch_code,
         notes: s.notes || (s.reason === 'adjustment' ? 'Penyesuaian' : 'Penjualan'),
         color: s.reason === 'adjustment' ? 'text-orange-500' : 'text-red-500'

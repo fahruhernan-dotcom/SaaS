@@ -62,6 +62,7 @@ const AdminUsers        = lazy(() => import('./dashboard/admin/AdminUsers'))
 const AdminSubscriptions= lazy(() => import('./dashboard/admin/AdminSubscriptions'))
 const AdminPricing      = lazy(() => import('./dashboard/admin/AdminPricing'))
 const AdminActivity     = lazy(() => import('./dashboard/admin/AdminActivity'))
+const AdminSettings     = lazy(() => import('./dashboard/admin/AdminSettings'))
 
 import { getXBasePath, resolveBusinessVertical, BUSINESS_MODELS } from './lib/businessModel'
 
@@ -513,7 +514,7 @@ export const routes = createRoutesFromElements(
       <Route path="subscriptions" element={<AdminSubscriptions />} />
       <Route path="pricing" element={<AdminPricing />} />
       <Route path="activity" element={<AdminActivity />} />
-      <Route path="settings" element={<AdminComingSoon />} />
+      <Route path="settings" element={<AdminSettings />} />
       <Route path="info" element={<AdminComingSoon />} />
       <Route path="help" element={<AdminComingSoon />} />
     </Route>

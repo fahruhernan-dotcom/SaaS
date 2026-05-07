@@ -9,6 +9,7 @@ import RPADistribusi from './rpa/Distribusi'
 import RPADistribusiDetail from './rpa/DistribusiDetail'
 import RPALaporanMargin from './rpa/LaporanMargin'
 import RPAAkun from './rpa/Akun'
+import RPATimManajemenPage from './rpa/TimManajemenPage'
 
 // RPH pages (placeholder)
 import RPHBeranda from './rph/RPHBeranda'
@@ -25,6 +26,7 @@ export function RPPageRouter({ page }) {
       'distribusi-detail': <RPADistribusiDetail />,
       laporan:      <RPALaporanMargin />,
       akun:         <RPAAkun />,
+      tim:          <RPATimManajemenPage />,
     },
     rph: {
       beranda: <RPHBeranda />,

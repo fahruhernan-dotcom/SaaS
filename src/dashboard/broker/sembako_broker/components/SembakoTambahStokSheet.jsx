@@ -19,8 +19,10 @@ const fmt = (n) => new Intl.NumberFormat('id-ID').format(Math.round(n || 0))
 function genBatchCode() {
   const now = new Date()
   const d = now.toISOString().slice(0, 10).replace(/-/g, '')
-  const r = Math.random().toString(36).slice(2, 6).toUpperCase()
-  return `BATCH-${d}-${r}`
+  // Tambah ms-timestamp untuk entropy — eliminasi birthday paradox (ATTACK-04)
+  const ms  = now.getTime().toString(36).slice(-3).toUpperCase()
+  const r   = Math.random().toString(36).slice(2, 5).toUpperCase()
+  return `BATCH-${d}-${ms}${r}`
 }
 
 const inputSt = {

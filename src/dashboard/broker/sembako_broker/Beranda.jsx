@@ -1055,12 +1055,15 @@ export default function SembakoBeranda() {
         <MobileBeranda {...sharedProps} profile={profile} tenant={tenant} profiles={profiles} switchTenant={switchTenant} />
       )}
 
-      <SembakoTambahStokSheet 
-        isOpen={stokOpen}
-        onClose={() => setStokOpen(false)}
-        products={products}
-        suppliers={suppliers}
-      />
+      <AnimatePresence>
+        {stokOpen && (
+          <SembakoTambahStokSheet 
+            onClose={() => setStokOpen(false)}
+            products={products}
+            suppliers={suppliers}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

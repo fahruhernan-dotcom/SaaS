@@ -5,7 +5,8 @@ import {
   Tag, Sparkles, Building2,
   Home, Factory, Trash2, Copy, Check,
   RefreshCcw, AlertCircle, Loader2,
-  Settings2, Clock, Infinity as InfinityIcon, Egg, ShoppingBasket
+  Settings2, Clock, Infinity as InfinityIcon, Egg, ShoppingBasket,
+  ShieldAlert, CheckCircle2, XCircle, MapPin, CalendarClock
 } from 'lucide-react'
 import {
   usePricingConfig,
@@ -16,6 +17,9 @@ import {
   useDeleteDiscountCode,
   usePlanConfigs,
   useUpdatePlanConfig,
+  useMarketPriceReviewQueue,
+  useApproveMarketPrice,
+  useDeleteMarketPrice,
 } from '@/lib/hooks/useAdminData'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -63,45 +67,28 @@ export default function AdminPricing() {
   const toggleVoucher = useToggleDiscountCode()
   const deleteVoucher = useDeleteDiscountCode()
 
+  const { data: reviewQueue = [], isLoading: isLoadingQueue } = useMarketPriceReviewQueue()
+  const approvePrice = useApproveMarketPrice()
+  const deletePrice = useDeleteMarketPrice()
+
   const [activeTab, setActiveTab] = useState('plans')
   const [editingPricing, setEditingPricing] = useState(null)
   const [savingRole, setSavingRole] = useState(null)
   const [formKey, setFormKey] = useState(0)
 
   // ── New: Add-on & Limit state ─────────────────────────────────────────────
-  const [kandangLimits, setKandangLimits] = useState({
-    starter: 1, pro: 2, business: 99, enterprise: 99
-  })
-  const [teamLimits, setTeamLimits] = useState({
-    starter: 1, pro: 3, business: 10, enterprise: 99
-  })
-  const [businessLimits, setBusinessLimits] = useState({
-    starter: 1, pro: 3, business: 999, enterprise: 999
-  })
-  const [ternakLimits, setTernakLimits] = useState({
-    domba_kambing: { starter: 20, pro: 100, business: null },
-    sapi:          { starter: 10, pro: 50,  business: null },
-  })
   const [addonPricing, setAddonPricing] = useState({
     price_per_type: 99000,
     max_addons_before_upgrade: 2,
     business_slot_price: 150000, // New: Default price for additional business slots
   })
-  const [savingLimits, setSavingLimits] = useState(false)
   const [savingAddon, setSavingAddon] = useState(false)
 
   // ── New: Trial & Diskon state ─────────────────────────────────────────────
-  const [trxQuota, setTrxQuota] = useState({ starter: 30 })
-  const [savingQuota, setSavingQuota] = useState(false)
-
-  const [trialConfig, setTrialConfig] = useState({
-    starter: 14, pro: 14, business: 14
-  })
   const [annualDiscount, setAnnualDiscount] = useState({
     discount_percent: 20,
     badge_text: 'Hemat 2 bln!',
   })
-  const [savingTrial, setSavingTrial] = useState(false)
   const [savingDiscount, setSavingDiscount] = useState(false)
   const [configsInited, setConfigsInited] = useState(false)
 
@@ -115,14 +102,8 @@ export default function AdminPricing() {
   // Initialise config state once plan_configs data arrives
   useMemo(() => {
     if (configs && Object.keys(configs).length > 0 && !configsInited) {
-      if (configs.kandang_limit) setKandangLimits(v => ({ ...v, ...configs.kandang_limit }))
-      if (configs.team_limit) setTeamLimits(v => ({ ...v, ...configs.team_limit }))
-      if (configs.business_limit) setBusinessLimits(v => ({ ...v, ...configs.business_limit }))
       if (configs.addon_pricing) setAddonPricing(v => ({ ...v, ...configs.addon_pricing }))
-      if (configs.trial_config) setTrialConfig(v => ({ ...v, ...configs.trial_config }))
       if (configs.annual_discount) setAnnualDiscount(v => ({ ...v, ...configs.annual_discount }))
-      if (configs.transaction_quota) setTrxQuota(v => ({ ...v, ...configs.transaction_quota }))
-      if (configs.ternak_limit) setTernakLimits(v => ({ ...v, ...configs.ternak_limit }))
       setConfigsInited(true)
     }
   }, [configs, configsInited])
@@ -230,56 +211,13 @@ export default function AdminPricing() {
     toast.success('Kode diskon disalin!')
   }
 
-  const handleSaveLimits = async () => {
-    setSavingLimits(true)
-    try {
-      await updateConfig.mutateAsync({ config_key: 'kandang_limit', config_value: kandangLimits })
-      await updateConfig.mutateAsync({ config_key: 'team_limit', config_value: teamLimits })
-      await updateConfig.mutateAsync({ config_key: 'business_limit', config_value: businessLimits })
-    } catch { /* toast shown in hook */ } finally {
-      setSavingLimits(false)
-    }
-  }
-
-  const handleSaveTernakLimits = async () => {
-    setSavingLimits(true)
-    try {
-      await updateConfig.mutateAsync({ config_key: 'ternak_limit', config_value: ternakLimits })
-      toast.success('Limit ternak berhasil disimpan!')
-    } catch { /* toast shown in hook */ } finally {
-      setSavingLimits(false)
-    }
-  }
-
   const handleSaveAddon = async () => {
     setSavingAddon(true)
     try {
       await updateConfig.mutateAsync({ config_key: 'addon_pricing', config_value: addonPricing })
+      toast.success('Harga Add-on berhasil disimpan')
     } catch { /* toast shown in hook */ } finally {
       setSavingAddon(false)
-    }
-  }
-
-  const handleSaveQuota = async () => {
-    const val = Number(trxQuota.starter)
-    if (!val || val < 1 || val > 9999) {
-      toast.error('Kuota harus antara 1–9999')
-      return
-    }
-    setSavingQuota(true)
-    try {
-      await updateConfig.mutateAsync({ config_key: 'transaction_quota', config_value: { starter: val } })
-    } catch { /* toast shown in hook */ } finally {
-      setSavingQuota(false)
-    }
-  }
-
-  const handleSaveTrial = async () => {
-    setSavingTrial(true)
-    try {
-      await updateConfig.mutateAsync({ config_key: 'trial_config', config_value: trialConfig })
-    } catch { /* toast shown in hook */ } finally {
-      setSavingTrial(false)
     }
   }
 
@@ -287,13 +225,11 @@ export default function AdminPricing() {
     setSavingDiscount(true)
     try {
       await updateConfig.mutateAsync({ config_key: 'annual_discount', config_value: annualDiscount })
+      toast.success('Skema diskon tahunan berhasil disimpan')
     } catch { /* toast shown in hook */ } finally {
       setSavingDiscount(false)
     }
   }
-
-  const previewTrialDate = (days) =>
-    format(addDays(new Date(), Number(days) || 0), 'd MMMM yyyy', { locale: idLocale })
 
   if (isLoadingPricing || !editingPricing) {
     return (
@@ -342,9 +278,10 @@ export default function AdminPricing() {
         <TabsList className="bg-white/[0.03] backdrop-blur-md border border-white/5 p-1 h-14 rounded-2xl mb-10 w-full flex overflow-x-auto overflow-y-hidden scrollbar-hide flex-nowrap sticky top-[10rem] md:top-[10rem] lg:relative lg:top-0 z-10 shadow-2xl items-center justify-start">
           {[
             { id: 'plans', label: 'Harga Plan' },
-            { id: 'addons', label: 'Add-on & Limit' },
-            { id: 'trial', label: 'Trial & Diskon' },
-            { id: 'vouchers', label: 'Kode Diskon' }
+            { id: 'addons', label: 'Add-on Pricing' },
+            { id: 'discounts', label: 'Diskon Tahunan' },
+            { id: 'vouchers', label: 'Kode Diskon' },
+            { id: 'review', label: 'Review Harga', badge: reviewQueue.length || null }
           ].map((tab) => (
             <TabsTrigger
               key={tab.id}
@@ -354,7 +291,12 @@ export default function AdminPricing() {
               {activeTab === tab.id && (
                 <div className="absolute inset-0 bg-white/5 rounded-xl border border-white/10 shadow-lg" />
               )}
-              <span className="relative z-10">{tab.label}</span>
+              <span className="relative z-10 flex items-center gap-1.5">
+                {tab.label}
+                {tab.badge ? (
+                  <span className="bg-amber-500 text-black text-[8px] font-black rounded-full px-1.5 py-0.5 leading-none">{tab.badge}</span>
+                ) : null}
+              </span>
             </TabsTrigger>
           ))}
         </TabsList>
@@ -518,241 +460,11 @@ export default function AdminPricing() {
 
 
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {/* TAB: ADD-ON & LIMIT                                          */}
+        {/* TAB: ADD-ON PRICING                                          */}
         {/* ═══════════════════════════════════════════════════════════════ */}
         <TabsContent value="addons" className="space-y-10 animate-in fade-in duration-300">
 
-          {/* Section A — Kandang & Tim Limit */}
-          <section className="space-y-5">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478] font-display flex items-center gap-2">
-                <Settings2 size={13} /> KANDANG LIMIT PER PLAN
-              </p>
-              <p className="text-xs text-[#4B6478] mt-1">Jumlah kandang aktif maksimal yang bisa dimiliki per plan</p>
-            </div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Starter */}
-              <PlanLimitCard
-                planName="STARTER"
-                badgeClass="bg-white/10 text-white/50"
-                kandangValue={kandangLimits.starter}
-                teamValue={teamLimits.starter}
-                businessValue={businessLimits.starter}
-                onKandangChange={v => setKandangLimits(p => ({ ...p, starter: v }))}
-                onTeamChange={v => setTeamLimits(p => ({ ...p, starter: v }))}
-                onBusinessChange={v => setBusinessLimits(p => ({ ...p, starter: v }))}
-              />
-              {/* PRO */}
-              <PlanLimitCard
-                planName="PRO"
-                badgeClass="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                kandangValue={kandangLimits.pro}
-                teamValue={teamLimits.pro}
-                businessValue={businessLimits.pro}
-                onKandangChange={v => setKandangLimits(p => ({ ...p, pro: v }))}
-                onTeamChange={v => setTeamLimits(p => ({ ...p, pro: v }))}
-                onBusinessChange={v => setBusinessLimits(p => ({ ...p, pro: v }))}
-              />
-              {/* Business */}
-              <PlanLimitCard
-                planName="BUSINESS"
-                badgeExtra="MOST POPULAR"
-                badgeClass="bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                kandangValue={kandangLimits.business}
-                teamValue={teamLimits.business}
-                businessValue={businessLimits.business}
-                onKandangChange={v => setKandangLimits(p => ({ ...p, business: v }))}
-                onTeamChange={v => setTeamLimits(p => ({ ...p, business: v }))}
-                onBusinessChange={v => setBusinessLimits(p => ({ ...p, business: v }))}
-              />
-              {/* Enterprise */}
-              <PlanLimitCard
-                planName="ENTERPRISE"
-                badgeClass="bg-purple-500/10 text-purple-400 border border-purple-500/20"
-                readOnly
-                kandangValue={99}
-                teamValue={99}
-                businessValue={999}
-              />
-            </div>
-
-            <button
-              onClick={handleSaveLimits}
-              disabled={savingLimits}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-12 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(16,185,129,0.3)] border border-emerald-400/20 active:scale-[0.98]"
-            >
-              {savingLimits
-                ? <><Loader2 size={16} className="animate-spin" /> MENYIMPAN LIMIT...</>
-                : 'SIMPAN KONFIGURASI LIMIT'
-              }
-            </button>
-          </section>
-
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/5 to-transparent my-4" />
-
-          {/* Section B — Ternak Limit */}
-          <section className="space-y-5">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478] font-display flex items-center gap-2">
-                <Settings2 size={13} /> LIMIT TERNAK AKTIF PER PLAN
-              </p>
-              <p className="text-xs text-[#4B6478] mt-1">Jumlah ekor ternak aktif maksimal per tenant. Business = tidak terbatas.</p>
-            </div>
-
-            <div className="space-y-4">
-              {[
-                { key: 'domba_kambing', label: 'Domba & Kambing', emoji: '🐑' },
-                { key: 'sapi', label: 'Sapi', emoji: '🐃' },
-              ].map(({ key, label, emoji }) => (
-                <div key={key} className="bg-white/[0.03] rounded-[24px] p-6 border border-white/5 space-y-4">
-                  <p className="text-xs font-black uppercase tracking-widest text-white/60">{emoji} {label}</p>
-                  <div className="grid grid-cols-3 gap-3">
-                    {/* Starter */}
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Starter</label>
-                      <input
-                        type="number"
-                        min={1}
-                        value={ternakLimits[key]?.starter ?? ''}
-                        onChange={e => setTernakLimits(p => ({
-                          ...p,
-                          [key]: { ...p[key], starter: parseInt(e.target.value) || 0 }
-                        }))}
-                        className="w-full bg-black/40 border border-white/5 h-11 rounded-2xl px-4 text-sm text-white font-black focus:outline-none focus:border-emerald-500/40 focus:bg-emerald-500/5 transition-all"
-                      />
-                    </div>
-                    {/* Pro */}
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-emerald-500/60">Pro</label>
-                      <input
-                        type="number"
-                        min={1}
-                        value={ternakLimits[key]?.pro ?? ''}
-                        onChange={e => setTernakLimits(p => ({
-                          ...p,
-                          [key]: { ...p[key], pro: parseInt(e.target.value) || 0 }
-                        }))}
-                        className="w-full bg-black/40 border border-emerald-500/20 h-11 rounded-2xl px-4 text-sm text-white font-black focus:outline-none focus:border-emerald-500/40 focus:bg-emerald-500/5 transition-all"
-                      />
-                    </div>
-                    {/* Business */}
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-amber-500/60">Business</label>
-                      <div className="h-11 rounded-2xl bg-amber-500/5 border border-amber-500/20 flex items-center px-4 gap-2 text-sm font-black text-amber-400">
-                        <InfinityIcon size={15} /> Unlimited
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={handleSaveTernakLimits}
-              disabled={savingLimits}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-12 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(16,185,129,0.3)] border border-emerald-400/20 active:scale-[0.98]"
-            >
-              {savingLimits
-                ? <><Loader2 size={16} className="animate-spin" /> MENYIMPAN...</>
-                : 'SIMPAN LIMIT TERNAK'
-              }
-            </button>
-          </section>
-
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/5 to-transparent my-4" />
-
-          {/* Section C — Transaction Quota */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                <RefreshCcw size={18} className="text-emerald-400" />
-              </div>
-              <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#4B6478]">
-                  KUOTA TRANSAKSI BULANAN
-                </p>
-                <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-widest mt-0.5">
-                  Berlaku untuk semua vertikal (Broker Ayam, Sembako, Telur, dll) — global per plan
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Starter — editable */}
-              <div className="bg-white/[0.03] backdrop-blur-lg rounded-[32px] p-7 border border-white/5 space-y-5 hover:border-white/10 transition-all duration-500 group">
-                <span className="inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border border-white/5 bg-white/5 text-[#94A3B8]">
-                  STARTER
-                </span>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1 group-hover:text-emerald-500/60 transition-colors">
-                    Kuota Transaksi / Bulan
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="number"
-                      min={1}
-                      max={9999}
-                      value={trxQuota.starter}
-                      onChange={e => setTrxQuota(v => ({ ...v, starter: Number(e.target.value) }))}
-                      className="w-full bg-black/40 border border-white/5 h-12 rounded-2xl px-4 text-sm text-white font-black focus:outline-none focus:border-emerald-500/40 focus:bg-emerald-500/5 transition-all shadow-inner"
-                    />
-                    <span className="text-[11px] text-[#4B6478] font-bold whitespace-nowrap shrink-0">trx / bln</span>
-                  </div>
-                  <p className="text-[10px] text-[#4B6478] ml-1">
-                    Tersimpan: <span className="text-white font-bold">{configs?.transaction_quota?.starter ?? 30}</span>
-                  </p>
-                </div>
-              </div>
-
-              {/* Pro — unlimited */}
-              <div className="bg-white/[0.03] backdrop-blur-lg rounded-[32px] p-7 border border-white/5 space-y-5 hover:border-emerald-500/20 transition-all duration-500 group">
-                <span className="inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
-                  PRO
-                </span>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1 group-hover:text-emerald-500/60 transition-colors">
-                    Kuota Transaksi / Bulan
-                  </label>
-                  <div className="h-12 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex items-center px-4 gap-2 text-sm font-black text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]">
-                    <InfinityIcon size={16} /> Unlimited
-                  </div>
-                  <p className="text-[10px] text-emerald-500/50 ml-1 font-semibold">Tidak ada batas transaksi</p>
-                </div>
-              </div>
-
-              {/* Business — unlimited */}
-              <div className="bg-white/[0.03] backdrop-blur-lg rounded-[32px] p-7 border border-white/5 space-y-5 hover:border-amber-500/20 transition-all duration-500 group">
-                <span className="inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-400">
-                  BUSINESS
-                </span>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1 group-hover:text-amber-500/60 transition-colors">
-                    Kuota Transaksi / Bulan
-                  </label>
-                  <div className="h-12 rounded-2xl bg-amber-500/5 border border-amber-500/20 flex items-center px-4 gap-2 text-sm font-black text-amber-400 shadow-[inset_0_0_20px_rgba(245,158,11,0.05)]">
-                    <InfinityIcon size={16} /> Unlimited
-                  </div>
-                  <p className="text-[10px] text-amber-500/50 ml-1 font-semibold">Tidak ada batas transaksi</p>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={handleSaveQuota}
-              disabled={savingQuota}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-12 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(16,185,129,0.3)] border border-emerald-400/20 active:scale-[0.98]"
-            >
-              {savingQuota
-                ? <><Loader2 size={16} className="animate-spin" /> MENYIMPAN...</>
-                : 'SIMPAN KUOTA TRANSAKSI'
-              }
-            </button>
-          </section>
-
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/5 to-transparent my-4" />
-
-          {/* Section C — Add-on Pricing */}
+          {/* Section A — Add-on Pricing */}
           <section className="space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
@@ -863,85 +575,11 @@ export default function AdminPricing() {
         </TabsContent>
 
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {/* TAB: TRIAL & DISKON                                           */}
+        {/* TAB: DISKON TAHUNAN                                           */}
         {/* ═══════════════════════════════════════════════════════════════ */}
-        <TabsContent value="trial" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <TabsContent value="discounts" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-          {/* Section A — Trial Duration */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-                <Clock size={18} className="text-amber-400" />
-              </div>
-              <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#4B6478]">Durasi Trial Gratis</p>
-                <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-widest mt-0.5">Konfigurasi first-user experience</p>
-              </div>
-            </div>
-
-            {/* Starter info — bukan trial, gratis permanen */}
-            <div className="flex items-center gap-4 px-5 py-4 rounded-2xl border border-white/5 bg-white/[0.02]">
-              <span className="inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border bg-white/5 text-[#94A3B8] border-white/5 shrink-0">
-                STARTER
-              </span>
-              <div className="flex-1">
-                <p className="text-[12px] font-bold text-[#94A3B8]">Gratis Selamanya — tidak ada trial</p>
-                <p className="text-[11px] text-[#4B6478] mt-0.5">Plan Starter tidak menggunakan mekanisme trial. Akses langsung tanpa batas waktu.</p>
-              </div>
-              <InfinityIcon size={18} className="text-[#2A3F52] shrink-0" />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                { key: 'pro',     label: 'PRO',     badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', hoverBorder: 'hover:border-emerald-500/20', labelHover: 'group-hover:text-emerald-500/60', previewColor: 'text-emerald-400', inputFocus: 'focus:border-emerald-500/40 focus:bg-emerald-500/5' },
-                { key: 'business',label: 'BUSINESS',badgeClass: 'bg-amber-500/10 text-amber-400 border-amber-500/20',   hoverBorder: 'hover:border-amber-500/20',   labelHover: 'group-hover:text-amber-500/60',   previewColor: 'text-amber-400',   inputFocus: 'focus:border-amber-500/40 focus:bg-amber-500/5'   },
-              ].map(plan => (
-                <div key={plan.key} className={`bg-white/[0.03] backdrop-blur-lg rounded-[32px] p-7 border border-white/5 space-y-5 ${plan.hoverBorder} transition-all duration-500 group`}>
-                  <span className={`inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border ${plan.badgeClass}`}>
-                    {plan.label}
-                  </span>
-
-                  <div className="space-y-2">
-                    <label htmlFor={`trial_${plan.key}`} className={`text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1 ${plan.labelHover} transition-colors`}>
-                      Durasi Trial (Hari)
-                    </label>
-                    <Input
-                      id={`trial_${plan.key}`}
-                      type="number"
-                      min={1}
-                      max={365}
-                      value={trialConfig[plan.key]}
-                      onChange={e => setTrialConfig(p => ({ ...p, [plan.key]: parseInt(e.target.value) || 1 }))}
-                      className={`w-full bg-black/40 border-white/5 h-12 rounded-2xl px-4 text-sm text-white font-black shadow-inner ${plan.inputFocus} transition-all`}
-                    />
-                  </div>
-
-                  <div className="bg-white/[0.02] rounded-2xl p-4 border border-white/5">
-                    <p className="text-[10px] text-[#4B6478] font-black uppercase tracking-[0.15em] mb-1.5">Aktif trial sampai</p>
-                    <p className={`text-base font-black tracking-tight ${plan.previewColor}`}>
-                      {previewTrialDate(trialConfig[plan.key])}
-                    </p>
-                    <p className="text-[11px] text-[#4B6478] mt-0.5">jika daftar hari ini</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={handleSaveTrial}
-              disabled={savingTrial}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-12 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(16,185,129,0.3)] border border-emerald-400/20 active:scale-[0.98]"
-            >
-              {savingTrial
-                ? <><Loader2 size={16} className="animate-spin" /> MENYIMPAN...</>
-                : 'SIMPAN KONFIGURASI TRIAL'
-              }
-            </button>
-          </section>
-
-          <div className="h-px w-full bg-gradient-to-r from-transparent via-white/5 to-transparent" />
-
-          {/* Section B — Diskon Tahunan */}
+          {/* Section A — Diskon Tahunan */}
           <section className="space-y-10">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shadow-lg shadow-purple-500/5">
@@ -1281,6 +919,114 @@ export default function AdminPricing() {
             </div>
           </div>
         </TabsContent>
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* TAB: REVIEW HARGA PASAR                                      */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        <TabsContent value="review" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shadow-lg shadow-amber-500/5">
+              <ShieldAlert size={22} className="text-amber-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-white uppercase tracking-tight">Review Queue Harga Pasar</h2>
+              <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mt-1">
+                Harga yang terdeteksi outlier (&gt;40% deviasi) — perlu persetujuan manual
+              </p>
+            </div>
+            {reviewQueue.length > 0 && (
+              <div className="ml-auto bg-amber-500/10 px-4 py-2 rounded-full border border-amber-500/20">
+                <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">{reviewQueue.length} PENDING</span>
+              </div>
+            )}
+          </div>
+
+          {isLoadingQueue ? (
+            <div className="flex items-center justify-center min-h-[200px]">
+              <Loader2 size={24} className="animate-spin text-amber-400" />
+            </div>
+          ) : reviewQueue.length === 0 ? (
+            <div className="bg-white/[0.02] rounded-[32px] border border-white/5 flex flex-col items-center justify-center py-20 gap-4">
+              <CheckCircle2 size={40} className="text-emerald-500 opacity-40" />
+              <p className="text-[12px] font-black text-[#4B6478] uppercase tracking-[0.3em]">Tidak ada harga yang perlu direview</p>
+            </div>
+          ) : (
+            <div className="bg-[#0C1319] rounded-[32px] border border-white/5 overflow-hidden shadow-xl">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-white/5 bg-white/[0.02]">
+                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Jenis</th>
+                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#4B6478]">
+                        <span className="flex items-center gap-1"><MapPin size={10} />Wilayah</span>
+                      </th>
+                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#4B6478] text-right">Kandang</th>
+                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#4B6478] text-right">Jual Rata-rata</th>
+                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Sumber</th>
+                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#4B6478]">
+                        <span className="flex items-center gap-1"><CalendarClock size={10} />Tanggal</span>
+                      </th>
+                      <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-[#4B6478] text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reviewQueue.map((row, i) => (
+                      <tr key={row.id} className={`border-b border-white/5 hover:bg-white/[0.03] transition-colors ${i % 2 === 1 ? 'bg-white/[0.01]' : ''}`}>
+                        <td className="px-6 py-4">
+                          <span className="text-[12px] font-black text-white capitalize">{row.chicken_type ?? row.commodity_type ?? '—'}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-[12px] text-white/70 font-medium">{row.region ?? '—'}</span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <span className="text-[13px] font-black text-amber-400 tabular-nums">
+                            {row.farm_gate_price != null ? formatIDR(row.farm_gate_price) : '—'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <span className="text-[13px] font-bold text-white/60 tabular-nums">
+                            {row.avg_sell_price != null ? formatIDR(row.avg_sell_price) : '—'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <Badge variant="outline" className="text-[9px] font-black uppercase tracking-tighter border-white/10 text-white/40">
+                            {row.source}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-[11px] text-[#4B6478] font-bold">
+                            {row.price_date ? format(new Date(row.price_date), 'd MMM yyyy', { locale: idLocale }) : '—'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => approvePrice.mutate(row.id)}
+                              disabled={approvePrice.isPending}
+                              className="h-8 px-3 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-[10px] font-black uppercase tracking-wider gap-1"
+                            >
+                              <CheckCircle2 size={12} />
+                              Setujui
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => deletePrice.mutate(row.id)}
+                              disabled={deletePrice.isPending}
+                              className="h-8 w-8 p-0 rounded-lg text-[#4B6478] hover:bg-red-500/10 hover:text-red-500"
+                            >
+                              <XCircle size={14} />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </TabsContent>
       </Tabs>
 
       {/* Floating Sticky Save Button for Mobile (High-Density UX) */}
@@ -1443,113 +1189,7 @@ function RolePricingCard({ roleName, roleId, icon: Icon, color, data, onChange, 
 }
 
 
-// ─── Helper: PlanLimitCard ────────────────────────────────────────────────────
 
-function PlanLimitCard({ planName, badgeClass, badgeExtra, kandangValue, teamValue, businessValue, onKandangChange, onTeamChange, onBusinessChange, readOnly }) {
-  const isUnlimited = (v) => Number(v) >= 99
-  const isUnlimitedBusiness = (v) => Number(v) >= 999
-  const inputCls = "w-full bg-black/40 border border-white/5 h-12 rounded-2xl px-4 text-sm text-white font-black focus:outline-none focus:border-emerald-500/40 focus:bg-emerald-500/5 transition-all shadow-inner disabled:opacity-50"
-
-  return (
-    <div className="bg-white/[0.03] backdrop-blur-lg rounded-[32px] p-7 border border-white/5 space-y-6 hover:border-white/10 transition-all duration-500 group">
-      <div className="flex items-center gap-3 flex-wrap">
-        <span className={`inline-block text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border border-white/5 ${badgeClass}`}>
-          {planName}
-        </span>
-        {badgeExtra && (
-          <span className="text-[9px] font-black text-amber-400 bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/10 animate-pulse">
-            {badgeExtra}
-          </span>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <label htmlFor={`bl_${planName}`} className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1 group-hover:text-purple-500/60 transition-colors">
-          Business Limit (Jatah Bisnis)
-        </label>
-        {isUnlimitedBusiness(businessValue) ? (
-          <div className="flex items-center gap-2">
-            <div className="flex-1 h-12 rounded-2xl bg-purple-500/5 border border-purple-500/20 flex items-center px-4 gap-2 text-sm font-black text-purple-400 shadow-[inset_0_0_20px_rgba(168,85,247,0.05)]">
-              <InfinityIcon size={16} /> Unlimited
-            </div>
-            <input
-              id={`bl_${planName}`}
-              type="number"
-              value={businessValue}
-              onChange={e => onBusinessChange(parseInt(e.target.value) || 1)}
-              className="w-16 bg-black/40 border-white/5 h-12 rounded-xl px-2 text-sm text-white/40 font-black text-center"
-            />
-          </div>
-        ) : (
-          <input
-            id={`bl_${planName}`}
-            type="number"
-            min={1}
-            max={999}
-            value={businessValue}
-            onChange={e => onBusinessChange(parseInt(e.target.value) || 1)}
-            className={inputCls}
-          />
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <label htmlFor={`kl_${planName}`} className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1 group-hover:text-emerald-500/60 transition-colors">
-          Kandang Limit
-        </label>
-        {readOnly ? (
-          <div className="h-12 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center px-4 gap-2 text-sm font-black text-white/30">
-            <InfinityIcon size={16} /> Unlimited Access
-          </div>
-        ) : isUnlimited(kandangValue) ? (
-          <div className="flex items-center gap-2">
-            <div className="flex-1 h-12 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex items-center px-4 gap-2 text-sm font-black text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]">
-              <InfinityIcon size={16} /> Unlimited
-            </div>
-            <input
-              id={`kl_${planName}`}
-              type="number"
-              value={kandangValue}
-              onChange={e => onKandangChange(parseInt(e.target.value) || 1)}
-              className="w-16 bg-black/40 border-white/5 h-12 rounded-xl px-2 text-sm text-white/40 font-black text-center"
-            />
-          </div>
-        ) : (
-          <input
-            id={`kl_${planName}`}
-            type="number"
-            min={1}
-            max={99}
-            value={kandangValue}
-            onChange={e => onKandangChange(parseInt(e.target.value) || 1)}
-            className={inputCls}
-          />
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <label htmlFor={`tl_${planName}`} className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1 group-hover:text-emerald-500/60 transition-colors">
-          Max Anggota Tim
-        </label>
-        {readOnly ? (
-          <div className="h-12 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center px-4 gap-2 text-sm font-black text-white/30">
-            <InfinityIcon size={16} /> Unlimited Access
-          </div>
-        ) : (
-          <input
-            id={`tl_${planName}`}
-            type="number"
-            min={1}
-            max={99}
-            value={teamValue}
-            onChange={e => onTeamChange(parseInt(e.target.value) || 1)}
-            className={inputCls}
-          />
-        )}
-      </div>
-    </div>
-  )
-}
 
 // ─── Helper: AddonPreview ─────────────────────────────────────────────────────
 
