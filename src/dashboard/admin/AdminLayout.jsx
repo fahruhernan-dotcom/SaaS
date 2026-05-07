@@ -362,7 +362,7 @@ export default function AdminLayout({ children }) {
                     <AdminTopBar onOpenMenu={() => setMenuOpen(true)} />
                     <main className="pt-20 pb-28">
                         <div className="px-4">
-                                {children || <Outlet />}
+                                <ErrorBoundary>{children || <Outlet />}</ErrorBoundary>
                             </div>
                     </main>
                     <AdminBottomNav onOpenMenu={() => setMenuOpen(true)} />

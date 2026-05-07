@@ -41,7 +41,7 @@ echo "==> Generating sitemap..."
 npm run sitemap
 
 echo "==> Build..."
-npm run build
+NODE_OPTIONS="--max-old-space-size=3072" npm run build
 
 echo "==> Applying Nginx Hardening Config..."
 if [ -f "nginx/ternakos.conf" ]; then

@@ -1035,6 +1035,5 @@ export function useAIAssistant({ userType, contextPage }) {
     // New chat
     cancelAI,
     resetConversation,
-    error,
   }
 }
