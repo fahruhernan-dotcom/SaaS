@@ -7,6 +7,7 @@ const STEP3 = {
     title: 'Mulai Siklus Pertama',
     desc: 'Siklus dimulai saat DOC / bibit masuk kandang. Catat jumlah, berat awal, dan target panen. Semua kalkulasi FCR & IP akan berjalan otomatis.',
     navHint: 'Siklus',
+    selector: '[data-tutorial="peternak-siklus"]',
   },
   fattening: {
     id: 'batch',
@@ -14,6 +15,7 @@ const STEP3 = {
     title: 'Buka Batch Pertama',
     desc: 'Batch dimulai saat ternak masuk. Catat jumlah ekor, berat awal, dan estimasi target penjualan. Data ini menjadi dasar laporan performa.',
     navHint: 'Batch',
+    selector: '[data-tutorial="peternak-siklus"]',
   },
   breeding: {
     id: 'induk',
@@ -21,6 +23,7 @@ const STEP3 = {
     title: 'Daftarkan Induk Ternak',
     desc: 'Mulai dengan mendaftarkan induk betina dan jantan. Catatan reproduksi, birahi, dan kelahiran akan terhubung ke masing-masing induk.',
     navHint: 'Ternak',
+    selector: '[data-tutorial="peternak-siklus"]',
   },
   dairy: {
     id: 'induk',
@@ -28,6 +31,7 @@ const STEP3 = {
     title: 'Daftarkan Induk & Produksi',
     desc: 'Daftarkan induk perah terlebih dahulu. Setiap hari catat hasil produksi susu per induk untuk analisa tren dan target penjualan.',
     navHint: 'Ternak',
+    selector: '[data-tutorial="peternak-siklus"]',
   },
 }
 
@@ -37,6 +41,7 @@ const STEP_KANDANG = {
   title: 'Buat Kandang Pertama',
   desc: 'Kandang adalah unit dasar operasional. Beri nama kandang, masukkan kapasitas, dan lokasi. Satu akun bisa punya banyak kandang.',
   navHint: 'Kandang',
+  selector: '[data-tutorial="peternak-kandang"]',
 }
 
 const STEP_INPUT = {
@@ -45,6 +50,7 @@ const STEP_INPUT = {
   title: 'Input Harian — Kunci Akurasi',
   desc: 'Catat pakan harian, mortalitas, dan berat sampel setiap hari. Data ini otomatis menghitung FCR, IP Score, dan proyeksi panen.',
   navHint: 'Input Harian',
+  selector: '[data-tutorial="peternak-input"]',
 }
 
 const STEP_LAPORAN = {
@@ -53,6 +59,7 @@ const STEP_LAPORAN = {
   title: 'Pantau Laporan & Performa',
   desc: 'Lihat tren mortalitas, biaya per kg, dan komparasi antar kandang. Laporan bisa diekspor untuk rapat atau kemitraan.',
   navHint: 'Laporan',
+  selector: '[data-tutorial="peternak-laporan"]',
 }
 
 const STEP_WELCOME = {

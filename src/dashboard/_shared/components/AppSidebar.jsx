@@ -361,7 +361,7 @@ export default function AppSidebar({ open, onClose }) {
       items: [
         { title: isBroiler ? 'Program Vaksin' : 'Kesehatan', url: `${peternakBase}/${isBroiler ? 'vaksinasi' : 'kesehatan'}`, icon: Syringe, show: isBroiler ? (pp?.canViewVaksinasi ?? true) : true },
         { title: 'Stok Pakan',    url: `${peternakBase}/pakan`,        icon: Warehouse, show: isBroiler ? (pp?.canViewPakan ?? true) : true },
-        { title: isBroiler ? 'Laporan Siklus' : 'Laporan', url: `${peternakBase}/laporan`, icon: FileText, show: pp?.canViewLaporan ?? true },
+        { title: isBroiler ? 'Laporan Siklus' : 'Laporan', url: `${peternakBase}/laporan`, icon: FileText, show: pp?.canViewLaporan ?? true, dataTutorial: 'peternak-laporan' },
         // Listrik & Air — hanya untuk peternak yang punya data batch (penggemukan)
         ...((isDombaPenggemukan || isKambingPenggemukan || isSapiPenggemukan || isSapiBreeding) ? [
           { title: 'Listrik & Air',  url: `${peternakBase}/listrik-air`, icon: Zap, roles: ['owner', 'manajer'] },
@@ -793,7 +793,7 @@ export default function AppSidebar({ open, onClose }) {
                             )}
                           </div>
                         ) : (
-                          <NavLink to={item.url} className="flex items-center gap-3 w-full">
+                          <NavLink to={item.url} data-tutorial={item.dataTutorial} className="flex items-center gap-3 w-full">
                             <item.icon
                               size={18}
                               style={isActive ? { color: color } : {}}
@@ -837,6 +837,7 @@ export default function AppSidebar({ open, onClose }) {
                     Mulai kelola operasional dengan menambah kandang pertama.
                   </p>
                   <button
+                    data-tutorial="peternak-kandang"
                     onClick={() => navigate(`${peternakBase}/beranda`)}
                     className="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-bold rounded-xl shadow-lg shadow-purple-900/20 transition-all border-none cursor-pointer"
                   >
@@ -886,9 +887,9 @@ export default function AppSidebar({ open, onClose }) {
                       <SidebarMenu className="pl-2">
                         {[
                           { title: 'Dashboard',    url: `${farmBase}/beranda`,       icon: Home,          show: true                       },
-                          { title: 'Siklus',       url: `${farmBase}/siklus`,        icon: RefreshCw,     show: pp?.canViewSiklus   ?? true },
-                          { title: 'Input Harian', url: `${farmBase}/input`,         icon: ClipboardList, show: pp?.canInputHarian  ?? true },
-                          { title: 'Laporan',      url: `${peternakBase}/laporan`,   icon: FileText,      show: pp?.canViewLaporan  ?? true },
+                          { title: 'Siklus',       url: `${farmBase}/siklus`,        icon: RefreshCw,     show: pp?.canViewSiklus   ?? true, dataTutorial: 'peternak-siklus' },
+                          { title: 'Input Harian', url: `${farmBase}/input`,         icon: ClipboardList, show: pp?.canInputHarian  ?? true, dataTutorial: 'peternak-input' },
+                          { title: 'Laporan',      url: `${peternakBase}/laporan`,   icon: FileText,      show: pp?.canViewLaporan  ?? true, dataTutorial: 'peternak-laporan' },
                           { title: 'Pakan',        url: `${farmBase}/pakan`,         icon: Warehouse,     show: pp?.canViewPakan    ?? true },
                           { title: 'Vaksinasi',    url: `${peternakBase}/vaksinasi`, icon: Syringe,       show: pp?.canViewVaksinasi ?? true },
                         ].filter(item => item.show !== false).map((item) => {
@@ -906,7 +907,7 @@ export default function AppSidebar({ open, onClose }) {
                                   border: `1px solid ${farmColor}33`,
                                 } : {}}
                               >
-                                <NavLink to={item.url} className="flex items-center gap-3 w-full">
+                                <NavLink to={item.url} data-tutorial={item.dataTutorial} className="flex items-center gap-3 w-full">
                                   <item.icon
                                     size={16}
                                     style={{ color: isActive ? farmColor : undefined }}
@@ -940,6 +941,7 @@ export default function AppSidebar({ open, onClose }) {
               return (
                 <div className="px-3 pt-1 pb-2">
                   <button
+                    data-tutorial="peternak-kandang"
                     onClick={() => canAddKandang && navigate(`${peternakBase}/beranda`)}
                     disabled={!canAddKandang}
                     className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold border transition-colors ${

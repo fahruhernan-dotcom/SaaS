@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, ChevronLeft, Check } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Check, X, MapPin } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useParams } from 'react-router-dom'
 import { getTutorialSteps } from './tutorialSteps'
@@ -10,348 +10,394 @@ const ACCENT_DIM = 'rgba(34,197,94,0.12)'
 const CARD_BG = '#0C1319'
 const MUTED = '#64748B'
 const TEXT = '#F1F5F9'
+const SPOTLIGHT_PAD = 12
+const SPOTLIGHT_RADIUS = 14
 
 function useIsDesktop() {
   const [isDesktop, setIsDesktop] = useState(false)
   useEffect(() => {
-    setIsDesktop(window.innerWidth >= 768)
-    const handler = () => setIsDesktop(window.innerWidth >= 768)
-    window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
+    const update = () => setIsDesktop(window.innerWidth >= 768)
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
   }, [])
   return isDesktop
 }
 
-function ProgressDots({ total, current, horizontal = false }) {
+function useViewport() {
+  const [vp, setVp] = useState({ w: 0, h: 0 })
+  useEffect(() => {
+    const update = () => setVp({ w: window.innerWidth, h: window.innerHeight })
+    update()
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
+  }, [])
+  return vp
+}
+
+// ── Progress dots ────────────────────────────────────────────────────────────────
+function ProgressDots({ total, current }) {
   return (
-    <div style={{ display: 'flex', gap: 6, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' }}>
+    <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
       {Array.from({ length: total }).map((_, i) => (
-        <div
-          key={i}
-          style={{
-            width: i === current ? 18 : 8,
-            height: 8,
-            borderRadius: 4,
-            background: i === current ? ACCENT : 'rgba(255,255,255,0.12)',
-            transition: 'all 0.3s ease',
-          }}
-        />
+        <div key={i} style={{
+          width: i === current ? 18 : 7, height: 7,
+          borderRadius: 4,
+          background: i === current ? ACCENT : 'rgba(255,255,255,0.15)',
+          transition: 'all 0.3s ease',
+        }} />
       ))}
     </div>
   )
 }
 
-function StepContent({ step, isWelcome }) {
-  const Icon = step.icon
+// ── SVG spotlight overlay ────────────────────────────────────────────────────────
+function SpotlightSVG({ rect }) {
+  const vp = useViewport()
+  if (!vp.w) return null
+
+  const x = rect ? rect.x - SPOTLIGHT_PAD : 0
+  const y = rect ? rect.y - SPOTLIGHT_PAD : 0
+  const rw = rect ? rect.w + SPOTLIGHT_PAD * 2 : 0
+  const rh = rect ? rect.h + SPOTLIGHT_PAD * 2 : 0
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{
-        width: 72, height: 72,
-        borderRadius: 20,
-        background: ACCENT_DIM,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0,
-      }}>
-        <Icon size={34} color={ACCENT} />
-      </div>
-
-      <div>
-        <h2 style={{
-          fontFamily: 'DM Sans, sans-serif',
-          fontWeight: 800,
-          fontSize: 20,
-          color: TEXT,
-          margin: 0,
-          lineHeight: 1.3,
-        }}>
-          {step.title}
-        </h2>
-        <p style={{
-          fontSize: 14,
-          color: '#94A3B8',
-          margin: '10px 0 0',
-          lineHeight: 1.7,
-        }}>
-          {step.desc}
-        </p>
-      </div>
-
-      {isWelcome && step.bullets && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
-          {step.bullets.map((b, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{
-                width: 22, height: 22, borderRadius: 6,
-                background: ACCENT_DIM,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0,
-              }}>
-                <Check size={12} color={ACCENT} strokeWidth={3} />
-              </div>
-              <span style={{ fontSize: 13, color: '#CBD5E1', fontWeight: 600 }}>{b}</span>
-            </div>
-          ))}
-        </div>
+    <svg
+      style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', zIndex: 9998, pointerEvents: 'none' }}
+    >
+      {rect ? (
+        <>
+          <defs>
+            <mask id="tut-mask">
+              <rect width="100%" height="100%" fill="white" />
+              <rect x={x} y={y} width={rw} height={rh} rx={SPOTLIGHT_RADIUS} ry={SPOTLIGHT_RADIUS} fill="black" />
+            </mask>
+          </defs>
+          <rect width="100%" height="100%" fill="rgba(0,0,0,0.82)" mask="url(#tut-mask)" />
+          {/* Accent border ring */}
+          <rect x={x} y={y} width={rw} height={rh} rx={SPOTLIGHT_RADIUS} ry={SPOTLIGHT_RADIUS}
+            fill="none" stroke={ACCENT} strokeWidth="2.5" opacity="0.85" />
+          {/* Outer pulse ring */}
+          <rect x={x - 5} y={y - 5} width={rw + 10} height={rh + 10} rx={SPOTLIGHT_RADIUS + 5} ry={SPOTLIGHT_RADIUS + 5}
+            fill="none" stroke={ACCENT} strokeWidth="1" opacity="0.25" />
+        </>
+      ) : (
+        <rect width="100%" height="100%" fill="rgba(0,0,0,0.78)" />
       )}
-
-      {!isWelcome && step.navHint && (
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 6,
-          background: 'rgba(255,255,255,0.05)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: 8, padding: '6px 12px',
-          width: 'fit-content',
-        }}>
-          <span style={{ fontSize: 11, color: MUTED, fontWeight: 700, letterSpacing: '0.06em' }}>MENU</span>
-          <ChevronRight size={12} color={MUTED} />
-          <span style={{ fontSize: 13, color: '#94A3B8', fontWeight: 700 }}>{step.navHint}</span>
-        </div>
-      )}
-    </div>
+    </svg>
   )
 }
 
-export default function PeternakTutorialOverlay() {
-  const { profile, tenant } = useAuth()
-  const { peternakType } = useParams()
-  const isDesktop = useIsDesktop()
+// 4 invisible divs that block clicks outside the spotlight hole
+function ClickBlocker({ rect }) {
+  const vp = useViewport()
+  if (!vp.w) return <div style={{ position: 'fixed', inset: 0, zIndex: 9997 }} />
+  if (!rect) return <div style={{ position: 'fixed', inset: 0, zIndex: 9997 }} />
 
-  const storageKey = `peternak_tutorial_${tenant?.id}`
+  const x = rect.x - SPOTLIGHT_PAD
+  const y = rect.y - SPOTLIGHT_PAD
+  const rw = rect.w + SPOTLIGHT_PAD * 2
+  const rh = rect.h + SPOTLIGHT_PAD * 2
 
-  const [visible, setVisible] = useState(false)
-  const [stepIdx, setStepIdx] = useState(0)
-  const [direction, setDirection] = useState(1)
-
-  // Re-check when tenant resolves
-  useEffect(() => {
-    if (!tenant?.id) return
-    try {
-      setVisible(!localStorage.getItem(`peternak_tutorial_${tenant.id}`))
-    } catch { /* ok */ }
-  }, [tenant?.id])
-
-  if (!visible) return null
-  if (profile?.role !== 'owner') return null
-
-  const steps = getTutorialSteps(peternakType)
-  const step = steps[stepIdx]
-  const isFirst = stepIdx === 0
-  const isLast = stepIdx === steps.length - 1
-  const isWelcome = step.id === 'welcome'
-
-  const dismiss = (reason) => {
-    try { localStorage.setItem(storageKey, reason) } catch { /* ok */ }
-    setVisible(false)
-  }
-
-  const goNext = () => {
-    if (isLast) { dismiss('complete'); return }
-    setDirection(1)
-    setStepIdx(i => i + 1)
-  }
-
-  const goPrev = () => {
-    if (isFirst) return
-    setDirection(-1)
-    setStepIdx(i => i - 1)
-  }
-
-  const variants = {
-    enter: (dir) => ({ x: dir > 0 ? 32 : -32, opacity: 0 }),
-    center: { x: 0, opacity: 1 },
-    exit: (dir) => ({ x: dir > 0 ? -32 : 32, opacity: 0 }),
-  }
-
-  if (isDesktop) {
-    return <DesktopModal
-      steps={steps} stepIdx={stepIdx} step={step}
-      direction={direction} variants={variants}
-      isFirst={isFirst} isLast={isLast} isWelcome={isWelcome}
-      onNext={goNext} onPrev={goPrev} onSkip={() => dismiss('skip')}
-    />
-  }
-
-  return <MobileOverlay
-    steps={steps} stepIdx={stepIdx} step={step}
-    direction={direction} variants={variants}
-    isFirst={isFirst} isLast={isLast} isWelcome={isWelcome}
-    onNext={goNext} onPrev={goPrev} onSkip={() => dismiss('skip')}
-  />
+  return (
+    <>
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, height: y, zIndex: 9997 }} />
+      <div style={{ position: 'fixed', top: y + rh, left: 0, right: 0, bottom: 0, zIndex: 9997 }} />
+      <div style={{ position: 'fixed', top: y, left: 0, width: x, height: rh, zIndex: 9997 }} />
+      <div style={{ position: 'fixed', top: y, left: x + rw, right: 0, height: rh, zIndex: 9997 }} />
+    </>
+  )
 }
 
-function DesktopModal({ steps, stepIdx, step, direction, variants, isFirst, isLast, isWelcome, onNext, onPrev, onSkip }) {
+// ── Tooltip card ─────────────────────────────────────────────────────────────────
+function TooltipCard({ step, stepIdx, totalSteps, rect, isLast, isDesktop, onNext, onPrev, onSkip }) {
+  const vp = useViewport()
+  const Icon = step.icon
+  if (!vp.w) return null
+
+  const CARD_W = isDesktop ? 296 : Math.min(296, vp.w - 32)
+
+  // Compute tooltip position relative to spotlit element (or fallback to bottom center)
+  let style = {}
+  let arrowSide = null  // 'top' | 'bottom'
+
+  if (rect) {
+    const pad = SPOTLIGHT_PAD
+    const elBottom = rect.y + rect.h + pad + 12
+    const elTop    = rect.y - pad - 12
+    const elCenterX = rect.x + rect.w / 2
+    const clampLeft = (v) => Math.max(16, Math.min(vp.w - CARD_W - 16, v))
+
+    if (elBottom + 220 < vp.h) {
+      style = { top: elBottom, left: clampLeft(elCenterX - CARD_W / 2) }
+      arrowSide = 'top'
+    } else if (elTop - 220 > 0) {
+      style = { bottom: vp.h - elTop, left: clampLeft(elCenterX - CARD_W / 2) }
+      arrowSide = 'bottom'
+    } else {
+      style = { bottom: 96, left: clampLeft(elCenterX - CARD_W / 2) }
+    }
+  } else {
+    style = { bottom: isDesktop ? 48 : 96, left: Math.max(16, (vp.w - CARD_W) / 2) }
+  }
+
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 50,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'rgba(0,0,0,0.72)',
-      backdropFilter: 'blur(6px)',
-    }}>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.25, ease: 'easeOut' }}
-        style={{
-          width: '100%', maxWidth: 640,
-          background: CARD_BG,
-          borderRadius: 24,
-          border: '1px solid rgba(255,255,255,0.08)',
-          overflow: 'hidden',
-          display: 'flex',
-          boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
-        }}
-      >
-        {/* Left panel */}
+    <motion.div
+      key={stepIdx}
+      initial={{ opacity: 0, y: arrowSide === 'top' ? -10 : 10, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.94 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      style={{
+        position: 'fixed', ...style,
+        width: CARD_W,
+        background: CARD_BG,
+        borderRadius: 20,
+        border: '1px solid rgba(255,255,255,0.1)',
+        padding: '18px 18px 14px',
+        zIndex: 10000,
+        boxShadow: '0 24px 64px rgba(0,0,0,0.75), 0 0 0 1px rgba(34,197,94,0.1)',
+      }}
+    >
+      {/* Arrow pointing up (tooltip is below the element) */}
+      {arrowSide === 'top' && (
         <div style={{
-          width: '40%',
-          background: `linear-gradient(160deg, rgba(34,197,94,0.1) 0%, rgba(34,197,94,0.03) 100%)`,
-          borderRight: '1px solid rgba(255,255,255,0.06)',
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center',
-          padding: '40px 24px', gap: 28,
+          position: 'absolute', top: -7, left: 22,
+          width: 14, height: 7,
+          overflow: 'hidden',
         }}>
           <div style={{
-            width: 96, height: 96, borderRadius: 28,
+            width: 12, height: 12,
+            background: CARD_BG,
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 2,
+            transform: 'rotate(45deg) translate(1px, 1px)',
+          }} />
+        </div>
+      )}
+      {/* Arrow pointing down (tooltip is above the element) */}
+      {arrowSide === 'bottom' && (
+        <div style={{
+          position: 'absolute', bottom: -7, left: 22,
+          width: 14, height: 7,
+          overflow: 'hidden',
+          display: 'flex', alignItems: 'flex-end',
+        }}>
+          <div style={{
+            width: 12, height: 12,
+            background: CARD_BG,
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 2,
+            transform: 'rotate(45deg) translate(1px, -1px)',
+          }} />
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
+        <div style={{
+          width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+          background: ACCENT_DIM,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Icon size={17} color={ACCENT} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 10, color: MUTED, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 2 }}>
+            LANGKAH {stepIdx} / {totalSteps - 1}
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: TEXT, lineHeight: 1.25, fontFamily: 'DM Sans, sans-serif' }}>
+            {step.title}
+          </div>
+        </div>
+        <button
+          onClick={onSkip}
+          style={{ background: 'none', border: 'none', color: MUTED, cursor: 'pointer', padding: '2px 2px', lineHeight: 0, flexShrink: 0 }}
+          aria-label="Lewati tutorial"
+        >
+          <X size={15} />
+        </button>
+      </div>
+
+      <p style={{ fontSize: 12.5, color: '#94A3B8', lineHeight: 1.65, margin: '0 0 12px' }}>
+        {step.desc}
+      </p>
+
+      {/* No spotlight found — show hint */}
+      {!rect && step.navHint && (
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 5,
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 7, padding: '5px 10px',
+          marginBottom: 12,
+        }}>
+          <MapPin size={11} color={MUTED} />
+          <span style={{ fontSize: 11, color: MUTED, fontWeight: 700 }}>Buka sidebar → {step.navHint}</span>
+        </div>
+      )}
+
+      <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', marginBottom: 12 }} />
+
+      {/* Footer */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <ProgressDots total={totalSteps} current={stepIdx} />
+        <div style={{ display: 'flex', gap: 7 }}>
+          <button onClick={onPrev} style={{
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 10, padding: '7px 12px',
+            color: '#94A3B8', fontSize: 12, fontWeight: 700,
+            cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 3,
+          }}>
+            <ChevronLeft size={13} />
+          </button>
+          <button onClick={onNext} style={{
+            background: isLast ? '#16A34A' : ACCENT,
+            border: 'none', borderRadius: 10,
+            padding: '7px 15px',
+            color: '#fff', fontSize: 12, fontWeight: 800,
+            cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 5,
+            boxShadow: `0 4px 14px ${ACCENT}40`,
+          }}>
+            {isLast ? <><Check size={13} strokeWidth={3} /> Mulai!</> : <>Lanjut <ChevronRight size={13} /></>}
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// ── Welcome modal (step 0) ────────────────────────────────────────────────────────
+function WelcomeModal({ step, steps, stepIdx, direction, onNext, onSkip, isDesktop }) {
+  const Icon = step.icon
+  const variants = {
+    enter: (d) => ({ x: d > 0 ? 28 : -28, opacity: 0 }),
+    center: { x: 0, opacity: 1 },
+    exit: (d) => ({ x: d > 0 ? -28 : 28, opacity: 0 }),
+  }
+
+  const content = (
+    <AnimatePresence mode="wait" custom={direction}>
+      <motion.div key={stepIdx} custom={direction} variants={variants}
+        initial="enter" animate="center" exit="exit"
+        transition={{ duration: 0.22, ease: 'easeOut' }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{
+            width: 68, height: 68, borderRadius: 20,
             background: ACCENT_DIM,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            {React.createElement(step.icon, { size: 48, color: ACCENT })}
+            <Icon size={32} color={ACCENT} />
           </div>
-          <ProgressDots total={steps.length} current={stepIdx} />
-          <span style={{ fontSize: 12, color: MUTED, fontWeight: 700, letterSpacing: '0.06em' }}>
-            {stepIdx + 1} / {steps.length}
-          </span>
-        </div>
-
-        {/* Right panel */}
-        <div style={{
-          flex: 1, padding: '36px 32px',
-          display: 'flex', flexDirection: 'column',
-        }}>
-          <div style={{ flex: 1, overflow: 'hidden' }}>
-            <AnimatePresence mode="wait" custom={direction}>
-              <motion.div
-                key={stepIdx}
-                custom={direction}
-                variants={variants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.22, ease: 'easeOut' }}
-              >
-                <DesktopStepContent step={step} isWelcome={isWelcome} />
-              </motion.div>
-            </AnimatePresence>
+          <div>
+            <h2 style={{ fontFamily: 'DM Sans, sans-serif', fontWeight: 800, fontSize: isDesktop ? 22 : 20, color: TEXT, margin: 0, lineHeight: 1.3 }}>
+              {step.title}
+            </h2>
+            <p style={{ fontSize: 14, color: '#94A3B8', margin: '10px 0 0', lineHeight: 1.7 }}>
+              {step.desc}
+            </p>
           </div>
-
-          {/* Footer */}
-          <div style={{ paddingTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              {!isFirst && (
-                <button onClick={onPrev} style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  background: 'none', border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: 10, padding: '10px 16px',
-                  color: '#94A3B8', fontSize: 13, fontWeight: 700,
-                  cursor: 'pointer',
-                }}>
-                  <ChevronLeft size={14} /> Kembali
-                </button>
-              )}
+          {step.bullets && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {step.bullets.map((b, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{
+                    width: 22, height: 22, borderRadius: 6,
+                    background: ACCENT_DIM,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  }}>
+                    <Check size={12} color={ACCENT} strokeWidth={3} />
+                  </div>
+                  <span style={{ fontSize: 13, color: '#CBD5E1', fontWeight: 600 }}>{b}</span>
+                </div>
+              ))}
             </div>
+          )}
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  )
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              {!isLast && (
-                <button onClick={onSkip} style={{
-                  background: 'none', border: 'none',
-                  color: MUTED, fontSize: 12, fontWeight: 600,
-                  cursor: 'pointer', padding: '8px 4px',
-                }}>
-                  Lewati
-                </button>
-              )}
+  if (isDesktop) {
+    return (
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 9999,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)',
+      }}>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.24, ease: 'easeOut' }}
+          style={{
+            width: '100%', maxWidth: 560,
+            background: CARD_BG,
+            borderRadius: 24,
+            border: '1px solid rgba(255,255,255,0.08)',
+            overflow: 'hidden',
+            display: 'flex',
+            boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
+          }}
+        >
+          {/* Left accent panel */}
+          <div style={{
+            width: '38%',
+            background: `linear-gradient(160deg, rgba(34,197,94,0.12) 0%, rgba(34,197,94,0.03) 100%)`,
+            borderRight: '1px solid rgba(255,255,255,0.06)',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            padding: '40px 20px', gap: 24,
+          }}>
+            <div style={{
+              width: 88, height: 88, borderRadius: 26,
+              background: ACCENT_DIM,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Icon size={44} color={ACCENT} />
+            </div>
+            <ProgressDots total={steps.length} current={stepIdx} />
+            <span style={{ fontSize: 12, color: MUTED, fontWeight: 700, letterSpacing: '0.06em' }}>
+              {stepIdx + 1} / {steps.length}
+            </span>
+          </div>
+          {/* Right content */}
+          <div style={{ flex: 1, padding: '32px 28px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ flex: 1 }}>{content}</div>
+            <div style={{ paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <button onClick={onSkip} style={{
+                background: 'none', border: 'none',
+                color: MUTED, fontSize: 13, fontWeight: 600,
+                cursor: 'pointer', padding: '8px 4px',
+              }}>
+                Lewati tutorial
+              </button>
               <button onClick={onNext} style={{
                 display: 'flex', alignItems: 'center', gap: 8,
-                background: isLast ? '#16A34A' : ACCENT,
-                border: 'none', borderRadius: 12,
+                background: ACCENT, border: 'none', borderRadius: 12,
                 padding: '11px 22px',
                 color: '#fff', fontSize: 14, fontWeight: 800,
                 cursor: 'pointer',
                 boxShadow: `0 4px 16px ${ACCENT}40`,
               }}>
-                {isLast ? (
-                  <><Check size={15} strokeWidth={3} /> Selesai</>
-                ) : isFirst ? (
-                  <>Mulai <ChevronRight size={15} /></>
-                ) : (
-                  <>Lanjut <ChevronRight size={15} /></>
-                )}
+                Mulai tour <ChevronRight size={15} />
               </button>
             </div>
           </div>
-        </div>
-      </motion.div>
-    </div>
-  )
-}
-
-function DesktopStepContent({ step, isWelcome }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div>
-        <h2 style={{
-          fontFamily: 'DM Sans, sans-serif',
-          fontWeight: 800, fontSize: 22,
-          color: TEXT, margin: 0, lineHeight: 1.3,
-        }}>
-          {step.title}
-        </h2>
-        <p style={{ fontSize: 14, color: '#94A3B8', margin: '12px 0 0', lineHeight: 1.75 }}>
-          {step.desc}
-        </p>
+        </motion.div>
       </div>
+    )
+  }
 
-      {isWelcome && step.bullets && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6 }}>
-          {step.bullets.map((b, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{
-                width: 24, height: 24, borderRadius: 7,
-                background: ACCENT_DIM,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0,
-              }}>
-                <Check size={13} color={ACCENT} strokeWidth={3} />
-              </div>
-              <span style={{ fontSize: 14, color: '#CBD5E1', fontWeight: 600 }}>{b}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {!isWelcome && step.navHint && (
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 6,
-          background: 'rgba(255,255,255,0.05)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: 8, padding: '7px 14px',
-          width: 'fit-content', marginTop: 4,
-        }}>
-          <span style={{ fontSize: 11, color: MUTED, fontWeight: 700, letterSpacing: '0.06em' }}>MENU</span>
-          <ChevronRight size={12} color={MUTED} />
-          <span style={{ fontSize: 13, color: '#94A3B8', fontWeight: 700 }}>{step.navHint}</span>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function MobileOverlay({ steps, stepIdx, step, direction, variants, isFirst, isLast, isWelcome, onNext, onPrev, onSkip }) {
+  // Mobile bottom sheet
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 50,
+      position: 'fixed', inset: 0, zIndex: 9999,
       display: 'flex', alignItems: 'flex-end',
-      background: 'rgba(0,0,0,0.82)',
+      background: 'rgba(0,0,0,0.84)',
       backdropFilter: 'blur(4px)',
     }}>
       <motion.div
@@ -359,110 +405,160 @@ function MobileOverlay({ steps, stepIdx, step, direction, variants, isFirst, isL
         animate={{ y: 0 }}
         transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
         style={{
-          width: '100%',
-          maxHeight: '82vh',
+          width: '100%', maxHeight: '82vh',
           background: CARD_BG,
           borderRadius: '24px 24px 0 0',
           border: '1px solid rgba(255,255,255,0.08)',
           borderBottom: 'none',
           display: 'flex', flexDirection: 'column',
-          padding: '20px 20px 0',
+          padding: '16px 20px 0',
           boxShadow: '0 -16px 48px rgba(0,0,0,0.5)',
         }}
       >
-        {/* Drag handle */}
-        <div style={{
-          width: 36, height: 4, borderRadius: 2,
-          background: 'rgba(255,255,255,0.15)',
-          margin: '0 auto 16px',
-          flexShrink: 0,
-        }} />
-
-        {/* Header row: dots + skip */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          marginBottom: 24, flexShrink: 0,
-        }}>
+        <div style={{ width: 32, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.15)', margin: '0 auto 14px', flexShrink: 0 }} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexShrink: 0 }}>
           <ProgressDots total={steps.length} current={stepIdx} />
-          <button
-            onClick={onSkip}
-            style={{
-              background: 'none', border: 'none',
-              color: MUTED, fontSize: 13, fontWeight: 700,
-              cursor: 'pointer', padding: '10px 4px 10px 16px',
-              minHeight: 44,
-            }}
-          >
+          <button onClick={onSkip} style={{ background: 'none', border: 'none', color: MUTED, fontSize: 13, fontWeight: 700, cursor: 'pointer', padding: '10px 4px 10px 16px', minHeight: 44 }}>
             Lewati
           </button>
         </div>
-
-        {/* Step content — scrollable */}
-        <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 8 }}>
-          <AnimatePresence mode="wait" custom={direction}>
-            <motion.div
-              key={stepIdx}
-              custom={direction}
-              variants={variants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.22, ease: 'easeOut' }}
-            >
-              <StepContent step={step} isWelcome={isWelcome} />
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Footer buttons — sticky */}
-        <div style={{
-          paddingTop: 20, paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
-          flexShrink: 0,
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-        }}>
-          {isFirst ? (
-            <button onClick={onNext} style={{
-              width: '100%',
-              background: ACCENT, border: 'none', borderRadius: 14,
-              padding: '15px 0', color: '#fff',
-              fontSize: 15, fontWeight: 800, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              boxShadow: `0 4px 20px ${ACCENT}44`,
-            }}>
-              Mulai <ChevronRight size={16} />
-            </button>
-          ) : (
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={onPrev} style={{
-                flex: 1,
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 14, padding: '14px 0',
-                color: '#94A3B8', fontSize: 14, fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              }}>
-                <ChevronLeft size={15} /> Kembali
-              </button>
-              <button onClick={onNext} style={{
-                flex: 2,
-                background: isLast ? '#16A34A' : ACCENT,
-                border: 'none', borderRadius: 14, padding: '14px 0',
-                color: '#fff', fontSize: 14, fontWeight: 800,
-                cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                boxShadow: `0 4px 20px ${ACCENT}44`,
-              }}>
-                {isLast ? (
-                  <><Check size={15} strokeWidth={3} /> Selesai</>
-                ) : (
-                  <>Lanjut <ChevronRight size={15} /></>
-                )}
-              </button>
-            </div>
-          )}
+        <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 8 }}>{content}</div>
+        <div style={{ paddingTop: 16, paddingBottom: 'max(20px, env(safe-area-inset-bottom))', flexShrink: 0, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <button onClick={onNext} style={{
+            width: '100%',
+            background: ACCENT, border: 'none', borderRadius: 14,
+            padding: '15px 0', color: '#fff',
+            fontSize: 15, fontWeight: 800, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            boxShadow: `0 4px 20px ${ACCENT}44`,
+          }}>
+            Mulai tour <ChevronRight size={16} />
+          </button>
         </div>
       </motion.div>
     </div>
+  )
+}
+
+// ── Main component ────────────────────────────────────────────────────────────────
+export default function PeternakTutorialOverlay() {
+  const { profile, tenant } = useAuth()
+  const { peternakType } = useParams()
+  const isDesktop = useIsDesktop()
+
+  const [visible, setVisible]     = useState(false)
+  const [mode, setMode]           = useState('welcome')  // 'welcome' | 'spotlight'
+  const [stepIdx, setStepIdx]     = useState(0)
+  const [direction, setDirection] = useState(1)
+  const [targetRect, setTargetRect] = useState(null)
+  const retryRef = useRef(null)
+
+  useEffect(() => {
+    if (!tenant?.id) return
+    try { setVisible(!localStorage.getItem(`peternak_tutorial_${tenant.id}`)) } catch { /* ok */ }
+  }, [tenant?.id])
+
+  const queryTarget = useCallback((step) => {
+    if (!step?.selector) { setTargetRect(null); return }
+    const el = document.querySelector(step.selector)
+    if (el) {
+      const r = el.getBoundingClientRect()
+      // Element must be on-screen to be useful
+      if (r.width > 0 && r.height > 0 && r.top >= 0 && r.top < window.innerHeight) {
+        setTargetRect({ x: r.x, y: r.y, w: r.width, h: r.height })
+        return
+      }
+    }
+    setTargetRect(null)
+  }, [])
+
+  useEffect(() => {
+    if (mode !== 'spotlight') return
+    const steps = getTutorialSteps(peternakType)
+    const step = steps[stepIdx]
+
+    // On mobile: open sidebar drawer so elements inside become visible
+    if (!isDesktop) {
+      window.dispatchEvent(new Event('open-mobile-sidebar'))
+    }
+
+    // Wait for sidebar open animation, then query
+    clearTimeout(retryRef.current)
+    retryRef.current = setTimeout(() => queryTarget(step), 340)
+
+    // Re-query on resize
+    const onResize = () => queryTarget(step)
+    window.addEventListener('resize', onResize)
+    return () => {
+      clearTimeout(retryRef.current)
+      window.removeEventListener('resize', onResize)
+    }
+  }, [mode, stepIdx, isDesktop, peternakType, queryTarget])
+
+  if (!visible) return null
+  if (profile?.role !== 'owner') return null
+
+  const steps = getTutorialSteps(peternakType)
+  const step  = steps[stepIdx]
+  const isLast = stepIdx === steps.length - 1
+  const storageKey = `peternak_tutorial_${tenant?.id}`
+
+  const dismiss = (reason) => {
+    try { localStorage.setItem(storageKey, reason) } catch { /* ok */ }
+    setVisible(false)
+  }
+
+  const goNext = () => {
+    if (mode === 'welcome') {
+      setMode('spotlight')
+      setStepIdx(1)
+      return
+    }
+    if (isLast) { dismiss('complete'); return }
+    setDirection(1)
+    setStepIdx(i => i + 1)
+  }
+
+  const goPrev = () => {
+    if (mode === 'spotlight' && stepIdx <= 1) {
+      setMode('welcome')
+      setStepIdx(0)
+      setTargetRect(null)
+      return
+    }
+    setDirection(-1)
+    setStepIdx(i => i - 1)
+  }
+
+  if (mode === 'welcome') {
+    return (
+      <WelcomeModal
+        step={step} steps={steps} stepIdx={stepIdx}
+        direction={direction} isDesktop={isDesktop}
+        onNext={goNext} onSkip={() => dismiss('skip')}
+      />
+    )
+  }
+
+  // Spotlight mode
+  return (
+    <>
+      <SpotlightSVG rect={targetRect} />
+      <ClickBlocker rect={targetRect} />
+      <AnimatePresence mode="wait">
+        <TooltipCard
+          key={stepIdx}
+          step={step}
+          stepIdx={stepIdx}
+          totalSteps={steps.length}
+          rect={targetRect}
+          isLast={isLast}
+          isDesktop={isDesktop}
+          onNext={goNext}
+          onPrev={goPrev}
+          onSkip={() => dismiss('skip')}
+        />
+      </AnimatePresence>
+    </>
   )
 }
