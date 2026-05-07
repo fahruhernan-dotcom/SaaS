@@ -657,10 +657,15 @@ export default function HargaPage() {
   const [billing, setBilling] = useState('monthly')
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 
+  // Guard: delay auth-aware UI until after hydration to prevent SSG mismatch (#418)
+  const [isMounted, setIsMounted] = useState(false)
+  useEffect(() => { setIsMounted(true) }, [])
+
   const { user, tenant } = useAuth()
   const subStatus = tenant ? getSubscriptionStatus(tenant) : null
-  const isLoggedIn = !!user
-  const isStarter = subStatus?.plan === 'starter'
+  // Only derive auth state after mount — SSG always sees false (logged-out)
+  const isLoggedIn = isMounted && !!user
+  const isStarter = isMounted && subStatus?.plan === 'starter'
 
   const { data: dbPricing } = usePricingConfig()
   const { data: dbConfigs } = usePlanConfigs()
@@ -742,14 +747,17 @@ export default function HargaPage() {
           maskImage: 'radial-gradient(ellipse 80% 50% at center top, black 30%, transparent 80%)'
         }}
       />
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
-        <Particles
-          particleColors={['#10B981', '#34D399', '#059669']}
-          particleCount={typeof window !== 'undefined' && window.innerWidth < 768 ? 25 : 50}
-          speed={0.2}
-          particleBaseSize={1.4}
-        />
-      </div>
+      {/* Only render Particles on client — canvas API not available during SSG */}
+      {isMounted && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+          <Particles
+            particleColors={['#10B981', '#34D399', '#059669']}
+            particleCount={window.innerWidth < 768 ? 25 : 50}
+            speed={0.2}
+            particleBaseSize={1.4}
+          />
+        </div>
+      )}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
