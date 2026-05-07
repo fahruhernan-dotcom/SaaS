@@ -70,10 +70,64 @@ export const BROKER_SEMBAKO_TIM_CONFIG = {
   inviteCodeTitle: 'Kode Undangan Sembako',
 }
 
-// ── BROKER POULTRY / EGG ─────────────────────────────────────────────────────
+// ── BROKER POULTRY (Ayam) ────────────────────────────────────────────────────
 export const BROKER_POULTRY_TIM_CONFIG = {
-  ...PETERNAK_TIM_CONFIG,
-  inviteCodeTitle: 'Kode Undangan Tim',
+  accent: '#0EA5E9',
+  accentHover: '#0284C7',
+  accentRgb: '14, 165, 233',
+
+  roleBadgeMap: {
+    owner:     { label: 'Owner',             class: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
+    manajer:   { label: 'Manajer',           class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+    sales:     { label: 'Sales / Marketing', class: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+    supir:     { label: 'Supir / Driver',    class: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+    staff:     { label: 'Staff',             class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
+    view_only: { label: 'Lihat Saja',        class: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
+  },
+
+  inviteRoles: [
+    { value: 'manajer',   label: 'Manajer',           desc: 'Akses penuh operasional & transaksi.' },
+    { value: 'sales',     label: 'Sales / Marketing', desc: 'Kelola transaksi penjualan & pelanggan.' },
+    { value: 'supir',     label: 'Supir / Driver',    desc: 'Akses lihat jadwal pengiriman.' },
+    { value: 'staff',     label: 'Staff',             desc: 'Input data & tugas operasional.' },
+    { value: 'view_only', label: 'Lihat Saja',        desc: 'Akses terbatas laporan & statistik.' },
+  ],
+  defaultInviteRole: 'staff',
+
+  cardBg: '#0C1319',
+  cardRadius: '16px',
+  inputBg: '#111C24',
+  inviteCodeTitle: 'Kode Undangan Broker Ayam',
+}
+
+// ── BROKER TELUR ─────────────────────────────────────────────────────────────
+export const BROKER_TELUR_TIM_CONFIG = {
+  accent: '#F59E0B',
+  accentHover: '#D97706',
+  accentRgb: '245, 158, 11',
+
+  roleBadgeMap: {
+    owner:     { label: 'Owner',         class: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+    admin:     { label: 'Admin',         class: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+    sales:     { label: 'Sales',         class: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+    gudang:    { label: 'Gudang',        class: 'bg-purple-500/10 text-purple-400 border-purple-500/20' },
+    kurir:     { label: 'Kurir / Sopir', class: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' },
+    view_only: { label: 'Lihat Saja',    class: 'bg-gray-500/10 text-gray-400 border-gray-500/20' },
+  },
+
+  inviteRoles: [
+    { value: 'admin',     label: 'Admin',         desc: 'Akses penuh operasional & keuangan.' },
+    { value: 'sales',     label: 'Sales',         desc: 'Kelola penjualan & pelanggan telur.' },
+    { value: 'gudang',    label: 'Gudang',        desc: 'Manajemen stok & inventori telur.' },
+    { value: 'kurir',     label: 'Kurir / Sopir', desc: 'Akses lihat jadwal pengiriman.' },
+    { value: 'view_only', label: 'Lihat Saja',    desc: 'Akses terbatas laporan.' },
+  ],
+  defaultInviteRole: 'admin',
+
+  cardBg: '#0C1319',
+  cardRadius: '16px',
+  inputBg: '#111C24',
+  inviteCodeTitle: 'Kode Undangan Broker Telur',
 }
 
 // ── RPA (Placeholder) ────────────────────────────────────────────────────────

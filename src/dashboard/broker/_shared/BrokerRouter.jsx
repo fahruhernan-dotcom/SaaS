@@ -13,9 +13,8 @@ import Simulator from '../poultry_broker/Simulator'
 import Akun from '../poultry_broker/Akun'
 import RPADetail from '../poultry_broker/RPADetail'
 import SopirDashboard from '../poultry_broker/SopirDashboard'
-import SharedTim from '../../_shared/pages/tim/Tim'
-import ManajemenPage from '../../_shared/pages/tim/ManajemenPage'
-import { BROKER_POULTRY_TIM_CONFIG } from '../../_shared/pages/tim/timConfigs'
+import PoultryTimManajemenPage from '../poultry_broker/TimManajemenPage'
+import TelurTimManajemenPage from '../egg_broker/TimManajemenPage'
 
 // Sembako pages
 import SembakoBeranda from '../sembako_broker/Beranda'
@@ -56,7 +55,7 @@ export function BrokerPageRouter({ page }) {
       'cash-flow': <CashFlow />,
       armada: <Armada />,
       simulator: <Simulator />,
-      tim: <ManajemenPage roleConfig={BROKER_POULTRY_TIM_CONFIG} />,
+      tim: <PoultryTimManajemenPage />,
       akun: <Akun />,
       sopir: <SopirDashboard />
     },
@@ -70,7 +69,7 @@ export function BrokerPageRouter({ page }) {
       'cash-flow': <CashFlow />,
       armada: <Armada />,
       simulator: <Simulator />,
-      tim: <ManajemenPage roleConfig={BROKER_POULTRY_TIM_CONFIG} />,
+      tim: <PoultryTimManajemenPage />,
       akun: <Akun />,
       sopir: <SopirDashboard />
     },
@@ -82,7 +81,7 @@ export function BrokerPageRouter({ page }) {
       customers: <EggCustomers />,
       transaksi: <EggTransaksi />,
       akun: <Akun />,
-      tim: <ManajemenPage roleConfig={BROKER_POULTRY_TIM_CONFIG} />
+      tim: <TelurTimManajemenPage />
     },
     distributor_sembako: {
       beranda: <SembakoBeranda />,

@@ -114,6 +114,7 @@ import AnalisisPerformaPage from './ai/AnalisisPerformaPage'
 import PrediksiHasilPage    from './ai/PrediksiHasilPage'
 import { getLivestockTypeFromSubType } from '@/lib/constants/taskTemplates'
 import { useAuth } from '@/lib/hooks/useAuth'
+import PeternakTutorialOverlay from './_shared/components/PeternakTutorialOverlay'
 
 // ─── Route Guard ──────────────────────────────────────────────────────────────
 function PeternakAdminGuard({ children }) {
@@ -313,6 +314,17 @@ export function PeternakPageRouter({ page }) {
     },
   }
 
-  return pages[peternakType]?.[page]
+  const component = pages[peternakType]?.[page]
     ?? <div className="p-8 text-[#94A3B8]">Halaman tidak ditemukan</div>
+
+  if (page === 'beranda') {
+    return (
+      <>
+        {component}
+        <PeternakTutorialOverlay />
+      </>
+    )
+  }
+
+  return component
 }
