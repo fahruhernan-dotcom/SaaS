@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Node heap limit — must be exported so all child processes (npm, vite, esbuild) inherit it
+export NODE_OPTIONS="--max-old-space-size=4096"
+
 echo "==> Pull latest code..."
 cd ~/ternakos || exit 1
 git pull origin main
@@ -41,7 +44,7 @@ echo "==> Generating sitemap..."
 npm run sitemap
 
 echo "==> Build..."
-NODE_OPTIONS="--max-old-space-size=3072" npm run build
+npm run build
 
 echo "==> Applying Nginx Hardening Config..."
 if [ -f "nginx/ternakos.conf" ]; then
