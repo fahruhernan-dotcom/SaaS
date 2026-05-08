@@ -508,9 +508,9 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
             transaction_date: txnDate, due_date: dueDate || null,
             total_amount: totalAmount, total_cogs: totalCogs,
             delivery_cost: deliveryCost, other_cost: otherCost, notes,
-          }
+          },
+          items: validItems,
         })
-        toast.success('Transaksi diperbarui')
         handleClose()
         return
       }
@@ -599,6 +599,28 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
       const zeroPriceItem = validItems.find(i => !i.price_per_unit || i.price_per_unit <= 0)
       if (zeroPriceItem) {
         toast.error('Harga jual per unit wajib diisi (tidak boleh Rp 0)'); return
+      }
+      // In edit mode, this sale's original qty will be restored before re-deduction,
+      // so effective available = current_stock + original qty for that product in this sale
+      const getEffectiveStock = (productId) => {
+        const prod = products.find(p => p.id === productId)
+        if (!prod) return 0
+        const originalQty = editId
+          ? (editSale?.sembako_sale_items || [])
+              .filter(it => it.product_id === productId)
+              .reduce((s, it) => s + (it.quantity || 0), 0)
+          : 0
+        return (prod.current_stock || 0) + originalQty
+      }
+      const overStockItem = validItems.find(i => {
+        const prod = products.find(p => p.id === i.product_id)
+        return prod && i.quantity > getEffectiveStock(i.product_id)
+      })
+      if (overStockItem) {
+        const prod = products.find(p => p.id === overStockItem.product_id)
+        const available = getEffectiveStock(overStockItem.product_id)
+        toast.error(`Stok ${prod?.product_name} tidak cukup — tersedia ${available} ${prod?.unit ?? 'unit'}`)
+        return
       }
     }
     setStep(s => s + 1)
@@ -867,7 +889,12 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
                     <div className="space-y-3">
                       {items.map((item, idx) => {
                         const prod = products.find(p => p.id === item.product_id)
-                        const overStock = prod && item.quantity > (prod.current_stock || 0)
+                        const originalQty = editId
+                          ? (editSale?.sembako_sale_items || [])
+                              .filter(it => it.product_id === item.product_id)
+                              .reduce((s, it) => s + (it.quantity || 0), 0)
+                          : 0
+                        const overStock = prod && item.quantity > ((prod.current_stock || 0) + originalQty)
                         return (
                           <ProductItemRow
                             key={idx}
@@ -1139,6 +1166,23 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
                         )}
                       </div>
                     </div>
+
+                    {/* Medium #5: overpayment warning (edit mode only) */}
+                    {editId && editSale && (editSale.paid_amount || 0) > totalAmount && (
+                      <div
+                        className="flex items-start gap-2.5 px-4 py-3 rounded-xl"
+                        style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}
+                      >
+                        <span style={{ fontSize: '16px', flexShrink: 0, marginTop: '1px' }}>⚠️</span>
+                        <div>
+                          <p className="text-xs font-bold" style={{ color: '#F59E0B' }}>Kelebihan Bayar</p>
+                          <p className="text-[11px] mt-0.5" style={{ color: MUTED }}>
+                            Toko sudah bayar {formatIDR(editSale.paid_amount || 0)} tapi total baru {formatIDR(totalAmount)}.
+                            Sisa kelebihan {formatIDR((editSale.paid_amount || 0) - totalAmount)} — invoice akan ditandai <strong>LUNAS</strong>.
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Margin warning for negative margins (RUGI) */}
                     {totalAmount > 0 && marginPct < 0 && (

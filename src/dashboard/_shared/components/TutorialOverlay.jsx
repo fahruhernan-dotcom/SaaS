@@ -211,7 +211,7 @@ function TooltipCard({ step, stepIdx, totalSteps, rect, isLast, isDesktop, accen
 
 // Mobile-only bottom sheet for spotlight steps.
 // Does NOT open sidebar (avoids Radix focus trap blocking button taps).
-function MobileStepSheet({ step, stepIdx, totalSteps, isLast, accent, accentDim, onNext, onPrev, onSkip }) {
+function MobileStepSheet({ step, stepIdx, totalSteps, isLast, accent, accentDim, onNext, onPrev, onSkip, hasSpotlight = false }) {
   const Icon = step.icon
 
   return (
@@ -219,9 +219,9 @@ function MobileStepSheet({ step, stepIdx, totalSteps, isLast, accent, accentDim,
       position: 'fixed', inset: 0,
       zIndex: 9999,
       display: 'flex', alignItems: 'flex-end',
-      background: 'rgba(0,0,0,0.55)',
-      backdropFilter: 'blur(3px)',
-      // backdrop is non-interactive so sidebar stays accessible if needed
+      // SpotlightSVG handles backdrop when element is found
+      background: hasSpotlight ? 'transparent' : 'rgba(0,0,0,0.55)',
+      backdropFilter: hasSpotlight ? 'none' : 'blur(3px)',
       pointerEvents: 'none',
     }}>
       <motion.div
@@ -490,14 +490,16 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
 
   useEffect(() => {
     if (mode !== 'spotlight') return
-    // On mobile: skip sidebar open and spotlight — MobileStepSheet handles it via navHint
-    if (!isDesktop) return
-
     const step = steps[stepIdx]
-    window.dispatchEvent(new Event('open-mobile-sidebar'))
+
+    // Desktop: open sidebar first so elements inside it become visible
+    // Mobile: query directly — no sidebar dispatch (avoids Radix focus trap)
+    if (isDesktop) {
+      window.dispatchEvent(new Event('open-mobile-sidebar'))
+    }
 
     clearTimeout(retryRef.current)
-    retryRef.current = setTimeout(() => queryTarget(step), 340)
+    retryRef.current = setTimeout(() => queryTarget(step), isDesktop ? 340 : 80)
 
     const onResize = () => queryTarget(step)
     window.addEventListener('resize', onResize)
@@ -554,23 +556,27 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
     )
   }
 
-  // Mobile spotlight: bottom sheet with navHint, no sidebar open, no click blocking
+  // Mobile: spotlight when element found, navHint-only when not (no sidebar open = no Radix focus trap)
   if (!isDesktop) {
     return (
-      <AnimatePresence mode="wait">
-        <MobileStepSheet
-          key={stepIdx}
-          step={step}
-          stepIdx={stepIdx}
-          totalSteps={steps.length}
-          isLast={isLast}
-          accent={accent}
-          accentDim={accentDim}
-          onNext={goNext}
-          onPrev={goPrev}
-          onSkip={() => dismiss('skip')}
-        />
-      </AnimatePresence>
+      <>
+        {targetRect && <SpotlightSVG rect={targetRect} accent={accent} />}
+        <AnimatePresence mode="wait">
+          <MobileStepSheet
+            key={stepIdx}
+            step={step}
+            stepIdx={stepIdx}
+            totalSteps={steps.length}
+            isLast={isLast}
+            accent={accent}
+            accentDim={accentDim}
+            onNext={goNext}
+            onPrev={goPrev}
+            onSkip={() => dismiss('skip')}
+            hasSpotlight={!!targetRect}
+          />
+        </AnimatePresence>
+      </>
     )
   }
 

@@ -529,7 +529,7 @@ function DesktopBeranda({ stats, sales, employees, navigate, name, salesLoading,
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '24px', marginTop: '20px' }}>
         <KPICard icon={CreditCard}  label="Piutang Toko"       value={formatIDR(stats?.penjualan?.totalOutstanding || 0)} sub={overdue > 0 ? `${overdue} jatuh tempo` : 'Semua lancar'} urgent={(stats?.penjualan?.totalOutstanding||0)>0} trend={kpiTrends?.piutangTrend} />
-        <KPICard icon={TrendingUp}  label="Revenue Bulan Ini"  value={formatIDR(stats?.penjualan?.revenueThisMonth || 0)}  sub={`Net profit: ${formatIDR(stats?.penjualan?.netProfitThisMonth || 0)}`} trend={kpiTrends?.txTrend} />
+        <KPICard icon={TrendingUp}  label="Revenue Bulan Ini"  value={formatIDR(stats?.penjualan?.revenueThisMonth || 0)}  sub={`Net profit (after ops): ${formatIDR(stats?.penjualan?.netProfitThisMonth || 0)}`} trend={kpiTrends?.txTrend} />
         <KPICard icon={Package}     label="Nilai Stok Gudang"  value={formatIDR(stats?.stok?.nilaiStok || 0)}              sub={`${stats?.stok?.totalProduk || 0} jenis produk`} accentColor={C.amber} badge={lowStock.length > 0 ? `${lowStock.length} menipis` : null} />
         <KPICard icon={Receipt}     label="Pengeluaran Bulan Ini" value={formatIDR(totalExp)}                              sub="Termasuk gaji pegawai" accentColor="#EF4444" />
       </div>
@@ -740,7 +740,7 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
           </p>
           <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
             <span style={{ fontSize: '11px', color: C.muted }}>
-              Net Profit:{' '}
+              Net Profit (after ops):{' '}
               <span style={{ color: '#34D399', fontWeight: 700 }}>
                 {formatIDR(stats?.penjualan?.netProfitThisMonth || 0)}
               </span>

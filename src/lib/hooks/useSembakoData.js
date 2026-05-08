@@ -194,6 +194,18 @@ export const useSembakoDashboardStats = () => {
       const now = new Date()
       const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000)
 
+      const expenseThisMonth = expenses
+        .filter(e => new Date(e.expense_date) > thirtyDaysAgo)
+        .reduce((s, e) => s + (e.amount || 0), 0)
+      const payrollThisMonth = payroll
+        .filter(p => new Date(p.period_date) > thirtyDaysAgo)
+        .reduce((s, p) => s + (p.total_pay || 0), 0)
+
+      // gross net profit from sales only (revenue - cogs - delivery - other)
+      const saleNetProfitThisMonth = sales
+        .filter(s => new Date(s.transaction_date) > thirtyDaysAgo)
+        .reduce((s, i) => s + (i.net_profit || 0), 0)
+
       return {
         stok: {
           totalProduk: products.length,
@@ -209,9 +221,9 @@ export const useSembakoDashboardStats = () => {
           revenueThisMonth: sales
             .filter(s => new Date(s.transaction_date) > thirtyDaysAgo)
             .reduce((s, i) => s + (i.total_amount || 0), 0),
-          netProfitThisMonth: sales
-            .filter(s => new Date(s.transaction_date) > thirtyDaysAgo)
-            .reduce((s, i) => s + (i.net_profit || 0), 0),
+          // True net profit = sale margin - operational expenses - payroll (same as Laporan)
+          netProfitThisMonth: saleNetProfitThisMonth - expenseThisMonth - payrollThisMonth,
+          grossProfitThisMonth: saleNetProfitThisMonth,
           totalOutstanding: sales
             .reduce((s, i) => s + (i.remaining_amount || 0), 0),
           overdueCount: sales.filter(s =>
@@ -219,12 +231,8 @@ export const useSembakoDashboardStats = () => {
           ).length,
         },
         pengeluaran: {
-          totalExpenseThisMonth: expenses
-            .filter(e => new Date(e.expense_date) > thirtyDaysAgo)
-            .reduce((s, e) => s + (e.amount || 0), 0),
-          totalPayrollThisMonth: payroll
-            .filter(p => new Date(p.period_date) > thirtyDaysAgo)
-            .reduce((s, p) => s + (p.total_pay || 0), 0),
+          totalExpenseThisMonth: expenseThisMonth,
+          totalPayrollThisMonth: payrollThisMonth,
         },
       }
     } catch (err) {
@@ -380,11 +388,49 @@ export const useCreateSembakoSale = () => {
       const badCogs = items.find(i => (i.cogs_per_unit ?? 0) < 0)
       if (badCogs) throw new Error(`COGS negatif tidak valid untuk produk ${badCogs.product_id}`)
 
-      // Hitung totals dari items
+      // HIGH-03 + HIGH-04: pre-flight stock check + FIFO-accurate COGS in one pass
+      // Fetches batches once per product, caches for reuse in deduction loop
+      const itemFifoCogs   = {}  // { [product_id]: FIFO-weighted cogs_per_unit }
+      const itemBatchCache = {}  // { [product_id]: batch[] } reused in deduction
+
+      for (const item of items) {
+        if (!item.product_id) continue
+        const { data: batches } = await supabase
+          .from('sembako_stock_batches')
+          .select('id, qty_sisa, buy_price')
+          .eq('product_id', item.product_id)
+          .eq('is_deleted', false)
+          .gt('qty_sisa', 0)
+          .order('created_at', { ascending: true })
+
+        const available = (batches || []).reduce((s, b) => s + (b.qty_sisa || 0), 0)
+        if (item.quantity > available) {
+          throw new Error(
+            `Stok ${item.product_name || 'produk'} tidak cukup — tersedia ${available} ${item.unit || 'unit'}, diminta ${item.quantity}`
+          )
+        }
+
+        // Compute FIFO-weighted average COGS for this item
+        let remaining = item.quantity
+        let totalCost = 0
+        for (const batch of (batches || [])) {
+          if (remaining <= 0) break
+          const take = Math.min(batch.qty_sisa, remaining)
+          totalCost += take * (batch.buy_price || 0)
+          remaining -= take
+        }
+        itemFifoCogs[item.product_id]   = item.quantity > 0 ? Math.round(totalCost / item.quantity) : 0
+        itemBatchCache[item.product_id] = batches || []
+      }
+
+      // Hitung totals (FIFO-accurate COGS)
       const total_amount = items.reduce((s, i) =>
         s + Math.round(i.quantity * i.price_per_unit), 0)
       const total_cogs = items.reduce((s, i) =>
-        s + Math.round(i.quantity * (i.cogs_per_unit || 0)), 0)
+        s + Math.round(i.quantity * (i.product_id
+          ? (itemFifoCogs[i.product_id] ?? i.cogs_per_unit ?? 0)
+          : (i.cogs_per_unit || 0)
+        )), 0)
 
       // Insert sale header — gross_profit, net_profit, remaining_amount adalah GENERATED
       const { data: sale, error: saleErr } = await supabase
@@ -400,7 +446,7 @@ export const useCreateSembakoSale = () => {
         }).select().single()
       if (saleErr) throw saleErr
 
-      // Insert items — subtotal, cogs_total adalah GENERATED
+      // Insert items with FIFO-accurate cogs_per_unit — subtotal, cogs_total adalah GENERATED
       const itemsToInsert = items.map(item => ({
         sale_id: sale.id,
         product_id: item.product_id || null,
@@ -408,41 +454,46 @@ export const useCreateSembakoSale = () => {
         unit: item.unit,
         quantity: item.quantity,
         price_per_unit: item.price_per_unit,
-        cogs_per_unit: item.cogs_per_unit || 0,
+        cogs_per_unit: item.product_id
+          ? (itemFifoCogs[item.product_id] ?? item.cogs_per_unit ?? 0)
+          : (item.cogs_per_unit || 0),
       }))
       const { error: itemErr } = await supabase
         .from('sembako_sale_items').insert(itemsToInsert)
       if (itemErr) throw itemErr
 
-      // FIFO: kurangi qty_sisa di batches + catat di sembako_stock_out untuk reversal
-      for (const item of items) {
-        if (!item.product_id) continue
-        let qtyToDeduct = item.quantity
-        const { data: batches } = await supabase
-          .from('sembako_stock_batches')
-          .select('id, qty_sisa, buy_price')
-          .eq('product_id', item.product_id)
-          .eq('is_deleted', false)
-          .gt('qty_sisa', 0)
-          .order('created_at', { ascending: true }) // FIFO
+      // FIFO deduction — reuse cached batches, no extra DB fetch per product
+      // Medium #6: compensating rollback if deduction fails mid-loop
+      try {
+        for (const item of items) {
+          if (!item.product_id) continue
+          let qtyToDeduct = item.quantity
+          const batches = itemBatchCache[item.product_id] || []
 
-        for (const batch of (batches || [])) {
-          if (qtyToDeduct <= 0) break
-          const deduct = Math.min(batch.qty_sisa, qtyToDeduct)
-          await supabase.from('sembako_stock_batches')
-            .update({ qty_sisa: batch.qty_sisa - deduct })
-            .eq('id', batch.id)
-          // Catat stock_out agar delete sale bisa restore stok (FIFO reversal)
-          await supabase.from('sembako_stock_out').insert({
-            tenant_id,
-            product_id: item.product_id,
-            batch_id: batch.id,
-            sale_id: sale.id,
-            qty_keluar: deduct,
-            buy_price: batch.buy_price || 0,
-          })
-          qtyToDeduct -= deduct
+          for (const batch of batches) {
+            if (qtyToDeduct <= 0) break
+            const deduct = Math.min(batch.qty_sisa, qtyToDeduct)
+            const { error: batchErr } = await supabase.from('sembako_stock_batches')
+              .update({ qty_sisa: batch.qty_sisa - deduct })
+              .eq('id', batch.id)
+            if (batchErr) throw batchErr
+            const { error: outErr } = await supabase.from('sembako_stock_out').insert({
+              tenant_id,
+              product_id: item.product_id,
+              batch_id: batch.id,
+              sale_id: sale.id,
+              qty_keluar: deduct,
+              buy_price: batch.buy_price || 0,
+            })
+            if (outErr) throw outErr
+            qtyToDeduct -= deduct
+          }
         }
+      } catch (deductErr) {
+        // Compensating rollback: clean up orphan sale header + items
+        await supabase.from('sembako_sale_items').delete().eq('sale_id', sale.id)
+        await supabase.from('sembako_sales').delete().eq('id', sale.id)
+        throw deductErr
       }
       return sale
     },
@@ -452,7 +503,7 @@ export const useCreateSembakoSale = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
       toast.success('Invoice berhasil dibuat')
     },
-    onError: () => toast.error('Gagal membuat invoice'),
+    onError: (err) => toast.error(err?.message || 'Gagal membuat invoice'),
   })
 }
 
@@ -1137,9 +1188,10 @@ export const useDeleteSembakoSale = () => {
 export const useUpdateSembakoSale = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, updates }) => {
-      // SIM-07: Jika total_amount diubah, recalculate remaining_amount & payment_status
-      // agar saldo piutang customer tidak desync setelah edit
+    mutationFn: async ({ id, updates, items }) => {
+      const tenant_id = await getTenantId()
+
+      // ── 1. Recalculate piutang jika total_amount berubah ──────────────────
       if (updates.total_amount !== undefined) {
         const { data: sale } = await supabase
           .from('sembako_sales')
@@ -1152,29 +1204,172 @@ export const useUpdateSembakoSale = () => {
           const newTotal     = updates.total_amount
           const newRemaining = Math.max(0, newTotal - paidAmount)
           const newStatus    =
-            paidAmount <= 0       ? 'belum_lunas'
+            paidAmount <= 0        ? 'belum_lunas'
             : paidAmount >= newTotal ? 'lunas'
             : 'sebagian'
 
-          updates = {
-            ...updates,
-            remaining_amount: newRemaining,
-            payment_status:   newStatus,
+          // Medium #5: track overpayment so caller can warn the user
+          if (paidAmount > newTotal) {
+            updates = { ...updates, _overpaid: paidAmount - newTotal }
+          }
+
+          updates = { ...updates, remaining_amount: newRemaining, payment_status: newStatus }
+        }
+      }
+
+      // ── 2. FIFO Reversal + Re-deduct jika items diberikan ─────────────────
+      if (items && items.length > 0) {
+        // 2a. Ambil semua stock_out lama (product_id + buy_price diperlukan untuk compensating rollback)
+        const { data: oldStockOuts } = await supabase
+          .from('sembako_stock_out')
+          .select('batch_id, qty_keluar, product_id, buy_price')
+          .eq('sale_id', id)
+
+        // 2b. Kembalikan stok ke batch asal (reversal FIFO)
+        if (oldStockOuts && oldStockOuts.length > 0) {
+          for (const rec of oldStockOuts) {
+            const { data: batch } = await supabase
+              .from('sembako_stock_batches')
+              .select('qty_sisa')
+              .eq('id', rec.batch_id)
+              .single()
+            if (batch) {
+              await supabase.from('sembako_stock_batches')
+                .update({ qty_sisa: (batch.qty_sisa || 0) + rec.qty_keluar })
+                .eq('id', rec.batch_id)
+            }
+          }
+          await supabase.from('sembako_stock_out').delete().eq('sale_id', id)
+        }
+
+        // 2c. HIGH-03 + HIGH-04: pre-flight stock check + FIFO COGS in one pass (post-reversal)
+        // Wrapped in try-catch: if pre-flight fails, compensating rollback re-deducts original
+        // quantities so stock + stock_out remain consistent even on failure.
+        const editFifoCogs   = {}
+        const editBatchCache = {}
+        try {
+          for (const item of items) {
+            if (!item.product_id) continue
+            const { data: batches } = await supabase
+              .from('sembako_stock_batches')
+              .select('id, qty_sisa, buy_price')
+              .eq('product_id', item.product_id)
+              .eq('is_deleted', false)
+              .gt('qty_sisa', 0)
+              .order('created_at', { ascending: true })
+            const available = (batches || []).reduce((s, b) => s + (b.qty_sisa || 0), 0)
+            if (item.quantity > available) {
+              throw new Error(
+                `Stok ${item.product_name || 'produk'} tidak cukup — tersedia ${available} ${item.unit || 'unit'}, diminta ${item.quantity}`
+              )
+            }
+            let remaining = item.quantity
+            let totalCost = 0
+            for (const b of (batches || [])) {
+              if (remaining <= 0) break
+              const take = Math.min(b.qty_sisa, remaining)
+              totalCost += take * (b.buy_price || 0)
+              remaining -= take
+            }
+            editFifoCogs[item.product_id]   = item.quantity > 0 ? Math.round(totalCost / item.quantity) : 0
+            editBatchCache[item.product_id] = batches || []
+          }
+        } catch (preflightErr) {
+          // Compensating rollback: restore original stock_out + re-deduct batches
+          for (const rec of (oldStockOuts || [])) {
+            const { data: batch } = await supabase
+              .from('sembako_stock_batches')
+              .select('qty_sisa')
+              .eq('id', rec.batch_id)
+              .single()
+            if (batch) {
+              await supabase.from('sembako_stock_batches')
+                .update({ qty_sisa: Math.max(0, (batch.qty_sisa || 0) - rec.qty_keluar) })
+                .eq('id', rec.batch_id)
+            }
+            await supabase.from('sembako_stock_out').insert({
+              tenant_id,
+              product_id: rec.product_id,
+              batch_id: rec.batch_id,
+              sale_id: id,
+              qty_keluar: rec.qty_keluar,
+              buy_price: rec.buy_price || 0,
+            })
+          }
+          throw preflightErr
+        }
+
+        // Recompute totals with FIFO COGS and push to updates
+        const editTotalCogs = items.reduce((s, i) =>
+          s + Math.round(i.quantity * (i.product_id
+            ? (editFifoCogs[i.product_id] ?? i.cogs_per_unit ?? 0)
+            : (i.cogs_per_unit || 0)
+          )), 0)
+        updates = { ...updates, total_cogs: editTotalCogs }
+
+        // 2e. Hapus sale_items lama
+        await supabase.from('sembako_sale_items').delete().eq('sale_id', id)
+
+        // 2f. Insert sale_items baru dengan FIFO-accurate COGS
+        const itemsToInsert = items.map(item => ({
+          sale_id: id,
+          product_id: item.product_id || null,
+          product_name: item.product_name,
+          unit: item.unit,
+          quantity: item.quantity,
+          price_per_unit: item.price_per_unit,
+          cogs_per_unit: item.product_id
+            ? (editFifoCogs[item.product_id] ?? item.cogs_per_unit ?? 0)
+            : (item.cogs_per_unit || 0),
+        }))
+        const { error: itemErr } = await supabase.from('sembako_sale_items').insert(itemsToInsert)
+        if (itemErr) throw itemErr
+
+        // 2g. FIFO re-deduct — reuse cached batches
+        for (const item of items) {
+          if (!item.product_id) continue
+          let qtyToDeduct = item.quantity
+          const batches = editBatchCache[item.product_id] || []
+
+          for (const batch of batches) {
+            if (qtyToDeduct <= 0) break
+            const deduct = Math.min(batch.qty_sisa, qtyToDeduct)
+            await supabase.from('sembako_stock_batches')
+              .update({ qty_sisa: batch.qty_sisa - deduct })
+              .eq('id', batch.id)
+            await supabase.from('sembako_stock_out').insert({
+              tenant_id,
+              product_id: item.product_id,
+              batch_id: batch.id,
+              sale_id: id,
+              qty_keluar: deduct,
+              buy_price: batch.buy_price || 0,
+            })
+            qtyToDeduct -= deduct
           }
         }
       }
 
-      const { error } = await supabase.from('sembako_sales')
-        .update(updates)
-        .eq('id', id)
+      // ── 3. Update sale header ─────────────────────────────────────────────
+      const { _overpaid, ...cleanUpdates } = updates  // strip UI-only hint
+      const { error } = await supabase.from('sembako_sales').update(cleanUpdates).eq('id', id)
       if (error) throw error
+      return { _overpaid }
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-products'] })
       queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-all-batches'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-stock-out'] })
       queryClient.invalidateQueries({ queryKey: ['sembako-customer-invoices'] })
       queryClient.invalidateQueries({ queryKey: ['sembako-customer-payments'] })
-      toast.success('Transaksi diperbarui')
+      if (result?._overpaid) {
+        const fmt = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 })
+        toast.warning(`Transaksi diperbarui — kelebihan bayar ${fmt.format(result._overpaid)} dicatat sebagai LUNAS`)
+      } else {
+        toast.success('Transaksi diperbarui')
+      }
     },
     onError: (err) => toast.error('Gagal: ' + err.message),
   })
