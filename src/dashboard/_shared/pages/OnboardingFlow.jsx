@@ -6,13 +6,19 @@ import LoadingScreen from '@/components/LoadingScreen'
 import { getBrokerBasePath } from '@/lib/hooks/useAuth'
 
 const KEY_TO_PATH = {
+  poultry_broker:      '/broker/broker_ayam/beranda',
   broker:              '/broker/broker_ayam/beranda',
   egg_broker:          '/broker/broker_telur/beranda',
   distributor_sembako: '/broker/distributor_sembako/beranda',
   peternak:                              '/peternak/peternak_broiler/beranda',
   peternak_layer:                        '/peternak/peternak_layer/beranda',
-  peternak_kambing_domba_penggemukan:    '/peternak/peternak_kambing_domba_penggemukan/beranda',
-  peternak_kambing_domba_breeding:       '/peternak/peternak_kambing_domba_breeding/beranda',
+  peternak_domba_penggemukan:            '/peternak/peternak_domba_penggemukan/beranda',
+  peternak_domba_breeding:               '/peternak/peternak_domba_breeding/beranda',
+  peternak_kambing_penggemukan:          '/peternak/peternak_kambing_penggemukan/beranda',
+  peternak_kambing_breeding:             '/peternak/peternak_kambing_breeding/beranda',
+  peternak_kambing_perah:                '/peternak/peternak_kambing_perah/beranda',
+  peternak_kambing_domba_penggemukan:    '/peternak/peternak_domba_penggemukan/beranda',
+  peternak_kambing_domba_breeding:       '/peternak/peternak_domba_breeding/beranda',
   peternak_sapi_penggemukan:             '/peternak/peternak_sapi_penggemukan/beranda',
   peternak_sapi_breeding:                '/peternak/peternak_sapi_breeding/beranda',
   rumah_potong_rpa:    '/rumah_potong/rpa/beranda',
@@ -40,7 +46,7 @@ export default function OnboardingFlow() {
         return
       }
       if (profile.user_type === 'rumah_potong') {
-        navigate(`/rumah_potong/${profile.tenants?.sub_type || 'rpa_ayam'}/beranda`, { replace: true })
+        navigate(`/rumah_potong/rpa/beranda`, { replace: true })
         return
       }
       navigate(getBrokerBasePath(profile.tenants) + '/beranda', { replace: true })

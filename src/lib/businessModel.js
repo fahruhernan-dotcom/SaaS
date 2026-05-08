@@ -235,19 +235,19 @@ export const BUSINESS_MODELS = {
     user_type: 'rumah_potong',
     sub_type: 'rpa_ayam',
     comingSoon: false,
-    bottomNav: createNav('rumah_potong', 'rpa_ayam', [
+    bottomNav: createNav('rumah_potong', 'rpa', [
       { slug: 'beranda',   icon: 'Home',           label: 'Home'   },
       { slug: 'transaksi', icon: 'ArrowLeftRight', label: 'Produksi'  },
       { slug: 'stok',      icon: 'Warehouse',      label: 'Gudang'    },
       { slug: 'pengiriman',icon: 'Truck',          label: 'Kirim'     },
     ]),
     drawerMenu: [
-      { path: '/rumah_potong/rpa_ayam/distribusi', icon: 'Store',    label: 'Distribusi & Invoice' },
-      { path: '/rumah_potong/rpa_ayam/laporan',    icon: 'BarChart2',label: 'Laporan Margin'       },
-      { path: '/market',                           icon: 'Store',    label: 'TernakOS Market'      },
-      { path: '/rumah_potong/rpa_ayam/akun',       icon: 'User',     label: 'Akun & Profil'        },
+      { path: '/rumah_potong/rpa/distribusi', icon: 'Store',    label: 'Distribusi & Invoice' },
+      { path: '/rumah_potong/rpa/laporan',    icon: 'BarChart2',label: 'Laporan Margin'       },
+      { path: '/market',                      icon: 'Store',    label: 'TernakOS Market'      },
+      { path: '/rumah_potong/rpa/akun',       icon: 'User',     label: 'Akun & Profil'        },
     ],
-    fabPath: '/rumah_potong/rpa_ayam/order?action=new',
+    fabPath: '/rumah_potong/rpa/order?action=new',
   },
   peternak_domba_penggemukan: {
     key: 'peternak_domba_penggemukan',
