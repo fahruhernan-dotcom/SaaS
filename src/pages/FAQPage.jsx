@@ -66,8 +66,10 @@ function FAQItem({ item, accentColor = 'emerald' }) {
 const ACCENT = {
   umum: 'emerald',
   broker_ayam: 'emerald',
+  broker_telur: 'amber',
   sembako: 'amber',
-  peternak: 'emerald',
+  peternak_ayam: 'emerald',
+  peternak_ruminansia: 'emerald',
   teknis: 'emerald',
 }
 

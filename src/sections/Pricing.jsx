@@ -108,30 +108,67 @@ const Pricing = ({ activeRole, setActiveRole }) => {
       peternak: [
         { text: '1 Kandang aktif', highlight: false },
         { text: '1 Jenis ternak', highlight: false },
-        { text: 'Input harian & laporan dasar', highlight: false },
-        { text: 'FCR & IP Score tracking', highlight: false },
-        { text: 'Akses mobile dashboard', highlight: false },
+        { text: 'Pencatatan pakan & operasional', highlight: false },
+        { text: 'FCR & IP Score dasar', highlight: false },
+        { text: 'Akses Mobile Kandang Map', highlight: false },
       ],
       broker: [
-        { text: 'Input transaksi harian', highlight: false },
-        { text: 'Laporan harian dasar', highlight: false },
-        { text: 'Manajemen 1 armada/sopir', highlight: false },
-        { text: 'Harga pasar realtime', highlight: false },
-        { text: 'Akses mobile dashboard', highlight: false },
+        { text: 'Input transaksi Ayam & Sembako', highlight: false },
+        { text: 'Manajemen 1 armada / gudang', highlight: false },
+        { text: 'Pelacakan piutang & hutang', highlight: false },
+        { text: 'Kasir & Sales Wizard dasar', highlight: false },
       ],
       rpa: [
-        { text: 'Input harian operasional', highlight: false },
-        { text: 'Laporan stok dasar', highlight: false },
+        { text: 'Input produksi potong', highlight: false },
         { text: 'Manajemen 1 unit RPA', highlight: false },
-        { text: 'Harga pasar realtime', highlight: false },
-        { text: 'Akses mobile dashboard', highlight: false },
+        { text: 'Laporan stok gudang dasar', highlight: false },
+        { text: 'Pelacakan hutang broker', highlight: false },
       ]
+    };
+
+    const getSubtitle = (role) => {
+      switch (role) {
+        case 'broker': return 'Broker Ayam & Sembako';
+        case 'peternak': return 'Peternak';
+        case 'rpa': return 'Rumah Potong';
+        default: return 'User';
+      }
+    };
+
+    const getProFeatures = (role) => {
+      switch (role) {
+        case 'peternak': return [
+          { text: 'Manajemen Kandang Interaktif', highlight: false },
+          { text: 'Pencatatan biaya operasional detail', highlight: false },
+          { text: 'Penugasan Tim (Daily Task)', highlight: false },
+          { text: 'Kalkulasi FCR & IP Score Otomatis', highlight: true },
+          { text: 'Prediksi panen & bobot', highlight: false },
+          { text: 'Harga pasar realtime', highlight: false },
+        ];
+        case 'broker': return [
+          { text: 'Transaksi Real-time (Ayam & Sembako)', highlight: false },
+          { text: 'Kasir Sales Wizard & Retur Barang', highlight: true },
+          { text: 'Pelacakan Piutang & Hutang Otomatis', highlight: true },
+          { text: 'Manajemen Armada & Stok Gudang', highlight: false },
+          { text: 'Profit Margin Calculator', highlight: false },
+          { text: 'Tim & Multi-Cabang (maks 5 anggota)', highlight: false },
+        ];
+        case 'rpa': return [
+          { text: 'Manajemen Produksi & Potong', highlight: false },
+          { text: 'Integrasi pembelian dari Broker', highlight: false },
+          { text: 'Pelacakan Hutang ke Broker detail', highlight: true },
+          { text: 'Manajemen Stok Gudang realtime', highlight: false },
+          { text: 'Manajemen tim (maks 5 anggota)', highlight: false },
+          { text: 'Laporan yield karkas otomatis', highlight: false },
+        ];
+        default: return [];
+      }
     };
 
     return [
       {
         name: 'STARTER',
-        subtitle: activeRole === 'broker' ? 'Broker' : activeRole === 'peternak' ? 'Peternak' : 'RPA',
+        subtitle: getSubtitle(activeRole),
         price: 'Gratis',
         description: 'Langkah awal digitalisasi bisnismu secara gratis selamanya.',
         features: starterFeatures[activeRole] || starterFeatures.peternak,
@@ -152,14 +189,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
         anchorPrice: currentPrices.proAnchor,
         savingAmount: currentPrices.proSaving,
         description: 'Solusi lengkap untuk manajemen operasional harian.',
-        features: [
-          { text: activeRole === 'peternak' ? 'Manajemen kandang & populasi' : 'Manajemen transaksi & operasional', highlight: false },
-          { text: activeRole === 'peternak' ? 'Tracking pakan & mortalitas' : 'Tracking pengiriman & loss report', highlight: false },
-          { text: activeRole === 'peternak' ? 'Prediksi panen & bobot' : 'RPA & piutang management', highlight: false },
-          { text: 'Cash flow & laporan keuangan', highlight: false },
-          { text: activeRole === 'broker' ? 'Armada & tim (maks 3 anggota)' : 'Manajemen tim & akses', highlight: false },
-          { text: 'Harga pasar realtime', highlight: false },
-        ],
+        features: getProFeatures(activeRole),
         buttonText: `Mulai ${trialPro} Hari Gratis`,
         href: '/register',
         isPopular: false,
@@ -167,7 +197,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
       },
       {
         name: 'BUSINESS',
-        subtitle: activeRole === 'broker' ? 'Broker' : activeRole === 'peternak' ? 'Peternak' : 'RPA',
+        subtitle: getSubtitle(activeRole),
         monthlyPrice: currentPrices.biz,
         annualPrice: currentPrices.bizAnnual,
         anchorPrice: currentPrices.bizAnchor,
@@ -177,9 +207,9 @@ const Pricing = ({ activeRole, setActiveRole }) => {
         features: [
           { text: 'Semua fitur PRO', highlight: false },
           { text: 'TernakBot AI (Grok 4.1 Fast)', highlight: true },
-          { text: 'Analisis profit otomatis', highlight: false },
-          { text: 'Deteksi anomali transaksi', highlight: false },
-          { text: activeRole === 'peternak' ? 'AI Health Monitor (Beta)' : 'Prediksi panen AI', highlight: true },
+          { text: 'Analisis profit & efisiensi AI', highlight: false },
+          { text: 'Deteksi anomali operasional', highlight: false },
+          { text: activeRole === 'peternak' ? 'AI Health Monitor (Beta)' : activeRole === 'broker' ? 'Prediksi Harga & Stok AI' : 'Prediksi panen & harga AI', highlight: true },
           { text: 'Laporan PDF/Excel otomatis', highlight: false },
           { text: 'Tim unlimited', highlight: false },
         ],

@@ -52,6 +52,10 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 
 function getVerticalIcon(v) {
+  if (v?.startsWith('peternak_')) return <Home size={18} />
+  if (v?.startsWith('broker_')) return <Building2 size={18} />
+  if (v?.startsWith('rpa_')) return <Factory size={18} />
+  
   switch (v) {
     case 'poultry_broker': return <Bird size={18} />
     case 'egg_broker': return <Egg size={18} />

@@ -72,6 +72,8 @@ export default function AdminPricing() {
   const deletePrice = useDeleteMarketPrice()
 
   const [activeTab, setActiveTab] = useState('plans')
+  const [selectedCategory, setSelectedCategory] = useState('broker')
+  const [selectedPeternakType, setSelectedPeternakType] = useState('all')
   const [editingPricing, setEditingPricing] = useState(null)
   const [savingRole, setSavingRole] = useState(null)
   const [formKey, setFormKey] = useState(0)
@@ -95,7 +97,25 @@ export default function AdminPricing() {
   // Initialise local edit state once DB data arrives
   useMemo(() => {
     if (pricing && !editingPricing) {
-      setEditingPricing(pricing)
+      const defaultRoles = [
+        'broker_ayam', 'broker_telur', 'broker_distributor', 'broker_sembako',
+        'peternak_ayam_broiler', 'peternak_ayam_layer', 
+        'peternak_sapi_potong_fattening', 'peternak_sapi_potong_breeding', 'peternak_sapi_perah',
+        'peternak_kambing_potong_fattening', 'peternak_kambing_potong_breeding', 'peternak_kambing_perah',
+        'peternak_domba_potong_fattening', 'peternak_domba_potong_breeding',
+        'rpa_buyer', 'rpa_rph'
+      ];
+
+      const mergedPricing = { ...pricing };
+      defaultRoles.forEach(role => {
+        if (!mergedPricing[role]) {
+          mergedPricing[role] = {
+            pro: { price: 299000, originalPrice: 499000 },
+            business: { price: 799000, originalPrice: 1299000 }
+          };
+        }
+      });
+      setEditingPricing(mergedPricing);
     }
   }, [pricing, editingPricing])
 
@@ -111,7 +131,14 @@ export default function AdminPricing() {
   const handleSaveAllPricing = async () => {
     setSavingRole('all')
     try {
-      const roles = ['broker', 'peternak', 'rpa', 'egg_broker', 'sembako_broker']
+      const roles = [
+        'broker_ayam', 'broker_telur', 'broker_distributor', 'broker_sembako',
+        'peternak_ayam_broiler', 'peternak_ayam_layer', 
+        'peternak_sapi_potong_fattening', 'peternak_sapi_potong_breeding', 'peternak_sapi_perah',
+        'peternak_kambing_potong_fattening', 'peternak_kambing_potong_breeding', 'peternak_kambing_perah',
+        'peternak_domba_potong_fattening', 'peternak_domba_potong_breeding',
+        'rpa_buyer', 'rpa_rph'
+      ];
       const promises = roles.flatMap(role => {
         if (!editingPricing[role]) return []
         return [
@@ -140,16 +167,20 @@ export default function AdminPricing() {
 
   const handlePriceChange = (role, plan, field, value) => {
     const numericValue = typeof value === 'number' ? value : (parseInt(String(value).replace(/\D/g, '')) || 0)
-    setEditingPricing(prev => ({
-      ...prev,
-      [role]: {
-        ...prev[role],
-        [plan]: {
-          ...prev[role][plan],
-          [field]: numericValue
+    setEditingPricing(prev => {
+      const prevRole = prev[role] || { pro: {}, business: {} };
+      const prevPlan = prevRole[plan] || {};
+      return {
+        ...prev,
+        [role]: {
+          ...prevRole,
+          [plan]: {
+            ...prevPlan,
+            [field]: numericValue
+          }
         }
-      }
-    }))
+      };
+    })
   }
 
   const handleSavePricing = async (role) => {
@@ -258,7 +289,7 @@ export default function AdminPricing() {
             Kelola skema pendapatan & promosi platform
           </p>
         </div>
-        
+
         {activeTab === 'plans' && (
           <Button
             onClick={handleSaveAllPricing}
@@ -301,97 +332,259 @@ export default function AdminPricing() {
           ))}
         </TabsList>
 
-        <TabsContent value="plans" className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <TabsContent value="plans" className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+          {/* Category Selector */}
+          <div className="flex flex-wrap justify-center gap-2 p-1.5 bg-white/5 backdrop-blur-md rounded-2xl w-fit mx-auto border border-white/10 shadow-lg">
+            {[
+              { id: 'broker', label: 'Broker & Distributor' },
+              { id: 'peternak', label: 'Peternak' },
+              { id: 'rpa', label: 'Rumah Potong (RPA/RPH)' }
+            ].map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-6 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${selectedCategory === cat.id
+                    ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]'
+                    : 'text-[#4B6478] hover:text-white hover:bg-white/10'
+                  }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+          
+          {selectedCategory === 'peternak' && (
+            <div className="flex flex-wrap gap-3 mb-8 bg-white/[0.02] p-2 rounded-2xl border border-white/5">
+              {[
+                { id: 'all', label: 'Semua Ternak' },
+                { id: 'ayam', label: 'Ayam' },
+                { id: 'sapi', label: 'Sapi' },
+                { id: 'kambing', label: 'Kambing' },
+                { id: 'domba', label: 'Domba' }
+              ].map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setSelectedPeternakType(t.id)}
+                  className={`px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all ${selectedPeternakType === t.id
+                    ? 'bg-purple-500/80 text-white shadow-lg'
+                    : 'text-[#4B6478] hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Pricing Matrix */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <RolePricingCard
-              roleName="Broker Ayam"
-              roleId="broker"
-              icon={Building2}
-              color="emerald"
-              data={editingPricing.broker}
-              onChange={handlePriceChange}
-              onSave={() => handleSavePricing('broker')}
-              isSaving={savingRole === 'broker'}
-              vertical="poultry_broker"
-            />
-            <RolePricingCard
-              roleName="Peternak Ayam"
-              roleId="peternak"
-              icon={Home}
-              color="purple"
-              data={editingPricing.peternak}
-              onChange={handlePriceChange}
-              onSave={() => handleSavePricing('peternak')}
-              isSaving={savingRole === 'peternak'}
-              vertical="peternak"
-            />
-            <RolePricingCard
-              roleName="Sapi Potong"
-              roleId="peternak_sapi_potong"
-              icon={Home}
-              color="emerald"
-              data={editingPricing.peternak_sapi_potong ?? { pro: { price: 499000, originalPrice: 699000 }, business: { price: 999000, originalPrice: 1999000 } }}
-              onChange={handlePriceChange}
-              onSave={() => handleSavePricing('peternak_sapi_potong')}
-              isSaving={savingRole === 'peternak_sapi_potong'}
-              vertical="peternak_sapi_potong"
-            />
-            <RolePricingCard
-              roleName="Kambing & Domba"
-              roleId="peternak_kambing_domba"
-              icon={Home}
-              color="amber"
-              data={editingPricing.peternak_kambing_domba ?? { pro: { price: 499000, originalPrice: 699000 }, business: { price: 999000, originalPrice: 1999000 } }}
-              onChange={handlePriceChange}
-              onSave={() => handleSavePricing('peternak_kambing_domba')}
-              isSaving={savingRole === 'peternak_kambing_domba'}
-              vertical="peternak_kambing_domba"
-            />
-            <RolePricingCard
-              roleName="Sapi Perah"
-              roleId="peternak_sapi_perah"
-              icon={Home}
-              color="sky"
-              data={editingPricing.peternak_sapi_perah ?? { pro: { price: 499000, originalPrice: 699000 }, business: { price: 999000, originalPrice: 1999000 } }}
-              onChange={handlePriceChange}
-              onSave={() => handleSavePricing('peternak_sapi_perah')}
-              isSaving={savingRole === 'peternak_sapi_perah'}
-              vertical="peternak_sapi_perah"
-            />
-            <RolePricingCard
-              roleName="Rumah Potong (RPA)"
-              roleId="rpa"
-              icon={Factory}
-              color="amber"
-              data={editingPricing.rpa}
-              onChange={handlePriceChange}
-              onSave={() => handleSavePricing('rpa')}
-              isSaving={savingRole === 'rpa'}
-              vertical="rumah_potong"
-            />
-            <RolePricingCard
-              roleName="Broker Telur"
-              roleId="egg_broker"
-              icon={Egg}
-              color="sky"
-              data={editingPricing.egg_broker ?? { pro: { price: 199000, originalPrice: 249000 }, business: { price: 399000, originalPrice: 499000 } }}
-              onChange={handlePriceChange}
-              onSave={() => handleSavePricing('egg_broker')}
-              isSaving={savingRole === 'egg_broker'}
-              vertical="egg_broker"
-            />
-            <RolePricingCard
-              roleName="Sembako / Distributor"
-              roleId="sembako_broker"
-              icon={ShoppingBasket}
-              color="rose"
-              data={editingPricing.sembako_broker ?? { pro: { price: 249000, originalPrice: 299000 }, business: { price: 499000, originalPrice: 599000 } }}
-              onChange={handlePriceChange}
-              onSave={() => handleSavePricing('sembako_broker')}
-              isSaving={savingRole === 'sembako_broker'}
-              vertical="sembako_broker"
-            />
+            {selectedCategory === 'broker' && (
+              <>
+                <RolePricingCard
+                  roleName="Broker Ayam"
+                  roleId="broker_ayam"
+                  icon={Building2}
+                  color="emerald"
+                  data={editingPricing.broker_ayam ?? { pro: { price: 299000, originalPrice: 899999 }, business: { price: 599000, originalPrice: 1499999 } }}
+                  onChange={handlePriceChange}
+                  onSave={() => handleSavePricing('broker_ayam')}
+                  isSaving={savingRole === 'broker_ayam'}
+                  vertical="broker_ayam"
+                />
+                <RolePricingCard
+                  roleName="Broker Telur"
+                  roleId="broker_telur"
+                  icon={Egg}
+                  color="sky"
+                  data={editingPricing.broker_telur ?? { pro: { price: 299000, originalPrice: 899999 }, business: { price: 599000, originalPrice: 1499999 } }}
+                  onChange={handlePriceChange}
+                  onSave={() => handleSavePricing('broker_telur')}
+                  isSaving={savingRole === 'broker_telur'}
+                  vertical="broker_telur"
+                />
+                <RolePricingCard
+                  roleName="Distributor Sembako"
+                  roleId="broker_sembako"
+                  icon={ShoppingBasket}
+                  color="rose"
+                  data={editingPricing.broker_sembako ?? { pro: { price: 249000, originalPrice: 299000 }, business: { price: 499000, originalPrice: 599000 } }}
+                  onChange={handlePriceChange}
+                  onSave={() => handleSavePricing('broker_sembako')}
+                  isSaving={savingRole === 'broker_sembako'}
+                  vertical="broker_sembako"
+                />
+                <RolePricingCard
+                  roleName="Distributor Daging"
+                  roleId="broker_distributor"
+                  icon={Building2}
+                  color="sky"
+                  data={editingPricing.broker_distributor ?? { pro: { price: 299000, originalPrice: 399000 }, business: { price: 599000, originalPrice: 899000 } }}
+                  onChange={handlePriceChange}
+                  onSave={() => handleSavePricing('broker_distributor')}
+                  isSaving={savingRole === 'broker_distributor'}
+                  vertical="broker_distributor"
+                />
+              </>
+            )}
+
+            {selectedCategory === 'peternak' && (
+              <>
+                {(selectedPeternakType === 'all' || selectedPeternakType === 'ayam') && (
+                  <>
+                    <RolePricingCard
+                      roleName="Peternak Ayam Broiler"
+                      roleId="peternak_ayam_broiler"
+                      icon={Home}
+                      color="purple"
+                      data={editingPricing.peternak_ayam_broiler ?? { pro: { price: 149000, originalPrice: 249000 }, business: { price: 449000, originalPrice: 699000 } }}
+                      onChange={handlePriceChange}
+                      onSave={() => handleSavePricing('peternak_ayam_broiler')}
+                      isSaving={savingRole === 'peternak_ayam_broiler'}
+                      vertical="peternak_ayam_broiler"
+                    />
+                    <RolePricingCard
+                      roleName="Peternak Ayam Layer"
+                      roleId="peternak_ayam_layer"
+                      icon={Home}
+                      color="amber"
+                      data={editingPricing.peternak_ayam_layer ?? { pro: { price: 149000, originalPrice: 249000 }, business: { price: 449000, originalPrice: 699000 } }}
+                      onChange={handlePriceChange}
+                      onSave={() => handleSavePricing('peternak_ayam_layer')}
+                      isSaving={savingRole === 'peternak_ayam_layer'}
+                      vertical="peternak_ayam_layer"
+                    />
+                  </>
+                )}
+                {(selectedPeternakType === 'all' || selectedPeternakType === 'sapi') && (
+                  <>
+                    <RolePricingCard
+                      roleName="Sapi Potong (Fattening)"
+                      roleId="peternak_sapi_potong_fattening"
+                      icon={Home}
+                      color="emerald"
+                      data={editingPricing.peternak_sapi_potong_fattening ?? { pro: { price: 499000, originalPrice: 699000 }, business: { price: 999000, originalPrice: 1999000 } }}
+                      onChange={handlePriceChange}
+                      onSave={() => handleSavePricing('peternak_sapi_potong_fattening')}
+                      isSaving={savingRole === 'peternak_sapi_potong_fattening'}
+                      vertical="peternak_sapi_potong_fattening"
+                    />
+                    <RolePricingCard
+                      roleName="Sapi Potong (Breeding)"
+                      roleId="peternak_sapi_potong_breeding"
+                      icon={Home}
+                      color="emerald"
+                      data={editingPricing.peternak_sapi_potong_breeding ?? { pro: { price: 499000, originalPrice: 699000 }, business: { price: 999000, originalPrice: 1999000 } }}
+                      onChange={handlePriceChange}
+                      onSave={() => handleSavePricing('peternak_sapi_potong_breeding')}
+                      isSaving={savingRole === 'peternak_sapi_potong_breeding'}
+                      vertical="peternak_sapi_potong_breeding"
+                    />
+                    <RolePricingCard
+                      roleName="Sapi Perah"
+                      roleId="peternak_sapi_perah"
+                      icon={Home}
+                      color="sky"
+                      data={editingPricing.peternak_sapi_perah ?? { pro: { price: 499000, originalPrice: 699000 }, business: { price: 999000, originalPrice: 1999000 } }}
+                      onChange={handlePriceChange}
+                      onSave={() => handleSavePricing('peternak_sapi_perah')}
+                      isSaving={savingRole === 'peternak_sapi_perah'}
+                      vertical="peternak_sapi_perah"
+                    />
+                  </>
+                )}
+                {(selectedPeternakType === 'all' || selectedPeternakType === 'kambing') && (
+                  <>
+                    <RolePricingCard
+                      roleName="Kambing Potong (Fattening)"
+                      roleId="peternak_kambing_potong_fattening"
+                      icon={Home}
+                      color="amber"
+                      data={editingPricing.peternak_kambing_potong_fattening ?? { pro: { price: 499000, originalPrice: 699000 }, business: { price: 999000, originalPrice: 1999000 } }}
+                      onChange={handlePriceChange}
+                      onSave={() => handleSavePricing('peternak_kambing_potong_fattening')}
+                      isSaving={savingRole === 'peternak_kambing_potong_fattening'}
+                      vertical="peternak_kambing_potong_fattening"
+                    />
+                    <RolePricingCard
+                      roleName="Kambing Potong (Breeding)"
+                      roleId="peternak_kambing_potong_breeding"
+                      icon={Home}
+                      color="amber"
+                      data={editingPricing.peternak_kambing_potong_breeding ?? { pro: { price: 499000, originalPrice: 699000 }, business: { price: 999000, originalPrice: 1999000 } }}
+                      onChange={handlePriceChange}
+                      onSave={() => handleSavePricing('peternak_kambing_potong_breeding')}
+                      isSaving={savingRole === 'peternak_kambing_potong_breeding'}
+                      vertical="peternak_kambing_potong_breeding"
+                    />
+                    <RolePricingCard
+                      roleName="Kambing Perah"
+                      roleId="peternak_kambing_perah"
+                      icon={Home}
+                      color="amber"
+                      data={editingPricing.peternak_kambing_perah ?? { pro: { price: 499000, originalPrice: 699000 }, business: { price: 999000, originalPrice: 1999000 } }}
+                      onChange={handlePriceChange}
+                      onSave={() => handleSavePricing('peternak_kambing_perah')}
+                      isSaving={savingRole === 'peternak_kambing_perah'}
+                      vertical="peternak_kambing_perah"
+                    />
+                  </>
+                )}
+                {(selectedPeternakType === 'all' || selectedPeternakType === 'domba') && (
+                  <>
+                    <RolePricingCard
+                      roleName="Domba Potong (Fattening)"
+                      roleId="peternak_domba_potong_fattening"
+                      icon={Home}
+                      color="purple"
+                      data={editingPricing.peternak_domba_potong_fattening ?? { pro: { price: 499000, originalPrice: 699000 }, business: { price: 999000, originalPrice: 1999000 } }}
+                      onChange={handlePriceChange}
+                      onSave={() => handleSavePricing('peternak_domba_potong_fattening')}
+                      isSaving={savingRole === 'peternak_domba_potong_fattening'}
+                      vertical="peternak_domba_potong_fattening"
+                    />
+                    <RolePricingCard
+                      roleName="Domba Potong (Breeding)"
+                      roleId="peternak_domba_potong_breeding"
+                      icon={Home}
+                      color="purple"
+                      data={editingPricing.peternak_domba_potong_breeding ?? { pro: { price: 499000, originalPrice: 699000 }, business: { price: 999000, originalPrice: 1999000 } }}
+                      onChange={handlePriceChange}
+                      onSave={() => handleSavePricing('peternak_domba_potong_breeding')}
+                      isSaving={savingRole === 'peternak_domba_potong_breeding'}
+                      vertical="peternak_domba_potong_breeding"
+                    />
+                  </>
+                )}
+              </>
+            )}
+
+            {selectedCategory === 'rpa' && (
+              <>
+                <RolePricingCard
+                  roleName="RPA Buyer"
+                  roleId="rpa_buyer"
+                  icon={Factory}
+                  color="amber"
+                  data={editingPricing.rpa_buyer ?? { pro: { price: 699000, originalPrice: 999000 }, business: { price: 1499000, originalPrice: 2499000 } }}
+                  onChange={handlePriceChange}
+                  onSave={() => handleSavePricing('rpa_buyer')}
+                  isSaving={savingRole === 'rpa_buyer'}
+                  vertical="rpa_buyer"
+                />
+                <RolePricingCard
+                  roleName="Rumah Potong (RPH)"
+                  roleId="rpa_rph"
+                  icon={Factory}
+                  color="rose"
+                  data={editingPricing.rpa_rph ?? { pro: { price: 699000, originalPrice: 999000 }, business: { price: 1499000, originalPrice: 2499000 } }}
+                  onChange={handlePriceChange}
+                  onSave={() => handleSavePricing('rpa_rph')}
+                  isSaving={savingRole === 'rpa_rph'}
+                  vertical="rpa_rph"
+                />
+              </>
+            )}
           </div>
 
           {/* Preview Section */}
@@ -481,9 +674,9 @@ export default function AdminPricing() {
             </div>
 
             <div className="bg-white/[0.02] backdrop-blur-xl rounded-[32px] p-8 border border-white/5 space-y-8 shadow-xl relative overflow-hidden group">
-               <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
-               
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
                 {/* Price per type */}
                 <div className="space-y-2.5">
                   <label htmlFor="addon_price" className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">
@@ -592,52 +785,52 @@ export default function AdminPricing() {
             </div>
 
             <div className="bg-white/[0.02] backdrop-blur-xl rounded-[40px] p-8 border border-white/5 space-y-10 shadow-2xl relative overflow-hidden group">
-               <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-50" />
-               
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
-                  {/* Discount percent */}
-                  <div className="space-y-3">
-                    <label htmlFor="discount_percent" className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">
-                      PERSENTASE POTONGAN (%)
-                    </label>
-                    <div className="flex items-center gap-4">
-                      <div className="relative flex-1">
-                        <Input
-                          id="discount_percent"
-                          name="discount_percent"
-                          type="number"
-                          min={0}
-                          max={50}
-                          value={annualDiscount.discount_percent}
-                          onChange={e => setAnnualDiscount(p => ({ ...p, discount_percent: parseInt(e.target.value) || 0 }))}
-                          className="w-full bg-black/40 border-white/5 h-16 rounded-3xl px-8 text-3xl font-black text-white text-center focus:border-purple-500/40 focus:bg-purple-500/5 transition-all shadow-inner tabular-nums"
-                        />
-                        <div className="absolute right-6 top-1/2 -translate-y-1/2 text-2xl font-black text-[#4B6478]">%</div>
-                      </div>
-                    </div>
-                  </div>
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-transparent opacity-50" />
 
-                  {/* Badge text */}
-                  <div className="space-y-3">
-                    <label htmlFor="badge_text" className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">
-                      TEKS LABEL PROMO DI UI
-                    </label>
-                    <Input
-                      id="badge_text"
-                      name="badge_text"
-                      type="text"
-                      value={annualDiscount.badge_text}
-                      onChange={e => setAnnualDiscount(p => ({ ...p, badge_text: e.target.value }))}
-                      placeholder="Contoh: Hemat 2 bln!"
-                      className="w-full bg-black/40 border-white/5 h-16 rounded-3xl px-6 text-xl text-white font-bold focus:border-purple-500/40 focus:bg-purple-500/5 transition-all shadow-inner"
-                    />
-                    <div className="flex items-center gap-3 mt-2 ml-2">
-                      <span className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Live Preview:</span>
-                      <span className="bg-amber-500/10 text-amber-400 text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.2)] animate-pulse">
-                        {annualDiscount.badge_text || 'HEMET 2 BLN!'}
-                      </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
+                {/* Discount percent */}
+                <div className="space-y-3">
+                  <label htmlFor="discount_percent" className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">
+                    PERSENTASE POTONGAN (%)
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <div className="relative flex-1">
+                      <Input
+                        id="discount_percent"
+                        name="discount_percent"
+                        type="number"
+                        min={0}
+                        max={50}
+                        value={annualDiscount.discount_percent}
+                        onChange={e => setAnnualDiscount(p => ({ ...p, discount_percent: parseInt(e.target.value) || 0 }))}
+                        className="w-full bg-black/40 border-white/5 h-16 rounded-3xl px-8 text-3xl font-black text-white text-center focus:border-purple-500/40 focus:bg-purple-500/5 transition-all shadow-inner tabular-nums"
+                      />
+                      <div className="absolute right-6 top-1/2 -translate-y-1/2 text-2xl font-black text-[#4B6478]">%</div>
                     </div>
                   </div>
+                </div>
+
+                {/* Badge text */}
+                <div className="space-y-3">
+                  <label htmlFor="badge_text" className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">
+                    TEKS LABEL PROMO DI UI
+                  </label>
+                  <Input
+                    id="badge_text"
+                    name="badge_text"
+                    type="text"
+                    value={annualDiscount.badge_text}
+                    onChange={e => setAnnualDiscount(p => ({ ...p, badge_text: e.target.value }))}
+                    placeholder="Contoh: Hemat 2 bln!"
+                    className="w-full bg-black/40 border-white/5 h-16 rounded-3xl px-6 text-xl text-white font-bold focus:border-purple-500/40 focus:bg-purple-500/5 transition-all shadow-inner"
+                  />
+                  <div className="flex items-center gap-3 mt-2 ml-2">
+                    <span className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Live Preview:</span>
+                    <span className="bg-amber-500/10 text-amber-400 text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.2)] animate-pulse">
+                      {annualDiscount.badge_text || 'HEMET 2 BLN!'}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Discount preview table */}
@@ -712,8 +905,8 @@ export default function AdminPricing() {
               <div className="relative z-10">
                 <h2 className="text-2xl font-black text-white uppercase tracking-tight">Buat Voucher</h2>
                 <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mt-2 flex items-center gap-2">
-                   <span className="w-1 h-1 rounded-full bg-emerald-500 block" />
-                   Loyalty & Promo Engine
+                  <span className="w-1 h-1 rounded-full bg-emerald-500 block" />
+                  Loyalty & Promo Engine
                 </p>
               </div>
 
@@ -822,7 +1015,7 @@ export default function AdminPricing() {
                   DAFTAR VOUCHER AKTIF
                 </h2>
                 <div className="bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                    <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">{vouchers?.length || 0} TOTAL</span>
+                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">{vouchers?.length || 0} TOTAL</span>
                 </div>
               </div>
 
@@ -1037,7 +1230,7 @@ export default function AdminPricing() {
             disabled={savingRole === 'all'}
             className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-14 rounded-2xl font-black uppercase text-[12px] tracking-[0.2em] shadow-[0_20px_50px_rgba(16,185,129,0.3)] border border-emerald-400/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
           >
-             {savingRole === 'all' ? (
+            {savingRole === 'all' ? (
               <><Loader2 size={18} className="animate-spin" /> MENYIMPAN DATA...</>
             ) : (
               <>SIMPAN SEMUA PERUBAHAN</>
@@ -1091,7 +1284,7 @@ function RolePricingCard({ roleName, roleId, icon: Icon, color, data, onChange, 
     <Card className={`group relative bg-[#111C24]/40 backdrop-blur-xl rounded-[40px] p-8 border ${themes.card} transition-all duration-500 overflow-hidden hover:-translate-y-2`}>
       {/* Mesh Gradient Background */}
       <div className={`absolute inset-0 bg-gradient-to-br ${themes.mesh} opacity-50 group-hover:opacity-100 transition-opacity duration-700`} />
-      
+
       {/* Decorative Icon in background */}
       <div className="absolute -right-8 -bottom-8 opacity-[0.03] group-hover:opacity-[0.08] transition-all duration-700 scale-150 group-hover:rotate-12">
         <Icon size={180} strokeWidth={1} />
@@ -1118,7 +1311,7 @@ function RolePricingCard({ roleName, roleId, icon: Icon, color, data, onChange, 
               <Badge className="bg-emerald-500/10 text-emerald-400 border-none font-black tracking-widest text-[9px] px-3 py-1">PRO PLAN</Badge>
               <div className="h-px flex-1 bg-white/5" />
             </div>
-            
+
             <div className="grid grid-cols-1 gap-5">
               <div className="space-y-2 group/input">
                 <label className="text-[9px] uppercase text-[#4B6478] font-black tracking-widest ml-1 transition-colors group-hover/input:text-emerald-500/60">Target Harga Aktif</label>

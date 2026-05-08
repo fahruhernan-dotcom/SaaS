@@ -4,12 +4,13 @@ export const groups = [
   {
     Icon: Home,
     title: 'Multi-Kandang, Multi-Model Bisnis',
-    desc: null,
+    desc: 'Setup farm sekali, kelola semua kandang dari satu dashboard — dukung model mandiri maupun kemitraan.',
     features: [
-      'Dukung Mandiri & Kemitraan (CP, Japfa, dll)',
-      'Setup detail INTI perusahaan + harga kontrak',
-      'Limit kandang per plan (Starter:1, Pro:2, Business:∞)',
-      'Dukung Broiler & Petelur (Layer) dalam satu akun',
+      'Dukung Mandiri & Kemitraan (CP, Japfa, dll) dalam satu akun',
+      'Setup detail INTI perusahaan + harga kontrak kemitraan',
+      'Limit kandang per plan (Starter: 1, Pro: 2, Business: unlimited)',
+      'Dukung Broiler & Petelur Layer (segera hadir) dalam satu akun',
+      'Farm settings: kapasitas kandang, model bisnis, target FCR',
     ],
   },
   {
@@ -17,23 +18,26 @@ export const groups = [
     title: 'Tracking Siklus dari Chick In sampai Panen',
     desc: null,
     features: [
-      'Mulai siklus: input DOC, tanggal, target panen',
-      'Catat biaya DOC otomatis (mandiri)',
-      'Estimasi harvest date otomatis',
-      'Status siklus: Growing, Ready, Panen, Selesai',
+      'Mulai siklus: input DOC, tanggal chick-in, target panen',
+      'Catat biaya DOC otomatis (mandiri) atau via INTI (kemitraan)',
+      'Estimasi harvest date otomatis berdasarkan bobot target',
+      'Status siklus: Growing → Ready → Panen → Selesai',
       'Multi-siklus paralel per kandang',
+      'Standar bobot Cobb500 sebagai benchmark harian',
     ],
   },
   {
     Icon: ClipboardList,
-    title: 'Input Harian < 2 Menit',
+    title: 'Input Harian < 2 Menit + Vaksinasi',
     desc: null,
     features: [
-      'Catat mortalitas harian',
-      'Catat pakan terpakai (kg)',
-      'Sample berat rata-rata (gram)',
-      'FCR estimasi realtime',
+      'Catat mortalitas harian per kandang',
+      'Catat pakan terpakai (kg) dengan debit stok otomatis',
+      'Sample berat rata-rata (gram) vs standar Cobb500',
+      'FCR estimasi realtime setiap hari',
       'Alert jika belum input hari ini',
+      'Jadwal vaksinasi standar: ND+IB, Gumboro, booster, dll',
+      'Log vaksinasi: jenis, dosis, tanggal, pelaksana',
       'Timeline histori per siklus',
     ],
   },
@@ -42,24 +46,26 @@ export const groups = [
     title: 'Analitik Performa Kandang',
     desc: null,
     features: [
-      'FCR Final = total pakan ÷ total bobot panen',
-      'IP Score otomatis per siklus',
-      'Benchmark: Sangat Baik / Baik / Perlu Evaluasi',
-      'Grafik bobot & pakan per hari',
-      'Breakdown biaya lengkap per siklus',
+      'FCR Final = total pakan ÷ total bobot panen (per siklus)',
+      'IP Score otomatis per siklus selesai',
+      'Benchmark otomatis: Sangat Baik / Baik / Perlu Evaluasi',
+      'Grafik bobot & pakan per hari vs standar Cobb500',
+      'Breakdown biaya lengkap per siklus (DOC, pakan, obat, TK)',
       'HPP per kg terhitung otomatis',
+      'Laporan siklus: FCR final, IP Score, HPP/kg, laba-rugi',
     ],
   },
   {
     Icon: Users,
-    title: 'Kelola Anak Kandang & Penggajian',
+    title: 'Anak Kandang, Tugas & Penggajian',
     desc: null,
     features: [
-      'Database anak kandang per farm',
-      'Sistem gaji: Flat + Bonus panen',
-      'Bonus otomatis jika FCR < target',
-      'Catat pembayaran gaji & bonus',
-      'Riwayat pembayaran per worker',
+      'Database anak kandang per farm dengan penugasan harian',
+      'Tugas harian digital: assign, tracking penyelesaian',
+      'Sistem gaji: Flat + Bonus panen otomatis',
+      'Bonus otomatis jika FCR < target (konfigurasi sendiri)',
+      'Catat pembayaran gaji & bonus per worker',
+      'Riwayat pembayaran per anak kandang',
     ],
   },
   {
@@ -67,28 +73,29 @@ export const groups = [
     title: 'Manajemen Stok Pakan',
     desc: null,
     features: [
-      'Stok per jenis pakan (Starter/Grower/Finisher)',
-      'Status: Aman / Cukup / Menipis',
-      'Catat pembelian pakan (tambah stok)',
-      'Catat pemakaian manual',
-      'Alert stok < 100 kg',
-      'Integrasi ke cycle_expenses',
+      'Stok per jenis pakan: Starter, Grower, Finisher',
+      'Status visual: Aman / Cukup / Menipis',
+      'Catat pembelian pakan dari supplier (tambah stok)',
+      'Debit stok otomatis dari input harian',
+      'Alert stok < 100 kg ke HP pengelola',
+      'Integrasi ke laporan biaya siklus',
     ],
   },
 ]
 
 export const hero = {
-  eyebrow: 'Solusi Peternak Ayam',
+  eyebrow: 'Solusi Peternak Ayam Broiler',
   headline: 'Cetak Indeks Performa (IP) Tertinggi dengan Manajemen Kandang Berbasis Data.',
-  sub: 'Catat FCR, mortality, dan pemakaian obat harian. Bandingkan performa antar siklus kandang.',
+  sub: 'Catat FCR, mortalitas, dan vaksinasi harian — semua terhitung otomatis. Bandingkan performa antar siklus kandang.\n\n*Ayam Layer (Petelur) sedang dikembangkan — tersedia segera.*',
   cta: 'Mulai Kelola Kandang Ayam',
 }
 
 export const beforeAfter = [
-  { before: 'Catat kematian ayam di kertas, mudah hilang', after: 'Recording harian digital, tersimpan per siklus' },
-  { before: 'Hitung FCR manual, sering tidak akurat', after: 'Kalkulator FCR otomatis dari data pakan & bobot' },
-  { before: 'Tidak bisa bandingkan performa antar siklus', after: 'Analisis siklus otomatis dengan grafik tren' },
-  { before: 'Tidak tahu profit sebelum panen selesai', after: 'Estimasi keuntungan tersedia real-time' },
+  { before: 'Catat kematian ayam di kertas, mudah hilang', after: 'Recording harian digital, tersimpan otomatis per siklus di cloud' },
+  { before: 'Hitung FCR manual pakai kalkulator, sering meleset', after: 'FCR & IP Score terhitung otomatis setiap hari dari data aktual' },
+  { before: 'Jadwal vaksinasi lupa atau terlewat', after: 'Jadwal vaksinasi standar Cobb — alert otomatis ke HP pengelola' },
+  { before: 'Tidak bisa bandingkan performa antar siklus', after: 'Laporan siklus + grafik tren bobot vs standar Cobb500' },
+  { before: 'Tidak tahu profit sebelum panen selesai', after: 'Estimasi laba-rugi + HPP/kg tersedia real-time sepanjang siklus' },
 ]
 
 export const faq = [
@@ -102,11 +109,11 @@ export const faq = [
   },
   {
     q: 'Bisakah pantau lebih dari satu kandang?',
-    a: 'Bisa. Tambahkan kandang sebanyak yang kamu miliki (sesuai limit paket). Setiap kandang punya recording harian dan analisis siklus sendiri yang bisa dibandingkan satu sama lain.',
+    a: 'Bisa. Tambahkan kandang sesuai limit paket (Starter: 1, Pro: 2, Business: unlimited). Setiap kandang punya recording harian dan analisis siklus sendiri yang bisa dibandingkan satu sama lain.',
   },
   {
     q: 'Apakah TernakOS mendukung sistem kemitraan (CP, Japfa, dll)?',
-    a: 'Ya. TernakOS mendukung model bisnis mandiri murni, mandiri semi, maupun mitra penuh. Untuk pola mitra, kamu bisa input nama INTI, harga kontrak, dan sistem deducting sapronak otomatis.',
+    a: 'Ya. TernakOS mendukung model bisnis mandiri maupun mitra penuh. Untuk pola mitra, kamu bisa input nama INTI, harga kontrak, dan sistem deducting sapronak otomatis.',
   },
   {
     q: 'Bagaimana cara menghitung keuntungan peternak broiler per siklus?',
@@ -119,5 +126,9 @@ export const faq = [
   {
     q: 'Apakah ada fitur recording harian untuk peternak?',
     a: 'Ada. Input harian bisa diselesaikan kurang dari 2 menit: mortalitas, pakan terpakai, sampel bobot rata-rata. Sistem otomatis menghitung FCR harian dan menampilkan grafik tren bobot vs pakan.',
+  },
+  {
+    q: 'Kapan fitur Ayam Layer (Petelur) tersedia?',
+    a: 'Fitur peternak ayam layer (petelur) sedang dalam pengembangan — termasuk recording produksi telur harian, HDP (Hen Day Production), dan laporan produksi. Subscriber Pro akan mendapat akses otomatis saat fitur live.',
   },
 ]

@@ -33,7 +33,7 @@ import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import AboutUs from './pages/AboutUs';
 import FiturPage from './pages/FiturPage';
-import HargaPage from './pages/HargaPage';
+import HargaPage from './pages/harga';
 import FAQPage from './pages/FAQPage';
 import MarketPublic from './pages/MarketPublic';
 import HubungiKami from './pages/HubungiKami';

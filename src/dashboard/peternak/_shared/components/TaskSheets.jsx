@@ -364,9 +364,9 @@ export function CompleteTaskSheet({
                     <p className="text-xs font-semibold text-slate-400 mt-1.5 flex items-center gap-2">
                       <MapPin size={12} className="text-slate-500" /> {task.kandang_name || 'Global Farm'} 
                       <span className="text-white/10">•</span>
-                      {task.status === 'selesai' && task.completed_at 
+                      {task.status === 'selesai' && task.completed_at
                           ? `Selesai: ${format(new Date(task.completed_at), "HH:mm", { locale: idLocale })}`
-                          : `${task.due_time?.substring(0, 5)} WIB`
+                          : task.due_time ? `${task.due_time.substring(0, 5)} WIB` : 'Jadwal Harian'
                         }
                     </p>
                   </div>

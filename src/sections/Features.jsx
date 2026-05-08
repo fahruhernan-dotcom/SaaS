@@ -10,9 +10,9 @@ const Features = ({ activeRole }) => {
     broker: {
       block1: {
         badge: "TRANSAKSI & PROFIT",
-        title: "Profit Langsung Kelihatan Sebelum Deal.",
-        desc: "Input pembelian dari kandang dan penjualan ke RPA. Margin per kg, total profit, semua dihitung otomatis. Ada simulator margin sebelum kamu deal.",
-        checklist: ['Hitung margin per kg otomatis', 'Simulator profit akurat', 'Tanpa kalkulator atau Excel rawan error'],
+        title: "Transkasi Cepat. Profit Terlihat Jelas.",
+        desc: "Input pembelian dari kandang dan penjualan ke RPA secara real-time. Margin per kg, total profit, serta biaya armada dihitung otomatis tanpa kalkulator.",
+        checklist: ['Kalkulator margin profit otomatis', 'Manajemen rute & biaya armada', 'Transaksi Jual/Beli Real-time'],
         mockup: {
           label: "Catat Penjualan Baru",
           items: ["Harga Jual: Rp 23.000/kg", "Total Berat: 2.100 kg"],
@@ -23,9 +23,9 @@ const Features = ({ activeRole }) => {
       },
       block2: {
         badge: "TRACKER PIUTANG",
-        title: "Tidak Ada Lagi Hutang RPA yang Kelewat.",
-        desc: "Semua piutang RPA tercatat dengan jatuh tempo. Satu ketukan untuk tandai lunas. Lihat siapa yang paling lama menunggak dari dashboard.",
-        checklist: ['Notifikasi jatuh tempo pembayaran', 'Tandai lunas dengan satu klik', 'Riwayat piutang per RPA'],
+        title: "Piutang RPA & Hutang Peternak Terkendali.",
+        desc: "Lacak piutang dari RPA dan hutang ke peternak di satu tempat. Tandai lunas, cek jatuh tempo, dan lihat analitik kas Anda tanpa membuka buku besar.",
+        checklist: ['Pelacakan Piutang RPA otomatis', 'Notifikasi jatuh tempo pembayaran', 'Rekap arus kas terintegrasi'],
         mockup: {
           label: "Piutang Aktif",
           badge: "3 belum lunas",
@@ -39,65 +39,98 @@ const Features = ({ activeRole }) => {
     },
     peternak: {
       block1: {
-        badge: "+ KELOLA SIKLUS",
-        title: "Pantau Siklus Budidaya dari Awal sampai Panen.",
-        desc: "Input harian pakan, mortalitas, dan bobot otomatis terhitung. FCR dan efisiensi pakan langsung kelihatan tanpa Excel.",
-        checklist: ['FCR otomatis terhitung tiap hari', 'Grafik pertumbuhan bobot per siklus', 'Alert stok pakan menipis'],
+        badge: "KANDANG MAP & TASKS",
+        title: "Pantau Kandang & Tim dengan Interaktif.",
+        desc: "Akses Mobile Kandang Map untuk melihat status setiap blok. Buat penugasan (Daily Tasks) untuk anak kandang dan pantau operasional dari genggaman.",
+        checklist: ['Mobile Kandang Map interaktif', 'Penugasan Tim (Daily Task)', 'Pencatatan mortalitas & pakan'],
         mockup: {
-          label: "SIKLUS AKTIF",
-          items: ["Kandang Makmur · Hari ke-28", "Populasi: 5.000 ekor"],
+          label: "STATUS KANDANG",
+          items: ["Kandang Blok A · Hari ke-28", "Tugas Harian: 4/5 Selesai"],
           profit: 1.72,
           profitPrefix: "FCR: ",
           profitSuffix: "",
-          stats: "Target Panen: 14 hari lagi",
-          progress: "75%",
+          stats: "IP Score: 345 (Sangat Baik)",
+          progress: "80%",
           isFCR: true
         }
       },
       block2: {
-        badge: "+ KONEKSI BROKER",
-        title: "Listing Stok Ayam Siap Jual ke Broker.",
-        desc: "Tidak perlu telepon satu-satu. Pasang listing stok, broker yang cocok langsung bisa hubungi kamu.",
-        checklist: ['Listing stok terlihat oleh broker terdaftar', 'Notifikasi saat ada broker tertarik', 'Riwayat transaksi dengan broker'],
+        badge: "BIAYA OPERASIONAL",
+        title: "Lacak Setiap Rupiah yang Keluar.",
+        desc: "Sistem pencatatan biaya operasional yang detail. Dari biaya listrik hingga vitamin, ketahui harga pokok produksi (HPP) Anda sebelum masa panen tiba.",
+        checklist: ['Kalkulasi HPP otomatis', 'Rekap pengeluaran operasional', 'InputRupiah untuk validasi data'],
         mockup: {
-          label: "STOK LISTING",
-          badge: "3 listing aktif",
+          label: "BIAYA OPERASIONAL",
+          badge: "Bulan Ini",
           items: [
-            { name: 'Kandang Utama', amount: '4.500 ekor', date: 'Ready 20 Mar', avatar: 'KU', bg: 'bg-emerald-600', subBadge: 'AKTIF' },
-            { name: 'Kandang Barat', amount: '5.200 ekor', date: 'Ready 25 Mar', avatar: 'KB', bg: 'bg-[#0891B2]', subBadge: 'AKTIF' },
-            { name: 'Kandang Timur', amount: '3.800 ekor', date: 'Ready 28 Mar', avatar: 'KT', bg: 'bg-amber-500', subBadge: 'AKTIF' }
+            { name: 'Pakan Starter', amount: 'Rp 14jt', date: 'Total 40 sak', avatar: 'PS', bg: 'bg-emerald-600', subBadge: 'LUNAS' },
+            { name: 'Listrik & Air', amount: 'Rp 1.2jt', date: 'Beban Tetap', avatar: 'LA', bg: 'bg-[#0891B2]', subBadge: 'LUNAS' },
+            { name: 'Vitamin & OVK', amount: 'Rp 2.8jt', date: 'Vaksin ND', avatar: 'VO', bg: 'bg-amber-500', subBadge: 'LUNAS' }
           ]
         }
       }
     },
     rpa: {
       block1: {
-        badge: "+ KELOLA ORDER",
-        title: "Semua Order Pembelian Ayam di Satu Tempat.",
-        desc: "Buat purchase order ke broker, pantau status pengiriman, dan catat pembayaran dalam satu dashboard terintegrasi.",
-        checklist: ['Purchase order ke banyak broker sekaligus', 'Status pengiriman real-time', 'Riwayat pembelian per broker'],
+        badge: "MANAJEMEN PRODUKSI",
+        title: "Kontrol Penuh Produksi & Karkas.",
+        desc: "Catat jumlah ayam hidup yang masuk, hitung persentase yield karkas otomatis, dan pantau hasil potongan per produk dengan tingkat akurasi tinggi.",
+        checklist: ['Manajemen Produksi & Potong', 'Perhitungan yield karkas otomatis', 'Integrasi pembelian dari Broker'],
         mockup: {
-          label: "ORDER AKTIF",
-          items: ["PO #882 - Broker Sinar", "Total: 3.500 kg"],
-          profit: 2450,
-          profitPrefix: "Total: ",
-          profitSuffix: " ekor",
-          stats: "Status: DIKIRIM (On Route)",
-          progress: "45%"
+          label: "PRODUKSI HARI INI",
+          items: ["Ayam Hidup Masuk: 3.500 kg", "Hasil Karkas: 2.450 kg"],
+          profit: 70,
+          profitPrefix: "Yield: ",
+          profitSuffix: "%",
+          stats: "Status: SELESAI POTONG",
+          progress: "100%"
         }
       },
       block2: {
-        badge: "+ TRACKER HUTANG",
-        title: "Tidak Ada Lagi Hutang ke Broker yang Kelewat.",
-        desc: "Semua hutang ke broker tercatat dengan jatuh tempo. Tandai lunas dengan satu ketukan. Lihat total hutang berjalan.",
-        checklist: ['Jatuh tempo otomatis tercatat', 'Notifikasi H-3 sebelum jatuh tempo', 'Riwayat pembayaran per broker'],
+        badge: "STOK GUDANG",
+        title: "Stok Barang Real-time & Pelacakan Hutang.",
+        desc: "Tidak ada lagi barang hilang atau hutang yang terlewat. Pantau stok produk potongan di gudang dan kelola hutang ke broker dengan rapi.",
+        checklist: ['Manajemen Stok Gudang realtime', 'Pelacakan Hutang ke Broker', 'Riwayat keluar-masuk barang'],
         mockup: {
-          label: "HUTANG BERJALAN",
-          badge: "4 tagihan",
+          label: "HUTANG & STOK",
+          badge: "Aman",
           items: [
             { name: 'Broker Sentosa', amount: 'Rp 32jt', date: 'Jatuh tempo 15 Mar', avatar: 'BS', bg: 'bg-emerald-600' },
-            { name: 'Broker Jaya', amount: 'Rp 18jt', date: 'Jatuh tempo 20 Mar', avatar: 'BJ', bg: 'bg-[#0891B2]' },
-            { name: 'Broker Abadi', amount: 'Rp 45jt', date: 'Jatuh tempo 25 Mar', avatar: 'BA', bg: 'bg-amber-500' }
+            { name: 'Dada Mentok (Stok)', amount: '1.200 kg', date: 'Gudang A', avatar: 'DM', bg: 'bg-[#0891B2]' },
+            { name: 'Paha Bawah (Stok)', amount: '850 kg', date: 'Gudang B', avatar: 'PB', bg: 'bg-amber-500' }
+          ]
+        }
+      }
+    },
+    sembako: {
+      block1: {
+        badge: "PEMBELIAN SUPPLIER",
+        title: "Catat Pembelian Sembako Lebih Aman.",
+        desc: "Input data pembelian barang dari supplier dengan mudah. Sistem memvalidasi metode pembayaran (tunai/hutang) untuk mencegah selisih uang kas.",
+        checklist: ['Validasi Pembayaran Lunas', 'Rekap Hutang Supplier', 'Otomatis tambah stok gudang'],
+        mockup: {
+          label: "PO Terbaru",
+          items: ["Supplier Makmur - 50 Karung Beras", "Status: Belum Lunas"],
+          profit: 12500000,
+          profitPrefix: "Hutang: Rp ",
+          profitSuffix: "",
+          stats: "Jatuh Tempo: 20 Mar",
+          progress: "85%",
+          isFCR: false
+        }
+      },
+      block2: {
+        badge: "KASIR PENJUALAN",
+        title: "Penjualan Cepat dengan Sales Wizard.",
+        desc: "Proses transaksi kasir menjadi sangat mudah dengan Sales Wizard. Fitur retur, pelacakan pengiriman kurir, dan potong stok otomatis tanpa ribet.",
+        checklist: ['Kasir Cepat (Sales Wizard)', 'Fitur Retur Barang', 'Laporan & Analytics Lengkap'],
+        mockup: {
+          label: "TRANSAKSI HARI INI",
+          badge: "23 Selesai",
+          items: [
+            { name: 'Toko Sumber', amount: 'Rp 4.5jt', date: 'Dikirim: Kurir Anto', avatar: 'TS', bg: 'bg-emerald-600', subBadge: 'LUNAS' },
+            { name: 'Ibu Ani', amount: 'Rp 850rb', date: 'Diambil di Toko', avatar: 'IA', bg: 'bg-[#0891B2]', subBadge: 'LUNAS' },
+            { name: 'Warung Pojok', amount: 'Rp 2.1jt', date: 'Menunggu Kurir', avatar: 'WP', bg: 'bg-amber-500', subBadge: 'HUTANG' }
           ]
         }
       }

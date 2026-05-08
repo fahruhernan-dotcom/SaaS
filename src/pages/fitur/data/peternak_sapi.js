@@ -9,7 +9,8 @@ export const groups = [
       'Buat & tutup batch dengan tanggal masuk dan target panen',
       'Dukung dua model: Penggemukan (Fattening) & Breeding',
       'Status batch: Aktif, Siap Jual',
-      'Ringkasan populasi & nilai per batch realtime',
+      'Ringkasan populasi, nilai batch, FCR, & R/C ratio realtime',
+      'BEP otomatis per batch — tahu kapan balik modal',
       'Multi-batch paralel dalam satu akun',
     ],
   },
@@ -27,7 +28,7 @@ export const groups = [
   },
   {
     Icon: Home,
-    title: 'Denah Kandang 3D Interaktif',
+    title: 'Denah Kandang Interaktif',
     desc: 'Visualisasi posisi setiap sapi — lihat performa sekilas tanpa buka kartu satu-satu.',
     features: [
       'Layout kandang interaktif per batch',
@@ -52,41 +53,45 @@ export const groups = [
   {
     Icon: Users,
     title: 'Kesehatan & Reproduksi (Breeding)',
-    desc: 'Rekam medik per ekor dan siklus reproduksi untuk mode Breeding.',
+    desc: 'Rekam medik per ekor dan siklus reproduksi penuh untuk mode Breeding.',
     features: [
-      'Log vaksinasi & pengobatan per ekor',
+      'Log vaksinasi & pengobatan per ekor (sakit, treatment, sembuh)',
       'Rekam medik individual terintegrasi',
-      'Tracking siklus birahi, IB, dan kelahiran',
-      'Catatan induk, pejantan, & silsilah pedet',
+      'Manajemen reproduksi: IB / kawin alam, inseminator, tanggal',
+      'Status kehamilan: birahi → IB → bunting → kelahiran',
+      'Pencatatan kelahiran & silsilah pedet (dam/sire lineage)',
+      'Conception rate & calving interval otomatis',
       'Alert pemeriksaan rutin berkala',
     ],
   },
   {
     Icon: BarChart2,
-    title: 'Laporan Batch & Penjualan',
+    title: 'Laporan Batch, Penjualan & Keuangan',
     desc: 'Laba-rugi per batch terhitung otomatis — tidak perlu Excel lagi.',
     features: [
-      'Laporan laba-rugi per batch otomatis',
-      'HPP per kg/ekor terhitung dari semua biaya',
-      'Catat penjualan per ekor atau per batch',
-      'Biaya operasional: listrik, air, pakan, obat',
-      'Ringkasan keuangan batch siap lapor',
+      'Laporan batch closure: FCR final, R/C ratio, HPP/kg, laba-rugi',
+      'HPP per kg/ekor terhitung dari semua biaya masuk',
+      'Catat penjualan per ekor atau per batch (bobot, harga, pembeli)',
+      'Biaya operasional: pakan, obat, TK, listrik, air',
+      'Stok pakan per batch dengan supplier tracking',
+      'KPI harian beranda: ADG target, mortalitas, FCR, R/C ratio, BEP',
     ],
   },
 ]
 
 export const hero = {
   eyebrow: 'Solusi Peternak Sapi',
-  headline: 'Pantau ADG, Batch, dan Denah Kandang Sapi dari Satu Dashboard.',
-  sub: 'Sistem lengkap untuk sapi penggemukan & breeding — tracking bobot per ekor, penugasan tim anak kandang, hingga laporan keuangan batch otomatis.',
+  headline: 'Pantau ADG, FCR, dan BEP Sapi dari Satu Dashboard.',
+  sub: 'Sistem lengkap untuk sapi penggemukan & breeding — tracking bobot per ekor, penugasan tim anak kandang, reproduksi, hingga laporan keuangan batch otomatis.',
   cta: 'Mulai Kelola Kandang Sapi',
 }
 
 export const beforeAfter = [
-  { before: 'Catat bobot sapi di buku, susah cari histori per ekor', after: 'Kartu ternak digital dengan ADG otomatis per ekor' },
+  { before: 'Catat bobot sapi di buku, susah cari histori per ekor', after: 'Kartu ternak digital dengan ADG otomatis — prediksi panen realtime' },
+  { before: 'Tidak tahu apakah batch sudah balik modal atau belum', after: 'BEP & R/C ratio tersedia otomatis sejak hari pertama batch' },
   { before: 'Delegasi tugas anak kandang lewat pesan WhatsApp', after: 'Penugasan digital dengan tracking penyelesaian harian' },
-  { before: 'Jadwal kesehatan & IB tidak terdokumentasi', after: 'Log kesehatan & reproduksi terintegrasi per ekor' },
-  { before: 'Laporan batch dihitung manual di akhir periode', after: 'Laporan laba-rugi batch tersedia real-time otomatis' },
+  { before: 'Jadwal IB dan kelahiran tidak terdokumentasi', after: 'Manajemen reproduksi: conception rate & calving interval terekam' },
+  { before: 'Laporan batch dihitung manual di akhir periode', after: 'Laporan laba-rugi + FCR final + HPP/kg tersedia real-time' },
 ]
 
 export const faq = [
@@ -100,14 +105,18 @@ export const faq = [
   },
   {
     q: 'Apakah bisa kelola sapi penggemukan dan breeding sekaligus?',
-    a: 'Bisa. Satu akun TernakOS mendukung dua tipe peternakan sapi: Penggemukan (fattening) dan Breeding. Penggemukan fokus pada tracking bobot dan ADG menuju target panen, sementara Breeding memiliki modul reproduksi untuk tracking birahi, IB, dan kelahiran.',
+    a: 'Bisa. Satu akun TernakOS mendukung dua tipe peternakan sapi: Penggemukan (fattening) dan Breeding. Penggemukan fokus pada tracking bobot, ADG, BEP, dan R/C ratio menuju target panen. Breeding memiliki modul reproduksi untuk tracking IB, kehamilan, kelahiran, dan silsilah pedet.',
   },
   {
-    q: 'Apa itu fitur Denah Kandang 3D?',
+    q: 'Apa itu fitur Denah Kandang?',
     a: 'Denah Kandang adalah visualisasi interaktif posisi setiap sapi dalam kandang. Setiap titik berwarna berdasarkan performa ADG: hijau (ADG ≥ 0.8 kg/hari), kuning (0.5–0.8 kg), merah (< 0.5 kg). Tersedia mode tampilan 3D isometrik. Klik salah satu titik untuk langsung membuka kartu detail sapi tersebut.',
   },
   {
     q: 'Bagaimana sistem penugasan tim anak kandang bekerja?',
-    a: 'Owner atau manajer bisa membuat template tugas harian (pakan pagi, timbang, cek kesehatan) dan mengassign ke anak kandang. Setiap anak kandang melihat daftar tugasnya dan menandai selesai dari HP. Riwayat penyelesaian terekam otomatis — kamu bisa pantau kepatuhan tim tanpa harus telepon satu-satu.',
+    a: 'Owner atau manajer bisa membuat template tugas harian (pakan pagi, timbang, cek kesehatan) dan mengassign ke anak kandang. Setiap anak kandang melihat daftar tugasnya dan menandai selesai dari HP. Riwayat penyelesaian terekam otomatis.',
+  },
+  {
+    q: 'Apa itu R/C Ratio dan BEP di peternakan sapi?',
+    a: 'R/C Ratio (Revenue to Cost) mengukur efisiensi: R/C > 1 artinya usaha menguntungkan. BEP (Break Even Point) adalah titik balik modal — kapan pendapatan penjualan sapi menutupi semua biaya. TernakOS menghitung keduanya otomatis per batch berdasarkan data biaya dan harga jual aktual.',
   },
 ]

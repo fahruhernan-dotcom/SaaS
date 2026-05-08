@@ -1,16 +1,17 @@
-import { ArrowLeftRight, Home, Truck, Users, BarChart2 } from 'lucide-react'
+import { ArrowLeftRight, Home, Truck, Users, BarChart2, Calculator } from 'lucide-react'
 
 export const groups = [
   {
     Icon: ArrowLeftRight,
     title: 'Catat Beli & Jual dalam Hitungan Detik',
-    desc: 'Wizard transaksi 3 langkah — dari beli kandang sampai kirim ke RPA.',
+    desc: 'Wizard 3 langkah — dari beli kandang sampai audit transaksi & kirim nota ke WhatsApp.',
     features: [
       'Catat pembelian dari kandang (harga, bobot, ekor)',
       'Catat penjualan ke RPA/pasar/langsung',
-      'Kalkulasi margin otomatis per transaksi',
-      'Multi-mode: Beli dulu atau Order dulu',
-      'Riwayat transaksi lengkap dengan filter',
+      'Kalkulasi margin & susut otomatis per transaksi',
+      'Audit sheet lengkap: detail beli, kirim, & histori bayar',
+      'Kirim nota digital ke WhatsApp pembeli satu klik',
+      'Riwayat transaksi dengan filter status & periode',
     ],
   },
   {
@@ -18,60 +19,63 @@ export const groups = [
     title: 'Pantau Semua Kandang dari Satu Tempat',
     desc: null,
     features: [
-      'Database kandang lengkap (stok, bobot, status)',
+      'Database kandang mitra (stok, bobot, status)',
+      'Status: GROWING, READY, EMPTY dengan filter cepat',
       'Rating kualitas kandang 1–5 bintang',
-      'Filter kandang siap panen vs growing',
-      'Riwayat transaksi per kandang',
-      'Estimasi panen & jadwal harvest',
+      'Estimasi tanggal harvest per kandang',
+      'Riwayat transaksi per kandang mitra',
     ],
   },
   {
     Icon: Truck,
-    title: 'Tracking Pengiriman Real-time',
+    title: 'Tracking Pengiriman & Loss Report',
     desc: null,
     features: [
       'Catat detail pengiriman (kendaraan, sopir, muatan)',
+      'Update bobot & ekor tiba vs bobot kirim (susut)',
       'Timbangan digital (Business plan)',
-      'Catat bobot tiba vs bobot kirim (susut)',
-      'Loss report otomatis: mortalitas & susut berat',
-      'Revenue diupdate otomatis dari bobot tiba',
+      'Loss report mortalitas & susut berat per pengiriman',
+      'Revenue diupdate otomatis dari bobot tiba aktual',
+      'PDF Surat Jalan pengiriman (Pro)',
+      'Dashboard khusus Sopir (akses mobile)',
     ],
   },
   {
     Icon: Users,
-    title: 'Kelola Piutang Tanpa Dispute',
+    title: 'Kelola Piutang RPA Tanpa Dispute',
     desc: null,
     features: [
-      'Database RPA/buyer lengkap',
+      'Database RPA/buyer dengan reliability score',
       'Tracking piutang per RPA realtime',
       'Payment terms: Cash, NET 3/7/14/30',
-      'Catat pembayaran partial',
+      'Catat pembayaran partial & tandai lunas massal',
       'Alert piutang jatuh tempo',
-      'Reliability score per buyer',
+      'WhatsApp link langsung ke nomor RPA',
     ],
   },
   {
-    Icon: BarChart2,
-    title: 'Laporan Keuangan Otomatis',
+    Icon: Calculator,
+    title: 'Simulator & Cash Flow Otomatis',
     desc: null,
     features: [
-      'Dashboard cash flow bulanan',
-      'Breakdown: modal, transport, kerugian, extra',
-      'Net profit per periode',
-      'Grafik trend 6 bulan',
-      'Catat biaya operasional tambahan',
+      'Simulator: hitung BEP, ROI%, dan margin/kg sebelum deal',
+      'Integrasikan harga pasar hari ini ke simulasi',
+      'Dashboard cash flow bulanan (modal, transport, kerugian)',
+      'Grafik Revenue vs Biaya per hari/minggu/bulan',
+      'Breakdown per RPA & per kandang sumber',
+      'Export laporan PDF & Excel (Business)',
     ],
   },
   {
     Icon: Truck,
-    title: 'Kelola Armada & Anggota Tim',
+    title: 'Armada, Pengeluaran & Tim',
     desc: null,
     features: [
       'Database kendaraan + SIM expiry alert',
       'Database sopir + upah per trip',
-      'Multi-role: Owner, Staff, View Only, Sopir',
-      'Undang anggota via kode 6 digit',
-      'RBAC: akses berbeda per role',
+      'Catat pengeluaran armada: BBM, servis, pajak, sewa',
+      'Multi-role: Owner, Manajer, Staff, Sopir, View Only',
+      'Undang anggota via kode 6 digit (Pro: maks 3, Business: unlimited)',
     ],
   },
 ]
@@ -79,7 +83,7 @@ export const groups = [
 export const hero = {
   eyebrow: 'Solusi Broker Ayam',
   headline: 'Kelola Ratusan Ton Ayam Tanpa Pusing Selisih Timbangan.',
-  sub: 'Dari catat pembelian kandang sampai kirim nota ke WhatsApp pembeli — semua dalam 3 langkah.',
+  sub: 'Dari catat pembelian kandang sampai kirim nota ke WhatsApp pembeli — semua dalam 3 langkah. Hemat 2 jam/hari pencatatan.',
   cta: 'Mulai Kelola Transaksi Broker',
 }
 

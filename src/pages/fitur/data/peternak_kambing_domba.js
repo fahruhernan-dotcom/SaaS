@@ -1,28 +1,29 @@
-import { RefreshCw, Package, Home, ClipboardList, Zap, BarChart2 } from 'lucide-react'
+import { RefreshCw, Package, Home, ClipboardList, Milk, BarChart2 } from 'lucide-react'
 
 export const groups = [
   {
     Icon: RefreshCw,
     title: 'Penggemukan & Breeding dalam Satu Akun',
-    desc: '4 sub-tipe tersedia: Kambing Penggemukan, Kambing Breeding, Domba Penggemukan, Domba Breeding.',
+    desc: '5 sub-tipe tersedia: Kambing Penggemukan, Kambing Breeding, Kambing Perah, Domba Penggemukan, Domba Breeding.',
     features: [
-      'Penggemukan: sistem batch koloni massal',
-      'Breeding: tracking individu & reproduksi',
+      'Penggemukan: sistem batch koloni massal (kambing & domba)',
+      'Breeding: tracking individu & reproduksi (kambing & domba)',
+      'Kambing Perah: produksi susu harian per ekor',
       'Switch antar tipe tanpa keluar aplikasi',
       'Data & laporan terpisah per tipe',
-      'Semua diakses dari satu dashboard',
     ],
   },
   {
     Icon: Package,
-    title: 'Batch Management Penggemukan',
-    desc: 'Catat masuk, pantau mortalitas, tutup batch saat panen — tanpa kertas.',
+    title: 'Batch Penggemukan: ADG, FCR & BEP',
+    desc: 'Catat masuk, pantau performa, tutup batch saat panen — tanpa kertas.',
     features: [
       'Buat batch: tanggal masuk, jumlah ekor, bobot rata-rata',
-      'Tracking mortalitas & pergantian populasi realtime',
+      'Kartu ternak individual dengan ADG otomatis per ekor',
+      'FCR & R/C ratio per batch dihitung realtime',
+      'BEP otomatis — tahu kapan balik modal',
       'Target hari dan target bobot panen per batch',
-      'Status batch: Aktif, Siap Jual',
-      'Catat penjualan massal saat batch tutup',
+      'Catat penjualan per ekor atau massal saat batch tutup',
     ],
   },
   {
@@ -31,7 +32,7 @@ export const groups = [
     desc: 'Lihat posisi ternak di kandang — performa batch terbaca sekilas.',
     features: [
       'Visualisasi layout kandang interaktif',
-      'Warna per batch berdasarkan performa',
+      'Warna per ternak berdasarkan tier ADG (hijau/kuning/merah)',
       'Mode tampilan 3D isometrik',
       'Filter tampilan per batch aktif',
       'Klik ternak → kartu detail langsung terbuka',
@@ -39,75 +40,84 @@ export const groups = [
   },
   {
     Icon: ClipboardList,
-    title: 'Tugas Harian & Penugasan Tim',
-    desc: 'Assign tugas ke anak kandang, pantau kepatuhan dari HP.',
+    title: 'Breeding: Reproduksi & Kesehatan',
+    desc: 'Rekam medik per ekor dan siklus reproduksi penuh untuk mode Breeding.',
     features: [
-      'Template tugas: pakan, minum, vaksin, timbang',
-      'Assign ke anak kandang individual',
-      'Tracking penyelesaian tugas real-time',
-      'Konfigurasi jadwal & template tugas',
-      'Riwayat kepatuhan harian tim',
+      'Kartu ternak individu: silsilah, dam/sire lineage',
+      'Manajemen reproduksi: IB / kawin alam, inseminator, tanggal',
+      'Status kehamilan: birahi → IB → bunting → kelahiran',
+      'Pencatatan kelahiran & silsilah pedet/cempe',
+      'Conception rate & calving interval otomatis',
+      'Log vaksinasi & pengobatan per ekor',
+      'Tugas harian + penugasan tim anak kandang',
     ],
   },
   {
-    Icon: Zap,
-    title: 'Stok Pakan & Kesehatan',
-    desc: 'Pantau stok sebelum habis, catat riwayat kesehatan per batch.',
+    Icon: Milk,
+    title: 'Kambing Perah: Produksi Susu & Inventori',
+    desc: 'Catat produksi susu harian per sesi, kelola inventori, dan rekam penjualan susu.',
     features: [
-      'Stok hijauan & konsentrat terpantau realtime',
-      'Log pemberian pakan per batch',
-      'Log vaksinasi & pengobatan per batch/individu',
-      'Alert stok pakan menipis otomatis',
-      'Rekam medik per batch atau individu',
+      'Recording produksi susu: sesi pagi, siang, sore',
+      'Yield per ekor (liter) + kadar lemak / fat% per sesi',
+      'Database ternak perah dengan status laktasi per ekor',
+      'Inventori produk susu segar & olahan',
+      'Catat penjualan susu ke pelanggan individual',
+      'Registry pelanggan susu dengan riwayat pembelian',
+      'Tugas harian + penugasan tim',
     ],
   },
   {
     Icon: BarChart2,
-    title: 'Reproduksi & Laporan Keuangan',
-    desc: 'BEP per batch terhitung otomatis — siklus breeding terdokumentasi lengkap.',
+    title: 'Laporan & Pakan',
+    desc: 'Laba-rugi penggemukan & breeding otomatis — stok pakan terpantau sebelum habis.',
     features: [
-      'Tracking reproduksi: birahi, IB, kehamilan, kelahiran (Breeding)',
-      'Laporan laba-rugi per batch (Penggemukan)',
-      'HPP per ekor otomatis dari semua komponen biaya',
-      'Catat penjualan massal atau per individu',
-      'Ringkasan keuangan per batch siap lapor',
+      'Laporan batch closure: HPP/ekor, laba-rugi, penjualan (Penggemukan)',
+      'Laporan farm breeding dengan data reproduksi',
+      'Stok hijauan & konsentrat dengan alert menipis',
+      'Log pemberian pakan per batch dengan supplier tracking',
+      'Catatan: Laporan finansial Kambing Perah segera hadir',
     ],
   },
 ]
 
 export const hero = {
   eyebrow: 'Solusi Peternak Kambing & Domba',
-  headline: 'Kelola Batch Penggemukan & Siklus Breeding Kambing Domba Lebih Akurat.',
-  sub: 'Dari koloni penggemukan massal hingga tracking reproduksi breeding — kambing dan domba sama-sama didukung dalam satu platform digital tanpa kertas.',
+  headline: 'Kelola Batch Penggemukan, Breeding, dan Produksi Susu Perah dalam Satu Platform.',
+  sub: 'Dari koloni penggemukan massal hingga tracking reproduksi breeding dan pencatatan susu harian — kambing, domba, dan kambing perah didukung dalam satu platform digital tanpa kertas.',
   cta: 'Mulai Kelola Kandang Kambing Domba',
 }
 
 export const beforeAfter = [
-  { before: 'Catat populasi & mortalitas di whiteboard kandang', after: 'Batch digital dengan mortalitas terpantau real-time' },
-  { before: 'Tugas harian anak kandang tidak terdokumentasi', after: 'Template tugas + tracking penyelesaian per pekerja' },
+  { before: 'Catat populasi & mortalitas di whiteboard kandang', after: 'Batch digital: ADG, FCR, R/C ratio & BEP terpantau real-time' },
+  { before: 'Jadwal IB dan kelahiran tidak terdokumentasi', after: 'Manajemen reproduksi: conception rate & kelahiran terekam per ekor' },
+  { before: 'Produksi susu kambing dicatat di buku, sering lupa sesi', after: 'Recording susu pagi/siang/sore per ekor dengan yield & fat%' },
   { before: 'Stok konsentrat baru ketahuan habis saat kosong', after: 'Alert stok pakan otomatis sebelum kehabisan' },
-  { before: 'BEP & untung rugi batch dihitung asal kira-kira', after: 'Laporan HPP & laba-rugi per batch otomatis' },
+  { before: 'BEP & untung rugi batch dihitung asal kira-kira', after: 'Laporan HPP & laba-rugi per batch tersedia otomatis' },
 ]
 
 export const faq = [
   {
     q: 'Apa perbedaan modul Penggemukan dan Breeding di TernakOS?',
-    a: 'Penggemukan (Fattening) menggunakan sistem batch koloni — kamu input populasi massal per kandang, tracking mortalitas, dan tutup batch saat panen. Breeding menggunakan tracking individu — setiap ternak punya kartu dengan silsilah, siklus reproduksi, dan rekam medik sendiri.',
+    a: 'Penggemukan (Fattening) menggunakan sistem batch koloni — kamu input populasi massal per kandang, tracking ADG, FCR, BEP, dan tutup batch saat panen. Breeding menggunakan tracking individu — setiap ternak punya kartu dengan silsilah, siklus reproduksi, dan rekam medik sendiri.',
   },
   {
     q: 'Apakah kambing dan domba bisa dikelola dalam satu akun?',
-    a: 'Bisa. TernakOS mendukung 4 sub-tipe: Kambing Penggemukan, Kambing Breeding, Domba Penggemukan, dan Domba Breeding. Masing-masing punya data dan laporan terpisah, tapi semua bisa diakses dari satu login.',
+    a: 'Bisa. TernakOS mendukung 5 sub-tipe: Kambing Penggemukan, Kambing Breeding, Kambing Perah, Domba Penggemukan, dan Domba Breeding. Masing-masing punya data dan laporan terpisah, tapi semua bisa diakses dari satu login.',
   },
   {
-    q: 'Apakah mendukung pencatatan batch populasi massal?',
-    a: 'Ya. Untuk mode penggemukan, kamu bisa buat batch dengan total ekor masuk, bobot rata-rata, dan target hari panen. Mortalitas, pengeluaran, dan penjualan dicatat per batch. Di akhir periode, laporan laba-rugi dan HPP per ekor terhitung otomatis tanpa hitung manual.',
+    q: 'Apakah ada modul khusus untuk kambing perah?',
+    a: 'Ada. Modul Kambing Perah mendukung recording produksi susu harian per sesi (pagi, siang, sore) per ekor, tracking kadar lemak (fat%), inventori produk susu, dan pencatatan penjualan susu ke pelanggan.',
+  },
+  {
+    q: 'Bagaimana TernakOS membantu menghitung keuntungan per batch penggemukan?',
+    a: 'TernakOS merangkum semua biaya per batch: harga beli ternak masuk, biaya pakan, biaya operasional (listrik, air), biaya kesehatan — lalu dikurangi pendapatan penjualan. HPP per ekor, R/C ratio, BEP, dan laba bersih per batch langsung tersedia.',
   },
   {
     q: 'Bagaimana sistem tugas harian untuk anak kandang bekerja?',
     a: 'Owner atau manajer buat template tugas (pakan pagi, pakan sore, cek kesehatan) dan assign ke anak kandang. Setiap pekerja bisa centang tugas selesai dari HP. Riwayat penyelesaian terekam untuk evaluasi performa tim harian.',
   },
   {
-    q: 'Bagaimana TernakOS membantu menghitung keuntungan per batch?',
-    a: 'TernakOS merangkum semua biaya per batch: harga beli ternak masuk, biaya pakan, biaya operasional (listrik, air), biaya kesehatan — lalu dikurangi pendapatan penjualan. HPP per ekor dan laba bersih per batch langsung tersedia, tidak perlu buka Excel.',
+    q: 'Apakah mendukung tracking IB (Inseminasi Buatan) untuk kambing?',
+    a: 'Ya. Modul Breeding mendukung tracking IB maupun kawin alam — termasuk inseminator, tanggal, status kehamilan, dan pencatatan kelahiran cempe. Conception rate dan calving interval dihitung otomatis dari data yang diinput.',
   },
 ]

@@ -13,6 +13,7 @@ import { InputNumber } from '@/components/ui/InputNumber'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { toast } from 'sonner'
 import { getUrgencyLabel } from '@/dashboard/peternak/_shared/utils/taskUtils'
+import { ContainerCalcField } from '@/dashboard/peternak/_shared/components/TaskSheets'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -537,6 +538,9 @@ export function InteractiveCheckCard({
                         <SelectTrigger className="h-12 lg:h-16 rounded-xl lg:rounded-[28px] bg-black/40 border border-white/5 px-6 lg:px-8 text-white focus:ring-0"><SelectValue placeholder={field.placeholder} /></SelectTrigger>
                         <SelectContent className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-3xl">{field.options.map(o => <SelectItem key={o} value={o} className="rounded-xl">{o}</SelectItem>)}</SelectContent>
                       </Select>
+                    )}
+                    {field.type === 'container_calc' && (
+                      <ContainerCalcField field={field} reportData={reportData} setReportData={setReportData} />
                     )}
                   </div>
                 ))}

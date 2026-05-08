@@ -362,12 +362,22 @@ export const useUpdatePricing = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ role, plan, price, originalPrice }) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('pricing_plans')
         .update({ price, original_price: originalPrice, updated_at: new Date().toISOString() })
         .eq('role', role)
         .eq('plan', plan)
+        .select()
+        
       if (error) throw error
+
+      if (!data || data.length === 0) {
+        // If row doesn't exist, insert it
+        const { error: insertError } = await supabase
+          .from('pricing_plans')
+          .insert({ role, plan, price, original_price: originalPrice })
+        if (insertError) throw insertError
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['pricing-plans'])

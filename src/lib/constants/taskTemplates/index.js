@@ -80,18 +80,18 @@ export const CONTAINER_PRESETS = [
 const COMMON_REPORT = {
   pakan: {
     fields: [
+      { id: '_wadah_hijauan', label: 'Hitung dari Wadah (Hijauan)', type: 'container_calc', feedType: 'hijauan',    targetKgField: 'hijauan_kg' },
       { id: 'hijauan_kg',    label: 'Hijauan (KG)',    type: 'number',         suffix: 'KG', placeholder: '0.0' },
-      { id: '_wadah_hijauan', label: 'Hitung dari Wadah', type: 'container_calc', feedType: 'hijauan',    targetKgField: 'hijauan_kg' },
+      { id: '_wadah_konsentrat', label: 'Hitung dari Wadah (Konsentrat)', type: 'container_calc', feedType: 'konsentrat', targetKgField: 'konsentrat_kg' },
       { id: 'konsentrat_kg', label: 'Konsentrat (KG)', type: 'number',         suffix: 'KG', placeholder: '0.0' },
-      { id: '_wadah_konsentrat', label: 'Hitung dari Wadah', type: 'container_calc', feedType: 'konsentrat', targetKgField: 'konsentrat_kg' },
     ]
   },
   pemberian_pakan: {
     fields: [
+      { id: '_wadah_hijauan', label: 'Hitung dari Wadah (Hijauan)', type: 'container_calc', feedType: 'hijauan',    targetKgField: 'hijauan_kg' },
       { id: 'hijauan_kg',    label: 'Hijauan (KG)',    type: 'number',         suffix: 'KG', placeholder: '0.0' },
-      { id: '_wadah_hijauan', label: 'Hitung dari Wadah', type: 'container_calc', feedType: 'hijauan',    targetKgField: 'hijauan_kg' },
+      { id: '_wadah_konsentrat', label: 'Hitung dari Wadah (Konsentrat)', type: 'container_calc', feedType: 'konsentrat', targetKgField: 'konsentrat_kg' },
       { id: 'konsentrat_kg', label: 'Konsentrat (KG)', type: 'number',         suffix: 'KG', placeholder: '0.0' },
-      { id: '_wadah_konsentrat', label: 'Hitung dari Wadah', type: 'container_calc', feedType: 'konsentrat', targetKgField: 'konsentrat_kg' },
     ]
   },
   vaksinasi: {

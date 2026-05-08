@@ -26,25 +26,26 @@ export const groups = [
   },
   {
     Icon: BarChart2,
-    title: 'Analitik Profitabilitas',
+    title: 'Laporan Margin & Distribusi',
     desc: null,
     features: [
+      'Laporan margin keuntungan per periode (Pro)',
       'Margin per produk & per customer',
       'Top 10 customer by revenue',
       'Composed chart: Revenue + HPP + Profit',
+      'PDF Surat Jalan distribusi (Pro)',
       'Filter date range fleksibel',
-      'Identifikasi produk paling profitable',
     ],
   },
   {
     Icon: Building,
-    title: 'Profil & Preferensi Bisnis',
+    title: 'Manajemen Distribusi',
     desc: null,
     features: [
-      'Setup tipe RPA (potong ayam, pasar, restoran, dll)',
-      'Kapasitas harian',
-      'Payment terms default',
-      'Preferred chicken type',
+      'Catat pengiriman ke banyak tujuan sekaligus',
+      'Tracking status pengiriman per customer',
+      'Loss report mortalitas & susut berat otomatis',
+      'Revenue diupdate dari bobot tiba aktual',
     ],
   },
 ]
@@ -60,7 +61,7 @@ export const beforeAfter = [
   { before: 'Dokumen timbang manual, rawan dispute', after: 'Timbangan digital tercatat otomatis' },
   { before: 'Susut bobot tidak terpantau', after: 'Loss report otomatis setiap pengiriman' },
   { before: 'Laporan harian dibuat manual', after: 'Dashboard operasional harian otomatis' },
-  { before: 'Koordinasi sopir lewat telepon', after: 'Manajemen armada & jadwal dari dashboard' },
+  { before: 'Margin per produk tidak terpantau', after: 'Laporan margin otomatis per periode' },
 ]
 
 export const faq = [

@@ -1,51 +1,63 @@
-import { ShoppingCart, Package, UserCheck, FileText } from 'lucide-react'
+import { ShoppingCart, Package, UserCheck, FileText, BarChart2 } from 'lucide-react'
 
 export const groups = [
   {
     Icon: ShoppingCart,
     title: 'POS Telur yang Cepat & Akurat',
-    desc: null,
+    desc: 'Catat penjualan langsung dari grid produk — cart, customer, payment status, invoice selesai dalam hitungan detik.',
     features: [
-      'Input penjualan per produk/grade',
-      'Kalkulasi otomatis total + HPP',
-      'Invoice number otomatis',
-      'Status: Lunas / Piutang / Pending',
-      'Customer name untuk quick search',
+      'Grid produk dengan stok realtime — klik untuk tambah ke cart',
+      'Toggle payment: Lunas (cash) atau Piutang/TOP (kredit)',
+      'Invoice number otomatis per transaksi',
+      'Kalkulasi total + HPP + margin otomatis',
+      'Konfirmasi sukses dengan nomor invoice',
     ],
   },
   {
     Icon: Package,
-    title: 'Stok Realtime per Grade Telur',
+    title: 'Inventori Multi-Grade & HPP Otomatis',
     desc: null,
     features: [
-      '3 grade: Hero, Standard, Salted',
-      'Stok butir realtime',
-      'HPP per butir + biaya packaging',
-      'Harga jual per pack',
-      'Alert stok menipis',
-      'Log mutasi stok (masuk/keluar/adj)',
+      'Kelola banyak grade/produk: Grade A, Gajah, TB, Lokal, dll',
+      'Stok butir realtime dengan indikator warna (merah jika menipis)',
+      'HPP per butir dihitung otomatis dari harga beli + packaging',
+      'Margin % per grade dengan badge warna (hijau/kuning/merah)',
+      'Alert minimum stok sebelum kehabisan',
+      'Log mutasi stok: masuk, keluar, penyesuaian',
     ],
   },
   {
     Icon: UserCheck,
-    title: 'CRM Supplier & Pelanggan',
+    title: 'Database Pelanggan & Supplier',
     desc: null,
     features: [
-      'Database supplier lengkap',
-      'Database customer dengan total spend',
-      'Tracking order per customer',
-      'Piutang customer terpantau',
+      'Database pelanggan: nama, HP, lokasi, total belanja',
+      'Database supplier dengan riwayat pembelian',
+      'Filter pelanggan yang punya piutang aktif',
+      'Total spending per pelanggan terakumulasi otomatis',
+      'WhatsApp langsung dari kartu pelanggan/supplier',
     ],
   },
   {
     Icon: FileText,
-    title: 'Histori & Laporan Penjualan',
+    title: 'Riwayat Transaksi & Invoice',
     desc: null,
     features: [
-      'Riwayat semua transaksi',
-      'Filter status fulfillment',
-      'Net profit per invoice',
-      'Top customer by revenue',
+      'Riwayat semua transaksi dengan search & filter status',
+      'Filter: Lunas / Sebagian / Belum Lunas',
+      'Detail invoice: breakdown item, harga, subtotal',
+      'Catat pembayaran partial per invoice',
+      'Cetak/unduh invoice PDF',
+    ],
+  },
+  {
+    Icon: BarChart2,
+    title: 'Dashboard & Ringkasan Bisnis',
+    desc: null,
+    features: [
+      'KPI harian: total stok, transaksi, pelanggan aktif, omzet',
+      'Ringkasan inventori top 5 grade dengan stok visual',
+      'Akses cepat ke POS, Supplier, Pelanggan, Transaksi',
     ],
   },
 ]
@@ -58,10 +70,10 @@ export const hero = {
 }
 
 export const beforeAfter = [
-  { before: 'Harga telur dicatat manual tiap hari', after: 'Pantau harga pasar real-time dari dashboard' },
-  { before: 'Margin per transaksi dihitung kalkulator', after: 'Margin otomatis terhitung saat input transaksi' },
-  { before: 'Piutang diingat-ingat sendiri', after: 'Tracking piutang otomatis dengan reminder' },
-  { before: 'Nota dikirim foto buku ke WhatsApp', after: 'Nota digital profesional langsung ke pembeli' },
+  { before: 'Input penjualan satu-satu di buku, sering salah hitung', after: 'POS grid produk — klik, pilih customer, checkout selesai' },
+  { before: 'HPP & margin dihitung manual pakai kalkulator', after: 'HPP & margin % otomatis terhitung per grade per transaksi' },
+  { before: 'Piutang pelanggan diingat sendiri, sering lupa', after: 'Dashboard piutang per pelanggan realtime dengan filter' },
+  { before: 'Stok baru ketahuan habis saat kehabisan', after: 'Alert minimum stok otomatis sebelum kehabisan' },
 ]
 
 export const faq = [

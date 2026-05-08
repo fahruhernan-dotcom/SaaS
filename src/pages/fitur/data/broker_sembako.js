@@ -1,51 +1,65 @@
-import { ShoppingCart, Package, Users, Network } from 'lucide-react'
+import { ShoppingCart, Package, Users, Truck, BarChart2 } from 'lucide-react'
 
 export const groups = [
   {
     Icon: ShoppingCart,
-    title: 'POS Grosir & Eceran Dinamis',
-    desc: null,
+    title: 'Invoice & POS Grosir Digital',
+    desc: 'Buat invoice penjualan multi-item dalam hitungan detik — support satuan ganda, dual harga, dan sistem tempo.',
     features: [
-      'Support multi-satuan (Sak, Ball, Karton, Pcs)',
-      'Invoice instan ke kasir & print struck',
-      'Dual-Pricing otomatis (Harga Retail vs Partai)',
-      'Sistem Payment Cash / Tempo (Piutang)',
-      'Diskon dinamis (Tiered Pricing)',
+      'Multi-item per invoice: Sak, Ball, Karton, Pcs, Kg, dll',
+      'Dual-pricing otomatis: Harga Retail vs Harga Partai',
+      'Sistem payment: Cash atau Tempo (Piutang)',
+      'Invoice number otomatis + PDF invoice (Pro)',
+      'Kuota bulanan di Starter, unlimited di Pro',
     ],
   },
   {
     Icon: Package,
-    title: 'Manajemen Multi-Gudang & Inventori',
+    title: 'Inventori, Batch & Gudang',
     desc: null,
     features: [
-      'Tracking stok real-time antar cabang',
-      'Mutasi/transfer stok antar gudang tanpa error',
-      'Modul Stok Opname / SO harian terintegrasi',
-      'Alert "Minimum Stock" ke HP pengelola',
-      'Kalkulasi Harga Pokok Penjualan (HPP FIFO/Average)',
+      'Manajemen produk dengan dual satuan & konversi otomatis',
+      'Margin % per produk dengan badge warna (hijau/kuning/merah)',
+      'Batch tracking: kode batch, supplier, tanggal masuk, sisa stok',
+      'Riwayat mutasi stok: penerimaan, penjualan, penyesuaian',
+      'Alert minimum stok ke HP pengelola',
+      'Multi-gudang & transfer stok antar lokasi (Business)',
     ],
   },
   {
     Icon: Users,
-    title: 'Kas & Hutang Piutang Lintas Toko',
+    title: 'Toko, Supplier & Piutang',
     desc: null,
     features: [
-      'Monitor batas limit kredit toko mitra',
-      'Rekap pencairan Nota Piutang / Bon',
-      'Split-payment system untuk Sales Canvaser',
-      'Monitoring komisi per divisi Sales',
-      'Bukti pelunasan digital tanpa kertas',
+      'Database toko/pelanggan: warung, retail, supermarket, grosir',
+      'Database supplier dengan tracking hutang pembelian',
+      'Piutang toko realtime dengan partial payment',
+      'Filter "hanya yang punya piutang aktif"',
+      'Riwayat invoice & pembayaran per toko/supplier',
     ],
   },
   {
-    Icon: Network,
-    title: 'Sentralisasi Jaringan Distribusi',
+    Icon: Truck,
+    title: 'Pengiriman & Logistik',
     desc: null,
     features: [
-      'Konsolidasi laporan performa seluruh agen cabang',
-      'Sinkronisasi master data barang di semua P.O.S',
-      'Analitik Pareto — Produk mana yang paling laris?',
-      'Export Laporan Pemasukan Harian',
+      'Delivery order dari invoice penjualan pending',
+      'Assign sopir & kendaraan per pengiriman',
+      'Status real-time: Pending → Jalan → Tiba → Selesai',
+      'Timeline pengiriman dengan tanggal mulai & selesai',
+      'Catatan bukti pengiriman',
+    ],
+  },
+  {
+    Icon: BarChart2,
+    title: 'Laporan, Pegawai & Payroll (Pro)',
+    desc: null,
+    features: [
+      'Laporan laba-rugi: revenue, COGS, gross & net profit',
+      'Breakdown pengeluaran: sewa, listrik, BBM, packaging',
+      'Analitik Pareto — produk & customer paling menguntungkan',
+      'Export laporan PDF & Excel (Business)',
+      'Manajemen pegawai + gaji & payroll bulanan',
     ],
   },
 ]
@@ -58,10 +72,10 @@ export const hero = {
 }
 
 export const beforeAfter = [
-  { before: 'Stok dicatat manual, sering selisih', after: 'FIFO otomatis, stok selalu akurat' },
-  { before: 'Tidak tahu barang mana yang mau expired', after: 'Sistem batch tracking mencegah stok mengendap' },
-  { before: 'Hitung untung rugi di akhir bulan saja', after: 'Laporan profit bersih tersedia kapan saja' },
-  { before: 'Input faktur satu per satu tiap item', after: 'Multi-item entry dalam satu invoice' },
+  { before: 'Invoice ditulis tangan, sering ada item kelewat', after: 'Invoice digital multi-item selesai dalam 30 detik' },
+  { before: 'Stok dicatat manual, sering selisih saat opname', after: 'Batch tracking otomatis — setiap masuk & keluar tercatat' },
+  { before: 'Piutang toko tidak terpantau, sering dispute', after: 'Dashboard piutang per toko dengan riwayat pembayaran' },
+  { before: 'Laporan laba-rugi dihitung di Excel akhir bulan', after: 'Laporan P&L + analitik produk terlaris tersedia realtime' },
 ]
 
 export const faq = [
@@ -87,6 +101,6 @@ export const faq = [
   },
   {
     q: 'Bisakah TernakOS dipakai untuk distributor sembako berskala besar?',
-    a: 'Bisa. Paket Business mendukung unlimited pengguna, multi-gudang, dan konsolidasi laporan seluruh cabang. Cocok untuk distributor sembako yang punya jaringan agen dan toko mitra.',
+    a: 'Bisa. Paket Business mendukung unlimited pengguna, multi-gudang dengan transfer stok antar lokasi, dan laporan HPP otomatis. Cocok untuk distributor sembako yang punya banyak gudang dan jaringan toko mitra.',
   },
 ]
