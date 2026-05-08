@@ -207,7 +207,7 @@ def insert_to_supabase(harga: dict) -> bool:
         "apikey":        SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
         "Content-Type":  "application/json",
-        "Prefer":        "return=minimal",
+        "Prefer":        "resolution=ignore-duplicates,return=minimal",
     }
 
     try:
