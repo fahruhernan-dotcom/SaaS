@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, ChevronLeft, Check, X, MapPin } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { supabase } from '@/lib/supabase'
 
 const CARD_BG = '#0C1319'
 const MUTED = '#64748B'
@@ -208,6 +209,135 @@ function TooltipCard({ step, stepIdx, totalSteps, rect, isLast, isDesktop, accen
   )
 }
 
+// Mobile-only bottom sheet for spotlight steps.
+// Does NOT open sidebar (avoids Radix focus trap blocking button taps).
+function MobileStepSheet({ step, stepIdx, totalSteps, isLast, accent, accentDim, onNext, onPrev, onSkip }) {
+  const Icon = step.icon
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0,
+      zIndex: 9999,
+      display: 'flex', alignItems: 'flex-end',
+      background: 'rgba(0,0,0,0.55)',
+      backdropFilter: 'blur(3px)',
+      // backdrop is non-interactive so sidebar stays accessible if needed
+      pointerEvents: 'none',
+    }}>
+      <motion.div
+        key={stepIdx}
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+        style={{
+          width: '100%',
+          background: CARD_BG,
+          borderRadius: '24px 24px 0 0',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderBottom: 'none',
+          padding: '16px 20px',
+          paddingBottom: 'max(20px, env(safe-area-inset-bottom))',
+          boxShadow: '0 -16px 48px rgba(0,0,0,0.5)',
+          pointerEvents: 'auto', // only the sheet captures touches
+        }}
+      >
+        {/* drag handle */}
+        <div style={{ width: 32, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.15)', margin: '0 auto 16px' }} />
+
+        {/* header row */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
+          <div style={{ width: 42, height: 42, borderRadius: 13, background: accentDim, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Icon size={20} color={accent} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 10, color: MUTED, fontWeight: 700, letterSpacing: '0.08em', marginBottom: 2 }}>
+              LANGKAH {stepIdx} / {totalSteps - 1}
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: TEXT, lineHeight: 1.25, fontFamily: 'DM Sans, sans-serif' }}>
+              {step.title}
+            </div>
+          </div>
+          <button
+            onClick={onSkip}
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 10,
+              color: MUTED,
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 44, height: 44,
+              flexShrink: 0,
+            }}
+            aria-label="Lewati tutorial"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <p style={{ fontSize: 14, color: '#94A3B8', lineHeight: 1.65, margin: '0 0 12px' }}>
+          {step.desc}
+        </p>
+
+        {step.navHint && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            background: `${accent}18`,
+            border: `1px solid ${accent}35`,
+            borderRadius: 10, padding: '9px 12px', marginBottom: 16,
+          }}>
+            <MapPin size={13} color={accent} />
+            <span style={{ fontSize: 13, color: accent, fontWeight: 700 }}>
+              Menu → {step.navHint}
+            </span>
+          </div>
+        )}
+
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', marginBottom: 14 }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <ProgressDots total={totalSteps} current={stepIdx} accent={accent} />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={onPrev}
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 12, padding: '0 16px',
+                color: '#94A3B8', fontSize: 13, fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 4,
+                minHeight: 44, minWidth: 44,
+              }}
+            >
+              <ChevronLeft size={15} />
+            </button>
+            <button
+              onClick={onNext}
+              style={{
+                background: isLast ? '#16A34A' : accent,
+                border: 'none',
+                borderRadius: 12, padding: '0 20px',
+                color: '#fff', fontSize: 14, fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 6,
+                boxShadow: `0 4px 14px ${accent}40`,
+                minHeight: 44,
+              }}
+            >
+              {isLast
+                ? <><Check size={14} strokeWidth={3} /> Mulai!</>
+                : <>Lanjut <ChevronRight size={14} /></>
+              }
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
 function WelcomeModal({ step, steps, stepIdx, direction, accent, accentDim, onNext, onSkip, isDesktop }) {
   const Icon = step.icon
   const variants = {
@@ -323,9 +453,27 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
   const retryRef = useRef(null)
 
   useEffect(() => {
-    if (!tenant?.id) return
-    try { setVisible(!localStorage.getItem(storageKey)) } catch { /* ok */ }
-  }, [tenant?.id, storageKey])
+    if (!tenant?.id || !profile?.profile_id) return
+
+    // Fast path: localStorage already has a value
+    try {
+      if (localStorage.getItem(storageKey)) return
+    } catch { /* ok */ }
+
+    // Fallback: check DB (handles new device / cleared cache)
+    supabase
+      .from('profiles')
+      .select('tutorials_completed')
+      .eq('id', profile.profile_id)
+      .single()
+      .then(({ data }) => {
+        if (data?.tutorials_completed?.[storageKey]) {
+          try { localStorage.setItem(storageKey, data.tutorials_completed[storageKey]) } catch { /* ok */ }
+        } else {
+          setVisible(true)
+        }
+      })
+  }, [tenant?.id, profile?.profile_id, storageKey])
 
   const queryTarget = useCallback((step) => {
     if (!step?.selector) { setTargetRect(null); return }
@@ -342,9 +490,11 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
 
   useEffect(() => {
     if (mode !== 'spotlight') return
-    const step = steps[stepIdx]
+    // On mobile: skip sidebar open and spotlight — MobileStepSheet handles it via navHint
+    if (!isDesktop) return
 
-    if (!isDesktop) window.dispatchEvent(new Event('open-mobile-sidebar'))
+    const step = steps[stepIdx]
+    window.dispatchEvent(new Event('open-mobile-sidebar'))
 
     clearTimeout(retryRef.current)
     retryRef.current = setTimeout(() => queryTarget(step), 340)
@@ -364,8 +514,18 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
   const isLast = stepIdx === steps.length - 1
 
   const dismiss = (reason) => {
-    try { localStorage.setItem(storageKey, reason) } catch { /* ok */ }
+    const value = reason === 'complete' ? new Date().toISOString() : reason
+    try { localStorage.setItem(storageKey, value) } catch { /* ok */ }
     setVisible(false)
+
+    // Sync ke DB — fire and forget
+    if (profile?.profile_id) {
+      supabase.rpc('append_tutorial_completed', {
+        p_profile_id: profile.profile_id,
+        p_key: storageKey,
+        p_value: value,
+      }).then(() => {})
+    }
   }
 
   const goNext = () => {
@@ -394,6 +554,27 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
     )
   }
 
+  // Mobile spotlight: bottom sheet with navHint, no sidebar open, no click blocking
+  if (!isDesktop) {
+    return (
+      <AnimatePresence mode="wait">
+        <MobileStepSheet
+          key={stepIdx}
+          step={step}
+          stepIdx={stepIdx}
+          totalSteps={steps.length}
+          isLast={isLast}
+          accent={accent}
+          accentDim={accentDim}
+          onNext={goNext}
+          onPrev={goPrev}
+          onSkip={() => dismiss('skip')}
+        />
+      </AnimatePresence>
+    )
+  }
+
+  // Desktop spotlight: spotlight + click blocker + tooltip
   return (
     <>
       <SpotlightSVG rect={targetRect} accent={accent} />

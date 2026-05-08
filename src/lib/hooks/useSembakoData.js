@@ -440,7 +440,6 @@ export const useCreateSembakoSale = () => {
             sale_id: sale.id,
             qty_keluar: deduct,
             buy_price: batch.buy_price || 0,
-            reason: 'sale', // audit trail: beda dari 'adjustment'
           })
           qtyToDeduct -= deduct
         }
@@ -1291,7 +1290,7 @@ export const useAdjustBatchStock = () => {
       
       const { data: batch } = await supabase
         .from('sembako_stock_batches')
-        .select('qty_sisa, product_id')
+        .select('qty_sisa, product_id, buy_price')
         .eq('id', batch_id)
         .single()
       
@@ -1328,7 +1327,7 @@ export const useAdjustBatchStock = () => {
             product_id: batch.product_id,
             batch_id: batch_id,
             qty_keluar: Math.abs(qty_change),
-            notes: notes || 'Penyesuaian Stok'
+            buy_price: batch.buy_price || 0,
           })
         if (outErr) throw outErr
       }

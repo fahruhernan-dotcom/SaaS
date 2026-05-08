@@ -1057,7 +1057,7 @@ export default function SembakoBeranda() {
 
       <AnimatePresence>
         {stokOpen && (
-          <SembakoTambahStokSheet 
+          <SembakoTambahStokSheet
             onClose={() => setStokOpen(false)}
             products={products}
             suppliers={suppliers}

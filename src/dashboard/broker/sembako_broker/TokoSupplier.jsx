@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { useNavigate, useOutletContext } from 'react-router-dom'
+import { useNavigate, useOutletContext, useSearchParams } from 'react-router-dom'
 import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import { motion } from 'framer-motion'
 import {
@@ -73,6 +73,8 @@ const PAYMENT_TERMS = [
 export default function SembakoTokoSupplier() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const { setSidebarOpen } = useOutletContext()
+  const [searchParams] = useSearchParams()
+  const autoOpenToko = searchParams.get('action') === 'new'
   const [sub, setSub] = useState('toko')
   const [search, setSearch] = useState('')
   const [selectedArea, setSelectedArea] = useState('Semua Area')
@@ -218,10 +220,10 @@ export default function SembakoTokoSupplier() {
             isDesktop ? (
               <div className="flex items-center gap-2">
                 <SegmentSwitch sub={sub} setSub={setSub} />
-                {sub === 'toko' ? <TokoActions compact /> : <SupplierActions compact />}
+                {sub === 'toko' ? <TokoActions compact autoOpen={autoOpenToko} /> : <SupplierActions compact />}
               </div>
             ) : (
-              sub === 'toko' ? <TokoActions compact /> : <SupplierActions compact />
+              sub === 'toko' ? <TokoActions compact autoOpen={autoOpenToko} /> : <SupplierActions compact />
             )
           }
         />
@@ -300,8 +302,8 @@ function SegmentSwitch({ sub, setSub }) {
   )
 }
 
-function TokoActions({ compact = false }) {
-  const [open, setOpen] = useState(false)
+function TokoActions({ compact = false, autoOpen = false }) {
+  const [open, setOpen] = useState(autoOpen)
   const createCustomer = useCreateSembakoCustomer()
   const [form, setForm] = useState({
     customer_name: '',

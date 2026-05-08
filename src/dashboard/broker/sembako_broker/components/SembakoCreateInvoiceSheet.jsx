@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, X, ChevronLeft, Loader2, Search, Check, ChevronDown } from 'lucide-react'
+import { Plus, X, ChevronLeft, Loader2, Search, Check, ChevronDown, Truck, Bike, Package2, Car } from 'lucide-react'
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { PhoneInput } from '@/components/ui/PhoneInput'
@@ -9,7 +9,7 @@ import { formatIDR } from '@/lib/format'
 import {
   useSembakoProducts, useSembakoCustomers, useSembakoSales, useSembakoEmployees, useSembakoDeliveries,
   useCreateSembakoProduct, useUpdateSembakoProduct, useCreateSembakoSale, useCreateSembakoDelivery,
-  useRecordSembakoPayment, useUpdateSembakoSale, useCreateSembakoCustomer,
+  useRecordSembakoPayment, useUpdateSembakoSale, useCreateSembakoCustomer, useCreateSembakoEmployee,
 } from '@/lib/hooks/useSembakoData'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import SembakoInvoicePreview from '../SembakoInvoicePreview'
@@ -282,6 +282,14 @@ function ProductItemRow({ item, idx, products, productOptions, total, overStock,
 }
 
 // ─── Payment Method Buttons ───────────────────────────────────────────────────
+const VEHICLE_TYPES = [
+  { value: 'Mobil Box',  label: 'Mobil Box',  Icon: Package2 },
+  { value: 'Pick Up',    label: 'Pick Up',    Icon: Truck },
+  { value: 'L300',       label: 'L300',       Icon: Car },
+  { value: 'Motor',      label: 'Motor',      Icon: Bike },
+  { value: 'Truk',       label: 'Truk',       Icon: Truck },
+]
+
 const PAY_METHOD_CONFIG = {
   cash:     { label: 'Cash',     color: '#EA580C', bg: 'rgba(234,88,12,0.12)' },
   transfer: { label: 'Transfer', color: '#60A5FA', bg: 'rgba(96,165,250,0.12)' },
@@ -321,6 +329,7 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
   const updateProduct  = useUpdateSembakoProduct()
   const createDelivery = useCreateSembakoDelivery()
   const recordPayment  = useRecordSembakoPayment()
+  const createEmployee = useCreateSembakoEmployee()
 
   const [step, setStep]           = useState(0)
   const [custId, setCustId]       = useState('')
@@ -345,6 +354,8 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
   const [deliveryPlate, setDeliveryPlate]       = useState('')
   const [deliveryArea, setDeliveryArea]         = useState('')
   const [fuelCost, setFuelCost]                 = useState(0)
+  const [addKurir, setAddKurir]                 = useState(false)
+  const [newKurirForm, setNewKurirForm]         = useState({ full_name: '', phone: '' })
 
   // Auto-prefill kendaraan & plat saat pilih sopir
   const handleSelectDriver = useCallback((driverId) => {
@@ -358,6 +369,15 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
       if (lastDelivery.vehicle_plate) setDeliveryPlate(lastDelivery.vehicle_plate)
     }
   }, [allDeliveries])
+
+  const handleSaveKurir = async () => {
+    if (!newKurirForm.full_name.trim()) { toast.error('Nama kurir wajib diisi'); return }
+    try {
+      await createEmployee.mutateAsync({ full_name: newKurirForm.full_name.trim(), phone: newKurirForm.phone, role: 'sopir', status: 'aktif' })
+      setAddKurir(false)
+      setNewKurirForm({ full_name: '', phone: '' })
+    } catch { /* handled by hook */ }
+  }
 
   const [successData, setSuccessData] = useState(null)
   const [printData, setPrintData]     = useState(null)
@@ -558,6 +578,7 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
     setDeliveryCost(0); setOtherCost(0); setNotes('')
     setPayAmount(0); setPayMethod('cash')
     setUseDelivery(false); setDeliveryDriver(''); setDeliveryVehicle(''); setDeliveryPlate(''); setDeliveryArea(''); setFuelCost(0)
+    setAddKurir(false); setNewKurirForm({ full_name: '', phone: '' })
     setQuickAddCust(false); setQuickAddProd(false); setShowCustSearch(false)
     onOpenChange(false)
   }, [onOpenChange])
@@ -886,27 +907,24 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
                 ════════════════════════════════════════ */}
                 {step === 2 && (
                   <>
-                    <p className="text-[13px] leading-relaxed" style={{ color: MUTED }}>
-                      Apakah barang ini dikirim menggunakan armada sendiri? Jika ya, trip pengiriman akan otomatis dibuat.
-                    </p>
-
+                    {/* Toggle switch card */}
                     <button
+                      type="button"
                       onClick={() => setUseDelivery(v => !v)}
-                      className="w-full flex items-center gap-3 px-4 py-4 rounded-2xl text-left transition-all"
+                      className="w-full flex items-center gap-4 px-5 py-4 rounded-2xl text-left"
                       style={{
-                        background: useDelivery ? 'rgba(96,165,250,0.1)' : SURFACE,
+                        background: useDelivery ? 'rgba(96,165,250,0.08)' : SURFACE,
                         border: `${useDelivery ? 2 : 1}px solid ${useDelivery ? '#60A5FA' : BORDER}`,
+                        transition: 'all 0.15s',
                       }}
                     >
-                      <div
-                        className="w-5 h-5 rounded-md flex items-center justify-center shrink-0"
-                        style={{ background: useDelivery ? '#60A5FA' : 'transparent', border: `2px solid ${useDelivery ? '#60A5FA' : BORDER}` }}
-                      >
-                        {useDelivery && <Check size={12} color="#fff" strokeWidth={3} />}
+                      <div style={{ width: 44, height: 24, borderRadius: 12, background: useDelivery ? '#3B82F6' : 'rgba(255,255,255,0.12)', position: 'relative', flexShrink: 0, transition: 'background 0.2s' }}>
+                        <div style={{ position: 'absolute', top: 3, left: useDelivery ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.35)' }} />
                       </div>
-                      <span className="font-bold text-sm" style={{ color: useDelivery ? '#60A5FA' : TEXT }}>
-                        Jadwalkan Pengiriman
-                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm" style={{ color: useDelivery ? '#93C5FD' : TEXT }}>Jadwalkan Pengiriman</p>
+                        <p className="text-[11px] mt-0.5 font-medium" style={{ color: MUTED }}>Trip pengiriman otomatis dibuat saat simpan</p>
+                      </div>
                     </button>
 
                     <AnimatePresence>
@@ -915,26 +933,151 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="space-y-3 overflow-hidden"
+                          className="space-y-4 overflow-hidden"
                         >
+                          {/* Jenis Kendaraan chips */}
+                          <div>
+                            <label className={labelCn}>Jenis Kendaraan</label>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {VEHICLE_TYPES.map(({ value, label, Icon }) => {
+                                const active = deliveryVehicle === value
+                                return (
+                                  <button
+                                    key={value}
+                                    type="button"
+                                    onClick={() => setDeliveryVehicle(active ? '' : value)}
+                                    className="flex items-center gap-1.5 px-3 h-9 rounded-xl text-xs font-bold transition-all"
+                                    style={{
+                                      background: active ? 'rgba(96,165,250,0.15)' : INPUT_BG,
+                                      border: `${active ? 2 : 1}px solid ${active ? '#60A5FA' : 'rgba(234,88,12,0.15)'}`,
+                                      color: active ? '#93C5FD' : TEXT,
+                                    }}
+                                  >
+                                    <Icon size={13} strokeWidth={2.5} />
+                                    {label}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+
+                          {/* No. Plat */}
+                          <div>
+                            <label className={labelCn}>No. Plat</label>
+                            <input
+                              className={inputCn}
+                              value={deliveryPlate}
+                              onChange={e => setDeliveryPlate(e.target.value.toUpperCase())}
+                              placeholder="B 1234 XY"
+                            />
+                          </div>
+
+                          {/* Sopir / Kurir */}
                           <div>
                             <label className={labelCn}>Sopir / Kurir (Opsional)</label>
-                            <CustomSelect value={deliveryDriver} onChange={handleSelectDriver} options={employeeOptions} placeholder="Pilih Kurir" />
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <label className={labelCn}>Kendaraan</label>
-                              <input className={inputCn} value={deliveryVehicle} onChange={e => setDeliveryVehicle(e.target.value)} placeholder="Mobil Box" />
+                            <div className="space-y-2">
+                              {/* Belum Ditentukan */}
+                              <button
+                                type="button"
+                                onClick={() => setDeliveryDriver('')}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all"
+                                style={{
+                                  background: !deliveryDriver ? 'rgba(96,165,250,0.08)' : SURFACE,
+                                  border: `1px solid ${!deliveryDriver ? '#60A5FA' : BORDER}`,
+                                }}
+                              >
+                                <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 16, color: MUTED }}>–</div>
+                                <span className="font-bold text-sm" style={{ color: !deliveryDriver ? '#93C5FD' : MUTED }}>Belum Ditentukan</span>
+                                {!deliveryDriver && <Check size={14} color="#60A5FA" strokeWidth={3} className="ml-auto" />}
+                              </button>
+
+                              {/* Employee cards */}
+                              {employees.filter(e => e.status === 'aktif').map(e => (
+                                <button
+                                  key={e.id}
+                                  type="button"
+                                  onClick={() => handleSelectDriver(e.id)}
+                                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all"
+                                  style={{
+                                    background: deliveryDriver === e.id ? 'rgba(96,165,250,0.08)' : SURFACE,
+                                    border: `1px solid ${deliveryDriver === e.id ? '#60A5FA' : BORDER}`,
+                                  }}
+                                >
+                                  <div style={{ width: 32, height: 32, borderRadius: 10, background: deliveryDriver === e.id ? 'rgba(96,165,250,0.15)' : 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 14 }}>👤</div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-bold text-sm truncate" style={{ color: deliveryDriver === e.id ? '#93C5FD' : TEXT }}>{e.full_name}</p>
+                                    <p className="text-[11px] font-medium capitalize" style={{ color: MUTED }}>{e.role}</p>
+                                  </div>
+                                  {deliveryDriver === e.id && <Check size={14} color="#60A5FA" strokeWidth={3} />}
+                                </button>
+                              ))}
+
+                              {/* Tambah Kurir Baru */}
+                              {!addKurir ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setAddKurir(true)}
+                                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all"
+                                  style={{ background: 'rgba(234,88,12,0.06)', border: `1px dashed ${ACCENT}`, color: ACCENT }}
+                                >
+                                  <Plus size={15} /> Tambah Kurir Baru
+                                </button>
+                              ) : (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: 'auto' }}
+                                  className="space-y-3 overflow-hidden p-4 rounded-2xl"
+                                  style={{ background: SURFACE, border: `1px solid ${BORDER}` }}
+                                >
+                                  <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: MUTED }}>Data Kurir Baru</p>
+                                  <input
+                                    className={inputCn}
+                                    placeholder="Nama lengkap *"
+                                    value={newKurirForm.full_name}
+                                    onChange={e => setNewKurirForm(f => ({ ...f, full_name: e.target.value }))}
+                                  />
+                                  <input
+                                    className={inputCn}
+                                    placeholder="No. HP (opsional)"
+                                    value={newKurirForm.phone}
+                                    onChange={e => setNewKurirForm(f => ({ ...f, phone: e.target.value }))}
+                                  />
+                                  <div className="flex gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => { setAddKurir(false); setNewKurirForm({ full_name: '', phone: '' }) }}
+                                      className="flex-1 h-10 rounded-xl text-xs font-bold"
+                                      style={{ background: 'rgba(255,255,255,0.05)', color: MUTED, border: `1px solid ${BORDER}` }}
+                                    >
+                                      Batal
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={handleSaveKurir}
+                                      disabled={createEmployee.isPending}
+                                      className="flex-1 h-10 rounded-xl text-xs font-bold"
+                                      style={{ background: '#3B82F6', color: '#fff', opacity: createEmployee.isPending ? 0.6 : 1 }}
+                                    >
+                                      {createEmployee.isPending ? 'Menyimpan...' : 'Simpan Kurir'}
+                                    </button>
+                                  </div>
+                                </motion.div>
+                              )}
                             </div>
-                            <div>
-                              <label className={labelCn}>No. Plat</label>
-                              <input className={inputCn} value={deliveryPlate} onChange={e => setDeliveryPlate(e.target.value)} placeholder="B 1234 XY" />
-                            </div>
                           </div>
+
+                          {/* Area Pengiriman */}
                           <div>
                             <label className={labelCn}>Area Pengiriman</label>
-                            <input className={inputCn} value={deliveryArea} onChange={e => setDeliveryArea(e.target.value)} placeholder="Contoh: Kec. Setiabudi" />
+                            <input
+                              className={inputCn}
+                              value={deliveryArea}
+                              onChange={e => setDeliveryArea(e.target.value)}
+                              placeholder="Contoh: Kec. Setiabudi"
+                            />
                           </div>
+
+                          {/* Biaya BBM */}
                           <div>
                             <label className={labelCn}>Biaya BBM (Internal)</label>
                             <InputRupiah value={fuelCost} onChange={setFuelCost} />
@@ -1144,7 +1287,7 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
       </Sheet>
 
       <SembakoSuccessCard
-        isOpen={!!successData}
+        isOpen={!!successData && !printData}
         onClose={() => { setSuccessData(null); handleClose() }}
         data={successData}
         onPrint={(mode) => { setPrintData(successData); setPrintMode(mode) }}

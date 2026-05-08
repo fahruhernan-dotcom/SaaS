@@ -46,7 +46,7 @@ const SField = ({ label, children }) => (
   </div>
 )
 
-export function SembakoTambahStokSheet({ isOpen, preselectedProductId, products = [], suppliers = [], onClose }) {
+export function SembakoTambahStokSheet({ preselectedProductId, products = [], suppliers = [], onClose }) {
   const addBatch  = useAddStockBatch()
   const createSup = useCreateSembakoSupplier()
   const createProd = useCreateSembakoProduct()
@@ -94,8 +94,6 @@ export function SembakoTambahStokSheet({ isOpen, preselectedProductId, products 
 
   const selectedProduct = products.find(p => p.id === form.product_id)
 
-  if (!isOpen) return null
-
   const handleAddSupplier = async () => {
     if (!newSupplier.trim()) return
     try {
@@ -139,7 +137,7 @@ export function SembakoTambahStokSheet({ isOpen, preselectedProductId, products 
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 4000, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
       onClick={onClose}
     >
       <motion.div

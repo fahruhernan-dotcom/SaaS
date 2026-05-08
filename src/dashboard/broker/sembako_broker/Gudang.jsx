@@ -16,6 +16,7 @@ import { DatePicker } from '@/components/ui/DatePicker'
 import { C, fmtDate, CustomSelect, InputRupiah } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
 import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import { SembakoTambahStokSheet } from './components/SembakoTambahStokSheet'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -37,10 +38,6 @@ function genBatchCode() {
   const r = Math.random().toString(36).slice(2, 6).toUpperCase()
   return `BATCH-${d}-${r}`
 }
-
-// ── Tambah Stok Sheet ─────────────────────────────────────────────────────────
-
-import { SembakoTambahStokSheet } from './components/SembakoTambahStokSheet'
 
 // ── Tab: Stok Saat Ini ────────────────────────────────────────────────────────
 

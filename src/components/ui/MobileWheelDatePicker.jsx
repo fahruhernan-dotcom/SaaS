@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './sheet'
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from './sheet'
 import { Button } from './button'
 import { CalendarIcon } from 'lucide-react'
 import { format, getDaysInMonth, isValid, subYears } from 'date-fns'
@@ -167,6 +167,7 @@ export function MobileWheelDatePicker({
       <SheetContent side="bottom" className="bg-[#111C24] border-t border-white/10 px-0 pb-6 pt-4 rounded-t-3xl overflow-hidden">
         <SheetHeader className="px-6 mb-4">
           <SheetTitle className="text-center text-lg text-white font-bold">{placeholder}</SheetTitle>
+          <SheetDescription className="sr-only">Pilih tanggal</SheetDescription>
         </SheetHeader>
         
         <div className="flex px-6 items-center justify-center gap-2 relative select-none">
