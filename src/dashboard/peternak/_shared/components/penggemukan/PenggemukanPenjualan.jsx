@@ -83,7 +83,9 @@ function HppPanel({ batchId, useHppBatch }) {
   const { totalModalBeli, totalBiayaPakan, totalBiayaOps, totalBiayaGaji = 0,
     totalBiayaOpsLain = 0, totalBiayaKesehatan = 0, totalHpp,
     aktifCount, terjualCount, matiCount, totalPendapatan, totalHutang = 0,
-    hppPerEkor, bepPerEkor, bepSisa, bepSisaKas = 0, profitLoss, produksiCount,
+    hppPerEkor, bepPerEkor, bepSisa, bepSisaKas = 0,
+    bepSisaPerKg = 0, avgActiveWeightKg = 0,
+    profitLoss, produksiCount,
     kgPakanTotal, hargaRataPerKg,
     warnPakanTanpaBiaya, ternakTanpaHarga = 0, allDead } = hpp
 
@@ -222,9 +224,17 @@ function HppPanel({ batchId, useHppBatch }) {
                 )}>
                   <p className="text-[9px] font-black text-orange-400/70 uppercase tracking-widest mb-1">BEP Sisa</p>
                   <p className={cn('text-sm font-black font-["Sora"]', aktifCount > 0 ? 'text-orange-300' : 'text-[#4B6478]')}>
-                    {aktifCount > 0 ? `Rp ${fmt(bepSisa)}` : '—'}
+                    {aktifCount > 0
+                      ? bepSisaPerKg > 0 ? `Rp ${fmt(bepSisaPerKg)}/kg` : `Rp ${fmt(bepSisa)}/ekor`
+                      : '—'}
                   </p>
-                  <p className="text-[9px] text-[#4B6478] mt-0.5">{aktifCount} ekor sisa</p>
+                  <p className="text-[9px] text-[#4B6478] mt-0.5">
+                    {aktifCount > 0
+                      ? avgActiveWeightKg > 0
+                        ? `${aktifCount} ekor · ±${avgActiveWeightKg.toFixed(0)} kg/ekor`
+                        : `${aktifCount} ekor sisa`
+                      : ''}
+                  </p>
                 </div>
               </div>
 
@@ -270,7 +280,10 @@ function HppPanel({ batchId, useHppBatch }) {
                   <ArrowUpDown size={12} className="text-orange-400 shrink-0 mt-0.5" />
                   <p className="text-[10px] text-[#4B6478] leading-relaxed">
                     Jual <span className="text-white font-black">{aktifCount} ekor sisa</span> minimal{' '}
-                    <span className="text-orange-300 font-black">Rp {fmt(bepSisa)}/ekor</span> untuk menutup semua biaya + target margin 20%.
+                    {bepSisaPerKg > 0
+                      ? <><span className="text-orange-300 font-black">Rp {fmt(bepSisaPerKg)}/kg</span>{avgActiveWeightKg > 0 && <span className="text-[#4B6478]"> (±{avgActiveWeightKg.toFixed(0)} kg/ekor)</span>}</>
+                      : <span className="text-orange-300 font-black">Rp {fmt(bepSisa)}/ekor</span>
+                    }{' '}untuk menutup semua biaya + target margin 20%.
                   </p>
                 </div>
               )}
@@ -298,11 +311,19 @@ function HppPanel({ batchId, useHppBatch }) {
 
 // ── MARGIN ANALYZER (inside SaleSheet Step 2) ─────────────────────────────────
 
-function MarginAnalyzer({ bepSisa, pricePerEkor }) {
+function MarginAnalyzer({ bepSisa, bepSisaPerKg = 0, avgActiveWeightKg = 0, pricePerEkor }) {
   if (!bepSisa || bepSisa === 0) return null
 
-  const margin = pricePerEkor > 0 ? ((pricePerEkor - bepSisa) / bepSisa) * 100 : null
-  const diff = pricePerEkor - bepSisa
+  // Jika ada bepSisaPerKg, convert pricePerEkor ke per-kg untuk compare
+  const usePerKg = bepSisaPerKg > 0 && avgActiveWeightKg > 0
+  const bepRef = usePerKg ? bepSisaPerKg : bepSisa
+  const priceRef = usePerKg && pricePerEkor > 0
+    ? Math.round(pricePerEkor / avgActiveWeightKg)
+    : pricePerEkor
+  const unit = usePerKg ? 'kg' : 'ekor'
+
+  const margin = priceRef > 0 ? ((priceRef - bepRef) / bepRef) * 100 : null
+  const diff = priceRef - bepRef
 
   const status =
     margin === null ? 'idle'
@@ -328,14 +349,15 @@ function MarginAnalyzer({ bepSisa, pricePerEkor }) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <p className="text-[9px] text-[#4B6478] uppercase font-bold tracking-widest mb-1">BEP Sisa</p>
-          <p className="text-sm font-black text-orange-300">Rp {fmt(bepSisa)}</p>
-          <p className="text-[9px] text-[#4B6478]">min. harga/ekor</p>
+          <p className="text-sm font-black text-orange-300">Rp {fmt(bepRef)}</p>
+          <p className="text-[9px] text-[#4B6478]">min. harga/{unit}</p>
         </div>
         <div>
           <p className="text-[9px] text-[#4B6478] uppercase font-bold tracking-widest mb-1">Harga Jual</p>
-          <p className={cn('text-sm font-black', pricePerEkor > 0 ? 'text-white' : 'text-[#4B6478]')}>
-            {pricePerEkor > 0 ? `Rp ${fmt(pricePerEkor)}` : '—'}
+          <p className={cn('text-sm font-black', priceRef > 0 ? 'text-white' : 'text-[#4B6478]')}>
+            {priceRef > 0 ? `Rp ${fmt(priceRef)}` : '—'}
           </p>
+          {priceRef > 0 && <p className="text-[9px] text-[#4B6478]">per {unit}</p>}
         </div>
       </div>
       {margin !== null && (
@@ -347,7 +369,7 @@ function MarginAnalyzer({ bepSisa, pricePerEkor }) {
             'text-xs font-black',
             status === 'good' ? 'text-emerald-400' : status === 'warning' ? 'text-amber-400' : 'text-red-400'
           )}>
-            {statusCfg.label} {diff > 0 ? '+' : ''}Rp {fmt(Math.abs(diff))}/ekor
+            {statusCfg.label} {diff > 0 ? '+' : ''}Rp {fmt(Math.abs(diff))}/{unit}
           </span>
           <span className={cn(
             'text-[11px] font-black px-2 py-1 rounded-lg border',
@@ -653,7 +675,12 @@ function SaleSheet({ batchId, animals, hppData, onClose, useAddSale, animalLabel
 
                 {/* Margin Analyzer */}
                 {hppData && (
-                  <MarginAnalyzer bepSisa={hppData.bepSisa} pricePerEkor={pricePerEkor} />
+                  <MarginAnalyzer
+                    bepSisa={hppData.bepSisa}
+                    bepSisaPerKg={hppData.bepSisaPerKg}
+                    avgActiveWeightKg={hppData.avgActiveWeightKg}
+                    pricePerEkor={pricePerEkor}
+                  />
                 )}
 
                 {/* Pembayaran */}

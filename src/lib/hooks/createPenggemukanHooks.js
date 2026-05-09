@@ -1149,9 +1149,14 @@ export function createPenggemukanHooks(prefix) {
       const ternakTanpaHarga = animalList.filter(a => !a.purchase_price_idr || Number(a.purchase_price_idr) === 0).length
 
       // ── Biaya Pakan ────────────────────────────────────────────────────────
+      // Source 1: feed_cost_idr langsung di feed_logs (log harian)
       const totalBiayaPakanDirect = thisBatchFeedLogs.reduce(
         (s, f) => s + (Number(f.feed_cost_idr) || 0), 0
       )
+      // Source 2: "Beli Pakan" yang dicatat via tab Pakan → operational_costs category='pakan'
+      const totalBiayaPakanOps = thisBatchOpsCosts
+        .filter(c => c.category === 'pakan')
+        .reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
 
       // Track consumption volume for display & warning
       const kgConsumedThisBatch = thisBatchFeedLogs.reduce((s, f) => {
@@ -1160,20 +1165,20 @@ export function createPenggemukanHooks(prefix) {
         return s + Math.max(0, input - (f.sisa_pakan_kg || 0))
       }, 0)
 
-      const totalBiayaPakan = totalBiayaPakanDirect
+      const totalBiayaPakan = totalBiayaPakanDirect + totalBiayaPakanOps
 
-      // Warning: ada log pakan (kg > 0) tapi biaya = 0
+      // Warning: ada log pakan (kg > 0) tapi biaya = 0 di kedua sumber
       const warnPakanTanpaBiaya = kgConsumedThisBatch > 0 && totalBiayaPakan === 0
 
       // Avg price per kg for UI display
       const avgPricePerKg = kgConsumedThisBatch > 0 ? totalBiayaPakan / kgConsumedThisBatch : 0
 
-      // ── Biaya Ops (Listrik, dll — exclude gaji for separate display) ───────
+      // ── Biaya Ops (exclude pakan & gaji — keduanya tampil terpisah) ─────────
       const aktifCount = animalList.filter(a => a.status === 'active').length
       const gajiCosts = thisBatchOpsCosts.filter(c => c.category === 'gaji')
-      const nonGajiCosts = thisBatchOpsCosts.filter(c => c.category !== 'gaji')
+      const nonGajiNonPakanCosts = thisBatchOpsCosts.filter(c => c.category !== 'gaji' && c.category !== 'pakan')
       const totalBiayaGaji = gajiCosts.reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
-      const totalBiayaOpsLain = nonGajiCosts.reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
+      const totalBiayaOpsLain = nonGajiNonPakanCosts.reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
       const totalBiayaOps = totalBiayaGaji + totalBiayaOpsLain
 
       // ── Biaya Kesehatan (treatment_cost_idr from health_logs if available) ─
@@ -1207,6 +1212,14 @@ export function createPenggemukanHooks(prefix) {
       // BEP Sisa Kas: hanya yg sudah lunas (cashflow reality)
       const bepSisaKas = aktifCount > 0 ? Math.max(0, targetRevenue - totalPendapatanLunas) / aktifCount : 0
 
+      // BEP per kg — pakai bobot aktif (latest_weight_kg > entry_weight_kg > 0)
+      const activeAnimals = animalList.filter(a => a.status === 'active')
+      const totalActiveWeightKg = activeAnimals.reduce(
+        (s, a) => s + (parseFloat(a.latest_weight_kg ?? a.entry_weight_kg) || 0), 0
+      )
+      const avgActiveWeightKg = activeAnimals.length > 0 ? totalActiveWeightKg / activeAnimals.length : 0
+      const bepSisaPerKg = avgActiveWeightKg > 0 ? Math.round(bepSisa / avgActiveWeightKg) : 0
+
       const sisaHpp = totalHpp - totalPendapatan
       const profitLoss = totalPendapatan - totalHpp
 
@@ -1219,7 +1232,9 @@ export function createPenggemukanHooks(prefix) {
         totalBiayaOpsLain, totalBiayaKesehatan, totalHpp,
         aktifCount, terjualCount, matiCount, produksiCount,
         totalPendapatan, totalPendapatanLunas, totalHutang,
-        hppPerEkor, bepPerEkor, bepSisa, bepSisaKas, sisaHpp, profitLoss,
+        hppPerEkor, bepPerEkor, bepSisa, bepSisaKas,
+        bepSisaPerKg, avgActiveWeightKg,
+        sisaHpp, profitLoss,
         kgPakanTotal, hargaRataPerKg,
         // Warning flags
         warnPakanTanpaBiaya, ternakTanpaHarga, allDead,

@@ -11,6 +11,6 @@ export default function PeternakTutorialOverlay() {
   const { peternakType } = useParams()
   const { tenant } = useAuth()
   const steps = getTutorialSteps(peternakType)
-  const storageKey = `peternak_tutorial_${tenant?.id}`
+  const storageKey = `peternak_tutorial_${peternakType}_${tenant?.id}`
   return <TutorialOverlay steps={steps} storageKey={storageKey} accent={ACCENT} accentDim={ACCENT_DIM} />
 }
