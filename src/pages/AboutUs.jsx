@@ -15,6 +15,7 @@ import AnimatedContent from '../components/reactbits/AnimatedContent';
 import Particles from '../components/reactbits/Particles';
 import CountUp from '../components/reactbits/CountUp';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
+import { useSiteConfig } from '@/lib/hooks/useSiteConfig';
 import '../components/reactbits/ShinyText.css';
 
 // ─── Animation helper ─────────────────────────────────────────────────────────
@@ -37,6 +38,7 @@ function FadeUp({ children, delay = 0, className }) {
 
 export default function AboutUs() {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const { data: cfg = {} } = useSiteConfig();
 
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans selection:bg-emerald-500/30 overflow-x-hidden">
@@ -163,9 +165,13 @@ export default function AboutUs() {
           <div className="max-w-5xl mx-auto px-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {[
-                { countTo: 500, suffix: '+', sep: '', label: 'Pengguna Aktif' },
-                { countTo: 10000, suffix: '+', sep: '.', label: 'Transaksi Tercatat' },
-                { raw: 'Rp 50M+', label: 'Nilai Transaksi' },
+                cfg.stats_users
+                  ? { raw: cfg.stats_users, label: 'Pengguna Aktif' }
+                  : { countTo: 500, suffix: '+', sep: '', label: 'Pengguna Aktif' },
+                cfg.stats_transactions
+                  ? { raw: cfg.stats_transactions, label: 'Transaksi Tercatat' }
+                  : { countTo: 10000, suffix: '+', sep: '.', label: 'Transaksi Tercatat' },
+                { raw: cfg.stats_value ?? 'Rp 50M+', label: 'Nilai Transaksi' },
                 { raw: '3', label: 'Vertikal Bisnis' },
               ].map((stat, i) => (
                 <FadeUp key={i} delay={i * 0.1} className={`text-center ${i < 3 ? 'md:border-r border-white/8' : ''}`}>

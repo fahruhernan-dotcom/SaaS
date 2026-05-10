@@ -16,17 +16,19 @@ import Footer from '../components/Footer';
 
 import ComparisonTable from '../sections/ComparisonTable';
 import StickyCTA from '../components/StickyCTA';
+import { useSiteConfig } from '@/lib/hooks/useSiteConfig';
 
 const LandingPage = () => {
   const [activeRole, setActiveRole] = useState('peternak');
+  const { data: cfg = {} } = useSiteConfig();
 
   const hubSchema = [
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
       "@id": "https://ternakos.my.id/#website",
-      "url": "https://ternakos.my.id",
-      "name": "TernakOS",
+      "url": cfg.company_url ?? "https://ternakos.my.id",
+      "name": cfg.company_name ?? "TernakOS",
       "potentialAction": {
         "@type": "SearchAction",
         "target": "https://ternakos.my.id/faq?q={search_term_string}",
@@ -37,21 +39,21 @@ const LandingPage = () => {
       "@context": "https://schema.org",
       "@type": "Organization",
       "@id": "https://ternakos.my.id/#organization",
-      "name": "TernakOS",
-      "url": "https://ternakos.my.id",
-      "logo": "https://ternakos.my.id/logo.png",
-      "description": "Platform SaaS Manajemen Ternak #1 di Indonesia",
+      "name": cfg.company_name ?? "TernakOS",
+      "url": cfg.company_url ?? "https://ternakos.my.id",
+      "logo": cfg.company_logo_url ?? "https://ternakos.my.id/logo.png",
+      "description": cfg.company_description ?? "Platform SaaS Manajemen Ternak #1 di Indonesia",
       "contactPoint": {
         "@type": "ContactPoint",
-        "telephone": "+6281358925505",
+        "telephone": cfg.company_phone ?? "+6281358925505",
         "contactType": "customer service",
         "areaServed": "ID",
         "availableLanguage": "Indonesian"
       },
       "sameAs": [
-        "https://instagram.com/ternakos.id",
-        "https://linkedin.com/company/ternakos"
-      ]
+        cfg.instagram_url ?? "https://instagram.com/ternakos.id",
+        cfg.linkedin_url ?? "https://linkedin.com/company/ternakos"
+      ].filter(Boolean)
     }
   ];
 

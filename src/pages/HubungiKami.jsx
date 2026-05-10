@@ -9,7 +9,8 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Particles from '../components/reactbits/Particles';
 import ShinyText from '../components/reactbits/ShinyText';
-import { WA_URL, CONTACT_EMAIL, BUSINESS_HOURS } from '@/lib/constants/contact';
+import { WA_URL as WA_URL_FALLBACK, CONTACT_EMAIL as EMAIL_FALLBACK, BUSINESS_HOURS as HOURS_FALLBACK } from '@/lib/constants/contact';
+import { useSiteConfig } from '@/lib/hooks/useSiteConfig';
 
 // ─── Animation helper ─────────────────────────────────────────────────────────
 
@@ -31,6 +32,11 @@ function FadeUp({ children, delay = 0, className }) {
 
 export default function HubungiKami() {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
+  const { data: cfg = {} } = useSiteConfig();
+
+  const WA_URL = cfg.wa_url || WA_URL_FALLBACK;
+  const CONTACT_EMAIL = cfg.contact_email || EMAIL_FALLBACK;
+  const BUSINESS_HOURS = cfg.business_hours || HOURS_FALLBACK;
 
   const handleSubmit = (e) => {
     e.preventDefault();

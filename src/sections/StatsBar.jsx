@@ -3,15 +3,21 @@ import { motion, useInView } from 'framer-motion';
 import CountUp from '../components/reactbits/CountUp';
 import ShinyText from '../components/reactbits/ShinyText';
 import anime from '../lib/animation';
+import { useSiteConfig } from '@/lib/hooks/useSiteConfig';
 
 const StatsBar = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-10%" });
+  const { data: cfg = {} } = useSiteConfig();
 
   const stats = [
-    { value: 500, suffix: "+", label: "Broker & Peternak", duration: 1.5 },
-    { value: 50, suffix: "rb+", label: "Transaksi Tercatat", duration: 1.8 },
-    { value: "Rp 250M+", isShiny: true, label: "Volume Transaksi", duration: 2 },
+    cfg.stats_users
+      ? { raw: cfg.stats_users, label: "Broker & Peternak" }
+      : { value: 500, suffix: "+", label: "Broker & Peternak", duration: 1.5 },
+    cfg.stats_transactions
+      ? { raw: cfg.stats_transactions, label: "Transaksi Tercatat" }
+      : { value: 50, suffix: "rb+", label: "Transaksi Tercatat", duration: 1.8 },
+    { raw: cfg.stats_value ?? "Rp 250M+", isShiny: true, label: "Volume Transaksi" },
     { value: 14, suffix: " Hari", label: "Coba Gratis", duration: 1.2 }
   ];
 
@@ -43,7 +49,9 @@ const StatsBar = () => {
                 <div style={{display:'flex', alignItems:'baseline', gap:'1px', justifyContent:'center'}}>
                   <span className="font-display font-extrabold text-[#F1F5F9] tracking-tighter leading-none text-[12px] md:text-[32px] lg:text-[42px]">
                     {stat.isShiny ? (
-                      <ShinyText text={stat.value} speed={5} style={{ fontFamily:'Sora', fontSize:'inherit', fontWeight:800 }} />
+                      <ShinyText text={stat.raw} speed={5} style={{ fontFamily:'Sora', fontSize:'inherit', fontWeight:800 }} />
+                    ) : stat.raw != null ? (
+                      <span>{stat.raw}</span>
                     ) : (
                       <CountUp 
                         from={0}

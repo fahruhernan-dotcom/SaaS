@@ -6,6 +6,7 @@ import SEO from '../components/SEO';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { getPostBySlug, getRelatedPosts, formatDate } from '../data/blogPosts';
+import { useSiteConfig } from '@/lib/hooks/useSiteConfig';
 
 // ─── Category colors (mirrored from BlogPage) ────────────────────────────────
 
@@ -46,6 +47,7 @@ function RelatedCard({ post }) {
 export default function BlogPostPage() {
   const { slug } = useParams();
   const post = getPostBySlug(slug);
+  const { data: cfg = {} } = useSiteConfig();
 
   // Redirect 404 → /blog
   if (!post) return <Navigate to="/blog" replace />;
@@ -62,18 +64,18 @@ export default function BlogPostPage() {
     },
     "headline": post.title,
     "description": post.metaDescription,
-    "image": post.image ? `https://ternakos.my.id${post.image}` : "https://ternakos.my.id/logo.png",  
+    "image": post.image ? `https://ternakos.my.id${post.image}` : (cfg.company_logo_url ?? "https://ternakos.my.id/logo.png"),  
     "author": {
       "@type": "Organization",
-      "name": "TernakOS",
-      "url": "https://ternakos.my.id"
+      "name": cfg.company_name ?? "TernakOS",
+      "url": cfg.company_url ?? "https://ternakos.my.id"
     },  
     "publisher": {
       "@type": "Organization",
-      "name": "TernakOS",
+      "name": cfg.company_name ?? "TernakOS",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://ternakos.my.id/logo.png"
+        "url": cfg.company_logo_url ?? "https://ternakos.my.id/logo.png"
       }
     },
     "datePublished": post.date || "2026-04-20"

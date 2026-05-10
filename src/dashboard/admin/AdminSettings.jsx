@@ -4,9 +4,10 @@ import {
   Globe, Bot, Shield, AlertTriangle,
   Save, RefreshCw, PowerOff, Building2,
   Loader2, Infinity as InfinityIcon, Settings2, Clock, RefreshCcw,
-  ArrowRight, History
+  ArrowRight, History, Info, Phone, Mail, Instagram, Linkedin, BarChart3
 } from 'lucide-react'
 import { usePlanConfigs, useUpdatePlanConfig, usePlanConfigHistory } from '@/lib/hooks/useAdminData'
+import { useSiteConfig, useUpdateSiteConfig } from '@/lib/hooks/useSiteConfig'
 import { supabase } from '@/lib/supabase'
 import { format, addDays } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
@@ -30,6 +31,17 @@ import { toast } from 'sonner'
 export default function AdminSettings() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('general')
+
+  // Site Config
+  const { data: cfg = {} } = useSiteConfig()
+  const updateSiteConfig = useUpdateSiteConfig()
+  const [siteForm, setSiteForm] = useState({})
+  const [siteSaving, setSiteSaving] = useState(false)
+
+  // Sync siteForm when cfg loads
+  React.useEffect(() => {
+    if (Object.keys(cfg).length > 0) setSiteForm(cfg)
+  }, [JSON.stringify(cfg)])
 
   // Mock States
   const [bannerText, setBannerText] = useState('')
@@ -306,6 +318,9 @@ export default function AdminSettings() {
           </TabsTrigger>
           <TabsTrigger value="security" className="rounded-lg lg:rounded-xl px-4 py-2.5 text-[10px] lg:text-[11px] font-black uppercase tracking-widest data-[state=active]:bg-white/10 data-[state=active]:text-red-400">
             <Shield className="w-4 h-4 mr-2" /> Security
+          </TabsTrigger>
+          <TabsTrigger value="site_info" className="rounded-lg lg:rounded-xl px-4 py-2.5 text-[10px] lg:text-[11px] font-black uppercase tracking-widest data-[state=active]:bg-white/10 data-[state=active]:text-sky-400">
+            <Info className="w-4 h-4 mr-2" /> Site Info
           </TabsTrigger>
         </TabsList>
 
@@ -786,6 +801,140 @@ export default function AdminSettings() {
                  </div>
               </div>
              </section>
+          </TabsContent>
+
+          {/* SITE INFO TAB */}
+          <TabsContent value="site_info" className="mt-0 space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <section className="space-y-6">
+              <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center">
+                  <Info className="text-sky-400" size={18} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-white uppercase tracking-tight">Site Info</h2>
+                  <p className="text-[11px] text-[#4B6478] font-bold uppercase tracking-widest mt-0.5">Metadata perusahaan & konten landing page</p>
+                </div>
+              </div>
+
+              {/* Company Identity */}
+              <div className="space-y-3">
+                <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478] flex items-center gap-2"><Building2 size={13} /> Identitas Perusahaan</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { key: 'company_name',        label: 'Nama Perusahaan',  placeholder: 'TernakOS' },
+                    { key: 'company_url',          label: 'URL Utama',        placeholder: 'https://ternakos.my.id' },
+                    { key: 'company_logo_url',     label: 'URL Logo',         placeholder: 'https://ternakos.my.id/logo.png' },
+                    { key: 'company_description',  label: 'Deskripsi Singkat',placeholder: 'Platform SaaS Manajemen Ternak...' },
+                  ].map(({ key, label, placeholder }) => (
+                    <div key={key} className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">{label}</label>
+                      <Input
+                        value={siteForm[key] ?? ''}
+                        onChange={e => setSiteForm(p => ({ ...p, [key]: e.target.value }))}
+                        placeholder={placeholder}
+                        className="bg-black/40 border-white/10 text-white text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="h-px w-full bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+
+              {/* Contact */}
+              <div className="space-y-3">
+                <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478] flex items-center gap-2"><Phone size={13} /> Kontak & Support</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { key: 'company_phone',  label: 'Nomor Telepon (E.164)', placeholder: '+6281358925505' },
+                    { key: 'contact_email',  label: 'Email Support',          placeholder: 'support@ternakos.my.id' },
+                    { key: 'wa_url',         label: 'URL WhatsApp',           placeholder: 'https://wa.me/6281234567890' },
+                    { key: 'business_hours', label: 'Jam Operasional',        placeholder: 'Senin – Jumat, 08:00 – 17:00 WIB' },
+                  ].map(({ key, label, placeholder }) => (
+                    <div key={key} className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">{label}</label>
+                      <Input
+                        value={siteForm[key] ?? ''}
+                        onChange={e => setSiteForm(p => ({ ...p, [key]: e.target.value }))}
+                        placeholder={placeholder}
+                        className="bg-black/40 border-white/10 text-white text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="h-px w-full bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+
+              {/* Social Media */}
+              <div className="space-y-3">
+                <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478] flex items-center gap-2"><Instagram size={13} /> Social Media</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { key: 'instagram_url', label: 'URL Instagram', placeholder: 'https://instagram.com/ternakos.id' },
+                    { key: 'linkedin_url',  label: 'URL LinkedIn',  placeholder: 'https://linkedin.com/company/ternakos' },
+                  ].map(({ key, label, placeholder }) => (
+                    <div key={key} className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">{label}</label>
+                      <Input
+                        value={siteForm[key] ?? ''}
+                        onChange={e => setSiteForm(p => ({ ...p, [key]: e.target.value }))}
+                        placeholder={placeholder}
+                        className="bg-black/40 border-white/10 text-white text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="h-px w-full bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+
+              {/* Landing Page Stats */}
+              <div className="space-y-3">
+                <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478] flex items-center gap-2"><BarChart3 size={13} /> Statistik Landing Page</p>
+                <p className="text-[10px] text-[#4B6478]">Tampil di StatsBar & About Us. Kosongkan untuk pakai animasi CountUp default.</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { key: 'stats_users',        label: 'Pengguna Aktif',    placeholder: '500+' },
+                    { key: 'stats_transactions', label: 'Transaksi Tercatat', placeholder: '10rb+' },
+                    { key: 'stats_value',        label: 'Volume Transaksi',   placeholder: 'Rp 250M+' },
+                  ].map(({ key, label, placeholder }) => (
+                    <div key={key} className="space-y-1.5">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">{label}</label>
+                      <Input
+                        value={siteForm[key] ?? ''}
+                        onChange={e => setSiteForm(p => ({ ...p, [key]: e.target.value }))}
+                        placeholder={placeholder}
+                        className="bg-black/40 border-white/10 text-white text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={async () => {
+                  setSiteSaving(true)
+                  try {
+                    await Promise.all(
+                      Object.entries(siteForm).map(([key, value]) =>
+                        updateSiteConfig.mutateAsync({ key, value })
+                      )
+                    )
+                    toast.success('Informasi site berhasil disimpan')
+                  } catch { /* toast handled in hook */ } finally {
+                    setSiteSaving(false)
+                  }
+                }}
+                disabled={siteSaving}
+                className="w-full bg-sky-500 hover:bg-sky-600 text-white h-12 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all disabled:opacity-50 flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(14,165,233,0.3)] border border-sky-400/20 active:scale-[0.98]"
+              >
+                {siteSaving
+                  ? <><Loader2 size={16} className="animate-spin" /> MENYIMPAN...</>
+                  : 'SIMPAN SITE INFO'
+                }
+              </button>
+            </section>
           </TabsContent>
 
         </div>
