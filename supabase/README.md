@@ -7,6 +7,26 @@ Based on our comprehensive security audit, the database architecture heavily rel
 
 ---
 
+## File Layout
+
+The `supabase/` folder is structured into a series of numbered SQL files, representing a sequence of safe execution dependencies:
+
+- `00_extensions.sql` to `03_role_memberships.sql`: Setup extensions, schemas, and basic roles.
+- `04_tables.sql` to `07_table_owners.sql`: Setup tables, primary keys, foreign keys, and owners.
+- `08_functions.sql` to `10_enabled_extension_functions.sql`: Setup functions and extensions logic.
+- `11_views.sql` to `12_triggers.sql`: Setup views and triggers.
+- `13_rls_status.sql` to `14_policies.sql`: Enable and apply RLS and policies.
+- `15_table_privileges.sql` to `19_public_anon_access.sql`: Finalize grants and execute privileges.
+
+## Regeneration Workflow
+
+The `Supabase *.txt` files are the **raw source of truth** exported from Supabase Studio. The `.sql` files are the **executable representation** of that truth. 
+
+- **Workflow:** Every time a new snapshot is pulled, regenerate the relevant `.sql` files based purely on the `.txt` source. 
+- **AI Agent Notice:** AI agents and developers are expected to **read the `.sql` files**, not the `.txt` files, to understand the schema and policies, as the `.sql` files contain the syntactically correct and fully resolved representation of the database.
+
+---
+
 ## 1. Multi-Tenant RLS Pattern (The Standard)
 
 ### ✅ Recommended Pattern: `is_tenant_member()`
