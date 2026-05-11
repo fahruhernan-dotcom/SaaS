@@ -191,6 +191,7 @@ export default function AdminUsers() {
 
     return Object.values(groups).filter(user => {
       const matchesSearch = (user.name || '').toLowerCase().includes(q) ||
+        (user.email || '').toLowerCase().includes(q) ||
         user.profiles.some(p => (p.tenants?.business_name || '').toLowerCase().includes(q))
       return matchesSearch
     })
@@ -495,6 +496,9 @@ export default function AdminUsers() {
                             </Avatar>
                             <div>
                                <p className="text-[14px] font-black text-white leading-tight">{toTitleCase(u.name) || '(Tanpa Nama)'}</p>
+                               {u.email && (
+                                 <p className="text-[11px] font-medium text-emerald-400/80 lowercase mt-0.5">{u.email}</p>
+                               )}
                                <p className="text-[9px] font-bold text-[#4B6478] uppercase mt-1 tracking-widest">UID: {u.id.substring(0, 8)}</p>
                             </div>
                           </div>
@@ -510,9 +514,14 @@ export default function AdminUsers() {
                               
                               <div className="w-[1px] h-4 bg-white/10 hidden lg:block" />
 
+                              {/* App Role Badge */}
+                              {u.profiles.some(p => p.app_role === 'superadmin' || p.role === 'superadmin') && (
+                                <AppRoleBadge appRole="superadmin" />
+                              )}
+
                               {/* Membership Role Badges (Subtle) */}
                               <div className="flex flex-wrap gap-2">
-                                {Array.from(new Set(u.profiles.map(p => p.role === 'superadmin' ? 'owner' : p.role))).map(role => (
+                                {Array.from(new Set(u.profiles.map(p => p.role === 'superadmin' ? 'owner' : p.role))).filter(Boolean).map(role => (
                                   <RoleBadge key={role} role={role} />
                                 ))}
                               </div>
@@ -581,8 +590,14 @@ export default function AdminUsers() {
                       <SheetTitle className="text-xl font-black text-white uppercase tracking-tight">
                         {selectedUser.name || 'User Tanpa Nama'}
                       </SheetTitle>
-                      <SheetDescription className="text-[11px] font-bold text-[#4B6478] uppercase mt-1 tracking-[0.15em]">
-                        User ID: {selectedUser.id}
+                      {selectedUser.email && (
+                        <p className="text-[13px] font-bold text-emerald-400/90 lowercase mt-1">{selectedUser.email}</p>
+                      )}
+                      <SheetDescription className="text-[11px] font-bold text-[#4B6478] uppercase mt-1 tracking-[0.15em] flex items-center gap-2">
+                        <span>User ID: {selectedUser.id}</span>
+                        {selectedUser.profiles.some(p => p.app_role === 'superadmin' || p.role === 'superadmin') && (
+                          <AppRoleBadge appRole="superadmin" />
+                        )}
                       </SheetDescription>
                     </div>
                   </div>
@@ -863,6 +878,7 @@ export default function AdminUsers() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="text-[12px] font-bold text-white truncate">{toTitleCase(p.full_name) || '-'}</p>
+                              {(p.app_role === 'superadmin' || p.role === 'superadmin') && <AppRoleBadge appRole="superadmin" />}
                               <RoleBadge role={p.role === 'superadmin' ? 'owner' : p.role} />
                             </div>
                             <p className="text-[10px] text-[#4B6478] font-bold uppercase mt-0.5 tracking-tighter">
@@ -930,8 +946,6 @@ export default function AdminUsers() {
     </div>
   )
 }
-
-// --- Sub-Components ---
 
 // --- Sub-Components ---
 
@@ -1006,8 +1020,14 @@ function UserMobileCard({ user, onClick }) {
           </Avatar>
           <div className="min-w-0">
              <p className="text-[14px] font-black text-white leading-tight truncate">{toTitleCase(user.name) || '(Tanpa Nama)'}</p>
+             {user.email && (
+                <p className="text-[10px] font-medium text-emerald-400/80 lowercase mt-0.5 truncate">{user.email}</p>
+             )}
              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                {Array.from(new Set(user.profiles.map(p => p.role === 'superadmin' ? 'owner' : p.role))).slice(0, 2).map(role => (
+                {user.profiles.some(p => p.app_role === 'superadmin' || p.role === 'superadmin') && (
+                  <AppRoleBadge appRole="superadmin" />
+                )}
+                {Array.from(new Set(user.profiles.map(p => p.role === 'superadmin' ? 'owner' : p.role))).filter(Boolean).slice(0, 2).map(role => (
                   <RoleBadge key={role} role={role} />
                 ))}
                 <span className="text-[9px] font-bold text-[#4B6478] uppercase">{user.uniqueTenants?.size || 0} Bisnis</span>
@@ -1075,6 +1095,18 @@ function PlanBadge({ tenant }) {
     <Badge className={`px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm ${isTrial ? trialStyle : styles[plan] || styles.starter}`}>
       {isTrial ? `TRIAL ${toTitleCase(plan)}` : toTitleCase(plan)}
     </Badge>
+  )
+}
+
+function AppRoleBadge({ appRole }) {
+  if (appRole !== 'superadmin') return null;
+  return (
+    <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-amber-500/10 border border-amber-500/20 shadow-sm shadow-amber-500/5">
+      <Shield size={10} className="text-amber-400" />
+      <span className="text-[9px] font-bold uppercase tracking-widest leading-none text-amber-400">
+        Superadmin
+      </span>
+    </div>
   )
 }
 

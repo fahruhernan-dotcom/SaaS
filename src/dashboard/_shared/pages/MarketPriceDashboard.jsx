@@ -13,6 +13,8 @@ import {
 import { format, startOfWeek, startOfMonth, addDays, subDays } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { isSuperadmin } from '@/lib/auth'
+import { isOwner, isStaff } from '@/lib/auth/business-roles'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useMarketTrends } from '@/lib/hooks/useMarketTrends'
 import { formatIDR, formatDate, safeNum } from '@/lib/format'
@@ -106,7 +108,7 @@ export default function MarketPriceDashboard() {
   const { profile, tenant } = useAuth()
   const queryClient = useQueryClient()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
-  const canWrite = profile?.role === 'owner' || profile?.role === 'staff' || profile?.role === 'superadmin'
+  const canWrite = isOwner(profile) || isStaff(profile) || isSuperadmin(profile)
 
   // Province is sourced from tenant account, with manual override on this page
   const [selectedProvince, setSelectedProvince] = useState(

@@ -22,6 +22,8 @@ import {
 import { useUpdateDelivery } from '@/lib/hooks/useUpdateDelivery'
 import { useRPA } from '@/lib/hooks/useRPA'
 import { useTransactionQuota } from '@/lib/hooks/useTransactionQuota'
+import { isSuperadmin } from '@/lib/auth'
+import { isOwner, isStaff } from '@/lib/auth/business-roles'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -94,9 +96,9 @@ export default function Transaksi() {
     }
   }, [location.search])
   
-  const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin'
+  const isOwnerUser = isOwner(profile) || isSuperadmin(profile)
   const isViewOnly = profile?.role === 'view_only'
-  const canWrite = profile?.role === 'owner' || profile?.role === 'staff' || profile?.role === 'superadmin'
+  const canWrite = isOwnerUser || isStaff(profile)
 
 
   // --- FINAL SUCCESS STATE ---

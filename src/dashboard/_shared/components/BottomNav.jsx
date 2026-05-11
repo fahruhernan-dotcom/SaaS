@@ -32,6 +32,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { getBusinessModel, BUSINESS_MODELS, resolveBusinessVertical } from '@/lib/businessModel'
+import { isSuperadmin, isOwner, isStaff, isViewOnly } from '@/lib/auth'
 import { useTheme } from '@/lib/hooks/useTheme'
 import { peternakPermissions } from '@/lib/hooks/usePeternakPermissions'
 import DrawerLainnya from './DrawerLainnya'
@@ -436,7 +437,7 @@ export default function BottomNav() {
   }
 
   const tabs = allTabs.filter(tab => {
-    if (profile?.role === 'superadmin') return true
+    if (isSuperadmin(profile)) return true
 
     // ── Peternak vertical ─────────────────────────────────────────────────
     if (isPeternakUser && pp) {
@@ -455,18 +456,14 @@ export default function BottomNav() {
     if (profile?.user_type !== 'broker') return true
 
     // ── Broker vertical ───────────────────────────────────────────────────
-    const isOwner    = profile?.role === 'owner' || profile?.role === 'superadmin'
-    const isStaff    = profile?.role === 'staff'
-    const isViewOnly = profile?.role === 'view_only'
-
-    if (isOwner) return true
-    if (isStaff) {
+    if (isOwner(profile) || isSuperadmin(profile)) return true
+    if (isStaff(profile)) {
       if (isSembako) {
         return ['Beranda', 'Jual', 'Toko', 'Kirim'].includes(tab.label)
       }
       return ['Beranda', 'Transaksi', 'RPA', 'Akun'].includes(tab.label)
     }
-    if (isViewOnly) {
+    if (isViewOnly(profile)) {
       if (isSembako) {
         return ['Beranda', 'Laporan'].includes(tab.label)
       }
@@ -493,9 +490,7 @@ export default function BottomNav() {
     } else if (tab.path === '/lainnya') {
       setDrawerOpen(true)
     } else if (tab.label === 'Admin') {
-      const adminProfile = profiles?.find(
-        p => p.role === 'superadmin' || p.user_type === 'superadmin'
-      )
+      const adminProfile = profiles?.find(p => isSuperadmin(p))
       if (adminProfile) {
         switchTenant(adminProfile.tenant_id)
         navigate('/admin')

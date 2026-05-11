@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-
+import { isSuperadmin } from './auth'
 /**
  * Centrally calculates the total limit for any feature.
  * Scalable: Just add a new key in plan_configs to support more features.
@@ -58,19 +58,14 @@ export async function checkQuotaUsage(tenant, profile, type) {
   // 1. GLOBAL ADMIN CHECK: Fetch all profiles for this user to check global status
   const { data: userProfiles, error: profError } = await supabase
     .from('profiles')
-    .select('role, user_type')
+    .select('role, user_type, app_role')
     .eq('auth_user_id', profile.auth_user_id)
 
   if (profError) {
     console.error('[QUOTA_ERROR] Failed to fetch user profiles:', profError)
   }
 
-  const isAdminGlobal = (userProfiles || []).some(p => 
-    p.role === 'admin' || 
-    p.role === 'superadmin' || 
-    p.user_type === 'superadmin' ||
-    p.user_type === 'admin'
-  )
+  const isAdminGlobal = (userProfiles || []).some(p => isSuperadmin(p))
 
 
 

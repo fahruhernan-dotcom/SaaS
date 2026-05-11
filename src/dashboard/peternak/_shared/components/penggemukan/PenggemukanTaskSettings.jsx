@@ -39,6 +39,7 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { isSuperadmin } from '@/lib/auth'
 
 // ─── Accent Map ──────────────────────────────────────────────────────────────
 
@@ -175,7 +176,7 @@ function TemplateItemMobile({ template, onEdit, onDelete, isSelected, onToggleSe
   const cfg = TASK_TYPE_CFG[template.task_type] || TASK_TYPE_CFG.lainnya
   const refresh = useGenerateInstancesFromTemplate()
   const { profile } = useAuth()
-  const isOwner = profile?.role === 'owner'
+  const isOwner = isSuperadmin(profile) || profile?.role === 'owner'
   const isProtected = template.title?.includes('Sampling') ||
     template.title?.includes('Intensif') ||
     template.title?.includes('Timbang Total (90 Hari)')

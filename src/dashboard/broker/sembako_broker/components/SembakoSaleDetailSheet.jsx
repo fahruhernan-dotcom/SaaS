@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { formatIDR } from '@/lib/format'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { isSuperadmin } from '@/lib/auth'
 import { useDeleteSembakoSale, useCreateSembakoReturn } from '@/lib/hooks/useSembakoData'
 import InvoicePreviewModal from '@/components/invoice/InvoicePreviewModal'
 import { C, sBtn, sLabel, DetailRow, fmtDate, generateWAMessage, toWaLink } from './sembakoSaleUtils'
@@ -25,7 +26,7 @@ export function SembakoSaleDetailSheet({ isOpen, onOpenChange, sale, onEdit }) {
   const { tenant, profile } = useAuth()
   const deleteSale = useDeleteSembakoSale()
   const createReturn = useCreateSembakoReturn()
-  const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin'
+  const isOwner = profile?.role === 'owner' || isSuperadmin(profile)
   const [payTarget, setPayTarget] = useState(null)
   const [invoiceModal, setInvoiceModal] = useState({ open: false, type: null })
   const [confirmDelete, setConfirmDelete] = useState(false)

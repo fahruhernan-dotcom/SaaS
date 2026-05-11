@@ -12,6 +12,8 @@ import {
   calcCurrentAge,
 } from '@/lib/hooks/usePeternakData'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { isSuperadmin } from '@/lib/auth'
+import { isOwner } from '@/lib/auth/business-roles'
 import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -417,7 +419,7 @@ export default function FarmBeranda() {
             <span className="text-[11px] font-bold text-slate-300 bg-white/[0.05] border border-white/[0.08] px-2.5 py-1 rounded-full whitespace-nowrap flex-shrink-0">
               {livestockLabel}
             </span>
-            {(profile?.role === 'owner' || profile?.role === 'superadmin') && (
+            {(isOwner(profile) || isSuperadmin(profile)) && (
               <button
                 onClick={() => navigate(`${peternakBase}/kandang/${farmId}/atur`)}
                 className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"

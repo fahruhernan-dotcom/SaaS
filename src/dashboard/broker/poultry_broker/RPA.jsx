@@ -26,6 +26,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useNavigate, useParams, useOutletContext } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { isSuperadmin } from '@/lib/auth'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import EmptyState from '@/components/EmptyState'
@@ -442,7 +443,7 @@ function RPACard({ rpa, isDesktop, onClick, onEdit }) {
 
 export function RPAForm({ rpa, isDesktop, onClose, onSubmit, onDelete }) {
     const { profile } = useAuth()
-    const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin'
+    const isOwner = profile?.role === 'owner' || isSuperadmin(profile)
     const [isLoading, setIsLoading] = useState(false)
     
     const { register, handleSubmit, watch, setValue, control, formState: { errors } } = useForm({

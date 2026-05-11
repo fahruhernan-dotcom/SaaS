@@ -7,6 +7,8 @@ import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { formatIDR, formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { isSuperadmin } from '@/lib/auth'
+import { isOwner } from '@/lib/auth/business-roles'
 import { BrokerMobileHeader } from './BrokerMobileHeader'
 import {
   useBrokerEmployees,
@@ -55,7 +57,7 @@ export default function BrokerKaryawanPage({ hideMobileHeader = false, accentCol
   const { setSidebarOpen } = useOutletContext() || {}
   const { tenant, profile } = useAuth()
   const sub = getSubscriptionStatus(tenant)
-  const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin'
+  const isOwnerUser = isOwner(profile) || isSuperadmin(profile)
   const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
 
   const { data: employees = [], isLoading } = useBrokerEmployees()
@@ -161,7 +163,7 @@ export default function BrokerKaryawanPage({ hideMobileHeader = false, accentCol
               <h1 className="font-display text-[28px] font-black text-white leading-tight">Karyawan</h1>
               <p className="text-[#64748B] text-sm mt-1">{employees.length} karyawan terdaftar</p>
             </div>
-            {isOwner && (
+            {isOwnerUser && (
               <button onClick={openAdd}
                 className="h-11 px-5 rounded-xl font-black text-sm text-white flex items-center gap-2 transition-all active:scale-95"
                 style={{ background: accentColor, boxShadow: `0 4px 16px ${accentColor}40` }}>
@@ -212,7 +214,7 @@ export default function BrokerKaryawanPage({ hideMobileHeader = false, accentCol
         </div>
 
         {/* Mobile add button */}
-        {!isDesktop && isOwner && (
+        {!isDesktop && isOwnerUser && (
           <button onClick={openAdd}
             className="w-full h-11 rounded-xl font-black text-sm text-white flex items-center justify-center gap-2 transition-all active:scale-95"
             style={{ background: accentColor }}>
@@ -254,7 +256,7 @@ export default function BrokerKaryawanPage({ hideMobileHeader = false, accentCol
                         <Badge className={cn('text-[9px] font-black border', status.bg, status.text, status.border)}>
                           {status.label}
                         </Badge>
-                        {isOwner && (
+                        {isOwnerUser && (
                           <div className="flex gap-1">
                             <button onClick={() => openEdit(emp)}
                               className="w-7 h-7 rounded-lg flex items-center justify-center text-[#4B6478] hover:text-white transition-colors bg-white/[0.03]">

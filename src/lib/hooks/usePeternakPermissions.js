@@ -16,12 +16,14 @@
  */
 
 import { useAuth } from '@/lib/hooks/useAuth'
+import { isSuperadmin } from '@/lib/auth'
 
 /**
  * Pure helper — pass role string, get permission object.
  * Useful outside React (e.g. server-side checks, tests).
  */
 export function peternakPermissions(role) {
+  // superadmin is treated as owner for peternak permission matrix
   const isOwner    = role === 'owner' || role === 'superadmin'
   const isManajer  = role === 'manajer'
   const isStaff    = role === 'staff'        // = Pekerja / Anak Kandang
@@ -112,7 +114,9 @@ export function peternakPermissions(role) {
 /** React hook — reads role from auth context */
 export default function usePeternakPermissions() {
   const { profile } = useAuth()
-  return peternakPermissions(profile?.role ?? 'view_only')
+  // Superadmin gets full owner-level access in the peternak permission matrix
+  const effectiveRole = isSuperadmin(profile) ? 'owner' : (profile?.role ?? 'view_only')
+  return peternakPermissions(effectiveRole)
 }
 
 // ── Label helpers ─────────────────────────────────────────────────────────────

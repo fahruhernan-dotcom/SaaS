@@ -25,20 +25,16 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { getBusinessModel } from '@/lib/businessModel'
 import ThemePicker from '@/components/ui/ThemePicker'
-
+import { isSuperadmin, isOwner, isStaff, isViewOnly } from '@/lib/auth'
 const ICON_MAP = {
   Truck, Wallet, BarChart2, BarChart3, Car, Calculator, User, Users,
   Package, RefreshCw, ClipboardList, ShoppingCart, CreditCard, History, Store, LayoutGrid, Shield,
 }
 
 export default function DrawerLainnya({ isOpen, onClose, userType }) {
-  const { profile, tenant, profiles, isSuperadmin, switchTenant } = useAuth()
+  const { profile, tenant, profiles, switchTenant } = useAuth()
   const navigate = useNavigate()
   const model = getBusinessModel(userType, profile?.sub_type)
-
-  const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin'
-  const isStaff = profile?.role === 'staff'
-  const isViewOnly = profile?.role === 'view_only'
 
   const filteredMenu = (model?.drawerMenu || []).filter(item => {
     // Global restriction for Harga Pasar
@@ -48,21 +44,21 @@ export default function DrawerLainnya({ isOpen, onClose, userType }) {
 
     // Peternak role filtering
     if (userType === 'peternak') {
-      if (item.label === 'Tim & Akses') return profile?.role === 'owner' || profile?.role === 'superadmin'
-      if (item.label === 'Stok & Pakan') return profile?.role !== 'view_only'
+      if (item.label === 'Tim & Akses') return isOwner(profile) || isSuperadmin(profile)
+      if (item.label === 'Stok & Pakan') return !isViewOnly(profile)
       return true
     }
 
     if (userType !== 'broker') return true // only apply to broker
     
-    if (isOwner) return true
-    if (isStaff) {
+    if (isOwner(profile) || isSuperadmin(profile)) return true
+    if (isStaff(profile)) {
       if (profile?.sub_type?.includes('sembako') || tenant?.business_vertical === 'distributor_sembako') {
         return ['Dashboard', 'Manajemen Produk', 'Riwayat Penjualan', 'Gudang & Stok', 'Manajemen Pegawai', 'Laporan Bisnis', 'Akun & Profil'].includes(item.label)
       }
       return ['Pengiriman & Loss', 'Harga Pasar', 'Akun & Profil'].includes(item.label)
     }
-    if (isViewOnly) {
+    if (isViewOnly(profile)) {
       if (profile?.sub_type?.includes('sembako') || tenant?.business_vertical === 'distributor_sembako') {
         return ['Dashboard', 'Laporan Bisnis', 'Akun & Profil'].includes(item.label)
       }
@@ -140,13 +136,11 @@ export default function DrawerLainnya({ isOpen, onClose, userType }) {
                 })}
 
                 {/* Admin Panel — superadmin only */}
-                {isSuperadmin && (
+                {isSuperadmin(profile) && (
                   <motion.div
                     whileTap={{ scale: 0.98 }}
                     onClick={() => {
-                      const adminProfile = profiles?.find(
-                        p => p.role === 'superadmin' || p.user_type === 'superadmin'
-                      )
+                      const adminProfile = profiles?.find(p => isSuperadmin(p))
                       if (adminProfile) switchTenant(adminProfile.tenant_id)
                       navigate('/admin')
                       onClose()

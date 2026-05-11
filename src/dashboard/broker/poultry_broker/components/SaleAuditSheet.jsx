@@ -7,6 +7,8 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useRPA } from '@/lib/hooks/useRPA'
+import { isSuperadmin } from '@/lib/auth'
+import { isOwner, isStaff } from '@/lib/auth/business-roles'
 import { 
   Sheet, 
   SheetContent, 
@@ -64,8 +66,8 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
   const queryClient = useQueryClient()
   const { tenant, profile } = useAuth()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
-  const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin'
-  const canWrite = profile?.role === 'owner' || profile?.role === 'staff' || profile?.role === 'superadmin'
+  const isOwnerUser = isOwner(profile) || isSuperadmin(profile)
+  const canWrite = isOwnerUser || isStaff(profile)
   const { data: rpaClients } = useRPA()
   
   const [isEditing, setIsEditing] = useState(false)

@@ -116,12 +116,13 @@ import { getLivestockTypeFromSubType } from '@/lib/constants/taskTemplates'
 import { useAuth } from '@/lib/hooks/useAuth'
 import PeternakTutorialOverlay from './_shared/components/PeternakTutorialOverlay'
 import WelcomeOnlyOverlay from '@/dashboard/_shared/components/WelcomeOnlyOverlay'
+import { isOwner, isManager, isSuperadmin } from '@/lib/auth'
 
 // ─── Route Guard ──────────────────────────────────────────────────────────────
 function PeternakAdminGuard({ children }) {
   const { profile, loading } = useAuth()
   if (loading) return <LoadingSpinner fullPage />
-  const isAllowed = profile?.role === 'owner' || profile?.role === 'superadmin'
+  const isAllowed = isOwner(profile) || isSuperadmin(profile)
   if (!isAllowed) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center text-slate-400">
@@ -141,7 +142,7 @@ function PeternakAdminGuard({ children }) {
 function PeternakManagerGuard({ children }) {
   const { profile, loading } = useAuth()
   if (loading) return <LoadingSpinner fullPage />
-  const isAllowed = ['owner', 'manajer', 'superadmin'].includes(profile?.role)
+  const isAllowed = isOwner(profile) || isManager(profile) || isSuperadmin(profile)
   if (!isAllowed) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center text-slate-400">

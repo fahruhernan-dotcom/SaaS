@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import BusinessModelOverlay from '../components/BusinessModelOverlay'
 import LoadingScreen from '@/components/LoadingScreen'
 import { getBrokerBasePath } from '@/lib/hooks/useAuth'
+import { isSuperadmin } from '@/lib/auth'
 
 const KEY_TO_PATH = {
   poultry_broker:      '/broker/broker_ayam/beranda',
@@ -37,10 +38,7 @@ export default function OnboardingFlow() {
     
     // Original redirect logic only if NOT in new business mode
     if (!isNewBusiness && profile?.onboarded) {
-      if (profile.role === 'superadmin' || profile.user_type === 'superadmin') {
-        navigate('/admin', { replace: true })
-        return
-      }
+
       if (profile.user_type === 'peternak') {
         navigate(`/peternak/${profile.tenants?.sub_type || 'peternak_broiler'}/beranda`, { replace: true })
         return

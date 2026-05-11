@@ -65,6 +65,7 @@ const AdminActivity     = lazy(() => import('./dashboard/admin/AdminActivity'))
 const AdminSettings     = lazy(() => import('./dashboard/admin/AdminSettings'))
 
 import { getXBasePath, resolveBusinessVertical, BUSINESS_MODELS } from './lib/businessModel'
+import { isSuperadmin } from '@/lib/auth'
 
 // ── Vertical-aware beranda path ───────────────────────────────────────────────
 function getVerticalBeranda(tenant, profile) {
@@ -121,13 +122,14 @@ const AuthHashRedirect = () => {
 };
 
 function ProtectedRoute({ children, requiredType, requiredVertical }) {
-  const { user, profile, tenant, isSuperadmin, loading } = useAuth();
+  const { user, profile, tenant, loading } = useAuth();
   const location = useLocation();
 
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
 
-  if (isSuperadmin) return children;
+  // Superadmin bypass — uses centralized helper (migration-safe dual-mode)
+  if (isSuperadmin(profile)) return children;
 
   if (profile && !profile.onboarded && location.pathname !== '/onboarding' && profile.role === 'owner') {
     return <Navigate to="/onboarding" replace />;
@@ -186,7 +188,7 @@ function RoleRedirector() {
   if (loading) return <LoadingScreen />;
   
   // Superadmin redirects to /admin only if not explicitly on a business path
-  if (profile?.role === 'superadmin' && (location.pathname === '/' || location.pathname === '/home' || location.pathname === '/dashboard')) {
+  if (isSuperadmin(profile) && (location.pathname === '/' || location.pathname === '/home' || location.pathname === '/dashboard')) {
     return <Navigate to="/admin" replace />;
   }
 
@@ -251,12 +253,12 @@ function DashboardLayout({ children }) {
 }
 
 function AdminRoute({ children }) {
-  const { user, isSuperadmin, profile, tenant, loading } = useAuth();
+  const { user, profile, tenant, loading } = useAuth();
 
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
   
-  if (!isSuperadmin) {
+  if (!isSuperadmin(profile)) {
     return <Navigate to={getVerticalBeranda(tenant, profile)} replace />;
   }
 

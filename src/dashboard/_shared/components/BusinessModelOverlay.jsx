@@ -10,6 +10,7 @@ import { checkQuotaUsage } from '@/lib/quotaUtils'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import StepSetup from './onboarding/StepSetup'
+import { isSuperadmin } from '@/lib/auth'
 
 // Verticals that need a dedicated setup step after business name
 const SETUP_REQUIRED_VERTICALS = new Set(['peternak_sapi_penggemukan'])
@@ -68,7 +69,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
   const isRoleLocked = useMemo(() => {
     // Platform-wide admins (superadmin) should not be locked into a specific business category
     // They should be able to create any type of business
-    if (profile?.role === 'superadmin' || profile?.user_type === 'superadmin') return false
+    if (isSuperadmin(profile)) return false
     return isNewBusiness || profile?.onboarded
   }, [isNewBusiness, profile])
 

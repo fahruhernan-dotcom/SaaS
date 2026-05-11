@@ -3,6 +3,7 @@ import { useOutletContext, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/hooks/useAuth';
+import { isSuperadmin, isOwner as checkIsOwner } from '@/lib/auth';
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
 import { cn } from '@/lib/utils';
@@ -50,7 +51,7 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
     location: ''
   });
   
-  const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin';
+  const isOwner = checkIsOwner(profile) || isSuperadmin(profile);
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const { setSidebarOpen } = useOutletContext() || {};
 

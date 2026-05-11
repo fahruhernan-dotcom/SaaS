@@ -39,6 +39,8 @@ import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import EmptyState from '@/components/EmptyState'
+import { isSuperadmin } from '@/lib/auth'
+import { isOwner } from '@/lib/auth/business-roles'
 import InvoicePreviewModal from '@/components/invoice/InvoicePreviewModal'
 import {
   Sheet,
@@ -83,7 +85,7 @@ export default function RPADetail() {
   const queryClient = useQueryClient()
   const { tenant, profile } = useAuth()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
-  const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin'
+  const isOwnerUser = isOwner(profile) || isSuperadmin(profile)
   
   const _navigate = useNavigate()
   const brokerBase = getBrokerBasePath(tenant)
@@ -208,7 +210,7 @@ export default function RPADetail() {
                 <p className="text-[10px] font-black text-[#4B6478] uppercase mt-0.5 tracking-widest">Detail Pembeli</p>
             </div>
         </div>
-        {isOwner && (
+        {isOwnerUser && (
           <button
               className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-colors active:scale-95"
               onClick={() => setShowEdit(true)}

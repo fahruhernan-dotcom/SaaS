@@ -700,8 +700,7 @@ export const useAllUsers = () => {
         is_membership: true,
         // Since memberships don't have full_name, we rely on the grouping logic 
         // to find a matching profiles row with the same auth_user_id.
-        full_name: m.full_name || null,
-        email: m.email || null
+        full_name: m.full_name || null
       }))
 
       return [...profiles, ...memberAssociations]

@@ -42,6 +42,7 @@ import ConfirmDialog from '@/dashboard/_shared/components/ConfirmDialog'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import EmptyState from '@/components/EmptyState'
+import { isSuperadmin } from '@/lib/auth'
 import { PROVINCES } from '@/lib/constants/regions'
 import { ProvinceWarningBanner } from './components/ProvinceWarningBanner'
 
@@ -329,7 +330,7 @@ function HarvestPill({ days, date }) {
 function FarmSheet({ isOpen, onClose, farm, tenantId }) {
     const { profile } = useAuth()
     const isDesktop = useMediaQuery('(min-width: 1024px)')
-    const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin'
+    const isOwner = profile?.role === 'owner' || isSuperadmin(profile)
     const [mode, setMode] = useState('view')
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
     const queryClient = useQueryClient()

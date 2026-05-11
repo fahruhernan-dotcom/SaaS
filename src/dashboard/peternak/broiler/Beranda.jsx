@@ -7,6 +7,8 @@ import {
 } from 'lucide-react'
 import { LineChart, Line, ResponsiveContainer, Tooltip, YAxis } from 'recharts'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { isSuperadmin } from '@/lib/auth'
+import { isOwner } from '@/lib/auth/business-roles'
 import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 import { useQueryClient } from '@tanstack/react-query'
 import { formatIDRShort } from '@/lib/format'
@@ -402,7 +404,7 @@ export default function PeternakBeranda() {
         )}
 
         {/* Modal Berjalan (Cashflow Global) */}
-        {(profile?.role === 'owner' || profile?.role === 'superadmin') && activeCycles.length > 0 && (
+        {(isOwner(profile) || isSuperadmin(profile)) && activeCycles.length > 0 && (
           <section className="mt-4">
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -464,7 +466,7 @@ export default function PeternakBeranda() {
         )}
 
         {/* ── Leaderboard & Konsolidasi Performa Kandang ── */}
-        {(profile?.role === 'owner' || profile?.role === 'superadmin') && farmRanking.length > 0 && (
+        {(isOwner(profile) || isSuperadmin(profile)) && farmRanking.length > 0 && (
           <section className="mt-7">
             <div className="flex items-center justify-between mb-3.5">
               <h2 className="font-['Sora'] text-sm font-extrabold text-slate-100">🏆 Leaderboard Kandang</h2>

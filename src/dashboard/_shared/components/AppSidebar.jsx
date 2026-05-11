@@ -75,6 +75,7 @@ import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { peternakPermissions } from '@/lib/hooks/usePeternakPermissions'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { supabase } from '@/lib/supabase'
+import { isSuperadmin, isOwner, isStaff, isViewOnly } from '@/lib/auth'
 import { checkQuotaUsage } from '@/lib/quotaUtils'
 import { toast } from 'sonner'
 import { useQueryClient, useQuery } from '@tanstack/react-query'
@@ -172,9 +173,9 @@ export default function AppSidebar({ open, onClose }) {
   const tenantInitials = tenant?.business_name?.slice(0, 2).toUpperCase() || 'TO'
   const userInitials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
 
-  const isOwner = profile?.role === 'owner' || profile?.role === 'superadmin'
-  const isStaff = profile?.role === 'staff'
-  const isViewOnly = profile?.role === 'view_only'
+  const isOwnerUser = isOwner(profile) || isSuperadmin(profile)
+  const isStaffUser = isStaff(profile)
+  const isViewOnlyUser = isViewOnly(profile)
 
   const { accentColor } = useTheme()
 
@@ -237,7 +238,7 @@ export default function AppSidebar({ open, onClose }) {
   const activeVerticalInfo = getVerticalInfo(vertical)
 
   const handleGoToAdmin = () => {
-    const adminProfile = profiles?.find(p => p.role === 'superadmin' || p.user_type === 'superadmin')
+    const adminProfile = profiles?.find(p => isSuperadmin(p))
     if (adminProfile) {
       switchTenant(adminProfile.tenant_id)
       navigate('/admin')
@@ -412,7 +413,7 @@ export default function AppSidebar({ open, onClose }) {
     ...group,
     items: group.items.filter(item => {
       if (!item.roles) return true // default accessible to all roles
-      return item.roles.includes(profile?.role) || profile?.role === 'superadmin'
+      return item.roles.includes(profile?.role) || isSuperadmin(profile)
     })
   })).filter(group => group.items.length > 0)
 
@@ -1193,14 +1194,14 @@ export default function AppSidebar({ open, onClose }) {
                     </p>
                     <p className="text-[11px] text-[#4B6478] truncate">{user?.email}</p>
                   </div>
-                  {profile?.role && (
+                  {(profile?.role || isSuperadmin) && (
                     <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shrink-0 ${
-                      profile.role === 'superadmin' ? 'bg-amber-500/10 text-amber-500' :
-                      profile.role === 'owner'      ? 'bg-[#10B981]/10 text-[#10B981]' :
-                      profile.role === 'staff'      ? 'bg-blue-500/10 text-blue-400' :
+                      isSuperadmin ? 'bg-amber-500/10 text-amber-500' :
+                      isOwner(profile) ? 'bg-[#10B981]/10 text-[#10B981]' :
+                      isStaff(profile) ? 'bg-blue-500/10 text-blue-400' :
                       'bg-white/5 text-[#4B6478]'
                     }`}>
-                      {profile.role.replace('_', ' ')}
+                      {isSuperadmin ? 'SUPERADMIN' : profile?.role?.replace('_', ' ')}
                     </span>
                   )}
                 </div>
