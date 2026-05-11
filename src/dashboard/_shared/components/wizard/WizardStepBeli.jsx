@@ -111,6 +111,31 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
     }
   })
 
+  const { data: marketBuyPrice } = useQuery({
+    queryKey: ['market-price-latest-buy', tenant?.id],
+    queryFn: async () => {
+      // 1. Try to get the latest scraper price (Chickin.id reference)
+      const { data: scraperData } = await supabase.from('market_prices')
+        .select('farm_gate_price')
+        .eq('source', 'auto_scraper')
+        .order('price_date', { ascending: false })
+        .limit(1).maybeSingle()
+        
+      if (scraperData?.farm_gate_price) return scraperData.farm_gate_price
+
+      // 2. Fallback to platform average buy price
+      const { data } = await supabase.from('market_prices').select('avg_buy_price').order('price_date', { ascending: false }).limit(1).maybeSingle()
+      if (data?.avg_buy_price) return data.avg_buy_price
+      
+      // 3. Fallback to last tenant transaction
+      if (tenant?.id) {
+        const { data: lastTx } = await supabase.from('purchases').select('price_per_kg').eq('tenant_id', tenant.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        if (lastTx?.price_per_kg) return lastTx.price_per_kg
+      }
+      return 19800
+    }
+  })
+
   const { data: farms } = useQuery({
     queryKey: ['farms-active-simple', tenant?.id],
     queryFn: async () => {
@@ -615,7 +640,15 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
 
       {/* Harga Beli */}
       <div className="space-y-1.5">
-        <label htmlFor="price_per_kg" style={S.label}>Harga Beli (Rp/kg) *</label>
+        <div className="flex justify-between items-center">
+          <label htmlFor="price_per_kg" style={S.label}>Harga Beli (Rp/kg) *</label>
+          {marketBuyPrice && (
+            <button type="button" onClick={() => setValue('price_per_kg', marketBuyPrice, { shouldValidate: true })}
+              className="text-[10px] text-emerald-400 font-black uppercase tracking-wider hover:underline">
+              Pakai harga pasar: {safeNum(marketBuyPrice).toLocaleString('id-ID')} →
+            </button>
+          )}
+        </div>
         <InputRupiah id="price_per_kg" name="price_per_kg" value={watch('price_per_kg')} onChange={(val) => setValue('price_per_kg', val, { shouldValidate: true })} placeholder="19.800" className={`${S.input} text-lg font-bold text-white ${errors.price_per_kg ? 'border-red-500 ring-1 ring-red-500' : ''}`} />
         {errors.price_per_kg && <p className="text-[10px] text-red-500 font-bold">{errors.price_per_kg.message}</p>}
       </div>

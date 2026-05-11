@@ -147,10 +147,27 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
   })
 
   const { data: marketPrice } = useQuery({
-    queryKey: ['market-price-latest'],
+    queryKey: ['market-price-latest-sell', tenant?.id],
     queryFn: async () => {
+      // 1. Try to get the latest scraper price
+      const { data: scraperData } = await supabase.from('market_prices')
+        .select('buyer_price')
+        .eq('source', 'auto_scraper')
+        .order('price_date', { ascending: false })
+        .limit(1).maybeSingle()
+        
+      if (scraperData?.buyer_price) return scraperData.buyer_price
+
+      // 2. Fallback to platform average sell price
       const { data } = await supabase.from('market_prices').select('avg_sell_price').order('price_date', { ascending: false }).limit(1).maybeSingle()
-      return data?.avg_sell_price || null
+      if (data?.avg_sell_price) return data.avg_sell_price
+
+      // 3. Fallback to last tenant transaction
+      if (tenant?.id) {
+        const { data: lastTx } = await supabase.from('sales').select('price_per_kg').eq('tenant_id', tenant.id).order('created_at', { ascending: false }).limit(1).maybeSingle()
+        if (lastTx?.price_per_kg) return lastTx.price_per_kg
+      }
+      return 20500
     }
   })
 

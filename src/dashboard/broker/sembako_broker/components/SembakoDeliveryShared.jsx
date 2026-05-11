@@ -684,6 +684,18 @@ export function TambahTripSheet({ open, onClose, prefillSale, salesPending, empl
     ...(customers || []).map(c => ({ value: c.id, label: `${c.customer_name} (${c.address || '-'})` })),
   ]
 
+  const vehicleOptions = [
+    { value: 'L300', label: 'L300 (Pick Up)' },
+    { value: 'Traga', label: 'Traga (Pick Up)' },
+    { value: 'Grand Max', label: 'Grand Max (Pick Up)' },
+    { value: 'CDE', label: 'Engkel (CDE)' },
+    { value: 'CDD', label: 'Double (CDD)' },
+    { value: 'Motor', label: 'Motor' },
+    { value: 'Lainnya', label: 'Lainnya / Manual' },
+  ]
+
+  const [isManualVehicle, setIsManualVehicle] = useState(false)
+
   async function handleSubmit() {
     const payload = {
       sale_id: isLinkedMode
@@ -837,12 +849,37 @@ export function TambahTripSheet({ open, onClose, prefillSale, salesPending, empl
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
             <div>
               <p style={sLabel}>Jenis Kendaraan</p>
-              <input
-                style={sInput}
-                value={form.vehicle_type}
-                onChange={e => set('vehicle_type', e.target.value)}
-                placeholder="mis. L300"
-              />
+              {!isManualVehicle ? (
+                <CustomSelect
+                  value={form.vehicle_type}
+                  onChange={val => {
+                    if (val === 'Lainnya') {
+                      setIsManualVehicle(true)
+                      set('vehicle_type', '')
+                    } else {
+                      set('vehicle_type', val)
+                    }
+                  }}
+                  options={vehicleOptions}
+                  placeholder="Pilih..."
+                />
+              ) : (
+                <div style={{ position: 'relative' }}>
+                  <input
+                    style={sInput}
+                    value={form.vehicle_type}
+                    onChange={e => set('vehicle_type', e.target.value)}
+                    placeholder="Ketik jenis..."
+                    autoFocus
+                  />
+                  <button 
+                    onClick={() => setIsManualVehicle(false)}
+                    style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: C.accent, fontSize: '10px', fontWeight: 900, cursor: 'pointer' }}
+                  >
+                    BATAL
+                  </button>
+                </div>
+              )}
             </div>
             <div>
               <p style={sLabel}>Plat Nomor</p>

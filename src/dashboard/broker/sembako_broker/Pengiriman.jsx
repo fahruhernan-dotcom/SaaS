@@ -24,6 +24,7 @@ import {
   useArriveSembakoDelivery,
 } from '@/lib/hooks/useSembakoData'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import { formatIDR } from '@/lib/format'
 import { SembakoPageHeader } from '@/dashboard/broker/sembako_broker/components/SembakoPageHeader'
 import { SembakoErrorState } from '@/dashboard/broker/sembako_broker/components/SembakoUiPrimitives'
 import { Button } from '@/components/ui/button'
@@ -290,8 +291,11 @@ function DeliveryCard({ delivery, onStart, onArrive, onComplete, highlighted, on
         <AlertDialogContent className="bg-[#0C1319] border border-white/10 rounded-2xl max-w-sm">
           <AlertDialogHeader>
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-500/10">
-                <CheckCircle2 size={20} className="text-emerald-400" />
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(245,158,11,0.15))' }}
+              >
+                <CheckCircle2 size={20} style={{ color: '#F59E0B' }} />
               </div>
               <AlertDialogTitle className="text-white font-black text-base uppercase tracking-wide">
                 Selesaikan Pengiriman?
@@ -299,10 +303,11 @@ function DeliveryCard({ delivery, onStart, onArrive, onComplete, highlighted, on
             </div>
             <AlertDialogDescription asChild>
               <div className="space-y-3">
+                {/* Blok 1 – Detail Logistik */}
                 <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4 space-y-2.5 text-[11px]">
                   <div className="flex justify-between pb-2 border-b border-white/5 items-center">
-                    <span className="text-[#4B6478] font-black uppercase tracking-widest">Detail Pengiriman</span>
-                    <Truck size={13} className="text-emerald-500/50" />
+                    <span className="text-[#4B6478] font-black uppercase tracking-widest">Detail Logistik</span>
+                    <Truck size={14} className="text-emerald-500/50" />
                   </div>
                   {(() => {
                     const s = delivery.sembako_sales
@@ -311,6 +316,24 @@ function DeliveryCard({ delivery, onStart, onArrive, onComplete, highlighted, on
                     const driver = e?.full_name || delivery.driver_name || '—'
                     const vehicle = [delivery.vehicle_type, delivery.vehicle_plate].filter(Boolean).join(' ') || '—'
                     const its = s?.sembako_sale_items || []
+                    
+                    // Time calculations
+                    let waktuTiba = '—'
+                    let lamaJalan = '—'
+                    if (delivery.arrived_at) {
+                      const arr = new Date(delivery.arrived_at)
+                      waktuTiba = format(arr, 'HH:mm')
+                      if (delivery.started_at) {
+                        const start = new Date(delivery.started_at)
+                        const diffMins = Math.floor((arr - start) / 60000)
+                        const h = Math.floor(diffMins / 60)
+                        const m = diffMins % 60
+                        lamaJalan = h > 0 ? `${h}j ${m}m` : `${m}m`
+                      }
+                    }
+
+                    const totalQty = its.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0)
+
                     return (
                       <div className="grid grid-cols-2 gap-y-2">
                         <span className="text-[#4B6478] font-bold uppercase">Tujuan</span>
@@ -319,17 +342,29 @@ function DeliveryCard({ delivery, onStart, onArrive, onComplete, highlighted, on
                         <span className="text-white font-black text-right truncate">{driver}</span>
                         <span className="text-[#4B6478] font-bold uppercase">Kendaraan</span>
                         <span className="text-white font-black text-right">{vehicle}</span>
+                        <span className="text-[#4B6478] font-bold uppercase">Waktu Tiba</span>
+                        <span className="text-white font-black text-right">{waktuTiba}</span>
+                        <span className="text-[#4B6478] font-bold uppercase">Lama Jalan</span>
+                        <span className="text-white font-black text-right">{lamaJalan}</span>
                         {its.length > 0 && <>
                           <span className="text-[#4B6478] font-bold uppercase">Muatan</span>
-                          <span className="text-white font-black text-right">{its.length} jenis produk</span>
+                          <span className="text-white font-black text-right">{totalQty} item ({its.length} SKU)</span>
                         </>}
                       </div>
                     )
                   })()}
                 </div>
-                <p className="text-[#4B6478] text-[11px] font-bold uppercase tracking-wider">
-                  Status pengiriman akan berubah menjadi Terkirim.
-                </p>
+
+                {/* Blok 2 – Status note */}
+                <div className="rounded-xl bg-emerald-500/[0.03] border border-emerald-500/10 p-4 space-y-2.5 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-[#4B6478] font-bold uppercase text-[11px] tracking-wider">Status Baru</span>
+                    <span className="text-emerald-400 font-black text-[11px]">TERKIRIM</span>
+                  </div>
+                  <p className="text-[#4B6478] text-[11px] font-bold uppercase tracking-wider">
+                    Setelah diselesaikan, status pengiriman tidak dapat diubah kembali ke &ldquo;Tiba&rdquo;.
+                  </p>
+                </div>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -339,7 +374,8 @@ function DeliveryCard({ delivery, onStart, onArrive, onComplete, highlighted, on
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => onComplete(delivery.id)}
-              className="flex-1 h-11 bg-emerald-500 hover:bg-emerald-600 font-black uppercase text-xs tracking-wider text-white border-0"
+              className="flex-1 h-11 font-black uppercase text-xs tracking-wider text-white border-0"
+              style={{ background: 'linear-gradient(135deg, #10B981 0%, #F59E0B 100%)' }}
             >
               Ya, Selesaikan
             </AlertDialogAction>
