@@ -1,5 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
+import { AlertCircle } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -115,6 +116,46 @@ export function SembakoEmptyState({
           )}
         >
           {actionLabel}
+        </Button>
+      )}
+    </motion.div>
+  )
+}
+
+export function SembakoErrorState({
+  error,
+  onRetry,
+  title = "Gagal Memuat Data",
+}) {
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex flex-col items-center justify-center p-12 text-center"
+    >
+      <div className="w-20 h-20 rounded-[32px] border flex items-center justify-center mb-6 text-[#EF4444]/60 bg-[#EF4444]/5 border-[#EF4444]/20">
+        <AlertCircle size={32} strokeWidth={2} />
+      </div>
+
+      <h3 className="font-display text-lg font-black text-[#FEF3C7] uppercase tracking-tight">
+        {title}
+      </h3>
+      <p className="text-[#EF4444]/80 text-sm font-bold mt-2 max-w-[320px] leading-relaxed tracking-wide">
+        {error?.message || "Koneksi ke server terputus atau data tidak dapat dimuat."}
+      </p>
+
+      {onRetry && (
+        <Button
+          variant="outline"
+          onClick={onRetry}
+          className={cn(
+            'mt-8 h-12 px-6 rounded-2xl border-[#EF4444]/20 bg-[#1C1208] text-[#FEF3C7] font-black uppercase tracking-widest hover:bg-[#EF4444]/10',
+            isDesktop ? 'text-[11px]' : 'text-[10px]'
+          )}
+        >
+          Coba Lagi
         </Button>
       )}
     </motion.div>

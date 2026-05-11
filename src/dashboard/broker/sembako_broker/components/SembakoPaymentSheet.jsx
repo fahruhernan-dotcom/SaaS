@@ -10,7 +10,12 @@ export function SembakoPaymentSheet({ sale, onClose }) {
   const recordPayment = useRecordSembakoPayment()
   const [amount, setAmount] = useState(0)
   const [errorMsg, setErrorMsg] = useState('')
-  const handleSheetClose = useCallback((v) => { if (!v) onClose() }, [onClose])
+  const handleSheetClose = useCallback((v) => {
+    if (!v) {
+      recordPayment.reset()   // clear error state so button unlocks on reopen
+      onClose()
+    }
+  }, [onClose, recordPayment])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

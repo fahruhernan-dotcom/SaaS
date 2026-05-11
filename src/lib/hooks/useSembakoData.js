@@ -2,10 +2,33 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 import { toast } from 'sonner'
 import { useAuth } from './useAuth'
+import { normalizeSupabaseError } from '../supabaseErrorHandler'
 
 // ── READ HOOKS ────────────────────────────────────────────────────────────────
 
 const STALE_5M = 5 * 60 * 1000
+
+async function getTenantId() {
+  // Selalu prioritaskan tenant yang sedang aktif di UI
+  const activeTenantId = localStorage.getItem('ternakos_active_tenant_id')
+  if (activeTenantId) return activeTenantId
+
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) throw normalizeSupabaseError(new Error('User not authenticated'))
+
+  const { data: profiles, error } = await supabase
+    .from('profiles')
+    .select('tenant_id')
+    .eq('auth_user_id', user.id)
+    .limit(1)
+
+  if (error) throw error
+  if (!profiles || profiles.length === 0) throw normalizeSupabaseError(new Error('Profil tidak ditemukan. Pastikan Anda sudah terdaftar dengan benar.'))
+  const profile = profiles[0]
+  if (!profile.tenant_id) throw normalizeSupabaseError(new Error('Tenant ID tidak ditemukan pada profil Anda.'))
+
+  return profile.tenant_id
+}
 
 export const useSembakoProducts = () => {
   const { tenant } = useAuth()
@@ -14,19 +37,13 @@ export const useSembakoProducts = () => {
     enabled: !!tenant?.id,
     staleTime: STALE_5M,
     queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('sembako_products')
+      const { data, error } = await supabase.from('sembako_products')
           .select('*')
           .eq('tenant_id', tenant.id)
           .eq('is_deleted', false)
           .order('product_name')
-        if (error) throw error
+        if (error) throw normalizeSupabaseError(error)
         return data
-      } catch (e) {
-        console.error('[useSembakoProducts] Error:', e)
-        return []
-      }
     }
   })
 }
@@ -38,21 +55,15 @@ export const useSembakoStockBatches = (productId) => {
     enabled: !!productId && !!tenant?.id,
     staleTime: STALE_5M,
     queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('sembako_stock_batches')
+      const { data, error } = await supabase.from('sembako_stock_batches')
           .select('*, sembako_suppliers(supplier_name)')
           .eq('tenant_id', tenant.id)
           .eq('product_id', productId)
           .eq('is_deleted', false)
           .gt('qty_sisa', 0)
           .order('created_at', { ascending: true }) // FIFO
-        if (error) throw error
+        if (error) throw normalizeSupabaseError(error)
         return data
-      } catch (e) {
-        console.error(`[useSembakoStockBatches] Error for product ${productId}:`, e)
-        return []
-      }
     }
   })
 }
@@ -64,19 +75,13 @@ export const useSembakoCustomers = () => {
     enabled: !!tenant?.id,
     staleTime: STALE_5M,
     queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('sembako_customers')
+      const { data, error } = await supabase.from('sembako_customers')
           .select('*')
           .eq('tenant_id', tenant.id)
           .eq('is_deleted', false)
           .order('customer_name')
-        if (error) throw error
+        if (error) throw normalizeSupabaseError(error)
         return data
-      } catch (e) {
-        console.error('[useSembakoCustomers] Error:', e)
-        return []
-      }
     }
   })
 }
@@ -88,19 +93,13 @@ export const useSembakoSuppliers = () => {
     enabled: !!tenant?.id,
     staleTime: STALE_5M,
     queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('sembako_suppliers')
+      const { data, error } = await supabase.from('sembako_suppliers')
           .select('*')
           .eq('tenant_id', tenant.id)
           .eq('is_deleted', false)
           .order('supplier_name')
-        if (error) throw error
+        if (error) throw normalizeSupabaseError(error)
         return data
-      } catch (e) {
-        console.error('[useSembakoSuppliers] Error:', e)
-        return []
-      }
     }
   })
 }
@@ -112,19 +111,55 @@ export const useSembakoSales = () => {
     enabled: !!tenant?.id,
     staleTime: STALE_5M,
     queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('sembako_sales')
+      const { data, error } = await supabase.from('sembako_sales')
           .select('*, sembako_customers(customer_name, customer_type, phone), sembako_sale_items(*), sembako_deliveries(id, status)')
           .eq('tenant_id', tenant.id)
           .eq('is_deleted', false)
           .order('transaction_date', { ascending: false })
-        if (error) throw error
+        if (error) throw normalizeSupabaseError(error)
         return data
-      } catch (e) {
-        console.error('[useSembakoSales] Error:', e)
-        return []
-      }
+    }
+  })
+}
+
+// useSembakoAllBatches — semua batch (termasuk habis), untuk riwayat masuk
+export const useSembakoAllBatches = (productId) => {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sembako-all-batches', tenant?.id, productId ?? 'all'],
+    enabled: !!tenant?.id,
+    staleTime: STALE_5M,
+    queryFn: async () => {
+      let q = supabase.from('sembako_stock_batches')
+          .select('*, sembako_suppliers(supplier_name), sembako_products(product_name, unit)')
+          .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
+          .order('created_at', { ascending: false })
+        if (productId) q = q.eq('product_id', productId)
+        const { data, error } = await q
+        if (error) throw normalizeSupabaseError(error)
+        return data
+    }
+  })
+}
+
+// useSembakoStockOut — riwayat pengurangan stok (FIFO)
+export const useSembakoStockOut = (productId) => {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sembako-stock-out', tenant?.id, productId ?? 'all'],
+    enabled: !!tenant?.id,
+    staleTime: STALE_5M,
+    queryFn: async () => {
+      let q = supabase.from('sembako_stock_out')
+          .select('*, sembako_products(product_name, unit), sembako_stock_batches(batch_code), sembako_sales(invoice_number, customer_name)')
+          .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
+          .order('created_at', { ascending: false })
+        if (productId) q = q.eq('product_id', productId)
+        const { data, error } = await q
+        if (error) throw normalizeSupabaseError(error)
+        return data
     }
   })
 }
@@ -136,19 +171,13 @@ export const useSembakoEmployees = () => {
     enabled: !!tenant?.id,
     staleTime: STALE_5M,
     queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('sembako_employees')
+      const { data, error } = await supabase.from('sembako_employees')
           .select('*')
           .eq('tenant_id', tenant.id)
           .eq('is_deleted', false)
           .order('full_name')
-        if (error) throw error
+        if (error) throw normalizeSupabaseError(error)
         return data
-      } catch (e) {
-        console.error('[useSembakoEmployees] Error:', e)
-        return []
-      }
     }
   })
 }
@@ -236,506 +265,11 @@ export const useSembakoDashboardStats = () => {
         },
       }
     } catch (err) {
-      console.error('Critical Error in useSembakoDashboardStats:', err)
-      return {
-        stok: { totalProduk: 0, lowStock: [], nilaiStok: 0 },
-        penjualan: { totalRevenue: 0, revenueThisMonth: 0, netProfitThisMonth: 0, totalOutstanding: 0, overdueCount: 0 },
-        pengeluaran: { totalExpenseThisMonth: 0, totalPayrollThisMonth: 0 },
-      }
+      throw normalizeSupabaseError(err)
     }
   }
-  })
+})
 }
-
-// useSembakoAllBatches — semua batch (termasuk habis), untuk riwayat masuk
-// Opsional: filter by productId
-export const useSembakoAllBatches = (productId) => {
-  const { tenant } = useAuth()
-  return useQuery({
-    queryKey: ['sembako-all-batches', tenant?.id, productId ?? 'all'],
-    enabled: !!tenant?.id,
-    staleTime: STALE_5M,
-    queryFn: async () => {
-      try {
-        let q = supabase
-          .from('sembako_stock_batches')
-          .select('*, sembako_suppliers(supplier_name), sembako_products(product_name, unit)')
-          .eq('tenant_id', tenant.id)
-          .eq('is_deleted', false)
-          .order('created_at', { ascending: false })
-        if (productId) q = q.eq('product_id', productId)
-        const { data, error } = await q
-        if (error) throw error
-        return data
-      } catch (e) {
-        console.error('[useSembakoAllBatches] Error:', e)
-        return []
-      }
-    }
-  })
-}
-
-// useSembakoStockOut — riwayat pengurangan stok (FIFO)
-export const useSembakoStockOut = (productId) => {
-  const { tenant } = useAuth()
-  return useQuery({
-    queryKey: ['sembako-stock-out', tenant?.id, productId ?? 'all'],
-    enabled: !!tenant?.id,
-    staleTime: STALE_5M,
-    queryFn: async () => {
-      try {
-        let q = supabase
-          .from('sembako_stock_out')
-          .select('*, sembako_products(product_name, unit), sembako_stock_batches(batch_code), sembako_sales(invoice_number, customer_name)')
-          .eq('tenant_id', tenant.id)
-          .eq('is_deleted', false)
-          .order('created_at', { ascending: false })
-        if (productId) q = q.eq('product_id', productId)
-        const { data, error } = await q
-        if (error) throw error
-        return data
-      } catch (e) {
-        console.error('[useSembakoStockOut] Error:', e)
-        return []
-      }
-    }
-  })
-}
-
-// ── MUTATION HOOKS ────────────────────────────────────────────────────────────
-
-async function getTenantId() {
-  // Selalu prioritaskan tenant yang sedang aktif di UI
-  const activeTenantId = localStorage.getItem('ternakos_active_tenant_id')
-  if (activeTenantId) return activeTenantId
-
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  if (authError || !user) throw new Error('User not authenticated')
-
-  const { data: profiles, error } = await supabase
-    .from('profiles')
-    .select('tenant_id')
-    .eq('auth_user_id', user.id)
-    .limit(1)
-
-  if (error) throw error
-  if (!profiles || profiles.length === 0) throw new Error('Profil tidak ditemukan. Pastikan Anda sudah terdaftar dengan benar.')
-  const profile = profiles[0]
-  if (!profile.tenant_id) throw new Error('Tenant ID tidak ditemukan pada profil Anda.')
-
-  return profile.tenant_id
-}
-
-export const useCreateSembakoProduct = () => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (payload) => {
-      const tenant_id = await getTenantId()
-      const { error } = await supabase.from('sembako_products')
-        .insert({ ...payload, tenant_id })
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sembako-products'] })
-      queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
-      toast.success('Produk berhasil ditambahkan')
-    },
-    onError: (err) => toast.error('Gagal: ' + err.message),
-  })
-}
-
-export const useAddStockBatch = () => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ product_id, supplier_id, qty_masuk,
-      buy_price, purchase_date, expiry_date, notes }) => {
-      const tenant_id = await getTenantId()
-      // total_cost adalah GENERATED — jangan insert
-      const { error } = await supabase.from('sembako_stock_batches')
-        .insert({
-          tenant_id, product_id, supplier_id,
-          qty_masuk,
-          qty_sisa: qty_masuk, // awal = qty penuh
-          buy_price, purchase_date, expiry_date, notes,
-        })
-      if (error) throw error
-      // DB trigger auto-update current_stock + avg_buy_price di product
-    },
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['sembako-products'] })
-      queryClient.invalidateQueries({ queryKey: ['sembako-batches', vars.product_id] })
-      queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
-      toast.success('Stok berhasil ditambahkan')
-    },
-    onError: (err) => toast.error('Gagal: ' + err.message),
-  })
-}
-
-export const useCreateSembakoSale = () => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ customer_id, customer_name, transaction_date,
-      due_date, items, delivery_cost, other_cost, notes }) => {
-      const tenant_id = await getTenantId()
-
-      // Generate invoice number
-      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-      const rand = Array.from(crypto.getRandomValues(new Uint8Array(3)))
-        .map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase().slice(0, 4)
-      const invoice_number = `SMB-${dateStr}-${rand}`
-
-      // ATTACK-02 guard: cogs_per_unit tidak boleh negatif (bisa 0 untuk produk tanpa HPP)
-      const badCogs = items.find(i => (i.cogs_per_unit ?? 0) < 0)
-      if (badCogs) throw new Error(`COGS negatif tidak valid untuk produk ${badCogs.product_id}`)
-
-      // HIGH-03 + HIGH-04: pre-flight stock check + FIFO-accurate COGS in one pass
-      // Fetches batches once per product, caches for reuse in deduction loop
-      const itemFifoCogs   = {}  // { [product_id]: FIFO-weighted cogs_per_unit }
-      const itemBatchCache = {}  // { [product_id]: batch[] } reused in deduction
-
-      for (const item of items) {
-        if (!item.product_id) continue
-        const { data: batches } = await supabase
-          .from('sembako_stock_batches')
-          .select('id, qty_sisa, buy_price')
-          .eq('product_id', item.product_id)
-          .eq('is_deleted', false)
-          .gt('qty_sisa', 0)
-          .order('created_at', { ascending: true })
-
-        const available = (batches || []).reduce((s, b) => s + (b.qty_sisa || 0), 0)
-        if (item.quantity > available) {
-          throw new Error(
-            `Stok ${item.product_name || 'produk'} tidak cukup — tersedia ${available} ${item.unit || 'unit'}, diminta ${item.quantity}`
-          )
-        }
-
-        // Compute FIFO-weighted average COGS for this item
-        let remaining = item.quantity
-        let totalCost = 0
-        for (const batch of (batches || [])) {
-          if (remaining <= 0) break
-          const take = Math.min(batch.qty_sisa, remaining)
-          totalCost += take * (batch.buy_price || 0)
-          remaining -= take
-        }
-        itemFifoCogs[item.product_id]   = item.quantity > 0 ? Math.round(totalCost / item.quantity) : 0
-        itemBatchCache[item.product_id] = batches || []
-      }
-
-      // Hitung totals (FIFO-accurate COGS)
-      const total_amount = items.reduce((s, i) =>
-        s + Math.round(i.quantity * i.price_per_unit), 0)
-      const total_cogs = items.reduce((s, i) =>
-        s + Math.round(i.quantity * (i.product_id
-          ? (itemFifoCogs[i.product_id] ?? i.cogs_per_unit ?? 0)
-          : (i.cogs_per_unit || 0)
-        )), 0)
-
-      // Insert sale header — gross_profit, net_profit, remaining_amount adalah GENERATED
-      const { data: sale, error: saleErr } = await supabase
-        .from('sembako_sales').insert({
-          tenant_id, customer_id, customer_name, invoice_number,
-          transaction_date, due_date,
-          total_amount, total_cogs,
-          delivery_cost: delivery_cost || 0,
-          other_cost: other_cost || 0,
-          payment_status: 'belum_lunas',
-          paid_amount: 0,
-          notes,
-        }).select().single()
-      if (saleErr) throw saleErr
-
-      // Insert items with FIFO-accurate cogs_per_unit — subtotal, cogs_total adalah GENERATED
-      const itemsToInsert = items.map(item => ({
-        sale_id: sale.id,
-        product_id: item.product_id || null,
-        product_name: item.product_name,
-        unit: item.unit,
-        quantity: item.quantity,
-        price_per_unit: item.price_per_unit,
-        cogs_per_unit: item.product_id
-          ? (itemFifoCogs[item.product_id] ?? item.cogs_per_unit ?? 0)
-          : (item.cogs_per_unit || 0),
-      }))
-      const { error: itemErr } = await supabase
-        .from('sembako_sale_items').insert(itemsToInsert)
-      if (itemErr) throw itemErr
-
-      // FIFO deduction — reuse cached batches, no extra DB fetch per product
-      // Medium #6: compensating rollback if deduction fails mid-loop
-      try {
-        for (const item of items) {
-          if (!item.product_id) continue
-          let qtyToDeduct = item.quantity
-          const batches = itemBatchCache[item.product_id] || []
-
-          for (const batch of batches) {
-            if (qtyToDeduct <= 0) break
-            const deduct = Math.min(batch.qty_sisa, qtyToDeduct)
-            const { error: batchErr } = await supabase.from('sembako_stock_batches')
-              .update({ qty_sisa: batch.qty_sisa - deduct })
-              .eq('id', batch.id)
-            if (batchErr) throw batchErr
-            const { error: outErr } = await supabase.from('sembako_stock_out').insert({
-              tenant_id,
-              product_id: item.product_id,
-              batch_id: batch.id,
-              sale_id: sale.id,
-              qty_keluar: deduct,
-              buy_price: batch.buy_price || 0,
-            })
-            if (outErr) throw outErr
-            qtyToDeduct -= deduct
-          }
-        }
-      } catch (deductErr) {
-        // Compensating rollback: clean up orphan sale header + items
-        await supabase.from('sembako_sale_items').delete().eq('sale_id', sale.id)
-        await supabase.from('sembako_sales').delete().eq('id', sale.id)
-        throw deductErr
-      }
-      return sale
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
-      queryClient.invalidateQueries({ queryKey: ['sembako-products'] })
-      queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
-      toast.success('Invoice berhasil dibuat')
-    },
-    onError: (err) => toast.error(err?.message || 'Gagal membuat invoice'),
-  })
-}
-
-export const useRecordSembakoPayment = () => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ sale_id, customer_id, amount,
-      payment_date, payment_method, reference_number, notes }) => {
-      const tenant_id = await getTenantId()
-
-      const { error: payErr } = await supabase
-        .from('sembako_payments').insert({
-          tenant_id, sale_id, customer_id, amount,
-          payment_date, payment_method, reference_number, notes,
-        })
-      if (payErr) throw payErr
-
-      // Update sale paid_amount + status
-      const { data: sale } = await supabase
-        .from('sembako_sales')
-        .select('total_amount, paid_amount')
-        .eq('id', sale_id).single()
-      const newPaid   = (sale.paid_amount || 0) + amount
-      const newStatus = newPaid >= sale.total_amount ? 'lunas'
-        : newPaid > 0 ? 'sebagian' : 'belum_lunas'
-      await supabase.from('sembako_sales')
-        .update({ paid_amount: newPaid, payment_status: newStatus })
-        .eq('id', sale_id)
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
-      queryClient.invalidateQueries({ queryKey: ['sembako-customers'] })
-      queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
-      toast.success('Pembayaran berhasil dicatat')
-    },
-    onError: (err) => toast.error('Gagal: ' + err.message),
-  })
-}
-
-export const useCreateSembakoEmployee = () => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (payload) => {
-      const tenant_id = await getTenantId()
-      const { error } = await supabase.from('sembako_employees')
-        .insert({ ...payload, tenant_id })
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sembako-employees'] })
-      toast.success('Pegawai berhasil ditambahkan')
-    },
-    onError: (err) => toast.error('Gagal: ' + err.message),
-  })
-}
-
-export const useRecordPayroll = () => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ employee_id, period_type, period_date,
-      work_days, trip_count, sales_amount, base_amount,
-      commission_amount, bonus, deduction, notes }) => {
-      const tenant_id = await getTenantId()
-      // total_pay adalah GENERATED — jangan insert
-      const { error } = await supabase.from('sembako_payroll').insert({
-        tenant_id, employee_id, period_type, period_date,
-        work_days, trip_count, sales_amount,
-        base_amount, commission_amount, bonus, deduction, notes,
-        payment_status: 'pending',
-      })
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sembako-payroll'] })
-      queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
-      toast.success('Gaji berhasil dicatat')
-    },
-    onError: (err) => toast.error('Gagal: ' + err.message),
-  })
-}
-
-export const useUpdateSembakoProduct = () => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ id, ...updates }) => {
-      const { error } = await supabase.from('sembako_products')
-        .update(updates)
-        .eq('id', id)
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sembako-products'] })
-      queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
-      toast.success('Produk berhasil diperbarui')
-    },
-    onError: (err) => toast.error('Gagal: ' + err.message),
-  })
-}
-
-export const useSoftDeleteSembakoProduct = () => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async (id) => {
-      const { error: errProduct } = await supabase.from('sembako_products')
-        .update({ is_deleted: true })
-        .eq('id', id)
-      if (errProduct) throw errProduct
-      // Hapus juga semua batch stok yang terkait
-      const { error: errBatch } = await supabase.from('sembako_stock_batches')
-        .update({ is_deleted: true })
-        .eq('product_id', id)
-      if (errBatch) throw errBatch
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sembako-products'] })
-      queryClient.invalidateQueries({ queryKey: ['sembako-all-batches'] })
-      queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
-      toast.success('Produk dihapus')
-    },
-    onError: (err) => toast.error('Gagal: ' + err.message),
-  })
-}
-
-export const useCreateSembakoSupplier = () => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ supplier_name, phone, address, notes }) => {
-      const tenant_id = await getTenantId()
-      const { data, error } = await supabase.from('sembako_suppliers')
-        .insert({ tenant_id, supplier_name, phone, address, notes })
-        .select().single()
-      if (error) throw error
-      return data
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sembako-suppliers'] })
-      toast.success('Supplier berhasil ditambahkan')
-    },
-    onError: (err) => toast.error('Gagal: ' + err.message),
-  })
-}
-
-// ── NEW HOOKS (Phase 3) ──────────────────────────────────────────────────────
-
-export const useSembakoDeliveries = () => {
-  const { tenant } = useAuth()
-  return useQuery({
-    queryKey: ['sembako-deliveries', tenant?.id],
-    enabled: !!tenant?.id,
-    staleTime: STALE_5M,
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('sembako_deliveries')
-          .select(`
-            *,
-            sembako_employees(id, full_name, role, phone),
-            sembako_sales(
-              id, invoice_number, total_amount, payment_status, transaction_date, customer_name,
-              sembako_customers(id, customer_name, phone, address),
-              sembako_sale_items(id, product_name, quantity, unit)
-            )
-          `)
-          .eq('tenant_id', tenant.id)
-          .eq('is_deleted', false)
-          .order('created_at', { ascending: false })
-        if (error) throw error
-        return data
-      } catch (e) {
-        console.error('[useSembakoDeliveries] Error:', e)
-        return []
-      }
-    }
-  })
-}
-
-export const useSembakoSalesPendingDelivery = () => {
-  const { tenant } = useAuth()
-  return useQuery({
-    queryKey: ['sembako-sales-pending-delivery', tenant?.id],
-    enabled: !!tenant?.id,
-    staleTime: STALE_5M,
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('sembako_sales')
-          .select(`
-            id, invoice_number, transaction_date, total_amount, payment_status, customer_name,
-            sembako_customers(id, customer_name, address, phone),
-            sembako_sale_items(id, product_name, quantity, unit),
-            sembako_deliveries(id, status, is_deleted)
-          `)
-          .eq('tenant_id', tenant.id)
-          .eq('is_deleted', false)
-          .order('transaction_date', { ascending: false })
-        if (error) throw error
-        return (data || []).filter(sale => {
-          const activeDeliveries = (sale.sembako_deliveries || []).filter(d => !d.is_deleted)
-          return activeDeliveries.length === 0
-        })
-      } catch (e) {
-        console.error('[useSembakoSalesPendingDelivery] Error:', e)
-        return []
-      }
-    }
-  })
-}
-
-export const useSembakoPayrolls = () => {
-  const { tenant } = useAuth()
-  return useQuery({
-    queryKey: ['sembako-payroll', tenant?.id],
-    enabled: !!tenant?.id,
-    staleTime: STALE_5M,
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('sembako_payroll')
-          .select('*, sembako_employees(full_name, role, salary_type)')
-          .eq('tenant_id', tenant.id)
-          .eq('is_deleted', false)
-          .order('period_date', { ascending: false })
-        if (error) throw error
-        return data
-      } catch (e) {
-        console.error('[useSembakoPayrolls] Error:', e)
-        return []
-      }
-    }
-  })
-}
-
 export const useCreateSembakoCustomer = () => {
   const queryClient = useQueryClient()
   return useMutation({
@@ -751,7 +285,7 @@ export const useCreateSembakoCustomer = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-customers'] })
       toast.success('Toko berhasil ditambahkan')
     },
-    onError: (err) => toast.error('Gagal: ' + err.message),
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
   })
 }
 
@@ -767,7 +301,7 @@ export const useUpdateSembakoCustomer = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-customers'] })
       toast.success('Toko berhasil diperbarui')
     },
-    onError: (err) => toast.error('Gagal: ' + err.message),
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
   })
 }
 
@@ -784,7 +318,7 @@ export const useDeleteSembakoCustomer = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
       toast.success('Toko berhasil dihapus')
     },
-    onError: (err) => toast.error('Gagal: ' + err.message),
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
   })
 }
 
@@ -800,7 +334,7 @@ export const useUpdateSembakoSupplier = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-suppliers'] })
       toast.success('Supplier berhasil diperbarui')
     },
-    onError: (err) => toast.error('Gagal: ' + err.message),
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
   })
 }
 
@@ -816,7 +350,7 @@ export const useDeleteSembakoSupplier = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-suppliers'] })
       toast.success('Supplier berhasil dihapus')
     },
-    onError: (err) => toast.error('Gagal: ' + err.message),
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
   })
 }
 
@@ -832,7 +366,7 @@ export const useUpdateSembakoEmployee = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-employees'] })
       toast.success('Data pegawai diperbarui')
     },
-    onError: (err) => toast.error('Gagal: ' + err.message),
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
   })
 }
 
@@ -851,7 +385,7 @@ export const useCreateSembakoDelivery = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
       toast.success('Trip berhasil dicatat')
     },
-    onError: (err) => toast.error('Gagal: ' + err.message),
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
   })
 }
 
@@ -871,7 +405,7 @@ export const useCompleteSembakoDelivery = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
       toast.success('Pengiriman selesai')
     },
-    onError: (err) => toast.error('Gagal: ' + err.message),
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
   })
 }
 
@@ -891,7 +425,7 @@ export const useStartSembakoDelivery = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
       toast.success('Pengiriman berangkat')
     },
-    onError: (err) => toast.error('Gagal: ' + err.message),
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
   })
 }
 
@@ -909,7 +443,7 @@ export const useArriveSembakoDelivery = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-deliveries'] })
       toast.success('Kedatangan dicatat')
     },
-    onError: (err) => toast.error('Gagal: ' + err.message),
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
   })
 }
 
@@ -931,7 +465,7 @@ export const useUpdateSembakoDeliveryTimestamps = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-deliveries'] })
       toast.success('Waktu pengiriman berhasil diperbarui')
     },
-    onError: (err) => toast.error('Gagal: ' + err.message),
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
   })
 }
 
@@ -949,7 +483,7 @@ export const useMarkPayrollPaid = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
       toast.success('Gaji ditandai lunas')
     },
-    onError: (err) => toast.error('Gagal: ' + err.message),
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
   })
 }
 
@@ -960,19 +494,13 @@ export const useSembakoCustomerInvoices = (customerId) => useQuery({
   enabled: !!customerId,
   staleTime: STALE_5M,
   queryFn: async () => {
-    try {
-      const { data, error } = await supabase
-        .from('sembako_sales')
+    const { data, error } = await supabase.from('sembako_sales')
         .select('*, sembako_sale_items(*)')
         .eq('customer_id', customerId)
         .eq('is_deleted', false)
         .order('transaction_date', { ascending: false })
-      if (error) throw error
-      return data
-    } catch (e) {
-      console.error(`[useSembakoCustomerInvoices] Error for customer ${customerId}:`, e)
-      return []
-    }
+      if (error) throw normalizeSupabaseError(error)
+        return data
   }
 })
 
@@ -981,19 +509,13 @@ export const useSembakoCustomerPayments = (customerId) => useQuery({
   enabled: !!customerId,
   staleTime: STALE_5M,
   queryFn: async () => {
-    try {
-      const { data, error } = await supabase
-        .from('sembako_payments')
+    const { data, error } = await supabase.from('sembako_payments')
         .select('*, sembako_sales!inner(invoice_number, is_deleted)')
         .eq('customer_id', customerId)
         .eq('sembako_sales.is_deleted', false)
         .order('payment_date', { ascending: false })
-      if (error) throw error
-      return data
-    } catch (e) {
-      console.error(`[useSembakoCustomerPayments] Error for customer ${customerId}:`, e)
-      return []
-    }
+      if (error) throw normalizeSupabaseError(error)
+        return data
   }
 })
 
@@ -1002,19 +524,13 @@ export const useSembakoSupplierInvoices = (supplierId) => useQuery({
   enabled: !!supplierId,
   staleTime: STALE_5M,
   queryFn: async () => {
-    try {
-      const { data, error } = await supabase
-        .from('sembako_stock_batches')
+    const { data, error } = await supabase.from('sembako_stock_batches')
         .select('*, sembako_products(product_name, unit)')
         .eq('supplier_id', supplierId)
         .eq('is_deleted', false)
         .order('purchase_date', { ascending: false })
-      if (error) throw error
-      return data
-    } catch (e) {
-      console.error(`[useSembakoSupplierInvoices] Error for supplier ${supplierId}:`, e)
-      return []
-    }
+      if (error) throw normalizeSupabaseError(error)
+        return data
   }
 })
 
@@ -1112,12 +628,7 @@ export const useSembakoLaporan = (startDate, endDate) => {
         sales, expenses, payroll,
       }
     } catch (err) {
-      console.error('Critical Error in useSembakoLaporan:', err)
-      return {
-        summary: { totalRevenue: 0, totalCOGS: 0, grossProfit: 0, grossMarginPct: 0, totalDeliveryCost: 0, totalOtherCost: 0, totalExpenses: 0, totalPayroll: 0, netProfit: 0, netMarginPct: 0, totalStockPurchase: 0 },
-        byProduct: {}, byCustomer: {}, expenseByCategory: {},
-        sales: [], expenses: [], payroll: []
-      }
+      throw normalizeSupabaseError(err)
     }
   }
 })}
@@ -1182,7 +693,7 @@ export const useDeleteSembakoSale = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-customer-invoices'] })
       toast.success('Transaksi dihapus & Stok dikembalikan')
     },
-    onError: (err) => toast.error('Gagal: ' + err.message),
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
   })
 }
 export const useUpdateSembakoSale = () => {
@@ -1371,7 +882,7 @@ export const useUpdateSembakoSale = () => {
         toast.success('Transaksi diperbarui')
       }
     },
-    onError: (err) => toast.error('Gagal: ' + err.message),
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
   })
 }
 
@@ -1380,19 +891,13 @@ export const useSembakoSupplierPayments = (supplierId) => useQuery({
   enabled: !!supplierId,
   staleTime: STALE_5M,
   queryFn: async () => {
-    try {
-      const { data, error } = await supabase
-        .from('sembako_supplier_payments')
+    const { data, error } = await supabase.from('sembako_supplier_payments')
         .select('*')
         .eq('supplier_id', supplierId)
         .eq('is_deleted', false)
         .order('payment_date', { ascending: false })
-      if (error) throw error
-      return data
-    } catch (e) {
-      console.error(`[useSembakoSupplierPayments] Error for supplier ${supplierId}:`, e)
-      return []
-    }
+      if (error) throw normalizeSupabaseError(error)
+        return data
   }
 })
 
@@ -1412,7 +917,7 @@ export const useRecordSembakoSupplierPayment = () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
       toast.success('Pembayaran ke supplier dicatat')
     },
-    onError: (err) => toast.error('Gagal: ' + err.message),
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
   })
 }
 
@@ -1538,3 +1043,326 @@ export const useAdjustBatchStock = () => {
     onError: (err) => toast.error('Gagal adjust stok: ' + err.message),
   })
 }
+
+export const useCreateSembakoProduct = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload) => {
+      const tenant_id = await getTenantId()
+      const { error } = await supabase.from('sembako_products')
+        .insert({ ...payload, tenant_id })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sembako-products'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
+      toast.success('Produk berhasil ditambahkan')
+    },
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
+  })
+}
+
+export const useAddStockBatch = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ product_id, supplier_id, qty_masuk,
+      buy_price, purchase_date, expiry_date, notes }) => {
+      const tenant_id = await getTenantId()
+      const { error } = await supabase.from('sembako_stock_batches')
+        .insert({
+          tenant_id, product_id, supplier_id,
+          qty_masuk,
+          qty_sisa: qty_masuk,
+          buy_price, purchase_date, expiry_date, notes,
+        })
+      if (error) throw error
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['sembako-products'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-batches', vars.product_id] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
+      toast.success('Stok berhasil ditambahkan')
+    },
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
+  })
+}
+
+export const useCreateSembakoSale = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ customer_id, customer_name, transaction_date,
+      due_date, items, delivery_cost, other_cost, notes }) => {
+      const tenant_id = await getTenantId()
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+      const rand = Array.from(crypto.getRandomValues(new Uint8Array(3)))
+        .map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase().slice(0, 4)
+      const invoice_number = `SMB-${dateStr}-${rand}`
+
+      const itemFifoCogs = {}
+      const itemBatchCache = {}
+
+      for (const item of items) {
+        if (!item.product_id) continue
+        const { data: batches } = await supabase
+          .from('sembako_stock_batches')
+          .select('id, qty_sisa, buy_price')
+          .eq('product_id', item.product_id)
+          .eq('is_deleted', false)
+          .gt('qty_sisa', 0)
+          .order('created_at', { ascending: true })
+
+        const available = (batches || []).reduce((s, b) => s + (b.qty_sisa || 0), 0)
+        if (item.quantity > available) {
+          throw new Error(`Stok ${item.product_name || 'produk'} tidak cukup — tersedia ${available} ${item.unit || 'unit'}, diminta ${item.quantity}`)
+        }
+
+        let remaining = item.quantity
+        let totalCost = 0
+        for (const batch of (batches || [])) {
+          if (remaining <= 0) break
+          const take = Math.min(batch.qty_sisa, remaining)
+          totalCost += take * (batch.buy_price || 0)
+          remaining -= take
+        }
+        itemFifoCogs[item.product_id] = item.quantity > 0 ? Math.round(totalCost / item.quantity) : 0
+        itemBatchCache[item.product_id] = batches || []
+      }
+
+      const total_amount = items.reduce((s, i) => s + Math.round(i.quantity * i.price_per_unit), 0)
+      const total_cogs = items.reduce((s, i) => s + Math.round(i.quantity * (i.product_id ? (itemFifoCogs[i.product_id] ?? i.cogs_per_unit ?? 0) : (i.cogs_per_unit || 0))), 0)
+
+      const { data: sale, error: saleErr } = await supabase
+        .from('sembako_sales').insert({
+          tenant_id, customer_id, customer_name, invoice_number,
+          transaction_date, due_date,
+          total_amount, total_cogs,
+          delivery_cost: delivery_cost || 0,
+          other_cost: other_cost || 0,
+          payment_status: 'belum_lunas',
+          paid_amount: 0,
+          notes,
+        }).select().single()
+      if (saleErr) throw saleErr
+
+      const itemsToInsert = items.map(item => ({
+        sale_id: sale.id,
+        product_id: item.product_id || null,
+        product_name: item.product_name,
+        unit: item.unit,
+        quantity: item.quantity,
+        price_per_unit: item.price_per_unit,
+        cogs_per_unit: item.product_id ? (itemFifoCogs[item.product_id] ?? item.cogs_per_unit ?? 0) : (item.cogs_per_unit || 0),
+      }))
+      const { error: itemErr } = await supabase.from('sembako_sale_items').insert(itemsToInsert)
+      if (itemErr) throw itemErr
+
+      try {
+        for (const item of items) {
+          if (!item.product_id) continue
+          let qtyToDeduct = item.quantity
+          const batches = itemBatchCache[item.product_id] || []
+          for (const batch of batches) {
+            if (qtyToDeduct <= 0) break
+            const deduct = Math.min(batch.qty_sisa, qtyToDeduct)
+            const { error: batchErr } = await supabase.from('sembako_stock_batches').update({ qty_sisa: batch.qty_sisa - deduct }).eq('id', batch.id)
+            if (batchErr) throw batchErr
+            const { error: outErr } = await supabase.from('sembako_stock_out').insert({
+              tenant_id, product_id: item.product_id, batch_id: batch.id, sale_id: sale.id, qty_keluar: deduct, buy_price: batch.buy_price || 0,
+            })
+            if (outErr) throw outErr
+            qtyToDeduct -= deduct
+          }
+        }
+      } catch (deductErr) {
+        await supabase.from('sembako_sale_items').delete().eq('sale_id', sale.id)
+        await supabase.from('sembako_sales').delete().eq('id', sale.id)
+        throw deductErr
+      }
+      return sale
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-products'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
+      toast.success('Invoice berhasil dibuat')
+    },
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
+  })
+}
+
+export const useRecordSembakoPayment = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ sale_id, customer_id, amount,
+      payment_date, payment_method, reference_number, notes }) => {
+      const tenant_id = await getTenantId()
+      const { error: payErr } = await supabase.from('sembako_payments').insert({
+        tenant_id, sale_id, customer_id, amount, payment_date, payment_method, reference_number, notes,
+      })
+      if (payErr) throw payErr
+      const { data: sale } = await supabase.from('sembako_sales').select('total_amount, paid_amount').eq('id', sale_id).single()
+      const newPaid = (sale.paid_amount || 0) + amount
+      const newStatus = newPaid >= sale.total_amount ? 'lunas' : newPaid > 0 ? 'sebagian' : 'belum_lunas'
+      await supabase.from('sembako_sales').update({ paid_amount: newPaid, payment_status: newStatus }).eq('id', sale_id)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-customers'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
+      toast.success('Pembayaran berhasil dicatat')
+    },
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
+  })
+}
+
+export const useCreateSembakoEmployee = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (payload) => {
+      const tenant_id = await getTenantId()
+      const { error } = await supabase.from('sembako_employees').insert({ ...payload, tenant_id })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sembako-employees'] })
+      toast.success('Pegawai berhasil ditambahkan')
+    },
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
+  })
+}
+
+export const useRecordPayroll = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ employee_id, period_type, period_date,
+      work_days, trip_count, sales_amount, base_amount,
+      commission_amount, bonus, deduction, notes }) => {
+      const tenant_id = await getTenantId()
+      const { error } = await supabase.from('sembako_payroll').insert({
+        tenant_id, employee_id, period_type, period_date, work_days, trip_count, sales_amount, base_amount, commission_amount, bonus, deduction, notes, payment_status: 'pending',
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sembako-payroll'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
+      toast.success('Gaji berhasil dicatat')
+    },
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
+  })
+}
+
+export const useUpdateSembakoProduct = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...updates }) => {
+      const { error } = await supabase.from('sembako_products').update(updates).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sembako-products'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
+      toast.success('Produk berhasil diperbarui')
+    },
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
+  })
+}
+
+export const useSoftDeleteSembakoProduct = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id) => {
+      const { error: errProduct } = await supabase.from('sembako_products').update({ is_deleted: true }).eq('id', id)
+      if (errProduct) throw errProduct
+      const { error: errBatch } = await supabase.from('sembako_stock_batches').update({ is_deleted: true }).eq('product_id', id)
+      if (errBatch) throw errBatch
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sembako-products'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-all-batches'] })
+      queryClient.invalidateQueries({ queryKey: ['sembako-dashboard-stats'] })
+      toast.success('Produk dihapus')
+    },
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
+  })
+}
+
+export const useCreateSembakoSupplier = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ supplier_name, phone, address, notes }) => {
+      const tenant_id = await getTenantId()
+      const { data, error } = await supabase.from('sembako_suppliers').insert({ tenant_id, supplier_name, phone, address, notes }).select().single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['sembako-suppliers'] })
+      toast.success('Supplier berhasil ditambahkan')
+    },
+    onError: (err) => toast.error(normalizeSupabaseError(err).message),
+  })
+}
+
+export const useSembakoDeliveries = () => {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sembako-deliveries', tenant?.id],
+    enabled: !!tenant?.id,
+    staleTime: STALE_5M,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('sembako_deliveries')
+          .select(`*, sembako_employees(id, full_name, role, phone), sembako_sales(id, invoice_number, total_amount, payment_status, transaction_date, customer_name, sembako_customers(id, customer_name, phone, address), sembako_sale_items(id, product_name, quantity, unit))`)
+          .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
+          .order('created_at', { ascending: false })
+        if (error) throw normalizeSupabaseError(error)
+        return data
+    }
+  })
+}
+
+export const useSembakoSalesPendingDelivery = () => {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sembako-sales-pending-delivery', tenant?.id],
+    enabled: !!tenant?.id,
+    staleTime: STALE_5M,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('sembako_sales')
+          .select(`id, invoice_number, transaction_date, total_amount, payment_status, customer_name, sembako_customers(id, customer_name, address, phone), sembako_sale_items(id, product_name, quantity, unit), sembako_deliveries(id, status, is_deleted)`)
+          .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
+          .order('transaction_date', { ascending: false })
+        if (error) throw normalizeSupabaseError(error)
+        return (data || []).filter(sale => {
+          const activeDeliveries = (sale.sembako_deliveries || []).filter(d => !d.is_deleted)
+          return activeDeliveries.length === 0
+        })
+    }
+  })
+}
+
+export const useSembakoPayrolls = () => {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sembako-payroll', tenant?.id],
+    enabled: !!tenant?.id,
+    staleTime: STALE_5M,
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('sembako_payroll')
+          .select('*, sembako_employees(full_name, role, salary_type)')
+          .eq('tenant_id', tenant.id)
+          .eq('is_deleted', false)
+          .order('period_date', { ascending: false })
+        if (error) throw normalizeSupabaseError(error)
+        return data || []
+      } catch (err) {
+        throw normalizeSupabaseError(err)
+      }
+    }
+  })
+}
+

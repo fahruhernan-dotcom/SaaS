@@ -28,6 +28,7 @@ import { SembakoSummaryStrip } from '@/dashboard/broker/sembako_broker/component
 import {
   SembakoEmptyState,
   SembakoFilterPill,
+  SembakoErrorState,
 } from '@/dashboard/broker/sembako_broker/components/SembakoUiPrimitives'
 import {
   Sheet,
@@ -80,10 +81,10 @@ export default function SembakoTokoSupplier() {
   const [selectedArea, setSelectedArea] = useState('Semua Area')
   const [onlyHutang, setOnlyHutang] = useState(false)
 
-  const { data: customers = [] } = useSembakoCustomers()
-  const { data: suppliers = [] } = useSembakoSuppliers()
-  const { data: sales = [] } = useSembakoSales()
-  const { data: allBatches = [] } = useSembakoAllBatches()
+  const { data: customers = [], isError: isCustError, error: custError, refetch: refetchCust } = useSembakoCustomers()
+  const { data: suppliers = [], isError: isSuppError, error: suppError, refetch: refetchSupp } = useSembakoSuppliers()
+  const { data: sales = [], isError: isSalesError, error: salesError, refetch: refetchSales } = useSembakoSales()
+  const { data: allBatches = [], isError: isBatchError, error: batchError, refetch: refetchBatch } = useSembakoAllBatches()
 
   const customerStats = useMemo(() => {
     return sales.reduce((acc, sale) => {
@@ -183,6 +184,11 @@ export default function SembakoTokoSupplier() {
         { label: 'Supplier',       value: suppliers.length },
         { label: 'Punya Batch',    value: activeSuppliers,      color: 'amber' },
       ]
+
+  if (isCustError) return <SembakoErrorState error={custError} onRetry={refetchCust} />
+  if (isSuppError) return <SembakoErrorState error={suppError} onRetry={refetchSupp} />
+  if (isSalesError) return <SembakoErrorState error={salesError} onRetry={refetchSales} />
+  if (isBatchError) return <SembakoErrorState error={batchError} onRetry={refetchBatch} />
 
   return (
     <div className="min-h-screen bg-[#06090F] pb-24 text-left">

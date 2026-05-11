@@ -22,16 +22,17 @@ const StatsBar = () => {
   ];
 
   useEffect(() => {
-    if (isInView) {
-      anime({
-        targets: '.stat-card',
-        translateY: [20, 0],
-        opacity: [0, 1],
-        delay: anime.stagger(150, { from: 'center' }),
-        duration: 800,
-        easing: 'easeOutExpo'
-      });
-    }
+    if (!isInView || !ref.current) return;
+    const cards = ref.current.querySelectorAll('.stat-card');
+    if (!cards.length) return;
+    anime({
+      targets: cards,
+      translateY: [20, 0],
+      opacity: [0, 1],
+      delay: anime.stagger(150, { from: 'center' }),
+      duration: 800,
+      easing: 'easeOutExpo'
+    });
   }, [isInView]);
 
   return (

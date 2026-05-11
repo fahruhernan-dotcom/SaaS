@@ -11,7 +11,7 @@ import { formatIDR } from '@/lib/format'
 import { SembakoPageHeader } from '@/dashboard/broker/sembako_broker/components/SembakoPageHeader'
 import { SembakoSummaryStrip } from '@/dashboard/broker/sembako_broker/components/SembakoSummaryStrip'
 import { SembakoInvoiceCard } from '@/dashboard/broker/sembako_broker/components/SembakoInvoiceCard'
-import { SembakoStatCard } from '@/dashboard/broker/sembako_broker/components/SembakoUiPrimitives'
+import { SembakoStatCard, SembakoErrorState } from '@/dashboard/broker/sembako_broker/components/SembakoUiPrimitives'
 import { Button } from '@/components/ui/button'
 import { SembakoSaleDetailSheet } from '@/dashboard/broker/sembako_broker/components/SembakoSaleDetailSheet'
 import { SembakoCreateInvoiceSheet } from '@/dashboard/broker/sembako_broker/components/SembakoCreateInvoiceSheet'
@@ -56,7 +56,7 @@ function TabInvoice({ isDesktop, openWizard, setOpenWizard }) {
   const location = useLocation()
   const { tenant } = useAuth()
   const quota = useSembakoTransactionQuota(tenant)
-  const { data: sales = [], isLoading } = useSembakoSales()
+  const { data: sales = [], isLoading, isError, error, refetch } = useSembakoSales()
   const [search, setSearch] = useState('')
   const [invoiceFilter, setInvoiceFilter] = useState('all')
   const [page, setPage] = useState(0)
@@ -132,6 +132,12 @@ function TabInvoice({ isDesktop, openWizard, setOpenWizard }) {
     const base = location.pathname.replace('/penjualan', '/pengiriman')
     navigate(`${base}?saleId=${saleId}`)
   }, [location.pathname, navigate])
+
+  if (isError) return (
+    <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <SembakoErrorState error={error} onRetry={refetch} />
+    </div>
+  )
 
   return (
     <div>

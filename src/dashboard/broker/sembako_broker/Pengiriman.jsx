@@ -24,8 +24,8 @@ import {
   useArriveSembakoDelivery,
 } from '@/lib/hooks/useSembakoData'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
-import { formatIDR } from '@/lib/format'
 import { SembakoPageHeader } from '@/dashboard/broker/sembako_broker/components/SembakoPageHeader'
+import { SembakoErrorState } from '@/dashboard/broker/sembako_broker/components/SembakoUiPrimitives'
 import { Button } from '@/components/ui/button'
 import {
   C, sInput, sLabel, sBtn, fmtDate, EmptyBox, CustomSelect,
@@ -381,8 +381,8 @@ export default function SembakoPengiriman() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const { data: deliveries = [], isLoading: loadingDeliveries } = useSembakoDeliveries()
-  const { data: salesPending = [], isLoading: loadingSales } = useSembakoSalesPendingDelivery()
+  const { data: deliveries = [], isLoading: loadingDeliveries, isError: isErrD, error: errD, refetch: refD } = useSembakoDeliveries()
+  const { data: salesPending = [], isLoading: loadingSales, isError: isErrS, error: errS, refetch: refS } = useSembakoSalesPendingDelivery()
   const { data: employees = [] } = useSembakoEmployees()
   const { data: customers = [] } = useSembakoCustomers()
   const completeDelivery = useCompleteSembakoDelivery()
@@ -437,6 +437,12 @@ export default function SembakoPengiriman() {
   async function handleArrive(deliveryId) {
     try { await arriveDelivery.mutateAsync(deliveryId) } catch {}
   }
+
+  if (isErrD || isErrS) return (
+    <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <SembakoErrorState error={isErrD ? errD : errS} onRetry={() => { refD(); refS(); }} />
+    </div>
+  )
 
   return (
     <div style={{ background: C.bg, minHeight: '100vh', paddingBottom: '96px' }}>

@@ -22,6 +22,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   C, sInput, sBtn, sLabel, fmtDate, InputRupiah, CustomSelect,
 } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
+import { SembakoErrorState } from '@/dashboard/broker/sembako_broker/components/SembakoUiPrimitives'
 
 const SALARY_TYPES = [
   { value: 'harian', label: 'Harian', color: '#60A5FA' },
@@ -105,7 +106,7 @@ export default function SembakoPegawai({ hideMobileHeader }) {
 // TAB 1: DATA PEGAWAI
 // ═══════════════════════════════════════════════════════════════════════════
 function TabPegawai({ isDesktop }) {
-  const { data: employees = [] } = useSembakoEmployees()
+  const { data: employees = [], isError, error, refetch } = useSembakoEmployees()
   const createEmp = useCreateSembakoEmployee()
   const updateEmp = useUpdateSembakoEmployee()
   const [editing, setEditing] = useState(null)
@@ -140,6 +141,8 @@ function TabPegawai({ isDesktop }) {
     else await updateEmp.mutateAsync({ id: editing.id, ...payload })
     setEditing(null)
   }
+
+  if (isError) return <SembakoErrorState error={error} onRetry={refetch} />
 
   return (
     <div>
@@ -309,8 +312,8 @@ function TabPegawai({ isDesktop }) {
 // TAB 2: GAJI & PAYROLL
 // ═══════════════════════════════════════════════════════════════════════════
 function TabPayroll({ isDesktop }) {
-  const { data: employees = [] } = useSembakoEmployees()
-  const { data: payrolls = [] } = useSembakoPayrolls()
+  const { data: employees = [], isError: isEmpError, error: empError, refetch: refetchEmp } = useSembakoEmployees()
+  const { data: payrolls = [], isError: isPayError, error: payError, refetch: refetchPay } = useSembakoPayrolls()
   const recordPayroll = useRecordPayroll()
   const markPaid = useMarkPayrollPaid()
 
@@ -391,6 +394,9 @@ function TabPayroll({ isDesktop }) {
     }
     return list
   }, [payrolls, filterEmp, filterMonth])
+
+  if (isEmpError) return <SembakoErrorState error={empError} onRetry={refetchEmp} />
+  if (isPayError) return <SembakoErrorState error={payError} onRetry={refetchPay} />
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>

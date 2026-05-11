@@ -26,6 +26,7 @@ import SmartInsight from '@/dashboard/_shared/components/SmartInsight'
 import { SembakoTambahStokSheet } from './components/SembakoTambahStokSheet'
 import { SembakoOnboardingChecklist } from './components/SembakoOnboardingChecklist'
 import { useSembakoAllBatches, useSembakoCustomers } from '@/lib/hooks/useSembakoData'
+import { SembakoErrorState } from '@/dashboard/broker/sembako_broker/components/SembakoUiPrimitives'
 
 // ── Skeleton ────────────────────────────────────────────────────────────────────
 function Skel({ h = '60px', w = '100%', r = '14px' }) {
@@ -939,12 +940,12 @@ export default function SembakoBeranda() {
   const { profile, tenant, profiles, switchTenant } = useAuth()
   const isDesktop  = useMediaQuery('(min-width: 1024px)')
 
-  const { data: stats,       isLoading: statsLoading }  = useSembakoDashboardStats()
-  const { data: sales = [],  isLoading: salesLoading }  = useSembakoSales()
-  const { data: employees = [] }                        = useSembakoEmployees()
-  const { data: deliveries = [] }                       = useSembakoDeliveries()
-  const { data: products = [] }                         = useSembakoProducts()
-  const { data: suppliers = [] }                        = useSembakoSuppliers()
+  const { data: stats,       isLoading: statsLoading, isError: isStatsError, error: statsError, refetch: refetchStats }  = useSembakoDashboardStats()
+  const { data: sales = [],  isLoading: salesLoading, isError: isSalesError, error: salesError, refetch: refetchSales }  = useSembakoSales()
+  const { data: employees = [], isError: isEmpError, error: empError, refetch: refetchEmp }                        = useSembakoEmployees()
+  const { data: deliveries = [], isError: isDelError, error: delError, refetch: refetchDel }                       = useSembakoDeliveries()
+  const { data: products = [], isError: isProdError, error: prodError, refetch: refetchProd }                         = useSembakoProducts()
+  const { data: suppliers = [], isError: isSuppError, error: suppError, refetch: refetchSupp }                        = useSembakoSuppliers()
 
   // Chart + insight state
   const [chartPeriod,   setChartPeriod]   = useState('weekly')
@@ -1036,6 +1037,13 @@ export default function SembakoBeranda() {
       </div>
     )
   }
+
+  if (isStatsError) return <div style={{ minHeight: '100vh', background: C.bg }}><SembakoErrorState error={statsError} onRetry={refetchStats} /></div>
+  if (isSalesError) return <div style={{ minHeight: '100vh', background: C.bg }}><SembakoErrorState error={salesError} onRetry={refetchSales} /></div>
+  if (isEmpError) return <div style={{ minHeight: '100vh', background: C.bg }}><SembakoErrorState error={empError} onRetry={refetchEmp} /></div>
+  if (isDelError) return <div style={{ minHeight: '100vh', background: C.bg }}><SembakoErrorState error={delError} onRetry={refetchDel} /></div>
+  if (isProdError) return <div style={{ minHeight: '100vh', background: C.bg }}><SembakoErrorState error={prodError} onRetry={refetchProd} /></div>
+  if (isSuppError) return <div style={{ minHeight: '100vh', background: C.bg }}><SembakoErrorState error={suppError} onRetry={refetchSupp} /></div>
 
   const sharedProps = {
     stats, sales, employees, deliveries, navigate, name, salesLoading,

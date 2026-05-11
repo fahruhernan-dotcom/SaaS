@@ -21,6 +21,7 @@ import {
 import { useOutletContext, useLocation, useNavigate } from 'react-router-dom'
 import { C } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
 import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
+import { SembakoErrorState } from '@/dashboard/broker/sembako_broker/components/SembakoUiPrimitives'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -546,7 +547,7 @@ export default function Produk() {
   const { setSidebarOpen } = useOutletContext()
   const location = useLocation()
   const navigate = useNavigate()
-  const { data: products = [], isLoading } = useSembakoProducts()
+  const { data: products = [], isLoading, isError, error, refetch } = useSembakoProducts()
   const deleteMut = useSoftDeleteSembakoProduct()
 
   const [search,    setSearch]    = useState('')
@@ -597,6 +598,12 @@ export default function Produk() {
   if (isLoading) return (
     <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <p style={{ color: TEXT_SEC, fontFamily: 'DM Sans' }}>Memuat produk...</p>
+    </div>
+  )
+
+  if (isError) return (
+    <div style={{ minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <SembakoErrorState error={error} onRetry={refetch} />
     </div>
   )
 

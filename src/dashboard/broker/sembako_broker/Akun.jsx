@@ -35,6 +35,8 @@ import {
 import { cn } from '@/lib/utils'
 import { formatIDR, formatDate } from '@/lib/format'
 import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
+import { SembakoErrorState } from '@/dashboard/broker/sembako_broker/components/SembakoUiPrimitives'
+import { normalizeSupabaseError } from '@/lib/supabaseErrorHandler'
 
 const staggerContainer = {
   hidden: {},
@@ -423,10 +425,11 @@ function RecycleBinSection({ tenantId }) {
     const [activeTab, setActiveTab] = useState(tabs[0].id)
     const queryClient = useQueryClient()
 
-    const { data: deletedData, isLoading, refetch } = useQuery({
+    const { data: deletedData, isLoading, isError, error, refetch } = useQuery({
         queryKey: ['recycle-bin-sembako', tenantId, activeTab],
         queryFn: async () => {
-            const { data } = await supabase.from(activeTab).select('*').eq('tenant_id', tenantId).eq('is_deleted', true).order('updated_at', { ascending: false })
+            const { data, error } = await supabase.from(activeTab).select('*').eq('tenant_id', tenantId).eq('is_deleted', true).order('updated_at', { ascending: false })
+            if (error) throw normalizeSupabaseError(error, `Memuat Data ${activeTab}`)
             return data || []
         },
         enabled: !!tenantId && isOpen
@@ -511,6 +514,10 @@ function RecycleBinSection({ tenantId }) {
                                     {isLoading ? (
                                         <div className="flex items-center justify-center h-40">
                                             <div className="w-8 h-8 border-4 border-[#EA580C]/20 border-t-[#EA580C] rounded-full animate-spin" />
+                                        </div>
+                                    ) : isError ? (
+                                        <div className="py-4">
+                                            <SembakoErrorState error={error} onRetry={refetch} />
                                         </div>
                                     ) : deletedData?.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center py-12 text-center">

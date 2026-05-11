@@ -17,6 +17,7 @@ import { formatIDR } from '@/lib/format'
 import TopBar from '@/dashboard/_shared/components/TopBar'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { C, fmtDate, CustomSelect } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
+import { SembakoErrorState } from '@/dashboard/broker/sembako_broker/components/SembakoUiPrimitives'
 
 const PIE_COLORS = ['#EA580C', '#F59E0B', '#34D399', '#60A5FA', '#A78BFA', '#F472B6', '#FB923C']
 const CATEGORY_LABEL = {
@@ -112,7 +113,7 @@ export default function SembakoLaporan() {
     }
   }
 
-  const { data, isLoading, isFetching } = useSembakoLaporan(startDate, endDate)
+  const { data, isLoading, isFetching, isError, error, refetch } = useSembakoLaporan(startDate, endDate)
 
   const s = data?.summary || {}
 
@@ -167,7 +168,9 @@ export default function SembakoLaporan() {
           </div>
         </div>
 
-        {isLoading ? <LoadingSkeleton /> : !data ? (
+        {isLoading ? <LoadingSkeleton /> : isError ? (
+          <SembakoErrorState error={error} onRetry={refetch} />
+        ) : !data ? (
           <p style={{ color: C.muted, textAlign: 'center', padding: '60px 0' }}>Pilih rentang tanggal untuk melihat laporan</p>
         ) : (
           <div style={{ position: 'relative' }}>

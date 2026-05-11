@@ -15,6 +15,7 @@ import { useSearchParams, useOutletContext } from 'react-router-dom'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { C, fmtDate, CustomSelect, InputRupiah } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
 import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
+import { SembakoErrorState } from '@/dashboard/broker/sembako_broker/components/SembakoUiPrimitives'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { SembakoTambahStokSheet } from './components/SembakoTambahStokSheet'
 
@@ -45,7 +46,7 @@ function StokSaatIni({ products, onTambah, onAdjust, onShowHistory }) {
   const [expanded, setExpanded] = useState(null)
   const [search,   setSearch]   = useState('')
 
-  const { data: allBatches = [] } = useSembakoAllBatches()
+  const { data: allBatches = [], isLoading: batchesLoading, isError: batchesIsError, error: batchesError, refetch: batchesRefetch } = useSembakoAllBatches()
 
   const filtered = useMemo(() => {
     if (!search) return products.filter(p => p.is_active && !p.is_deleted)
@@ -57,6 +58,10 @@ function StokSaatIni({ products, onTambah, onAdjust, onShowHistory }) {
 
   const batchesForProduct = (productId) =>
     allBatches.filter(b => b.product_id === productId && b.qty_sisa > 0)
+
+  if (batchesIsError) {
+    return <SembakoErrorState error={batchesError} onRetry={batchesRefetch} />
+  }
 
   return (
     <div>
@@ -190,9 +195,10 @@ function StokSaatIni({ products, onTambah, onAdjust, onShowHistory }) {
 // ── Tab: Riwayat Masuk ────────────────────────────────────────────────────────
 
 function RiwayatMasuk() {
-  const { data: batches = [], isLoading } = useSembakoAllBatches()
+  const { data: batches = [], isLoading, isError, error, refetch } = useSembakoAllBatches()
 
   if (isLoading) return <LoadingRow />
+  if (isError) return <SembakoErrorState error={error} onRetry={refetch} />
 
   return (
     <div>
@@ -229,9 +235,10 @@ function RiwayatMasuk() {
 // ── Tab: Riwayat Keluar ───────────────────────────────────────────────────────
 
 function RiwayatKeluar() {
-  const { data: stockOuts = [], isLoading } = useSembakoStockOut()
+  const { data: stockOuts = [], isLoading, isError, error, refetch } = useSembakoStockOut()
 
   if (isLoading) return <LoadingRow />
+  if (isError) return <SembakoErrorState error={error} onRetry={refetch} />
 
   if (stockOuts.length === 0) return <EmptyState label="Belum ada riwayat stok keluar" sub="Stok berkurang otomatis saat penjualan dicatat" />
 
@@ -346,8 +353,8 @@ export default function Gudang() {
   const { setSidebarOpen } = useOutletContext()
   const preProductId   = searchParams.get('product') || null
 
-  const { data: products  = [], isLoading: productsLoading } = useSembakoProducts()
-  const { data: suppliers = [] } = useSembakoSuppliers()
+  const { data: products  = [], isLoading: productsLoading, isError: productsIsError, error: productsError, refetch: productsRefetch } = useSembakoProducts()
+  const { data: suppliers = [], isError: supErr, error: supError, refetch: supRefetch } = useSembakoSuppliers()
 
   const [activeTab,        setActiveTab]        = useState(0)
   const [showTambahSheet,  setShowTambahSheet]  = useState(!!preProductId || searchParams.get('action') === 'add-stock')
@@ -443,12 +450,14 @@ export default function Gudang() {
         {activeTab === 0 && (
           productsLoading
             ? <ProductSkeleton />
-            : <StokSaatIni
-                products={products}
-                onTambah={openTambah}
-                onAdjust={openAdjust}
-                onShowHistory={p => { setHistoryProduct(p); setShowHistorySheet(true) }}
-              />
+            : productsIsError || supErr
+              ? <SembakoErrorState error={productsError || supError} onRetry={() => { productsRefetch(); supRefetch(); }} />
+              : <StokSaatIni
+                  products={products}
+                  onTambah={openTambah}
+                  onAdjust={openAdjust}
+                  onShowHistory={p => { setHistoryProduct(p); setShowHistorySheet(true) }}
+                />
         )}
         {activeTab === 1 && <RiwayatMasuk />}
         {activeTab === 2 && <RiwayatKeluar />}
@@ -491,8 +500,13 @@ export default function Gudang() {
 }
 
 function KartuStokSheet({ product, onClose }) {
-  const { data: batches = [] } = useSembakoAllBatches()
-  const { data: stockOuts = [] } = useSembakoStockOut()
+  const { data: batches = [], isLoading: bLoad, isError: bErr, error: bError, refetch: bRefetch } = useSembakoAllBatches()
+  const { data: stockOuts = [], isLoading: sLoad, isError: sErr, error: sError, refetch: sRefetch } = useSembakoStockOut()
+
+  const isError = bErr || sErr
+  const error = bError || sError
+  const isLoading = bLoad || sLoad
+  const refetch = () => { bRefetch(); sRefetch() }
 
   const movements = useMemo(() => {
     if (!product) return []
@@ -556,7 +570,11 @@ function KartuStokSheet({ product, onClose }) {
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 space-y-3 pb-20">
-           {movements.length === 0 ? (
+           {isError ? (
+             <div className="py-10"><SembakoErrorState error={error} onRetry={refetch} /></div>
+           ) : isLoading ? (
+             <p className="text-center py-20 text-[#4B6478] font-bold text-xs uppercase">Memuat data...</p>
+           ) : movements.length === 0 ? (
              <p className="text-center py-20 text-[#4B6478] font-bold text-xs uppercase">Belum ada riwayat pergerakan</p>
            ) : (
              movements.map(m => (

@@ -1,4 +1,5 @@
 import { QueryClient } from '@tanstack/react-query'
+import { normalizeSupabaseError } from './supabaseErrorHandler'
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -8,7 +9,17 @@ export const queryClient = new QueryClient({
       refetchOnWindowFocus: false,          // jangan refetch saat user alt-tab / klik window
       refetchOnMount:      true,           // refetch jika cache kosong; skip jika data masih fresh (staleTime)
       refetchOnReconnect:  true,           // tetap refetch jika internet reconnect
-      retry:               1,
+      retry: (failureCount, error) => {
+        const appError = normalizeSupabaseError(error)
+        
+        // Jangan retry jika error terkait auth (401), permission (403), kuota (402), atau logic business (400)
+        if ([401, 403, 400, 402].includes(appError.status)) {
+          return false
+        }
+        
+        // Retry maksimal 2 kali untuk error lainnya (network, 500, dll)
+        return failureCount < 2
+      },
     },
   },
 })
