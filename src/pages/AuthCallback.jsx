@@ -47,8 +47,11 @@ export default function AuthCallback() {
         .eq('auth_user_id', session.user.id)
 
       if (!profiles || profiles.length === 0) {
-        navigate('/onboarding', { replace: true })
-        toast.info('Yuk lengkapi profil bisnismu dulu!')
+        // Brand-new user: show welcome screen first
+        navigate('/welcome', {
+          replace: true,
+          state: { fullName: session.user.user_metadata?.full_name || '' },
+        })
         return
       }
 
@@ -62,7 +65,11 @@ export default function AuthCallback() {
       const profile = profiles.find(p => p.onboarded) || profiles[0]
 
       if (!profile.onboarded) {
-        navigate('/onboarding', { replace: true })
+        // Not yet onboarded: show welcome if this is their first time
+        navigate('/welcome', {
+          replace: true,
+          state: { fullName: profile.full_name || session.user.user_metadata?.full_name || '' },
+        })
         return
       }
 

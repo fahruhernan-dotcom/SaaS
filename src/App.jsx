@@ -11,6 +11,7 @@ import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import CheckEmail from './pages/CheckEmail';
+import WelcomeOnboard from './pages/WelcomeOnboard';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import LoadingScreen from './components/LoadingScreen';
@@ -132,7 +133,7 @@ function ProtectedRoute({ children, requiredType, requiredVertical }) {
   // Superadmin bypass — uses centralized helper (migration-safe dual-mode)
   if (isSuperadmin(profile)) return children;
 
-  if (profile && !profile.onboarded && location.pathname !== '/onboarding' && profile.role === 'owner') {
+  if (profile && !profile.onboarded && location.pathname !== '/onboarding' && location.pathname !== '/welcome' && profile.role === 'owner') {
     return <Navigate to="/onboarding" replace />;
   }
 
@@ -358,6 +359,7 @@ export const routes = createRoutesFromElements(
     <Route path="/harga-pasar/:province?" element={<HargaPasarPublic />} />
     <Route path="/faq" element={<FAQPage />} />
     <Route path="/check-email" element={<CheckEmail />} />
+    <Route path="/welcome" element={<WelcomeOnboard />} />
     <Route path="/forgot-password" element={<ForgotPassword />} />
     <Route path="/reset-password" element={<ResetPassword />} />
     <Route path="/auth/callback" element={<AuthCallback />} />

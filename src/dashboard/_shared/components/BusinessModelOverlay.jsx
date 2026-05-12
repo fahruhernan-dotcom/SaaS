@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react'
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, Lock, ArrowLeft, Building2, MapPin, ChevronDown, X, Key, ChevronRight } from 'lucide-react'
+import { Check, Lock, ArrowLeft, Building2, MapPin, ChevronDown, X, Key, ChevronRight, CheckCircle2, Sparkles } from 'lucide-react'
 import { useNavigate as useNav } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { BUSINESS_MODELS, BUSINESS_CATEGORIES, ANIMAL_GROUPS, resolveBusinessVertical } from '@/lib/businessModel'
@@ -9,11 +9,17 @@ import { PROVINCES } from '@/lib/constants/regions'
 import { checkQuotaUsage } from '@/lib/quotaUtils'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import StepSetup from './onboarding/StepSetup'
+import StepSetup, { VERTICAL_SETUP_CONFIG } from './onboarding/StepSetup'
 import { isSuperadmin } from '@/lib/auth'
 
-// Verticals that need a dedicated setup step after business name
-const SETUP_REQUIRED_VERTICALS = new Set(['peternak_sapi_penggemukan'])
+// Verticals that need a dedicated setup step after business name.
+// Driven by StepSetup's VERTICAL_SETUP_CONFIG — single source of truth.
+const SETUP_REQUIRED_VERTICALS = new Set(Object.keys(VERTICAL_SETUP_CONFIG))
+
+// Step labels for progress bar — peternak (5 steps max) and non-peternak (3 steps)
+const STEP_LABELS_PETERNAK       = ['Kategori', 'Hewan', 'Spesialisasi', 'Nama Farm', 'Setup Awal']
+const STEP_LABELS_PETERNAK_SHORT = ['Kategori', 'Hewan', 'Spesialisasi', 'Nama Farm']
+const STEP_LABELS_BROKER         = ['Kategori', 'Spesialisasi', 'Nama Bisnis']
 
 export default function BusinessModelOverlay({ user, profile, isNewBusiness, onComplete }) {
   const [step, setStep] = useState(1)
@@ -27,6 +33,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
   const [provinceSearch, setProvinceSearch] = useState('')
   const [provinceOpen, setProvinceOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false) // success animation gate
   const [setupData, setSetupData] = useState({
     batch_name: '',
     start_date: new Date().toISOString().split('T')[0],
@@ -242,30 +249,47 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         }
       }
 
-      // --- SETUP STEP: Save initial batch for Sapi Penggemukan ---
-      if (selected === 'peternak_sapi_penggemukan' && setupData.initial_count && resolvedTenantId) {
+      // --- SETUP STEP: Save initial batch (config-driven for all penggemukan verticals) ---
+      const BATCH_TABLE_MAP = {
+        peternak_sapi_penggemukan:             'sapi_penggemukan_batches',
+        peternak_domba_penggemukan:            'domba_penggemukan_batches',
+        peternak_kambing_penggemukan:          'kambing_penggemukan_batches',
+        peternak_kambing_domba_penggemukan:    'domba_penggemukan_batches',
+      }
+      const batchTable = BATCH_TABLE_MAP[selected]
+      if (batchTable && setupData.initial_count && resolvedTenantId) {
         const batchCode = `BATCH-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-001`
-        const { error: batchError } = await supabase.from('sapi_penggemukan_batches').insert({
-          tenant_id: resolvedTenantId,
-          batch_code: setupData.batch_name?.trim() || batchCode,
-          kandang_name: setupData.kandang_name?.trim() || 'Kandang Utama',
-          start_date: setupData.start_date,
-          total_animals: parseInt(setupData.initial_count) || 0,
-          avg_entry_weight_kg: parseFloat(setupData.initial_avg_weight) || null,
-          status: 'active',
-          batch_purpose: 'potong',
-          notes: setupData.purchase_price_per_kg
-            ? `Harga beli: Rp ${parseInt(setupData.purchase_price_per_kg).toLocaleString('id-ID')}/kg`
-            : null,
-        })
-        if (batchError) throw batchError
+        const batchPayload = {
+          tenant_id:            resolvedTenantId,
+          batch_code:           setupData.batch_name?.trim() || batchCode,
+          kandang_name:         setupData.kandang_name?.trim() || 'Kandang Utama',
+          start_date:           setupData.start_date,
+          total_animals:        parseInt(setupData.initial_count) || 0,
+          avg_entry_weight_kg:  parseFloat(setupData.initial_avg_weight) || null,
+          status:               'active',
+        }
+        // Sapi-specific fields
+        if (selected === 'peternak_sapi_penggemukan') {
+          batchPayload.batch_purpose = 'potong'
+          if (setupData.purchase_price_per_kg) {
+            batchPayload.notes = `Harga beli: Rp ${parseInt(setupData.purchase_price_per_kg).toLocaleString('id-ID')}/kg`
+          }
+        }
+        const { error: batchError } = await supabase.from(batchTable).insert(batchPayload)
+        if (batchError) {
+          // Non-fatal: log warning but don't block onboarding
+          console.warn('[Onboarding] Batch insert failed, continuing:', batchError.message)
+        }
       }
 
-      if (onComplete) onComplete(selected)
+      // Show success animation briefly before calling onComplete
+      setIsSuccess(true)
+      setTimeout(() => {
+        if (onComplete) onComplete(selected)
+      }, 1800)
     } catch (err) {
       console.error('Error saving business model:', err)
       toast.error('Gagal menyimpan pilihan. Silakan coba lagi.')
-    } finally {
       setLoading(false)
     }
   }
@@ -343,6 +367,104 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
     )
   }, [provinceSearch])
 
+  // ── Success Animation Screen ────────────────────────────────────────────────
+  if (isSuccess) {
+    const successModel = BUSINESS_MODELS[selected]
+    const emoji = VERTICAL_SETUP_CONFIG[selected]?.emoji || successModel?.icon || '🎉'
+    return (
+      <div className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4">
+        <motion.div
+          initial={{ scale: 0.85, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+          className="flex flex-col items-center text-center gap-6 max-w-xs w-full"
+        >
+          {/* Animated check ring */}
+          <div className="relative">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 18 }}
+              className="w-28 h-28 rounded-full flex items-center justify-center"
+              style={{
+                background: 'radial-gradient(ellipse at 40% 30%, rgba(16,185,129,0.25), rgba(16,185,129,0.06))',
+                border: '2px solid rgba(16,185,129,0.35)',
+                boxShadow: '0 0 40px rgba(16,185,129,0.2)',
+              }}
+            >
+              <span className="text-5xl select-none">{emoji}</span>
+            </motion.div>
+            {/* Pulse ring 1 */}
+            <motion.div
+              animate={{ scale: [1, 1.5], opacity: [0.4, 0] }}
+              transition={{ duration: 1.4, repeat: Infinity }}
+              className="absolute inset-0 rounded-full border border-emerald-500/30"
+            />
+            {/* Pulse ring 2 */}
+            <motion.div
+              animate={{ scale: [1, 1.8], opacity: [0.2, 0] }}
+              transition={{ duration: 1.4, repeat: Infinity, delay: 0.4 }}
+              className="absolute inset-0 rounded-full border border-emerald-500/15"
+            />
+            {/* Checkmark badge */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.35, type: 'spring', stiffness: 300, damping: 18 }}
+              className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/40"
+            >
+              <Check size={18} strokeWidth={3} className="text-white" />
+            </motion.div>
+          </div>
+
+          <div>
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="text-xs font-black uppercase tracking-widest text-emerald-400 mb-1"
+            >
+              Bisnis Berhasil Dibuat!
+            </motion.p>
+            <motion.h2
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-2xl font-black text-white leading-tight"
+            >
+              {toTitleCase(businessName.trim())}
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.55 }}
+              className="text-[13px] text-slate-500 mt-2"
+            >
+              Mengarahkan ke dashboard...
+            </motion.p>
+          </div>
+
+          {/* Loading dots */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="flex gap-1.5"
+          >
+            {[0, 1, 2].map(i => (
+              <motion.div
+                key={i}
+                animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1, 0.8] }}
+                transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.2 }}
+                className="w-1.5 h-1.5 rounded-full bg-emerald-500"
+              />
+            ))}
+          </motion.div>
+        </motion.div>
+      </div>
+    )
+  }
+
   return (
     <div className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-xl flex items-center justify-center p-2 sm:p-4 overflow-y-auto custom-scrollbar">
       <motion.div
@@ -373,15 +495,34 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
             <span className="font-display font-black text-lg tracking-tight text-white">TernakOS</span>
           </div>
 
-          <div className="flex items-center justify-center gap-1.5 mb-6 relative z-10">
-            {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
-              <div key={s} className={cn(
-                "h-1 rounded-full transition-all duration-500",
-                step >= s 
-                  ? "w-7 bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]" 
-                  : "w-1.5 bg-white/10"
-              )} />
-            ))}
+          {/* Progress bar with step labels */}
+          <div className="flex items-start justify-center gap-1 mb-6 relative z-10">
+            {(() => {
+              const labels = isPeternak
+                ? (needsSetupStep ? STEP_LABELS_PETERNAK : STEP_LABELS_PETERNAK_SHORT)
+                : STEP_LABELS_BROKER
+              return labels.map((label, i) => {
+                const s = i + 1
+                const isActive = step === s
+                const isDone = step > s
+                return (
+                  <div key={s} className="flex flex-col items-center gap-1" style={{ minWidth: 52 }}>
+                    <div className={cn(
+                      'h-1 w-full rounded-full transition-all duration-500',
+                      isDone || isActive
+                        ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.35)]'
+                        : 'bg-white/10'
+                    )} />
+                    <span className={cn(
+                      'text-[8px] font-black uppercase tracking-wider transition-colors duration-300 leading-none',
+                      isActive ? 'text-emerald-400' : isDone ? 'text-emerald-600' : 'text-white/15'
+                    )}>
+                      {label}
+                    </span>
+                  </div>
+                )
+              })
+            })()}
           </div>
 
           <AnimatePresence mode="wait">
@@ -435,7 +576,10 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               ) : isSetupStep ? (
                 <>
                   <h2 className="font-display text-xl sm:text-2xl font-black text-white mb-1.5 flex items-center justify-center gap-2.5 leading-tight">
-                    Setup Batch Pertama <span className="animate-bounce-slow">🐄</span>
+                    Setup Batch Pertama{' '}
+                    <span className="animate-bounce-slow">
+                      {VERTICAL_SETUP_CONFIG[selected]?.emoji || '🐄'}
+                    </span>
                   </h2>
                   <p className="text-[13px] text-slate-400 font-medium leading-relaxed">
                     Data awal untuk mendukung performa ternak.
