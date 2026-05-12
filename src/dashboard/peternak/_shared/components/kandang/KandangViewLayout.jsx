@@ -443,39 +443,35 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
                   <p className="text-xs font-black text-[#4B6478] uppercase tracking-widest mb-4">Belum ada kandang produksi</p>
                   <Button variant="outline" onClick={() => setAddSheet(true)} className="border-white/10 text-[#4B6478] hover:text-white rounded-xl uppercase text-[10px] font-black h-10">Buat Kandang Baru</Button>
                 </div>
-              ) : (() => {
-                // 1-3 kandang → fit exactly in one row; 4+ → lock at 3 per row and wrap
-                const cols = Math.min(normalKandangs.length, 3)
-                return (
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-                      gap: '2rem',
-                    }}
-                  >
-                    <AnimatePresence mode="popLayout">
-                      {normalKandangs.map((k, i) => (
-                        <motion.div key={k.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }} className="h-[460px]">
-                          <KandangBox
-                            kandang={k}
-                            animalsInKandang={groupedAnimals[k.id] || []}
-                            dragOver={dragOverKandang}
-                            onDragOver={handleDragOver}
-                            onDragLeave={() => setDragOverKandang(null)}
-                            onDrop={handleDrop}
-                            onAnimalClick={setSelectedAnimal}
-                            onKandangDoubleClick={setEditingKandang}
-                            speciesConfig={speciesConfig}
-                            batchColorMap={batchColorMap}
-                            isAllBatches={isAllBatches}
-                          />
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
-                  </div>
-                )
-              })()}
+              ) : (
+                <div className="flex md:grid overflow-x-auto md:overflow-x-visible pb-8 md:pb-0 snap-x snap-mandatory md:snap-none gap-6 lg:gap-10 -mx-5 px-5 md:mx-0 md:px-0 md:grid-cols-2 xl:grid-cols-3 custom-scrollbar">
+                  <AnimatePresence mode="popLayout">
+                    {normalKandangs.map((k, i) => (
+                      <motion.div
+                        key={k.id}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="min-w-[280px] sm:min-w-[320px] md:min-w-0 h-auto min-h-[460px] snap-center"
+                      >
+                        <KandangBox
+                          kandang={k}
+                          animalsInKandang={groupedAnimals[k.id] || []}
+                          dragOver={dragOverKandang}
+                          onDragOver={handleDragOver}
+                          onDragLeave={() => setDragOverKandang(null)}
+                          onDrop={handleDrop}
+                          onAnimalClick={setSelectedAnimal}
+                          onKandangDoubleClick={setEditingKandang}
+                          speciesConfig={speciesConfig}
+                          batchColorMap={batchColorMap}
+                          isAllBatches={isAllBatches}
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
             </div>
 
             {holdingPen && (
@@ -485,7 +481,7 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
                   <div className="h-px flex-1 bg-gradient-to-r from-emerald-500/10 to-transparent" />
                   <div className="flex items-center gap-2"><HelpCircle size={13} className="text-[#4B6478]" /><span className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Penampungan Sementara</span></div>
                 </div>
-                <div className="h-[320px]">
+                <div className="h-auto min-h-[320px]">
                   <KandangBox
                     kandang={holdingPen}
                     animalsInKandang={groupedAnimals[holdingPen.id] || []}

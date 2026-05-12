@@ -33,7 +33,7 @@ export default function AnimalDetailSheet({ animal, kandangs, speciesConfig, onC
     return [...records].sort((a, b) => new Date(b.weigh_date) - new Date(a.weigh_date)).slice(0, 4)
   }, [records])
 
-  const moveTargets = kandangs.filter(k => !k.is_holding && k.id !== animal.kandang_id)
+  const moveTargets = kandangs.filter(k => k.id !== animal.kandang_id)
 
   return (
     <motion.div
