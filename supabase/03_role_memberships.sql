@@ -1,31 +1,100 @@
 -- 03_role_memberships.sql
--- Generated from Supabase ROLE MEMBERSHIPS.txt
--- Last sync: 2026-05-12
--- DO NOT EDIT MANUALLY — regenerate from snapshot .txt
+-- Source: Supabase ROLE MEMBERSHIPS.txt
+-- Last sync: (Current)
+-- DO NOT EDIT MANUALLY
 
-DO $$\nBEGIN\n  GRANT "pg_read_all_settings" TO "pg_monitor";
-  GRANT "pg_read_all_stats" TO "pg_monitor";
-  GRANT "pg_stat_scan_tables" TO "pg_monitor";
-  GRANT "pg_read_all_data" TO "supabase_etl_admin";
-  GRANT "pg_read_all_data" TO "supabase_read_only_user";
-  GRANT "anon" TO "authenticator";
-  GRANT "authenticated" TO "authenticator";
-  GRANT "service_role" TO "authenticator";
-  GRANT "authenticator" TO "supabase_storage_admin";
-  GRANT "anon" TO "postgres";
-  GRANT "authenticated" TO "postgres";
-  GRANT "service_role" TO "postgres";
-  GRANT "authenticator" TO "postgres";
-  GRANT "pg_monitor" TO "postgres";
-  GRANT "pg_read_all_data" TO "postgres";
-  GRANT "pg_signal_backend" TO "postgres";
-  GRANT "pg_monitor" TO "supabase_etl_admin";
-  GRANT "pg_monitor" TO "supabase_read_only_user";
-  GRANT "pg_create_subscription" TO "postgres";
-  GRANT "supabase_realtime_admin" TO "postgres";
-  GRANT "postgres" TO "cli_login_postgres";
-  GRANT "supabase_privileged_role" TO "postgres";
-  GRANT "supabase_privileged_role" TO "supabase_etl_admin";
-EXCEPTION WHEN undefined_object THEN NULL;
-END $$;
-
+DO $body$
+BEGIN
+  BEGIN
+    EXECUTE 'GRANT "pg_monitor" TO "pg_read_all_settings"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "pg_monitor" TO "pg_read_all_stats"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "pg_monitor" TO "pg_stat_scan_tables"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "supabase_etl_admin" TO "pg_read_all_data"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "supabase_read_only_user" TO "pg_read_all_data"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "authenticator" TO "anon"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "authenticator" TO "authenticated"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "authenticator" TO "service_role"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "supabase_storage_admin" TO "authenticator"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "postgres" TO "anon"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "postgres" TO "authenticated"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "postgres" TO "service_role"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "postgres" TO "authenticator"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "postgres" TO "pg_monitor"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "postgres" TO "pg_read_all_data"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "postgres" TO "pg_signal_backend"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "supabase_etl_admin" TO "pg_monitor"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "supabase_read_only_user" TO "pg_monitor"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "postgres" TO "pg_create_subscription"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "postgres" TO "supabase_realtime_admin"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "cli_login_postgres" TO "postgres"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "postgres" TO "supabase_privileged_role"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+  BEGIN
+    EXECUTE 'GRANT "supabase_etl_admin" TO "supabase_privileged_role"';
+  EXCEPTION WHEN undefined_object THEN NULL;
+  END;
+END $body$;

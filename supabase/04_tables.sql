@@ -1,6 +1,2550 @@
 -- 04_tables.sql
--- Generated from Supabase TABLES + RLS STATUS.txt + Supabase TABLE COLUMNS.txt
--- Last sync: 2026-05-12
--- DO NOT EDIT MANUALLY — regenerate from snapshot .txt
+-- Source: Supabase TABLE COLUMNS.txt
+-- Last sync: (Current)
+-- DO NOT EDIT MANUALLY
 
-CREATE TABLE IF NOT EXISTS "public"."ai_anomaly_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "staged_transaction_id" uuid,\n  "field_name" text,\n  "anomaly_reason" text,\n  "severity" text,\n  "detected_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."ai_conversations" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "profile_id" uuid NOT NULL,\n  "messages" ARRAY NOT NULL DEFAULT '{}'::jsonb[],\n  "user_type" text NOT NULL,\n  "context_page" text,\n  "context_snapshot" jsonb,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "metadata" jsonb DEFAULT '{}'::jsonb\n);\n\nCREATE TABLE IF NOT EXISTS "public"."ai_error_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid,\n  "profile_id" uuid,\n  "error_msg" text NOT NULL,\n  "provider" text,\n  "user_message" text,\n  "context_page" text,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."ai_feedback" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "pending_entry_id" uuid NOT NULL,\n  "tenant_id" uuid NOT NULL,\n  "profile_id" uuid NOT NULL,\n  "rating" smallint NOT NULL,\n  "correction_notes" text,\n  "corrected_data" jsonb,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."ai_pending_entries" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "conversation_id" uuid NOT NULL,\n  "tenant_id" uuid NOT NULL,\n  "profile_id" uuid NOT NULL,\n  "intent" text NOT NULL,\n  "extracted_data" jsonb NOT NULL DEFAULT '{}'::jsonb,\n  "target_table" text,\n  "status" text NOT NULL DEFAULT 'pending'::text,\n  "confidence" numeric NOT NULL DEFAULT 1.0,\n  "clarification_needed" text,\n  "raw_ai_response" jsonb,\n  "inserted_record_id" uuid,\n  "error_message" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."ai_staged_transactions" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "pending_entry_id" uuid,\n  "tenant_id" uuid NOT NULL,\n  "profile_id" uuid NOT NULL,\n  "target_table" text NOT NULL,\n  "intent" text NOT NULL,\n  "payload" jsonb NOT NULL,\n  "original_data" jsonb,\n  "is_edited" boolean DEFAULT false,\n  "status" text DEFAULT 'staged'::text,\n  "error_message" text,\n  "staged_at" timestamp with time zone DEFAULT now(),\n  "committed_at" timestamp with time zone,\n  "production_id" uuid,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."breeding_cycles" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "peternak_farm_id" uuid NOT NULL,\n  "cycle_number" integer NOT NULL,\n  "chicken_type" text NOT NULL DEFAULT 'broiler'::text,\n  "doc_count" integer NOT NULL,\n  "doc_price" integer,\n  "start_date" date NOT NULL,\n  "target_harvest_date" date,\n  "actual_harvest_date" date,\n  "target_weight_kg" numeric DEFAULT 1.9,\n  "target_fcr" numeric DEFAULT 1.7,\n  "status" text NOT NULL DEFAULT 'active'::text,\n  "total_feed_kg" numeric DEFAULT 0,\n  "total_mortality" integer DEFAULT 0,\n  "final_count" integer,\n  "final_avg_weight_kg" numeric,\n  "final_fcr" numeric,\n  "final_ip_score" numeric,\n  "total_production_cost" bigint DEFAULT 0,\n  "cost_per_kg" integer,\n  "notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."broker_connections" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "status" text NOT NULL DEFAULT 'pending'::text,\n  "connected_at" timestamp with time zone,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "requester_tenant_id" uuid NOT NULL,\n  "requester_type" text,\n  "target_tenant_id" uuid NOT NULL,\n  "target_type" text,\n  "message" text,\n  "rejected_reason" text,\n  "requested_at" timestamp with time zone DEFAULT now(),\n  "responded_at" timestamp with time zone,\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."broker_employees" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "full_name" text NOT NULL,\n  "role" text NOT NULL DEFAULT 'staff'::text,\n  "phone" text,\n  "salary_type" text DEFAULT 'bulanan'::text,\n  "salary_amount" numeric DEFAULT 0,\n  "status" text DEFAULT 'aktif'::text,\n  "start_date" date,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."broker_profiles" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "chicken_types" ARRAY DEFAULT '{}'::text[],\n  "egg_types" ARRAY DEFAULT '{}'::text[],\n  "area_operasi" text,\n  "target_volume_monthly" integer DEFAULT 0,\n  "mitra_peternak_count" integer DEFAULT 0,\n  "kapasitas_harian_butir" integer DEFAULT 0,\n  "catatan" text,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."chicken_batches" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "farm_id" uuid NOT NULL,\n  "batch_code" text,\n  "chicken_type" text NOT NULL DEFAULT 'broiler'::text,\n  "initial_count" integer NOT NULL,\n  "current_count" integer NOT NULL,\n  "avg_weight_kg" numeric,\n  "age_days" integer,\n  "estimated_harvest_date" date,\n  "status" text NOT NULL DEFAULT 'growing'::text,\n  "quality_notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."cycle_expenses" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "cycle_id" uuid NOT NULL,\n  "expense_type" text NOT NULL,\n  "description" text,\n  "qty" numeric,\n  "unit" text,\n  "unit_price" integer,\n  "total_amount" bigint NOT NULL,\n  "expense_date" date NOT NULL,\n  "supplier" text,\n  "is_deleted" boolean DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."daily_records" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "cycle_id" uuid NOT NULL,\n  "record_date" date NOT NULL,\n  "age_days" integer NOT NULL,\n  "mortality_count" integer NOT NULL DEFAULT 0,\n  "cull_count" integer NOT NULL DEFAULT 0,\n  "feed_type" text,\n  "feed_kg" numeric NOT NULL DEFAULT 0,\n  "sample_count" integer,\n  "sample_weight_kg" numeric,\n  "avg_weight_kg" numeric,\n  "temperature_morning" numeric,\n  "temperature_evening" numeric,\n  "health_notes" text,\n  "notes" text,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "water_liter" numeric,\n  "litter_condition" text,\n  "ammonia_level" text\n);\n\nCREATE TABLE IF NOT EXISTS "public"."deliveries" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "sale_id" uuid NOT NULL,\n  "vehicle_type" text,\n  "vehicle_plate" text,\n  "driver_name" text,\n  "driver_phone" text,\n  "load_time" timestamp with time zone,\n  "departure_time" timestamp with time zone,\n  "arrival_time" timestamp with time zone,\n  "initial_count" integer NOT NULL,\n  "arrived_count" integer,\n  "mortality_count" integer NOT NULL DEFAULT 0,\n  "initial_weight_kg" numeric,\n  "arrived_weight_kg" numeric,\n  "shrinkage_kg" numeric,\n  "delivery_cost" integer NOT NULL DEFAULT 0,\n  "status" text NOT NULL DEFAULT 'preparing'::text,\n  "notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now(),\n  "vehicle_id" uuid,\n  "driver_id" uuid,\n  "driver_wage" numeric DEFAULT 0,\n  "include_driver_wage" boolean DEFAULT true,\n  "include_fuel_cost" boolean DEFAULT true\n);\n\nCREATE TABLE IF NOT EXISTS "public"."discount_codes" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "code" text NOT NULL,\n  "discount_type" text NOT NULL,\n  "discount_value" integer NOT NULL DEFAULT 0,\n  "applies_to_plan" text DEFAULT 'all'::text,\n  "applies_to_role" text DEFAULT 'all'::text,\n  "expires_at" timestamp with time zone,\n  "max_usage" integer,\n  "usage_count" integer DEFAULT 0,\n  "is_active" boolean DEFAULT true,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."domba_breeding_animals" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "ear_tag" text NOT NULL,\n  "name" text,\n  "breed" text,\n  "sex" text NOT NULL DEFAULT 'betina'::text,\n  "birth_date" date,\n  "entry_date" date DEFAULT CURRENT_DATE,\n  "entry_weight_kg" numeric,\n  "dam_id" uuid,\n  "sire_id" uuid,\n  "generation" integer DEFAULT 0,\n  "status" text DEFAULT 'aktif'::text,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."domba_breeding_births" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "dam_id" uuid NOT NULL,\n  "mating_id" uuid,\n  "partus_date" date NOT NULL,\n  "born_alive" integer DEFAULT 0,\n  "born_dead" integer DEFAULT 0,\n  "birth_type" text,\n  "birth_ease" text DEFAULT 'normal'::text,\n  "kids_detail" jsonb DEFAULT '[]'::jsonb,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."domba_breeding_feed_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "log_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "hijauan_kg" numeric DEFAULT 0,\n  "konsentrat_kg" numeric DEFAULT 0,\n  "dedak_kg" numeric DEFAULT 0,\n  "other_feed_kg" numeric DEFAULT 0,\n  "feed_cost_idr" numeric,\n  "animal_count" integer,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."domba_breeding_health_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid,\n  "log_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "log_type" text NOT NULL DEFAULT 'pemeriksaan'::text,\n  "symptoms" text,\n  "diagnosis" text,\n  "treatment" text,\n  "medicine_name" text,\n  "medicine_dose" text,\n  "handled_by" text,\n  "outcome" text,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "treatment_cost_idr" numeric DEFAULT 0\n);\n\nCREATE TABLE IF NOT EXISTS "public"."domba_breeding_mating_records" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "dam_id" uuid NOT NULL,\n  "sire_id" uuid,\n  "mating_date" date NOT NULL,\n  "mating_type" text DEFAULT 'kawin_alam'::text,\n  "inseminator" text,\n  "straw_code" text,\n  "expected_partus" date,\n  "result" text DEFAULT 'menunggu'::text,\n  "pregnancy_check_date" date,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."domba_breeding_sales" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid NOT NULL,\n  "sale_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "buyer_name" text,\n  "sale_type" text DEFAULT 'bibit'::text,\n  "price_idr" numeric,\n  "weight_kg" numeric,\n  "age_days" integer,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."domba_breeding_weight_records" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid NOT NULL,\n  "weigh_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "weight_kg" numeric NOT NULL,\n  "bcs" text,\n  "age_days" integer,\n  "adg_since_last" numeric,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."domba_kandangs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_id" uuid,\n  "name" text NOT NULL,\n  "capacity" integer DEFAULT 0,\n  "panjang_m" numeric,\n  "lebar_m" numeric,\n  "is_holding" boolean DEFAULT false,\n  "is_active" boolean DEFAULT true,\n  "notes" text,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now(),\n  "grid_x" integer,\n  "grid_y" integer\n);\n\nCREATE TABLE IF NOT EXISTS "public"."domba_penggemukan_animals" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_id" uuid,\n  "ear_tag" text NOT NULL,\n  "breed" text,\n  "sex" text DEFAULT 'jantan'::text,\n  "age_estimate" text,\n  "entry_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "entry_weight_kg" numeric,\n  "entry_bcs" text,\n  "entry_condition" text DEFAULT 'sehat'::text,\n  "purchase_price_idr" numeric,\n  "source" text,\n  "kandang_slot" text,\n  "kandang_id" uuid,\n  "quarantine_start" date,\n  "quarantine_end" date,\n  "quarantine_notes" text,\n  "status" text NOT NULL DEFAULT 'active'::text,\n  "exit_date" date,\n  "latest_weight_kg" numeric,\n  "latest_weight_date" date,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now(),\n  "entry_age_months" integer\n);\n\nCREATE TABLE IF NOT EXISTS "public"."domba_penggemukan_batches" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_code" text NOT NULL,\n  "kandang_name" text,\n  "start_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "target_end_date" date,\n  "status" text NOT NULL DEFAULT 'active'::text,\n  "total_animals" integer DEFAULT 0,\n  "mortality_count" integer DEFAULT 0,\n  "notes" text,\n  "end_date" date,\n  "avg_adg_gram" numeric,\n  "avg_fcr" numeric,\n  "avg_entry_weight_kg" numeric,\n  "avg_exit_weight_kg" numeric,\n  "total_feed_cost_idr" numeric,\n  "total_revenue_idr" numeric,\n  "total_cogs_idr" numeric,\n  "net_profit_idr" numeric,\n  "rc_ratio" numeric,\n  "alive_count" integer,\n  "sold_count" integer,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."domba_penggemukan_feed_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_id" uuid NOT NULL,\n  "log_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "kandang_name" text,\n  "animal_count" integer,\n  "hijauan_kg" numeric DEFAULT 0,\n  "konsentrat_kg" numeric DEFAULT 0,\n  "dedak_kg" numeric DEFAULT 0,\n  "other_feed_kg" numeric DEFAULT 0,\n  "sisa_pakan_kg" numeric DEFAULT 0,\n  "feed_cost_idr" numeric,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "feed_orts_category" text\n);\n\nCREATE TABLE IF NOT EXISTS "public"."domba_penggemukan_health_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid,\n  "batch_id" uuid,\n  "log_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "log_type" text NOT NULL DEFAULT 'pemeriksaan'::text,\n  "symptoms" text,\n  "action_taken" text,\n  "medicine_name" text,\n  "medicine_dose" text,\n  "handled_by" text,\n  "outcome" text,\n  "vaccine_name" text,\n  "vaccine_next_due" date,\n  "death_cause" text,\n  "death_weight_kg" numeric,\n  "loss_value_idr" numeric,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "treatment_cost_idr" numeric DEFAULT 0\n);\n\nCREATE TABLE IF NOT EXISTS "public"."domba_penggemukan_operational_costs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_id" uuid,\n  "log_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "item_name" text NOT NULL,\n  "category" text NOT NULL DEFAULT 'lainnya'::text,\n  "amount_idr" numeric NOT NULL DEFAULT 0,\n  "quantity" numeric DEFAULT 0,\n  "unit" text,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."domba_penggemukan_sales" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_id" uuid NOT NULL,\n  "sale_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "buyer_name" text,\n  "buyer_type" text,\n  "buyer_contact" text,\n  "animal_ids" ARRAY,\n  "animal_count" integer,\n  "total_weight_kg" numeric,\n  "avg_weight_kg" numeric,\n  "price_type" text,\n  "price_amount" numeric,\n  "total_revenue_idr" numeric,\n  "payment_method" text,\n  "is_paid" boolean DEFAULT false,\n  "paid_date" date,\n  "has_skkh" boolean DEFAULT false,\n  "has_surat_jalan" boolean DEFAULT false,\n  "invoice_number" text,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."domba_penggemukan_weight_records" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid NOT NULL,\n  "batch_id" uuid,\n  "weigh_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "weight_kg" numeric NOT NULL,\n  "bcs" text,\n  "days_in_farm" integer,\n  "adg_since_last" numeric,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "famacha_score" integer\n);\n\nCREATE TABLE IF NOT EXISTS "public"."drivers" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "full_name" text NOT NULL,\n  "phone" text NOT NULL,\n  "sim_number" text,\n  "sim_type" text DEFAULT 'B1'::text,\n  "sim_expires_at" date,\n  "status" text NOT NULL DEFAULT 'aktif'::text,\n  "wage_per_trip" integer DEFAULT 0,\n  "address" text,\n  "notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."egg_customers" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "name" text NOT NULL,\n  "phone" text,\n  "address" text,\n  "total_spent" bigint NOT NULL DEFAULT 0,\n  "total_orders" integer NOT NULL DEFAULT 0,\n  "notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."egg_inventory" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "product_name" text NOT NULL,\n  "egg_grade" text NOT NULL DEFAULT 'standard'::text,\n  "current_stock_butir" integer NOT NULL DEFAULT 0,\n  "cost_per_egg" integer NOT NULL DEFAULT 0,\n  "packaging_cost" integer NOT NULL DEFAULT 0,\n  "eggs_per_pack" integer NOT NULL DEFAULT 10,\n  "sell_price_per_pack" integer NOT NULL DEFAULT 0,\n  "low_stock_threshold" integer NOT NULL DEFAULT 20,\n  "notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "cost_per_pack" integer\n);\n\nCREATE TABLE IF NOT EXISTS "public"."egg_sale_items" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "sale_id" uuid NOT NULL,\n  "inventory_id" uuid NOT NULL,\n  "qty_pack" integer NOT NULL DEFAULT 1,\n  "price_per_pack" integer NOT NULL DEFAULT 0,\n  "cost_per_pack" integer NOT NULL DEFAULT 0,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "subtotal" bigint\n);\n\nCREATE TABLE IF NOT EXISTS "public"."egg_sales" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "customer_id" uuid,\n  "invoice_number" text NOT NULL,\n  "customer_name" text NOT NULL,\n  "customer_phone" text,\n  "total_price" bigint NOT NULL DEFAULT 0,\n  "total_cost" bigint NOT NULL DEFAULT 0,\n  "payment_status" text NOT NULL DEFAULT 'pending'::text,\n  "payment_method" text,\n  "fulfillment_status" text NOT NULL DEFAULT 'processing'::text,\n  "transaction_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "due_date" date,\n  "notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "net_profit" bigint\n);\n\nCREATE TABLE IF NOT EXISTS "public"."egg_stock_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "inventory_id" uuid NOT NULL,\n  "sale_id" uuid,\n  "supplier_id" uuid,\n  "log_type" text NOT NULL,\n  "qty_butir" integer NOT NULL,\n  "unit_price" integer,\n  "notes" text,\n  "created_by" uuid,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."egg_suppliers" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "name" text NOT NULL,\n  "phone" text,\n  "address" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."extra_expenses" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "category" text NOT NULL,\n  "description" text NOT NULL,\n  "amount" bigint NOT NULL,\n  "expense_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."farms" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "farm_name" text NOT NULL,\n  "owner_name" text NOT NULL,\n  "phone" text,\n  "location" text,\n  "address" text,\n  "latitude" numeric,\n  "longitude" numeric,\n  "chicken_type" text NOT NULL DEFAULT 'broiler'::text,\n  "capacity" integer,\n  "available_stock" integer NOT NULL DEFAULT 0,\n  "avg_weight_kg" numeric,\n  "harvest_date" date,\n  "status" text NOT NULL DEFAULT 'empty'::text,\n  "quality_rating" smallint,\n  "quality_notes" text,\n  "last_transaction_date" date,\n  "notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now(),\n  "province" text\n);\n\nCREATE TABLE IF NOT EXISTS "public"."feed_stocks" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "peternak_farm_id" uuid NOT NULL,\n  "feed_type" text NOT NULL,\n  "quantity_kg" numeric NOT NULL DEFAULT 0,\n  "price_per_kg" integer,\n  "purchase_date" date,\n  "supplier" text,\n  "notes" text,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."generated_invoices" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "invoice_type" text NOT NULL,\n  "reference_id" uuid NOT NULL,\n  "invoice_number" text NOT NULL,\n  "recipient_name" text,\n  "total_amount" bigint DEFAULT 0,\n  "status" text DEFAULT 'draft'::text,\n  "pdf_url" text,\n  "metadata" jsonb,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "created_by" uuid\n);\n\nCREATE TABLE IF NOT EXISTS "public"."global_audit_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "actor_profile_id" uuid,\n  "tenant_id" uuid,\n  "action" text NOT NULL,\n  "entity_type" text NOT NULL,\n  "entity_id" uuid,\n  "old_data" jsonb,\n  "new_data" jsonb,\n  "ip_address" text,\n  "user_agent" text,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."harvest_records" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "cycle_id" uuid NOT NULL,\n  "harvest_date" date NOT NULL,\n  "buyer_type" text,\n  "buyer_name" text,\n  "mitra_company" text,\n  "contract_price_per_kg" integer,\n  "total_ekor_panen" integer NOT NULL,\n  "total_weight_kg" numeric NOT NULL,\n  "avg_weight_kg" numeric,\n  "price_per_kg" integer,\n  "total_revenue" bigint,\n  "deduction_sapronak" bigint DEFAULT 0,\n  "net_revenue" bigint,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."invite_rate_limits" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "ip_address" text NOT NULL,\n  "attempt_count" integer DEFAULT 1,\n  "first_attempt_at" timestamp with time zone DEFAULT now(),\n  "locked_until" timestamp with time zone,\n  "last_attempt_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_breeding_animals" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "ear_tag" text NOT NULL,\n  "name" text,\n  "breed" text,\n  "sex" text NOT NULL DEFAULT 'betina'::text,\n  "birth_date" date,\n  "entry_date" date DEFAULT CURRENT_DATE,\n  "entry_weight_kg" numeric,\n  "dam_id" uuid,\n  "sire_id" uuid,\n  "generation" integer DEFAULT 0,\n  "status" text DEFAULT 'aktif'::text,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_breeding_births" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "dam_id" uuid NOT NULL,\n  "mating_id" uuid,\n  "partus_date" date NOT NULL,\n  "born_alive" integer DEFAULT 0,\n  "born_dead" integer DEFAULT 0,\n  "birth_type" text,\n  "birth_ease" text DEFAULT 'normal'::text,\n  "kids_detail" jsonb DEFAULT '[]'::jsonb,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_breeding_feed_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "log_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "hijauan_kg" numeric DEFAULT 0,\n  "konsentrat_kg" numeric DEFAULT 0,\n  "dedak_kg" numeric DEFAULT 0,\n  "other_feed_kg" numeric DEFAULT 0,\n  "feed_cost_idr" numeric,\n  "animal_count" integer,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_breeding_health_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid,\n  "log_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "log_type" text NOT NULL DEFAULT 'pemeriksaan'::text,\n  "symptoms" text,\n  "diagnosis" text,\n  "treatment" text,\n  "medicine_name" text,\n  "medicine_dose" text,\n  "handled_by" text,\n  "outcome" text,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "treatment_cost_idr" numeric DEFAULT 0\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_breeding_mating_records" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "dam_id" uuid NOT NULL,\n  "sire_id" uuid,\n  "mating_date" date NOT NULL,\n  "mating_type" text DEFAULT 'kawin_alam'::text,\n  "inseminator" text,\n  "straw_code" text,\n  "expected_partus" date,\n  "result" text DEFAULT 'menunggu'::text,\n  "pregnancy_check_date" date,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_breeding_sales" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid NOT NULL,\n  "sale_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "buyer_name" text,\n  "sale_type" text DEFAULT 'bibit'::text,\n  "price_idr" numeric,\n  "weight_kg" numeric,\n  "age_days" integer,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_breeding_weight_records" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid NOT NULL,\n  "weigh_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "weight_kg" numeric NOT NULL,\n  "bcs" text,\n  "age_days" integer,\n  "adg_since_last" numeric,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_kandangs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_id" uuid,\n  "name" text NOT NULL,\n  "capacity" integer DEFAULT 0,\n  "panjang_m" numeric,\n  "lebar_m" numeric,\n  "is_holding" boolean DEFAULT false,\n  "is_active" boolean DEFAULT true,\n  "notes" text,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_penggemukan_animals" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_id" uuid,\n  "ear_tag" text NOT NULL,\n  "breed" text,\n  "sex" text DEFAULT 'jantan'::text,\n  "age_estimate" text,\n  "entry_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "entry_weight_kg" numeric,\n  "entry_bcs" text,\n  "entry_condition" text DEFAULT 'sehat'::text,\n  "purchase_price_idr" numeric,\n  "source" text,\n  "kandang_slot" text,\n  "kandang_id" uuid,\n  "quarantine_start" date,\n  "quarantine_end" date,\n  "quarantine_notes" text,\n  "status" text NOT NULL DEFAULT 'active'::text,\n  "exit_date" date,\n  "latest_weight_kg" numeric,\n  "latest_weight_date" date,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_penggemukan_batches" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_code" text NOT NULL,\n  "kandang_name" text,\n  "start_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "target_end_date" date,\n  "status" text NOT NULL DEFAULT 'active'::text,\n  "total_animals" integer DEFAULT 0,\n  "mortality_count" integer DEFAULT 0,\n  "notes" text,\n  "end_date" date,\n  "avg_adg_gram" numeric,\n  "avg_fcr" numeric,\n  "avg_entry_weight_kg" numeric,\n  "avg_exit_weight_kg" numeric,\n  "total_feed_cost_idr" numeric,\n  "total_revenue_idr" numeric,\n  "total_cogs_idr" numeric,\n  "net_profit_idr" numeric,\n  "rc_ratio" numeric,\n  "alive_count" integer,\n  "sold_count" integer,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_penggemukan_feed_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_id" uuid NOT NULL,\n  "log_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "kandang_name" text,\n  "animal_count" integer,\n  "hijauan_kg" numeric DEFAULT 0,\n  "konsentrat_kg" numeric DEFAULT 0,\n  "dedak_kg" numeric DEFAULT 0,\n  "other_feed_kg" numeric DEFAULT 0,\n  "sisa_pakan_kg" numeric DEFAULT 0,\n  "feed_cost_idr" numeric,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_penggemukan_health_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid,\n  "batch_id" uuid,\n  "log_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "log_type" text NOT NULL DEFAULT 'pemeriksaan'::text,\n  "symptoms" text,\n  "action_taken" text,\n  "medicine_name" text,\n  "medicine_dose" text,\n  "handled_by" text,\n  "outcome" text,\n  "vaccine_name" text,\n  "vaccine_next_due" date,\n  "death_cause" text,\n  "death_weight_kg" numeric,\n  "loss_value_idr" numeric,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "treatment_cost_idr" numeric DEFAULT 0\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_penggemukan_operational_costs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_id" uuid,\n  "log_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "item_name" text NOT NULL,\n  "category" text NOT NULL DEFAULT 'lainnya'::text,\n  "amount_idr" numeric NOT NULL DEFAULT 0,\n  "quantity" numeric DEFAULT 0,\n  "unit" text,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_penggemukan_sales" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_id" uuid NOT NULL,\n  "sale_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "buyer_name" text,\n  "buyer_type" text,\n  "buyer_contact" text,\n  "animal_ids" ARRAY,\n  "animal_count" integer,\n  "total_weight_kg" numeric,\n  "avg_weight_kg" numeric,\n  "price_type" text,\n  "price_amount" numeric,\n  "total_revenue_idr" numeric,\n  "payment_method" text,\n  "is_paid" boolean DEFAULT false,\n  "paid_date" date,\n  "has_skkh" boolean DEFAULT false,\n  "has_surat_jalan" boolean DEFAULT false,\n  "invoice_number" text,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_penggemukan_weight_records" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid NOT NULL,\n  "batch_id" uuid,\n  "weigh_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "weight_kg" numeric NOT NULL,\n  "bcs" text,\n  "days_in_farm" integer,\n  "adg_since_last" numeric,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_animal_groups" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "name" text NOT NULL,\n  "description" text,\n  "group_type" text,\n  "is_active" boolean DEFAULT true,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_breeding_animals" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "group_id" uuid,\n  "kandang_id" uuid,\n  "ear_tag" text NOT NULL,\n  "name" text,\n  "breed" text,\n  "sex" text NOT NULL DEFAULT 'betina'::text,\n  "birth_date" date,\n  "entry_date" date DEFAULT CURRENT_DATE,\n  "entry_weight_kg" numeric,\n  "dam_id" uuid,\n  "sire_id" uuid,\n  "status" text DEFAULT 'aktif'::text,\n  "current_parity" integer DEFAULT 0,\n  "total_lifetime_yield" numeric DEFAULT 0,\n  "last_milking_date" date,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_breeding_births" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "dam_id" uuid NOT NULL,\n  "mating_id" uuid,\n  "partus_date" date NOT NULL,\n  "born_alive" integer DEFAULT 0,\n  "born_dead" integer DEFAULT 0,\n  "kids_ids" ARRAY,\n  "notes" text,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_breeding_feed_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "group_id" uuid,\n  "formulation_id" uuid,\n  "log_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "total_qty_kg" numeric,\n  "total_cost_idr" numeric,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_breeding_health_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid,\n  "log_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "log_type" text NOT NULL DEFAULT 'pemeriksaan'::text,\n  "symptoms" text,\n  "is_udder_problem" boolean DEFAULT false,\n  "action_taken" text,\n  "medicine_item_id" uuid,\n  "medicine_usage_qty" numeric,\n  "withdrawal_date" date,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_breeding_mating_records" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "dam_id" uuid NOT NULL,\n  "sire_id" uuid,\n  "mating_date" date NOT NULL,\n  "mating_type" text DEFAULT 'kawin_alam'::text,\n  "expected_partus" date,\n  "result" text DEFAULT 'menunggu'::text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_breeding_weight_records" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid NOT NULL,\n  "weigh_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "weight_kg" numeric NOT NULL,\n  "bcs" text,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_customer_registry" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "name" text NOT NULL,\n  "type" text,\n  "phone" text,\n  "address" text,\n  "loyalty_points" integer DEFAULT 0,\n  "notes" text,\n  "is_active" boolean DEFAULT true,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_feed_formulations" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "name" text NOT NULL,\n  "target_group_type" text,\n  "ingredients" jsonb,\n  "cost_per_kg" numeric,\n  "is_active" boolean DEFAULT true,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_inventory_items" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "name" text NOT NULL,\n  "category" text NOT NULL,\n  "unit" text NOT NULL,\n  "stock_quantity" numeric DEFAULT 0,\n  "reorder_level" numeric DEFAULT 0,\n  "unit_price_idr" numeric,\n  "is_active" boolean DEFAULT true,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_inventory_transactions" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "item_id" uuid NOT NULL,\n  "type" text NOT NULL,\n  "quantity" numeric NOT NULL,\n  "transaction_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "reference_type" text,\n  "reference_id" uuid,\n  "notes" text,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_kandangs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "name" text NOT NULL,\n  "type" text,\n  "capacity" integer DEFAULT 0,\n  "is_active" boolean DEFAULT true,\n  "notes" text,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_lactation_cycles" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid NOT NULL,\n  "start_date" date NOT NULL,\n  "dry_off_date" date,\n  "parity_number" integer NOT NULL,\n  "status" text,\n  "total_yield_liter" numeric DEFAULT 0,\n  "peak_yield_liter" numeric,\n  "avg_daily_yield" numeric,\n  "notes" text,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_milk_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid NOT NULL,\n  "lactation_id" uuid,\n  "log_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "session" text,\n  "volume_liter" numeric NOT NULL DEFAULT 0,\n  "temperature_c" numeric,\n  "acidity_ph" numeric,\n  "operator_name" text,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_milk_quality_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid NOT NULL,\n  "lactation_id" uuid,\n  "test_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "fat_pct" numeric,\n  "snf_pct" numeric,\n  "protein_pct" numeric,\n  "scc_value" integer,\n  "bacteria_count" integer,\n  "quality_grade" text,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_milk_sales" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "customer_id" uuid,\n  "sale_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "buyer_name_legacy" text,\n  "volume_liter" numeric NOT NULL,\n  "price_per_liter" numeric NOT NULL,\n  "total_revenue_idr" numeric NOT NULL,\n  "payment_method" text,\n  "is_paid" boolean DEFAULT false,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_penggemukan_animals" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_id" uuid,\n  "ear_tag" text NOT NULL,\n  "sex" text DEFAULT 'jantan'::text,\n  "status" text DEFAULT 'active'::text,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_penggemukan_batches" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_code" text NOT NULL,\n  "status" text NOT NULL DEFAULT 'active'::text,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_penggemukan_feed_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_id" uuid,\n  "log_date" date DEFAULT CURRENT_DATE,\n  "feed_cost_idr" numeric,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_penggemukan_health_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid,\n  "log_type" text,\n  "action_taken" text,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_penggemukan_sales" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_id" uuid,\n  "sale_date" date DEFAULT CURRENT_DATE,\n  "total_revenue_idr" numeric,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kambing_perah_penggemukan_weight_records" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid NOT NULL,\n  "weight_kg" numeric NOT NULL,\n  "weigh_date" date DEFAULT CURRENT_DATE,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kandang_worker_payments" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "worker_id" uuid NOT NULL,\n  "payment_date" date NOT NULL,\n  "payment_type" text NOT NULL DEFAULT 'gaji'::text,\n  "amount" integer NOT NULL DEFAULT 0,\n  "notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."kandang_workers" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "peternak_farm_id" uuid,\n  "full_name" text NOT NULL,\n  "phone" text,\n  "join_date" date,\n  "salary_type" text DEFAULT 'flat_bonus'::text,\n  "base_salary" integer DEFAULT 0,\n  "bonus_per_kg" integer DEFAULT 0,\n  "bonus_threshold_fcr" numeric,\n  "status" text DEFAULT 'aktif'::text,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "profile_id" uuid,\n  "kandang_name" text,\n  "pay_day" integer DEFAULT 1\n);\n\nCREATE TABLE IF NOT EXISTS "public"."loss_reports" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "sale_id" uuid,\n  "delivery_id" uuid,\n  "loss_type" text NOT NULL,\n  "chicken_count" integer NOT NULL DEFAULT 0,\n  "weight_loss_kg" numeric NOT NULL DEFAULT 0,\n  "price_per_kg" integer,\n  "financial_loss" bigint,\n  "description" text,\n  "resolved" boolean NOT NULL DEFAULT false,\n  "resolved_at" timestamp with time zone,\n  "report_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."market_listings" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "listing_type" text NOT NULL,\n  "chicken_type" text DEFAULT 'broiler'::text,\n  "quantity_ekor" integer,\n  "weight_kg" numeric,\n  "price_per_kg" integer,\n  "title" text NOT NULL,\n  "description" text,\n  "location" text,\n  "contact_name" text NOT NULL,\n  "contact_wa" text NOT NULL,\n  "status" text DEFAULT 'active'::text,\n  "expires_at" timestamp with time zone DEFAULT (now() + '30 days'::interval),\n  "view_count" integer DEFAULT 0,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "is_deleted" boolean DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."market_prices" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "price_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "chicken_type" text NOT NULL DEFAULT 'broiler'::text,\n  "region" text NOT NULL DEFAULT 'nasional'::text,\n  "farm_gate_price" integer,\n  "avg_buy_price" integer,\n  "avg_sell_price" integer,\n  "buyer_price" integer,\n  "broker_margin" integer,\n  "transaction_count" integer NOT NULL DEFAULT 1,\n  "source" text NOT NULL DEFAULT 'transaction'::text,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now(),\n  "source_url" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "price_delta" integer DEFAULT 0,\n  "needs_review" boolean NOT NULL DEFAULT false,\n  "submitted_by" uuid\n);\n\nCREATE TABLE IF NOT EXISTS "public"."notifications" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "type" text NOT NULL,\n  "title" text NOT NULL,\n  "body" text,\n  "is_read" boolean NOT NULL DEFAULT false,\n  "action_url" text,\n  "metadata" jsonb,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "priority" smallint NOT NULL DEFAULT 1,\n  "expires_at" timestamp with time zone,\n  "vertical" text,\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "is_deleted" boolean NOT NULL DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."orders" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "rpa_id" uuid NOT NULL,\n  "chicken_type" text NOT NULL DEFAULT 'broiler'::text,\n  "requested_count" integer NOT NULL,\n  "requested_weight_kg" numeric,\n  "target_price_per_kg" integer,\n  "preferred_size" text,\n  "requested_date" date,\n  "status" text NOT NULL DEFAULT 'open'::text,\n  "matched_farm_id" uuid,\n  "matched_batch_id" uuid,\n  "notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."payment_settings" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "bank_name" text NOT NULL,\n  "account_number" text NOT NULL,\n  "account_name" text NOT NULL,\n  "is_active" boolean DEFAULT true,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."payments" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "sale_id" uuid NOT NULL,\n  "amount" bigint NOT NULL,\n  "payment_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "payment_method" text NOT NULL DEFAULT 'transfer'::text,\n  "reference_no" text,\n  "notes" text,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "is_deleted" boolean DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."peternak_farms" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "farm_name" text NOT NULL,\n  "location" text,\n  "address" text,\n  "latitude" numeric,\n  "longitude" numeric,\n  "capacity" integer NOT NULL,\n  "kandang_count" integer DEFAULT 1,\n  "is_active" boolean DEFAULT true,\n  "notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now(),\n  "business_model" text DEFAULT 'mandiri'::text,\n  "mitra_company" text,\n  "mitra_contract_price" integer,\n  "livestock_type" text DEFAULT 'ayam_broiler'::text,\n  "mitra_contract_notes" text,\n  "animal_types" ARRAY DEFAULT '{}'::text[],\n  "doc_capacity" integer DEFAULT 0\n);\n\nCREATE TABLE IF NOT EXISTS "public"."peternak_profiles" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_types" ARRAY DEFAULT '{}'::text[],\n  "chicken_sub_types" ARRAY DEFAULT '{}'::text[],\n  "ruminansia_types" ARRAY DEFAULT '{}'::text[],\n  "kandang_count" integer DEFAULT 1,\n  "doc_capacity" integer DEFAULT 0,\n  "total_ternak" integer DEFAULT 0,\n  "luas_lahan_m2" integer DEFAULT 0,\n  "catatan" text,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."peternak_task_instances" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "template_id" uuid,\n  "kandang_name" text,\n  "title" text NOT NULL,\n  "description" text,\n  "task_type" text NOT NULL,\n  "due_date" date NOT NULL,\n  "due_time" time without time zone,\n  "assigned_worker_id" uuid,\n  "assigned_profile_id" uuid,\n  "status" text NOT NULL DEFAULT 'pending'::text,\n  "completed_at" timestamp with time zone,\n  "completed_by_profile_id" uuid,\n  "linked_record_id" uuid,\n  "linked_record_table" text,\n  "notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "livestock_type" text\n);\n\nCREATE TABLE IF NOT EXISTS "public"."peternak_task_templates" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "kandang_name" text,\n  "title" text NOT NULL,\n  "description" text,\n  "task_type" text NOT NULL,\n  "linked_data_entry" boolean NOT NULL DEFAULT false,\n  "recurring_type" text NOT NULL,\n  "recurring_interval_days" integer,\n  "recurring_days_of_week" ARRAY,\n  "start_date" date NOT NULL,\n  "end_date" date,\n  "default_assignee_worker_id" uuid,\n  "is_active" boolean NOT NULL DEFAULT true,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_by" uuid,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "due_time" time without time zone NOT NULL DEFAULT '08:00:00'::time without time zone,\n  "livestock_type" text\n);\n\nCREATE TABLE IF NOT EXISTS "public"."plan_configs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "config_key" text NOT NULL,\n  "config_value" jsonb NOT NULL,\n  "description" text,\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."pricing_plans" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "role" text NOT NULL,\n  "plan" text NOT NULL,\n  "price" integer NOT NULL DEFAULT 0,\n  "original_price" integer DEFAULT 0,\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."profiles" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "auth_user_id" uuid NOT NULL,\n  "full_name" text,\n  "role" text NOT NULL DEFAULT 'owner'::text,\n  "user_type" text NOT NULL DEFAULT 'broker'::text,\n  "phone" text,\n  "avatar_url" text,\n  "is_active" boolean NOT NULL DEFAULT true,\n  "onboarded" boolean NOT NULL DEFAULT false,\n  "last_seen_at" timestamp with time zone,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now(),\n  "business_model_selected" boolean NOT NULL DEFAULT false,\n  "onboarding_completed_at" timestamp with time zone,\n  "business_limit" integer DEFAULT 1,\n  "additional_slots" integer DEFAULT 0,\n  "tutorials_completed" jsonb NOT NULL DEFAULT '{}'::jsonb,\n  "app_role" text NOT NULL DEFAULT 'user'::text,\n  "email" text\n);\n\nCREATE TABLE IF NOT EXISTS "public"."purchases" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "farm_id" uuid NOT NULL,\n  "batch_id" uuid,\n  "quantity" integer NOT NULL,\n  "avg_weight_kg" numeric NOT NULL,\n  "total_weight_kg" numeric NOT NULL,\n  "price_per_kg" integer NOT NULL,\n  "total_cost" bigint NOT NULL,\n  "transport_cost" integer NOT NULL DEFAULT 0,\n  "other_cost" integer NOT NULL DEFAULT 0,\n  "total_modal" bigint,\n  "transaction_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."rpa_clients" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "rpa_name" text NOT NULL,\n  "buyer_type" text NOT NULL DEFAULT 'rpa'::text,\n  "contact_person" text,\n  "phone" text,\n  "location" text,\n  "address" text,\n  "payment_terms" text NOT NULL DEFAULT 'cash'::text,\n  "credit_limit" bigint NOT NULL DEFAULT 0,\n  "total_outstanding" bigint NOT NULL DEFAULT 0,\n  "avg_volume_per_order" integer,\n  "preferred_chicken_size" text,\n  "preferred_chicken_type" text DEFAULT 'broiler'::text,\n  "last_deal_price" integer,\n  "reliability_score" smallint,\n  "notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now(),\n  "province" text\n);\n\nCREATE TABLE IF NOT EXISTS "public"."rpa_customer_payments" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "invoice_id" uuid NOT NULL,\n  "customer_id" uuid,\n  "amount" bigint NOT NULL,\n  "payment_date" date NOT NULL,\n  "payment_method" text DEFAULT 'cash'::text,\n  "reference_no" text,\n  "notes" text,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "is_deleted" boolean DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."rpa_customers" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "customer_name" text NOT NULL,\n  "customer_type" text DEFAULT 'toko_kecil'::text,\n  "contact_person" text,\n  "phone" text,\n  "address" text,\n  "payment_terms" text DEFAULT 'cash'::text,\n  "credit_limit" bigint DEFAULT 0,\n  "total_outstanding" bigint DEFAULT 0,\n  "total_purchases" bigint DEFAULT 0,\n  "reliability_score" smallint,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."rpa_invoice_items" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "invoice_id" uuid NOT NULL,\n  "product_id" uuid,\n  "product_name" text NOT NULL,\n  "quantity_kg" numeric NOT NULL,\n  "price_per_kg" integer NOT NULL,\n  "cost_per_kg" integer DEFAULT 0,\n  "subtotal" bigint\n);\n\nCREATE TABLE IF NOT EXISTS "public"."rpa_invoices" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "customer_id" uuid,\n  "invoice_number" text NOT NULL,\n  "customer_name" text NOT NULL,\n  "transaction_date" date NOT NULL,\n  "due_date" date,\n  "total_amount" bigint DEFAULT 0,\n  "total_cost" bigint DEFAULT 0,\n  "net_profit" bigint,\n  "payment_status" text DEFAULT 'belum_lunas'::text,\n  "paid_amount" bigint DEFAULT 0,\n  "remaining_amount" bigint,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."rpa_payments" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "rpa_tenant_id" uuid NOT NULL,\n  "broker_tenant_id" uuid NOT NULL,\n  "amount" bigint NOT NULL,\n  "payment_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "payment_method" text NOT NULL DEFAULT 'transfer'::text,\n  "reference_no" text,\n  "notes" text,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "is_deleted" boolean DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."rpa_products" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "product_name" text NOT NULL,\n  "product_type" text DEFAULT 'karkas'::text,\n  "unit" text DEFAULT 'kg'::text,\n  "sell_price" integer DEFAULT 0,\n  "cost_price" integer DEFAULT 0,\n  "current_stock_kg" numeric DEFAULT 0,\n  "is_active" boolean DEFAULT true,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."rpa_profiles" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "rpa_name" text NOT NULL,\n  "rpa_type" text NOT NULL DEFAULT 'rpa'::text,\n  "contact_person" text,\n  "phone" text,\n  "address" text,\n  "location" text,\n  "capacity_per_day" integer,\n  "preferred_types" ARRAY,\n  "is_verified" boolean DEFAULT false,\n  "notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now(),\n  "kapasitas_potong_per_hari" integer DEFAULT 0,\n  "product_types" ARRAY DEFAULT '{}'::text[],\n  "area_distribusi" text,\n  "catatan" text\n);\n\nCREATE TABLE IF NOT EXISTS "public"."rpa_purchase_orders" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "rpa_tenant_id" uuid NOT NULL,\n  "broker_tenant_id" uuid,\n  "chicken_type" text NOT NULL DEFAULT 'broiler'::text,\n  "requested_count" integer NOT NULL,\n  "target_weight_kg" numeric,\n  "max_price_per_kg" integer,\n  "required_date" date,\n  "status" text NOT NULL DEFAULT 'open'::text,\n  "notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sales" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "rpa_id" uuid NOT NULL,\n  "purchase_id" uuid,\n  "order_id" uuid,\n  "quantity" integer NOT NULL,\n  "avg_weight_kg" numeric NOT NULL,\n  "total_weight_kg" numeric NOT NULL,\n  "price_per_kg" integer NOT NULL,\n  "total_revenue" bigint NOT NULL,\n  "delivery_cost" integer NOT NULL DEFAULT 0,\n  "net_revenue" bigint,\n  "payment_status" text NOT NULL DEFAULT 'belum_lunas'::text,\n  "paid_amount" bigint NOT NULL DEFAULT 0,\n  "remaining_amount" bigint,\n  "transaction_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "due_date" date,\n  "notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sapi_breeding_animals" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "ear_tag" text NOT NULL,\n  "name" text,\n  "species" text NOT NULL DEFAULT 'sapi'::text,\n  "sex" text NOT NULL,\n  "breed" text,\n  "breed_composition" text,\n  "generation" text,\n  "birth_date" date,\n  "birth_weight_kg" numeric,\n  "birth_type" text,\n  "dam_id" uuid,\n  "sire_id" uuid,\n  "acquisition_type" text NOT NULL DEFAULT 'beli'::text,\n  "source" text,\n  "purpose" text,\n  "parity" integer NOT NULL DEFAULT 0,\n  "selection_class" text,\n  "phenotype_score" numeric,\n  "genetic_notes" text,\n  "origin" text,\n  "entry_date" date,\n  "entry_weight_kg" numeric,\n  "entry_bcs" numeric,\n  "purchase_price_idr" bigint,\n  "kandang_name" text,\n  "status" text NOT NULL DEFAULT 'aktif'::text,\n  "exit_date" date,\n  "latest_weight_kg" numeric,\n  "latest_weight_date" date,\n  "latest_bcs" numeric,\n  "notes" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "is_deleted" boolean NOT NULL DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sapi_breeding_births" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "mating_record_id" uuid,\n  "dam_id" uuid NOT NULL,\n  "partus_date" date NOT NULL,\n  "partus_time" time without time zone,\n  "birth_type" text,\n  "total_born" integer NOT NULL DEFAULT 1,\n  "total_born_alive" integer NOT NULL DEFAULT 1,\n  "total_born_dead" integer,\n  "pedet_sex" text,\n  "pedet_birth_weight_kg" numeric,\n  "pedet_condition" text,\n  "pedet_id" uuid,\n  "is_freemartin_risk" boolean NOT NULL DEFAULT false,\n  "birth_assistance" text NOT NULL DEFAULT 'normal'::text,\n  "colostrum_given" boolean DEFAULT true,\n  "placenta_expelled" boolean DEFAULT true,\n  "retentio_placenta" boolean NOT NULL DEFAULT false,\n  "dam_condition" text,\n  "notes" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "is_deleted" boolean NOT NULL DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sapi_breeding_feed_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "log_date" date NOT NULL,\n  "kandang_name" text NOT NULL,\n  "animal_count" integer NOT NULL,\n  "hijauan_kg" numeric NOT NULL DEFAULT 0,\n  "konsentrat_kg" numeric NOT NULL DEFAULT 0,\n  "dedak_kg" numeric NOT NULL DEFAULT 0,\n  "other_feed_kg" numeric NOT NULL DEFAULT 0,\n  "sisa_pakan_kg" numeric NOT NULL DEFAULT 0,\n  "consumed_kg" numeric,\n  "feed_cost_idr" bigint,\n  "notes" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "is_deleted" boolean NOT NULL DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sapi_breeding_health_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid NOT NULL,\n  "log_date" date NOT NULL,\n  "log_type" text NOT NULL,\n  "vaccine_name" text,\n  "drug_name" text,\n  "dose" text,\n  "route" text,\n  "symptoms" text,\n  "diagnosis" text,\n  "treatment" text,\n  "outcome" text,\n  "death_cause" text,\n  "death_weight_kg" numeric,\n  "loss_value_idr" bigint,\n  "handled_by" text,\n  "notes" text,\n  "recorded_by" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "treatment_cost_idr" numeric DEFAULT 0\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sapi_breeding_mating_records" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "dam_id" uuid NOT NULL,\n  "sire_id" uuid,\n  "method" text NOT NULL,\n  "bull_name" text,\n  "semen_code" text,\n  "inseminator_name" text,\n  "repeat_ib_count" integer NOT NULL DEFAULT 1,\n  "sync_protocol" text,\n  "estrus_date" date,\n  "mating_date" date NOT NULL,\n  "est_partus_date" date,\n  "pregnancy_confirmed" boolean DEFAULT false,\n  "pregnancy_confirm_date" date,\n  "pregnancy_method" text,\n  "fetus_count" integer,\n  "status" text NOT NULL DEFAULT 'menunggu'::text,\n  "notes" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "is_deleted" boolean NOT NULL DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sapi_breeding_sales" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid NOT NULL,\n  "sale_date" date NOT NULL,\n  "product_type" text NOT NULL,\n  "buyer_name" text NOT NULL,\n  "buyer_contact" text,\n  "buyer_type" text,\n  "sale_weight_kg" numeric,\n  "price_type" text,\n  "price_amount" bigint NOT NULL,\n  "total_revenue_idr" bigint NOT NULL,\n  "payment_method" text,\n  "is_paid" boolean NOT NULL DEFAULT false,\n  "paid_date" date,\n  "invoice_number" text,\n  "notes" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "is_deleted" boolean NOT NULL DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sapi_breeding_weight_records" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid NOT NULL,\n  "weigh_date" date NOT NULL,\n  "weight_kg" numeric NOT NULL,\n  "age_days" integer,\n  "adg_since_last" numeric,\n  "bcs" numeric,\n  "weigh_method" text NOT NULL DEFAULT 'timbang_langsung'::text,\n  "chest_girth_cm" numeric,\n  "notes" text,\n  "recorded_by" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "is_deleted" boolean NOT NULL DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sapi_kandangs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_id" uuid NOT NULL,\n  "name" text NOT NULL,\n  "capacity" integer NOT NULL DEFAULT 0,\n  "panjang_m" numeric,\n  "lebar_m" numeric,\n  "luas_m2" numeric,\n  "is_holding" boolean NOT NULL DEFAULT false,\n  "notes" text,\n  "is_active" boolean NOT NULL DEFAULT true,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "grid_x" integer,\n  "grid_y" integer\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sapi_penggemukan_animals" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_id" uuid NOT NULL,\n  "ear_tag" text NOT NULL,\n  "species" text NOT NULL DEFAULT 'sapi'::text,\n  "breed" text,\n  "sex" text NOT NULL,\n  "birth_date" date,\n  "entry_age_months" integer,\n  "age_confidence" text NOT NULL DEFAULT 'estimasi'::text,\n  "acquisition_type" text NOT NULL DEFAULT 'beli'::text,\n  "entry_date" date NOT NULL,\n  "entry_weight_kg" numeric NOT NULL,\n  "entry_bcs" numeric,\n  "entry_condition" text,\n  "purchase_price_idr" bigint,\n  "source" text,\n  "kandang_slot" text,\n  "quarantine_start" date,\n  "quarantine_end" date,\n  "quarantine_notes" text,\n  "status" text NOT NULL DEFAULT 'active'::text,\n  "exit_date" date,\n  "latest_weight_kg" numeric,\n  "latest_weight_date" date,\n  "latest_bcs" numeric,\n  "kandang_id" uuid,\n  "notes" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "is_deleted" boolean NOT NULL DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sapi_penggemukan_batches" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_code" text NOT NULL,\n  "kandang_name" text NOT NULL,\n  "start_date" date NOT NULL,\n  "target_end_date" date,\n  "end_date" date,\n  "batch_purpose" text NOT NULL DEFAULT 'potong'::text,\n  "total_animals" integer NOT NULL DEFAULT 0,\n  "alive_count" integer,\n  "sold_count" integer,\n  "mortality_count" integer NOT NULL DEFAULT 0,\n  "avg_adg_gram" numeric,\n  "avg_fcr" numeric,\n  "avg_entry_weight_kg" numeric,\n  "avg_exit_weight_kg" numeric,\n  "total_feed_cost_idr" bigint,\n  "total_revenue_idr" bigint,\n  "total_cogs_idr" bigint,\n  "net_profit_idr" bigint,\n  "rc_ratio" numeric,\n  "status" text NOT NULL DEFAULT 'active'::text,\n  "notes" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "is_deleted" boolean NOT NULL DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sapi_penggemukan_feed_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_id" uuid NOT NULL,\n  "log_date" date NOT NULL,\n  "kandang_name" text NOT NULL,\n  "animal_count" integer NOT NULL,\n  "hijauan_kg" numeric NOT NULL DEFAULT 0,\n  "konsentrat_kg" numeric NOT NULL DEFAULT 0,\n  "dedak_kg" numeric NOT NULL DEFAULT 0,\n  "other_feed_kg" numeric NOT NULL DEFAULT 0,\n  "sisa_pakan_kg" numeric NOT NULL DEFAULT 0,\n  "consumed_kg" numeric,\n  "feed_cost_idr" bigint,\n  "notes" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "is_deleted" boolean NOT NULL DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sapi_penggemukan_health_logs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid NOT NULL,\n  "batch_id" uuid NOT NULL,\n  "log_date" date NOT NULL,\n  "log_type" text NOT NULL,\n  "symptoms" text,\n  "action_taken" text,\n  "medicine_name" text,\n  "medicine_dose" text,\n  "handled_by" text,\n  "outcome" text,\n  "vaccine_name" text,\n  "vaccine_next_due" date,\n  "death_cause" text,\n  "death_weight_kg" numeric,\n  "loss_value_idr" bigint,\n  "notes" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "treatment_cost_idr" numeric DEFAULT 0\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sapi_penggemukan_operational_costs" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_id" uuid,\n  "log_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "item_name" text NOT NULL,\n  "category" text NOT NULL DEFAULT 'lainnya'::text,\n  "amount_idr" numeric NOT NULL DEFAULT 0,\n  "quantity" numeric DEFAULT 0,\n  "unit" text,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sapi_penggemukan_sales" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "batch_id" uuid NOT NULL,\n  "sale_date" date NOT NULL,\n  "buyer_name" text NOT NULL,\n  "buyer_type" text,\n  "buyer_contact" text,\n  "animal_ids" ARRAY NOT NULL,\n  "animal_count" integer NOT NULL,\n  "total_weight_kg" numeric NOT NULL,\n  "avg_weight_kg" numeric,\n  "price_type" text,\n  "price_amount" bigint NOT NULL,\n  "total_revenue_idr" bigint NOT NULL,\n  "payment_method" text,\n  "is_paid" boolean NOT NULL DEFAULT false,\n  "paid_date" date,\n  "has_skkh" boolean NOT NULL DEFAULT false,\n  "has_surat_jalan" boolean NOT NULL DEFAULT false,\n  "invoice_number" text,\n  "notes" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "is_deleted" boolean NOT NULL DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sapi_penggemukan_weight_records" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "animal_id" uuid NOT NULL,\n  "batch_id" uuid NOT NULL,\n  "weigh_date" date NOT NULL,\n  "days_in_farm" integer,\n  "weight_kg" numeric NOT NULL,\n  "bcs" numeric,\n  "adg_since_last" numeric,\n  "weigh_method" text NOT NULL DEFAULT 'timbang_langsung'::text,\n  "chest_girth_cm" numeric,\n  "notes" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "is_deleted" boolean NOT NULL DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sembako_customers" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "customer_name" text NOT NULL,\n  "customer_type" text DEFAULT 'warung'::text,\n  "contact_person" text,\n  "phone" text,\n  "address" text,\n  "area" text,\n  "payment_terms" text DEFAULT 'cash'::text,\n  "credit_limit" bigint DEFAULT 0,\n  "total_outstanding" bigint DEFAULT 0,\n  "total_purchases" bigint DEFAULT 0,\n  "reliability_score" smallint,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sembako_deliveries" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "sale_id" uuid,\n  "employee_id" uuid,\n  "vehicle_type" text,\n  "vehicle_plate" text,\n  "driver_name" text,\n  "delivery_date" date NOT NULL,\n  "delivery_area" text,\n  "delivery_cost" integer DEFAULT 0,\n  "other_cost" integer DEFAULT 0,\n  "status" text DEFAULT 'pending'::text,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "departed_at" timestamp with time zone,\n  "arrived_at" timestamp with time zone,\n  "completed_at" timestamp with time zone\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sembako_employees" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "full_name" text NOT NULL,\n  "role" text NOT NULL,\n  "phone" text,\n  "address" text,\n  "join_date" date,\n  "salary_type" text DEFAULT 'bulanan'::text,\n  "base_salary" integer DEFAULT 0,\n  "commission_pct" numeric DEFAULT 0,\n  "trip_rate" integer DEFAULT 0,\n  "status" text DEFAULT 'aktif'::text,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sembako_expenses" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "category" text NOT NULL,\n  "description" text NOT NULL,\n  "amount" bigint NOT NULL,\n  "expense_date" date NOT NULL,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sembako_payments" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "sale_id" uuid NOT NULL,\n  "customer_id" uuid,\n  "amount" bigint NOT NULL,\n  "payment_date" date NOT NULL,\n  "payment_method" text DEFAULT 'cash'::text,\n  "reference_no" text,\n  "notes" text,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "is_deleted" boolean DEFAULT false,\n  "reference_number" text\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sembako_payroll" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "employee_id" uuid NOT NULL,\n  "period_type" text NOT NULL,\n  "period_date" date NOT NULL,\n  "work_days" integer DEFAULT 0,\n  "trip_count" integer DEFAULT 0,\n  "sales_amount" bigint DEFAULT 0,\n  "base_amount" integer DEFAULT 0,\n  "commission_amount" integer DEFAULT 0,\n  "bonus" integer DEFAULT 0,\n  "deduction" integer DEFAULT 0,\n  "total_pay" integer,\n  "payment_status" text DEFAULT 'pending'::text,\n  "paid_at" timestamp with time zone,\n  "notes" text,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "is_deleted" boolean DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sembako_products" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "product_name" text NOT NULL,\n  "category" text NOT NULL,\n  "unit" text NOT NULL DEFAULT 'kg'::text,\n  "current_stock" numeric DEFAULT 0,\n  "avg_buy_price" integer DEFAULT 0,\n  "sell_price" integer DEFAULT 0,\n  "min_stock_alert" numeric DEFAULT 0,\n  "barcode" text,\n  "notes" text,\n  "is_active" boolean DEFAULT true,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "secondary_unit" text,\n  "conversion_rate" numeric\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sembako_sale_items" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "sale_id" uuid NOT NULL,\n  "product_id" uuid,\n  "product_name" text NOT NULL,\n  "unit" text NOT NULL,\n  "quantity" numeric NOT NULL,\n  "price_per_unit" integer NOT NULL,\n  "cogs_per_unit" integer DEFAULT 0,\n  "subtotal" bigint,\n  "cogs_total" bigint\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sembako_sales" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "customer_id" uuid,\n  "delivery_id" uuid,\n  "invoice_number" text NOT NULL,\n  "customer_name" text NOT NULL,\n  "transaction_date" date NOT NULL,\n  "due_date" date,\n  "total_amount" bigint DEFAULT 0,\n  "total_cogs" bigint DEFAULT 0,\n  "gross_profit" bigint,\n  "delivery_cost" integer DEFAULT 0,\n  "other_cost" integer DEFAULT 0,\n  "net_profit" bigint,\n  "payment_status" text DEFAULT 'belum_lunas'::text,\n  "paid_amount" bigint DEFAULT 0,\n  "remaining_amount" bigint,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sembako_stock_batches" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "product_id" uuid NOT NULL,\n  "supplier_id" uuid,\n  "batch_code" text,\n  "qty_masuk" numeric NOT NULL,\n  "qty_sisa" numeric NOT NULL,\n  "buy_price" integer NOT NULL,\n  "total_cost" bigint,\n  "purchase_date" date NOT NULL,\n  "expiry_date" date,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sembako_stock_out" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "product_id" uuid NOT NULL,\n  "batch_id" uuid NOT NULL,\n  "sale_item_id" uuid,\n  "qty_keluar" numeric NOT NULL,\n  "buy_price" integer NOT NULL,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "sale_id" uuid,\n  "is_deleted" boolean DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sembako_supplier_payments" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "supplier_id" uuid NOT NULL,\n  "amount" bigint NOT NULL,\n  "payment_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "payment_method" text NOT NULL,\n  "reference_number" text,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."sembako_suppliers" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "supplier_name" text NOT NULL,\n  "supplier_type" text DEFAULT 'petani'::text,\n  "contact_person" text,\n  "phone" text,\n  "address" text,\n  "products_supplied" ARRAY,\n  "payment_terms" text DEFAULT 'cash'::text,\n  "total_outstanding" bigint DEFAULT 0,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."site_config" (\n  "key" text NOT NULL,\n  "value" text,\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."stock_listings" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "peternak_tenant_id" uuid NOT NULL,\n  "cycle_id" uuid,\n  "chicken_type" text NOT NULL DEFAULT 'broiler'::text,\n  "available_count" integer NOT NULL,\n  "estimated_weight_kg" numeric,\n  "estimated_harvest_date" date,\n  "asking_price_per_kg" integer,\n  "status" text NOT NULL DEFAULT 'available'::text,\n  "visible_to" text NOT NULL DEFAULT 'connected'::text,\n  "notes" text,\n  "expires_at" timestamp with time zone,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."subscription_invoices" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "invoice_number" text,\n  "amount" integer NOT NULL,\n  "plan" text NOT NULL,\n  "billing_period" text,\n  "billing_months" integer DEFAULT 1,\n  "status" text NOT NULL DEFAULT 'pending'::text,\n  "transfer_proof_url" text,\n  "bank_name" text,\n  "transfer_date" date,\n  "confirmed_by" uuid,\n  "confirmed_at" timestamp with time zone,\n  "notes" text,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now(),\n  "payment_proof_url" text,\n  "payment_method" text DEFAULT 'transfer'::text,\n  "xendit_invoice_id" text,\n  "xendit_payment_url" text,\n  "paid_at" timestamp with time zone\n);\n\nCREATE TABLE IF NOT EXISTS "public"."team_invitations" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "invited_by" uuid NOT NULL,\n  "email" text,\n  "role" text NOT NULL,\n  "token" text NOT NULL DEFAULT encode(gen_random_bytes(32), 'hex'::text),\n  "status" text NOT NULL DEFAULT 'pending'::text,\n  "expires_at" timestamp with time zone NOT NULL DEFAULT (now() + '7 days'::interval),\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "is_deleted" boolean DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."tenant_memberships" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "auth_user_id" uuid NOT NULL,\n  "tenant_id" uuid NOT NULL,\n  "role" text NOT NULL,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "full_name" text\n);\n\nCREATE TABLE IF NOT EXISTS "public"."tenants" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "business_name" text NOT NULL,\n  "owner_name" text,\n  "phone" text,\n  "location" text,\n  "plan" text NOT NULL DEFAULT 'starter'::text,\n  "is_active" boolean NOT NULL DEFAULT true,\n  "trial_ends_at" timestamp with time zone,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now(),\n  "business_vertical" text DEFAULT 'poultry_broker'::text,\n  "is_hidden_beta" boolean DEFAULT false,\n  "kandang_limit" integer DEFAULT 1,\n  "sub_type" text,\n  "chicken_types" ARRAY DEFAULT '{}'::text[],\n  "animal_types" ARRAY DEFAULT '{}'::text[],\n  "area_operasi" text,\n  "target_volume_monthly" integer DEFAULT 0,\n  "base_livestock_type" text DEFAULT 'broiler'::text,\n  "addon_livestock_types" ARRAY DEFAULT '{}'::text[],\n  "plan_expires_at" timestamp with time zone,\n  "province" text\n);\n\nCREATE TABLE IF NOT EXISTS "public"."vaccination_records" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "cycle_id" uuid NOT NULL,\n  "vaccination_date" date NOT NULL,\n  "age_days" integer,\n  "vaccine_name" text NOT NULL,\n  "disease_target" text,\n  "method" text,\n  "dose_per_bird" numeric,\n  "batch_number" text,\n  "notes" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "is_deleted" boolean NOT NULL DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."vehicle_expenses" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "vehicle_id" uuid NOT NULL,\n  "expense_type" text NOT NULL,\n  "amount" bigint NOT NULL,\n  "description" text,\n  "expense_date" date NOT NULL DEFAULT CURRENT_DATE,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."vehicles" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "vehicle_type" text NOT NULL,\n  "vehicle_plate" text NOT NULL,\n  "brand" text,\n  "year" integer,\n  "capacity_ekor" integer,\n  "capacity_kg" numeric,\n  "ownership" text NOT NULL DEFAULT 'milik_sendiri'::text,\n  "rental_cost" integer,\n  "rental_owner" text,\n  "status" text NOT NULL DEFAULT 'aktif'::text,\n  "last_service_date" date,\n  "notes" text,\n  "is_deleted" boolean NOT NULL DEFAULT false,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."waitlist_signups" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "email" text NOT NULL,\n  "vertical" text,\n  "created_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "public"."worker_payments" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "tenant_id" uuid NOT NULL,\n  "cycle_id" uuid NOT NULL,\n  "worker_id" uuid NOT NULL,\n  "payment_type" text,\n  "amount" bigint NOT NULL,\n  "payment_date" date NOT NULL,\n  "notes" text,\n  "is_deleted" boolean DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "public"."xendit_config" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "is_active" boolean DEFAULT false,\n  "secret_key_encrypted" text,\n  "webhook_token" text,\n  "success_redirect_url" text,\n  "failure_redirect_url" text,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."audit_log_entries" (\n  "instance_id" uuid,\n  "id" uuid NOT NULL,\n  "payload" json,\n  "created_at" timestamp with time zone,\n  "ip_address" character varying NOT NULL DEFAULT ''::character varying\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."custom_oauth_providers" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "provider_type" text NOT NULL,\n  "identifier" text NOT NULL,\n  "name" text NOT NULL,\n  "client_id" text NOT NULL,\n  "client_secret" text NOT NULL,\n  "acceptable_client_ids" ARRAY NOT NULL DEFAULT '{}'::text[],\n  "scopes" ARRAY NOT NULL DEFAULT '{}'::text[],\n  "pkce_enabled" boolean NOT NULL DEFAULT true,\n  "attribute_mapping" jsonb NOT NULL DEFAULT '{}'::jsonb,\n  "authorization_params" jsonb NOT NULL DEFAULT '{}'::jsonb,\n  "enabled" boolean NOT NULL DEFAULT true,\n  "email_optional" boolean NOT NULL DEFAULT false,\n  "issuer" text,\n  "discovery_url" text,\n  "skip_nonce_check" boolean NOT NULL DEFAULT false,\n  "cached_discovery" jsonb,\n  "discovery_cached_at" timestamp with time zone,\n  "authorization_url" text,\n  "token_url" text,\n  "userinfo_url" text,\n  "jwks_uri" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."flow_state" (\n  "id" uuid NOT NULL,\n  "user_id" uuid,\n  "auth_code" text,\n  "code_challenge_method" USER-DEFINED,\n  "code_challenge" text,\n  "provider_type" text NOT NULL,\n  "provider_access_token" text,\n  "provider_refresh_token" text,\n  "created_at" timestamp with time zone,\n  "updated_at" timestamp with time zone,\n  "authentication_method" text NOT NULL,\n  "auth_code_issued_at" timestamp with time zone,\n  "invite_token" text,\n  "referrer" text,\n  "oauth_client_state_id" uuid,\n  "linking_target_id" uuid,\n  "email_optional" boolean NOT NULL DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."identities" (\n  "provider_id" text NOT NULL,\n  "user_id" uuid NOT NULL,\n  "identity_data" jsonb NOT NULL,\n  "provider" text NOT NULL,\n  "last_sign_in_at" timestamp with time zone,\n  "created_at" timestamp with time zone,\n  "updated_at" timestamp with time zone,\n  "email" text,\n  "id" uuid NOT NULL DEFAULT gen_random_uuid()\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."instances" (\n  "id" uuid NOT NULL,\n  "uuid" uuid,\n  "raw_base_config" text,\n  "created_at" timestamp with time zone,\n  "updated_at" timestamp with time zone\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."mfa_amr_claims" (\n  "session_id" uuid NOT NULL,\n  "created_at" timestamp with time zone NOT NULL,\n  "updated_at" timestamp with time zone NOT NULL,\n  "authentication_method" text NOT NULL,\n  "id" uuid NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."mfa_challenges" (\n  "id" uuid NOT NULL,\n  "factor_id" uuid NOT NULL,\n  "created_at" timestamp with time zone NOT NULL,\n  "verified_at" timestamp with time zone,\n  "ip_address" inet NOT NULL,\n  "otp_code" text,\n  "web_authn_session_data" jsonb\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."mfa_factors" (\n  "id" uuid NOT NULL,\n  "user_id" uuid NOT NULL,\n  "friendly_name" text,\n  "factor_type" USER-DEFINED NOT NULL,\n  "status" USER-DEFINED NOT NULL,\n  "created_at" timestamp with time zone NOT NULL,\n  "updated_at" timestamp with time zone NOT NULL,\n  "secret" text,\n  "phone" text,\n  "last_challenged_at" timestamp with time zone,\n  "web_authn_credential" jsonb,\n  "web_authn_aaguid" uuid,\n  "last_webauthn_challenge_data" jsonb\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."oauth_authorizations" (\n  "id" uuid NOT NULL,\n  "authorization_id" text NOT NULL,\n  "client_id" uuid NOT NULL,\n  "user_id" uuid,\n  "redirect_uri" text NOT NULL,\n  "scope" text NOT NULL,\n  "state" text,\n  "resource" text,\n  "code_challenge" text,\n  "code_challenge_method" USER-DEFINED,\n  "response_type" USER-DEFINED NOT NULL DEFAULT 'code'::auth.oauth_response_type,\n  "status" USER-DEFINED NOT NULL DEFAULT 'pending'::auth.oauth_authorization_status,\n  "authorization_code" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "expires_at" timestamp with time zone NOT NULL DEFAULT (now() + '00:03:00'::interval),\n  "approved_at" timestamp with time zone,\n  "nonce" text\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."oauth_client_states" (\n  "id" uuid NOT NULL,\n  "provider_type" text NOT NULL,\n  "code_verifier" text,\n  "created_at" timestamp with time zone NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."oauth_clients" (\n  "id" uuid NOT NULL,\n  "client_secret_hash" text,\n  "registration_type" USER-DEFINED NOT NULL,\n  "redirect_uris" text NOT NULL,\n  "grant_types" text NOT NULL,\n  "client_name" text,\n  "client_uri" text,\n  "logo_uri" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "deleted_at" timestamp with time zone,\n  "client_type" USER-DEFINED NOT NULL DEFAULT 'confidential'::auth.oauth_client_type,\n  "token_endpoint_auth_method" text NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."oauth_consents" (\n  "id" uuid NOT NULL,\n  "user_id" uuid NOT NULL,\n  "client_id" uuid NOT NULL,\n  "scopes" text NOT NULL,\n  "granted_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "revoked_at" timestamp with time zone\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."one_time_tokens" (\n  "id" uuid NOT NULL,\n  "user_id" uuid NOT NULL,\n  "token_type" USER-DEFINED NOT NULL,\n  "token_hash" text NOT NULL,\n  "relates_to" text NOT NULL,\n  "created_at" timestamp without time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp without time zone NOT NULL DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."refresh_tokens" (\n  "instance_id" uuid,\n  "id" bigint NOT NULL DEFAULT nextval('auth.refresh_tokens_id_seq'::regclass),\n  "token" character varying,\n  "user_id" character varying,\n  "revoked" boolean,\n  "created_at" timestamp with time zone,\n  "updated_at" timestamp with time zone,\n  "parent" character varying,\n  "session_id" uuid\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."saml_providers" (\n  "id" uuid NOT NULL,\n  "sso_provider_id" uuid NOT NULL,\n  "entity_id" text NOT NULL,\n  "metadata_xml" text NOT NULL,\n  "metadata_url" text,\n  "attribute_mapping" jsonb,\n  "created_at" timestamp with time zone,\n  "updated_at" timestamp with time zone,\n  "name_id_format" text\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."saml_relay_states" (\n  "id" uuid NOT NULL,\n  "sso_provider_id" uuid NOT NULL,\n  "request_id" text NOT NULL,\n  "for_email" text,\n  "redirect_to" text,\n  "created_at" timestamp with time zone,\n  "updated_at" timestamp with time zone,\n  "flow_state_id" uuid\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."schema_migrations" (\n  "version" character varying NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."sessions" (\n  "id" uuid NOT NULL,\n  "user_id" uuid NOT NULL,\n  "created_at" timestamp with time zone,\n  "updated_at" timestamp with time zone,\n  "factor_id" uuid,\n  "aal" USER-DEFINED,\n  "not_after" timestamp with time zone,\n  "refreshed_at" timestamp without time zone,\n  "user_agent" text,\n  "ip" inet,\n  "tag" text,\n  "oauth_client_id" uuid,\n  "refresh_token_hmac_key" text,\n  "refresh_token_counter" bigint,\n  "scopes" text\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."sso_domains" (\n  "id" uuid NOT NULL,\n  "sso_provider_id" uuid NOT NULL,\n  "domain" text NOT NULL,\n  "created_at" timestamp with time zone,\n  "updated_at" timestamp with time zone\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."sso_providers" (\n  "id" uuid NOT NULL,\n  "resource_id" text,\n  "created_at" timestamp with time zone,\n  "updated_at" timestamp with time zone,\n  "disabled" boolean\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."users" (\n  "instance_id" uuid,\n  "id" uuid NOT NULL,\n  "aud" character varying,\n  "role" character varying,\n  "email" character varying,\n  "encrypted_password" character varying,\n  "email_confirmed_at" timestamp with time zone,\n  "invited_at" timestamp with time zone,\n  "confirmation_token" character varying,\n  "confirmation_sent_at" timestamp with time zone,\n  "recovery_token" character varying,\n  "recovery_sent_at" timestamp with time zone,\n  "email_change_token_new" character varying,\n  "email_change" character varying,\n  "email_change_sent_at" timestamp with time zone,\n  "last_sign_in_at" timestamp with time zone,\n  "raw_app_meta_data" jsonb,\n  "raw_user_meta_data" jsonb,\n  "is_super_admin" boolean,\n  "created_at" timestamp with time zone,\n  "updated_at" timestamp with time zone,\n  "phone" text DEFAULT NULL::character varying,\n  "phone_confirmed_at" timestamp with time zone,\n  "phone_change" text DEFAULT ''::character varying,\n  "phone_change_token" character varying DEFAULT ''::character varying,\n  "phone_change_sent_at" timestamp with time zone,\n  "confirmed_at" timestamp with time zone,\n  "email_change_token_current" character varying DEFAULT ''::character varying,\n  "email_change_confirm_status" smallint DEFAULT 0,\n  "banned_until" timestamp with time zone,\n  "reauthentication_token" character varying DEFAULT ''::character varying,\n  "reauthentication_sent_at" timestamp with time zone,\n  "is_sso_user" boolean NOT NULL DEFAULT false,\n  "deleted_at" timestamp with time zone,\n  "is_anonymous" boolean NOT NULL DEFAULT false\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."webauthn_challenges" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "user_id" uuid,\n  "challenge_type" text NOT NULL,\n  "session_data" jsonb NOT NULL,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "expires_at" timestamp with time zone NOT NULL\n);\n\nCREATE TABLE IF NOT EXISTS "auth"."webauthn_credentials" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "user_id" uuid NOT NULL,\n  "credential_id" bytea NOT NULL,\n  "public_key" bytea NOT NULL,\n  "attestation_type" text NOT NULL DEFAULT ''::text,\n  "aaguid" uuid,\n  "sign_count" bigint NOT NULL DEFAULT 0,\n  "transports" jsonb NOT NULL DEFAULT '[]'::jsonb,\n  "backup_eligible" boolean NOT NULL DEFAULT false,\n  "backed_up" boolean NOT NULL DEFAULT false,\n  "friendly_name" text NOT NULL DEFAULT ''::text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "last_used_at" timestamp with time zone\n);\n\nCREATE TABLE IF NOT EXISTS "storage"."buckets" (\n  "id" text NOT NULL,\n  "name" text NOT NULL,\n  "owner" uuid,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now(),\n  "public" boolean DEFAULT false,\n  "avif_autodetection" boolean DEFAULT false,\n  "file_size_limit" bigint,\n  "allowed_mime_types" ARRAY,\n  "owner_id" text,\n  "type" USER-DEFINED NOT NULL DEFAULT 'STANDARD'::storage.buckettype\n);\n\nCREATE TABLE IF NOT EXISTS "storage"."buckets_analytics" (\n  "name" text NOT NULL,\n  "type" USER-DEFINED NOT NULL DEFAULT 'ANALYTICS'::storage.buckettype,\n  "format" text NOT NULL DEFAULT 'ICEBERG'::text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "deleted_at" timestamp with time zone\n);\n\nCREATE TABLE IF NOT EXISTS "storage"."buckets_vectors" (\n  "id" text NOT NULL,\n  "type" USER-DEFINED NOT NULL DEFAULT 'VECTOR'::storage.buckettype,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "storage"."migrations" (\n  "id" integer NOT NULL,\n  "name" character varying NOT NULL,\n  "hash" character varying NOT NULL,\n  "executed_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS "storage"."objects" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "bucket_id" text,\n  "name" text,\n  "owner" uuid,\n  "created_at" timestamp with time zone DEFAULT now(),\n  "updated_at" timestamp with time zone DEFAULT now(),\n  "last_accessed_at" timestamp with time zone DEFAULT now(),\n  "metadata" jsonb,\n  "path_tokens" ARRAY,\n  "version" text,\n  "owner_id" text,\n  "user_metadata" jsonb\n);\n\nCREATE TABLE IF NOT EXISTS "storage"."s3_multipart_uploads" (\n  "id" text NOT NULL,\n  "in_progress_size" bigint NOT NULL DEFAULT 0,\n  "upload_signature" text NOT NULL,\n  "bucket_id" text NOT NULL,\n  "key" text NOT NULL,\n  "version" text NOT NULL,\n  "owner_id" text,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "user_metadata" jsonb,\n  "metadata" jsonb\n);\n\nCREATE TABLE IF NOT EXISTS "storage"."s3_multipart_uploads_parts" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "upload_id" text NOT NULL,\n  "size" bigint NOT NULL DEFAULT 0,\n  "part_number" integer NOT NULL,\n  "bucket_id" text NOT NULL,\n  "key" text NOT NULL,\n  "etag" text NOT NULL,\n  "owner_id" text,\n  "version" text NOT NULL,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "storage"."vector_indexes" (\n  "id" text NOT NULL DEFAULT gen_random_uuid(),\n  "name" text NOT NULL,\n  "bucket_id" text NOT NULL,\n  "data_type" text NOT NULL,\n  "dimension" integer NOT NULL,\n  "distance_metric" text NOT NULL,\n  "metadata_configuration" jsonb,\n  "created_at" timestamp with time zone NOT NULL DEFAULT now(),\n  "updated_at" timestamp with time zone NOT NULL DEFAULT now()\n);\n\nCREATE TABLE IF NOT EXISTS "vault"."decrypted_secrets" (\n  "id" uuid,\n  "name" text,\n  "description" text,\n  "secret" text,\n  "decrypted_secret" text,\n  "key_id" uuid,\n  "nonce" bytea,\n  "created_at" timestamp with time zone,\n  "updated_at" timestamp with time zone\n);\n\nCREATE TABLE IF NOT EXISTS "vault"."secrets" (\n  "id" uuid NOT NULL DEFAULT gen_random_uuid(),\n  "name" text,\n  "description" text NOT NULL DEFAULT ''::text,\n  "secret" text NOT NULL,\n  "key_id" uuid,\n  "nonce" bytea DEFAULT vault._crypto_aead_det_noncegen(),\n  "created_at" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  "updated_at" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE TABLE IF NOT EXISTS "cron"."job" (\n  "jobid" bigint NOT NULL DEFAULT nextval('cron.jobid_seq'::regclass),\n  "schedule" text NOT NULL,\n  "command" text NOT NULL,\n  "nodename" text NOT NULL DEFAULT 'localhost'::text,\n  "nodeport" integer NOT NULL DEFAULT inet_server_port(),\n  "database" text NOT NULL DEFAULT current_database(),\n  "username" text NOT NULL DEFAULT CURRENT_USER,\n  "active" boolean NOT NULL DEFAULT true,\n  "jobname" text\n);\n\nCREATE TABLE IF NOT EXISTS "cron"."job_run_details" (\n  "jobid" bigint,\n  "runid" bigint NOT NULL DEFAULT nextval('cron.runid_seq'::regclass),\n  "job_pid" integer,\n  "database" text,\n  "username" text,\n  "command" text,\n  "status" text,\n  "return_message" text,\n  "start_time" timestamp with time zone,\n  "end_time" timestamp with time zone\n);\n\nCREATE TABLE IF NOT EXISTS "extensions"."pg_stat_statements" (\n  "userid" oid,\n  "dbid" oid,\n  "toplevel" boolean,\n  "queryid" bigint,\n  "query" text,\n  "plans" bigint,\n  "total_plan_time" double precision,\n  "min_plan_time" double precision,\n  "max_plan_time" double precision,\n  "mean_plan_time" double precision,\n  "stddev_plan_time" double precision,\n  "calls" bigint,\n  "total_exec_time" double precision,\n  "min_exec_time" double precision,\n  "max_exec_time" double precision,\n  "mean_exec_time" double precision,\n  "stddev_exec_time" double precision,\n  "rows" bigint,\n  "shared_blks_hit" bigint,\n  "shared_blks_read" bigint,\n  "shared_blks_dirtied" bigint,\n  "shared_blks_written" bigint,\n  "local_blks_hit" bigint,\n  "local_blks_read" bigint,\n  "local_blks_dirtied" bigint,\n  "local_blks_written" bigint,\n  "temp_blks_read" bigint,\n  "temp_blks_written" bigint,\n  "shared_blk_read_time" double precision,\n  "shared_blk_write_time" double precision,\n  "local_blk_read_time" double precision,\n  "local_blk_write_time" double precision,\n  "temp_blk_read_time" double precision,\n  "temp_blk_write_time" double precision,\n  "wal_records" bigint,\n  "wal_fpi" bigint,\n  "wal_bytes" numeric,\n  "jit_functions" bigint,\n  "jit_generation_time" double precision,\n  "jit_inlining_count" bigint,\n  "jit_inlining_time" double precision,\n  "jit_optimization_count" bigint,\n  "jit_optimization_time" double precision,\n  "jit_emission_count" bigint,\n  "jit_emission_time" double precision,\n  "jit_deform_count" bigint,\n  "jit_deform_time" double precision,\n  "stats_since" timestamp with time zone,\n  "minmax_stats_since" timestamp with time zone\n);\n\nCREATE TABLE IF NOT EXISTS "extensions"."pg_stat_statements_info" (\n  "dealloc" bigint,\n  "stats_reset" timestamp with time zone\n);\n\nCREATE TABLE IF NOT EXISTS "realtime"."messages" (\n  "topic" text NOT NULL,\n  "extension" text NOT NULL,\n  "payload" jsonb,\n  "event" text,\n  "private" boolean DEFAULT false,\n  "updated_at" timestamp without time zone NOT NULL DEFAULT now(),\n  "inserted_at" timestamp without time zone NOT NULL DEFAULT now(),\n  "id" uuid NOT NULL DEFAULT gen_random_uuid()\n);\n\nCREATE TABLE IF NOT EXISTS "realtime"."messages_2026_05_08" (\n  "topic" text NOT NULL,\n  "extension" text NOT NULL,\n  "payload" jsonb,\n  "event" text,\n  "private" boolean DEFAULT false,\n  "updated_at" timestamp without time zone NOT NULL DEFAULT now(),\n  "inserted_at" timestamp without time zone NOT NULL DEFAULT now(),\n  "id" uuid NOT NULL DEFAULT gen_random_uuid()\n);\n\nCREATE TABLE IF NOT EXISTS "realtime"."messages_2026_05_09" (\n  "topic" text NOT NULL,\n  "extension" text NOT NULL,\n  "payload" jsonb,\n  "event" text,\n  "private" boolean DEFAULT false,\n  "updated_at" timestamp without time zone NOT NULL DEFAULT now(),\n  "inserted_at" timestamp without time zone NOT NULL DEFAULT now(),\n  "id" uuid NOT NULL DEFAULT gen_random_uuid()\n);\n\nCREATE TABLE IF NOT EXISTS "realtime"."messages_2026_05_10" (\n  "topic" text NOT NULL,\n  "extension" text NOT NULL,\n  "payload" jsonb,\n  "event" text,\n  "private" boolean DEFAULT false,\n  "updated_at" timestamp without time zone NOT NULL DEFAULT now(),\n  "inserted_at" timestamp without time zone NOT NULL DEFAULT now(),\n  "id" uuid NOT NULL DEFAULT gen_random_uuid()\n);\n\nCREATE TABLE IF NOT EXISTS "realtime"."messages_2026_05_11" (\n  "topic" text NOT NULL,\n  "extension" text NOT NULL,\n  "payload" jsonb,\n  "event" text,\n  "private" boolean DEFAULT false,\n  "updated_at" timestamp without time zone NOT NULL DEFAULT now(),\n  "inserted_at" timestamp without time zone NOT NULL DEFAULT now(),\n  "id" uuid NOT NULL DEFAULT gen_random_uuid()\n);\n\nCREATE TABLE IF NOT EXISTS "realtime"."messages_2026_05_12" (\n  "topic" text NOT NULL,\n  "extension" text NOT NULL,\n  "payload" jsonb,\n  "event" text,\n  "private" boolean DEFAULT false,\n  "updated_at" timestamp without time zone NOT NULL DEFAULT now(),\n  "inserted_at" timestamp without time zone NOT NULL DEFAULT now(),\n  "id" uuid NOT NULL DEFAULT gen_random_uuid()\n);\n\nCREATE TABLE IF NOT EXISTS "realtime"."messages_2026_05_13" (\n  "topic" text NOT NULL,\n  "extension" text NOT NULL,\n  "payload" jsonb,\n  "event" text,\n  "private" boolean DEFAULT false,\n  "updated_at" timestamp without time zone NOT NULL DEFAULT now(),\n  "inserted_at" timestamp without time zone NOT NULL DEFAULT now(),\n  "id" uuid NOT NULL DEFAULT gen_random_uuid()\n);\n\nCREATE TABLE IF NOT EXISTS "realtime"."messages_2026_05_14" (\n  "topic" text NOT NULL,\n  "extension" text NOT NULL,\n  "payload" jsonb,\n  "event" text,\n  "private" boolean DEFAULT false,\n  "updated_at" timestamp without time zone NOT NULL DEFAULT now(),\n  "inserted_at" timestamp without time zone NOT NULL DEFAULT now(),\n  "id" uuid NOT NULL DEFAULT gen_random_uuid()\n);\n\nCREATE TABLE IF NOT EXISTS "realtime"."schema_migrations" (\n  "version" bigint NOT NULL,\n  "inserted_at" timestamp without time zone\n);\n\nCREATE TABLE IF NOT EXISTS "realtime"."subscription" (\n  "id" bigint NOT NULL,\n  "subscription_id" uuid NOT NULL,\n  "entity" regclass NOT NULL,\n  "filters" ARRAY NOT NULL DEFAULT '{}'::realtime.user_defined_filter[],\n  "claims" jsonb NOT NULL,\n  "claims_role" regrole NOT NULL,\n  "created_at" timestamp without time zone NOT NULL DEFAULT timezone('utc'::text, now()),\n  "action_filter" text DEFAULT '*'::text\n);\n\nCREATE TABLE IF NOT EXISTS "supabase_migrations"."schema_migrations" (\n  "version" text NOT NULL,\n  "statements" ARRAY,\n  "name" text\n);\n\n
+CREATE TABLE IF NOT EXISTS "public"."ai_anomaly_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "staged_transaction_id" uuid,
+  "field_name" text,
+  "anomaly_reason" text,
+  "severity" text,
+  "detected_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."ai_conversations" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "profile_id" uuid NOT NULL,
+  "messages" jsonb[] NOT NULL DEFAULT '{}'::jsonb[],
+  "user_type" text NOT NULL,
+  "context_page" text,
+  "context_snapshot" jsonb,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "metadata" jsonb DEFAULT '{}'::jsonb
+);
+
+CREATE TABLE IF NOT EXISTS "public"."ai_error_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid,
+  "profile_id" uuid,
+  "error_msg" text NOT NULL,
+  "provider" text,
+  "user_message" text,
+  "context_page" text,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."ai_feedback" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "pending_entry_id" uuid NOT NULL,
+  "tenant_id" uuid NOT NULL,
+  "profile_id" uuid NOT NULL,
+  "rating" smallint NOT NULL,
+  "correction_notes" text,
+  "corrected_data" jsonb,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."ai_pending_entries" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "conversation_id" uuid NOT NULL,
+  "tenant_id" uuid NOT NULL,
+  "profile_id" uuid NOT NULL,
+  "intent" text NOT NULL,
+  "extracted_data" jsonb NOT NULL DEFAULT '{}'::jsonb,
+  "target_table" text,
+  "status" text NOT NULL DEFAULT 'pending'::text,
+  "confidence" numeric NOT NULL DEFAULT 1.0,
+  "clarification_needed" text,
+  "raw_ai_response" jsonb,
+  "inserted_record_id" uuid,
+  "error_message" text,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."ai_staged_transactions" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "pending_entry_id" uuid,
+  "tenant_id" uuid NOT NULL,
+  "profile_id" uuid NOT NULL,
+  "target_table" text NOT NULL,
+  "intent" text NOT NULL,
+  "payload" jsonb NOT NULL,
+  "original_data" jsonb,
+  "is_edited" boolean DEFAULT false,
+  "status" text DEFAULT 'staged'::text,
+  "error_message" text,
+  "staged_at" timestamp with time zone DEFAULT now(),
+  "committed_at" timestamp with time zone,
+  "production_id" uuid,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."breeding_cycles" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "peternak_farm_id" uuid NOT NULL,
+  "cycle_number" integer NOT NULL,
+  "chicken_type" text NOT NULL DEFAULT 'broiler'::text,
+  "doc_count" integer NOT NULL,
+  "doc_price" integer,
+  "start_date" date NOT NULL,
+  "target_harvest_date" date,
+  "actual_harvest_date" date,
+  "target_weight_kg" numeric DEFAULT 1.9,
+  "target_fcr" numeric DEFAULT 1.7,
+  "status" text NOT NULL DEFAULT 'active'::text,
+  "total_feed_kg" numeric DEFAULT 0,
+  "total_mortality" integer DEFAULT 0,
+  "final_count" integer,
+  "final_avg_weight_kg" numeric,
+  "final_fcr" numeric,
+  "final_ip_score" numeric,
+  "total_production_cost" bigint DEFAULT 0,
+  "cost_per_kg" integer,
+  "notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."broker_connections" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "status" text NOT NULL DEFAULT 'pending'::text,
+  "connected_at" timestamp with time zone,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "requester_tenant_id" uuid NOT NULL,
+  "requester_type" text,
+  "target_tenant_id" uuid NOT NULL,
+  "target_type" text,
+  "message" text,
+  "rejected_reason" text,
+  "requested_at" timestamp with time zone DEFAULT now(),
+  "responded_at" timestamp with time zone,
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."broker_employees" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "full_name" text NOT NULL,
+  "role" text NOT NULL DEFAULT 'staff'::text,
+  "phone" text,
+  "salary_type" text DEFAULT 'bulanan'::text,
+  "salary_amount" numeric DEFAULT 0,
+  "status" text DEFAULT 'aktif'::text,
+  "start_date" date,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."broker_profiles" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "chicken_types" text[] DEFAULT '{}'::text[],
+  "egg_types" text[] DEFAULT '{}'::text[],
+  "area_operasi" text,
+  "target_volume_monthly" integer DEFAULT 0,
+  "mitra_peternak_count" integer DEFAULT 0,
+  "kapasitas_harian_butir" integer DEFAULT 0,
+  "catatan" text,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."chicken_batches" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "farm_id" uuid NOT NULL,
+  "batch_code" text,
+  "chicken_type" text NOT NULL DEFAULT 'broiler'::text,
+  "initial_count" integer NOT NULL,
+  "current_count" integer NOT NULL,
+  "avg_weight_kg" numeric,
+  "age_days" integer,
+  "estimated_harvest_date" date,
+  "status" text NOT NULL DEFAULT 'growing'::text,
+  "quality_notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."cycle_expenses" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "cycle_id" uuid NOT NULL,
+  "expense_type" text NOT NULL,
+  "description" text,
+  "qty" numeric,
+  "unit" text,
+  "unit_price" integer,
+  "total_amount" bigint NOT NULL,
+  "expense_date" date NOT NULL,
+  "supplier" text,
+  "is_deleted" boolean DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."daily_records" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "cycle_id" uuid NOT NULL,
+  "record_date" date NOT NULL,
+  "age_days" integer NOT NULL,
+  "mortality_count" integer NOT NULL DEFAULT 0,
+  "cull_count" integer NOT NULL DEFAULT 0,
+  "feed_type" text,
+  "feed_kg" numeric NOT NULL DEFAULT 0,
+  "sample_count" integer,
+  "sample_weight_kg" numeric,
+  "avg_weight_kg" numeric,
+  "temperature_morning" numeric,
+  "temperature_evening" numeric,
+  "health_notes" text,
+  "notes" text,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "water_liter" numeric,
+  "litter_condition" text,
+  "ammonia_level" text
+);
+
+CREATE TABLE IF NOT EXISTS "public"."deliveries" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "sale_id" uuid NOT NULL,
+  "vehicle_type" text,
+  "vehicle_plate" text,
+  "driver_name" text,
+  "driver_phone" text,
+  "load_time" timestamp with time zone,
+  "departure_time" timestamp with time zone,
+  "arrival_time" timestamp with time zone,
+  "initial_count" integer NOT NULL,
+  "arrived_count" integer,
+  "mortality_count" integer NOT NULL DEFAULT 0,
+  "initial_weight_kg" numeric,
+  "arrived_weight_kg" numeric,
+  "shrinkage_kg" numeric,
+  "delivery_cost" integer NOT NULL DEFAULT 0,
+  "status" text NOT NULL DEFAULT 'preparing'::text,
+  "notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now(),
+  "vehicle_id" uuid,
+  "driver_id" uuid,
+  "driver_wage" numeric DEFAULT 0,
+  "include_driver_wage" boolean DEFAULT true,
+  "include_fuel_cost" boolean DEFAULT true
+);
+
+CREATE TABLE IF NOT EXISTS "public"."discount_codes" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "code" text NOT NULL,
+  "discount_type" text NOT NULL,
+  "discount_value" integer NOT NULL DEFAULT 0,
+  "applies_to_plan" text DEFAULT 'all'::text,
+  "applies_to_role" text DEFAULT 'all'::text,
+  "expires_at" timestamp with time zone,
+  "max_usage" integer,
+  "usage_count" integer DEFAULT 0,
+  "is_active" boolean DEFAULT true,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."domba_breeding_animals" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "ear_tag" text NOT NULL,
+  "name" text,
+  "breed" text,
+  "sex" text NOT NULL DEFAULT 'betina'::text,
+  "birth_date" date,
+  "entry_date" date DEFAULT CURRENT_DATE,
+  "entry_weight_kg" numeric,
+  "dam_id" uuid,
+  "sire_id" uuid,
+  "generation" integer DEFAULT 0,
+  "status" text DEFAULT 'aktif'::text,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."domba_breeding_births" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "dam_id" uuid NOT NULL,
+  "mating_id" uuid,
+  "partus_date" date NOT NULL,
+  "born_alive" integer DEFAULT 0,
+  "born_dead" integer DEFAULT 0,
+  "birth_type" text,
+  "birth_ease" text DEFAULT 'normal'::text,
+  "kids_detail" jsonb DEFAULT '[]'::jsonb,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."domba_breeding_feed_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "log_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "hijauan_kg" numeric DEFAULT 0,
+  "konsentrat_kg" numeric DEFAULT 0,
+  "dedak_kg" numeric DEFAULT 0,
+  "other_feed_kg" numeric DEFAULT 0,
+  "feed_cost_idr" numeric,
+  "animal_count" integer,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."domba_breeding_health_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid,
+  "log_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "log_type" text NOT NULL DEFAULT 'pemeriksaan'::text,
+  "symptoms" text,
+  "diagnosis" text,
+  "treatment" text,
+  "medicine_name" text,
+  "medicine_dose" text,
+  "handled_by" text,
+  "outcome" text,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "treatment_cost_idr" numeric DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS "public"."domba_breeding_mating_records" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "dam_id" uuid NOT NULL,
+  "sire_id" uuid,
+  "mating_date" date NOT NULL,
+  "mating_type" text DEFAULT 'kawin_alam'::text,
+  "inseminator" text,
+  "straw_code" text,
+  "expected_partus" date,
+  "result" text DEFAULT 'menunggu'::text,
+  "pregnancy_check_date" date,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."domba_breeding_sales" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid NOT NULL,
+  "sale_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "buyer_name" text,
+  "sale_type" text DEFAULT 'bibit'::text,
+  "price_idr" numeric,
+  "weight_kg" numeric,
+  "age_days" integer,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."domba_breeding_weight_records" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid NOT NULL,
+  "weigh_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "weight_kg" numeric NOT NULL,
+  "bcs" text,
+  "age_days" integer,
+  "adg_since_last" numeric,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."domba_kandangs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_id" uuid,
+  "name" text NOT NULL,
+  "capacity" integer DEFAULT 0,
+  "panjang_m" numeric,
+  "lebar_m" numeric,
+  "is_holding" boolean DEFAULT false,
+  "is_active" boolean DEFAULT true,
+  "notes" text,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now(),
+  "grid_x" integer,
+  "grid_y" integer
+);
+
+CREATE TABLE IF NOT EXISTS "public"."domba_penggemukan_animals" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_id" uuid,
+  "ear_tag" text NOT NULL,
+  "breed" text,
+  "sex" text DEFAULT 'jantan'::text,
+  "age_estimate" text,
+  "entry_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "entry_weight_kg" numeric,
+  "entry_bcs" text,
+  "entry_condition" text DEFAULT 'sehat'::text,
+  "purchase_price_idr" numeric,
+  "source" text,
+  "kandang_slot" text,
+  "kandang_id" uuid,
+  "quarantine_start" date,
+  "quarantine_end" date,
+  "quarantine_notes" text,
+  "status" text NOT NULL DEFAULT 'active'::text,
+  "exit_date" date,
+  "latest_weight_kg" numeric,
+  "latest_weight_date" date,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now(),
+  "entry_age_months" integer
+);
+
+CREATE TABLE IF NOT EXISTS "public"."domba_penggemukan_batches" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_code" text NOT NULL,
+  "kandang_name" text,
+  "start_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "target_end_date" date,
+  "status" text NOT NULL DEFAULT 'active'::text,
+  "total_animals" integer DEFAULT 0,
+  "mortality_count" integer DEFAULT 0,
+  "notes" text,
+  "end_date" date,
+  "avg_adg_gram" numeric,
+  "avg_fcr" numeric,
+  "avg_entry_weight_kg" numeric,
+  "avg_exit_weight_kg" numeric,
+  "total_feed_cost_idr" numeric,
+  "total_revenue_idr" numeric,
+  "total_cogs_idr" numeric,
+  "net_profit_idr" numeric,
+  "rc_ratio" numeric,
+  "alive_count" integer,
+  "sold_count" integer,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."domba_penggemukan_feed_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_id" uuid NOT NULL,
+  "log_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "kandang_name" text,
+  "animal_count" integer,
+  "hijauan_kg" numeric DEFAULT 0,
+  "konsentrat_kg" numeric DEFAULT 0,
+  "dedak_kg" numeric DEFAULT 0,
+  "other_feed_kg" numeric DEFAULT 0,
+  "sisa_pakan_kg" numeric DEFAULT 0,
+  "feed_cost_idr" numeric,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "feed_orts_category" text
+);
+
+CREATE TABLE IF NOT EXISTS "public"."domba_penggemukan_health_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid,
+  "batch_id" uuid,
+  "log_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "log_type" text NOT NULL DEFAULT 'pemeriksaan'::text,
+  "symptoms" text,
+  "action_taken" text,
+  "medicine_name" text,
+  "medicine_dose" text,
+  "handled_by" text,
+  "outcome" text,
+  "vaccine_name" text,
+  "vaccine_next_due" date,
+  "death_cause" text,
+  "death_weight_kg" numeric,
+  "loss_value_idr" numeric,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "treatment_cost_idr" numeric DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS "public"."domba_penggemukan_operational_costs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_id" uuid,
+  "log_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "item_name" text NOT NULL,
+  "category" text NOT NULL DEFAULT 'lainnya'::text,
+  "amount_idr" numeric NOT NULL DEFAULT 0,
+  "quantity" numeric DEFAULT 0,
+  "unit" text,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."domba_penggemukan_sales" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_id" uuid NOT NULL,
+  "sale_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "buyer_name" text,
+  "buyer_type" text,
+  "buyer_contact" text,
+  "animal_ids" text[],
+  "animal_count" integer,
+  "total_weight_kg" numeric,
+  "avg_weight_kg" numeric,
+  "price_type" text,
+  "price_amount" numeric,
+  "total_revenue_idr" numeric,
+  "payment_method" text,
+  "is_paid" boolean DEFAULT false,
+  "paid_date" date,
+  "has_skkh" boolean DEFAULT false,
+  "has_surat_jalan" boolean DEFAULT false,
+  "invoice_number" text,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."domba_penggemukan_weight_records" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid NOT NULL,
+  "batch_id" uuid,
+  "weigh_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "weight_kg" numeric NOT NULL,
+  "bcs" text,
+  "days_in_farm" integer,
+  "adg_since_last" numeric,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "famacha_score" integer
+);
+
+CREATE TABLE IF NOT EXISTS "public"."drivers" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "full_name" text NOT NULL,
+  "phone" text NOT NULL,
+  "sim_number" text,
+  "sim_type" text DEFAULT 'B1'::text,
+  "sim_expires_at" date,
+  "status" text NOT NULL DEFAULT 'aktif'::text,
+  "wage_per_trip" integer DEFAULT 0,
+  "address" text,
+  "notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."egg_customers" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "name" text NOT NULL,
+  "phone" text,
+  "address" text,
+  "total_spent" bigint NOT NULL DEFAULT 0,
+  "total_orders" integer NOT NULL DEFAULT 0,
+  "notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."egg_inventory" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "product_name" text NOT NULL,
+  "egg_grade" text NOT NULL DEFAULT 'standard'::text,
+  "current_stock_butir" integer NOT NULL DEFAULT 0,
+  "cost_per_egg" integer NOT NULL DEFAULT 0,
+  "packaging_cost" integer NOT NULL DEFAULT 0,
+  "eggs_per_pack" integer NOT NULL DEFAULT 10,
+  "sell_price_per_pack" integer NOT NULL DEFAULT 0,
+  "low_stock_threshold" integer NOT NULL DEFAULT 20,
+  "notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "cost_per_pack" integer
+);
+
+CREATE TABLE IF NOT EXISTS "public"."egg_sale_items" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "sale_id" uuid NOT NULL,
+  "inventory_id" uuid NOT NULL,
+  "qty_pack" integer NOT NULL DEFAULT 1,
+  "price_per_pack" integer NOT NULL DEFAULT 0,
+  "cost_per_pack" integer NOT NULL DEFAULT 0,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "subtotal" bigint
+);
+
+CREATE TABLE IF NOT EXISTS "public"."egg_sales" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "customer_id" uuid,
+  "invoice_number" text NOT NULL,
+  "customer_name" text NOT NULL,
+  "customer_phone" text,
+  "total_price" bigint NOT NULL DEFAULT 0,
+  "total_cost" bigint NOT NULL DEFAULT 0,
+  "payment_status" text NOT NULL DEFAULT 'pending'::text,
+  "payment_method" text,
+  "fulfillment_status" text NOT NULL DEFAULT 'processing'::text,
+  "transaction_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "due_date" date,
+  "notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "net_profit" bigint
+);
+
+CREATE TABLE IF NOT EXISTS "public"."egg_stock_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "inventory_id" uuid NOT NULL,
+  "sale_id" uuid,
+  "supplier_id" uuid,
+  "log_type" text NOT NULL,
+  "qty_butir" integer NOT NULL,
+  "unit_price" integer,
+  "notes" text,
+  "created_by" uuid,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."egg_suppliers" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "name" text NOT NULL,
+  "phone" text,
+  "address" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."extra_expenses" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "category" text NOT NULL,
+  "description" text NOT NULL,
+  "amount" bigint NOT NULL,
+  "expense_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."farms" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "farm_name" text NOT NULL,
+  "owner_name" text NOT NULL,
+  "phone" text,
+  "location" text,
+  "address" text,
+  "latitude" numeric,
+  "longitude" numeric,
+  "chicken_type" text NOT NULL DEFAULT 'broiler'::text,
+  "capacity" integer,
+  "available_stock" integer NOT NULL DEFAULT 0,
+  "avg_weight_kg" numeric,
+  "harvest_date" date,
+  "status" text NOT NULL DEFAULT 'empty'::text,
+  "quality_rating" smallint,
+  "quality_notes" text,
+  "last_transaction_date" date,
+  "notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now(),
+  "province" text
+);
+
+CREATE TABLE IF NOT EXISTS "public"."feed_stocks" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "peternak_farm_id" uuid NOT NULL,
+  "feed_type" text NOT NULL,
+  "quantity_kg" numeric NOT NULL DEFAULT 0,
+  "price_per_kg" integer,
+  "purchase_date" date,
+  "supplier" text,
+  "notes" text,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."generated_invoices" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "invoice_type" text NOT NULL,
+  "reference_id" uuid NOT NULL,
+  "invoice_number" text NOT NULL,
+  "recipient_name" text,
+  "total_amount" bigint DEFAULT 0,
+  "status" text DEFAULT 'draft'::text,
+  "pdf_url" text,
+  "metadata" jsonb,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "created_by" uuid
+);
+
+CREATE TABLE IF NOT EXISTS "public"."global_audit_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "actor_profile_id" uuid,
+  "tenant_id" uuid,
+  "action" text NOT NULL,
+  "entity_type" text NOT NULL,
+  "entity_id" uuid,
+  "old_data" jsonb,
+  "new_data" jsonb,
+  "ip_address" text,
+  "user_agent" text,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."harvest_records" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "cycle_id" uuid NOT NULL,
+  "harvest_date" date NOT NULL,
+  "buyer_type" text,
+  "buyer_name" text,
+  "mitra_company" text,
+  "contract_price_per_kg" integer,
+  "total_ekor_panen" integer NOT NULL,
+  "total_weight_kg" numeric NOT NULL,
+  "avg_weight_kg" numeric,
+  "price_per_kg" integer,
+  "total_revenue" bigint,
+  "deduction_sapronak" bigint DEFAULT 0,
+  "net_revenue" bigint,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."invite_rate_limits" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "ip_address" text NOT NULL,
+  "attempt_count" integer DEFAULT 1,
+  "first_attempt_at" timestamp with time zone DEFAULT now(),
+  "locked_until" timestamp with time zone,
+  "last_attempt_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_breeding_animals" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "ear_tag" text NOT NULL,
+  "name" text,
+  "breed" text,
+  "sex" text NOT NULL DEFAULT 'betina'::text,
+  "birth_date" date,
+  "entry_date" date DEFAULT CURRENT_DATE,
+  "entry_weight_kg" numeric,
+  "dam_id" uuid,
+  "sire_id" uuid,
+  "generation" integer DEFAULT 0,
+  "status" text DEFAULT 'aktif'::text,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_breeding_births" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "dam_id" uuid NOT NULL,
+  "mating_id" uuid,
+  "partus_date" date NOT NULL,
+  "born_alive" integer DEFAULT 0,
+  "born_dead" integer DEFAULT 0,
+  "birth_type" text,
+  "birth_ease" text DEFAULT 'normal'::text,
+  "kids_detail" jsonb DEFAULT '[]'::jsonb,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_breeding_feed_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "log_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "hijauan_kg" numeric DEFAULT 0,
+  "konsentrat_kg" numeric DEFAULT 0,
+  "dedak_kg" numeric DEFAULT 0,
+  "other_feed_kg" numeric DEFAULT 0,
+  "feed_cost_idr" numeric,
+  "animal_count" integer,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_breeding_health_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid,
+  "log_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "log_type" text NOT NULL DEFAULT 'pemeriksaan'::text,
+  "symptoms" text,
+  "diagnosis" text,
+  "treatment" text,
+  "medicine_name" text,
+  "medicine_dose" text,
+  "handled_by" text,
+  "outcome" text,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "treatment_cost_idr" numeric DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_breeding_mating_records" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "dam_id" uuid NOT NULL,
+  "sire_id" uuid,
+  "mating_date" date NOT NULL,
+  "mating_type" text DEFAULT 'kawin_alam'::text,
+  "inseminator" text,
+  "straw_code" text,
+  "expected_partus" date,
+  "result" text DEFAULT 'menunggu'::text,
+  "pregnancy_check_date" date,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_breeding_sales" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid NOT NULL,
+  "sale_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "buyer_name" text,
+  "sale_type" text DEFAULT 'bibit'::text,
+  "price_idr" numeric,
+  "weight_kg" numeric,
+  "age_days" integer,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_breeding_weight_records" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid NOT NULL,
+  "weigh_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "weight_kg" numeric NOT NULL,
+  "bcs" text,
+  "age_days" integer,
+  "adg_since_last" numeric,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_kandangs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_id" uuid,
+  "name" text NOT NULL,
+  "capacity" integer DEFAULT 0,
+  "panjang_m" numeric,
+  "lebar_m" numeric,
+  "is_holding" boolean DEFAULT false,
+  "is_active" boolean DEFAULT true,
+  "notes" text,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_penggemukan_animals" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_id" uuid,
+  "ear_tag" text NOT NULL,
+  "breed" text,
+  "sex" text DEFAULT 'jantan'::text,
+  "age_estimate" text,
+  "entry_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "entry_weight_kg" numeric,
+  "entry_bcs" text,
+  "entry_condition" text DEFAULT 'sehat'::text,
+  "purchase_price_idr" numeric,
+  "source" text,
+  "kandang_slot" text,
+  "kandang_id" uuid,
+  "quarantine_start" date,
+  "quarantine_end" date,
+  "quarantine_notes" text,
+  "status" text NOT NULL DEFAULT 'active'::text,
+  "exit_date" date,
+  "latest_weight_kg" numeric,
+  "latest_weight_date" date,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_penggemukan_batches" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_code" text NOT NULL,
+  "kandang_name" text,
+  "start_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "target_end_date" date,
+  "status" text NOT NULL DEFAULT 'active'::text,
+  "total_animals" integer DEFAULT 0,
+  "mortality_count" integer DEFAULT 0,
+  "notes" text,
+  "end_date" date,
+  "avg_adg_gram" numeric,
+  "avg_fcr" numeric,
+  "avg_entry_weight_kg" numeric,
+  "avg_exit_weight_kg" numeric,
+  "total_feed_cost_idr" numeric,
+  "total_revenue_idr" numeric,
+  "total_cogs_idr" numeric,
+  "net_profit_idr" numeric,
+  "rc_ratio" numeric,
+  "alive_count" integer,
+  "sold_count" integer,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_penggemukan_feed_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_id" uuid NOT NULL,
+  "log_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "kandang_name" text,
+  "animal_count" integer,
+  "hijauan_kg" numeric DEFAULT 0,
+  "konsentrat_kg" numeric DEFAULT 0,
+  "dedak_kg" numeric DEFAULT 0,
+  "other_feed_kg" numeric DEFAULT 0,
+  "sisa_pakan_kg" numeric DEFAULT 0,
+  "feed_cost_idr" numeric,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_penggemukan_health_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid,
+  "batch_id" uuid,
+  "log_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "log_type" text NOT NULL DEFAULT 'pemeriksaan'::text,
+  "symptoms" text,
+  "action_taken" text,
+  "medicine_name" text,
+  "medicine_dose" text,
+  "handled_by" text,
+  "outcome" text,
+  "vaccine_name" text,
+  "vaccine_next_due" date,
+  "death_cause" text,
+  "death_weight_kg" numeric,
+  "loss_value_idr" numeric,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "treatment_cost_idr" numeric DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_penggemukan_operational_costs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_id" uuid,
+  "log_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "item_name" text NOT NULL,
+  "category" text NOT NULL DEFAULT 'lainnya'::text,
+  "amount_idr" numeric NOT NULL DEFAULT 0,
+  "quantity" numeric DEFAULT 0,
+  "unit" text,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_penggemukan_sales" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_id" uuid NOT NULL,
+  "sale_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "buyer_name" text,
+  "buyer_type" text,
+  "buyer_contact" text,
+  "animal_ids" text[],
+  "animal_count" integer,
+  "total_weight_kg" numeric,
+  "avg_weight_kg" numeric,
+  "price_type" text,
+  "price_amount" numeric,
+  "total_revenue_idr" numeric,
+  "payment_method" text,
+  "is_paid" boolean DEFAULT false,
+  "paid_date" date,
+  "has_skkh" boolean DEFAULT false,
+  "has_surat_jalan" boolean DEFAULT false,
+  "invoice_number" text,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_penggemukan_weight_records" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid NOT NULL,
+  "batch_id" uuid,
+  "weigh_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "weight_kg" numeric NOT NULL,
+  "bcs" text,
+  "days_in_farm" integer,
+  "adg_since_last" numeric,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_animal_groups" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "name" text NOT NULL,
+  "description" text,
+  "group_type" text,
+  "is_active" boolean DEFAULT true,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_breeding_animals" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "group_id" uuid,
+  "kandang_id" uuid,
+  "ear_tag" text NOT NULL,
+  "name" text,
+  "breed" text,
+  "sex" text NOT NULL DEFAULT 'betina'::text,
+  "birth_date" date,
+  "entry_date" date DEFAULT CURRENT_DATE,
+  "entry_weight_kg" numeric,
+  "dam_id" uuid,
+  "sire_id" uuid,
+  "status" text DEFAULT 'aktif'::text,
+  "current_parity" integer DEFAULT 0,
+  "total_lifetime_yield" numeric DEFAULT 0,
+  "last_milking_date" date,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_breeding_births" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "dam_id" uuid NOT NULL,
+  "mating_id" uuid,
+  "partus_date" date NOT NULL,
+  "born_alive" integer DEFAULT 0,
+  "born_dead" integer DEFAULT 0,
+  "kids_ids" text[],
+  "notes" text,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_breeding_feed_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "group_id" uuid,
+  "formulation_id" uuid,
+  "log_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "total_qty_kg" numeric,
+  "total_cost_idr" numeric,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_breeding_health_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid,
+  "log_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "log_type" text NOT NULL DEFAULT 'pemeriksaan'::text,
+  "symptoms" text,
+  "is_udder_problem" boolean DEFAULT false,
+  "action_taken" text,
+  "medicine_item_id" uuid,
+  "medicine_usage_qty" numeric,
+  "withdrawal_date" date,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_breeding_mating_records" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "dam_id" uuid NOT NULL,
+  "sire_id" uuid,
+  "mating_date" date NOT NULL,
+  "mating_type" text DEFAULT 'kawin_alam'::text,
+  "expected_partus" date,
+  "result" text DEFAULT 'menunggu'::text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_breeding_weight_records" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid NOT NULL,
+  "weigh_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "weight_kg" numeric NOT NULL,
+  "bcs" text,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_customer_registry" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "name" text NOT NULL,
+  "type" text,
+  "phone" text,
+  "address" text,
+  "loyalty_points" integer DEFAULT 0,
+  "notes" text,
+  "is_active" boolean DEFAULT true,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_feed_formulations" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "name" text NOT NULL,
+  "target_group_type" text,
+  "ingredients" jsonb,
+  "cost_per_kg" numeric,
+  "is_active" boolean DEFAULT true,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_inventory_items" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "name" text NOT NULL,
+  "category" text NOT NULL,
+  "unit" text NOT NULL,
+  "stock_quantity" numeric DEFAULT 0,
+  "reorder_level" numeric DEFAULT 0,
+  "unit_price_idr" numeric,
+  "is_active" boolean DEFAULT true,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_inventory_transactions" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "item_id" uuid NOT NULL,
+  "type" text NOT NULL,
+  "quantity" numeric NOT NULL,
+  "transaction_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "reference_type" text,
+  "reference_id" uuid,
+  "notes" text,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_kandangs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "name" text NOT NULL,
+  "type" text,
+  "capacity" integer DEFAULT 0,
+  "is_active" boolean DEFAULT true,
+  "notes" text,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_lactation_cycles" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid NOT NULL,
+  "start_date" date NOT NULL,
+  "dry_off_date" date,
+  "parity_number" integer NOT NULL,
+  "status" text,
+  "total_yield_liter" numeric DEFAULT 0,
+  "peak_yield_liter" numeric,
+  "avg_daily_yield" numeric,
+  "notes" text,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_milk_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid NOT NULL,
+  "lactation_id" uuid,
+  "log_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "session" text,
+  "volume_liter" numeric NOT NULL DEFAULT 0,
+  "temperature_c" numeric,
+  "acidity_ph" numeric,
+  "operator_name" text,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_milk_quality_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid NOT NULL,
+  "lactation_id" uuid,
+  "test_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "fat_pct" numeric,
+  "snf_pct" numeric,
+  "protein_pct" numeric,
+  "scc_value" integer,
+  "bacteria_count" integer,
+  "quality_grade" text,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_milk_sales" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "customer_id" uuid,
+  "sale_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "buyer_name_legacy" text,
+  "volume_liter" numeric NOT NULL,
+  "price_per_liter" numeric NOT NULL,
+  "total_revenue_idr" numeric NOT NULL,
+  "payment_method" text,
+  "is_paid" boolean DEFAULT false,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_penggemukan_animals" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_id" uuid,
+  "ear_tag" text NOT NULL,
+  "sex" text DEFAULT 'jantan'::text,
+  "status" text DEFAULT 'active'::text,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_penggemukan_batches" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_code" text NOT NULL,
+  "status" text NOT NULL DEFAULT 'active'::text,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_penggemukan_feed_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_id" uuid,
+  "log_date" date DEFAULT CURRENT_DATE,
+  "feed_cost_idr" numeric,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_penggemukan_health_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid,
+  "log_type" text,
+  "action_taken" text,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_penggemukan_sales" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_id" uuid,
+  "sale_date" date DEFAULT CURRENT_DATE,
+  "total_revenue_idr" numeric,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kambing_perah_penggemukan_weight_records" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid NOT NULL,
+  "weight_kg" numeric NOT NULL,
+  "weigh_date" date DEFAULT CURRENT_DATE,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kandang_worker_payments" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "worker_id" uuid NOT NULL,
+  "payment_date" date NOT NULL,
+  "payment_type" text NOT NULL DEFAULT 'gaji'::text,
+  "amount" integer NOT NULL DEFAULT 0,
+  "notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."kandang_workers" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "peternak_farm_id" uuid,
+  "full_name" text NOT NULL,
+  "phone" text,
+  "join_date" date,
+  "salary_type" text DEFAULT 'flat_bonus'::text,
+  "base_salary" integer DEFAULT 0,
+  "bonus_per_kg" integer DEFAULT 0,
+  "bonus_threshold_fcr" numeric,
+  "status" text DEFAULT 'aktif'::text,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "profile_id" uuid,
+  "kandang_name" text,
+  "pay_day" integer DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS "public"."loss_reports" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "sale_id" uuid,
+  "delivery_id" uuid,
+  "loss_type" text NOT NULL,
+  "chicken_count" integer NOT NULL DEFAULT 0,
+  "weight_loss_kg" numeric NOT NULL DEFAULT 0,
+  "price_per_kg" integer,
+  "financial_loss" bigint,
+  "description" text,
+  "resolved" boolean NOT NULL DEFAULT false,
+  "resolved_at" timestamp with time zone,
+  "report_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."market_listings" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "listing_type" text NOT NULL,
+  "chicken_type" text DEFAULT 'broiler'::text,
+  "quantity_ekor" integer,
+  "weight_kg" numeric,
+  "price_per_kg" integer,
+  "title" text NOT NULL,
+  "description" text,
+  "location" text,
+  "contact_name" text NOT NULL,
+  "contact_wa" text NOT NULL,
+  "status" text DEFAULT 'active'::text,
+  "expires_at" timestamp with time zone DEFAULT (now() + '30 days'::interval),
+  "view_count" integer DEFAULT 0,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "is_deleted" boolean DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."market_prices" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "price_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "chicken_type" text NOT NULL DEFAULT 'broiler'::text,
+  "region" text NOT NULL DEFAULT 'nasional'::text,
+  "farm_gate_price" integer,
+  "avg_buy_price" integer,
+  "avg_sell_price" integer,
+  "buyer_price" integer,
+  "broker_margin" integer,
+  "transaction_count" integer NOT NULL DEFAULT 1,
+  "source" text NOT NULL DEFAULT 'transaction'::text,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now(),
+  "source_url" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "price_delta" integer DEFAULT 0,
+  "needs_review" boolean NOT NULL DEFAULT false,
+  "submitted_by" uuid
+);
+
+CREATE TABLE IF NOT EXISTS "public"."notifications" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "type" text NOT NULL,
+  "title" text NOT NULL,
+  "body" text,
+  "is_read" boolean NOT NULL DEFAULT false,
+  "action_url" text,
+  "metadata" jsonb,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "priority" smallint NOT NULL DEFAULT 1,
+  "expires_at" timestamp with time zone,
+  "vertical" text,
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "is_deleted" boolean NOT NULL DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."orders" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "rpa_id" uuid NOT NULL,
+  "chicken_type" text NOT NULL DEFAULT 'broiler'::text,
+  "requested_count" integer NOT NULL,
+  "requested_weight_kg" numeric,
+  "target_price_per_kg" integer,
+  "preferred_size" text,
+  "requested_date" date,
+  "status" text NOT NULL DEFAULT 'open'::text,
+  "matched_farm_id" uuid,
+  "matched_batch_id" uuid,
+  "notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."payment_settings" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "bank_name" text NOT NULL,
+  "account_number" text NOT NULL,
+  "account_name" text NOT NULL,
+  "is_active" boolean DEFAULT true,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."payments" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "sale_id" uuid NOT NULL,
+  "amount" bigint NOT NULL,
+  "payment_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "payment_method" text NOT NULL DEFAULT 'transfer'::text,
+  "reference_no" text,
+  "notes" text,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "is_deleted" boolean DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."peternak_farms" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "farm_name" text NOT NULL,
+  "location" text,
+  "address" text,
+  "latitude" numeric,
+  "longitude" numeric,
+  "capacity" integer NOT NULL,
+  "kandang_count" integer DEFAULT 1,
+  "is_active" boolean DEFAULT true,
+  "notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now(),
+  "business_model" text DEFAULT 'mandiri'::text,
+  "mitra_company" text,
+  "mitra_contract_price" integer,
+  "livestock_type" text DEFAULT 'ayam_broiler'::text,
+  "mitra_contract_notes" text,
+  "animal_types" text[] DEFAULT '{}'::text[],
+  "doc_capacity" integer DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS "public"."peternak_profiles" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_types" text[] DEFAULT '{}'::text[],
+  "chicken_sub_types" text[] DEFAULT '{}'::text[],
+  "ruminansia_types" text[] DEFAULT '{}'::text[],
+  "kandang_count" integer DEFAULT 1,
+  "doc_capacity" integer DEFAULT 0,
+  "total_ternak" integer DEFAULT 0,
+  "luas_lahan_m2" integer DEFAULT 0,
+  "catatan" text,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."peternak_task_instances" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "template_id" uuid,
+  "kandang_name" text,
+  "title" text NOT NULL,
+  "description" text,
+  "task_type" text NOT NULL,
+  "due_date" date NOT NULL,
+  "due_time" time without time zone,
+  "assigned_worker_id" uuid,
+  "assigned_profile_id" uuid,
+  "status" text NOT NULL DEFAULT 'pending'::text,
+  "completed_at" timestamp with time zone,
+  "completed_by_profile_id" uuid,
+  "linked_record_id" uuid,
+  "linked_record_table" text,
+  "notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "livestock_type" text
+);
+
+CREATE TABLE IF NOT EXISTS "public"."peternak_task_templates" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "kandang_name" text,
+  "title" text NOT NULL,
+  "description" text,
+  "task_type" text NOT NULL,
+  "linked_data_entry" boolean NOT NULL DEFAULT false,
+  "recurring_type" text NOT NULL,
+  "recurring_interval_days" integer,
+  "recurring_days_of_week" text[],
+  "start_date" date NOT NULL,
+  "end_date" date,
+  "default_assignee_worker_id" uuid,
+  "is_active" boolean NOT NULL DEFAULT true,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_by" uuid,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "due_time" time without time zone NOT NULL DEFAULT '08:00:00'::time without time zone,
+  "livestock_type" text
+);
+
+CREATE TABLE IF NOT EXISTS "public"."plan_configs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "config_key" text NOT NULL,
+  "config_value" jsonb NOT NULL,
+  "description" text,
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."pricing_plans" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "role" text NOT NULL,
+  "plan" text NOT NULL,
+  "price" integer NOT NULL DEFAULT 0,
+  "original_price" integer DEFAULT 0,
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."profiles" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "auth_user_id" uuid NOT NULL,
+  "full_name" text,
+  "role" text NOT NULL DEFAULT 'owner'::text,
+  "user_type" text NOT NULL DEFAULT 'broker'::text,
+  "phone" text,
+  "avatar_url" text,
+  "is_active" boolean NOT NULL DEFAULT true,
+  "onboarded" boolean NOT NULL DEFAULT false,
+  "last_seen_at" timestamp with time zone,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now(),
+  "business_model_selected" boolean NOT NULL DEFAULT false,
+  "onboarding_completed_at" timestamp with time zone,
+  "business_limit" integer DEFAULT 1,
+  "additional_slots" integer DEFAULT 0,
+  "tutorials_completed" jsonb NOT NULL DEFAULT '{}'::jsonb,
+  "app_role" text NOT NULL DEFAULT 'user'::text,
+  "email" text
+);
+
+CREATE TABLE IF NOT EXISTS "public"."purchases" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "farm_id" uuid NOT NULL,
+  "batch_id" uuid,
+  "quantity" integer NOT NULL,
+  "avg_weight_kg" numeric NOT NULL,
+  "total_weight_kg" numeric NOT NULL,
+  "price_per_kg" integer NOT NULL,
+  "total_cost" bigint NOT NULL,
+  "transport_cost" integer NOT NULL DEFAULT 0,
+  "other_cost" integer NOT NULL DEFAULT 0,
+  "total_modal" bigint,
+  "transaction_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."rpa_clients" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "rpa_name" text NOT NULL,
+  "buyer_type" text NOT NULL DEFAULT 'rpa'::text,
+  "contact_person" text,
+  "phone" text,
+  "location" text,
+  "address" text,
+  "payment_terms" text NOT NULL DEFAULT 'cash'::text,
+  "credit_limit" bigint NOT NULL DEFAULT 0,
+  "total_outstanding" bigint NOT NULL DEFAULT 0,
+  "avg_volume_per_order" integer,
+  "preferred_chicken_size" text,
+  "preferred_chicken_type" text DEFAULT 'broiler'::text,
+  "last_deal_price" integer,
+  "reliability_score" smallint,
+  "notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now(),
+  "province" text
+);
+
+CREATE TABLE IF NOT EXISTS "public"."rpa_customer_payments" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "invoice_id" uuid NOT NULL,
+  "customer_id" uuid,
+  "amount" bigint NOT NULL,
+  "payment_date" date NOT NULL,
+  "payment_method" text DEFAULT 'cash'::text,
+  "reference_no" text,
+  "notes" text,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "is_deleted" boolean DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."rpa_customers" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "customer_name" text NOT NULL,
+  "customer_type" text DEFAULT 'toko_kecil'::text,
+  "contact_person" text,
+  "phone" text,
+  "address" text,
+  "payment_terms" text DEFAULT 'cash'::text,
+  "credit_limit" bigint DEFAULT 0,
+  "total_outstanding" bigint DEFAULT 0,
+  "total_purchases" bigint DEFAULT 0,
+  "reliability_score" smallint,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."rpa_invoice_items" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "invoice_id" uuid NOT NULL,
+  "product_id" uuid,
+  "product_name" text NOT NULL,
+  "quantity_kg" numeric NOT NULL,
+  "price_per_kg" integer NOT NULL,
+  "cost_per_kg" integer DEFAULT 0,
+  "subtotal" bigint
+);
+
+CREATE TABLE IF NOT EXISTS "public"."rpa_invoices" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "customer_id" uuid,
+  "invoice_number" text NOT NULL,
+  "customer_name" text NOT NULL,
+  "transaction_date" date NOT NULL,
+  "due_date" date,
+  "total_amount" bigint DEFAULT 0,
+  "total_cost" bigint DEFAULT 0,
+  "net_profit" bigint,
+  "payment_status" text DEFAULT 'belum_lunas'::text,
+  "paid_amount" bigint DEFAULT 0,
+  "remaining_amount" bigint,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."rpa_payments" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "rpa_tenant_id" uuid NOT NULL,
+  "broker_tenant_id" uuid NOT NULL,
+  "amount" bigint NOT NULL,
+  "payment_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "payment_method" text NOT NULL DEFAULT 'transfer'::text,
+  "reference_no" text,
+  "notes" text,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "is_deleted" boolean DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."rpa_products" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "product_name" text NOT NULL,
+  "product_type" text DEFAULT 'karkas'::text,
+  "unit" text DEFAULT 'kg'::text,
+  "sell_price" integer DEFAULT 0,
+  "cost_price" integer DEFAULT 0,
+  "current_stock_kg" numeric DEFAULT 0,
+  "is_active" boolean DEFAULT true,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."rpa_profiles" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "rpa_name" text NOT NULL,
+  "rpa_type" text NOT NULL DEFAULT 'rpa'::text,
+  "contact_person" text,
+  "phone" text,
+  "address" text,
+  "location" text,
+  "capacity_per_day" integer,
+  "preferred_types" text[],
+  "is_verified" boolean DEFAULT false,
+  "notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now(),
+  "kapasitas_potong_per_hari" integer DEFAULT 0,
+  "product_types" text[] DEFAULT '{}'::text[],
+  "area_distribusi" text,
+  "catatan" text
+);
+
+CREATE TABLE IF NOT EXISTS "public"."rpa_purchase_orders" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "rpa_tenant_id" uuid NOT NULL,
+  "broker_tenant_id" uuid,
+  "chicken_type" text NOT NULL DEFAULT 'broiler'::text,
+  "requested_count" integer NOT NULL,
+  "target_weight_kg" numeric,
+  "max_price_per_kg" integer,
+  "required_date" date,
+  "status" text NOT NULL DEFAULT 'open'::text,
+  "notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sales" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "rpa_id" uuid NOT NULL,
+  "purchase_id" uuid,
+  "order_id" uuid,
+  "quantity" integer NOT NULL,
+  "avg_weight_kg" numeric NOT NULL,
+  "total_weight_kg" numeric NOT NULL,
+  "price_per_kg" integer NOT NULL,
+  "total_revenue" bigint NOT NULL,
+  "delivery_cost" integer NOT NULL DEFAULT 0,
+  "net_revenue" bigint,
+  "payment_status" text NOT NULL DEFAULT 'belum_lunas'::text,
+  "paid_amount" bigint NOT NULL DEFAULT 0,
+  "remaining_amount" bigint,
+  "transaction_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "due_date" date,
+  "notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sapi_breeding_animals" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "ear_tag" text NOT NULL,
+  "name" text,
+  "species" text NOT NULL DEFAULT 'sapi'::text,
+  "sex" text NOT NULL,
+  "breed" text,
+  "breed_composition" text,
+  "generation" text,
+  "birth_date" date,
+  "birth_weight_kg" numeric,
+  "birth_type" text,
+  "dam_id" uuid,
+  "sire_id" uuid,
+  "acquisition_type" text NOT NULL DEFAULT 'beli'::text,
+  "source" text,
+  "purpose" text,
+  "parity" integer NOT NULL DEFAULT 0,
+  "selection_class" text,
+  "phenotype_score" numeric,
+  "genetic_notes" text,
+  "origin" text,
+  "entry_date" date,
+  "entry_weight_kg" numeric,
+  "entry_bcs" numeric,
+  "purchase_price_idr" bigint,
+  "kandang_name" text,
+  "status" text NOT NULL DEFAULT 'aktif'::text,
+  "exit_date" date,
+  "latest_weight_kg" numeric,
+  "latest_weight_date" date,
+  "latest_bcs" numeric,
+  "notes" text,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "is_deleted" boolean NOT NULL DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sapi_breeding_births" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "mating_record_id" uuid,
+  "dam_id" uuid NOT NULL,
+  "partus_date" date NOT NULL,
+  "partus_time" time without time zone,
+  "birth_type" text,
+  "total_born" integer NOT NULL DEFAULT 1,
+  "total_born_alive" integer NOT NULL DEFAULT 1,
+  "total_born_dead" integer,
+  "pedet_sex" text,
+  "pedet_birth_weight_kg" numeric,
+  "pedet_condition" text,
+  "pedet_id" uuid,
+  "is_freemartin_risk" boolean NOT NULL DEFAULT false,
+  "birth_assistance" text NOT NULL DEFAULT 'normal'::text,
+  "colostrum_given" boolean DEFAULT true,
+  "placenta_expelled" boolean DEFAULT true,
+  "retentio_placenta" boolean NOT NULL DEFAULT false,
+  "dam_condition" text,
+  "notes" text,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "is_deleted" boolean NOT NULL DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sapi_breeding_feed_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "log_date" date NOT NULL,
+  "kandang_name" text NOT NULL,
+  "animal_count" integer NOT NULL,
+  "hijauan_kg" numeric NOT NULL DEFAULT 0,
+  "konsentrat_kg" numeric NOT NULL DEFAULT 0,
+  "dedak_kg" numeric NOT NULL DEFAULT 0,
+  "other_feed_kg" numeric NOT NULL DEFAULT 0,
+  "sisa_pakan_kg" numeric NOT NULL DEFAULT 0,
+  "consumed_kg" numeric,
+  "feed_cost_idr" bigint,
+  "notes" text,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "is_deleted" boolean NOT NULL DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sapi_breeding_health_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid NOT NULL,
+  "log_date" date NOT NULL,
+  "log_type" text NOT NULL,
+  "vaccine_name" text,
+  "drug_name" text,
+  "dose" text,
+  "route" text,
+  "symptoms" text,
+  "diagnosis" text,
+  "treatment" text,
+  "outcome" text,
+  "death_cause" text,
+  "death_weight_kg" numeric,
+  "loss_value_idr" bigint,
+  "handled_by" text,
+  "notes" text,
+  "recorded_by" text,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "treatment_cost_idr" numeric DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sapi_breeding_mating_records" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "dam_id" uuid NOT NULL,
+  "sire_id" uuid,
+  "method" text NOT NULL,
+  "bull_name" text,
+  "semen_code" text,
+  "inseminator_name" text,
+  "repeat_ib_count" integer NOT NULL DEFAULT 1,
+  "sync_protocol" text,
+  "estrus_date" date,
+  "mating_date" date NOT NULL,
+  "est_partus_date" date,
+  "pregnancy_confirmed" boolean DEFAULT false,
+  "pregnancy_confirm_date" date,
+  "pregnancy_method" text,
+  "fetus_count" integer,
+  "status" text NOT NULL DEFAULT 'menunggu'::text,
+  "notes" text,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "is_deleted" boolean NOT NULL DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sapi_breeding_sales" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid NOT NULL,
+  "sale_date" date NOT NULL,
+  "product_type" text NOT NULL,
+  "buyer_name" text NOT NULL,
+  "buyer_contact" text,
+  "buyer_type" text,
+  "sale_weight_kg" numeric,
+  "price_type" text,
+  "price_amount" bigint NOT NULL,
+  "total_revenue_idr" bigint NOT NULL,
+  "payment_method" text,
+  "is_paid" boolean NOT NULL DEFAULT false,
+  "paid_date" date,
+  "invoice_number" text,
+  "notes" text,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "is_deleted" boolean NOT NULL DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sapi_breeding_weight_records" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid NOT NULL,
+  "weigh_date" date NOT NULL,
+  "weight_kg" numeric NOT NULL,
+  "age_days" integer,
+  "adg_since_last" numeric,
+  "bcs" numeric,
+  "weigh_method" text NOT NULL DEFAULT 'timbang_langsung'::text,
+  "chest_girth_cm" numeric,
+  "notes" text,
+  "recorded_by" text,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "is_deleted" boolean NOT NULL DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sapi_kandangs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_id" uuid NOT NULL,
+  "name" text NOT NULL,
+  "capacity" integer NOT NULL DEFAULT 0,
+  "panjang_m" numeric,
+  "lebar_m" numeric,
+  "luas_m2" numeric,
+  "is_holding" boolean NOT NULL DEFAULT false,
+  "notes" text,
+  "is_active" boolean NOT NULL DEFAULT true,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "grid_x" integer,
+  "grid_y" integer
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sapi_penggemukan_animals" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_id" uuid NOT NULL,
+  "ear_tag" text NOT NULL,
+  "species" text NOT NULL DEFAULT 'sapi'::text,
+  "breed" text,
+  "sex" text NOT NULL,
+  "birth_date" date,
+  "entry_age_months" integer,
+  "age_confidence" text NOT NULL DEFAULT 'estimasi'::text,
+  "acquisition_type" text NOT NULL DEFAULT 'beli'::text,
+  "entry_date" date NOT NULL,
+  "entry_weight_kg" numeric NOT NULL,
+  "entry_bcs" numeric,
+  "entry_condition" text,
+  "purchase_price_idr" bigint,
+  "source" text,
+  "kandang_slot" text,
+  "quarantine_start" date,
+  "quarantine_end" date,
+  "quarantine_notes" text,
+  "status" text NOT NULL DEFAULT 'active'::text,
+  "exit_date" date,
+  "latest_weight_kg" numeric,
+  "latest_weight_date" date,
+  "latest_bcs" numeric,
+  "kandang_id" uuid,
+  "notes" text,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "is_deleted" boolean NOT NULL DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sapi_penggemukan_batches" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_code" text NOT NULL,
+  "kandang_name" text NOT NULL,
+  "start_date" date NOT NULL,
+  "target_end_date" date,
+  "end_date" date,
+  "batch_purpose" text NOT NULL DEFAULT 'potong'::text,
+  "total_animals" integer NOT NULL DEFAULT 0,
+  "alive_count" integer,
+  "sold_count" integer,
+  "mortality_count" integer NOT NULL DEFAULT 0,
+  "avg_adg_gram" numeric,
+  "avg_fcr" numeric,
+  "avg_entry_weight_kg" numeric,
+  "avg_exit_weight_kg" numeric,
+  "total_feed_cost_idr" bigint,
+  "total_revenue_idr" bigint,
+  "total_cogs_idr" bigint,
+  "net_profit_idr" bigint,
+  "rc_ratio" numeric,
+  "status" text NOT NULL DEFAULT 'active'::text,
+  "notes" text,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "is_deleted" boolean NOT NULL DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sapi_penggemukan_feed_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_id" uuid NOT NULL,
+  "log_date" date NOT NULL,
+  "kandang_name" text NOT NULL,
+  "animal_count" integer NOT NULL,
+  "hijauan_kg" numeric NOT NULL DEFAULT 0,
+  "konsentrat_kg" numeric NOT NULL DEFAULT 0,
+  "dedak_kg" numeric NOT NULL DEFAULT 0,
+  "other_feed_kg" numeric NOT NULL DEFAULT 0,
+  "sisa_pakan_kg" numeric NOT NULL DEFAULT 0,
+  "consumed_kg" numeric,
+  "feed_cost_idr" bigint,
+  "notes" text,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "is_deleted" boolean NOT NULL DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sapi_penggemukan_health_logs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid NOT NULL,
+  "batch_id" uuid NOT NULL,
+  "log_date" date NOT NULL,
+  "log_type" text NOT NULL,
+  "symptoms" text,
+  "action_taken" text,
+  "medicine_name" text,
+  "medicine_dose" text,
+  "handled_by" text,
+  "outcome" text,
+  "vaccine_name" text,
+  "vaccine_next_due" date,
+  "death_cause" text,
+  "death_weight_kg" numeric,
+  "loss_value_idr" bigint,
+  "notes" text,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "treatment_cost_idr" numeric DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sapi_penggemukan_operational_costs" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_id" uuid,
+  "log_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "item_name" text NOT NULL,
+  "category" text NOT NULL DEFAULT 'lainnya'::text,
+  "amount_idr" numeric NOT NULL DEFAULT 0,
+  "quantity" numeric DEFAULT 0,
+  "unit" text,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sapi_penggemukan_sales" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "batch_id" uuid NOT NULL,
+  "sale_date" date NOT NULL,
+  "buyer_name" text NOT NULL,
+  "buyer_type" text,
+  "buyer_contact" text,
+  "animal_ids" text[] NOT NULL,
+  "animal_count" integer NOT NULL,
+  "total_weight_kg" numeric NOT NULL,
+  "avg_weight_kg" numeric,
+  "price_type" text,
+  "price_amount" bigint NOT NULL,
+  "total_revenue_idr" bigint NOT NULL,
+  "payment_method" text,
+  "is_paid" boolean NOT NULL DEFAULT false,
+  "paid_date" date,
+  "has_skkh" boolean NOT NULL DEFAULT false,
+  "has_surat_jalan" boolean NOT NULL DEFAULT false,
+  "invoice_number" text,
+  "notes" text,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "is_deleted" boolean NOT NULL DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sapi_penggemukan_weight_records" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "animal_id" uuid NOT NULL,
+  "batch_id" uuid NOT NULL,
+  "weigh_date" date NOT NULL,
+  "days_in_farm" integer,
+  "weight_kg" numeric NOT NULL,
+  "bcs" numeric,
+  "adg_since_last" numeric,
+  "weigh_method" text NOT NULL DEFAULT 'timbang_langsung'::text,
+  "chest_girth_cm" numeric,
+  "notes" text,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "is_deleted" boolean NOT NULL DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sembako_customers" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "customer_name" text NOT NULL,
+  "customer_type" text DEFAULT 'warung'::text,
+  "contact_person" text,
+  "phone" text,
+  "address" text,
+  "area" text,
+  "payment_terms" text DEFAULT 'cash'::text,
+  "credit_limit" bigint DEFAULT 0,
+  "total_outstanding" bigint DEFAULT 0,
+  "total_purchases" bigint DEFAULT 0,
+  "reliability_score" smallint,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sembako_deliveries" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "sale_id" uuid,
+  "employee_id" uuid,
+  "vehicle_type" text,
+  "vehicle_plate" text,
+  "driver_name" text,
+  "delivery_date" date NOT NULL,
+  "delivery_area" text,
+  "delivery_cost" integer DEFAULT 0,
+  "other_cost" integer DEFAULT 0,
+  "status" text DEFAULT 'pending'::text,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "departed_at" timestamp with time zone,
+  "arrived_at" timestamp with time zone,
+  "completed_at" timestamp with time zone
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sembako_employees" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "full_name" text NOT NULL,
+  "role" text NOT NULL,
+  "phone" text,
+  "address" text,
+  "join_date" date,
+  "salary_type" text DEFAULT 'bulanan'::text,
+  "base_salary" integer DEFAULT 0,
+  "commission_pct" numeric DEFAULT 0,
+  "trip_rate" integer DEFAULT 0,
+  "status" text DEFAULT 'aktif'::text,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sembako_expenses" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "category" text NOT NULL,
+  "description" text NOT NULL,
+  "amount" bigint NOT NULL,
+  "expense_date" date NOT NULL,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sembako_payments" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "sale_id" uuid NOT NULL,
+  "customer_id" uuid,
+  "amount" bigint NOT NULL,
+  "payment_date" date NOT NULL,
+  "payment_method" text DEFAULT 'cash'::text,
+  "reference_no" text,
+  "notes" text,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "is_deleted" boolean DEFAULT false,
+  "reference_number" text
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sembako_payroll" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "employee_id" uuid NOT NULL,
+  "period_type" text NOT NULL,
+  "period_date" date NOT NULL,
+  "work_days" integer DEFAULT 0,
+  "trip_count" integer DEFAULT 0,
+  "sales_amount" bigint DEFAULT 0,
+  "base_amount" integer DEFAULT 0,
+  "commission_amount" integer DEFAULT 0,
+  "bonus" integer DEFAULT 0,
+  "deduction" integer DEFAULT 0,
+  "total_pay" integer,
+  "payment_status" text DEFAULT 'pending'::text,
+  "paid_at" timestamp with time zone,
+  "notes" text,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "is_deleted" boolean DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sembako_products" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "product_name" text NOT NULL,
+  "category" text NOT NULL,
+  "unit" text NOT NULL DEFAULT 'kg'::text,
+  "current_stock" numeric DEFAULT 0,
+  "avg_buy_price" integer DEFAULT 0,
+  "sell_price" integer DEFAULT 0,
+  "min_stock_alert" numeric DEFAULT 0,
+  "barcode" text,
+  "notes" text,
+  "is_active" boolean DEFAULT true,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "secondary_unit" text,
+  "conversion_rate" numeric
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sembako_sale_items" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "sale_id" uuid NOT NULL,
+  "product_id" uuid,
+  "product_name" text NOT NULL,
+  "unit" text NOT NULL,
+  "quantity" numeric NOT NULL,
+  "price_per_unit" integer NOT NULL,
+  "cogs_per_unit" integer DEFAULT 0,
+  "subtotal" bigint,
+  "cogs_total" bigint
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sembako_sales" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "customer_id" uuid,
+  "delivery_id" uuid,
+  "invoice_number" text NOT NULL,
+  "customer_name" text NOT NULL,
+  "transaction_date" date NOT NULL,
+  "due_date" date,
+  "total_amount" bigint DEFAULT 0,
+  "total_cogs" bigint DEFAULT 0,
+  "gross_profit" bigint,
+  "delivery_cost" integer DEFAULT 0,
+  "other_cost" integer DEFAULT 0,
+  "net_profit" bigint,
+  "payment_status" text DEFAULT 'belum_lunas'::text,
+  "paid_amount" bigint DEFAULT 0,
+  "remaining_amount" bigint,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sembako_stock_batches" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "product_id" uuid NOT NULL,
+  "supplier_id" uuid,
+  "batch_code" text,
+  "qty_masuk" numeric NOT NULL,
+  "qty_sisa" numeric NOT NULL,
+  "buy_price" integer NOT NULL,
+  "total_cost" bigint,
+  "purchase_date" date NOT NULL,
+  "expiry_date" date,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sembako_stock_out" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "product_id" uuid NOT NULL,
+  "batch_id" uuid NOT NULL,
+  "sale_item_id" uuid,
+  "qty_keluar" numeric NOT NULL,
+  "buy_price" integer NOT NULL,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "sale_id" uuid,
+  "is_deleted" boolean DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sembako_supplier_payments" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "supplier_id" uuid NOT NULL,
+  "amount" bigint NOT NULL,
+  "payment_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "payment_method" text NOT NULL,
+  "reference_number" text,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."sembako_suppliers" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "supplier_name" text NOT NULL,
+  "supplier_type" text DEFAULT 'petani'::text,
+  "contact_person" text,
+  "phone" text,
+  "address" text,
+  "products_supplied" text[],
+  "payment_terms" text DEFAULT 'cash'::text,
+  "total_outstanding" bigint DEFAULT 0,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."site_config" (
+"key" text NOT NULL,
+  "value" text,
+  "updated_at" timestamp with time zone NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."stock_listings" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "peternak_tenant_id" uuid NOT NULL,
+  "cycle_id" uuid,
+  "chicken_type" text NOT NULL DEFAULT 'broiler'::text,
+  "available_count" integer NOT NULL,
+  "estimated_weight_kg" numeric,
+  "estimated_harvest_date" date,
+  "asking_price_per_kg" integer,
+  "status" text NOT NULL DEFAULT 'available'::text,
+  "visible_to" text NOT NULL DEFAULT 'connected'::text,
+  "notes" text,
+  "expires_at" timestamp with time zone,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."subscription_invoices" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "invoice_number" text,
+  "amount" integer NOT NULL,
+  "plan" text NOT NULL,
+  "billing_period" text,
+  "billing_months" integer DEFAULT 1,
+  "status" text NOT NULL DEFAULT 'pending'::text,
+  "transfer_proof_url" text,
+  "bank_name" text,
+  "transfer_date" date,
+  "confirmed_by" uuid,
+  "confirmed_at" timestamp with time zone,
+  "notes" text,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now(),
+  "payment_proof_url" text,
+  "payment_method" text DEFAULT 'transfer'::text,
+  "xendit_invoice_id" text,
+  "xendit_payment_url" text,
+  "paid_at" timestamp with time zone
+);
+
+CREATE TABLE IF NOT EXISTS "public"."team_invitations" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "invited_by" uuid NOT NULL,
+  "email" text,
+  "role" text NOT NULL,
+  "token" text NOT NULL DEFAULT encode(gen_random_bytes(32), 'hex'::text),
+  "status" text NOT NULL DEFAULT 'pending'::text,
+  "expires_at" timestamp with time zone NOT NULL DEFAULT (now() + '7 days'::interval),
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "is_deleted" boolean DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."tenant_memberships" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "auth_user_id" uuid NOT NULL,
+  "tenant_id" uuid NOT NULL,
+  "role" text NOT NULL,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "full_name" text
+);
+
+CREATE TABLE IF NOT EXISTS "public"."tenants" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "business_name" text NOT NULL,
+  "owner_name" text,
+  "phone" text,
+  "location" text,
+  "plan" text NOT NULL DEFAULT 'starter'::text,
+  "is_active" boolean NOT NULL DEFAULT true,
+  "trial_ends_at" timestamp with time zone,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now(),
+  "business_vertical" text DEFAULT 'poultry_broker'::text,
+  "is_hidden_beta" boolean DEFAULT false,
+  "kandang_limit" integer DEFAULT 1,
+  "sub_type" text,
+  "chicken_types" text[] DEFAULT '{}'::text[],
+  "animal_types" text[] DEFAULT '{}'::text[],
+  "area_operasi" text,
+  "target_volume_monthly" integer DEFAULT 0,
+  "base_livestock_type" text DEFAULT 'broiler'::text,
+  "addon_livestock_types" text[] DEFAULT '{}'::text[],
+  "plan_expires_at" timestamp with time zone,
+  "province" text
+);
+
+CREATE TABLE IF NOT EXISTS "public"."vaccination_records" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "cycle_id" uuid NOT NULL,
+  "vaccination_date" date NOT NULL,
+  "age_days" integer,
+  "vaccine_name" text NOT NULL,
+  "disease_target" text,
+  "method" text,
+  "dose_per_bird" numeric,
+  "batch_number" text,
+  "notes" text,
+  "created_at" timestamp with time zone NOT NULL DEFAULT now(),
+  "is_deleted" boolean NOT NULL DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."vehicle_expenses" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "vehicle_id" uuid NOT NULL,
+  "expense_type" text NOT NULL,
+  "amount" bigint NOT NULL,
+  "description" text,
+  "expense_date" date NOT NULL DEFAULT CURRENT_DATE,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."vehicles" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "vehicle_type" text NOT NULL,
+  "vehicle_plate" text NOT NULL,
+  "brand" text,
+  "year" integer,
+  "capacity_ekor" integer,
+  "capacity_kg" numeric,
+  "ownership" text NOT NULL DEFAULT 'milik_sendiri'::text,
+  "rental_cost" integer,
+  "rental_owner" text,
+  "status" text NOT NULL DEFAULT 'aktif'::text,
+  "last_service_date" date,
+  "notes" text,
+  "is_deleted" boolean NOT NULL DEFAULT false,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."waitlist_signups" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "email" text NOT NULL,
+  "vertical" text,
+  "created_at" timestamp with time zone DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS "public"."worker_payments" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "tenant_id" uuid NOT NULL,
+  "cycle_id" uuid NOT NULL,
+  "worker_id" uuid NOT NULL,
+  "payment_type" text,
+  "amount" bigint NOT NULL,
+  "payment_date" date NOT NULL,
+  "notes" text,
+  "is_deleted" boolean DEFAULT false
+);
+
+CREATE TABLE IF NOT EXISTS "public"."xendit_config" (
+"id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "is_active" boolean DEFAULT false,
+  "secret_key_encrypted" text,
+  "webhook_token" text,
+  "success_redirect_url" text,
+  "failure_redirect_url" text,
+  "created_at" timestamp with time zone DEFAULT now(),
+  "updated_at" timestamp with time zone DEFAULT now()
+);

@@ -1,9 +1,9 @@
 -- 10_enabled_extension_functions.sql
--- Generated from Supabase ENABLED EXTENSION FUNCTIONS.txt
--- Last sync: 2026-05-12
--- DO NOT EDIT MANUALLY — regenerate from snapshot .txt
+-- Source: Supabase ENABLED EXTENSION FUNCTIONS.txt
+-- Last sync: (Current)
+-- DO NOT EDIT MANUALLY
 
--- Inventory of extension functions
+-- Read-only inventory of extension-provided functions
 -- extensions.armor
 -- extensions.armor
 -- extensions.crypt
@@ -172,4 +172,3 @@
 -- public.update_egg_customer_stats
 -- public.update_farm_last_transaction
 -- public.update_sembako_product_stock
-

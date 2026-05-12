@@ -11,19 +11,53 @@ Based on our comprehensive security audit, the database architecture heavily rel
 
 The `supabase/` folder is structured into a series of numbered SQL files, representing a sequence of safe execution dependencies:
 
-- `00_extensions.sql` to `03_role_memberships.sql`: Setup extensions, schemas, and basic roles.
-- `04_tables.sql` to `07_table_owners.sql`: Setup tables, primary keys, foreign keys, and owners.
-- `08_functions.sql` to `10_enabled_extension_functions.sql`: Setup functions and extensions logic.
-- `11_views.sql` to `12_triggers.sql`: Setup views and triggers.
-- `13_rls_status.sql` to `14_policies.sql`: Enable and apply RLS and policies.
-- `15_table_privileges.sql` to `19_public_anon_access.sql`: Finalize grants and execute privileges.
+| # | SQL File | Source `.txt` snapshot | Purpose |
+|---|---|---|---|
+| 00 | `00_extensions.sql` | `Supabase EXTENSIONS.txt` | Enable Postgres extensions |
+| 01 | `01_schemas.sql` | `Supabase SCHEMAS.txt` | Create non-managed schemas |
+| 02 | `02_schema_acl.sql` | `Supabase SCHEMA ACL.txt` | `GRANT USAGE/CREATE ON SCHEMA` |
+| 03 | `03_role_memberships.sql` | `Supabase ROLE MEMBERSHIPS.txt` | `GRANT <role> TO <member>` (PL/pgSQL) |
+| 04 | `04_tables.sql` | `TABLES + RLS STATUS.txt` + `TABLE COLUMNS.txt` | `CREATE TABLE` definitions |
+| 05 | `05_primary_keys.sql` | `Supabase PRIMARY KEYS.txt` | `ADD CONSTRAINT ... PRIMARY KEY` |
+| 06 | `06_foreign_keys.sql` | `Supabase FOREIGN KEYS.txt` | `ADD CONSTRAINT ... FOREIGN KEY` |
+| 07 | `07_table_owners.sql` | `Supabase TABLE OWNERS.txt` | `ALTER TABLE ... OWNER TO` |
+| 08 | `08_functions.sql` | `Supabase FUNCTIONS.txt` | Inventory comment listing of all functions |
+| 09 | `09_security_definer_functions.sql` | `Supabase SECURITY DEFINER FUNCTIONS.txt` | `ALTER FUNCTION ... SECURITY DEFINER SET search_path` |
+| 10 | `10_enabled_extension_functions.sql` | `Supabase ENABLED EXTENSION FUNCTIONS.txt` | Read-only inventory of extension-provided functions |
+| 11 | `11_views.sql` | `Supabase VIEWS.txt` | `CREATE OR REPLACE VIEW` |
+| 12 | `12_triggers.sql` | `Supabase TRIGGERS.txt` | `CREATE TRIGGER` (events grouped) |
+| 13 | `13_rls_status.sql` | `TABLES + RLS STATUS.txt` | `ENABLE / FORCE ROW LEVEL SECURITY` |
+| 14 | `14_policies.sql` | `Supabase POLICIES.txt` | `CREATE POLICY` |
+| 15 | `15_table_privileges.sql` | `Supabase TABLE PRIVILEGES.txt` | Default privileges |
+| 16 | `16_table_grants.sql` | `Supabase TABLE GRANTS.txt` | `GRANT ... ON TABLE` |
+| 17 | `17_column_grants.sql` | `Supabase COLUMN GRANTS.txt` | `GRANT (col,...) ON ...` |
+| 18 | `18_function_execute_grants.sql` | `Supabase FUNCTION EXECUTE GRANTS.txt` | `REVOKE/GRANT EXECUTE ON FUNCTION` |
+| 19 | `19_public_anon_access.sql` | `Supabase PUBLIC AND ANON ACCESS.txt` | Final `anon`/`PUBLIC` surface |
 
 ## Regeneration Workflow
 
 The `Supabase *.txt` files are the **raw source of truth** exported from Supabase Studio. The `.sql` files are the **executable representation** of that truth. 
 
-- **Workflow:** Every time a new snapshot is pulled, regenerate the relevant `.sql` files based purely on the `.txt` source. 
+1. In Supabase Studio SQL editor, run each of the 20 queries (documented in §Studio Queries below).
+2. Save each output as the matching `Supabase *.txt` in `supabase/`.
+3. Run `python supabase/generate_sqls.py` from the repo root.
+4. Review `git diff supabase/0*.sql supabase/1*.sql` and commit.
+
 - **AI Agent Notice:** AI agents and developers are expected to **read the `.sql` files**, not the `.txt` files, to understand the schema and policies, as the `.sql` files contain the syntactically correct and fully resolved representation of the database.
+
+## Studio Snapshot Queries
+
+To regenerate the `Supabase *.txt` files, use standard `information_schema` / `pg_catalog` queries in Supabase Studio. Examples include:
+- **EXTENSIONS:** `SELECT * FROM pg_extension JOIN pg_namespace ON pg_extension.extnamespace = pg_namespace.oid;`
+- **SCHEMAS:** `SELECT schema_name, schema_owner FROM information_schema.schemata;`
+- **TABLES + COLUMNS:** `SELECT table_schema, table_name, column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_schema NOT IN ('pg_catalog', 'information_schema');`
+- **POLICIES:** `SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check FROM pg_policies;`
+(Note: You should construct similar standard queries for triggers, primary keys, foreign keys, and role memberships to populate all 20 snapshots.)
+
+## Migration Strategy
+
+- Schema changes are now made in Supabase Studio, then re-snapshotted; ad-hoc `.sql` migrations under `supabase/migrations/` are deprecated and archived at `supabase/migrations/_archive/`.
+- For changes that must be reproducible across environments (e.g., a brand-new staging DB), apply files `00_*.sql` … `19_*.sql` in numeric order.
 
 ---
 

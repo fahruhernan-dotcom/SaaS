@@ -1,26 +1,8 @@
 -- 13_rls_status.sql
--- Generated from Supabase TABLES + RLS STATUS.txt
--- Last sync: 2026-05-12
--- DO NOT EDIT MANUALLY — regenerate from snapshot .txt
+-- Source: Supabase TABLES + RLS STATUS.txt
+-- Last sync: (Current)
+-- DO NOT EDIT MANUALLY
 
-ALTER TABLE "auth"."audit_log_entries" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "auth"."flow_state" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "auth"."identities" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "auth"."instances" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "auth"."mfa_amr_claims" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "auth"."mfa_challenges" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "auth"."mfa_factors" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "auth"."one_time_tokens" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "auth"."refresh_tokens" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "auth"."saml_providers" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "auth"."saml_relay_states" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "auth"."schema_migrations" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "auth"."sessions" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "auth"."sso_domains" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "auth"."sso_providers" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "auth"."users" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "cron"."job" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "cron"."job_run_details" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."ai_anomaly_logs" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."ai_conversations" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."ai_error_logs" ENABLE ROW LEVEL SECURITY;
@@ -111,6 +93,7 @@ ALTER TABLE "public"."notifications" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."orders" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."payment_settings" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."payments" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "public"."payments" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "public"."peternak_farms" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."peternak_profiles" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."peternak_task_instances" ENABLE ROW LEVEL SECURITY;
@@ -170,12 +153,3 @@ ALTER TABLE "public"."vehicles" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."waitlist_signups" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."worker_payments" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."xendit_config" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "storage"."buckets" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "storage"."buckets_analytics" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "storage"."buckets_vectors" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "storage"."migrations" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "storage"."objects" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "storage"."s3_multipart_uploads" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "storage"."s3_multipart_uploads_parts" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "storage"."vector_indexes" ENABLE ROW LEVEL SECURITY;
-
