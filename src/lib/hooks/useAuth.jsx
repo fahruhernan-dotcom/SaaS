@@ -114,12 +114,10 @@ export function AuthProvider({ children }) {
   const switchTenant = async (tenantId) => {
     const target = profiles.find(p => p.tenant_id === tenantId)
     if (target && user) {
-      // 1. Update database active session
+      // 1. Update database active session (only safe fields like last_seen_at)
       const { error } = await supabase
         .from('profiles')
         .update({ 
-          tenant_id: target.tenant_id, 
-          role: target.role,
           updated_at: new Date().toISOString(),
           last_seen_at: new Date().toISOString()
         })

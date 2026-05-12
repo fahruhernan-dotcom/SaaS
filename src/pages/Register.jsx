@@ -17,6 +17,7 @@ import { toast } from 'sonner'
 import { getBrokerBasePath } from '../lib/hooks/useAuth'
 import { useAntiSpam } from '@/lib/hooks/useAntiSpam'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import { usePlatformStats } from '@/lib/hooks/usePlatformStats'
 
 // Components
 import MobileRegister from './MobileRegister'
@@ -87,6 +88,7 @@ export default function Register() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [authError, setAuthError] = useState('')
   const [mode, setMode] = useState('mandiri')
+  const { stats: platformStats, loading: statsLoading } = usePlatformStats()
 
   const {
     cooldown, isLocked, lockoutRemaining,
@@ -236,7 +238,23 @@ export default function Register() {
 
           <AnimatedContent stagger delay={0.4} staggerDelay={0.15} distance={15}>
             <div className="flex gap-3 mt-8">
-              {[{ val: "500+", label: "Pengguna Aktif", sub: "broker & peternak" }, { val: "10.000+", label: "Transaksi Tercatat", sub: "& terus bertambah" }, { val: "Rp 50M+", label: "Nilai Dikelola", sub: "per bulan" }].map((stat, i) => (
+              {[
+                {
+                  val: statsLoading ? '—' : platformStats.active_users_text,
+                  label: 'Pengguna Aktif',
+                  sub: 'broker & peternak'
+                },
+                {
+                  val: statsLoading ? '—' : platformStats.total_transactions_text,
+                  label: 'Aktivitas Transaksi',
+                  sub: '& terus bertambah'
+                },
+                {
+                  val: statsLoading ? '—' : platformStats.transaction_volume_text,
+                  label: 'Volume Penjualan',
+                  sub: 'dari transaksi nyata'
+                }
+              ].map((stat, i) => (
                 <div key={i} className="bg-[#0C1319]/80 border border-white/8 rounded-xl p-3 flex-1 transition-all hover:border-white/12">
                   <div className="font-display text-lg font-bold text-[#10B981]">{stat.val}</div>
                   <div className="text-[#F1F5F9] text-[10px] font-semibold mt-0.5">{stat.label}</div>

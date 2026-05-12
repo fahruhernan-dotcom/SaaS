@@ -100,12 +100,13 @@ export default function Akun() {
       if (memberError) throw memberError
 
       // 3. Upsert profile session for this specific tenant
+      // NOTE: Do NOT include 'role' here — role is managed via tenant_memberships.
+      // The profiles upsert only establishes the row for the new tenant context.
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
           auth_user_id: user.id,
           tenant_id: invite.tenant_id,
-          role: invite.role,
           updated_at: new Date().toISOString()
         }, { onConflict: 'auth_user_id,tenant_id' })
 
@@ -134,7 +135,6 @@ export default function Akun() {
       const { error } = await supabase
         .from('profiles')
         .update({
-          role: targetRole,
           updated_at: new Date().toISOString(),
           last_seen_at: new Date().toISOString()
         })

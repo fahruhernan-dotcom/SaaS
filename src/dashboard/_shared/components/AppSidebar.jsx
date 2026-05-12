@@ -75,7 +75,7 @@ import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { peternakPermissions } from '@/lib/hooks/usePeternakPermissions'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { supabase } from '@/lib/supabase'
-import { isSuperadmin, isOwner, isStaff, isViewOnly } from '@/lib/auth'
+import { isSuperadmin as checkIsSuperadmin, isOwner, isStaff, isViewOnly } from '@/lib/auth'
 import { checkQuotaUsage } from '@/lib/quotaUtils'
 import { toast } from 'sonner'
 import { useQueryClient, useQuery } from '@tanstack/react-query'
@@ -173,7 +173,7 @@ export default function AppSidebar({ open, onClose }) {
   const tenantInitials = tenant?.business_name?.slice(0, 2).toUpperCase() || 'TO'
   const userInitials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
 
-  const isOwnerUser = isOwner(profile) || isSuperadmin(profile)
+  const isOwnerUser = isOwner(profile) || checkIsSuperadmin(profile)
   const isStaffUser = isStaff(profile)
   const isViewOnlyUser = isViewOnly(profile)
 
@@ -238,7 +238,7 @@ export default function AppSidebar({ open, onClose }) {
   const activeVerticalInfo = getVerticalInfo(vertical)
 
   const handleGoToAdmin = () => {
-    const adminProfile = profiles?.find(p => isSuperadmin(p))
+    const adminProfile = profiles?.find(p => checkIsSuperadmin(p))
     if (adminProfile) {
       switchTenant(adminProfile.tenant_id)
       navigate('/admin')
@@ -413,7 +413,7 @@ export default function AppSidebar({ open, onClose }) {
     ...group,
     items: group.items.filter(item => {
       if (!item.roles) return true // default accessible to all roles
-      return item.roles.includes(profile?.role) || isSuperadmin(profile)
+      return item.roles.includes(profile?.role) || checkIsSuperadmin(profile)
     })
   })).filter(group => group.items.length > 0)
 

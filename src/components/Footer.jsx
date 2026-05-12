@@ -77,6 +77,7 @@ const Footer = () => {
             <ul className="space-y-[6px]">
               {[
                 { name: 'Tentang Kami', to: '/tentang-kami' },
+                { name: 'Keamanan',    to: '/keamanan' },
                 { name: 'Hubungi Kami', to: '/hubungi-kami' },
                 { name: 'Karir',        to: '#' },
               ].map((link, i) => (
@@ -141,7 +142,9 @@ const Footer = () => {
           <div className="flex items-center gap-[12px] text-[11px] text-tx-3">
             <Link to="/privacy" className="hover:text-tx-1 transition-colors">Kebijakan Privasi</Link>
             <span>·</span>
-            <Link to="/terms" className="hover:text-tx-1 transition-colors">Syarat & Ketentuan</Link>
+            <Link to="/terms" className="hover:text-tx-1 transition-colors">Syarat &amp; Ketentuan</Link>
+            <span>·</span>
+            <Link to="/keamanan" className="hover:text-tx-1 transition-colors">Keamanan</Link>
           </div>
         </div>
 

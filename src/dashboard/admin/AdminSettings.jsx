@@ -892,12 +892,12 @@ export default function AdminSettings() {
               {/* Landing Page Stats */}
               <div className="space-y-3">
                 <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478] flex items-center gap-2"><BarChart3 size={13} /> Statistik Landing Page</p>
-                <p className="text-[10px] text-[#4B6478]">Tampil di StatsBar & About Us. Kosongkan untuk pakai animasi CountUp default.</p>
+                <p className="text-[10px] text-[#4B6478]">Tampil di StatsBar & About Us. Kosongkan untuk pakai data real dari database (diperbarui tiap jam).</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {[
-                    { key: 'stats_users',        label: 'Pengguna Aktif',    placeholder: '500+' },
-                    { key: 'stats_transactions', label: 'Transaksi Tercatat', placeholder: '10rb+' },
-                    { key: 'stats_value',        label: 'Volume Transaksi',   placeholder: 'Rp 250M+' },
+                    { key: 'stats_users',        label: 'Pengguna Aktif',       placeholder: '100+' },
+                    { key: 'stats_transactions', label: 'Aktivitas Transaksi',  placeholder: '1rb+' },
+                    { key: 'stats_value',        label: 'Volume Penjualan',     placeholder: 'Rp 250M+' },
                   ].map(({ key, label, placeholder }) => (
                     <div key={key} className="space-y-1.5">
                       <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478]">{label}</label>

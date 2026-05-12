@@ -32,6 +32,7 @@ import AuthCallback from './pages/AuthCallback';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import AboutUs from './pages/AboutUs';
+import SecurityPage from './pages/SecurityPage';
 import FiturPage from './pages/FiturPage';
 import HargaPage from './pages/harga';
 import FAQPage from './pages/FAQPage';
@@ -345,6 +346,7 @@ export const routes = createRoutesFromElements(
     <Route path="/terms" element={<TermsPage />} />
     <Route path="/privacy" element={<PrivacyPage />} />
     <Route path="/tentang-kami" element={<AboutUs />} />
+    <Route path="/keamanan" element={<SecurityPage />} />
     <Route path="/hubungi-kami" element={<HubungiKami />} />
     <Route path="/blog" element={<BlogPage />} />
     <Route path="/blog/:slug" element={<BlogPostPage />} />

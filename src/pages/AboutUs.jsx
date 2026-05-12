@@ -15,7 +15,7 @@ import AnimatedContent from '../components/reactbits/AnimatedContent';
 import Particles from '../components/reactbits/Particles';
 import CountUp from '../components/reactbits/CountUp';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
-import { useSiteConfig } from '@/lib/hooks/useSiteConfig';
+import { usePlatformStats } from '@/lib/hooks/usePlatformStats';
 import '../components/reactbits/ShinyText.css';
 
 // ─── Animation helper ─────────────────────────────────────────────────────────
@@ -38,7 +38,9 @@ function FadeUp({ children, delay = 0, className }) {
 
 export default function AboutUs() {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
-  const { data: cfg = {} } = useSiteConfig();
+  const { stats, loading } = usePlatformStats();
+
+  const DASH = '\u2014'; // em dash untuk loading state
 
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans selection:bg-emerald-500/30 overflow-x-hidden">
@@ -165,23 +167,37 @@ export default function AboutUs() {
           <div className="max-w-5xl mx-auto px-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {[
-                cfg.stats_users
-                  ? { raw: cfg.stats_users, label: 'Pengguna Aktif' }
-                  : { countTo: 500, suffix: '+', sep: '', label: 'Pengguna Aktif' },
-                cfg.stats_transactions
-                  ? { raw: cfg.stats_transactions, label: 'Transaksi Tercatat' }
-                  : { countTo: 10000, suffix: '+', sep: '.', label: 'Transaksi Tercatat' },
-                { raw: cfg.stats_value ?? 'Rp 50M+', label: 'Nilai Transaksi' },
-                { raw: '3', label: 'Vertikal Bisnis' },
+                {
+                  value: loading ? DASH : stats.active_users_text,
+                  label: 'Pengguna Aktif',
+                  isLive: !loading,
+                },
+                {
+                  value: loading ? DASH : stats.total_transactions_text,
+                  label: 'Aktivitas Transaksi',
+                  isLive: !loading,
+                },
+                {
+                  value: loading ? DASH : stats.transaction_volume_text,
+                  label: 'Volume Penjualan',
+                  isLive: !loading,
+                },
+                {
+                  value: '3',
+                  label: 'Vertikal Bisnis',
+                  isLive: false,
+                },
               ].map((stat, i) => (
                 <FadeUp key={i} delay={i * 0.1} className={`text-center ${i < 3 ? 'md:border-r border-white/8' : ''}`}>
                   <div className="font-display text-3xl font-black text-white mb-1">
-                    {stat.raw
-                      ? stat.raw
-                      : <CountUp to={stat.countTo} suffix={stat.suffix} duration={2} separator={stat.sep} />
-                    }
+                    {stat.value}
                   </div>
-                  <div className="text-[11px] uppercase tracking-widest text-[#4B6478] mt-1">{stat.label}</div>
+                  <div className="flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-widest text-[#4B6478] mt-1">
+                    {stat.isLive && (
+                      <span className="w-[5px] h-[5px] rounded-full bg-emerald-400 animate-pulse inline-block" title="Data real-time" />
+                    )}
+                    {stat.label}
+                  </div>
                 </FadeUp>
               ))}
             </div>

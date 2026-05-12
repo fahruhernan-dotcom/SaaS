@@ -346,10 +346,11 @@ function ProfileForm({ profile, onSuccess }) {
         e.preventDefault()
         setIsLoading(true)
         try {
+            // Update Profile — only safe, mutable fields. Use compound key for multi-tenant safety.
             await supabase.from('profiles').update({
                 full_name: formData.full_name,
                 phone: formData.phone
-            }).eq('id', profile.id)
+            }).eq('auth_user_id', profile.auth_user_id).eq('tenant_id', profile.tenant_id)
 
             await supabase.from('tenants').update({
                 business_name: formData.business_name

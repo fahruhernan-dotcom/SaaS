@@ -9,6 +9,7 @@ import { usePricingConfig, usePlanConfigs } from '@/lib/hooks/useAdminData'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
+import { usePlatformStats, formatCompactNumber } from '@/lib/hooks/usePlatformStats'
 import Particles from '../../components/reactbits/Particles'
 import { WA_URL } from '@/lib/constants/contact'
 
@@ -33,6 +34,7 @@ export default function HargaPage() {
 
   const { data: dbPricing } = usePricingConfig()
   const { data: dbConfigs } = usePlanConfigs()
+  const { stats: platformStats, loading: statsLoading } = usePlatformStats()
 
   const dynamicPricingData = useMemo(() => {
     const newData = JSON.parse(JSON.stringify(PRICING_DATA))
@@ -185,7 +187,11 @@ export default function HargaPage() {
               transition={{ duration: 0.4, delay: 0.1 }}
               className="text-[#94A3B8] text-lg"
             >
-              Pilih plan sesuai bisnismu. Lebih dari 500 peternak & broker aktif di TernakOS.
+              Pilih plan sesuai bisnismu.{
+                !statsLoading && platformStats.active_businesses > 0
+                  ? ` Lebih dari ${formatCompactNumber(platformStats.active_businesses)} bisnis aktif di TernakOS.`
+                  : ' Bergabunglah bersama peternak & broker aktif di TernakOS.'
+              }
             </motion.p>
           </div>
         </section>
@@ -403,7 +409,9 @@ export default function HargaPage() {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Users size={14} className="text-emerald-500" />
-                      <span className="text-[11px] text-[#4B6478] font-semibold">500+ Bisnis Aktif</span>
+                      <span className="text-[11px] text-[#4B6478] font-semibold">
+                        {statsLoading ? 'Bisnis Aktif' : `${formatCompactNumber(platformStats.active_businesses)}+ Bisnis Aktif`}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Star size={14} className="text-emerald-500 fill-emerald-500/30" />

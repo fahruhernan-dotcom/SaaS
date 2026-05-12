@@ -1,24 +1,49 @@
 import { useRef, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
-import CountUp from '../components/reactbits/CountUp';
-import ShinyText from '../components/reactbits/ShinyText';
 import anime from '../lib/animation';
-import { useSiteConfig } from '@/lib/hooks/useSiteConfig';
+import { usePlatformStats } from '@/lib/hooks/usePlatformStats';
+import { usePlanConfigs } from '@/lib/hooks/useAdminData';
 
+/**
+ * StatsBar — menampilkan 4 counter platform publik.
+ *
+ * Data: get_landing_stats() RPC
+ *   - Jika admin mengisi site_config.stats_*, tampilkan placeholder admin.
+ *   - Jika kosong, tampilkan data real dari platform_stats (cron per jam).
+ *
+ * Loading state: '—' (tidak tampilkan '0+' palsu saat fetch)
+ */
 const StatsBar = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-10%" });
-  const { data: cfg = {} } = useSiteConfig();
+  const isInView = useInView(ref, { once: true, margin: '-10%' });
+  const { stats, loading } = usePlatformStats();
+  const { data: planConfigs } = usePlanConfigs();
 
-  const stats = [
-    cfg.stats_users
-      ? { raw: cfg.stats_users, label: "Broker & Peternak" }
-      : { value: 500, suffix: "+", label: "Broker & Peternak", duration: 1.5 },
-    cfg.stats_transactions
-      ? { raw: cfg.stats_transactions, label: "Transaksi Tercatat" }
-      : { value: 50, suffix: "rb+", label: "Transaksi Tercatat", duration: 1.8 },
-    { raw: cfg.stats_value ?? "Rp 250M+", isShiny: true, label: "Volume Transaksi" },
-    { value: 14, suffix: " Hari", label: "Coba Gratis", duration: 1.2 }
+  const DASH = '—';
+  const trialDays = planConfigs?.trial_config?.pro ?? 14;
+
+  const items = [
+    {
+      value: loading ? DASH : stats.active_users_text,
+      label: 'Pengguna Aktif',
+      isLive: !loading,
+    },
+    {
+      value: loading ? DASH : stats.total_transactions_text,
+      label: 'Aktivitas Transaksi',
+      isLive: !loading,
+    },
+    {
+      value: loading ? DASH : stats.transaction_volume_text,
+      label: 'Volume Penjualan',
+      isLive: !loading,
+      isShiny: true,
+    },
+    {
+      value: `${trialDays} Hari`,
+      label: 'Coba Gratis',
+      isLive: false,
+    },
   ];
 
   useEffect(() => {
@@ -31,54 +56,52 @@ const StatsBar = () => {
       opacity: [0, 1],
       delay: anime.stagger(150, { from: 'center' }),
       duration: 800,
-      easing: 'easeOutExpo'
+      easing: 'easeOutExpo',
     });
   }, [isInView]);
 
   return (
     <section className="bg-[#0A0F16] py-4 md:py-8 px-4 md:px-[80px]" ref={ref}>
-      <motion.div 
+      <motion.div
         className="max-w-[1280px] mx-auto"
         initial={{ opacity: 0 }}
         animate={isInView ? { opacity: 1 } : { opacity: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="grid grid-cols-4 lg:grid-cols-4 gap-1">
-          {stats.map((stat, i) => (
-            <div key={i} className="stat-card bg-[#0A0F16] text-center p-2 md:p-[20px_12px] flex flex-col justify-center" style={{ opacity: 0 }}>
-              <div>
-                <div style={{display:'flex', alignItems:'baseline', gap:'1px', justifyContent:'center'}}>
-                  <span className="font-display font-extrabold text-[#F1F5F9] tracking-tighter leading-none text-[12px] md:text-[32px] lg:text-[42px]">
-                    {stat.isShiny ? (
-                      <ShinyText text={stat.raw} speed={5} style={{ fontFamily:'Sora', fontSize:'inherit', fontWeight:800 }} />
-                    ) : stat.raw != null ? (
-                      <span>{stat.raw}</span>
-                    ) : (
-                      <CountUp 
-                        from={0}
-                        to={stat.value} 
-                        suffix={stat.suffix}
-                        duration={stat.duration} 
-                      />
-                    )}
-                  </span>
-                </div>
-                <div className={`mt-1 md:mt-2 font-bold tracking-tight md:tracking-widest text-[7px] md:text-[11px] ${stat.isShiny ? 'text-emerald-400' : 'text-[#4B6478]'}`}>
-                  {stat.label}
-                </div>
+        <div className="grid grid-cols-4 gap-1">
+          {items.map((item, i) => (
+            <div
+              key={i}
+              className="stat-card bg-[#0A0F16] text-center p-2 md:p-[20px_12px] flex flex-col justify-center"
+              style={{ opacity: 0 }}
+            >
+              {/* Nilai */}
+              <div className="font-display font-extrabold text-[#F1F5F9] tracking-tighter leading-none text-[12px] md:text-[32px] lg:text-[42px]">
+                {item.value}
+              </div>
+
+              {/* Label + live dot */}
+              <div className="mt-1 md:mt-2 font-bold tracking-tight md:tracking-widest text-[7px] md:text-[11px] flex items-center justify-center gap-1 text-[#4B6478]">
+                {item.isLive && (
+                  <span
+                    className="w-[5px] h-[5px] rounded-full bg-emerald-400 animate-pulse inline-block"
+                    title="Data real-time dari transaksi aktual"
+                  />
+                )}
+                {item.label}
               </div>
             </div>
           ))}
         </div>
-        
-        {/* Methodology disclaimer */}
-        <motion.p 
+
+        {/* Disclaimer */}
+        <motion.p
           initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 0.4 } : { opacity: 0 }}
+          animate={isInView ? { opacity: 0.35 } : { opacity: 0 }}
           transition={{ delay: 1, duration: 1 }}
-          className="text-center text-[7px] md:text-[10px] text-[#4B6478] mt-4 md:mt-8 uppercase tracking-[0.2em] font-bold"
+          className="text-center text-[7px] md:text-[10px] text-[#4B6478] mt-4 md:mt-6 uppercase tracking-[0.18em] font-bold"
         >
-          *Berdasarkan rata-rata data 500+ pengguna aktif sepanjang 2024
+          *Data diperbarui otomatis setiap jam dari transaksi nyata
         </motion.p>
       </motion.div>
     </section>

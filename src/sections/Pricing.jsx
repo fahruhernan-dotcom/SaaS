@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import AnimatedContent from '../components/reactbits/AnimatedContent';
 import { usePricingConfig, usePlanConfigs } from '@/lib/hooks/useAdminData';
+import { usePlatformStats, formatCompactNumber } from '@/lib/hooks/usePlatformStats';
 
 // Social proof avatars for BUSINESS card
 const AVATARS = [
@@ -27,6 +28,11 @@ const Pricing = ({ activeRole, setActiveRole }) => {
 
   const { data: dbPricing } = usePricingConfig();
   const { data: dbConfigs } = usePlanConfigs();
+
+  const { stats, loading: statsLoading } = usePlatformStats();
+  const activeBizLabel = statsLoading
+    ? '—'
+    : `${formatCompactNumber(stats.active_businesses)}+ bisnis aktif`;
 
   const handleToggle = useCallback((checked) => {
     setIsAnnual(checked);
@@ -365,7 +371,9 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                           </div>
                         ))}
                       </div>
-                      <span className="text-[9px] font-bold text-[#94A3B8]">+500 bisnis aktif</span>
+                      <span className="text-[9px] font-bold text-[#94A3B8]">
+                        {activeBizLabel}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -498,7 +506,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                 <div className="hidden md:flex items-center justify-center gap-1.5 mt-4">
                   <Users size={11} className="text-[#4B6478]" />
                   <span className="text-[10px] font-bold text-[#4B6478]">
-                    Dipercaya 500+ bisnis aktif
+                    Dipercaya {activeBizLabel}
                   </span>
                 </div>
               )}
@@ -545,7 +553,9 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                           </div>
                         ))}
                       </div>
-                      <span className="text-[9px] font-bold text-[#94A3B8]">+500 bisnis aktif</span>
+                      <span className="text-[9px] font-bold text-[#94A3B8]">
+                        {activeBizLabel}
+                      </span>
                     </div>
                   )}
                 </div>

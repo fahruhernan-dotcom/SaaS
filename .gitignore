@@ -58,3 +58,7 @@ scratch/
 # Lint output files
 *_lint.json
 *_lint_final.json
+
+# Python
+__pycache__/
+*.pyc
