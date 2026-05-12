@@ -10,8 +10,8 @@ MANAGED_SCHEMAS = {
     "information_schema", "pg_catalog", "pg_toast", "pgbouncer"
 }
 
-CORE_TABLES = {"tenants", "profiles", "sales", "purchases", "farms", "subscriptions"}
-SENSITIVE_TABLES = {"payments", "audit_logs", "subscriptions", "tenant_billing"}
+CORE_TABLES = {"tenants", "profiles", "sales", "purchases", "farms"}
+SENSITIVE_TABLES = {"payments", "audit_logs", "tenant_billing"}
 
 def is_managed(schema):
     return schema in MANAGED_SCHEMAS or schema.startswith("pg_temp_") or schema.startswith("pg_toast_")
