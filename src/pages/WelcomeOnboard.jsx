@@ -27,7 +27,13 @@ const FEATURES = [
 export default function WelcomeOnboard() {
   const navigate = useNavigate()
   const location = useLocation()
-  const userName = location.state?.fullName || location.state?.name || ''
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const userName = mounted ? (location.state?.fullName || location.state?.name || '') : ''
   const [countdown, setCountdown] = useState(5)
   const [visible, setVisible] = useState(true)
 

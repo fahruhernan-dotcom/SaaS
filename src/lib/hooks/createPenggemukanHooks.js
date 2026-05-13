@@ -11,12 +11,18 @@
 
 import React from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  startOfMonth, endOfMonth, startOfWeek, endOfWeek,
+  differenceInCalendarDays, parseISO, min as dateMin, max as dateMax,
+  eachDayOfInterval, startOfDay,
+} from 'date-fns'
 import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
 import {
   calcADG, calcHariDiFarm,
 } from './useKdPenggemukanData'
+import { useTenantWorkerPayments } from './usePeternakTaskData'
 
 export function createPenggemukanHooks(prefix) {
   // Table names
@@ -1127,11 +1133,36 @@ export function createPenggemukanHooks(prefix) {
     })
   }
 
+  /**
+   * Fetch ALL animals for this prefix (cross-batch, all statuses).
+   * Includes sold/dead animals so we can reconstruct their active window:
+   *   active window = [purchase_date, sold_date || death_date || today]
+   * Used by useHppBatch for per-day overhead allocation.
+   *
+   * NOTE: Isolated to this animal type (prefix). Sapi/domba/kambing are separate.
+   */
+  function useAllAnimalsForType() {
+    const { tenant } = useAuth()
+    return useQuery({
+      queryKey: [`${prefix}-all-animals-for-overhead`, tenant?.id],
+      queryFn: async () => {
+        const { data, error } = await supabase
+          .from(T.animals)
+          .select('id, batch_id, status, entry_date, exit_date, updated_at')
+          .eq('tenant_id', tenant.id)
+        if (error) throw error
+        return data ?? []
+      },
+      enabled: !!tenant?.id,
+      staleTime: 1000 * 60 * 5, // 5 min — used for historical allocation
+    })
+  }
+
   function useHppBatch(batchId) {
     const { data: animalList = [], isLoading: l1 } = useAnimals(batchId)
     const { data: salesList,        isLoading: l2 } = useSales(batchId)
 
-    // Fetch costs scoped to THIS batch only (already allocated per-batch at save time)
+    // SCOPE: useOperationalCostsByBatches filters by batch_id IN [batchId]
     const batchIds = React.useMemo(() => batchId ? [batchId] : [], [batchId])
     const { data: thisBatchFeedLogs = [], isLoading: l3 } = useFeedLogsByBatches(batchIds)
     const { data: thisBatchOpsCosts = [], isLoading: l4 } = useOperationalCostsByBatches(batchIds)
@@ -1139,7 +1170,16 @@ export function createPenggemukanHooks(prefix) {
     // Fetch health logs for treatment cost (if column exists)
     const { data: healthLogs = [], isLoading: l5 } = useHealthLogs(batchId)
 
-    const isLoading = l1 || l2 || l3 || l4 || l5
+    // ── Payroll overhead: read directly from kandang_worker_payments ────────
+    const { data: allWorkerPayments = [], isLoading: l6 } = useTenantWorkerPayments()
+
+    // ── Cross-batch animals for per-day overhead allocation ──────────────────
+    // Fetches ALL animals (all statuses) for this prefix so we can reconstruct
+    // each animal's active window [purchase_date, sold_date] and count how many
+    // were present on each specific calendar day.
+    const { data: allAnimalsForType = [], isLoading: l7 } = useAllAnimalsForType()
+
+    const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7
 
     const hpp = React.useMemo(() => {
       // ── Modal Beli ─────────────────────────────────────────────────────────
@@ -1149,37 +1189,463 @@ export function createPenggemukanHooks(prefix) {
       const ternakTanpaHarga = animalList.filter(a => !a.purchase_price_idr || Number(a.purchase_price_idr) === 0).length
 
       // ── Biaya Pakan ────────────────────────────────────────────────────────
-      // Source 1: feed_cost_idr langsung di feed_logs (log harian)
+      // Source 1: feed_cost_idr per log harian (schema kandang — sapi).
+      // Untuk domba/kambing, field ini umumnya NULL → totalBiayaPakanDirect = 0.
       const totalBiayaPakanDirect = thisBatchFeedLogs.reduce(
         (s, f) => s + (Number(f.feed_cost_idr) || 0), 0
       )
-      // Source 2: "Beli Pakan" yang dicatat via tab Pakan → operational_costs category='pakan'
-      const totalBiayaPakanOps = thisBatchOpsCosts
-        .filter(c => c.category === 'pakan')
-        .reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
 
-      // Track consumption volume for display & warning
+      // Track consumption volume (actual consumed, not purchased)
       const kgConsumedThisBatch = thisBatchFeedLogs.reduce((s, f) => {
         if (f.consumed_kg != null && f.consumed_kg > 0) return s + f.consumed_kg
         const input = (f.hijauan_kg || 0) + (f.konsentrat_kg || 0) + (f.dedak_kg || 0) + (f.other_feed_kg || 0)
         return s + Math.max(0, input - (f.sisa_pakan_kg || 0))
       }, 0)
 
+      // ── Source 2: Pembelian Pakan (operational_costs category='pakan') ──────
+      // SCOPE: Data sudah terisolasi per batch_id dari query. Harga pakan adalah
+      // PER-BATCH, bukan stok global. Setiap batch menyimpan harga belinya sendiri.
+      //
+      // WARNING: amount_idr = total kas keluar untuk beli STOK pakan (asset),
+      // bukan biaya konsumsi (expense). Kita harus convert ke cost via:
+      //   HPP Pakan = kgConsumed × (totalCashOut / totalQtyKgPurchased)
+      //
+      // DEDUP: Deduplicate by row ID untuk mencegah join ganda yang menggandakan row.
+      const rawPakanRows = thisBatchOpsCosts.filter(c => c.category === 'pakan')
+      // ↓ Dedup by ID — protects against join duplication (e.g. cross-batch queries)
+      const seenCostIds = new Set()
+      const pakanPurchaseRows = rawPakanRows.filter(c => {
+        if (seenCostIds.has(c.id)) return false
+        seenCostIds.add(c.id)
+        return true
+      })
+      const dedupRemovedCount = rawPakanRows.length - pakanPurchaseRows.length
+
+      const feedPurchaseTotalQtyKg = pakanPurchaseRows.reduce((s, c) => s + (Number(c.quantity) || 0), 0)
+      const feedPurchaseTotalCost  = pakanPurchaseRows.reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
+
+      // Weighted average unit price from all deduplicated purchase rows for this batch
+      const avgPurchasePricePerKg = feedPurchaseTotalQtyKg > 0
+        ? feedPurchaseTotalCost / feedPurchaseTotalQtyKg
+        : 0
+
+      // ── Multi-type feed consumption breakdown ────────────────────────────────
+      // TODO: Untuk akurasi biaya multi-jenis pakan (hijauan vs konsentrat vs dedak),
+      // purchase rows idealnya diberi tag feed_type dan dihitung per-jenis:
+      //   hargaHijauanPerKg = totalBeli(hijauan) / totalQty(hijauan)
+      //   biayaHijauan = kgHijauanConsumed × hargaHijauanPerKg
+      //   (idem untuk konsentrat, dedak, other)
+      // Saat ini schema operational_costs.notes berisi "Rp X/kg" sebagai string.
+      // Solusi proper memerlukan kolom feed_type di operational_costs (schema change).
+      // Untuk saat ini: pakai weighted avg seluruh jenis → undercharge untuk konsentrat
+      // (mahal) dan overcharge untuk hijauan (murah). Aman vs alternatif lama yang
+      // membebankan TOTAL pembelian 100% ke HPP.
+
+      // HPP pakan = hanya kg yang sudah dikonsumsi × harga beli rata-rata
+      let totalBiayaPakanOps = 0
+      if (totalBiayaPakanDirect > 0) {
+        // Schema kandang (sapi): biaya sudah tercatat per log harian — tidak perlu source 2
+        totalBiayaPakanOps = 0
+      } else if (feedPurchaseTotalQtyKg > 0 && kgConsumedThisBatch > 0) {
+        // Consumption-based costing: consumed kg × weighted avg purchase price
+        totalBiayaPakanOps = Math.round(kgConsumedThisBatch * avgPurchasePricePerKg)
+      } else if (feedPurchaseTotalQtyKg === 0 && feedPurchaseTotalCost > 0) {
+        // Tidak ada quantity di purchase rows → fallback ke total pembelian (cash basis)
+        // Ini conservative: membebankan seluruh pembelian ke HPP jika qty tidak dicatat
+        totalBiayaPakanOps = feedPurchaseTotalCost
+      }
+      // else: tidak ada purchase rows → totalBiayaPakanOps = 0
+
       const totalBiayaPakan = totalBiayaPakanDirect + totalBiayaPakanOps
 
-      // Warning: ada log pakan (kg > 0) tapi biaya = 0 di kedua sumber
+      // Warning: ada log konsumsi tapi biaya = 0 di kedua sumber
       const warnPakanTanpaBiaya = kgConsumedThisBatch > 0 && totalBiayaPakan === 0
 
-      // Avg price per kg for UI display
+      // Avg HPP price per kg for UI display
       const avgPricePerKg = kgConsumedThisBatch > 0 ? totalBiayaPakan / kgConsumedThisBatch : 0
 
-      // ── Biaya Ops (exclude pakan & gaji — keduanya tampil terpisah) ─────────
+      if (process.env.NODE_ENV === 'development') {
+        const avgHppFeedPricePerKg = kgConsumedThisBatch > 0 ? totalBiayaPakan / kgConsumedThisBatch : 0
+        const possibleMismatch = totalBiayaPakan > 0 && kgConsumedThisBatch > 0 && avgPurchasePricePerKg > 0
+          && avgHppFeedPricePerKg > avgPurchasePricePerKg * 3
+
+        // ── Duplicate detection: will show identical IDs as red flags ──────────
+        if (dedupRemovedCount > 0) {
+          console.warn(
+            `[HPP] ⚠️ ${dedupRemovedCount} duplicate purchase row(s) removed for batch ${batchId}. ` +
+            'This indicates a join duplication bug — check useOperationalCostsByBatches query.'
+          )
+        }
+        // Full purchase row table for visual audit (open DevTools → Console → expand table)
+        if (rawPakanRows.length > 0) {
+          console.table(rawPakanRows.map(r => ({
+            id: r.id,
+            batch_id: r.batch_id,
+            item_name: r.item_name,
+            quantity_kg: r.quantity,
+            amount_idr: r.amount_idr,
+            created_at: r.created_at,
+            isDuplicate: rawPakanRows.filter(x => x.id === r.id).length > 1,
+          })))
+        }
+
+        console.debug('[HPP] Feed cost source audit', {
+          batchId,
+          rawRowCount: rawPakanRows.length,
+          dedupRowCount: pakanPurchaseRows.length,
+          dedupRemovedCount,
+          feedPurchaseTotalQtyKg,
+          feedPurchaseTotalCost,
+          kgConsumedThisBatch,
+          feedLogsDirectCost: totalBiayaPakanDirect,
+          feedCostUsedInHpp: totalBiayaPakan,
+          avgPurchasePricePerKg: Math.round(avgPurchasePricePerKg),
+          avgHppFeedPricePerKg: Math.round(avgHppFeedPricePerKg),
+          possibleMismatch,
+        })
+
+        // ── Legacy data integrity check ──────────────────────────────────────
+        // Deteksi baris pakan lama dimana quantity tidak dialokasikan bersama amount_idr.
+        // Tanda: qty * (totalCost/totalQty) >> amount_idr per baris (jauh lebih besar).
+        if (pakanPurchaseRows.length > 0 && avgPurchasePricePerKg > 0) {
+          pakanPurchaseRows.forEach(r => {
+            const qtyRow = Number(r.quantity) || 0
+            if (qtyRow <= 0) return
+            const expectedAmount = qtyRow * avgPurchasePricePerKg
+            const actualAmount   = Number(r.amount_idr) || 0
+            const ratio = actualAmount > 0 ? expectedAmount / actualAmount : 0
+            // Flag jika expected >2x actual — indikasi qty masih total, amount sudah dialokasi
+            if (ratio > 2) {
+              console.warn(
+                `[HPP] ⚠️ Kemungkinan quantity_kg belum dialokasi bersama amount_idr.\n` +
+                `  Row: ${r.item_name} (id: ${r.id})\n` +
+                `  qty=${qtyRow} kg · amount=Rp${actualAmount.toLocaleString('id-ID')} · ` +
+                `  expected≈Rp${Math.round(expectedAmount).toLocaleString('id-ID')} (ratio ${ratio.toFixed(1)}x)\n` +
+                `  → Jalankan DATA REPAIR query untuk memperbaiki row ini.`
+              )
+            }
+          })
+        }
+      }
+
+      // ── Biaya Ops (semua non-pakan, non-gaji: listrik_air, tenaga_kerja, lainnya, dll) ──
+      // Kategori 'gaji' dikeluarkan — sudah dihitung via payroll overhead di bawah.
       const aktifCount = animalList.filter(a => a.status === 'active').length
-      const gajiCosts = thisBatchOpsCosts.filter(c => c.category === 'gaji')
-      const nonGajiNonPakanCosts = thisBatchOpsCosts.filter(c => c.category !== 'gaji' && c.category !== 'pakan')
-      const totalBiayaGaji = gajiCosts.reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
-      const totalBiayaOpsLain = nonGajiNonPakanCosts.reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
-      const totalBiayaOps = totalBiayaGaji + totalBiayaOpsLain
+      const allOpsCosts = thisBatchOpsCosts.filter(c => c.category !== 'pakan' && c.category !== 'gaji')
+      const totalBiayaOps = allOpsCosts.reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
+      const totalBiayaGaji = 0    // legacy — selalu 0, kept for return shape
+      const totalBiayaOpsLain = totalBiayaOps
+
+      // ── Overhead Periodik Harian (per-day active_head_count allocation) ─────
+      //
+      // Algorithm (per payment):
+      //   1. Tentukan period [periodStart, periodEnd] dari payment_type.
+      //   2. dailyCost = amount / daysInPeriod  (kalender aktual, inklusif).
+      //   3. Pre-compute active window tiap hewan: [purchase_date, sold_date || today].
+      //   4. Untuk setiap hari D dalam overlap(period, batchWindow):
+      //        headThisBatch(D) = hewan batch ini aktif pada D
+      //        headAllBatches(D) = hewan semua batch aktif pada D
+      //        dayAlloc(D) = dailyCost × headThisBatch(D) / headAllBatches(D)
+      //   5. totalAllocated = SUM(dayAlloc) per payment
+      //
+      // Properti:
+      //   - Batch baru hanya bayar sejak tanggal masuknya (purchase_date per ekor)
+      //   - Batch lama tidak bayar setelah semua terjual/mati
+      //   - SUM alokasi semua batch <= totalPayroll (tidak bisa melebihi)
+      //   - Februari 28/29 (kabisat) otomatis benar via date-fns
+
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      // Batch window: kapan batch ini pertama dan terakhir aktif
+      const purchaseDates = animalList
+        .map(a => a.entry_date)   // entry_date = kolom aktual (bukan purchase_date)
+        .filter(Boolean)
+        .sort()
+      const batchStart = purchaseDates.length > 0 ? startOfDay(parseISO(purchaseDates[0])) : null
+      const allBatchAnimalsSold = animalList.length > 0 && animalList.every(a => a.status === 'sold')
+      const batchEnd = allBatchAnimalsSold
+        ? (() => {
+            const exitDates = animalList
+              .map(a => a.exit_date || a.updated_at)  // exit_date = kolom aktual
+              .filter(Boolean).sort().reverse()
+            return exitDates[0] ? startOfDay(parseISO(exitDates[0])) : today
+          })()
+        : today
+
+      // Pre-compute active window per animal (cross-batch, semua status)
+      // Window = [purchase/entry date, sold_date OR updated_at (proxy death) OR today]
+      const animalWindows = allAnimalsForType
+        .map(a => {
+          // Gunakan entry_date sebagai window start (kolom aktual di tabel)
+          const entryRaw = a.entry_date
+          if (!entryRaw) return null
+          const windowStart = startOfDay(parseISO(entryRaw))
+          let windowEnd = today
+          if (a.exit_date) {
+            // exit_date diisi saat hewan terjual, mati, atau afkir
+            windowEnd = startOfDay(parseISO(a.exit_date))
+          } else if (a.status === 'dead' || a.status === 'culled') {
+            // Fallback: gunakan updated_at sebagai proxy tanggal keluar
+            windowEnd = a.updated_at ? startOfDay(parseISO(a.updated_at)) : today
+          }
+          return { batchId: a.batch_id, start: windowStart, end: windowEnd }
+        })
+        .filter(Boolean)
+
+      let totalBiayaGajiOverhead = 0
+      const batchPayrollDebug = []
+
+      if (batchStart && allWorkerPayments.length > 0 && animalWindows.length > 0) {
+        totalBiayaGajiOverhead = allWorkerPayments.reduce((sum, payment) => {
+          const amount = Number(payment.amount) || 0
+          if (amount <= 0) return sum
+
+          const payDate = parseISO(payment.payment_date)
+
+          // ── Periode berdasarkan payment_type ────────────────────────────────
+          let periodStart, periodEnd
+          if (payment.payment_type === 'mingguan') {
+            periodStart = startOfWeek(payDate, { weekStartsOn: 1 })
+            periodEnd   = endOfWeek(payDate, { weekStartsOn: 1 })
+          } else if (payment.payment_type === 'harian') {
+            periodStart = startOfDay(payDate)
+            periodEnd   = startOfDay(payDate)
+          } else {
+            // default: bulanan (gaji, monthly, dll)
+            periodStart = startOfMonth(payDate)
+            periodEnd   = endOfMonth(payDate)
+          }
+
+          // ── Hari kalender aktual, inklusif ──────────────────────────────────
+          const daysInPeriod = differenceInCalendarDays(periodEnd, periodStart) + 1
+          const dailyCost    = amount / daysInPeriod
+
+          // ── Overlap: periode gaji ∩ periode aktif batch ─────────────────────
+          const overlapStart = dateMax([periodStart, batchStart])
+          const overlapEnd   = dateMin([periodEnd,   batchEnd])
+          if (overlapStart > overlapEnd) return sum // tidak ada irisan hari
+
+          // ── Per-day iteration ───────────────────────────────────────────────
+          const days = eachDayOfInterval({ start: overlapStart, end: overlapEnd })
+          let totalAllocatedToThisBatch = 0
+          const dailyAllocationsPreview = []
+
+          for (const day of days) {
+            // Hitung ternak aktif di BATCH INI pada hari ini
+            const headThisBatch = animalWindows.filter(
+              w => w.batchId === batchId && day >= w.start && day <= w.end
+            ).length
+
+            if (headThisBatch === 0) continue // batch tidak punya hewan aktif hari ini
+
+            // Hitung total ternak aktif SEMUA BATCH pada hari ini
+            const headAllBatches = animalWindows.filter(
+              w => day >= w.start && day <= w.end
+            ).length
+
+            if (headAllBatches <= 0) continue // tidak ada hewan sama sekali (unlikely)
+
+            const dayProportion = headThisBatch / headAllBatches
+            const dayAlloc      = dailyCost * dayProportion
+            totalAllocatedToThisBatch += dayAlloc
+
+            if (process.env.NODE_ENV === 'development' && dailyAllocationsPreview.length < 5) {
+              dailyAllocationsPreview.push({
+                date:          day.toISOString().slice(0, 10),
+                headThisBatch,
+                headAllBatches,
+                proportion:    Math.round(dayProportion * 1000) / 1000,
+                dayAlloc:      Math.round(dayAlloc),
+              })
+            }
+          }
+
+          const allocatedPayrollCost = Math.round(totalAllocatedToThisBatch)
+
+          if (process.env.NODE_ENV === 'development') {
+            batchPayrollDebug.push({
+              paymentId:               payment.id,
+              periodStart:             periodStart.toISOString().slice(0, 10),
+              periodEnd:               periodEnd.toISOString().slice(0, 10),
+              daysInPeriod,
+              dailyCost:               Math.round(dailyCost),
+              allocationBasis:         'per_day_active_head_count',
+              dailyAllocationsPreview,
+              totalAllocatedToThisBatch: allocatedPayrollCost,
+            })
+          }
+
+          return sum + allocatedPayrollCost
+        }, 0)
+      }
+
+      if (process.env.NODE_ENV === 'development' && batchPayrollDebug.length > 0) {
+        batchPayrollDebug.forEach(d => console.debug('Daily overhead allocation audit', d))
+      }
+
+      // ── Metrik transparansi overhead ─────────────────────────────────────────
+      //
+      // 1. animalDaysBatch
+      //    Total ekor-hari aktif HANYA untuk batch ini.
+      //    Setiap hewan di animalList disumbangkan 1 unit per hari dalam window
+      //    [entry_date, exit_date || today].
+      //    Hewan terjual/mati/afkir TIDAK dihitung setelah exit_date mereka.
+      //    Ini adalah denominator yang tepat untuk "biaya berjalan / ekor / hari".
+      let animalDaysBatch = 0
+      let animalDaysFormulaText = ''        // "8 ekor × 3 hari + 7 ekor × 19 hari = 157"
+      const animalDaysBreakdown = []        // per-hari untuk console.table
+
+      if (batchStart) {
+        // Bangun window per hewan dari animalList (bukan dari allAnimalsForType).
+        // Setiap entri menyimpan: { earTag, status, start, end }
+        const thisAnimalWindows = animalList.map(a => {
+          const entryRaw = a.entry_date
+          if (!entryRaw) return null
+          const wStart = startOfDay(parseISO(entryRaw))
+          let wEnd = today
+          if (a.exit_date) {
+            wEnd = startOfDay(parseISO(a.exit_date))
+          } else if ((a.status === 'dead' || a.status === 'culled') && a.updated_at) {
+            wEnd = startOfDay(parseISO(a.updated_at))
+          }
+          return { earTag: a.ear_tag || a.id?.slice(0, 6), status: a.status, start: wStart, end: wEnd }
+        }).filter(Boolean)
+
+        const batchWindowDays = eachDayOfInterval({ start: batchStart, end: batchEnd })
+        for (const day of batchWindowDays) {
+          const activeOnDay = thisAnimalWindows.filter(
+            w => day >= w.start && day <= w.end
+          ).length
+          animalDaysBatch += activeOnDay
+          animalDaysBreakdown.push({
+            date:                    day.toISOString().slice(0, 10),
+            activeHeadsThisBatch:    activeOnDay,
+            animalDaysContribution:  activeOnDay,   // cumulative per row shown separately
+          })
+        }
+
+        // ── Buat formula text dengan run-length encoding ────────────────────
+        // Compress consecutive days dengan head-count yang sama menjadi segment
+        // "N ekor × D hari" untuk kemudahan baca manusia.
+        if (animalDaysBreakdown.length > 0) {
+          const segments = []
+          let segHead = animalDaysBreakdown[0].activeHeadsThisBatch
+          let segDays = 1
+          for (let i = 1; i < animalDaysBreakdown.length; i++) {
+            const h = animalDaysBreakdown[i].activeHeadsThisBatch
+            if (h === segHead) {
+              segDays++
+            } else {
+              if (segHead > 0) segments.push({ head: segHead, days: segDays })
+              segHead = h
+              segDays = 1
+            }
+          }
+          if (segHead > 0) segments.push({ head: segHead, days: segDays })
+
+          const parts = segments.map(s => `${s.head} ekor × ${s.days} hari`)
+          animalDaysFormulaText = parts.length > 0
+            ? `${parts.join(' + ')} = ${animalDaysBatch} ekor-hari`
+            : `${animalDaysBatch} ekor-hari`
+        }
+
+        if (process.env.NODE_ENV === 'development' && animalDaysBreakdown.length > 0) {
+          // Tambah kolom kumulatif agar mudah cross-check di console
+          let cum = 0
+          const tableData = animalDaysBreakdown.map(r => {
+            cum += r.animalDaysContribution
+            return { ...r, cumulativeAnimalDays: cum }
+          })
+          console.debug(`[animalDaysBatch] formula: ${animalDaysFormulaText}`)
+          console.table(tableData)
+        }
+      }
+
+      // 2. overheadActiveHeadSample
+      //    Denominator rata-rata yang BENAR-BENAR dipakai dalam alokasi overhead.
+      //    Dihitung hanya dari hari-hari overlap antara payroll period dan batch window,
+      //    di-weight oleh allocated cost tiap payment sehingga pembayaran besar
+      //    (gaji bulan April Rp2,55 juta) mendominasi angka, bukan pembayaran kecil.
+      //
+      //    Untuk setiap payment yang sudah menghasilkan alokasi > 0:
+      //      overlapDays = hari-hari irisan (periodPayment ∩ batchWindow)
+      //      avgAllBatchesOnDay = rata-rata headAllBatches selama overlapDays
+      //    weighted average: SUM(allocated × avgDenom) / SUM(allocated)
+      let overheadActiveHeadSample = aktifCount // fallback jika tidak ada payroll
+      const overheadPeriods = []               // untuk debug
+
+      if (batchStart && allWorkerPayments.length > 0 && animalWindows.length > 0) {
+        let weightedDenomSum  = 0
+        let weightedCostTotal = 0
+
+        for (const payment of allWorkerPayments) {
+          const amount = Number(payment.amount) || 0
+          if (amount <= 0) continue
+
+          const payDate = parseISO(payment.payment_date)
+          let periodStart, periodEnd
+          if (payment.payment_type === 'mingguan') {
+            periodStart = startOfWeek(payDate, { weekStartsOn: 1 })
+            periodEnd   = endOfWeek(payDate, { weekStartsOn: 1 })
+          } else if (payment.payment_type === 'harian') {
+            periodStart = startOfDay(payDate)
+            periodEnd   = startOfDay(payDate)
+          } else {
+            periodStart = startOfMonth(payDate)
+            periodEnd   = endOfMonth(payDate)
+          }
+
+          const overlapStart = dateMax([periodStart, batchStart])
+          const overlapEnd   = dateMin([periodEnd,   batchEnd])
+          if (overlapStart > overlapEnd) continue // tidak ada irisan
+
+          const overlapDays = eachDayOfInterval({ start: overlapStart, end: overlapEnd })
+
+          // headAllBatches per hari di overlap ini
+          let totalDenomOnOverlap = 0
+          let daysCounted = 0
+          for (const day of overlapDays) {
+            const headThisBatch = animalWindows.filter(
+              w => w.batchId === batchId && day >= w.start && day <= w.end
+            ).length
+            if (headThisBatch === 0) continue // hari di mana batch ini tidak aktif
+            const headAll = animalWindows.filter(
+              w => day >= w.start && day <= w.end
+            ).length
+            totalDenomOnOverlap += headAll
+            daysCounted++
+          }
+
+          if (daysCounted === 0) continue
+          const avgDenomThisPayment = totalDenomOnOverlap / daysCounted
+
+          // Estimasi allocated cost untuk weighting
+          const daysInPeriod  = differenceInCalendarDays(periodEnd, periodStart) + 1
+          const dailyCost     = amount / daysInPeriod
+          const allocEstimate = dailyCost * daysCounted * (avgDenomThisPayment > 0
+            ? (animalWindows.filter(w => w.batchId === batchId && overlapStart >= w.start && overlapStart <= w.end).length / avgDenomThisPayment)
+            : 1)
+
+          weightedDenomSum  += avgDenomThisPayment * Math.max(allocEstimate, 1)
+          weightedCostTotal += Math.max(allocEstimate, 1)
+
+          overheadPeriods.push({
+            paymentId:            payment.id,
+            paymentType:          payment.payment_type,
+            amount,
+            overlapStart:         overlapStart.toISOString().slice(0, 10),
+            overlapEnd:           overlapEnd.toISOString().slice(0, 10),
+            daysCounted,
+            avgDenomThisPayment:  Math.round(avgDenomThisPayment * 10) / 10,
+            allocEstimate:        Math.round(allocEstimate),
+          })
+        }
+
+        if (weightedCostTotal > 0) {
+          overheadActiveHeadSample = Math.round(weightedDenomSum / weightedCostTotal)
+        }
+      }
 
       // ── Biaya Kesehatan (treatment_cost_idr from health_logs if available) ─
       const totalBiayaKesehatan = healthLogs.reduce(
@@ -1187,7 +1653,7 @@ export function createPenggemukanHooks(prefix) {
       )
 
       // ── Total HPP & Counts ─────────────────────────────────────────────────
-      const totalHpp = totalModalBeli + totalBiayaPakan + totalBiayaOps + totalBiayaKesehatan
+      const totalHpp = totalModalBeli + totalBiayaPakan + totalBiayaOps + totalBiayaKesehatan + totalBiayaGajiOverhead
       const terjualCount = animalList.filter(a => a.status === 'sold').length
       const matiCount = animalList.filter(a => a.status === 'dead' || a.status === 'culled').length
       const produksiCount = aktifCount + terjualCount
@@ -1227,19 +1693,57 @@ export function createPenggemukanHooks(prefix) {
       const kgPakanTotal = kgConsumedThisBatch
       const hargaRataPerKg = Math.round(avgPricePerKg)
 
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('Domba HPP/BEP audit', {
+          activeCount: aktifCount,
+          avgWeightKg: avgActiveWeightKg,
+          totalLiveWeightKg: totalActiveWeightKg,
+          purchaseCost: totalModalBeli,
+          feedKgTotal: kgConsumedThisBatch,
+          feedCostTotal: totalBiayaPakan,
+          operationalCost: totalBiayaOps,
+          payrollOverhead: totalBiayaGajiOverhead,
+          totalHpp,
+          hppPerHead: hppPerEkor,
+          targetMargin: 0.2,
+          targetPricePerHead: bepPerEkor,
+          targetPricePerKg: bepSisaPerKg
+        })
+
+        // ── Running cost per head day audit ─────────────────────────────────
+        const _totalRunningCost = totalBiayaPakan + totalBiayaGajiOverhead + totalBiayaOpsLain
+        const _runningCostPerHeadPerDay = animalDaysBatch > 0
+          ? Math.round(_totalRunningCost / animalDaysBatch)
+          : 0
+        console.debug('Running cost per head day audit', {
+          totalRunningCost:        _totalRunningCost,
+          animalDaysBatch,
+          animalDaysFormulaText,
+          runningCostPerHeadPerDay: _runningCostPerHeadPerDay,
+          overheadActiveHeadSample,
+          overheadPeriods,
+        })
+      }
+
       return {
         totalModalBeli, totalBiayaPakan, totalBiayaOps, totalBiayaGaji,
-        totalBiayaOpsLain, totalBiayaKesehatan, totalHpp,
+        totalBiayaOpsLain, totalBiayaKesehatan,
+        totalBiayaGajiOverhead, // ← overhead periodik dari kandang_worker_payments
+        totalHpp,
         aktifCount, terjualCount, matiCount, produksiCount,
         totalPendapatan, totalPendapatanLunas, totalHutang,
         hppPerEkor, bepPerEkor, bepSisa, bepSisaKas,
-        bepSisaPerKg, avgActiveWeightKg,
+        bepSisaPerKg, avgActiveWeightKg, totalActiveWeightKg,
         sisaHpp, profitLoss,
         kgPakanTotal, hargaRataPerKg,
-        // Warning flags
         warnPakanTanpaBiaya, ternakTanpaHarga, allDead,
+        // Metrik transparansi overhead
+        animalDaysBatch,           // total ekor-hari aktif batch ini (per-animal window)
+        animalDaysFormulaText,     // "8 ekor × 3 hari + 7 ekor × 19 hari = 157 ekor-hari"
+        overheadActiveHeadSample,  // rata-rata ekor aktif lintas-batch (weighted by allocation cost)
+        overheadPeriods,           // detail per-payment untuk audit
       }
-    }, [animalList, salesList, thisBatchFeedLogs, thisBatchOpsCosts, healthLogs, batchId])
+    }, [animalList, salesList, thisBatchFeedLogs, thisBatchOpsCosts, healthLogs, batchId, allWorkerPayments, allAnimalsForType])
 
     return { isLoading, ...hpp }
   }

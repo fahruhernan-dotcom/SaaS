@@ -81,21 +81,24 @@ function HppPanel({ batchId, useHppBatch }) {
   )
 
   const { totalModalBeli, totalBiayaPakan, totalBiayaOps, totalBiayaGaji = 0,
-    totalBiayaOpsLain = 0, totalBiayaKesehatan = 0, totalHpp,
+    totalBiayaOpsLain = 0, totalBiayaGajiOverhead = 0, totalBiayaKesehatan = 0, totalHpp,
     aktifCount, terjualCount, matiCount, totalPendapatan, totalHutang = 0,
     hppPerEkor, bepPerEkor, bepSisa, bepSisaKas = 0,
-    bepSisaPerKg = 0, avgActiveWeightKg = 0,
+    bepSisaPerKg = 0, avgActiveWeightKg = 0, totalActiveWeightKg = 0,
     profitLoss, produksiCount,
     kgPakanTotal, hargaRataPerKg,
-    warnPakanTanpaBiaya, ternakTanpaHarga = 0, allDead } = hpp
+    warnPakanTanpaBiaya, ternakTanpaHarga = 0, allDead,
+    animalDaysBatch = 0, overheadActiveHeadSample = 0, overheadPeriods = [],
+    animalDaysFormulaText = '',
+  } = hpp
 
   const isProfitable = profitLoss >= 0
   const hasRevenue = totalPendapatan > 0
   const costParts = [
     { label: 'Modal Beli', value: totalModalBeli, color: 'bg-blue-500' },
-    { label: 'Biaya Pakan', value: totalBiayaPakan, color: 'bg-emerald-500' },
+    { label: 'Pakan Terpakai', value: totalBiayaPakan, color: 'bg-emerald-500' },
+    ...(totalBiayaGajiOverhead > 0 ? [{ label: 'Overhead Periodik Harian', value: totalBiayaGajiOverhead, color: 'bg-pink-500' }] : []),
     { label: 'Biaya Ops', value: totalBiayaOpsLain, color: 'bg-violet-500' },
-    ...(totalBiayaGaji > 0 ? [{ label: 'Gaji', value: totalBiayaGaji, color: 'bg-pink-500' }] : []),
     ...(totalBiayaKesehatan > 0 ? [{ label: 'Kesehatan', value: totalBiayaKesehatan, color: 'bg-rose-500' }] : []),
   ]
   const totalForBar = totalHpp || 1
@@ -191,13 +194,38 @@ function HppPanel({ batchId, useHppBatch }) {
                       <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">{p.label}</p>
                       <p className="text-xs font-black text-white">Rp {fmt(p.value)}</p>
                       <p className="text-[9px] text-[#4B6478]">{totalHpp > 0 ? Math.round((p.value / totalHpp) * 100) : 0}%</p>
-                      {p.label === 'Biaya Pakan' && hargaRataPerKg > 0 && (
+                      {p.label === 'Pakan Terpakai' && hargaRataPerKg > 0 && (
                         <p className="text-[9px] text-emerald-400/70 mt-1 leading-tight">
                           {kgPakanTotal.toFixed(1)} kg × Rp {fmt(hargaRataPerKg)}/kg
                         </p>
                       )}
-                      {p.label === 'Biaya Pakan' && hargaRataPerKg === 0 && !warnPakanTanpaBiaya && (
+                      {p.label === 'Pakan Terpakai' && hargaRataPerKg === 0 && !warnPakanTanpaBiaya && (
                         <p className="text-[9px] text-[#4B6478]/60 mt-1 leading-tight italic">Catat beli pakan dulu</p>
+                      )}
+                    {p.label === 'Overhead Periodik Harian' && (
+                        <>
+                          <p
+                            className="text-[9px] text-pink-400/70 mt-1 leading-tight"
+                            title="Biaya periodik seperti gaji dibagi ke ternak aktif pada periode tersebut. Jika populasi sedikit, biaya per ekor akan lebih tinggi."
+                          >
+                            prorata harian
+                          </p>
+                          {overheadActiveHeadSample > 0 && (
+                            <p
+                              className="text-[9px] text-pink-300/60 mt-0.5 leading-tight"
+                              title={`Rata-rata denominator alokasi overhead dari ${(overheadPeriods ?? []).length} periode pembayaran. Tanda ~ berarti estimasi rata-rata tertimbang.`}
+                            >
+                              ÷ ~{overheadActiveHeadSample} ekor
+                              {(overheadPeriods ?? []).length > 1 && ' (rata-rata)'}
+                            </p>
+                          )}
+                          <p
+                            className="text-[8px] text-[#4B6478]/60 mt-1 leading-tight italic cursor-help"
+                            title="Biaya periodik seperti gaji dibagi ke ternak aktif pada periode tersebut. Jika populasi sedikit, biaya per ekor akan lebih tinggi. Pada farm besar (150+ ekor), overhead per ekor jauh lebih rendah."
+                          >
+                            ⓘ populasi kecil = overhead/ekor tinggi
+                          </p>
+                        </>
                       )}
                     </div>
                   ))}
@@ -222,7 +250,9 @@ function HppPanel({ batchId, useHppBatch }) {
                     ? 'bg-orange-500/5 border-orange-500/15'
                     : 'bg-white/[0.02] border-white/[0.05]'
                 )}>
-                  <p className="text-[9px] font-black text-orange-400/70 uppercase tracking-widest mb-1">BEP Sisa</p>
+                  <p className="text-[9px] font-black text-orange-400/70 uppercase tracking-widest mb-1"
+                    title="Harga minimum per kg jika seluruh ternak dijual HARI INI, pada bobot aktual saat ini. Makin berat saat panen, makin turun angka ini."
+                  >BEP Jual Hari Ini</p>
                   <p className={cn('text-sm font-black font-["Sora"]', aktifCount > 0 ? 'text-orange-300' : 'text-[#4B6478]')}>
                     {aktifCount > 0
                       ? bepSisaPerKg > 0 ? `Rp ${fmt(bepSisaPerKg)}/kg` : `Rp ${fmt(bepSisa)}/ekor`
@@ -231,12 +261,56 @@ function HppPanel({ batchId, useHppBatch }) {
                   <p className="text-[9px] text-[#4B6478] mt-0.5">
                     {aktifCount > 0
                       ? avgActiveWeightKg > 0
-                        ? `${aktifCount} ekor · ±${avgActiveWeightKg.toFixed(0)} kg/ekor`
+                        ? `${aktifCount} ekor · ~${avgActiveWeightKg.toFixed(1)} kg/ekor`
                         : `${aktifCount} ekor sisa`
                       : ''}
                   </p>
                 </div>
               </div>
+
+              {/* ── Biaya berjalan / ekor / hari ─────────────────────────────── */}
+              {(() => {
+                const runningCost = totalBiayaPakan + totalBiayaGajiOverhead + totalBiayaOpsLain
+                // animalDaysBatch = 0 → belum ada data hewan, jangan tampilkan
+                if (animalDaysBatch <= 0 || runningCost <= 0) return null
+                const costPerHeadPerDay = Math.round(runningCost / animalDaysBatch)
+                return (
+                  <div
+                    className="bg-pink-500/5 border border-pink-500/10 rounded-xl p-3 space-y-1"
+                    title="(Pakan Terpakai + Overhead + Biaya Ops) ÷ total ekor-hari aktif batch ini. Makin besar populasi atau makin cepat panen, makin kecil angka ini."
+                  >
+                    {/* ── Baris utama: label + nilai ── */}
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-[9px] font-black text-pink-400/70 uppercase tracking-widest">Biaya Berjalan / Ekor / Hari</p>
+                        <p className="text-sm font-black text-pink-300 font-['Sora']">Rp {fmt(costPerHeadPerDay)}</p>
+                      </div>
+                      <p className="text-[9px] text-[#4B6478]/80 leading-relaxed max-w-[110px] text-right mt-0.5">
+                        Makin banyak ekor atau makin cepat panen, makin rendah angka ini
+                      </p>
+                    </div>
+
+                    {/* ── Formula denominator ── */}
+                    <div className="bg-white/[0.03] rounded-lg p-2 space-y-0.5">
+                      {animalDaysFormulaText ? (
+                        <p
+                          className="text-[9px] text-pink-200/60 font-mono leading-snug break-all"
+                          title="Ekor-hari dihitung dari jumlah ternak aktif per hari sejak masuk batch. Ternak terjual/mati tidak dihitung setelah tanggal keluarnya."
+                        >
+                          {animalDaysFormulaText}
+                        </p>
+                      ) : (
+                        <p className="text-[9px] text-[#4B6478] font-mono">
+                          Rp {fmt(runningCost)} ÷ {animalDaysBatch.toLocaleString('id-ID')} ekor-hari
+                        </p>
+                      )}
+                      <p className="text-[8px] text-[#4B6478]/60 italic leading-snug">
+                        Ekor-hari = akumulasi ternak aktif per hari sejak masuk batch
+                      </p>
+                    </div>
+                  </div>
+                )
+              })()}
 
               {/* ── Dual BEP: Kas vs Akrual (show only if hutang exists) ──── */}
               {totalHutang > 0 && aktifCount > 0 && (
@@ -276,14 +350,26 @@ function HppPanel({ batchId, useHppBatch }) {
 
               {/* BEP sisa explanation */}
               {aktifCount > 0 && bepSisa > 0 && !allDead && (
-                <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-3 flex gap-2">
-                  <ArrowUpDown size={12} className="text-orange-400 shrink-0 mt-0.5" />
-                  <p className="text-[10px] text-[#4B6478] leading-relaxed">
-                    Jual <span className="text-white font-black">{aktifCount} ekor sisa</span> minimal{' '}
-                    {bepSisaPerKg > 0
-                      ? <><span className="text-orange-300 font-black">Rp {fmt(bepSisaPerKg)}/kg</span>{avgActiveWeightKg > 0 && <span className="text-[#4B6478]"> (±{avgActiveWeightKg.toFixed(0)} kg/ekor)</span>}</>
-                      : <span className="text-orange-300 font-black">Rp {fmt(bepSisa)}/ekor</span>
-                    }{' '}untuk menutup semua biaya + target margin 20%.
+                <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-3 space-y-1.5">
+                  <div className="flex gap-2">
+                    <ArrowUpDown size={12} className="text-orange-400 shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-[#4B6478] leading-relaxed">
+                      <span className="text-white font-black">BEP jika dijual hari ini:</span>{' '}
+                      {bepSisaPerKg > 0
+                        ? <><span className="text-orange-300 font-black">Rp {fmt(bepSisaPerKg)}/kg</span>
+                            {avgActiveWeightKg > 0 && (
+                              <span className="text-[#4B6478]"> (~{avgActiveWeightKg.toFixed(1)} kg/ekor · total {totalActiveWeightKg > 0 ? totalActiveWeightKg.toFixed(1) : '—'} kg)</span>
+                            )}
+                          </>
+                        : <span className="text-orange-300 font-black">Rp {fmt(bepSisa)}/ekor</span>
+                      }{' '}untuk menutup semua biaya + margin 20%.
+                    </p>
+                  </div>
+                  <p className="text-[9px] text-[#4B6478]/70 leading-relaxed pl-5">
+                    Dihitung dari total HPP berjalan dibagi total bobot aktif saat ini.{' '}
+                    <span className="text-[#4B6478]">
+                      Angka akan turun jika bobot panen naik — wajar tinggi saat ternak masih muda/ringan.
+                    </span>
                   </p>
                 </div>
               )}

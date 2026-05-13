@@ -515,18 +515,25 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
   const step   = steps[stepIdx]
   const isLast = stepIdx === steps.length - 1
 
-  const dismiss = (reason) => {
+  const dismiss = async (reason) => {
     const value = reason === 'complete' ? new Date().toISOString() : reason
     try { localStorage.setItem(storageKey, value) } catch { /* ok */ }
     setVisible(false)
 
     // Sync ke DB — fire and forget
     if (profile?.profile_id) {
-      supabase.rpc('append_tutorial_completed', {
-        p_profile_id: profile.profile_id,
-        p_key: storageKey,
-        p_value: value,
-      }).then(() => {})
+      try {
+        const { error } = await supabase.rpc('append_tutorial_completed', {
+          p_key: storageKey,
+          p_value: value
+        })
+
+        if (error) {
+          console.error('append_tutorial_completed RPC failed:', error)
+        }
+      } catch (err) {
+        console.error('append_tutorial_completed RPC exception:', err)
+      }
     }
   }
 

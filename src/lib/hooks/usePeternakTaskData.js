@@ -887,8 +887,11 @@ export function useAddKandangWorkerPayment() {
   const qc = useQueryClient()
   const { tenant } = useAuth()
   return useMutation({
-    mutationFn: async ({ worker_id, payment_date, payment_type, amount, notes, animalType, batches }) => {
-      // 1. Save to kandang_worker_payments (always)
+    mutationFn: async ({ worker_id, payment_date, payment_type, amount, notes }) => {
+      // Save to kandang_worker_payments.
+      // NOTE: Integrasi ke HPP dilakukan via useHppBatch yang membaca langsung
+      // dari tabel ini sebagai payroll overhead periodik — bukan via auto-sync
+      // ke operational_costs (yang dulu ada di sini tapi tidak reliable).
       const { error } = await supabase
         .from('kandang_worker_payments')
         .insert({
@@ -900,41 +903,12 @@ export function useAddKandangWorkerPayment() {
           notes: notes || null,
         })
       if (error) throw error
-
-      // 2. Auto-insert into operational_costs for HPP (if animal context provided)
-      if (animalType && batches?.length > 0 && amount > 0) {
-        const table = `${animalType}_penggemukan_operational_costs`
-        const totalAnimals = batches.reduce((s, b) => s + (b.total_animals || 0), 0)
-        const totalAmount = Math.round(Number(amount) || 0)
-        const rows = batches.map((b, i) => {
-          const proportion = totalAnimals > 0 ? (b.total_animals || 0) / totalAnimals : 1 / batches.length
-          const allocated = i === batches.length - 1
-            ? totalAmount - batches.slice(0, -1).reduce((s, bb) => {
-                const p = totalAnimals > 0 ? (bb.total_animals || 0) / totalAnimals : 1 / batches.length
-                return s + Math.round(totalAmount * p)
-              }, 0)
-            : Math.round(totalAmount * proportion)
-          return {
-            tenant_id: tenant.id,
-            batch_id: b.id,
-            log_date: payment_date,
-            item_name: notes || `Gaji Pekerja`,
-            category: 'gaji',
-            amount_idr: allocated,
-            notes: `Auto dari pembayaran gaji`,
-          }
-        })
-        const { error: opsError } = await supabase.from(table).insert(rows)
-        if (opsError) console.error('Gagal sync gaji ke ops costs:', opsError.message)
-      }
     },
-    onSuccess: (_, { worker_id, animalType }) => {
+    onSuccess: (_, { worker_id }) => {
       qc.invalidateQueries({ queryKey: ['kandang-worker-payments', worker_id] })
       qc.invalidateQueries({ queryKey: ['kandang-workers-all', tenant?.id] })
-      // Also invalidate ops costs cache so HPP updates
-      if (animalType) {
-        qc.invalidateQueries({ queryKey: [`${animalType}-operational-costs-multi`] })
-      }
+      // Invalidate tenant-wide payments cache (used by useHppBatch payroll overhead)
+      qc.invalidateQueries({ queryKey: ['kandang-worker-payments-tenant', tenant?.id] })
       toast.success('Pembayaran berhasil dicatat')
     },
     onError: (err) => toast.error('Gagal catat pembayaran: ' + err.message),
@@ -1052,5 +1026,31 @@ export function useDeleteFarmOpsCost(animalType) {
       toast.success('Catatan dihapus')
     },
     onError: (err) => toast.error('Gagal hapus: ' + err.message),
+  })
+}
+
+/**
+ * Fetch ALL kandang_worker_payments for the current tenant.
+ * Used by useHppBatch to compute payroll overhead as a periodic daily cost,
+ * WITHOUT relying on auto-sync to operational_costs.
+ *
+ * Returns rows with: id, worker_id, payment_date, payment_type, amount, notes, is_deleted
+ */
+export function useTenantWorkerPayments() {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['kandang-worker-payments-tenant', tenant?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('kandang_worker_payments')
+        .select('id, worker_id, payment_date, payment_type, amount, notes')
+        .eq('tenant_id', tenant.id)
+        .eq('is_deleted', false)
+        .order('payment_date', { ascending: false })
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: !!tenant?.id,
+    staleTime: 1000 * 60 * 5, // 5 min cache — payroll data doesn't change often
   })
 }

@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, X, Wheat, Calendar, Info, Trash2, ArrowLeft, Share2,
-  Receipt, Wallet, TrendingUp, Package,
+  Receipt, Wallet, TrendingUp, Package, Zap, Heart, Users, MoreHorizontal,
+  ShoppingCart, Filter, ChevronDown,
 } from 'lucide-react'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { InputNumber } from '@/components/ui/InputNumber'
@@ -23,6 +24,367 @@ function getConsumed(log) {
   if (log.consumed_kg != null && log.consumed_kg > 0) return log.consumed_kg
   const input = (log.hijauan_kg || 0) + (log.konsentrat_kg || 0) + (log.dedak_kg || 0) + (log.other_feed_kg || 0)
   return Math.max(0, input - (log.sisa_pakan_kg || 0))
+}
+
+// ─── Category helpers ──────────────────────────────────────────────────────────
+
+const CATEGORY_META = {
+  pakan:        { label: 'Pakan',         color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', dot: 'bg-emerald-400', icon: '🌿' },
+  listrik_air:  { label: 'Listrik & Air', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',         dot: 'bg-blue-400',    icon: '💡' },
+  LISTRIK_AIR:  { label: 'Listrik & Air', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',         dot: 'bg-blue-400',    icon: '💡' },
+  kesehatan:    { label: 'Kesehatan',     color: 'bg-rose-500/10 text-rose-400 border-rose-500/20',         dot: 'bg-rose-400',    icon: '🏥' },
+  tenaga_kerja: { label: 'Tenaga Kerja',  color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',      dot: 'bg-amber-400',   icon: '👷' },
+  upah:         { label: 'Tenaga Kerja',  color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',      dot: 'bg-amber-400',   icon: '👷' },
+  pekerja:      { label: 'Tenaga Kerja',  color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',      dot: 'bg-amber-400',   icon: '👷' },
+  gaji:         { label: 'Tenaga Kerja',  color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',      dot: 'bg-amber-400',   icon: '👷' },
+  lainnya:      { label: 'Lainnya',       color: 'bg-slate-500/10 text-slate-400 border-slate-500/20',      dot: 'bg-slate-400',   icon: '📦' },
+}
+
+function getCatMeta(category) {
+  if (!category) return CATEGORY_META.lainnya
+  const norm = category.toLowerCase().replace(/-/g, '_')
+  return CATEGORY_META[norm] || CATEGORY_META[category] || {
+    label: category.charAt(0).toUpperCase() + category.slice(1).replace(/_/g, ' '),
+    color: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
+    dot: 'bg-slate-400',
+    icon: '📦',
+  }
+}
+
+const fmt = (n) => Math.round(n).toLocaleString('id-ID')
+const fmtDate = (d) => new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+const fmtDateShort = (d) => new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })
+
+// ─── BiayaTab ─────────────────────────────────────────────────────────────────
+
+const ALL_CAT = 'semua'
+
+function CategoryBadge({ category, small = false }) {
+  const meta = getCatMeta(category)
+  return (
+    <span className={cn(
+      'inline-flex items-center gap-1 rounded-full border font-black',
+      small ? 'px-1.5 py-0.5 text-[9px]' : 'px-2 py-1 text-[10px]',
+      meta.color,
+    )}>
+      {meta.icon} {meta.label}
+    </span>
+  )
+}
+
+function BiayaTab({
+  costs, costStats, batches, batchCodeMap,
+  isAllBatches, canInputBiaya, canHapusBiaya,
+  hasDeleteHook, onAddCost, onDeleteCost,
+}) {
+  const [catFilter, setCatFilter] = useState(ALL_CAT)
+
+  // Dedup by ID (safety net — main dedup already in costStats)
+  const uniqueCosts = useMemo(
+    () => Array.from(new Map(costs.map(c => [c.id, c])).values()),
+    [costs]
+  )
+
+  // Derive unique categories for filter bar
+  const categories = useMemo(() => {
+    const seen = new Set()
+    uniqueCosts.forEach(c => seen.add(c.category))
+    return Array.from(seen)
+  }, [uniqueCosts])
+
+  const filteredCosts = useMemo(() =>
+    catFilter === ALL_CAT
+      ? uniqueCosts
+      : uniqueCosts.filter(c => c.category === catFilter),
+    [uniqueCosts, catFilter]
+  )
+
+  const summaryCards = [
+    {
+      label: 'Total Belanja',
+      value: `Rp ${fmt(costStats.total)}`,
+      sub: `${costStats.txCount} transaksi`,
+      color: 'from-violet-900/30 to-violet-900/10 border-violet-500/20',
+      textColor: 'text-violet-300',
+      icon: ShoppingCart,
+    },
+    {
+      label: 'Pembelian Pakan',
+      value: `Rp ${fmt(costStats.pakanTotal)}`,
+      sub: costStats.totalQtyPakan > 0 ? `${fmt(costStats.totalQtyPakan)} kg dibeli` : 'Stok pakan',
+      color: 'from-emerald-900/30 to-emerald-900/10 border-emerald-500/20',
+      textColor: 'text-emerald-300',
+      icon: Wheat,
+    },
+    {
+      label: 'Operasional',
+      value: `Rp ${fmt(costStats.nonPakanTotal)}`,
+      sub: 'Listrik, air, lainnya',
+      color: 'from-blue-900/30 to-blue-900/10 border-blue-500/20',
+      textColor: 'text-blue-300',
+      icon: Zap,
+    },
+    {
+      label: 'Harga Rata Pakan',
+      value: costStats.avgHargaPakan > 0 ? `Rp ${fmt(costStats.avgHargaPakan)}/kg` : '—',
+      sub: 'Berdasarkan pembelian',
+      color: 'from-amber-900/30 to-amber-900/10 border-amber-500/20',
+      textColor: 'text-amber-300',
+      icon: TrendingUp,
+    },
+  ]
+
+  return (
+    <div className="space-y-6">
+      {/* ── 4-card Summary Grid ── */}
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        {summaryCards.map(({ label, value, sub, color, textColor, icon: Icon }) => (
+          <div key={label} className={cn('rounded-2xl p-3.5 border bg-gradient-to-b', color)}>
+            <Icon size={13} className={cn(textColor, 'mb-2 opacity-80')} />
+            <p className={cn('text-sm font-black font-[\'Sora\'] leading-tight', textColor)}>{value}</p>
+            <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mt-1 leading-tight">{label}</p>
+            <p className="text-[9px] text-[#4B6478] mt-0.5 leading-tight">{sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Section Header + CTAs ── */}
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <h2 className="font-['Sora'] font-black text-[13px] text-white flex items-center gap-1.5">
+            <Receipt size={14} className="text-[#4B6478]" /> Riwayat Transaksi
+          </h2>
+          <p className="text-[10px] text-[#4B6478] mt-0.5">
+            {filteredCosts.length} dari {uniqueCosts.length} entri
+          </p>
+        </div>
+        {canInputBiaya && (
+          <button
+            onClick={onAddCost}
+            className="flex-shrink-0 px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white text-[11px] font-black rounded-xl transition-colors flex items-center gap-1.5"
+          >
+            <Plus size={13} /> Tambah Biaya
+          </button>
+        )}
+      </div>
+
+      {/* ── Category filter pills ── */}
+      {categories.length > 1 && (
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+          <button
+            onClick={() => setCatFilter(ALL_CAT)}
+            className={cn(
+              'flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all',
+              catFilter === ALL_CAT
+                ? 'bg-white/10 border-white/20 text-white'
+                : 'bg-white/[0.02] border-white/[0.06] text-[#4B6478] hover:text-white/60',
+            )}
+          >
+            Semua
+          </button>
+          {categories.map(cat => {
+            const meta = getCatMeta(cat)
+            const active = catFilter === cat
+            return (
+              <button
+                key={cat}
+                onClick={() => setCatFilter(cat)}
+                className={cn(
+                  'flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] font-black border transition-all flex items-center gap-1',
+                  active ? meta.color : 'bg-white/[0.02] border-white/[0.06] text-[#4B6478] hover:text-white/60',
+                )}
+              >
+                {meta.icon} {meta.label}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* ── Transaction List ── */}
+      {filteredCosts.length === 0 ? (
+        <div className="text-center py-12 bg-white/[0.01] border border-dashed border-white/[0.05] rounded-3xl">
+          <Wallet size={28} className="mx-auto text-white/5 mb-3" />
+          <p className="text-xs font-black text-[#4B6478]">
+            {uniqueCosts.length === 0 ? 'Belum ada catatan transaksi' : `Tidak ada transaksi kategori "${getCatMeta(catFilter).label}"`}
+          </p>
+          {uniqueCosts.length === 0 && canInputBiaya && (
+            <button onClick={onAddCost} className="mt-3 text-[10px] text-violet-400 hover:text-violet-300 font-black transition-colors">
+              + Tambah transaksi pertama
+            </button>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Desktop table — hidden on mobile */}
+          <div className="hidden sm:block">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/[0.05]">
+                  {['Tanggal','Jenis','Batch','Deskripsi','Qty · Rp/kg','Nominal',''].map(h => (
+                    <th key={h} className={cn(
+                      'py-2 text-[9px] font-black text-[#4B6478] uppercase tracking-widest',
+                      h === 'Nominal' ? 'text-right pr-3' : 'pr-4',
+                    )}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredCosts.map((cost, idx) => {
+                  const meta = getCatMeta(cost.category)
+                  const batchCode = batchCodeMap[cost.batch_id]
+                  const qty = Number(cost.quantity) || 0
+                  const amount = Number(cost.amount_idr) || 0
+                  // Derived harga/kg from this row's own qty and amount
+                  const derivedPricePerKg = qty > 0 ? amount / qty : 0
+                  // Legacy mismatch: qty * avg_price >> amount (qty was not split, only amount was)
+                  // We detect this by checking if amount is much less than qty * derivedBatchAvg.
+                  // Use costStats.avgHargaPakan as the batch-level reference.
+                  const batchAvgPrice = costStats.avgHargaPakan
+                  const expectedFromQty = qty > 0 && batchAvgPrice > 0 ? qty * batchAvgPrice : 0
+                  const isLegacyMismatch = cost.category === 'pakan' && qty > 0 && amount > 0
+                    && expectedFromQty > amount * 2  // expected >2x actual = old bug
+                  return (
+                    <tr key={cost.id}
+                      className={cn(
+                        'border-b border-white/[0.03] transition-colors hover:bg-white/[0.02] group',
+                        idx % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.01]',
+                      )}
+                    >
+                      <td className="py-3 pr-4 text-[11px] text-[#4B6478] whitespace-nowrap font-mono">
+                        {fmtDateShort(cost.log_date)}
+                      </td>
+                      <td className="py-3 pr-4">
+                        <CategoryBadge category={cost.category} small />
+                      </td>
+                      <td className="py-3 pr-4">
+                        {batchCode && (
+                          <span className="text-[9px] font-black text-slate-400 bg-white/[0.04] border border-white/[0.06] px-1.5 py-0.5 rounded-md">
+                            {batchCode}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3 pr-4 max-w-[180px]">
+                        <p className="text-[12px] font-bold text-white truncate">{cost.item_name}</p>
+                        {cost.notes && (
+                          <p className="text-[10px] text-[#4B6478] truncate mt-0.5">{cost.notes}</p>
+                        )}
+                      </td>
+                      <td className="py-3 pr-4 text-[11px] whitespace-nowrap">
+                        {qty > 0 ? (
+                          <div>
+                            <span className={cn('font-bold', isLegacyMismatch ? 'text-amber-400' : 'text-[#4B6478]')}>
+                              {qty.toLocaleString('id-ID')} {cost.unit || 'kg'}
+                            </span>
+                            {derivedPricePerKg > 0 && (
+                              <p className="text-[9px] text-[#4B6478] mt-0.5">
+                                Rp {fmt(derivedPricePerKg)}/kg
+                              </p>
+                            )}
+                            {isLegacyMismatch && (
+                              <p className="text-[9px] text-amber-400/80 mt-0.5">⚠ qty belum split</p>
+                            )}
+                          </div>
+                        ) : '—'}
+                      </td>
+                      <td className="py-3 pr-3 text-right text-[12px] font-black text-white whitespace-nowrap">
+                        Rp {fmt(amount)}
+                      </td>
+                      <td className="py-3 w-8">
+                        {canHapusBiaya && hasDeleteHook && (
+                          <button
+                            onClick={() => onDeleteCost(cost.id, cost.batch_id)}
+                            className="p-1 text-red-500/20 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile compact cards — shown on mobile only */}
+          <div className="sm:hidden space-y-1.5">
+            {filteredCosts.map(cost => {
+              const meta = getCatMeta(cost.category)
+              const batchCode = batchCodeMap[cost.batch_id]
+              const qty = Number(cost.quantity) || 0
+              const amount = Number(cost.amount_idr) || 0
+              const derivedPricePerKg = qty > 0 ? amount / qty : 0
+              const batchAvgPrice = costStats.avgHargaPakan
+              const expectedFromQty = qty > 0 && batchAvgPrice > 0 ? qty * batchAvgPrice : 0
+              const isLegacyMismatch = cost.category === 'pakan' && qty > 0 && amount > 0
+                && expectedFromQty > amount * 2
+              return (
+                <div key={cost.id}
+                  className={cn(
+                    'border border-white/[0.05] rounded-2xl px-3.5 py-3 flex items-center gap-3 transition-colors',
+                    isLegacyMismatch
+                      ? 'bg-amber-500/[0.03] border-amber-500/20 hover:bg-amber-500/[0.06]'
+                      : 'bg-white/[0.02] hover:bg-white/[0.04]',
+                  )}
+                >
+                  {/* Category dot */}
+                  <div className={cn('w-2 h-2 rounded-full flex-shrink-0 mt-0.5', meta.dot)} />
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    {/* Row 1: description + amount */}
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-[12px] font-bold text-white truncate leading-snug">{cost.item_name}</p>
+                      <p className="text-[12px] font-black text-white whitespace-nowrap flex-shrink-0">
+                        Rp {fmt(amount)}
+                      </p>
+                    </div>
+                    {/* Row 2: meta chips */}
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      <span className="text-[9px] text-[#4B6478]">{fmtDateShort(cost.log_date)}</span>
+                      {batchCode && (
+                        <span className="text-[9px] font-black text-slate-400 bg-white/[0.04] border border-white/[0.05] px-1.5 py-0.5 rounded">
+                          {batchCode}
+                        </span>
+                      )}
+                      <CategoryBadge category={cost.category} small />
+                      {qty > 0 && (
+                        <span className={cn('text-[9px]', isLegacyMismatch ? 'text-amber-400' : 'text-[#4B6478]')}>
+                          {qty.toLocaleString('id-ID')} {cost.unit || 'kg'}
+                          {isLegacyMismatch && ' ⚠'}
+                        </span>
+                      )}
+                      {derivedPricePerKg > 0 && (
+                        <span className="text-[9px] text-[#4B6478]">
+                          @ Rp {fmt(derivedPricePerKg)}/kg
+                        </span>
+                      )}
+                    </div>
+                    {isLegacyMismatch && (
+                      <p className="text-[9px] text-amber-400/70 mt-1">
+                        ⚠ Qty mungkin belum dialokasi — periksa di konsol
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Delete */}
+                  {canHapusBiaya && hasDeleteHook && (
+                    <button
+                      onClick={() => onDeleteCost(cost.id, cost.batch_id)}
+                      className="p-1.5 text-red-500/20 hover:text-red-500 transition-colors flex-shrink-0"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  )
 }
 
 // ─── Main Component ────────────────────────────────────────────────────────────
@@ -118,10 +480,17 @@ export function PenggemukanPakan({ config, hooks }) {
   }, [logs])
 
   const costStats = useMemo(() => {
-    const total = costs.reduce((s, c) => s + Number(c.amount_idr || 0), 0)
-    const pakan = costs.filter(c => c.category === 'pakan').reduce((s, c) => s + Number(c.amount_idr || 0), 0)
+    // Dedup by ID sebelum kalkulasi — proteksi dari join duplication
+    const uniqueCosts = Array.from(new Map(costs.map(c => [c.id, c])).values())
+    const total     = uniqueCosts.reduce((s, c) => s + Number(c.amount_idr || 0), 0)
+    const pakan     = uniqueCosts.filter(c => c.category === 'pakan')
+    const nonPakan  = uniqueCosts.filter(c => c.category !== 'pakan')
+    const pakanTotal   = pakan.reduce((s, c) => s + Number(c.amount_idr || 0), 0)
+    const nonPakanTotal = nonPakan.reduce((s, c) => s + Number(c.amount_idr || 0), 0)
+    const totalQtyPakan = pakan.reduce((s, c) => s + (Number(c.quantity) || 0), 0)
+    const avgHargaPakan = totalQtyPakan > 0 ? pakanTotal / totalQtyPakan : 0
     const groups = {}
-    costs.forEach(c => {
+    uniqueCosts.forEach(c => {
       const d = new Date(c.log_date)
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
       const label = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
@@ -130,7 +499,8 @@ export function PenggemukanPakan({ config, hooks }) {
       groups[key].items.push(c)
     })
     return {
-      total, pakan,
+      total, pakanTotal, nonPakanTotal, totalQtyPakan, avgHargaPakan,
+      txCount: uniqueCosts.length,
       monthlySummary: Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0])).map(([, d]) => d),
     }
   }, [costs])
@@ -203,36 +573,84 @@ export function PenggemukanPakan({ config, hooks }) {
       return
     }
     setIsSubmitting(true)
+
+    // Original unit price per kg (stored for HPP accuracy — not affected by allocation)
+    const originalPricePerKg = isPakanCost ? (parseFloat(costForm.harga_per_kg) || 0) : 0
+    const totalQtyKg = isPakanCost ? (parseFloat(costForm.quantity) || 0) : (parseFloat(costForm.quantity) || 0)
+
     const autoItemName = isPakanCost
       ? `Beli Pakan ${costForm.feed_type.charAt(0).toUpperCase() + costForm.feed_type.slice(1)}`
       : costForm.item_name
+
+    // Notes: store harga_per_kg as structured hint for HPP calculation
+    // Format: "Rp 1.200/kg · optional notes" — parsed by useHppBatch via avgPurchasePricePerKg
+    const buildNotes = (extraNotes) => {
+      const parts = []
+      if (isPakanCost && originalPricePerKg > 0) {
+        parts.push(`Rp ${Number(originalPricePerKg).toLocaleString('id-ID')}/kg`)
+      }
+      const userNotes = extraNotes || costForm.notes
+      if (userNotes) parts.push(userNotes)
+      return parts.join(' · ')
+    }
+
     const basePayload = {
       log_date: costForm.log_date,
       item_name: autoItemName || costForm.item_name,
       category: costForm.category,
-      quantity: parseFloat(costForm.quantity) || 0,
       unit: isPakanCost ? 'kg' : costForm.unit,
-      notes: isPakanCost && costForm.harga_per_kg
-        ? `Rp ${Number(costForm.harga_per_kg).toLocaleString('id-ID')}/kg${costForm.notes ? ' · ' + costForm.notes : ''}`
-        : costForm.notes,
     }
+
     try {
       if (costForm.is_shared && batches.length > 1) {
         const totalAnimals = batches.reduce((s, b) => s + (b.total_animals || 0), 0)
         if (totalAnimals === 0) {
-          await addCost.mutateAsync({ batch_id: batchForCost.id, ...basePayload, amount_idr: finalAmount })
+          // Fallback: no animal data → dump all to primary batch
+          await addCost.mutateAsync({
+            batch_id: batchForCost.id,
+            ...basePayload,
+            quantity: totalQtyKg,
+            amount_idr: finalAmount,
+            notes: buildNotes(),
+          })
         } else {
-          let remaining = finalAmount
+          // Proportional split: BOTH amount_idr AND quantity are split by the same ratio.
+          // harga_per_kg = finalAmount / totalQtyKg stays constant across all batches.
+          // This ensures avgPurchasePricePerKg in useHppBatch returns the correct unit price.
+          let remainingAmount = finalAmount
+          let remainingQty    = totalQtyKg
           for (let i = 0; i < batches.length; i++) {
             const b = batches[i]
             const proportion = (b.total_animals || 0) / totalAnimals
-            const allocated = i === batches.length - 1 ? remaining : Math.round(finalAmount * proportion)
-            remaining -= allocated
-            if (allocated > 0) await addCost.mutateAsync({ batch_id: b.id, ...basePayload, amount_idr: allocated })
+            // Last batch gets remainder to avoid rounding drift
+            const allocatedAmount = i === batches.length - 1
+              ? remainingAmount
+              : Math.round(finalAmount * proportion)
+            // Qty: derive from amount ratio (consistent with harga_per_kg)
+            const allocatedQty = i === batches.length - 1
+              ? Math.round(remainingQty * 100) / 100
+              : Math.round(totalQtyKg * proportion * 100) / 100
+            remainingAmount -= allocatedAmount
+            remainingQty    -= allocatedQty
+            if (allocatedAmount > 0) {
+              await addCost.mutateAsync({
+                batch_id: b.id,
+                ...basePayload,
+                quantity: allocatedQty,
+                amount_idr: allocatedAmount,
+                notes: buildNotes(`Alokasi bersama ${Math.round(proportion * 100)}%`),
+              })
+            }
           }
         }
       } else {
-        await addCost.mutateAsync({ batch_id: batchForCost.id, ...basePayload, amount_idr: finalAmount })
+        await addCost.mutateAsync({
+          batch_id: batchForCost.id,
+          ...basePayload,
+          quantity: totalQtyKg,
+          amount_idr: finalAmount,
+          notes: buildNotes(),
+        })
       }
       resetCostForm()
     } catch {
@@ -293,13 +711,17 @@ export function PenggemukanPakan({ config, hooks }) {
 
         {/* Tabs — only if operational costs are enabled */}
         {canViewBiayaTab && (
-          <div className="flex gap-1 bg-white/[0.03] p-1 rounded-xl mt-4 border border-white/[0.06]">
-            {[['konsumsi','Log Konsumsi'],['biaya','Belanja & Biaya']].map(([id, label]) => (
+          <div className="flex gap-1 bg-white/[0.05] p-1 rounded-2xl mt-4 border border-white/[0.08]">
+            {[['konsumsi','🌿 Konsumsi Harian'],['biaya','📋 Pembelian & Operasional']].map(([id, label]) => (
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={cn('flex-1 py-2 text-center rounded-lg text-xs font-bold transition-all',
-                  activeTab === id ? 'bg-white/10 text-white' : 'text-[#4B6478] hover:text-white/60')}
+                className={cn(
+                  'flex-1 py-2.5 text-center rounded-xl text-[11px] font-black tracking-wide transition-all',
+                  activeTab === id
+                    ? 'bg-[#0C1421] text-white shadow-sm border border-white/[0.08]'
+                    : 'text-[#4B6478] hover:text-white/60'
+                )}
               >
                 {label}
               </button>
@@ -418,94 +840,19 @@ export function PenggemukanPakan({ config, hooks }) {
 
           {/* ── BIAYA TAB ── */}
           {activeTab === 'biaya' && config.hasOperationalCosts && (
-            <>
-              <div className="grid grid-cols-2 gap-3 mb-8">
-                <div className="bg-violet-600/[0.05] border border-violet-600/10 rounded-2xl p-4">
-                  <p className="text-[10px] text-violet-500/60 font-bold uppercase tracking-wider mb-1">Total Biaya</p>
-                  <p className="text-xl font-black text-white font-['Sora']">Rp {costStats.total.toLocaleString('id-ID')}</p>
-                </div>
-                <div className="bg-amber-600/[0.05] border border-amber-600/10 rounded-2xl p-4">
-                  <p className="text-[10px] text-amber-500/60 font-bold uppercase tracking-wider mb-1">Khusus Pakan</p>
-                  <p className="text-xl font-black text-white font-['Sora']">Rp {costStats.pakan.toLocaleString('id-ID')}</p>
-                </div>
-              </div>
-
-              <div className="mb-8">
-                <h2 className="font-['Sora'] font-bold text-sm text-white mb-4 flex items-center gap-2">
-                  <TrendingUp size={16} className="text-violet-400" /> Alokasi Biaya Bulanan
-                </h2>
-                <div className="space-y-2">
-                  {costStats.monthlySummary.length === 0 ? (
-                    <p className="text-xs text-[#4B6478] italic">Belum ada data biaya bulanan</p>
-                  ) : costStats.monthlySummary.map(group => (
-                    <div key={group.label} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 flex items-center justify-between">
-                      <div>
-                        <p className="text-[10px] text-[#4B6478] font-bold uppercase">{group.label}</p>
-                        <p className="text-xs text-white font-bold">{group.items.length} Transaksi</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-black text-white">Rp {group.total.toLocaleString('id-ID')}</p>
-                        <p className="text-[9px] text-[#4B6478] font-bold uppercase tracking-tighter">TOTAL BULAN INI</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-['Sora'] font-bold text-sm text-white flex items-center gap-2">
-                  <Receipt size={16} className="text-[#4B6478]" /> Riwayat Belanja & Operasional
-                </h2>
-                {canInputBiaya && (
-                  <button
-                    onClick={() => setShowAddCost(true)}
-                    className="px-3 py-1.5 bg-violet-600 hover:bg-violet-500 text-white text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1.5"
-                  >
-                    <Plus size={14} /> Tambah Biaya
-                  </button>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                {costs.length === 0 ? (
-                  <div className="text-center py-12 bg-white/[0.01] border border-dashed border-white/[0.06] rounded-3xl">
-                    <Wallet size={32} className="mx-auto text-white/5 mb-3" />
-                    <p className="text-xs text-[#4B6478]">Belum ada catatan belanja barang atau pakan</p>
-                  </div>
-                ) : costs.map(cost => (
-                  <div key={cost.id} className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center border',
-                          cost.category === 'pakan' ? 'bg-green-500/10 border-green-500/20' : 'bg-violet-500/10 border-violet-500/20')}>
-                          {cost.category === 'pakan'
-                            ? <Package size={14} className="text-green-400" />
-                            : <Receipt size={14} className="text-violet-400" />}
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-white">{cost.item_name}</p>
-                          <p className="text-[10px] text-[#4B6478] uppercase font-bold tracking-widest">
-                            {isAllBatches && cost.batch_id && batchCodeMap[cost.batch_id] && (
-                              <span className="text-emerald-400/80 mr-1">{batchCodeMap[cost.batch_id]} · </span>
-                            )}
-                            {cost.category} · {new Date(cost.log_date).toLocaleDateString('id-ID')}
-                          </p>
-                        </div>
-                      </div>
-                      {canHapusBiaya && hooks.useDeleteOperationalCost && (
-                        <button onClick={() => handleDeleteCost(cost.id, cost.batch_id)} className="p-1 text-red-500/30 hover:text-red-500 transition-colors">
-                          <Trash2 size={14} />
-                        </button>
-                      )}
-                    </div>
-                    <div className="flex items-end justify-between pt-2 border-t border-white/[0.04]">
-                      <div className="text-[10px] text-[#4B6478]">{cost.quantity ? `${cost.quantity} ${cost.unit || ''}` : '-'}</div>
-                      <p className="text-sm font-black text-white">Rp {Number(cost.amount_idr).toLocaleString('id-ID')}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
+            <BiayaTab
+              costs={costs}
+              costStats={costStats}
+              batches={batches}
+              batchCodeMap={batchCodeMap}
+              isAllBatches={isAllBatches}
+              selectedBatchId={selectedBatchId}
+              canInputBiaya={canInputBiaya}
+              canHapusBiaya={canHapusBiaya}
+              hasDeleteHook={!!hooks.useDeleteOperationalCost}
+              onAddCost={() => setShowAddCost(true)}
+              onDeleteCost={handleDeleteCost}
+            />
           )}
         </div>
       )}
@@ -644,13 +991,29 @@ export function PenggemukanPakan({ config, hooks }) {
                   <div>
                     <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Kategori</label>
                     <div className="grid grid-cols-2 gap-2">
-                      {[{ id: 'pakan', emoji: '🌿', label: 'Pakan' }, { id: 'lainnya', emoji: '📦', label: 'Lainnya' }].map(c => (
+                      {[
+                        { id: 'pakan',        emoji: '🌿', label: 'Pakan',         hint: 'Stok hijauan, konsentrat, dll' },
+                        { id: 'listrik_air',  emoji: '💡', label: 'Listrik & Air', hint: 'Tagihan rutin kandang' },
+                        { id: 'tenaga_kerja', emoji: '👷', label: 'Tenaga Kerja',  hint: 'Upah & gaji pekerja' },
+                        { id: 'lainnya',      emoji: '📦', label: 'Lainnya',       hint: 'Obat-obatan, transportasi, dll' },
+                      ].map(c => (
                         <button key={c.id} type="button"
-                          onClick={() => setCostForm(f => ({ ...f, category: c.id, is_shared: false, unit: c.id === 'pakan' ? 'kg' : f.unit }))}
-                          className={cn('flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-left transition-all',
-                            costForm.category === c.id ? 'bg-violet-500/15 border-violet-500/40 text-violet-300' : 'bg-white/[0.02] border-white/[0.06] text-[#4B6478]')}>
+                          onClick={() => setCostForm(f => ({
+                            ...f,
+                            category: c.id,
+                            is_shared: false,
+                            unit: c.id === 'pakan' ? 'kg' : '-',
+                          }))}
+                          className={cn(
+                            'flex flex-col gap-0.5 px-3 py-2.5 rounded-xl border text-left transition-all',
+                            costForm.category === c.id
+                              ? 'bg-violet-500/15 border-violet-500/40 text-violet-300'
+                              : 'bg-white/[0.02] border-white/[0.06] text-[#4B6478]',
+                          )}
+                        >
                           <span className="text-sm">{c.emoji}</span>
-                          <span className="text-[10px] font-black uppercase tracking-wide">{c.label}</span>
+                          <span className="text-[10px] font-black uppercase tracking-wide leading-tight">{c.label}</span>
+                          <span className="text-[9px] font-normal normal-case leading-tight opacity-60">{c.hint}</span>
                         </button>
                       ))}
                     </div>
@@ -742,14 +1105,26 @@ export function PenggemukanPakan({ config, hooks }) {
                   ) : (
                     <>
                       <div>
-                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Nama / Keterangan</label>
-                        <input type="text" required placeholder="Keterangan biaya..." value={costForm.item_name}
+                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">
+                          {costForm.category === 'tenaga_kerja' ? 'Nama / Keterangan Upah' : 'Nama / Keterangan'}
+                        </label>
+                        <input type="text" required
+                          placeholder={
+                            costForm.category === 'tenaga_kerja' ? 'Contoh: Upah kandang, gaji mingguan...'
+                            : costForm.category === 'listrik_air' ? 'Contoh: Tagihan listrik Mei...'
+                            : 'Keterangan biaya...'
+                          }
+                          value={costForm.item_name}
                           onChange={e => setCostForm({ ...costForm, item_name: e.target.value })}
                           className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 transition-colors" />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Total Biaya (Rp)</label>
-                        <InputRupiah placeholder="Contoh: 500000" value={costForm.amount_idr}
+                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">
+                          Total Biaya (Rp)
+                        </label>
+                        <InputRupiah
+                          placeholder={costForm.category === 'tenaga_kerja' ? 'Contoh: 150000' : 'Contoh: 500000'}
+                          value={costForm.amount_idr}
                           onChange={val => setCostForm({ ...costForm, amount_idr: val })}
                           className="w-full bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 font-bold transition-colors" />
                       </div>
