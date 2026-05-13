@@ -67,6 +67,8 @@ export default defineConfig({
         '/blog/cara-mengurangi-angka-kematian-ayam-broiler',
         '/blog/tips-manajemen-kandang-ayam-broiler-pemula',
         '/blog/cara-hitung-keuntungan-peternak-ayam-broiler',
+        '/blog/cara-hitung-adg-sapi-potong-fattening',
+        '/blog/cara-mengelola-batch-fattening-kambing-domba',
         '/_spa_fallback',
       ]
     },

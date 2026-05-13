@@ -114,7 +114,7 @@ const Hero = () => {
             style={{ opacity: 0 }}
           >
             <div className="w-[7px] h-[7px] bg-em-400 rounded-full animate-pulse-dot"></div>
-            Solusi Digital Terpadu untuk Broker & Peternak
+            Solusi Digital Terpadu untuk Peternak & Broker Multi-Komoditas
           </div>
 
           {/* Headline */}
@@ -203,7 +203,7 @@ const Hero = () => {
             className="hero-subheadline text-sm md:text-base text-tx-3 leading-relaxed max-w-[500px] mb-6 text-center lg:text-left font-medium"
             style={{ opacity: 0 }}
           >
-            Mulai {formatShort(peternakPrice)}/bulan untuk <span className="text-em-400 font-bold">Peternak</span> — atau {formatShort(brokerPrice)}/bulan untuk <span className="text-em-400 font-bold">Broker</span>.
+            Platform terpadu untuk <span className="text-em-400 font-bold">Peternak Sapi, Domba, Kambing & Broiler</span> — serta <span className="text-em-400 font-bold">Broker, Distributor & RPA</span>. Mulai gratis, tanpa kartu kredit.
           </p>
 
           {/* CTA Buttons */}

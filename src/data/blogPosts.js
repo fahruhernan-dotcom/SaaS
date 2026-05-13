@@ -451,6 +451,183 @@ export const blogPosts = [
 </div>
 `,
   },
+
+  {
+    slug: 'cara-hitung-adg-sapi-potong-fattening',
+    title: 'Cara Menghitung ADG Sapi Potong Fattening: Rumus, Standar & Tips Praktis',
+    metaTitle: 'Cara Hitung ADG Sapi Potong Fattening: Rumus & Standar',
+    metaDescription: 'Pelajari cara menghitung Average Daily Gain (ADG) sapi potong fattening dengan benar. Rumus lengkap, standar ADG ideal, dan tips meningkatkan pertambahan bobot harian.',
+    category: 'peternak',
+    tags: ['ADG', 'sapi potong', 'fattening', 'pertambahan bobot harian', 'manajemen sapi'],
+    publishedAt: '2026-05-01',
+    readTime: 7,
+    excerpt: 'ADG (Average Daily Gain) adalah metrik paling penting dalam usaha penggemukan sapi potong. Artikel ini menjelaskan rumus, standar ideal ADG, dan strategi praktis untuk meningkatkan pertambahan bobot harian sapi Anda.',
+    image: null,
+    relatedSlugs: ['cara-mengelola-batch-fattening-kambing-domba', 'cara-hitung-fcr-ayam-broiler'],
+    content: `
+<h2>Apa Itu ADG dan Mengapa Sangat Penting?</h2>
+<p>ADG atau <strong>Average Daily Gain</strong> (Pertambahan Bobot Badan Harian / PBBH) adalah ukuran seberapa banyak bobot yang ditambahkan seekor sapi per hari selama periode penggemukan (fattening). Ini adalah angka paling strategis dalam bisnis sapi potong fattening.</p>
+<p>Sederhana saja: jika ADG Anda 0,8 kg/hari padahal target 1,0 kg/hari, maka dalam 90 hari periode fattening Anda kehilangan potensi bobot <strong>18 kg per ekor</strong>. Dengan harga sapi Rp 60.000/kg, itu Rp 1,08 juta per ekor yang terbuang — bisa puluhan juta untuk kandang dengan 50+ ekor.</p>
+
+<h2>Rumus ADG Sapi Potong</h2>
+<blockquote>
+  <strong>ADG = (Bobot Akhir − Bobot Awal) ÷ Jumlah Hari Penggemukan</strong>
+</blockquote>
+<p><em>Satuan: kg/hari atau gram/hari</em></p>
+
+<h2>Contoh Perhitungan Nyata</h2>
+<p>Sapi masuk dengan bobot 250 kg, setelah 90 hari fattening bobot mencapai 370 kg:</p>
+<blockquote>
+  ADG = (370 − 250) ÷ 90 = 120 ÷ 90 = <strong>1,33 kg/hari</strong>
+</blockquote>
+<p>Hasil yang sangat baik untuk sapi lokal (PO, Simmental cross, atau Limousin cross).</p>
+
+<h2>Standar ADG Ideal Berdasarkan Breed Sapi</h2>
+<table>
+  <thead><tr><th>Breed / Jenis Sapi</th><th>ADG Target</th><th>Keterangan</th></tr></thead>
+  <tbody>
+    <tr><td>Sapi PO (Peranakan Ongole)</td><td>0,6 – 0,9 kg/hari</td><td>Sapi lokal standar, adaptasi baik</td></tr>
+    <tr><td>Simmental Cross</td><td>0,9 – 1,2 kg/hari</td><td>Pertumbuhan lebih cepat, butuh pakan berkualitas</td></tr>
+    <tr><td>Limousin Cross</td><td>1,0 – 1,4 kg/hari</td><td>Produksi daging tinggi, responsif terhadap pakan</td></tr>
+    <tr><td>Brahman Cross</td><td>0,8 – 1,1 kg/hari</td><td>Tahan panas, efisien di iklim tropis</td></tr>
+  </tbody>
+</table>
+
+<h2>Faktor yang Mempengaruhi ADG Sapi Fattening</h2>
+
+<h3>1. Kualitas dan Formulasi Pakan (Konsentrat + Hijauan)</h3>
+<p>Pakan adalah faktor nomor satu. Rasio konsentrat:hijauan yang optimal untuk sapi fattening adalah 60:40 hingga 70:30. Konsentrat harus mengandung protein kasar (PK) minimal 14-16% dan TDN (Total Digestible Nutrients) minimal 70%. Kekurangan energi adalah penyebab paling umum ADG rendah.</p>
+
+<h3>2. Bobot Masuk (Initial Weight)</h3>
+<p>Sapi dengan bobot awal 200-300 kg umumnya menunjukkan ADG lebih tinggi dibanding sapi yang sudah terlalu berat (>400 kg). Ini karena sapi yang lebih muda dan lebih ringan memiliki kapasitas pertumbuhan kompensasi yang lebih besar.</p>
+
+<h3>3. Kesehatan dan Stres</h3>
+<p>Sapi yang baru masuk kandang butuh 7-14 hari adaptasi (acclimatization period). Selama periode ini ADG bisa rendah atau bahkan negatif — ini normal. Stres karena transportasi, perubahan pakan, atau penyakit subklinis bisa menekan ADG 20-40%.</p>
+
+<h3>4. Manajemen Kandang dan Kepadatan</h3>
+<p>Kepadatan standar untuk sapi fattening adalah 2,5-4 m² per ekor. Terlalu padat meningkatkan kompetisi pakan dan stres panas, yang langsung menekan ADG.</p>
+
+<h2>5 Cara Meningkatkan ADG Sapi Fattening</h2>
+<ol>
+  <li><strong>Timbang secara konsisten</strong> — Minimal setiap 14 hari sekali dengan timbangan digital. Jangan estimasi visual; selisih 10 kg dalam catatan bisa membuat perhitungan ADG dan break even point menjadi tidak akurat.</li>
+  <li><strong>Optimalkan formulasi konsentrat</strong> — Konsultasikan dengan nutrisionis atau gunakan formulasi konsentrat yang sudah terbukti untuk breed dan berat sapi Anda.</li>
+  <li><strong>Berikan hijauan berkualitas</strong> — Rumput gajah, kolonjono, atau jerami fermentasi (amoniasi) sebagai sumber serat. Kualitas hijauan berpengaruh signifikan terhadap kesehatan rumen.</li>
+  <li><strong>Monitor kesehatan rumen</strong> — Bloat (kembung) dan acidosis adalah musuh ADG. Pastikan transisi pakan dilakukan bertahap, dan selalu sediakan garam mineral ad libitum.</li>
+  <li><strong>Catat dan analisis per batch</strong> — Bandingkan ADG setiap batch untuk mengidentifikasi pola: breed mana yang lebih responsif, supplier pakan mana yang menghasilkan ADG lebih baik.</li>
+</ol>
+
+<h2>Mengapa Banyak Peternak Sapi Tidak Tahu ADG Kandang Mereka?</h2>
+<p>Sama seperti peternak broiler yang tidak tahu FCR, sebagian besar peternak sapi di Indonesia tidak menimbang sapi secara konsisten. Alasannya: timbangan sapi mahal, proses penimbangan sulit, dan tidak ada sistem pencatatan yang mudah digunakan di lapangan.</p>
+<p>Akibatnya, keputusan jual-beli masih berbasis perkiraan — dan sapi sering dijual di bawah potensi optimalnya, atau ditahan terlalu lama sehingga biaya pakan menggerus margin.</p>
+
+<div class="blog-cta">
+  <p>🐄 <strong>Catat bobot sapi per batch, pantau ADG otomatis, dan tahu kapan waktu optimal jual — semuanya tersedia di TernakOS untuk peternak sapi potong.</strong></p>
+  <a href="/register">→ Coba TernakOS Gratis untuk Peternak Sapi</a>
+</div>
+`,
+  },
+
+  {
+    slug: 'cara-mengelola-batch-fattening-kambing-domba',
+    title: 'Panduan Manajemen Batch Fattening Kambing & Domba untuk Peternak Pemula',
+    metaTitle: 'Manajemen Batch Fattening Kambing & Domba: Panduan Lengkap',
+    metaDescription: 'Panduan lengkap manajemen batch fattening kambing dan domba: target ADG, formula pakan, penimbangan berkala, dan cara menghitung break even point usaha ruminansia kecil.',
+    category: 'peternak',
+    tags: ['kambing potong', 'domba fattening', 'ADG kambing', 'manajemen batch', 'ruminansia kecil'],
+    publishedAt: '2026-05-02',
+    readTime: 8,
+    excerpt: 'Usaha fattening kambing dan domba semakin populer karena modal awal lebih terjangkau dan siklus lebih pendek dibanding sapi. Panduan ini membahas cara kelola batch fattening kambing/domba dari masuk kandang hingga siap jual.',
+    image: null,
+    relatedSlugs: ['cara-hitung-adg-sapi-potong-fattening', 'cara-hitung-keuntungan-peternak-ayam-broiler'],
+    content: `
+<h2>Kenapa Fattening Kambing & Domba Makin Menarik?</h2>
+<p>Dalam 5 tahun terakhir, usaha penggemukan (fattening) kambing dan domba di Indonesia mengalami pertumbuhan signifikan. Alasannya jelas:</p>
+<ul>
+  <li><strong>Modal awal lebih terjangkau</strong> — Harga bakalan kambing/domba Rp 1–3 juta per ekor vs sapi Rp 8–20 juta</li>
+  <li><strong>Siklus lebih pendek</strong> — Fattening 60–90 hari vs sapi 3–6 bulan</li>
+  <li><strong>Permintaan stabil</strong> — Konsumsi daging kambing/domba tumbuh, terutama menjelang Idul Adha, Idul Fitri, dan acara aqiqah</li>
+  <li><strong>Risiko lebih terdiversifikasi</strong> — Dengan 20-30 ekor per batch, risiko kerugian per ekor tidak sebesar sapi</li>
+</ul>
+
+<h2>Konsep Dasar: Apa Itu Batch Fattening?</h2>
+<p>Batch fattening adalah sistem penggemukan di mana sekelompok kambing/domba dimasukkan ke kandang pada waktu yang sama, dibesarkan bersama, dan dijual dalam satu periode tertentu. Berbeda dengan sistem continuous (masuk-keluar bergantian), batch memudahkan manajemen pakan, kesehatan, dan perhitungan break even per kelompok.</p>
+
+<h2>Standar ADG Kambing & Domba Fattening</h2>
+<table>
+  <thead><tr><th>Jenis Ternak</th><th>ADG Target</th><th>Catatan</th></tr></thead>
+  <tbody>
+    <tr><td>Kambing PE (Peranakan Etawa)</td><td>80 – 120 gram/hari</td><td>Lebih lambat, nilai jual tinggi</td></tr>
+    <tr><td>Kambing Kacang</td><td>60 – 90 gram/hari</td><td>Lokal, tahan kondisi ekstrem</td></tr>
+    <tr><td>Kambing Boer Cross</td><td>150 – 200 gram/hari</td><td>ADG tertinggi, responsif pakan berkualitas</td></tr>
+    <tr><td>Domba Lokal (Ekor Tipis)</td><td>70 – 100 gram/hari</td><td>Paling umum di Jawa Barat & Jawa Tengah</td></tr>
+    <tr><td>Domba Garut</td><td>80 – 120 gram/hari</td><td>Nilai jual premium, diminati untuk qurban</td></tr>
+    <tr><td>Domba Merino Cross</td><td>120 – 180 gram/hari</td><td>Pertumbuhan cepat, cocok untuk fattening intensif</td></tr>
+  </tbody>
+</table>
+
+<h2>Tahapan Manajemen Batch Fattening (60–90 Hari)</h2>
+
+<h3>Minggu 1–2: Adaptasi (Acclimatization)</h3>
+<p>Ini fase paling kritis yang sering diabaikan. Kambing/domba baru masuk mengalami stres transportasi dan perubahan lingkungan. Yang harus dilakukan:</p>
+<ul>
+  <li>Berikan air bersih + elektrolit selama 24 jam pertama</li>
+  <li>Mulai dengan hijauan saja (rumput + legum), belum berikan konsentrat penuh</li>
+  <li>Observasi napsu makan, konsistensi feses, dan tanda penyakit</li>
+  <li>Lakukan vaksinasi dan obat cacing (antelmintik) di hari ke-3 hingga ke-5</li>
+  <li>Timbang bobot awal (bobot masuk) sebagai baseline ADG</li>
+</ul>
+<p>ADG di fase ini bisa rendah atau bahkan negatif — ini normal selama tidak ada gejala penyakit.</p>
+
+<h3>Minggu 3–8: Penggemukan Intensif (Growing Phase)</h3>
+<p>Ini fase utama pertumbuhan. Porsi konsentrat ditingkatkan secara bertahap hingga 40–60% dari total asupan bahan kering:</p>
+<ul>
+  <li><strong>Hijauan</strong>: Rumput gajah, kolonjono, atau jerami fermentasi — 2–3 kg/ekor/hari (segar)</li>
+  <li><strong>Konsentrat</strong>: Dedak padi, bungkil kedelai, jagung giling + mineral — 0,3–0,5 kg/ekor/hari</li>
+  <li><strong>Timbang setiap 14 hari</strong> untuk monitor ADG aktual vs target</li>
+</ul>
+
+<h3>Minggu 9–12: Finishng & Penentuan Waktu Jual</h3>
+<p>Bobot penjualan optimal untuk kambing/domba fattening:</p>
+<ul>
+  <li>Kambing potong reguler: 25–35 kg bobot hidup</li>
+  <li>Domba qurban: minimal 23–25 kg bobot hidup (usia minimal 1 tahun)</li>
+  <li>Kambing aqiqah: 20–28 kg bobot hidup</li>
+</ul>
+<p>Jangan tahan terlalu lama setelah target bobot tercapai — pertumbuhan melambat setelah bobot optimal, biaya pakan terus berjalan, dan margin mengecil.</p>
+
+<h2>Cara Hitung Break Even Point per Batch</h2>
+<p>Contoh untuk batch 20 ekor kambing kacang, 75 hari fattening:</p>
+<table>
+  <thead><tr><th>Komponen Biaya</th><th>Total (Rp)</th></tr></thead>
+  <tbody>
+    <tr><td>Bakalan 20 ekor × Rp 1.500.000</td><td>30.000.000</td></tr>
+    <tr><td>Pakan 75 hari × 20 ekor × Rp 8.000/hari</td><td>12.000.000</td></tr>
+    <tr><td>Obat, vaksin, mineral</td><td>800.000</td></tr>
+    <tr><td>Tenaga kerja & operasional</td><td>1.500.000</td></tr>
+    <tr><td><strong>Total Biaya</strong></td><td><strong>44.300.000</strong></td></tr>
+  </tbody>
+</table>
+<p>Dengan ADG 80 gram/hari, bobot bertambah 6 kg per ekor. Bakalan rata-rata 15 kg → panen 21 kg:</p>
+<blockquote>
+  <strong>BEP = Rp 44.300.000 ÷ (20 ekor × 21 kg) = Rp 105.476/kg bobot hidup</strong>
+</blockquote>
+<p>Jika harga pasar kambing Rp 130.000–150.000/kg, margin per batch sekitar <strong>Rp 10–18 juta</strong>.</p>
+
+<h2>Pentingnya Pencatatan Batch yang Terstruktur</h2>
+<p>Tanpa pencatatan yang baik, Anda tidak akan tahu:</p>
+<ul>
+  <li>Batch mana yang paling menguntungkan (dan mengapa)</li>
+  <li>Breed atau supplier bakalan mana yang menghasilkan ADG terbaik</li>
+  <li>Apakah biaya pakan per batch masih dalam batas wajar</li>
+  <li>Kapan waktu optimal untuk menjual berdasarkan ADG aktual</li>
+</ul>
+
+<div class="blog-cta">
+  <p>🐐 <strong>Kelola batch fattening kambing & domba Anda dengan sistem pencatatan digital — pantau ADG, biaya pakan, dan profit per batch secara real-time di TernakOS.</strong></p>
+  <a href="/register">→ Coba TernakOS Gratis untuk Peternak Kambing & Domba</a>
+</div>
+`,
+  },
 ];
 
 /**

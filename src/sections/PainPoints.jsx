@@ -59,15 +59,15 @@ const PainPoints = ({ activeRole, setActiveRole }) => {
       points: [
         {
           icon: <Activity size={13} strokeWidth={2} />,
-          label: "PANTAU FCR",
-          title: "Susah pantau FCR & efisiensi pakan?",
-          desc: "Hitung konversi pakan manual tiap hari. Mudah salah, buang waktu dan sulit ambil keputusan tepat."
+          label: "PANTAU PERFORMA",
+          title: "Susah pantau FCR, ADG & efisiensi pakan?",
+          desc: "Hitung konversi pakan atau pertambahan bobot harian manual. Mudah salah dan sulit ambil keputusan tepat — baik untuk broiler, sapi, domba, maupun kambing."
         },
         {
           icon: <Calendar size={13} strokeWidth={2} />,
           label: "PREDIKSI PANEN",
-          title: "Tidak tahu kapan ayam siap panen?",
-          desc: "Estimasi panen masih pakai feeling. Sering meleset dari target bobot, bikin rugi operasional."
+          title: "Tidak tahu kapan ternak siap jual?",
+          desc: "Estimasi panen masih pakai feeling. Sering meleset dari target bobot, bikin rugi operasional — berlaku untuk semua jenis ternak."
         },
         {
           icon: <Package size={13} strokeWidth={2} />,
@@ -77,21 +77,21 @@ const PainPoints = ({ activeRole, setActiveRole }) => {
         },
         {
           icon: <Users size={13} strokeWidth={2} />,
-          label: "KONEKSI BROKER",
-          title: "Susah cari broker yang mau beli ayammu?",
-          desc: "Jual ayam masih andalkan kenalan. Tidak ada platform untuk listing stok ke broker."
+          label: "KONEKSI BUYER",
+          title: "Susah cari pembeli untuk hasil ternak?",
+          desc: "Jual sapi, domba, kambing, atau ayam masih andalkan kenalan. Tidak ada platform untuk listing stok ke broker atau RPA."
         },
         {
           icon: <FileText size={13} strokeWidth={2} />,
-          label: "INPUT HARIAN RIBET",
-          title: "Catat pakan & mortalitas masih pakai buku?",
-          desc: "Data harian tersebar di buku catatan berbeda. Susah rekap dan mudah hilang."
+          label: "PENCATATAN HARIAN",
+          title: "Catat pakan, bobot & mortalitas masih pakai buku?",
+          desc: "Data harian tersebar di buku catatan berbeda. Susah rekap dan mudah hilang — terutama saat kelola banyak batch."
         },
         {
           icon: <LayoutDashboard size={13} strokeWidth={2} />,
           label: "TIDAK ADA LAPORAN",
-          title: "Tidak tahu performa kandang per siklus?",
-          desc: "Tidak ada laporan otomatis per siklus. Susah evaluasi dan bandingkan antar periode."
+          title: "Tidak tahu performa per batch atau per siklus?",
+          desc: "Tidak ada laporan otomatis. Susah evaluasi dan bandingkan performa antar batch, antar kandang, atau antar periode."
         }
       ]
     },

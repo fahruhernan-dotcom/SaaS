@@ -117,14 +117,14 @@ export default function BlogPage() {
     "@type": "Blog",
     "url": "https://ternakos.my.id/blog",
     "name": "Blog & Wawasan Peternakan - TernakOS",
-    "description": "Temukan tips manajemen kandang, strategi bisnis broker ayam, hingga analisis pasar peternakan terbaru di Blog TernakOS."
+    "description": "Tips manajemen kandang sapi, domba, kambing, dan broiler. Strategi bisnis broker, analisis pasar ternak, dan panduan operasional untuk peternak & broker di seluruh Indonesia."
   };
 
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans selection:bg-emerald-500/30 overflow-x-hidden">
       <SEO
-        title="Blog & Wawasan Peternakan - TernakOS"
-        description="Temukan tips manajemen kandang, strategi bisnis broker ayam, hingga analisis pasar peternakan terbaru di Blog TernakOS."
+        title="Blog & Panduan Peternakan: Sapi, Domba, Kambing, Broiler - TernakOS"
+        description="Tips manajemen kandang sapi potong, domba fattening, kambing, dan broiler. Panduan bisnis broker ayam, analisis pasar ternak, dan wawasan operasional untuk peternak Indonesia."
         path="/blog"
         schema={blogSchema}
       />

@@ -109,8 +109,8 @@ export default function HargaPage() {
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] overflow-x-hidden">
       <SEO
-        title="Daftar Harga Paket TernakOS | Mulai Gratis, Tanpa Kartu Kredit"
-        description="Coba semua fitur Pro gratis 14 hari. Peternak mulai Rp 499rb/bln, Broker Rp 999rb/bln. Tidak ada kontrak, cancel kapan saja."
+        title="Daftar Harga Paket TernakOS | Sapi, Domba, Kambing, Broiler & Broker"
+        description="Paket harga fleksibel untuk semua jenis peternakan: sapi potong, domba, kambing, broiler, broker ayam, broker telur, distributor, dan RPA. Coba gratis 14 hari. Tidak perlu kartu kredit."
         path="/harga"
         schema={softwareSchema}
       />
