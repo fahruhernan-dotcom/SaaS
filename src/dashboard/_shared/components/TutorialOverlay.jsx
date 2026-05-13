@@ -521,11 +521,12 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
     setVisible(false)
 
     // Sync ke DB — fire and forget
-    if (profile?.profile_id) {
+    if (profile?.profile_id && tenant?.id) {
       try {
         const { error } = await supabase.rpc('append_tutorial_completed', {
           p_key: storageKey,
-          p_value: value
+          p_value: value,
+          p_tenant_id: tenant.id
         })
 
         if (error) {
