@@ -3,43 +3,66 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ArrowRight } from 'lucide-react'
 
-// Top 7 FAQs — high-volume search queries, no imports from faqData to keep bundle light
+// ── FAQ data — inklusif semua vertikal ternak, kritis untuk SEO & AI observability ──
 const TOP_FAQS = [
+  {
+    q: 'Apakah TernakOS hanya untuk ayam?',
+    a: 'Tidak. TernakOS mendukung semua jenis peternakan di Indonesia: peternak sapi potong (fattening & breeding), domba, kambing (potong, breeding, dan perah/susu), peternak broiler, broker ayam, broker telur, agen sembako, dan rumah potong ayam (RPA). Setiap vertikal memiliki modul khusus yang disesuaikan.',
+    link: '/fitur',
+  },
+  {
+    q: 'Jenis peternakan apa saja yang didukung TernakOS?',
+    a: 'TernakOS mendukung: (1) Unggas — broiler mandiri dan mitra INTI-Plasma. (2) Sapi Potong — fattening (penggemukan) dan breeding. (3) Domba — fattening dan breeding. (4) Kambing — fattening, breeding, dan perah. (5) Broker & Trader — broker ayam, broker telur, agen sembako. (6) RPA — rumah potong ayam. Sapi perah sedang dalam pengembangan aktif.',
+    link: '/fitur',
+  },
+  {
+    q: 'Apakah TernakOS bisa untuk peternak sapi?',
+    a: 'Ya, TernakOS mendukung penuh peternak sapi. Modul Sapi Fattening mengelola batch penggemukan: ADG, FCR, R/C ratio, BEP, kartu ternak per ekor, denah kandang, dan laporan laba-rugi per batch. Modul Sapi Breeding mengelola database herd, IB, tracking kehamilan, kelahiran pedet, dan KPI reproduksi.',
+    link: '/fitur',
+  },
+  {
+    q: 'Apakah TernakOS bisa untuk peternak domba dan kambing?',
+    a: 'Ya. TernakOS mendukung domba potong, kambing potong, kambing breeding, dan kambing perah. Fitur meliputi: batch fattening, kartu ternak individual, ADG, FCR, estimasi bobot panen, manajemen reproduksi (IB/kawin alam), dan recording susu kambing per sesi harian.',
+    link: '/fitur',
+  },
   {
     q: 'Apakah TernakOS gratis?',
     a: 'TernakOS menyediakan paket Starter gratis selamanya. Untuk fitur yang lebih lengkap, tersedia trial gratis paket Pro atau Business tanpa kartu kredit. Selama trial, semua fitur utama tersedia.',
+    link: '/harga',
   },
   {
-    q: 'Apa perbedaan TernakOS dengan Excel atau buku catatan biasa?',
-    a: 'Catatan manual rawan hilang, salah hitung, dan tidak bisa diakses tim secara bersamaan. TernakOS menghitung margin, piutang, FCR, dan laporan keuangan otomatis — langsung dari HP, tanpa rumus manual.',
-  },
-  {
-    q: 'Apakah data bisnis saya aman di TernakOS?',
-    a: 'Ya. TernakOS menggunakan Row Level Security (RLS) PostgreSQL — standar keamanan setara perbankan. Data setiap bisnis terisolasi penuh, tidak bisa diakses bisnis lain meskipun menggunakan ekosistem yang sama.',
+    q: 'Apakah TernakOS bisa digunakan di HP?',
+    a: 'Ya. TernakOS adalah Progressive Web App (PWA) yang berjalan langsung di browser HP (Chrome, Safari, Firefox) tanpa perlu download dari Play Store atau App Store. Tambahkan ke home screen untuk pengalaman seperti aplikasi native. Dioptimalkan untuk layar kecil — cocok dipakai langsung di kandang.',
   },
   {
     q: 'Apakah broker ayam bisa mencatat hutang dan piutang di TernakOS?',
     a: 'Bisa. Setiap transaksi pembelian dari peternak dan penjualan ke RPA otomatis mencatat hutang/piutang. Dashboard menampilkan total piutang per rekanan beserta riwayat pelunasan secara real-time.',
   },
   {
-    q: 'Apakah TernakOS bisa dipakai untuk peternak broiler mandiri?',
-    a: 'Ya. Modul Peternak Mandiri mendukung recording harian DOC (chick-in), pakan, mortalitas, berat panen, dan otomatis menghitung FCR, IP Score, serta laba/rugi per siklus.',
-  },
-  {
-    q: 'Bisakah lebih dari satu karyawan menggunakan akun yang sama?',
-    a: 'TernakOS mendukung multi-user per bisnis dengan kontrol peran (owner, manajer, staff, sopir). Setiap role punya akses berbeda — misalnya sopir hanya bisa lihat jadwal pengiriman, bukan data keuangan.',
+    q: 'Apa saja fitur utama TernakOS?',
+    a: 'Fitur utama TernakOS: manajemen batch ternak (sapi, domba, kambing, broiler), kartu ternak digital per ekor, kalkulasi ADG/FCR/FCR/R/C ratio otomatis, manajemen piutang dan hutang, stok pakan dan inventori, laporan laba-rugi per batch/siklus, multi-user dengan kontrol peran, denah kandang interaktif, monitoring harga pasar real-time, dan TernakBot AI (paket Business).',
+    link: '/fitur',
   },
   {
     q: 'Berapa harga ayam broiler hidup hari ini?',
     a: 'Harga ayam broiler hidup hari ini diperbarui secara otomatis di TernakOS. Data kami unik karena menggabungkan harga referensi pasar dengan rata-rata transaksi nyata dari ratusan broker aktif di seluruh Indonesia.',
     link: '/harga-pasar',
   },
-  {
-    q: 'Apa bedanya data harga TernakOS dengan portal harga ayam lain?',
-    a: 'Portal lain biasanya hanya menampilkan scraper atau estimasi manual. TernakOS adalah satu-satunya platform yang menampilkan rata-rata harga beli (kandang) dan harga jual (pasar) dari transaksi nyata TernakOS.',
-    link: '/harga-pasar',
-  },
 ]
+
+// JSON-LD FAQPage schema — di-inject di homepage agar Google & AI langsung membaca
+const homepageFaqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: TOP_FAQS.map(item => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.a,
+    },
+  })),
+}
 
 function FAQItem({ item }) {
   const [open, setOpen] = useState(false)
@@ -90,6 +113,12 @@ function FAQItem({ item }) {
 export default function PeopleAlsoAsk() {
   return (
     <section className="bg-[#06090F] py-20 px-5 border-t border-white/5">
+      {/* JSON-LD FAQPage schema — bake langsung di homepage untuk Google & AI */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageFaqSchema) }}
+      />
+
       <div className="max-w-2xl mx-auto">
 
         <motion.div
@@ -105,6 +134,9 @@ export default function PeopleAlsoAsk() {
           <h2 className="font-['Sora'] text-2xl md:text-3xl font-bold text-white">
             Pertanyaan yang Sering Ditanya
           </h2>
+          <p className="text-sm text-[#4B6478] mt-2">
+            Sapi, domba, kambing, broiler, broker — semua ada jawabannya di sini.
+          </p>
         </motion.div>
 
         <div className="space-y-2 mb-8">
@@ -126,7 +158,7 @@ export default function PeopleAlsoAsk() {
             to="/faq"
             className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
           >
-            Lihat semua 200+ FAQ
+            Lihat semua 200+ FAQ — semua vertikal ternak
             <ArrowRight size={15} />
           </Link>
         </div>

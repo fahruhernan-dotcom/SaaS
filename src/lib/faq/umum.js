@@ -1,7 +1,37 @@
 export const umum = [
   {
     q: 'Apa itu TernakOS?',
-    a: 'TernakOS adalah platform manajemen bisnis peternakan Indonesia berbasis cloud. Dirancang khusus untuk broker ayam, peternak broiler, agen sembako, dan rumah potong ayam (RPA) agar bisa mengelola transaksi, stok, piutang, dan laporan keuangan dari HP tanpa instalasi software.',
+    a: 'TernakOS adalah platform manajemen bisnis peternakan Indonesia berbasis cloud. Dirancang untuk semua jenis peternakan: broker ayam, peternak broiler, peternak sapi potong dan perah, peternak domba dan kambing, agen sembako, broker telur, dan rumah potong ayam (RPA). Semua bisa mengelola transaksi, stok, piutang, dan laporan keuangan dari HP tanpa instalasi software.',
+    link: '/fitur',
+  },
+  {
+    q: 'Apakah TernakOS hanya untuk ayam?',
+    a: 'Tidak. TernakOS mendukung berbagai jenis usaha peternakan dan perdagangan ternak di Indonesia, tidak terbatas pada ayam. Platform ini digunakan oleh peternak sapi potong, sapi perah (dalam pengembangan), domba, kambing potong, kambing breeding, kambing perah, peternak broiler, broker ayam, broker telur, agen sembako, dan rumah potong ayam (RPA). Setiap vertikal memiliki modul dan fitur yang disesuaikan dengan kebutuhan spesifiknya.',
+    link: '/fitur',
+  },
+  {
+    q: 'Apakah TernakOS bisa untuk peternak sapi?',
+    a: 'Ya, TernakOS sepenuhnya mendukung peternak sapi. Tersedia dua modul sapi: (1) Sapi Fattening (Penggemukan) — kelola batch sapi masuk, catat pertumbuhan harian, hitung ADG, FCR, R/C ratio, BEP, denah kandang per pen, kartu ternak digital per ekor, dan laporan laba-rugi per batch. (2) Sapi Breeding (Pembibitan) — manajemen database herd, IB atau kawin alam, tracking kehamilan, pencatatan kelahiran pedet, dan laporan conception rate serta calving interval.',
+    link: '/fitur',
+  },
+  {
+    q: 'Apakah TernakOS bisa untuk peternak domba dan kambing?',
+    a: 'Ya. TernakOS mendukung penuh peternak domba potong, kambing potong, kambing breeding, dan kambing perah. Untuk domba dan kambing potong/fattening: manajemen batch, kartu ternak individual, ADG, FCR, estimasi bobot panen, denah kandang, dan laporan laba-rugi. Untuk kambing breeding: tracking IB, kawin alam, kehamilan, kelahiran cempe, dan KPI reproduksi. Untuk kambing perah: recording susu per sesi (pagi/siang/sore), inventori produk susu, dan manajemen pelanggan.',
+    link: '/fitur',
+  },
+  {
+    q: 'Jenis peternakan apa saja yang didukung TernakOS?',
+    a: 'TernakOS mendukung enam kategori bisnis peternakan: (1) Peternak Unggas — broiler mandiri dan mitra sistem kemitraan INTI-Plasma. (2) Peternak Sapi — fattening (penggemukan) dan breeding (pembibitan). (3) Peternak Domba — fattening dan breeding. (4) Peternak Kambing — fattening, breeding, dan perah (susu). (5) Broker & Trader — broker ayam, broker telur, dan agen sembako/distributor. (6) Industri Hilir — rumah potong ayam (RPA). Modul sapi perah sedang dalam pengembangan aktif.',
+    link: '/fitur',
+  },
+  {
+    q: 'Apa perbedaan antara peran peternak, broker, dan RPA di TernakOS?',
+    a: 'Di TernakOS, tiga peran ini memiliki fungsi berbeda: (1) Peternak — mengelola kandang/farm, mencatat produksi, pakan, kesehatan ternak, dan performa per siklus/batch. (2) Broker — mengelola rantai distribusi: beli dari peternak, jual ke RPA atau pasar, catat hutang/piutang, dan kelola pengiriman. (3) RPA (Rumah Potong Ayam) — mengelola order masuk dari broker/pelanggan, stok bahan baku, hutang ke supplier, dan distribusi produk jadi. Satu akun bisa memiliki kombinasi beberapa tipe bisnis sekaligus.',
+    link: '/fitur',
+  },
+  {
+    q: 'Apakah TernakOS bisa untuk bisnis selain peternakan, seperti perdagangan telur atau sembako?',
+    a: 'Ya. TernakOS bukan hanya untuk kandang — platform ini juga mencakup rantai pasok terkait peternakan: (1) Broker Telur — POS berbasis grade (Grade A/B/C), manajemen stok per grade, dan pencatatan piutang pelanggan. (2) Agen/Distributor Sembako — manajemen stok FIFO multi-item (beras, minyak, gula, dll), laporan penjualan, dan analisis margin. Kedua modul ini berdiri sendiri, sehingga bisa digunakan tanpa harus punya kandang.',
     link: '/fitur',
   },
   {

@@ -110,6 +110,14 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
     }
   }, [isRoleLocked, primaryRoleInfo, step])
 
+  // Memoize provinces
+  const filteredProvinces = useMemo(() => {
+    if (!provinceSearch) return PROVINCES
+    return PROVINCES.filter(p => 
+      p.toLowerCase().includes(provinceSearch.toLowerCase())
+    )
+  }, [provinceSearch])
+
   // Allow rendering even without profile (for brand new users)
   // But if session is already onboarded and NOT in new business mode, hide it (Safety)
   if (profile?.onboarded && !isNewBusiness) return null
@@ -131,7 +139,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         .select('id')
         .ilike('business_name', formatted)
       
-      if (profile?.tenant_id) {
+      if (profile?.tenant_id && profile.tenant_id !== 'undefined') {
         query = query.neq('id', profile.tenant_id)
       }
 
@@ -157,7 +165,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
       .select('id')
       .ilike('business_name', formattedName)
     
-    if (profile?.tenant_id) {
+    if (profile?.tenant_id && profile.tenant_id !== 'undefined') {
       uniqueQuery = uniqueQuery.neq('id', profile.tenant_id)
     }
 
@@ -179,74 +187,155 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
 
   const saveAndComplete = async () => {
     const model = BUSINESS_MODELS[selected]
-    if (!model) return
+    if (!model) {
+      console.error('[Onboarding] saveAndComplete: model not found for selected key:', selected)
+      return
+    }
     const formattedName = toTitleCase(businessName.trim())
+
+    // --- VALIDATION: Guard against undefined/invalid user_type ---
+    if (!model.user_type) {
+      console.error('[Onboarding] model.user_type is missing for model:', model.key, model)
+      toast.error('Konfigurasi bisnis tidak valid. Silakan coba lagi.')
+      return
+    }
 
     setLoading(true)
     try {
       const targetAuthId = profile?.auth_user_id || user?.id
-      if (!targetAuthId) throw new Error('User session missing')
+      
+      const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
 
-      let resolvedTenantId = profile?.tenant_id
+      if (!targetAuthId || targetAuthId === 'undefined' || !isUUID(targetAuthId)) {
+        console.error('[Onboarding] targetAuthId is missing or invalid. profile:', profile, 'user:', user)
+        throw new Error('User session missing or invalid auth ID')
+      }
 
-      if (isNewBusiness || !profile) {
+      let resolvedTenantId = profile?.tenant_id === 'undefined' ? null : profile?.tenant_id
+
+      // --- KEY FIX: New user (profile exists but NO tenant_id) must use RPC, same as isNewBusiness ---
+      const isFirstTimeBusiness = !resolvedTenantId
+      const shouldCreateViRPC = isNewBusiness || !profile || isFirstTimeBusiness
+
+      console.log('[Onboarding] saveAndComplete start:', {
+        selectedKey: selected,
+        modelKey: model.key,
+        user_type: model.user_type,
+        isNewBusiness,
+        isFirstTimeBusiness,
+        shouldCreateViRPC,
+        profile_tenant_id: profile?.tenant_id,
+        targetAuthId,
+      })
+
+      if (shouldCreateViRPC) {
         // --- SCALABILITY: Final Quota Check before RPC ---
-        const quota = await checkQuotaUsage(null, profile, 'business')
-        if (isNewBusiness && !quota.canAdd) {
-          toast.error(`Jatah bisnis bapak sudah penuh (${quota.usage}/${quota.limit}). Silakan beli slot tambahan di Portal Add-on.`)
-          setLoading(false)
-          return
+        if (isNewBusiness) {
+          const quota = await checkQuotaUsage(null, profile, 'business')
+          if (!quota.canAdd) {
+            toast.error(`Jatah bisnis bapak sudah penuh (${quota.usage}/${quota.limit}). Silakan beli slot tambahan di Portal Add-on.`)
+            setLoading(false)
+            return
+          }
         }
 
         // --- MULTI-TENANT & NEW USER: Use RPC for Atomic Creation ---
+        console.log('[Onboarding] Calling create_new_business RPC with:', {
+          p_business_name: formattedName,
+          p_business_vertical: model.key,
+          p_location: province || null,
+          p_phone: profile?.phone || user?.user_metadata?.phone || '',
+        })
+
         const { data: rpcData, error: rpcError } = await supabase
           .rpc('create_new_business', {
             p_business_name: formattedName,
             p_business_vertical: model.key,
             p_location: province || null,
-            p_phone: profile?.phone || user?.user_metadata?.phone || ''
+            p_phone: profile?.phone || user?.user_metadata?.phone || null
           })
 
-        if (rpcError) throw rpcError
-        // Resolve the new tenant_id for setup step saving
-        if (rpcData) resolvedTenantId = rpcData
-        toast.success(isNewBusiness ? 'Bisnis baru berhasil dibuat!' : 'Profil bisnis berhasil dibuat!')
-
-      } else {
-        // --- INITIAL ONBOARDING: Update Existing Profile ---
-        const { error: profError } = await supabase
-          .from('profiles')
-          .update({
-            user_type: model.user_type,
-            business_model_selected: true,
-            onboarded: true,
-          })
-          .eq('auth_user_id', targetAuthId)
-
-        if (profError) throw profError
-
-        if (profile.tenant_id && model.sub_type) {
-          const subType = model.sub_type
-          const baseType = subType.includes('sapi') ? 'sapi'
-            : subType.includes('domba') && !subType.includes('kambing') ? 'domba'
-            : subType.includes('kambing') && !subType.includes('domba') ? 'kambing'
-            : subType.includes('bebek') ? 'bebek'
-            : subType.includes('babi') ? 'babi'
-            : ['peternak_broiler','peternak_layer','broker_ayam','broker_telur','rpa_ayam','rph'].includes(subType) ? 'ayam'
-            : null
-          const { error: tenError } = await supabase
-            .from('tenants')
-            .update({
-              sub_type: model.sub_type,
-              business_vertical: model.key,
-              business_name: formattedName,
-              province: province || null,
-              base_livestock_type: baseType,
-            })
-            .eq('id', profile.tenant_id)
-          
-          if (tenError) throw tenError
+        if (rpcError) {
+          console.error('[Onboarding] create_new_business RPC failed:', rpcError)
+          throw rpcError
         }
+        
+        if (!rpcData || rpcData === 'undefined' || !isUUID(rpcData)) {
+          console.error('[Onboarding] create_new_business RPC returned invalid tenant_id:', rpcData)
+          throw new Error('RPC returned invalid tenant_id')
+        }
+
+        console.log('[Onboarding] RPC create_new_business success, returned tenant_id:', rpcData)
+        // Resolve the new tenant_id for setup step saving
+        resolvedTenantId = rpcData
+        toast.success(isNewBusiness ? 'Bisnis baru berhasil dibuat!' : 'Profil bisnis berhasil dibuat!')
+      }
+
+      if (!resolvedTenantId || resolvedTenantId === 'undefined' || !isUUID(resolvedTenantId)) {
+        console.error('[Onboarding] resolvedTenantId is invalid before profile update:', resolvedTenantId)
+        throw new Error('Tenant ID is invalid/undefined')
+      }
+
+      // --- ALWAYS UPDATE PROFILE + TENANT TO ENSURE DATA INTEGRITY ---
+      console.log('[Onboarding] Updating profile and tenant details:', {
+        targetAuthId,
+        tenant_id: resolvedTenantId,
+        user_type: model.user_type,
+        sub_type: model.sub_type,
+        business_vertical: model.key,
+      })
+
+      const { error: profError } = await supabase
+        .from('profiles')
+        .update({
+          user_type: model.user_type,
+          business_model_selected: true,
+          onboarded: true,
+        })
+        .eq('auth_user_id', targetAuthId)
+
+      if (profError) {
+        console.error('[Onboarding] profiles PATCH failed:', {
+          code: profError.code,
+          message: profError.message,
+          details: profError.details,
+          hint: profError.hint,
+          payload: { user_type: model.user_type, auth_user_id: targetAuthId },
+        })
+        throw profError
+      }
+      console.log('[Onboarding] profiles PATCH success')
+
+      if (resolvedTenantId && model.sub_type) {
+        const subType = model.sub_type
+        const baseType = subType.includes('sapi') ? 'sapi'
+          : subType.includes('domba') && !subType.includes('kambing') ? 'domba'
+          : subType.includes('kambing') && !subType.includes('domba') ? 'kambing'
+          : subType.includes('bebek') ? 'bebek'
+          : subType.includes('babi') ? 'babi'
+          : ['peternak_broiler','peternak_layer','broker_ayam','broker_telur','rpa_ayam','rph'].includes(subType) ? 'ayam'
+          : null
+        const { error: tenError } = await supabase
+          .from('tenants')
+          .update({
+            sub_type: model.sub_type,
+            business_vertical: model.key,
+            business_name: formattedName,
+            province: province || null,
+            base_livestock_type: baseType,
+          })
+          .eq('id', resolvedTenantId)
+        
+        if (tenError) {
+          console.error('[Onboarding] tenants UPDATE failed:', {
+            code: tenError.code,
+            message: tenError.message,
+            details: tenError.details,
+            tenant_id: resolvedTenantId,
+          })
+          throw tenError
+        }
+        console.log('[Onboarding] tenants UPDATE success')
       }
 
       // --- SETUP STEP: Save initial batch (config-driven for all penggemukan verticals) ---
@@ -288,7 +377,13 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         if (onComplete) onComplete(selected)
       }, 1800)
     } catch (err) {
-      console.error('Error saving business model:', err)
+      console.error('[Onboarding] saveAndComplete FATAL error:', {
+        message: err?.message,
+        code: err?.code,
+        details: err?.details,
+        hint: err?.hint,
+        stack: err?.stack,
+      })
       toast.error('Gagal menyimpan pilihan. Silakan coba lagi.')
       setLoading(false)
     }
@@ -359,13 +454,6 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
       setSelected(null)
     }
   }
-
-  const filteredProvinces = useMemo(() => {
-    if (!provinceSearch) return PROVINCES
-    return PROVINCES.filter(p => 
-      p.toLowerCase().includes(provinceSearch.toLowerCase())
-    )
-  }, [provinceSearch])
 
   // ── Success Animation Screen ────────────────────────────────────────────────
   if (isSuccess) {
