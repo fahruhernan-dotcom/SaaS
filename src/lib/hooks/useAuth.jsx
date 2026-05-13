@@ -49,6 +49,9 @@ export function AuthProvider({ children }) {
         ...m,
         // profiles.id from legacyProfiles — needed for FKs that reference profiles.id (e.g. team_invitations.invited_by)
         profile_id: legacyMatch?.id ?? null,
+        // CRITICAL: carry app_role and role from profiles table (used for isSuperadmin check)
+        app_role: legacyMatch?.app_role ?? m.app_role ?? masterProfile.app_role,
+        role: legacyMatch?.role ?? m.role ?? masterProfile.role,
         // Inject metadata from master profile into membership-only rows
         full_name: m.full_name || masterProfile.full_name,
         avatar_url: m.avatar_url || masterProfile.avatar_url,
@@ -137,7 +140,15 @@ export function AuthProvider({ children }) {
     return false
   }
 
-  const isSuperadmin = user?.app_metadata?.is_superadmin === true
+  // Dual-mode check: JWT app_metadata (Supabase Auth) OR profile.app_role/role column (DB)
+  // app_metadata.is_superadmin requires a Supabase custom claim to be set.
+  // profile.app_role / profile.role are set directly in the DB and available immediately.
+  // Safety net: scan ALL profiles in case active profile is from tenant_memberships without app_role
+  const isSuperadmin =
+    user?.app_metadata?.is_superadmin === true ||
+    profile?.app_role === 'superadmin' ||
+    profile?.role === 'superadmin' ||
+    profiles.some(p => p.app_role === 'superadmin' || p.role === 'superadmin')
 
   const value = {
     user,

@@ -238,6 +238,13 @@ export default function AppSidebar({ open, onClose }) {
   const activeVerticalInfo = getVerticalInfo(vertical)
 
   const handleGoToAdmin = () => {
+    // isSuperadmin is already verified from useAuth() — navigate directly.
+    // The button is only rendered when isSuperadmin === true, so no extra check needed.
+    if (isSuperadmin) {
+      navigate('/admin')
+      return
+    }
+    // Fallback: try to find a matching superadmin profile and switch tenant
     const adminProfile = profiles?.find(p => checkIsSuperadmin(p))
     if (adminProfile) {
       switchTenant(adminProfile.tenant_id)

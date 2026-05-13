@@ -3,8 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/lib/hooks/useAuth'
 import BusinessModelOverlay from '../components/BusinessModelOverlay'
 import LoadingScreen from '@/components/LoadingScreen'
-import { getBrokerBasePath } from '@/lib/hooks/useAuth'
-import { isSuperadmin } from '@/lib/auth'
 
 const KEY_TO_PATH = {
   poultry_broker:      '/broker/broker_ayam/beranda',
@@ -47,7 +45,7 @@ export default function OnboardingFlow() {
         navigate(`/rumah_potong/rpa/beranda`, { replace: true })
         return
       }
-      navigate(getBrokerBasePath(profile.tenants) + '/beranda', { replace: true })
+      navigate(`/broker/${profile.tenants?.sub_type || 'broker_ayam'}/beranda`, { replace: true })
     }
   }, [profile, loading, navigate, isNewBusiness])
 
@@ -69,22 +67,31 @@ export default function OnboardingFlow() {
           if (!selectedKey) {
             // User cancelled / closed the overlay
             if (isNewBusiness) {
-              // Go back to previous page or dashboard
+              // In add-business mode: go back to previous page
               navigate(-1)
+            } else if (!profile?.onboarded) {
+              // New user closed without completing — send back to welcome
+              navigate('/welcome', { replace: true })
             }
             return
           }
-          
+
+          // FIX: Await refetch so context is up-to-date before navigate.
+          // Without this, dashboard mounts with stale profile (pre-onboarding state).
           await refetchProfile()
+
           const path = KEY_TO_PATH[selectedKey]
-          
+
           if (path) {
-            navigate(path, { replace: true })
-            // If it was a new business, we refresh to ensure all context (tenants etc) is updated
-            if (isNewBusiness) window.location.reload()
+            if (isNewBusiness) {
+              // New business: full reload ensures tenant context is refreshed
+              window.location.href = path
+            } else {
+              navigate(path, { replace: true })
+            }
           } else {
-            // Fallback for unknown keys
-            window.location.href = '/'
+            // Fallback for unmapped keys — go to root and let RoleRedirector handle it
+            navigate('/', { replace: true })
           }
         }}
       />

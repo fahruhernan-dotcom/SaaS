@@ -70,22 +70,22 @@ function GenericFatteningSetup({ data, onChange, config }) {
   return (
     <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
 
-      <div className="grid grid-cols-2 gap-3">
-        {/* Kandang */}
-        <div>
-          <Label className={labelCls} style={{ color: accent }}>
-            <Warehouse size={12} style={{ color: accent }} />
-            Kandang <span className="ml-0.5 opacity-50">*</span>
-          </Label>
-          <Input
-            type="text"
-            value={data.kandang_name || ''}
-            onChange={e => set('kandang_name', e.target.value)}
-            placeholder={config.kandangPlaceholder || 'Kandang A'}
-            className={inputCls}
-          />
-        </div>
+      {/* Nama Kandang — full width */}
+      <div>
+        <Label className={labelCls} style={{ color: accent }}>
+          <Warehouse size={12} style={{ color: accent }} />
+          Nama Kandang <span className="ml-0.5 opacity-50">*</span>
+        </Label>
+        <Input
+          type="text"
+          value={data.kandang_name || ''}
+          onChange={e => set('kandang_name', e.target.value)}
+          placeholder={config.kandangPlaceholder || 'Kandang Utama A'}
+          className={inputCls}
+        />
+      </div>
 
+      <div className="grid grid-cols-2 gap-3">
         {/* Jumlah Ekor */}
         <div>
           <Label className={labelCls} style={{ color: accent }}>

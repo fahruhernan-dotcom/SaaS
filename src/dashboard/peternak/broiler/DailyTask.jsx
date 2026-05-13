@@ -229,7 +229,7 @@ export default function BroilerDailyTask() {
       </main>
 
       <CompleteTaskSheet open={completeSheetOpen} onOpenChange={setCompleteSheetOpen} task={selectedTask} config={config} hooks={BROILER_HOOKS} updateStatus={updateStatus} profile={profile} livestockType={livestockType} />
-      <AdHocTaskSheet open={adHocSheetOpen} onOpenChange={setAdHocSheetOpen} livestockType={livestockType} hooks={BROILER_HOOKS} createTask={createTask} />
+      <AdHocTaskSheet open={adHocSheetOpen} onOpenChange={setAdHocSheetOpen} livestockType={livestockType} hooks={BROILER_HOOKS} createTask={createTask} TASK_TYPE_CFG={TASK_TYPE_CFG} useAssignableMembers={useAssignableMembers} />
       <IncidentReportSheet open={incidentSheetOpen} onOpenChange={setIncidentSheetOpen} config={config} hooks={BROILER_HOOKS} livestockType={livestockType} />
     </Scene>
   )

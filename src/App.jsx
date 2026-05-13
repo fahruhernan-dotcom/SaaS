@@ -202,16 +202,10 @@ function RoleRedirector() {
   }
   
   const targetPath = getVerticalBeranda(tenant, profile);
-  console.log('[DEBUG] RoleRedirector:', { 
-    from: location.pathname, 
-    to: targetPath,
-    profileOnboarded: profile?.onboarded
-  })
-  
+
   // Emergency brake: don't redirect if we are already there (normalized)
   const normalize = (p) => p?.replace(/\/$/, '') || '';
   if (normalize(targetPath) === normalize(location.pathname)) {
-    console.log('[DEBUG] RoleRedirector EMERGENCY BRAKE TRIGGERED')
     return null;
   }
 
