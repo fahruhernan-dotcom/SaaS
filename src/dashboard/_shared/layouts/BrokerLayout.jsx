@@ -12,6 +12,7 @@ import { useNotificationGenerator } from '@/lib/hooks/useNotifications.jsx'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { BusinessNameWarningBanner } from '../components/BusinessNameWarningBanner'
+import InstallAppPrompt from '@/components/InstallAppPrompt'
 import { PlanExpiryBanner } from '../components/PlanExpiryBanner'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import {
@@ -226,6 +227,7 @@ export default function BrokerLayout() {
       {vertical === 'poultry_broker' && <PoultryBrokerPrefetcher />}
       {renderContent()}
       <AIErrorBoundary><AIChatBubble /></AIErrorBoundary>
+      <InstallAppPrompt />
     </>
   )
 }

@@ -10,6 +10,7 @@ import { BusinessNameWarningBanner } from '../components/BusinessNameWarningBann
 import { PlanExpiryBanner } from '../components/PlanExpiryBanner'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import TopBar from '../components/TopBar'
+import InstallAppPrompt from '@/components/InstallAppPrompt'
 
 export default function PeternakLayout() {
   const { profile, loading, tenant, isSuperadmin } = useAuth()
@@ -98,6 +99,7 @@ export default function PeternakLayout() {
   return (
     <>
       {renderContent()}
+      <InstallAppPrompt />
     </>
   )
 }

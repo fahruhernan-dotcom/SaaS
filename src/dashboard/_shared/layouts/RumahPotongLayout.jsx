@@ -8,6 +8,7 @@ import { Menu } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useNotificationGenerator } from '@/lib/hooks/useNotifications.jsx'
 import { BusinessNameWarningBanner } from '../components/BusinessNameWarningBanner'
+import InstallAppPrompt from '@/components/InstallAppPrompt'
 import { PlanExpiryBanner } from '../components/PlanExpiryBanner'
 import { SidebarProvider } from '@/components/ui/sidebar'
 
@@ -79,6 +80,7 @@ export default function RumahPotongLayout() {
   return (
     <>
       {renderContent()}
+      <InstallAppPrompt />
     </>
   )
 }
