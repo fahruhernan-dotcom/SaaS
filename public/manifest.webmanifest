@@ -1,4 +1,5 @@
 {
+  "id": "/",
   "name": "TernakOS",
   "short_name": "TernakOS",
   "description": "Software manajemen peternakan untuk kandang, stok pakan, transaksi, laporan, dan performa ternak.",
@@ -26,6 +27,21 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile.jpg",
+      "sizes": "750x1334",
+      "type": "image/jpeg",
+      "label": "TernakOS — Dashboard Peternakan"
+    },
+    {
+      "src": "/screenshots/desktop.jpg",
+      "sizes": "1280x720",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "TernakOS — Dashboard Peternakan (Desktop)"
     }
   ]
 }
