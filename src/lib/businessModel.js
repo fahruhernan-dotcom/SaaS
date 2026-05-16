@@ -236,10 +236,10 @@ export const BUSINESS_MODELS = {
     sub_type: 'rpa_ayam',
     comingSoon: false,
     bottomNav: createNav('rumah_potong', 'rpa', [
-      { slug: 'beranda',   icon: 'Home',           label: 'Home'   },
-      { slug: 'transaksi', icon: 'ArrowLeftRight', label: 'Produksi'  },
-      { slug: 'stok',      icon: 'Warehouse',      label: 'Gudang'    },
-      { slug: 'pengiriman',icon: 'Truck',          label: 'Kirim'     },
+      { slug: 'beranda',    icon: 'Home',          label: 'Home'       },
+      { slug: 'order',      icon: 'ClipboardList', label: 'Order'      },
+      { slug: 'hutang',     icon: 'CreditCard',    label: 'Hutang'     },
+      { slug: 'distribusi', icon: 'Truck',         label: 'Distribusi' },
     ]),
     drawerMenu: [
       { path: '/rumah_potong/rpa/distribusi', icon: 'Store',    label: 'Distribusi & Invoice' },
