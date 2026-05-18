@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 import { toast } from 'sonner'
 import { getSubscriptionStatus } from '../subscriptionUtils'
+import { logSupabaseError } from '../logger/supabaseLogger'
+import { logError } from '../logger/errorLogger'
 
 export const useAllTenants = () => {
   return useQuery({
@@ -34,7 +36,10 @@ export const useAdminUpdateTenant = () => {
         .update(updates)
         .eq('id', tenantId)
       
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'tenants', operation: 'update', component: 'useAdminUpdateTenant', actionName: 'admin.tenant.update' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-tenants'])
@@ -113,7 +118,10 @@ export const useConfirmInvoice = () => {
         })
         .eq('id', invoiceId)
         .eq('status', 'pending')
-      if (invoiceErr) throw invoiceErr
+      if (invoiceErr) {
+        logSupabaseError(invoiceErr, { table: 'subscription_invoices', operation: 'update', component: 'useConfirmInvoice', actionName: 'admin.invoice.confirm_status' })
+        throw invoiceErr
+      }
 
       // 3. Specialized Fulfillment
       // If it's an add-on (e.g. addon_business_slot), we update profiles, not tenants.
@@ -132,7 +140,10 @@ export const useConfirmInvoice = () => {
               .from('profiles')
               .update({ additional_slots: (profile.additional_slots || 0) + (billingMonths || 1) })
               .eq('id', profile.id)
-            if (profErr) throw profErr
+            if (profErr) {
+              logError({ error: profErr, message: 'Failed to update profile for addon', actionName: 'admin.invoice.confirm_addon', component: 'useConfirmInvoice', metadata: { partial: true, step: 'update_profile' } })
+              throw profErr
+            }
             toast.success('Slot bisnis tambahan berhasil dikonfirmasi!')
           }
         }
@@ -161,7 +172,10 @@ export const useConfirmInvoice = () => {
           kandang_limit: kandangLimit
         })
         .eq('id', tenantId)
-      if (tenantErr) throw tenantErr
+      if (tenantErr) {
+        logError({ error: tenantErr, message: 'Failed to update tenant plan after invoice confirm', actionName: 'admin.invoice.confirm_tenant', component: 'useConfirmInvoice', metadata: { partial: true, step: 'update_tenant' } })
+        throw tenantErr
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-invoices'])
@@ -183,7 +197,10 @@ export const useActivateTrial = () => {
         p_plan:      plan,
         p_days:      days,
       })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'rpc:activate_plan_trial', operation: 'rpc', component: 'useActivateTrial', actionName: 'admin.trial.activate' })
+        throw error
+      }
       return { plan, days }
     },
     onSuccess: (result) => {
@@ -219,7 +236,10 @@ export const useDeletePaymentSetting = () => {
         .from('payment_settings')
         .delete()
         .eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'payment_settings', operation: 'delete', component: 'useDeletePaymentSetting', actionName: 'admin.payment_setting.delete' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['payment-settings'])
@@ -253,7 +273,10 @@ export const useCreateInvoice = () => {
           status: 'pending',
           payment_method: 'manual'
         })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'subscription_invoices', operation: 'insert', component: 'useCreateInvoice', actionName: 'admin.invoice.create' })
+        throw error
+      }
       return invoiceNumber
     },
     onSuccess: (invoiceNumber) => {
@@ -298,12 +321,18 @@ export const useSaveXenditConfig = () => {
           .from('payment_settings')
           .update(payload)
           .eq('id', existing.data.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: 'payment_settings', operation: 'update', component: 'useSaveXenditConfig', actionName: 'admin.payment_setting.update_xendit' })
+          throw error
+        }
       } else {
         const { error } = await supabase
           .from('payment_settings')
           .insert(payload)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: 'payment_settings', operation: 'insert', component: 'useSaveXenditConfig', actionName: 'admin.payment_setting.create_xendit' })
+          throw error
+        }
       }
     },
     onSuccess: () => {
@@ -322,7 +351,10 @@ export const useUpsertPaymentSetting = () => {
       const { error } = await supabase
         .from('payment_settings')
         .upsert(payload)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'payment_settings', operation: 'upsert', component: 'useUpsertPaymentSetting', actionName: 'admin.payment_setting.upsert' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['payment-settings'])
@@ -369,14 +401,20 @@ export const useUpdatePricing = () => {
         .eq('plan', plan)
         .select()
         
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'pricing_plans', operation: 'update', component: 'useUpdatePricing', actionName: 'admin.pricing.update' })
+        throw error
+      }
 
       if (!data || data.length === 0) {
         // If row doesn't exist, insert it
         const { error: insertError } = await supabase
           .from('pricing_plans')
           .insert({ role, plan, price, original_price: originalPrice })
-        if (insertError) throw insertError
+        if (insertError) {
+          logError({ error: insertError, message: 'Failed to insert pricing plan', actionName: 'admin.pricing.insert', component: 'useUpdatePricing', metadata: { partial: true, step: 'insert_pricing_plan' } })
+          throw insertError
+        }
       }
     },
     onSuccess: () => {
@@ -406,7 +444,10 @@ export const useCreateDiscountCode = () => {
       const { error } = await supabase
         .from('discount_codes')
         .insert(payload)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'discount_codes', operation: 'insert', component: 'useCreateDiscountCode', actionName: 'admin.discount.create' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['discount-codes'])
@@ -424,7 +465,10 @@ export const useToggleDiscountCode = () => {
         .from('discount_codes')
         .update({ is_active })
         .eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'discount_codes', operation: 'update', component: 'useToggleDiscountCode', actionName: 'admin.discount.toggle' })
+        throw error
+      }
     },
     onSuccess: () => queryClient.invalidateQueries(['discount-codes'])
   })
@@ -438,7 +482,10 @@ export const useDeleteDiscountCode = () => {
         .from('discount_codes')
         .delete()
         .eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'discount_codes', operation: 'delete', component: 'useDeleteDiscountCode', actionName: 'admin.discount.delete' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['discount-codes'])
@@ -475,7 +522,10 @@ export const useUpdatePlanConfig = () => {
           { config_key, config_value, updated_at: new Date().toISOString() },
           { onConflict: 'config_key' }
         )
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'plan_configs', operation: 'upsert', component: 'useUpdatePlanConfig', actionName: 'admin.plan_config.update' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['plan-configs'])
@@ -522,7 +572,10 @@ export const useApproveMarketPrice = () => {
         .from('market_prices')
         .update({ needs_review: false })
         .eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'market_prices', operation: 'update', component: 'useApproveMarketPrice', actionName: 'admin.market_price.approve' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['market-price-review-queue'])
@@ -540,7 +593,10 @@ export const useDeleteMarketPrice = () => {
         .from('market_prices')
         .delete()
         .eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'market_prices', operation: 'delete', component: 'useDeleteMarketPrice', actionName: 'admin.market_price.delete' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['market-price-review-queue'])
@@ -730,7 +786,10 @@ export const useDeleteUser = () => {
             if (!countErr && count === 1) {
               // User is the ONLY person in this business. 
               // Delete the Tenant (this should ideally cascade delete all its wiring)
-              await supabase.from('tenants').delete().eq('id', p.tenant_id)
+              const { error: tErr } = await supabase.from('tenants').delete().eq('id', p.tenant_id)
+              if (tErr) {
+                logError({ error: tErr, message: 'Failed to delete lonely tenant during user deletion', actionName: 'admin.user.delete_tenant', component: 'useDeleteUser', metadata: { partial: true, step: 'delete_tenant', tenantId: p.tenant_id } })
+              }
             }
           }
         }
@@ -741,7 +800,10 @@ export const useDeleteUser = () => {
         .from('profiles')
         .delete()
         .eq('auth_user_id', userId)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'profiles', operation: 'delete', component: 'useDeleteUser', actionName: 'admin.user.delete' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-all-users'])
@@ -765,7 +827,10 @@ export const useDeleteTenant = () => {
           .from(table)
           .delete()
           .eq(filter.col, filter.val)
-        if (error) throw new Error(`Failed deleting ${table}: ${error.message}`)
+        if (error) {
+          logError({ error, message: `Failed deleting ${table}`, actionName: 'admin.tenant.delete_cascade', component: 'useDeleteTenant', metadata: { partial: true, step: `delete_${table}` } })
+          throw new Error(`Failed deleting ${table}: ${error.message}`)
+        }
       }
 
       const nullify = async (table, col) => {
@@ -773,7 +838,10 @@ export const useDeleteTenant = () => {
           .from(table)
           .update({ [col]: null })
           .eq(col, tid)
-        if (error) throw new Error(`Failed nullifying ${table}.${col}: ${error.message}`)
+        if (error) {
+          logError({ error, message: `Failed nullifying ${table}.${col}`, actionName: 'admin.tenant.nullify_cascade', component: 'useDeleteTenant', metadata: { partial: true, step: `nullify_${table}` } })
+          throw new Error(`Failed nullifying ${table}.${col}: ${error.message}`)
+        }
       }
 
       await del('ai_anomaly_logs')
@@ -791,7 +859,10 @@ export const useDeleteTenant = () => {
         .from('broker_connections')
         .delete()
         .or(`requester_tenant_id.eq.${tid},target_tenant_id.eq.${tid}`)
-      if (bcErr) throw new Error(`Failed deleting broker_connections: ${bcErr.message}`)
+      if (bcErr) {
+        logError({ error: bcErr, message: 'Failed deleting broker_connections', actionName: 'admin.tenant.delete_broker_connections', component: 'useDeleteTenant', metadata: { partial: true, step: 'delete_broker_connections' } })
+        throw new Error(`Failed deleting broker_connections: ${bcErr.message}`)
+      }
 
       await nullify('rpa_payments', 'broker_tenant_id')
       await nullify('rpa_purchase_orders', 'broker_tenant_id')
@@ -818,7 +889,10 @@ export const useDeleteTenant = () => {
         .from('tenants')
         .delete({ count: 'exact' })
         .eq('id', tid)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'tenants', operation: 'delete', component: 'useDeleteTenant', actionName: 'admin.tenant.delete_final' })
+        throw error
+      }
       if (count === 0) throw new Error('Akses ditolak: superadmin DELETE policy belum diset di Supabase.')
     },
     onSuccess: () => {
@@ -841,7 +915,10 @@ export const useDeleteInvoice = () => {
         .from('subscription_invoices')
         .delete()
         .eq('id', invoiceId)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'subscription_invoices', operation: 'delete', component: 'useDeleteInvoice', actionName: 'admin.invoice.delete' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['admin-invoices'])

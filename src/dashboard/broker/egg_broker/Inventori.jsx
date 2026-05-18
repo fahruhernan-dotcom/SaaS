@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import EmptyState from '@/components/EmptyState'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatIDR } from '@/lib/format'
@@ -24,14 +25,6 @@ import {
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import { cn } from '@/lib/utils'
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { 
-    opacity: 1, y: 0,
-    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } 
-  }
-}
 
 export default function Inventori() {
   const { tenant } = useAuth()
@@ -62,8 +55,16 @@ export default function Inventori() {
         .from('egg_inventory')
         .update({ is_deleted: true })
         .eq('id', id)
-      
-      if (error) throw error
+
+      if (error) {
+        logSupabaseError(error, {
+          table: 'egg_inventory',
+          operation: 'update',
+          component: 'EggInventori',
+          actionName: 'egg.inventory.delete',
+        })
+        throw error
+      }
       toast.success('Item berhasil dihapus')
       queryClient.invalidateQueries({ queryKey: ['egg-inventory', tenant?.id] })
       setOpenModal(false)
@@ -79,13 +80,29 @@ export default function Inventori() {
           .from('egg_inventory')
           .update(formData)
           .eq('id', editingItem.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: 'egg_inventory',
+            operation: 'update',
+            component: 'EggInventori',
+            actionName: 'egg.inventory.update',
+          })
+          throw error
+        }
         toast.success('Item diperbarui')
       } else {
         const { error } = await supabase
           .from('egg_inventory')
           .insert([{ ...formData, tenant_id: tenant.id }])
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: 'egg_inventory',
+            operation: 'insert',
+            component: 'EggInventori',
+            actionName: 'egg.inventory.create',
+          })
+          throw error
+        }
         toast.success('Item ditambahkan')
       }
       queryClient.invalidateQueries({ queryKey: ['egg-inventory', tenant?.id] })
@@ -240,7 +257,7 @@ function InventoryCard({ item, onEdit }) {
   )
 }
 
-function InventoryForm({ item, onClose, onSave, onDelete }) {
+function InventoryForm({ item, onSave, onDelete }) {
     const isDesktop = useMediaQuery('(min-width: 1024px)')
     const [isLoading, setIsLoading] = useState(false)
     const [formData, setFormData] = useState(item || {
@@ -333,7 +350,7 @@ function InventoryForm({ item, onClose, onSave, onDelete }) {
                         size="icon"
                         onClick={() => {
                             if (confirm('Hapus item ini dari inventori?')) {
-                                handleDelete(item.id)
+                                onDelete(item.id)
                             }
                         }}
                         className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/5 text-[#F87171] hover:bg-red-500/10 transition-all"

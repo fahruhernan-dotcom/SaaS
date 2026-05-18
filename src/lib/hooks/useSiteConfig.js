@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 export function useSiteConfig() {
   return useQuery({
@@ -20,7 +21,10 @@ export function useUpdateSiteConfig() {
       const { error } = await supabase
         .from('site_config')
         .upsert({ key, value, updated_at: new Date() }, { onConflict: 'key' })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'site_config', operation: 'upsert', component: 'useUpdateSiteConfig', actionName: 'admin.site_config.update' })
+        throw error
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['site_config'] }),
   })

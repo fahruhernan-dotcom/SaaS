@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import {
@@ -17,6 +17,8 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
+import { logError } from '@/lib/logger/errorLogger'
 import { formatIDR } from '@/lib/format'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
@@ -25,7 +27,7 @@ import { cn } from '@/lib/utils'
 export default function POS() {
   const { tenant } = useAuth()
   const { data: inventory, isLoading: loadingInv } = useEggInventory()
-  const { data: customers, isLoading: loadingCust } = useEggCustomers()
+  const { data: customers } = useEggCustomers()
   const [cart, setCart] = useState([])
   const [selectedCustomerId, setSelectedCustomerId] = useState('')
   const [paymentStatus, setPaymentStatus] = useState('lunas')
@@ -78,7 +80,15 @@ export default function POS() {
         .select()
         .single()
 
-      if (saleError) throw saleError
+      if (saleError) {
+        logSupabaseError(saleError, {
+          table: 'egg_sales',
+          operation: 'insert',
+          component: 'EggPOS',
+          actionName: 'egg.sale.create',
+        })
+        throw saleError
+      }
 
       // 2. Create Sale Items
       const saleItems = cart.map(item => ({
@@ -95,7 +105,27 @@ export default function POS() {
         .from('egg_sale_items')
         .insert(saleItems)
 
-      if (itemsError) throw itemsError
+      if (itemsError) {
+        // Partial commit: egg_sales row exists but sale_items insert failed.
+        // DB triggers tied to sale_items won't fire — stock deduction and
+        // customer stats will be inconsistent. Flag for superadmin reconciliation.
+        logError({
+          level: 'error',
+          source: 'supabase',
+          component: 'EggPOS',
+          actionName: 'egg.sale.create.items',
+          error: itemsError,
+          metadata: {
+            table: 'egg_sale_items',
+            operation: 'insert',
+            partial: true,
+            step: 'sale_items_insert',
+            sale_id: sale.id,
+            item_count: saleItems.length,
+          },
+        })
+        throw itemsError
+      }
 
       // Triggers in DB will handle stock deduction & customer stats
       setLastInvoice(sale.invoice_number)

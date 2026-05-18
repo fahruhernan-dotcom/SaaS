@@ -208,7 +208,10 @@ export function useCreateTaskTemplate() {
           tenant_id: tenant.id,
           ...payload
         })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'peternak_task_templates', operation: 'insert', component: 'usePeternakTaskData', actionName: 'task.template.create', tenantId: tenant?.id })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['peternak-task-templates', tenant?.id] })
@@ -233,7 +236,10 @@ export function useUpdateTaskTemplate() {
         .update(payload)
         .eq('id', id)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'peternak_task_templates', operation: 'update', component: 'usePeternakTaskData', actionName: 'task.template.update', tenantId: tenant?.id })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['peternak-task-templates', tenant?.id] })
@@ -259,7 +265,10 @@ export function useUpsertTaskTemplate() {
           .update(payload)
           .eq('id', id)
           .eq('tenant_id', tenant.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: 'peternak_task_templates', operation: 'update', component: 'usePeternakTaskData', actionName: 'task.template.upsert', tenantId: tenant?.id })
+          throw error
+        }
       } else {
         const { error } = await supabase
           .from('peternak_task_templates')
@@ -267,7 +276,10 @@ export function useUpsertTaskTemplate() {
             tenant_id: tenant.id,
             ...payload
           })
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: 'peternak_task_templates', operation: 'insert', component: 'usePeternakTaskData', actionName: 'task.template.upsert', tenantId: tenant?.id })
+          throw error
+        }
       }
     },
     onSuccess: () => {
@@ -295,7 +307,10 @@ export function useBulkDeleteTaskTemplates() {
         .update({ is_deleted: true, is_active: false })
         .in('id', ids)
         .eq('tenant_id', tenant.id)
-      if (errTemplate) throw errTemplate
+      if (errTemplate) {
+        logSupabaseError(errTemplate, { table: 'peternak_task_templates', operation: 'update', component: 'usePeternakTaskData', actionName: 'task.template.bulk_delete', tenantId: tenant?.id })
+        throw errTemplate
+      }
 
       // 2. Soft delete associated uncompleted instances
       const { error: errInstance } = await supabase
@@ -305,7 +320,10 @@ export function useBulkDeleteTaskTemplates() {
         .eq('tenant_id', tenant.id)
         .neq('status', 'selesai')
       
-      if (errInstance) throw errInstance
+      if (errInstance) {
+        logSupabaseError(errInstance, { table: 'peternak_task_instances', operation: 'update', component: 'usePeternakTaskData', actionName: 'task.instance.bulk_delete', tenantId: tenant?.id })
+        throw errInstance
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['peternak-task-templates', tenant?.id] })
@@ -331,7 +349,10 @@ export function useDeleteTaskTemplate() {
         .update({ is_deleted: true, is_active: false })
         .eq('id', id)
         .eq('tenant_id', tenant.id)
-      if (errTemplate) throw errTemplate
+      if (errTemplate) {
+        logSupabaseError(errTemplate, { table: 'peternak_task_templates', operation: 'update', component: 'usePeternakTaskData', actionName: 'task.template.delete', tenantId: tenant?.id })
+        throw errTemplate
+      }
 
       // 2. Soft delete associated uncompleted instances
       const { error: errInstance } = await supabase
@@ -341,7 +362,10 @@ export function useDeleteTaskTemplate() {
         .eq('tenant_id', tenant.id)
         .neq('status', 'selesai')
 
-      if (errInstance) throw errInstance
+      if (errInstance) {
+        logSupabaseError(errInstance, { table: 'peternak_task_instances', operation: 'update', component: 'usePeternakTaskData', actionName: 'task.instance.delete', tenantId: tenant?.id })
+        throw errInstance
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['peternak-task-templates', tenant?.id] })
@@ -368,7 +392,10 @@ export function useCreateTaskInstance() {
       const { error } = await supabase
         .from('peternak_task_instances')
         .insert(toInsert)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'peternak_task_instances', operation: 'insert', component: 'usePeternakTaskData', actionName: 'task.instance.create', tenantId: tenant?.id })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['peternak-task-instances'] })
@@ -405,7 +432,10 @@ export function useUpdateTaskStatus() {
         .update(payload)
         .eq('id', id)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'peternak_task_instances', operation: 'update', component: 'usePeternakTaskData', actionName: 'task.instance.update_status', tenantId: tenant?.id })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['peternak-task-instances'] })
@@ -430,7 +460,10 @@ export function useLinkTaskRecord() {
         .update({ linked_record_id, linked_record_table })
         .eq('id', id)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'peternak_task_instances', operation: 'update', component: 'usePeternakTaskData', actionName: 'task.instance.link_record', tenantId: tenant?.id })
+        throw error
+      }
     }
   })
 }
@@ -451,7 +484,10 @@ export function useGenerateInstancesFromTemplate() {
         .update({ updated_at: new Date().toISOString() })
         .eq('id', templateId)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'peternak_task_templates', operation: 'update', component: 'usePeternakTaskData', actionName: 'task.template.generate_instances', tenantId: tenant?.id })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['peternak-task-instances'] })
@@ -497,7 +533,10 @@ export function useApplySapiTaskTemplate() {
         .from('peternak_task_templates')
         .insert(rows)
 
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'peternak_task_templates', operation: 'insert', component: 'usePeternakTaskData', actionName: 'task.template.apply_sapi', tenantId: tenant?.id })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['peternak-task-templates', tenant?.id] })
@@ -543,7 +582,10 @@ export function useApplyDombaTaskTemplate() {
         .from('peternak_task_templates')
         .insert(rows)
 
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'peternak_task_templates', operation: 'insert', component: 'usePeternakTaskData', actionName: 'task.template.apply_domba', tenantId: tenant?.id })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['peternak-task-templates', tenant?.id] })
@@ -569,7 +611,10 @@ export function useUpdateTaskAssignment() {
         .update({ assigned_worker_id, assigned_profile_id, updated_at: new Date().toISOString() })
         .eq('id', id)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'peternak_task_instances', operation: 'update', component: 'usePeternakTaskData', actionName: 'task.instance.update_assignment', tenantId: tenant?.id })
+        throw error
+      }
     },
     onSuccess: (_, { id, assigned_worker_id, assigned_profile_id }) => {
       // Update cache langsung — tidak ada refetch, tidak ada bounce
@@ -719,7 +764,10 @@ export function useAutoAssignBatch() {
         for (let i = 0; i < updates.length; i += 100) {
            const chunk = updates.slice(i, i + 100)
            const { error: errUp } = await supabase.from('peternak_task_instances').upsert(chunk)
-           if (errUp) throw errUp
+           if (errUp) {
+             logSupabaseError(errUp, { table: 'peternak_task_instances', operation: 'upsert', component: 'usePeternakTaskData', actionName: 'task.instance.auto_assign_batch', tenantId: tenant?.id })
+             throw errUp
+           }
         }
       }
       return updates.length
@@ -801,7 +849,10 @@ export function useCreateKandangWorker() {
       const { error } = await supabase
         .from('kandang_workers')
         .insert({ tenant_id: tenant.id, ...payload })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kandang_workers', operation: 'insert', component: 'usePeternakTaskData', actionName: 'worker.kandang_worker.create', tenantId: tenant?.id })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['kandang-workers-all', tenant?.id] })
@@ -825,7 +876,10 @@ export function useUpdateKandangWorker() {
         .update(payload)
         .eq('id', id)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kandang_workers', operation: 'update', component: 'usePeternakTaskData', actionName: 'worker.kandang_worker.update', tenantId: tenant?.id })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['kandang-workers-all', tenant?.id] })
@@ -849,7 +903,10 @@ export function useDeleteKandangWorker() {
         .update({ is_deleted: true, status: 'nonaktif' })
         .eq('id', id)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kandang_workers', operation: 'update', component: 'usePeternakTaskData', actionName: 'worker.kandang_worker.delete', tenantId: tenant?.id })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['kandang-workers-all', tenant?.id] })
@@ -903,7 +960,10 @@ export function useAddKandangWorkerPayment() {
           amount: Math.round(Number(amount) || 0),
           notes: notes || null,
         })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kandang_worker_payments', operation: 'insert', component: 'usePeternakTaskData', actionName: 'worker.kandang_worker_payment.add', tenantId: tenant?.id })
+        throw error
+      }
     },
     onSuccess: (_, { worker_id }) => {
       qc.invalidateQueries({ queryKey: ['kandang-worker-payments', worker_id] })
@@ -929,7 +989,10 @@ export function useDeleteKandangWorkerPayment() {
         .update({ is_deleted: true })
         .eq('id', paymentId)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kandang_worker_payments', operation: 'update', component: 'usePeternakTaskData', actionName: 'worker.kandang_worker_payment.delete', tenantId: tenant?.id })
+        throw error
+      }
       return workerId
     },
     onSuccess: (workerId) => {

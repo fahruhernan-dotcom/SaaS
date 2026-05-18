@@ -23,7 +23,19 @@
       "Bash(npm install *)",
       "Bash(npx supabase *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Read(//c/Users/ASUS TUF A15/AppData/Local/Temp/design_extract/ternakos/**)",
+      "PowerShell(Get-ChildItem -Recurse \"C:\\\\Users\\\\ASUS TUF A15\\\\AppData\\\\Local\\\\Temp\\\\design_extract\\\\ternakos\\\\project\\\\design_handoff_akun_profile\" | ForEach-Object { $_.FullName })",
+      "Bash(node -e \"console.log\\('node ok'\\)\")",
+      "Bash(node --check src/dashboard/_shared/layouts/BrokerLayout.jsx)",
+      "Bash(echo \"EXIT $?\")",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=6144\" npm run build)",
+      "Bash(awk '/^D:.+\\\\.jsx?$/{f=$0} /^ +[0-9]+:/{print f}')",
+      "Bash(awk -F\"actionName: \" '{file=$1; sub\\(/:.*/, \"\", file\\); sub\\(/^.+[\\\\\\\\\\\\/]src[\\\\\\\\\\\\/]/, \"\", file\\); print $2 \"\\\\t\" file}')",
+      "Bash(git stash *)"
+    ],
+    "additionalDirectories": [
+      "d:\\Dokumen\\02_Kerja_Profesional\\Ternak OS\\src\\lib"
     ]
   }
 }

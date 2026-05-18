@@ -15,6 +15,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import EmptyState from '@/components/EmptyState'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatIDR } from '@/lib/format'
@@ -55,8 +56,16 @@ export default function Customers() {
         .from('egg_customers')
         .update({ is_deleted: true })
         .eq('id', id)
-      
-      if (error) throw error
+
+      if (error) {
+        logSupabaseError(error, {
+          table: 'egg_customers',
+          operation: 'update',
+          component: 'EggCustomers',
+          actionName: 'egg.customer.delete',
+        })
+        throw error
+      }
       toast.success('Pelanggan berhasil dihapus')
       queryClient.invalidateQueries({ queryKey: ['egg-customers', tenant?.id] })
       setOpenModal(false)
@@ -72,13 +81,29 @@ export default function Customers() {
           .from('egg_customers')
           .update(formData)
           .eq('id', editingCustomer.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: 'egg_customers',
+            operation: 'update',
+            component: 'EggCustomers',
+            actionName: 'egg.customer.update',
+          })
+          throw error
+        }
         toast.success('Pelanggan diperbarui')
       } else {
         const { error } = await supabase
           .from('egg_customers')
           .insert([{ ...formData, tenant_id: tenant.id }])
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: 'egg_customers',
+            operation: 'insert',
+            component: 'EggCustomers',
+            actionName: 'egg.customer.create',
+          })
+          throw error
+        }
         toast.success('Pelanggan ditambahkan')
       }
       queryClient.invalidateQueries({ queryKey: ['egg-customers', tenant?.id] })
@@ -220,7 +245,7 @@ function CustomerCard({ customer, onEdit }) {
   )
 }
 
-function CustomerForm({ customer, onClose, onSave, onDelete }) {
+function CustomerForm({ customer, onSave, onDelete }) {
     const [isLoading, setIsLoading] = useState(false)
     const [formData, setFormData] = useState(customer || {
         name: '',

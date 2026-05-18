@@ -15,6 +15,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import EmptyState from '@/components/EmptyState'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -24,14 +25,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { 
-    opacity: 1, y: 0,
-    transition: { duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] } 
-  }
-}
 
 export default function Suppliers() {
   const { tenant } = useAuth()
@@ -62,8 +55,16 @@ export default function Suppliers() {
         .from('egg_suppliers')
         .update({ is_deleted: true })
         .eq('id', id)
-      
-      if (error) throw error
+
+      if (error) {
+        logSupabaseError(error, {
+          table: 'egg_suppliers',
+          operation: 'update',
+          component: 'EggSuppliers',
+          actionName: 'egg.supplier.delete',
+        })
+        throw error
+      }
       toast.success('Supplier berhasil dihapus')
       queryClient.invalidateQueries({ queryKey: ['egg-suppliers', tenant?.id] })
       setOpenModal(false)
@@ -79,13 +80,29 @@ export default function Suppliers() {
           .from('egg_suppliers')
           .update(formData)
           .eq('id', editingSupplier.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: 'egg_suppliers',
+            operation: 'update',
+            component: 'EggSuppliers',
+            actionName: 'egg.supplier.update',
+          })
+          throw error
+        }
         toast.success('Supplier diperbarui')
       } else {
         const { error } = await supabase
           .from('egg_suppliers')
           .insert([{ ...formData, tenant_id: tenant.id }])
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: 'egg_suppliers',
+            operation: 'insert',
+            component: 'EggSuppliers',
+            actionName: 'egg.supplier.create',
+          })
+          throw error
+        }
         toast.success('Supplier ditambahkan')
       }
       queryClient.invalidateQueries({ queryKey: ['egg-suppliers', tenant?.id] })
@@ -224,7 +241,7 @@ function SupplierCard({ supplier, onEdit }) {
   )
 }
 
-function SupplierForm({ supplier, onClose, onSave, onDelete }) {
+function SupplierForm({ supplier, onSave, onDelete }) {
     const [isLoading, setIsLoading] = useState(false)
     const [formData, setFormData] = useState(supplier || {
         name: '',
