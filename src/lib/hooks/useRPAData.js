@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
 import { logSupabaseError } from '@/lib/logger/supabaseLogger'
+import { logError } from '@/lib/logger/errorLogger'
 
 // ─── PURCHASE SIDE (beli dari broker) ────────────────────────────────────────
 
@@ -123,7 +124,15 @@ export const useCreateCustomer = () => {
     mutationFn: async (payload) => {
       const { error } = await supabase.from('rpa_customers')
         .insert({ ...payload, tenant_id: tenant.id })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, {
+          table: 'rpa_customers',
+          operation: 'insert',
+          component: 'useCreateCustomer',
+          actionName: 'rpa.customer.create',
+        })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-customers', tenant?.id] })
@@ -139,7 +148,15 @@ export const useUpdateCustomer = () => {
   return useMutation({
     mutationFn: async ({ id, updates }) => {
       const { error } = await supabase.from('rpa_customers').update(updates).eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, {
+          table: 'rpa_customers',
+          operation: 'update',
+          component: 'useUpdateCustomer',
+          actionName: 'rpa.customer.update',
+        })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-customers', tenant?.id] })
@@ -156,7 +173,15 @@ export const useCreateProduct = () => {
     mutationFn: async (payload) => {
       const { error } = await supabase.from('rpa_products')
         .insert({ ...payload, tenant_id: tenant.id, is_active: true })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, {
+          table: 'rpa_products',
+          operation: 'insert',
+          component: 'useCreateProduct',
+          actionName: 'rpa.product.create',
+        })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-products', tenant?.id] })
@@ -192,7 +217,15 @@ export const useCreateInvoice = () => {
           payment_status: 'belum_lunas', paid_amount: 0,
           notes: notes || null,
         }).select().single()
-      if (invErr) throw invErr
+      if (invErr) {
+        logSupabaseError(invErr, {
+          table: 'rpa_invoices',
+          operation: 'insert',
+          component: 'useCreateInvoice',
+          actionName: 'rpa.invoice.create',
+        })
+        throw invErr
+      }
 
       // Insert items — NO subtotal (generated column)
       const itemRows = items.map(item => ({
@@ -204,7 +237,17 @@ export const useCreateInvoice = () => {
         cost_per_kg: item.cost_per_kg || 0,
       }))
       const { error: itemErr } = await supabase.from('rpa_invoice_items').insert(itemRows)
-      if (itemErr) throw itemErr
+      if (itemErr) {
+        // Invoice header committed but items failed — partial commit
+        logError({
+          source: 'supabase',
+          component: 'useCreateInvoice',
+          actionName: 'rpa.invoice.create_items',
+          error: itemErr,
+          metadata: { partial: true, table: 'rpa_invoice_items', operation: 'insert', invoice_id: invoice.id, invoice_number },
+        })
+        throw itemErr
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-invoices', tenant?.id] })
@@ -237,12 +280,30 @@ export const useRecordCustomerPayment = () => {
         reference_no: reference_no || null,
         notes: notes || null,
       })
-      if (payErr) throw payErr
+      if (payErr) {
+        logSupabaseError(payErr, {
+          table: 'rpa_customer_payments',
+          operation: 'insert',
+          component: 'useRecordCustomerPayment',
+          actionName: 'rpa.customer_payment.create',
+        })
+        throw payErr
+      }
 
       // Update invoice paid_amount + payment_status
       const { data: invoice, error: fetchErr } = await supabase
         .from('rpa_invoices').select('total_amount, paid_amount').eq('id', invoice_id).single()
-      if (fetchErr) throw fetchErr
+      if (fetchErr) {
+        // Payment committed but invoice status could not be read — partial commit
+        logError({
+          source: 'supabase',
+          component: 'useRecordCustomerPayment',
+          actionName: 'rpa.customer_payment.sync_invoice_fetch',
+          error: fetchErr,
+          metadata: { partial: true, table: 'rpa_invoices', operation: 'select', invoice_id },
+        })
+        throw fetchErr
+      }
 
       const newPaid = (invoice.paid_amount || 0) + amount
       const newStatus = newPaid >= invoice.total_amount ? 'lunas'
@@ -250,7 +311,17 @@ export const useRecordCustomerPayment = () => {
 
       const { error: invErr } = await supabase.from('rpa_invoices')
         .update({ paid_amount: newPaid, payment_status: newStatus }).eq('id', invoice_id)
-      if (invErr) throw invErr
+      if (invErr) {
+        // Payment committed but invoice status not updated — partial commit
+        logError({
+          source: 'supabase',
+          component: 'useRecordCustomerPayment',
+          actionName: 'rpa.customer_payment.sync_invoice_status',
+          error: invErr,
+          metadata: { partial: true, table: 'rpa_invoices', operation: 'update', invoice_id, newPaid, newStatus },
+        })
+        throw invErr
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-invoices', tenant?.id] })
@@ -271,7 +342,15 @@ export const useUpdatePurchaseOrder = () => {
     mutationFn: async ({ orderId, updates }) => {
       const { error } = await supabase
         .from('rpa_purchase_orders').update(updates).eq('id', orderId)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, {
+          table: 'rpa_purchase_orders',
+          operation: 'update',
+          component: 'useUpdatePurchaseOrder',
+          actionName: 'rpa.purchase_order.update',
+        })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-purchase-orders', tenant?.id] })
@@ -309,7 +388,15 @@ export const useCreateRPAPayment = () => {
         rpa_tenant_id: tenant.id,
         broker_tenant_id, amount, payment_method, reference_no, notes,
       })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, {
+          table: 'rpa_payments',
+          operation: 'insert',
+          component: 'useCreateRPAPayment',
+          actionName: 'rpa.hutang_payment.create',
+        })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-payments-to-broker', tenant?.id] })
@@ -349,22 +436,35 @@ export const useUpsertRPAProfile = () => {
       if (business_name !== undefined) {
         const { error } = await supabase.from('tenants')
           .update({ business_name }).eq('id', tenant.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: 'tenants',
+            operation: 'update',
+            component: 'useUpsertRPAProfile',
+            actionName: 'rpa.profile.update_business_name',
+          })
+          throw error
+        }
       }
       // Upsert rpa_profiles
       const { error } = await supabase.from('rpa_profiles').upsert({
         tenant_id: tenant.id, ...profileFields,
       }, { onConflict: 'tenant_id' })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, {
+          table: 'rpa_profiles',
+          operation: 'upsert',
+          component: 'useUpsertRPAProfile',
+          actionName: 'rpa.profile.upsert',
+        })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-profile', tenant?.id] })
       toast.success('Profil berhasil disimpan')
     },
-    onError: (err) => {
-      logSupabaseError(err, { table: 'rpa_profiles', operation: 'upsert', component: 'RPAProfileForm', actionName: 'handleSaveProfile' })
-      toast.error('Gagal simpan profil: ' + err.message)
-    },
+    onError: (err) => toast.error('Gagal simpan profil: ' + err.message),
   })
 }
 

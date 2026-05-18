@@ -78,24 +78,24 @@ Tracks instrumentation status per (vertical × sub-page). Each cell is one of:
 | Sub-page | Broker Ayam (Poultry) | Broker Telur (Egg) | Distributor Sembako |
 |----------|:--:|:--:|:--:|
 | Beranda | — | — | — |
-| Transaksi | 🟡 | ⏳ | · |
-| POS / Penjualan | · | ⏳ | ✅ |
+| Transaksi | 🟡 | — | · |
+| POS / Penjualan | · | ✅ | ✅ |
 | Kandang / Farms | ✅ | · | · |
 | Pengiriman | ✅ | · | ✅ |
 | Cash Flow | ⏳ | · | · |
 | Armada (vehicle + driver) | ✅ | · | · |
 | Simulator | — | · | · |
 | RPA & Piutang | 🟡 | · | · |
-| Inventori | · | ⏳ | ✅ |
-| Suppliers | · | ⏳ | ✅ |
-| Customers | · | ⏳ | ✅ |
+| Inventori | · | ✅ | ✅ |
+| Suppliers | · | ✅ | ✅ |
+| Customers | · | ✅ | ✅ |
 | Toko-Supplier | · | · | ✅ |
 | Toko-Supplier Detail | · | · | ✅ |
 | Gudang | · | · | ✅ |
 | Produk | · | · | ✅ |
 | Karyawan / Tim | ⏳ | ⏳ | ✅ |
 | Laporan | — | — | — |
-| Akun | ⏳ | ⏳ | 🟡 |
+| Akun | ⏳ | ✅ | 🟡 |
 | Recycle Bin | · | · | ✅ |
 | Form Beli | ✅ | · | · |
 | Form Bayar | ✅ | · | · |
@@ -105,6 +105,7 @@ Tracks instrumentation status per (vertical × sub-page). Each cell is one of:
 
 **🟡 Transaksi (Broker Ayam)**: `FormBayarModal` covered (Phase 6.1) but other inline sale-edit mutations not audited.
 **🟡 RPA & Piutang (Broker Ayam)**: `FormBayarModal` RPA-side covered (Phase 6.1) but RPADetail.jsx and standalone RPA edits not audited.
+**Phase 6.C (2026-05-18)** completed Egg Broker mutation surface: Customers, Suppliers, Inventori (CRUD); POS (sale + items multi-step with partial-commit detection). `Transaksi.jsx` and `Beranda.jsx` are read-only — marked `—`. Egg `Akun` uses shared `_shared/pages/Akun.jsx` (Phase 5 ✅). Egg `Karyawan / Tim` delegates to cross-vertical shared `ManajemenPage` + `BrokerKaryawanPage` — kept ⏳ for Phase 6.F.
 
 ### RPA (Rumah Potong)
 
@@ -112,11 +113,11 @@ Tracks instrumentation status per (vertical × sub-page). Each cell is one of:
 |----------|--------|-------|
 | Beranda | — | Read-only |
 | Order (Purchase Order) | ✅ | `rpa.purchase_order.create` (Phase 6.3) |
-| Hutang | ⏳ | Payment/debt tracking — uses FormBayar RPA (✅) but standalone edits not audited |
-| Distribusi | ⏳ | Customer delivery flow |
-| Distribusi Detail | ⏳ | Per-customer view |
+| Hutang | ✅ | `rpa.hutang_payment.create` + `rpa.customer_payment.create/sync_*` (Phase 6.D) |
+| Distribusi | ✅ | `rpa.customer.create/update`, `rpa.product.create`, `rpa.invoice.create/create_items` (Phase 6.D) |
+| Distribusi Detail | ✅ | All flows via useRPAData.js hooks (Phase 6.D) |
 | Laporan | — | Read-only |
-| Akun | ✅ | RPAProfileForm via useUpsertRPAProfile (Phase 5) |
+| Akun | ✅ | RPAProfileForm via useUpsertRPAProfile mutationFn (Phase 5 + 6.D refactor) |
 
 ### Admin (Superadmin)
 
@@ -140,8 +141,8 @@ Phases are **independent** — pick by demand, not by alphabet order. Numbering 
 
 1. ~~**6.A** — Distributor Sembako~~ ✅ DONE
 2. ~~**6.B** — Peternak Fattening detail~~ ✅ DONE
-3. **6.C** — Egg Broker (mirror Sembako structure, smaller scope) ← **next up**
-4. **6.D** — RPA (Order already done; Hutang / Distribusi remaining)
+3. ~~**6.C** — Egg Broker~~ ✅ DONE
+4. ~~**6.D** — RPA (Order already done; Hutang / Distribusi remaining)~~ ✅ DONE
 5. **6.E** — Admin (Users / Subscriptions / Pricing CRUD)
 6. **6.F** — Cross-vertical shared (Tim, Akun per vertical, DailyTask, Notifications, KandangView, breeding verticals, broiler/layer remaining hooks)
 
@@ -222,43 +223,90 @@ Multi-step with partial-commit detection (5):
 
 ---
 
-### Phase 6.C — Egg Broker
+### Phase 6.C — Egg Broker ✅ DONE
 
-**Scope:** `src/dashboard/broker/egg_broker/**` — smaller surface than Sembako, similar structure.
+**Scope (delivered):** All mutations in `src/dashboard/broker/egg_broker/**`. Unlike Sembako (single hook file), Egg Broker keeps mutations inline in each page component — the four `useEgg*.js` hook files are read-only queries. Each page component owns its own `handleSave` / `handleDelete` (and POS owns `handleSubmit`).
 
-**Target sub-pages:**
-- POS (`POS.jsx`) — egg sales entry
-- Inventori (`Inventori.jsx`) — stock + HPP
-- Suppliers (`Suppliers.jsx`) — egg supplier CRUD
-- Customers (`Customers.jsx`) — buyer CRUD
-- Transaksi (`Transaksi.jsx`) — sales history + edits
-- Tim Manajemen (`TimManajemenPage.jsx`)
-- Akun (`Akun.jsx`)
+**Files instrumented (4):**
 
-**Expected mutations:** `egg_sales`, `egg_sale_items`, `egg_purchases`, `egg_inventory`, `egg_suppliers`, `egg_customers`, `egg_payments`.
+`Customers.jsx` — 3 sites
+- `handleDelete` → `egg.customer.delete` (soft-delete `is_deleted=true`)
+- `handleSave` (edit branch) → `egg.customer.update`
+- `handleSave` (new branch) → `egg.customer.create`
 
-**Action name pattern:** `egg.{entity}.{operation}` — e.g. `egg.sale.create`, `egg.purchase.create`, `egg.inventory.adjust`, `egg.supplier.update`.
+`Suppliers.jsx` — 3 sites (identical pattern to Customers)
+- `egg.supplier.create` / `egg.supplier.update` / `egg.supplier.delete`
 
-**Status:** ⏳ Not started
+`Inventori.jsx` — 3 sites (identical pattern, table `egg_inventory`)
+- `egg.inventory.create` / `egg.inventory.update` / `egg.inventory.delete`
+
+`POS.jsx` — multi-step sale flow
+- Step 1: `egg.sale.create` (`egg_sales.insert`)
+- Step 2: `egg.sale.create.items` (`egg_sale_items.insert`, partial commit)
+
+**Total: 11 new action_names** (all `egg.*` prefix) — see INVENTORY Action Name Index.
+
+**Tables covered:** `egg_customers`, `egg_suppliers`, `egg_inventory`, `egg_sales`, `egg_sale_items`. DB triggers on `egg_sale_items` handle stock deduction + customer stats (out of scope; not instrumented from the frontend).
+
+**Pattern notes:**
+- Simple CRUD sites use `logSupabaseError({ table, operation, component, actionName })` before re-throw inside `try/catch`. Outer `catch (err) { toast.error(...) }` preserves existing UI behaviour.
+- POS multi-step partial commit uses `logError({ source: 'supabase', metadata: { partial: true, step: 'sale_items_insert', sale_id, item_count } })` — `sale_id` is UUID, `item_count` is a number; no raw cart payload logged.
+- `EggBroker` Akun page uses the cross-vertical shared `_shared/pages/Akun.jsx` (covered by Phase 5). `TimManajemenPage` delegates to shared `ManajemenPage` + `BrokerKaryawanPage` (Phase 6.F scope). `Transaksi.jsx` and `Beranda.jsx` are read-only.
+
+**Bug fix bundled (lint-policy safe + minimal):** `Inventori.jsx` `InventoryForm` delete button was calling an undefined `handleDelete` (closure miss — `onDelete` prop was unused). Switched the form call to use the `onDelete` prop, fixing both the runtime bug and the corresponding `no-unused-vars` warning in one edit.
+
+**Status:** ✅ DONE (build pass, lint clean for touched files within phase policy)
 
 ---
 
-### Phase 6.D — RPA (Rumah Potong)
+### Phase 6.D — RPA (Rumah Potong) ✅ DONE
 
-**Scope:** Sub-pages not yet covered.
+**Scope (delivered):** All mutations in `src/lib/hooks/useRPAData.js`. Unlike Egg Broker (inline per-page), all RPA mutation logic is centralised in one hook file. `Hutang.jsx`, `Distribusi.jsx`, and `DistribusiDetail.jsx` contain **zero** inline Supabase calls — every write goes through these hooks.
 
-**Target sub-pages:**
-- Hutang (`Hutang.jsx`) — debt tracking edits beyond FormBayar
-- Distribusi (`Distribusi.jsx`) — customer delivery flow
-- Distribusi Detail (`DistribusiDetail.jsx`) — per-customer detail + edits
-- Customers (RPA customer CRUD in `useRPAData.js`)
-- Products / pricing (`useRPAData.js`)
+**Pre-existing coverage (not touched):**
+- `useCreatePurchaseOrder` — `rpa.purchase_order.create` (Phase 6.3)
 
-**Expected mutations:** `rpa_customer_payments` (debt update), `rpa_invoices` (delivery), `rpa_customers` CRUD, `rpa_products` CRUD, `rpa_orders` updates.
+**Hooks instrumented (Phase 6.D, 11 sites across 8 hooks):**
 
-**Action name pattern:** `rpa.{entity}.{operation}` — e.g. `rpa.customer.create`, `rpa.customer_payment.create`, `rpa.invoice.create`, `rpa.distribution.update`.
+`useCreateCustomer` — 1 site
+- `rpa.customer.create` (`rpa_customers.insert`)
 
-**Status:** ⏳ Not started
+`useUpdateCustomer` — 1 site
+- `rpa.customer.update` (`rpa_customers.update`)
+
+`useCreateProduct` — 1 site
+- `rpa.product.create` (`rpa_products.insert`)
+
+`useCreateInvoice` — 2 sites (multi-step with partial-commit)
+- `rpa.invoice.create` (`rpa_invoices.insert`, header)
+- `rpa.invoice.create_items` (`rpa_invoice_items.insert`, partial commit — header committed, items failed)
+
+`useRecordCustomerPayment` — 3 sites (multi-step with partial-commit)
+- `rpa.customer_payment.create` (`rpa_customer_payments.insert`)
+- `rpa.customer_payment.sync_invoice_fetch` (`rpa_invoices.select`, partial commit)
+- `rpa.customer_payment.sync_invoice_status` (`rpa_invoices.update`, partial commit)
+
+`useCreateRPAPayment` — 1 site (Hutang broker debt payment)
+- `rpa.hutang_payment.create` (`rpa_payments.insert`)
+
+`useUpdatePurchaseOrder` — 1 site
+- `rpa.purchase_order.update` (`rpa_purchase_orders.update`)
+
+`useUpsertRPAProfile` — 2 sites (refactored from `onError` → `mutationFn` for richer context)
+- `rpa.profile.update_business_name` (`tenants.update`)
+- `rpa.profile.upsert` (`rpa_profiles.upsert`)
+
+**Total: 13 new action_names** (all `rpa.*` prefix) — see INVENTORY Action Name Index.
+
+**Tables covered:** `rpa_customers`, `rpa_products`, `rpa_invoices`, `rpa_invoice_items`, `rpa_customer_payments`, `rpa_payments`, `rpa_purchase_orders`, `tenants`, `rpa_profiles`.
+
+**Pattern notes:**
+- Simple CRUD hooks use `logSupabaseError({ table, operation, component: 'use<Hook>', actionName })` before re-throw.
+- All partial-commit failure paths use `logError({ source: 'supabase', error, metadata: { partial: true, table, operation, ... } })` directly — `logSupabaseError` doesn't forward arbitrary metadata.
+- `useRecordCustomerPayment` is a **non-transactional multi-step** flow: payment insert → invoice fetch → invoice status update. Partial-commit signals on the last two steps alert superadmin to possible `paid_amount` drift.
+- `rpa_payments` (Hutang broker debt) and `rpa_customer_payments` (invoice-linked) are distinct tables — action names reflect this (`rpa.hutang_payment.*` vs `rpa.customer_payment.*`).
+
+**Status:** ✅ DONE (ESLint clean — 0 warnings — and `npm run build` passes for both client + SSR bundles)
 
 ---
 
@@ -370,9 +418,22 @@ All lint errors found on `createPenggemukanHooks.js` after Phase 6.B (17 errors)
 
 **Net lint delta from Phase 6.B:** 0 new errors introduced. Pre-existing count on `createPenggemukanHooks.js`: 18 → 17 (one unused-var fortuitously got referenced by a new `metadata` object — not deliberate).
 
-### Phase 6.C — TBD (Egg Broker)
+### Phase 6.C — Egg Broker ✅ resolved within phase
 
-_No entries yet._
+All pre-existing lint errors on touched files were within "safe + minimal" boundary and fixed in-phase. Lint now reports **zero** errors on the four touched files.
+
+| File | Rule | Approx line | Resolution |
+|------|------|-------------|------------|
+| `src/dashboard/broker/egg_broker/Customers.jsx` | `no-unused-vars` (`onClose`) | 248 | `CustomerForm` prop destructure — `onClose` never invoked inside form (parent closes after `onSave`). Removed from destructure. |
+| `src/dashboard/broker/egg_broker/Suppliers.jsx` | `no-unused-vars` (`fadeUp`) | 28 | Dead Framer-Motion variants object, never referenced. Deleted. |
+| `src/dashboard/broker/egg_broker/Suppliers.jsx` | `no-unused-vars` (`onClose`) | 252 | Same pattern as CustomerForm. Removed from destructure. |
+| `src/dashboard/broker/egg_broker/Inventori.jsx` | `no-unused-vars` (`fadeUp`) | 28 | Dead Framer-Motion variants object. Deleted. |
+| `src/dashboard/broker/egg_broker/Inventori.jsx` | `no-unused-vars` (`onClose`, `onDelete`) | 268 | `InventoryForm` prop destructure. `onDelete` was actually intended to be called at the delete button — see next row. `onClose` removed from destructure. |
+| `src/dashboard/broker/egg_broker/Inventori.jsx` | `no-undef` (`handleDelete`) | 361 | Runtime bug: form delete button referenced an undefined `handleDelete` (parent scope). Changed to `onDelete(item.id)` — fixes both the bug and the `onDelete is defined but never used` warning above. |
+| `src/dashboard/broker/egg_broker/POS.jsx` | `no-unused-vars` (`useMemo`) | 1 | Dead React import. Removed from named import list. |
+| `src/dashboard/broker/egg_broker/POS.jsx` | `no-unused-vars` (`loadingCust`) | 30 | Unused `useEggCustomers().isLoading` alias. Removed from destructure. |
+
+**Net lint delta from Phase 6.C:** 0 new errors introduced. 9 pre-existing errors resolved within phase (8 dead-code removals + 1 runtime bug fix).
 
 ### Phase 6.D — TBD (RPA)
 

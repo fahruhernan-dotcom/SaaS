@@ -20,8 +20,8 @@
 | Phase 6.3 | Tier C: Vaksinasi, Kandang broker, FormBeli, AdminSettings audit, Armada, useCreatePurchaseOrder | ✅ DONE |
 | Phase 6.A | Sembako Broker sweep (useSembakoData — 21 mutation hooks) | ✅ DONE |
 | Phase 6.B | Peternak Fattening detail (createPenggemukanHooks + usePeternakTaskData) | ✅ DONE |
-| Phase 6.C | Egg Broker | ⏸️ BACKLOG |
-| Phase 6.D | RPA (Hutang / Distribusi) | ⏸️ BACKLOG |
+| Phase 6.C | Egg Broker (Customers + Suppliers + Inventori + POS sale flow) | ✅ DONE |
+| Phase 6.D | RPA (Hutang / Distribusi) | ✅ DONE |
 | Phase 6.E | Admin (Users / Subscriptions / Pricing) | ⏸️ BACKLOG |
 | Phase 6.F | Cross-vertical (Tim / Akun / DailyTask / Notifications) | ⏸️ BACKLOG |
 | Broad lint cleanup | Project-wide unused-vars / hook-deps | ⏸️ PAUSED — separate task |
@@ -43,7 +43,7 @@ src/
 │   │   └── actionLogger.js                   ← withActionLogging() helper
 │   └── hooks/
 │       ├── useAuth.jsx                       ← fetchAuthData (Phase 6.2) + switchTenant (Phase 6.1) + AuthProvider context inject
-│       ├── useRPAData.js                     ← useUpsertRPAProfile.onError (Phase 5) + useCreatePurchaseOrder (Phase 6.3)
+│       └── useRPAData.js                     ← useCreatePurchaseOrder + useCreateCustomer + useUpdateCustomer + useCreateProduct + useCreateInvoice (partial) + useRecordCustomerPayment (partial) + useCreateRPAPayment + useUpdatePurchaseOrder + useUpsertRPAProfile (tenants + rpa_profiles) (Phase 5 + 6.3 + 6.D)
 │       ├── createPenggemukanHooks.js         ← 4 core hooks (Phase 6.2) + 19 more (Phase 6.B) covers all domba/kambing/sapi penggemukan mutations
 │       ├── usePeternakTaskData.js            ← 2 farm-wide ops cost hooks for Listrik & Air page (Phase 6.B)
 │       ├── useUpdateDelivery.js              ← delivery → sale/loss/notification flow (Phase 6.2)
@@ -79,11 +79,17 @@ src/
     │   ├── poultry_broker/
     │   │   ├── Kandang.jsx                   ← farms.create/update/delete (Phase 6.3)
     │   │   └── Armada.jsx                    ← vehicles + drivers CRUD (Phase 6.3)
+    │   ├── egg_broker/
+    │   │   ├── Customers.jsx                 ← egg_customers CRUD (Phase 6.C)
+    │   │   ├── Suppliers.jsx                 ← egg_suppliers CRUD (Phase 6.C)
+    │   │   ├── Inventori.jsx                 ← egg_inventory CRUD (Phase 6.C)
+    │   │   └── POS.jsx                       ← egg_sales + egg_sale_items multi-step (Phase 6.C)
     │   └── sembako_broker/components/
     │       └── SembakoRecycleBin.jsx         ← restore + deletePermanent catch (Phase 5)
     └── rumah_potong/
         └── rpa/components/
-            └── RPAProfileForm.jsx            ← (uses useUpsertRPAProfile.onError — actual log lives in useRPAData.js)
+            └── RPAProfileForm.jsx            ← (uses useUpsertRPAProfile — actual log lives in useRPAData.js mutationFn)
+        <!-- All RPA Hutang/Distribusi mutations log from useRPAData.js hooks (Phase 6.D) -->
 ```
 
 Supporting infra (not in `src/`):
@@ -171,16 +177,41 @@ supabase/migrations/_archive/
 ---
 
 ### `src/lib/hooks/useRPAData.js`
-**Phase:** 5 + 6.3
+**Phase:** 5 + 6.3 + 6.D
 **Coverage:**
-- **Phase 5**: `useUpsertRPAProfile.onError` — RPA profile upsert failure
-- **Phase 6.3**: `useCreatePurchaseOrder.mutationFn` — `rpa_purchase_orders.insert` failure (logSupabaseError before throw)
+- **Phase 5**: `useUpsertRPAProfile` — RPA profile upsert failure
+  - originally logged in `onError`; **Phase 6.D** moved logging into `mutationFn` (separate sites for `tenants.update` and `rpa_profiles.upsert`)
+- **Phase 6.3**: `useCreatePurchaseOrder.mutationFn` — `rpa_purchase_orders.insert` failure
+- **Phase 6.D** (new):
+  - `useCreateCustomer.mutationFn` — `rpa_customers.insert` failure
+  - `useUpdateCustomer.mutationFn` — `rpa_customers.update` failure
+  - `useCreateProduct.mutationFn` — `rpa_products.insert` failure
+  - `useCreateInvoice.mutationFn` — `rpa_invoices.insert` failure; **partial-commit** if `rpa_invoice_items.insert` fails after header is committed
+  - `useRecordCustomerPayment.mutationFn` — `rpa_customer_payments.insert` failure; **partial-commit** on invoice fetch failure (`sync_invoice_fetch`) or invoice status update failure (`sync_invoice_status`)
+  - `useCreateRPAPayment.mutationFn` — `rpa_payments.insert` failure (Hutang → broker payment)
+  - `useUpdatePurchaseOrder.mutationFn` — `rpa_purchase_orders.update` failure
+  - `useUpsertRPAProfile.mutationFn` — `tenants.update` (business_name) and `rpa_profiles.upsert` — two separate `logSupabaseError` calls
 
 **Action names:**
-- `handleSaveProfile` (predates the dotted convention)
-- `rpa.purchase_order.create`
+- `rpa.purchase_order.create` (Phase 6.3)
+- `rpa.purchase_order.update` (Phase 6.D)
+- `rpa.customer.create` (Phase 6.D)
+- `rpa.customer.update` (Phase 6.D)
+- `rpa.product.create` (Phase 6.D)
+- `rpa.invoice.create` (Phase 6.D)
+- `rpa.invoice.create_items` (Phase 6.D — partial commit; `metadata.partial: true`)
+- `rpa.customer_payment.create` (Phase 6.D)
+- `rpa.customer_payment.sync_invoice_fetch` (Phase 6.D — partial commit; `metadata.partial: true`)
+- `rpa.customer_payment.sync_invoice_status` (Phase 6.D — partial commit; `metadata.partial: true`)
+- `rpa.hutang_payment.create` (Phase 6.D — broker debt payment via `rpa_payments`)
+- `rpa.profile.update_business_name` (Phase 6.D)
+- `rpa.profile.upsert` (Phase 6.D)
 
-**Notes:** `useUpsertRPAProfile` logs in onError; `useCreatePurchaseOrder` logs inside mutationFn before throw (clearer table context) — the existing onError toast stays intact. Called from RPA form components via `mutate()`.
+**Notes:**
+- All three `useRecordCustomerPayment` partial-commit paths use `logError` directly (not `logSupabaseError`) so that `metadata.partial: true` propagates correctly.
+- `rpa.invoice.create_items` fires only when the invoice header is already committed — this is a data-integrity signal for superadmin reconciliation.
+- `rpa_payments` (broker debt payments) is a separate table from `rpa_customer_payments` (customer invoice payments) — action names reflect this distinction.
+- `Hutang.jsx` / `Distribusi.jsx` / `DistribusiDetail.jsx` contain no direct Supabase mutations — all flows go through the hooks above.
 
 ---
 
@@ -611,6 +642,61 @@ supabase/migrations/_archive/
 
 ---
 
+### `src/dashboard/broker/egg_broker/Customers.jsx`
+**Phase:** 6.C Egg Broker sweep
+**Coverage:**
+- `handleDelete` — `egg_customers.update is_deleted=true`
+- `handleSave` (edit) — `egg_customers.update`
+- `handleSave` (new) — `egg_customers.insert`
+
+**Action names:**
+- `egg.customer.create` / `egg.customer.update` / `egg.customer.delete`
+
+**Notes:** Inline mutations (no shared hook). Each branch logs via `logSupabaseError` before re-throw — outer `catch (err)` keeps the existing toast intact.
+
+---
+
+### `src/dashboard/broker/egg_broker/Suppliers.jsx`
+**Phase:** 6.C Egg Broker sweep
+**Coverage:** Mirror of Customers.jsx — `egg_suppliers` CRUD (3 sites).
+
+**Action names:**
+- `egg.supplier.create` / `egg.supplier.update` / `egg.supplier.delete`
+
+**Notes:** Identical pattern to `EggCustomers`. Toast / outer catch behaviour preserved.
+
+---
+
+### `src/dashboard/broker/egg_broker/Inventori.jsx`
+**Phase:** 6.C Egg Broker sweep
+**Coverage:** Egg grade / HPP entry — `egg_inventory` CRUD (3 sites).
+
+**Action names:**
+- `egg.inventory.create` / `egg.inventory.update` / `egg.inventory.delete`
+
+**Notes:**
+- Toast / outer catch behaviour preserved.
+- Bug fix bundled (safe + minimal per lint policy): `InventoryForm` delete button was calling an undefined `handleDelete` (closure miss) — switched to the `onDelete` prop, which also resolved the corresponding `no-unused-vars` warning.
+
+---
+
+### `src/dashboard/broker/egg_broker/POS.jsx`
+**Phase:** 6.C Egg Broker sweep
+**Coverage:** Multi-step sale flow inside `handleSubmit`
+- Step 1: `egg_sales.insert` (with `.select().single()`)
+- Step 2: `egg_sale_items.insert` (bulk, after sale row succeeds)
+
+**Action names:**
+- `egg.sale.create`
+- `egg.sale.create.items` (partial — sale row exists but items insert failed)
+
+**Notes:**
+- DB triggers (out of scope) handle stock deduction + customer stats, fired on `egg_sale_items` insert. Partial commit case (sale row + no items) leaves stock unreconciled — `metadata.partial: true, step: 'sale_items_insert', sale_id, item_count` makes superadmin reconciliation possible.
+- No raw cart payload logged — only `sale_id` (UUID) + `item_count` (number).
+- Outer `catch (err)` keeps the existing `Transaksi gagal: ...` toast intact.
+
+---
+
 ## Action Name Index
 
 Sorted alphabetically. All entries below were verified via grep against `actionName:` literals in `src/`.
@@ -643,6 +729,17 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `broker.vehicle.update` | `src/dashboard/broker/poultry_broker/Armada.jsx` | 6.3 | vehicles.update (edit existing) |
 | `createCycle` | `src/dashboard/peternak/_shared/components/SiklusSheet.jsx` | 6.1 | breeding_cycles.insert |
 | `createCycleExpenses` | `src/dashboard/peternak/_shared/components/SiklusSheet.jsx` | 6.1 | cycle_expenses.insert (partial commit flag) |
+| `egg.customer.create` | `src/dashboard/broker/egg_broker/Customers.jsx` | 6.C | egg_customers.insert |
+| `egg.customer.delete` | `src/dashboard/broker/egg_broker/Customers.jsx` | 6.C | egg_customers.update is_deleted=true |
+| `egg.customer.update` | `src/dashboard/broker/egg_broker/Customers.jsx` | 6.C | egg_customers.update |
+| `egg.inventory.create` | `src/dashboard/broker/egg_broker/Inventori.jsx` | 6.C | egg_inventory.insert |
+| `egg.inventory.delete` | `src/dashboard/broker/egg_broker/Inventori.jsx` | 6.C | egg_inventory.update is_deleted=true |
+| `egg.inventory.update` | `src/dashboard/broker/egg_broker/Inventori.jsx` | 6.C | egg_inventory.update |
+| `egg.sale.create` | `src/dashboard/broker/egg_broker/POS.jsx` | 6.C | egg_sales.insert (header — first step of multi-step POS submit) |
+| `egg.sale.create.items` | `src/dashboard/broker/egg_broker/POS.jsx` | 6.C | egg_sale_items.insert after sale header (partial commit) |
+| `egg.supplier.create` | `src/dashboard/broker/egg_broker/Suppliers.jsx` | 6.C | egg_suppliers.insert |
+| `egg.supplier.delete` | `src/dashboard/broker/egg_broker/Suppliers.jsx` | 6.C | egg_suppliers.update is_deleted=true |
+| `egg.supplier.update` | `src/dashboard/broker/egg_broker/Suppliers.jsx` | 6.C | egg_suppliers.update |
 | `handleDeletePermanent` | `src/dashboard/broker/sembako_broker/components/SembakoRecycleBin.jsx` | 5 | Permanent delete from recycle bin |
 | `handleLogout` | `src/dashboard/_shared/pages/AkunPreview.jsx` | 5 | supabase.auth.signOut error |
 | `handleRestore` | `src/dashboard/broker/sembako_broker/components/SembakoRecycleBin.jsx` | 5 | Restore soft-deleted row |
@@ -828,6 +925,7 @@ WHERE action_name LIKE 'admin.%'
    OR action_name LIKE 'broker.%'
    OR action_name LIKE 'rpa.%'
    OR action_name LIKE 'sembako.%'
+   OR action_name LIKE 'egg.%'
    OR action_name LIKE 'account.%'
    OR action_name LIKE 'route.%'
    OR action_name LIKE 'login.%'
@@ -854,6 +952,21 @@ WHERE action_name IN (
   'broker.vehicle.create', 'broker.vehicle.update', 'broker.vehicle.delete',
   'broker.driver.create', 'broker.driver.update', 'broker.driver.delete',
   'rpa.purchase_order.create'
+)
+ORDER BY created_at DESC
+LIMIT 30;
+```
+
+Phase 6.C quick check (Egg Broker action_names only):
+
+```sql
+SELECT created_at, component, action_name, error_message, metadata
+FROM public.system_error_logs
+WHERE action_name IN (
+  'egg.customer.create', 'egg.customer.update', 'egg.customer.delete',
+  'egg.supplier.create', 'egg.supplier.update', 'egg.supplier.delete',
+  'egg.inventory.create', 'egg.inventory.update', 'egg.inventory.delete',
+  'egg.sale.create', 'egg.sale.create.items'
 )
 ORDER BY created_at DESC
 LIMIT 30;
