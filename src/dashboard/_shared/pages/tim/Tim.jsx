@@ -172,7 +172,7 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
         .single();
         
       if (error) {
-        logSupabaseError({ table: 'team_invitations', operation: 'insert', component: 'Tim', actionName: 'team.invite.create', error });
+        logSupabaseError(error, { table: 'team_invitations', operation: 'insert', component: 'Tim', actionName: 'team.invite.create', tenantId: profile?.tenant_id });
         throw error;
       }
       return { ...data, code };
@@ -195,7 +195,7 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
         .update(payload)
         .eq('id', profile.tenant_id);
       if (error) {
-        logSupabaseError({ table: 'tenants', operation: 'update', component: 'Tim', actionName: 'team.tenant.update', error });
+        logSupabaseError(error, { table: 'tenants', operation: 'update', component: 'Tim', actionName: 'team.tenant.update', tenantId: profile?.tenant_id });
         throw error;
       }
     },
@@ -219,7 +219,7 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
         .eq('tenant_id', profile.tenant_id);
       
       if (errorMem) {
-        logSupabaseError({ table: 'tenant_memberships', operation: 'delete', component: 'Tim', actionName: 'team.member.remove', error: errorMem });
+        logSupabaseError(errorMem, { table: 'tenant_memberships', operation: 'delete', component: 'Tim', actionName: 'team.member.remove', tenantId: profile?.tenant_id });
         throw errorMem;
       }
 
@@ -230,7 +230,7 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
         .eq('tenant_id', profile.tenant_id);
         
       if (errorProf) {
-        logSupabaseError({ table: 'profiles', operation: 'delete', component: 'Tim', actionName: 'team.member.remove', error: errorProf });
+        logSupabaseError(errorProf, { table: 'profiles', operation: 'delete', component: 'Tim', actionName: 'team.member.remove', tenantId: profile?.tenant_id });
         throw errorProf;
       }
     },
@@ -252,7 +252,7 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
         .eq('id', inviteId)
         .eq('tenant_id', profile.tenant_id);
       if (error) {
-        logSupabaseError({ table: 'team_invitations', operation: 'update', component: 'Tim', actionName: 'team.invite.cancel', error });
+        logSupabaseError(error, { table: 'team_invitations', operation: 'update', component: 'Tim', actionName: 'team.invite.cancel', tenantId: profile?.tenant_id });
         throw error;
       }
     },

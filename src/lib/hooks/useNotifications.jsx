@@ -79,7 +79,7 @@ export function NotificationsProvider({ children }) {
       .update({ is_read: true })
       .eq('id', id)
     if (error) {
-      logSupabaseError({ table: 'notifications', operation: 'update', component: 'useNotifications', actionName: 'notification.mark_read', error })
+      logSupabaseError(error, { table: 'notifications', operation: 'update', component: 'useNotifications', actionName: 'notification.mark_read', tenantId: tenant?.id })
     }
     fetchNotifications()
   }
@@ -92,7 +92,7 @@ export function NotificationsProvider({ children }) {
       .eq('tenant_id', tenant.id)
       .eq('is_read', false)
     if (error) {
-      logSupabaseError({ table: 'notifications', operation: 'update', component: 'useNotifications', actionName: 'notification.mark_read', error })
+      logSupabaseError(error, { table: 'notifications', operation: 'update', component: 'useNotifications', actionName: 'notification.mark_read', tenantId: tenant?.id })
     }
     fetchNotifications()
   }
@@ -103,7 +103,7 @@ export function NotificationsProvider({ children }) {
       .update({ is_deleted: true })
       .eq('id', id)
     if (error) {
-      logSupabaseError({ table: 'notifications', operation: 'update', component: 'useNotifications', actionName: 'notification.delete', error })
+      logSupabaseError(error, { table: 'notifications', operation: 'update', component: 'useNotifications', actionName: 'notification.delete', tenantId: tenant?.id })
     }
     setNotifications(prev => prev.filter(n => n.id !== id))
   }
