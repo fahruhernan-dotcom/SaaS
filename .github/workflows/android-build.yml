@@ -68,40 +68,67 @@ jobs:
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android-signing/ternakos.keystore
           echo "Keystore restored: $(wc -c < android-signing/ternakos.keystore) bytes"
 
-      - name: Initialize Bubblewrap project
-        # bubblewrap init uses inquirer which requires a real TTY — piping stdin
-        # causes exit 130. `expect` creates a pseudo-TTY and drives all prompts:
-        #   - "install JDK?" → n, then provide JAVA_HOME
-        #   - "install Android SDK?" → n, then provide ANDROID_SDK_ROOT
-        #   - "package id?" → id.my.ternakos.app (assetlinks.json must match)
-        #   - all other prompts (name, colors, etc.) → Enter (accept manifest defaults)
-        # Single-quoted ENDSCRIPT prevents shell expansion; expect reads $env(VAR).
+      - name: Generate Android project via @bubblewrap/core API (non-interactive)
+        # bubblewrap init CLI uses inquirer which needs a real TTY — any attempt to
+        # drive it non-interactively (piped stdin, expect) exits 130.
+        # @bubblewrap/core exposes the same generator as a plain Node.js API with
+        # no interactive prompts at all. We call it directly here.
         run: |
-          cat > /tmp/bw_init.exp << 'ENDSCRIPT'
-          set timeout 180
-          spawn bubblewrap init --manifest https://ternakos.my.id/manifest.webmanifest --directory android-build
-          expect {
-            -re {install.*JDK.*\(Y/n\)}          { send "n\r"; exp_continue }
-            -re {path.*JDK|JDK.*direct}          { send "$env(JAVA_HOME)\r"; exp_continue }
-            -re {install.*Android.*\(Y/n\)}      { send "n\r"; exp_continue }
-            -re {path.*Android|Android.*direct}  { send "$env(ANDROID_SDK_ROOT)\r"; exp_continue }
-            -re {[Pp]ackage.*id|application.*id} { send "id.my.ternakos.app\r"; exp_continue }
-            -re {\?}                             { send "\r"; exp_continue }
-            eof
-          }
-          lassign [wait] pid spawnid os_error_flag exit_code
-          exit $exit_code
+          export NODE_PATH="$(npm root -g)"
+          node - << 'ENDSCRIPT'
+          'use strict';
+          const path = require('path');
+          const fs   = require('fs');
+          const { TwaGenerator, TwaManifest, Config } = require('@bubblewrap/core');
+          (async () => {
+            const jdkPath = process.env.JAVA_HOME;
+            const sdkPath = process.env.ANDROID_SDK_ROOT || '/usr/local/lib/android/sdk';
+            if (!jdkPath) throw new Error('JAVA_HOME is not set');
+            console.log('JDK:', jdkPath);
+            console.log('SDK:', sdkPath);
+
+            const config = new Config(jdkPath, sdkPath);
+
+            // Prefer fromFile so all settings in twa-manifest.json (packageId,
+            // fingerprints, colors) are preserved exactly as committed.
+            let manifest;
+            if (typeof TwaManifest.fromFile === 'function') {
+              manifest = await TwaManifest.fromFile(path.resolve('./twa-manifest.json'));
+              console.log('Manifest loaded from twa-manifest.json (fromFile)');
+            } else {
+              const json = JSON.parse(fs.readFileSync('./twa-manifest.json', 'utf8'));
+              manifest = new TwaManifest(json);
+              console.log('Manifest loaded from twa-manifest.json (constructor)');
+            }
+
+            await new TwaGenerator().createTwaProject(
+              path.resolve('./android-build'),
+              manifest,
+              config
+            );
+            console.log('android-build generated OK');
+          })().catch(err => {
+            console.error('FAILED:', err.stack || err.message || err);
+            process.exit(1);
+          });
           ENDSCRIPT
-          expect /tmp/bw_init.exp
+          # Verify directory was actually created
+          test -d android-build || (echo "ERROR: android-build not created" && exit 1)
+          echo "=== android-build top-level ===" && ls android-build/
 
       - name: Build APK + AAB
+        # Run Gradle directly instead of `bubblewrap build` to avoid any
+        # interactive prompts from the CLI wrapper.
+        # android.injected.signing.* are the standard Gradle signing props.
         run: |
           cd android-build
-          bubblewrap build \
-            --keyPath ../android-signing/ternakos.keystore \
-            --keyAlias "${{ secrets.KEY_ALIAS }}" \
-            --keystorePassword "${{ secrets.KEYSTORE_PASSWORD }}" \
-            --keyPassword "${{ secrets.KEY_PASSWORD }}"
+          chmod +x gradlew
+          ./gradlew assembleRelease bundleRelease \
+            -Pandroid.injected.signing.store.file="$(pwd)/../android-signing/ternakos.keystore" \
+            -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
+            -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
+            -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}" \
+            --no-daemon
 
       - name: Locate build outputs
         run: |
