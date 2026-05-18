@@ -37,11 +37,18 @@ jobs:
       - name: Pre-configure Bubblewrap SDK paths (prevents interactive prompt)
         run: |
           mkdir -p ~/.bubblewrap
-          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' \
-            "$JAVA_HOME" "$ANDROID_SDK_ROOT" \
+          # Use jq for safe JSON encoding in case paths contain special chars
+          jq -n \
+            --arg jdk  "$JAVA_HOME" \
+            --arg sdk  "${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}" \
+            '{"jdkPath":$jdk,"androidSdkPath":$sdk}' \
             > ~/.bubblewrap/config.json
-          echo "Bubblewrap config written:"
+          echo "=== Bubblewrap config ==="
           cat ~/.bubblewrap/config.json
+          echo "=== Path check ==="
+          test -f "$JAVA_HOME/bin/java"   && echo "JDK OK"   || echo "JDK MISSING: $JAVA_HOME"
+          SDK="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
+          test -d "$SDK"                  && echo "SDK OK"   || echo "SDK MISSING: $SDK"
 
       - name: Accept Android SDK licenses
         run: yes | sdkmanager --licenses 2>/dev/null || true
@@ -62,11 +69,13 @@ jobs:
           echo "Keystore restored: $(wc -c < android-signing/ternakos.keystore) bytes"
 
       - name: Initialize Bubblewrap project
+        # Pipe empty lines so all confirmation prompts accept their defaults.
+        # config.json (above) prevents the "Set up SDK?" prompt; the remaining
+        # prompts (app name, package ID, etc.) default to manifest values.
         run: |
-          bubblewrap init \
+          yes "" | bubblewrap init \
             --manifest https://ternakos.my.id/manifest.webmanifest \
             --directory android-build
-        # ANDROID_HOME and ANDROID_SDK_ROOT are already set by the runner
 
       - name: Build APK + AAB
         run: |
