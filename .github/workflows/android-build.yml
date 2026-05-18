@@ -69,13 +69,30 @@ jobs:
           echo "Keystore restored: $(wc -c < android-signing/ternakos.keystore) bytes"
 
       - name: Initialize Bubblewrap project
-        # Pipe empty lines so all confirmation prompts accept their defaults.
-        # config.json (above) prevents the "Set up SDK?" prompt; the remaining
-        # prompts (app name, package ID, etc.) default to manifest values.
+        # bubblewrap init uses inquirer which requires a real TTY — piping stdin
+        # causes exit 130. `expect` creates a pseudo-TTY and drives all prompts:
+        #   - "install JDK?" → n, then provide JAVA_HOME
+        #   - "install Android SDK?" → n, then provide ANDROID_SDK_ROOT
+        #   - "package id?" → id.my.ternakos.app (assetlinks.json must match)
+        #   - all other prompts (name, colors, etc.) → Enter (accept manifest defaults)
+        # Single-quoted ENDSCRIPT prevents shell expansion; expect reads $env(VAR).
         run: |
-          yes "" | bubblewrap init \
-            --manifest https://ternakos.my.id/manifest.webmanifest \
-            --directory android-build
+          cat > /tmp/bw_init.exp << 'ENDSCRIPT'
+          set timeout 180
+          spawn bubblewrap init --manifest https://ternakos.my.id/manifest.webmanifest --directory android-build
+          expect {
+            -re {install.*JDK.*\(Y/n\)}          { send "n\r"; exp_continue }
+            -re {path.*JDK|JDK.*direct}          { send "$env(JAVA_HOME)\r"; exp_continue }
+            -re {install.*Android.*\(Y/n\)}      { send "n\r"; exp_continue }
+            -re {path.*Android|Android.*direct}  { send "$env(ANDROID_SDK_ROOT)\r"; exp_continue }
+            -re {[Pp]ackage.*id|application.*id} { send "id.my.ternakos.app\r"; exp_continue }
+            -re {\?}                             { send "\r"; exp_continue }
+            eof
+          }
+          lassign [wait] pid spawnid os_error_flag exit_code
+          exit $exit_code
+          ENDSCRIPT
+          expect /tmp/bw_init.exp
 
       - name: Build APK + AAB
         run: |
