@@ -66,6 +66,9 @@ __pycache__/
 # Claude settings
 .claude/settings.local.json
 
+# Claude Code agent skills (auto-generated, contain nested .git repos)
+.agents/
+
 # Android signing — NEVER commit these
 android-signing/
 *.keystore

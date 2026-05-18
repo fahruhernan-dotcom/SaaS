@@ -29,7 +29,9 @@ jobs:
           node-version: '20'
 
       - name: Install Bubblewrap CLI
-        run: npm install -g @bubblewrap/cli
+        # Install both cli and core so @bubblewrap/core lands in npm root -g
+        # and is resolvable via NODE_PATH without nested-module lookup.
+        run: npm install -g @bubblewrap/cli @bubblewrap/core
 
       # Pre-seed ~/.bubblewrap/config.json so `bubblewrap init` never prompts
       # "Local Android Development Environment not found. Set it up? [y/N]".
@@ -66,7 +68,13 @@ jobs:
         run: |
           mkdir -p android-signing
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android-signing/ternakos.keystore
-          echo "Keystore restored: $(wc -c < android-signing/ternakos.keystore) bytes"
+          BYTES=$(wc -c < android-signing/ternakos.keystore)
+          echo "Keystore restored: $BYTES bytes"
+          if [ "$BYTES" -lt 100 ]; then
+            echo "ERROR: KEYSTORE_BASE64 secret is empty or invalid (got $BYTES bytes)."
+            echo "Set KEYSTORE_BASE64 in repo Settings → Secrets → Actions."
+            exit 1
+          fi
 
       - name: Generate Android project via @bubblewrap/core API (non-interactive)
         # bubblewrap init CLI uses inquirer which needs a real TTY — any attempt to
