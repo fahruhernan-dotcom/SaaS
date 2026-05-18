@@ -77,7 +77,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 3000,
   },
   ssgOptions: {
-    script: 'async',
+    script: 'defer',
     formatting: 'minify',
     dirStyle: 'nested',
     includedRoutes() {
