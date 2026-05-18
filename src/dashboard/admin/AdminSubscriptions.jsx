@@ -50,6 +50,7 @@ import { formatIDR, formatDate, toTitleCase } from '@/lib/format'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 function getVerticalIcon(v) {
   if (v?.startsWith('peternak_')) return <Home size={18} />
@@ -195,6 +196,7 @@ export default function AdminSubscriptions() {
       .update({ status: 'cancelled' })
       .eq('id', selectedInvoice.id)
     if (error) {
+      logSupabaseError(error, { table: 'subscription_invoices', operation: 'update', component: 'AdminSubscriptions', actionName: 'admin.invoice.cancel' })
       toast.error('Gagal membatalkan invoice')
     } else {
       toast.success('Invoice dibatalkan')
@@ -1412,6 +1414,7 @@ function BankCard({ bank, onEdit, onDelete }) {
       .eq('id', bank.id)
     setIsToggling(false)
     if (error) {
+      logSupabaseError(error, { table: 'payment_settings', operation: 'update', component: 'BankCard', actionName: 'admin.payment_setting.toggle_active' })
       toast.error('Gagal mengubah status rekening')
     } else {
       queryClient.invalidateQueries(['payment-settings'])

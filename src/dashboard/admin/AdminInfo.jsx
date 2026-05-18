@@ -7,6 +7,7 @@ import {
 import { formatDistanceToNow, format, subHours } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
 import { supabase } from '@/lib/supabase'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -162,7 +163,11 @@ function DetailSheet({ log, onClose, onResolved }) {
       .update({ resolved: !log.resolved, resolved_at: !log.resolved ? new Date().toISOString() : null, note: note || null })
       .eq('id', log.id)
     setSaving(false)
-    if (error) { toast.error('Gagal update: ' + error.message); return }
+    if (error) { 
+      logSupabaseError(error, { table: 'system_error_logs', operation: 'update', component: 'AdminInfo', actionName: 'admin.error_log.resolve' })
+      toast.error('Gagal update: ' + error.message)
+      return 
+    }
     toast.success(!log.resolved ? 'Ditandai resolved.' : 'Dibuka kembali.')
     onResolved()
   }
