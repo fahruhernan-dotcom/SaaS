@@ -3,6 +3,7 @@ import { addDays, format } from 'date-fns'
 import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
+import { logSupabaseError } from '../logger/supabaseLogger'
 import { TEMPLATE_150_HARI, TEMPLATE_180_HARI } from '../constants/sapiTaskTemplates'
 import { TEMPLATE_DOMBA_PENGGEMUKAN_90, TEMPLATE_DOMBA_INTENSIF_90 } from '../constants/taskTemplates/dombaTaskTemplates'
 
@@ -991,7 +992,15 @@ export function useAddFarmOpsCost(animalType) {
         }
       })
       const { error } = await supabase.from(table).insert(rows)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, {
+          table,
+          operation: 'insert',
+          component: 'usePeternakTaskData',
+          actionName: 'peternak.farm_ops_cost.create',
+        })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['farm-ops-costs', animalType] })
@@ -1016,7 +1025,15 @@ export function useDeleteFarmOpsCost(animalType) {
         .update({ is_deleted: true })
         .eq('id', costId)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, {
+          table,
+          operation: 'update',
+          component: 'usePeternakTaskData',
+          actionName: 'peternak.farm_ops_cost.delete',
+        })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['farm-ops-costs', animalType] })

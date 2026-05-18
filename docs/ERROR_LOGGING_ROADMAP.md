@@ -58,20 +58,20 @@ Tracks instrumentation status per (vertical × sub-page). Each cell is one of:
 | Sub-page | Broiler | Layer | Domba Pgmkn | Kambing Pgmkn | Sapi Pgmkn | Domba Breeding | Kambing Breeding | Sapi Breeding |
 |----------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
 | Beranda | — | — | — | — | — | — | — | — |
-| Siklus / Batch | ✅ | ⏳ | 🟡 | 🟡 | 🟡 | ⏳ | ⏳ | ⏳ |
-| Vaksinasi / Kesehatan | ✅ | ⏳ | ⏳ | ⏳ | ⏳ | · | · | · |
+| Siklus / Batch | ✅ | ⏳ | ✅ | ✅ | ✅ | ⏳ | ⏳ | ⏳ |
+| Vaksinasi / Kesehatan | ✅ | ⏳ | ✅ | ✅ | ✅ | · | · | · |
 | Input Harian / Daily Task | ✅ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| Ternak (Data Ternak) | · | · | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 | 🟡 |
-| Penjualan (Sale) | · | · | 🟡 | 🟡 | 🟡 | · | · | · |
-| Denah Kandang / Kandang-View | · | · | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
+| Ternak (Data Ternak) | · | · | ✅ | ✅ | ✅ | 🟡 | 🟡 | 🟡 |
+| Penjualan (Sale) | · | · | ✅ | ✅ | ✅ | · | · | · |
+| Denah Kandang / Kandang-View | · | · | ✅ | ✅ | ✅ | ⏳ | ⏳ | ⏳ |
 | Reproduksi | · | · | · | · | · | ⏳ | ⏳ | ⏳ |
-| Pakan / Stok Pakan | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| Listrik & Air | · | · | ⏳ | ⏳ | ⏳ | · | · | ⏳ |
+| Pakan / Stok Pakan | ⏳ | ⏳ | ✅ | ✅ | ✅ | ⏳ | ⏳ | ⏳ |
+| Listrik & Air | · | · | ✅ | ✅ | ✅ | · | · | ⏳ |
 | Tim / Anak Kandang | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | Laporan | — | — | — | — | — | — | — | — |
 | Akun | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
-**🟡 partial** for fattening verticals: `createPenggemukanHooks` covers batch/animal/sale (Phase 6.2). Page-level handlers in `Batch.jsx`, `Ternak.jsx`, `Penjualan.jsx` may have additional inline mutations not yet audited.
+**Phase 6.B (2026-05-18)** completed fattening coverage end-to-end across all three sub-verticals — `createPenggemukanHooks` is now fully instrumented (23 mutation hooks: 4 from Phase 6.2 + 19 from Phase 6.B), plus farm-wide Listrik & Air via `usePeternakTaskData.useAddFarmOpsCost` / `useDeleteFarmOpsCost`. Breeding verticals + broiler/layer remain ⏳ — those use different hook files (`useBreedingData.js`, broiler-specific hooks) and are out of Phase 6.B scope.
 
 ### Broker verticals
 
@@ -139,11 +139,11 @@ Phases are **independent** — pick by demand, not by alphabet order. Numbering 
 ### Backlog priority (user-confirmed)
 
 1. ~~**6.A** — Distributor Sembako~~ ✅ DONE
-2. **6.B** — Peternak Fattening detail (Batch / Ternak / Penjualan / Reproduksi / Kandang-view; closes Phase 6.2 gaps) ← **next up**
-3. **6.C** — Egg Broker (mirror Sembako structure, smaller scope)
+2. ~~**6.B** — Peternak Fattening detail~~ ✅ DONE
+3. **6.C** — Egg Broker (mirror Sembako structure, smaller scope) ← **next up**
 4. **6.D** — RPA (Order already done; Hutang / Distribusi remaining)
 5. **6.E** — Admin (Users / Subscriptions / Pricing CRUD)
-6. **6.F** — Cross-vertical shared (Tim, Akun per vertical, DailyTask, Notifications, KandangView)
+6. **6.F** — Cross-vertical shared (Tim, Akun per vertical, DailyTask, Notifications, KandangView, breeding verticals, broiler/layer remaining hooks)
 
 ---
 
@@ -184,23 +184,41 @@ Multi-step with partial-commit detection (5):
 
 ---
 
-### Phase 6.B — Peternak Fattening detail
+### Phase 6.B — Peternak Fattening detail ✅ DONE
 
-**Scope:** Cover sub-pages of `peternak_domba_penggemukan` / `peternak_kambing_penggemukan` / `peternak_sapi_penggemukan` not already covered by `createPenggemukanHooks`. Many mutations may already be in the hook factory — verify, otherwise instrument page-level handlers.
+**Scope (delivered):** Closed the gap in `createPenggemukanHooks.js` left by Phase 6.2 (which only covered 4 core create hooks) and added farm-wide Listrik & Air hooks in `usePeternakTaskData.js`. All 21 mutation hooks for `peternak_domba_penggemukan` / `peternak_kambing_penggemukan` / `peternak_sapi_penggemukan` are now instrumented end-to-end.
 
-**Target sub-pages:**
-- Batch list (`Batch.jsx`) — close-batch + edit-batch + delete-batch
-- Ternak / Data Ternak (`Ternak.jsx`) — animal-level edits beyond create/bulk
-- Penjualan (`Penjualan.jsx`) — sale-level edits beyond create
-- Denah Kandang (`KandangViewLayout`) — slot assign / kandang CRUD
-- Reproduksi (`Reproduksi.jsx`, breeding only) — mating records, partus records
-- Kesehatan (`Kesehatan.jsx`, non-broiler equivalent of Vaksinasi)
+**Hooks instrumented (21 total across 2 files):**
 
-**Expected mutations:** mostly already factory-covered. Look for inline `supabase.from(...).update/delete()` in pages, plus reproduksi-specific tables (`*_breeding_records`, `*_partus_records`).
+`createPenggemukanHooks.js` — 19 new hooks (Phase 6.2's 4 already done):
+- Batch: `useCloseBatch` (1)
+- Animal: `useUpdateAnimal`, `useUpdateAnimalStatus`, `useMoveAnimalToKandang` (3)
+- Weight: `useAddWeightRecord` (with `animal_sync` partial), `useDeleteWeightRecord` (2)
+- Feed: `useAddFeedLog`, `useDeleteFeedLog` (2)
+- Health: `useAddHealthLog` (with `animal_sync` partial for kematian), `useDeleteHealthLog` (2)
+- Sale: `useUpdateSale`, `useDeleteSale` (with `animal_sync` partial) (2)
+- Kandang: `useCreateKandang`, `useUpdateKandang`, `useDeleteKandang`, `useUpdateKandangPosition` (4)
+- Operational cost (per-batch): `useAddOperationalCost`, `useDeleteOperationalCost` (2)
+- Holding pen: `useEnsureHoldingPen` (split into `ensure.check` + `ensure.create`) (1)
 
-**Action name pattern:** `peternak.{entity}.{operation}` — e.g. `peternak.batch.close`, `peternak.batch.update`, `peternak.batch.delete`, `peternak.kandang.create`, `peternak.kandang.assign`, `peternak.breeding.record`, `peternak.partus.record`, `peternak.health.record`.
+`usePeternakTaskData.js` — 2 new hooks:
+- `useAddFarmOpsCost` — farm-wide Listrik & Air proportional split insert
+- `useDeleteFarmOpsCost` — farm-wide Listrik & Air row soft-delete
 
-**Status:** ⏳ Not started
+**Total: 32 new action_names** (all `peternak.*` prefix) — see INVENTORY Action Name Index.
+
+**Tables covered:** `{domba,kambing,sapi}_penggemukan_batches`, `*_animals`, `*_animal_weight_records`, `*_feed_logs`, `*_health_logs`, `*_sales`, `*_kandangs`, `*_operational_costs` — every mutation table the fattening pages touch.
+
+**Pattern notes:**
+- All simple single-step hooks use `logSupabaseError({ table, operation, component: 'createPenggemukanHooks'|'usePeternakTaskData', actionName })` before throw.
+- Partial-commit sites use `logError({ source: 'supabase', metadata: { partial: true, step, animal_id|batch_id|sale_id } })` directly — `logSupabaseError` doesn't forward arbitrary metadata.
+- `useAddHealthLog.kematian` branch preserves original fire-and-forget behaviour on the animal-status update (logs the failure but does NOT throw — consistent with pre-instrumentation behaviour).
+- `useEnsureHoldingPen` distinguishes pre-check SELECT (`peternak.holding_pen.ensure.check`) from creation INSERT (`peternak.holding_pen.ensure.create`) so RLS/policy failures on either side are diagnosable.
+- Hook factory pattern: `component='createPenggemukanHooks'` is shared across all three verticals; vertical is recoverable from the `metadata.table` value (e.g. `domba_penggemukan_animals`).
+
+**Status:** ✅ DONE (lint clean within phase boundary — see Lint Debt Log below; `npm run build` passes)
+
+---
 
 ---
 
@@ -338,9 +356,19 @@ When the dedicated lint-cleanup phase happens, this log becomes the work list.
 
 No deferred debt — all lint errors in touched file were within boundary of "safe + minimal" and fixed in-phase.
 
-### Phase 6.B — TBD (Peternak Fattening detail)
+### Phase 6.B — Peternak Fattening detail ✅ deferred-only
 
-_No entries yet._
+All lint errors found on `createPenggemukanHooks.js` after Phase 6.B (17 errors) are pre-existing structural issues — none introduced by Phase 6.B. `usePeternakTaskData.js` lints clean. Per per-phase policy, deferred to the dedicated lint-cleanup phase.
+
+| File | Rule | Approx line | Note |
+|------|------|-------------|------|
+| `src/lib/hooks/createPenggemukanHooks.js` | `no-unused-vars` (`age_confidence`, `acquisition_type`) | 486 | Destructured in `useAddAnimal`/`useBulkAddAnimals` mutationFn signature but not read in body (legacy form fields kept for forward compatibility). Removing affects call-site arity expectations across all three verticals — structural change, deferred. |
+| `src/lib/hooks/createPenggemukanHooks.js` | `no-unused-vars` (`batch_id`) | 549, 627, 996, 1307 | Destructured in `onSuccess: (_, { batch_id })` callbacks but only used for cache key, eslint flagged anyway. Mass renaming to `_batch_id` would lose the documentation value. Deferred. |
+| `src/lib/hooks/createPenggemukanHooks.js` | `no-unused-vars` (`batchId`) | 642, 659, 674, 1025 | Same pattern in `useUpdateAnimal` / `useUpdateAnimalStatus` / `useAddWeightRecord` / `useDeleteWeightRecord` onSuccess. Deferred. |
+| `src/lib/hooks/createPenggemukanHooks.js` | `no-unused-vars` (`animal_id`, `batch_id`) | 1025 | `useDeleteWeightRecord.onSuccess` destructures both; only `animal_id` actually drives the cache key for `weight-records`. Deferred. |
+| `src/lib/hooks/createPenggemukanHooks.js` | `no-undef` `process` × 6 | 1523, 1709, 1722, 1739, 1809, 1952 | Already inherited from Phase 6.0–6.3 (see Pre-Phase 6.A inherited debt). Vite migration to `import.meta.env` required. |
+
+**Net lint delta from Phase 6.B:** 0 new errors introduced. Pre-existing count on `createPenggemukanHooks.js`: 18 → 17 (one unused-var fortuitously got referenced by a new `metadata` object — not deliberate).
 
 ### Phase 6.C — TBD (Egg Broker)
 

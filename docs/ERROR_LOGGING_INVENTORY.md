@@ -19,7 +19,7 @@
 | Phase 6.2 | Tier B: useAuth.fetchAuthData, createPenggemukanHooks, useUpdateDelivery | ✅ DONE |
 | Phase 6.3 | Tier C: Vaksinasi, Kandang broker, FormBeli, AdminSettings audit, Armada, useCreatePurchaseOrder | ✅ DONE |
 | Phase 6.A | Sembako Broker sweep (useSembakoData — 21 mutation hooks) | ✅ DONE |
-| Phase 6.B | Peternak Fattening detail | ⏸️ BACKLOG |
+| Phase 6.B | Peternak Fattening detail (createPenggemukanHooks + usePeternakTaskData) | ✅ DONE |
 | Phase 6.C | Egg Broker | ⏸️ BACKLOG |
 | Phase 6.D | RPA (Hutang / Distribusi) | ⏸️ BACKLOG |
 | Phase 6.E | Admin (Users / Subscriptions / Pricing) | ⏸️ BACKLOG |
@@ -44,7 +44,8 @@ src/
 │   └── hooks/
 │       ├── useAuth.jsx                       ← fetchAuthData (Phase 6.2) + switchTenant (Phase 6.1) + AuthProvider context inject
 │       ├── useRPAData.js                     ← useUpsertRPAProfile.onError (Phase 5) + useCreatePurchaseOrder (Phase 6.3)
-│       ├── createPenggemukanHooks.js         ← 4 mutation hooks (Phase 6.2)
+│       ├── createPenggemukanHooks.js         ← 4 core hooks (Phase 6.2) + 19 more (Phase 6.B) covers all domba/kambing/sapi penggemukan mutations
+│       ├── usePeternakTaskData.js            ← 2 farm-wide ops cost hooks for Listrik & Air page (Phase 6.B)
 │       ├── useUpdateDelivery.js              ← delivery → sale/loss/notification flow (Phase 6.2)
 │       └── useSembakoData.js                 ← 21 mutation hooks: customer/supplier/employee/product/delivery/payroll/stock CRUD + multi-step sale/payment/return/adjust (Phase 6.A)
 ├── pages/
@@ -184,28 +185,72 @@ supabase/migrations/_archive/
 ---
 
 ### `src/lib/hooks/createPenggemukanHooks.js`
-**Phase:** 6.2 Tier B
-**Coverage:**
+**Phase:** 6.2 Tier B + 6.B Peternak Fattening sweep
+
+**Coverage (Phase 6.2 — core create flows):**
 - `useCreateBatch` — batch insert
 - `useAddAnimal` — animal insert + count sync + batch total_animals sync (multi-step)
 - `useBulkAddAnimals` — bulk animals insert + count sync + batch sync
 - `useAddSale` — sale insert + animals status='sold' sync (partial commit risk)
 
-**Action names:**
+**Coverage (Phase 6.B — every remaining mutation in the factory):**
+- `useCloseBatch` — `batches.update status=closed`
+- `useUpdateAnimal` — `animals.update` (edit individual animal)
+- `useUpdateAnimalStatus` — `animals.update status/exit_date` (manual lifecycle change)
+- `useAddWeightRecord` — weight insert + `animals.latest_weight_kg` sync (partial)
+- `useAddFeedLog` — `feed.upsert` per kandang/log_date
+- `useAddHealthLog` — `health.insert` + conditional `animals.status='dead'` for `kematian` (partial)
+- `useDeleteFeedLog` / `useDeleteWeightRecord` / `useDeleteHealthLog` — soft-delete `is_deleted=true`
+- `useDeleteSale` — sale soft-delete + revert animals to `status='active'` (partial commit risk)
+- `useUpdateSale` — `sales.update` (edit existing penjualan row)
+- `useCreateKandang` / `useUpdateKandang` / `useDeleteKandang` / `useUpdateKandangPosition` — Denah Kandang CRUD
+- `useMoveAnimalToKandang` — `animals.update kandang_id/slot` (used by drag-drop Denah Kandang; has optimistic update + rollback in onError)
+- `useAddOperationalCost` / `useDeleteOperationalCost` — per-batch ops cost (legacy form, separate from farm-wide Listrik & Air)
+- `useEnsureHoldingPen` — check + create `is_holding=true` kandang (Phase 6.B treats SELECT and INSERT as 2 logged steps)
+
+**Action names (Phase 6.2):**
 - `peternak.batch.create`
-- `peternak.animal.add`
-- `peternak.animal.add.count_sync`
-- `peternak.animal.add.batch_sync`
-- `peternak.animal.bulk_add`
-- `peternak.animal.bulk_add.count_sync`
-- `peternak.animal.bulk_add.batch_sync`
-- `peternak.sale.create`
-- `peternak.sale.create.animal_sync`
+- `peternak.animal.add` / `peternak.animal.add.count_sync` / `peternak.animal.add.batch_sync`
+- `peternak.animal.bulk_add` / `peternak.animal.bulk_add.count_sync` / `peternak.animal.bulk_add.batch_sync`
+- `peternak.sale.create` / `peternak.sale.create.animal_sync`
+
+**Action names (Phase 6.B):**
+- `peternak.batch.close`
+- `peternak.animal.update` / `peternak.animal.update_status` / `peternak.animal.move_kandang`
+- `peternak.weight_record.create` / `peternak.weight_record.create.animal_sync` (partial) / `peternak.weight_record.delete`
+- `peternak.feed_log.create` / `peternak.feed_log.delete`
+- `peternak.health_log.create` / `peternak.health_log.create.animal_sync` (partial) / `peternak.health_log.delete`
+- `peternak.sale.update` / `peternak.sale.delete` / `peternak.sale.delete.animal_sync` (partial)
+- `peternak.kandang.create` / `peternak.kandang.update` / `peternak.kandang.update_position` / `peternak.kandang.delete`
+- `peternak.operational_cost.create` / `peternak.operational_cost.delete`
+- `peternak.holding_pen.ensure.check` / `peternak.holding_pen.ensure.create`
 
 **Notes:**
+- Hook factory `createPenggemukanHooks(prefix)` — each name binds to per-vertical prefix (`domba`, `kambing`, `sapi`), and the `component` field is always `createPenggemukanHooks` (vertical is recoverable from `metadata.table` like `domba_penggemukan_animals`).
 - Happy path produces 0 error logs.
-- Multi-step mutations flag `metadata.partial: true` when step 1 succeeds but step 2/3 fails (e.g. animals inserted but batches.total_animals sync failed → reconcile manually).
+- Multi-step mutations flag `metadata.partial: true` when step 1 succeeds but step 2/3 fails (e.g. animals inserted but `batches.total_animals` sync failed → reconcile manually). New Phase 6.B partial sites: `weight_record.create.animal_sync` (latest_weight_kg), `health_log.create.animal_sync` (animal `status='dead'` after kematian record), `sale.delete.animal_sync` (revert animals to active after sale soft-delete).
+- `useAddHealthLog`'s `kematian` branch preserves original behaviour — the animal status update is logged on failure but **not thrown** (consistent with pre-Phase 6.B fire-and-forget). All other animal_sync sites still throw.
+- `useMoveAnimalToKandang` keeps its optimistic-update + onError rollback; the new log point fires on the server error before the rollback toast.
 - Sub-step partial logs use `logError({ source: 'supabase' })` directly (because `logSupabaseError` doesn't forward arbitrary metadata).
+- `useEnsureHoldingPen` is split into `ensure.check` (SELECT) and `ensure.create` (INSERT) so superadmin can distinguish a permissions denial on read vs write.
+
+---
+
+### `src/lib/hooks/usePeternakTaskData.js`
+**Phase:** 6.B Peternak Fattening sweep
+
+**Coverage:**
+- `useAddFarmOpsCost(animalType)` — farm-wide Listrik & Air cost split across all active batches by animal proportion. Each row goes into `${animalType}_penggemukan_operational_costs`.
+- `useDeleteFarmOpsCost(animalType)` — soft-delete one row (`is_deleted=true`).
+
+**Action names:**
+- `peternak.farm_ops_cost.create`
+- `peternak.farm_ops_cost.delete`
+
+**Notes:**
+- Powers the `Listrik & Air` page (`src/dashboard/peternak/_shared/components/FarmOpsCostSheet.jsx` or equivalent).
+- `table` is dynamic per `animalType` (e.g. `domba_penggemukan_operational_costs`); animalType recoverable from the `metadata.table` field at log time.
+- Out of Phase 6.B scope (kept for backlog): the query hooks in this file (`usePeternakTaskTemplates`, etc.) and the `useTenantWorkerPayments` family — read-only, no mutation = nothing to log here. Worker-payment mutations live in `useKandangWorkerData.js` (Phase 6.F backlog).
 
 ---
 
@@ -620,10 +665,35 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `peternak.animal.bulk_add` | `src/lib/hooks/createPenggemukanHooks.js` | 6.2 | Bulk animals insert |
 | `peternak.animal.bulk_add.batch_sync` | `src/lib/hooks/createPenggemukanHooks.js` | 6.2 | batches.total_animals sync after bulk (partial) |
 | `peternak.animal.bulk_add.count_sync` | `src/lib/hooks/createPenggemukanHooks.js` | 6.2 | animals count select after bulk (partial) |
+| `peternak.animal.move_kandang` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | animals.update kandang_id/slot (drag-drop Denah Kandang) |
+| `peternak.animal.update` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | animals.update (edit single animal) |
+| `peternak.animal.update_status` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | animals.update status/exit_date (manual lifecycle change) |
+| `peternak.batch.close` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | batches.update status=closed |
 | `peternak.batch.create` | `src/lib/hooks/createPenggemukanHooks.js` | 6.2 | New batch insert |
+| `peternak.farm_ops_cost.create` | `src/lib/hooks/usePeternakTaskData.js` | 6.B | farm-wide Listrik & Air ops cost insert (split across active batches) |
+| `peternak.farm_ops_cost.delete` | `src/lib/hooks/usePeternakTaskData.js` | 6.B | farm-wide Listrik & Air ops cost soft-delete |
+| `peternak.feed_log.create` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | feed.upsert per kandang/log_date |
+| `peternak.feed_log.delete` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | feed.update is_deleted=true |
+| `peternak.health_log.create` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | health.insert |
+| `peternak.health_log.create.animal_sync` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | animals.status='dead' sync after kematian record (partial, fire-and-forget) |
+| `peternak.health_log.delete` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | health.update is_deleted=true |
+| `peternak.holding_pen.ensure.check` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | Pre-check SELECT on kandangs.is_holding=true |
+| `peternak.holding_pen.ensure.create` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | Kandangs.insert Holding pen when none exists |
+| `peternak.kandang.create` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | kandangs.insert (Denah Kandang) |
+| `peternak.kandang.delete` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | kandangs.delete hard (Denah Kandang) |
+| `peternak.kandang.update` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | kandangs.update (Denah Kandang form edit) |
+| `peternak.kandang.update_position` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | kandangs.update grid_x/grid_y (drag-drop reposition) |
+| `peternak.operational_cost.create` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | Per-batch ops cost insert |
+| `peternak.operational_cost.delete` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | Per-batch ops cost soft-delete |
 | `peternak.sale.create` | `src/lib/hooks/createPenggemukanHooks.js` | 6.2 | sales insert |
 | `peternak.sale.create.animal_sync` | `src/lib/hooks/createPenggemukanHooks.js` | 6.2 | animals status='sold' update after sale (partial commit risk) |
+| `peternak.sale.delete` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | sales.update is_deleted=true (multi-step with animal revert) |
+| `peternak.sale.delete.animal_sync` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | animals status='active' revert after sale soft-delete (partial commit) |
+| `peternak.sale.update` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | sales.update (edit penjualan row) |
 | `peternak.vaccination.create` | `src/dashboard/peternak/broiler/Vaksinasi.jsx` | 6.3 | vaccination_records.insert |
+| `peternak.weight_record.create` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | weights.insert |
+| `peternak.weight_record.create.animal_sync` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | animals.latest_weight_kg sync after weigh-in (partial commit) |
+| `peternak.weight_record.delete` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | weights.update is_deleted=true |
 | `register.invite_expired` | `src/pages/Register.jsx` | 6.0 | Invite token past expires_at |
 | `register.invite_invalid` | `src/pages/Register.jsx` | 6.0 | Invite token RPC returned no row or status≠pending |
 | `register.invite_submit` | `src/pages/Register.jsx` | 6.0 | handleInviteRegister outer catch |
@@ -784,6 +854,27 @@ WHERE action_name IN (
   'broker.vehicle.create', 'broker.vehicle.update', 'broker.vehicle.delete',
   'broker.driver.create', 'broker.driver.update', 'broker.driver.delete',
   'rpa.purchase_order.create'
+)
+ORDER BY created_at DESC
+LIMIT 30;
+```
+
+Phase 6.B quick check (Peternak Fattening action_names only):
+
+```sql
+SELECT created_at, component, action_name, error_message, metadata
+FROM public.system_error_logs
+WHERE action_name IN (
+  'peternak.batch.close',
+  'peternak.animal.update', 'peternak.animal.update_status', 'peternak.animal.move_kandang',
+  'peternak.weight_record.create', 'peternak.weight_record.create.animal_sync', 'peternak.weight_record.delete',
+  'peternak.feed_log.create', 'peternak.feed_log.delete',
+  'peternak.health_log.create', 'peternak.health_log.create.animal_sync', 'peternak.health_log.delete',
+  'peternak.sale.update', 'peternak.sale.delete', 'peternak.sale.delete.animal_sync',
+  'peternak.kandang.create', 'peternak.kandang.update', 'peternak.kandang.update_position', 'peternak.kandang.delete',
+  'peternak.operational_cost.create', 'peternak.operational_cost.delete',
+  'peternak.holding_pen.ensure.check', 'peternak.holding_pen.ensure.create',
+  'peternak.farm_ops_cost.create', 'peternak.farm_ops_cost.delete'
 )
 ORDER BY created_at DESC
 LIMIT 30;

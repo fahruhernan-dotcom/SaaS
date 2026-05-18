@@ -463,7 +463,10 @@ export function createPenggemukanHooks(prefix) {
           .update({ status: 'closed', ...kpiFinal })
           .eq('id', batchId)
           .eq('tenant_id', tenant.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: T.batches, operation: 'update', component: 'createPenggemukanHooks', actionName: 'peternak.batch.close' })
+          throw error
+        }
       },
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
@@ -648,7 +651,10 @@ export function createPenggemukanHooks(prefix) {
           .update(finalUpdates)
           .eq('id', animalId)
           .eq('tenant_id', tenant.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: T.animals, operation: 'update', component: 'createPenggemukanHooks', actionName: 'peternak.animal.update' })
+          throw error
+        }
       },
       onSuccess: (_, { animalId, batchId }) => {
         qc.invalidateQueries({ queryKey: [`${K}-animals`] })
@@ -671,7 +677,10 @@ export function createPenggemukanHooks(prefix) {
           .update({ status, exit_date })
           .eq('id', animalId)
           .eq('tenant_id', tenant.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: T.animals, operation: 'update', component: 'createPenggemukanHooks', actionName: 'peternak.animal.update_status' })
+          throw error
+        }
       },
       onSuccess: (_, { batchId }) => {
         qc.invalidateQueries({ queryKey: [`${K}-animals`, batchId] })
@@ -718,7 +727,10 @@ export function createPenggemukanHooks(prefix) {
             weigh_date, weight_kg, bcs, famacha_score,
             days_in_farm, adg_since_last, notes,
           })
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: T.weights, operation: 'insert', component: 'createPenggemukanHooks', actionName: 'peternak.weight_record.create' })
+          throw error
+        }
 
         // ── Sync latest_weight_kg on the animal record ──
         // This ensures the DB column stays up-to-date for any query
@@ -732,13 +744,22 @@ export function createPenggemukanHooks(prefix) {
           .limit(1)
         const latestW = allW?.[0]
         if (latestW) {
-          await supabase
+          const { error: animalSyncErr } = await supabase
             .from(T.animals)
             .update({
               latest_weight_kg: latestW.weight_kg,
               latest_weight_date: latestW.weigh_date,
             })
             .eq('id', animal_id)
+          if (animalSyncErr) {
+            // Non-fatal: weight saved, animal latest_weight_kg sync failed.
+            logError({
+              level: 'error', source: 'supabase', component: 'createPenggemukanHooks',
+              actionName: 'peternak.weight_record.create.animal_sync',
+              error: animalSyncErr,
+              metadata: { table: T.animals, operation: 'update', partial: true, step: 'animal_latest_weight_sync', animal_id, batch_id },
+            })
+          }
         }
       },
       onSuccess: (_, { animal_id, batch_id }) => {
@@ -786,7 +807,10 @@ export function createPenggemukanHooks(prefix) {
             onConflict: 'batch_id,kandang_name,log_date',
             ignoreDuplicates: false,
           })
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: T.feed, operation: 'upsert', component: 'createPenggemukanHooks', actionName: 'peternak.feed_log.create' })
+          throw error
+        }
       },
       onSuccess: (_, { batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-feed-logs`, batch_id] })
@@ -822,14 +846,40 @@ export function createPenggemukanHooks(prefix) {
             treatment_cost_idr: treatment_cost_idr || 0,
             notes,
           })
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: T.health,
+            operation: 'insert',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.health_log.create',
+          })
+          throw error
+        }
 
         if (log_type === 'kematian') {
-          await supabase
+          const { error: animalErr } = await supabase
             .from(T.animals)
             .update({ status: 'dead', exit_date: log_date })
             .eq('id', animal_id)
             .eq('tenant_id', tenant.id)
+          if (animalErr) {
+            // Partial commit: health record saved but animal status not flipped to 'dead'.
+            logError({
+              level: 'error',
+              source: 'supabase',
+              component: 'createPenggemukanHooks',
+              actionName: 'peternak.health_log.create.animal_sync',
+              error: animalErr,
+              metadata: {
+                table: T.animals,
+                operation: 'update',
+                partial: true,
+                step: 'animal_dead_status_sync',
+                animal_id,
+                batch_id,
+              },
+            })
+          }
         }
       },
       onSuccess: async (_, vars) => {
@@ -949,7 +999,15 @@ export function createPenggemukanHooks(prefix) {
           .update({ is_deleted: true })
           .eq('id', logId)
           .eq('tenant_id', tenant.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: T.feed,
+            operation: 'update',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.feed_log.delete',
+          })
+          throw error
+        }
       },
       onSuccess: (_, { batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-feed-logs`, batch_id] })
@@ -970,7 +1028,15 @@ export function createPenggemukanHooks(prefix) {
           .update({ is_deleted: true })
           .eq('id', recordId)
           .eq('tenant_id', tenant.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: T.weights,
+            operation: 'update',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.weight_record.delete',
+          })
+          throw error
+        }
       },
       onSuccess: (_, { animal_id, batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-weight-records`, animal_id] })
@@ -995,7 +1061,15 @@ export function createPenggemukanHooks(prefix) {
           .update({ is_deleted: true })
           .eq('id', saleId)
           .eq('tenant_id', tenant.id)
-        if (saleErr) throw saleErr
+        if (saleErr) {
+          logSupabaseError(saleErr, {
+            table: T.sales,
+            operation: 'update',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.sale.delete',
+          })
+          throw saleErr
+        }
 
         // 2. Revert animal status to 'active'
         const { error: animalErr } = await supabase
@@ -1003,7 +1077,26 @@ export function createPenggemukanHooks(prefix) {
           .update({ status: 'active', exit_date: null })
           .in('id', animalIds)
           .eq('tenant_id', tenant.id)
-        if (animalErr) throw animalErr
+        if (animalErr) {
+          // Partial commit: sale soft-deleted but animals still flagged 'sold'.
+          logError({
+            level: 'error',
+            source: 'supabase',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.sale.delete.animal_sync',
+            error: animalErr,
+            metadata: {
+              table: T.animals,
+              operation: 'update',
+              partial: true,
+              step: 'animal_revert_active',
+              sale_id: saleId,
+              batch_id: batchId,
+              animal_count: Array.isArray(animalIds) ? animalIds.length : 0,
+            },
+          })
+          throw animalErr
+        }
       },
       onSuccess: (_, { batchId }) => {
         qc.invalidateQueries({ queryKey: [`${K}-sales`, batchId] })
@@ -1027,7 +1120,15 @@ export function createPenggemukanHooks(prefix) {
           .update(updates)
           .eq('id', saleId)
           .eq('tenant_id', tenant.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: T.sales,
+            operation: 'update',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.sale.update',
+          })
+          throw error
+        }
       },
       onSuccess: (_, { batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-sales`, batch_id] })
@@ -1049,7 +1150,15 @@ export function createPenggemukanHooks(prefix) {
         const { error } = await supabase
           .from(T.kandangs)
           .insert({ tenant_id: tenant.id, ...rest })
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: T.kandangs,
+            operation: 'insert',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.kandang.create',
+          })
+          throw error
+        }
       },
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: [`${K}-kandangs`, tenant?.id] })
@@ -1069,7 +1178,15 @@ export function createPenggemukanHooks(prefix) {
           .update({ grid_x, grid_y })
           .eq('id', kandangId)
           .eq('tenant_id', tenant.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: T.kandangs,
+            operation: 'update',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.kandang.update_position',
+          })
+          throw error
+        }
       },
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: [`${K}-kandangs`, tenant?.id] })
@@ -1087,7 +1204,15 @@ export function createPenggemukanHooks(prefix) {
           .update(updates)
           .eq('id', kandangId)
           .eq('tenant_id', tenant.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: T.kandangs,
+            operation: 'update',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.kandang.update',
+          })
+          throw error
+        }
       },
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: [`${K}-kandangs`, tenant?.id] })
@@ -1107,7 +1232,15 @@ export function createPenggemukanHooks(prefix) {
           .delete()
           .eq('id', kandangId)
           .eq('tenant_id', tenant.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: T.kandangs,
+            operation: 'delete',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.kandang.delete',
+          })
+          throw error
+        }
       },
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: [`${K}-kandangs`, tenant?.id] })
@@ -1127,7 +1260,15 @@ export function createPenggemukanHooks(prefix) {
           .update({ kandang_id: kandangId, kandang_slot: kandangSlot })
           .eq('id', animalId)
           .eq('tenant_id', tenant.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: T.animals,
+            operation: 'update',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.animal.move_kandang',
+          })
+          throw error
+        }
       },
       onMutate: async ({ animalId, kandangId, kandangSlot }) => {
         // Cancel in-flight refetches so they don't overwrite our optimistic update
@@ -1169,7 +1310,15 @@ export function createPenggemukanHooks(prefix) {
           .update({ is_deleted: true })
           .eq('id', logId)
           .eq('tenant_id', tenant.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: T.health,
+            operation: 'update',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.health_log.delete',
+          })
+          throw error
+        }
       },
       onSuccess: (_, { batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-health-logs`, batch_id] })
@@ -1188,7 +1337,15 @@ export function createPenggemukanHooks(prefix) {
         const { error } = await supabase
           .from(T.costs)
           .insert({ tenant_id: tenant.id, ...payload })
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: T.costs,
+            operation: 'insert',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.operational_cost.create',
+          })
+          throw error
+        }
       },
       onSuccess: (_, { batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-operational-costs`, batch_id] })
@@ -1211,7 +1368,15 @@ export function createPenggemukanHooks(prefix) {
           .update({ is_deleted: true })
           .eq('id', costId)
           .eq('tenant_id', tenant.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: T.costs,
+            operation: 'update',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.operational_cost.delete',
+          })
+          throw error
+        }
       },
       onSuccess: (_, { batchId }) => {
         qc.invalidateQueries({ queryKey: [`${K}-operational-costs`, batchId] })
@@ -1851,7 +2016,15 @@ export function createPenggemukanHooks(prefix) {
           .eq('is_holding', true)
           .limit(1)
 
-        if (checkErr) throw checkErr
+        if (checkErr) {
+          logSupabaseError(checkErr, {
+            table: T.kandangs,
+            operation: 'select',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.holding_pen.ensure.check',
+          })
+          throw checkErr
+        }
 
         if (!data || data.length === 0) {
           const { error: insertErr } = await supabase
@@ -1863,7 +2036,15 @@ export function createPenggemukanHooks(prefix) {
               is_holding: true,
               notes: 'Area penampungan ternak belum dialokasikan',
             })
-          if (insertErr) throw insertErr
+          if (insertErr) {
+            logSupabaseError(insertErr, {
+              table: T.kandangs,
+              operation: 'insert',
+              component: 'createPenggemukanHooks',
+              actionName: 'peternak.holding_pen.ensure.create',
+            })
+            throw insertErr
+          }
         }
       },
       onSuccess: () => {
