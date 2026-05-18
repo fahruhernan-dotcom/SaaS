@@ -1,0 +1,81 @@
+name: Build Android APK/AAB
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Bubblewrap CLI
+        run: npm install -g @bubblewrap/cli
+
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses 2>/dev/null || true
+
+      - name: Restore signing keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ternakos.keystore
+          echo "Keystore restored: $(wc -c < ternakos.keystore) bytes"
+
+      - name: Initialize Bubblewrap project (non-interactive)
+        run: |
+          # twa-manifest.json committed to repo — Bubblewrap reads it automatically
+          bubblewrap init \
+            --manifest https://ternakos.my.id/manifest.webmanifest \
+            --directory android-build
+        # If this step hangs waiting for input, the build will fail with timeout.
+        # Do NOT pipe `yes` or guess prompts — instead fix twa-manifest.json to
+        # provide all required fields and re-run.
+
+      - name: Build APK + AAB (non-interactive)
+        run: |
+          cd android-build
+          bubblewrap build \
+            --keyPath ../ternakos.keystore \
+            --keyAlias "${{ secrets.KEY_ALIAS }}" \
+            --keystorePassword "${{ secrets.KEYSTORE_PASSWORD }}" \
+            --keyPassword "${{ secrets.KEY_PASSWORD }}"
+        # All signing parameters passed via CLI flags — no prompts expected.
+        # If Gradle fails with a missing SDK component, check the sdkmanager
+        # license step above or add the specific component to sdkmanager install.
+
+      - name: Locate build outputs
+        run: |
+          echo "=== APK files ==="
+          find android-build -name "*.apk" 2>/dev/null || echo "No APK found"
+          echo "=== AAB files ==="
+          find android-build -name "*.aab" 2>/dev/null || echo "No AAB found"
+
+      - name: Upload signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ternakos-apk-${{ github.run_number }}
+          path: android-build/**/*.apk
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Upload AAB (Play Store)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ternakos-aab-${{ github.run_number }}
+          path: android-build/**/*.aab
+          if-no-files-found: warn
+          retention-days: 30

@@ -1,0 +1,37 @@
+{
+  "packageId": "id.my.ternakos.app",
+  "host": "ternakos.my.id",
+  "name": "TernakOS",
+  "launcherName": "TernakOS",
+  "display": "standalone",
+  "themeColor": "#16a34a",
+  "navigationColor": "#16a34a",
+  "navigationColorDark": "#16a34a",
+  "navigationDividerColor": "#16a34a",
+  "navigationDividerColorDark": "#16a34a",
+  "backgroundColor": "#ffffff",
+  "enableNotifications": false,
+  "startUrl": "/",
+  "iconUrl": "https://ternakos.my.id/icons/icon-512.png",
+  "maskableIconUrl": "https://ternakos.my.id/icons/maskable-icon-512.png",
+  "monochromeIconUrl": "https://ternakos.my.id/icons/icon-512.png",
+  "appVersion": "1.0.0",
+  "appVersionCode": 1,
+  "signingKey": {
+    "path": "ternakos.keystore",
+    "alias": "ternakos"
+  },
+  "splashScreenFadeOutDuration": 300,
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://ternakos.my.id/",
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [
+    {
+      "type": "sha256",
+      "value": "F3:39:45:AC:CA:48:DB:7D:52:99:EB:3C:6A:9C:4F:BD:6C:20:BF:69:FD:C8:B0:03:A9:B7:0E:C4:60:5E:7C:05"
+    }
+  ]
+}

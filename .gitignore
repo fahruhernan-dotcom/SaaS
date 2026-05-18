@@ -66,3 +66,12 @@ __pycache__/
 # Claude settings
 .claude/settings.local.json
 
+# Android signing — NEVER commit these
+*.keystore
+*.jks
+*.keystore.b64
+*.key
+*.crt
+*.p12
+android/
+
