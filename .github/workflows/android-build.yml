@@ -5,6 +5,10 @@ on:
     tags: ['v*']
   workflow_dispatch:
 
+env:
+  # Opt into Node.js 24 now to avoid forced migration warnings
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build-android:
     runs-on: ubuntu-latest
@@ -27,8 +31,29 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
+      # Pre-seed ~/.bubblewrap/config.json so `bubblewrap init` never prompts
+      # "Local Android Development Environment not found. Set it up? [y/N]".
+      # GitHub Actions runners ship with ANDROID_SDK_ROOT and JAVA_HOME set.
+      - name: Pre-configure Bubblewrap SDK paths (prevents interactive prompt)
+        run: |
+          mkdir -p ~/.bubblewrap
+          printf '{"jdkPath":"%s","androidSdkPath":"%s"}\n' \
+            "$JAVA_HOME" "$ANDROID_SDK_ROOT" \
+            > ~/.bubblewrap/config.json
+          echo "Bubblewrap config written:"
+          cat ~/.bubblewrap/config.json
+
       - name: Accept Android SDK licenses
         run: yes | sdkmanager --licenses 2>/dev/null || true
+
+      - name: Install required SDK build tools
+        run: |
+          sdkmanager "build-tools;34.0.0" "platforms;android-34" 2>/dev/null || true
+
+      # Gradle calls `git describe` for versioning inside android-build/.
+      # Without this, git exits 128 ("unsafe directory") on GH Actions.
+      - name: Allow git in all directories (prevents Gradle git exit 128)
+        run: git config --global --add safe.directory '*'
 
       - name: Restore signing keystore
         run: |
@@ -36,17 +61,14 @@ jobs:
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android-signing/ternakos.keystore
           echo "Keystore restored: $(wc -c < android-signing/ternakos.keystore) bytes"
 
-      - name: Initialize Bubblewrap project (non-interactive)
+      - name: Initialize Bubblewrap project
         run: |
-          # twa-manifest.json committed to repo — Bubblewrap reads it automatically
           bubblewrap init \
             --manifest https://ternakos.my.id/manifest.webmanifest \
             --directory android-build
-        # If this step hangs waiting for input, the build will fail with timeout.
-        # Do NOT pipe `yes` or guess prompts — instead fix twa-manifest.json to
-        # provide all required fields and re-run.
+        # ANDROID_HOME and ANDROID_SDK_ROOT are already set by the runner
 
-      - name: Build APK + AAB (non-interactive)
+      - name: Build APK + AAB
         run: |
           cd android-build
           bubblewrap build \
@@ -54,9 +76,6 @@ jobs:
             --keyAlias "${{ secrets.KEY_ALIAS }}" \
             --keystorePassword "${{ secrets.KEYSTORE_PASSWORD }}" \
             --keyPassword "${{ secrets.KEY_PASSWORD }}"
-        # All signing parameters passed via CLI flags — no prompts expected.
-        # If Gradle fails with a missing SDK component, check the sdkmanager
-        # license step above or add the specific component to sdkmanager install.
 
       - name: Locate build outputs
         run: |
