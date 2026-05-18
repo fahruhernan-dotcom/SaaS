@@ -296,7 +296,7 @@ export default function AdminSettings() {
       return
     }
     await logAuditTrail('kill_switch', null, { executed_at: new Date().toISOString() })
-    await supabase.auth.signOut()
+    await supabase.auth.signOut({ scope: 'local' })
     navigate('/login')
   }
 

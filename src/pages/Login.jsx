@@ -12,9 +12,10 @@ import {
   TrendingUp, Truck, BarChart2, Clock, Shield, Users, Zap, Mail, Lock
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { getBrokerBasePath } from '../lib/hooks/useAuth'
+import { getBrokerBasePath, useAuth } from '../lib/hooks/useAuth'
 import { logError } from '@/lib/logger/errorLogger'
 import { logSupabaseError } from '@/lib/logger/supabaseLogger'
+import { setRememberMe as saveRememberMe } from '@/lib/supabaseStorage'
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" className="shrink-0">
@@ -38,8 +39,27 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [rememberMe, setRememberMe] = useState(false)
+
+  const { user, profile, loading: authLoading, isSuperadmin } = useAuth()
+
+  useEffect(() => {
+    if (authLoading || !user || !profile) return
+    if (isSuperadmin) { navigate('/admin', { replace: true }); return }
+    if (!profile.onboarded) { navigate('/onboarding', { replace: true }); return }
+    if (profile.user_type === 'peternak') {
+      navigate(`/peternak/${profile.tenants?.sub_type || 'peternak_broiler'}/beranda`, { replace: true })
+      return
+    }
+    if (profile.user_type === 'rumah_potong') {
+      navigate(`/rumah_potong/${profile.tenants?.sub_type || 'rpa_ayam'}/beranda`, { replace: true })
+      return
+    }
+    navigate(getBrokerBasePath(profile.tenants) + '/beranda', { replace: true })
+  }, [authLoading, user, profile, isSuperadmin]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleGoogleSignIn = async () => {
+    saveRememberMe(rememberMe)
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -65,7 +85,8 @@ export default function Login() {
     if (!email || !password) return
     setIsLoading(true)
     setError('')
-    
+    saveRememberMe(rememberMe)
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim().includes('@') ? email.trim() : `${email.trim()}@ternakos.id`,
@@ -173,7 +194,8 @@ export default function Login() {
 
   const propsBag = {
     email, setEmail, password, setPassword, showPassword, setShowPassword,
-    isLoading, error, handleLogin, handleGoogleSignIn, navigate
+    isLoading, error, handleLogin, handleGoogleSignIn, navigate,
+    rememberMe, setRememberMe,
   }
 
   if (!isDesktop) {
@@ -183,7 +205,7 @@ export default function Login() {
   return <DesktopLoginView {...propsBag} />
 }
 
-function DesktopLoginView({ email, setEmail, password, setPassword, showPassword, setShowPassword, isLoading, error, handleLogin, handleGoogleSignIn, navigate }) {
+function DesktopLoginView({ email, setEmail, password, setPassword, showPassword, setShowPassword, isLoading, error, handleLogin, handleGoogleSignIn, navigate, rememberMe, setRememberMe }) {
   return (
     <div className="flex min-h-screen bg-[#06090F] overflow-x-hidden">
       {/* LOGO (Absolute Positioned) */}
@@ -472,6 +494,20 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
                 </div>
               </div>
               
+              {/* Remember Me */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="checkbox"
+                  id="rememberMe"
+                  checked={rememberMe}
+                  onChange={e => setRememberMe(e.target.checked)}
+                  style={{ width: 15, height: 15, accentColor: '#10B981', cursor: 'pointer', flexShrink: 0 }}
+                />
+                <label htmlFor="rememberMe" style={{ fontSize: '13px', color: '#94A3B8', cursor: 'pointer', userSelect: 'none' }}>
+                  Ingat saya
+                </label>
+              </div>
+
               {error && (
                 <div style={{
                   padding: '10px 14px',
@@ -488,7 +524,7 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
                   {error}
                 </div>
               )}
-              
+
               <Button
                 onClick={handleLogin}
                 disabled={isLoading || !email || !password}
@@ -574,8 +610,7 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
   )
 }
 
-function MobileLoginView({ email, setEmail, password, setPassword, showPassword, setShowPassword, isLoading, error, handleLogin, handleGoogleSignIn, navigate }) {
-  const [remember, setRemember] = useState(false)
+function MobileLoginView({ email, setEmail, password, setPassword, showPassword, setShowPassword, isLoading, error, handleLogin, handleGoogleSignIn, navigate, rememberMe, setRememberMe }) {
   const containerRef = useRef(null)
 
   useEffect(() => {
@@ -710,8 +745,8 @@ function MobileLoginView({ email, setEmail, password, setPassword, showPassword,
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                 <input
                   type="checkbox"
-                  checked={remember}
-                  onChange={e => setRemember(e.target.checked)}
+                  checked={rememberMe}
+                  onChange={e => setRememberMe(e.target.checked)}
                   style={{ width: 16, height: 16, accentColor: '#22c55e', cursor: 'pointer' }}
                 />
                 <span style={{ color: '#9ca3af', fontSize: 13, fontFamily: 'inherit' }}>Ingat saya</span>

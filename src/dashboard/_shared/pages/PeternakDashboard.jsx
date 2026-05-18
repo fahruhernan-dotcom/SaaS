@@ -50,7 +50,7 @@ export default function PeternakDashboard() {
       </div>
 
       <button 
-        onClick={() => supabase.auth.signOut()}
+        onClick={() => supabase.auth.signOut({ scope: 'local' })}
         style={{
           background: 'none',
           border: '1px solid rgba(255,255,255,0.1)',

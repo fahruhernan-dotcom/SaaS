@@ -261,7 +261,7 @@ export default function AcceptInvite() {
 
       // 2a. Block only if they already own THIS specific tenant
       if (existingProfile?.role === 'owner' && existingProfile?.tenant_id === invitation.tenant_id) {
-        await supabase.auth.signOut();
+        await supabase.auth.signOut({ scope: 'local' });
         toast.error('Kamu sudah menjadi owner di bisnis ini.');
         return;
       }
@@ -351,7 +351,7 @@ export default function AcceptInvite() {
       await pendingUpdateFn();
     } catch (err) {
       toast.error('Gagal memindahkan akses: ' + (err.message || ''));
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: 'local' });
       setConfirmingSwitch(false);
       setPendingUpdateFn(null);
     } finally {
@@ -360,7 +360,7 @@ export default function AcceptInvite() {
   };
 
   const handleCancelSwitch = async () => {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: 'local' });
     setConfirmingSwitch(false);
     setPendingUpdateFn(null);
     toast.info('Pemindahan dibatalkan.');

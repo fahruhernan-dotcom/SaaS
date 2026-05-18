@@ -136,7 +136,7 @@ export default function AkunPage() {
   const tenantCity = activeTenant?.city || activeTenant?.location || '—'
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut()
+    const { error } = await supabase.auth.signOut({ scope: 'local' })
     if (error) {
       logError({
         level: 'error',

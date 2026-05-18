@@ -434,7 +434,7 @@ export default function AppSidebar({ open, onClose }) {
   }, [dropdownOpen])
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut()
+    const { error } = await supabase.auth.signOut({ scope: 'local' })
     if (error) toast.error(error.message)
     else {
       toast.success('Logged out successfully')
