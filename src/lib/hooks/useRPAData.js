@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 // ─── PURCHASE SIDE (beli dari broker) ────────────────────────────────────────
 
@@ -37,7 +38,15 @@ export const useCreatePurchaseOrder = () => {
         target_price_per_kg, requested_date, notes,
         status: 'open',
       })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, {
+          table: 'rpa_purchase_orders',
+          operation: 'insert',
+          component: 'useCreatePurchaseOrder',
+          actionName: 'rpa.purchase_order.create',
+        })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-purchase-orders', tenant?.id] })
@@ -352,7 +361,10 @@ export const useUpsertRPAProfile = () => {
       queryClient.invalidateQueries({ queryKey: ['rpa-profile', tenant?.id] })
       toast.success('Profil berhasil disimpan')
     },
-    onError: (err) => toast.error('Gagal simpan profil: ' + err.message),
+    onError: (err) => {
+      logSupabaseError(err, { table: 'rpa_profiles', operation: 'upsert', component: 'RPAProfileForm', actionName: 'handleSaveProfile' })
+      toast.error('Gagal simpan profil: ' + err.message)
+    },
   })
 }
 
@@ -426,7 +438,7 @@ export const useRPADashboardStats = () => {
   return useQuery({
     queryKey: ['rpa-dashboard-stats', tenant?.id],
     queryFn: async () => {
-      const [ordersRes, invoicesRes, paymentsRes] = await Promise.all([
+      const [ordersRes, invoicesRes] = await Promise.all([
         supabase
           .from('rpa_purchase_orders')
           .select('id, status, created_at')

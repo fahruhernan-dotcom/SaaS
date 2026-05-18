@@ -75,10 +75,10 @@ import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { peternakPermissions } from '@/lib/hooks/usePeternakPermissions'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { supabase } from '@/lib/supabase'
-import { isSuperadmin as checkIsSuperadmin, isOwner, isStaff, isViewOnly } from '@/lib/auth'
+import { isSuperadmin as checkIsSuperadmin, isOwner, isStaff } from '@/lib/auth'
 import { checkQuotaUsage } from '@/lib/quotaUtils'
 import { toast } from 'sonner'
-import { useQueryClient, useQuery } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { usePeternakFarms } from '@/lib/hooks/usePeternakData'
 import { usePlanConfigs } from '@/lib/hooks/useAdminData'
@@ -86,7 +86,7 @@ import { useTheme } from '@/lib/hooks/useTheme'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 
 export default function AppSidebar({ open, onClose }) {
-  const { user, profile, profiles, tenant, ownerTenant, isSuperadmin, switchTenant, loading } = useAuth()
+  const { user, profile, profiles, tenant, ownerTenant, isSuperadmin, switchTenant } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -142,7 +142,6 @@ export default function AppSidebar({ open, onClose }) {
   }, [ownerTenant, profile, profiles])
 
   const canAddBusiness = isSuperadmin || quota.canAdd
-  const hasPaidPlan = isSuperadmin || ['pro', 'business'].includes(ownerTenant?.plan)
 
   const [activeProfileId, setActiveProfileId] = useState(null)
 
@@ -170,12 +169,7 @@ export default function AppSidebar({ open, onClose }) {
   // const profile = profiles.find(p => p.id === activeProfileId) || authProfile
   // const tenant = profile?.tenants || authTenant
 
-  const tenantInitials = tenant?.business_name?.slice(0, 2).toUpperCase() || 'TO'
   const userInitials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'U'
-
-  const isOwnerUser = isOwner(profile) || checkIsSuperadmin(profile)
-  const isStaffUser = isStaff(profile)
-  const isViewOnlyUser = isViewOnly(profile)
 
   const { accentColor } = useTheme()
 
@@ -284,10 +278,10 @@ export default function AppSidebar({ open, onClose }) {
 
         // Domba Penggemukan
         ...(isDombaPenggemukan ? [
-          { title: 'Batch Aktif',    url: `${peternakBase}/batch`,       icon: RefreshCw,    show: pp?.canViewSiklus    ?? true },
+          { title: 'Batch Aktif',    url: `${peternakBase}/batch`,       icon: RefreshCw,    show: pp?.canViewSiklus    ?? true, dataTutorial: 'peternak-siklus' },
           { title: 'Data Ternak',    url: `${peternakBase}/ternak`,      icon: Tag },
           { title: 'Penjualan',      url: `${peternakBase}/penjualan`,   icon: ShoppingCart, show: pp?.canViewPenjualan ?? true },
-          { title: 'Denah Kandang',  url: `${peternakBase}/kandang-view`,icon: LayoutGrid },
+          { title: 'Denah Kandang',  url: `${peternakBase}/kandang-view`,icon: LayoutGrid, dataTutorial: 'peternak-kandang' },
         ] : []),
 
         // Domba Breeding
@@ -298,10 +292,10 @@ export default function AppSidebar({ open, onClose }) {
 
         // Kambing Penggemukan
         ...(isKambingPenggemukan ? [
-          { title: 'Batch Aktif',    url: `${peternakBase}/batch`,       icon: RefreshCw,    show: pp?.canViewSiklus    ?? true },
+          { title: 'Batch Aktif',    url: `${peternakBase}/batch`,       icon: RefreshCw,    show: pp?.canViewSiklus    ?? true, dataTutorial: 'peternak-siklus' },
           { title: 'Data Ternak',    url: `${peternakBase}/ternak`,      icon: Tag },
           { title: 'Penjualan',      url: `${peternakBase}/penjualan`,   icon: ShoppingCart, show: pp?.canViewPenjualan ?? true },
-          { title: 'Denah Kandang',  url: `${peternakBase}/kandang-view`,icon: LayoutGrid },
+          { title: 'Denah Kandang',  url: `${peternakBase}/kandang-view`,icon: LayoutGrid, dataTutorial: 'peternak-kandang' },
         ] : []),
 
         // Kambing Breeding
@@ -311,11 +305,11 @@ export default function AppSidebar({ open, onClose }) {
         ] : []),
 
         ...(isSapiPenggemukan || isSapiBreeding ? [
-          { title: 'Sapi Aktif',    url: `${peternakBase}/batch`,        icon: RefreshCw,  show: isSapiPenggemukan },
+          { title: 'Sapi Aktif',    url: `${peternakBase}/batch`,        icon: RefreshCw,  show: isSapiPenggemukan, dataTutorial: 'peternak-siklus' },
           { title: 'Data Ternak',   url: `${peternakBase}/ternak`,       icon: Tag },
           { title: 'Penjualan',     url: `${peternakBase}/penjualan`,    icon: ShoppingCart, show: isSapiPenggemukan && (pp?.canViewPenjualan ?? true) },
-          { title: 'Denah Kandang', url: `${peternakBase}/kandang-view`, icon: LayoutGrid, show: isSapiPenggemukan },
-          { title: 'Reproduksi',    url: `${peternakBase}/reproduksi`,   icon: Heart,      show: isSapiBreeding },
+          { title: 'Denah Kandang', url: `${peternakBase}/kandang-view`, icon: LayoutGrid, show: isSapiPenggemukan, dataTutorial: 'peternak-kandang' },
+          { title: 'Reproduksi',    url: `${peternakBase}/reproduksi`,   icon: Heart,      show: isSapiBreeding,    dataTutorial: 'peternak-siklus' },
         ].filter(item => item.show !== false) : []),
 
         // RPA
@@ -347,7 +341,11 @@ export default function AppSidebar({ open, onClose }) {
     ...(isPeternak ? [{
       label: 'TUGAS',
       items: [
-        { title: 'Tugas Harian',     url: `${peternakBase}/daily_task`,   icon: ClipboardList },
+        // Non-broiler peternak doesn't have a dedicated "Input Harian" nav item
+        // (broiler has it inside the per-farm collapsible). Tugas Harian is the
+        // closest daily-tracking entry-point for fattening/breeding/dairy users,
+        // so use it as the spotlight target for the `peternak-input` step.
+        { title: 'Tugas Harian',     url: `${peternakBase}/daily_task`,   icon: ClipboardList, dataTutorial: !isBroiler ? 'peternak-input' : undefined },
         ...((isSapiPenggemukan || isSapiBreeding || isDombaPenggemukan || isDombaBreeding || isKambingPenggemukan || isKambingBreeding || isBroiler) ? [
           { title: 'Penugasan',        url: `${peternakBase}/task_assign`,  icon: Users2, roles: ['owner', 'manajer'] },
           { title: 'Pengaturan Tugas', url: `${peternakBase}/task_settings`,icon: Settings2, roles: ['owner', 'manajer'] },
@@ -459,8 +457,6 @@ export default function AppSidebar({ open, onClose }) {
   // ownerTenant is only used for quota (how many businesses you can create yourself).
   const sub = getSubscriptionStatus(tenant)
   const isAccountActive = isSuperadmin || sub.status === 'active' || sub.status === 'trial'
-  const daysLeft = isSuperadmin ? 0 : sub.daysLeft
-
   // Plan-tier gating
   const planTier = isSuperadmin ? 'business' : (sub.plan || 'starter')
   const isPro     = ['pro', 'business'].includes(planTier) || sub.status === 'trial'

@@ -35,6 +35,7 @@ import {
   AlertDialogHeader, AlertDialogTitle 
 } from '@/components/ui/alert-dialog'
 import { supabase } from '@/lib/supabase'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -339,7 +340,15 @@ function FarmSheet({ isOpen, onClose, farm, tenantId }) {
         if (!farm) return
         try {
             const { error } = await supabase.from('farms').update({ is_deleted: true }).eq('id', farm.id)
-            if (error) throw error
+            if (error) {
+                logSupabaseError(error, {
+                    table: 'farms',
+                    operation: 'update',
+                    component: 'Kandang',
+                    actionName: 'broker.farm.delete',
+                })
+                throw error
+            }
             toast.success('Kandang dihapus')
             queryClient.invalidateQueries(['farms'])
             onClose()
@@ -520,11 +529,27 @@ function FarmForm({ farm, tenantId, onSuccess, onCancel, isSheet }) {
 
             if (farm) {
                 const { error } = await supabase.from('farms').update(payload).eq('id', farm.id)
-                if (error) throw error
+                if (error) {
+                    logSupabaseError(error, {
+                        table: 'farms',
+                        operation: 'update',
+                        component: 'Kandang',
+                        actionName: 'broker.farm.update',
+                    })
+                    throw error
+                }
                 toast.success('Kandang diperbarui!')
             } else {
                 const { error } = await supabase.from('farms').insert({ ...payload, tenant_id: tenantId })
-                if (error) throw error
+                if (error) {
+                    logSupabaseError(error, {
+                        table: 'farms',
+                        operation: 'insert',
+                        component: 'Kandang',
+                        actionName: 'broker.farm.create',
+                    })
+                    throw error
+                }
                 toast.success('Kandang ditambahkan!')
             }
             onSuccess()

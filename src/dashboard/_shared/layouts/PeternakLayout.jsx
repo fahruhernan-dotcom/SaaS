@@ -55,7 +55,15 @@ export default function PeternakLayout() {
     swipeStartX.current = null
   }
 
-  if (loading) return null
+  // Visible loading state — must not return null while AppContentLayout's
+  // overlay is between transitions, otherwise root renders only <Toaster />.
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', padding: 24, color: '#F1F5F9', background: '#06090F' }}>
+        Memuat dashboard...
+      </div>
+    )
+  }
 
   const renderContent = () => {
     if (!isDesktop) {

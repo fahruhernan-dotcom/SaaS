@@ -13,6 +13,8 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getBrokerBasePath } from '../lib/hooks/useAuth'
+import { logError } from '@/lib/logger/errorLogger'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" className="shrink-0">
@@ -47,6 +49,14 @@ export default function Login() {
       })
       if (error) throw error
     } catch (err) {
+      logError({
+        level: 'error',
+        source: 'auth',
+        component: 'Login',
+        actionName: 'login.oauth_google',
+        error: err,
+        metadata: { method: 'google' },
+      })
       toast.error('Gagal masuk dengan Google. Coba lagi.')
     }
   }
@@ -64,6 +74,14 @@ export default function Login() {
       
       if (error) {
         const msg = error.message.toLowerCase()
+        logError({
+          level: 'error',
+          source: 'auth',
+          component: 'Login',
+          actionName: 'login.submit',
+          error,
+          metadata: { method: 'email' },
+        })
         if (msg.includes('invalid login credentials')) {
           setError('Email atau password salah')
         } else if (msg.includes('user not found')) {
@@ -86,10 +104,18 @@ export default function Login() {
       }
 
       // Cek profile ada sebelum redirect — cegah login loop
-      const { data: profiles } = await supabase
+      const { data: profiles, error: profilesErr } = await supabase
         .from('profiles')
         .select('*, tenants(sub_type, business_vertical)')
         .eq('auth_user_id', data.user.id)
+      if (profilesErr) {
+        logSupabaseError(profilesErr, {
+          table: 'profiles',
+          operation: 'select',
+          component: 'Login',
+          actionName: 'login.fetch_profiles',
+        })
+      }
 
       if (!profiles || profiles.length === 0) {
         navigate('/onboarding')
@@ -125,6 +151,14 @@ export default function Login() {
       toast.success('Selamat datang kembali!')
       
     } catch (err) {
+      logError({
+        level: 'error',
+        source: 'auth',
+        component: 'Login',
+        actionName: 'login.unexpected',
+        error: err,
+        metadata: { method: 'email' },
+      })
       if (err.message?.toLowerCase().includes('fetch') || err.message?.toLowerCase().includes('network')) {
         setError('Gagal terhubung, coba lagi')
       } else {

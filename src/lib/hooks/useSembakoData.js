@@ -3,6 +3,8 @@ import { supabase } from '../supabase'
 import { toast } from 'sonner'
 import { useAuth } from './useAuth'
 import { normalizeSupabaseError } from '../supabaseErrorHandler'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
+import { logError } from '@/lib/logger/errorLogger'
 
 // ── READ HOOKS ────────────────────────────────────────────────────────────────
 
@@ -278,7 +280,10 @@ export const useCreateSembakoCustomer = () => {
       const { data, error } = await supabase.from('sembako_customers')
         .insert({ ...payload, tenant_id })
         .select().single()
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_customers', operation: 'insert', component: 'useSembakoData', actionName: 'sembako.customer.create' })
+        throw error
+      }
       return data
     },
     onSuccess: () => {
@@ -295,7 +300,10 @@ export const useUpdateSembakoCustomer = () => {
     mutationFn: async ({ id, ...updates }) => {
       const { error } = await supabase.from('sembako_customers')
         .update(updates).eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_customers', operation: 'update', component: 'useSembakoData', actionName: 'sembako.customer.update' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-customers'] })
@@ -311,7 +319,10 @@ export const useDeleteSembakoCustomer = () => {
     mutationFn: async (id) => {
       const { error } = await supabase.from('sembako_customers')
         .update({ is_deleted: true }).eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_customers', operation: 'update', component: 'useSembakoData', actionName: 'sembako.customer.delete' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-customers'] })
@@ -328,7 +339,10 @@ export const useUpdateSembakoSupplier = () => {
     mutationFn: async ({ id, ...updates }) => {
       const { error } = await supabase.from('sembako_suppliers')
         .update(updates).eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_suppliers', operation: 'update', component: 'useSembakoData', actionName: 'sembako.supplier.update' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-suppliers'] })
@@ -344,7 +358,10 @@ export const useDeleteSembakoSupplier = () => {
     mutationFn: async (id) => {
       const { error } = await supabase.from('sembako_suppliers')
         .update({ is_deleted: true }).eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_suppliers', operation: 'update', component: 'useSembakoData', actionName: 'sembako.supplier.delete' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-suppliers'] })
@@ -360,7 +377,10 @@ export const useUpdateSembakoEmployee = () => {
     mutationFn: async ({ id, ...updates }) => {
       const { error } = await supabase.from('sembako_employees')
         .update(updates).eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_employees', operation: 'update', component: 'useSembakoData', actionName: 'sembako.employee.update' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-employees'] })
@@ -377,7 +397,10 @@ export const useCreateSembakoDelivery = () => {
       const tenant_id = await getTenantId()
       const { error } = await supabase.from('sembako_deliveries')
         .insert({ ...payload, tenant_id })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_deliveries', operation: 'insert', component: 'useSembakoData', actionName: 'sembako.delivery.create' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-deliveries'] })
@@ -397,7 +420,10 @@ export const useCompleteSembakoDelivery = () => {
         .from('sembako_deliveries')
         .update({ status: 'delivered', completed_at: new Date().toISOString() })
         .eq('id', deliveryId)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_deliveries', operation: 'update', component: 'useSembakoData', actionName: 'sembako.delivery.complete' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-deliveries'] })
@@ -417,7 +443,10 @@ export const useStartSembakoDelivery = () => {
         .from('sembako_deliveries')
         .update({ status: 'on_route', departed_at: new Date().toISOString() })
         .eq('id', deliveryId)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_deliveries', operation: 'update', component: 'useSembakoData', actionName: 'sembako.delivery.start' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-deliveries'] })
@@ -437,7 +466,10 @@ export const useArriveSembakoDelivery = () => {
         .from('sembako_deliveries')
         .update({ status: 'arrived', arrived_at: new Date().toISOString() })
         .eq('id', deliveryId)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_deliveries', operation: 'update', component: 'useSembakoData', actionName: 'sembako.delivery.arrive' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-deliveries'] })
@@ -459,7 +491,10 @@ export const useUpdateSembakoDeliveryTimestamps = () => {
         .from('sembako_deliveries')
         .update(updates)
         .eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_deliveries', operation: 'update', component: 'useSembakoData', actionName: 'sembako.delivery.update_timestamps' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-deliveries'] })
@@ -476,7 +511,10 @@ export const useMarkPayrollPaid = () => {
       const { error } = await supabase.from('sembako_payroll')
         .update({ payment_status: 'paid', paid_at: new Date().toISOString() })
         .eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_payroll', operation: 'update', component: 'useSembakoData', actionName: 'sembako.payroll.mark_paid' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-payroll'] })
@@ -666,22 +704,50 @@ export const useDeleteSembakoSale = () => {
       const { error } = await supabase.from('sembako_sales')
         .update({ is_deleted: true })
         .eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_sales', operation: 'update', component: 'useSembakoData', actionName: 'sembako.sale.delete' })
+        throw error
+      }
 
       // 4. Hard delete related payments (sembako_payments has NO is_deleted column)
-      await supabase.from('sembako_payments')
+      const { error: payDelErr } = await supabase.from('sembako_payments')
         .delete()
         .eq('sale_id', id)
+      if (payDelErr) {
+        // Partial: sale soft-deleted but payments still exist.
+        logError({
+          level: 'error', source: 'supabase', component: 'useSembakoData',
+          actionName: 'sembako.sale.delete.payments_cleanup',
+          error: payDelErr,
+          metadata: { table: 'sembako_payments', operation: 'delete', partial: true, step: 'payments_delete', sale_id: id },
+        })
+      }
 
       // 5. Hard delete sale items — cegah orphan records di analitik (SIM-04)
-      await supabase.from('sembako_sale_items')
+      const { error: itemsDelErr } = await supabase.from('sembako_sale_items')
         .delete()
         .eq('sale_id', id)
+      if (itemsDelErr) {
+        logError({
+          level: 'error', source: 'supabase', component: 'useSembakoData',
+          actionName: 'sembako.sale.delete.items_cleanup',
+          error: itemsDelErr,
+          metadata: { table: 'sembako_sale_items', operation: 'delete', partial: true, step: 'sale_items_delete', sale_id: id },
+        })
+      }
 
       // 6. Hard delete deliveries terkait — cegah orphan tracking (SIM-04)
-      await supabase.from('sembako_deliveries')
+      const { error: delivDelErr } = await supabase.from('sembako_deliveries')
         .delete()
         .eq('sale_id', id)
+      if (delivDelErr) {
+        logError({
+          level: 'error', source: 'supabase', component: 'useSembakoData',
+          actionName: 'sembako.sale.delete.deliveries_cleanup',
+          error: delivDelErr,
+          metadata: { table: 'sembako_deliveries', operation: 'delete', partial: true, step: 'deliveries_delete', sale_id: id },
+        })
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
@@ -834,7 +900,16 @@ export const useUpdateSembakoSale = () => {
             : (item.cogs_per_unit || 0),
         }))
         const { error: itemErr } = await supabase.from('sembako_sale_items').insert(itemsToInsert)
-        if (itemErr) throw itemErr
+        if (itemErr) {
+          // Partial: old items deleted but new items insert failed → sale_items orphan state.
+          logError({
+            level: 'error', source: 'supabase', component: 'useSembakoData',
+            actionName: 'sembako.sale.update.items_replace',
+            error: itemErr,
+            metadata: { table: 'sembako_sale_items', operation: 'insert', partial: true, step: 'sale_items_reinsert', sale_id: id },
+          })
+          throw itemErr
+        }
 
         // 2g. FIFO re-deduct — reuse cached batches
         for (const item of items) {
@@ -864,7 +939,16 @@ export const useUpdateSembakoSale = () => {
       // ── 3. Update sale header ─────────────────────────────────────────────
       const { _overpaid, ...cleanUpdates } = updates  // strip UI-only hint
       const { error } = await supabase.from('sembako_sales').update(cleanUpdates).eq('id', id)
-      if (error) throw error
+      if (error) {
+        // Header update failed — but stock/items may already have been mutated above.
+        logError({
+          level: 'error', source: 'supabase', component: 'useSembakoData',
+          actionName: 'sembako.sale.update.header',
+          error,
+          metadata: { table: 'sembako_sales', operation: 'update', partial: items && items.length > 0, step: 'sale_header_update', sale_id: id },
+        })
+        throw error
+      }
       return { _overpaid }
     },
     onSuccess: (result) => {
@@ -909,7 +993,10 @@ export const useRecordSembakoSupplierPayment = () => {
       const { error } = await supabase
         .from('sembako_supplier_payments')
         .insert({ ...payload, tenant_id })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_supplier_payments', operation: 'insert', component: 'useSembakoData', actionName: 'sembako.supplier_payment.create' })
+        throw error
+      }
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['sembako-supplier-payments', vars.supplier_id] })
@@ -947,7 +1034,16 @@ export const useCreateSembakoReturn = () => {
         .from('sembako_stock_out')
         .delete()
         .eq('sale_id', sale_id)
-      if (stockOutErr) throw stockOutErr
+      if (stockOutErr) {
+        // Stock already reversed (step 1) but stock_out cleanup failed → partial state.
+        logError({
+          level: 'error', source: 'supabase', component: 'useSembakoData',
+          actionName: 'sembako.sale.return.stock_out_cleanup',
+          error: stockOutErr,
+          metadata: { table: 'sembako_stock_out', operation: 'delete', partial: true, step: 'stock_out_delete', sale_id },
+        })
+        throw stockOutErr
+      }
 
       // 3. Hapus payment records terkait sale ini
       //    (mencegah orphan payments setelah retur)
@@ -955,18 +1051,34 @@ export const useCreateSembakoReturn = () => {
         .from('sembako_payments')
         .delete()
         .eq('sale_id', sale_id)
-      if (payErr) throw payErr
+      if (payErr) {
+        logError({
+          level: 'error', source: 'supabase', component: 'useSembakoData',
+          actionName: 'sembako.sale.return.payments_cleanup',
+          error: payErr,
+          metadata: { table: 'sembako_payments', operation: 'delete', partial: true, step: 'payments_delete', sale_id },
+        })
+        throw payErr
+      }
 
       // 4. Soft delete: beri catatan retur di sales header
       const { error } = await supabase
         .from('sembako_sales')
-        .update({ 
-          is_deleted: true, 
-          notes: `[RETUR ${new Date().toLocaleDateString('id-ID')}] Barang dikembalikan & stok dipulihkan.` 
+        .update({
+          is_deleted: true,
+          notes: `[RETUR ${new Date().toLocaleDateString('id-ID')}] Barang dikembalikan & stok dipulihkan.`
         })
         .eq('id', sale_id)
-        
-      if (error) throw error
+
+      if (error) {
+        logError({
+          level: 'error', source: 'supabase', component: 'useSembakoData',
+          actionName: 'sembako.sale.return.header',
+          error,
+          metadata: { table: 'sembako_sales', operation: 'update', partial: true, step: 'sale_soft_delete', sale_id },
+        })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
@@ -985,7 +1097,7 @@ export const useCreateSembakoReturn = () => {
 export const useAdjustBatchStock = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ batch_id, qty_change, reason, notes }) => {
+    mutationFn: async ({ batch_id, qty_change }) => {
       const tenant_id = await getTenantId()
       
       const { data: batch } = await supabase
@@ -1003,7 +1115,10 @@ export const useAdjustBatchStock = () => {
         .from('sembako_stock_batches')
         .update({ qty_sisa: newQty })
         .eq('id', batch_id)
-      if (updErr) throw updErr
+      if (updErr) {
+        logSupabaseError(updErr, { table: 'sembako_stock_batches', operation: 'update', component: 'useSembakoData', actionName: 'sembako.stock_batch.adjust' })
+        throw updErr
+      }
 
       // BUG-05 fix: sync product.current_stock dengan SUM semua batch aktif
       // agar UI tidak tampilkan stok yang sudah stale
@@ -1013,10 +1128,18 @@ export const useAdjustBatchStock = () => {
         .eq('product_id', batch.product_id)
         .gt('qty_sisa', 0)
       const syncedStock = (batchTotals || []).reduce((s, b) => s + (b.qty_sisa || 0), 0)
-      await supabase
+      const { error: prodSyncErr } = await supabase
         .from('sembako_products')
         .update({ current_stock: syncedStock })
         .eq('id', batch.product_id)
+      if (prodSyncErr) {
+        logError({
+          level: 'error', source: 'supabase', component: 'useSembakoData',
+          actionName: 'sembako.stock_batch.adjust.product_sync',
+          error: prodSyncErr,
+          metadata: { table: 'sembako_products', operation: 'update', partial: true, step: 'product_current_stock_sync', batch_id, product_id: batch.product_id },
+        })
+      }
 
       // Jika pengurangan stok, catat di sembako_stock_out
       if (qty_change < 0) {
@@ -1029,7 +1152,15 @@ export const useAdjustBatchStock = () => {
             qty_keluar: Math.abs(qty_change),
             buy_price: batch.buy_price || 0,
           })
-        if (outErr) throw outErr
+        if (outErr) {
+          logError({
+            level: 'error', source: 'supabase', component: 'useSembakoData',
+            actionName: 'sembako.stock_batch.adjust.stock_out',
+            error: outErr,
+            metadata: { table: 'sembako_stock_out', operation: 'insert', partial: true, step: 'stock_out_insert', batch_id },
+          })
+          throw outErr
+        }
       }
     },
     onSuccess: () => {
@@ -1051,7 +1182,10 @@ export const useCreateSembakoProduct = () => {
       const tenant_id = await getTenantId()
       const { error } = await supabase.from('sembako_products')
         .insert({ ...payload, tenant_id })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_products', operation: 'insert', component: 'useSembakoData', actionName: 'sembako.product.create' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-products'] })
@@ -1075,7 +1209,10 @@ export const useAddStockBatch = () => {
           qty_sisa: qty_masuk,
           buy_price, purchase_date, expiry_date, notes,
         })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_stock_batches', operation: 'insert', component: 'useSembakoData', actionName: 'sembako.stock_batch.create' })
+        throw error
+      }
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['sembako-products'] })
@@ -1142,7 +1279,10 @@ export const useCreateSembakoSale = () => {
           paid_amount: 0,
           notes,
         }).select().single()
-      if (saleErr) throw saleErr
+      if (saleErr) {
+        logSupabaseError(saleErr, { table: 'sembako_sales', operation: 'insert', component: 'useSembakoData', actionName: 'sembako.sale.create' })
+        throw saleErr
+      }
 
       const itemsToInsert = items.map(item => ({
         sale_id: sale.id,
@@ -1154,7 +1294,16 @@ export const useCreateSembakoSale = () => {
         cogs_per_unit: item.product_id ? (itemFifoCogs[item.product_id] ?? item.cogs_per_unit ?? 0) : (item.cogs_per_unit || 0),
       }))
       const { error: itemErr } = await supabase.from('sembako_sale_items').insert(itemsToInsert)
-      if (itemErr) throw itemErr
+      if (itemErr) {
+        // Partial: sale header inserted but items failed → orphan sale.
+        logError({
+          level: 'error', source: 'supabase', component: 'useSembakoData',
+          actionName: 'sembako.sale.create.items',
+          error: itemErr,
+          metadata: { table: 'sembako_sale_items', operation: 'insert', partial: true, step: 'sale_items_insert', sale_id: sale.id },
+        })
+        throw itemErr
+      }
 
       try {
         for (const item of items) {
@@ -1165,15 +1314,34 @@ export const useCreateSembakoSale = () => {
             if (qtyToDeduct <= 0) break
             const deduct = Math.min(batch.qty_sisa, qtyToDeduct)
             const { error: batchErr } = await supabase.from('sembako_stock_batches').update({ qty_sisa: batch.qty_sisa - deduct }).eq('id', batch.id)
-            if (batchErr) throw batchErr
+            if (batchErr) {
+              logError({
+                level: 'error', source: 'supabase', component: 'useSembakoData',
+                actionName: 'sembako.sale.create.stock_deduct',
+                error: batchErr,
+                metadata: { table: 'sembako_stock_batches', operation: 'update', partial: true, step: 'stock_batches_deduct', sale_id: sale.id, batch_id: batch.id },
+              })
+              throw batchErr
+            }
             const { error: outErr } = await supabase.from('sembako_stock_out').insert({
               tenant_id, product_id: item.product_id, batch_id: batch.id, sale_id: sale.id, qty_keluar: deduct, buy_price: batch.buy_price || 0,
             })
-            if (outErr) throw outErr
+            if (outErr) {
+              logError({
+                level: 'error', source: 'supabase', component: 'useSembakoData',
+                actionName: 'sembako.sale.create.stock_out',
+                error: outErr,
+                metadata: { table: 'sembako_stock_out', operation: 'insert', partial: true, step: 'stock_out_insert', sale_id: sale.id, batch_id: batch.id },
+              })
+              throw outErr
+            }
             qtyToDeduct -= deduct
           }
         }
       } catch (deductErr) {
+        // Compensating rollback: best-effort cleanup. Note: stock_batches updates
+        // already done in this loop are NOT reversed here — superadmin may need
+        // to reconcile via the partial logs above.
         await supabase.from('sembako_sale_items').delete().eq('sale_id', sale.id)
         await supabase.from('sembako_sales').delete().eq('id', sale.id)
         throw deductErr
@@ -1199,11 +1367,23 @@ export const useRecordSembakoPayment = () => {
       const { error: payErr } = await supabase.from('sembako_payments').insert({
         tenant_id, sale_id, customer_id, amount, payment_date, payment_method, reference_number, notes,
       })
-      if (payErr) throw payErr
+      if (payErr) {
+        logSupabaseError(payErr, { table: 'sembako_payments', operation: 'insert', component: 'useSembakoData', actionName: 'sembako.payment.create' })
+        throw payErr
+      }
       const { data: sale } = await supabase.from('sembako_sales').select('total_amount, paid_amount').eq('id', sale_id).single()
       const newPaid = (sale.paid_amount || 0) + amount
       const newStatus = newPaid >= sale.total_amount ? 'lunas' : newPaid > 0 ? 'sebagian' : 'belum_lunas'
-      await supabase.from('sembako_sales').update({ paid_amount: newPaid, payment_status: newStatus }).eq('id', sale_id)
+      const { error: saleSyncErr } = await supabase.from('sembako_sales').update({ paid_amount: newPaid, payment_status: newStatus }).eq('id', sale_id)
+      if (saleSyncErr) {
+        // Partial commit: payment recorded but sale paid_amount/status not synced.
+        logError({
+          level: 'error', source: 'supabase', component: 'useSembakoData',
+          actionName: 'sembako.payment.create.sale_sync',
+          error: saleSyncErr,
+          metadata: { table: 'sembako_sales', operation: 'update', partial: true, step: 'sale_paid_amount_sync', sale_id },
+        })
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-sales'] })
@@ -1221,7 +1401,10 @@ export const useCreateSembakoEmployee = () => {
     mutationFn: async (payload) => {
       const tenant_id = await getTenantId()
       const { error } = await supabase.from('sembako_employees').insert({ ...payload, tenant_id })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_employees', operation: 'insert', component: 'useSembakoData', actionName: 'sembako.employee.create' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-employees'] })
@@ -1241,7 +1424,10 @@ export const useRecordPayroll = () => {
       const { error } = await supabase.from('sembako_payroll').insert({
         tenant_id, employee_id, period_type, period_date, work_days, trip_count, sales_amount, base_amount, commission_amount, bonus, deduction, notes, payment_status: 'pending',
       })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_payroll', operation: 'insert', component: 'useSembakoData', actionName: 'sembako.payroll.create' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-payroll'] })
@@ -1257,7 +1443,10 @@ export const useUpdateSembakoProduct = () => {
   return useMutation({
     mutationFn: async ({ id, ...updates }) => {
       const { error } = await supabase.from('sembako_products').update(updates).eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_products', operation: 'update', component: 'useSembakoData', actionName: 'sembako.product.update' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-products'] })
@@ -1273,9 +1462,21 @@ export const useSoftDeleteSembakoProduct = () => {
   return useMutation({
     mutationFn: async (id) => {
       const { error: errProduct } = await supabase.from('sembako_products').update({ is_deleted: true }).eq('id', id)
-      if (errProduct) throw errProduct
+      if (errProduct) {
+        logSupabaseError(errProduct, { table: 'sembako_products', operation: 'update', component: 'useSembakoData', actionName: 'sembako.product.delete' })
+        throw errProduct
+      }
       const { error: errBatch } = await supabase.from('sembako_stock_batches').update({ is_deleted: true }).eq('product_id', id)
-      if (errBatch) throw errBatch
+      if (errBatch) {
+        // Partial commit: product marked deleted but related batches still active.
+        logError({
+          level: 'error', source: 'supabase', component: 'useSembakoData',
+          actionName: 'sembako.product.delete.batch_sync',
+          error: errBatch,
+          metadata: { table: 'sembako_stock_batches', operation: 'update', partial: true, step: 'batch_soft_delete', product_id: id },
+        })
+        throw errBatch
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sembako-products'] })
@@ -1293,7 +1494,10 @@ export const useCreateSembakoSupplier = () => {
     mutationFn: async ({ supplier_name, phone, address, notes }) => {
       const tenant_id = await getTenantId()
       const { data, error } = await supabase.from('sembako_suppliers').insert({ tenant_id, supplier_name, phone, address, notes }).select().single()
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sembako_suppliers', operation: 'insert', component: 'useSembakoData', actionName: 'sembako.supplier.create' })
+        throw error
+      }
       return data
     },
     onSuccess: () => {

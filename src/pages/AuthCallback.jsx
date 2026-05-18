@@ -3,13 +3,15 @@ import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { toast } from 'sonner'
-import LoadingScreen from '@/components/LoadingScreen'
 import { motion } from 'framer-motion'
 import { AlertTriangle, RotateCcw, LogIn } from 'lucide-react'
+import { logError } from '@/lib/logger/errorLogger'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
   const [authError, setAuthError] = useState(null)
+  const [phase, setPhase] = useState('processing') // 'processing' | 'preparing' | 'error'
 
   useEffect(() => {
     // Parse error from hash fragment (e.g. #error=access_denied&error_code=otp_expired&...)
@@ -26,8 +28,20 @@ export default function AuthCallback() {
           'invalid_request': 'Permintaan tidak valid. Silakan coba lagi.',
         }
 
+        const codeOnly = errorCode || params.get('error')
+        logError({
+          level: 'warning',
+          source: 'auth',
+          component: 'AuthCallback',
+          actionName: 'auth.callback_error',
+          // Only error code + sanitized description — NEVER the token/hash itself.
+          error: { code: codeOnly, message: friendlyMessages[errorCode] || errorDesc?.replace(/\+/g, ' ') || 'callback_error' },
+          metadata: { error_code: codeOnly },
+        })
+
+        setPhase('error')
         setAuthError({
-          code: errorCode || params.get('error'),
+          code: codeOnly,
           message: friendlyMessages[errorCode] || errorDesc?.replace(/\+/g, ' ') || 'Terjadi kesalahan saat verifikasi email.',
         })
         return
@@ -37,14 +51,37 @@ export default function AuthCallback() {
     // Normal flow: get session and redirect
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session?.user) {
-        navigate('/login', { replace: true })
+        logError({
+          level: 'warning',
+          source: 'auth',
+          component: 'AuthCallback',
+          actionName: 'auth.callback_no_session',
+          error: { message: 'No session after callback', code: 'no_session' },
+          metadata: {},
+        })
+        setPhase('error')
+        setAuthError({
+          code: 'no_session',
+          message: 'Sesi tidak ditemukan. Silakan login ulang.',
+        })
         return
       }
 
-      const { data: profiles } = await supabase
+      // Session confirmed — switch to "preparing" UI while we fetch profile/tenant.
+      setPhase('preparing')
+
+      const { data: profiles, error: profilesErr } = await supabase
         .from('profiles')
         .select('*, tenants(sub_type, business_vertical)')
         .eq('auth_user_id', session.user.id)
+      if (profilesErr) {
+        logSupabaseError(profilesErr, {
+          table: 'profiles',
+          operation: 'select',
+          component: 'AuthCallback',
+          actionName: 'auth.callback_fetch_profiles',
+        })
+      }
 
       if (!profiles || profiles.length === 0) {
         // Brand-new user: show welcome screen first
@@ -88,6 +125,23 @@ export default function AuthCallback() {
 
       navigate(getBrokerBasePath(profile.tenants) + '/beranda', { replace: true })
       toast.success('Selamat datang kembali!')
+    }).catch((err) => {
+      // Catches network errors, navigate failures, or any unexpected throw inside
+      // the getSession().then() chain. Without this the promise hangs and the UI
+      // stays in default state with no feedback.
+      logError({
+        level: 'error',
+        source: 'auth',
+        component: 'AuthCallback',
+        actionName: 'auth.callback_unexpected',
+        error: err,
+        metadata: {},
+      })
+      setPhase('error')
+      setAuthError({
+        code: 'callback_failure',
+        message: 'Tidak bisa memproses login. Periksa koneksi dan coba lagi.',
+      })
     })
   }, [navigate])
 
@@ -153,5 +207,47 @@ export default function AuthCallback() {
     )
   }
 
-  return <LoadingScreen />
+  // Default processing/preparing UI — explicit visible state so the page never
+  // appears blank even if LoadingScreen / framer-motion path breaks.
+  const message = phase === 'preparing' ? 'Menyiapkan akun…' : 'Memproses login…'
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: '#06090F',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 24,
+    }}>
+      <div style={{ textAlign: 'center', maxWidth: 360 }}>
+        <div style={{
+          width: 56,
+          height: 56,
+          margin: '0 auto 20px',
+          borderRadius: 16,
+          border: '2px solid rgba(34,197,94,0.25)',
+          borderTopColor: '#22C55E',
+          animation: 'authcb-spin 0.8s linear infinite',
+        }} />
+        <style>{`@keyframes authcb-spin { to { transform: rotate(360deg); } }`}</style>
+        <h1 style={{
+          fontFamily: 'Sora, sans-serif',
+          fontSize: 18,
+          fontWeight: 800,
+          color: '#F1F5F9',
+          margin: 0,
+          marginBottom: 8,
+        }}>
+          {message}
+        </h1>
+        <p style={{
+          fontSize: 13,
+          color: '#94A3B8',
+          margin: 0,
+        }}>
+          Mohon tunggu sebentar…
+        </p>
+      </div>
+    </div>
+  )
 }

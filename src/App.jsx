@@ -65,6 +65,7 @@ const AdminSubscriptions= lazy(() => import('./dashboard/admin/AdminSubscription
 const AdminPricing      = lazy(() => import('./dashboard/admin/AdminPricing'))
 const AdminActivity     = lazy(() => import('./dashboard/admin/AdminActivity'))
 const AdminSettings     = lazy(() => import('./dashboard/admin/AdminSettings'))
+const AdminInfo         = lazy(() => import('./dashboard/admin/AdminInfo'))
 
 import { getXBasePath, resolveBusinessVertical, BUSINESS_MODELS } from './lib/businessModel'
 import { isSuperadmin } from '@/lib/auth'
@@ -185,7 +186,7 @@ function RoleGuard({ allowedRoles, children }) {
 }
 
 function RoleRedirector() {
-  const { user, profile, tenant, loading } = useAuth();
+  const { profile, tenant, loading } = useAuth();
   const location = useLocation();
   if (loading) return <LoadingScreen />;
   
@@ -515,7 +516,7 @@ export const routes = createRoutesFromElements(
       <Route path="pricing" element={<AdminPricing />} />
       <Route path="activity" element={<AdminActivity />} />
       <Route path="settings" element={<AdminSettings />} />
-      <Route path="info" element={<AdminComingSoon />} />
+      <Route path="info" element={<AdminInfo />} />
       <Route path="help" element={<AdminComingSoon />} />
     </Route>
 

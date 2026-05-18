@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, ChevronLeft, Check, X, MapPin } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 const CARD_BG = '#0C1319'
 const MUTED = '#64748B'
@@ -452,8 +453,14 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
   const [targetRect, setTargetRect] = useState(null)
   const retryRef = useRef(null)
 
+  // CLAUDE.md canonical pattern: profile.profile_id is an alias set only when
+  // there is a matching tenant_memberships row. Brand-new profiles created by
+  // create_new_business RPC don't yet have a membership row, so profile_id is
+  // undefined and only the legacy `id` (actual profiles.id) is available.
+  const actualProfileId = profile?.profile_id ?? profile?.id
+
   useEffect(() => {
-    if (!tenant?.id || !profile?.profile_id) return
+    if (!tenant?.id || !actualProfileId) return
 
     // Fast path: localStorage already has a value
     try {
@@ -464,7 +471,7 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
     supabase
       .from('profiles')
       .select('tutorials_completed')
-      .eq('id', profile.profile_id)
+      .eq('id', actualProfileId)
       .single()
       .then(({ data }) => {
         if (data?.tutorials_completed?.[storageKey]) {
@@ -473,7 +480,7 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
           setVisible(true)
         }
       })
-  }, [tenant?.id, profile?.profile_id, storageKey])
+  }, [tenant?.id, actualProfileId, storageKey])
 
   const queryTarget = useCallback((step) => {
     if (!step?.selector) { setTargetRect(null); return }
@@ -520,20 +527,52 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
     try { localStorage.setItem(storageKey, value) } catch { /* ok */ }
     setVisible(false)
 
-    // Sync ke DB — fire and forget
-    if (profile?.profile_id && tenant?.id) {
+    // Sync ke DB — fire and forget. Using direct UPDATE instead of the
+    // append_tutorial_completed RPC because the deployed function signature
+    // only accepts (p_key, p_value) — passing p_tenant_id makes the RPC return
+    // 404. The authenticated role has GRANT UPDATE on tutorials_completed
+    // (see supabase/17_column_grants.sql), so a read-merge-write works fine.
+    if (actualProfileId && tenant?.id) {
       try {
-        const { error } = await supabase.rpc('append_tutorial_completed', {
-          p_key: storageKey,
-          p_value: value,
-          p_tenant_id: tenant.id
-        })
+        const { data: current, error: readErr } = await supabase
+          .from('profiles')
+          .select('tutorials_completed')
+          .eq('id', actualProfileId)
+          .single()
 
-        if (error) {
-          console.error('append_tutorial_completed RPC failed:', error)
+        if (readErr) {
+          logSupabaseError(readErr, {
+            table: 'profiles',
+            operation: 'select',
+            component: 'TutorialOverlay',
+            actionName: 'tutorial.complete.read',
+          })
+        } else {
+          const merged = {
+            ...(current?.tutorials_completed || {}),
+            [storageKey]: value,
+          }
+          const { error: writeErr } = await supabase
+            .from('profiles')
+            .update({ tutorials_completed: merged })
+            .eq('id', actualProfileId)
+
+          if (writeErr) {
+            logSupabaseError(writeErr, {
+              table: 'profiles',
+              operation: 'update',
+              component: 'TutorialOverlay',
+              actionName: 'tutorial.complete.write',
+            })
+          }
         }
       } catch (err) {
-        console.error('append_tutorial_completed RPC exception:', err)
+        logSupabaseError(err, {
+          table: 'profiles',
+          operation: 'update',
+          component: 'TutorialOverlay',
+          actionName: 'tutorial.complete.exception',
+        })
       }
     }
   }

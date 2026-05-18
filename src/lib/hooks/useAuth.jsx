@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../supabase'
 import { getXBasePath } from '../businessModel'
 import { toast } from 'sonner'
+import { setLoggerContext, logError } from '@/lib/logger/errorLogger'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 // ── Auth Context ───────────────────────────────────────────────────────────────
 // Single source of truth untuk auth state.
@@ -21,21 +23,43 @@ export function AuthProvider({ children }) {
   const setPersistedTenantId = (id) => localStorage.setItem('ternakos_active_tenant_id', id)
 
   async function fetchAuthData(userId) {
+    // Set partial logger context early so any Supabase select failures below
+    // get user_id stamped (required for system_error_logs RLS — INSERT policy
+    // requires user_id = auth.uid()). Active tenant/role get filled in at end
+    // once the active profile is resolved.
+    setLoggerContext({ userId, tenantId: null, vertical: null, role: null })
+
     // 1. Fetch all profiles (legacy source of truth for multi-tenant)
     const { data: legacyProfiles, error: profilesError } = await supabase
       .from('profiles')
       .select('*, tenants(*)')
       .eq('auth_user_id', userId)
 
-    if (profilesError) console.error('Error fetching profiles:', profilesError)
+    if (profilesError) {
+      console.error('Error fetching profiles:', profilesError)
+      logSupabaseError(profilesError, {
+        table: 'profiles',
+        operation: 'select',
+        component: 'AuthProvider',
+        actionName: 'auth.fetch_profiles',
+      })
+    }
 
     // 2. Fetch all memberships (new source of truth for M:N)
     const { data: memberData, error: memberError } = await supabase
       .from('tenant_memberships')
       .select('*, tenants(*)')
       .eq('auth_user_id', userId)
-    
-    if (memberError) console.error('Error fetching memberships:', memberError)
+
+    if (memberError) {
+      console.error('Error fetching memberships:', memberError)
+      logSupabaseError(memberError, {
+        table: 'tenant_memberships',
+        operation: 'select',
+        component: 'AuthProvider',
+        actionName: 'auth.fetch_memberships',
+      })
+    }
 
     // 3. Uniquely merge both sources by tenant_id
     // Identify a "Master Profile" (any entry with name/metadata) to sync across all associations
@@ -91,6 +115,16 @@ export function AuthProvider({ children }) {
 
     setProfile(active)
     setLoading(false)
+
+    // Inject context so logger can tag logs with user/tenant/role.
+    // Fallback userId to the param so we never lose user context even when
+    // the profile fetch returned empty (e.g. fresh signup mid-onboarding).
+    setLoggerContext({
+      userId: active?.auth_user_id || userId,
+      tenantId: active?.tenant_id || null,
+      role: active?.app_role || active?.role || active?.user_type || null,
+      vertical: null, // resolved per-component via resolveBusinessVertical
+    })
   }
 
   useEffect(() => {
@@ -128,6 +162,18 @@ export function AuthProvider({ children }) {
         .eq('tenant_id', target.tenant_id)
 
       if (error) {
+        logError({
+          level: 'error',
+          source: 'supabase',
+          component: 'AuthProvider',
+          actionName: 'switchTenant',
+          error,
+          metadata: {
+            table: 'profiles',
+            operation: 'update',
+            target_tenant_id: target?.tenant_id,
+          },
+        })
         toast.error('Gagal sinkronisasi sesi: ' + error.message)
         return false
       }

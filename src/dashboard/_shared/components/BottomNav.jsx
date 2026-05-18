@@ -28,6 +28,11 @@ import {
   Wheat,
   Receipt,
   Boxes,
+  Scale,
+  HeartPulse,
+  FileText,
+  Sparkles,
+  PackagePlus,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
@@ -246,7 +251,7 @@ function BrokerNavItem({ tab, active, color, onClick }) {
 }
 
 // ── Sembako Speed Dial FAB ────────────────────────────────────────────────────
-function SembakoSpeedDial({ color, open, onToggle, items }) {
+function SpeedDial({ color, open, onToggle, items }) {
   return (
     <>
       {/* Speed dial container */}
@@ -328,6 +333,25 @@ function SembakoSpeedDial({ color, open, onToggle, items }) {
   )
 }
 
+// Keep backward-compat alias
+const SembakoSpeedDial = SpeedDial
+
+// ── Peternak Speed Dial (green-themed, same UX as Sembako) ────────────────────
+const PeternakSpeedDial = SpeedDial
+
+// ── Helper: is this Peternak Domba Fattening? ────────────────────────────────
+function isPeternakDombaFattening(profile, tenant, vertical) {
+  try {
+    if (vertical === 'peternak_domba_penggemukan') return true
+    const subType = profile?.sub_type || tenant?.sub_type || ''
+    const businessVertical = profile?.business_vertical || tenant?.business_vertical || ''
+    const keywords = ['peternak_domba_penggemukan', 'peternak_kambing_domba_penggemukan', 'domba_penggemukan']
+    return keywords.some(k => subType === k || businessVertical === k)
+  } catch {
+    return false
+  }
+}
+
 // ── Peternak Dock FAB ─────────────────────────────────────────────────────────
 function PeternakCenterFAB({ color, onClick }) {
   return (
@@ -358,6 +382,7 @@ export default function BottomNav() {
   const navigate = useNavigate()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [fabMenuOpen, setFabMenuOpen] = useState(false)
+  const [peternakFabMenuOpen, setPeternakFabMenuOpen] = useState(false)
   const { accentColor } = useTheme()
 
   // Centralized Business Vertical Resolution (SCALABLE ARCHITECTURE)
@@ -366,7 +391,12 @@ export default function BottomNav() {
   
   // BRANDING: Theme implementation
   const isSembako = vertical === 'distributor_sembako' || vertical === 'sembako_broker'
+  const isDombaFattening = isPeternakDombaFattening(profile, tenant, vertical)
   const color = (isSembako ? '#EA580C' : (accentColor || model?.color || '#10B981'))
+
+  // Domba Fattening green tokens (override when speed dial is used)
+  const DOMBA_GREEN = '#22C55E'
+  const dombaColor = isDombaFattening ? DOMBA_GREEN : color
 
   // Detect peternak per-farm context (Level 2)
   // URL structure: /peternak/:peternakType/kandang/:farmId/...
@@ -423,6 +453,17 @@ export default function BottomNav() {
     { label: 'Tambah Pengeluaran', icon: Wallet,  onClick: () => { setFabMenuOpen(false); navigate(`${brokerBase}/laporan`) } },
   ] : null
 
+  // ── Domba Fattening Speed Dial items ─────────────────────────────────────────
+  const DOMBA_BASE = '/peternak/peternak_domba_penggemukan'
+  const dombaSpeedItems = isDombaFattening ? [
+    { label: 'Timbang Ternak',  icon: Scale,       onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/ternak`) } },
+    { label: 'Log Pakan',       icon: Wheat,       onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/stok-pakan`) } },
+    { label: 'Catat Kesehatan', icon: HeartPulse,  onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/kesehatan`) } },
+    { label: 'Bersih Kandang',  icon: Sparkles,    onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/daily_task`) } },
+    { label: 'Catatan Harian',  icon: FileText,    onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/daily_task`) } },
+    { label: 'Batch Baru',      icon: PackagePlus, onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/batch`) } },
+  ] : null
+
   // Role-based filtering — use model.category (already resolved) rather than profile.user_type
   // which may be 'superadmin' when an admin browses a peternak dashboard
   const isPeternakUser = profile?.user_type === 'peternak' || model?.category === 'peternak'
@@ -435,6 +476,9 @@ export default function BottomNav() {
     if (isPeternakFarm) fabPath = null
     else if (model.fabPath?.includes('/peternak/')) fabPath = null
   }
+
+  // Domba speed dial is also permission-gated: suppress for view_only
+  const showDombaSpeedDial = isDombaFattening && (!pp || pp.showFab)
 
   const tabs = allTabs.filter(tab => {
     if (isSuperadmin(profile)) return true
@@ -479,7 +523,8 @@ export default function BottomNav() {
   const finalTabs = tabs
 
   // Split into left half + right half for FAB layout
-  const hasFab = !!fabPath
+  // showDombaSpeedDial always reserves a center speed-dial slot, regardless of fabPath
+  const hasFab = !!fabPath || showDombaSpeedDial
   const mid    = Math.ceil(finalTabs.length / 2)
   const leftTabs  = hasFab ? finalTabs.slice(0, mid)  : finalTabs
   const rightTabs = hasFab ? finalTabs.slice(mid)      : []
@@ -541,7 +586,7 @@ export default function BottomNav() {
 
   return (
     <>
-      {/* Sembako FAB backdrop — rendered outside <nav> so it doesn't get clipped by nav's stacking context */}
+      {/* Sembako FAB backdrop */}
       <AnimatePresence>
         {fabMenuOpen && (
           <motion.div
@@ -550,6 +595,25 @@ export default function BottomNav() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             onClick={() => setFabMenuOpen(false)}
+            style={{
+              position: 'fixed', inset: 0, zIndex: 3490,
+              background: 'rgba(0,0,0,0.55)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Domba Fattening FAB backdrop */}
+      <AnimatePresence>
+        {peternakFabMenuOpen && showDombaSpeedDial && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            onClick={() => setPeternakFabMenuOpen(false)}
             style={{
               position: 'fixed', inset: 0, zIndex: 3490,
               background: 'rgba(0,0,0,0.55)',
@@ -603,7 +667,7 @@ export default function BottomNav() {
         }}
       >
         {useFloatingDock ? (
-          hasFab ? (
+          hasFab || showDombaSpeedDial ? (
             <>
               {leftTabs.map(renderTab)}
               {isSembako ? (
@@ -612,6 +676,13 @@ export default function BottomNav() {
                   open={fabMenuOpen}
                   onToggle={() => setFabMenuOpen(v => !v)}
                   items={sembakoSpeedItems}
+                />
+              ) : showDombaSpeedDial ? (
+                <PeternakSpeedDial
+                  color={dombaColor}
+                  open={peternakFabMenuOpen}
+                  onToggle={() => setPeternakFabMenuOpen(v => !v)}
+                  items={dombaSpeedItems}
                 />
               ) : (
                 <PeternakCenterFAB color={color} onClick={() => navigate(fabPath)} />

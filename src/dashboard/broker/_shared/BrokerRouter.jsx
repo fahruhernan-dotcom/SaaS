@@ -47,7 +47,7 @@ import { resolveBusinessVertical as resolveVertical } from '@/lib/businessModel'
 export function BrokerPageRouter({ page }) {
   const { brokerType } = useParams()
   const { profile, tenant } = useAuth()
-  
+
   const pages = {
     broker_ayam: {
       beranda: <Beranda />,

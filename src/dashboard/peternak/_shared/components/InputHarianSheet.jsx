@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -260,7 +261,15 @@ export default function InputHarianSheet({ open, onClose, cycle }) {
         condition: form.condition,
         notes: form.notes || null,
       }])
-      if (recErr) throw recErr
+      if (recErr) {
+        logSupabaseError(recErr, {
+          table: 'daily_records',
+          operation: 'insert',
+          component: 'InputHarianSheet',
+          actionName: 'submitDaily',
+        })
+        throw recErr
+      }
 
       const currentCount = cycle?.current_count ?? cycle?.doc_count ?? 0
       const { error: cycleErr } = await supabase

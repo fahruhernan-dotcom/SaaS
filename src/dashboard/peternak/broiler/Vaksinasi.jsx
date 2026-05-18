@@ -13,6 +13,7 @@ import {
 } from '@/lib/hooks/usePeternakData'
 import { toast } from 'sonner'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -474,7 +475,15 @@ function AddVaccinationSheet({ open, onClose, cycle, tenantId, prefill, cycleAge
         batch_number: form.batch_number.trim() || null,
         notes: form.notes.trim() || null,
       })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, {
+          table: 'vaccination_records',
+          operation: 'insert',
+          component: 'Vaksinasi',
+          actionName: 'peternak.vaccination.create',
+        })
+        throw error
+      }
       toast.success(`Vaksinasi ${form.vaccine_name} berhasil dicatat`)
       if (onSuccess) onSuccess()
       setForm({ vaccination_date: today, vaccine_name: '', disease_target: '', method: 'air_minum', dose_per_bird: '', batch_number: '', notes: '' })

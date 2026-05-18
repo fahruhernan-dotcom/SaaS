@@ -1,4 +1,5 @@
 import { Component } from 'react'
+import { logError } from '@/lib/logger/errorLogger'
 
 export default class ErrorBoundary extends Component {
   constructor(props) {
@@ -12,6 +13,21 @@ export default class ErrorBoundary extends Component {
   
   componentDidCatch(error, info) {
     console.error('ErrorBoundary caught:', error, info)
+    // Fire-and-forget — never await in lifecycle methods
+    logError({
+      level: 'error',
+      source: 'react_error_boundary',
+      component: this.props.name || 'ErrorBoundary',
+      error: {
+        message: error?.message,
+        stack: error?.stack,
+        code: null,
+        details: info?.componentStack
+          ? String(info.componentStack).slice(0, 1000)
+          : null,
+      },
+      metadata: {},
+    })
   }
   
   render() {

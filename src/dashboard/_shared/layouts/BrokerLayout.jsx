@@ -174,7 +174,15 @@ export default function BrokerLayout() {
     swipeStartX.current = null
   }
 
-  if (loading) return null
+  // Visible loading state — must not return null while AppContentLayout's
+  // overlay is between transitions, otherwise root renders only <Toaster />.
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', padding: 24, color: '#F1F5F9', background: '#06090F' }}>
+        Memuat dashboard...
+      </div>
+    )
+  }
 
   // Guard: Business Model Selection (Bypassed for Superadmin)
   if (!isSuperadmin && !profile?.business_model_selected) {

@@ -14,6 +14,8 @@ import { Card } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
+import { logError } from '@/lib/logger/errorLogger'
 import { formatIDR } from '@/lib/format'
 import { useNavigate } from 'react-router-dom'
 import { InputRupiah } from '@/components/ui/InputRupiah'
@@ -106,9 +108,17 @@ export default function FormBeliModal({ onClose }) {
         notes: values.notes || null
       })
 
-      if (purchaseError) throw purchaseError
+      if (purchaseError) {
+        logSupabaseError(purchaseError, {
+          table: 'purchases',
+          operation: 'insert',
+          component: 'FormBeliModal',
+          actionName: 'broker.purchase.create',
+        })
+        throw purchaseError
+      }
 
-      // Update farm stock
+      // Update farm stock — partial commit risk: purchase already inserted.
       const { data: farm } = await supabase
         .from('farms')
         .select('population')
@@ -116,10 +126,26 @@ export default function FormBeliModal({ onClose }) {
         .single()
 
       if (farm) {
-        await supabase
+        const { error: farmUpdErr } = await supabase
           .from('farms')
           .update({ population: (farm.population || 0) - values.quantity })
           .eq('id', values.farm_id)
+        if (farmUpdErr) {
+          // Non-fatal: purchase exists but farm population not decremented.
+          logError({
+            level: 'error',
+            source: 'supabase',
+            component: 'FormBeliModal',
+            actionName: 'broker.purchase.create.farm_sync',
+            error: farmUpdErr,
+            metadata: {
+              table: 'farms',
+              operation: 'update',
+              partial: true,
+              farm_id: values.farm_id,
+            },
+          })
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: ['broker-stats'] })

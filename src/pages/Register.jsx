@@ -18,6 +18,7 @@ import { getBrokerBasePath } from '../lib/hooks/useAuth'
 import { useAntiSpam } from '@/lib/hooks/useAntiSpam'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { usePlatformStats } from '@/lib/hooks/usePlatformStats'
+import { logError } from '@/lib/logger/errorLogger'
 
 // Components
 import MobileRegister from './MobileRegister'
@@ -121,6 +122,14 @@ export default function Register() {
       })
       if (error) throw error
     } catch (err) {
+      logError({
+        level: 'error',
+        source: 'auth',
+        component: 'Register',
+        actionName: 'register.oauth_google',
+        error: err,
+        metadata: { method: 'google' },
+      })
       toast.error('Gagal masuk dengan Google. Coba lagi.')
     } finally {
       setGoogleLoading(false)
@@ -135,10 +144,26 @@ export default function Register() {
         .rpc('get_invitation_by_token', { p_token: data.inviteCode.toUpperCase().trim() })
       const invite = inviteRows?.[0] ?? null
       if (inviteError || !invite || invite.status !== 'pending') {
+        logError({
+          level: 'warning',
+          source: 'auth',
+          component: 'Register',
+          actionName: 'register.invite_invalid',
+          error: inviteError || { message: 'Invitation not found or not pending', code: invite?.status || 'no_invite' },
+          metadata: { method: 'invite_code' },
+        })
         toast.error('Kode undangan tidak valid atau sudah kadaluarsa')
         return
       }
       if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
+        logError({
+          level: 'warning',
+          source: 'auth',
+          component: 'Register',
+          actionName: 'register.invite_expired',
+          error: { message: 'Invitation expired', code: 'invite_expired' },
+          metadata: { method: 'invite_code' },
+        })
         toast.error('Kode undangan sudah kadaluarsa')
         return
       }
@@ -157,12 +182,28 @@ export default function Register() {
       toast.success('Berhasil bergabung ke ' + businessName)
       const profile = await waitForProfile(signUpData.user.id)
       if (!profile) {
+        logError({
+          level: 'error',
+          source: 'auth',
+          component: 'Register',
+          actionName: 'register.wait_profile_timeout',
+          error: { message: 'Profile not created within timeout window after invite signup', code: 'profile_timeout' },
+          metadata: { method: 'invite' },
+        })
         toast.error('Gagal memuat profil. Silakan login manual.')
         return
       }
       await supabase.auth.refreshSession()
       navigate(getBrokerBasePath(profile.tenants) + '/beranda')
     } catch (err) {
+      logError({
+        level: 'error',
+        source: 'auth',
+        component: 'Register',
+        actionName: 'register.invite_submit',
+        error: err,
+        metadata: { method: 'invite' },
+      })
       setAuthError(err.message)
     } finally {
       setIsLoading(false)
@@ -189,6 +230,14 @@ export default function Register() {
       navigate('/check-email', { state: { email: formData.email.trim() } })
       toast.success('Akun dibuat! Cek email kamu.')
     } catch (err) {
+      logError({
+        level: 'error',
+        source: 'auth',
+        component: 'Register',
+        actionName: 'register.submit',
+        error: err,
+        metadata: { method: 'email' },
+      })
       setAuthError(err.message)
     } finally {
       setIsLoading(false)

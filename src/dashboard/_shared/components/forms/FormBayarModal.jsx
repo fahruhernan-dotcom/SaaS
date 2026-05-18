@@ -3,6 +3,7 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import { 
   Sheet, 
   SheetContent, 
@@ -60,13 +61,29 @@ export function FormBayarModal({ isOpen, onClose, sale, onSuccess }) {
         payment_method: method,
         payment_date: new Date().toISOString().split('T')[0]
       })
-      if (err1) throw err1
+      if (err1) {
+        logSupabaseError(err1, {
+          table: 'payments',
+          operation: 'insert',
+          component: 'FormBayarModal',
+          actionName: 'submitPayment',
+        })
+        throw err1
+      }
 
       const { error: err2 } = await supabase.from('sales').update({
         paid_amount: newPaid,
         payment_status: status
       }).eq('id', sale.id)
-      if (err2) throw err2
+      if (err2) {
+        logSupabaseError(err2, {
+          table: 'sales',
+          operation: 'update',
+          component: 'FormBayarModal',
+          actionName: 'submitPayment',
+        })
+        throw err2
+      }
 
       toast.success('Pembayaran berhasil dicatat')
       

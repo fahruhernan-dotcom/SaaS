@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Lock, ArrowLeft, Building2, MapPin, ChevronDown, X, Key, ChevronRight, CheckCircle2, Sparkles } from 'lucide-react'
 import { useNavigate as useNav } from 'react-router-dom'
@@ -11,6 +11,8 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import StepSetup, { VERTICAL_SETUP_CONFIG } from './onboarding/StepSetup'
 import { isSuperadmin } from '@/lib/auth'
+import { logError } from '@/lib/logger/errorLogger'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 // Verticals that need a dedicated setup step after business name.
 // Driven by StepSetup's VERTICAL_SETUP_CONFIG — single source of truth.
@@ -52,10 +54,6 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
   // Dynamic step count:
   // Peternak: Category(1) → Animal Group(2) → Sub-role(3) → Name(4) [→ Setup(5) if sapi]
   // Others: Category(1) → Sub-role(2) → Name(3)
-  const peternak_base_steps = 4
-  const totalSteps = category === 'peternak'
-    ? (needsSetupStep ? 5 : 4)
-    : 3
   const isPeternak = category === 'peternak'
   const isAnimalStep = isPeternak && step === 2
   const isSubRoleStep = isPeternak ? step === 3 : step === 2
@@ -72,12 +70,19 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
     return Object.values(BUSINESS_MODELS).filter(m => m.category === category)
   }, [category, animalGroup, isPeternak])
 
-  // New: Role Locking Logic
+  // Role Locking Logic
+  //   - Superadmin: never locked.
+  //   - Add-new-business mode (?mode=new_business): NOT locked — user explicitly
+  //     wants a fresh tenant + profile via create_new_business RPC.
+  //   - Regular onboarding with business_model_selected=true: LOCKED — user
+  //     has already committed a category; DB trigger forbids changing user_type.
+  //   - Regular onboarding with business_model_selected=false (default broker
+  //     from registration, never explicitly chosen): NOT locked. If they pick
+  //     a different user_type, saveAndComplete routes through create_new_business
+  //     RPC (userTypeMismatch branch) to sidestep the trigger.
   const isRoleLocked = useMemo(() => {
-    // Platform-wide admins (superadmin) should not be locked into a specific business category
-    // They should be able to create any type of business
     if (isSuperadmin(profile)) return false
-    return isNewBusiness || profile?.onboarded
+    return !isNewBusiness && profile?.business_model_selected === true
   }, [isNewBusiness, profile])
 
   const primaryRoleInfo = useMemo(() => {
@@ -215,7 +220,20 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
 
       // --- KEY FIX: New user (profile exists but NO tenant_id) must use RPC, same as isNewBusiness ---
       const isFirstTimeBusiness = !resolvedTenantId
-      const shouldCreateViRPC = isNewBusiness || !profile || isFirstTimeBusiness
+
+      // --- KEY FIX 2: When picking a vertical with different user_type than
+      // existing profile (e.g. DB-default 'broker' user picks a peternak
+      // vertical), route through create_new_business RPC instead of trying to
+      // UPDATE the existing profile. The DB trigger forbids changing user_type,
+      // so the only legal path is creating a new tenant + new profile row with
+      // the correct user_type baked in from the start.
+      const userTypeMismatch = Boolean(
+        profile?.user_type &&
+        model.user_type &&
+        profile.user_type !== model.user_type
+      )
+
+      const shouldCreateViRPC = isNewBusiness || !profile || isFirstTimeBusiness || userTypeMismatch
 
       console.log('[Onboarding] saveAndComplete start:', {
         selectedKey: selected,
@@ -223,6 +241,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         user_type: model.user_type,
         isNewBusiness,
         isFirstTimeBusiness,
+        userTypeMismatch,
         shouldCreateViRPC,
         profile_tenant_id: profile?.tenant_id,
         targetAuthId,
@@ -257,6 +276,12 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
 
         if (rpcError) {
           console.error('[Onboarding] create_new_business RPC failed:', rpcError)
+          logSupabaseError(rpcError, {
+            table: 'rpc:create_new_business',
+            operation: 'rpc',
+            component: 'BusinessModelOverlay',
+            actionName: 'onboarding.create_new_business',
+          })
           throw rpcError
         }
         
@@ -268,11 +293,34 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         console.log('[Onboarding] RPC create_new_business success, returned tenant_id:', rpcData)
         // Resolve the new tenant_id for setup step saving
         resolvedTenantId = rpcData
+
+        // Point active session at the new tenant so the subsequent refetchProfile
+        // (in OnboardingFlow.onComplete) picks the new business instead of the
+        // old default-broker tenant that was previously persisted.
+        if (typeof window !== 'undefined') {
+          try { localStorage.setItem('ternakos_active_tenant_id', rpcData) } catch { /* ok */ }
+        }
+
         toast.success(isNewBusiness ? 'Bisnis baru berhasil dibuat!' : 'Profil bisnis berhasil dibuat!')
       }
 
       if (!resolvedTenantId || resolvedTenantId === 'undefined' || !isUUID(resolvedTenantId)) {
         console.error('[Onboarding] resolvedTenantId is invalid before profile update:', resolvedTenantId)
+        // Specific log so superadmin can tell missing-tenant from generic fatal.
+        // Prevents the .eq('tenant_id', null) silent 0-row update case downstream.
+        logError({
+          level: 'error',
+          source: 'action',
+          component: 'BusinessModelOverlay',
+          actionName: 'onboarding.missing_tenant_id',
+          error: { message: 'resolvedTenantId is invalid before profile update', code: 'missing_tenant_id' },
+          metadata: {
+            vertical: selected || null,
+            isNewBusiness: !!isNewBusiness,
+            shouldCreateViRPC,
+            hasProfile: !!profile,
+          },
+        })
         throw new Error('Tenant ID is invalid/undefined')
       }
 
@@ -285,6 +333,9 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         business_vertical: model.key,
       })
 
+      // SCOPED BY tenant_id: user may have multiple profile rows (multi-tenant).
+      // Without this scope, the trigger that forbids changing user_type fires for
+      // OTHER tenants' profiles even when this tenant's user_type is unchanged.
       const { error: profError } = await supabase
         .from('profiles')
         .update({
@@ -293,6 +344,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
           onboarded: true,
         })
         .eq('auth_user_id', targetAuthId)
+        .eq('tenant_id', resolvedTenantId)
 
       if (profError) {
         console.error('[Onboarding] profiles PATCH failed:', {
@@ -300,7 +352,13 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
           message: profError.message,
           details: profError.details,
           hint: profError.hint,
-          payload: { user_type: model.user_type, auth_user_id: targetAuthId },
+          payload: { user_type: model.user_type, auth_user_id: targetAuthId, tenant_id: resolvedTenantId },
+        })
+        logSupabaseError(profError, {
+          table: 'profiles',
+          operation: 'update',
+          component: 'BusinessModelOverlay',
+          actionName: 'onboarding.update_profile',
         })
         throw profError
       }
@@ -332,6 +390,12 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
             message: tenError.message,
             details: tenError.details,
             tenant_id: resolvedTenantId,
+          })
+          logSupabaseError(tenError, {
+            table: 'tenants',
+            operation: 'update',
+            component: 'BusinessModelOverlay',
+            actionName: 'onboarding.update_tenant',
           })
           throw tenError
         }
@@ -368,6 +432,12 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         if (batchError) {
           // Non-fatal: log warning but don't block onboarding
           console.warn('[Onboarding] Batch insert failed, continuing:', batchError.message)
+          logSupabaseError(batchError, {
+            table: batchTable,
+            operation: 'insert',
+            component: 'BusinessModelOverlay',
+            actionName: 'onboarding.insert_initial_batch',
+          })
         }
       }
 
@@ -384,7 +454,30 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         hint: err?.hint,
         stack: err?.stack,
       })
-      toast.error('Gagal menyimpan pilihan. Silakan coba lagi.')
+      // Catch-all: per-step errors above already logged via logSupabaseError.
+      // This handles unexpected throws (validation, ID parse, etc.).
+      logError({
+        level: 'error',
+        source: 'action',
+        component: 'BusinessModelOverlay',
+        actionName: 'onboarding.saveAndComplete_fatal',
+        error: err,
+        metadata: { vertical: selected || null, isNewBusiness: !!isNewBusiness },
+      })
+
+      // Friendly toast for trigger-enforced user_type lock (P0001).
+      // Even with the tenant_id scope fix above, this protects against future
+      // schema changes or legitimate "you really can't switch type" cases.
+      const isUserTypeLocked =
+        err?.code === 'P0001' &&
+        typeof err?.message === 'string' &&
+        err.message.toLowerCase().includes('cannot change user_type')
+
+      if (isUserTypeLocked) {
+        toast.error('Tidak bisa mengubah tipe bisnis akun ini. Buat bisnis baru lewat menu "Tambah Bisnis".')
+      } else {
+        toast.error('Gagal menyimpan pilihan. Silakan coba lagi.')
+      }
       setLoading(false)
     }
   }

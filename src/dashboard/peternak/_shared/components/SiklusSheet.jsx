@@ -7,6 +7,8 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { usePeternakFarms } from '@/lib/hooks/usePeternakData'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
+import { logError } from '@/lib/logger/errorLogger'
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -120,12 +122,20 @@ export default function SiklusSheet({ open, onClose }) {
         }])
         .select('id')
         .single()
-      if (cycleErr) throw cycleErr
+      if (cycleErr) {
+        logSupabaseError(cycleErr, {
+          table: 'breeding_cycles',
+          operation: 'insert',
+          component: 'SiklusSheet',
+          actionName: 'createCycle',
+        })
+        throw cycleErr
+      }
 
       // Insert doc purchase expense if mandiri
       if (showDocPrice && form.doc_price_per_ekor > 0) {
         const totalDocCost = docCount * form.doc_price_per_ekor
-        await supabase.from('cycle_expenses').insert([{
+        const { error: expErr } = await supabase.from('cycle_expenses').insert([{
           tenant_id: tenant.id,
           cycle_id: cycleData.id,
           expense_type: 'doc',
@@ -137,6 +147,23 @@ export default function SiklusSheet({ open, onClose }) {
           expense_date: form.chick_in_date,
           supplier: form.supplier_doc || null,
         }])
+        if (expErr) {
+          // Partial commit: cycle exists but expense baseline missing — flag for superadmin.
+          logError({
+            level: 'error',
+            source: 'supabase',
+            component: 'SiklusSheet',
+            actionName: 'createCycleExpenses',
+            error: expErr,
+            metadata: {
+              table: 'cycle_expenses',
+              operation: 'insert',
+              partial: true,
+              cycle_id: cycleData.id,
+              hint: expErr.hint || null,
+            },
+          })
+        }
       }
 
       toast.success(`Siklus #${cycleNumber} berhasil dimulai!`)

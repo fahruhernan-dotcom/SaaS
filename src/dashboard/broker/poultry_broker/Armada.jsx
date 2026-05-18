@@ -16,6 +16,7 @@ import {
 import { id } from 'date-fns/locale'
 import { useOutletContext, Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
@@ -791,11 +792,18 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
             capacity_kg: vals.capacity_kg ? parseFloat(vals.capacity_kg) : null,
         }
 
-        const { error } = editingData 
+        const isUpdate = !!editingData
+        const { error } = isUpdate
             ? await supabase.from('vehicles').update(payload).eq('id', editingData.id)
             : await supabase.from('vehicles').insert(payload)
 
         if (error) {
+            logSupabaseError(error, {
+                table: 'vehicles',
+                operation: isUpdate ? 'update' : 'insert',
+                component: 'Armada',
+                actionName: isUpdate ? 'broker.vehicle.update' : 'broker.vehicle.create',
+            })
             toast.error('Gagal menyimpan data kendaraan')
         } else {
             toast.success('Kendaraan tersimpan!')
@@ -808,6 +816,12 @@ function VehicleSheet({ isOpen, onClose, editingData, tenantId }) {
     const handleDelete = async () => {
         const { error } = await supabase.from('vehicles').update({ is_deleted: true }).eq('id', editingData.id)
         if (error) {
+            logSupabaseError(error, {
+                table: 'vehicles',
+                operation: 'update',
+                component: 'Armada',
+                actionName: 'broker.vehicle.delete',
+            })
             toast.error('Gagal menghapus kendaraan')
         } else {
             toast.success('Kendaraan dihapus')
@@ -1035,11 +1049,20 @@ function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
                 status: vals.status
             }
 
-            const { error } = editingData 
+            const isUpdate = !!editingData
+            const { error } = isUpdate
                 ? await supabase.from('drivers').update(payload).eq('id', editingData.id)
                 : await supabase.from('drivers').insert(payload)
 
-            if (error) throw error
+            if (error) {
+                logSupabaseError(error, {
+                    table: 'drivers',
+                    operation: isUpdate ? 'update' : 'insert',
+                    component: 'Armada',
+                    actionName: isUpdate ? 'broker.driver.update' : 'broker.driver.create',
+                })
+                throw error
+            }
 
             toast.success('Sopir tersimpan!')
             queryClient.invalidateQueries(['drivers'])
@@ -1055,6 +1078,12 @@ function DriverSheet({ isOpen, onClose, editingData, tenantId }) {
     const handleDelete = async () => {
         const { error } = await supabase.from('drivers').update({ is_deleted: true }).eq('id', editingData.id)
         if (error) {
+            logSupabaseError(error, {
+                table: 'drivers',
+                operation: 'update',
+                component: 'Armada',
+                actionName: 'broker.driver.delete',
+            })
             toast.error('Gagal menghapus sopir')
         } else {
             toast.success('Sopir dihapus')

@@ -1,11 +1,37 @@
-import React from 'react'
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Home, Globe, MessageCircle } from 'lucide-react'
 import Particles from '../components/reactbits/Particles'
+import { logError } from '@/lib/logger/errorLogger'
+
+const MotionDiv = motion.div
+const MotionH2 = motion.h2
+const MotionP = motion.p
 
 export default function NotFound() {
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    logError({
+      level: 'warning',
+      source: 'not_found',
+      component: 'NotFound',
+      actionName: 'route.not_found',
+      error: {
+        message: `404 — ${window.location.pathname}`,
+        code: '404',
+        stack: null,
+        details: null,
+      },
+      metadata: {
+        path: window.location.pathname,
+        search: window.location.search,
+        referrer: document.referrer || null,
+      },
+    })
+  }, [])
 
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] relative overflow-hidden flex flex-col items-center justify-center p-8">
@@ -26,16 +52,16 @@ export default function NotFound() {
         
         {/* 404 Hero - Crip & Elegant */}
         <div className="relative flex flex-col items-center mb-16">
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-2 mb-8"
           >
             <div className="w-6 h-6 bg-emerald-500 rounded-md flex items-center justify-center font-black italic text-xs">T</div>
             <span className="font-['Sora'] font-bold text-sm tracking-widest uppercase opacity-60">TernakOS Indonesia</span>
-          </motion.div>
+          </MotionDiv>
 
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="relative"
@@ -45,29 +71,29 @@ export default function NotFound() {
             </h1>
             
             <div className="absolute inset-0 flex flex-col items-center justify-center pt-8">
-              <motion.h2 
+              <MotionH2 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
                 className="text-4xl md:text-6xl font-['Sora'] font-black text-white text-center tracking-tight"
               >
                 Halaman Hilang<span className="text-emerald-500">.</span>
-              </motion.h2>
+              </MotionH2>
             </div>
-          </motion.div>
+          </MotionDiv>
           
-          <motion.p
+          <MotionP
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
             className="text-[#94A3B8] max-w-md text-center text-sm md:text-base font-medium leading-relaxed mt-4"
           >
             Maaf, kami tidak bisa menemukan halaman tersebut. Mungkin sedang dalam masa pemeliharaan atau kodenya mengalami anomali.
-          </motion.p>
+          </MotionP>
         </div>
 
         {/* Navigation Actions - Glass Card Style */}
-        <motion.div
+        <MotionDiv
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
@@ -85,10 +111,10 @@ export default function NotFound() {
                <span className="text-[10px] font-black uppercase tracking-widest">Kembali</span>
              </button>
           </div>
-        </motion.div>
+        </MotionDiv>
 
         {/* System Footer Info */}
-        <motion.div
+        <MotionDiv
            initial={{ opacity: 0 }}
            animate={{ opacity: 1 }}
            transition={{ delay: 0.7 }}
@@ -98,7 +124,7 @@ export default function NotFound() {
           <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-[0.4em] text-center">
             System Status: <span className="text-emerald-500">All Systems Operational</span>
           </p>
-        </motion.div>
+        </MotionDiv>
 
       </div>
     </div>

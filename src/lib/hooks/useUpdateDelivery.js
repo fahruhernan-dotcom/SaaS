@@ -4,6 +4,7 @@ import { supabase } from '../supabase'
 import { safeNum } from '../format'
 import { useAuth } from './useAuth'
 import { getXBasePath } from '../businessModel'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 export function useUpdateDelivery() {
   const queryClient = useQueryClient()
@@ -33,8 +34,16 @@ export function useUpdateDelivery() {
       .select('initial_count, initial_weight_kg, sale_id')
       .eq('id', deliveryId)
       .single()
-    
-    if (fetchError) throw fetchError
+
+    if (fetchError) {
+      logSupabaseError(fetchError, {
+        table: 'deliveries',
+        operation: 'select',
+        component: 'useUpdateDelivery',
+        actionName: 'broker.delivery.fetch',
+      })
+      throw fetchError
+    }
     
     const mortality = safeNum(delivery.initial_count) - safeNum(arrivedCount)
     const shrinkage = safeNum(delivery.initial_weight_kg) - safeNum(arrivedWeight)
@@ -79,6 +88,12 @@ export function useUpdateDelivery() {
     
     if (updateError) {
       console.error('[useUpdateDelivery] Supabase Update Error:', updateError)
+      logSupabaseError(updateError, {
+        table: 'deliveries',
+        operation: 'update',
+        component: 'useUpdateDelivery',
+        actionName: 'broker.delivery.update',
+      })
       throw updateError
     }
     console.log('[useUpdateDelivery] Supabase Update Success:', updateRes?.[0])
@@ -117,8 +132,19 @@ export function useUpdateDelivery() {
         .update({ total_revenue: newTotalRevenue })
         .eq('id', delivery.sale_id)
 
-      if (saleUpdateError) console.error('Error updating sale revenue:', saleUpdateError)
-      else console.log('✅ Sales total_revenue updated (Cumulative):', newTotalRevenue)
+      if (saleUpdateError) {
+        console.error('Error updating sale revenue:', saleUpdateError)
+        // Non-fatal: delivery already updated, sale revenue sync failed.
+        // Flag as partial commit so superadmin can reconcile accounting.
+        logSupabaseError(saleUpdateError, {
+          table: 'sales',
+          operation: 'update',
+          component: 'useUpdateDelivery',
+          actionName: 'broker.sale.delivery_sync',
+        })
+      } else {
+        console.log('✅ Sales total_revenue updated (Cumulative):', newTotalRevenue)
+      }
     }
 
     // 4. Auto-create loss report if there is mortality or shrinkage
@@ -163,10 +189,28 @@ export function useUpdateDelivery() {
     }
 
     if (lossReports.length > 0) {
-      await supabase.from('loss_reports').delete().eq('delivery_id', deliveryId)
+      const { error: lossDelErr } = await supabase.from('loss_reports').delete().eq('delivery_id', deliveryId)
+      if (lossDelErr) {
+        // Non-fatal: old loss reports for this delivery may still exist alongside new ones.
+        logSupabaseError(lossDelErr, {
+          table: 'loss_reports',
+          operation: 'delete',
+          component: 'useUpdateDelivery',
+          actionName: 'broker.loss_report.cleanup',
+        })
+      }
       const { error: lossError } = await supabase.from('loss_reports').insert(lossReports)
-      if (lossError) console.error('Error inserting loss reports:', lossError)
-      else console.log('✅ Loss reports created:', lossReports.length)
+      if (lossError) {
+        console.error('Error inserting loss reports:', lossError)
+        logSupabaseError(lossError, {
+          table: 'loss_reports',
+          operation: 'insert',
+          component: 'useUpdateDelivery',
+          actionName: 'broker.loss_report.create',
+        })
+      } else {
+        console.log('✅ Loss reports created:', lossReports.length)
+      }
     }
     
     // 5. Create notification for Broker/Owner to audit
@@ -177,13 +221,21 @@ export function useUpdateDelivery() {
       
       const { error: notifError } = await supabase.from('notifications').insert({
         tenant_id: tenant.id,
-        type: 'pengiriman_tiba', 
+        type: 'pengiriman_tiba',
         title: '🚚 Pengiriman Tiba',
         body: `Sopir ${driverTitle} telah sampai di ${rpaTitle}. Segera audit data timbangan.`,
         action_url: `${basePath}/pengiriman`,
         metadata: { ref_id: deliveryId },
       })
-      if (notifError) console.error('Notification error:', notifError)
+      if (notifError) {
+        console.error('Notification error:', notifError)
+        logSupabaseError(notifError, {
+          table: 'notifications',
+          operation: 'insert',
+          component: 'useUpdateDelivery',
+          actionName: 'broker.notification.create',
+        })
+      }
     }
     
     // 6. Invalidate all relevant queries

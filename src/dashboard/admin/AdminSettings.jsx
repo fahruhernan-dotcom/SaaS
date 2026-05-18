@@ -27,6 +27,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 export default function AdminSettings() {
   const navigate = useNavigate()
@@ -109,7 +110,7 @@ export default function AdminSettings() {
           .maybeSingle()
         profileId = profile?.id ?? null
       }
-      await supabase.from('global_audit_logs').insert({
+      const { error: auditErr } = await supabase.from('global_audit_logs').insert({
         actor_profile_id: profileId,
         tenant_id: null, // global config = no tenant scope
         action: 'CONFIG_UPDATE',
@@ -118,8 +119,24 @@ export default function AdminSettings() {
         old_data: oldVal ?? null,
         new_data: newVal ?? null,
       })
-    } catch {
-      // Non-blocking: audit failure should not block config save
+      if (auditErr) {
+        // Non-blocking: audit failure should not block config save, but record
+        // the audit-of-audit failure so superadmin can see when audit trail breaks.
+        logSupabaseError(auditErr, {
+          table: 'global_audit_logs',
+          operation: 'insert',
+          component: 'AdminSettings',
+          actionName: 'admin.audit_trail.create',
+        })
+      }
+    } catch (err) {
+      // Non-blocking: audit failure should not block config save.
+      logSupabaseError(err, {
+        table: 'global_audit_logs',
+        operation: 'insert',
+        component: 'AdminSettings',
+        actionName: 'admin.audit_trail.create',
+      })
     }
   }, [])
 

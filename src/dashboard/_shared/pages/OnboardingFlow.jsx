@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/lib/hooks/useAuth'
 import BusinessModelOverlay from '../components/BusinessModelOverlay'
 import LoadingScreen from '@/components/LoadingScreen'
+import { logError } from '@/lib/logger/errorLogger'
 
 const KEY_TO_PATH = {
   poultry_broker:      '/broker/broker_ayam/beranda',
@@ -91,6 +92,19 @@ export default function OnboardingFlow() {
             }
           } else {
             // Fallback for unmapped keys — go to root and let RoleRedirector handle it
+            logError({
+              level: 'error',
+              source: 'route_guard',
+              component: 'OnboardingFlow',
+              actionName: 'onboarding.redirect_failed',
+              error: { message: `No KEY_TO_PATH mapping for vertical "${selectedKey}"`, code: 'unmapped_vertical' },
+              metadata: {
+                vertical: selectedKey,
+                role: profile?.user_type || profile?.role || null,
+                hasTenant: !!profile?.tenant_id,
+                isNewBusiness,
+              },
+            })
             navigate('/', { replace: true })
           }
         }}

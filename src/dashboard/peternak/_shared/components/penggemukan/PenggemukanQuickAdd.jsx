@@ -1,11 +1,21 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Scale, Wheat, HeartPulse, Sparkles, FileText, Plus, ChevronRight } from 'lucide-react'
 import { motion } from 'framer-motion'
+import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 
 // config: { basePath, iconBg, iconText }
 export function PenggemukanQuickAdd({ config }) {
   const navigate = useNavigate()
+  const p = usePeternakPermissions()
+
+  useEffect(() => {
+    if (!p.showFab) {
+      navigate(`${config.basePath}/beranda`, { replace: true })
+    }
+  }, [p.showFab, navigate, config.basePath])
+
+  if (!p.showFab) return null
 
   const items = [
     { icon: <Scale size={20} strokeWidth={2.5} />,      label: 'Timbang ternak',  sub: 'Catat bobot per ekor',    path: `${config.basePath}/ternak` },

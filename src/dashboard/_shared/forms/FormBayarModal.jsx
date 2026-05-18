@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import { formatIDR } from '@/lib/format';
 import { DatePicker } from '@/components/ui/DatePicker';
 import SlideModal from '../components/SlideModal';
+import { logError } from '@/lib/logger/errorLogger';
 
 const bayarSchema = z.object({
   payment_amount: z.number().min(1000, 'Minimal Rp 1.000'),
@@ -62,10 +63,39 @@ export default function FormBayarModal({ isOpen, onClose, rpa }) {
         }
       }
 
-      await Promise.all(updates);
+      // Run all row updates; collect per-row failures (rejections OR Supabase {error} payloads).
+      const results = await Promise.allSettled(updates);
+      const failures = [];
+      results.forEach((r, idx) => {
+        if (r.status === 'rejected') {
+          failures.push({ idx, error: r.reason });
+        } else if (r.value?.error) {
+          failures.push({ idx, error: r.value.error });
+        }
+      });
+
+      if (failures.length > 0) {
+        failures.forEach(({ idx, error: rowErr }) => {
+          logError({
+            level: 'error',
+            source: 'supabase',
+            component: 'FormBayarModal',
+            actionName: 'submitPayment',
+            error: rowErr,
+            metadata: {
+              table: 'sales',
+              operation: 'update',
+              row_index: idx,
+              hint: rowErr?.hint || null,
+            },
+          });
+        });
+        toast.error('Gagal mencatat pembayaran.');
+        return;
+      }
 
       // Record in a payments log table if it exists (assuming it doesn't yet as per initial DB plan, but it should)
-      // For now we just update the sales table which correctly affects total_outstanding via DB Trigger 
+      // For now we just update the sales table which correctly affects total_outstanding via DB Trigger
       // (assuming trigger exists, if not we update rpa table manually)
 
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
@@ -75,6 +105,14 @@ export default function FormBayarModal({ isOpen, onClose, rpa }) {
       reset();
       onClose();
     } catch (err) {
+      logError({
+        level: 'error',
+        source: 'supabase',
+        component: 'FormBayarModal',
+        actionName: 'submitPayment',
+        error: err,
+        metadata: { phase: 'load_or_validate' },
+      });
       toast.error('Gagal mencatat pembayaran.');
     }
   };

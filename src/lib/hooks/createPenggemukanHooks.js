@@ -17,6 +17,8 @@ import {
   eachDayOfInterval, startOfDay,
 } from 'date-fns'
 import { supabase } from '../supabase'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
+import { logError } from '@/lib/logger/errorLogger'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
 import {
@@ -432,7 +434,15 @@ export function createPenggemukanHooks(prefix) {
           batch_code, kandang_name, start_date, target_end_date, notes,
           status: 'active',
         })
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, {
+            table: T.batches,
+            operation: 'insert',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.batch.create',
+          })
+          throw error
+        }
       },
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
@@ -489,7 +499,15 @@ export function createPenggemukanHooks(prefix) {
             latest_weight_kg: entry_weight_kg,
             latest_weight_date: entry_date,
           })
-        if (animalErr) throw animalErr
+        if (animalErr) {
+          logSupabaseError(animalErr, {
+            table: T.animals,
+            operation: 'insert',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.animal.add',
+          })
+          throw animalErr
+        }
 
         // Sync total_animals in the batch after insert
         const { count, error: countErr } = await supabase
@@ -498,11 +516,31 @@ export function createPenggemukanHooks(prefix) {
           .eq('batch_id', batch_id)
           .eq('is_deleted', false)
 
-        if (!countErr && count !== null) {
-          await supabase
+        if (countErr) {
+          // Non-fatal: animal already inserted, count failed → log partial state
+          logError({
+            level: 'error',
+            source: 'supabase',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.animal.add.count_sync',
+            error: countErr,
+            metadata: { table: T.animals, operation: 'count', partial: true, batch_id },
+          })
+        } else if (count !== null) {
+          const { error: batchUpdErr } = await supabase
             .from(T.batches)
             .update({ total_animals: count })
             .eq('id', batch_id)
+          if (batchUpdErr) {
+            logError({
+              level: 'error',
+              source: 'supabase',
+              component: 'createPenggemukanHooks',
+              actionName: 'peternak.animal.add.batch_sync',
+              error: batchUpdErr,
+              metadata: { table: T.batches, operation: 'update', partial: true, batch_id, expected_count: count },
+            })
+          }
         }
       },
       onSuccess: (_, { batch_id }) => {
@@ -540,7 +578,15 @@ export function createPenggemukanHooks(prefix) {
         const { error: insertErr } = await supabase
           .from(T.animals)
           .insert(rows)
-        if (insertErr) throw insertErr
+        if (insertErr) {
+          logSupabaseError(insertErr, {
+            table: T.animals,
+            operation: 'insert',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.animal.bulk_add',
+          })
+          throw insertErr
+        }
 
         // Sync total_animals in the batch after bulk insert
         const { count, error: countErr } = await supabase
@@ -549,11 +595,30 @@ export function createPenggemukanHooks(prefix) {
           .eq('batch_id', batch_id)
           .eq('is_deleted', false)
 
-        if (!countErr && count !== null) {
-          await supabase
+        if (countErr) {
+          logError({
+            level: 'error',
+            source: 'supabase',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.animal.bulk_add.count_sync',
+            error: countErr,
+            metadata: { table: T.animals, operation: 'count', partial: true, batch_id, expected_rows: rows.length },
+          })
+        } else if (count !== null) {
+          const { error: batchUpdErr } = await supabase
             .from(T.batches)
             .update({ total_animals: count })
             .eq('id', batch_id)
+          if (batchUpdErr) {
+            logError({
+              level: 'error',
+              source: 'supabase',
+              component: 'createPenggemukanHooks',
+              actionName: 'peternak.animal.bulk_add.batch_sync',
+              error: batchUpdErr,
+              metadata: { table: T.batches, operation: 'update', partial: true, batch_id, expected_count: count },
+            })
+          }
         }
       },
       onSuccess: (_, { batch_id }) => {
@@ -827,14 +892,40 @@ export function createPenggemukanHooks(prefix) {
             has_surat_jalan: has_surat_jalan ?? false,
             invoice_number, notes,
           })
-        if (saleErr) throw saleErr
+        if (saleErr) {
+          logSupabaseError(saleErr, {
+            table: T.sales,
+            operation: 'insert',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.sale.create',
+          })
+          throw saleErr
+        }
 
         const { error: animalErr } = await supabase
           .from(T.animals)
           .update({ status: 'sold', exit_date: sale_date })
           .in('id', animal_ids)
           .eq('tenant_id', tenant.id)
-        if (animalErr) throw animalErr
+        if (animalErr) {
+          // Partial commit: sale row inserted but animals not marked 'sold'.
+          // Flag for superadmin reconciliation.
+          logError({
+            level: 'error',
+            source: 'supabase',
+            component: 'createPenggemukanHooks',
+            actionName: 'peternak.sale.create.animal_sync',
+            error: animalErr,
+            metadata: {
+              table: T.animals,
+              operation: 'update',
+              partial: true,
+              batch_id,
+              animal_count: Array.isArray(animal_ids) ? animal_ids.length : 0,
+            },
+          })
+          throw animalErr
+        }
       },
       onSuccess: (_, { batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-sales`, batch_id] })
