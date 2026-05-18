@@ -32,8 +32,9 @@ jobs:
 
       - name: Restore signing keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > ternakos.keystore
-          echo "Keystore restored: $(wc -c < ternakos.keystore) bytes"
+          mkdir -p android-signing
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android-signing/ternakos.keystore
+          echo "Keystore restored: $(wc -c < android-signing/ternakos.keystore) bytes"
 
       - name: Initialize Bubblewrap project (non-interactive)
         run: |
@@ -49,7 +50,7 @@ jobs:
         run: |
           cd android-build
           bubblewrap build \
-            --keyPath ../ternakos.keystore \
+            --keyPath ../android-signing/ternakos.keystore \
             --keyAlias "${{ secrets.KEY_ALIAS }}" \
             --keystorePassword "${{ secrets.KEYSTORE_PASSWORD }}" \
             --keyPassword "${{ secrets.KEY_PASSWORD }}"
