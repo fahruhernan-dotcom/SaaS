@@ -22,8 +22,8 @@
 | Phase 6.B | Peternak Fattening detail (createPenggemukanHooks + usePeternakTaskData) | ✅ DONE |
 | Phase 6.C | Egg Broker (Customers + Suppliers + Inventori + POS sale flow) | ✅ DONE |
 | Phase 6.D | RPA (Hutang / Distribusi) | ✅ DONE |
-| Phase 6.E | Admin (Users / Subscriptions / Pricing) | ⏸️ BACKLOG |
-| Phase 6.F | Cross-vertical (Tim / Akun / DailyTask / Notifications) | ⏸️ BACKLOG |
+| Phase 6.E | Admin (Users / Subscriptions / Pricing) | ✅ DONE |
+| Phase 6.F | Cross-vertical (Tim / Akun / DailyTask / Notifications) | 🟡 IN PROGRESS — Sapi Kandang gap patched; import-path fixes applied to useNotifications.jsx + Tim.jsx; remaining Tim/DailyTask/Notifications mutations pending |
 | Broad lint cleanup | Project-wide unused-vars / hook-deps | ⏸️ PAUSED — separate task |
 
 ---
@@ -45,9 +45,14 @@ src/
 │       ├── useAuth.jsx                       ← fetchAuthData (Phase 6.2) + switchTenant (Phase 6.1) + AuthProvider context inject
 │       └── useRPAData.js                     ← useCreatePurchaseOrder + useCreateCustomer + useUpdateCustomer + useCreateProduct + useCreateInvoice (partial) + useRecordCustomerPayment (partial) + useCreateRPAPayment + useUpdatePurchaseOrder + useUpsertRPAProfile (tenants + rpa_profiles) (Phase 5 + 6.3 + 6.D)
 │       ├── createPenggemukanHooks.js         ← 4 core hooks (Phase 6.2) + 19 more (Phase 6.B) covers all domba/kambing/sapi penggemukan mutations
+│       ├── useSapiPenggemukanData.js         ← 6 Sapi-specific Kandang/animal mutations (Phase 6.F — Sapi Kandang gap patch)
 │       ├── usePeternakTaskData.js            ← 2 farm-wide ops cost hooks for Listrik & Air page (Phase 6.B)
 │       ├── useUpdateDelivery.js              ← delivery → sale/loss/notification flow (Phase 6.2)
-│       └── useSembakoData.js                 ← 21 mutation hooks: customer/supplier/employee/product/delivery/payroll/stock CRUD + multi-step sale/payment/return/adjust (Phase 6.A)
+│       ├── useSembakoData.js                 ← 21 mutation hooks: customer/supplier/employee/product/delivery/payroll/stock CRUD + multi-step sale/payment/return/adjust (Phase 6.A)
+│       ├── useAdminData.js                   ← Admin users/tenants/subscriptions/pricing mutations (Phase 6.E)
+│       ├── useSiteConfig.js                  ← useUpdateSiteConfig mutation (Phase 6.E)
+│       ├── useNotifications.jsx              ← import-path fix only (Phase 6.F); mutation instrumentation pending
+│       └── (useKandangWorkerData.js, etc.)   ← Phase 6.F backlog — worker CRUD hooks not yet instrumented
 ├── pages/
 │   ├── Login.jsx                             ← OAuth, signIn, profile fetch, unexpected (Phase 6.0)
 │   ├── Register.jsx                          ← OAuth, signUp, invite flow, profile timeout (Phase 6.0)
@@ -56,7 +61,8 @@ src/
 └── dashboard/
     ├── admin/
     │   ├── AdminInfo.jsx                     ← /admin/info dashboard reader (Phase 4)
-    │   └── AdminSettings.jsx                 ← logAuditTrail audit-of-audit (Phase 6.3)
+    │   ├── AdminSettings.jsx                 ← logAuditTrail audit-of-audit (Phase 6.3)
+    │   └── AdminSubscriptions.jsx            ← inline cancel invoice (Phase 6.E)
     ├── _shared/
     │   ├── components/
     │   │   ├── BusinessModelOverlay.jsx      ← RPC + profile/tenant update + batch + fatal + missing_tenant (Phase 6.0)
@@ -68,7 +74,8 @@ src/
     │   │   └── FormBayarModal.jsx            ← RPA payment Promise.allSettled per-row (Phase 6.1)
     │   └── pages/
     │       ├── OnboardingFlow.jsx            ← redirect_failed for unmapped vertical (Phase 6.0)
-    │       └── AkunPreview.jsx               ← logout + EditProfileSheet save (Phase 5)
+    │       ├── AkunPreview.jsx               ← logout + EditProfileSheet save (Phase 5)
+    │       └── tim/Tim.jsx                   ← import-path fix only (Phase 6.F); team mutation instrumentation pending
     ├── peternak/
     │   ├── _shared/components/
     │   │   ├── SiklusSheet.jsx               ← breeding_cycles + cycle_expenses partial (Phase 6.1)
@@ -264,6 +271,41 @@ supabase/migrations/_archive/
 - `useMoveAnimalToKandang` keeps its optimistic-update + onError rollback; the new log point fires on the server error before the rollback toast.
 - Sub-step partial logs use `logError({ source: 'supabase' })` directly (because `logSupabaseError` doesn't forward arbitrary metadata).
 - `useEnsureHoldingPen` is split into `ensure.check` (SELECT) and `ensure.create` (INSERT) so superadmin can distinguish a permissions denial on read vs write.
+
+---
+
+### `src/lib/hooks/useSapiPenggemukanData.js`
+**Phase:** 6.F — Sapi Kandang gap patch
+
+**Context:** `useSapiPenggemukanData.js` is the Sapi-specific penggemukan hook file — it duplicates the pattern of the generic `createPenggemukanHooks.js` factory but owns its own Supabase calls (the factory covers Domba and Kambing; Sapi pre-Phase 6.F had no error instrumentation on Kandang mutations). The 6 hooks below were the only Kandang/animal-movement sites missing coverage.
+
+**Coverage (Phase 6.F — 6 new mutation sites):**
+- `useCreateSapiKandang` — `kandangs.insert` (Denah Kandang create)
+- `useMoveSapiAnimalToKandang` — `animals.update kandang_id/slot` (drag-drop / Denah Kandang move)
+- `useUpdateSapiKandangPosition` — `kandangs.update grid_x/grid_y` (drag-drop reposition)
+- `useUpdateSapiKandang` — `kandangs.update` (form edit)
+- `useEnsureSapiHoldingPen` (check step) — SELECT pre-check on `kandangs.is_holding=true`
+- `useEnsureSapiHoldingPen` (create step) — INSERT holding pen when none exists
+
+**Action names:**
+- `sapi.kandang.create`
+- `sapi.animal.move_kandang`
+- `sapi.kandang.update_position`
+- `sapi.kandang.update`
+- `sapi.kandang.ensure_holding_check`
+- `sapi.kandang.ensure_holding_create`
+
+**Naming rationale:** Uses `sapi.*` prefix (not `peternak.*`) intentionally — Sapi penggemukan workflows are larger and more complex than the factory-managed verticals; vertical-specific action names give cleaner observability than factory-shared names. The `peternak.*` names in `createPenggemukanHooks.js` continue to cover Domba and Kambing.
+
+**Import fixes bundled (pre-existing build-breaking errors):**
+- `src/lib/hooks/useNotifications.jsx` — `logSupabaseError` was incorrectly imported from `errorLogger.js` (does not export that function); corrected to `supabaseLogger.js`.
+- `src/dashboard/_shared/pages/tim/Tim.jsx` — same incorrect import path; corrected to `supabaseLogger.js`.
+Neither file has new instrumentation points added (mutation audit deferred to Phase 6.F continuation).
+
+**Notes:**
+- All 6 sites use `logSupabaseError({ table, operation, component: 'useSapiPenggemukanData', actionName })` before re-throw — consistent with factory pattern.
+- `ensure_holding_check` and `ensure_holding_create` mirror `peternak.holding_pen.ensure.check/create` naming semantics: SELECT denial vs INSERT denial are diagnosable separately.
+- Happy path produces 0 error logs.
 
 ---
 
@@ -585,6 +627,18 @@ supabase/migrations/_archive/
 
 ---
 
+### `src/dashboard/admin/AdminSubscriptions.jsx`
+**Phase:** 6.E
+**Coverage:**
+- `executeCancelInvoice` — `subscription_invoices.update` (status='cancelled')
+
+**Action names:**
+- `admin.invoice.cancel`
+
+**Notes:** Most mutations are delegated to `useAdminData.js`. The inline mutation is for canceling an invoice directly.
+
+---
+
 ### `src/lib/hooks/useSembakoData.js`
 **Phase:** 6.A Sembako Broker sweep
 **Coverage:** 21 mutation hooks — covers entire Sembako broker dashboard (Penjualan, Pengiriman, Gudang, Produk, TokoSupplier, TimManajemen, Akun, Beranda flows).
@@ -697,6 +751,38 @@ supabase/migrations/_archive/
 
 ---
 
+---
+
+### `src/lib/hooks/useSiteConfig.js`
+**Phase:** 6.E Admin
+**Coverage:**
+- `useUpdateSiteConfig` — `site_configs.update`
+
+**Action names:**
+- `admin.site_config.update`
+
+**Notes:** Standard logSupabaseError coverage before generic toast throw.
+
+---
+
+### `src/lib/hooks/useAdminData.js`
+**Phase:** 6.E Admin
+**Coverage:**
+- Admin User/Tenant management (`useDeleteUser`, `useDeleteTenant`, `useAdminUpdateTenant`)
+- Admin Subscriptions (`useActivateTrial`)
+- Admin Invoices (`useCreateInvoice`, `useConfirmInvoice`, `useDeleteInvoice`)
+- Admin Payment Settings (`useDeletePaymentSetting`, `useUpsertPaymentSetting`, `useSaveXenditConfig`)
+- Admin Pricing (`useUpdatePricing`, `useUpdatePlanConfig`)
+- Admin Discounts (`useCreateDiscountCode`, `useToggleDiscountCode`, `useDeleteDiscountCode`)
+- Admin Market Prices (`useApproveMarketPrice`, `useDeleteMarketPrice`)
+
+**Action names (all start with `admin.`):** see Action Name Index below for the full set added in Phase 6.E.
+
+**Notes:**
+- `useDeleteTenant`, `useDeleteUser`, `useConfirmInvoice`, and `useUpdatePricing` include partial commit logs using `logError({ metadata: { partial: true } })`.
+
+---
+
 ## Action Name Index
 
 Sorted alphabetically. All entries below were verified via grep against `actionName:` literals in `src/`.
@@ -704,6 +790,32 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | action_name | file | phase | purpose |
 |---|---|---|---|
 | `admin.audit_trail.create` | `src/dashboard/admin/AdminSettings.jsx` | 6.3 | Audit-of-audit — `global_audit_logs.insert` failure (non-blocking) |
+| `admin.discount.create` | `src/lib/hooks/useAdminData.js` | 6.E | discounts.insert |
+| `admin.discount.delete` | `src/lib/hooks/useAdminData.js` | 6.E | discounts.delete |
+| `admin.discount.toggle` | `src/lib/hooks/useAdminData.js` | 6.E | discounts.update is_active |
+| `admin.invoice.cancel` | `src/dashboard/admin/AdminSubscriptions.jsx` | 6.E | subscription_invoices.update status='cancelled' |
+| `admin.invoice.confirm_addon` | `src/lib/hooks/useAdminData.js` | 6.E | subscription_invoices.update during addon confirmation (partial commit) |
+| `admin.invoice.confirm_status` | `src/lib/hooks/useAdminData.js` | 6.E | subscription_invoices.update status |
+| `admin.invoice.confirm_tenant` | `src/lib/hooks/useAdminData.js` | 6.E | tenants.update during invoice confirmation (partial commit) |
+| `admin.invoice.create` | `src/lib/hooks/useAdminData.js` | 6.E | subscription_invoices.insert |
+| `admin.invoice.delete` | `src/lib/hooks/useAdminData.js` | 6.E | subscription_invoices.delete |
+| `admin.market_price.approve` | `src/lib/hooks/useAdminData.js` | 6.E | market_prices.update status=approved |
+| `admin.market_price.delete` | `src/lib/hooks/useAdminData.js` | 6.E | market_prices.delete |
+| `admin.payment_setting.delete` | `src/lib/hooks/useAdminData.js` | 6.E | payment_settings.delete |
+| `admin.payment_setting.upsert` | `src/lib/hooks/useAdminData.js` | 6.E | payment_settings.upsert |
+| `admin.payment_setting.upsert_xendit` | `src/lib/hooks/useAdminData.js` | 6.E | payment_settings.upsert for Xendit |
+| `admin.plan_config.update` | `src/lib/hooks/useAdminData.js` | 6.E | plan_configs.update |
+| `admin.pricing.insert` | `src/lib/hooks/useAdminData.js` | 6.E | plan_configs.insert (partial commit flag) |
+| `admin.pricing.update` | `src/lib/hooks/useAdminData.js` | 6.E | plan_configs.update |
+| `admin.site_config.update` | `src/lib/hooks/useSiteConfig.js` | 6.E | site_configs.update |
+| `admin.subscription.activate_trial` | `src/lib/hooks/useAdminData.js` | 6.E | tenants.update subscription_plan |
+| `admin.tenant.delete_broker_connections` | `src/lib/hooks/useAdminData.js` | 6.E | broker_connections.delete (partial commit flag) |
+| `admin.tenant.delete_cascade` | `src/lib/hooks/useAdminData.js` | 6.E | multi-table soft/hard delete cascade (partial commit flag) |
+| `admin.tenant.delete_final` | `src/lib/hooks/useAdminData.js` | 6.E | tenants.delete |
+| `admin.tenant.nullify_cascade` | `src/lib/hooks/useAdminData.js` | 6.E | multi-table tenant_id nullify (partial commit flag) |
+| `admin.tenant.update` | `src/lib/hooks/useAdminData.js` | 6.E | tenants.update |
+| `admin.user.delete` | `src/lib/hooks/useAdminData.js` | 6.E | profiles.delete |
+| `admin.user.delete_tenant` | `src/lib/hooks/useAdminData.js` | 6.E | tenants.delete for lonely tenant (partial commit flag) |
 | `auth.callback_error` | `src/pages/AuthCallback.jsx` | 6.0 | Hash error params (otp_expired, access_denied) — code only, no token |
 | `auth.callback_fetch_profiles` | `src/pages/AuthCallback.jsx` | 6.0 | Profile fetch after callback session resolved |
 | `auth.callback_no_session` | `src/pages/AuthCallback.jsx` | 6.0 | getSession() returned no user |
@@ -791,6 +903,12 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `peternak.weight_record.create` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | weights.insert |
 | `peternak.weight_record.create.animal_sync` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | animals.latest_weight_kg sync after weigh-in (partial commit) |
 | `peternak.weight_record.delete` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | weights.update is_deleted=true |
+| `sapi.animal.move_kandang` | `src/lib/hooks/useSapiPenggemukanData.js` | 6.F | sapi_penggemukan_animals.update kandang_id/slot (drag-drop Denah Kandang) |
+| `sapi.kandang.create` | `src/lib/hooks/useSapiPenggemukanData.js` | 6.F | sapi_penggemukan_kandangs.insert (Denah Kandang) |
+| `sapi.kandang.ensure_holding_check` | `src/lib/hooks/useSapiPenggemukanData.js` | 6.F | Pre-check SELECT on sapi kandangs.is_holding=true |
+| `sapi.kandang.ensure_holding_create` | `src/lib/hooks/useSapiPenggemukanData.js` | 6.F | sapi kandangs.insert Holding pen when none exists |
+| `sapi.kandang.update` | `src/lib/hooks/useSapiPenggemukanData.js` | 6.F | sapi_penggemukan_kandangs.update (form edit) |
+| `sapi.kandang.update_position` | `src/lib/hooks/useSapiPenggemukanData.js` | 6.F | sapi_penggemukan_kandangs.update grid_x/grid_y (drag-drop reposition) |
 | `register.invite_expired` | `src/pages/Register.jsx` | 6.0 | Invite token past expires_at |
 | `register.invite_invalid` | `src/pages/Register.jsx` | 6.0 | Invite token RPC returned no row or status≠pending |
 | `register.invite_submit` | `src/pages/Register.jsx` | 6.0 | handleInviteRegister outer catch |
@@ -922,6 +1040,7 @@ WHERE action_name LIKE 'admin.%'
    OR action_name LIKE 'auth.%'
    OR action_name LIKE 'onboarding.%'
    OR action_name LIKE 'peternak.%'
+   OR action_name LIKE 'sapi.%'
    OR action_name LIKE 'broker.%'
    OR action_name LIKE 'rpa.%'
    OR action_name LIKE 'sembako.%'
@@ -988,6 +1107,23 @@ WHERE action_name IN (
   'peternak.operational_cost.create', 'peternak.operational_cost.delete',
   'peternak.holding_pen.ensure.check', 'peternak.holding_pen.ensure.create',
   'peternak.farm_ops_cost.create', 'peternak.farm_ops_cost.delete'
+)
+ORDER BY created_at DESC
+LIMIT 30;
+```
+
+Phase 6.F quick check (Sapi Kandang gap patch — sapi.* action_names):
+
+```sql
+SELECT created_at, component, action_name, error_message, metadata
+FROM public.system_error_logs
+WHERE action_name IN (
+  'sapi.kandang.create',
+  'sapi.animal.move_kandang',
+  'sapi.kandang.update_position',
+  'sapi.kandang.update',
+  'sapi.kandang.ensure_holding_check',
+  'sapi.kandang.ensure_holding_create'
 )
 ORDER BY created_at DESC
 LIMIT 30;

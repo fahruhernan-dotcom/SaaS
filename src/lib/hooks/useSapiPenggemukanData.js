@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 // ─── Pure KPI Calculations ────────────────────────────────────────────────────
 
@@ -977,7 +978,15 @@ export function useCreateSapiKandang() {
       const { error } = await supabase
         .from('sapi_kandangs')
         .insert({ tenant_id: tenant.id, ...rest })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, {
+          table: 'sapi_kandangs',
+          operation: 'insert',
+          component: 'useSapiPenggemukanData',
+          actionName: 'sapi.kandang.create',
+        })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sapi-kandangs', tenant?.id] })
@@ -998,7 +1007,15 @@ export function useMoveSapiAnimalToKandang() {
         .update({ kandang_id: kandangId, kandang_slot: kandangSlot })
         .eq('id', animalId)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, {
+          table: 'sapi_penggemukan_animals',
+          operation: 'update',
+          component: 'useSapiPenggemukanData',
+          actionName: 'sapi.animal.move_kandang',
+        })
+        throw error
+      }
     },
     onSuccess: (_, { batchId }) => {
       qc.invalidateQueries({ queryKey: ['sapi-animals', batchId] })
@@ -1018,7 +1035,15 @@ export function useUpdateSapiKandangPosition() {
         .update({ grid_x, grid_y })
         .eq('id', kandangId)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, {
+          table: 'sapi_kandangs',
+          operation: 'update',
+          component: 'useSapiPenggemukanData',
+          actionName: 'sapi.kandang.update_position',
+        })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sapi-kandangs', tenant?.id] })
@@ -1038,7 +1063,15 @@ export function useUpdateSapiKandang() {
         .update(updates)
         .eq('id', kandangId)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, {
+          table: 'sapi_kandangs',
+          operation: 'update',
+          component: 'useSapiPenggemukanData',
+          actionName: 'sapi.kandang.update',
+        })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sapi-kandangs', tenant?.id] })
@@ -1061,7 +1094,15 @@ export function useEnsureSapiHoldingPen() {
         .eq('is_holding', true)
         .limit(1)
 
-      if (checkErr) throw checkErr
+      if (checkErr) {
+        logSupabaseError(checkErr, {
+          table: 'sapi_kandangs',
+          operation: 'select',
+          component: 'useSapiPenggemukanData',
+          actionName: 'sapi.kandang.ensure_holding_check',
+        })
+        throw checkErr
+      }
 
       if (!data || data.length === 0) {
         const { error: insertErr } = await supabase
@@ -1073,7 +1114,15 @@ export function useEnsureSapiHoldingPen() {
             is_holding: true,
             notes: 'Area penampungan sapi belum dialokasikan',
           })
-        if (insertErr) throw insertErr
+        if (insertErr) {
+          logSupabaseError(insertErr, {
+            table: 'sapi_kandangs',
+            operation: 'insert',
+            component: 'useSapiPenggemukanData',
+            actionName: 'sapi.kandang.ensure_holding_create',
+          })
+          throw insertErr
+        }
       }
     },
     onSuccess: () => {

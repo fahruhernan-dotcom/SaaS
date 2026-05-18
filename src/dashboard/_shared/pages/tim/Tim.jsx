@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { logSupabaseError } from '@/lib/logger/supabaseLogger';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { isSuperadmin, isOwner as checkIsOwner } from '@/lib/auth';
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils';
@@ -170,7 +171,10 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
         .select()
         .single();
         
-      if (error) throw error;
+      if (error) {
+        logSupabaseError({ table: 'team_invitations', operation: 'insert', component: 'Tim', actionName: 'team.invite.create', error });
+        throw error;
+      }
       return { ...data, code };
     },
     onSuccess: (data) => {
@@ -190,7 +194,10 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
         .from('tenants')
         .update(payload)
         .eq('id', profile.tenant_id);
-      if (error) throw error;
+      if (error) {
+        logSupabaseError({ table: 'tenants', operation: 'update', component: 'Tim', actionName: 'team.tenant.update', error });
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success('Profil bisnis berhasil disimpan');
@@ -206,15 +213,26 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
     mutationFn: async (member) => {
       const authUserId = member.auth_user_id;
       // Remove from tenant_memberships (no RLS, always works)
-      await supabase.from('tenant_memberships')
+      const { error: errorMem } = await supabase.from('tenant_memberships')
         .delete()
         .eq('auth_user_id', authUserId)
         .eq('tenant_id', profile.tenant_id);
+      
+      if (errorMem) {
+        logSupabaseError({ table: 'tenant_memberships', operation: 'delete', component: 'Tim', actionName: 'team.member.remove', error: errorMem });
+        throw errorMem;
+      }
+
       // Remove profiles row for this tenant (only if user has multiple tenants)
-      await supabase.from('profiles')
+      const { error: errorProf } = await supabase.from('profiles')
         .delete()
         .eq('auth_user_id', authUserId)
         .eq('tenant_id', profile.tenant_id);
+        
+      if (errorProf) {
+        logSupabaseError({ table: 'profiles', operation: 'delete', component: 'Tim', actionName: 'team.member.remove', error: errorProf });
+        throw errorProf;
+      }
     },
     onSuccess: () => {
       toast.success('Anggota berhasil dihapus');
@@ -233,7 +251,10 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
         .update({ status: 'expired' })
         .eq('id', inviteId)
         .eq('tenant_id', profile.tenant_id);
-      if (error) throw error;
+      if (error) {
+        logSupabaseError({ table: 'team_invitations', operation: 'update', component: 'Tim', actionName: 'team.invite.cancel', error });
+        throw error;
+      }
     },
     onSuccess: () => {
       toast.success('Undangan dibatalkan');

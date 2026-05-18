@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabase'
+import { logSupabaseError } from '../logger/supabaseLogger'
 import { useAuth } from './useAuth'
 import { getXBasePath, resolveBusinessVertical } from '../businessModel'
 import { getSubscriptionStatus } from '../subscriptionUtils'
@@ -73,28 +74,37 @@ export function NotificationsProvider({ children }) {
   const unreadCount = notifications.filter(n => !n.is_read).length
 
   const markAsRead = async (id) => {
-    await supabase
+    const { error } = await supabase
       .from('notifications')
       .update({ is_read: true })
       .eq('id', id)
+    if (error) {
+      logSupabaseError({ table: 'notifications', operation: 'update', component: 'useNotifications', actionName: 'notification.mark_read', error })
+    }
     fetchNotifications()
   }
 
   const markAllAsRead = async () => {
     if (!tenant?.id) return
-    await supabase
+    const { error } = await supabase
       .from('notifications')
       .update({ is_read: true })
       .eq('tenant_id', tenant.id)
       .eq('is_read', false)
+    if (error) {
+      logSupabaseError({ table: 'notifications', operation: 'update', component: 'useNotifications', actionName: 'notification.mark_read', error })
+    }
     fetchNotifications()
   }
 
   const deleteNotif = async (id) => {
-    await supabase
+    const { error } = await supabase
       .from('notifications')
       .update({ is_deleted: true })
       .eq('id', id)
+    if (error) {
+      logSupabaseError({ table: 'notifications', operation: 'update', component: 'useNotifications', actionName: 'notification.delete', error })
+    }
     setNotifications(prev => prev.filter(n => n.id !== id))
   }
 
