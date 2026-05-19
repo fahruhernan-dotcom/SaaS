@@ -9,6 +9,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
+import { logSupabaseError } from '../logger/supabaseLogger'
+import { logError } from '../logger/errorLogger'
 
 export function createDairyHooks(prefix) {
   const T = {
@@ -214,7 +216,10 @@ export function createDairyHooks(prefix) {
           ...payload,
           tenant_id: tenant.id
         })
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: T.milk_logs, operation: 'insert', component: 'createDairyHooks', actionName: 'dairy.milk_log.add' })
+          throw error
+        }
       },
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: [`${K}-milk-logs`] })
@@ -235,20 +240,27 @@ export function createDairyHooks(prefix) {
           tenant_id: tenant.id,
           item_id, type, quantity, notes
         })
-        if (txErr) throw txErr
+        if (txErr) {
+          logSupabaseError(txErr, { table: T.transactions, operation: 'insert', component: 'createDairyHooks', actionName: 'dairy.inventory.update' })
+          throw txErr
+        }
 
         // Manual stock update for robust fallback
         const multiplier = type === 'in' ? 1 : -1
         const { data: item } = await supabase.from(T.inventory).select('stock_quantity').eq('id', item_id).single()
         const newQty = (item?.stock_quantity || 0) + (quantity * multiplier)
-        
+
         const { error: updErr } = await supabase.from(T.inventory).update({ stock_quantity: newQty }).eq('id', item_id)
-        if (updErr) throw updErr
+        if (updErr) {
+          logError({ level: 'error', source: 'supabase', component: 'createDairyHooks', actionName: 'dairy.inventory.update.stock_sync', error: updErr, metadata: { partial: true, transaction_inserted: true, item_id } })
+          throw updErr
+        }
       },
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: [`${K}-inventory`] })
         qc.invalidateQueries({ queryKey: [`${K}-kpis`] })
-      }
+      },
+      onError: (err) => toast.error('Gagal update inventori: ' + err.message)
     })
   }
 
@@ -261,13 +273,17 @@ export function createDairyHooks(prefix) {
           ...payload,
           tenant_id: tenant.id
         })
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: T.sales, operation: 'insert', component: 'createDairyHooks', actionName: 'dairy.milk_sale.add' })
+          throw error
+        }
       },
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: [`${K}-milk-sales`] })
         qc.invalidateQueries({ queryKey: [`${K}-kpis`] })
         toast.success('Transaksi berhasil dicatat')
-      }
+      },
+      onError: (err) => toast.error('Gagal simpan transaksi: ' + err.message)
     })
   }
 
@@ -276,13 +292,17 @@ export function createDairyHooks(prefix) {
     return useMutation({
       mutationFn: async (payload) => {
         const { error } = await supabase.from(T.animals).insert(payload)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: T.animals, operation: 'insert', component: 'createDairyHooks', actionName: 'dairy.animal.add' })
+          throw error
+        }
       },
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: [`${K}-animals`] })
         qc.invalidateQueries({ queryKey: [`${K}-kpis`] })
         toast.success('Ternak berhasil didaftarkan')
-      }
+      },
+      onError: (err) => toast.error('Gagal tambah ternak: ' + err.message)
     })
   }
 

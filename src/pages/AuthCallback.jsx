@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { getBrokerBasePath } from '@/lib/hooks/useAuth'
+import { getBrokerBasePath, getPeternakBasePath } from '@/lib/hooks/useAuth'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { AlertTriangle, RotateCcw, LogIn } from 'lucide-react'
@@ -101,6 +101,11 @@ export default function AuthCallback() {
 
       const profile = profiles.find(p => p.onboarded) || profiles[0]
 
+      // Persist active tenant so useAuth picks the right profile on next init
+      if (profile?.tenant_id) {
+        try { localStorage.setItem('ternakos_active_tenant_id', profile.tenant_id) } catch { /* ok */ }
+      }
+
       if (!profile.onboarded) {
         // Not yet onboarded: show welcome if this is their first time
         navigate('/welcome', {
@@ -111,19 +116,18 @@ export default function AuthCallback() {
       }
 
       if (profile.user_type === 'peternak') {
-        navigate(`/peternak/${profile.tenants?.sub_type || 'peternak_broiler'}/beranda`, { replace: true })
+        navigate(getPeternakBasePath(profile.tenants, profile) + '/beranda', { replace: true })
         toast.success('Selamat datang kembali!')
         return
       }
 
       if (profile.user_type === 'rumah_potong') {
-        const rpType = profile.tenants?.sub_type?.startsWith('rpa') ? 'rpa' : 'rph'
-        navigate(`/rumah_potong/${rpType}/beranda`, { replace: true })
+        navigate(getPeternakBasePath(profile.tenants, profile) + '/beranda', { replace: true })
         toast.success('Selamat datang kembali!')
         return
       }
 
-      navigate(getBrokerBasePath(profile.tenants) + '/beranda', { replace: true })
+      navigate(getBrokerBasePath(profile.tenants, profile) + '/beranda', { replace: true })
       toast.success('Selamat datang kembali!')
     }).catch((err) => {
       // Catches network errors, navigate failures, or any unexpected throw inside

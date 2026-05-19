@@ -12,6 +12,8 @@ import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
 import { calcBreedingADG } from './useKdBreedingData'
+import { logSupabaseError } from '../logger/supabaseLogger'
+import { logError } from '../logger/errorLogger'
 
 export function createBreedingHooks(prefix) {
   // Table names
@@ -193,7 +195,10 @@ export function createBreedingHooks(prefix) {
         const { error } = await supabase
           .from(T.animals)
           .insert({ ...payload, tenant_id: tenant.id })
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: T.animals, operation: 'insert', component: 'createBreedingHooks', actionName: 'breeding.animal.add' })
+          throw error
+        }
       },
       onSuccess: () => {
         qc.invalidateQueries(KEYS.animals(tenant.id))
@@ -214,7 +219,10 @@ export function createBreedingHooks(prefix) {
           .update(payload)
           .eq('id', id)
           .eq('tenant_id', tenant.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: T.animals, operation: 'update', component: 'createBreedingHooks', actionName: 'breeding.animal.update' })
+          throw error
+        }
       },
       onSuccess: () => {
         qc.invalidateQueries(KEYS.animals(tenant.id))
@@ -266,7 +274,10 @@ export function createBreedingHooks(prefix) {
         const { error } = await supabase
           .from(T.weights)
           .insert({ ...payload, tenant_id: tenant.id, adg_since_last, age_days })
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: T.weights, operation: 'insert', component: 'createBreedingHooks', actionName: 'breeding.weight.add' })
+          throw error
+        }
       },
       onSuccess: (_d, vars) => {
         qc.invalidateQueries(KEYS.animals(tenant.id))
@@ -285,7 +296,10 @@ export function createBreedingHooks(prefix) {
         const { error } = await supabase
           .from(T.matings)
           .insert({ ...payload, tenant_id: tenant.id })
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: T.matings, operation: 'insert', component: 'createBreedingHooks', actionName: 'breeding.mating.add' })
+          throw error
+        }
       },
       onSuccess: () => {
         qc.invalidateQueries(KEYS.matings(tenant.id))
@@ -305,7 +319,10 @@ export function createBreedingHooks(prefix) {
           .update(payload)
           .eq('id', id)
           .eq('tenant_id', tenant.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: T.matings, operation: 'update', component: 'createBreedingHooks', actionName: 'breeding.mating.update' })
+          throw error
+        }
       },
       onSuccess: () => {
         qc.invalidateQueries(KEYS.matings(tenant.id))
@@ -323,7 +340,10 @@ export function createBreedingHooks(prefix) {
         const { error } = await supabase
           .from(T.births)
           .insert({ ...payload, tenant_id: tenant.id })
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: T.births, operation: 'insert', component: 'createBreedingHooks', actionName: 'breeding.birth.add' })
+          throw error
+        }
       },
       onSuccess: () => {
         qc.invalidateQueries(KEYS.births(tenant.id))
@@ -342,7 +362,10 @@ export function createBreedingHooks(prefix) {
         const { error } = await supabase
           .from(T.health)
           .insert({ ...payload, tenant_id: tenant.id })
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: T.health, operation: 'insert', component: 'createBreedingHooks', actionName: 'breeding.health_log.add' })
+          throw error
+        }
       },
       onSuccess: (_d, vars) => {
         qc.invalidateQueries(KEYS.health(tenant.id))
@@ -361,7 +384,10 @@ export function createBreedingHooks(prefix) {
         const { error } = await supabase
           .from(T.feed)
           .insert({ ...payload, tenant_id: tenant.id })
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: T.feed, operation: 'insert', component: 'createBreedingHooks', actionName: 'breeding.feed_log.add' })
+          throw error
+        }
       },
       onSuccess: () => {
         qc.invalidateQueries(KEYS.feed(tenant.id))
@@ -379,14 +405,20 @@ export function createBreedingHooks(prefix) {
         const { error: saleErr } = await supabase
           .from(T.sales)
           .insert({ ...payload, tenant_id: tenant.id })
-        if (saleErr) throw saleErr
+        if (saleErr) {
+          logSupabaseError(saleErr, { table: T.sales, operation: 'insert', component: 'createBreedingHooks', actionName: 'breeding.sale.add' })
+          throw saleErr
+        }
 
         const { error: statusErr } = await supabase
           .from(T.animals)
           .update({ status: 'terjual' })
           .eq('id', payload.animal_id)
           .eq('tenant_id', tenant.id)
-        if (statusErr) throw statusErr
+        if (statusErr) {
+          logError({ level: 'error', source: 'supabase', component: 'createBreedingHooks', actionName: 'breeding.sale.add.animal_sync', error: statusErr, metadata: { partial: true, sale_inserted: true, animal_id: payload.animal_id } })
+          throw statusErr
+        }
       },
       onSuccess: () => {
         qc.invalidateQueries(KEYS.sales(tenant.id))

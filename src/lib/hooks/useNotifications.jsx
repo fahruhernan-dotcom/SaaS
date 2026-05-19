@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { supabase } from '../supabase'
 import { logSupabaseError } from '../logger/supabaseLogger'
 import { useAuth } from './useAuth'
+import { logError } from '../logger/errorLogger'
 import { getXBasePath, resolveBusinessVertical } from '../businessModel'
 import { getSubscriptionStatus } from '../subscriptionUtils'
 
@@ -154,15 +155,16 @@ export const useNotificationGenerator = () => {
 
         for (const sale of overdueSales || []) {
           if (existingKeys.has('piutang_jatuh_tempo' + sale.id)) continue
-          await supabase.from('notifications').insert({
+          const { error: e1 } = await supabase.from('notifications').insert({
             tenant_id: tenant.id,
             type: 'piutang_jatuh_tempo',
             title: 'Piutang Jatuh Tempo',
             body: `${sale.rpa_clients?.rpa_name ?? 'RPA'} belum bayar dan sudah melewati due date.`,
             action_url: `${basePath}/rpa`,
-            priority: 1, // smallint: 1=low, 2=medium, 3=high
+            priority: 1,
             metadata: { ref_id: sale.id },
           })
+          if (e1) logSupabaseError(e1, { table: 'notifications', operation: 'insert', component: 'useNotificationGenerator', actionName: 'notification.generate.piutang_broker' })
         }
       }
 
@@ -177,7 +179,7 @@ export const useNotificationGenerator = () => {
 
         for (const sale of overdueSales || []) {
           if (existingKeys.has('piutang_jatuh_tempo' + sale.id)) continue
-          await supabase.from('notifications').insert({
+          const { error: e2 } = await supabase.from('notifications').insert({
             tenant_id: tenant.id,
             type: 'piutang_jatuh_tempo',
             title: 'Piutang Jatuh Tempo',
@@ -186,27 +188,29 @@ export const useNotificationGenerator = () => {
             priority: 1,
             metadata: { ref_id: sale.id },
           })
+          if (e2) logSupabaseError(e2, { table: 'notifications', operation: 'insert', component: 'useNotificationGenerator', actionName: 'notification.generate.piutang_sembako' })
         }
       }
 
       // 2. Notifikasi subscription
       const sub = getSubscriptionStatus(tenant)
-      
+
       // Only notify for trial or active paid plans with imminent expiry
       if (sub.status === 'trial' || (sub.status === 'active' && sub.plan !== 'starter' && sub.isExpiringSoon)) {
         if (!existingKeys.has('subscription_expires' + tenant.id)) {
           const title = sub.status === 'trial' ? 'Trial Akan Berakhir' : `Langganan ${toTitleCase(sub.plan)} Akan Berakhir`
-          await supabase.from('notifications').insert({
+          const { error: e3 } = await supabase.from('notifications').insert({
             tenant_id: tenant.id,
             type: 'subscription_expires',
             title,
-            body: sub.status === 'trial' 
+            body: sub.status === 'trial'
               ? `Trial kamu berakhir dalam ${sub.daysLeft} hari.`
               : `Langganan ${toTitleCase(sub.plan)} kamu berakhir dalam ${sub.daysLeft} hari.`,
             action_url: `${basePath}/akun`,
             priority: 1,
             metadata: { ref_id: tenant.id, days_left: sub.daysLeft },
           })
+          if (e3) logSupabaseError(e3, { table: 'notifications', operation: 'insert', component: 'useNotificationGenerator', actionName: 'notification.generate.subscription_expires' })
         }
       }
 
@@ -220,7 +224,7 @@ export const useNotificationGenerator = () => {
 
         for (const stock of (allStocks || []).filter(s => s.quantity_kg < 100)) {
           if (existingKeys.has('stok_pakan_menipis' + stock.id)) continue
-          await supabase.from('notifications').insert({
+          const { error: e4 } = await supabase.from('notifications').insert({
             tenant_id: tenant.id,
             type: 'stok_pakan_menipis',
             title: 'Stok Pakan Menipis',
@@ -229,6 +233,7 @@ export const useNotificationGenerator = () => {
             priority: 1,
             metadata: { ref_id: stock.id },
           })
+          if (e4) logSupabaseError(e4, { table: 'notifications', operation: 'insert', component: 'useNotificationGenerator', actionName: 'notification.generate.stok_pakan' })
         }
 
         // 4. Tugas terlambat — one summary notif per day
@@ -240,7 +245,7 @@ export const useNotificationGenerator = () => {
             .eq('status', 'terlambat')
 
           if ((overdueCount ?? 0) > 0) {
-            await supabase.from('notifications').insert({
+            const { error: e5 } = await supabase.from('notifications').insert({
               tenant_id: tenant.id,
               type: 'tugas_terlambat',
               title: `${overdueCount} Tugas Terlambat`,
@@ -249,6 +254,7 @@ export const useNotificationGenerator = () => {
               priority: 1,
               metadata: { ref_id: todayStr, count: overdueCount },
             })
+            if (e5) logSupabaseError(e5, { table: 'notifications', operation: 'insert', component: 'useNotificationGenerator', actionName: 'notification.generate.tugas_terlambat' })
           }
         }
 
@@ -265,7 +271,7 @@ export const useNotificationGenerator = () => {
             // Check if already paid this month (or week for weekly)
             const gracePeriod = new Date(today.getFullYear(), today.getMonth(), 1)
             gracePeriod.setDate(gracePeriod.getDate() - 5)
-            
+
             const { data: alreadyPaid } = await supabase
               .from('kandang_worker_payments')
               .select('id')
@@ -279,7 +285,7 @@ export const useNotificationGenerator = () => {
 
             const key = 'payday_reminder' + w.id + todayStr
             if (!existingKeys.has(key)) {
-              await supabase.from('notifications').insert({
+              const { error: e6 } = await supabase.from('notifications').insert({
                 tenant_id: tenant.id,
                 type: 'payday_reminder',
                 title: 'Waktunya Gajian!',
@@ -288,6 +294,7 @@ export const useNotificationGenerator = () => {
                 priority: 1,
                 metadata: { ref_id: w.id + todayStr, worker_id: w.id, amount: w.base_salary },
               })
+              if (e6) logSupabaseError(e6, { table: 'notifications', operation: 'insert', component: 'useNotificationGenerator', actionName: 'notification.generate.payday' })
             }
           }
         }
@@ -296,8 +303,7 @@ export const useNotificationGenerator = () => {
       // Always refetch after generation — don't rely solely on realtime
       // context.refetch() - REMOVED to prevent infinite loops
     } catch (err) {
-      console.error('DEBUG: checkAndGenerate ERROR', err)
-      // Notification generation is non-critical — silently skip on error
+      logError({ level: 'error', source: 'frontend', component: 'useNotificationGenerator', actionName: 'notification.generate.unexpected', error: err })
     }
   }
 

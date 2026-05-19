@@ -30,6 +30,7 @@ import {
     PieChart, Pie, Cell, Scatter
 } from 'recharts'
 import { supabase } from '@/lib/supabase'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useQueryClient } from '@tanstack/react-query'
@@ -1278,8 +1279,11 @@ function CreateExtraExpenseSheet({ isOpen, onClose }) {
             }
 
             const { error } = await supabase.from('extra_expenses').insert(payload)
-            
-            if (error) throw error
+
+            if (error) {
+                logSupabaseError(error, { table: 'extra_expenses', operation: 'insert', component: 'CashFlow', actionName: 'broker.expense.add' })
+                throw error
+            }
             
             toast.success('Pengeluaran berhasil dicatat!')
             queryClient.invalidateQueries(['cashflow-v2'])

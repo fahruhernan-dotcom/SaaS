@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
+import { logSupabaseError } from '../logger/supabaseLogger'
+import { logError } from '../logger/errorLogger'
 
 // ─── Pure helper calculations ─────────────────────────────────────────────────
 
@@ -167,7 +169,10 @@ export const useCreatePeternakFarm = () => {
         livestock_type, business_model, mitra_company,
         is_active: true,
       })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'peternak_farms', operation: 'insert', component: 'usePeternakData', actionName: 'peternak.farm.create' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['peternak-farms', tenant?.id] })
@@ -191,7 +196,10 @@ export const useUpdatePeternakFarm = () => {
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'peternak_farms', operation: 'update', component: 'usePeternakData', actionName: 'peternak.farm.update' })
+        throw error
+      }
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['peternak-farms', tenant?.id] })
@@ -211,7 +219,10 @@ export const useDeletePeternakFarm = () => {
         .from('peternak_farms')
         .update({ is_deleted: true, updated_at: new Date().toISOString() })
         .eq('id', farmId)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'peternak_farms', operation: 'update', component: 'usePeternakData', actionName: 'peternak.farm.delete' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['peternak-farms', tenant?.id] })
@@ -254,7 +265,10 @@ export const useCreateCycle = () => {
         cycle_number, status: 'active',
         total_mortality: 0, total_feed_kg: 0,
       })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'breeding_cycles', operation: 'insert', component: 'usePeternakData', actionName: 'peternak.broiler_cycle.create' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['all-cycles', tenant?.id] })
@@ -285,7 +299,10 @@ export const useUpdateCycleStatus = () => {
           ...(notes !== undefined ? { notes } : {}),
         })
         .eq('id', cycleId)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'breeding_cycles', operation: 'update', component: 'usePeternakData', actionName: 'peternak.broiler_cycle.update_status' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['all-cycles', tenant?.id] })
@@ -336,7 +353,10 @@ export const useUpsertDailyRecord = () => {
         },
         { onConflict: 'cycle_id,record_date' }
       )
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'daily_records', operation: 'upsert', component: 'usePeternakData', actionName: 'peternak.daily_record.upsert' })
+        throw error
+      }
       // Recompute breeding_cycles aggregate totals
       const { data: allRecs } = await supabase
         .from('daily_records')
@@ -344,10 +364,13 @@ export const useUpsertDailyRecord = () => {
         .eq('cycle_id', cycle_id)
       const totalMortality = allRecs?.reduce((s, r) => s + (r.mortality_count || 0), 0) ?? 0
       const totalFeed      = allRecs?.reduce((s, r) => s + Number(r.feed_kg || 0), 0) ?? 0
-      await supabase
+      const { error: syncErr } = await supabase
         .from('breeding_cycles')
         .update({ total_mortality: totalMortality, total_feed_kg: totalFeed })
         .eq('id', cycle_id)
+      if (syncErr) {
+        logError({ level: 'error', source: 'supabase', component: 'usePeternakData', actionName: 'peternak.daily_record.upsert.cycle_sync', error: syncErr, metadata: { partial: true, daily_record_saved: true, cycle_id } })
+      }
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['daily-records', vars.cycle_id] })
@@ -404,12 +427,18 @@ export const useUpsertFeedStock = () => {
           .from('feed_stocks')
           .update({ quantity_kg: existing.quantity_kg + quantity_kg })
           .eq('id', existing.id)
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: 'feed_stocks', operation: 'update', component: 'usePeternakData', actionName: 'peternak.feed_stock.upsert' })
+          throw error
+        }
       } else {
         const { error } = await supabase
           .from('feed_stocks')
           .insert({ tenant_id: tenant.id, peternak_farm_id, feed_type, quantity_kg })
-        if (error) throw error
+        if (error) {
+          logSupabaseError(error, { table: 'feed_stocks', operation: 'insert', component: 'usePeternakData', actionName: 'peternak.feed_stock.upsert' })
+          throw error
+        }
       }
 
       // Optional: record in cycle_expenses if cycle_id + unit_price provided
@@ -429,7 +458,10 @@ export const useUpsertFeedStock = () => {
             expense_date: new Date().toISOString().split('T')[0],
             notes: notes || null,
           })
-        if (expErr) throw expErr
+        if (expErr) {
+          logError({ level: 'error', source: 'supabase', component: 'usePeternakData', actionName: 'peternak.feed_stock.upsert.expense', error: expErr, metadata: { partial: true, feed_stock_saved: true, cycle_id } })
+          throw expErr
+        }
       }
     },
     onSuccess: () => {
@@ -454,7 +486,10 @@ export const useReduceFeedStock = () => {
         .from('feed_stocks')
         .update({ quantity_kg: newQty })
         .eq('id', stock_id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'feed_stocks', operation: 'update', component: 'usePeternakData', actionName: 'peternak.feed_stock.reduce' })
+        throw error
+      }
       return newQty
     },
     onSuccess: (newQty) => {
@@ -518,7 +553,10 @@ export const useDeleteCycle = () => {
         .from('breeding_cycles')
         .update({ is_deleted: true })
         .eq('id', cycleId)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'breeding_cycles', operation: 'update', component: 'usePeternakData', actionName: 'peternak.broiler_cycle.delete' })
+        throw error
+      }
     },
     onSuccess: (_, cycleId) => {
       queryClient.invalidateQueries({ queryKey: ['all-cycles', tenant?.id] })

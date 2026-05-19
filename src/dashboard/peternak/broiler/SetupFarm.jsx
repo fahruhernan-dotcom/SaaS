@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { resolveBusinessVertical } from '@/lib/businessModel'
 import { useQueryClient } from '@tanstack/react-query'
@@ -151,7 +152,10 @@ export default function SetupFarm({ onSuccess, onCancel }) {
         }])
         .select()
         .single()
-      if (farmErr) throw farmErr
+      if (farmErr) {
+        logSupabaseError(farmErr, { table: 'peternak_farms', operation: 'insert', component: 'SetupFarm', actionName: 'peternak.farm.setup' })
+        throw farmErr
+      }
 
       // 2. Optionally save first cycle
       if (!skipCycle && cycleForm.doc_count) {

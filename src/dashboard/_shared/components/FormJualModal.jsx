@@ -4,6 +4,7 @@ import { DatePicker } from '@/components/ui/DatePicker'
 import * as z from 'zod'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -106,7 +107,10 @@ export default function FormJualModal({ onClose }) {
         notes: values.notes
       })
 
-      if (saleError) throw saleError
+      if (saleError) {
+        logSupabaseError(saleError, { table: 'sales', operation: 'insert', component: 'FormJualModal', actionName: 'broker.sale.create' })
+        throw saleError
+      }
 
       // Update RPA balance
       const { data: rpa } = await supabase

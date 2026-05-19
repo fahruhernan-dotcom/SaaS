@@ -10,6 +10,7 @@ import { id } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { supabase } from '@/lib/supabase'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { toast } from 'sonner'
 import { formatWeight, formatEkor, safeNum } from '@/lib/format'
@@ -554,6 +555,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                     .select('status, arrival_time')
 
                 if (error) {
+                    logSupabaseError(error, { table: 'deliveries', operation: 'update', component: 'UpdateArrivalSheet', actionName: 'broker.delivery.update_arrival' })
                     console.error('[UpdateArrivalSheet] Manual Update Error:', error)
                     throw error
                 }

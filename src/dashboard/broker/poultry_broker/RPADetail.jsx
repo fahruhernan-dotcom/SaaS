@@ -37,6 +37,7 @@ import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useQueryClient, useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import { cn } from '@/lib/utils'
 import EmptyState from '@/components/EmptyState'
 import { isSuperadmin } from '@/lib/auth'
@@ -173,13 +174,17 @@ export default function RPADetail() {
     setShowConfirmAllPaid(false)
     try {
         for (const s of unpaidSales) {
-            await supabase.from('payments').insert({
+            const { error: payErr } = await supabase.from('payments').insert({
                 tenant_id: tenant.id,
                 sale_id: s.id,
                 amount: calcRemainingAmount(s),
                 payment_method: 'cash',
                 notes: 'Pelunasan massal'
             })
+            if (payErr) {
+                logSupabaseError(payErr, { table: 'payments', operation: 'insert', component: 'RPADetail', actionName: 'broker.payment.bulk_settle' })
+                throw payErr
+            }
         }
 
         queryClient.invalidateQueries({ queryKey: ['rpa-clients', tenant?.id] })
@@ -368,7 +373,10 @@ export default function RPADetail() {
               onClose={() => setShowEdit(false)}
               onSubmit={async (data) => {
                 const { error } = await supabase.from('rpa_clients').update(data).eq('id', id)
-                if (error) throw error
+                if (error) {
+                  logSupabaseError(error, { table: 'rpa_clients', operation: 'update', component: 'RPADetail', actionName: 'broker.rpa.update' })
+                  throw error
+                }
                 queryClient.invalidateQueries({ queryKey: ['rpa-detail', id] })
                 queryClient.invalidateQueries({ queryKey: ['rpa-clients'] })
                 toast.success('Data RPA diperbarui!')
@@ -406,9 +414,12 @@ export default function RPADetail() {
                 const { error } = await supabase.from('rpa_clients')
                   .update({ is_deleted: true })
                   .eq('id', id)
-                
-                if (error) return toast.error('Gagal menghapus: ' + error.message)
-                
+
+                if (error) {
+                  logSupabaseError(error, { table: 'rpa_clients', operation: 'update', component: 'RPADetail', actionName: 'broker.rpa.delete' })
+                  return toast.error('Gagal menghapus: ' + error.message)
+                }
+
                 toast.success('RPA dihapus')
                 navigate('/broker/rpa')
               }}
@@ -461,7 +472,7 @@ function SaleList({ sales, rpa, onPay, canPayFunc }) {
     const handleConfirmFullPaid = async () => {
         const sale = confirmFullPaid.sale
         if (!sale) return
-        
+
         try {
             const totalJual = calcTotalJual(sale, sale.deliveries?.[0])
             const { error } = await supabase.from('payments').insert({
@@ -471,7 +482,10 @@ function SaleList({ sales, rpa, onPay, canPayFunc }) {
                 payment_method: 'cash',
                 notes: 'Pelunasan langsung'
             })
-            if (error) throw error
+            if (error) {
+                logSupabaseError(error, { table: 'payments', operation: 'insert', component: 'RPADetail', actionName: 'broker.payment.settle' })
+                throw error
+            }
             toast.success('Transaksi dilunasi!')
             queryClient.invalidateQueries({ queryKey: ['sales', tenant?.id] })
             queryClient.invalidateQueries({ queryKey: ['rpa-clients', tenant?.id] })
@@ -793,7 +807,10 @@ function FormPaymentModal({ sale, onClose }) {
                 payment_method: data.method,
                 payment_date: new Date().toISOString().split('T')[0]
             })
-            if (error) throw error
+            if (error) {
+                logSupabaseError(error, { table: 'payments', operation: 'insert', component: 'RPADetail', actionName: 'broker.payment.add' })
+                throw error
+            }
             toast.success('Pembayaran dicatat!')
             queryClient.invalidateQueries({ queryKey: ['rpa-clients', tenant?.id] })
             queryClient.invalidateQueries({ queryKey: ['sales', tenant?.id] })

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { generateInvoiceNumber } from './invoiceUtils'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 // ── Query: invoice history per reference ─────────────────────────────────────
 
@@ -55,7 +56,10 @@ export const useSaveInvoice = () => {
         })
         .select()
         .single()
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'generated_invoices', operation: 'insert', component: 'useInvoice', actionName: 'invoice.generate' })
+        throw error
+      }
       return data
     },
     onSuccess: (_, vars) => {

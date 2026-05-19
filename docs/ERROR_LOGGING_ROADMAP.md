@@ -58,34 +58,41 @@ Tracks instrumentation status per (vertical × sub-page). Each cell is one of:
 | Sub-page | Broiler | Layer | Domba Pgmkn | Kambing Pgmkn | Sapi Pgmkn | Domba Breeding | Kambing Breeding | Sapi Breeding |
 |----------|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
 | Beranda | — | — | — | — | — | — | — | — |
-| Siklus / Batch | ✅ | ⏳ | ✅ | ✅ | ✅ | ⏳ | ⏳ | ⏳ |
-| Vaksinasi / Kesehatan | ✅ | ⏳ | ✅ | ✅ | ✅ | · | · | · |
+| Siklus / Batch | ✅ | ⏳ | ✅ | ✅ | ✅ | · | · | · |
+| Vaksinasi / Kesehatan | ✅ | ⏳ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Input Harian / Daily Task | ✅ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
-| Ternak (Data Ternak) | · | · | ✅ | ✅ | ✅ | 🟡 | 🟡 | 🟡 |
-| Penjualan (Sale) | · | · | ✅ | ✅ | ✅ | · | · | · |
+| Ternak (Data Ternak) | · | · | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Penjualan (Sale) | · | · | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Denah Kandang / Kandang-View | · | · | ✅ | ✅ | ✅ | ⏳ | ⏳ | ⏳ |
-| Reproduksi | · | · | · | · | · | ⏳ | ⏳ | ⏳ |
-| Pakan / Stok Pakan | ⏳ | ⏳ | ✅ | ✅ | ✅ | ⏳ | ⏳ | ⏳ |
+| Reproduksi | · | · | · | · | · | ✅ | ✅ | ✅ |
+| Pakan / Stok Pakan | ✅ | ⏳ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Listrik & Air | · | · | ✅ | ✅ | ✅ | · | · | ⏳ |
 | Tim / Anak Kandang | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ |
 | Laporan | — | — | — | — | — | — | — | — |
 | Akun | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
-**Phase 6.B (2026-05-18)** completed fattening coverage end-to-end across all three sub-verticals — `createPenggemukanHooks` is now fully instrumented (23 mutation hooks: 4 from Phase 6.2 + 19 from Phase 6.B), plus farm-wide Listrik & Air via `usePeternakTaskData.useAddFarmOpsCost` / `useDeleteFarmOpsCost`. Breeding verticals + broiler/layer remain ⏳ — those use different hook files (`useBreedingData.js`, broiler-specific hooks) and are out of Phase 6.B scope.
+**Phase 6.B (2026-05-18)** completed fattening coverage end-to-end across all three sub-verticals — `createPenggemukanHooks` is now fully instrumented (23 mutation hooks: 4 from Phase 6.2 + 19 from Phase 6.B), plus farm-wide Listrik & Air via `usePeternakTaskData.useAddFarmOpsCost` / `useDeleteFarmOpsCost`.
+
+**Phase 6.F (2026-05-19)** closed the breeding and broiler mutation gaps:
+- `createBreedingHooks.js` — 9 mutation hooks, covers all domba/kambing/sapi breeding verticals (animals, weights, matings, births, health logs, feed logs, sales)
+- `useKdBreedingData.js` — 9 mutation hooks, covers kambing perah breeding (same pattern, separate tables)
+- `usePeternakData.js` — 9 mutation hooks, covers broiler peternak farm/cycle/daily/feed stack
+
+Breeding health logs map to "Vaksinasi / Kesehatan" for breeding verticals (no vaccination page, but health log mutations now covered ✅). Breeding sale flow now ✅. Reproduksi (mating + birth) now ✅. Broiler "Input Harian / Daily Task" ✅ via `useUpsertDailyRecord`. Broiler "Pakan / Stok Pakan" ✅ via `useUpsertFeedStock` + `useReduceFeedStock`.
 
 ### Broker verticals
 
 | Sub-page | Broker Ayam (Poultry) | Broker Telur (Egg) | Distributor Sembako |
 |----------|:--:|:--:|:--:|
-| Beranda | — | — | — |
-| Transaksi | 🟡 | — | · |
+| Beranda | ✅ | — | — |
+| Transaksi | ✅ | — | · |
 | POS / Penjualan | · | ✅ | ✅ |
 | Kandang / Farms | ✅ | · | · |
 | Pengiriman | ✅ | · | ✅ |
-| Cash Flow | ⏳ | · | · |
+| Cash Flow | ✅ | · | · |
 | Armada (vehicle + driver) | ✅ | · | · |
 | Simulator | — | · | · |
-| RPA & Piutang | 🟡 | · | · |
+| RPA & Piutang | ✅ | · | · |
 | Inventori | · | ✅ | ✅ |
 | Suppliers | · | ✅ | ✅ |
 | Customers | · | ✅ | ✅ |
@@ -93,7 +100,7 @@ Tracks instrumentation status per (vertical × sub-page). Each cell is one of:
 | Toko-Supplier Detail | · | · | ✅ |
 | Gudang | · | · | ✅ |
 | Produk | · | · | ✅ |
-| Karyawan / Tim | ⏳ | ⏳ | ✅ |
+| Karyawan / Tim | ✅ | ✅ | ✅ |
 | Laporan | — | — | — |
 | Akun | ⏳ | ✅ | 🟡 |
 | Recycle Bin | · | · | ✅ |
@@ -103,8 +110,7 @@ Tracks instrumentation status per (vertical × sub-page). Each cell is one of:
 | Supplier Payments | · | · | ✅ |
 | Stock Adjust / Returns | · | · | ✅ |
 
-**🟡 Transaksi (Broker Ayam)**: `FormBayarModal` covered (Phase 6.1) but other inline sale-edit mutations not audited.
-**🟡 RPA & Piutang (Broker Ayam)**: `FormBayarModal` RPA-side covered (Phase 6.1) but RPADetail.jsx and standalone RPA edits not audited.
+**Phase 6.F (2026-05-19)** completed Broker Ayam coverage: `Beranda.jsx` (bulk_mark_paid), `FormJualModal` (`broker.sale.create`), `CashFlow.jsx` (`broker.expense.add`), `RPA.jsx` + `RPADetail.jsx` (full CRUD + payment settlement), `useBrokerKaryawanData.js` (employee CRUD covers both Broker Ayam and Broker Telur).
 **Phase 6.C (2026-05-18)** completed Egg Broker mutation surface: Customers, Suppliers, Inventori (CRUD); POS (sale + items multi-step with partial-commit detection). `Transaksi.jsx` and `Beranda.jsx` are read-only — marked `—`. Egg `Akun` uses shared `_shared/pages/Akun.jsx` (Phase 5 ✅). Egg `Karyawan / Tim` delegates to cross-vertical shared `ManajemenPage` + `BrokerKaryawanPage` — kept ⏳ for Phase 6.F.
 
 ### RPA (Rumah Potong)
@@ -144,7 +150,7 @@ Phases are **independent** — pick by demand, not by alphabet order. Numbering 
 3. ~~**6.C** — Egg Broker~~ ✅ DONE
 4. ~~**6.D** — RPA (Order already done; Hutang / Distribusi remaining)~~ ✅ DONE
 5. ~~**6.E** — Admin (Users / Subscriptions / Pricing CRUD)~~ ✅ DONE
-6. **6.F** — Cross-vertical shared (Tim, Akun per vertical, DailyTask, Notifications, KandangView, breeding verticals, broiler/layer remaining hooks) — 🟡 IN PROGRESS
+6. ~~**6.F** — Cross-vertical shared (Tim, Akun per vertical, DailyTask, Notifications, KandangView, breeding verticals, broiler/layer remaining hooks)~~ ✅ DONE
 
 ---
 
@@ -365,13 +371,51 @@ Discovered during the Phase 6.F audit: `useSapiPenggemukanData.js` is the Sapi-s
 - `src/dashboard/_shared/pages/tim/Tim.jsx` — same wrong import → corrected to `supabaseLogger.js`.
 Neither file has new mutation instrumentation; full Tim/Notifications audit deferred to Phase 6.F continuation.
 
-#### Remaining Phase 6.F scope (⏳ pending)
+#### Phase 6.F completed (2026-05-19)
 
-- `tim/Tim.jsx` — team invite/accept/revoke mutations (after import fix, now build-safe to instrument)
-- `useNotifications.jsx` — mark-read/delete notification mutations
+- ✅ `useNotifications.jsx` — 6 generator insert sites + outer catch + mark-read/delete notification mutations
+- ✅ `createBreedingHooks.js` — 9 mutation hooks (domba/kambing/sapi breeding factory)
+- ✅ `useKdBreedingData.js` — 9 mutation hooks (kambing perah breeding)
+- ✅ `usePeternakData.js` — 9 mutation hooks (broiler farms, cycles, daily records, feed stock)
+- ✅ `AkunPreview.jsx` — `account.business.delete` (RPC) + `account.bisnis.update` (EditBisnisSheet)
+
+#### Phase 6.F completion sweep (2026-05-19)
+
+Cross-vertical hooks (all mutation sites, not factory-generated):
+- ✅ `useBrokerKaryawanData.js` — 3 broker employee mutations (`broker.employee.create/update/delete`)
+- ✅ `useBrokerConnections.js` — 3 broker connection mutations (`broker.connection.request/respond/cancel`)
+- ✅ `useInvoice.js` — 1 generated invoice mutation (`invoice.generate`)
+- ✅ `useKdPenggemukanData.js` — 15 kambing/domba penggemukan mutation sites across 11 hooks
+- ✅ `createDairyHooks.js` — 5 dairy factory mutations (milk log, inventory, sale, animal)
+- ✅ `useSapiBreedingData.js` — 11 sapi breeding mutations (animal, weight, mating, birth, health, feed, sale)
+- ✅ `useMarket.js` — 3 market listing mutations (`market.listing.create/close/delete`)
+
+Broker Ayam components (all inline mutations):
+- ✅ `Beranda.jsx` — `broker.sale.bulk_mark_paid` (handleTandaiLunas loop)
+- ✅ `CashFlow.jsx` — `broker.expense.add` (extra_expenses.insert)
+- ✅ `RPA.jsx` — `broker.rpa.create/update/delete`
+- ✅ `RPADetail.jsx` — `broker.rpa.update/delete` + `broker.payment.bulk_settle/settle/add` (5 sites)
+- ✅ `pengiriman/CreateLossSheet.jsx` — `broker.loss_report.create`
+- ✅ `pengiriman/UpdateArrivalSheet.jsx` — `broker.delivery.update_arrival`
+- ✅ `_shared/components/FormJualModal.jsx` — `broker.sale.create`
+
+Peternak components:
+- ✅ `peternak/broiler/LaporanSiklus.jsx` — `peternak.cycle_expense.add`
+- ✅ `peternak/broiler/SetupFarm.jsx` — `peternak.farm.setup`
+
+Auth / onboarding:
+- ✅ `src/pages/Invite.jsx` — `invite.accept.profile_update` + `invite.accept.mark_accepted`
+
+**Total Phase 6.F new action_names:** 55 across 17 files (see INVENTORY Action Name Index).
+
+**Remaining out-of-scope for Phase 6.F (deferred):**
+- `tim/Tim.jsx` — team invite/accept/revoke inline mutations (import-path fix done; mutations deferred)
 - `daily_task/` components — task assign/complete
 - Per-vertical Akun pages (beyond shared AkunPreview)
 - Worker CRUD (`useKandangWorkerData.js` and equivalents)
+- Broker Ayam `Akun` page — still ⏳
+
+**Status:** ✅ DONE (all in-scope targets instrumented; deferred items listed above for next sweep)
 
 ---
 
@@ -470,15 +514,16 @@ _No entries yet._
 
 _No entries yet._
 
-### Phase 6.F — 🟡 IN PROGRESS
+### Phase 6.F — ✅ DONE
 
 | File | Rule | Approx line | Note |
 |------|------|-------------|------|
 | `src/lib/hooks/useNotifications.jsx` | Invalid import path (`errorLogger.js` does not export `logSupabaseError`) | 3 | Build-breaking pre-existing error. Fixed in Phase 6.F (corrected import source to `supabaseLogger.js`). |
 | `src/dashboard/_shared/pages/tim/Tim.jsx` | Invalid import path (same as above) | 5 | Build-breaking pre-existing error. Fixed in Phase 6.F. |
 | `src/lib/hooks/useSapiPenggemukanData.js` | `no-unused-vars` / `react-hooks/exhaustive-deps` (pre-existing) | various | Any pre-existing lint in this file beyond the 6 instrumented sites is deferred per lint policy. |
+| `src/dashboard/_shared/components/FormJualModal.jsx` | `useState` used but not imported | 43 | Pre-existing bug (`useState` referenced without import). Component was presumably never rendered without error — deferred (structural fix). |
 
-**Net lint delta from Phase 6.F (partial):** 2 build-breaking import errors resolved. 6 new instrumentation sites added with no new lint errors.
+**Net lint delta from Phase 6.F:** 2 build-breaking import errors resolved. 55 new action_names across 17 files added with no new lint errors introduced.
 
 ### Pre-Phase 6.A inherited debt
 

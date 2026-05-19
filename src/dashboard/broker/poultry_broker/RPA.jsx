@@ -29,6 +29,7 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { isSuperadmin } from '@/lib/auth'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import EmptyState from '@/components/EmptyState'
 import { Skeleton } from '@/components/ui/skeleton'
 import { RPASkeleton } from '@/components/ui/BrokerPageSkeleton'
@@ -258,19 +259,25 @@ export default function RPA() {
                         onClose={() => setOpenModal(false)}
                         tenantId={tenant?.id}
                         onSubmit={async (data) => {
-                            const action = editingRPA ? 'update' : 'insert'
-                            const { error } = await (editingRPA ?
+                            const isEdit = !!editingRPA
+                            const { error } = await (isEdit ?
                                 supabase.from('rpa_clients').update(data).eq('id', editingRPA.id) :
                                 supabase.from('rpa_clients').insert({ ...data, tenant_id: tenant?.id })
                             )
-                            if (error) throw error
-                            toast.success(editingRPA ? 'RPA diperbarui' : 'RPA ditambahkan')
+                            if (error) {
+                                logSupabaseError(error, { table: 'rpa_clients', operation: isEdit ? 'update' : 'insert', component: 'RPA', actionName: isEdit ? 'broker.rpa.update' : 'broker.rpa.create' })
+                                throw error
+                            }
+                            toast.success(isEdit ? 'RPA diperbarui' : 'RPA ditambahkan')
                             queryClient.invalidateQueries({ queryKey: ['rpa-clients', tenant?.id] })
                             setOpenModal(false)
                         }}
                         onDelete={async (id) => {
                             const { error } = await supabase.from('rpa_clients').delete().eq('id', id)
-                            if (error) throw error
+                            if (error) {
+                                logSupabaseError(error, { table: 'rpa_clients', operation: 'delete', component: 'RPA', actionName: 'broker.rpa.delete' })
+                                throw error
+                            }
                             toast.success('RPA dihapus')
                             queryClient.invalidateQueries({ queryKey: ['rpa-clients', tenant?.id] })
                             setOpenModal(false)

@@ -82,6 +82,9 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
   //     RPC (userTypeMismatch branch) to sidestep the trigger.
   const isRoleLocked = useMemo(() => {
     if (isSuperadmin(profile)) return false
+    // When adding a new business, restrict to the same category as the user's existing role.
+    // A peternak can only create new peternak businesses; a broker can only create broker businesses.
+    if (isNewBusiness && profile?.user_type) return true
     return !isNewBusiness && profile?.business_model_selected === true
   }, [isNewBusiness, profile])
 

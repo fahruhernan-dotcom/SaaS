@@ -41,6 +41,7 @@ import {
 } from 'recharts'
 import { supabase } from '@/lib/supabase'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import {
   formatIDR,
@@ -295,7 +296,11 @@ export default function BrokerBeranda() {
       const { data: unpaidSales } = await supabase.from('sales').select('id, total_revenue').eq('rpa_id', rpaId).neq('payment_status', 'lunas').eq('is_deleted', false)
       if (!unpaidSales) return
       for (const sale of unpaidSales) {
-        await supabase.from('sales').update({ payment_status: 'lunas', paid_amount: sale.total_revenue }).eq('id', sale.id)
+        const { error: updateErr } = await supabase.from('sales').update({ payment_status: 'lunas', paid_amount: sale.total_revenue }).eq('id', sale.id)
+        if (updateErr) {
+          logSupabaseError(updateErr, { table: 'sales', operation: 'update', component: 'Beranda', actionName: 'broker.sale.bulk_mark_paid' })
+          throw updateErr
+        }
       }
       queryClient.invalidateQueries({ queryKey: ['dashboard-redesign', tenant.id] })
       toast.success(`✅ Semua piutang ${rpaName} ditandai lunas!`)
@@ -320,7 +325,7 @@ export default function BrokerBeranda() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
-            className="fixed top-4 left-1/2 -translate-x-1/2 z-[999] w-full max-w-[560px] px-4"
+            className="fixed top-4 left-4 right-4 z-[999] mx-auto max-w-[560px]"
           >
             <div className="relative flex items-start gap-4 p-5 rounded-2xl border border-amber-500/30 bg-[#0C1319]/95 backdrop-blur-xl shadow-2xl shadow-amber-500/10">
               {/* Glow accent */}
@@ -342,7 +347,7 @@ export default function BrokerBeranda() {
                 </p>
                 <div className="flex items-center gap-3 mt-3">
                   <button
-                    onClick={() => navigate('/broker/akun')}
+                    onClick={() => navigate('/broker/akun', { state: { openEditBisnis: true } })}
                     className="px-4 py-2 rounded-xl bg-amber-500 text-[#0C1319] text-[11px] font-black uppercase tracking-widest hover:bg-amber-400 active:scale-95 transition-all shadow-lg shadow-amber-500/20"
                   >
                     <MapPin size={11} className="inline mr-1.5 -mt-0.5" />

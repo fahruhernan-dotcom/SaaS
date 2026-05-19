@@ -5,6 +5,7 @@ import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle2, XCircle, Building2, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { logSupabaseError } from '@/lib/logger/supabaseLogger';
 
 export default function Invite() {
   const { token } = useParams();
@@ -69,7 +70,10 @@ export default function Invite() {
         })
         .eq('id', profile.id);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        logSupabaseError(profileError, { table: 'profiles', operation: 'update', component: 'Invite', actionName: 'invite.accept.profile_update' });
+        throw profileError;
+      }
 
       // 2. Mark invite as accepted
       const { error: inviteError } = await supabase
@@ -77,7 +81,10 @@ export default function Invite() {
         .update({ status: 'accepted' })
         .eq('id', inviteData.id);
 
-      if (inviteError) throw inviteError;
+      if (inviteError) {
+        logSupabaseError(inviteError, { table: 'team_invitations', operation: 'update', component: 'Invite', actionName: 'invite.accept.mark_accepted' });
+        throw inviteError;
+      }
 
       toast.success('Berhasil bergabung ke tim!');
       navigate(getBrokerBasePath({ sub_type: inviteData.tenant_sub_type }) + '/beranda');

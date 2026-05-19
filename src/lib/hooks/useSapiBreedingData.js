@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
+import { logSupabaseError } from '../logger/supabaseLogger'
 
 // ─── Pure KPI Calculations ────────────────────────────────────────────────────
 
@@ -331,7 +332,10 @@ export function useAddSapiBreedingAnimal() {
           latest_weight_kg: entry_weight_kg,
           latest_weight_date: entry_date,
         })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sapi_breeding_animals', operation: 'insert', component: 'useSapiBreedingData', actionName: 'sapi_breeding.animal.add' })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sapi-breeding-animals', tenant?.id] })
@@ -353,7 +357,10 @@ export function useUpdateSapiBreedingAnimal() {
         .update(updates)
         .eq('id', animalId)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sapi_breeding_animals', operation: 'update', component: 'useSapiBreedingData', actionName: 'sapi_breeding.animal.update' })
+        throw error
+      }
     },
     onSuccess: (_, { animalId }) => {
       qc.invalidateQueries({ queryKey: ['sapi-breeding-animals', tenant?.id] })
@@ -389,7 +396,10 @@ export function useAddSapiBreedingMatingRecord() {
           status: 'menunggu',
           notes,
         })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sapi_breeding_mating_records', operation: 'insert', component: 'useSapiBreedingData', actionName: 'sapi_breeding.mating.add' })
+        throw error
+      }
 
       // Update status indukan menjadi 'bunting' setelah IB dicatat
       // (akan dikonfirmasi saat PKB — ini hanya flag awal)
@@ -427,7 +437,10 @@ export function useUpdateSapiBreedingMatingStatus() {
         })
         .eq('id', matingId)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sapi_breeding_mating_records', operation: 'update', component: 'useSapiBreedingData', actionName: 'sapi_breeding.mating.update_status' })
+        throw error
+      }
 
       // Sync status indukan sesuai konfirmasi kebuntingan
       if (status === 'bunting') {
@@ -488,7 +501,10 @@ export function useAddSapiBreedingBirth() {
           retentio_placenta,
           dam_condition, notes,
         })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sapi_breeding_births', operation: 'insert', component: 'useSapiBreedingData', actionName: 'sapi_breeding.birth.add' })
+        throw error
+      }
       // DB trigger: mating.status → 'melahirkan' + dam.parity += 1 otomatis
       // Status indukan kembali ke 'aktif' setelah melahirkan
       await supabase
@@ -566,7 +582,10 @@ export function useAddSapiBreedingWeightRecord() {
           weigh_method, chest_girth_cm,
           notes, recorded_by,
         })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sapi_breeding_weight_records', operation: 'insert', component: 'useSapiBreedingData', actionName: 'sapi_breeding.weight.add' })
+        throw error
+      }
       // DB trigger sync latest_weight_* ke animals otomatis
     },
     onSuccess: (_, { animal_id }) => {
@@ -604,7 +623,10 @@ export function useAddSapiBreedingHealthLog() {
           death_cause, death_weight_kg, loss_value_idr,
           handled_by, notes, recorded_by,
         })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sapi_breeding_health_logs', operation: 'insert', component: 'useSapiBreedingData', actionName: 'sapi_breeding.health_log.add' })
+        throw error
+      }
       // DB trigger trg_sapi_breeding_health_mark_dead menangani status 'mati' otomatis
     },
     onSuccess: (_, { animal_id }) => {
@@ -628,7 +650,10 @@ export function useDeleteSapiBreedingHealthLog() {
         .update({ is_deleted: true })
         .eq('id', logId)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sapi_breeding_health_logs', operation: 'update', component: 'useSapiBreedingData', actionName: 'sapi_breeding.health_log.delete' })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sapi-breeding-health-logs', tenant?.id] })
@@ -663,7 +688,10 @@ export function useAddSapiBreedingFeedLog() {
           onConflict: 'tenant_id,kandang_name,log_date',
           ignoreDuplicates: false,
         })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sapi_breeding_feed_logs', operation: 'upsert', component: 'useSapiBreedingData', actionName: 'sapi_breeding.feed_log.add' })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sapi-breeding-feed-logs', tenant?.id] })
@@ -684,7 +712,10 @@ export function useDeleteSapiBreedingFeedLog() {
         .update({ is_deleted: true })
         .eq('id', logId)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'sapi_breeding_feed_logs', operation: 'update', component: 'useSapiBreedingData', actionName: 'sapi_breeding.feed_log.delete' })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sapi-breeding-feed-logs', tenant?.id] })
@@ -716,7 +747,10 @@ export function useAddSapiBreedingSale() {
           payment_method, is_paid: is_paid ?? false, paid_date,
           invoice_number, notes,
         })
-      if (saleErr) throw saleErr
+      if (saleErr) {
+        logSupabaseError(saleErr, { table: 'sapi_breeding_sales', operation: 'insert', component: 'useSapiBreedingData', actionName: 'sapi_breeding.sale.add' })
+        throw saleErr
+      }
       // DB trigger trg_sapi_breeding_sale_mark_sold menangani animal.status = 'terjual'
     },
     onSuccess: () => {

@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
+import { logSupabaseError } from '../logger/supabaseLogger'
+import { logError } from '../logger/errorLogger'
 
 // ─── Pure KPI Calculations ────────────────────────────────────────────────────
 
@@ -272,7 +274,10 @@ export function useCreateKdBatch() {
         batch_code, kandang_name, start_date, target_end_date, notes,
         status: 'active',
       })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kd_penggemukan_batches', operation: 'insert', component: 'useKdPenggemukanData', actionName: 'kd_penggemukan.batch.create' })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['kd-batches', tenant?.id] })
@@ -298,7 +303,10 @@ export function useCloseKdBatch() {
         .update({ status: 'closed', ...kpiFinal })
         .eq('id', batchId)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kd_penggemukan_batches', operation: 'update', component: 'useKdPenggemukanData', actionName: 'kd_penggemukan.batch.close' })
+        throw error
+      }
     },
     onSuccess: (_, { batchId }) => {
       qc.invalidateQueries({ queryKey: ['kd-batches', tenant?.id] })
@@ -333,13 +341,19 @@ export function useAddKdAnimal() {
           latest_weight_kg: entry_weight_kg,
           latest_weight_date: entry_date,
         })
-      if (animalErr) throw animalErr
+      if (animalErr) {
+        logSupabaseError(animalErr, { table: 'kd_penggemukan_animals', operation: 'insert', component: 'useKdPenggemukanData', actionName: 'kd_penggemukan.animal.add' })
+        throw animalErr
+      }
 
       // Recount total_animals di batch via RPC
       const { error: batchErr } = await supabase.rpc('increment_kd_batch_animal_count', {
         p_batch_id: batch_id,
       })
-      if (batchErr) throw batchErr
+      if (batchErr) {
+        logError({ level: 'error', source: 'supabase', component: 'useKdPenggemukanData', actionName: 'kd_penggemukan.animal.add.batch_sync', error: batchErr, metadata: { partial: true, animal_inserted: true, batch_id } })
+        throw batchErr
+      }
     },
     onSuccess: (_, { batch_id }) => {
       qc.invalidateQueries({ queryKey: ['kd-animals', batch_id] })
@@ -362,7 +376,10 @@ export function useUpdateKdAnimalStatus() {
         .update({ status, exit_date })
         .eq('id', animalId)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kd_penggemukan_animals', operation: 'update', component: 'useKdPenggemukanData', actionName: 'kd_penggemukan.animal.update_status' })
+        throw error
+      }
     },
     onSuccess: (_, { batchId }) => {
       qc.invalidateQueries({ queryKey: ['kd-animals', batchId] })
@@ -417,7 +434,10 @@ export function useAddKdWeightRecord() {
           weigh_date, weight_kg, bcs,
           days_in_farm, adg_since_last, notes,
         })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kd_penggemukan_weight_records', operation: 'insert', component: 'useKdPenggemukanData', actionName: 'kd_penggemukan.weight.add' })
+        throw error
+      }
       // Trigger DB otomatis update latest_weight_* di kd_penggemukan_animals
     },
     onSuccess: (_, { animal_id, batch_id }) => {
@@ -455,7 +475,10 @@ export function useAddKdFeedLog() {
           onConflict: 'batch_id,kandang_name,log_date',
           ignoreDuplicates: false,
         })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kd_penggemukan_feed_logs', operation: 'upsert', component: 'useKdPenggemukanData', actionName: 'kd_penggemukan.feed_log.add' })
+        throw error
+      }
     },
     onSuccess: (_, { batch_id }) => {
       qc.invalidateQueries({ queryKey: ['kd-feed-logs', batch_id] })
@@ -489,7 +512,10 @@ export function useAddKdHealthLog() {
           death_cause, death_weight_kg, loss_value_idr,
           notes,
         })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kd_penggemukan_health_logs', operation: 'insert', component: 'useKdPenggemukanData', actionName: 'kd_penggemukan.health_log.add' })
+        throw error
+      }
 
       // Jika kematian → update status ekor ke 'dead'
       if (log_type === 'kematian') {
@@ -539,7 +565,10 @@ export function useAddKdSale() {
           has_surat_jalan: has_surat_jalan ?? false,
           invoice_number, notes,
         })
-      if (saleErr) throw saleErr
+      if (saleErr) {
+        logSupabaseError(saleErr, { table: 'kd_penggemukan_sales', operation: 'insert', component: 'useKdPenggemukanData', actionName: 'kd_penggemukan.sale.add' })
+        throw saleErr
+      }
 
       // 2. Update setiap ekor yang terjual → status 'sold'
       const { error: animalErr } = await supabase
@@ -547,7 +576,10 @@ export function useAddKdSale() {
         .update({ status: 'sold', exit_date: sale_date })
         .in('id', animal_ids)
         .eq('tenant_id', tenant.id)
-      if (animalErr) throw animalErr
+      if (animalErr) {
+        logError({ level: 'error', source: 'supabase', component: 'useKdPenggemukanData', actionName: 'kd_penggemukan.sale.add.animal_sync', error: animalErr, metadata: { partial: true, sale_inserted: true, batch_id, animal_ids } })
+        throw animalErr
+      }
     },
     onSuccess: (_, { batch_id }) => {
       qc.invalidateQueries({ queryKey: ['kd-sales', batch_id] })
@@ -570,7 +602,10 @@ export function useDeleteKdFeedLog() {
         .update({ is_deleted: true })
         .eq('id', logId)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kd_penggemukan_feed_logs', operation: 'update', component: 'useKdPenggemukanData', actionName: 'kd_penggemukan.feed_log.delete' })
+        throw error
+      }
     },
     onSuccess: (_, { batch_id }) => {
       qc.invalidateQueries({ queryKey: ['kd-feed-logs', batch_id] })
@@ -591,7 +626,10 @@ export function useDeleteKdWeightRecord() {
         .update({ is_deleted: true })
         .eq('id', recordId)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kd_penggemukan_weight_records', operation: 'update', component: 'useKdPenggemukanData', actionName: 'kd_penggemukan.weight.delete' })
+        throw error
+      }
     },
     onSuccess: (_, { animal_id, batch_id }) => {
       qc.invalidateQueries({ queryKey: ['kd-weight-records', animal_id] })
@@ -636,7 +674,10 @@ export function useCreateKdKandang() {
           tenant_id: tenant.id,
           ...payload
         })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kd_kandangs', operation: 'insert', component: 'useKdPenggemukanData', actionName: 'kd_penggemukan.kandang.create' })
+        throw error
+      }
     },
     onSuccess: (_, { batch_id }) => {
       qc.invalidateQueries({ queryKey: ['kd-kandangs', batch_id] })
@@ -653,13 +694,16 @@ export function useMoveAnimalToKandang() {
     mutationFn: async ({ animalId, kandangId, kandangSlot, batchId }) => {
       const { error } = await supabase
         .from('kd_penggemukan_animals')
-        .update({ 
+        .update({
           kandang_id: kandangId,
           kandang_slot: kandangSlot // backward compatibility
         })
         .eq('id', animalId)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kd_penggemukan_animals', operation: 'update', component: 'useKdPenggemukanData', actionName: 'kd_penggemukan.animal.move_kandang' })
+        throw error
+      }
     },
     onSuccess: (_, { batchId }) => {
       qc.invalidateQueries({ queryKey: ['kd-animals', batchId] })
@@ -683,7 +727,10 @@ export function useEnsureHoldingPen() {
         .eq('is_holding', true)
         .limit(1)
       
-      if (checkErr) throw checkErr
+      if (checkErr) {
+        logSupabaseError(checkErr, { table: 'kd_kandangs', operation: 'select', component: 'useKdPenggemukanData', actionName: 'kd_penggemukan.kandang.ensure_holding' })
+        throw checkErr
+      }
 
       if (!data || data.length === 0) {
         // Create holding pen
@@ -697,7 +744,10 @@ export function useEnsureHoldingPen() {
             is_holding: true,
             notes: 'Area penampungan domba belum dialokasikan'
           })
-        if (insertErr) throw insertErr
+        if (insertErr) {
+          logSupabaseError(insertErr, { table: 'kd_kandangs', operation: 'insert', component: 'useKdPenggemukanData', actionName: 'kd_penggemukan.kandang.ensure_holding' })
+          throw insertErr
+        }
       }
     },
     onSuccess: (_, batchId) => {

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
+import { logSupabaseError } from '../logger/supabaseLogger'
 
 const STALE_5M = 5 * 60 * 1000
 
@@ -32,7 +33,10 @@ export const useCreateBrokerEmployee = () => {
       const { error } = await supabase
         .from('broker_employees')
         .insert({ ...payload, tenant_id: tenant.id })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'broker_employees', operation: 'insert', component: 'useBrokerKaryawanData', actionName: 'broker.employee.create' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['broker-employees', tenant?.id])
@@ -51,7 +55,10 @@ export const useUpdateBrokerEmployee = () => {
         .from('broker_employees')
         .update(updates)
         .eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'broker_employees', operation: 'update', component: 'useBrokerKaryawanData', actionName: 'broker.employee.update' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['broker-employees', tenant?.id])
@@ -70,7 +77,10 @@ export const useDeleteBrokerEmployee = () => {
         .from('broker_employees')
         .update({ is_deleted: true })
         .eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'broker_employees', operation: 'update', component: 'useBrokerKaryawanData', actionName: 'broker.employee.delete' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['broker-employees', tenant?.id])

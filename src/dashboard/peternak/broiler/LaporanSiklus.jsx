@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Thermometer, Droplets, Plus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import { useAuth } from '@/lib/hooks/useAuth'
 import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 import { useAllCycles, useDailyRecords, calcCurrentAge, calcFCR, calcIPScore, calcMortalityPct } from '@/lib/hooks/usePeternakData'
@@ -1011,7 +1012,10 @@ function AddExpenseSheet({ open, onClose, cycleId, tenantId, onSuccess }) {
         total_amount: Number(amount),
         description: desc || null,
       })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'cycle_expenses', operation: 'insert', component: 'LaporanSiklus', actionName: 'peternak.cycle_expense.add' })
+        throw error
+      }
       toast.success('Biaya berhasil dicatat')
       if (onSuccess) onSuccess()
       setAmount('')

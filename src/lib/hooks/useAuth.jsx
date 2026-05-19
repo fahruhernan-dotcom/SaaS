@@ -103,9 +103,12 @@ export function AuthProvider({ children }) {
       active = combined.find(p => p.tenant_id === savedTenantId)
     }
 
-    // Priority 2: Use the first one available if no match or none saved
+    // Priority 2: Use the first one available if no match or none saved.
+    // Prefer onboarded owner profiles so fresh logins route to the right dashboard.
     if (!active && combined.length > 0) {
-      active = combined[0]
+      active = combined.find(c => c.onboarded && c.role === 'owner')
+        || combined.find(c => c.onboarded)
+        || combined[0]
       if (active.tenant_id) setPersistedTenantId(active.tenant_id)
     }
 

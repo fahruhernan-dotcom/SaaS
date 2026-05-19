@@ -1,14 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Edit3, Shuffle, Sparkles, HelpCircle, Building2, Shield,
   Check, X, Package, Receipt, Sun, Globe, Bell, Settings, Phone,
   FileText, LogOut, ChevronRight, ArrowUpRight, Info, LayoutGrid,
   ClipboardList, BarChart2, Users, ShoppingCart, Truck, Warehouse,
+  Trash2, AlertTriangle, MapPin,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { resolveBusinessVertical, getXBasePath } from '@/lib/businessModel'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import { logError } from '@/lib/logger/errorLogger'
 import { logSupabaseError } from '@/lib/logger/supabaseLogger'
@@ -111,6 +112,7 @@ function cardStyle() {
 export default function AkunPage() {
   const { user, profile, tenant, ownerTenant, profiles, isSuperadmin, refetchProfile } = useAuth()
   const navigate = useNavigate()
+  const { state: routerState } = useLocation()
 
   const activeTenant = tenant
   const billingTenant = ownerTenant || tenant
@@ -152,7 +154,19 @@ export default function AkunPage() {
     }
   }
 
+  const canDeleteBusiness = role === 'owner' && !isSuperadmin && !!activeTenant?.id
+  const canEditBisnis = role === 'owner' && !!activeTenant?.id
+
   const [editProfileOpen, setEditProfileOpen] = useState(false)
+  const [editBisnisOpen, setEditBisnisOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+
+  useEffect(() => {
+    if (routerState?.openEditBisnis && canEditBisnis) {
+      setEditBisnisOpen(true)
+      navigate('.', { replace: true, state: {} })
+    }
+  }, [routerState?.openEditBisnis, canEditBisnis])
 
   const handleSwitchBiz = () => {
     if (!isMultiTenant) return
@@ -201,7 +215,9 @@ export default function AkunPage() {
         <ActiveBusinessCard
           accent={accent} roleBadge={roleBadge}
           tenantName={tenantName} tenantCity={tenantCity}
-          onEditBiz={editBizPath ? () => navigate(editBizPath) : null}
+          tenantProvince={activeTenant?.province || null}
+          canEditBisnis={canEditBisnis}
+          onEditBiz={canEditBisnis ? () => setEditBisnisOpen(true) : (editBizPath ? () => navigate(editBizPath) : null)}
         />
 
         {/* 4. Akses Saya */}
@@ -227,7 +243,15 @@ export default function AkunPage() {
         {/* 7. Bantuan & Tentang */}
         <HelpAboutCard navigate={navigate} />
 
-        {/* 8. Logout */}
+        {/* 8. Zona Berbahaya — hanya pemilik bisnis */}
+        {canDeleteBusiness && (
+          <DangerZoneCard
+            tenantName={tenantName}
+            onDelete={() => setDeleteDialogOpen(true)}
+          />
+        )}
+
+        {/* 9. Logout */}
         <LogoutBtn onLogout={handleLogout} />
       </div>
 
@@ -241,6 +265,40 @@ export default function AkunPage() {
         onSuccess={refetchProfile}
         accent={accent}
       />
+
+      {/* Edit Bisnis Sheet */}
+      <EditBisnisSheet
+        key={editBisnisOpen ? 'open' : 'closed'}
+        open={editBisnisOpen}
+        onClose={() => setEditBisnisOpen(false)}
+        tenant={activeTenant}
+        onSuccess={refetchProfile}
+        accent={accent}
+      />
+
+      {/* Delete Business Dialog */}
+      {deleteDialogOpen && (
+        <DeleteBusinessDialog
+          tenant={activeTenant}
+          profiles={profiles}
+          onClose={() => setDeleteDialogOpen(false)}
+          onDeleted={() => {
+            setDeleteDialogOpen(false)
+            // Clear persisted tenant so useAuth picks next available on refetch
+            try { localStorage.removeItem('ternakos_active_tenant_id') } catch { /* ok */ }
+            refetchProfile()
+            // Give refetchProfile a tick to resolve then navigate
+            setTimeout(() => {
+              const remaining = profiles.filter(p => p.tenant_id !== activeTenant?.id)
+              if (remaining.length > 0) {
+                navigate('/', { replace: true })
+              } else {
+                navigate('/welcome', { replace: true })
+              }
+            }, 300)
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -401,7 +459,7 @@ function getEditBizPath(rawVertical, basePath) {
   return null
 }
 
-function ActiveBusinessCard({ accent, roleBadge, tenantName, tenantCity, onEditBiz }) {
+function ActiveBusinessCard({ accent, roleBadge, tenantName, tenantCity, tenantProvince, canEditBisnis, onEditBiz }) {
   return (
     <Section title="Bisnis Aktif" icon={<Building2 size={13} />} iconColor={accent.base} delay={0.1}>
       <div style={cardStyle()}>
@@ -412,6 +470,24 @@ function ActiveBusinessCard({ accent, roleBadge, tenantName, tenantCity, onEditB
           </span>
         </InfoRow>
         <InfoRow label="Lokasi" value={tenantCity} />
+        <InfoRow label="Provinsi">
+          {tenantProvince ? (
+            <span style={{ fontSize: 13, color: T.text, fontWeight: 500 }}>{tenantProvince}</span>
+          ) : (
+            <span
+              onClick={canEditBisnis ? onEditBiz : undefined}
+              style={{
+                fontSize: 11, fontWeight: 700, color: T.warn,
+                background: 'oklch(0.78 0.14 70 / 0.12)',
+                border: '1px solid oklch(0.78 0.14 70 / 0.3)',
+                borderRadius: 6, padding: '2px 8px', letterSpacing: 0.3,
+                textTransform: 'uppercase', cursor: canEditBisnis ? 'pointer' : 'default',
+              }}
+            >
+              {canEditBisnis ? '⚠ Belum diisi — tap untuk isi' : 'Belum diisi'}
+            </span>
+          )}
+        </InfoRow>
         <InfoRow label="Peran Saya" noBorder>
           <span style={{ padding: '2px 8px', borderRadius: 6, background: roleBadge.bg, color: roleBadge.fg, fontSize: 10, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase' }}>
             {roleBadge.label}
@@ -429,7 +505,7 @@ function ActiveBusinessCard({ accent, roleBadge, tenantName, tenantCity, onEditB
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}
           >
-            <Edit3 size={14} strokeWidth={2.5} /> Edit Bisnis
+            <Edit3 size={14} strokeWidth={2.5} /> Edit Info Bisnis
           </button>
         )}
       </div>
@@ -886,6 +962,198 @@ function LogoutBtn({ onLogout }) {
   )
 }
 
+// ─── Edit Bisnis Sheet ────────────────────────────────────────
+
+const INDONESIA_PROVINCES = [
+  'Aceh','Bali','Banten','Bengkulu','DI Yogyakarta','DKI Jakarta',
+  'Gorontalo','Jambi','Jawa Barat','Jawa Tengah','Jawa Timur',
+  'Kalimantan Barat','Kalimantan Selatan','Kalimantan Tengah',
+  'Kalimantan Timur','Kalimantan Utara','Kepulauan Bangka Belitung',
+  'Kepulauan Riau','Lampung','Maluku','Maluku Utara',
+  'Nusa Tenggara Barat','Nusa Tenggara Timur','Papua','Papua Barat',
+  'Papua Barat Daya','Papua Pegunungan','Papua Selatan','Papua Tengah',
+  'Riau','Sulawesi Barat','Sulawesi Selatan','Sulawesi Tengah',
+  'Sulawesi Tenggara','Sulawesi Utara','Sumatera Barat',
+  'Sumatera Selatan','Sumatera Utara',
+]
+
+function EditBisnisSheet({ open, onClose, tenant, onSuccess, accent }) {
+  const [businessName, setBusinessName] = useState(tenant?.business_name || '')
+  const [location, setLocation] = useState(tenant?.location || '')
+  const [province, setProvince] = useState(tenant?.province || '')
+  const [saving, setSaving] = useState(false)
+
+  const originalName = tenant?.business_name || ''
+  const originalLocation = tenant?.location || ''
+  const originalProvince = tenant?.province || ''
+  const isDirty = businessName.trim() !== originalName || location.trim() !== originalLocation || province !== originalProvince
+  const isValid = businessName.trim().length > 0
+  const canSave = isDirty && isValid && !saving
+
+  const handleSave = async () => {
+    if (!canSave) return
+    setSaving(true)
+    const { error } = await supabase
+      .from('tenants')
+      .update({
+        business_name: businessName.trim(),
+        location: location.trim() || null,
+        province: province || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', tenant.id)
+    setSaving(false)
+    if (error) {
+      logSupabaseError(error, {
+        table: 'tenants',
+        operation: 'update',
+        component: 'EditBisnisSheet',
+        actionName: 'account.bisnis.update',
+      })
+      toast.error('Gagal menyimpan: ' + (error.message || 'Coba lagi'))
+    } else {
+      toast.success('Info bisnis berhasil diperbarui.')
+      onSuccess?.()
+      onClose()
+    }
+  }
+
+  if (!open) return null
+
+  const sheetStyle = {
+    width: '100%', maxWidth: 480, margin: '0 auto',
+    background: T.surface,
+    borderRadius: '20px 20px 0 0',
+    borderTop: `1px solid ${T.hairlineStrong}`,
+    paddingBottom: 'calc(120px + env(safe-area-inset-bottom))',
+    boxShadow: '0 -8px 40px rgba(0,0,0,0.5)',
+    zIndex: 210,
+    maxHeight: '90dvh', overflowY: 'auto',
+    animation: 'slideUp 240ms cubic-bezier(0.32,0.72,0,1)',
+  }
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 200,
+        background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)',
+        display: 'flex', alignItems: 'flex-end',
+        animation: 'fadeIn 180ms ease',
+      }}
+    >
+      <div onClick={e => e.stopPropagation()} style={sheetStyle}>
+        {/* Handle */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: T.hairlineStrong }} />
+        </div>
+
+        {/* Header */}
+        <div style={{ padding: '16px 20px 12px', borderBottom: `1px solid ${T.hairline}` }}>
+          <div style={{ fontSize: 17, fontWeight: 700, color: T.text, letterSpacing: -0.3 }}>Edit Info Bisnis</div>
+          <div style={{ fontSize: 12, color: T.textDim, marginTop: 3 }}>Nama bisnis, lokasi, dan provinsi</div>
+        </div>
+
+        {/* Form */}
+        <div style={{ padding: '20px 20px 8px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Business Name */}
+          <div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: T.textDim, letterSpacing: 0.4, textTransform: 'uppercase', marginBottom: 8 }}>
+              Nama Bisnis <span style={{ color: T.danger }}>*</span>
+            </label>
+            <input
+              value={businessName}
+              onChange={e => setBusinessName(e.target.value)}
+              placeholder="Nama bisnis"
+              style={{
+                width: '100%', padding: '12px 14px', boxSizing: 'border-box',
+                background: T.surfaceAlt, border: `1px solid ${businessName.trim() ? accent.base + '55' : T.hairline}`,
+                borderRadius: 12, color: T.text, fontSize: 16, outline: 'none',
+              }}
+            />
+          </div>
+
+          {/* Provinsi — dropdown */}
+          <div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: T.textDim, letterSpacing: 0.4, textTransform: 'uppercase', marginBottom: 8 }}>
+              Provinsi <span style={{ color: T.warn }}>⚠</span>
+              <span style={{ fontSize: 10, fontWeight: 400, textTransform: 'none', letterSpacing: 0, marginLeft: 4 }}>
+                — diperlukan untuk filter regional
+              </span>
+            </label>
+            <select
+              value={province}
+              onChange={e => setProvince(e.target.value)}
+              style={{
+                width: '100%', padding: '12px 14px', boxSizing: 'border-box',
+                background: T.surfaceAlt, border: `1px solid ${province ? accent.base + '55' : 'oklch(0.78 0.14 70 / 0.5)'}`,
+                borderRadius: 12, color: province ? T.text : T.textDim, fontSize: 16, outline: 'none',
+                appearance: 'none', WebkitAppearance: 'none',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239BA29B' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center',
+                paddingRight: 36,
+              }}
+            >
+              <option value="">— Pilih provinsi —</option>
+              {INDONESIA_PROVINCES.map(p => (
+                <option key={p} value={p} style={{ background: T.surface, color: T.text }}>{p}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Lokasi / Kota */}
+          <div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: T.textDim, letterSpacing: 0.4, textTransform: 'uppercase', marginBottom: 8 }}>
+              Kota / Lokasi <span style={{ fontSize: 10, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(opsional)</span>
+            </label>
+            <input
+              value={location}
+              onChange={e => setLocation(e.target.value)}
+              placeholder="Contoh: Malang, Jawa Timur"
+              style={{
+                width: '100%', padding: '12px 14px', boxSizing: 'border-box',
+                background: T.surfaceAlt, border: `1px solid ${T.hairline}`,
+                borderRadius: 12, color: T.text, fontSize: 16, outline: 'none',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div style={{ padding: '12px 20px 20px', display: 'flex', gap: 10 }}>
+          <button
+            onClick={onClose}
+            disabled={saving}
+            style={{
+              flex: 1, padding: '13px',
+              background: 'transparent', border: `1px solid ${T.hairlineStrong}`,
+              color: T.textDim, borderRadius: 12, cursor: 'pointer',
+              fontSize: 14, fontWeight: 600,
+            }}
+          >
+            Batal
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={!canSave}
+            style={{
+              flex: 2, padding: '13px',
+              background: canSave ? accent.base : T.hairlineStrong,
+              border: 'none', color: canSave ? '#0A0E0C' : T.textMute,
+              borderRadius: 12, cursor: canSave ? 'pointer' : 'not-allowed',
+              fontSize: 14, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              transition: 'background 150ms',
+            }}
+          >
+            {saving ? 'Menyimpan...' : <><MapPin size={14} /> Simpan</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Edit Profile Sheet ───────────────────────────────────────
 
 function EditProfileSheet({ open, onClose, profile, user, onSuccess, accent }) {
@@ -1124,6 +1392,211 @@ function InfoRow({ label, value, children, noBorder }) {
     }}>
       <span style={{ fontSize: 12, color: T.textDim, fontWeight: 500, flexShrink: 0 }}>{label}</span>
       {children || <span style={{ fontSize: 13, color: T.text, fontWeight: 600, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>}
+    </div>
+  )
+}
+
+// ─── Danger Zone ──────────────────────────────────────────────
+
+function DangerZoneCard({ tenantName, onDelete }) {
+  return (
+    <Section title="Zona Berbahaya" icon={<AlertTriangle size={13} />} iconColor={T.danger} delay={0.21}>
+      <div style={{
+        ...cardStyle(),
+        border: `1px solid ${T.danger}33`,
+        background: `${T.danger}08`,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, paddingBottom: 12, borderBottom: `1px solid ${T.hairline}` }}>
+          <span style={{ width: 32, height: 32, borderRadius: 10, flexShrink: 0, background: `${T.danger}18`, color: T.danger, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
+            <Trash2 size={15} />
+          </span>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: T.text, marginBottom: 3 }}>Hapus Bisnis</div>
+            <div style={{ fontSize: 12, color: T.textDim, lineHeight: 1.5 }}>
+              Menghapus <strong style={{ color: T.text }}>{tenantName}</strong> beserta seluruh data secara permanen. Tindakan ini tidak dapat dibatalkan.
+            </div>
+          </div>
+        </div>
+        <button
+          onClick={onDelete}
+          style={{
+            marginTop: 12, width: '100%', padding: '11px',
+            background: 'transparent', border: `1px solid ${T.danger}55`,
+            color: T.danger, borderRadius: 10, cursor: 'pointer',
+            fontSize: 13, fontWeight: 700, letterSpacing: -0.1,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          }}
+        >
+          <Trash2 size={14} strokeWidth={2.5} /> Hapus Bisnis Ini...
+        </button>
+      </div>
+    </Section>
+  )
+}
+
+// ─── Delete Business Dialog ───────────────────────────────────
+
+function DeleteBusinessDialog({ tenant, profiles, onClose, onDeleted }) {
+  const tenantName = tenant?.business_name || 'Bisnis Aktif'
+  const [confirmText, setConfirmText] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
+  const isLastBusiness = profiles.filter(p => p.tenant_id !== tenant?.id).length === 0
+  const nameMatches = confirmText.trim().toLowerCase() === tenantName.toLowerCase()
+
+  const handleDelete = async () => {
+    if (!nameMatches || deleting) return
+    setDeleting(true)
+    const { error } = await supabase.rpc('delete_my_business', { p_tenant_id: tenant.id })
+    setDeleting(false)
+    if (error) {
+      logSupabaseError(error, {
+        table: 'rpc:delete_my_business',
+        operation: 'rpc',
+        component: 'DeleteBusinessDialog',
+        actionName: 'account.business.delete',
+      })
+      logError({
+        level: 'error',
+        source: 'supabase',
+        component: 'DeleteBusinessDialog',
+        actionName: 'account.business.delete',
+        error,
+        metadata: { tenant_id: tenant?.id },
+      })
+      if (error.message?.includes('ACCESS_DENIED')) {
+        toast.error('Hanya pemilik bisnis yang bisa menghapus bisnis ini.')
+      } else {
+        toast.error('Gagal menghapus bisnis: ' + (error.message || 'Coba lagi'))
+      }
+      return
+    }
+    toast.success(`${tenantName} berhasil dihapus.`)
+    onDeleted()
+  }
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 300,
+        background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)',
+        display: 'flex', alignItems: 'flex-end',
+        animation: 'fadeIn 180ms ease',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: 480, margin: '0 auto',
+          background: T.surface,
+          borderRadius: '20px 20px 0 0',
+          borderTop: `2px solid ${T.danger}55`,
+          paddingBottom: 'calc(32px + env(safe-area-inset-bottom))',
+          boxShadow: `0 -8px 40px rgba(0,0,0,0.6), 0 -2px 0 ${T.danger}33`,
+          animation: 'slideUp 240ms cubic-bezier(0.32,0.72,0,1)',
+          maxHeight: '90dvh', overflowY: 'auto',
+        }}
+      >
+        {/* Handle */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
+          <div style={{ width: 36, height: 4, borderRadius: 2, background: T.hairlineStrong }} />
+        </div>
+
+        {/* Header */}
+        <div style={{ padding: '20px 20px 16px', borderBottom: `1px solid ${T.hairline}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 13, background: `${T.danger}18`, color: T.danger, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Trash2 size={20} />
+          </div>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: T.text, letterSpacing: -0.3 }}>Hapus Bisnis?</div>
+            <div style={{ fontSize: 12, color: T.textDim, marginTop: 2 }}>Semua data akan dihapus permanen</div>
+          </div>
+        </div>
+
+        <div style={{ padding: '20px 20px 8px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Warning box */}
+          <div style={{
+            padding: '14px', borderRadius: 12,
+            background: `${T.danger}10`, border: `1px solid ${T.danger}30`,
+            display: 'flex', gap: 10, alignItems: 'flex-start',
+          }}>
+            <AlertTriangle size={16} color={T.danger} style={{ flexShrink: 0, marginTop: 1 }} />
+            <div style={{ fontSize: 12, color: T.textDim, lineHeight: 1.6 }}>
+              Menghapus <strong style={{ color: T.text }}>{tenantName}</strong> akan menghapus permanen semua transaksi, laporan, data kandang, dan anggota tim bisnis ini.
+              {isLastBusiness && (
+                <><br /><br /><span style={{ color: T.warn }}>⚠ Ini adalah bisnis terakhir Anda. Setelah dihapus, Anda perlu membuat bisnis baru untuk menggunakan TernakOS.</span></>
+              )}
+            </div>
+          </div>
+
+          {/* Confirm input */}
+          <div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: T.textDim, letterSpacing: 0.4, textTransform: 'uppercase', marginBottom: 8 }}>
+              Ketik nama bisnis untuk konfirmasi
+            </label>
+            <div style={{ fontSize: 13, fontWeight: 600, color: T.danger, background: `${T.danger}12`, border: `1px solid ${T.danger}30`, borderRadius: 8, padding: '6px 12px', marginBottom: 8, letterSpacing: 0.2 }}>
+              {tenantName}
+            </div>
+            <input
+              value={confirmText}
+              onChange={e => setConfirmText(e.target.value)}
+              placeholder={`Ketik: ${tenantName}`}
+              autoComplete="off"
+              style={{
+                width: '100%', padding: '12px 14px',
+                background: T.surfaceAlt,
+                border: `1px solid ${nameMatches ? T.danger + '88' : T.hairline}`,
+                borderRadius: 12, color: T.text, fontSize: 15, outline: 'none',
+                boxSizing: 'border-box', transition: 'border-color 150ms',
+              }}
+            />
+            {confirmText.length > 0 && !nameMatches && (
+              <div style={{ fontSize: 11, color: T.textDim, marginTop: 5 }}>Nama belum sesuai</div>
+            )}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div style={{ padding: '8px 20px 0', display: 'flex', gap: 10 }}>
+          <button
+            onClick={onClose}
+            disabled={deleting}
+            style={{
+              flex: 1, padding: '13px',
+              background: 'transparent', border: `1px solid ${T.hairlineStrong}`,
+              color: T.textDim, borderRadius: 12, cursor: 'pointer',
+              fontSize: 14, fontWeight: 600,
+            }}
+          >
+            Batal
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={!nameMatches || deleting}
+            style={{
+              flex: 2, padding: '13px',
+              background: nameMatches && !deleting ? T.danger : T.surfaceAlt,
+              border: 'none', borderRadius: 12,
+              cursor: nameMatches && !deleting ? 'pointer' : 'default',
+              color: nameMatches && !deleting ? '#fff' : T.textMute,
+              fontSize: 14, fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              transition: 'background 150ms, color 150ms',
+              boxShadow: nameMatches && !deleting ? `0 6px 18px ${T.danger}44` : 'none',
+            }}
+          >
+            {deleting ? (
+              <>
+                <span style={{ width: 14, height: 14, borderRadius: 999, border: '2px solid currentColor', borderTopColor: 'transparent', animation: 'spin 600ms linear infinite', display: 'inline-block' }} />
+                Menghapus...
+              </>
+            ) : (
+              <><Trash2 size={14} /> Hapus Selamanya</>
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   )
 }

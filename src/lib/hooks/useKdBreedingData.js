@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
+import { logSupabaseError } from '../logger/supabaseLogger'
+import { logError } from '../logger/errorLogger'
 
 // ─── Pure KPI Calculations ────────────────────────────────────────────────────
 
@@ -215,7 +217,10 @@ export const useAddKdBreedingAnimal = () => {
       const { error } = await supabase
         .from('kd_breeding_animals')
         .insert({ ...payload, tenant_id: tenant.id })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kd_breeding_animals', operation: 'insert', component: 'useKdBreedingData', actionName: 'kd_breeding.animal.add' })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries(KEYS.animals(tenant.id))
@@ -235,7 +240,10 @@ export const useUpdateKdBreedingAnimal = () => {
         .update(payload)
         .eq('id', id)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kd_breeding_animals', operation: 'update', component: 'useKdBreedingData', actionName: 'kd_breeding.animal.update' })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries(KEYS.animals(tenant.id))
@@ -289,7 +297,10 @@ export const useAddKdBreedingWeight = () => {
       const { error } = await supabase
         .from('kd_breeding_weight_records')
         .insert({ ...payload, tenant_id: tenant.id, adg_since_last, age_days })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kd_breeding_weight_records', operation: 'insert', component: 'useKdBreedingData', actionName: 'kd_breeding.weight.add' })
+        throw error
+      }
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries(KEYS.animals(tenant.id))
@@ -308,7 +319,10 @@ export const useAddKdBreedingMating = () => {
       const { error } = await supabase
         .from('kd_breeding_mating_records')
         .insert({ ...payload, tenant_id: tenant.id })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kd_breeding_mating_records', operation: 'insert', component: 'useKdBreedingData', actionName: 'kd_breeding.mating.add' })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries(KEYS.matings(tenant.id))
@@ -328,7 +342,10 @@ export const useUpdateKdBreedingMating = () => {
         .update(payload)
         .eq('id', id)
         .eq('tenant_id', tenant.id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kd_breeding_mating_records', operation: 'update', component: 'useKdBreedingData', actionName: 'kd_breeding.mating.update' })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries(KEYS.matings(tenant.id))
@@ -346,7 +363,10 @@ export const useAddKdBreedingBirth = () => {
       const { error } = await supabase
         .from('kd_breeding_births')
         .insert({ ...payload, tenant_id: tenant.id })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kd_breeding_births', operation: 'insert', component: 'useKdBreedingData', actionName: 'kd_breeding.birth.add' })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries(KEYS.births(tenant.id))
@@ -365,7 +385,10 @@ export const useAddKdBreedingHealthLog = () => {
       const { error } = await supabase
         .from('kd_breeding_health_logs')
         .insert({ ...payload, tenant_id: tenant.id })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kd_breeding_health_logs', operation: 'insert', component: 'useKdBreedingData', actionName: 'kd_breeding.health_log.add' })
+        throw error
+      }
     },
     onSuccess: (_d, vars) => {
       qc.invalidateQueries(KEYS.health(tenant.id))
@@ -384,7 +407,10 @@ export const useAddKdBreedingFeedLog = () => {
       const { error } = await supabase
         .from('kd_breeding_feed_logs')
         .insert({ ...payload, tenant_id: tenant.id })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'kd_breeding_feed_logs', operation: 'insert', component: 'useKdBreedingData', actionName: 'kd_breeding.feed_log.add' })
+        throw error
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries(KEYS.feed(tenant.id))
@@ -402,14 +428,20 @@ export const useAddKdBreedingSale = () => {
       const { error: saleErr } = await supabase
         .from('kd_breeding_sales')
         .insert({ ...payload, tenant_id: tenant.id })
-      if (saleErr) throw saleErr
+      if (saleErr) {
+        logSupabaseError(saleErr, { table: 'kd_breeding_sales', operation: 'insert', component: 'useKdBreedingData', actionName: 'kd_breeding.sale.add' })
+        throw saleErr
+      }
 
       const { error: statusErr } = await supabase
         .from('kd_breeding_animals')
         .update({ status: 'terjual' })
         .eq('id', payload.animal_id)
         .eq('tenant_id', tenant.id)
-      if (statusErr) throw statusErr
+      if (statusErr) {
+        logError({ level: 'error', source: 'supabase', component: 'useKdBreedingData', actionName: 'kd_breeding.sale.add.animal_sync', error: statusErr, metadata: { partial: true, sale_inserted: true, animal_id: payload.animal_id } })
+        throw statusErr
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries(KEYS.sales(tenant.id))

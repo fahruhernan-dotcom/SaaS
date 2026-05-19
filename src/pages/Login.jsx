@@ -12,7 +12,7 @@ import {
   TrendingUp, Truck, BarChart2, Clock, Shield, Users, Zap, Mail, Lock
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { getBrokerBasePath, useAuth } from '../lib/hooks/useAuth'
+import { getBrokerBasePath, getPeternakBasePath, useAuth } from '../lib/hooks/useAuth'
 import { logError } from '@/lib/logger/errorLogger'
 import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import { setRememberMe as saveRememberMe } from '@/lib/supabaseStorage'
@@ -48,14 +48,14 @@ export default function Login() {
     if (isSuperadmin) { navigate('/admin', { replace: true }); return }
     if (!profile.onboarded) { navigate('/onboarding', { replace: true }); return }
     if (profile.user_type === 'peternak') {
-      navigate(`/peternak/${profile.tenants?.sub_type || 'peternak_broiler'}/beranda`, { replace: true })
+      navigate(getPeternakBasePath(profile.tenants, profile) + '/beranda', { replace: true })
       return
     }
     if (profile.user_type === 'rumah_potong') {
-      navigate(`/rumah_potong/${profile.tenants?.sub_type || 'rpa_ayam'}/beranda`, { replace: true })
+      navigate(getPeternakBasePath(profile.tenants, profile) + '/beranda', { replace: true })
       return
     }
-    navigate(getBrokerBasePath(profile.tenants) + '/beranda', { replace: true })
+    navigate(getBrokerBasePath(profile.tenants, profile) + '/beranda', { replace: true })
   }, [authLoading, user, profile, isSuperadmin]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleGoogleSignIn = async () => {
@@ -147,6 +147,11 @@ export default function Login() {
       // Pilih profile terbaik: prefer yang sudah onboarded, lalu yang punya tenant
       const profile = profiles.find(p => p.onboarded) || profiles[0]
 
+      // Persist active tenant so useAuth picks the right profile on next init
+      if (profile?.tenant_id) {
+        try { localStorage.setItem('ternakos_active_tenant_id', profile.tenant_id) } catch { /* ok */ }
+      }
+
       if (!profile.onboarded) {
         navigate('/onboarding')
         return
@@ -154,21 +159,20 @@ export default function Login() {
 
       // Peternak
       if (profile.user_type === 'peternak') {
-        navigate(`/peternak/${profile.tenants?.sub_type || 'peternak_broiler'}/beranda`)
+        navigate(getPeternakBasePath(profile.tenants, profile) + '/beranda')
         toast.success('Selamat datang kembali!')
         return
       }
 
       // Rumah Potong
       if (profile.user_type === 'rumah_potong') {
-        const subType = profile.tenants?.sub_type || 'rpa_ayam'
-        navigate(`/rumah_potong/${subType}/beranda`)
+        navigate(getPeternakBasePath(profile.tenants, profile) + '/beranda')
         toast.success('Selamat datang kembali!')
         return
       }
 
       // Broker (default)
-      navigate(getBrokerBasePath(profile.tenants) + '/beranda')
+      navigate(getBrokerBasePath(profile.tenants, profile) + '/beranda')
       toast.success('Selamat datang kembali!')
       
     } catch (err) {

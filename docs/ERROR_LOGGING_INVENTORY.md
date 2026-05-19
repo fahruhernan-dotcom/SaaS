@@ -23,7 +23,7 @@
 | Phase 6.C | Egg Broker (Customers + Suppliers + Inventori + POS sale flow) | ✅ DONE |
 | Phase 6.D | RPA (Hutang / Distribusi) | ✅ DONE |
 | Phase 6.E | Admin (Users / Subscriptions / Pricing) | ✅ DONE |
-| Phase 6.F | Cross-vertical (Tim / Akun / DailyTask / Notifications) | 🟡 IN PROGRESS — Sapi Kandang gap patched; import-path fixes applied to useNotifications.jsx + Tim.jsx; remaining Tim/DailyTask/Notifications mutations pending |
+| Phase 6.F | Cross-vertical (Breeding hooks / Dairy / KD Penggemukan / Broker Ayam components / Market / Invoice / Invite / Peternak components) | ✅ DONE — 55 new action_names across 17 files; Tim mutations + DailyTask + worker CRUD deferred to next sweep |
 | Broad lint cleanup | Project-wide unused-vars / hook-deps | ⏸️ PAUSED — separate task |
 
 ---
@@ -51,13 +51,24 @@ src/
 │       ├── useSembakoData.js                 ← 21 mutation hooks: customer/supplier/employee/product/delivery/payroll/stock CRUD + multi-step sale/payment/return/adjust (Phase 6.A)
 │       ├── useAdminData.js                   ← Admin users/tenants/subscriptions/pricing mutations (Phase 6.E)
 │       ├── useSiteConfig.js                  ← useUpdateSiteConfig mutation (Phase 6.E)
-│       ├── useNotifications.jsx              ← import-path fix only (Phase 6.F); mutation instrumentation pending
-│       └── (useKandangWorkerData.js, etc.)   ← Phase 6.F backlog — worker CRUD hooks not yet instrumented
+│       ├── useNotifications.jsx              ← 6 notification generator insert sites + outer catch logError (Phase 6.F)
+│       ├── createBreedingHooks.js            ← 9 breeding mutation hooks — domba/kambing/sapi breeding factory (Phase 6.F)
+│       ├── useKdBreedingData.js              ← 9 kambing perah breeding mutations (Phase 6.F)
+│       ├── usePeternakData.js                ← 9 broiler farm/cycle/daily/feed mutations (Phase 6.F)
+│       ├── useBrokerKaryawanData.js          ← 3 broker employee mutations (Phase 6.F)
+│       ├── useBrokerConnections.js           ← 3 broker connection mutations (Phase 6.F)
+│       ├── useInvoice.js                     ← 1 generated invoice mutation (Phase 6.F)
+│       ├── useKdPenggemukanData.js           ← 15 kambing/domba penggemukan mutations (Phase 6.F)
+│       ├── createDairyHooks.js               ← 5 dairy factory mutations — milk log/inventory/sale/animal (Phase 6.F)
+│       ├── useSapiBreedingData.js            ← 11 sapi breeding mutations (Phase 6.F)
+│       ├── useMarket.js                      ← 3 market listing mutations (Phase 6.F)
+│       └── (useKandangWorkerData.js, etc.)   ← next sweep backlog — worker CRUD hooks not yet instrumented
 ├── pages/
 │   ├── Login.jsx                             ← OAuth, signIn, profile fetch, unexpected (Phase 6.0)
 │   ├── Register.jsx                          ← OAuth, signUp, invite flow, profile timeout (Phase 6.0)
 │   ├── AuthCallback.jsx                      ← hash error, no_session, profile fetch, .catch unexpected (Phase 6.0)
-│   └── NotFound.jsx                          ← 404 route logging (Phase 5)
+│   ├── NotFound.jsx                          ← 404 route logging (Phase 5)
+│   └── Invite.jsx                            ← invite accept: profile_update + mark_accepted (Phase 6.F)
 └── dashboard/
     ├── admin/
     │   ├── AdminInfo.jsx                     ← /admin/info dashboard reader (Phase 4)
@@ -75,7 +86,7 @@ src/
     │   └── pages/
     │       ├── OnboardingFlow.jsx            ← redirect_failed for unmapped vertical (Phase 6.0)
     │       ├── AkunPreview.jsx               ← logout + EditProfileSheet save (Phase 5)
-    │       └── tim/Tim.jsx                   ← import-path fix only (Phase 6.F); team mutation instrumentation pending
+    │       └── tim/Tim.jsx                   ← import-path fix only (Phase 6.F); team mutation instrumentation deferred
     ├── peternak/
     │   ├── _shared/components/
     │   │   ├── SiklusSheet.jsx               ← breeding_cycles + cycle_expenses partial (Phase 6.1)
@@ -271,6 +282,141 @@ supabase/migrations/_archive/
 - `useMoveAnimalToKandang` keeps its optimistic-update + onError rollback; the new log point fires on the server error before the rollback toast.
 - Sub-step partial logs use `logError({ source: 'supabase' })` directly (because `logSupabaseError` doesn't forward arbitrary metadata).
 - `useEnsureHoldingPen` is split into `ensure.check` (SELECT) and `ensure.create` (INSERT) so superadmin can distinguish a permissions denial on read vs write.
+
+---
+
+### `src/lib/hooks/useNotifications.jsx`
+**Phase:** 6.F
+**Coverage (NotificationsProvider — read/mark/delete):**
+- `markAsRead` — `notifications.update` failure → `notification.mark_read`
+- `markAllAsRead` — `notifications.update` failure → `notification.mark_read`
+- `deleteNotif` — `notifications.update is_deleted=true` → `notification.delete`
+
+**Coverage (useNotificationGenerator — fire-and-forget inserts):**
+- Broker piutang overdue → `notification.generate.piutang_broker`
+- Sembako piutang overdue → `notification.generate.piutang_sembako`
+- Subscription/trial expiry → `notification.generate.subscription_expires`
+- Feed stock low alert → `notification.generate.stok_pakan`
+- Overdue tasks summary → `notification.generate.tugas_terlambat`
+- Payday reminder per worker → `notification.generate.payday`
+- Outer catch (unexpected throw) → `notification.generate.unexpected`
+
+**Action names:**
+- `notification.mark_read` (mark single + mark all)
+- `notification.delete`
+- `notification.generate.piutang_broker`
+- `notification.generate.piutang_sembako`
+- `notification.generate.subscription_expires`
+- `notification.generate.stok_pakan`
+- `notification.generate.tugas_terlambat`
+- `notification.generate.payday`
+- `notification.generate.unexpected`
+
+**Notes:**
+- Generator inserts are **non-throwing** — `logSupabaseError` fires but the loop continues. This preserves the original fire-and-forget behaviour (a single failed notification doesn't abort other generators).
+- Outer `catch (err)` in `checkAndGenerate` now calls `logError` instead of `console.error` only — surfaces unexpected JS throws (e.g. network errors in the entire generator block).
+- Import-path fix bundled: `logSupabaseError` was previously imported from `errorLogger.js` (wrong) — corrected to `supabaseLogger.js`.
+
+---
+
+### `src/lib/hooks/createBreedingHooks.js`
+**Phase:** 6.F
+**Coverage:** Hook factory `createBreedingHooks(prefix)` generates all mutation hooks for `{prefix}_breeding_*` tables. Used for `domba`, `kambing`, `sapi` breeding verticals.
+
+**Mutation hooks instrumented (9):**
+- `useAddAnimal` — `{prefix}_breeding_animals.insert`
+- `useUpdateAnimal` — `{prefix}_breeding_animals.update`
+- `useAddWeight` — `{prefix}_breeding_weight_records.insert`
+- `useAddMating` — `{prefix}_breeding_mating_records.insert`
+- `useUpdateMating` — `{prefix}_breeding_mating_records.update`
+- `useAddBirth` — `{prefix}_breeding_births.insert`
+- `useAddHealthLog` — `{prefix}_breeding_health_logs.insert`
+- `useAddFeedLog` — `{prefix}_breeding_feed_logs.insert`
+- `useAddSale` — 2-step: `{prefix}_breeding_sales.insert` + `animals.update status='terjual'` (partial commit on step 2)
+
+**Action names:**
+- `breeding.animal.add`
+- `breeding.animal.update`
+- `breeding.weight.add`
+- `breeding.mating.add`
+- `breeding.mating.update`
+- `breeding.birth.add`
+- `breeding.health_log.add`
+- `breeding.feed_log.add`
+- `breeding.sale.add`
+- `breeding.sale.add.animal_sync` (partial — sale inserted but animal status sync failed; `metadata.partial: true`)
+
+**Notes:**
+- Factory pattern: `component: 'createBreedingHooks'` is shared across all three verticals; vertical is recoverable from the `metadata.table` value (e.g. `domba_breeding_animals`).
+- `useAddSale` partial commit: uses `logError` directly (not `logSupabaseError`) to include `metadata.partial: true, sale_inserted: true, animal_id`.
+- Simple single-step hooks use `logSupabaseError` before re-throw; toast/UI behaviour in `onError` preserved.
+
+---
+
+### `src/lib/hooks/useKdBreedingData.js`
+**Phase:** 6.F
+**Coverage:** Kambing perah breeding mutation hooks — mirrors `createBreedingHooks` pattern but targets `kd_breeding_*` tables directly (not factory-generated).
+
+**Mutation hooks instrumented (9):**
+- `useAddKdBreedingAnimal` — `kd_breeding_animals.insert`
+- `useUpdateKdBreedingAnimal` — `kd_breeding_animals.update`
+- `useAddKdBreedingWeight` — `kd_breeding_weight_records.insert`
+- `useAddKdBreedingMating` — `kd_breeding_mating_records.insert`
+- `useUpdateKdBreedingMating` — `kd_breeding_mating_records.update`
+- `useAddKdBreedingBirth` — `kd_breeding_births.insert`
+- `useAddKdBreedingHealthLog` — `kd_breeding_health_logs.insert`
+- `useAddKdBreedingFeedLog` — `kd_breeding_feed_logs.insert`
+- `useAddKdBreedingSale` — 2-step: `kd_breeding_sales.insert` + `kd_breeding_animals.update status='terjual'` (partial commit on step 2)
+
+**Action names:**
+- `kd_breeding.animal.add`
+- `kd_breeding.animal.update`
+- `kd_breeding.weight.add`
+- `kd_breeding.mating.add`
+- `kd_breeding.mating.update`
+- `kd_breeding.birth.add`
+- `kd_breeding.health_log.add`
+- `kd_breeding.feed_log.add`
+- `kd_breeding.sale.add`
+- `kd_breeding.sale.add.animal_sync` (partial — `metadata.partial: true, sale_inserted: true, animal_id`)
+
+**Notes:** Identical instrumentation pattern to `createBreedingHooks`. `component: 'useKdBreedingData'` in all log calls. Also exports pure calculation functions (`calcBreedingADG`, `calcConceptionRate`, etc.) — those are not instrumented (read-only helpers).
+
+---
+
+### `src/lib/hooks/usePeternakData.js`
+**Phase:** 6.F
+**Coverage:** Broiler peternak mutation hooks — farm CRUD, breeding cycle lifecycle, daily records, feed stock management.
+
+**Mutation hooks instrumented (9):**
+- `useCreatePeternakFarm` — `peternak_farms.insert`
+- `useUpdatePeternakFarm` — `peternak_farms.update`
+- `useDeletePeternakFarm` — `peternak_farms.update is_deleted=true`
+- `useCreateCycle` — `breeding_cycles.insert` (broiler cycle)
+- `useUpdateCycleStatus` — `breeding_cycles.update` (status, fcr, ip_score, harvest date)
+- `useDeleteCycle` — `breeding_cycles.update is_deleted=true`
+- `useUpsertDailyRecord` — 2-step: `daily_records.upsert` + `breeding_cycles.update` aggregate sync (partial on step 2)
+- `useUpsertFeedStock` — 2-step: `feed_stocks.update/insert` + optional `cycle_expenses.insert` (partial on optional step)
+- `useReduceFeedStock` — `feed_stocks.update quantity_kg`
+
+**Action names:**
+- `peternak.farm.create`
+- `peternak.farm.update`
+- `peternak.farm.delete`
+- `peternak.broiler_cycle.create`
+- `peternak.broiler_cycle.update_status`
+- `peternak.broiler_cycle.delete`
+- `peternak.daily_record.upsert`
+- `peternak.daily_record.upsert.cycle_sync` (partial — daily saved but aggregate update failed; `metadata.partial: true, daily_record_saved: true, cycle_id`)
+- `peternak.feed_stock.upsert`
+- `peternak.feed_stock.upsert.expense` (partial — feed stock saved but cycle_expenses insert failed; `metadata.partial: true, feed_stock_saved: true, cycle_id`)
+- `peternak.feed_stock.reduce`
+
+**Notes:**
+- `useUpsertDailyRecord` aggregate sync (`breeding_cycles.update total_mortality + total_feed_kg`) is **non-throwing** — uses `logError` directly with `partial: true` flag but does NOT re-throw, consistent with non-critical side-effect pattern.
+- `useUpsertFeedStock` expense insertion is optional (only fires when `cycle_id + unit_price` provided) — logged as partial commit but still throws so the caller sees the failure.
+- `useDeletePeternakFarm` uses soft-delete (`is_deleted=true`), not hard delete — operation is `'update'` not `'delete'` in the log.
+- Also exports query hooks (`usePeternakFarms`, `useActiveCycles`, etc.) and pure helpers (`calcCurrentAge`, `calcFCR`, etc.) — those are not instrumented.
 
 ---
 
@@ -506,16 +652,20 @@ Neither file has new instrumentation points added (mutation audit deferred to Ph
 ---
 
 ### `src/dashboard/_shared/pages/AkunPreview.jsx`
-**Phase:** 5
+**Phase:** 5 + 6.F
 **Coverage:**
 - `handleLogout` — `supabase.auth.signOut()` error
 - `EditProfileSheet.handleSave` — `profiles.update()` error
+- **Phase 6.F**: `DeleteBusinessDialog` — `delete_my_business` RPC error (`logSupabaseError` + `logError` dual-log)
+- **Phase 6.F**: `EditBisnisSheet.handleSave` — `tenants.update` error (business_name, province, location)
 
 **Action names:**
 - `handleLogout`
 - `handleSave`
+- `account.business.delete` (Phase 6.F)
+- `account.bisnis.update` (Phase 6.F)
 
-**Notes:** Predates dotted convention — names are React handler names. Functionally complete; rename to `account.logout` / `account.edit_profile.save` is cosmetic, deferred.
+**Notes:** `handleLogout` / `handleSave` predate dotted convention — deferred cosmetic rename. `DeleteBusinessDialog` uses dual-log (`logSupabaseError` + `logError`) to surface RPC error as both classified supabase error and rich metadata log. `EditBisnisSheet` supports owner-only province selection from 38 Indonesian provinces.
 
 ---
 
@@ -783,6 +933,297 @@ Neither file has new instrumentation points added (mutation audit deferred to Ph
 
 ---
 
+### `src/lib/hooks/useBrokerKaryawanData.js`
+**Phase:** 6.F
+**Coverage:** Broker employee CRUD.
+
+**Mutation hooks instrumented (3):**
+- `useCreateBrokerEmployee` -- `broker_employees.insert`
+- `useUpdateBrokerEmployee` -- `broker_employees.update`
+- `useDeleteBrokerEmployee` -- `broker_employees.update is_deleted=true`
+
+**Action names:**
+- `broker.employee.create`
+- `broker.employee.update`
+- `broker.employee.delete`
+
+**Notes:** `component: 'useBrokerKaryawanData'`. Used by both Poultry Broker and Egg Broker Tim/Karyawan pages.
+
+---
+
+### `src/lib/hooks/useBrokerConnections.js`
+**Phase:** 6.F
+**Coverage:** Broker-to-broker connection lifecycle.
+
+**Mutation hooks instrumented (3):**
+- `useRequestConnection` -- `broker_connections.insert`
+- `useRespondConnection` -- `broker_connections.update` (status accept/reject)
+- `useCancelConnection` -- `broker_connections.update is_cancelled=true`
+
+**Action names:**
+- `broker.connection.request`
+- `broker.connection.respond`
+- `broker.connection.cancel`
+
+**Notes:** All three use `logSupabaseError` before re-throw. `component: 'useBrokerConnections'`.
+
+---
+
+### `src/lib/invoice/useInvoice.js`
+**Phase:** 6.F
+**Coverage:**
+- `useSaveInvoice` -- `generated_invoices.insert`
+
+**Action names:**
+- `invoice.generate`
+
+**Notes:** `component: 'useInvoice'`. Pre-insert profileErr SELECT failure throws early without logging (not a mutation failure).
+
+---
+
+### `src/lib/hooks/useKdPenggemukanData.js`
+**Phase:** 6.F
+**Coverage:** Kambing/Domba penggemukan mutation hooks -- batch lifecycle, animals, weights, feed, health, sales, kandangs.
+
+**Mutation hooks instrumented (11 hooks, 15 action_name sites):**
+- `useCreateKdBatch` -- `kd_*_batches.insert`
+- `useCloseKdBatch` -- `kd_*_batches.update status=closed`
+- `useAddKdAnimal` -- `kd_*_animals.insert` + batch total_animals sync (partial)
+- `useUpdateKdAnimalStatus` -- `kd_*_animals.update status`
+- `useAddKdWeightRecord` -- `kd_*_weight_records.insert`
+- `useAddKdFeedLog` -- `kd_*_feed_logs.upsert`
+- `useAddKdHealthLog` -- `kd_*_health_logs.insert`
+- `useAddKdSale` -- `kd_*_sales.insert` + `kd_*_animals.update status='terjual'` (partial)
+- `useDeleteKdFeedLog` -- `kd_*_feed_logs.update is_deleted=true`
+- `useDeleteKdWeightRecord` -- `kd_*_weight_records.update is_deleted=true`
+- `useCreateKdKandang` -- `kd_*_kandangs.insert`
+- `useMoveAnimalToKandang` -- `kd_*_animals.update kandang_id/slot`
+- `useEnsureHoldingPen` -- SELECT check + INSERT create (single action_name for both steps)
+
+**Action names:**
+- `kd_penggemukan.batch.create`
+- `kd_penggemukan.batch.close`
+- `kd_penggemukan.animal.add`
+- `kd_penggemukan.animal.add.batch_sync` (partial -- animal inserted, batch sync failed)
+- `kd_penggemukan.animal.update_status`
+- `kd_penggemukan.animal.move_kandang`
+- `kd_penggemukan.weight.add`
+- `kd_penggemukan.weight.delete`
+- `kd_penggemukan.feed_log.add`
+- `kd_penggemukan.feed_log.delete`
+- `kd_penggemukan.health_log.add`
+- `kd_penggemukan.sale.add`
+- `kd_penggemukan.sale.add.animal_sync` (partial -- sale inserted, animal sync failed; `metadata.animal_ids`)
+- `kd_penggemukan.kandang.create`
+- `kd_penggemukan.kandang.ensure_holding` (shared for SELECT and INSERT steps)
+
+**Notes:**
+- `useAddKdAnimal` batch sync and `useAddKdSale` animal sync use `logError` directly with `metadata.partial: true`.
+- `component: 'useKdPenggemukanData'` in all calls.
+
+---
+
+### `src/lib/hooks/createDairyHooks.js`
+**Phase:** 6.F
+**Coverage:** Hook factory `createDairyHooks(prefix)` -- milk production logs, inventory, sales, animal management.
+
+**Mutation hooks instrumented (4 hooks, 5 action_name sites):**
+- `useLogProduction` -- `{prefix}_milk_logs.insert`
+- `useUpdateInventory` -- `{prefix}_transactions.insert` + `{prefix}_inventory.update` qty sync (partial)
+- `useLogSale` -- `{prefix}_sales.insert`
+- `useAddAnimal` -- `{prefix}_animals.insert`
+
+**Action names:**
+- `dairy.milk_log.add`
+- `dairy.inventory.update`
+- `dairy.inventory.update.stock_sync` (partial -- transaction inserted, inventory sync failed; `metadata.partial: true, transaction_inserted: true, item_id`)
+- `dairy.milk_sale.add`
+- `dairy.animal.add`
+
+**Notes:**
+- Factory pattern: `component: 'createDairyHooks'`; vertical recoverable from `metadata.table`.
+- `useUpdateInventory` partial commit uses `logError` directly.
+- `onError: (err) => toast.error(...)` added to `useLogSale` and `useAddAnimal` (were missing).
+
+---
+
+### `src/lib/hooks/useSapiBreedingData.js`
+**Phase:** 6.F
+**Coverage:** Sapi breeding mutation hooks -- separate from `createBreedingHooks.js` factory; covers `sapi_breeding_*` tables.
+
+**Mutation hooks instrumented (11):**
+- `useAddSapiBreedingAnimal` -- `sapi_breeding_animals.insert`
+- `useUpdateSapiBreedingAnimal` -- `sapi_breeding_animals.update`
+- `useAddSapiBreedingMatingRecord` -- `sapi_breeding_mating_records.insert`
+- `useUpdateSapiBreedingMatingStatus` -- `sapi_breeding_mating_records.update status`
+- `useAddSapiBreedingBirth` -- `sapi_breeding_births.insert`
+- `useAddSapiBreedingWeightRecord` -- `sapi_breeding_weight_records.insert`
+- `useAddSapiBreedingHealthLog` -- `sapi_breeding_health_logs.insert`
+- `useDeleteSapiBreedingHealthLog` -- `sapi_breeding_health_logs.update is_deleted=true`
+- `useAddSapiBreedingFeedLog` -- `sapi_breeding_feed_logs.insert`
+- `useDeleteSapiBreedingFeedLog` -- `sapi_breeding_feed_logs.update is_deleted=true`
+- `useAddSapiBreedingSale` -- `sapi_breeding_sales.insert`
+
+**Action names:**
+- `sapi_breeding.animal.add`
+- `sapi_breeding.animal.update`
+- `sapi_breeding.mating.add`
+- `sapi_breeding.mating.update_status`
+- `sapi_breeding.birth.add`
+- `sapi_breeding.weight.add`
+- `sapi_breeding.health_log.add`
+- `sapi_breeding.health_log.delete`
+- `sapi_breeding.feed_log.add`
+- `sapi_breeding.feed_log.delete`
+- `sapi_breeding.sale.add`
+
+**Notes:** `component: 'useSapiBreedingData'`. All 11 use `logSupabaseError` before re-throw.
+
+---
+
+### `src/lib/hooks/useMarket.js`
+**Phase:** 6.F
+**Coverage:** Market listing CRUD.
+
+**Mutation hooks instrumented (3):**
+- `useCreateListing` -- `market_listings.insert`
+- `useCloseListing` -- `market_listings.update status='closed'`
+- `useDeleteListing` -- `market_listings.update is_deleted=true`
+
+**Action names:**
+- `market.listing.create`
+- `market.listing.close`
+- `market.listing.delete`
+
+**Notes:** `component: 'useMarket'`.
+
+---
+
+### `src/pages/Invite.jsx`
+**Phase:** 6.F
+**Coverage:** Invite accept flow -- two sequential mutations in `handleAcceptInvite`.
+
+**Action names:**
+- `invite.accept.profile_update` -- `profiles.update` (write name + user_type)
+- `invite.accept.mark_accepted` -- `team_invitations.update status='accepted'`
+
+**Notes:** Both use `logSupabaseError` and re-throw. No invite code or OTP token is logged. `component: 'Invite'`.
+
+---
+
+### `src/dashboard/broker/poultry_broker/RPA.jsx`
+**Phase:** 6.F
+**Coverage:** RPA client CRUD -- inline mutations in RPAForm.
+
+**Action names:**
+- `broker.rpa.create` -- `rpa_clients.insert`
+- `broker.rpa.update` -- `rpa_clients.update`
+- `broker.rpa.delete` -- `rpa_clients.update is_deleted=true`
+
+**Notes:** `component: 'RPA'`. `broker.rpa.update` and `broker.rpa.delete` are shared with `RPADetail.jsx` (differentiated by `component`).
+
+---
+
+### `src/dashboard/broker/poultry_broker/RPADetail.jsx`
+**Phase:** 6.F
+**Coverage:** RPA detail page -- debt settlement and RPA profile edits (5 mutation sites).
+
+**Action names:**
+- `broker.payment.bulk_settle` -- `payments.insert` loop per overdue sale
+- `broker.payment.settle` -- `payments.insert` full single payment
+- `broker.payment.add` -- `payments.insert` partial payment form
+- `broker.rpa.update` -- `rpa_clients.update` (shared with `RPA.jsx`)
+- `broker.rpa.delete` -- `rpa_clients.update is_deleted=true` (shared with `RPA.jsx`)
+
+**Notes:** `component: 'RPADetail'`. `proceedMarkAllPaid` previously had no error check -- added with instrumentation.
+
+---
+
+### `src/dashboard/broker/poultry_broker/Beranda.jsx`
+**Phase:** 6.F
+**Coverage:**
+- `handleTandaiLunas` loop -- `sales.update payment_status='lunas'` per overdue sale
+
+**Action names:**
+- `broker.sale.bulk_mark_paid`
+
+**Notes:** Previously fire-and-forget; now logs and throws on failure. `component: 'Beranda'`.
+
+---
+
+### `src/dashboard/broker/poultry_broker/CashFlow.jsx`
+**Phase:** 6.F
+**Coverage:**
+- `extra_expenses.insert` (expense entry form)
+
+**Action names:**
+- `broker.expense.add`
+
+**Notes:** `component: 'CashFlow'`.
+
+---
+
+### `src/dashboard/broker/poultry_broker/pengiriman/CreateLossSheet.jsx`
+**Phase:** 6.F
+**Coverage:**
+- `loss_reports.insert` (in `handleCreate`)
+
+**Action names:**
+- `broker.loss_report.create` (shared with `useUpdateDelivery.js` -- differentiated by `component`)
+
+**Notes:** Non-throwing pattern (uses `if (error)` check, not try/catch). `component: 'CreateLossSheet'`.
+
+---
+
+### `src/dashboard/broker/poultry_broker/pengiriman/UpdateArrivalSheet.jsx`
+**Phase:** 6.F
+**Coverage:**
+- `deliveries.update` (critical arrival data write)
+
+**Action names:**
+- `broker.delivery.update_arrival`
+
+**Notes:** `component: 'UpdateArrivalSheet'`. Pre-step ID lookups and post-step side effects remain fire-and-forget.
+
+---
+
+### `src/dashboard/peternak/broiler/LaporanSiklus.jsx`
+**Phase:** 6.F
+**Coverage:**
+- `AddExpenseSheet.handleSubmit` -- `cycle_expenses.insert`
+
+**Action names:**
+- `peternak.cycle_expense.add`
+
+**Notes:** `component: 'LaporanSiklus'`.
+
+---
+
+### `src/dashboard/peternak/broiler/SetupFarm.jsx`
+**Phase:** 6.F
+**Coverage:**
+- `peternak_farms.insert` (initial farm creation)
+
+**Action names:**
+- `peternak.farm.setup`
+
+**Notes:** `component: 'SetupFarm'`. Distinct from `peternak.farm.create` (the `usePeternakData` hook). SetupFarm.jsx is the first-run onboarding page. Subsequent `breeding_cycles.insert` bootstrap is fire-and-forget.
+
+---
+
+### `src/dashboard/_shared/components/FormJualModal.jsx`
+**Phase:** 6.F
+**Coverage:**
+- `sales.insert` (broker sale record creation)
+
+**Action names:**
+- `broker.sale.create`
+
+**Notes:** `component: 'FormJualModal'`. Side effects (`rpa_clients.update`, `farms.update`) are fire-and-forget. Pre-existing lint: `useState` used without import at line 43 -- deferred.
+
+---
+
+
 ## Action Name Index
 
 Sorted alphabetically. All entries below were verified via grep against `actionName:` literals in `src/`.
@@ -816,12 +1257,24 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `admin.tenant.update` | `src/lib/hooks/useAdminData.js` | 6.E | tenants.update |
 | `admin.user.delete` | `src/lib/hooks/useAdminData.js` | 6.E | profiles.delete |
 | `admin.user.delete_tenant` | `src/lib/hooks/useAdminData.js` | 6.E | tenants.delete for lonely tenant (partial commit flag) |
+| `account.bisnis.update` | `src/dashboard/_shared/pages/AkunPreview.jsx` | 6.F | tenants.update business_name/province/location (EditBisnisSheet) |
+| `account.business.delete` | `src/dashboard/_shared/pages/AkunPreview.jsx` | 6.F | delete_my_business RPC failure (dual-log with logSupabaseError + logError) |
 | `auth.callback_error` | `src/pages/AuthCallback.jsx` | 6.0 | Hash error params (otp_expired, access_denied) — code only, no token |
 | `auth.callback_fetch_profiles` | `src/pages/AuthCallback.jsx` | 6.0 | Profile fetch after callback session resolved |
 | `auth.callback_no_session` | `src/pages/AuthCallback.jsx` | 6.0 | getSession() returned no user |
 | `auth.callback_unexpected` | `src/pages/AuthCallback.jsx` | 6.0 | Catch-all for promise chain throws (prevents blank-page hang) |
 | `auth.fetch_memberships` | `src/lib/hooks/useAuth.jsx` | 6.2 | tenant_memberships SELECT failure |
 | `auth.fetch_profiles` | `src/lib/hooks/useAuth.jsx` | 6.2 | profiles SELECT failure during auth bootstrap |
+| `breeding.animal.add` | `src/lib/hooks/createBreedingHooks.js` | 6.F | `{prefix}_breeding_animals.insert` |
+| `breeding.animal.update` | `src/lib/hooks/createBreedingHooks.js` | 6.F | `{prefix}_breeding_animals.update` |
+| `breeding.birth.add` | `src/lib/hooks/createBreedingHooks.js` | 6.F | `{prefix}_breeding_births.insert` |
+| `breeding.feed_log.add` | `src/lib/hooks/createBreedingHooks.js` | 6.F | `{prefix}_breeding_feed_logs.insert` |
+| `breeding.health_log.add` | `src/lib/hooks/createBreedingHooks.js` | 6.F | `{prefix}_breeding_health_logs.insert` |
+| `breeding.mating.add` | `src/lib/hooks/createBreedingHooks.js` | 6.F | `{prefix}_breeding_mating_records.insert` |
+| `breeding.mating.update` | `src/lib/hooks/createBreedingHooks.js` | 6.F | `{prefix}_breeding_mating_records.update` |
+| `breeding.sale.add` | `src/lib/hooks/createBreedingHooks.js` | 6.F | `{prefix}_breeding_sales.insert` |
+| `breeding.sale.add.animal_sync` | `src/lib/hooks/createBreedingHooks.js` | 6.F | `animals.update status='terjual'` after sale (partial commit) |
+| `breeding.weight.add` | `src/lib/hooks/createBreedingHooks.js` | 6.F | `{prefix}_breeding_weight_records.insert` |
 | `broker.delivery.fetch` | `src/lib/hooks/useUpdateDelivery.js` | 6.2 | Initial deliveries select for the update flow |
 | `broker.delivery.update` | `src/lib/hooks/useUpdateDelivery.js` | 6.2 | deliveries.update (status, arrived count/weight, mortality) |
 | `broker.driver.create` | `src/dashboard/broker/poultry_broker/Armada.jsx` | 6.3 | drivers.insert (new driver) |
@@ -839,6 +1292,28 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `broker.vehicle.create` | `src/dashboard/broker/poultry_broker/Armada.jsx` | 6.3 | vehicles.insert (new vehicle) |
 | `broker.vehicle.delete` | `src/dashboard/broker/poultry_broker/Armada.jsx` | 6.3 | vehicles.update is_deleted=true (soft delete) |
 | `broker.vehicle.update` | `src/dashboard/broker/poultry_broker/Armada.jsx` | 6.3 | vehicles.update (edit existing) |
+| `broker.connection.cancel` | `src/lib/hooks/useBrokerConnections.js` | 6.F | broker_connections.update is_cancelled=true |
+| `broker.connection.request` | `src/lib/hooks/useBrokerConnections.js` | 6.F | broker_connections.insert |
+| `broker.connection.respond` | `src/lib/hooks/useBrokerConnections.js` | 6.F | broker_connections.update status (accept/reject) |
+| `broker.delivery.update_arrival` | `src/dashboard/broker/poultry_broker/pengiriman/UpdateArrivalSheet.jsx` | 6.F | deliveries.update arrival data (critical path) |
+| `broker.employee.create` | `src/lib/hooks/useBrokerKaryawanData.js` | 6.F | broker_employees.insert |
+| `broker.employee.delete` | `src/lib/hooks/useBrokerKaryawanData.js` | 6.F | broker_employees.update is_deleted=true |
+| `broker.employee.update` | `src/lib/hooks/useBrokerKaryawanData.js` | 6.F | broker_employees.update |
+| `broker.expense.add` | `src/dashboard/broker/poultry_broker/CashFlow.jsx` | 6.F | extra_expenses.insert |
+| `broker.loss_report.create` | `src/dashboard/broker/poultry_broker/pengiriman/CreateLossSheet.jsx` | 6.F | loss_reports.insert (manual; also used by useUpdateDelivery.js for automated delivery rows) |
+| `broker.payment.add` | `src/dashboard/broker/poultry_broker/RPADetail.jsx` | 6.F | payments.insert (partial payment form) |
+| `broker.payment.bulk_settle` | `src/dashboard/broker/poultry_broker/RPADetail.jsx` | 6.F | payments.insert loop per overdue sale |
+| `broker.payment.settle` | `src/dashboard/broker/poultry_broker/RPADetail.jsx` | 6.F | payments.insert (single full payment) |
+| `broker.rpa.create` | `src/dashboard/broker/poultry_broker/RPA.jsx` | 6.F | rpa_clients.insert |
+| `broker.rpa.delete` | `src/dashboard/broker/poultry_broker/RPA.jsx` + `RPADetail.jsx` | 6.F | rpa_clients.update is_deleted=true |
+| `broker.rpa.update` | `src/dashboard/broker/poultry_broker/RPA.jsx` + `RPADetail.jsx` | 6.F | rpa_clients.update |
+| `broker.sale.bulk_mark_paid` | `src/dashboard/broker/poultry_broker/Beranda.jsx` | 6.F | sales.update payment_status='lunas' loop |
+| `broker.sale.create` | `src/dashboard/_shared/components/FormJualModal.jsx` | 6.F | sales.insert (broker sale record creation) |
+| `dairy.animal.add` | `src/lib/hooks/createDairyHooks.js` | 6.F | `{prefix}_animals.insert` |
+| `dairy.inventory.update` | `src/lib/hooks/createDairyHooks.js` | 6.F | `{prefix}_transactions.insert` |
+| `dairy.inventory.update.stock_sync` | `src/lib/hooks/createDairyHooks.js` | 6.F | `{prefix}_inventory.update` qty sync after transaction (partial commit) |
+| `dairy.milk_log.add` | `src/lib/hooks/createDairyHooks.js` | 6.F | `{prefix}_milk_logs.insert` |
+| `dairy.milk_sale.add` | `src/lib/hooks/createDairyHooks.js` | 6.F | `{prefix}_sales.insert` |
 | `createCycle` | `src/dashboard/peternak/_shared/components/SiklusSheet.jsx` | 6.1 | breeding_cycles.insert |
 | `createCycleExpenses` | `src/dashboard/peternak/_shared/components/SiklusSheet.jsx` | 6.1 | cycle_expenses.insert (partial commit flag) |
 | `egg.customer.create` | `src/dashboard/broker/egg_broker/Customers.jsx` | 6.C | egg_customers.insert |
@@ -853,14 +1328,54 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `egg.supplier.delete` | `src/dashboard/broker/egg_broker/Suppliers.jsx` | 6.C | egg_suppliers.update is_deleted=true |
 | `egg.supplier.update` | `src/dashboard/broker/egg_broker/Suppliers.jsx` | 6.C | egg_suppliers.update |
 | `handleDeletePermanent` | `src/dashboard/broker/sembako_broker/components/SembakoRecycleBin.jsx` | 5 | Permanent delete from recycle bin |
+| `kd_breeding.animal.add` | `src/lib/hooks/useKdBreedingData.js` | 6.F | `kd_breeding_animals.insert` |
+| `kd_breeding.animal.update` | `src/lib/hooks/useKdBreedingData.js` | 6.F | `kd_breeding_animals.update` |
+| `kd_breeding.birth.add` | `src/lib/hooks/useKdBreedingData.js` | 6.F | `kd_breeding_births.insert` |
+| `kd_breeding.feed_log.add` | `src/lib/hooks/useKdBreedingData.js` | 6.F | `kd_breeding_feed_logs.insert` |
+| `kd_breeding.health_log.add` | `src/lib/hooks/useKdBreedingData.js` | 6.F | `kd_breeding_health_logs.insert` |
+| `kd_breeding.mating.add` | `src/lib/hooks/useKdBreedingData.js` | 6.F | `kd_breeding_mating_records.insert` |
+| `kd_breeding.mating.update` | `src/lib/hooks/useKdBreedingData.js` | 6.F | `kd_breeding_mating_records.update` |
+| `kd_breeding.sale.add` | `src/lib/hooks/useKdBreedingData.js` | 6.F | `kd_breeding_sales.insert` |
+| `kd_breeding.sale.add.animal_sync` | `src/lib/hooks/useKdBreedingData.js` | 6.F | `kd_breeding_animals.update status='terjual'` after sale (partial commit) |
+| `kd_breeding.weight.add` | `src/lib/hooks/useKdBreedingData.js` | 6.F | `kd_breeding_weight_records.insert` |
+| `kd_penggemukan.animal.add` | `src/lib/hooks/useKdPenggemukanData.js` | 6.F | `kd_*_animals.insert` |
+| `kd_penggemukan.animal.add.batch_sync` | `src/lib/hooks/useKdPenggemukanData.js` | 6.F | batch total_animals sync after animal add (partial commit) |
+| `kd_penggemukan.animal.move_kandang` | `src/lib/hooks/useKdPenggemukanData.js` | 6.F | `kd_*_animals.update kandang_id/slot` |
+| `kd_penggemukan.animal.update_status` | `src/lib/hooks/useKdPenggemukanData.js` | 6.F | `kd_*_animals.update status` |
+| `kd_penggemukan.batch.close` | `src/lib/hooks/useKdPenggemukanData.js` | 6.F | `kd_*_batches.update status=closed` |
+| `kd_penggemukan.batch.create` | `src/lib/hooks/useKdPenggemukanData.js` | 6.F | `kd_*_batches.insert` |
+| `kd_penggemukan.feed_log.add` | `src/lib/hooks/useKdPenggemukanData.js` | 6.F | `kd_*_feed_logs.upsert` |
+| `kd_penggemukan.feed_log.delete` | `src/lib/hooks/useKdPenggemukanData.js` | 6.F | `kd_*_feed_logs.update is_deleted=true` |
+| `kd_penggemukan.health_log.add` | `src/lib/hooks/useKdPenggemukanData.js` | 6.F | `kd_*_health_logs.insert` |
+| `kd_penggemukan.kandang.create` | `src/lib/hooks/useKdPenggemukanData.js` | 6.F | `kd_*_kandangs.insert` |
+| `kd_penggemukan.kandang.ensure_holding` | `src/lib/hooks/useKdPenggemukanData.js` | 6.F | SELECT pre-check + INSERT holding pen (shared action_name for both steps) |
+| `kd_penggemukan.sale.add` | `src/lib/hooks/useKdPenggemukanData.js` | 6.F | `kd_*_sales.insert` |
+| `kd_penggemukan.sale.add.animal_sync` | `src/lib/hooks/useKdPenggemukanData.js` | 6.F | `kd_*_animals.update status='terjual'` after sale (partial commit) |
+| `kd_penggemukan.weight.add` | `src/lib/hooks/useKdPenggemukanData.js` | 6.F | `kd_*_weight_records.insert` |
+| `kd_penggemukan.weight.delete` | `src/lib/hooks/useKdPenggemukanData.js` | 6.F | `kd_*_weight_records.update is_deleted=true` |
 | `handleLogout` | `src/dashboard/_shared/pages/AkunPreview.jsx` | 5 | supabase.auth.signOut error |
 | `handleRestore` | `src/dashboard/broker/sembako_broker/components/SembakoRecycleBin.jsx` | 5 | Restore soft-deleted row |
 | `handleSave` | `src/dashboard/_shared/pages/AkunPreview.jsx` | 5 | EditProfileSheet profiles.update |
+| `invite.accept.mark_accepted` | `src/pages/Invite.jsx` | 6.F | team_invitations.update status='accepted' |
+| `invite.accept.profile_update` | `src/pages/Invite.jsx` | 6.F | profiles.update name + user_type during invite accept |
+| `invoice.generate` | `src/lib/invoice/useInvoice.js` | 6.F | generated_invoices.insert |
 | `handleSaveProfile` | `src/lib/hooks/useRPAData.js` | 5 | RPA profile upsert onError |
 | `login.fetch_profiles` | `src/pages/Login.jsx` | 6.0 | profiles select after sign-in |
 | `login.oauth_google` | `src/pages/Login.jsx` | 6.0 | Google OAuth init catch |
 | `login.submit` | `src/pages/Login.jsx` | 6.0 | signInWithPassword error branch |
 | `login.unexpected` | `src/pages/Login.jsx` | 6.0 | handleLogin outer catch |
+| `market.listing.close` | `src/lib/hooks/useMarket.js` | 6.F | market_listings.update status='closed' |
+| `market.listing.create` | `src/lib/hooks/useMarket.js` | 6.F | market_listings.insert |
+| `market.listing.delete` | `src/lib/hooks/useMarket.js` | 6.F | market_listings.update is_deleted=true |
+| `notification.delete` | `src/lib/hooks/useNotifications.jsx` | 6.F | `notifications.update is_deleted=true` |
+| `notification.generate.payday` | `src/lib/hooks/useNotifications.jsx` | 6.F | Payday reminder insert for worker (non-throwing) |
+| `notification.generate.piutang_broker` | `src/lib/hooks/useNotifications.jsx` | 6.F | Overdue broker sales notification insert (non-throwing) |
+| `notification.generate.piutang_sembako` | `src/lib/hooks/useNotifications.jsx` | 6.F | Overdue sembako sales notification insert (non-throwing) |
+| `notification.generate.stok_pakan` | `src/lib/hooks/useNotifications.jsx` | 6.F | Low feed stock notification insert (non-throwing) |
+| `notification.generate.subscription_expires` | `src/lib/hooks/useNotifications.jsx` | 6.F | Trial/subscription expiry notification insert (non-throwing) |
+| `notification.generate.tugas_terlambat` | `src/lib/hooks/useNotifications.jsx` | 6.F | Overdue tasks summary notification insert (non-throwing) |
+| `notification.generate.unexpected` | `src/lib/hooks/useNotifications.jsx` | 6.F | Outer catch in checkAndGenerate — unexpected JS throw |
+| `notification.mark_read` | `src/lib/hooks/useNotifications.jsx` | 6.F | `notifications.update is_read=true` (single + all) |
 | `onboarding.create_new_business` | `src/dashboard/_shared/components/BusinessModelOverlay.jsx` | 6.0 | create_new_business RPC error |
 | `onboarding.insert_initial_batch` | `src/dashboard/_shared/components/BusinessModelOverlay.jsx` | 6.0 | Non-fatal penggemukan setup batch insert |
 | `onboarding.missing_tenant_id` | `src/dashboard/_shared/components/BusinessModelOverlay.jsx` | post-fix | Invalid/null tenant_id detected before profile update |
@@ -879,8 +1394,21 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `peternak.animal.update_status` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | animals.update status/exit_date (manual lifecycle change) |
 | `peternak.batch.close` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | batches.update status=closed |
 | `peternak.batch.create` | `src/lib/hooks/createPenggemukanHooks.js` | 6.2 | New batch insert |
+| `peternak.broiler_cycle.create` | `src/lib/hooks/usePeternakData.js` | 6.F | `breeding_cycles.insert` (broiler) |
+| `peternak.broiler_cycle.delete` | `src/lib/hooks/usePeternakData.js` | 6.F | `breeding_cycles.update is_deleted=true` |
+| `peternak.broiler_cycle.update_status` | `src/lib/hooks/usePeternakData.js` | 6.F | `breeding_cycles.update` (status/fcr/ip/harvest) |
+| `peternak.daily_record.upsert` | `src/lib/hooks/usePeternakData.js` | 6.F | `daily_records.upsert` (conflict on cycle_id,record_date) |
+| `peternak.daily_record.upsert.cycle_sync` | `src/lib/hooks/usePeternakData.js` | 6.F | `breeding_cycles.update total_mortality/total_feed_kg` aggregate sync (partial, non-throwing) |
+| `peternak.farm.create` | `src/lib/hooks/usePeternakData.js` | 6.F | `peternak_farms.insert` |
+| `peternak.farm.delete` | `src/lib/hooks/usePeternakData.js` | 6.F | `peternak_farms.update is_deleted=true` |
+| `peternak.cycle_expense.add` | `src/dashboard/peternak/broiler/LaporanSiklus.jsx` | 6.F | cycle_expenses.insert (AddExpenseSheet in cycle report page) |
+| `peternak.farm.setup` | `src/dashboard/peternak/broiler/SetupFarm.jsx` | 6.F | peternak_farms.insert (first-run onboarding setup; distinct from peternak.farm.create hook) |
+| `peternak.farm.update` | `src/lib/hooks/usePeternakData.js` | 6.F | `peternak_farms.update` |
 | `peternak.farm_ops_cost.create` | `src/lib/hooks/usePeternakTaskData.js` | 6.B | farm-wide Listrik & Air ops cost insert (split across active batches) |
 | `peternak.farm_ops_cost.delete` | `src/lib/hooks/usePeternakTaskData.js` | 6.B | farm-wide Listrik & Air ops cost soft-delete |
+| `peternak.feed_stock.reduce` | `src/lib/hooks/usePeternakData.js` | 6.F | `feed_stocks.update quantity_kg` (catat pemakaian) |
+| `peternak.feed_stock.upsert` | `src/lib/hooks/usePeternakData.js` | 6.F | `feed_stocks.update/insert` (add/create stock) |
+| `peternak.feed_stock.upsert.expense` | `src/lib/hooks/usePeternakData.js` | 6.F | `cycle_expenses.insert` for pakan cost tracking (partial commit) |
 | `peternak.feed_log.create` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | feed.upsert per kandang/log_date |
 | `peternak.feed_log.delete` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | feed.update is_deleted=true |
 | `peternak.health_log.create` | `src/lib/hooks/createPenggemukanHooks.js` | 6.B | health.insert |
@@ -909,6 +1437,17 @@ Sorted alphabetically. All entries below were verified via grep against `actionN
 | `sapi.kandang.ensure_holding_create` | `src/lib/hooks/useSapiPenggemukanData.js` | 6.F | sapi kandangs.insert Holding pen when none exists |
 | `sapi.kandang.update` | `src/lib/hooks/useSapiPenggemukanData.js` | 6.F | sapi_penggemukan_kandangs.update (form edit) |
 | `sapi.kandang.update_position` | `src/lib/hooks/useSapiPenggemukanData.js` | 6.F | sapi_penggemukan_kandangs.update grid_x/grid_y (drag-drop reposition) |
+| `sapi_breeding.animal.add` | `src/lib/hooks/useSapiBreedingData.js` | 6.F | sapi_breeding_animals.insert |
+| `sapi_breeding.animal.update` | `src/lib/hooks/useSapiBreedingData.js` | 6.F | sapi_breeding_animals.update |
+| `sapi_breeding.birth.add` | `src/lib/hooks/useSapiBreedingData.js` | 6.F | sapi_breeding_births.insert |
+| `sapi_breeding.feed_log.add` | `src/lib/hooks/useSapiBreedingData.js` | 6.F | sapi_breeding_feed_logs.insert |
+| `sapi_breeding.feed_log.delete` | `src/lib/hooks/useSapiBreedingData.js` | 6.F | sapi_breeding_feed_logs.update is_deleted=true |
+| `sapi_breeding.health_log.add` | `src/lib/hooks/useSapiBreedingData.js` | 6.F | sapi_breeding_health_logs.insert |
+| `sapi_breeding.health_log.delete` | `src/lib/hooks/useSapiBreedingData.js` | 6.F | sapi_breeding_health_logs.update is_deleted=true |
+| `sapi_breeding.mating.add` | `src/lib/hooks/useSapiBreedingData.js` | 6.F | sapi_breeding_mating_records.insert |
+| `sapi_breeding.mating.update_status` | `src/lib/hooks/useSapiBreedingData.js` | 6.F | sapi_breeding_mating_records.update status |
+| `sapi_breeding.sale.add` | `src/lib/hooks/useSapiBreedingData.js` | 6.F | sapi_breeding_sales.insert |
+| `sapi_breeding.weight.add` | `src/lib/hooks/useSapiBreedingData.js` | 6.F | sapi_breeding_weight_records.insert |
 | `register.invite_expired` | `src/pages/Register.jsx` | 6.0 | Invite token past expires_at |
 | `register.invite_invalid` | `src/pages/Register.jsx` | 6.0 | Invite token RPC returned no row or status≠pending |
 | `register.invite_submit` | `src/pages/Register.jsx` | 6.0 | handleInviteRegister outer catch |
@@ -1046,6 +1585,9 @@ WHERE action_name LIKE 'admin.%'
    OR action_name LIKE 'sembako.%'
    OR action_name LIKE 'egg.%'
    OR action_name LIKE 'account.%'
+   OR action_name LIKE 'breeding.%'
+   OR action_name LIKE 'kd_breeding.%'
+   OR action_name LIKE 'notification.%'
    OR action_name LIKE 'route.%'
    OR action_name LIKE 'login.%'
    OR action_name LIKE 'register.%'

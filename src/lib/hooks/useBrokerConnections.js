@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { toast } from 'sonner'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 // Ambil semua koneksi yang melibatkan tenant aktif
 export const useMyConnections = () => {
@@ -63,7 +64,10 @@ export const useRequestConnection = () => {
         })
         .select()
         .single()
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'broker_connections', operation: 'insert', component: 'useBrokerConnections', actionName: 'broker.connection.request' })
+        throw error
+      }
       return data
     },
     onSuccess: (_, vars) => {
@@ -97,7 +101,10 @@ export const useRespondConnection = () => {
         .eq('id', connectionId)
         .select()
         .single()
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'broker_connections', operation: 'update', component: 'useBrokerConnections', actionName: 'broker.connection.respond' })
+        throw error
+      }
       return data
     },
     onSuccess: (data) => {
@@ -125,7 +132,10 @@ export const useCancelConnection = () => {
         .eq('id', connectionId)
         .eq('requester_tenant_id', tenant.id)
         .eq('status', 'pending')
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'broker_connections', operation: 'delete', component: 'useBrokerConnections', actionName: 'broker.connection.cancel' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['broker-connections', tenant.id])

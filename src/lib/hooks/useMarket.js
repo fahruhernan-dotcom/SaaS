@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
+import { logSupabaseError } from '../logger/supabaseLogger'
 
 export const useMarketListings = (filters) => useQuery({
   queryKey: ['market-listings', filters],
@@ -50,7 +51,10 @@ export const useCreateListing = () => {
       const { error } = await supabase
         .from('market_listings')
         .insert({ ...listing, tenant_id: tenant.id })
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'market_listings', operation: 'insert', component: 'useMarket', actionName: 'market.listing.create' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['market-listings'] })
@@ -70,7 +74,10 @@ export const useCloseListing = () => {
         .from('market_listings')
         .update({ status: 'closed' })
         .eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'market_listings', operation: 'update', component: 'useMarket', actionName: 'market.listing.close' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['market-listings'] })
@@ -90,7 +97,10 @@ export const useDeleteListing = () => {
         .from('market_listings')
         .update({ is_deleted: true })
         .eq('id', id)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'market_listings', operation: 'update', component: 'useMarket', actionName: 'market.listing.delete' })
+        throw error
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['market-listings'] })

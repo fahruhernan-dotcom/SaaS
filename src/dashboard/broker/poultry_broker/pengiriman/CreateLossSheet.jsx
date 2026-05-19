@@ -4,6 +4,7 @@ import { AlertCircle, Plus, Receipt } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { toast } from 'sonner'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import { DatePicker } from '@/components/ui/DatePicker'
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet'
@@ -38,8 +39,9 @@ export default function CreateLossSheet({ isOpen, onClose, initialData }) {
         }
 
         const { error } = await supabase.from('loss_reports').insert(payload)
-        
+
         if (error) {
+            logSupabaseError(error, { table: 'loss_reports', operation: 'insert', component: 'CreateLossSheet', actionName: 'broker.loss_report.create' })
             toast.error('Gagal mencatat kerugian')
         } else {
             toast.success('Kerugian berhasil dicatat!')
