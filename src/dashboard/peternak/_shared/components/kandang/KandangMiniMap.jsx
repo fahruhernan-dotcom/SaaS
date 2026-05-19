@@ -18,8 +18,8 @@ function MiniAnimal({ animal, bounds, dotColor, emoji, weightScaling, is3D, onAn
   const iconSizeMeters = iconSize / CELL_PX
 
   const [target, setTarget] = useState({
-    x: Math.random() * Math.max(0, bounds.w - iconSizeMeters),
-    y: Math.random() * Math.max(0, bounds.h - iconSizeMeters),
+    x: Math.random() * Math.max(0, bounds.w - iconSizeMeters), // eslint-disable-line react-hooks/purity -- intentional: randomize initial spawn position
+    y: Math.random() * Math.max(0, bounds.h - iconSizeMeters), // eslint-disable-line react-hooks/purity -- intentional: randomize initial spawn position
   })
   const [isIdle, setIsIdle] = useState(true)
   const [isFlipped, setIsFlipped] = useState(false)
@@ -39,7 +39,7 @@ function MiniAnimal({ animal, bounds, dotColor, emoji, weightScaling, is3D, onAn
   return (
     <motion.div
       animate={{ x: target.x * CELL_PX, y: target.y * CELL_PX }}
-      transition={{ duration: isIdle ? 0 : 8 + Math.random() * 12, ease: 'linear' }}
+      transition={{ duration: isIdle ? 0 : 8 + Math.random() * 12, ease: 'linear' }} // eslint-disable-line react-hooks/purity -- Math.random() intentional: randomize walk animation duration
       onAnimationComplete={() => setIsIdle(true)}
       onClick={onAnimalClick ? (e) => { e.stopPropagation(); onAnimalClick(animal) } : undefined}
       onPointerDown={onAnimalClick ? (e) => e.stopPropagation() : undefined}

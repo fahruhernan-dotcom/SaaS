@@ -8,10 +8,9 @@ import {
   LayoutGrid, MapPin, Scale, Wand2, ChevronLeft, 
   ChevronRight, AlertCircle as AlertCircleIcon
 } from 'lucide-react'
-import { 
-  format, addDays, subDays, startOfWeek, endOfWeek, 
-  startOfMonth, endOfMonth, isSameDay, isSameMonth, 
-  eachDayOfInterval, parseISO, addWeeks 
+import {
+  format,
+  startOfMonth, endOfMonth,
 } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
@@ -26,7 +25,7 @@ import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { Scene, GlassCard, SummaryTiles, WeekOrbit, CustomCalendar, EmptyState, CriticalOverdueAlert } from '@/dashboard/peternak/_shared/components/TaskBaseUI'
 import { TaskCard, InteractiveCheckCard } from '@/dashboard/peternak/_shared/components/TaskCards'
 import { CompleteTaskSheet, AdHocTaskSheet, IncidentReportSheet } from '@/dashboard/peternak/_shared/components/TaskSheets'
-import { getUrgencyLabel, sortTasksByPriority } from '@/dashboard/peternak/_shared/utils/taskUtils'
+import { sortTasksByPriority } from '@/dashboard/peternak/_shared/utils/taskUtils'
 
 // Hooks
 import { useAuth } from '@/lib/hooks/useAuth'
@@ -77,7 +76,7 @@ export default function LayerDailyTask() {
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [tab, setTab] = useState('semua')
-  const [auditRange, setAuditRange] = useState('day') 
+  const [auditRange, _setAuditRange] = useState('day')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTask, setSelectedTask] = useState(null)
   const [completeSheetOpen, setCompleteSheetOpen] = useState(false)
@@ -158,7 +157,7 @@ export default function LayerDailyTask() {
     try {
       await updateStatus.mutateAsync({ id: task.id, status: 'selesai' })
       toast.success('Tugas selesai')
-    } catch (err) {
+    } catch (_err) {
       toast.error('Gagal memperbarui status')
     }
   }, [updateStatus, TASK_REPORT_CONFIG])

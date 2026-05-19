@@ -980,7 +980,8 @@ const INDONESIA_PROVINCES = [
 function EditBisnisSheet({ open, onClose, tenant, onSuccess, accent }) {
   const [businessName, setBusinessName] = useState(tenant?.business_name || '')
   const [location, setLocation] = useState(tenant?.location || '')
-  const [province, setProvince] = useState(tenant?.province || '')
+  const inferredProvince = !tenant?.province && tenant?.location && INDONESIA_PROVINCES.includes(tenant.location) ? tenant.location : ''
+  const [province, setProvince] = useState(tenant?.province || inferredProvince)
   const [saving, setSaving] = useState(false)
 
   const originalName = tenant?.business_name || ''

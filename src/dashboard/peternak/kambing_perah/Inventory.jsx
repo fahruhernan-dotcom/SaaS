@@ -4,8 +4,7 @@ import {
   Plus, Minus, Package, AlertTriangle, 
   Search, History, ArrowUp, ArrowDown, Settings 
 } from 'lucide-react'
-import { useAuth } from '@/lib/hooks/useAuth'
-import { 
+import {
   useKambingPerahInventory,
   useUpdateKambingPerahInventory
 } from '@/lib/hooks/useKambingPerahData'
@@ -13,8 +12,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 export default function KambingPerahInventory() {
-  const { tenant } = useAuth()
-  
   // Queries
   const { data: items = [], isLoading } = useKambingPerahInventory()
   const updateStock = useUpdateKambingPerahInventory()

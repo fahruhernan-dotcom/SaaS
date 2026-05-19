@@ -129,13 +129,12 @@ export default function DenahLantai({
   placingKandang, setPlacingKandang,
   drawStart, setDrawStart,
   drawCurrent, setDrawCurrent,
-  pendingRect, setPendingRect,
-  pendingName, setPendingName,
+  pendingRect: _pendingRect, setPendingRect,
+  pendingName: _pendingName, setPendingName,
   dragging, setDragging,
   hooks, speciesConfig, batchColorMap,
 }) {
   const containerRef = useRef(null)
-  const createKandang = hooks.useCreateKandang()
   const updatePosition = hooks.useUpdateKandangPosition()
 
   const [viewport, setViewport] = useState({ x: 24, y: 24, scale: 1 })

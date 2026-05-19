@@ -156,7 +156,7 @@ export const TaskCard = ({ task, onClick, TASK_TYPE_CFG, STATUS_CFG, members = [
   )
 }
 
-const NoBatchWarning = ({ label, animalLabel }) => (
+const NoBatchWarning = ({ label, animalLabel: _animalLabel }) => (
   <div className="flex items-center gap-3 p-4 bg-orange-500/10 border border-orange-500/20 rounded-2xl">
     <AlertTriangle className="text-orange-500 shrink-0" size={18} />
     <p className="text-[10px] font-bold text-orange-200/80 uppercase tracking-wider leading-relaxed">Belum ada batch aktif yang terdeteksi untuk lapor data {label?.toLowerCase()}</p>
@@ -167,7 +167,7 @@ export function InteractiveCheckCard({
   task, onCheck, isExpanded, onToggle, 
   config, TASK_TYPE_CFG, TASK_REPORT_CONFIG, 
   hooks, updateStatus, linkRecord,
-  profile, livestockType,
+  profile, livestockType: _livestockType,
   renderExtraReportFields, // Function to render livestock specific fields (like FAMACHA)
   members = []
 }) {
@@ -223,7 +223,7 @@ export function InteractiveCheckCard({
             setHealthData(h => ({ ...h, medicine_name: last.medicine_name, dosage: last.dosage }))
           }
         }
-      } catch (e) {}
+      } catch (_e) {} // eslint-disable-line no-empty -- intentional: silently ignore malformed notes JSON
     } else {
       setWeighingEntries([])
       setHealthEntries([])
@@ -357,7 +357,7 @@ export function InteractiveCheckCard({
     try {
       await updateStatus.mutateAsync({ id: task.id, status: 'pending' })
       toast.success('Gembok dibuka! Silakan edit data.')
-    } catch (err) { toast.error('Gagal membuka gembok') }
+    } catch (_err) { toast.error('Gagal membuka gembok') }
   }
 
   return (
@@ -515,7 +515,7 @@ export function InteractiveCheckCard({
                             const finalNotes = JSON.stringify({ _version: '2.0', report: {}, weighing_entries: weighingEntries, health_entries: healthEntries, batch_id: effectiveBatchId })
                             await updateStatus.mutateAsync({ id: task.id, status: 'selesai', notes: finalNotes })
                             toast.success(`Tugas selesai! 🎉`)
-                          } catch (err) { toast.error('Gagal menyelesaikan tugas') }
+                          } catch (_err) { toast.error('Gagal menyelesaikan tugas') }
                         }}
                         disabled={updateStatus.isPending}
                         className="w-full h-12 lg:h-14 rounded-xl lg:rounded-[28px] bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest shadow-lg shadow-emerald-900/40 transition-all"

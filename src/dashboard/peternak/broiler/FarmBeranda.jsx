@@ -2,7 +2,9 @@ import React, { useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  PlayCircle, MapPin, Layers, Syringe, Settings
+  PlayCircle, MapPin, Layers, Syringe, Settings,
+  AlertCircle, AlertTriangle, Info,
+  BarChart2, ClipboardList, Package
 } from 'lucide-react'
 import {
   useSingleFarm,

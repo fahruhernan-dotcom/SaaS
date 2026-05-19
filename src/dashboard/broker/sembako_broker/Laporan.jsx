@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
-import { useNavigate, useOutletContext, Link } from 'react-router-dom'
+import { useOutletContext, Link } from 'react-router-dom'
 import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
-import { motion } from 'framer-motion' // eslint-disable-line no-unused-vars
+import { motion } from 'framer-motion'
 import {
   TrendingUp, TrendingDown, DollarSign, Receipt,
   ChevronDown, ChevronUp, Calendar, Lock, BarChart3,
@@ -49,6 +49,8 @@ export default function SembakoLaporan() {
   const [startDate, setStartDate] = useState(bulanStart)
   const [endDate, setEndDate] = useState(bulanEnd)
   const [preset, setPreset] = useState('bulan_ini')
+
+  const { data, isLoading, isFetching, isError, error, refetch } = useSembakoLaporan(startDate, endDate)
 
   // ── Upgrade wall — must come after all hooks ──────────────────────────────
   if (isStarter) {
@@ -112,8 +114,6 @@ export default function SembakoLaporan() {
       setEndDate(end)
     }
   }
-
-  const { data, isLoading, isFetching, isError, error, refetch } = useSembakoLaporan(startDate, endDate)
 
   const s = data?.summary || {}
 

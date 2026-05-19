@@ -9,9 +9,8 @@ import {
   ChevronRight, AlertCircle as AlertCircleIcon
 } from 'lucide-react'
 import {
-  format, addDays, subDays, startOfWeek, endOfWeek,
-  startOfMonth, endOfMonth, isSameDay, isSameMonth,
-  eachDayOfInterval, parseISO, addWeeks
+  format, subDays, startOfWeek, endOfWeek,
+  startOfMonth, endOfMonth, isSameDay, parseISO
 } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
@@ -23,7 +22,7 @@ import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { Scene, GlassCard, SummaryTiles, WeekOrbit, CustomCalendar, EmptyState, CriticalOverdueAlert } from '@/dashboard/peternak/_shared/components/TaskBaseUI'
 import { TaskCard, InteractiveCheckCard } from '@/dashboard/peternak/_shared/components/TaskCards'
 import { CompleteTaskSheet, AdHocTaskSheet, IncidentReportSheet } from '@/dashboard/peternak/_shared/components/TaskSheets'
-import { getUrgencyLabel, sortTasksByPriority } from '@/dashboard/peternak/_shared/utils/taskUtils'
+import { sortTasksByPriority } from '@/dashboard/peternak/_shared/utils/taskUtils'
 
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
@@ -173,7 +172,7 @@ export function PenggemukanDailyTask({ livestockType, hooks, renderExtraReportFi
     try {
       await updateStatus.mutateAsync({ id: task.id, status: 'selesai', notes: 'Selesai tepat waktu (Quick Complete)' })
       toast.success('Tugas diselesaikan!', { icon: <CheckCircle2 size={16} /> })
-    } catch (err) {
+    } catch (_err) {
       toast.error('Gagal memperbarui status')
     }
   }, [updateStatus, TASK_REPORT_CONFIG, config.usesIndividualAnimals])

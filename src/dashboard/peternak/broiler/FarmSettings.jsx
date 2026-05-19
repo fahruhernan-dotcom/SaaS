@@ -48,7 +48,7 @@ const inputCls = 'w-full h-12 px-4 rounded-xl bg-[#111C24] border border-white/1
 export default function FarmSettings() {
   const { farmId } = useParams()
   const navigate = useNavigate()
-  const { profile, tenant } = useAuth()
+  const { profile } = useAuth()
   
   const { data: farm, isLoading: farmLoading } = useSingleFarm(farmId)
   const { data: activeCycle, isLoading: cycleLoading } = useFarmActiveCycle(farmId)
@@ -109,7 +109,7 @@ export default function FarmSettings() {
     try {
       await deleteFarm.mutateAsync(farmId)
       navigate(`${peternakBase}/beranda`)
-    } catch (err) {
+    } catch (_err) {
       // toast handled in hook
     }
   }

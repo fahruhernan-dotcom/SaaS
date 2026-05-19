@@ -487,6 +487,23 @@ export default function AIConfirmCard({
     }
   }, [pendingCommit])
 
+  // ── Dynamic field options from snapshot — must be before early return ──────
+  const dynamicFieldOptions = React.useMemo(() => {
+    const snapshot = pendingEntry?._context?.snapshot || {}
+    const farmOpts = (snapshot.farms || []).map(f => ({ value: f.name, label: f.name }))
+    const rpaOpts  = (snapshot.rpas  || []).map(r => ({ value: r.name, label: r.name }))
+    const vehOpts  = (snapshot.vehicles || []).map(v => ({ value: v.name, label: `${v.name}${v.type ? ` · ${v.type}` : ''}` }))
+    const drvOpts  = (snapshot.drivers  || []).map(d => ({ value: d.name, label: `${d.name}${d.phone ? ` · ${d.phone}` : ''}` }))
+    return {
+      ...FIELD_OPTIONS,
+      supplier_name: farmOpts,
+      farm_name:     farmOpts,
+      rpa_name:      rpaOpts,
+      vehicle_plate: vehOpts,
+      driver_name:   drvOpts,
+    }
+  }, [pendingEntry])
+
   if (!pendingEntry) return null
 
   const config = INTENT_CONFIG[pendingEntry.intent] || { label: pendingEntry.intent, Icon: ShoppingCart, color: 'emerald', fields: [] }
@@ -527,24 +544,6 @@ export default function AIConfirmCard({
       FIELD_LABELS[key]
     )
   const allKeys = getVisibleFields(pendingEntry.intent, rawKeys, vertical)
-
-  // ── Dynamic field options from snapshot ──────────────────
-  const dynamicFieldOptions = React.useMemo(() => {
-    const snapshot = pendingEntry?._context?.snapshot || {}
-    const farmOpts = (snapshot.farms || []).map(f => ({ value: f.name, label: f.name }))
-    const rpaOpts  = (snapshot.rpas  || []).map(r => ({ value: r.name, label: r.name }))
-    const vehOpts  = (snapshot.vehicles || []).map(v => ({ value: v.name, label: `${v.name}${v.type ? ` · ${v.type}` : ''}` }))
-    const drvOpts  = (snapshot.drivers  || []).map(d => ({ value: d.name, label: `${d.name}${d.phone ? ` · ${d.phone}` : ''}` }))
-    return {
-      ...FIELD_OPTIONS,
-      supplier_name: farmOpts,
-      farm_name:     farmOpts,
-      rpa_name:      rpaOpts,
-      vehicle_plate: vehOpts,
-      driver_name:   drvOpts,
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- pendingEntry ref covers nested snapshot
-  }, [pendingEntry])
 
   const dataEntries = allKeys.map(key => [key, (pendingEntry.extracted_data || {})[key]])
 

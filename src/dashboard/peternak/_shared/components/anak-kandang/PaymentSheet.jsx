@@ -6,7 +6,6 @@ import { InputRupiah } from '@/components/ui/InputRupiah'
 import { useKandangWorkerPayments, useAddKandangWorkerPayment, useDeleteKandangWorkerPayment } from '@/lib/hooks/usePeternakTaskData'
 import { Plus, Loader2, Trash2, X, AlertCircle } from 'lucide-react'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
-import { toast } from 'sonner'
 
 const TYPES = [
   { value: 'gaji',  label: '💰 Gaji',      color: '#34D399' },

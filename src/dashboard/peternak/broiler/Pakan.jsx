@@ -2,9 +2,8 @@ import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Minus, Package, AlertTriangle, ChevronDown, Search, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useFeedStocks, useUpsertFeedStock, useReduceFeedStock, usePeternakFarms, useActiveCycles } from '@/lib/hooks/usePeternakData'
-import { useAuth } from '@/lib/hooks/useAuth'
 import FarmContextBar from '@/dashboard/peternak/_shared/components/FarmContextBar'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -425,13 +424,9 @@ function FarmGroup({ farmName, stocks, onUsage }) {
 
 export default function PeternakPakan() {
   const { farmId } = useParams()   // present at /peternak/kandang/:farmId/pakan
-  const navigate = useNavigate()
-  const { profile } = useAuth()
   const { data: allStocks = [], isLoading } = useFeedStocks()
   const { data: farms = [] } = usePeternakFarms()
   const { data: cycles = [] } = useActiveCycles()
-
-  const peternakBase = `/peternak/${profile?.sub_type || 'peternak_broiler'}`
 
   // When at Level-2 route, scope to this farm only
   const stocks = farmId ? allStocks.filter(s => s.peternak_farm_id === farmId) : allStocks
@@ -447,7 +442,7 @@ export default function PeternakPakan() {
   const lowCount     = stocks.filter(s => s.quantity_kg < 100).length
 
   // ── Filter ──
-  const filtered = useMemo(() => {
+  const filtered = useMemo(() => { // eslint-disable-line react-hooks/preserve-manual-memoization -- stocks is external query data; compiler skip is safe
     let list = stocks
     if (farmFilter !== 'all') list = list.filter(s => s.peternak_farm_id === farmFilter)
     if (search.trim()) {
@@ -458,7 +453,7 @@ export default function PeternakPakan() {
       )
     }
     return list
-  }, [stocks, farmFilter, search])
+  }, [stocks, farmFilter, search]) // eslint-disable-line react-hooks/preserve-manual-memoization
 
   // ── Group by farm ──
   const grouped = useMemo(() => {

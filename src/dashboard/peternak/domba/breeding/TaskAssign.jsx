@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -6,7 +6,6 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
-  pointerWithin,
   rectIntersection,
 } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
@@ -40,8 +39,7 @@ import {
 } from "@/components/ui/select"
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { cn } from '@/lib/utils'
-import { format, parseISO, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
-import { id as idLocale } from 'date-fns/locale'
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns'
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -81,7 +79,6 @@ function DraggableTaskCard({ task, assignmentOverride, isDragOverlay = false }) 
 
   const typeCfg = TASK_TYPE_CFG[task.template?.task_type] ?? TASK_TYPE_CFG.lainnya
   const TypeIcon = typeCfg.icon
-  const statusCfg = STATUS_CFG[task.status] ?? STATUS_CFG.pending
   const assignedName = assignmentOverride?.workerName
     ?? task.worker?.full_name
 
@@ -273,7 +270,7 @@ export default function DombaBreedingTaskAssign() {
       await updateAssignment.mutateAsync({ taskId, workerId: targetWorkerId })
       toast.success(targetWorkerId ? `Tugas diberikan ke ${targetWorker.full_name}` : 'Tugas dilepas')
       refetch()
-    } catch (err) {
+    } catch (_err) {
       setLocalAssignments(prev => {
         const next = { ...prev }
         delete next[taskId]

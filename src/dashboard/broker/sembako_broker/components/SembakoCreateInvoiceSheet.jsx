@@ -14,7 +14,7 @@ import {
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import SembakoInvoicePreview from '../SembakoInvoicePreview'
 import {
-  C, sInput, sLabel,
+  C,
   CustomSelect, InputRupiah, ProgressIndicator, SummaryLine,
   PAYMENT_TERMS_DAYS, PAYMENT_TERMS_LABEL,
   CUSTOMER_TYPE_OPTIONS,
@@ -213,7 +213,7 @@ function QuickAddProduct({ form, onChange, onSave, onCancel, saving }) {
 }
 
 // ─── Product Item Row ─────────────────────────────────────────────────────────
-function ProductItemRow({ item, idx, products, productOptions, total, overStock, onChangeItem, onRemove, onAddNew, isOnly }) {
+function ProductItemRow({ item, idx, products: _products, productOptions, total: _total, overStock, onChangeItem, onRemove, onAddNew, isOnly }) {
   const subtotal = Math.round((item.quantity || 0) * (item.price_per_unit || 0))
 
   return (
@@ -393,10 +393,6 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
     products.map(p => ({ value: p.id, label: `${p.product_name} (${p.current_stock} ${p.unit})` })),
     [products]
   )
-  const employeeOptions = useMemo(() =>
-    [{ value: '', label: '-- Belum Ditentukan --' }, ...employees.filter(e => e.status === 'aktif').map(e => ({ value: e.id, label: `${e.full_name} (${e.role})` }))],
-    [employees]
-  )
   const editSale = useMemo(() => {
     if (!editId) return null
     return allSales.find(s => s.id === editId) || null
@@ -570,6 +566,7 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
     }
   }
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- React Compiler skip; manual useCallback must remain
   const handleClose = useCallback(() => {
     lastPrefillKeyRef.current = null
     const tomorrow = () => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10) }
@@ -581,6 +578,7 @@ export function SembakoCreateInvoiceSheet({ open, onOpenChange, editId }) {
     setAddKurir(false); setNewKurirForm({ full_name: '', phone: '' })
     setQuickAddCust(false); setQuickAddProd(false); setShowCustSearch(false)
     onOpenChange(false)
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- closing line suppress
   }, [onOpenChange])
 
   const handleSheetOpenChange = v => { if (!v) handleClose(); else onOpenChange(true) }

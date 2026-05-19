@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase'
 import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import { useAuth } from '@/lib/hooks/useAuth'
 import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
-import { useAllCycles, useDailyRecords, calcCurrentAge, calcFCR, calcIPScore, calcMortalityPct } from '@/lib/hooks/usePeternakData'
+import { useAllCycles, useDailyRecords, calcFCR, calcIPScore, calcMortalityPct } from '@/lib/hooks/usePeternakData'
 import { formatIDRShort } from '@/lib/format'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet'
@@ -275,17 +275,16 @@ export default function LaporanSiklus() {
         </div>
       )}
 
-      {cycle && <CycleReport key={cycle.id} cycle={cycle} tenantId={tenant?.id} navigate={navigate} />}
+      {cycle && <CycleReport key={cycle.id} cycle={cycle} tenantId={tenant?.id} navigate={navigate} p={p} />}
     </div>
   )
 }
 
 // ─── Cycle Report ─────────────────────────────────────────────────────────────
 
-function CycleReport({ cycle, tenantId, navigate }) {
+function CycleReport({ cycle, tenantId, navigate, p }) {
   const farmName  = cycle.peternak_farms?.farm_name ?? '—'
   const startDate = cycle.start_date ?? cycle.created_at
-  const farmId    = cycle.peternak_farm_id
   const queryClient = useQueryClient()
   const [expenseSheetOpen, setExpenseSheetOpen] = useState(false)
 

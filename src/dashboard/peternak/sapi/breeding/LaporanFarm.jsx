@@ -8,7 +8,6 @@ import {
   useSapiBreedingHealthLogs,
   useSapiBreedingSales,
   calcConceptionRate,
-  calcCalvingInterval,
 } from '@/lib/hooks/useSapiBreedingData'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
@@ -91,7 +90,7 @@ export default function SapiBreedingLaporanFarm() {
   const { data: animals  = [], isLoading: lA } = useSapiBreedingAnimals()
   const { data: matings  = [], isLoading: lM } = useSapiBreedingMatingRecords()
   const { data: births   = [], isLoading: lB } = useSapiBreedingBirths()
-  const { data: health   = [] }                = useSapiBreedingHealthLogs()
+  useSapiBreedingHealthLogs()
   const { data: sales    = [] }                = useSapiBreedingSales()
 
   const isLoading = lA || lM || lB
@@ -323,7 +322,7 @@ export default function SapiBreedingLaporanFarm() {
       {/* Freemartin alert */}
       {kpi.freemartinRisk > 0 && (
         <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl px-4 py-3">
-          <p className="text-sm font-bold text-amber-300">âš  {kpi.freemartinRisk} Pedet Berisiko Freemartin</p>
+          <p className="text-sm font-bold text-amber-300">âš  {kpi.freemartinRisk} Pedet Berisiko Freemartin</p>
           <p className="text-[11px] text-[#4B6478] mt-1">
             Kelahiran kembar jantan+betina — periksa kesuburan pedet betina sebelum dijadikan calon bibit.
           </p>

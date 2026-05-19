@@ -4,8 +4,7 @@ import {
   Plus, Search, Milk, Activity, 
   History, Calendar, ChevronRight, Droplets 
 } from 'lucide-react'
-import { useAuth } from '@/lib/hooks/useAuth'
-import { 
+import {
   useKambingPerahAnimals,
   useKambingPerahLactatingAnimals,
   useKambingPerahMilkLogs,
@@ -16,10 +15,8 @@ import { DatePicker } from '@/components/ui/DatePicker'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 export default function KambingPerahProduksi() {
-  const { tenant } = useAuth()
-  
   // Queries
-  const { data: allAnimals = [], isLoading: loadingAnimals } = useKambingPerahAnimals()
+  const { isLoading: loadingAnimals } = useKambingPerahAnimals()
   const { data: lactating = [], isLoading: loadingLaktasi } = useKambingPerahLactatingAnimals()
   const { data: recentLogs = [], isLoading: loadingLogs } = useKambingPerahMilkLogs(3) // 3 days
 

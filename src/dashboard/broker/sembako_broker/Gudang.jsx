@@ -9,7 +9,6 @@ import {
   useSembakoAllBatches,
   useSembakoStockOut,
   useAdjustBatchStock,
-  useUpdateSembakoProduct,
 } from '@/lib/hooks/useSembakoData'
 import { useSearchParams, useOutletContext } from 'react-router-dom'
 import { DatePicker } from '@/components/ui/DatePicker'
@@ -33,12 +32,6 @@ const inputSt = {
   boxSizing: 'border-box',
 }
 
-function genBatchCode() {
-  const now = new Date()
-  const d = now.toISOString().slice(0, 10).replace(/-/g, '')
-  const r = Math.random().toString(36).slice(2, 6).toUpperCase()
-  return `BATCH-${d}-${r}`
-}
 
 // ── Tab: Stok Saat Ini ────────────────────────────────────────────────────────
 
@@ -46,7 +39,7 @@ function StokSaatIni({ products, onTambah, onAdjust, onShowHistory }) {
   const [expanded, setExpanded] = useState(null)
   const [search,   setSearch]   = useState('')
 
-  const { data: allBatches = [], isLoading: batchesLoading, isError: batchesIsError, error: batchesError, refetch: batchesRefetch } = useSembakoAllBatches()
+  const { data: allBatches = [], isError: batchesIsError, error: batchesError, refetch: batchesRefetch } = useSembakoAllBatches()
 
   const filtered = useMemo(() => {
     if (!search) return products.filter(p => p.is_active && !p.is_deleted)

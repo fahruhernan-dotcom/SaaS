@@ -151,9 +151,9 @@ export default function Vaksinasi() {
   const farmName = selectedCycle?.peternak_farms?.farm_name ?? '—'
 
   // Build schedule status for selected cycle
-  const scheduleStatus = useMemo(
+  const scheduleStatus = useMemo( // eslint-disable-line react-hooks/preserve-manual-memoization -- age and records are external data; compiler skip is safe
     () => STANDARD_SCHEDULE.map(s => ({ ...s, ...getScheduleStatus(s, age, records) })),
-    [age, records]
+    [age, records] // eslint-disable-line react-hooks/preserve-manual-memoization
   )
 
   const overdueCount   = scheduleStatus.filter(s => s.status === 'overdue').length

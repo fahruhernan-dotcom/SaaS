@@ -63,7 +63,6 @@ export default function BreedingBeranda() {
 
     const totalKawin   = matings.length
     const totalBunting = matings.filter(m => m.status === 'bunting' || m.status === 'melahirkan').length
-    const totalLahir   = births.reduce((s, b) => s + (b.total_born || 0), 0)
     const totalHidup   = births.reduce((s, b) => s + (b.total_born_alive || 0), 0)
 
     // Upcoming partus within 30 days

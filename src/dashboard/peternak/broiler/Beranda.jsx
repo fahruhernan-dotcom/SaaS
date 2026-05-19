@@ -128,7 +128,7 @@ export default function PeternakBeranda() {
   const { profile, tenant } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const { setSidebarOpen } = useOutletContext() || {}
+  const { setSidebarOpen: _setSidebarOpen } = useOutletContext() || {}
   const queryClient = useQueryClient()
   const p = usePeternakPermissions()
 

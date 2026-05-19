@@ -427,7 +427,7 @@ export default function AdminSubscriptions() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {pagedInvoices.map((inv, i) => (
+                  {pagedInvoices.map((inv, _i) => (
                     <tr
                       key={inv.id}
                       onClick={() => handleOpenDetail(inv)}
@@ -1242,7 +1242,7 @@ function ExpiringPlansTab({ allTenants, onRenew }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {expiring.map((tenant, i) => {
+                {expiring.map((tenant, _i) => {
                   const sub = tenant._sub
                   const isUrgent = sub.daysLeft <= 7
                   const expiryStr = sub.expiresAt
@@ -1490,7 +1490,6 @@ function BankCard({ bank, onEdit, onDelete }) {
 // ─── Xendit Config Tab ────────────────────────────────────────────────────────
 
 function XenditConfigTab() {
-  const queryClient = useQueryClient()
   const { data: xenditConfig } = useXenditConfig()
   const saveConfig = useSaveXenditConfig()
 

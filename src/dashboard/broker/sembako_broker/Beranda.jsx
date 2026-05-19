@@ -1,13 +1,13 @@
 import React, { useMemo, useState } from 'react'
-import { useNavigate, useLocation, useParams, useOutletContext } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion' // eslint-disable-line no-unused-vars
+import { useNavigate, useParams, useOutletContext } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   CreditCard, TrendingUp, Package, Receipt,
   BarChart2, User, ShoppingCart, Warehouse, Users, Clock,
   Plus, Menu, X, Shield, AlertTriangle, ChevronRight, ChevronLeft,
   Truck, Wallet, CalendarX,
 } from 'lucide-react'
-import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
+import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useSembakoDashboardStats, useSembakoSales, useSembakoEmployees, useSembakoDeliveries, useSembakoProducts, useSembakoSuppliers } from '@/lib/hooks/useSembakoData'
 import { formatIDR, formatIDRShort } from '@/lib/format'
@@ -685,7 +685,7 @@ function OnboardingWrapper({ setStokOpen }) {
 }
 
 // ── Mobile version ────────────────────────────────────────────────────────────
-function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, profile, tenant, profiles, switchTenant, insight, chartPeriod, setChartPeriod, weeklyChartData, monthlyChartData, deliveries, selectedDate, setSelectedDate, currentMonth, setCurrentMonth, agendaFilter, setAgendaFilter, setStokOpen }) {
+function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, _profile, _tenant, _profiles, _switchTenant, insight, chartPeriod, setChartPeriod, weeklyChartData, monthlyChartData, deliveries, selectedDate, setSelectedDate, currentMonth, setCurrentMonth, agendaFilter, setAgendaFilter, setStokOpen }) {
   const { brokerType } = useParams()
   const brokerBase = `/broker/${brokerType}`
   const { setSidebarOpen } = useOutletContext()

@@ -496,7 +496,7 @@ export default function RPALaporanMargin() {
                             Tidak ada invoice
                           </td>
                         </tr>
-                      ) : filteredInvoices.map((inv, idx) => {
+                      ) : filteredInvoices.map((inv, _idx) => {
                         const profit = inv.net_profit || (inv.total_amount - inv.total_cost) || 0
                         const STATUS_COLOR = { lunas: '#34D399', sebagian: '#60A5FA', belum_lunas: '#F59E0B' }
                         return (

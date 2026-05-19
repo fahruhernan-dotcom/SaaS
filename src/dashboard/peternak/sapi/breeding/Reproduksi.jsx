@@ -146,7 +146,7 @@ function BirthCard({ birth }) {
         )}
         {birth.is_freemartin_risk && (
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400">
-            âš  Freemartin Risk
+            âš  Freemartin Risk
           </span>
         )}
         {birth.retentio_placenta && (
@@ -386,7 +386,7 @@ function ConfirmPregnancySheet({ mating, onClose }) {
 
 // â”€â”€ Sheet: Catat Kelahiran â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function RecordBirthSheet({ mating, onClose }) {
-  const { register, handleSubmit, watch, setValue } = useForm({
+  const { register, handleSubmit, watch } = useForm({
     defaultValues: {
       birth_type: 'tunggal',
       total_born: 1,

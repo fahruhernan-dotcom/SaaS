@@ -7,7 +7,6 @@ import {
   useSensor,
   useSensors,
   pointerWithin,
-  rectIntersection,
 } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { useDraggable, useDroppable } from '@dnd-kit/core'
@@ -400,6 +399,7 @@ export default function UniversalTaskAssign({ livestockType = 'sapi_penggemukan'
 
   // â”€â”€ Auto-assign â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+  // eslint-disable-next-line no-unused-vars -- auto-assign logic ready; not yet wired to a trigger button
   function handleAutoAssign() {
     if (!workers.length) return
 

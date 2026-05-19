@@ -37,7 +37,7 @@ export function MobileOverlay({ title, subtitle, onBack, children, isOpen }) {
   )
 }
 
-export function MobileBatchDetailOverlay({ batch, isOpen, onBack, animals = [], weightHistory = [], feedLogs = [], sales = [] }) {
+export function MobileBatchDetailOverlay({ batch, isOpen, onBack, animals = [], weightHistory: _weightHistory = [], feedLogs: _feedLogs = [], sales: _sales = [] }) {
   if (!batch) return null
 
   // Calculate stats logic similar to handoff
@@ -48,8 +48,6 @@ export function MobileBatchDetailOverlay({ batch, isOpen, onBack, animals = [], 
   const totalAnimals = batch.total_animals || 0
   const activeCount = animals.length || totalAnimals
   const mortalitasCount = batch.mortality_count || 0
-  const mortalitasPct = totalAnimals > 0 ? ((mortalitasCount / totalAnimals) * 100).toFixed(1) : '0.0'
-  
   const avgWeight = batch.avg_latest_weight_kg || batch.avg_entry_weight_kg || 15
   const adg = batch.avg_adg_gram || 0
 

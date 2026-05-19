@@ -161,7 +161,7 @@ function PeternakManagerGuard({ children }) {
 
 export function PeternakPageRouter({ page }) {
   const { peternakType } = useParams()
-  const livestockType = getLivestockTypeFromSubType(peternakType)
+  const _livestockType = getLivestockTypeFromSubType(peternakType)
 
   const AI = {
     'ai-chat':       <TanyaAIPage />,

@@ -18,7 +18,7 @@ gsap.registerPlugin(Draggable)
  * @param {function} props.onDragStart      - compatibility for native drop zones
  * @param {object|null} props.batchColor  - palette entry when in all-batch mode
  */
-export default function AnimalToken({ animal, speciesConfig, onClick, onDragStart, batchColor }) {
+export default function AnimalToken({ animal, speciesConfig, onClick, onDragStart: _onDragStart, batchColor }) {
   const { emoji, weightRecordsKey, calcADG, adgThresholds } = speciesConfig
   const records = animal[weightRecordsKey] ?? []
   const adg = calcADG(records, animal.entry_date, animal.entry_weight_kg)

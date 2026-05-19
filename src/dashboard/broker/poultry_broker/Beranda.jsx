@@ -47,9 +47,6 @@ import {
   formatIDR,
   formatIDRShort,
   formatDate,
-  formatDateFull,
-  formatRelative,
-  safeNum,
   calcNetProfit,
   calcRemainingAmount,
   formatPaymentStatus
@@ -70,7 +67,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command"
 import TransaksiWizard from '@/dashboard/_shared/components/TransaksiWizard'
-import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, format, isToday, isWithinInterval, addDays, differenceInDays } from 'date-fns'
+import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, format, isToday, addDays, differenceInDays } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
 import SmartInsight from '@/dashboard/_shared/components/SmartInsight'
 import { PROVINCES } from '@/lib/constants/regions'
@@ -304,7 +301,7 @@ export default function BrokerBeranda() {
       }
       queryClient.invalidateQueries({ queryKey: ['dashboard-redesign', tenant.id] })
       toast.success(`✅ Semua piutang ${rpaName} ditandai lunas!`)
-    } catch (err) {
+    } catch (_err) {
       toast.error('❌ Gagal memperbarui status lunas')
     }
   }
@@ -418,10 +415,10 @@ export default function BrokerBeranda() {
   )
 }
 
-function DesktopDashboard({ 
-  data, profile, navigate, setWizardOpen, handleTandaiLunas, 
-  chartPeriod, setChartPeriod, selectedDate, setSelectedDate, 
-  currentMonth, setCurrentMonth, agendaFilter, setAgendaFilter, 
+function DesktopDashboard({
+  data, profile, navigate, setWizardOpen, _handleTandaiLunas,
+  chartPeriod, setChartPeriod, selectedDate, setSelectedDate,
+  currentMonth, setCurrentMonth, agendaFilter, setAgendaFilter,
   activeProvince
 }) {
   const firstName = profile?.full_name?.split(' ')[0] || 'User'
@@ -607,14 +604,12 @@ function DesktopDashboard({
 }
 
 // --- MOBILE RENDERER ---
-function MobileDashboard({ 
-  data, profile, navigate, setWizardOpen, setSidebarOpen, 
-  handleTandaiLunas, chartPeriod, setChartPeriod, 
-  selectedDate, setSelectedDate, currentMonth, setCurrentMonth, 
-  agendaFilter, setAgendaFilter, activeProvince 
+function MobileDashboard({
+  data, profile, navigate, setWizardOpen, setSidebarOpen,
+  _handleTandaiLunas, chartPeriod, setChartPeriod,
+  _selectedDate, _setSelectedDate, _currentMonth, _setCurrentMonth,
+  _agendaFilter, _setAgendaFilter, activeProvince
 }) {
-  const firstName = profile?.full_name?.split(' ')[0] || 'User'
-  const initials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'BR'
 
   const recentActivity = useMemo(() => {
     if (!data) return []
@@ -1268,14 +1263,6 @@ function EventItem({ event, isDesktop, onClick }) {
 }
 
 
-function getGreeting() {
-  const hour = new Date().getHours()
-  if (hour < 11) return 'pagi'
-  if (hour < 15) return 'siang'
-  if (hour < 19) return 'sore'
-  return 'malam'
-}
-
 // ─── MARKET TREND CARD ────────────────────────────────────────────────────────
 
 function MarketTrendCard({ province }) {
@@ -1283,7 +1270,6 @@ function MarketTrendCard({ province }) {
 
   const { startDate, endDate, daysLabel } = useMemo(() => {
     const now = new Date()
-    const todayStr = format(now, 'yyyy-MM-dd')
     let start, end
     if (period === 'weekly') {
       start = startOfWeek(now, { weekStartsOn: 1 })
@@ -1299,7 +1285,7 @@ function MarketTrendCard({ province }) {
     }
   }, [period])
 
-  const { data: trendData, isLoading } = useMarketTrends(
+  const { data: trendData } = useMarketTrends(
     province === 'Seluruh Indonesia' ? 'Jawa Tengah' : province,
     startDate,
     endDate

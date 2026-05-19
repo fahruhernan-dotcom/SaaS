@@ -113,9 +113,9 @@ export function ContainerCalcField({ field, reportData, setReportData, disabled 
 }
 
 export function CompleteTaskSheet({ 
-  open, onOpenChange, task, isDesktop, onSuccess, showSuccessAnimation, 
+  open, onOpenChange, task, isDesktop, onSuccess, showSuccessAnimation: _showSuccessAnimation,
   isOwnerView, config, TASK_TYPE_CFG, TASK_REPORT_CONFIG,
-  hooks, livestockType, profile, updateStatus, linkRecord,
+  hooks, livestockType, profile: _profile, updateStatus, linkRecord,
   createTask, // For auto-tasking
   renderExtraReportFields, // Function to render livestock specific fields (like FAMACHA)
   triggerMedicalInterventionTemplate // Optional template for auto-tasking
@@ -170,7 +170,7 @@ export function CompleteTaskSheet({
           setWeighingEntries([])
           setHealthEntries([])
         }
-      } catch (e) {
+      } catch (_e) {
         setNotes(task.notes || '')
         setReportData({})
         setWeighingEntries([])
@@ -667,7 +667,7 @@ export function AdHocTaskSheet({
 
   const uniqueTaskTypes = useMemo(() => {
     const seen = new Set()
-    return Object.entries(TASK_TYPE_CFG).filter(([k, v]) => {
+    return Object.entries(TASK_TYPE_CFG).filter(([_k, v]) => {
       if (seen.has(v.label)) return false
       seen.add(v.label)
       return true
@@ -782,7 +782,7 @@ const REPORT_CATEGORIES = [
 
 export function IncidentReportSheet({
   open, onOpenChange, isDesktop,
-  config, hooks, livestockType
+  config: _config, hooks, livestockType: _livestockType
 }) {
   const { data: batches = [] } = hooks.useActiveBatches()
   const addLog = hooks.useAddHealth()

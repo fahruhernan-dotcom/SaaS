@@ -12,7 +12,6 @@ import {
   calcLambingRate,
   calcWeaningRate,
   calcLitterSize,
-  calcBreedingRCRatio,
   calcBreedingADG,
   calcAgeInDays,
 } from '@/lib/hooks/useDombaBreedingData'
@@ -93,8 +92,8 @@ export default function BreedingLaporanFarm() {
   const { data: animals = [], isLoading: lA } = useDombaBreedingAnimals()
   const { data: matings = [], isLoading: lM } = useDombaBreedingMatings()
   const { data: births  = [], isLoading: lB } = useDombaBreedingBirths()
-  const { data: health  = [] }                = useDombaBreedingHealthLogs()
-  const { data: feeds   = [] }                = useDombaBreedingFeedLogs()
+  useDombaBreedingHealthLogs()
+  useDombaBreedingFeedLogs()
   const { data: sales   = [] }                = useDombaBreedingSales()
 
   const isLoading = lA || lM || lB
@@ -105,8 +104,6 @@ export default function BreedingLaporanFarm() {
     const aktif    = animals.filter(a => a.status === 'aktif')
     const indukan  = aktif.filter(a => a.sex === 'betina')
     const pejantan = aktif.filter(a => a.sex === 'jantan')
-    const mati     = animals.filter(a => a.status === 'mati')
-
     // Reproduksi
     const totalKawin    = matings.length
     const totalBunting  = matings.filter(m => ['bunting','melahirkan'].includes(m.status)).length
@@ -133,15 +130,9 @@ export default function BreedingLaporanFarm() {
         }, 0) / withWeight.length).toFixed(1)
       : null
 
-    // Mortality adults
-    const mortalitasDewaasaPct = animals.filter(a => a.birth_date && calcAgeInDays(a.birth_date) > 90).length
-      ? ((mati.filter(a => a.birth_date && calcAgeInDays(a.birth_date) > 90).length /
-          animals.filter(a => a.birth_date && calcAgeInDays(a.birth_date) > 90).length) * 100).toFixed(1)
-      : null
 
     // Financial
     const totalPenerimaan = sales.reduce((s, sv) => s + sv.price_per_head, 0)
-    const totalPakanBiaya = 0  // No cost tracking in feed logs — placeholder
 
     // Lambing interval: avg days between births per dam
     const damBirths = {}
@@ -216,10 +207,6 @@ export default function BreedingLaporanFarm() {
       </div>
     )
   }
-
-  const rcRatio = kpi.totalPenerimaan > 0
-    ? calcBreedingRCRatio(kpi.totalPenerimaan, 1)  // placeholder — no cost tracking
-    : null
 
   return (
     <div className="flex flex-col gap-5 p-4 pb-28">

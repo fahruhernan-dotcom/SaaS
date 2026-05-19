@@ -39,8 +39,6 @@ function BatchCard({ batch, onClick, onCloseBatch, config, KandangMiniMap }) {
 
   const progress = Math.min(100, Math.round((hari / TARGET_HARI) * 100))
   const isOverdue = hari > TARGET_HARI
-  const isCritical = mort > config.mortalityThreshold
-
   // ADG dalam gram/hari
   const adgVal = batch.avg_adg_gram ? Math.round(batch.avg_adg_gram) : null
 
@@ -189,7 +187,6 @@ function BatchCard({ batch, onClick, onCloseBatch, config, KandangMiniMap }) {
 function CloseBatchWizard({ batch, config, hooks, onClose }) {
   const { data: animals = [] } = hooks.useAnimals(batch.id)
   const { data: sales = [] } = hooks.useSales(batch.id)
-  const { data: feedLogs = [] } = hooks.useFeedLogs(batch.id)
   const { data: operationalCosts = [] } = hooks.useOperationalCosts(batch.id)
   const { mutate: closeBatch, isPending } = hooks.useCloseBatch()
 

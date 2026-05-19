@@ -29,7 +29,7 @@ import { SembakoPageHeader } from '@/dashboard/broker/sembako_broker/components/
 import { SembakoErrorState } from '@/dashboard/broker/sembako_broker/components/SembakoUiPrimitives'
 import { Button } from '@/components/ui/button'
 import {
-  C, sInput, sLabel, sBtn, fmtDate, EmptyBox, CustomSelect,
+  C, sLabel, sBtn, fmtDate, EmptyBox, CustomSelect,
 } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
 import { SembakoTimeline, TambahTripSheet, SembakoDeliveryDetailSheet } from '@/dashboard/broker/sembako_broker/components/SembakoDeliveryShared'
 
@@ -465,13 +465,13 @@ export default function SembakoPengiriman() {
   function closeSheet() { setSheetOpen(false); setPrefillSale(null) }
 
   async function handleComplete(deliveryId) {
-    try { await completeDelivery.mutateAsync(deliveryId) } catch {}
+    try { await completeDelivery.mutateAsync(deliveryId) } catch { /* mutation errors surfaced by react-query */ }
   }
   async function handleStart(deliveryId) {
-    try { await startDelivery.mutateAsync(deliveryId) } catch {}
+    try { await startDelivery.mutateAsync(deliveryId) } catch { /* mutation errors surfaced by react-query */ }
   }
   async function handleArrive(deliveryId) {
-    try { await arriveDelivery.mutateAsync(deliveryId) } catch {}
+    try { await arriveDelivery.mutateAsync(deliveryId) } catch { /* mutation errors surfaced by react-query */ }
   }
 
   if (isErrD || isErrS) return (

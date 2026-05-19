@@ -88,7 +88,7 @@ function ChatThread({
     }
   }, [displayMessages, isLoading, pendingEntries, undoEntry])
 
-  const isEmpty = displayMessages.length === 0 ||
+  const _isEmpty = displayMessages.length === 0 ||
     (displayMessages.length === 1 && displayMessages[0].role === 'assistant' && !displayMessages[0].timestamp_real)
 
   return (

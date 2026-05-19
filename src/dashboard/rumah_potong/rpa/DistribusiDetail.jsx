@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Phone, MapPin, Star, CreditCard, FileText, Pencil,
@@ -11,7 +11,7 @@ import TopBar from '../../_shared/components/TopBar'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import {
   useRPACustomers, useRPAInvoices,
-  useCreateCustomer, useUpdateCustomer, useCreateInvoice, useRecordCustomerPayment,
+  useUpdateCustomer, useRecordCustomerPayment,
 } from '@/lib/hooks/useRPAData'
 
 // Lazy-import sheets from Distribusi to avoid circular deps — inline them here

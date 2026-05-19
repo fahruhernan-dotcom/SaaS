@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react'
-import { useNavigate, useOutletContext, Link } from 'react-router-dom'
+import { useOutletContext, Link } from 'react-router-dom'
 import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
-import { motion } from 'framer-motion' // eslint-disable-line no-unused-vars
+import { motion } from 'framer-motion'
 import { Users, Plus, DollarSign, CalendarCheck, Check, Lock } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
@@ -342,12 +342,12 @@ function TabPayroll({ isDesktop }) {
     if (st === 'komisi') return selectedEmp.base_salary || 0
     if (st === 'campuran') return (workDays > 0 ? workDays * (selectedEmp.base_salary || 0) : (selectedEmp.base_salary || 0)) + tripCount * (selectedEmp.trip_rate || 0)
     return 0
-  }, [selectedEmp, workDays, tripCount])
+  }, [selectedEmp, workDays, tripCount]) // eslint-disable-line react-hooks/preserve-manual-memoization -- selectedEmp is a reference read inside memo, not mutated
 
-  const calcComm = useMemo(() => {
+  const calcComm = useMemo(() => { // eslint-disable-line react-hooks/preserve-manual-memoization -- selectedEmp read-only in memo; cascade from calcBase skip
     if (!selectedEmp || !selectedEmp.commission_pct) return 0
     return Math.round(salesAmount * selectedEmp.commission_pct / 100)
-  }, [selectedEmp, salesAmount])
+  }, [selectedEmp, salesAmount]) // eslint-disable-line react-hooks/preserve-manual-memoization
 
   const totalPay = calcBase + calcComm + bonus - deduction
 
@@ -393,7 +393,7 @@ function TabPayroll({ isDesktop }) {
       })
     }
     return list
-  }, [payrolls, filterEmp, filterMonth])
+  }, [payrolls, filterEmp, filterMonth]) // eslint-disable-line react-hooks/preserve-manual-memoization -- payrolls spread prevents mutation; list is locally constructed
 
   if (isEmpError) return <SembakoErrorState error={empError} onRetry={refetchEmp} />
   if (isPayError) return <SembakoErrorState error={payError} onRetry={refetchPay} />

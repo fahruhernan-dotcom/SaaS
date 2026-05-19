@@ -117,6 +117,7 @@ export default function AdminUsers() {
   // Filtering logic
   const filteredTenants = useMemo(() => {
     if (!tenants) return []
+    // eslint-disable-next-line react-hooks/purity -- Date.now() intentional: freshness threshold computed at render time
     const now = Date.now()
     const fiveMinutesAgo = now - 5 * 60 * 1000
     const q = debouncedSearch.toLowerCase()
@@ -149,6 +150,7 @@ export default function AdminUsers() {
 
   const groupedUsers = useMemo(() => {
     if (!allUsers) return []
+    // eslint-disable-next-line react-hooks/purity -- Date.now() intentional: freshness threshold computed at render time
     const now = Date.now()
     const fiveMinutesAgo = now - 5 * 60 * 1000
     const q = debouncedSearch.toLowerCase()

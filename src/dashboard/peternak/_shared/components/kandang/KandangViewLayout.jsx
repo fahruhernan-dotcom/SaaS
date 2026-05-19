@@ -40,7 +40,7 @@ const SafeBrokerPageHeader = BrokerPageHeader || (() => null);
  * @param {string} [props.pageTitle]
  */
 export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
-  const { emoji, targetHari } = speciesConfig
+  const { emoji } = speciesConfig
 
   // ── Data ──────────────────────────────────────────────────────────────────
   const { data: batches = [], isLoading: loadingBatches } = hooks.useActiveBatches()

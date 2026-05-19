@@ -15,7 +15,6 @@ import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { Lock, Unlock, Trash2, Save } from 'lucide-react'
-import { useAuth } from '@/lib/hooks/useAuth'
 import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
@@ -80,7 +79,7 @@ function HppPanel({ batchId, useHppBatch }) {
     <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4 animate-pulse h-20" />
   )
 
-  const { totalModalBeli, totalBiayaPakan, totalBiayaOps, totalBiayaGaji = 0,
+  const { totalModalBeli, totalBiayaPakan, totalBiayaOps: _totalBiayaOps, totalBiayaGaji: _totalBiayaGaji = 0,
     totalBiayaOpsLain = 0, totalBiayaGajiOverhead = 0, totalBiayaKesehatan = 0, totalHpp,
     aktifCount, terjualCount, matiCount, totalPendapatan, totalHutang = 0,
     hppPerEkor, bepPerEkor, bepSisa, bepSisaKas = 0,
@@ -480,7 +479,7 @@ function SaleSheet({ batchId, animals, hppData, onClose, useAddSale, animalLabel
 
   const activeAnimals = useMemo(() => animals.filter(a => a.status === 'active'), [animals])
 
-  const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, control, watch, formState: { errors } } = useForm({
     defaultValues: {
       sale_date: new Date().toISOString().split('T')[0],
       buyer_type: 'Pedagang',
@@ -855,7 +854,7 @@ function SaleDetailSheet({ sale, onClose, useUpdateSale, useDeleteSale, accent, 
   const { mutate: updateSale, isPending: isUpdating } = useUpdateSale()
   const { mutate: deleteSale, isPending: isDeleting } = useDeleteSale()
 
-  const { register, handleSubmit, control, watch, formState: { isDirty } } = useForm({
+  const { register, handleSubmit, control, formState: { isDirty } } = useForm({
     defaultValues: {
       buyer_name: sale.buyer_name,
       buyer_type: sale.buyer_type,

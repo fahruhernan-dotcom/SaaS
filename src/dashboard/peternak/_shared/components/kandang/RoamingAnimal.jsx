@@ -19,8 +19,8 @@ export default function RoamingAnimal({ animal, bounds, dotColor, emoji, weightS
   const iconSize = lengthMeters * CELL_PX
 
   const [target, setTarget] = useState({
-    x: Math.random() * (bounds.w - lengthMeters),
-    y: Math.random() * (bounds.h - lengthMeters),
+    x: Math.random() * (bounds.w - lengthMeters), // eslint-disable-line react-hooks/purity -- intentional: randomize initial spawn position
+    y: Math.random() * (bounds.h - lengthMeters), // eslint-disable-line react-hooks/purity -- intentional: randomize initial spawn position
   })
   const [isIdle, setIsIdle] = useState(true)
   const [isFlipped, setIsFlipped] = useState(false)
@@ -40,7 +40,7 @@ export default function RoamingAnimal({ animal, bounds, dotColor, emoji, weightS
   return (
     <motion.div
       animate={{ x: target.x * CELL_PX, y: target.y * CELL_PX }}
-      transition={{ duration: isIdle ? 0 : 6 + Math.random() * 12, ease: 'linear' }}
+      transition={{ duration: isIdle ? 0 : 6 + Math.random() * 12, ease: 'linear' }} // eslint-disable-line react-hooks/purity -- Math.random() intentional: randomize walk animation duration
       onAnimationComplete={() => setIsIdle(true)}
       onClick={(e) => { e.stopPropagation(); onClick(animal) }}
       style={{

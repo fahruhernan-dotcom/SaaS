@@ -52,7 +52,6 @@ function getCatMeta(category) {
 }
 
 const fmt = (n) => Math.round(n).toLocaleString('id-ID')
-const fmtDate = (d) => new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
 const fmtDateShort = (d) => new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })
 
 // ─── BiayaTab ─────────────────────────────────────────────────────────────────
@@ -73,8 +72,8 @@ function CategoryBadge({ category, small = false }) {
 }
 
 function BiayaTab({
-  costs, costStats, batches, batchCodeMap,
-  isAllBatches, canInputBiaya, canHapusBiaya,
+  costs, costStats, batches: _batches, batchCodeMap,
+  isAllBatches: _isAllBatches, canInputBiaya, canHapusBiaya,
   hasDeleteHook, onAddCost, onDeleteCost,
 }) {
   const [catFilter, setCatFilter] = useState(ALL_CAT)
@@ -231,7 +230,6 @@ function BiayaTab({
               </thead>
               <tbody>
                 {filteredCosts.map((cost, idx) => {
-                  const meta = getCatMeta(cost.category)
                   const batchCode = batchCodeMap[cost.batch_id]
                   const qty = Number(cost.quantity) || 0
                   const amount = Number(cost.amount_idr) || 0
@@ -427,8 +425,8 @@ export function PenggemukanPakan({ config, hooks }) {
   const addLog = hooks.useAddFeedLog()
   const deleteLog = useDeleteFeedLog()
 
-  const { data: allCosts = [], isLoading: loadingAllCosts } = useOperationalCostsByBatches(isAllBatches ? allBatchIds : [])
-  const { data: singleCosts = [], isLoading: loadingSingleCosts } = useOperationalCosts(isAllBatches ? null : selectedBatchId)
+  const { data: allCosts = [] } = useOperationalCostsByBatches(isAllBatches ? allBatchIds : [])
+  const { data: singleCosts = [] } = useOperationalCosts(isAllBatches ? null : selectedBatchId)
   const costs = isAllBatches ? allCosts : singleCosts
 
   const addCost = useAddOperationalCost()

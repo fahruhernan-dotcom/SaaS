@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
@@ -112,7 +112,6 @@ const labelStyle = {
   display: 'block',
   marginBottom: '6px',
 }
-const srOnly = { position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', opacity: 0 }
 
 // ─── StatusBadge ──────────────────────────────────────────────────────────────
 
@@ -148,7 +147,7 @@ function CustomerTypeBadge({ type }) {
 
 // ─── InvoiceCard (mobile) ────────────────────────────────────────────────────
 
-function InvoiceCard({ inv, onPay, onDetail, onPrintInvoice }) {
+function InvoiceCard({ inv, onPay, _onDetail, onPrintInvoice }) {
   const od = isOverdue(inv)
   return (
     <div style={{
@@ -247,12 +246,6 @@ function CreateInvoiceSheet({ open, onClose, customers, products }) {
 
   const selectedCustomer = customers.find(c => c.id === form.customer_id)
 
-  // Outstanding for selected customer (from invoices — not needed here, computed in parent)
-  const outstanding = useMemo(() => {
-    // placeholder — actual outstanding is per customer, passed via prop or computed
-    return null
-  }, [form.customer_id])
-
   function handleCustomerChange(val) {
     const customer = customers.find(c => c.id === val)
     const newDueDate = form.transaction_date && customer?.payment_terms
@@ -340,7 +333,7 @@ function CreateInvoiceSheet({ open, onClose, customers, products }) {
       >
         <div className="sticky top-0 bg-[#0C1319] z-20 px-5 pt-5 pb-4 border-b border-white/10 flex items-center justify-between">
           <SheetTitle className="text-base font-bold text-white font-display">
-            {isEdit ? 'Edit Invoice' : 'Buat Invoice Baru'}
+            Buat Invoice Baru
           </SheetTitle>
           <button onClick={onClose} className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center active:bg-white/10">
             <X className="w-4 h-4 text-[#4B6478]" />
@@ -626,7 +619,7 @@ function RecordPaymentSheet({ invoice, onClose }) {
   const [method, setMethod] = useState('transfer')
   const [refNo, setRefNo] = useState('')
   const [payDate, setPayDate] = useState(new Date().toISOString().slice(0, 10))
-  const [notes, setNotes] = useState('')
+  const [notes, _setNotes] = useState('')
 
   useEffect(() => {
     if (invoice) {

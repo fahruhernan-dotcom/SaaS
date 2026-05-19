@@ -68,7 +68,7 @@ const DAYS = [
 function SummaryStrip({ items = [] }) {
   return (
     <div className="bg-[#7C3AED]/[0.04] border-b border-white/5 px-5 py-3.5 flex justify-between items-center overflow-x-auto no-scrollbar">
-      {items.map((item, idx) => (
+      {items.map((item, _idx) => (
         <div key={item.label} className={cn("min-w-[120px] px-6 border-r border-white/5 last:border-0")}>
           <p className="font-black text-[#4B6478] uppercase tracking-widest leading-none mb-1.5 text-[9px]">
             {item.label}
@@ -611,8 +611,6 @@ function TernakOSTemplateSheet({ open, onOpenChange, existingTemplates, isDeskto
   
   const { data: activeBatches = [] } = hooks.useActiveBatches()
   const applyTemplate = hooks.useApply()
-
-  const selectedPackageData = packageInfo.find(p => p.id === selectedPackage)
 
   const selectedBatch = activeBatches.find(b => b.id === selectedBatchId)
   const existingCount = selectedBatch

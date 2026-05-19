@@ -13,12 +13,11 @@ import {
   useSembakoCustomers, useSembakoSuppliers,
   useSembakoCustomerInvoices, useSembakoCustomerPayments,
   useSembakoSupplierInvoices, useRecordSembakoPayment,
-  useUpdateSembakoCustomer, useUpdateSembakoSupplier,
   useSembakoSupplierPayments, useRecordSembakoSupplierPayment
 } from '@/lib/hooks/useSembakoData'
 import { 
-  formatIDR, formatDate, formatRelative, 
-  formatIDRShort, safeNum, safePercent
+  formatIDR, formatDate,
+  formatIDRShort
 } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -32,7 +31,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { InputRupiah } from '@/components/ui/InputRupiah'
-import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -67,7 +65,7 @@ export default function SembakoTokoSupplierDetail() {
   const isCustomer = type === 'customer'
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { tenant } = useAuth()
+  useAuth()
   
   // Data Queries
   const { data: allCustomers } = useSembakoCustomers()
@@ -79,9 +77,9 @@ export default function SembakoTokoSupplierDetail() {
   }, [allCustomers, allSuppliers, id, isCustomer])
 
   const { data: customerInvoices, isLoading: loadingCInvoices } = useSembakoCustomerInvoices(isCustomer ? id : null)
-  const { data: customerPayments, isLoading: loadingCPayments } = useSembakoCustomerPayments(isCustomer ? id : null)
+  const { data: customerPayments } = useSembakoCustomerPayments(isCustomer ? id : null)
   const { data: supplierInvoices, isLoading: loadingSInvoices } = useSembakoSupplierInvoices(!isCustomer ? id : null)
-  const { data: supplierPayments, isLoading: loadingSPayments } = useSembakoSupplierPayments(!isCustomer ? id : null)
+  const { data: supplierPayments } = useSembakoSupplierPayments(!isCustomer ? id : null)
 
   const [openModal, setOpenModal] = useState(null) // 'bayar' | 'edit'
   const [selectedInvoice, setSelectedInvoice] = useState(null)
@@ -466,7 +464,7 @@ function PaymentForm({ invoice, isCustomer, parentId, maxAmount, onClose }) {
         })
       }
       onClose()
-    } catch (err) {
+    } catch (_err) { // payment errors surfaced via UI state; swallow here
     } finally {
       setLoading(false)
     }

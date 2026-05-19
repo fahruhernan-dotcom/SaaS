@@ -345,8 +345,8 @@ export function SembakoDeliveryDetailSheet({ delivery, onClose }) {
   const missingTimestamps = delivery.status === 'delivered' &&
     (!delivery.departed_at || !delivery.arrived_at || !delivery.completed_at)
 
-  async function handleStart()    { try { await startDelivery.mutateAsync(delivery.id);    onClose() } catch {} }
-  async function handleArrive()   { try { await arriveDelivery.mutateAsync(delivery.id);   onClose() } catch {} }
+  async function handleStart()    { try { await startDelivery.mutateAsync(delivery.id);    onClose() } catch { /* mutation errors surfaced by react-query */ } }
+  async function handleArrive()   { try { await arriveDelivery.mutateAsync(delivery.id);   onClose() } catch { /* mutation errors surfaced by react-query */ } }
   async function handleComplete() {
     // Guard: jangan selesaikan jika step before belum dilewati
     if (!delivery.departed_at || !delivery.arrived_at) {
@@ -355,7 +355,7 @@ export function SembakoDeliveryDetailSheet({ delivery, onClose }) {
       setShowConfirm(false)
       return
     }
-    try { await completeDelivery.mutateAsync(delivery.id); setShowConfirm(false); onClose() } catch {}
+    try { await completeDelivery.mutateAsync(delivery.id); setShowConfirm(false); onClose() } catch { /* mutation errors surfaced by react-query */ }
   }
 
   const duration = getDuration()

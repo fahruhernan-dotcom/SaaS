@@ -12,7 +12,6 @@ import {
   usePeternakTaskTemplates,
   useCreateTaskTemplate,
   useUpdateTaskTemplate,
-  useDeleteTaskTemplate,
   useBulkDeleteTaskTemplates,
   useKandangWorkers,
   useGenerateInstancesFromTemplate,

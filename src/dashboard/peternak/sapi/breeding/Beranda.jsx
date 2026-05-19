@@ -8,7 +8,6 @@ import {
   useSapiBreedingActiveMatingRecords,
   useSapiBreedingBirths,
   calcConceptionRate,
-  calcCalvingInterval,
   calcHariMenujuPartus,
 } from '@/lib/hooks/useSapiBreedingData'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'

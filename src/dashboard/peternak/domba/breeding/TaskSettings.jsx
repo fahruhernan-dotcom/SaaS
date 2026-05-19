@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState } from 'react'
 import { 
   Settings2, Wand2, Plus, Trash2, Save, 
   ChevronRight, Calendar, ClipboardList, Info, 
@@ -78,7 +78,7 @@ export default function DombaBreedingTaskSettings() {
       setIsAdding(false)
       setEditingTemplate(null)
       refetch()
-    } catch (err) {
+    } catch (_err) {
       toast.error('Gagal menyimpan template')
     }
   }
@@ -89,7 +89,7 @@ export default function DombaBreedingTaskSettings() {
       await deleteTemplate.mutateAsync(id)
       toast.success('Template dihapus')
       refetch()
-    } catch (err) {
+    } catch (_err) {
       toast.error('Gagal menghapus template')
     }
   }

@@ -1,13 +1,12 @@
 import React, { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  Plus, Search, ShoppingBag, Users, 
+  Plus, ShoppingBag, Users,
   TrendingUp, Calendar, CreditCard, Droplets 
 } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { 
   useKambingPerahMilkSales,
-  useKambingPerahCustomers,
   useLogKambingPerahSale
 } from '@/lib/hooks/useKambingPerahData'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -18,11 +17,9 @@ export default function KambingPerahPenjualan() {
   
   // Queries
   const { data: sales = [], isLoading: loadingSales } = useKambingPerahMilkSales()
-  const { data: customers = [], isLoading: loadingCustomers } = useKambingPerahCustomers()
   const logSale = useLogKambingPerahSale()
 
   // State
-  const [search, setSearch] = useState('')
   const [addSheet, setAddSheet] = useState(false)
   const [form, setForm] = useState({
     sale_date: new Date().toISOString().split('T')[0],
