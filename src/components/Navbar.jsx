@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import anime from '../lib/animation';
 
 const Navbar = ({ authPage = false }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

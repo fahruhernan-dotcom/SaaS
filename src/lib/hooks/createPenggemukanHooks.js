@@ -483,7 +483,7 @@ export function createPenggemukanHooks(prefix) {
     return useMutation({
       mutationFn: async ({
         batch_id, ear_tag, breed, sex, age_estimate,
-        entry_age_months, age_confidence, acquisition_type,
+        entry_age_months, _age_confidence, _acquisition_type,
         entry_date, entry_weight_kg, entry_bcs, entry_condition,
         purchase_price_idr, source, kandang_slot, notes,
         quarantine_start, quarantine_end, quarantine_notes,
@@ -546,7 +546,7 @@ export function createPenggemukanHooks(prefix) {
           }
         }
       },
-      onSuccess: (_, { batch_id }) => {
+      onSuccess: (_, { _batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-animals`] })
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
@@ -624,7 +624,7 @@ export function createPenggemukanHooks(prefix) {
           }
         }
       },
-      onSuccess: (_, { batch_id }) => {
+      onSuccess: (_, { _batch_id }) => {
         qc.invalidateQueries({ queryKey: [`${K}-animals`] })
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
@@ -639,7 +639,7 @@ export function createPenggemukanHooks(prefix) {
     const qc = useQueryClient()
     const { tenant } = useAuth()
     return useMutation({
-      mutationFn: async ({ animalId, batchId, updates }) => {
+      mutationFn: async ({ animalId, _batchId, updates }) => {
         const { entry_age_months, age_confidence, acquisition_type, ...rest } = updates
         const finalUpdates = { ...rest }
         if (entry_age_months !== undefined) {
@@ -656,7 +656,7 @@ export function createPenggemukanHooks(prefix) {
           throw error
         }
       },
-      onSuccess: (_, { animalId, batchId }) => {
+      onSuccess: (_, { animalId, _batchId }) => {
         qc.invalidateQueries({ queryKey: [`${K}-animals`] })
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-animal-detail`, animalId] })
@@ -671,7 +671,7 @@ export function createPenggemukanHooks(prefix) {
     const qc = useQueryClient()
     const { tenant } = useAuth()
     return useMutation({
-      mutationFn: async ({ animalId, batchId, status, exit_date }) => {
+      mutationFn: async ({ animalId, _batchId, status, exit_date }) => {
         const { error } = await supabase
           .from(T.animals)
           .update({ status, exit_date })
@@ -993,7 +993,7 @@ export function createPenggemukanHooks(prefix) {
     const qc = useQueryClient()
     const { tenant } = useAuth()
     return useMutation({
-      mutationFn: async ({ logId, batch_id }) => {
+      mutationFn: async ({ logId, _batch_id }) => {
         const { error } = await supabase
           .from(T.feed)
           .update({ is_deleted: true })
@@ -1022,7 +1022,7 @@ export function createPenggemukanHooks(prefix) {
     const qc = useQueryClient()
     const { tenant } = useAuth()
     return useMutation({
-      mutationFn: async ({ recordId, animal_id, batch_id }) => {
+      mutationFn: async ({ recordId, _animal_id, _batch_id }) => {
         const { error } = await supabase
           .from(T.weights)
           .update({ is_deleted: true })
@@ -1304,7 +1304,7 @@ export function createPenggemukanHooks(prefix) {
     const qc = useQueryClient()
     const { tenant } = useAuth()
     return useMutation({
-      mutationFn: async ({ logId, batch_id }) => {
+      mutationFn: async ({ logId, _batch_id }) => {
         const { error } = await supabase
           .from(T.health)
           .update({ is_deleted: true })
@@ -1520,7 +1520,7 @@ export function createPenggemukanHooks(prefix) {
       // Avg HPP price per kg for UI display
       const avgPricePerKg = kgConsumedThisBatch > 0 ? totalBiayaPakan / kgConsumedThisBatch : 0
 
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         const avgHppFeedPricePerKg = kgConsumedThisBatch > 0 ? totalBiayaPakan / kgConsumedThisBatch : 0
         const possibleMismatch = totalBiayaPakan > 0 && kgConsumedThisBatch > 0 && avgPurchasePricePerKg > 0
           && avgHppFeedPricePerKg > avgPurchasePricePerKg * 3
@@ -1706,7 +1706,7 @@ export function createPenggemukanHooks(prefix) {
             const dayAlloc      = dailyCost * dayProportion
             totalAllocatedToThisBatch += dayAlloc
 
-            if (process.env.NODE_ENV === 'development' && dailyAllocationsPreview.length < 5) {
+            if (import.meta.env.DEV && dailyAllocationsPreview.length < 5) {
               dailyAllocationsPreview.push({
                 date:          day.toISOString().slice(0, 10),
                 headThisBatch,
@@ -1719,7 +1719,7 @@ export function createPenggemukanHooks(prefix) {
 
           const allocatedPayrollCost = Math.round(totalAllocatedToThisBatch)
 
-          if (process.env.NODE_ENV === 'development') {
+          if (import.meta.env.DEV) {
             batchPayrollDebug.push({
               paymentId:               payment.id,
               periodStart:             periodStart.toISOString().slice(0, 10),
@@ -1736,7 +1736,7 @@ export function createPenggemukanHooks(prefix) {
         }, 0)
       }
 
-      if (process.env.NODE_ENV === 'development' && batchPayrollDebug.length > 0) {
+      if (import.meta.env.DEV && batchPayrollDebug.length > 0) {
         batchPayrollDebug.forEach(d => console.debug('Daily overhead allocation audit', d))
       }
 
@@ -1806,7 +1806,7 @@ export function createPenggemukanHooks(prefix) {
             : `${animalDaysBatch} ekor-hari`
         }
 
-        if (process.env.NODE_ENV === 'development' && animalDaysBreakdown.length > 0) {
+        if (import.meta.env.DEV && animalDaysBreakdown.length > 0) {
           // Tambah kolom kumulatif agar mudah cross-check di console
           let cum = 0
           const tableData = animalDaysBreakdown.map(r => {
@@ -1949,7 +1949,7 @@ export function createPenggemukanHooks(prefix) {
       const kgPakanTotal = kgConsumedThisBatch
       const hargaRataPerKg = Math.round(avgPricePerKg)
 
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.debug('Domba HPP/BEP audit', {
           activeCount: aktifCount,
           avgWeightKg: avgActiveWeightKg,

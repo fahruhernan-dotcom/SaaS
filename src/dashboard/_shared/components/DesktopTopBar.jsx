@@ -1,5 +1,5 @@
 import React from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { ChevronRight, BarChart2 } from 'lucide-react'
 import NotificationBell from './NotificationBell'

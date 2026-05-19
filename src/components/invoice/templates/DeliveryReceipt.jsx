@@ -1,6 +1,6 @@
 import React from 'react'
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
-import { formatRupiahPDF, formatDatePDF, generateInvoiceNumber } from '@/lib/invoice/invoiceUtils'
+import { formatRupiahPDF, formatDatePDF } from '@/lib/invoice/invoiceUtils'
 
 // Blue accent — beda dari SaleInvoice (emerald) agar mudah dibedakan
 const C = {

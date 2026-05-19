@@ -10,6 +10,7 @@ const KEY_TO_PATH = {
   broker:              '/broker/broker_ayam/beranda',
   egg_broker:          '/broker/broker_telur/beranda',
   distributor_sembako: '/broker/distributor_sembako/beranda',
+  sembako_broker:      '/broker/distributor_sembako/beranda',
   peternak:                              '/peternak/peternak_broiler/beranda',
   peternak_layer:                        '/peternak/peternak_layer/beranda',
   peternak_domba_penggemukan:            '/peternak/peternak_domba_penggemukan/beranda',
@@ -31,13 +32,29 @@ export default function OnboardingFlow() {
   const [searchParams] = useSearchParams()
   const isNewBusiness = searchParams.get('mode') === 'new_business'
 
+  // Guard: once onComplete() takes control of navigation, suppress the
+  // profile-change useEffect so it cannot overwrite the correct redirect.
+  const redirectHandledRef = React.useRef(false)
+
   // Hooks MUST come before any early returns
   React.useEffect(() => {
     if (loading) return
-    
+    // If onComplete() already handled the redirect, do NOT re-fire this effect.
+    if (redirectHandledRef.current) return
+
     // Original redirect logic only if NOT in new business mode
     if (!isNewBusiness && profile?.onboarded) {
+      // Use KEY_TO_PATH with the tenant's business_vertical or sub_type so we
+      // always resolve to the correct beranda, not a stale fallback.
+      const vertical = profile.tenants?.business_vertical || profile.tenants?.sub_type
+      const resolvedPath = (vertical && KEY_TO_PATH[vertical]) || KEY_TO_PATH[profile.user_type]
 
+      if (resolvedPath) {
+        navigate(resolvedPath, { replace: true })
+        return
+      }
+
+      // Legacy fallback (should rarely be hit)
       if (profile.user_type === 'peternak') {
         navigate(`/peternak/${profile.tenants?.sub_type || 'peternak_broiler'}/beranda`, { replace: true })
         return
@@ -76,6 +93,11 @@ export default function OnboardingFlow() {
             }
             return
           }
+
+          // Mark that we are handling the redirect — suppress the useEffect guard
+          // so a profile refetch triggering profile?.onboarded=true does NOT
+          // overwrite our KEY_TO_PATH-based navigation with a stale fallback.
+          redirectHandledRef.current = true
 
           // FIX: Await refetch so context is up-to-date before navigate.
           // Without this, dashboard mounts with stale profile (pre-onboarding state).

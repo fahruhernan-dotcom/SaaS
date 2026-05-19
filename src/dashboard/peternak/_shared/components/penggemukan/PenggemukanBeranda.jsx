@@ -24,7 +24,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
 } from 'recharts'
-import { format, addDays } from 'date-fns'
+import { format } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -251,12 +251,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
     return list
   }, [activeBatches, feedLogs, selectedBatchId, todayTasks, navigate, BASE, calcHariDiFarm, calcMortalitas, targetDays, mortalityThreshold, mortalityWarn])
 
-  const taskStats = useMemo(() => {
-    const total = todayTasks.length
-    const done = todayTasks.filter(t => t.status === 'selesai').length
-    const pct = total === 0 ? 100 : Math.round((done / total) * 100)
-    return { total, done, pct }
-  }, [todayTasks])
+  // taskStats removed — not used in render
 
   if (isLoading) return <LoadingSpinner fullPage />
 
@@ -832,6 +827,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                             dot={chartData.length === 1 ? { r: 4, strokeWidth: 0 } : false}
                             activeDot={{ r: 4, strokeWidth: 0 }}
                             animationDuration={1000}
+                            connectNulls
                           />
                         )
                       })}

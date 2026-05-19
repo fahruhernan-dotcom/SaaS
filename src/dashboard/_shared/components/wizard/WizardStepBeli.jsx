@@ -48,7 +48,6 @@ z.setErrorMap((issue, ctx) => {
   return { message: ctx.defaultError }
 })
 import { InputNumber } from '@/components/ui/InputNumber'
-import { useNavigate } from 'react-router-dom'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { formatIDR, safeNum, formatWeight } from '@/lib/format'
@@ -456,7 +455,7 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
                             <CommandItem
                               key={p}
                               value={p}
-                              onSelect={(val) => {
+                              onSelect={(_val) => {
                                 setNewFarm(prev => ({ ...prev, province: p }))
                                 setProvinceOpen(false)
                               }}

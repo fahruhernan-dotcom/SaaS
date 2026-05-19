@@ -36,9 +36,10 @@ import FormJualModal from '../components/FormJualModal'
 export default function Beranda() {
   const { profile, tenant } = useAuth()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const today = new Date().toISOString().split('T')[0]
 
-  const handleMarkLunas = async (rpaId, rpaName, amount) => {
+  const _handleMarkLunas = async (rpaId, rpaName, amount) => {
     try {
       // Update all sales that are unpaid for this client
       const { error } = await supabase

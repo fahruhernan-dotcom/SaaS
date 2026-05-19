@@ -5,10 +5,10 @@ import {
     Clock, MapPin, User,
     Pencil, Check, FileText, AlertTriangle
 } from 'lucide-react'
-import { format, parseISO, isAfter, differenceInMinutes } from 'date-fns'
+import { format, parseISO, differenceInMinutes } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
-import { safeNum, formatWeight, formatEkor, formatIDR } from '@/lib/format'
+import { safeNum, formatWeight, formatEkor } from '@/lib/format'
 
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'

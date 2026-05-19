@@ -350,7 +350,7 @@ Multi-step with partial-commit detection (5):
 
 **Action name pattern:** `{area}.{entity}.{operation}` — e.g. `team.invitation.create`, `team.invitation.accept`, `task.assign`, `task.complete`, `notification.mark_read`.
 
-**Status:** 🟡 IN PROGRESS
+**Status:** ✅ DONE — completed 2026-05-19; Tim mutations, DailyTask, and worker CRUD deferred to next sweep
 
 #### Sapi Kandang gap (PATCHED — 2026-05-18)
 
@@ -369,7 +369,7 @@ Discovered during the Phase 6.F audit: `useSapiPenggemukanData.js` is the Sapi-s
 **Import-path fixes bundled (build-breaking pre-existing errors):**
 - `src/lib/hooks/useNotifications.jsx` — `logSupabaseError` imported from `errorLogger.js` → corrected to `supabaseLogger.js`.
 - `src/dashboard/_shared/pages/tim/Tim.jsx` — same wrong import → corrected to `supabaseLogger.js`.
-Neither file has new mutation instrumentation; full Tim/Notifications audit deferred to Phase 6.F continuation.
+Neither file has new mutation instrumentation; Tim mutation instrumentation deferred; Notifications instrumentation completed later in Phase 6.F.
 
 #### Phase 6.F completed (2026-05-19)
 

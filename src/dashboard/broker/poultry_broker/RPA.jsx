@@ -10,7 +10,7 @@ import { useRPA } from '@/lib/hooks/useRPA'
 import { useSales } from '@/lib/hooks/useSales'
 import {
     formatIDR, formatIDRShort, formatBuyerType,
-    BUYER_TYPE_LABELS, PAYMENT_TERMS_LABELS, formatPaymentTerms,
+    BUYER_TYPE_LABELS, PAYMENT_TERMS_LABELS,
     calcTotalJual, safeNum
 } from '@/lib/format'
 import { Button } from '@/components/ui/button'
@@ -313,7 +313,7 @@ const PaymentStatusBadge = ({ outstanding }) => {
     )
 }
 
-function RPACard({ rpa, isDesktop, onClick, onEdit }) {
+function RPACard({ rpa, isDesktop, onClick, _onEdit }) {
     const initials = rpa.rpa_name.slice(0, 2).toUpperCase()
 
     // ── Desktop layout (unchanged) ──────────────────────────────────────────────
@@ -448,12 +448,12 @@ function RPACard({ rpa, isDesktop, onClick, onEdit }) {
     )
 }
 
-export function RPAForm({ rpa, isDesktop, onClose, onSubmit, onDelete }) {
+export function RPAForm({ rpa, isDesktop, _onClose, onSubmit, onDelete }) {
     const { profile } = useAuth()
     const isOwner = profile?.role === 'owner' || isSuperadmin(profile)
     const [isLoading, setIsLoading] = useState(false)
     
-    const { register, handleSubmit, watch, setValue, control, formState: { errors } } = useForm({
+    const { register, handleSubmit, watch, setValue, control: _control, formState: { errors } } = useForm({
         resolver: zodResolver(rpaSchema),
         defaultValues: rpa || {
             rpa_name: '',
@@ -472,7 +472,7 @@ export function RPAForm({ rpa, isDesktop, onClose, onSubmit, onDelete }) {
         setIsLoading(true)
         try {
             await onSubmit(data)
-        } catch (err) {
+        } catch (_err) {
             // Error handling is done in onSubmit
         } finally {
             setIsLoading(false)
@@ -650,7 +650,7 @@ export function RPAForm({ rpa, isDesktop, onClose, onSubmit, onDelete }) {
     )
 }
 
-function LoadingList({ isDesktop }) {
+function LoadingList({ _isDesktop }) {
     return (
         <div className="space-y-3">
             <Skeleton className="h-[48px] w-full rounded-2xl bg-secondary/10 mb-6" />

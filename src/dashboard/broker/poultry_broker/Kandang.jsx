@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { differenceInDays } from 'date-fns'
 import { useFarms } from '@/lib/hooks/useFarms'
-import { formatIDR, formatDate, formatWeight, formatRelative, safeNumber, formatEkor } from '@/lib/format'
+import { formatDate, formatWeight, safeNumber, formatEkor } from '@/lib/format'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -38,7 +38,7 @@ import { supabase } from '@/lib/supabase'
 import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import ConfirmDialog from '@/dashboard/_shared/components/ConfirmDialog'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -65,12 +65,10 @@ export default function Kandang() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const { setSidebarOpen } = useOutletContext() || {}
   const { data: farms, isLoading } = useFarms()
-  const [search, setSearch] = useState('')
+  const [search, _setSearch] = useState('')
   const [filter, setFilter] = useState('Semua') // 'Semua' | 'READY' | 'GROWING' | 'EMPTY'
   const [openModal, setOpenModal] = useState(false)
   const [editingFarm, setEditingFarm] = useState(null)
-  
-  const queryClient = useQueryClient()
 
   // Stats
   const totalEkor = farms?.reduce((acc, f) => acc + (f.available_stock || 0), 0) || 0
@@ -89,7 +87,7 @@ export default function Kandang() {
     })
   }, [farms, search, filter])
 
-  const handleEdit = (farm, e) => {
+  const _handleEdit = (farm, e) => {
     e.stopPropagation()
     setEditingFarm(farm)
     setOpenModal(true)
@@ -494,7 +492,7 @@ function DetailRow({ label, value, className }) {
     )
 }
 
-function FarmForm({ farm, tenantId, onSuccess, onCancel, isSheet }) {
+function FarmForm({ farm, tenantId, onSuccess, onCancel, _isSheet }) {
     const isDesktop = useMediaQuery('(min-width: 1024px)')
     const [isLoading, setIsLoading] = useState(false)
     const [formData, setFormData] = useState({

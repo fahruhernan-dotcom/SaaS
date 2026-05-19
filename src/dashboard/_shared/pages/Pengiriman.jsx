@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Truck, MapPin, Clock, AlertTriangle, CheckCircle2, Plus, Phone, Weight } from 'lucide-react';
 import { useDeliveries } from '@/lib/hooks/useDeliveries';
-import { formatEkor, formatKg, formatDate } from '@/lib/format';
+import { formatEkor, formatKg } from '@/lib/format';
 import TopBar from '../components/TopBar';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';

@@ -1,15 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
-import { 
-  startOfWeek, 
-  endOfWeek, 
-  startOfMonth, 
-  endOfMonth, 
-  format,
-  subDays,
-  subMonths
-} from 'date-fns'
 import { calcNetProfit } from '../format'
 
 /**

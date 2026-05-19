@@ -44,6 +44,36 @@ const PAYMENT_TERMS = [
   { value: 'net7', label: 'Net 7' },
 ]
 
+const COMMODITY_GROUPS = [
+  {
+    label: 'Unggas (Hidup & Karkas)',
+    options: [
+      { value: 'broiler', label: 'Ayam Broiler' },
+      { value: 'kampung', label: 'Ayam Kampung' },
+      { value: 'pejantan', label: 'Ayam Pejantan' },
+      { value: 'layer', label: 'Ayam Layer' },
+    ]
+  },
+  {
+    label: 'Ternak & Hewan Besar',
+    options: [
+      { value: 'sapi', label: 'Sapi' },
+      { value: 'kambing', label: 'Kambing' },
+      { value: 'domba', label: 'Domba' }
+    ]
+  },
+  {
+    label: 'Sembako & Hasil Bumi',
+    options: [
+      { value: 'beras', label: 'Beras' },
+      { value: 'minyak', label: 'Minyak Goreng' },
+      { value: 'gula', label: 'Gula' },
+      { value: 'tepung', label: 'Tepung' },
+      { value: 'telur', label: 'Telur' },
+    ]
+  }
+]
+
 const TYPE_META = {
   stok_ayam:        { label: 'Stok Peternak',    color: '#A78BFA', bg: 'rgba(124,58,237,0.12)',  border: 'rgba(124,58,237,0.3)'  },
   penawaran_broker: { label: 'Penawaran Broker',  color: '#34D399', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)'  },

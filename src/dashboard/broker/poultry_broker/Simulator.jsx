@@ -7,9 +7,9 @@ import {
   Truck, ShoppingCart, Info, AlertCircle, CheckCircle2,
   Sparkles, Target, Lock
 } from 'lucide-react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
-import { formatIDR, formatWeight, safeNumber } from '@/lib/format'
+import { formatIDR, formatWeight } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -21,12 +21,12 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 
-const staggerContainer = {
+const _staggerContainer = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.05 } }
 }
 
-const fadeUp = {
+const _fadeUp = {
   hidden: { opacity: 0, y: 16 },
   visible: { 
     opacity: 1, y: 0,
@@ -36,7 +36,6 @@ const fadeUp = {
 
 export default function Simulator() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
-  const navigate = useNavigate()
   const { tenant } = useAuth()
   const sub = getSubscriptionStatus(tenant)
   const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
@@ -84,7 +83,7 @@ export default function Simulator() {
   const netProfit = pendapatan - modal - biayaSusut - biayaKirim
   const marginPerKg = bobotTiba > 0 ? netProfit / bobotTiba : 0
   const roi = modal > 0 ? (netProfit / modal) * 100 : 0
-  const bep = bobotTiba > 0 ? (modal + biayaKirim) / bobotTiba : 0
+  const _bep = bobotTiba > 0 ? (modal + biayaKirim) / bobotTiba : 0
 
   const isFilled = jumlahEkor > 0 && avgBobot > 0 && (hargaBeli > 0 || hargaJual > 0)
 

@@ -535,6 +535,7 @@ SidebarMenuBadge.displayName = "SidebarMenuBadge"
 
 const SidebarMenuSkeleton = React.forwardRef(({ className, showIcon = false, ...props }, ref) => {
   // Random width between 50 to 90%.
+  // eslint-disable-next-line react-hooks/purity -- intentional: skeleton width randomised once on mount
   const width = React.useMemo(() => {
     return `${Math.floor(Math.random() * 40) + 50}%`;
   }, [])

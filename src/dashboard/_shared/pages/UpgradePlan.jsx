@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Check, Copy, ArrowLeft, Zap, Crown, Loader2, CheckCircle2,
   Truck, Users, FileText, TrendingUp, Calculator, Warehouse,
-  Receipt, BarChart3, ShieldCheck, Headphones, Infinity,
+  Receipt, BarChart3, ShieldCheck, Headphones, Infinity as InfinityIcon,
   ChevronDown, ChevronUp, Star, Building2, MessageCircle, Clock,
 } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
@@ -15,7 +15,6 @@ import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { format, addMonths } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
 
 // ─── Billing options ─────────────────────────────────────────────────────────
 
@@ -32,7 +31,7 @@ const ROLE_FEATURES = {
   broker: {
     label: 'Broker Ayam',
     pro: [
-      { icon: <Infinity size={13} />, text: 'Transaksi tidak terbatas (vs 30/bln)' },
+      { icon: <InfinityIcon size={13} />, text: 'Transaksi tidak terbatas (vs 30/bln)' },
       { icon: <Truck size={13} />,    text: 'Armada hingga 5 kendaraan & sopir' },
       { icon: <TrendingUp size={13} />, text: 'Cash Flow & laporan keuangan' },
       { icon: <Users size={13} />,    text: 'Tim hingga 3 anggota' },
@@ -40,7 +39,7 @@ const ROLE_FEATURES = {
       { icon: <Calculator size={13} />, text: 'Simulator keuntungan' },
     ],
     business: [
-      { icon: <Infinity size={13} />, text: 'Semua fitur Pro' },
+      { icon: <InfinityIcon size={13} />, text: 'Semua fitur Pro' },
       { icon: <Users size={13} />,    text: 'Tim tidak terbatas' },
       { icon: <Truck size={13} />,    text: 'Armada tidak terbatas' },
       { icon: <BarChart3 size={13} />, text: 'Laporan & analitik lanjutan' },
@@ -59,7 +58,7 @@ const ROLE_FEATURES = {
       { icon: <Headphones size={13} />, text: 'Support prioritas WhatsApp' },
     ],
     business: [
-      { icon: <Infinity size={13} />, text: 'Semua fitur Pro' },
+      { icon: <InfinityIcon size={13} />, text: 'Semua fitur Pro' },
       { icon: <Warehouse size={13} />, text: 'Kandang tidak terbatas' },
       { icon: <Users size={13} />,    text: 'Multi-user manajemen kandang' },
       { icon: <ShieldCheck size={13} />, text: 'Akses API data produksi' },
@@ -70,7 +69,7 @@ const ROLE_FEATURES = {
   rpa: {
     label: 'Rumah Potong Ayam',
     pro: [
-      { icon: <Infinity size={13} />, text: 'Order & transaksi tidak terbatas' },
+      { icon: <InfinityIcon size={13} />, text: 'Order & transaksi tidak terbatas' },
       { icon: <Receipt size={13} />,  text: 'Manajemen piutang toko' },
       { icon: <FileText size={13} />, text: 'Invoice PDF profesional' },
       { icon: <BarChart3 size={13} />, text: 'Laporan penjualan & omzet' },
@@ -78,7 +77,7 @@ const ROLE_FEATURES = {
       { icon: <Headphones size={13} />, text: 'Support prioritas WhatsApp' },
     ],
     business: [
-      { icon: <Infinity size={13} />, text: 'Semua fitur Pro' },
+      { icon: <InfinityIcon size={13} />, text: 'Semua fitur Pro' },
       { icon: <Warehouse size={13} />, text: 'Multi-lokasi / multi-outlet' },
       { icon: <Users size={13} />,    text: 'Tim tidak terbatas' },
       { icon: <ShieldCheck size={13} />, text: 'Akses API & integrasi ERP' },
@@ -89,7 +88,7 @@ const ROLE_FEATURES = {
   egg_broker: {
     label: 'Broker Telur',
     pro: [
-      { icon: <Infinity size={13} />, text: 'Penjualan & stok tidak terbatas' },
+      { icon: <InfinityIcon size={13} />, text: 'Penjualan & stok tidak terbatas' },
       { icon: <BarChart3 size={13} />, text: 'Laporan omzet & HPP otomatis' },
       { icon: <FileText size={13} />, text: 'Invoice PDF profesional' },
       { icon: <Receipt size={13} />,  text: 'Manajemen piutang pelanggan' },
@@ -97,7 +96,7 @@ const ROLE_FEATURES = {
       { icon: <Headphones size={13} />, text: 'Support prioritas WhatsApp' },
     ],
     business: [
-      { icon: <Infinity size={13} />, text: 'Semua fitur Pro' },
+      { icon: <InfinityIcon size={13} />, text: 'Semua fitur Pro' },
       { icon: <Warehouse size={13} />, text: 'Multi-gudang / multi-lokasi' },
       { icon: <Users size={13} />,    text: 'Tim tidak terbatas' },
       { icon: <ShieldCheck size={13} />, text: 'Akses API & integrasi' },
@@ -108,7 +107,7 @@ const ROLE_FEATURES = {
   sembako_broker: {
     label: 'Distributor Sembako',
     pro: [
-      { icon: <Infinity size={13} />, text: 'Produk & transaksi tidak terbatas' },
+      { icon: <InfinityIcon size={13} />, text: 'Produk & transaksi tidak terbatas' },
       { icon: <BarChart3 size={13} />, text: 'FIFO stok & laporan COGS' },
       { icon: <FileText size={13} />, text: 'Invoice & surat jalan PDF' },
       { icon: <Receipt size={13} />,  text: 'Penggajian karyawan' },
@@ -116,7 +115,7 @@ const ROLE_FEATURES = {
       { icon: <Headphones size={13} />, text: 'Support prioritas WhatsApp' },
     ],
     business: [
-      { icon: <Infinity size={13} />, text: 'Semua fitur Pro' },
+      { icon: <InfinityIcon size={13} />, text: 'Semua fitur Pro' },
       { icon: <Warehouse size={13} />, text: 'Multi-gudang / multi-outlet' },
       { icon: <Users size={13} />,    text: 'Tim tidak terbatas' },
       { icon: <ShieldCheck size={13} />, text: 'Akses API & integrasi ERP' },
@@ -174,7 +173,7 @@ function getRoleFeatures(pricingRole) {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function PlanCard({ planKey, meta, price, isSelected, onSelect, features, billingMonths, discount }) {
+function PlanCard({ planKey, meta, price, isSelected, onSelect, features, _billingMonths, discount }) {
   const monthlyDisplay = price ? formatIDR(Math.round(price * (1 - discount / 100))) : '—'
   const originalMonthly = price ? formatIDR(price) : null
 
@@ -248,8 +247,8 @@ function PlanCard({ planKey, meta, price, isSelected, onSelect, features, billin
   )
 }
 
-function FeatureSection({ planKey, meta, features, billingMonths, basePrice, discount, isExpanded, onToggle }) {
-  const total = basePrice ? Math.round(basePrice * billingMonths * (1 - discount / 100)) : 0
+function FeatureSection({ _planKey, meta, features, billingMonths, basePrice, discount, isExpanded, onToggle }) {
+  const _total = basePrice ? Math.round(basePrice * billingMonths * (1 - discount / 100)) : 0
 
   return (
     <div

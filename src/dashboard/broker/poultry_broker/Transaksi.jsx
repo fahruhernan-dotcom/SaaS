@@ -6,21 +6,19 @@ import {
   Plus, Search, History, AlertCircle, Trash2, Loader2, Eye, Menu
 } from 'lucide-react'
 import InvoicePreviewModal from '@/components/invoice/InvoicePreviewModal'
-import { format, isSameDay, isSameWeek, isSameMonth, parseISO } from 'date-fns'
-import { id } from 'date-fns/locale'
+import { isSameDay, isSameWeek, isSameMonth, parseISO } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { 
-  formatIDR, safeNumber, safePercent, safeNum, formatWeight, formatEkor, formatKg,
-  formatDate, formatRelative, formatIDRShort, formatPaymentStatus,
-  calcTotalJual, calcKerugianSusut, calcNetProfit, calcRemainingAmount
+  formatIDR, safeNumber, formatWeight, formatEkor, formatKg,
+  formatDate, formatIDRShort, formatPaymentStatus,
+  calcNetProfit, calcRemainingAmount
 } from '@/lib/format'
 import { useUpdateDelivery } from '@/lib/hooks/useUpdateDelivery'
-import { useRPA } from '@/lib/hooks/useRPA'
 import { useTransactionQuota } from '@/lib/hooks/useTransactionQuota'
 import { isSuperadmin } from '@/lib/auth'
 import { isOwner, isStaff } from '@/lib/auth/business-roles'
@@ -108,7 +106,7 @@ export default function Transaksi() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
-  const [isUpdating, setIsUpdating] = useState(false)
+  const [_isUpdating, setIsUpdating] = useState(false)
   const [selectedSaleId, setSelectedSaleId] = useState(null)
   const [showAuditSheet, setShowAuditSheet] = useState(false)
   const [deleteTargetSale, setDeleteTargetSale] = useState(null)
@@ -132,7 +130,7 @@ export default function Transaksi() {
   const [searchOpen, setSearchOpen] = useState(false)
 
   // --- DATA FETCHING ---
-  const { data: sales = [], isLoading: isLoadingSales, refetch: refetchSales } = useQuery({
+  const { data: sales = [], isLoading: isLoadingSales } = useQuery({
     queryKey: ['sales', tenant?.id],
     queryFn: async () => {
       // 1. Try with purchases join
@@ -277,7 +275,7 @@ export default function Transaksi() {
     }
   }, [updateDeliveryTarget])
 
-  const handleClickDelete = async (e, purchase) => {
+  const _handleClickDelete = async (e, purchase) => {
     e.stopPropagation()
     if (isViewOnly) {
       toast.info('Kamu dalam mode View Only. Tidak bisa menghapus data.')
@@ -566,7 +564,7 @@ export default function Transaksi() {
     return encodeURIComponent(msg)
   }
 
-  const handleSendWA = (sale) => {
+  const _handleSendWA = (sale) => {
     const phone = sale.rpa_clients?.phone || ''
     const cleanPhone = phone.replace(/[^0-9]/g, '')
     const finalPhone = cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone
@@ -587,7 +585,7 @@ export default function Transaksi() {
     setWizardOpen(true)
   }, [quota.isAtLimit])
 
-  const handleDeliveryClose = React.useCallback(() => setShowUpdateDelivery(false), [])
+  const _handleDeliveryClose = React.useCallback(() => setShowUpdateDelivery(false), [])
 
   const handleDeleteDialogChange = React.useCallback((o) => {
     if (!o) {
@@ -1077,6 +1075,11 @@ export default function Transaksi() {
         }}
         data={finalSuccessData}
       />
+      <FormBayarModal
+        isOpen={!!paymentTarget}
+        onClose={() => setPaymentTarget(null)}
+        sale={paymentTarget}
+      />
     </motion.div>
   )
 }
@@ -1087,11 +1090,6 @@ function LoadingList() {
         {Array(3).fill(0).map((_, i) => (
             <Skeleton key={i} className="h-44 w-full rounded-[22px] bg-secondary/10 border border-white/5" />
         ))}
-      <FormBayarModal
-        isOpen={!!paymentTarget}
-        onClose={() => setPaymentTarget(null)}
-        sale={paymentTarget}
-      />
     </div>
   )
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Plus, Home as HomeIcon, Calendar, Weight, ChevronRight, AlertTriangle, MapPin, Phone } from 'lucide-react';
 import { useFarms } from '@/lib/hooks/useFarms';
@@ -8,6 +9,7 @@ import EmptyState from '../components/EmptyState';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Kandang() {
+  const navigate = useNavigate();
   const { data: farms, isLoading } = useFarms();
   const [filter, setFilter] = useState('all'); // 'all', 'ready', 'harvested'
 

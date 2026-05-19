@@ -11,7 +11,6 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts'
 import { useGlobalStats, useAdminUpdateTenant } from '@/lib/hooks/useAdminData'
-import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -68,13 +67,13 @@ function LoadingSkeleton() {
 // ── Main Component ────────────────────────────────────────────
 
 export default function AdminBeranda() {
-  const isDesktop = useMediaQuery('(min-width: 1024px)')
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { data: stats, isLoading, isError } = useGlobalStats()
   const updateTenant = useAdminUpdateTenant()
 
   const handleExtendTrial = (tenantId) => {
+    // eslint-disable-next-line react-hooks/purity -- Date.now() is in an event handler, not render
     const newEnd = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
     updateTenant.mutate(
       { tenantId, updates: { trial_ends_at: newEnd } },

@@ -27,7 +27,7 @@ export default function ManajemenPage({ roleConfig, workerTab }) {
   const [activeTab, setActiveTab] = useState(workerTab ? workerTab.id : 'tim')
 
   const accent = roleConfig?.accent || '#10B981'
-  const accentStyle = { color: accent, borderColor: accent }
+  const _accentStyle = { color: accent, borderColor: accent }
 
   // If no workerTab → render Tim directly without any tab chrome
   if (!workerTab) {

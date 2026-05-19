@@ -221,29 +221,36 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
 
       let resolvedTenantId = profile?.tenant_id === 'undefined' ? null : profile?.tenant_id
 
-      // --- KEY FIX: New user (profile exists but NO tenant_id) must use RPC, same as isNewBusiness ---
-      const isFirstTimeBusiness = !resolvedTenantId
+      // New user onboarding check
+      const isFirstTimeOnboarding = !profile?.onboarded || !profile?.business_model_selected
 
-      // --- KEY FIX 2: When picking a vertical with different user_type than
-      // existing profile (e.g. DB-default 'broker' user picks a peternak
-      // vertical), route through create_new_business RPC instead of trying to
-      // UPDATE the existing profile. The DB trigger forbids changing user_type,
-      // so the only legal path is creating a new tenant + new profile row with
-      // the correct user_type baked in from the start.
+      // If they have a resolvedTenantId but it's their first time and NOT an explicit new business,
+      // we can reuse the existing placeholder tenant.
+      const canReuseExistingTenant = isFirstTimeOnboarding && resolvedTenantId && !isNewBusiness
+
+      // When picking a vertical with different user_type than existing profile,
+      // we normally route through create_new_business RPC instead of trying to UPDATE the existing profile.
       const userTypeMismatch = Boolean(
         profile?.user_type &&
         model.user_type &&
         profile.user_type !== model.user_type
       )
 
-      const shouldCreateViRPC = isNewBusiness || !profile || isFirstTimeBusiness || userTypeMismatch
+      // Only create via RPC if we CANNOT reuse the existing tenant
+      let shouldCreateViRPC = false
+      if (canReuseExistingTenant) {
+        shouldCreateViRPC = false
+      } else if (isNewBusiness || !resolvedTenantId || userTypeMismatch) {
+        shouldCreateViRPC = true
+      }
 
       console.log('[Onboarding] saveAndComplete start:', {
         selectedKey: selected,
         modelKey: model.key,
         user_type: model.user_type,
         isNewBusiness,
-        isFirstTimeBusiness,
+        isFirstTimeOnboarding,
+        canReuseExistingTenant,
         userTypeMismatch,
         shouldCreateViRPC,
         profile_tenant_id: profile?.tenant_id,
@@ -336,16 +343,21 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         business_vertical: model.key,
       })
 
+      const profilePayload = {
+        user_type: model.user_type,
+        business_model_selected: true,
+        onboarded: true,
+      }
+      if (profile && 'sub_type' in profile) {
+        profilePayload.sub_type = model.sub_type || null
+      }
+
       // SCOPED BY tenant_id: user may have multiple profile rows (multi-tenant).
       // Without this scope, the trigger that forbids changing user_type fires for
       // OTHER tenants' profiles even when this tenant's user_type is unchanged.
       const { error: profError } = await supabase
         .from('profiles')
-        .update({
-          user_type: model.user_type,
-          business_model_selected: true,
-          onboarded: true,
-        })
+        .update(profilePayload)
         .eq('auth_user_id', targetAuthId)
         .eq('tenant_id', resolvedTenantId)
 
@@ -367,8 +379,8 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
       }
       console.log('[Onboarding] profiles PATCH success')
 
-      if (resolvedTenantId && model.sub_type) {
-        const subType = model.sub_type
+      if (resolvedTenantId) {
+        const subType = model.sub_type || ''
         const baseType = subType.includes('sapi') ? 'sapi'
           : subType.includes('domba') && !subType.includes('kambing') ? 'domba'
           : subType.includes('kambing') && !subType.includes('domba') ? 'kambing'
@@ -379,11 +391,13 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         const { error: tenError } = await supabase
           .from('tenants')
           .update({
-            sub_type: model.sub_type,
+            sub_type: model.sub_type || null,
             business_vertical: model.key,
             business_name: formattedName,
             province: province || null,
             base_livestock_type: baseType,
+            owner_name: profile?.full_name || user?.user_metadata?.full_name || null,
+            updated_at: new Date().toISOString(),
           })
           .eq('id', resolvedTenantId)
         

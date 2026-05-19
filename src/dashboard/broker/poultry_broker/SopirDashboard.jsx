@@ -8,15 +8,14 @@ import {
   Navigation, CheckCircle, Save, X,
   DollarSign, Menu
 } from 'lucide-react'
-import { format, isAfter, parseISO } from 'date-fns'
-import { id } from 'date-fns/locale'
+import { isAfter, parseISO } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { formatIDR, formatWeight, formatEkor, safeNumber } from '@/lib/format'
+import { formatIDR, formatWeight, formatEkor } from '@/lib/format'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet'
@@ -28,11 +27,10 @@ import { useUpdateDelivery } from '@/lib/hooks/useUpdateDelivery'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export default function SopirDashboard() {
-  const { profile, user, tenant } = useAuth()
+  const { profile } = useAuth()
   const { setSidebarOpen } = useOutletContext() || {}
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { updateTiba } = useUpdateDelivery()
   const [isUpdateSheetOpen, setIsUpdateSheetOpen] = useState(false)
   const [selectedDelivery, setSelectedDelivery] = useState(null)
   

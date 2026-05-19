@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import BottomNav from '../components/BottomNav'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import DesktopSidebarLayout from './DesktopSidebarLayout'
@@ -13,13 +13,12 @@ import TopBar from '../components/TopBar'
 import InstallAppPrompt from '@/components/InstallAppPrompt'
 
 export default function PeternakLayout() {
-  const { profile, loading, tenant, isSuperadmin } = useAuth()
-  const navigate = useNavigate()
+  const { _profile, loading, tenant, isSuperadmin } = useAuth()
   const location = useLocation()
   useNotificationGenerator()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [rightAction, setRightAction] = useState(null)
+  const [_rightAction, setRightAction] = useState(null)
 
   // Reset rightAction on every navigation
   useEffect(() => {

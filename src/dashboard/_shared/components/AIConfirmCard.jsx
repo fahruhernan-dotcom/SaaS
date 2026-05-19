@@ -226,7 +226,7 @@ function formatValue(key, value) {
   if (/qty_ekor|count/.test(key) && typeof value === 'number') return `${value.toLocaleString('id-ID')} ekor`
   if (/weight|qty_kg/.test(key) && typeof value === 'number') return `${value.toLocaleString('id-ID')} kg`
   if (DATE_FIELDS.has(key) && (typeof value === 'string' || value instanceof Date)) {
-    try { const d = new Date(value); if (!isNaN(d.getTime())) return format(d, 'dd MMM yyyy') } catch {}
+    try { const d = new Date(value); if (!isNaN(d.getTime())) return format(d, 'dd MMM yyyy') } catch { /* ignore invalid date */ }
   }
   if (Array.isArray(value)) return `${value.length} item`
   return String(value)
@@ -453,16 +453,7 @@ export default function AIConfirmCard({
   userRole = 'owner',
   onCommit,           // optional: enables 8s countdown before commit
 }) {
-  if (!pendingEntry) return null
-
-  const config = INTENT_CONFIG[pendingEntry.intent] || { label: pendingEntry.intent, Icon: ShoppingCart, color: 'emerald', fields: [] }
-  const { label, Icon, color } = config
-  const c = colorMap[color] || colorMap.emerald
-  const confidence = pendingEntry.confidence ?? 1
-  const isLowConfidence = confidence < 0.8
-  const validation = pendingEntry._validation
-  const hasDirtyFields = Object.keys(pendingEntry._dirty || {}).length > 0
-
+  // Hooks must be declared before any early return
   const [step, setStep] = useState(unresolvedEntities.length > 0 ? 'resolve' : 'confirm')
   const [pendingCommit, setPendingCommit] = useState(false)
   const timerRef = useRef(null)
@@ -496,6 +487,16 @@ export default function AIConfirmCard({
     }
   }, [pendingCommit])
 
+  if (!pendingEntry) return null
+
+  const config = INTENT_CONFIG[pendingEntry.intent] || { label: pendingEntry.intent, Icon: ShoppingCart, color: 'emerald', fields: [] }
+  const { label, Icon, color } = config
+  const c = colorMap[color] || colorMap.emerald
+  const confidence = pendingEntry.confidence ?? 1
+  const isLowConfidence = confidence < 0.8
+  const validation = pendingEntry._validation
+  const hasDirtyFields = Object.keys(pendingEntry._dirty || {}).length > 0
+
   const handleConfirmClick = () => {
     if (onCommit) {
       setPendingCommit(true)
@@ -528,8 +529,8 @@ export default function AIConfirmCard({
   const allKeys = getVisibleFields(pendingEntry.intent, rawKeys, vertical)
 
   // ── Dynamic field options from snapshot ──────────────────
-  const snapshot = pendingEntry._context?.snapshot || {}
   const dynamicFieldOptions = React.useMemo(() => {
+    const snapshot = pendingEntry?._context?.snapshot || {}
     const farmOpts = (snapshot.farms || []).map(f => ({ value: f.name, label: f.name }))
     const rpaOpts  = (snapshot.rpas  || []).map(r => ({ value: r.name, label: r.name }))
     const vehOpts  = (snapshot.vehicles || []).map(v => ({ value: v.name, label: `${v.name}${v.type ? ` · ${v.type}` : ''}` }))
@@ -542,7 +543,8 @@ export default function AIConfirmCard({
       vehicle_plate: vehOpts,
       driver_name:   drvOpts,
     }
-  }, [snapshot])  // eslint-disable-line
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- pendingEntry ref covers nested snapshot
+  }, [pendingEntry])
 
   const dataEntries = allKeys.map(key => [key, (pendingEntry.extracted_data || {})[key]])
 

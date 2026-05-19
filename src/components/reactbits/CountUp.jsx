@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useInView, useMotionValue, useTransform, animate } from 'framer-motion'
+import { useInView, useMotionValue, animate } from 'framer-motion'
 
 function CountUp({
   from = 0,

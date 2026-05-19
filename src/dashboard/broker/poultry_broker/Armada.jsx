@@ -9,11 +9,7 @@ import {
     Wrench, Building, ChevronRight,
     Search, X, Clock, DollarSign, Menu
 } from 'lucide-react'
-import { 
-    format, differenceInDays, isAfter, 
-    parseISO, startOfMonth, endOfMonth 
-} from 'date-fns'
-import { id } from 'date-fns/locale'
+import { format, differenceInDays } from 'date-fns'
 import { useOutletContext, Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { logSupabaseError } from '@/lib/logger/supabaseLogger'
@@ -27,7 +23,7 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { DatePicker } from '@/components/ui/DatePicker'
 import * as z from 'zod'
-import { formatIDR, formatIDRShort, safeNumber, safePercent, formatEkor, formatWeight } from '@/lib/format'
+import { formatIDR, formatIDRShort, safeNumber } from '@/lib/format'
 import { InputNumber } from '@/components/ui/InputNumber'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 
@@ -97,7 +93,6 @@ export default function Armada() {
     const isDesktop = useMediaQuery('(min-width: 1024px)')
     const { tenant } = useAuth()
     const { setSidebarOpen } = useOutletContext() || {}
-    const queryClient = useQueryClient()
     const [activeTab, setActiveTab] = useState('kendaraan')
     
     // --- QUERIES ---
@@ -1275,7 +1270,7 @@ function ExpenseSheet({ isOpen, onClose, vehicle, tenantId }) {
                     </SheetDescription>
                 </SheetHeader>
 
-                <form onSubmit={handleSubmit(onSubmit, (errs) => toast.error('Harap lengkapi form dengan benar!'))} className="space-y-6">
+                <form onSubmit={handleSubmit(onSubmit, (_errs) => toast.error('Harap lengkapi form dengan benar!'))} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                              <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Jenis Biaya *</Label>
@@ -1504,7 +1499,7 @@ function DriverDetailSheet({ driver, onClose }) {
             toast.success('Upah standar berhasil diperbarui')
             setEditingStandard(false)
             queryClient.invalidateQueries(['drivers'])
-        } catch (error) {
+        } catch (_error) {
             toast.error('Gagal memperbarui upah standar')
         } finally {
             setIsSavingStandard(false)
@@ -1525,7 +1520,7 @@ function DriverDetailSheet({ driver, onClose }) {
             setEditingWageId(null)
             queryClient.invalidateQueries(['driver-deliveries'])
             queryClient.invalidateQueries(['drivers'])
-        } catch (error) {
+        } catch (_error) {
             toast.error('Gagal memperbarui upah')
         } finally {
             setIsSaving(false)

@@ -21,7 +21,7 @@ export default function AISuccessCard({ entry, onUndo, onClose, undoCountdown })
   let displayDate = 'Hari ini'
   try {
     displayDate = format(new Date(formattedDate), 'dd MMM yyyy')
-  } catch(e) {}
+  } catch (_e) { /* ignore invalid date */ }
   
   const revenue = isPenjualan ? (data.weight_kg || 0) * (data.price_per_kg || 0) : 0
   

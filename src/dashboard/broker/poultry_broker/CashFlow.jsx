@@ -9,17 +9,17 @@ import {
     ShoppingCart, Truck, Receipt, ChevronRight, Clock,
     Download, ArrowRight, MapPin, Building, Package
 } from 'lucide-react'
-import { 
-    format, startOfWeek, endOfWeek, startOfMonth, 
-    endOfMonth, subMonths, eachDayOfInterval, 
-    isWithinInterval, parseISO, addDays, differenceInDays,
-    isSameDay, startOfDay 
+import {
+    format, startOfWeek, endOfWeek, startOfMonth,
+    endOfMonth, subMonths, eachDayOfInterval, addDays,
+    parseISO, differenceInDays,
+    isSameDay, startOfDay
 } from 'date-fns'
 import { id } from 'date-fns/locale'
 import { useNavigate } from 'react-router-dom'
 import { 
-  formatIDR, formatIDRShort, formatDate, formatWeight, safeNum,
-  calcTotalJual, calcNetProfit, formatPaymentStatus 
+  formatIDR, formatIDRShort, formatDate, formatWeight,
+  calcNetProfit, formatPaymentStatus
 } from '@/lib/format'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -119,7 +119,6 @@ export default function CashFlow() {
     const navigate = useNavigate()
     const isDesktop = useMediaQuery('(min-width: 1024px)')
     const { tenant } = useAuth()
-    const queryClient = useQueryClient()
     const sub = getSubscriptionStatus(tenant)
     
     // --- PERIOD STATE ---
@@ -135,9 +134,10 @@ export default function CashFlow() {
                 return { start: startOfWeek(today, { weekStartsOn: 1 }), end: endOfWeek(today, { weekStartsOn: 1 }) }
             case 'month':
                 return { start: startOfMonth(today), end: endOfMonth(today) }
-            case 'lastMonth':
+            case 'lastMonth': {
                 const lastMonth = subMonths(today, 1)
                 return { start: startOfMonth(lastMonth), end: endOfMonth(lastMonth) }
+            }
             case 'all': {
                 const earliest = tenant?.created_at ? parseISO(tenant.created_at) : new Date(today.getFullYear(), 0, 1)
                 return { start: earliest, end: endOfMonth(today) }
@@ -149,8 +149,8 @@ export default function CashFlow() {
         }
     }, [selectedPeriod, customRange, tenant?.created_at])
 
-    const startStr = format(dateRange.start, 'yyyy-MM-dd')
-    const endStr = format(dateRange.end, 'yyyy-MM-dd')
+    const _startStr = format(dateRange.start, 'yyyy-MM-dd')
+    const _endStr = format(dateRange.end, 'yyyy-MM-dd')
 
     // --- DATA QUERY ---
     const { data, isLoading } = useCashFlow(selectedPeriod === 'all' ? 'all' : selectedPeriod === 'custom' ? 'custom' : selectedPeriod)
@@ -167,8 +167,8 @@ export default function CashFlow() {
         summary = {}, 
         sales = [], 
         purchases = [], 
-        deliveries = [], 
-        losses = [], 
+        deliveries: _deliveries = [],
+        losses: _losses = [],
         extras = [], 
         payments = [],
         unpaidSales = [],
@@ -237,12 +237,12 @@ export default function CashFlow() {
             return { ...sale, urgency, daysUntilDue, daysSinceTx }
         })
         .filter(a => a.urgency)
-        .sort((a, b) => (a.urgency === 'red' ? -1 : 1))
+        .sort((a, _b) => (a.urgency === 'red' ? -1 : 1))
         .slice(0, 3)
     }, [unpaidSales])
 
     // --- ENHANCED CHART DATA PROCESSING ---
-    const { chartData, breakdownData, totalTransport, totalSusutValue } = useMemo(() => {
+    const { chartData, breakdownData: _breakdownData, totalTransport: _totalTransport, totalSusutValue: _totalSusutValue } = useMemo(() => {
         if (!data) return { chartData: [], breakdownData: [], totalTransport: 0, totalSusutValue: 0 }
 
         const { start: from, end: to } = (() => {
@@ -257,7 +257,7 @@ export default function CashFlow() {
         const endDate = startOfDay(to)
 
         const days = eachDayOfInterval({ start: startDate, end: endDate })
-        const todayStr = format(today, 'yyyy-MM-dd')
+        const _todayStr = format(today, 'yyyy-MM-dd')
         
         // Processing Previous Data
         const prevDays = previousData ? eachDayOfInterval({ 
@@ -289,6 +289,7 @@ export default function CashFlow() {
             const dayOut = dayPurchOut + dayDelivOut + dayExtraOut
             
             if (!isFuture) {
+                // eslint-disable-next-line react-hooks/immutability -- accumulator pattern, local mutation inside useMemo
                 runningSaldo += (dayIn - dayOut)
             }
 
@@ -700,7 +701,7 @@ export default function CashFlow() {
                                         verticalAlign="bottom" 
                                         align="center"
                                         wrapperStyle={{ paddingTop: 20 }}
-                                        content={({ payload }) => (
+                                        content={({ payload: _payload }) => (
                                             <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
                                                 <LegendItem color="#10B981" label="Saldo Minggu Ini" />
                                                 <LegendItem color="#4B6478" label="Minggu Lalu" dashed />
@@ -947,7 +948,7 @@ export default function CashFlow() {
 
 // --- SUB-COMPONENTS ---
 
-function SummaryCard({ label, value, icon: Icon, color, sub, className, highlight, isDesktop, onClick, clickable, isKg, isRupiahOnly }) {
+function SummaryCard({ label, value, icon: Icon, color, sub, className, _highlight, isDesktop, onClick, clickable, isKg, _isRupiahOnly }) {
     const isEmerald = color === 'emerald'
     const isAmber = color === 'amber'
     const isRed = color === 'red'

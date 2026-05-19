@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { AlertTriangle, TrendingDown, Package, FileText, CheckCircle, Plus, Info, ChevronRight } from 'lucide-react';
 import { useLossReports } from '@/lib/hooks/useLossReports';
-import { formatIDR, formatEkor, formatKg } from '@/lib/format';
+import { formatIDR, formatEkor, formatDate } from '@/lib/format';
 import TopBar from '../components/TopBar';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
 
 export default function LossReport() {
   const { data: reports, isLoading } = useLossReports();
-  const [showAdd, setShowAdd] = useState(false);
+  const [_showAdd, setShowAdd] = useState(false);
 
   const totalLoss = reports?.reduce((s, r) => s + (r.financial_loss || 0), 0) || 0;
   const mortality = reports?.filter(r => r.loss_type === 'mortality').reduce((s, r) => s + (r.chicken_count || 0), 0) || 0;

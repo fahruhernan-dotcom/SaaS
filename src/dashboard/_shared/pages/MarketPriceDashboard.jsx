@@ -10,13 +10,11 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer
 } from 'recharts'
-import { format, startOfWeek, startOfMonth, addDays, subDays } from 'date-fns'
+import { format, startOfWeek, startOfMonth, subDays } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { isSuperadmin } from '@/lib/auth'
 import { isOwner, isStaff } from '@/lib/auth/business-roles'
-import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
-import { useMarketTrends } from '@/lib/hooks/useMarketTrends'
 import { formatIDR, formatDate, safeNum } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -25,8 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from '@/components/ui/command'
-import { toast } from 'sonner'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { cn } from '@/lib/utils'
 import { PROVINCES } from '@/lib/constants/regions'
 
@@ -90,7 +87,7 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.07 } }
 }
 
-function normaliseRow(row) {
+function _normaliseRow(row) {
   return {
     ...row,
     avg_buy_price:  safeNum(row.avg_buy_price)  || safeNum(row.farm_gate_price)  || 0,
@@ -106,9 +103,7 @@ function formatShortDate(dateStr) {
 
 export default function MarketPriceDashboard() {
   const { profile, tenant } = useAuth()
-  const queryClient = useQueryClient()
-  const isDesktop = useMediaQuery('(min-width: 1024px)')
-  const canWrite = isOwner(profile) || isStaff(profile) || isSuperadmin(profile)
+  const _canWrite = isOwner(profile) || isStaff(profile) || isSuperadmin(profile)
 
   // Province is sourced from tenant account, with manual override on this page
   const [selectedProvince, setSelectedProvince] = useState(
@@ -267,13 +262,13 @@ export default function MarketPriceDashboard() {
   const buyDiff = latestRow && prevRow ? latestRow.avg_buy_price - prevRow.avg_buy_price : 0
   const sellDiff = latestRow && prevRow ? latestRow.avg_sell_price - prevRow.avg_sell_price : 0
 
-  const avgMargin7d = useMemo(() => {
+  const _avgMargin7d = useMemo(() => {
     const recent = dedupedPrices.slice(0, 7).filter(r => r.broker_margin > 0)
     if (!recent.length) return 0
     return Math.round(recent.reduce((s, r) => s + r.broker_margin, 0) / recent.length)
   }, [dedupedPrices])
 
-  const latestDelta = trendData?.[trendData.length - 1]?.delta ?? 0
+  const _latestDelta = trendData?.[trendData.length - 1]?.delta ?? 0
 
   // Spread: broker's latest avg buy price vs Chickin.id reference
   const latestTrend = trendData?.[trendData.length - 1]

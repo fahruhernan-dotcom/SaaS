@@ -23,7 +23,7 @@ const PhoneInput = forwardRef(({ className, onChange, value, ...props }, ref) =>
           duration: 2000
         })
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error('Gagal membaca clipboard', {
         description: 'Pastikan Anda memberi izin akses clipboard di browser.'
       })

@@ -165,7 +165,7 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
       if (error) throw error
       toast.success('Transaksi selesai')
       queryClient.invalidateQueries({ queryKey: ['sales', tenant?.id] })
-    } catch (err) {
+    } catch (_err) {
       toast.error('Gagal menyelesaikan transaksi')
     }
   }
@@ -178,7 +178,7 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
   const deliveryCost = Number(data?.delivery_cost || 0)
   
   const susutWeight = safeNum(delivery?.shrinkage_kg)
-  const paramPricePerKg = isEditing ? Number(editData.price_per_kg || 0) : safeNum(data?.price_per_kg)
+  const _paramPricePerKg = isEditing ? Number(editData.price_per_kg || 0) : safeNum(data?.price_per_kg)
   const shrinkagePercent = delivery?.initial_weight_kg > 0 
     ? (safeNum(delivery.shrinkage_kg) / delivery.initial_weight_kg) * 100 
     : 0

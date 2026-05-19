@@ -98,7 +98,7 @@ export default function AIChatBubble() {
     retryLastMessage,
     isEntryLocked,
     getEntryParent,
-    entryResults,
+    entryResults: _entryResults,
     resetConversation,
     cancelAI, // Add this
     error,
@@ -182,7 +182,7 @@ export default function AIChatBubble() {
   }
 
   // ── Confirm / Reject handlers ─────────────────────────────
-  const handleConfirm = useCallback(async () => {
+  const _handleConfirm = useCallback(async () => {
     if (!pendingEntry) return
     const data = await confirmEntry(pendingEntry.id)
     if (data) {
@@ -195,7 +195,7 @@ export default function AIChatBubble() {
     }
   }, [pendingEntry, confirmEntry, queryClient])
 
-  const handleReject = useCallback(async () => {
+  const _handleReject = useCallback(async () => {
     if (!pendingEntry) return
     await rejectEntry(pendingEntry.id)
   }, [pendingEntry, rejectEntry])

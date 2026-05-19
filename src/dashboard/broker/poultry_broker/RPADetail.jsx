@@ -11,12 +11,11 @@ import {
   ChevronDown,
   Check
 } from 'lucide-react'
-import { formatEkor, formatKg } from '@/lib/format'
-import { useRPA } from '@/lib/hooks/useRPA'
+import { formatEkor } from '@/lib/format'
 import { useSales } from '@/lib/hooks/useSales'
 import { 
-  formatIDR, formatDate, formatRelative, formatWeight, 
-  formatBuyerType, formatPaymentTerms, formatPaymentStatus, safeNumber, safePercent, 
+  formatIDR, formatDate, formatWeight,
+  formatBuyerType, formatPaymentTerms, formatPaymentStatus, safeNumber,
   formatIDRShort, safeNum, calcTotalJual, calcRemainingAmount
 } from '@/lib/format'
 import { Button } from '@/components/ui/button'
@@ -146,12 +145,9 @@ export default function RPADetail() {
   const [showDeleteRPA, setShowDeleteRPA] = useState(false)
   const [showConfirmAllPaid, setShowConfirmAllPaid] = useState(false)
 
-  if (!rpa && !loadingSales && !loadingRpa) return <EmptyState icon={AlertCircle} title="RPA Tidak Ditemukan" description="Data RPA yang Anda cari mungkin telah dihapus." action={<Button onClick={() => navigate('/broker/rpa')}>Kembali ke List</Button>} />
-
+  // Hooks must be declared before any early return
   const unpaidSales = useMemo(() => rpaSales.filter(s => calcRemainingAmount(s) > 0), [rpaSales])
-  
   const totalOutstanding = useMemo(() => unpaidSales.reduce((acc, s) => acc + calcRemainingAmount(s), 0), [unpaidSales])
-
   const activeSalesCount = unpaidSales.length
 
   const canPay = (sale) => {
@@ -161,6 +157,8 @@ export default function RPADetail() {
   }
 
   const allDelivered = useMemo(() => unpaidSales.every(sale => canPay(sale)), [unpaidSales])
+
+  if (!rpa && !loadingSales && !loadingRpa) return <EmptyState icon={AlertCircle} title="RPA Tidak Ditemukan" description="Data RPA yang Anda cari mungkin telah dihapus." action={<Button onClick={() => navigate('/broker/rpa')}>Kembali ke List</Button>} />
 
   const handleMarkAllPaid = async () => {
     if (!allDelivered) {
@@ -489,7 +487,7 @@ function SaleList({ sales, rpa, onPay, canPayFunc }) {
             toast.success('Transaksi dilunasi!')
             queryClient.invalidateQueries({ queryKey: ['sales', tenant?.id] })
             queryClient.invalidateQueries({ queryKey: ['rpa-clients', tenant?.id] })
-        } catch (err) {
+        } catch (_err) {
             toast.error('Gagal melunasi')
         } finally {
             setConfirmFullPaid({ open: false, sale: null })
@@ -787,14 +785,14 @@ function FormPaymentModal({ sale, onClose }) {
         method: z.string().default('transfer')
     })
 
-    const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
+    const { handleSubmit, watch, setValue, formState: { errors } } = useForm({
         resolver: zodResolver(paymentSchema),
         defaultValues: { amount: currentRemaining, method: 'transfer' }
     })
 
     const amount = watch('amount')
     const method = watch('method')
-    const remaining = currentRemaining - safeNumber(amount)
+    const _remaining = currentRemaining - safeNumber(amount)
     const isFull = safeNumber(amount) >= currentRemaining
 
     const onFormSubmit = async (data) => {

@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 
 function BlurText({

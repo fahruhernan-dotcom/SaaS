@@ -42,7 +42,7 @@ import { Check, ChevronsUpDown } from 'lucide-react'
 
 export default function HargaPasar() {
   const { profile, tenant } = useAuth()
-  const isViewOnly = profile?.role === 'view_only'
+  const _isViewOnly = profile?.role === 'view_only'
   const canWrite = profile?.role === 'owner' || profile?.role === 'staff'
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [isManualOpen, setIsManualOpen] = useState(false)

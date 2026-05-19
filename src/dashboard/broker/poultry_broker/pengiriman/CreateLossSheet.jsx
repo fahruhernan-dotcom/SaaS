@@ -14,13 +14,11 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-export default function CreateLossSheet({ isOpen, onClose, initialData }) {
+export default function CreateLossSheet({ isOpen, onClose, _initialData }) {
     const { tenant } = useAuth()
     const queryClient = useQueryClient()
     const [isLoading, setIsLoading] = useState(false)
     const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0])
-    const [weightLoss, setWeightLoss] = useState(0)
-    const [pricePerKg, setPricePerKg] = useState(0)
 
     const handleCreate = async (e) => {
         e.preventDefault()

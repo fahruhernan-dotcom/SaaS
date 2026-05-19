@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { format, addDays } from 'date-fns'
+import { format } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
 import {
   Tag, Sparkles, Building2,

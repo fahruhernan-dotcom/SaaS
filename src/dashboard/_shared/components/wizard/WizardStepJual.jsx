@@ -135,7 +135,7 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
   const paidAmount = watch('paid_amount')
   const dueDate = watch('due_date')
   const transactionDate = watch('transaction_date')
-  const notes = watch('notes')
+  const _notes = watch('notes')
 
   const { data: rpaClients } = useQuery({
     queryKey: ['rpa-clients-active-simple', tenant?.id],

@@ -13,6 +13,7 @@ import { InputRupiah } from '@/components/ui/InputRupiah'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { safeNum } from '@/lib/format'
 import { TrendingDown, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
 
 const FIELD_LABELS = {
   rpa_id: 'Pembeli RPA',
@@ -172,7 +173,7 @@ export default function WizardStepOrder({ onNext, onBack }) {
   const paidAmount = watch('paid_amount')
   const dueDate = watch('due_date')
   const transactionDate = watch('transaction_date')
-  const notes = watch('notes')
+  const _notes = watch('notes')
 
   const { data: rpaClients } = useQuery({
     queryKey: ['rpa-clients-active', tenant?.id],

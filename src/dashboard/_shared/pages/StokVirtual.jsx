@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Search, Filter, Package, Calendar, Weight, ChevronRight, Phone, MessageSquare } from 'lucide-react';
 import { useChickenBatches } from '@/lib/hooks/useChickenBatches';
-import { formatEkor, formatDate, formatKg } from '@/lib/format';
+import { formatEkor, formatDate } from '@/lib/format';
 import TopBar from '../components/TopBar';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';

@@ -4,7 +4,7 @@ import { Wallet, ArrowUpRight, ArrowDownRight, Calendar, Filter, Download, Info 
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { useCashFlow } from '@/lib/hooks/useCashFlow';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { formatIDR, formatIDRShort } from '@/lib/format';
+import { formatIDR } from '@/lib/format';
 import TopBar from '../components/TopBar';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -26,7 +26,7 @@ export default function CashFlow() {
     };
   })();
 
-  const { data, isLoading } = useCashFlow(startStr, endStr, tenant?.id);
+  const { data } = useCashFlow(startStr, endStr, tenant?.id);
   const cashflow = data?.summary || {};
 
   return (

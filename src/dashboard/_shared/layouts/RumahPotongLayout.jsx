@@ -17,7 +17,7 @@ import { SidebarProvider } from '@/components/ui/sidebar'
  * Handles both Mobile (BottomNav + AppSidebar) and Desktop (DesktopSidebarLayout)
  */
 export default function RumahPotongLayout() {
-  const { profile, loading, tenant, isSuperadmin } = useAuth()
+  const { _profile, loading, tenant, isSuperadmin } = useAuth()
   useNotificationGenerator()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [sidebarOpen, setSidebarOpen] = useState(false)

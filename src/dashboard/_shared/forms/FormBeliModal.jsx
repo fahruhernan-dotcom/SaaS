@@ -56,7 +56,7 @@ export default function FormBeliModal({ isOpen, onClose }) {
       toast.success('Pembelian berhasil dicatat! 💸');
       reset();
       onClose();
-    } catch (err) {
+    } catch (_err) {
       toast.error('Gagal menyimpan data.');
     }
   };

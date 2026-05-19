@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, TrendingUp, TrendingDown, AlertTriangle, ChevronRight, Package, ClipboardList } from 'lucide-react';
 import { useForecast } from '@/lib/hooks/useForecast';

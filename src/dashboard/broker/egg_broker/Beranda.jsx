@@ -27,8 +27,8 @@ export default function EggBeranda() {
     return _navigate(path, options)
   }
   const { data: inventory, isLoading: loadingInv } = useEggInventory()
-  const { data: sales, isLoading: loadingSales } = useEggSales()
-  const { data: customers, isLoading: loadingCust } = useEggCustomers()
+  const { data: sales, isLoading: _loadingSales } = useEggSales()
+  const { data: customers, isLoading: _loadingCust } = useEggCustomers()
 
   const stats = useMemo(() => {
     const totalStok = inventory?.reduce((acc, i) => acc + (i.current_stock_butir || 0), 0) || 0

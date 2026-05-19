@@ -119,7 +119,7 @@ function Step0ModeSelect({ onSelect }) {
 
 // ─── Main Wizard ──────────────────────────────────────────────────────────────
 export default function TransaksiWizard({ isOpen, onClose }) {
-  const { tenant, profile } = useAuth()
+  const { tenant, _profile } = useAuth()
   const queryClient = useQueryClient()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 
@@ -131,7 +131,7 @@ export default function TransaksiWizard({ isOpen, onClose }) {
   const [submitting, setSubmitting] = useState(false)
   const [successData, setSuccessData] = useState(null)
 
-  const resetWizard = () => {
+  const _resetWizard = () => {
     setMode(null)
     setCurrentStep(0)
     setStep1Data(null)
@@ -169,7 +169,7 @@ export default function TransaksiWizard({ isOpen, onClose }) {
           if (parsed.mode && parsed.updatedAt) {
             setHasDraft(true)
           }
-        } catch (e) {
+        } catch (_e) {
           localStorage.removeItem(`ternak_os_wizard_draft_${tenant?.id}`)
         }
       }

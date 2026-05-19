@@ -89,7 +89,7 @@ export default function AdminSubscriptions() {
   const [isGenerateOpen, setIsGenerateOpen] = useState(false)
   const [genForm, setGenForm] = useState({ tenantId: '', plan: 'pro', billingMonths: 1, discountPct: 0, notes: '' })
   const [manualPrice, setManualPrice] = useState(0)
-  const [confirmSuccess, setConfirmSuccess] = useState(false)
+  const [_confirmSuccess, setConfirmSuccess] = useState(false)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
@@ -98,7 +98,7 @@ export default function AdminSubscriptions() {
   const [deleteBankTarget, setDeleteBankTarget] = useState(null)
 
   const ITEMS_PER_PAGE = 20
-  const today = new Date().toISOString().slice(0, 10)
+  const _today = new Date().toISOString().slice(0, 10)
 
   // Stats calculation
   const stats = useMemo(() => {

@@ -75,7 +75,7 @@ export default function FormJualModal({ isOpen, onClose }) {
       toast.success('Penjualan berhasil dicatat! 🚀');
       reset();
       onClose();
-    } catch (err) {
+    } catch (_err) {
       toast.error('Gagal menyimpan data.');
     }
   };

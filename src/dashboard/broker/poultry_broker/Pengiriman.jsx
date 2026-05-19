@@ -11,16 +11,14 @@ import {
     ChevronDown, ChevronsUpDown, Trash2,
     Pencil, PencilLine, Printer, X, FileText, Menu
 } from 'lucide-react'
-import { format, parseISO } from 'date-fns'
-import { id } from 'date-fns/locale'
+import { format } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
-import { formatIDR, safeNumber, safePercent, safeNum, formatWeight, formatEkor } from '@/lib/format'
-import { useUpdateDelivery } from '@/lib/hooks/useUpdateDelivery'
+import { formatIDR, safeNum } from '@/lib/format'
 import { InputNumber } from '@/components/ui/InputNumber'
 // Components
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -73,7 +71,7 @@ const containerVariants = {
     }
 }
 
-const itemVariants = {
+const _itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { 
         opacity: 1, y: 0,
@@ -86,7 +84,7 @@ export default function Pengiriman() {
     const { tenant, profile } = useAuth()
     const { setSidebarOpen } = useOutletContext() || {}
     const queryClient = useQueryClient()
-    const [activeTab, setActiveTab] = useState('pengiriman')
+    const [_activeTab, setActiveTab] = useState('pengiriman')
     const [deliveryFilter, setDeliveryFilter] = useState('semua')
     
     // --- MODALS STATE ---

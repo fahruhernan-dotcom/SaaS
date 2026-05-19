@@ -26,8 +26,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { Loader2, Trash2, X, Plus, UserPlus, Users, Clock, Copy, Pencil, Save, AlertCircle, Menu, Shield } from 'lucide-react';
-import { formatDistanceToNow, differenceInDays } from 'date-fns';
-import { id } from 'date-fns/locale';
+import { differenceInDays } from 'date-fns';
 import { TimSkeleton } from '@/components/ui/BrokerPageSkeleton'
 import { PETERNAK_TIM_CONFIG } from './timConfigs'
 
@@ -38,9 +37,9 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
   const cardRadius = cfg.cardRadius || '16px'
   const cardBg = cfg.cardBg || '#0C1319'
   const inputBg = cfg.inputBg || '#111C24'
-  const inviteRoles = cfg.inviteRoles || []
-  const defaultInviteRole = cfg.defaultInviteRole || 'staff'
-  const inviteCodeTitle = cfg.inviteCodeTitle || 'Kode Undangan Tim'
+  const _inviteRoles = cfg.inviteRoles || []
+  const _defaultInviteRole = cfg.defaultInviteRole || 'staff'
+  const _inviteCodeTitle = cfg.inviteCodeTitle || 'Kode Undangan Tim'
   const { profile, tenant: authTenant } = useAuth();
   const sub = getSubscriptionStatus(authTenant);
   const queryClient = useQueryClient();
@@ -273,7 +272,7 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
   if (loadingTenant || loadingMembers) return <TimSkeleton />
 
   const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
-  const memberLimit = isStarter ? 1 : sub.plan === 'business' ? Infinity : 3
+  const _memberLimit = isStarter ? 1 : sub.plan === 'business' ? Infinity : 3
 
   const handleInviteClick = () => {
     const totalMembers = members.length + invitations.length;
@@ -725,7 +724,7 @@ function InviteSheet({ isOpen, onClose, onSubmit, isPending, showCode, inviteCod
   const accent = cfg.accent || '#10B981'
   const inviteRoles = cfg.inviteRoles || []
   const defaultInviteRole = cfg.defaultInviteRole || 'staff'
-  const inviteCodeTitle = cfg.inviteCodeTitle || 'Kode Undangan Tim'
+  const _inviteCodeTitle = cfg.inviteCodeTitle || 'Kode Undangan Tim'
   const [role, setRole] = useState(defaultInviteRole);
   const isDesktop = useMediaQuery('(min-width: 1024px)');
 

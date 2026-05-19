@@ -308,7 +308,7 @@ export function useCloseKdBatch() {
         throw error
       }
     },
-    onSuccess: (_, { batchId }) => {
+    onSuccess: (_, { _batchId }) => {
       qc.invalidateQueries({ queryKey: ['kd-batches', tenant?.id] })
       qc.invalidateQueries({ queryKey: ['kd-active-batches', tenant?.id] })
       toast.success('Batch ditutup')
@@ -370,7 +370,7 @@ export function useUpdateKdAnimalStatus() {
   const qc = useQueryClient()
   const { tenant } = useAuth()
   return useMutation({
-    mutationFn: async ({ animalId, batchId, status, exit_date }) => {
+    mutationFn: async ({ animalId, _batchId, status, exit_date }) => {
       const { error } = await supabase
         .from('kd_penggemukan_animals')
         .update({ status, exit_date })
@@ -596,7 +596,7 @@ export function useDeleteKdFeedLog() {
   const qc = useQueryClient()
   const { tenant } = useAuth()
   return useMutation({
-    mutationFn: async ({ logId, batch_id }) => {
+    mutationFn: async ({ logId, _batch_id }) => {
       const { error } = await supabase
         .from('kd_penggemukan_feed_logs')
         .update({ is_deleted: true })
@@ -620,7 +620,7 @@ export function useDeleteKdWeightRecord() {
   const qc = useQueryClient()
   const { tenant } = useAuth()
   return useMutation({
-    mutationFn: async ({ recordId, animal_id, batch_id }) => {
+    mutationFn: async ({ recordId, _animal_id, _batch_id }) => {
       const { error } = await supabase
         .from('kd_penggemukan_weight_records')
         .update({ is_deleted: true })
@@ -691,7 +691,7 @@ export function useMoveAnimalToKandang() {
   const qc = useQueryClient()
   const { tenant } = useAuth()
   return useMutation({
-    mutationFn: async ({ animalId, kandangId, kandangSlot, batchId }) => {
+    mutationFn: async ({ animalId, kandangId, kandangSlot, _batchId }) => {
       const { error } = await supabase
         .from('kd_penggemukan_animals')
         .update({

@@ -3,9 +3,9 @@ import { Card } from '@/components/ui/card'
 import { motion } from 'framer-motion'
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react'
 
-export default function KPICard({ label, value, sub, icon: Icon, trend, variant = 'default' }) {
+export default function KPICard({ label, value, sub, icon: Icon, trend, _variant = 'default' }) {
   const isPositive = trend > 0
-  const isNegative = trend < 0
+  const _isNegative = trend < 0
 
   return (
     <Card className={`p-6 bg-[#0C1319] border border-border rounded-3xl hover:border-white/10 transition-all group relative overflow-hidden`}>

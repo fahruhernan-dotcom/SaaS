@@ -1,7 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatDate, formatIDR, formatEkor } from '@/lib/format'
 import { Smartphone } from 'lucide-react'
-import { formatPaymentStatus, calcRemainingAmount } from '@/lib/format'
 
 // ─── Animated check circle ────────────────────────────────────────────────────
 

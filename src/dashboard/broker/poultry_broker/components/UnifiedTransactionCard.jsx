@@ -1,5 +1,4 @@
 import React from 'react'
-import { isAfter, parseISO } from 'date-fns'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
@@ -72,7 +71,7 @@ function getDeliveryBadge(delivery, now = new Date()) {
   return map[currentStatus] || map.preparing
 }
 
-export function UnifiedTransactionCard({ sale, onOpenAuditSheet, onPay, isOwner, isDesktop }) {
+export function UnifiedTransactionCard({ sale, onOpenAuditSheet, onPay, _isOwner, isDesktop }) {
   // Force re-render every 30 minutes to update time-based status badges
   const [now, setNow] = React.useState(new Date())
   React.useEffect(() => {
@@ -95,7 +94,7 @@ export function UnifiedTransactionCard({ sale, onOpenAuditSheet, onPay, isOwner,
   const susutWeight = safeNum(delivery?.shrinkage_kg)
   const isLoss = netProfit < 0
   const isInProgress = delivery?.status === 'preparing' || delivery?.status === 'loading' || delivery?.status === 'on_route'
-  const isOnRoute = delivery?.status === 'on_route'
+  const _isOnRoute = delivery?.status === 'on_route'
   
   const rpaName = sale.rpa_clients?.rpa_name || 'RPA Umum'
   const farmName = sale.purchases?.farms?.farm_name || 'Kandang'

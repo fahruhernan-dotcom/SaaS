@@ -112,7 +112,7 @@ function SummaryChip({ label, value, color }) {
 }
 
 function OrderCard({ order }) {
-  const isTargetPriceMet = order.target_price_per_kg >= 21000; // Mock logic
+  const _isTargetPriceMet = order.target_price_per_kg >= 21000; // Mock logic
 
   return (
     <motion.div
