@@ -336,6 +336,7 @@ function AdminMenuHub({ isOpen, onClose }) {
 export default function AdminLayout({ children }) {
     const isDesktop = useMediaQuery('(min-width: 1024px)')
     const [menuOpen, setMenuOpen] = useState(false)
+    const location = useLocation()
 
     return (
         <div className="min-h-screen bg-[#06090F] selection:bg-emerald-500/30 selection:text-emerald-200 overflow-x-hidden relative">
@@ -352,7 +353,7 @@ export default function AdminLayout({ children }) {
                     <main className="lg:pl-[240px] pt-[calc(2rem+env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))] relative z-10 transition-all duration-500">
                         <div className="max-w-[1440px] mx-auto px-4 lg:px-8">
                             <div className="px-2 lg:px-0">
-                                    <ErrorBoundary>{children || <Outlet />}</ErrorBoundary>
+                                    <ErrorBoundary key={location.key}>{children || <Outlet />}</ErrorBoundary>
                                 </div>
                         </div>
                     </main>
@@ -362,7 +363,7 @@ export default function AdminLayout({ children }) {
                     <AdminTopBar onOpenMenu={() => setMenuOpen(true)} />
                     <main className="pt-20 pb-28">
                         <div className="px-4">
-                                <ErrorBoundary>{children || <Outlet />}</ErrorBoundary>
+                                <ErrorBoundary key={location.key}>{children || <Outlet />}</ErrorBoundary>
                             </div>
                     </main>
                     <AdminBottomNav onOpenMenu={() => setMenuOpen(true)} />

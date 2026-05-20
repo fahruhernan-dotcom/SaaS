@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Calendar, Clock, Tag, ChevronRight, ArrowLeft, ArrowRight, Share2, Facebook, Twitter, MessageCircle, BarChart2, CheckCircle2 } from 'lucide-react';

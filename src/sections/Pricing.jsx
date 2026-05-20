@@ -100,7 +100,8 @@ const Pricing = ({ activeRole, setActiveRole }) => {
     };
   };
 
-  const currentPrices = useMemo(() => getPrices(activeRole), [activeRole, dbPricing, dbConfigs]);
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- React Compiler skip; manual useMemo must remain for pricing calculation
+  const currentPrices = useMemo(() => getPrices(activeRole), [activeRole, dbPricing, dbConfigs]); // eslint-disable-line react-hooks/preserve-manual-memoization
   const discountPctDisplay = dbConfigs?.annual_discount?.discount_percent || 20;
 
   const formatRupiah = (n) =>

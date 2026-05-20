@@ -101,7 +101,7 @@ export default function AcceptInvite() {
         setFormData(prev => ({ ...prev, email: data.invitation.email }));
       }
       setView('choice');
-    } catch (err) {
+    } catch (_err) {
       toast.error('Gagal memverifikasi kode');
     } finally {
       setLoading(false);
@@ -337,7 +337,7 @@ export default function AcceptInvite() {
       setPendingUpdateFn(() => doUpdate);
       setConfirmingSwitch(true);
 
-    } catch (err) {
+    } catch (_err) {
       toast.error('Gagal masuk. Periksa kembali password Anda.');
     } finally {
       setIsSubmitting(false);

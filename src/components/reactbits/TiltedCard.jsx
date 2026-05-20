@@ -8,12 +8,12 @@ function TiltedCard({
   containerWidth = '100%',
   rotateAmplitude = 12,
   scaleOnHover = 1.03,
-  showMobileWarning = false,
-  showTooltip = false,
-  displayOverlayContent = false,
-  overlayContent = null,
-  imageAlt = '',
-  captionContent = null,
+  showMobileWarning: _showMobileWarning = false,
+  showTooltip: _showTooltip = false,
+  displayOverlayContent: _displayOverlayContent = false,
+  overlayContent: _overlayContent = null,
+  imageAlt: _imageAlt = '',
+  captionContent: _captionContent = null,
   style = {},
 }) {
   const ref = useRef(null)

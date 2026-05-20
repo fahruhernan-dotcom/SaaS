@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 
 function Magnet({
   children,
-  padding = 50,
+  padding: _padding = 50,
   disabled = false,
   magnetStrength = 0.5,
   className = '',

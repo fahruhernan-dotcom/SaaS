@@ -264,13 +264,14 @@ function AdminRoute({ children }) {
 
 function AppContentLayout() {
   const { loading } = useAuth();
+  const location = useLocation();
 
   return (
     <>
       <AnimatePresence mode="wait">
         {loading && <LoadingScreen key="loading-screen" />}
       </AnimatePresence>
-      <ErrorBoundary>
+      <ErrorBoundary key={location.key}>
         <Suspense fallback={<LoadingScreen />}>
           <Outlet />
         </Suspense>

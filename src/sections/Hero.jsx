@@ -21,9 +21,12 @@ const Hero = () => {
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const { stats: platformStats, loading: statsLoading } = usePlatformStats();
 
+  // eslint-disable-next-line no-unused-vars -- dynamic pricing from DB for hero display; not yet wired to JSX
   const peternakPrice = dbPricing?.peternak?.pro?.price || 499000;
+  // eslint-disable-next-line no-unused-vars -- dynamic pricing from DB for hero display; not yet wired to JSX
   const brokerPrice = dbPricing?.broker?.pro?.price || 999000;
 
+  // eslint-disable-next-line no-unused-vars -- price formatter paired with peternakPrice/brokerPrice above
   const formatShort = (num) => {
     if (num >= 1000000) return `Rp ${(num / 1000000).toFixed(1).replace('.0', '')}jt`;
     if (num >= 1000) return `Rp ${num / 1000}rb`;

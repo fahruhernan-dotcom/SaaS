@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { 
   Calculator, AlertCircle, Phone, 
   Activity, Calendar, Package,

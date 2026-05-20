@@ -6,11 +6,11 @@ function AnimatedContent({
   distance = 40,
   direction = 'vertical',
   reverse = false,
-  config = { tension: 50, friction: 25 },
+  config: _config = { tension: 50, friction: 25 },
   initialOpacity = 0,
   animateOpacity = true,
   scale = 1,
-  threshold = 0.1,
+  threshold: _threshold = 0.1,
   delay = 0,
   className = '',
 }) {

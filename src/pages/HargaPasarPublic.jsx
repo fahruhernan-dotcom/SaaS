@@ -44,15 +44,15 @@ import { cn } from '@/lib/utils'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import SEO from '@/components/SEO'
-import { format, subDays, startOfWeek, endOfWeek, startOfMonth } from 'date-fns'
+import { format, subDays, startOfWeek, startOfMonth } from 'date-fns'
 import Particles from '@/components/reactbits/Particles'
-import { id as idLocale } from 'date-fns/locale'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const WIB_OFFSET = 7 * 60 * 60 * 1000
 const TODAY = new Date(Date.now() + WIB_OFFSET).toISOString().split('T')[0]
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+// eslint-disable-next-line no-unused-vars -- row normalizer for harga pasar data; not yet wired to current fetch path
 function normaliseRow(row) {
   return {
     ...row,

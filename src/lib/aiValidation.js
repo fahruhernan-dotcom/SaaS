@@ -210,7 +210,7 @@ const VALIDATORS = {
     if (data.amount > 1000000000) warnings.push('Nominal >1 miliar — yakin ini benar?')
   },
 
-  BUAT_INVOICE: (data, errors, warnings) => {
+  BUAT_INVOICE: (data, errors, _warnings) => {
     if (!data.customer_name && !data.customer_id) errors.push('Customer belum ditentukan')
     if (!data.items || !Array.isArray(data.items) || data.items.length === 0) {
       errors.push('Invoice harus punya minimal 1 item')
@@ -222,11 +222,11 @@ const VALIDATORS = {
     }
   },
 
-  CATAT_ORDER: (data, errors, warnings) => {
+  CATAT_ORDER: (data, errors, _warnings) => {
     if (!data.qty_ekor || data.qty_ekor <= 0) errors.push('Jumlah order harus > 0')
   },
 
-  TAMBAH_PRODUK: (data, errors, warnings) => {
+  TAMBAH_PRODUK: (data, errors, _warnings) => {
     if (!data.name) errors.push('Nama produk wajib diisi')
     if (!data.sell_price || data.sell_price <= 0) errors.push('Harga jual harus > 0')
   },

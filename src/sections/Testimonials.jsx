@@ -26,17 +26,19 @@ const Testimonials = () => {
     }
   ];
 
+  // eslint-disable-next-line no-unused-vars -- stagger animation variants; ready to wire to motion.div
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       transition: { staggerChildren: 0.08 }
     }
   };
 
+  // eslint-disable-next-line no-unused-vars -- item animation variants; paired with containerVariants above
   const itemVariants = {
     hidden: { opacity: 0, y: 28 },
-    visible: { 
+    visible: {
       opacity: 1, y: 0,
       transition: { duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] }
     }

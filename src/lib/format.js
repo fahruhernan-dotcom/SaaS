@@ -1,4 +1,4 @@
-import { format, formatDistanceToNow, parseISO, isValid } from 'date-fns'
+import { format, parseISO, isValid } from 'date-fns'
 import { id } from 'date-fns/locale'
 
 export const safeNumber = (val, fallback = 0) => {

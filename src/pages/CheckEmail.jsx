@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, useLocation, Link } from 'react-router-dom'
+import { useLocation, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Mail, RefreshCw, ArrowLeft, CheckCircle2, Clock, Shield } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
 export default function CheckEmail() {
-  const navigate = useNavigate()
   const location = useLocation()
   const email = location.state?.email || ''
 

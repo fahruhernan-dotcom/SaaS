@@ -141,7 +141,7 @@ export function buildSystemPrompt(ctx) {
     snapshot = {},
     today,
     vertical = 'generic',
-    businessModel = 'generic',
+    businessModel: _businessModel = 'generic',
     userMessage = '',
   } = ctx
 

@@ -5,7 +5,7 @@ function Particles({
   particleCount = 50,
   speed = 0.5,
   particleBaseSize = 1.5,
-  moveParticlesOnHover = false,
+  moveParticlesOnHover: _moveParticlesOnHover = false,
   className = '',
 }) {
   const canvasRef = useRef(null)

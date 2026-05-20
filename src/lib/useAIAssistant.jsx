@@ -13,6 +13,7 @@ import { buildSystemPrompt } from './aiPrompt'
 import { toast } from 'sonner'
 import { validateBusinessRules } from './aiValidation'
 import { useBusinessSnapshot } from './useBusinessSnapshot'
+// eslint-disable-next-line no-unused-vars -- AI transaction inserter; not yet wired to current chat flow but is intended insertion path
 import { insertBusinessData } from './aiTransactionInserter'
 import { useAIQuota } from './hooks/useAIQuota'
 import { AI_PLAN_CONFIG } from './constants/planGating'
@@ -120,7 +121,7 @@ export function useAIAssistant({ userType, contextPage }) {
 
   // ── Dependency Map ────────────────────────────────────────
   // Maps AI-generated ID (string) to the actual UUID of the pending entry
-  const [aiIdToEntryIdMap, setAiIdToEntryIdMap] = useState({})
+  const [_aiIdToEntryIdMap, setAiIdToEntryIdMap] = useState({})
 
   // ── Last failed message for retry ─────────────────────────
   const [lastFailedMessage, setLastFailedMessage] = useState(null)
@@ -217,6 +218,7 @@ export function useAIAssistant({ userType, contextPage }) {
   // ═════════════════════════════════════════════════════════
   // PARSE AI RESPONSE
   // ═════════════════════════════════════════════════════════
+  // eslint-disable-next-line no-unused-vars -- core AI response parser; maintained for direct invocation path
   const parseAIResponse = (raw) => {
     let cleaned = (raw || '').trim()
     const match = cleaned.match(/(\{[\s\S]*\}|\[[\s\S]*\])/)
@@ -310,7 +312,7 @@ export function useAIAssistant({ userType, contextPage }) {
   // ═════════════════════════════════════════════════════════
   // PROCESS AI RESULT → PENDING ENTRIES
   // ═════════════════════════════════════════════════════════
-  const processAIParsedResult = useCallback(async (parsed, snapshot, telemetry = {}, anomalies = []) => {
+  const processAIParsedResult = useCallback(async (parsed, snapshot, telemetry = {}, _anomalies = []) => {
     let intents = parsed.intents || []
     if (intents.length === 0 && parsed.intent) {
       intents = [{ intent: parsed.intent, data: parsed.data ?? {}, confidence: parsed.confidence ?? 1.0, clarification: parsed.clarification ?? null }]
@@ -824,12 +826,12 @@ export function useAIAssistant({ userType, contextPage }) {
       // If we undo a parent, we must also undo any children that were already confirmed
       // in this session and are currently staged.
       const childrenToUndo = Object.entries(entryResults)
-        .filter(([resId, res]) => res.status === 'confirmed')
+        .filter(([_resId, res]) => res.status === 'confirmed')
         .map(([resId]) => pendingEntries.find(p => p.id === resId))
         .filter(p => p && p.dependency_id === id)
 
       // Recursive undo for children first
-      for (const child of childrenToUndo) {
+      for (const _child of childrenToUndo) {
         // Note: we'd need to find the stagedId for the child to do it properly.
         // For now, we'll focus on the target entry being undone.
         // If a child is confirmed, it should ideally be blocked from staying confirmed 
