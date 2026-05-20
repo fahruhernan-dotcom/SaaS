@@ -37,6 +37,11 @@ export default function WelcomeOnboard() {
   const [countdown, setCountdown] = useState(5)
   const [visible, setVisible] = useState(true)
 
+  const handleContinue = () => {
+    setVisible(false)
+    setTimeout(() => navigate('/onboarding', { replace: true }), 300)
+  }
+
   // Auto-redirect after 5 seconds
   useEffect(() => {
     if (countdown <= 0) {
@@ -46,11 +51,6 @@ export default function WelcomeOnboard() {
     const t = setTimeout(() => setCountdown(c => c - 1), 1000)
     return () => clearTimeout(t)
   }, [countdown])
-
-  const handleContinue = () => {
-    setVisible(false)
-    setTimeout(() => navigate('/onboarding', { replace: true }), 300)
-  }
 
   return (
     <AnimatePresence>

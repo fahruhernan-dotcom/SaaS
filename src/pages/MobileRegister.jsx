@@ -17,7 +17,7 @@ const GoogleIcon = () => (
 
 export default function MobileRegister({
   mode, setMode, showPassword, setShowPassword, isLoading, googleLoading, 
-  authError, cooldown, isLocked, lockoutRemaining, isBlocked, register, handleSubmit, 
+  authError, cooldown, isLocked: _isLocked, lockoutRemaining: _lockoutRemaining, isBlocked, register, handleSubmit,
   setValue, errors, onSubmit, handleGoogleSignIn, navigate, HoneypotField 
 }) {
   const containerRef = useRef(null)

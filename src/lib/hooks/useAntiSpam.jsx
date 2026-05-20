@@ -52,7 +52,7 @@ export function useAntiSpam(formId, {
       return
     }
 
-    const { lockedUntil, attempts, windowStart } = formData
+    const { lockedUntil, attempts: _attempts, windowStart } = formData
     const now = Date.now()
 
     // Check if currently locked out
@@ -172,9 +172,11 @@ export function useAntiSpam(formId, {
   /**
    * Call this after a successful submit to start cooldown & record attempt.
    */
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- React Compiler infers recordAttempt dep; recordAttempt is a stable function decl, cooldownSeconds is the only varying input
   const onSubmitted = useCallback(() => {
     setCooldown(cooldownSeconds)
     recordAttempt()
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- closing suppress
   }, [cooldownSeconds])
 
   /**

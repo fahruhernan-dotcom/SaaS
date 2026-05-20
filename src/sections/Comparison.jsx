@@ -166,6 +166,16 @@ export default function Comparison() {
   const [sliderPosition, setSliderPosition] = useState(50)
   const [isDragging, setIsDragging] = useState(false)
   const containerRef = useRef(null)
+  const [containerWidth, setContainerWidth] = useState(800)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    setContainerWidth(el.getBoundingClientRect().width || 800)
+    const ro = new ResizeObserver(([entry]) => setContainerWidth(entry.contentRect.width || 800))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const handleDrag = useCallback((clientX) => {
     if (!containerRef.current) return
@@ -256,7 +266,7 @@ export default function Comparison() {
                 <span className="text-[10px] font-mono text-gray-500">Google Sheets — Manual</span>
               </div>
               {/* Fixed-width inner so content doesn't compress */}
-              <div style={{ width: containerRef.current?.getBoundingClientRect().width || 800, height: '100%' }}>
+              <div style={{ width: containerWidth, height: '100%' }}>
                 <ExcelMockup />
               </div>
             </div>
