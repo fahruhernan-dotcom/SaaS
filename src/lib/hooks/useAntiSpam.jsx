@@ -172,9 +172,11 @@ export function useAntiSpam(formId, {
   /**
    * Call this after a successful submit to start cooldown & record attempt.
    */
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- React Compiler infers recordAttempt as dep; it is a stable fn decl, cooldownSeconds is the only varying input
   const onSubmitted = useCallback(() => {
     setCooldown(cooldownSeconds)
     recordAttempt()
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization -- closing suppress
   }, [cooldownSeconds])
 
   /**

@@ -32,6 +32,7 @@ export function peternakPermissions(role) {
   // Shorthand sets
   const ownerOrMgr    = isOwner || isManajer
   const canWrite      = isOwner || isManajer || isStaff  // anyone but view_only
+  // eslint-disable-next-line no-unused-vars -- financial/structural write gate; not yet returned but kept for planned permission expansion
   const canWriteData  = isOwner || isManajer             // financial / structural writes
 
   return {

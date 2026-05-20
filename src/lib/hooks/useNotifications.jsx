@@ -128,7 +128,7 @@ export const useNotificationGenerator = () => {
   const { tenant, profile } = useAuth()
   const context = useNotifications()
   const notificationsRef = useRef([])
-  notificationsRef.current = context?.notifications || []
+  notificationsRef.current = context?.notifications || [] // eslint-disable-line react-hooks/refs -- intentional latest-value ref pattern; read only in event handlers, not in JSX
 
   const vertical = resolveBusinessVertical(profile, tenant)
   const basePath = getXBasePath(tenant, profile)
