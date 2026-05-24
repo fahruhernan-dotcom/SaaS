@@ -18,8 +18,22 @@ export function getSubscriptionStatus(tenant) {
 
   const now = new Date()
   const plan = tenant.plan || 'starter'
-  
-  // 1. Check for Active Trial (Only for Pro/Business)
+
+  // 1. Check for Paid Plan (Pro/Business) — takes priority over trial
+  const planExp = tenant.plan_expires_at ? new Date(tenant.plan_expires_at) : null
+  if (planExp && planExp > now && plan !== 'starter') {
+    const daysLeft = Math.ceil((planExp - now) / 86400000)
+    return {
+      status: 'active',
+      label: plan === 'pro' ? 'Pro' : 'Business',
+      daysLeft,
+      expiresAt: planExp,
+      isExpiringSoon: daysLeft <= 14,
+      plan,
+    }
+  }
+
+  // 2. Check for Active Trial (only if no active paid plan)
   const trialEnd = tenant.trial_ends_at ? new Date(tenant.trial_ends_at) : null
   if (trialEnd && trialEnd > now && plan !== 'starter') {
     const daysLeft = Math.ceil((trialEnd - now) / 86400000)
@@ -33,7 +47,7 @@ export function getSubscriptionStatus(tenant) {
     }
   }
 
-  // 2. Handle Starter Plan (Free Forever if no trial)
+  // 3. Handle Starter Plan (Free Forever if no trial)
   if (plan === 'starter') {
     return {
       status: 'active',
@@ -41,20 +55,6 @@ export function getSubscriptionStatus(tenant) {
       daysLeft: 999, // Infinite
       expiresAt: null,
       isExpiringSoon: false,
-      plan,
-    }
-  }
-
-  // 3. Check for Paid Plan (Pro/Business)
-  const planExp = tenant.plan_expires_at ? new Date(tenant.plan_expires_at) : null
-  if (planExp && planExp > now) {
-    const daysLeft = Math.ceil((planExp - now) / 86400000)
-    return {
-      status: 'active',
-      label: plan === 'pro' ? 'Pro' : 'Business',
-      daysLeft,
-      expiresAt: planExp,
-      isExpiringSoon: daysLeft <= 14,
       plan,
     }
   }
@@ -86,6 +86,17 @@ export function getStatusColor(status) {
  * Label expiry yang kontekstual
  * Contoh: "Trial berakhir 15 Apr 2026" / "Pro aktif hingga 1 Jul 2026"
  */
+/**
+ * Returns the plan that should be enforced for feature gating.
+ * Returns 'starter' for expired tenants even if tenants.plan is still 'pro'/'business'.
+ * Use this everywhere you need to determine feature access — never read tenant.plan directly.
+ */
+export function getEffectivePlan(tenant) {
+  const sub = getSubscriptionStatus(tenant)
+  if (sub.status === 'active' || sub.status === 'trial') return sub.plan || 'starter'
+  return 'starter'
+}
+
 export function getExpiryLabel(tenant) {
   const sub = getSubscriptionStatus(tenant)
   if (!sub.expiresAt) return null

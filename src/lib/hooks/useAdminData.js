@@ -64,7 +64,7 @@ export const useAllInvoices = () => {
         .select(`
           id, invoice_number, amount, plan, billing_period,
           billing_months, status, payment_proof_url, payment_method,
-          xendit_invoice_id, xendit_payment_url,
+          payment_provider, provider_order_id, provider_payment_url, provider_status,
           confirmed_by, confirmed_at, paid_at, notes, created_at,
           tenants(id, business_name, business_vertical)
         `)
@@ -107,7 +107,7 @@ export const useConfirmInvoice = () => {
       }
 
       // 2. Update invoice status → paid (DB trigger fires here, uses same base date we captured)
-      const { error: invoiceErr } = await supabase
+      const { data: invoiceRows, error: invoiceErr } = await supabase
         .from('subscription_invoices')
         .update({
           status: 'paid',
@@ -118,9 +118,13 @@ export const useConfirmInvoice = () => {
         })
         .eq('id', invoiceId)
         .eq('status', 'pending')
+        .select('id')
       if (invoiceErr) {
         logSupabaseError(invoiceErr, { table: 'subscription_invoices', operation: 'update', component: 'useConfirmInvoice', actionName: 'admin.invoice.confirm_status' })
         throw invoiceErr
+      }
+      if (!invoiceRows || invoiceRows.length === 0) {
+        throw new Error('Invoice sudah diproses sebelumnya — konfirmasi tidak dijalankan.')
       }
 
       // 3. Specialized Fulfillment
@@ -261,7 +265,7 @@ export const useCreateInvoice = () => {
         .toUpperCase().substring(0, 4)
       const invoiceNumber = `INV-${timestamp}-${random}`
 
-      const { error } = await supabase
+      const { data: row, error } = await supabase
         .from('subscription_invoices')
         .insert({
           tenant_id: tenantId,
@@ -271,15 +275,18 @@ export const useCreateInvoice = () => {
           amount,
           notes: notes || null,
           status: 'pending',
-          payment_method: 'manual'
+          payment_method: 'manual',
+          payment_provider: 'manual'
         })
+        .select('id')
+        .single()
       if (error) {
         logSupabaseError(error, { table: 'subscription_invoices', operation: 'insert', component: 'useCreateInvoice', actionName: 'admin.invoice.create' })
         throw error
       }
-      return invoiceNumber
+      return { invoiceNumber, invoiceId: row.id }
     },
-    onSuccess: (invoiceNumber) => {
+    onSuccess: ({ invoiceNumber }) => {
       queryClient.invalidateQueries(['admin-invoices'])
       toast.success(`Invoice ${invoiceNumber} berhasil dibuat`)
     },
@@ -289,58 +296,22 @@ export const useCreateInvoice = () => {
   })
 }
 
-export const useXenditConfig = () => useQuery({
-  queryKey: ['xendit-config'],
-  queryFn: async () => {
-    const { data } = await supabase
-      .from('payment_settings')
-      .select('*')
-      .eq('bank_name', 'xendit_config')
-      .maybeSingle()
-    return data || null
-  }
-})
-
-export const useSaveXenditConfig = () => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ api_key, webhook_token, callback_url, is_production }) => {
-      const payload = {
-        bank_name: 'xendit_config',
-        account_number: api_key,
-        account_name: JSON.stringify({ webhook_token, callback_url, is_production }),
-        is_active: true
-      }
-      const existing = await supabase
-        .from('payment_settings')
+export const useHasPendingInvoice = (tenantId) => {
+  return useQuery({
+    queryKey: ['invoice-pending-check', tenantId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('subscription_invoices')
         .select('id')
-        .eq('bank_name', 'xendit_config')
-        .single()
-      if (existing.data?.id) {
-        const { error } = await supabase
-          .from('payment_settings')
-          .update(payload)
-          .eq('id', existing.data.id)
-        if (error) {
-          logSupabaseError(error, { table: 'payment_settings', operation: 'update', component: 'useSaveXenditConfig', actionName: 'admin.payment_setting.update_xendit' })
-          throw error
-        }
-      } else {
-        const { error } = await supabase
-          .from('payment_settings')
-          .insert(payload)
-        if (error) {
-          logSupabaseError(error, { table: 'payment_settings', operation: 'insert', component: 'useSaveXenditConfig', actionName: 'admin.payment_setting.create_xendit' })
-          throw error
-        }
-      }
+        .eq('tenant_id', tenantId)
+        .eq('status', 'pending')
+        .limit(1)
+        .maybeSingle()
+      if (error) return false
+      return !!data
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries(['xendit-config'])
-      queryClient.invalidateQueries(['payment-settings'])
-      toast.success('Xendit config berhasil disimpan')
-    },
-    onError: () => toast.error('Gagal menyimpan Xendit config')
+    enabled: !!tenantId,
+    staleTime: 10_000,
   })
 }
 
@@ -911,13 +882,18 @@ export const useDeleteInvoice = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (invoiceId) => {
-      const { error } = await supabase
+      const { data: deleted, error } = await supabase
         .from('subscription_invoices')
         .delete()
         .eq('id', invoiceId)
+        .neq('status', 'paid')
+        .select('id')
       if (error) {
         logSupabaseError(error, { table: 'subscription_invoices', operation: 'delete', component: 'useDeleteInvoice', actionName: 'admin.invoice.delete' })
         throw error
+      }
+      if (!deleted || deleted.length === 0) {
+        throw new Error('Invoice dengan status paid tidak dapat dihapus.')
       }
     },
     onSuccess: () => {

@@ -50,7 +50,7 @@ export default function AddonPortal() {
   const handlePurchase = async () => {
     if (!profile?.tenant_id) return
     try {
-      const invoiceNumber = await createInvoice.mutateAsync({
+      const { invoiceNumber } = await createInvoice.mutateAsync({
         tenantId: profile.tenant_id,
         plan: 'addon_business_slot',
         billingMonths: 1,

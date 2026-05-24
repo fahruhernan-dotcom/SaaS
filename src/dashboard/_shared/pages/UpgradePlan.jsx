@@ -1,17 +1,19 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Check, Copy, ArrowLeft, Zap, Crown, Loader2, CheckCircle2,
+  Check, ArrowLeft, Zap, Crown, Loader2, CheckCircle2, XCircle, AlertCircle,
   Truck, Users, FileText, TrendingUp, Calculator, Warehouse,
   Receipt, BarChart3, ShieldCheck, Headphones, Infinity as InfinityIcon,
-  ChevronDown, ChevronUp, Star, Building2, MessageCircle, Clock,
+  ChevronDown, ChevronUp, Star, Building2, Clock,
 } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
-import { usePaymentSettings, usePricingConfig, useCreateInvoice, useActivateTrial, usePlanConfigs } from '@/lib/hooks/useAdminData'
+import { usePricingConfig, useCreateInvoice, useActivateTrial, usePlanConfigs, useHasPendingInvoice } from '@/lib/hooks/useAdminData'
+import { supabase } from '@/lib/supabase'
 import { formatIDR } from '@/lib/format'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
+import { FALLBACK_TRANSACTION_QUOTA } from '@/lib/constants/planGating'
 import { format, addMonths } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import { toast } from 'sonner'
@@ -31,7 +33,7 @@ const ROLE_FEATURES = {
   broker: {
     label: 'Broker Ayam',
     pro: [
-      { icon: <InfinityIcon size={13} />, text: 'Transaksi tidak terbatas (vs 30/bln)' },
+      { icon: <InfinityIcon size={13} />, text: 'Transaksi tidak terbatas (vs {{STARTER_QUOTA}}/bln)' },
       { icon: <Truck size={13} />,    text: 'Armada hingga 5 kendaraan & sopir' },
       { icon: <TrendingUp size={13} />, text: 'Cash Flow & laporan keuangan' },
       { icon: <Users size={13} />,    text: 'Tim hingga 3 anggota' },
@@ -156,19 +158,46 @@ const PLAN_META = {
 
 // Map tenant.business_vertical → pricing_plans.role key
 const VERTICAL_TO_PRICING_ROLE = {
-  poultry_broker:  'broker',
-  egg_broker:      'egg_broker',
-  peternak:        'peternak',
-  rumah_potong:    'rpa',
-  sembako_broker:  'sembako_broker',
+  poultry_broker:                    'broker',
+  egg_broker:                        'egg_broker',
+  peternak:                          'peternak',
+  peternak_ayam_broiler:             'peternak_ayam_broiler',
+  peternak_ayam_layer:               'peternak_ayam_layer',
+  peternak_sapi_penggemukan:         'peternak_sapi_potong_fattening',
+  peternak_sapi_potong_fattening:    'peternak_sapi_potong_fattening',
+  peternak_sapi_potong_breeding:     'peternak_sapi_potong_breeding',
+  peternak_sapi_perah:               'peternak_sapi_perah',
+  peternak_kambing_penggemukan:      'peternak_kambing_potong_fattening',
+  peternak_kambing_potong_fattening: 'peternak_kambing_potong_fattening',
+  peternak_kambing_potong_breeding:  'peternak_kambing_potong_breeding',
+  peternak_kambing_perah:            'peternak_kambing_perah',
+  peternak_domba_penggemukan:        'peternak_domba_potong_fattening',
+  peternak_domba_potong_fattening:   'peternak_domba_potong_fattening',
+  peternak_domba_potong_breeding:    'peternak_domba_potong_breeding',
+  rumah_potong:                      'rpa',
+  sembako_broker:                    'sembako_broker',
+  distributor_sembako:               'sembako_broker',
 }
 
 function getPricingRole(tenant) {
   return VERTICAL_TO_PRICING_ROLE[tenant?.business_vertical] || 'broker'
 }
 
-function getRoleFeatures(pricingRole) {
-  return ROLE_FEATURES[pricingRole] || ROLE_FEATURES.broker
+function getRoleFeatures(pricingRole, starterQuota = FALLBACK_TRANSACTION_QUOTA) {
+  // Sub-type peternak (e.g. peternak_sapi_potong_fattening) share the same features as 'peternak'
+  const featureKey = ROLE_FEATURES[pricingRole]
+    ? pricingRole
+    : pricingRole?.startsWith('peternak_') ? 'peternak' : 'broker'
+  const base = ROLE_FEATURES[featureKey]
+  if (!base.pro.some(f => typeof f.text === 'string' && f.text.includes('{{STARTER_QUOTA}}'))) return base
+  return {
+    ...base,
+    pro: base.pro.map(f =>
+      typeof f.text === 'string' && f.text.includes('{{STARTER_QUOTA}}')
+        ? { ...f, text: f.text.replace('{{STARTER_QUOTA}}', starterQuota) }
+        : f
+    ),
+  }
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -336,24 +365,51 @@ function BillingSelector({ value, onChange }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+const PAYMENT_STATUS_META = {
+  finish: {
+    icon: <CheckCircle2 size={18} />,
+    title: 'Pembayaran diterima!',
+    body: 'Plan kamu sedang diaktifkan. Refresh halaman dalam 1–2 menit.',
+    color: '#10B981',
+    bg: 'rgba(16,185,129,0.08)',
+    border: 'rgba(16,185,129,0.25)',
+  },
+  unfinish: {
+    icon: <AlertCircle size={18} />,
+    title: 'Pembayaran belum selesai',
+    body: 'Kamu menutup halaman pembayaran sebelum selesai. Klik tombol upgrade untuk melanjutkan.',
+    color: '#F59E0B',
+    bg: 'rgba(245,158,11,0.08)',
+    border: 'rgba(245,158,11,0.25)',
+  },
+  error: {
+    icon: <XCircle size={18} />,
+    title: 'Pembayaran gagal',
+    body: 'Terjadi kesalahan saat memproses pembayaran. Coba lagi atau hubungi admin.',
+    color: '#EF4444',
+    bg: 'rgba(239,68,68,0.08)',
+    border: 'rgba(239,68,68,0.25)',
+  },
+}
+
 export default function UpgradePlan() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { profile, tenant } = useAuth()
   const { data: pricing } = usePricingConfig()
-  const { data: banks } = usePaymentSettings()
   const createInvoice  = useCreateInvoice()
   const activateTrial  = useActivateTrial()
   const { data: planConfigs = {} } = usePlanConfigs()
+  const { data: hasPendingInvoice } = useHasPendingInvoice(profile?.tenant_id)
 
   const [selectedPlan, setSelectedPlan] = useState('pro')
   const [billingMonths, setBillingMonths] = useState(1)
   const [expandedFeature, setExpandedFeature] = useState('pro')
-  const [invoiceResult, setInvoiceResult] = useState(null)
-  const [copied, setCopied] = useState(null)
+  const [redirecting, setRedirecting] = useState(false)
 
   const pricingRole  = getPricingRole(tenant)
-  const roleFeatures = getRoleFeatures(pricingRole)
-  const activeBanks  = banks?.filter(b => b.is_active && b.bank_name !== 'xendit_config') || []
+  const starterQuota = planConfigs?.transaction_quota?.starter ?? FALLBACK_TRANSACTION_QUOTA
+  const roleFeatures = getRoleFeatures(pricingRole, starterQuota)
 
   const sub       = getSubscriptionStatus(tenant)
   const isRenewal = sub.status === 'active' && tenant?.plan === selectedPlan
@@ -373,142 +429,51 @@ export default function UpgradePlan() {
   const canTrial        = sub.plan === 'starter' && !trialUsed
   const trialDays       = planConfigs?.trial_config?.pro ?? 7
 
+  const paymentStatus   = searchParams.get('payment') // 'finish' | 'unfinish' | 'error' | null
+  const paymentMeta     = PAYMENT_STATUS_META[paymentStatus] ?? null
+
+  const paymentBanner = paymentMeta && (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex items-start gap-3 p-4 rounded-2xl mb-6"
+      style={{ background: paymentMeta.bg, border: `1px solid ${paymentMeta.border}` }}
+    >
+      <span style={{ color: paymentMeta.color, flexShrink: 0, marginTop: 1 }}>{paymentMeta.icon}</span>
+      <div>
+        <p className="font-display font-black text-[13px] text-white leading-tight mb-0.5">{paymentMeta.title}</p>
+        <p className="text-[12px] text-[#4B6478]">{paymentMeta.body}</p>
+      </div>
+    </motion.div>
+  )
+
   const handleSubmit = async () => {
     if (!profile?.tenant_id) return
+    if (hasPendingInvoice === true) {
+      toast.warning('Kamu sudah memiliki invoice pending. Tunggu konfirmasi admin atau hubungi admin untuk membatalkannya terlebih dahulu.')
+      return
+    }
     try {
-      const invoiceNumber = await createInvoice.mutateAsync({
+      const { invoiceId } = await createInvoice.mutateAsync({
         tenantId:     profile.tenant_id,
         plan:         selectedPlan,
         billingMonths,
         amount:       total,
         notes:        `${isRenewal ? 'Perpanjang' : 'Upgrade ke'} ${PLAN_META[selectedPlan].label} — ${billingMonths} bulan`,
       })
-      setInvoiceResult(invoiceNumber)
-    } catch (_) { /* handled by mutation */ }
-  }
-
-  const copyToClipboard = (text, id) => {
-    navigator.clipboard.writeText(text)
-    setCopied(id)
-    toast.success('Disalin!')
-    setTimeout(() => setCopied(null), 2000)
-  }
-
-  // ── Success screen ──────────────────────────────────────────────────────────
-
-  if (invoiceResult) {
-    const successMeta = PLAN_META[selectedPlan]
-    const steps = [
-      { n: '1', label: 'Salin nomor invoice', done: true },
-      { n: '2', label: `Transfer ${formatIDR(total)} ke rekening di bawah` },
-      { n: '3', label: 'Kirim bukti transfer ke admin via WhatsApp' },
-      { n: '4', label: 'Plan aktif dalam 1×24 jam kerja' },
-    ]
-    return (
-      <div className="min-h-screen p-5" style={{ background: '#06090F' }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-          className="max-w-md mx-auto pt-6"
-        >
-          {/* Header */}
-          <div className="flex flex-col items-center text-center mb-7">
-            <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.1, type: 'spring', stiffness: 300, damping: 18 }}
-              className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-              style={{ background: `${successMeta.colorMid}`, border: `1.5px solid ${successMeta.colorBorder}`, boxShadow: successMeta.glow }}
-            >
-              <CheckCircle2 size={28} color={successMeta.color} />
-            </motion.div>
-            <h2 className="font-display font-black text-2xl text-white mb-1">Invoice Dibuat!</h2>
-            <p className="text-[13px] text-[#4B6478]">
-              Selesaikan 3 langkah di bawah untuk mengaktifkan{' '}
-              <span className="font-bold" style={{ color: successMeta.color }}>{successMeta.label}</span>
-            </p>
-          </div>
-
-          {/* Invoice number */}
-          <div
-            className="flex items-center justify-between p-4 rounded-2xl mb-5"
-            style={{ background: '#0C1319', border: `1px solid ${successMeta.colorBorder}` }}
-          >
-            <div>
-              <p className="text-[10px] text-[#4B6478] mb-1 uppercase tracking-widest font-bold">Nomor Invoice</p>
-              <p className="font-display font-black text-lg" style={{ color: successMeta.color }}>{invoiceResult}</p>
-              <p className="text-[10px] text-[#2A3F52] mt-0.5">Sertakan di pesan WhatsApp kamu</p>
-            </div>
-            <button
-              onClick={() => copyToClipboard(invoiceResult, 'inv')}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all text-[12px] font-bold"
-              style={{
-                background: copied === 'inv' ? successMeta.colorMid : 'rgba(255,255,255,0.05)',
-                border: `1px solid ${copied === 'inv' ? successMeta.colorBorder : 'rgba(255,255,255,0.08)'}`,
-                color: copied === 'inv' ? successMeta.color : '#4B6478',
-              }}
-            >
-              {copied === 'inv' ? <><CheckCircle2 size={13} /> Disalin</> : <><Copy size={13} /> Salin</>}
-            </button>
-          </div>
-
-          {/* Steps */}
-          <div className="space-y-2.5 mb-5">
-            {steps.map((s, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-xl"
-                style={{ background: s.done ? `${successMeta.colorLow}` : 'rgba(255,255,255,0.02)', border: `1px solid ${s.done ? successMeta.colorBorder : 'rgba(255,255,255,0.05)'}` }}
-              >
-                <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-black"
-                  style={{ background: s.done ? successMeta.color : 'rgba(255,255,255,0.08)', color: s.done ? '#000' : '#4B6478' }}
-                >
-                  {s.done ? <Check size={11} strokeWidth={3} /> : s.n}
-                </div>
-                <span className={`text-[13px] ${s.done ? 'text-white font-semibold' : 'text-[#4B6478]'}`}>{s.label}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Bank accounts */}
-          {activeBanks.length > 0 && (
-            <div className="mb-5">
-              <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-widest mb-2">Rekening Tujuan</p>
-              <div className="space-y-2.5">
-                {activeBanks.map((bank) => (
-                  <div key={bank.id} className="flex items-center justify-between p-4 rounded-2xl"
-                    style={{ background: '#0C1319', border: '1px solid rgba(255,255,255,0.08)' }}
-                  >
-                    <div>
-                      <p className="text-[11px] text-[#4B6478] mb-0.5 font-semibold uppercase tracking-wider">{bank.bank_name}</p>
-                      <p className="font-display font-black text-base text-white mb-0.5">{bank.account_number}</p>
-                      <p className="text-[11px] text-[#4B6478]">a.n. {bank.account_name}</p>
-                    </div>
-                    <button
-                      onClick={() => copyToClipboard(bank.account_number, bank.id)}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all text-[12px] font-bold"
-                      style={{
-                        background: copied === bank.id ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
-                        border: `1px solid ${copied === bank.id ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                        color: copied === bank.id ? '#10B981' : '#4B6478',
-                      }}
-                    >
-                      {copied === bank.id ? <><CheckCircle2 size={13} /> Disalin</> : <><Copy size={13} /> Salin</>}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center justify-center gap-2 text-[13px] text-[#2A3F52] hover:text-[#4B6478] transition-colors w-full py-3"
-          >
-            <ArrowLeft size={13} /> Kembali ke Dashboard
-          </button>
-        </motion.div>
-      </div>
-    )
+      setRedirecting(true)
+      const { data: fnData, error: fnError } = await supabase.functions.invoke('midtrans-create-transaction', {
+        body: { invoice_id: invoiceId },
+      })
+      if (fnError || !fnData?.redirect_url) {
+        toast.error('Gagal menghubungi payment gateway. Silakan coba lagi atau hubungi admin.')
+        setRedirecting(false)
+        return
+      }
+      window.location.assign(fnData.redirect_url)
+    } catch (_) {
+      setRedirecting(false)
+    }
   }
 
   // ── Shared UI blocks (used in both layouts) ────────────────────────────────
@@ -616,41 +581,11 @@ export default function UpgradePlan() {
     </motion.div>
   )
 
-  const bankList = activeBanks.length > 0 && (
-    <div>
-      <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mb-3">Transfer ke</p>
-      <div className="space-y-2.5">
-        {activeBanks.map((bank) => (
-          <div key={bank.id} className="flex items-center justify-between p-4 rounded-2xl"
-            style={{ background: '#0C1319', border: '1px solid rgba(255,255,255,0.08)' }}
-          >
-            <div>
-              <p className="text-[11px] text-[#4B6478] mb-0.5 font-semibold uppercase tracking-wider">{bank.bank_name}</p>
-              <p className="font-display font-black text-base text-white mb-0.5">{bank.account_number}</p>
-              <p className="text-[11px] text-[#4B6478]">a.n. {bank.account_name}</p>
-            </div>
-            <button onClick={() => copyToClipboard(bank.account_number, bank.id)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all text-[12px] font-bold"
-              style={{
-                background: copied === bank.id ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
-                border: `1px solid ${copied === bank.id ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                color: copied === bank.id ? '#10B981' : '#4B6478',
-              }}
-            >
-              {copied === bank.id ? <><CheckCircle2 size={13} /> Disalin</> : <><Copy size={13} /> Salin</>}
-            </button>
-          </div>
-        ))}
-      </div>
-      <p className="text-[11px] text-[#2A3F52] mt-3">Setelah transfer, kirim bukti ke admin. Dikonfirmasi 1×24 jam kerja.</p>
-    </div>
-  )
-
   const ctaButton = (
     <motion.button
       whileTap={{ scale: 0.98 }}
       onClick={handleSubmit}
-      disabled={createInvoice.isPending || !basePrice}
+      disabled={createInvoice.isPending || redirecting || !basePrice}
       className="w-full py-4 rounded-2xl font-display font-black text-[15px] transition-all disabled:opacity-60"
       style={{
         background: currentPlanMeta.color,
@@ -658,7 +593,11 @@ export default function UpgradePlan() {
         boxShadow: `0 4px 28px ${currentPlanMeta.colorMid}`,
       }}
     >
-      {createInvoice.isPending ? (
+      {redirecting ? (
+        <span className="flex items-center justify-center gap-2">
+          <Loader2 size={16} className="animate-spin" /> Mengarahkan ke pembayaran...
+        </span>
+      ) : createInvoice.isPending ? (
         <span className="flex items-center justify-center gap-2">
           <Loader2 size={16} className="animate-spin" /> Memproses...
         </span>
@@ -753,6 +692,8 @@ export default function UpgradePlan() {
             </p>
           </div>
 
+          {paymentBanner}
+
           {/* Two-column grid */}
           <div className="grid grid-cols-[1fr_360px] gap-8 items-start">
 
@@ -771,11 +712,10 @@ export default function UpgradePlan() {
                 <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mb-3">Ringkasan Pesanan</p>
                 {priceSummary}
               </div>
-              {bankList}
               <div>
                 {ctaButton}
                 <p className="text-center text-[10px] text-[#2A3F52] mt-2">
-                  Transfer bank · Aktif hingga {newExpiryStr} · Konfirmasi 1×24 jam
+                  Pembayaran aman via Midtrans · Aktif hingga {newExpiryStr}
                 </p>
               </div>
             </div>
@@ -808,13 +748,14 @@ export default function UpgradePlan() {
           </p>
         </div>
 
+        {paymentBanner}
+
         <div className="space-y-5">
           {billingSelector}
           {planCards}
           {trialBlock}
           {featureSections}
           {priceSummary}
-          {bankList}
           {addonLink}
         </div>
       </div>
@@ -826,7 +767,7 @@ export default function UpgradePlan() {
         <div className="max-w-lg mx-auto">
           {ctaButton}
           <p className="text-center text-[10px] text-[#2A3F52] mt-2">
-            Transfer bank · Aktif hingga {newExpiryStr} · Konfirmasi 1×24 jam
+            Pembayaran aman via Midtrans · Aktif hingga {newExpiryStr}
           </p>
         </div>
       </div>

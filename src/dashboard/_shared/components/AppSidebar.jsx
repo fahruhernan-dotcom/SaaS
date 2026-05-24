@@ -457,6 +457,7 @@ export default function AppSidebar({ open, onClose }) {
   // ownerTenant is only used for quota (how many businesses you can create yourself).
   const sub = getSubscriptionStatus(tenant)
   const isAccountActive = isSuperadmin || sub.status === 'active' || sub.status === 'trial'
+  const canStartTrial = !isSuperadmin && sub.plan === 'starter' && !tenant?.trial_ends_at
   // Plan-tier gating
   const planTier = isSuperadmin ? 'business' : (sub.plan || 'starter')
   const isPro     = ['pro', 'business'].includes(planTier) || sub.status === 'trial'
@@ -1113,8 +1114,8 @@ export default function AppSidebar({ open, onClose }) {
             </button>
           )}
 
-          {/* Mulai Trial button — hanya untuk starter yang belum/sudah expired trial */}
-          {!isAccountActive && !isSuperadmin && sub.plan === 'starter' && (
+          {/* Mulai Trial button — hanya untuk starter yang belum pernah trial */}
+          {canStartTrial && (
             <div style={{ marginTop: '10px' }}>
               {!showTrialChoices ? (
                 <button
