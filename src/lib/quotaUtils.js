@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { isSuperadmin } from './auth'
+import { getEffectivePlan } from './subscriptionUtils'
 /**
  * Centrally calculates the total limit for any feature.
  * Scalable: Just add a new key in plan_configs to support more features.
@@ -15,7 +16,7 @@ export async function getFeatureLimit(tenant, configKey) {
     .maybeSingle()
 
   const config = configRow?.config_value ?? {}
-  const plan = tenant.plan || 'starter'
+  const plan = getEffectivePlan(tenant)
   
   // Default values if not in DB
   const DEFAULTS = {

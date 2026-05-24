@@ -31,7 +31,8 @@ const FinalCTA = () => {
             letterSpacing: '-1.5px',
             lineHeight: 1.1,
             color: '#F1F5F9',
-            marginBottom: '16px'
+            marginBottom: '16px',
+            userSelect: 'none',
           }}>
             Siap Kelola Bisnis Ternak<br/>
             <span className="bg-clip-text text-transparent bg-[linear-gradient(90deg,var(--em-400)_0%,#6EE7B7_30%,var(--em-500)_50%,var(--em-400)_100%)] animate-shimmer-text" style={{ backgroundSize: '200% auto' }}>Lebih Rapi?</span>

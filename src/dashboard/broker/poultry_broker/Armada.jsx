@@ -195,7 +195,7 @@ export default function Armada() {
 
     // Starter plan limits: maks 1 kendaraan & 1 sopir
     const sub = getSubscriptionStatus(tenant)
-    const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
+    const isStarter = sub.status !== 'active' && sub.status !== 'trial'
     const vehicleLimitReached = isStarter && vehicles.length >= 1
     const driverLimitReached  = isStarter && drivers.length >= 1
 

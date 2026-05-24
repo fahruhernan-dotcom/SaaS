@@ -173,7 +173,7 @@ export default function InvoicePreviewModal({ type, data, isOpen, onClose }) {
 
   const { tenant } = useAuth()
   const sub = getSubscriptionStatus(tenant)
-  const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
+  const isStarter = sub.status !== 'active' && sub.status !== 'trial'
 
   const { mutate: saveInvoice, isPending: isSaving } = useSaveInvoice()
 

@@ -105,7 +105,7 @@ export default function RPALaporanMargin() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const { tenant } = useAuth()
   const sub = getSubscriptionStatus(tenant)
-  const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
+  const isStarter = sub.status !== 'active' && sub.status !== 'trial'
 
   const [startDate, setStartDate] = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'))
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'))

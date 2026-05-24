@@ -15,7 +15,7 @@ const FALLBACK_STARTER_LIMIT = FALLBACK_TRANSACTION_QUOTA
  */
 export function useSembakoTransactionQuota(tenant) {
   const sub = getSubscriptionStatus(tenant)
-  const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
+  const isStarter = sub.status !== 'active' && sub.status !== 'trial'
 
   const { data: configs = {} } = usePlanConfigs()
   const limit = configs?.transaction_quota?.starter ?? FALLBACK_STARTER_LIMIT

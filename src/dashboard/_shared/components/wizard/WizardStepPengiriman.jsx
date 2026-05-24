@@ -115,7 +115,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   const sub = getSubscriptionStatus(tenant)
-  const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
+  const isStarter = sub.status !== 'active' && sub.status !== 'trial'
   const [vehicleMode, setVehicleMode] = useState('armada')
   const [driverMode, setDriverMode] = useState('driver')
   const [openVehicle, setOpenVehicle] = useState(false)

@@ -6,9 +6,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   CreditCard, Banknote, History, Search,
   CheckCircle2, XCircle, Clock, Check, ChevronRight,
-  ExternalLink, Globe, AlertCircle, AlertTriangle, Zap, Loader2,
+  ExternalLink, Globe, AlertCircle, AlertTriangle, Loader2,
   Plus, Edit2, Trash2, Download, FileText, X, CalendarDays,
-  Eye, EyeOff, Copy, Wifi, WifiOff,
   Bird, Egg, Home, Factory, Building2
 } from 'lucide-react'
 import { format } from 'date-fns'
@@ -22,9 +21,7 @@ import {
   useCreateInvoice,
   useDeleteInvoice,
   useAllTenants,
-  usePricingConfig,
-  useXenditConfig,
-  useSaveXenditConfig
+  usePricingConfig
 } from '@/lib/hooks/useAdminData'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -137,6 +134,7 @@ export default function AdminSubscriptions() {
   }, [invoices, invoiceSearch, invoiceTab, dateFrom, dateTo])
 
   // Reset to page 1 whenever filters change
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- pagination reset on filter change is intentional, no external system involved
   useEffect(() => { setCurrentPage(1) }, [invoiceSearch, invoiceTab, dateFrom, dateTo])
 
   const totalPages = Math.max(1, Math.ceil(filteredInvoices.length / ITEMS_PER_PAGE))
@@ -191,13 +189,18 @@ export default function AdminSubscriptions() {
   }
 
   const executeCancelInvoice = async () => {
-    const { error } = await supabase
+    const { data: cancelledRows, error } = await supabase
       .from('subscription_invoices')
       .update({ status: 'cancelled' })
       .eq('id', selectedInvoice.id)
+      .eq('status', 'pending')
+      .select('id')
     if (error) {
       logSupabaseError(error, { table: 'subscription_invoices', operation: 'update', component: 'AdminSubscriptions', actionName: 'admin.invoice.cancel' })
       toast.error('Gagal membatalkan invoice')
+    } else if (!cancelledRows || cancelledRows.length === 0) {
+      toast.warning('Invoice tidak dapat dibatalkan — status bukan pending.')
+      setCancelDialog(false)
     } else {
       toast.success('Invoice dibatalkan')
       queryClient.invalidateQueries(['admin-invoices'])
@@ -308,7 +311,7 @@ export default function AdminSubscriptions() {
               { id: 'invoices', label: 'Invoices', icon: History },
               { id: 'settings', label: 'Bank', icon: Building2 },
               { id: 'expiring', label: 'Expiring', icon: Clock },
-              { id: 'xendit', label: 'Xendit', icon: Zap }
+              { id: 'payment', label: 'Payment', icon: CreditCard }
             ].map((tab) => (
               <TabsTrigger
                 key={tab.id}
@@ -608,9 +611,9 @@ export default function AdminSubscriptions() {
           />
         </TabsContent>
 
-        {/* ─── XENDIT CONFIG TAB ─── */}
-        <TabsContent value="xendit" className="animate-in fade-in duration-300">
-          <XenditConfigTab />
+        {/* ─── PAYMENT GATEWAY TAB ─── */}
+        <TabsContent value="payment" className="animate-in fade-in duration-300">
+          <PaymentGatewayTab />
         </TabsContent>
       </Tabs>
 
@@ -766,17 +769,17 @@ export default function AdminSubscriptions() {
 
                 {/* ── Footer actions ── */}
                 {selectedInvoice.status === 'pending' && (() => {
-                  const isXendit = selectedInvoice.payment_method === 'xendit' || !!selectedInvoice.xendit_invoice_id
+                  const isMidtrans = selectedInvoice.payment_provider === 'midtrans'
                   return (
                     <div className="px-5 py-4 border-t border-white/5 bg-[#0A0F14] shrink-0 space-y-3">
-                      {isXendit ? (
+                      {isMidtrans ? (
                         <div className="flex items-center gap-3 p-3 rounded-xl"
-                          style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)' }}
+                          style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)' }}
                         >
-                          <Zap size={16} className="text-amber-400 shrink-0" />
+                          <CreditCard size={16} className="text-emerald-400 shrink-0" />
                           <div>
-                            <p className="text-[12px] font-bold text-amber-300">Xendit Gateway</p>
-                            <p className="text-[11px] text-amber-400/60">Konfirmasi otomatis via webhook saat pembayaran berhasil.</p>
+                            <p className="text-[12px] font-bold text-emerald-300">Midtrans Gateway</p>
+                            <p className="text-[11px] text-emerald-400/60">Konfirmasi otomatis via webhook saat pembayaran berhasil.</p>
                           </div>
                         </div>
                       ) : (
@@ -1487,252 +1490,39 @@ function BankCard({ bank, onEdit, onDelete }) {
   )
 }
 
-// ─── Xendit Config Tab ────────────────────────────────────────────────────────
+// ─── Payment Gateway Tab ──────────────────────────────────────────────────────
 
-function XenditConfigTab() {
-  const { data: xenditConfig } = useXenditConfig()
-  const saveConfig = useSaveXenditConfig()
-
-  // Parse saved config
-  const savedMeta = (() => {
-    try { return JSON.parse(xenditConfig?.account_name || '{}') } catch { return {} }
-  })()
-
-  const [apiKey, setApiKey] = useState('')
-  const [webhookToken, setWebhookToken] = useState('')
-  const [callbackUrl, setCallbackUrl] = useState('')
-  const [isProduction, setIsProduction] = useState(false)
-  const [showApiKey, setShowApiKey] = useState(false)
-  const [showWebhookToken, setShowWebhookToken] = useState(false)
-
-  // Pre-fill from DB on load
-  useEffect(() => {
-    if (!xenditConfig) return
-    setApiKey(xenditConfig.account_number || '')
-    setWebhookToken(savedMeta.webhook_token || '')
-    setCallbackUrl(savedMeta.callback_url || '')
-    setIsProduction(savedMeta.is_production ?? false)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [xenditConfig?.id])
-
-  const webhookEndpoint = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/xendit-webhook`
-
-  const handleCopyWebhook = () => {
-    navigator.clipboard.writeText(webhookEndpoint)
-    toast.success('URL disalin')
-  }
-
-  const handleSave = (e) => {
-    e.preventDefault()
-    if (!apiKey.trim()) { toast.error('API Key tidak boleh kosong'); return }
-    saveConfig.mutate({ api_key: apiKey, webhook_token: webhookToken, callback_url: callbackUrl, is_production: isProduction })
-  }
-
-  const maskedApiKey = xenditConfig?.account_number
-    ? 'xnd_****' + xenditConfig.account_number.slice(-4)
-    : null
-
+function PaymentGatewayTab() {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-      {/* ── LEFT: Form ── */}
-      <div className="lg:col-span-3">
-        <form onSubmit={handleSave} className="bg-[#111C24] rounded-2xl border border-white/8 overflow-hidden">
-          {/* Card Header */}
-          <div className="p-6 border-b border-white/5 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-              <Zap size={22} className="text-amber-400" />
-            </div>
+    <div className="max-w-xl">
+      <div className="bg-[#111C24] rounded-2xl border border-white/8 overflow-hidden">
+        <div className="p-6 border-b border-white/5 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+            <CreditCard size={22} className="text-emerald-400" />
+          </div>
+          <div>
+            <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mb-0.5">PAYMENT GATEWAY</p>
+            <h3 className="text-lg font-display font-black text-white uppercase tracking-tight leading-none">Konfigurasi Payment Gateway</h3>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20">
+            <AlertCircle size={18} className="text-amber-400 shrink-0" />
             <div>
-              <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mb-0.5">PAYMENT GATEWAY</p>
-              <h3 className="text-lg font-display font-black text-white uppercase tracking-tight leading-none">Konfigurasi Xendit</h3>
+              <p className="text-[12px] font-black text-amber-300 mb-0.5">Midtrans belum diaktifkan</p>
+              <p className="text-[11px] text-amber-400/70 leading-relaxed">
+                Integrasi Midtrans Snap sedang dalam pengembangan (Phase B4).
+              </p>
             </div>
           </div>
 
-          <div className="p-6 space-y-5">
-            {/* Environment Toggle */}
-            <div className="space-y-2">
-              <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest ml-1">Mode</p>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsProduction(false)}
-                  className={`h-11 rounded-xl font-black uppercase text-[11px] tracking-widest border transition-all flex items-center justify-center gap-2 ${!isProduction
-                      ? 'bg-amber-500/15 border-amber-500/60 text-amber-400'
-                      : 'bg-white/5 border-white/10 text-[#4B6478] hover:bg-white/10'
-                    }`}
-                >
-                  <span className={`w-2 h-2 rounded-full ${!isProduction ? 'bg-amber-400' : 'bg-[#4B6478]'}`} />
-                  Sandbox
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsProduction(true)}
-                  className={`h-11 rounded-xl font-black uppercase text-[11px] tracking-widest border transition-all flex items-center justify-center gap-2 ${isProduction
-                      ? 'bg-emerald-500/15 border-emerald-500/60 text-emerald-400'
-                      : 'bg-white/5 border-white/10 text-[#4B6478] hover:bg-white/10'
-                    }`}
-                >
-                  <span className={`w-2 h-2 rounded-full ${isProduction ? 'bg-emerald-400' : 'bg-[#4B6478]'}`} />
-                  Production
-                </button>
-              </div>
-            </div>
-
-            {/* Secret API Key */}
-            <div className="space-y-2">
-              <label htmlFor="xenditApiKey" className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest ml-1">
-                Secret API Key *
-              </label>
-              <div className="relative">
-                <input
-                  id="xenditApiKey"
-                  name="xenditApiKey"
-                  type={showApiKey ? 'text' : 'password'}
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={isProduction ? 'xnd_production_...' : 'xnd_development_...'}
-                  className="w-full h-12 bg-[#162230] border border-white/10 rounded-xl px-4 pr-12 font-mono text-sm text-white placeholder:text-[#4B6478] focus:border-emerald-500/50 focus:outline-none transition-all"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowApiKey(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4B6478] hover:text-white transition-colors"
-                >
-                  {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-
-            {/* Webhook Token */}
-            <div className="space-y-2">
-              <label htmlFor="xenditWebhookToken" className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest ml-1">
-                Webhook Verification Token
-              </label>
-              <div className="relative">
-                <input
-                  id="xenditWebhookToken"
-                  name="xenditWebhookToken"
-                  type={showWebhookToken ? 'text' : 'password'}
-                  value={webhookToken}
-                  onChange={(e) => setWebhookToken(e.target.value)}
-                  placeholder="Token verifikasi dari dashboard Xendit"
-                  className="w-full h-12 bg-[#162230] border border-white/10 rounded-xl px-4 pr-12 font-mono text-sm text-white placeholder:text-[#4B6478] focus:border-emerald-500/50 focus:outline-none transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowWebhookToken(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4B6478] hover:text-white transition-colors"
-                >
-                  {showWebhookToken ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-
-            {/* Callback URL */}
-            <div className="space-y-2">
-              <label htmlFor="xenditCallbackUrl" className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest ml-1">
-                Callback URL (opsional)
-              </label>
-              <input
-                id="xenditCallbackUrl"
-                name="xenditCallbackUrl"
-                type="url"
-                value={callbackUrl}
-                onChange={(e) => setCallbackUrl(e.target.value)}
-                placeholder="https://yourapp.com/api/xendit/webhook"
-                className="w-full h-12 bg-[#162230] border border-white/10 rounded-xl px-4 text-sm text-white placeholder:text-[#4B6478] focus:border-emerald-500/50 focus:outline-none transition-all"
-              />
-            </div>
-          </div>
-
-          <div className="px-6 pb-6">
-            <Button
-              type="submit"
-              disabled={saveConfig.isPending}
-              className="w-full h-12 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[12px] tracking-widest shadow-xl shadow-emerald-500/20 disabled:opacity-60"
-            >
-              {saveConfig.isPending ? 'Menyimpan...' : <><Zap size={15} className="mr-2" /> Simpan Konfigurasi</>}
-            </Button>
-          </div>
-        </form>
-      </div>
-
-      {/* ── RIGHT: Status + Info ── */}
-      <div className="lg:col-span-2 space-y-4">
-        {/* Status Card */}
-        <div className="bg-[#162230] rounded-xl p-4 border border-white/8">
-          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mb-3">Status Koneksi</p>
-          {xenditConfig ? (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2.5">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-                </span>
-                <p className="text-[13px] font-black text-emerald-400">Terkonfigurasi</p>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-wider">Mode</p>
-                  <Badge className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 ${savedMeta.is_production
-                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                      : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                    }`}>
-                    {savedMeta.is_production ? 'Production' : 'Sandbox'}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-wider">API Key</p>
-                  <p className="text-[11px] font-mono font-bold text-white/60">{maskedApiKey}</p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
-              <p className="text-[13px] font-black text-red-400">Belum dikonfigurasi</p>
-            </div>
-          )}
-        </div>
-
-        {/* Webhook URL Card */}
-        <div className="bg-[#162230] rounded-xl p-4 border border-white/8">
-          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mb-3">Webhook Endpoint</p>
-          <div className="bg-black/30 border border-white/5 rounded-lg p-3 flex items-center justify-between gap-2">
-            <p className="text-[10px] font-mono text-white/40 break-all leading-relaxed flex-1 min-w-0">
-              {webhookEndpoint}
+          <div className="p-4 rounded-xl bg-white/[0.02] border border-white/8 space-y-2">
+            <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Catatan Keamanan</p>
+            <p className="text-[11px] text-white/50 leading-relaxed">
+              Server Key Midtrans wajib disimpan di <span className="text-emerald-400 font-bold">Supabase Edge Function Secrets</span>, bukan di frontend atau database.
             </p>
-            <button
-              type="button"
-              onClick={handleCopyWebhook}
-              className="shrink-0 w-8 h-8 rounded-lg bg-white/5 hover:bg-emerald-500/20 hover:text-emerald-400 text-[#4B6478] flex items-center justify-center transition-all"
-              title="Salin URL"
-            >
-              <Copy size={13} />
-            </button>
           </div>
-          <p className="text-[10px] font-bold text-[#4B6478] mt-2 leading-relaxed">
-            Masukkan URL ini di Dashboard Xendit → Settings → Webhooks
-          </p>
-        </div>
-
-        {/* Coming Soon Features */}
-        <div className="bg-[#162230] rounded-xl p-4 border border-white/8 space-y-3">
-          <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Fitur Terintegrasi</p>
-          {[
-            'Auto-konfirmasi invoice saat pembayaran',
-            'Generate payment link untuk tenant',
-            'Notifikasi real-time via webhook',
-            'Riwayat transaksi Xendit',
-          ].map((feat, i) => (
-            <div key={i} className="flex items-center gap-2.5">
-              <div className="w-4 h-4 rounded-md bg-emerald-500/15 flex items-center justify-center shrink-0">
-                <Check size={9} className="text-emerald-400" />
-              </div>
-              <p className="text-[11px] font-bold text-white/50">{feat}</p>
-            </div>
-          ))}
         </div>
       </div>
     </div>

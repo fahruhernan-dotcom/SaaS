@@ -75,9 +75,9 @@ const APP_VERSION = 'v0.9.4 build 2026.05'
 function getUserRole(profile) {
   if (!profile) return 'view_only'
   const raw = (
+    profile.role ||
     profile.app_role ||
     profile.business_role ||
-    profile.role ||
     profile.user_type ||
     'view_only'
   ).toLowerCase()
@@ -257,7 +257,7 @@ export default function AkunPage() {
 
       {/* Edit Profile Sheet — key forces remount on open so state initializes fresh */}
       <EditProfileSheet
-        key={editProfileOpen ? 'open' : 'closed'}
+        key={editProfileOpen ? 'profile-open' : 'profile-closed'}
         open={editProfileOpen}
         onClose={() => setEditProfileOpen(false)}
         profile={profile}
@@ -268,7 +268,7 @@ export default function AkunPage() {
 
       {/* Edit Bisnis Sheet */}
       <EditBisnisSheet
-        key={editBisnisOpen ? 'open' : 'closed'}
+        key={editBisnisOpen ? 'bisnis-open' : 'bisnis-closed'}
         open={editBisnisOpen}
         onClose={() => setEditBisnisOpen(false)}
         tenant={activeTenant}

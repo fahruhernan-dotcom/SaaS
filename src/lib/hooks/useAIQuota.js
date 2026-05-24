@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
+import { getEffectivePlan } from '@/lib/subscriptionUtils'
 import { AI_PLAN_CONFIG } from '@/lib/constants/planGating'
 
 /**
@@ -20,8 +20,7 @@ import { AI_PLAN_CONFIG } from '@/lib/constants/planGating'
  * }}
  */
 export function useAIQuota(tenant) {
-  const sub = getSubscriptionStatus(tenant)
-  const plan = sub.plan || 'starter'
+  const plan = getEffectivePlan(tenant)
   const planConfig = AI_PLAN_CONFIG[plan] || AI_PLAN_CONFIG.starter
   const limit = planConfig.chat_sessions_per_month
 

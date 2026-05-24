@@ -992,7 +992,7 @@ function ConfirmSaveDialog({ open, onOpenChange, title, configKey, oldValue, new
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="bg-[#0C1319] border border-white/10 max-w-lg">
+      <AlertDialogContent className="bg-[#0C1319] border border-white/10 w-[calc(100vw-2rem)] max-w-2xl overflow-hidden">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-white font-black uppercase tracking-tight flex items-center gap-2">
             <AlertTriangle size={18} className="text-amber-500" />
@@ -1007,14 +1007,14 @@ function ConfirmSaveDialog({ open, onOpenChange, title, configKey, oldValue, new
                 Config: {configKey}
               </p>
               {changes ? (
-                <div className="space-y-2">
+                <div className="space-y-2 max-h-[45vh] overflow-y-auto overflow-x-hidden">
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Perubahan Terdeteksi:</p>
                   {changes.map(c => (
-                    <div key={c.key} className="flex items-center gap-2 text-[11px] bg-white/[0.03] rounded-lg px-3 py-2 border border-white/5">
+                    <div key={c.key} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2 text-[11px] bg-white/[0.03] rounded-lg px-3 py-2 border border-white/5 min-w-0 overflow-hidden">
                       <span className="text-slate-400 font-mono shrink-0">{c.key}</span>
-                      <span className="text-red-400 font-bold line-through">{JSON.stringify(c.old)}</span>
-                      <ArrowRight size={12} className="text-slate-600 shrink-0" />
-                      <span className="text-emerald-400 font-bold">{JSON.stringify(c.new)}</span>
+                      <span className="text-red-400 font-bold line-through break-all min-w-0">{JSON.stringify(c.old)}</span>
+                      <ArrowRight size={12} className="text-slate-600 shrink-0 hidden sm:block" />
+                      <span className="text-emerald-400 font-bold break-all min-w-0">{JSON.stringify(c.new)}</span>
                     </div>
                   ))}
                 </div>

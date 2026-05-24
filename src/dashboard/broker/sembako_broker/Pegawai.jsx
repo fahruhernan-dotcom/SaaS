@@ -40,7 +40,7 @@ export default function SembakoPegawai({ hideMobileHeader }) {
   const { setSidebarOpen } = useOutletContext()
   const { tenant } = useAuth()
   const sub = getSubscriptionStatus(tenant)
-  const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
+  const isStarter = sub.status !== 'active' && sub.status !== 'trial'
   const [tab, setTab] = useState('pegawai')
 
   if (isStarter) {

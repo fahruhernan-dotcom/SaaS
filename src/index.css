@@ -47,6 +47,8 @@ body {
   letter-spacing: -1.2px;
   line-height: 1.15;
   color: #F1F5F9;
+  user-select: none;
+  cursor: default;
 }
 
 .section-subtitle {
@@ -54,6 +56,20 @@ body {
   font-size: 15px;
   color: #64748B;
   line-height: 1.7;
+  user-select: none;
+  cursor: default;
+}
+
+/* Hero headline rows — anime.js target + cursor guard */
+.hero-headline-row {
+  user-select: none;
+  cursor: default;
+}
+
+/* All section headings on public landing pages: no I-beam cursor on marketing text */
+section h1, section h2, section h3 {
+  user-select: none;
+  cursor: default;
 }
 @media (min-width: 768px) {
   .section-subtitle {

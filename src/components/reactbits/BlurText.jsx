@@ -28,7 +28,7 @@ function BlurText({
   ]
 
   return (
-    <p ref={ref} className={className} style={{ margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: animateBy === 'words' ? '0.25em' : '0', ...style }}>
+    <p ref={ref} className={className} style={{ margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: animateBy === 'words' ? '0.25em' : '0', userSelect: 'none', ...style }}>
       {elements.map((el, i) => (
         <motion.span
           key={i}

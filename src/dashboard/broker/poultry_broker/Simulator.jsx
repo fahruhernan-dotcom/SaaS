@@ -38,7 +38,7 @@ export default function Simulator() {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const { tenant } = useAuth()
   const sub = getSubscriptionStatus(tenant)
-  const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
+  const isStarter = sub.status !== 'active' && sub.status !== 'trial'
 
   const [marketPrices, setMarketPrices] = useState(null)
   const [formData, setFormData] = useState({

@@ -36,7 +36,7 @@ export default function SembakoLaporan() {
   const { setSidebarOpen } = useOutletContext()
   const { tenant } = useAuth()
   const sub = getSubscriptionStatus(tenant)
-  const isStarter = sub.plan === 'starter' && sub.status !== 'trial'
+  const isStarter = sub.status !== 'active' && sub.status !== 'trial'
 
   // Compute before useState so initial values are stable regardless of isStarter.
   // Rules of Hooks: all hooks must be called unconditionally before any early return.
