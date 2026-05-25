@@ -1,3 +1,5 @@
-import AkunPage from './AkunPreview'
+import AkunPage from './akun_page'
 
 export default AkunPage
+
+

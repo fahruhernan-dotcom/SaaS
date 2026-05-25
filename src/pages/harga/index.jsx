@@ -334,10 +334,10 @@ export default function HargaPage() {
                 transition={{ duration: 0.2 }}
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start pt-6">
-                  <StarterCard data={data} />
-                  <ProCard data={data} billing={billing} annualDiscount={annualDiscount} />
+                  <StarterCard data={data} isLoggedIn={isLoggedIn} />
+                  <ProCard data={data} billing={billing} annualDiscount={annualDiscount} isLoggedIn={isLoggedIn} />
                   <div className="lg:relative lg:z-10 lg:scale-[1.03]">
-                    <BusinessCard data={data} billing={billing} annualDiscount={annualDiscount} />
+                    <BusinessCard data={data} billing={billing} annualDiscount={annualDiscount} isLoggedIn={isLoggedIn} />
                   </div>
                   <EnterpriseCard />
                 </div>

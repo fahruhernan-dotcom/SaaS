@@ -417,6 +417,29 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
           throw tenError
         }
         console.log('[Onboarding] tenants UPDATE success')
+
+        // Auto-activate trial if there is an intended trial plan from landing/pricing pages
+        const intendedPlan = sessionStorage.getItem('intended_trial_plan')
+        if (intendedPlan && (intendedPlan === 'pro' || intendedPlan === 'business') && resolvedTenantId) {
+          console.log('[Onboarding] Auto-activating trial for plan:', intendedPlan)
+          try {
+            const { error: trialError } = await supabase.rpc('activate_plan_trial', {
+              p_tenant_id: resolvedTenantId,
+              p_plan:      intendedPlan,
+              p_days:      14, // default trial days
+            })
+            if (trialError) {
+              console.error('[Onboarding] Auto trial activation failed:', trialError.message)
+            } else {
+              console.log('[Onboarding] Auto trial activation success')
+              toast.success(`Trial ${intendedPlan === 'business' ? 'Business' : 'Pro'} 14 hari gratis berhasil diaktifkan!`)
+            }
+          } catch (trialErr) {
+            console.error('[Onboarding] Auto trial activation exception:', trialErr)
+          } finally {
+            sessionStorage.removeItem('intended_trial_plan')
+          }
+        }
       }
 
       // --- SETUP STEP: Save initial batch (config-driven for all penggemukan verticals) ---

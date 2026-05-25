@@ -106,6 +106,26 @@ export default function AppSidebar({ open, onClose }) {
   const { data: planConfigs } = usePlanConfigs()
   const trialConfig = planConfigs?.trial_config || { duration: 14 }
   const trialDurationDays = Number(trialConfig.duration) || 14
+
+  const handleStartProTrial = async () => {
+    try {
+      const trialEnd = new Date(Date.now() + trialDurationDays * 24 * 60 * 60 * 1000).toISOString()
+      const { error } = await supabase
+        .from('tenants')
+        .update({ 
+           plan: 'pro', 
+           trial_ends_at: trialEnd, 
+           kandang_limit: 2
+        })
+        .eq('id', tenant?.id)
+      
+      if (error) throw error
+      toast.success('🎉 Trial PRO ' + trialDurationDays + ' Hari dimulai!')
+      setTimeout(() => window.location.reload(), 500)
+    } catch (err) {
+      toast.error('Gagal: ' + err.message)
+    }
+  }
   
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 
@@ -1117,61 +1137,19 @@ export default function AppSidebar({ open, onClose }) {
           {/* Mulai Trial button — hanya untuk starter yang belum pernah trial */}
           {canStartTrial && (
             <div style={{ marginTop: '10px' }}>
-              {!showTrialChoices ? (
-                <button
-                  onClick={() => setShowTrialChoices(true)}
-                  style={{
-                    width: '100%', padding: '8px 12px',
-                    background: '#10B981', color: 'white', border: 'none', borderRadius: '8px',
-                    fontSize: '12px', fontWeight: 700, fontFamily: 'Sora', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                    boxShadow: '0 2px 12px rgba(16,185,129,0.25)', transition: 'all 0.2s'
-                  }}
-                >
-                  <Sparkles size={14} />
-                  Pilih Plan Trial ({trialDurationDays} Hari)
-                </button>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                  {['starter', 'pro', 'business'].map(p => (
-                    <button
-                      key={p}
-                      onClick={async () => {
-                        try {
-                          const trialEnd = new Date(Date.now() + trialDurationDays * 24 * 60 * 60 * 1000).toISOString()
-                          const { error } = await supabase
-                            .from('tenants')
-                            .update({ 
-                               plan: p, 
-                               trial_ends_at: trialEnd, 
-                               kandang_limit: p === 'business' ? 99 : p === 'pro' ? 2 : 1
-                            })
-                            .eq('id', tenant?.id)
-                          
-                          if (error) throw error
-                          toast.success(`🎉 Trial ${p.toUpperCase()} ${trialDurationDays} Hari dimulai!`)
-                          setTimeout(() => window.location.reload(), 500)
-                        } catch (err) {
-                          toast.error('Gagal: ' + err.message)
-                        }
-                      }}
-                      style={{
-                        padding: '6px 2px', borderRadius: '6px', border: '1px solid #10B981',
-                        background: 'transparent', color: '#34D399', fontSize: '9px',
-                        fontWeight: 800, cursor: 'pointer', textAlign: 'center'
-                      }}
-                    >
-                      {p.toUpperCase()}
-                    </button>
-                  ))}
-                  <button 
-                    onClick={() => setShowTrialChoices(false)}
-                    style={{ gridColumn: 'span 3', background: 'transparent', border: 'none', color: '#4B6478', fontSize: '9px', marginTop: '4px', cursor: 'pointer' }}
-                  >
-                    Batal
-                  </button>
-                </div>
-              )}
+              <button
+                onClick={handleStartProTrial}
+                style={{
+                  width: '100%', padding: '8px 12px',
+                  background: '#10B981', color: 'white', border: 'none', borderRadius: '8px',
+                  fontSize: '12px', fontWeight: 700, fontFamily: 'Sora', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justify: 'center', gap: '6px',
+                  boxShadow: '0 2px 12px rgba(16,185,129,0.25)', transition: 'all 0.2s'
+                }}
+              >
+                <Sparkles size={14} />
+                Mulai Trial PRO ({trialDurationDays} Hari)
+              </button>
             </div>
           )}
         </div>

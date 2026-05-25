@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import AnimatedContent from '../components/reactbits/AnimatedContent';
 import { usePricingConfig, usePlanConfigs } from '@/lib/hooks/useAdminData';
 import { usePlatformStats, formatCompactNumber } from '@/lib/hooks/usePlatformStats';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 // Social proof avatars for BUSINESS card
 const AVATARS = [
@@ -25,6 +26,9 @@ const Pricing = ({ activeRole, setActiveRole }) => {
   const [openFaq, setOpenFaq] = useState(null);
   const [mobilePlanIdx, setMobilePlanIdx] = useState(1); // default PRO
   const switchRef = useRef(null);
+
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
 
   const { data: dbPricing } = usePricingConfig();
   const { data: dbConfigs } = usePlanConfigs();
@@ -180,7 +184,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
         description: 'Langkah awal digitalisasi bisnismu secara gratis selamanya.',
         features: starterFeatures[activeRole] || starterFeatures.peternak,
         buttonText: 'Mulai Gratis',
-        href: '/register',
+        href: isLoggedIn ? '/' : '/register',
         isPopular: false,
         isSocial: false,
         anchorPrice: 0,
@@ -198,7 +202,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
         description: 'Solusi lengkap untuk manajemen operasional harian.',
         features: getProFeatures(activeRole),
         buttonText: `Mulai ${trialPro} Hari Gratis`,
-        href: '/register',
+        href: isLoggedIn ? '/upgrade?plan=pro' : '/register',
         isPopular: false,
         isSocial: false,
       },
@@ -221,12 +225,12 @@ const Pricing = ({ activeRole, setActiveRole }) => {
           { text: 'Tim unlimited', highlight: false },
         ],
         buttonText: `Mulai ${trialBiz} Hari Gratis`,
-        href: '/register',
+        href: isLoggedIn ? '/upgrade?plan=business' : '/register',
         isPopular: true,
         isSocial: true,
       },
     ];
-  }, [activeRole, currentPrices, dbConfigs]);
+  }, [activeRole, currentPrices, dbConfigs, isLoggedIn]);
 
   const faqs = [
     { q: 'Bisa cancel kapan saja?', a: 'Tentu. Tidak ada kontrak panjang. Anda bisa berhenti berlangganan kapan saja.' },
@@ -489,7 +493,16 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                       {plan.buttonText}
                     </a>
                   ) : (
-                    <Link to={plan.href}>{plan.buttonText}</Link>
+                    <Link
+                      to={plan.href}
+                      onClick={() => {
+                        if (!isLoggedIn && (plan.name === 'PRO' || plan.name === 'BUSINESS')) {
+                          sessionStorage.setItem('intended_trial_plan', plan.name.toLowerCase());
+                        }
+                      }}
+                    >
+                      {plan.buttonText}
+                    </Link>
                   )}
                 </Button>
 
@@ -630,7 +643,17 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                       : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
                   )}
                 >
-                  <Link to={plans[mobilePlanIdx].href}>{plans[mobilePlanIdx].buttonText}</Link>
+                  <Link
+                    to={plans[mobilePlanIdx].href}
+                    onClick={() => {
+                      const selectedPlanName = plans[mobilePlanIdx].name;
+                      if (!isLoggedIn && (selectedPlanName === 'PRO' || selectedPlanName === 'BUSINESS')) {
+                        sessionStorage.setItem('intended_trial_plan', selectedPlanName.toLowerCase());
+                      }
+                    }}
+                  >
+                    {plans[mobilePlanIdx].buttonText}
+                  </Link>
                 </Button>
                 <div className="flex items-center justify-center gap-1.5">
                   <CheckCircle2 size={12} className="text-emerald-500" />

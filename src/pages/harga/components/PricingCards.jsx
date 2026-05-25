@@ -81,7 +81,7 @@ export function AccordionItem({ q, a }) {
   )
 }
 
-export function StarterCard({ data }) {
+export function StarterCard({ data, isLoggedIn }) {
   return (
     <div className="group relative bg-[linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))] rounded-2xl p-8 border border-white/8 flex flex-col h-full transition-all duration-300 hover:border-white/20">
       <div className="relative z-10 mb-6">
@@ -108,7 +108,7 @@ export function StarterCard({ data }) {
       </ul>
 
       <Link
-        to="/register"
+        to={isLoggedIn ? "/" : "/register"}
         className="relative z-10 block text-center py-3 rounded-xl border border-white/10 text-[#64748B] text-sm font-bold hover:border-white/30 hover:text-white transition-all"
       >
         Mulai Gratis
@@ -117,7 +117,7 @@ export function StarterCard({ data }) {
   )
 }
 
-export function ProCard({ data, billing, annualDiscount }) {
+export function ProCard({ data, billing, annualDiscount, isLoggedIn }) {
   const price = billing === 'yearly' ? data.proYearly : data.proPrice
   const yearlyTotal = data.proYearly * 12
   const discountPct = annualDiscount?.discount_percent || 20
@@ -155,7 +155,12 @@ export function ProCard({ data, billing, annualDiscount }) {
       )}
 
       <Link
-        to="/register"
+        to={isLoggedIn ? "/upgrade?plan=pro" : "/register"}
+        onClick={() => {
+          if (!isLoggedIn) {
+            sessionStorage.setItem('intended_trial_plan', 'pro')
+          }
+        }}
         className="relative z-10 block text-center py-3 rounded-xl border border-emerald-500/40 text-emerald-400 text-sm font-bold hover:bg-emerald-500/10 transition-colors"
       >
         Mulai {data.trialDays || 14} Hari Gratis
@@ -164,7 +169,7 @@ export function ProCard({ data, billing, annualDiscount }) {
   )
 }
 
-export function BusinessCard({ data, billing, annualDiscount }) {
+export function BusinessCard({ data, billing, annualDiscount, isLoggedIn }) {
   const price = billing === 'yearly' ? data.bizYearly : data.bizPrice
   const yearlyTotal = data.bizYearly * 12
   const yearlySaving = (data.bizPrice - data.bizYearly) * 12
@@ -222,7 +227,12 @@ export function BusinessCard({ data, billing, annualDiscount }) {
 
         <div className="relative z-10 mt-8">
           <Link
-            to="/register"
+            to={isLoggedIn ? "/upgrade?plan=business" : "/register"}
+            onClick={() => {
+              if (!isLoggedIn) {
+                sessionStorage.setItem('intended_trial_plan', 'business')
+              }
+            }}
             className="block text-center py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold transition-all shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_4px_28px_rgba(16,185,129,0.45)] hover:-translate-y-0.5 active:translate-y-0"
           >
             Mulai {data.trialDays || 14} Hari Gratis

@@ -402,7 +402,10 @@ export default function UpgradePlan() {
   const { data: planConfigs = {} } = usePlanConfigs()
   const { data: hasPendingInvoice } = useHasPendingInvoice(profile?.tenant_id)
 
-  const [selectedPlan, setSelectedPlan] = useState('pro')
+  const [selectedPlan, setSelectedPlan] = useState(() => {
+    const p = searchParams.get('plan')
+    return (p === 'business' || p === 'pro') ? p : 'pro'
+  })
   const [billingMonths, setBillingMonths] = useState(1)
   const [expandedFeature, setExpandedFeature] = useState('pro')
   const [redirecting, setRedirecting] = useState(false)
@@ -427,7 +430,9 @@ export default function UpgradePlan() {
   const currentPlanMeta = PLAN_META[selectedPlan]
   const trialUsed       = !!tenant?.trial_ends_at
   const canTrial        = sub.plan === 'starter' && !trialUsed
-  const trialDays       = planConfigs?.trial_config?.pro ?? 7
+  const trialDays       = selectedPlan === 'business'
+    ? (planConfigs?.trial_config?.business ?? 7)
+    : (planConfigs?.trial_config?.pro ?? 7)
 
   const paymentStatus   = searchParams.get('payment') // 'finish' | 'unfinish' | 'error' | null
   const paymentMeta     = PAYMENT_STATUS_META[paymentStatus] ?? null
@@ -506,12 +511,27 @@ export default function UpgradePlan() {
           <Zap size={18} color="#818CF8" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-display font-black text-sm text-white leading-tight">Coba Pro {trialDays} Hari — Gratis</p>
+          <p className="font-display font-black text-sm text-white leading-tight">
+            Coba {selectedPlan === 'business' ? 'Business' : 'Pro'} {trialDays} Hari — Gratis
+          </p>
           <p className="text-[11px] text-[#64748B] mt-0.5">Tidak perlu kartu kredit. Batalkan kapan saja.</p>
         </div>
         <motion.button
           whileTap={{ scale: 0.96 }}
-          onClick={() => activateTrial.mutate({ tenantId: tenant.id, days: trialDays })}
+          onClick={() => {
+            if (!profile?.tenant_id) {
+              toast.error('Tenant ID tidak ditemukan.')
+              return
+            }
+            activateTrial.mutate(
+              { tenantId: profile.tenant_id, plan: selectedPlan, days: trialDays },
+              {
+                onSuccess: () => {
+                  navigate('/billing')
+                }
+              }
+            )
+          }}
           disabled={activateTrial.isPending}
           className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-black text-[12px] disabled:opacity-60"
           style={{ background: '#818CF8', color: '#fff' }}
@@ -674,11 +694,18 @@ export default function UpgradePlan() {
 
           {/* Top bar */}
           <div className="flex items-center justify-between mb-8">
-            <button onClick={() => navigate(-1)}
-              className="flex items-center gap-2 text-[13px] text-[#4B6478] hover:text-[#94A3B8] transition-colors"
-            >
-              <ArrowLeft size={14} /> Kembali
-            </button>
+            <div className="flex items-center gap-3">
+              <button onClick={() => navigate(-1)}
+                className="flex items-center gap-2 text-[13px] font-semibold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5 hover:border-white/10 transition-all active:scale-[0.98]"
+              >
+                <ArrowLeft size={14} /> Kembali
+              </button>
+              <button onClick={() => navigate('/dashboard')}
+                className="flex items-center gap-2 text-[13px] font-semibold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/15 px-4 py-2 rounded-xl border border-emerald-500/10 hover:border-emerald-500/20 transition-all active:scale-[0.98]"
+              >
+                <Building2 size={14} /> Dashboard
+              </button>
+            </div>
             {heroBadges}
           </div>
 
@@ -732,11 +759,18 @@ export default function UpgradePlan() {
       {ambientGlow}
       <div className="relative max-w-lg mx-auto px-4 pt-6 pb-36">
 
-        <button onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-[13px] text-[#4B6478] hover:text-[#94A3B8] transition-colors mb-6"
-        >
-          <ArrowLeft size={14} /> Kembali
-        </button>
+        <div className="flex items-center gap-3 mb-6">
+          <button onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-[13px] font-semibold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5 hover:border-white/10 transition-all active:scale-[0.98]"
+          >
+            <ArrowLeft size={14} /> Kembali
+          </button>
+          <button onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 text-[13px] font-semibold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/15 px-4 py-2 rounded-xl border border-emerald-500/10 hover:border-emerald-500/20 transition-all active:scale-[0.98]"
+          >
+            <Building2 size={14} /> Dashboard
+          </button>
+        </div>
 
         <div className="mb-6">
           {heroBadges}

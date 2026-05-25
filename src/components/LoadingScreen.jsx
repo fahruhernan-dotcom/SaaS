@@ -23,9 +23,11 @@ const LoadingScreen = () => {
       {/* Logo Row */}
       <div className="flex items-center gap-[7px]">
         {/* Logo Box */}
-        <div className="w-[22px] h-[22px] bg-[#10B981] rounded-md flex items-center justify-center">
-          <div className="w-[10px] h-[10px] bg-[#06090F] rounded opacity-70" />
-        </div>
+        <svg viewBox="0 0 256 256" className="w-[22px] h-[22px]" xmlns="http://www.w3.org/2000/svg">
+          <rect width="256" height="256" rx="60" fill="#123c26"/>
+          <rect x="56" y="60" width="50" height="40" fill="#ffffff" />
+          <path d="M 146 60 L 196 60 L 196 100 L 146 100 L 146 196 L 106 196 L 106 100 Z" fill="#ffffff" />
+        </svg>
         
         {/* Text */}
         <span className="font-display text-[14px] font-semibold text-[#F1F5F9] tracking-[-0.2px]">
