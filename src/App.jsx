@@ -55,6 +55,7 @@ const MarketPriceDashboard = lazy(() => import('./dashboard/_shared/pages/Market
 const Market               = lazy(() => import('./dashboard/_shared/pages/Market'))
 const OnboardingFlow       = lazy(() => import('./dashboard/_shared/pages/OnboardingFlow'))
 const UpgradePlan          = lazy(() => import('./dashboard/_shared/pages/UpgradePlan'))
+const BillingPortal        = lazy(() => import('./dashboard/_shared/pages/BillingPortal'))
 const AddonPortal          = lazy(() => import('./dashboard/_shared/pages/AddonPortal'))
 
 // Admin — lazy loaded (superadmin only)
@@ -362,6 +363,11 @@ export const routes = createRoutesFromElements(
     <Route path="/upgrade" element={
       <ProtectedRoute>
         <UpgradePlan />
+      </ProtectedRoute>
+    } />
+    <Route path="/billing" element={
+      <ProtectedRoute>
+        <BillingPortal />
       </ProtectedRoute>
     } />
 

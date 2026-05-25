@@ -4,7 +4,7 @@ import {
   Check, X, Package, Receipt, Sun, Globe, Bell, Settings, Phone,
   FileText, LogOut, ChevronRight, ArrowUpRight, Info, LayoutGrid,
   ClipboardList, BarChart2, Users, ShoppingCart, Truck, Warehouse,
-  Trash2, AlertTriangle, MapPin,
+  Trash2, AlertTriangle, MapPin, CreditCard,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/lib/hooks/useAuth'
@@ -207,6 +207,7 @@ export default function AkunPage() {
           isMultiTenant={isMultiTenant}
           onSwitch={handleSwitchBiz}
           onUpgrade={handleUpgrade}
+          onManage={() => navigate('/billing')}
           onHelp={() => navigate('/hubungi-kami')}
           onEditProfile={() => setEditProfileOpen(true)}
         />
@@ -386,7 +387,7 @@ function ProfileHero({ accent, roleBadge, displayName, email, initials, tenantNa
 
 // ─── Section 2: Quick Actions ─────────────────────────────────
 
-function QuickActions({ accent, plan, showBilling, isMultiTenant, onSwitch, onUpgrade, onHelp, onEditProfile }) {
+function QuickActions({ accent, plan, showBilling, isMultiTenant, onSwitch, onUpgrade, onManage, onHelp, onEditProfile }) {
   const planLabel = plan === 'none' ? 'Start Plan'
     : plan === 'starter' || plan === 'basic' ? 'Upgrade Plan'
     : 'Lihat Paket'
@@ -403,6 +404,7 @@ function QuickActions({ accent, plan, showBilling, isMultiTenant, onSwitch, onUp
     isMultiTenant && { icon: <Shuffle size={17} />, label: 'Ganti Bisnis', sub: 'Pindah tenant', fg: 'oklch(0.7 0.15 230)', featured: false, disabled: false, onClick: onSwitch },
     showBilling && { icon: <Sparkles size={17} />, label: planLabel, sub: planSub, fg: planFg, featured: isFeaturedPlan, disabled: false, onClick: onUpgrade },
     { icon: <HelpCircle size={17} />, label: 'Bantuan', sub: 'Pusat dukungan', fg: T.textDim, featured: false, disabled: false, onClick: onHelp },
+    showBilling && { icon: <CreditCard size={17} />, label: 'Manajemen Paket', sub: 'Invoice & perpanjang', fg: 'oklch(0.7 0.15 230)', featured: false, disabled: false, onClick: onManage },
   ].filter(Boolean)
 
   return (
