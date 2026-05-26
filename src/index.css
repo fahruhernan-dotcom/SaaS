@@ -183,6 +183,13 @@ section h1, section h2, section h3 {
     --sidebar-ring: 160 84% 39%;
 
     /* Extended Color Variables for Light Mode */
+    --emerald-50: #021a02;
+    --emerald-300: #021a02;
+    --emerald-400: #021a02;
+    --emerald-500: #021a02;
+    --emerald-600: #021a02;
+    --em-500: #021a02;
+  
     --bg-base-val: #FAFAFA; /* off-white bersih */
     --bg-1-val: #FFFFFF;    /* white panels */
     --bg-2-val: #F6F9F5;    /* warm sage-50 cards */
@@ -324,10 +331,17 @@ section h1, section h2, section h3 {
     --text-primary: #F8FAFC;
     --text-secondary: rgba(248, 250, 252, 0.72);
     --text-muted: rgba(248, 250, 252, 0.52);
-    --brand-500: #34D399; /* main CTA for dark mode */
-    --brand-600: #021a02; /* CTA hover override for dark mode */
+    --brand-500: #4e734e; /* main brand green for dark mode — muted forest */
+    --brand-600: #3d5c3d; /* CTA hover override for dark mode */
 
-    /* Extended Color Variables for Dark Mode */
+    /* Extended Color Variables for Dark Mode — based on #4e734e forest scale */
+    --emerald-50:  #e8f0e8; /* lightest tint */
+    --emerald-300: #8cb88c; /* light accent */
+    --emerald-400: #6b9a6b; /* icon / text accent */
+    --emerald-500: #4e734e; /* base brand green */
+    --emerald-600: #3d5c3d; /* darker — hover backgrounds */
+    --em-500: #4e734e;
+  
     --bg-base-val: #06090F;
     --bg-1-val: #0C1319;
     --bg-2-val: #111C24;
@@ -335,7 +349,7 @@ section h1, section h2, section h3 {
     --text-primary-val: #F1F5F9;
     --text-secondary-val: #94A3B8;
     --text-muted-val: #4B6478;
-    --text-accent-val: #34D399;
+    --text-accent-val: #6b9a6b;  /* emerald-400 tone — readable on dark bg */
     
     --border-sub-val: rgba(255, 255, 255, 0.05);
     --border-def-val: rgba(255, 255, 255, 0.09);
@@ -905,3 +919,11 @@ html:not(.dark) .fitur-page .py-24 {
 
 
 
+
+/* Theme-Adaptive Brand utility classes */
+.text-brand-500 {
+  color: var(--brand-500) !important;
+}
+.bg-brand-500 {
+  background-color: var(--brand-500) !important;
+}
