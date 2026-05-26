@@ -113,6 +113,7 @@ GRANT EXECUTE ON FUNCTION "public"."get_province_price_trends" TO "anon";
 GRANT EXECUTE ON FUNCTION "public"."get_public_market_stats" TO "authenticated";
 GRANT EXECUTE ON FUNCTION "public"."get_public_market_stats" TO "service_role";
 GRANT EXECUTE ON FUNCTION "public"."get_public_market_stats" TO "postgres";
+GRANT EXECUTE ON FUNCTION "public"."get_public_market_stats" TO "anon";
 GRANT EXECUTE ON FUNCTION "public"."get_ternak_limit" TO "service_role";
 GRANT EXECUTE ON FUNCTION "public"."get_ternak_limit" TO "authenticated";
 GRANT EXECUTE ON FUNCTION "public"."get_ternak_limit" TO "postgres";

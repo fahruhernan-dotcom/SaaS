@@ -318,47 +318,6 @@ export default function MarketPriceDashboard() {
         </motion.div>
       </motion.section>
 
-      {/* ── STAT CARDS ──────────────────────────────────────────────────── */}
-      <motion.section
-        variants={stagger} initial="hidden" animate="visible"
-        className="px-6 grid grid-cols-2 md:grid-cols-4 gap-4 pb-8 relative z-10"
-      >
-        <StatCard
-          label="Harga Beli (Kandang)"
-          value={latestRow?.avg_buy_price}
-          diff={buyDiff}
-          sub={buyDiff === 0 ? 'Stabil' : `${buyDiff > 0 ? '+' : ''}${formatIDR(buyDiff)} vs kemarin`}
-          icon={TrendingDown}
-          isLoading={scraperLoading || rpcLoading}
-        />
-        <StatCard
-          label="Harga Jual (Pasar)"
-          value={latestRow?.avg_sell_price}
-          diff={sellDiff}
-          sub={sellDiff === 0 ? 'Stabil' : `${sellDiff > 0 ? '+' : ''}${formatIDR(sellDiff)} vs kemarin`}
-          icon={TrendingUp}
-          isLoading={scraperLoading || rpcLoading}
-          highlight
-        />
-        <StatCard
-          label="Margin Broker"
-          value={latestRow?.broker_margin}
-          sub="Rata-rata saat ini"
-          icon={PieChart}
-          isLoading={scraperLoading || rpcLoading}
-        />
-        <StatCard
-          label="Spread vs Chickin.id"
-          value={spreadVsMarket != null ? Math.abs(spreadVsMarket) : null}
-          sub={spreadVsMarket != null
-            ? (spreadVsMarket > 0 ? '▲ Beli lebih mahal' : spreadVsMarket < 0 ? '▼ Beli lebih murah' : '= Sama')
-            : 'Belum ada data'}
-          icon={Activity}
-          isLoading={scraperLoading || rpcLoading}
-          spreadPositive={spreadVsMarket != null && spreadVsMarket <= 0}
-        />
-      </motion.section>
-
       {/* ── MAIN CONTENT ────────────────────────────────────────────────── */}
       <section className="px-6 grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
         <div className="lg:col-span-2 space-y-6">
@@ -367,8 +326,7 @@ export default function MarketPriceDashboard() {
               <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(2, 26, 2,0.04)_0%,transparent_70%)] pointer-events-none" />
 
               <div className="flex flex-col gap-4 mb-8 relative z-10">
-                <div className="flex flex-wrap justify-between items-start gap-3">
-                  <div>
+                <div className="flex flex-wrap justify-between items-start gap-3">                  <div>
                     <div className="flex items-center gap-2 mb-1">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">Data Real Platform + Referensi Pasar</p>
@@ -393,7 +351,7 @@ export default function MarketPriceDashboard() {
                 <div className="flex flex-wrap items-center gap-4">
                   <LegendItem color="#F59E0B" label="Chickin.id (Ref)" dashed />
                   <LegendItem color="#F97316" label="Arboge.com (Ref)" dashed />
-                  <LegendItem color="#021a02" label="Beli (TernakOS)" />
+                  <LegendItem color="var(--brand-500)" label="Beli (TernakOS)" />
                   <LegendItem color="#818CF8" label="Jual (TernakOS)" />
                   <span className="ml-auto text-[9px] font-black text-[#4B6478] uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded-lg border border-white/10">
                     {selectedProvince} · {trendLabel}
@@ -411,8 +369,8 @@ export default function MarketPriceDashboard() {
                     <AreaChart data={trendData}>
                       <defs>
                         <linearGradient id="gradBuy" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#021a02" stopOpacity={0.15} />
-                          <stop offset="95%" stopColor="#021a02" stopOpacity={0} />
+                          <stop offset="5%" stopColor="var(--brand-500)" stopOpacity={0.15} />
+                          <stop offset="95%" stopColor="var(--brand-500)" stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="gradSell" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#818CF8" stopOpacity={0.1} />
@@ -426,7 +384,7 @@ export default function MarketPriceDashboard() {
                       <Area type="monotone" dataKey="chickin" stroke="#F59E0B" strokeWidth={2} strokeDasharray="5 4" fill="transparent" connectNulls dot={false} />
                       <Area type="monotone" dataKey="arboge" stroke="#F97316" strokeWidth={2} strokeDasharray="3 3" fill="transparent" connectNulls dot={false} />
                       <Area type="monotone" dataKey="platformJual" stroke="#818CF8" strokeWidth={2} fillOpacity={1} fill="url(#gradSell)" connectNulls activeDot={{ r: 5, stroke: '#0C1319', strokeWidth: 2, fill: '#818CF8' }} />
-                      <Area type="monotone" dataKey="platformBeli" stroke="#021a02" strokeWidth={3} fillOpacity={1} fill="url(#gradBuy)" connectNulls activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: '#021a02' }} />
+                      <Area type="monotone" dataKey="platformBeli" stroke="var(--brand-500)" strokeWidth={3} fillOpacity={1} fill="url(#gradBuy)" connectNulls activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: 'var(--brand-500)' }} />
                     </AreaChart>
                   </ResponsiveContainer>
                 )}
@@ -627,37 +585,37 @@ function HybridTooltip({ active, payload }) {
   const spread = (d.platformBeli && d.chickin) ? d.chickin - d.platformBeli : null
   const margin = (d.platformBeli && d.platformJual) ? d.platformJual - d.platformBeli : null
   return (
-    <div className="bg-[#0C1319] border border-white/10 p-4 rounded-2xl shadow-2xl min-w-[200px] backdrop-blur-xl">
-      <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-3">{d.displayDate}</p>
+    <div className="bg-bg-1 border border-border-subtle p-4 rounded-2xl shadow-2xl min-w-[200px] backdrop-blur-xl">
+      <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-3">{d.displayDate}</p>
       <div className="space-y-2.5">
         {[
-          { label: 'Chickin.id (Ref)', val: d.chickin, color: 'text-amber-400' },
-          { label: 'Arboge.com (Ref)', val: d.arboge, color: 'text-orange-400' },
-          { label: 'Beli (TernakOS)', val: d.platformBeli, color: 'text-emerald-400' },
-          { label: 'Jual (TernakOS)', val: d.platformJual, color: 'text-indigo-400' },
+          { label: 'Chickin.id (Ref)', val: d.chickin, color: 'text-amber-500 font-bold' },
+          { label: 'Arboge.com (Ref)', val: d.arboge, color: 'text-orange-500 font-bold' },
+          { label: 'Beli (TernakOS)', val: d.platformBeli, color: 'text-emerald-600 dark:text-brand-500 font-black' },
+          { label: 'Jual (TernakOS)', val: d.platformJual, color: 'text-indigo-600 dark:text-indigo-400 font-black' },
         ].map(({ label, val, color }) => (
           <div key={label} className="flex justify-between items-center gap-4">
-            <span className="text-[11px] text-[#94A3B8] font-bold">{label}</span>
-            <span className={cn("text-sm font-black tabular-nums", val ? color : 'text-[#4B6478]')}>
+            <span className="text-[11px] text-text-secondary font-bold">{label}</span>
+            <span className={cn("text-sm font-black tabular-nums", val ? color : 'text-text-muted')}>
               {val ? formatIDR(val) : '—'}
             </span>
           </div>
         ))}
       </div>
       {(spread != null || margin != null) && (
-        <div className="mt-3 pt-3 border-t border-white/5 space-y-1.5">
+        <div className="mt-3 pt-3 border-t border-border-subtle space-y-1.5">
           {spread != null && (
             <div className="flex justify-between items-center">
-              <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider">Efisiensi Beli</span>
-              <span className={cn('text-xs font-black tabular-nums', spread >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
+              <span className="text-[9px] font-black text-text-muted uppercase tracking-wider">Efisiensi Beli</span>
+              <span className={cn('text-xs font-black tabular-nums', spread >= 0 ? 'text-emerald-600 dark:text-brand-500' : 'text-rose-600 dark:text-rose-400')}>
                 {spread > 0 ? '+' : ''}{formatIDR(spread)}
               </span>
             </div>
           )}
           {margin != null && (
             <div className="flex justify-between items-center">
-              <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider">Margin/kg</span>
-              <span className={cn('text-xs font-black tabular-nums', margin >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
+              <span className="text-[9px] font-black text-text-muted uppercase tracking-wider">Margin/kg</span>
+              <span className={cn('text-xs font-black tabular-nums', margin >= 0 ? 'text-emerald-600 dark:text-brand-500' : 'text-rose-600 dark:text-rose-400')}>
                 {margin > 0 ? '+' : ''}{formatIDR(margin)}
               </span>
             </div>

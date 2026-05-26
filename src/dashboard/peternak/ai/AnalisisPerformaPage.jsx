@@ -238,9 +238,9 @@ function UpgradeWall() {
 function CustomTooltip({ active, payload, label, unit }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-[#0C1319] border border-white/10 rounded-xl px-3 py-2">
-      <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest mb-1">{label}</p>
-      <p className="text-[13px] font-black text-white">{payload[0].value}{unit}</p>
+    <div className="bg-bg-1 border border-border-subtle rounded-xl px-3 py-2">
+      <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest mb-1">{label}</p>
+      <p className="text-[13px] font-black text-text-primary">{payload[0].value}{unit}</p>
     </div>
   )
 }
@@ -441,31 +441,31 @@ export default function AnalisisPerformaPage() {
                     <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                       <defs>
                         <linearGradient id="perfGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%"  stopColor="#021a02" stopOpacity={0.25} />
-                          <stop offset="95%" stopColor="#021a02" stopOpacity={0} />
+                          <stop offset="5%"  stopColor="var(--brand-500)" stopOpacity={0.25} />
+                          <stop offset="95%" stopColor="var(--brand-500)" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-sub-val)" />
                       <XAxis
                         dataKey="name"
                         axisLine={false} tickLine={false}
-                        tick={{ fill: '#4B6478', fontSize: 9, fontWeight: 800 }}
+                        tick={{ fill: 'var(--text-muted-val)', fontSize: 9, fontWeight: 800 }}
                         dy={8}
                       />
                       <YAxis
                         axisLine={false} tickLine={false}
-                        tick={{ fill: '#4B6478', fontSize: 9, fontWeight: 800 }}
+                        tick={{ fill: 'var(--text-muted-val)', fontSize: 9, fontWeight: 800 }}
                         width={40}
                       />
                       <RechartsTooltip content={<CustomTooltip unit={chartUnit} />} />
                       <Area
                         type="monotone"
                         dataKey="value"
-                        stroke="#021a02"
+                        stroke="var(--brand-500)"
                         strokeWidth={2}
                         fill="url(#perfGradient)"
-                        dot={{ r: 3, fill: '#021a02', strokeWidth: 0 }}
-                        activeDot={{ r: 5, fill: '#021a02', strokeWidth: 0 }}
+                        dot={{ r: 3, fill: 'var(--brand-500)', strokeWidth: 0 }}
+                        activeDot={{ r: 5, fill: 'var(--brand-500)', strokeWidth: 0 }}
                         connectNulls={false}
                       />
                     </AreaChart>

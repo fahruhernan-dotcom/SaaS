@@ -128,43 +128,71 @@ function HybridTooltip({ active, payload }) {
   const spread = (d.platformBeli && d.chickin) ? d.chickin - d.platformBeli : null
   const margin = (d.platformBeli && d.platformJual) ? d.platformJual - d.platformBeli : null
   return (
-    <div className="bg-[#0C1319] border border-white/10 p-4 rounded-2xl shadow-2xl min-w-[200px] backdrop-blur-xl">
-      <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-3">{d.displayDate}</p>
+    <div className="bg-bg-1 border border-border-subtle p-4 rounded-2xl shadow-2xl min-w-[200px] backdrop-blur-xl">
+      <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-3">{d.displayDate}</p>
       <div className="space-y-2.5">
         {[
-          { label: 'Chickin.id (Ref)', val: d.chickin, color: 'text-amber-400' },
-          { label: 'Arboge.com (Ref)', val: d.arboge, color: 'text-orange-400' },
-          { label: 'Beli (TernakOS)', val: d.platformBeli, color: 'text-emerald-400' },
-          { label: 'Jual (TernakOS)', val: d.platformJual, color: 'text-indigo-400' },
+          { label: 'Chickin.id (Ref)', val: d.chickin, color: 'text-amber-500 font-bold' },
+          { label: 'Arboge.com (Ref)', val: d.arboge, color: 'text-orange-500 font-bold' },
+          { label: 'Beli (TernakOS)', val: d.platformBeli, color: 'text-emerald-600 dark:text-brand-500 font-black' },
+          { label: 'Jual (TernakOS)', val: d.platformJual, color: 'text-indigo-600 dark:text-indigo-400 font-black' },
         ].map(({ label, val, color }) => (
           <div key={label} className="flex justify-between items-center gap-4">
-            <span className="text-[11px] text-[#94A3B8] font-bold">{label}</span>
-            <span className={cn("text-sm font-black tabular-nums", val ? color : 'text-[#4B6478]')}>
+            <span className="text-[11px] text-text-secondary font-bold">{label}</span>
+            <span className={cn("text-sm font-black tabular-nums", val ? color : 'text-text-muted')}>
               {val ? formatIDR(val) : '—'}
             </span>
           </div>
         ))}
       </div>
       {(spread != null || margin != null) && (
-        <div className="mt-3 pt-3 border-t border-white/5 space-y-1.5">
+        <div className="mt-3 pt-3 border-t border-border-subtle space-y-1.5">
           {spread != null && (
             <div className="flex justify-between items-center">
-              <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider">Efisiensi Beli</span>
-              <span className={cn('text-xs font-black tabular-nums', spread >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
+              <span className="text-[9px] font-black text-text-muted uppercase tracking-wider">Efisiensi Beli</span>
+              <span className={cn('text-xs font-black tabular-nums', spread >= 0 ? 'text-emerald-600 dark:text-brand-500' : 'text-rose-600 dark:text-rose-400')}>
                 {spread > 0 ? '+' : ''}{formatIDR(spread)}
               </span>
             </div>
           )}
           {margin != null && (
             <div className="flex justify-between items-center">
-              <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider">Margin/kg</span>
-              <span className={cn('text-xs font-black tabular-nums', margin >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
+              <span className="text-[9px] font-black text-text-muted uppercase tracking-wider">Margin/kg</span>
+              <span className={cn('text-xs font-black tabular-nums', margin >= 0 ? 'text-emerald-600 dark:text-brand-500' : 'text-rose-600 dark:text-rose-400')}>
                 {margin > 0 ? '+' : ''}{formatIDR(margin)}
               </span>
             </div>
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+function BrokerTrendTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null
+  const d = payload[0].payload
+  const buyVal = d['Harga Beli']
+  const sellVal = d['Harga Jual']
+  return (
+    <div className="bg-bg-1 border border-border-subtle p-4 rounded-2xl shadow-2xl min-w-[200px] backdrop-blur-xl">
+      <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-3">
+        {d.date ? formatShortDate(d.date) : ''}
+      </p>
+      <div className="space-y-2.5">
+        <div className="flex justify-between items-center gap-4">
+          <span className="text-[11px] text-text-secondary font-bold">Harga Beli</span>
+          <span className="text-sm font-black tabular-nums text-emerald-600 dark:text-brand-500">
+            {buyVal ? formatIDR(buyVal) : '—'}
+          </span>
+        </div>
+        <div className="flex justify-between items-center gap-4">
+          <span className="text-[11px] text-text-secondary font-bold">Harga Jual</span>
+          <span className="text-sm font-black tabular-nums text-indigo-600 dark:text-indigo-400">
+            {sellVal ? formatIDR(sellVal) : '—'}
+          </span>
+        </div>
+      </div>
     </div>
   )
 }
@@ -779,7 +807,7 @@ export default function HargaPasarPublic() {
                 <div className="flex flex-wrap items-center gap-4">
                   <LegendDot color="#F59E0B" label="Chickin.id (Ref)" dashed />
                   <LegendDot color="#F97316" label="Arboge.com (Ref)" dashed />
-                  <LegendDot color="#021a02" label="Beli Nyata (TernakOS)" />
+                  <LegendDot color="var(--brand-500)" label="Beli Nyata (TernakOS)" />
                   <LegendDot color="#818CF8" label="Jual Nyata (TernakOS)" />
                   <span className="ml-auto text-[9px] font-black text-[#4B6478] uppercase tracking-widest">
                     {currentProvince || 'Jawa Tengah'} · {hybridPeriod === 'weekly' ? 'Minggu Ini' : 'Bulan Ini'}
@@ -802,8 +830,8 @@ export default function HargaPasarPublic() {
                     <AreaChart data={hybridChartData}>
                       <defs>
                         <linearGradient id="gradBuy" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#021a02" stopOpacity={0.15} />
-                          <stop offset="95%" stopColor="#021a02" stopOpacity={0} />
+                          <stop offset="5%" stopColor="var(--brand-500)" stopOpacity={0.15} />
+                          <stop offset="95%" stopColor="var(--brand-500)" stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="gradSell" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#818CF8" stopOpacity={0.1} />
@@ -817,7 +845,7 @@ export default function HargaPasarPublic() {
                       <Area type="monotone" dataKey="chickin" stroke="#F59E0B" strokeWidth={2} strokeDasharray="5 4" fill="transparent" connectNulls dot={false} />
                       <Area type="monotone" dataKey="arboge" stroke="#F97316" strokeWidth={2} strokeDasharray="3 3" fill="transparent" connectNulls dot={false} />
                       <Area type="monotone" dataKey="platformJual" stroke="#818CF8" strokeWidth={2} fillOpacity={1} fill="url(#gradSell)" connectNulls activeDot={{ r: 5, stroke: '#0C1319', strokeWidth: 2, fill: '#818CF8' }} />
-                      <Area type="monotone" dataKey="platformBeli" stroke="#021a02" strokeWidth={3} fillOpacity={1} fill="url(#gradBuy)" connectNulls activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: '#021a02' }} />
+                      <Area type="monotone" dataKey="platformBeli" stroke="var(--brand-500)" strokeWidth={3} fillOpacity={1} fill="url(#gradBuy)" connectNulls activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: 'var(--brand-500)' }} />
                     </AreaChart>
                   </ResponsiveContainer>
                 )}
@@ -845,7 +873,7 @@ export default function HargaPasarPublic() {
                   <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-1">Analisis Margin Platform</p>
                   <h2 className="text-xl font-black text-white">Tren Jual Beli Broker</h2>
                   <div className="flex items-center gap-4 mt-3">
-                    <LegendDot color="#021a02" label="Harga Beli (Kandang)" />
+                    <LegendDot color="var(--brand-500)" label="Harga Beli (Kandang)" />
                     <LegendDot color="#6366F1" label="Harga Jual (Pasar/RPA)" />
                   </div>
                 </div>
@@ -882,8 +910,8 @@ export default function HargaPasarPublic() {
                     }))} margin={{ top: 4, right: 4, bottom: 0, left: 8 }}>
                     <defs>
                       <linearGradient id="gradB2" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#021a02" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#021a02" stopOpacity={0} />
+                        <stop offset="5%" stopColor="var(--brand-500)" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="var(--brand-500)" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="gradS2" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#6366F1" stopOpacity={0.25} />
@@ -893,12 +921,8 @@ export default function HargaPasarPublic() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
                     <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fill: '#4B6478', fontSize: 10 }} axisLine={false} tickLine={false} interval={hybridPeriod === 'monthly' ? 4 : 0} />
                     <YAxis tickFormatter={v => `${(v / 1000).toFixed(0)}k`} tick={{ fill: '#4B6478', fontSize: 10 }} axisLine={false} tickLine={false} width={38} />
-                    <Tooltip
-                      contentStyle={{ background: '#0C1319', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 12 }}
-                      labelFormatter={formatShortDate}
-                      formatter={v => formatIDR(v)}
-                    />
-                    <Area type="monotone" dataKey="Harga Beli" stroke="#021a02" strokeWidth={2} fill="url(#gradB2)" dot={false} activeDot={{ r: 4, fill: '#021a02' }} />
+                    <Tooltip content={<BrokerTrendTooltip />} />
+                    <Area type="monotone" dataKey="Harga Beli" stroke="var(--brand-500)" strokeWidth={2} fill="url(#gradB2)" dot={false} activeDot={{ r: 4, fill: 'var(--brand-500)' }} />
                     <Area type="monotone" dataKey="Harga Jual" stroke="#6366F1" strokeWidth={2} fill="url(#gradS2)" dot={false} activeDot={{ r: 4, fill: '#6366F1' }} />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -1000,7 +1024,7 @@ export default function HargaPasarPublic() {
               <Card key={title} className="bg-[#0C1319] border-white/5 hover:border-emerald-500/20 transition-all duration-300 group rounded-[20px]">
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-start justify-between">
-                    <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                    <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500/20 group-hover:scale-105 transition-all duration-300">
                       {icon}
                     </div>
                     <span className="text-[9px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full uppercase tracking-widest">{badge}</span>

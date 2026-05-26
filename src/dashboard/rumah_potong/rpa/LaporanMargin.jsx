@@ -34,7 +34,7 @@ const fmtDate = (d) => {
 
 const marginColor = (pct) => {
   const n = Number(pct)
-  if (n >= 15) return '#021a02'
+  if (n >= 15) return 'var(--brand-500)'
   if (n >= 10) return '#F59E0B'
   return '#EF4444'
 }
@@ -45,12 +45,12 @@ function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
   return (
     <div style={{
-      background: '#0D1117', border: '1px solid rgba(255,255,255,0.1)',
+      background: 'var(--bg-1-val)', border: '1px solid var(--border-sub-val)',
       borderRadius: '10px', padding: '10px 14px', minWidth: '160px',
     }}>
-      <div style={{ fontSize: '12px', color: '#94A3B8', marginBottom: '6px', fontWeight: 600 }}>{label}</div>
+      <div style={{ fontSize: '12px', color: 'var(--text-muted-val)', marginBottom: '6px', fontWeight: 600 }}>{label}</div>
       {payload.map(p => (
-        <div key={p.name} style={{ fontSize: '12px', color: p.color, fontWeight: 600, marginBottom: '3px' }}>
+        <div key={p.name} style={{ fontSize: '12px', color: p.color === '#021a02' ? 'var(--brand-500)' : p.color, fontWeight: 600, marginBottom: '3px' }}>
           {p.name}: {typeof p.value === 'number' ? fmt(p.value) : p.value}
         </div>
       ))}
@@ -95,7 +95,7 @@ function buildChartData(invoices, startDate, endDate) {
 
 function Skeleton({ h = 60, rounded = 12 }) {
   return (
-    <div style={{ height: h, borderRadius: rounded, background: 'rgba(255,255,255,0.04)', animation: 'pulse 1.5s infinite' }} />
+    <div style={{ height: h, borderRadius: rounded, background: 'var(--border-sub-val)', animation: 'pulse 1.5s infinite' }} />
   )
 }
 
@@ -156,7 +156,7 @@ export default function RPALaporanMargin() {
   // ── Upgrade wall — must come after all hooks ──────────────────────────────
   if (isStarter) {
     return (
-      <div style={{ minHeight: '100vh', background: '#06090F' }}>
+      <div style={{ minHeight: '100vh', background: 'var(--bg-base-val)' }}>
         {!isDesktop && <TopBar title="Laporan Margin" subtitle="Analisis profitabilitas" />}
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -178,10 +178,10 @@ export default function RPALaporanMargin() {
           }}>
             Fitur Pro
           </span>
-          <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#F1F5F9', marginBottom: '10px', fontFamily: 'Sora' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary-val)', marginBottom: '10px', fontFamily: 'Sora' }}>
             Laporan Margin & HPP
           </h2>
-          <p style={{ fontSize: '14px', color: '#4B6478', maxWidth: '320px', lineHeight: 1.6, marginBottom: '28px' }}>
+          <p style={{ fontSize: '14px', color: 'var(--text-muted-val)', maxWidth: '320px', lineHeight: 1.6, marginBottom: '28px' }}>
             Analitik HPP, margin per produk, breakdown per customer, dan chart revenue vs cost tersedia di plan Pro ke atas.
           </p>
           <Link
@@ -207,24 +207,25 @@ export default function RPALaporanMargin() {
 
   const tableHeaderStyle = {
     padding: '9px 12px', textAlign: 'left',
-    fontSize: '10px', fontWeight: 700, color: '#4B6478',
+    fontSize: '10px', fontWeight: 700, color: 'var(--text-muted-val)',
     textTransform: 'uppercase', letterSpacing: '0.05em',
-    background: 'rgba(255,255,255,0.02)',
+    background: 'var(--bg-2-val)',
+    borderBottom: '1px solid var(--border-sub-val)',
   }
   const tdStyle = (align = 'left') => ({
-    padding: '10px 12px', fontSize: '13px', color: '#CBD5E1', textAlign: align,
-    borderBottom: '1px solid rgba(255,255,255,0.04)',
+    padding: '10px 12px', fontSize: '13px', color: 'var(--text-secondary-val)', textAlign: align,
+    borderBottom: '1px solid var(--border-sub-val)',
   })
 
   return (
-    <div style={{ minHeight: '100vh', background: '#06090F' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-base-val)' }}>
       {/* Header */}
       {!isDesktop ? (
         <TopBar title="Laporan Margin" subtitle={`${fmtDate(startDate)} – ${fmtDate(endDate)}`} />
       ) : (
         <div style={{ padding: '28px 32px 0' }}>
-          <h1 style={{ fontFamily: 'Sora', fontSize: '22px', fontWeight: 700, color: '#F1F5F9' }}>Laporan Margin</h1>
-          <p style={{ fontSize: '14px', color: '#4B6478', marginTop: '4px' }}>Analisis profitabilitas distribusi RPA</p>
+          <h1 style={{ fontFamily: 'Sora', fontSize: '22px', fontWeight: 700, color: 'var(--text-primary-val)' }}>Laporan Margin</h1>
+          <p style={{ fontSize: '14px', color: 'var(--text-muted-val)', marginTop: '4px' }}>Analisis profitabilitas distribusi RPA</p>
         </div>
       )}
 
@@ -236,13 +237,13 @@ export default function RPALaporanMargin() {
           marginBottom: '20px', flexWrap: 'wrap',
         }}>
           <div style={{ flex: 1, minWidth: '140px' }}>
-            <label style={{ fontSize: '11px', color: '#4B6478', display: 'block', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <label style={{ fontSize: '11px', color: 'var(--text-muted-val)', display: 'block', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Dari
             </label>
             <DatePicker value={startDate} onChange={setStartDate} placeholder="Tanggal mulai" />
           </div>
           <div style={{ flex: 1, minWidth: '140px' }}>
-            <label style={{ fontSize: '11px', color: '#4B6478', display: 'block', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <label style={{ fontSize: '11px', color: 'var(--text-muted-val)', display: 'block', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Sampai
             </label>
             <DatePicker value={endDate} onChange={setEndDate} placeholder="Tanggal akhir" />
@@ -252,8 +253,8 @@ export default function RPALaporanMargin() {
         {/* ── SECTION A: KPI Cards ── */}
         <div style={{ display: 'grid', gridTemplateColumns: isDesktop ? 'repeat(4,1fr)' : 'repeat(2,1fr)', gap: '10px', marginBottom: '20px' }}>
           {/* Total Revenue */}
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '14px' }}>
-            <div style={{ fontSize: '11px', color: '#4B6478', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <div style={{ background: 'var(--bg-1-val)', border: '1px solid var(--border-sub-val)', borderRadius: '12px', padding: '14px' }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted-val)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
               <DollarSign size={12} />TOTAL REVENUE
             </div>
             {isLoading ? <Skeleton h={28} rounded={6} /> : (
@@ -264,10 +265,10 @@ export default function RPALaporanMargin() {
           </div>
 
           {/* Total HPP */}
-          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '14px' }}>
-            <div style={{ fontSize: '11px', color: '#4B6478', marginBottom: '6px' }}>TOTAL HPP</div>
+          <div style={{ background: 'var(--bg-1-val)', border: '1px solid var(--border-sub-val)', borderRadius: '12px', padding: '14px' }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted-val)', marginBottom: '6px' }}>TOTAL HPP</div>
             {isLoading ? <Skeleton h={28} rounded={6} /> : (
-              <div style={{ fontSize: isDesktop ? '18px' : '15px', fontWeight: 700, color: '#94A3B8' }}>
+              <div style={{ fontSize: isDesktop ? '18px' : '15px', fontWeight: 700, color: 'var(--text-secondary-val)' }}>
                 {fmt(data?.totalCost)}
               </div>
             )}
@@ -275,16 +276,16 @@ export default function RPALaporanMargin() {
 
           {/* Gross Profit */}
           <div style={{
-            background: profitPositive ? 'rgba(2, 26, 2,0.05)' : 'rgba(239,68,68,0.05)',
-            border: `1px solid ${profitPositive ? 'rgba(2, 26, 2,0.15)' : 'rgba(239,68,68,0.15)'}`,
+            background: profitPositive ? 'rgba(52, 211, 153, 0.05)' : 'rgba(239,68,68,0.05)',
+            border: `1px solid ${profitPositive ? 'var(--brand-500)' : '#EF4444'}`,
             borderRadius: '12px', padding: '14px',
           }}>
-            <div style={{ fontSize: '11px', color: '#4B6478', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-              {profitPositive ? <TrendingUp size={12} color="#021a02" /> : <TrendingDown size={12} color="#EF4444" />}
+            <div style={{ fontSize: '11px', color: 'var(--text-muted-val)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              {profitPositive ? <TrendingUp size={12} color="var(--brand-500)" /> : <TrendingDown size={12} color="#EF4444" />}
               GROSS PROFIT
             </div>
             {isLoading ? <Skeleton h={28} rounded={6} /> : (
-              <div style={{ fontSize: isDesktop ? '18px' : '15px', fontWeight: 700, color: profitPositive ? '#021a02' : '#EF4444' }}>
+              <div style={{ fontSize: isDesktop ? '18px' : '15px', fontWeight: 700, color: profitPositive ? 'var(--brand-500)' : '#EF4444' }}>
                 {fmt(data?.totalProfit)}
               </div>
             )}
@@ -292,18 +293,18 @@ export default function RPALaporanMargin() {
 
           {/* Margin % */}
           <div style={{
-            background: `rgba(${mc === '#021a02' ? '52,211,153' : mc === '#F59E0B' ? '245,158,11' : '239,68,68'},0.05)`,
-            border: `1px solid rgba(${mc === '#021a02' ? '52,211,153' : mc === '#F59E0B' ? '245,158,11' : '239,68,68'},0.2)`,
+            background: `rgba(${mc === 'var(--brand-500)' ? '52,211,153' : mc === '#F59E0B' ? '245,158,11' : '239,68,68'},0.05)`,
+            border: `1px solid rgba(${mc === 'var(--brand-500)' ? '52,211,153' : mc === '#F59E0B' ? '245,158,11' : '239,68,68'},0.2)`,
             borderRadius: '12px', padding: '14px',
           }}>
-            <div style={{ fontSize: '11px', color: '#4B6478', marginBottom: '6px' }}>MARGIN %</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted-val)', marginBottom: '6px' }}>MARGIN %</div>
             {isLoading ? <Skeleton h={28} rounded={6} /> : (
               <div style={{ fontSize: isDesktop ? '22px' : '18px', fontWeight: 700, color: mc, fontFamily: 'Sora' }}>
                 {data?.marginPct ?? 0}%
               </div>
             )}
             {!isLoading && (
-              <div style={{ fontSize: '11px', color: '#4B6478', marginTop: '3px' }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted-val)', marginTop: '3px' }}>
                 {Number(data?.marginPct) >= 15 ? '✓ Sehat' : Number(data?.marginPct) >= 10 ? '⚠ Perlu perhatian' : '✗ Di bawah target'}
               </div>
             )}
@@ -312,27 +313,27 @@ export default function RPALaporanMargin() {
 
         {/* ── SECTION B: Chart ── */}
         <div style={{
-          background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
+          background: 'var(--bg-1-val)', border: '1px solid var(--border-sub-val)',
           borderRadius: '14px', padding: '16px', marginBottom: '20px',
         }}>
-          <h3 style={{ fontSize: '13px', fontWeight: 600, color: '#94A3B8', marginBottom: '14px' }}>
+          <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary-val)', marginBottom: '14px' }}>
             Revenue vs HPP vs Profit
           </h3>
           {isLoading ? <Skeleton h={240} rounded={10} /> : chartData.length === 0 ? (
             <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <p style={{ color: '#4B6478', fontSize: '13px' }}>Tidak ada data dalam periode ini.</p>
+              <p style={{ color: 'var(--text-muted-val)', fontSize: '13px' }}>Tidak ada data dalam periode ini.</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={240}>
               <ComposedChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#4B6478' }} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={fmtShort} tick={{ fontSize: 11, fill: '#4B6478' }} axisLine={false} tickLine={false} width={48} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-sub-val)" vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--text-muted-val)' }} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={fmtShort} tick={{ fontSize: 11, fill: 'var(--text-muted-val)' }} axisLine={false} tickLine={false} width={48} />
                 <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ fontSize: '12px', color: '#94A3B8', paddingTop: '8px' }} />
+                <Legend wrapperStyle={{ fontSize: '12px', color: 'var(--text-secondary-val)', paddingTop: '8px' }} />
                 <Bar dataKey="revenue" name="Revenue" fill="#F59E0B" fillOpacity={0.8} radius={[3, 3, 0, 0]} />
-                <Bar dataKey="cost" name="HPP" fill="rgba(255,255,255,0.15)" radius={[3, 3, 0, 0]} />
-                <Line dataKey="profit" name="Profit" stroke="#021a02" strokeWidth={2} dot={false} type="monotone" />
+                <Bar dataKey="cost" name="HPP" fill="var(--border-strong-val)" radius={[3, 3, 0, 0]} />
+                <Line dataKey="profit" name="Profit" stroke="var(--brand-500)" strokeWidth={2} dot={false} type="monotone" />
               </ComposedChart>
             </ResponsiveContainer>
           )}
@@ -345,14 +346,14 @@ export default function RPALaporanMargin() {
         }}>
 
           {/* Breakdown per Produk */}
-          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', overflow: 'hidden' }}>
-            <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#94A3B8' }}>Breakdown per Produk</h3>
+          <div style={{ background: 'var(--bg-1-val)', border: '1px solid var(--border-sub-val)', borderRadius: '14px', overflow: 'hidden' }}>
+            <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-sub-val)' }}>
+              <h3 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary-val)' }}>Breakdown per Produk</h3>
             </div>
             {isLoading ? (
               <div style={{ padding: '12px' }}><Skeleton h={120} rounded={8} /></div>
             ) : productRows.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', fontSize: '13px', color: '#4B6478' }}>Belum ada data</div>
+              <div style={{ padding: '24px', textAlign: 'center', fontSize: '13px', color: 'var(--text-muted-val)' }}>Belum ada data</div>
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
@@ -365,23 +366,23 @@ export default function RPALaporanMargin() {
                 <tbody>
                   {productRows.map(row => (
                     <tr key={row.name}>
-                      <td style={tdStyle()}><span style={{ fontSize: '12px', fontWeight: 600, color: '#E2E8F0' }}>{row.name}</span></td>
-                      <td style={tdStyle('right')}><span style={{ fontSize: '12px' }}>{row.qty.toFixed(1)}</span></td>
+                      <td style={tdStyle()}><span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary-val)' }}>{row.name}</span></td>
+                      <td style={tdStyle('right')}><span style={{ fontSize: '12px', color: 'var(--text-secondary-val)' }}>{row.qty.toFixed(1)}</span></td>
                       <td style={tdStyle('right')}><span style={{ fontSize: '12px', color: '#F59E0B' }}>{fmtShort(row.revenue)}</span></td>
-                      <td style={tdStyle('right')}><span style={{ fontSize: '12px', color: row.profit >= 0 ? '#021a02' : '#EF4444' }}>{fmtShort(row.profit)}</span></td>
+                      <td style={tdStyle('right')}><span style={{ fontSize: '12px', color: row.profit >= 0 ? 'var(--brand-500)' : '#EF4444' }}>{fmtShort(row.profit)}</span></td>
                       <td style={tdStyle('right')}><span style={{ fontSize: '12px', color: marginColor(row.margin), fontWeight: 700 }}>{row.margin}%</span></td>
                     </tr>
                   ))}
                   {/* Total row */}
-                  <tr style={{ background: 'rgba(245,158,11,0.05)' }}>
-                    <td style={{ ...tdStyle(), fontWeight: 700, color: '#F1F5F9', borderBottom: 'none' }}>TOTAL</td>
-                    <td style={{ ...tdStyle('right'), fontWeight: 700, color: '#F1F5F9', borderBottom: 'none' }}>
+                  <tr style={{ background: 'rgba(245,158,11,0.08)' }}>
+                    <td style={{ ...tdStyle(), fontWeight: 700, color: 'var(--text-primary-val)', borderBottom: 'none' }}>TOTAL</td>
+                    <td style={{ ...tdStyle('right'), fontWeight: 700, color: 'var(--text-primary-val)', borderBottom: 'none' }}>
                       {productRows.reduce((s, r) => s + r.qty, 0).toFixed(1)}
                     </td>
                     <td style={{ ...tdStyle('right'), fontWeight: 700, color: '#F59E0B', borderBottom: 'none' }}>
                       {fmtShort(productRows.reduce((s, r) => s + r.revenue, 0))}
                     </td>
-                    <td style={{ ...tdStyle('right'), fontWeight: 700, color: '#021a02', borderBottom: 'none' }}>
+                    <td style={{ ...tdStyle('right'), fontWeight: 700, color: 'var(--brand-500)', borderBottom: 'none' }}>
                       {fmtShort(productRows.reduce((s, r) => s + r.profit, 0))}
                     </td>
                     <td style={{ ...tdStyle('right'), borderBottom: 'none' }}>
@@ -394,14 +395,14 @@ export default function RPALaporanMargin() {
           </div>
 
           {/* Top Toko */}
-          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', overflow: 'hidden' }}>
-            <div style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              <h3 style={{ fontSize: '13px', fontWeight: 700, color: '#94A3B8' }}>Top Toko (maks. 10)</h3>
+          <div style={{ background: 'var(--bg-1-val)', border: '1px solid var(--border-sub-val)', borderRadius: '14px', overflow: 'hidden' }}>
+            <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border-sub-val)' }}>
+              <h3 style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary-val)' }}>Top Toko (maks. 10)</h3>
             </div>
             {isLoading ? (
               <div style={{ padding: '12px' }}><Skeleton h={120} rounded={8} /></div>
             ) : customerRows.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', fontSize: '13px', color: '#4B6478' }}>Belum ada data</div>
+              <div style={{ padding: '24px', textAlign: 'center', fontSize: '13px', color: 'var(--text-muted-val)' }}>Belum ada data</div>
             ) : (
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
@@ -413,16 +414,16 @@ export default function RPALaporanMargin() {
                 </thead>
                 <tbody>
                   {customerRows.map((row, idx) => (
-                    <tr key={row.name} style={{ background: idx === 0 ? 'rgba(245,158,11,0.04)' : 'transparent' }}>
+                    <tr key={row.name} style={{ background: idx === 0 ? 'rgba(245,158,11,0.06)' : 'transparent' }}>
                       <td style={tdStyle()}>
-                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#E2E8F0' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary-val)' }}>
                           {idx === 0 && <span style={{ color: '#F59E0B', marginRight: '4px' }}>★</span>}
                           {row.name}
                         </span>
                       </td>
-                      <td style={{ ...tdStyle('center') }}><span style={{ fontSize: '12px' }}>{row.invoiceCount}</span></td>
+                      <td style={{ ...tdStyle('center') }}><span style={{ fontSize: '12px', color: 'var(--text-secondary-val)' }}>{row.invoiceCount}</span></td>
                       <td style={tdStyle('right')}><span style={{ fontSize: '12px', color: '#F59E0B' }}>{fmtShort(row.revenue)}</span></td>
-                      <td style={tdStyle('right')}><span style={{ fontSize: '12px', color: row.profit >= 0 ? '#021a02' : '#EF4444' }}>{fmtShort(row.profit)}</span></td>
+                      <td style={tdStyle('right')}><span style={{ fontSize: '12px', color: row.profit >= 0 ? 'var(--brand-500)' : '#EF4444' }}>{fmtShort(row.profit)}</span></td>
                       <td style={tdStyle('right')}><span style={{ fontSize: '12px', color: marginColor(row.margin), fontWeight: 700 }}>{row.margin}%</span></td>
                     </tr>
                   ))}
@@ -433,7 +434,7 @@ export default function RPALaporanMargin() {
         </div>
 
         {/* ── SECTION D: Semua Invoice (Collapsible) ── */}
-        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--bg-1-val)', border: '1px solid var(--border-sub-val)', borderRadius: '14px', overflow: 'hidden' }}>
           {/* Toggle header */}
           <button
             type="button"
@@ -444,11 +445,11 @@ export default function RPALaporanMargin() {
               background: 'transparent', border: 'none', cursor: 'pointer',
             }}
           >
-            <span style={{ fontSize: '13px', fontWeight: 700, color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-secondary-val)', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <FileText size={14} />
               Semua Invoice ({data?.invoices?.length ?? 0})
             </span>
-            {showAllInvoices ? <ChevronUp size={16} color="#4B6478" /> : <ChevronDown size={16} color="#4B6478" />}
+            {showAllInvoices ? <ChevronUp size={16} color="var(--text-muted-val)" /> : <ChevronDown size={16} color="var(--text-muted-val)" />}
           </button>
 
           <AnimatePresence>
@@ -461,7 +462,7 @@ export default function RPALaporanMargin() {
                 style={{ overflow: 'hidden' }}
               >
                 {/* Filter */}
-                <div style={{ padding: '8px 16px 10px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: '6px', overflowX: 'auto' }}>
+                <div style={{ padding: '8px 16px 10px', borderTop: '1px solid var(--border-sub-val)', display: 'flex', gap: '6px', overflowX: 'auto' }}>
                   {[
                     { key: 'all', label: 'Semua' },
                     { key: 'belum_lunas', label: 'Belum Lunas' },
@@ -470,9 +471,9 @@ export default function RPALaporanMargin() {
                   ].map(t => (
                     <button key={t.key} onClick={() => setInvFilter(t.key)} style={{
                       flexShrink: 0, padding: '5px 12px', borderRadius: '16px',
-                      border: invFilter === t.key ? 'none' : '1px solid rgba(255,255,255,0.08)',
+                      border: invFilter === t.key ? 'none' : '1px solid var(--border-sub-val)',
                       background: invFilter === t.key ? '#F59E0B' : 'transparent',
-                      color: invFilter === t.key ? '#0D1117' : '#64748B',
+                      color: invFilter === t.key ? '#0D1117' : 'var(--text-secondary-val)',
                       cursor: 'pointer', fontSize: '12px', fontWeight: invFilter === t.key ? 700 : 400,
                     }}>{t.label}</button>
                   ))}
@@ -492,29 +493,40 @@ export default function RPALaporanMargin() {
                     <tbody>
                       {filteredInvoices.length === 0 ? (
                         <tr>
-                          <td colSpan={7} style={{ padding: '20px', textAlign: 'center', fontSize: '13px', color: '#4B6478' }}>
+                          <td colSpan={7} style={{ padding: '20px', textAlign: 'center', fontSize: '13px', color: 'var(--text-muted-val)' }}>
                             Tidak ada invoice
                           </td>
                         </tr>
                       ) : filteredInvoices.map((inv, _idx) => {
                         const profit = inv.net_profit || (inv.total_amount - inv.total_cost) || 0
-                        const STATUS_COLOR = { lunas: '#021a02', sebagian: '#60A5FA', belum_lunas: '#F59E0B' }
+                        const isLunas = inv.payment_status === 'lunas'
+                        const isSebagian = inv.payment_status === 'sebagian'
+                        const statusBg = isLunas
+                          ? 'rgba(52, 211, 153, 0.12)'
+                          : isSebagian
+                          ? 'rgba(96, 165, 250, 0.12)'
+                          : 'rgba(245, 158, 11, 0.12)'
+                        const statusColor = isLunas
+                          ? 'var(--brand-500)'
+                          : isSebagian
+                          ? '#60A5FA'
+                          : '#F59E0B'
                         return (
-                          <tr key={inv.id}>
+                           <tr key={inv.id}>
                             <td style={{ ...tdStyle(), fontFamily: 'monospace', fontSize: '11px', color: '#F59E0B' }}>{inv.invoice_number}</td>
-                            <td style={{ ...tdStyle(), fontSize: '12px', fontWeight: 600 }}>
+                            <td style={{ ...tdStyle(), fontSize: '12px', fontWeight: 600, color: 'var(--text-primary-val)' }}>
                               {inv.customer_name ?? inv.rpa_customers?.customer_name}
                             </td>
                             <td style={{ ...tdStyle(), fontSize: '12px' }}>{fmtDate(inv.transaction_date)}</td>
                             <td style={{ ...tdStyle('right'), fontSize: '12px', color: '#F59E0B' }}>{fmt(inv.total_amount)}</td>
-                            <td style={{ ...tdStyle('right'), fontSize: '12px', color: '#94A3B8' }}>{fmt(inv.total_cost)}</td>
-                            <td style={{ ...tdStyle('right'), fontSize: '12px', color: profit >= 0 ? '#021a02' : '#EF4444', fontWeight: 600 }}>
+                            <td style={{ ...tdStyle('right'), fontSize: '12px', color: 'var(--text-secondary-val)' }}>{fmt(inv.total_cost)}</td>
+                            <td style={{ ...tdStyle('right'), fontSize: '12px', color: profit >= 0 ? 'var(--brand-500)' : '#EF4444', fontWeight: 600 }}>
                               {fmt(profit)}
                             </td>
                             <td style={tdStyle()}>
                               <span style={{
-                                background: `rgba(${STATUS_COLOR[inv.payment_status] === '#021a02' ? '52,211,153' : STATUS_COLOR[inv.payment_status] === '#60A5FA' ? '96,165,250' : '245,158,11'},0.12)`,
-                                color: STATUS_COLOR[inv.payment_status] ?? '#94A3B8',
+                                background: statusBg,
+                                color: statusColor,
                                 padding: '2px 8px', borderRadius: '16px', fontSize: '11px', fontWeight: 700,
                               }}>
                                 {inv.payment_status === 'lunas' ? 'Lunas' : inv.payment_status === 'sebagian' ? 'Sebagian' : 'Belum'}

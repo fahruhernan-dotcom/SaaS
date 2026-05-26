@@ -722,7 +722,7 @@ html:not(.dark) .border-white\/30 { border-color: rgba(0,0,0,0.30) !important; }
 /* ── GroupCard background (linear-gradient with rgba white) ── */
 /* GroupCard: bg-[linear-gradient(135deg,rgba(255,255,255,0.05),...)] */
 /* Di light mode, gradient putih di background putih = invisible card */
-html:not(.dark) [class*="bg-\[linear-gradient(135deg,rgba(255,255,255"] {
+html:not(.dark) [class*="bg-[linear-gradient(135deg,rgba(255,255,255"] {
   background: rgba(0,0,0,0.04) !important;
   border-color: rgba(0,0,0,0.10) !important;
 }
