@@ -436,11 +436,11 @@ export default function PeternakBeranda() {
             valueColor="text-[#A78BFA]"
           />
           <KPICard
-            icon={<Bird size={16} color="#34D399" />}
+            icon={<Bird size={16} color="#021a02" />}
             label="Populasi Aktif"
             value={kpi.totalDoc.toLocaleString('id-ID')}
             sub={`${activeCycles.length} siklus berjalan`}
-            valueColor="text-[#34D399]"
+            valueColor="text-[#021a02]"
           />
           <KPICard
             icon={<Clock size={16} color="#60A5FA" />}
@@ -691,7 +691,7 @@ function KPICard({ icon, label, value, sub, valueColor }) {
 
 function IPScoreCard({ ip, cycleCount }) {
   // Grade: <300 buruk, 300-349 cukup, 350-399 baik, 400+ sangat baik
-  const grade = ip >= 400 ? { label: 'Sangat Baik', color: '#34D399', bg: 'rgba(52,211,153,0.08)', border: 'rgba(52,211,153,0.2)' }
+  const grade = ip >= 400 ? { label: 'Sangat Baik', color: '#021a02', bg: 'rgba(2, 26, 2,0.08)', border: 'rgba(2, 26, 2,0.2)' }
     : ip >= 350 ? { label: 'Baik', color: '#A78BFA', bg: 'rgba(124,58,237,0.08)', border: 'rgba(124,58,237,0.2)' }
     : ip >= 300 ? { label: 'Cukup', color: '#F59E0B', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.2)' }
     : { label: 'Perlu Perhatian', color: '#F87171', bg: 'rgba(248,113,113,0.08)', border: 'rgba(248,113,113,0.2)' }
@@ -812,8 +812,8 @@ function CycleCard({ cycle, onInputHarian, onDetail, onVaksinasi }) {
             style={{
               width: `${progress}%`,
               background: progress >= 100
-                ? '#34D399'
-                : 'linear-gradient(90deg, #7C3AED 0%, #10B981 100%)',
+                ? '#021a02'
+                : 'linear-gradient(90deg, #7C3AED 0%, #021a02 100%)',
             }}
           />
         </div>

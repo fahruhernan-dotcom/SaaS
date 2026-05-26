@@ -80,7 +80,7 @@ function fmtDate(d) {
 }
 
 const STATUS_STYLE = {
-  lunas:       { bg: 'rgba(52,211,153,0.12)',  color: '#34D399', label: 'Lunas'      },
+  lunas:       { bg: 'rgba(2, 26, 2,0.12)',  color: '#021a02', label: 'Lunas'      },
   sebagian:    { bg: 'rgba(245,158,11,0.12)',  color: '#F59E0B', label: 'Sebagian'   },
   belum_lunas: { bg: 'rgba(239,68,68,0.20)',   color: '#EF4444', label: 'Belum Lunas', border: 'rgba(239,68,68,0.4)' },
 }
@@ -147,10 +147,10 @@ function KPICard({ icon: Icon, label, value, sub, accentColor = C.accent, urgent
           <span style={{
             display: 'inline-block', marginTop: '4px',
             background: trend != null
-              ? (trend >= 0 ? 'rgba(52,211,153,0.12)' : 'rgba(239,68,68,0.12)')
+              ? (trend >= 0 ? 'rgba(2, 26, 2,0.12)' : 'rgba(239,68,68,0.12)')
               : 'rgba(239,68,68,0.15)',
             color: trend != null
-              ? (trend >= 0 ? '#34D399' : '#EF4444')
+              ? (trend >= 0 ? '#021a02' : '#EF4444')
               : '#EF4444',
             fontSize: '8px', fontWeight: 800, padding: '2px 5px',
             borderRadius: '4px', letterSpacing: '0.02em', whiteSpace: 'nowrap',
@@ -742,7 +742,7 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
           <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
             <span style={{ fontSize: '11px', color: C.muted }}>
               Net Profit (after ops):{' '}
-              <span style={{ color: '#34D399', fontWeight: 700 }}>
+              <span style={{ color: '#021a02', fontWeight: 700 }}>
                 {formatIDR(stats?.penjualan?.netProfitThisMonth || 0)}
               </span>
             </span>

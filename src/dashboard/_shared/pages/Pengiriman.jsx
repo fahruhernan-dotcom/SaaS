@@ -26,7 +26,7 @@ export default function Pengiriman() {
       {/* Summary Chips */}
       <div style={{ padding: '0 20px', margin: '16px 0', display: 'flex', gap: '8px', overflowX: 'auto', scrollbarWidth: 'none' }}>
         <SummaryChip label="Aktif di Jalan" value={stats.active} color="#F59E0B" />
-        <SummaryChip label="Selesai Hari Ini" value={stats.today} color="#10B981" />
+        <SummaryChip label="Selesai Hari Ini" value={stats.today} color="#021a02" />
         <SummaryChip label="Mortalitas (Ekor)" value={stats.mortality} color="#F87171" />
       </div>
 
@@ -43,7 +43,7 @@ export default function Pengiriman() {
               fontWeight: 700,
               textTransform: 'capitalize',
               whiteSpace: 'nowrap',
-              background: filter === f ? '#10B981' : '#111C24',
+              background: filter === f ? '#021a02' : '#111C24',
               color: filter === f ? 'white' : '#94A3B8',
               border: filter === f ? 'none' : '1px solid rgba(255,255,255,0.06)',
             }}
@@ -77,10 +77,10 @@ export default function Pengiriman() {
           right: '20px',
           width: '56px', height: '56px',
           borderRadius: '28px',
-          background: '#10B981',
+          background: '#021a02',
           color: 'white',
           border: 'none',
-          boxShadow: '0 8px 24px rgba(16,185,129,0.3)',
+          boxShadow: '0 8px 24px rgba(2, 26, 2,0.3)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 90
         }}
@@ -120,7 +120,7 @@ function DeliveryCard({ delivery }) {
     loading: { label: 'Daftar Muat', color: '#FBBF24', bg: 'rgba(251,191,36,0.15)' },
     on_route: { label: 'Di Jalan', color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
     arrived: { label: 'Tiba', color: '#93C5FD', bg: 'rgba(96,165,250,0.15)' },
-    completed: { label: 'Selesai', color: '#10B981', bg: 'rgba(16,185,129,0.15)' },
+    completed: { label: 'Selesai', color: '#021a02', bg: 'rgba(2, 26, 2,0.15)' },
   };
 
   const meta = statusMap[delivery.status] || statusMap.preparing;
@@ -170,9 +170,9 @@ function DeliveryCard({ delivery }) {
       {/* Timeline Visual */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '10px 0' }}>
         <TimelinePoint label="Muat" active={delivery.status !== 'preparing' && !!delivery.load_time} />
-        <div style={{ flex: 1, height: '2px', background: (delivery.status !== 'preparing' && !!delivery.load_time) ? '#10B981' : 'rgba(255,255,255,0.05)' }} />
+        <div style={{ flex: 1, height: '2px', background: (delivery.status !== 'preparing' && !!delivery.load_time) ? '#021a02' : 'rgba(255,255,255,0.05)' }} />
         <TimelinePoint label="Jalan" active={delivery.status === 'on_route' || isArrived} pulse={delivery.status === 'on_route'} />
-        <div style={{ flex: 1, height: '2px', background: isArrived ? '#10B981' : 'rgba(255,255,255,0.05)' }} />
+        <div style={{ flex: 1, height: '2px', background: isArrived ? '#021a02' : 'rgba(255,255,255,0.05)' }} />
         <TimelinePoint label="Sampai" active={isArrived} />
       </div>
 
@@ -215,7 +215,7 @@ function DeliveryCard({ delivery }) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', padding: '12px', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px' }}>
           <div>
             <div style={{ fontSize: '10px', color: '#4B6478', fontWeight: 800 }}>MORTALITAS</div>
-            <div style={{ fontSize: '14px', color: delivery.mortality_count > 0 ? '#F87171' : '#10B981', fontWeight: 800 }}>{formatEkor(delivery.mortality_count || 0)}</div>
+            <div style={{ fontSize: '14px', color: delivery.mortality_count > 0 ? '#F87171' : '#021a02', fontWeight: 800 }}>{formatEkor(delivery.mortality_count || 0)}</div>
           </div>
           <div>
             <div style={{ fontSize: '10px', color: '#4B6478', fontWeight: 800 }}>SUSUT BERAT</div>
@@ -249,13 +249,13 @@ function TimelinePoint({ label, active, pulse }) {
       <div style={{
         width: '10px', height: '10px',
         borderRadius: '50%',
-        background: active ? '#10B981' : 'rgba(255,255,255,0.05)',
-        boxShadow: active ? '0 0 10px rgba(16,185,129,0.5)' : 'none',
+        background: active ? '#021a02' : 'rgba(255,255,255,0.05)',
+        boxShadow: active ? '0 0 10px rgba(2, 26, 2,0.5)' : 'none',
         position: 'relative'
       }}>
         {pulse && (
           <div style={{
-            position: 'absolute', inset: -4, border: '2px solid #10B981', borderRadius: '50%',
+            position: 'absolute', inset: -4, border: '2px solid #021a02', borderRadius: '50%',
             animation: 'pulse-dot 1.5s infinite'
           }} />
         )}

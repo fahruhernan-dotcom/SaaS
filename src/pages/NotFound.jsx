@@ -39,7 +39,7 @@ export default function NotFound() {
       {/* Dynamic Background */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <Particles
-          particleColors={['#10B981', '#ffffff', '#059669']}
+          particleColors={['#021a02', '#ffffff', '#021a02']}
           particleCount={40}
           speed={0.1}
           particleBaseSize={1}

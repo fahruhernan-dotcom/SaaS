@@ -66,11 +66,11 @@ export function EditPurchaseSheet({
             {/* Info kandang (readonly) */}
             <div style={{
               padding: '12px 14px',
-              background: 'rgba(16,185,129,0.06)',
-              border: '1px solid rgba(16,185,129,0.12)',
+              background: 'rgba(2, 26, 2,0.06)',
+              border: '1px solid rgba(2, 26, 2,0.12)',
               borderRadius: '10px',
               fontSize: '13px',
-              color: '#34D399'
+              color: '#021a02'
             }}>
               📦 {editTarget.farms?.farm_name}
             </div>
@@ -242,7 +242,7 @@ export function EditPurchaseSheet({
                       </span>
                       <span style={{
                         fontFamily:'Sora', fontSize:'18px',
-                        fontWeight:800, color:'#34D399',
+                        fontWeight:800, color:'#021a02',
                         fontVariantNumeric:'tabular-nums'
                       }}>
                         {formatIDR(tm)}
@@ -259,7 +259,7 @@ export function EditPurchaseSheet({
               disabled={isSubmitting}
               style={{
                 width:'100%', height:'46px',
-                background:'#10B981', border:'none',
+                background:'#021a02', border:'none',
                 borderRadius:'10px', color:'white',
                 fontFamily:'DM Sans', fontSize:'15px',
                 fontWeight:700

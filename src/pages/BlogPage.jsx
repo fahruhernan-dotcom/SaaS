@@ -133,7 +133,7 @@ export default function BlogPage() {
       <main className="pt-20">
         {/* HERO */}
         <section className="relative py-20 px-6 text-center overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.07)_0%,transparent_65%)]" />
+          <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_0%,rgba(2, 26, 2,0.07)_0%,transparent_65%)]" />
           <div className="max-w-3xl mx-auto relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -165,7 +165,7 @@ export default function BlogPage() {
                   onClick={() => setActiveCategory(cat.value)}
                   className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
                   style={activeCategory === cat.value
-                    ? { background: '#10B981', color: '#fff', border: '1px solid #10B981' }
+                    ? { background: '#021a02', color: '#fff', border: '1px solid #021a02' }
                     : { background: 'rgba(255,255,255,0.04)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.08)' }
                   }
                 >

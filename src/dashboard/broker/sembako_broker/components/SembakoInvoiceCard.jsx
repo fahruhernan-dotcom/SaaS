@@ -25,7 +25,7 @@ function getDeliveryBadge(deliveries) {
   const anyDelivered = deliveries.some(d => d.status === 'delivered')
 
   if (allDelivered) {
-    return { label: 'Terkirim', color: '#34D399', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.20)', icon: '✓' }
+    return { label: 'Terkirim', color: '#021a02', bg: 'rgba(2, 26, 2,0.08)', border: 'rgba(2, 26, 2,0.20)', icon: '✓' }
   }
   if (anyInTransit || anyDelivered) {
     return { label: 'Di Jalan', color: '#FBBF24', bg: 'rgba(251,191,36,0.08)', border: 'rgba(251,191,36,0.15)', icon: '🚚' }
@@ -47,7 +47,7 @@ function MiniDeliveryRow({ delivery, onStart, onComplete, onNavigate }) {
   const statusMeta = {
     pending:   { label: 'Disiapkan', color: '#94A3B8', bg: 'rgba(148,163,184,0.1)' },
     on_route:  { label: 'Di Jalan',  color: '#60A5FA', bg: 'rgba(59,130,246,0.1)', pulse: true },
-    delivered: { label: 'Selesai',   color: '#34D399', bg: 'rgba(52,211,153,0.1)' },
+    delivered: { label: 'Selesai',   color: '#021a02', bg: 'rgba(2, 26, 2,0.1)' },
   }
   const meta = statusMeta[delivery.status] || statusMeta.pending
   const emp = delivery.sembako_employees
@@ -114,7 +114,7 @@ function MiniDeliveryRow({ delivery, onStart, onComplete, onNavigate }) {
       {delivery.status === 'on_route' && (
         <button
           onClick={() => onComplete(delivery.id)}
-          style={{ ...sBtn(true), padding: '7px', fontSize: '11px', width: '100%', marginTop: '2px', background: '#10B981' }}
+          style={{ ...sBtn(true), padding: '7px', fontSize: '11px', width: '100%', marginTop: '2px', background: '#021a02' }}
         >
           ✓ Selesaikan
         </button>
@@ -263,8 +263,8 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery, isDes
         <span style={{
           display: 'inline-flex', alignItems: 'center',
           padding: '2px 8px', borderRadius: '99px',
-          background: isLunas ? 'rgba(52,211,153,0.1)' : isSebagian ? 'rgba(251,191,36,0.1)' : 'rgba(239,68,68,0.1)',
-          color: isLunas ? '#34D399' : isSebagian ? '#FBBF24' : '#F87171',
+          background: isLunas ? 'rgba(2, 26, 2,0.1)' : isSebagian ? 'rgba(251,191,36,0.1)' : 'rgba(239,68,68,0.1)',
+          color: isLunas ? '#021a02' : isSebagian ? '#FBBF24' : '#F87171',
           fontSize: '8px', fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase',
         }}>
           {paymentLabel}
@@ -291,8 +291,8 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery, isDes
         <span style={{
           display: 'inline-flex', alignItems: 'center', flexShrink: 0,
           padding: '2px 7px', borderRadius: '99px',
-          background: isLunas ? 'rgba(52,211,153,0.1)' : isSebagian ? 'rgba(251,191,36,0.1)' : 'rgba(239,68,68,0.1)',
-          color: isLunas ? '#34D399' : isSebagian ? '#FBBF24' : '#F87171',
+          background: isLunas ? 'rgba(2, 26, 2,0.1)' : isSebagian ? 'rgba(251,191,36,0.1)' : 'rgba(239,68,68,0.1)',
+          color: isLunas ? '#021a02' : isSebagian ? '#FBBF24' : '#F87171',
           fontSize: '8px', fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase',
         }}>
           {isLunas ? 'LUNAS' : isSebagian ? 'SEBAGIAN' : 'BELUM LUNAS'}
@@ -325,8 +325,8 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery, isDes
       <div className="text-left">
         {isLunas ? (
           <div className="space-y-1">
-            <p className="text-[10px] uppercase font-bold text-[#10B981] tracking-widest leading-none">TOTAL DIBAYAR</p>
-            <p className={cn('font-display font-bold text-[#10B981] leading-none mt-1 tabular-nums', valSize)}>
+            <p className="text-[10px] uppercase font-bold text-[#021a02] tracking-widest leading-none">TOTAL DIBAYAR</p>
+            <p className={cn('font-display font-bold text-[#021a02] leading-none mt-1 tabular-nums', valSize)}>
               {fmt(sale.total_amount || 0)}
             </p>
           </div>
@@ -446,7 +446,7 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery, isDes
           {topItem?.product_name || '—'}
         </span>
         {isLunas ? (
-          <span className="text-[10px] font-black text-[#10B981] shrink-0">✓ Lunas</span>
+          <span className="text-[10px] font-black text-[#021a02] shrink-0">✓ Lunas</span>
         ) : (
           <span className="text-[10px] font-black text-[#F87171] tabular-nums shrink-0">
             Sisa {formatIDRShort(sale.remaining_amount || 0)}

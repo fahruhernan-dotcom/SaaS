@@ -176,7 +176,7 @@ export default function BrokerKaryawanPage({ hideMobileHeader = false, accentCol
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-2">
           {[
-            { key: 'aktif', label: 'Aktif', color: '#10B981' },
+            { key: 'aktif', label: 'Aktif', color: '#021a02' },
             { key: 'nonaktif', label: 'Non-aktif', color: '#F87171' },
             { key: 'cuti', label: 'Cuti', color: '#F59E0B' },
           ].map(s => (

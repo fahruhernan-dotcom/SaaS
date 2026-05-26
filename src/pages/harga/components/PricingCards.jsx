@@ -178,14 +178,14 @@ export function BusinessCard({ data, billing, annualDiscount, isLoggedIn }) {
   return (
     <div className="relative">
       <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap">
-        <span className="bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-[0_4px_16px_rgba(16,185,129,0.4)]">
+        <span className="bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-[0_4px_16px_rgba(2, 26, 2,0.4)]">
           ⚡ PALING POPULER
         </span>
       </div>
 
       <div
-        className="group relative bg-[#0C1319] rounded-2xl p-8 border-2 border-emerald-500/60 flex flex-col h-full transition-all duration-300 hover:border-emerald-500 hover:shadow-[0_24px_60px_rgba(16,185,129,0.25)]"
-        style={{ boxShadow: '0 0 40px rgba(16,185,129,0.15)' }}
+        className="group relative bg-[#0C1319] rounded-2xl p-8 border-2 border-emerald-500/60 flex flex-col h-full transition-all duration-300 hover:border-emerald-500 hover:shadow-[0_24px_60px_rgba(2, 26, 2,0.25)]"
+        style={{ boxShadow: '0 0 40px rgba(2, 26, 2,0.15)' }}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent pointer-events-none rounded-2xl" />
 
@@ -233,7 +233,7 @@ export function BusinessCard({ data, billing, annualDiscount, isLoggedIn }) {
                 sessionStorage.setItem('intended_trial_plan', 'business')
               }
             }}
-            className="block text-center py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold transition-all shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_4px_28px_rgba(16,185,129,0.45)] hover:-translate-y-0.5 active:translate-y-0"
+            className="block text-center py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold transition-all shadow-[0_4px_20px_rgba(2, 26, 2,0.3)] hover:shadow-[0_4px_28px_rgba(2, 26, 2,0.45)] hover:-translate-y-0.5 active:translate-y-0"
           >
             Mulai {data.trialDays || 14} Hari Gratis
           </Link>

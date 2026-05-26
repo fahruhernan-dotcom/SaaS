@@ -294,7 +294,7 @@ export default function AdminPricing() {
           <Button
             onClick={handleSaveAllPricing}
             disabled={savingRole === 'all'}
-            className="hidden md:flex bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl h-11 px-8 text-[11px] font-black uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(16,185,129,0.3)] transition-all active:scale-95 border border-emerald-400/20"
+            className="hidden md:flex bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl h-11 px-8 text-[11px] font-black uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(2, 26, 2,0.3)] transition-all active:scale-95 border border-emerald-400/20"
           >
             {savingRole === 'all' ? (
               <><Loader2 size={14} className="animate-spin mr-2" /> Menyiimpan...</>
@@ -345,7 +345,7 @@ export default function AdminPricing() {
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-6 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${selectedCategory === cat.id
-                    ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]'
+                    ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(2, 26, 2,0.4)]'
                     : 'text-[#4B6478] hover:text-white hover:bg-white/10'
                   }`}
               >
@@ -618,7 +618,7 @@ export default function AdminPricing() {
                       {editingPricing.broker.pro.originalPrice > 0 && (
                         <p className="line-through text-[#4B6478] text-xs mb-1 font-bold">{formatIDR(editingPricing.broker.pro.originalPrice)}</p>
                       )}
-                      <p className="text-3xl font-display font-black text-emerald-400 tracking-tight drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]">{formatIDR(editingPricing.broker.pro.price)}</p>
+                      <p className="text-3xl font-display font-black text-emerald-400 tracking-tight drop-shadow-[0_0_15px_rgba(2, 26, 2,0.3)]">{formatIDR(editingPricing.broker.pro.price)}</p>
                       <p className="text-[10px] font-bold text-emerald-500/60 uppercase mt-2">Per Bulan</p>
                     </th>
                     <th className="px-8 py-10 text-center bg-amber-500/[0.03] min-w-[200px]">
@@ -637,8 +637,8 @@ export default function AdminPricing() {
                   {PRICING_FEATURES.map((feature, i) => (
                     <tr key={i} className="border-b border-white/[0.03] hover:bg-white/[0.03] transition-colors group/row">
                       <td className="px-10 py-5 text-white/70 font-medium group-hover/row:text-white transition-colors">{feature.label}</td>
-                      <td className="px-8 py-5 text-center">{feature.starter ? <Check size={20} className="mx-auto text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]" /> : <div className="w-5 h-0.5 bg-white/5 mx-auto" />}</td>
-                      <td className="px-8 py-5 text-center bg-emerald-500/[0.01]">{feature.pro ? <Check size={20} className="mx-auto text-emerald-500 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]" /> : <div className="w-5 h-0.5 bg-white/5 mx-auto" />}</td>
+                      <td className="px-8 py-5 text-center">{feature.starter ? <Check size={20} className="mx-auto text-emerald-500 drop-shadow-[0_0_8px_rgba(2, 26, 2,0.4)]" /> : <div className="w-5 h-0.5 bg-white/5 mx-auto" />}</td>
+                      <td className="px-8 py-5 text-center bg-emerald-500/[0.01]">{feature.pro ? <Check size={20} className="mx-auto text-emerald-500 drop-shadow-[0_0_8px_rgba(2, 26, 2,0.4)]" /> : <div className="w-5 h-0.5 bg-white/5 mx-auto" />}</td>
                       <td className="px-8 py-5 text-center bg-amber-500/[0.01]">{feature.business ? <Check size={20} className="mx-auto text-amber-500 drop-shadow-[0_0_8px_rgba(245,158,11,0.4)]" /> : <div className="w-5 h-0.5 bg-white/5 mx-auto" />}</td>
                     </tr>
                   ))}
@@ -737,7 +737,7 @@ export default function AdminPricing() {
                     { id: 'cb_enterprise', label: 'ENTERPRISE', checked: false, color: 'text-[#4B6478]' },
                   ].map(item => (
                     <div key={item.id} className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full ${item.checked ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-white/10'}`} />
+                      <div className={`w-2 h-2 rounded-full ${item.checked ? 'bg-emerald-500 shadow-[0_0_10px_rgba(2, 26, 2,0.5)]' : 'bg-white/10'}`} />
                       <span className={`text-[11px] font-black tracking-widest ${item.color}`}>{item.label}</span>
                     </div>
                   ))}
@@ -882,7 +882,7 @@ export default function AdminPricing() {
               <button
                 onClick={handleSaveDiscount}
                 disabled={savingDiscount}
-                className="relative z-10 w-full bg-emerald-500 hover:bg-emerald-600 text-white h-14 rounded-2xl font-black uppercase text-[11px] tracking-[0.25em] transition-all border border-emerald-400/20 flex items-center justify-center gap-3 active:scale-[0.98] shadow-[0_10px_30px_rgba(16,185,129,0.3)]"
+                className="relative z-10 w-full bg-emerald-500 hover:bg-emerald-600 text-white h-14 rounded-2xl font-black uppercase text-[11px] tracking-[0.25em] transition-all border border-emerald-400/20 flex items-center justify-center gap-3 active:scale-[0.98] shadow-[0_10px_30px_rgba(2, 26, 2,0.3)]"
               >
                 {savingDiscount
                   ? <><Loader2 size={16} className="animate-spin" /> MENYIMPAN DISKON...</>
@@ -1228,7 +1228,7 @@ export default function AdminPricing() {
           <Button
             onClick={handleSaveAllPricing}
             disabled={savingRole === 'all'}
-            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-14 rounded-2xl font-black uppercase text-[12px] tracking-[0.2em] shadow-[0_20px_50px_rgba(16,185,129,0.3)] border border-emerald-400/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+            className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-14 rounded-2xl font-black uppercase text-[12px] tracking-[0.2em] shadow-[0_20px_50px_rgba(2, 26, 2,0.3)] border border-emerald-400/20 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
           >
             {savingRole === 'all' ? (
               <><Loader2 size={18} className="animate-spin" /> MENYIMPAN DATA...</>
@@ -1250,9 +1250,9 @@ function RolePricingCard({ roleName, roleId, icon: Icon, color, data, onChange, 
   const themes = {
     emerald: {
       card: "shadow-emerald-500/5 border-emerald-500/20 hover:border-emerald-500/40",
-      icon: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)]",
+      icon: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-[0_0_20px_rgba(2, 26, 2,0.2)]",
       mesh: "from-emerald-500/10 via-transparent to-transparent",
-      inputFocus: "focus:border-emerald-500/40 focus:bg-emerald-500/5 focus:shadow-[0_0_20px_rgba(16,185,129,0.1)]"
+      inputFocus: "focus:border-emerald-500/40 focus:bg-emerald-500/5 focus:shadow-[0_0_20px_rgba(2, 26, 2,0.1)]"
     },
     purple: {
       card: "shadow-purple-500/5 border-purple-500/20 hover:border-purple-500/40",

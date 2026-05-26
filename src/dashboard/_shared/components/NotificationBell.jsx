@@ -30,8 +30,8 @@ const TYPE_CONFIG = {
   },
   pengiriman_tiba: {
     Icon: Truck,
-    bg: 'rgba(16,185,129,0.12)',
-    color: '#10B981',
+    bg: 'rgba(2, 26, 2,0.12)',
+    color: '#021a02',
   },
   stok_pakan_menipis: {
     Icon: Package,
@@ -75,8 +75,8 @@ const TYPE_CONFIG = {
   },
   kandang_siap_panen: {
     Icon: TrendingUp,
-    bg: 'rgba(16,185,129,0.12)',
-    color: '#10B981',
+    bg: 'rgba(2, 26, 2,0.12)',
+    color: '#021a02',
   },
 }
 

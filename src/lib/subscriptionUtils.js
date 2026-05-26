@@ -75,7 +75,7 @@ export function getSubscriptionStatus(tenant) {
  */
 export function getStatusColor(status) {
   switch (status) {
-    case 'active':   return { color: '#10B981', bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.25)' }
+    case 'active':   return { color: '#021a02', bg: 'rgba(2, 26, 2,0.1)', border: 'rgba(2, 26, 2,0.25)' }
     case 'trial':    return { color: '#6366F1', bg: 'rgba(99,102,241,0.1)', border: 'rgba(99,102,241,0.25)' }
     case 'expired':  return { color: '#F87171', bg: 'rgba(248,113,113,0.1)', border: 'rgba(248,113,113,0.25)' }
     default:         return { color: '#4B6478', bg: 'rgba(75,100,120,0.1)', border: 'rgba(75,100,120,0.25)' }

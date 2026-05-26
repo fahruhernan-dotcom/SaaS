@@ -57,7 +57,7 @@ const VERTICAL_SETUP_CONFIG = {
 }
 
 // ─── Generic Fattening Form ─────────────────────────────────────────────────
-function GenericFatteningSetup({ data, onChange, config }) {
+function GenericFatteningSetup({ data, onChange, config, t }) {
   const set = (key, val) => onChange({ ...data, [key]: val })
 
   const { accent } = config
@@ -74,7 +74,7 @@ function GenericFatteningSetup({ data, onChange, config }) {
       <div>
         <Label className={labelCls} style={{ color: accent }}>
           <Warehouse size={12} style={{ color: accent }} />
-          Nama Kandang <span className="ml-0.5 opacity-50">*</span>
+          {t('setup_kandang_label', 'Nama Kandang')} <span className="ml-0.5 opacity-50">*</span>
         </Label>
         <Input
           type="text"
@@ -84,13 +84,13 @@ function GenericFatteningSetup({ data, onChange, config }) {
           className={inputCls}
         />
       </div>
-
+ 
       <div className="grid grid-cols-2 gap-3">
         {/* Jumlah Ekor */}
         <div>
           <Label className={labelCls} style={{ color: accent }}>
             <PawPrint size={12} style={{ color: accent }} />
-            Populasi (Ekor) <span className="ml-0.5 opacity-50">*</span>
+            {t('setup_populasi_label', 'Populasi (Ekor)')} <span className="ml-0.5 opacity-50">*</span>
           </Label>
           <Input
             type="number"
@@ -108,7 +108,7 @@ function GenericFatteningSetup({ data, onChange, config }) {
         <div>
           <Label className={labelCls} style={{ color: accent }}>
             <Calendar size={12} style={{ color: accent }} />
-            Tanggal Masuk <span className="ml-0.5 opacity-50">*</span>
+            {t('setup_tanggal_masuk_label', 'Tanggal Masuk')} <span className="ml-0.5 opacity-50">*</span>
           </Label>
           <DatePicker
             value={data.start_date || new Date().toISOString().split('T')[0]}
@@ -122,7 +122,7 @@ function GenericFatteningSetup({ data, onChange, config }) {
         <div>
           <Label className={labelCls} style={{ color: accent }}>
             <Scale size={12} style={{ color: accent }} />
-            Berat Avg (kg)
+            {t('setup_berat_avg_label', 'Berat Avg (kg)')}
           </Label>
           <div className="relative">
             <Input
@@ -153,7 +153,7 @@ function GenericFatteningSetup({ data, onChange, config }) {
           <Info size={14} />
         </div>
         <p className="text-[10px] text-slate-400 font-medium leading-relaxed italic">
-          {config.infoText || 'Data ini digunakan untuk menghitung performa batch secara otomatis.'}
+          {t('setup_info_text', 'Data ini digunakan untuk menghitung performa batch secara otomatis.')}
         </p>
       </div>
     </div>
@@ -161,24 +161,24 @@ function GenericFatteningSetup({ data, onChange, config }) {
 }
 
 // ─── StepSetup export ───────────────────────────────────────────────────────
-export default function StepSetup({ selectedModel, setupData, setSetupData }) {
+export default function StepSetup({ selectedModel, setupData, setSetupData, t }) {
   const config = VERTICAL_SETUP_CONFIG[selectedModel]
 
   // Sapi uses dedicated form (has template feature)
   if (selectedModel === 'peternak_sapi_penggemukan') {
-    return <PeternakSapiForm data={setupData} onChange={setSetupData} />
+    return <PeternakSapiForm data={setupData} onChange={setSetupData} t={t} />
   }
 
   // Generic fattening form for other penggemukan verticals
   if (config?.component === 'fattening') {
-    return <GenericFatteningSetup data={setupData} onChange={setSetupData} config={config} />
+    return <GenericFatteningSetup data={setupData} onChange={setSetupData} config={config} t={t} />
   }
 
   // Fallback (should not happen — only verticals in SETUP_REQUIRED_VERTICALS hit this component)
   return (
     <div className="p-6 text-center rounded-xl border border-white/5 bg-white/[0.02]">
       <p className="text-[13px] text-slate-500 italic">
-        Tidak ada konfigurasi tambahan untuk tipe bisnis ini.
+        {t('setup_no_config', 'Tidak ada konfigurasi tambahan untuk tipe bisnis ini.')}
       </p>
     </div>
   )

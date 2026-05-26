@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 
 function Particles({
-  particleColors = ['#10B981', '#34D399'],
+  particleColors = ['#021a02', '#021a02'],
   particleCount = 50,
   speed = 0.5,
   particleBaseSize = 1.5,

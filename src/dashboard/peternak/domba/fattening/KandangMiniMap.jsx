@@ -10,8 +10,8 @@ const DOMBA_CONFIG = {
   emoji: '🐑',
   palette: [
     { bg: 'rgba(34,197,94,0.08)',   border: 'rgba(34,197,94,0.3)',   dotColor: '#22C55E' },
-    { bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.3)',  dotColor: '#10B981' },
-    { bg: 'rgba(52,211,153,0.08)',  border: 'rgba(52,211,153,0.3)',  dotColor: '#34D399' },
+    { bg: 'rgba(2, 26, 2,0.08)',  border: 'rgba(2, 26, 2,0.3)',  dotColor: '#021a02' },
+    { bg: 'rgba(2, 26, 2,0.08)',  border: 'rgba(2, 26, 2,0.3)',  dotColor: '#021a02' },
     { bg: 'rgba(132,204,22,0.08)',  border: 'rgba(132,204,22,0.3)',  dotColor: '#84CC16' },
     { bg: 'rgba(20,184,166,0.08)',  border: 'rgba(20,184,166,0.3)',  dotColor: '#14B8A6' },
   ],

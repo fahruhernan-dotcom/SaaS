@@ -108,7 +108,7 @@ export function ProgressBar({ value, max = 100, tone = 'accent', className = '' 
 }
 
 // ─── Donut Ring (SVG) ────────────────────────────────────────────────────────
-export function DonutRing({ value, max, size = 64, stroke = 6, color = '#10B981', children, className = '' }) {
+export function DonutRing({ value, max, size = 64, stroke = 6, color = '#021a02', children, className = '' }) {
   const r = (size - stroke) / 2
   const c = 2 * Math.PI * r
   const pct = Math.min(1, value / max)
@@ -137,7 +137,7 @@ export function DonutRing({ value, max, size = 64, stroke = 6, color = '#10B981'
 }
 
 // ─── Sparkline (Simple SVG Line Chart) ───────────────────────────────────────
-export function Sparkline({ data, color = '#10B981', height = 36, width = 100, className = '' }) {
+export function Sparkline({ data, color = '#021a02', height = 36, width = 100, className = '' }) {
   if (!data || data.length < 2) return null
   
   const min = Math.min(...data)

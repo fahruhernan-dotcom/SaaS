@@ -14,7 +14,7 @@ const C = {
   accent:  '#3B82F6',  // blue
   accentBg:'#EFF6FF',
   warn:    '#EF4444',
-  ok:      '#10B981',
+  ok:      '#021a02',
 }
 
 const s = StyleSheet.create({

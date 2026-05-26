@@ -40,7 +40,7 @@ const LoadingScreen = () => {
         <div 
           className="absolute top-0 bottom-0 w-[70px]"
           style={{
-            background: 'linear-gradient(90deg, transparent, #34D399, transparent)',
+            background: 'linear-gradient(90deg, transparent, #021a02, transparent)',
             animation: 'sweep 2s linear infinite'
           }}
         />

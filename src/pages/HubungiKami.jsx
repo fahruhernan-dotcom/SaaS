@@ -61,21 +61,21 @@ export default function HubungiKami() {
           <div className="absolute inset-0 pointer-events-none">
             <Particles
               quantity={30}
-              color="#10B981"
+              color="#021a02"
               opacity={0.1}
               className="absolute inset-0"
             />
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(16,185,129,0.05)_0%,transparent_70%)]" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(2, 26, 2,0.05)_0%,transparent_70%)]" />
           </div>
 
           <div className="max-w-4xl mx-auto text-center relative z-10">
             <FadeUp>
-              <div className="inline-block px-4 py-1.5 rounded-full bg-[#10B981]/10 border border-[#10B981]/20 mb-6">
+              <div className="inline-block px-4 py-1.5 rounded-full bg-[#021a02]/10 border border-[#021a02]/20 mb-6">
                 <ShinyText
                   text="👋 Kami siap membantu Anda"
                   disabled={false}
                   speed={3}
-                  className="text-[#10B981] text-xs font-bold leading-none"
+                  className="text-[#021a02] text-xs font-bold leading-none"
                 />
               </div>
               <h1 className="font-display text-4xl md:text-6xl font-black text-white leading-tight tracking-tight mb-6">

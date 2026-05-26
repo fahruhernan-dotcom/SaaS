@@ -287,7 +287,7 @@ export default function TermsPage() {
               </div>
               <a
                 href="mailto:support@ternakos.id"
-                className="px-6 py-3 bg-[#10B981] hover:bg-[#34D399] text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20 whitespace-nowrap"
+                className="px-6 py-3 bg-[#021a02] hover:bg-[#021a02] text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20 whitespace-nowrap"
               >
                 support@ternakos.id
               </a>

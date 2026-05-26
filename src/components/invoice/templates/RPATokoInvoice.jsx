@@ -13,7 +13,7 @@ const C = {
   accent:   '#F59E0B',   // amber
   accentBg: '#FFFBEB',
   warn:     '#EF4444',
-  ok:       '#10B981',
+  ok:       '#021a02',
 }
 
 // ── Column sets ──────────────────────────────────────────────────────────────
@@ -135,9 +135,9 @@ const s = StyleSheet.create({
     paddingBottom:   10,
     paddingLeft:     14,
     paddingRight:    14,
-    backgroundColor: 'rgba(16,185,129,0.06)',
+    backgroundColor: 'rgba(2, 26, 2,0.06)',
     borderWidth:     1,
-    borderColor:     'rgba(16,185,129,0.2)',
+    borderColor:     'rgba(2, 26, 2,0.2)',
     borderStyle:     'solid',
     borderRadius:    6,
     flexDirection:   'row',
@@ -213,7 +213,7 @@ const s = StyleSheet.create({
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 const statusColors = {
-  lunas:       { bg: '#F0FDF4', border: '#10B981', text: '#10B981' },
+  lunas:       { bg: '#F0FDF4', border: '#021a02', text: '#021a02' },
   belum_lunas: { bg: '#FEF3C7', border: '#F59E0B', text: '#F59E0B' },
   sebagian:    { bg: '#EFF6FF', border: '#3B82F6', text: '#3B82F6' },
 }

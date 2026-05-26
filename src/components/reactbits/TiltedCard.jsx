@@ -81,7 +81,7 @@ function TiltedCard({
             borderRadius: 'inherit',
             background: `radial-gradient(
               circle at ${isHovered ? 'var(--mouse-x, 50%) var(--mouse-y, 50%)' : '50% 50%'},
-              rgba(16,185,129,0.08) 0%,
+              rgba(2, 26, 2,0.08) 0%,
               transparent 70%
             )`,
             opacity: isHovered ? 1 : 0,

@@ -19,7 +19,7 @@ const DOMBA_CONFIG = {
   mortalityThreshold: 3,
   mortalityWarn: 1.5,
   animalEmoji: '🐏',
-  chartColors: ['#22C55E', '#10B981', '#34D399', '#4ADE80', '#059669', '#16A34A', '#84CC16', '#A3E635', '#2DD4BF', '#009688'],
+  chartColors: ['#22C55E', '#021a02', '#021a02', '#4ADE80', '#021a02', '#16A34A', '#84CC16', '#A3E635', '#2DD4BF', '#009688'],
   BASE: '/peternak/peternak_domba_penggemukan',
   calcHariDiFarm,
   calcMortalitas: calcMortalitasDomba,

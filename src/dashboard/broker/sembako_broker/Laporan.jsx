@@ -19,13 +19,13 @@ import { DatePicker } from '@/components/ui/DatePicker'
 import { C, fmtDate, CustomSelect } from '@/dashboard/broker/sembako_broker/components/sembakoSaleUtils'
 import { SembakoErrorState } from '@/dashboard/broker/sembako_broker/components/SembakoUiPrimitives'
 
-const PIE_COLORS = ['#EA580C', '#F59E0B', '#34D399', '#60A5FA', '#A78BFA', '#F472B6', '#FB923C']
+const PIE_COLORS = ['#EA580C', '#F59E0B', '#021a02', '#60A5FA', '#A78BFA', '#F472B6', '#FB923C']
 const CATEGORY_LABEL = {
   sewa_gudang: 'Sewa Gudang', listrik_air: 'Listrik & Air', bbm: 'BBM',
   perawatan: 'Perawatan', packaging: 'Packaging', administrasi: 'Administrasi', lainnya: 'Lainnya',
 }
 const STATUS_STYLE = {
-  lunas:       { bg: 'rgba(52,211,153,0.12)', color: C.green, label: 'Lunas' },
+  lunas:       { bg: 'rgba(2, 26, 2,0.12)', color: C.green, label: 'Lunas' },
   sebagian:    { bg: 'rgba(245,158,11,0.12)', color: C.amber, label: 'Sebagian' },
   belum_lunas: { bg: 'rgba(239,68,68,0.12)',  color: C.red,   label: 'Belum Lunas' },
 }

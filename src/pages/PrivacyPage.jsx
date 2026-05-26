@@ -82,25 +82,25 @@ export default function PrivacyPage() {
             <TabsList className="bg-[#0C1319] border border-white/10 p-1 rounded-2xl h-auto flex flex-wrap justify-center gap-1">
               <TabsTrigger
                 value="umum"
-                className="px-8 py-3 rounded-xl data-[state=active]:bg-[#10B981] data-[state=active]:text-white text-[#94A3B8] font-bold text-sm transition-all"
+                className="px-8 py-3 rounded-xl data-[state=active]:bg-[#021a02] data-[state=active]:text-white text-[#94A3B8] font-bold text-sm transition-all"
               >
                 UMUM
               </TabsTrigger>
               <TabsTrigger
                 value="broker"
-                className="px-8 py-3 rounded-xl data-[state=active]:bg-[#10B981] data-[state=active]:text-white text-[#94A3B8] font-bold text-sm transition-all"
+                className="px-8 py-3 rounded-xl data-[state=active]:bg-[#021a02] data-[state=active]:text-white text-[#94A3B8] font-bold text-sm transition-all"
               >
                 BROKER
               </TabsTrigger>
               <TabsTrigger
                 value="peternak"
-                className="px-8 py-3 rounded-xl data-[state=active]:bg-[#10B981] data-[state=active]:text-white text-[#94A3B8] font-bold text-sm transition-all"
+                className="px-8 py-3 rounded-xl data-[state=active]:bg-[#021a02] data-[state=active]:text-white text-[#94A3B8] font-bold text-sm transition-all"
               >
                 PETERNAK
               </TabsTrigger>
               <TabsTrigger
                 value="rpa"
-                className="px-8 py-3 rounded-xl data-[state=active]:bg-[#10B981] data-[state=active]:text-white text-[#94A3B8] font-bold text-sm transition-all"
+                className="px-8 py-3 rounded-xl data-[state=active]:bg-[#021a02] data-[state=active]:text-white text-[#94A3B8] font-bold text-sm transition-all"
               >
                 RPA
               </TabsTrigger>
@@ -367,7 +367,7 @@ export default function PrivacyPage() {
                       <p className="text-[#94A3B8] text-sm">Kirimkan permintaan akses, koreksi, atau penghapusan data melalui email kami.</p>
                       <p className="text-[#94A3B8] text-sm mt-1">Respons dalam <strong className="text-white">14 hari kerja</strong>.</p>
                     </div>
-                    <a href="mailto:support@ternakos.id" className="px-6 py-3 bg-[#10B981] hover:bg-[#34D399] text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20 whitespace-nowrap">
+                    <a href="mailto:support@ternakos.id" className="px-6 py-3 bg-[#021a02] hover:bg-[#021a02] text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20 whitespace-nowrap">
                       support@ternakos.id
                     </a>
                   </div>
@@ -480,7 +480,7 @@ export default function PrivacyPage() {
                 <PolicySection number="05" title="Hubungi Kami">
                   <div className="p-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex flex-col md:flex-row items-center justify-between gap-4">
                     <p className="text-[#94A3B8] text-sm">Pertanyaan tentang data bisnis Anda sebagai Broker?</p>
-                    <a href="mailto:support@ternakos.id" className="px-6 py-3 bg-[#10B981] hover:bg-[#34D399] text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20 whitespace-nowrap text-sm">
+                    <a href="mailto:support@ternakos.id" className="px-6 py-3 bg-[#021a02] hover:bg-[#021a02] text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20 whitespace-nowrap text-sm">
                       support@ternakos.id
                     </a>
                   </div>
@@ -563,7 +563,7 @@ export default function PrivacyPage() {
                 <PolicySection number="05" title="Hubungi Kami">
                   <div className="p-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex flex-col md:flex-row items-center justify-between gap-4">
                     <p className="text-[#94A3B8] text-sm">Pertanyaan tentang kontrol data kandang Anda?</p>
-                    <a href="mailto:support@ternakos.id" className="px-6 py-3 bg-[#10B981] hover:bg-[#34D399] text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20 whitespace-nowrap text-sm">
+                    <a href="mailto:support@ternakos.id" className="px-6 py-3 bg-[#021a02] hover:bg-[#021a02] text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20 whitespace-nowrap text-sm">
                       support@ternakos.id
                     </a>
                   </div>
@@ -636,7 +636,7 @@ export default function PrivacyPage() {
                 <PolicySection number="05" title="Hubungi Kami">
                   <div className="p-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex flex-col md:flex-row items-center justify-between gap-4">
                     <p className="text-[#94A3B8] text-sm">Pertanyaan tentang data transaksi atau piutang Anda sebagai RPA?</p>
-                    <a href="mailto:support@ternakos.id" className="px-6 py-3 bg-[#10B981] hover:bg-[#34D399] text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20 whitespace-nowrap text-sm">
+                    <a href="mailto:support@ternakos.id" className="px-6 py-3 bg-[#021a02] hover:bg-[#021a02] text-white font-bold rounded-xl transition-all shadow-lg shadow-emerald-500/20 whitespace-nowrap text-sm">
                       support@ternakos.id
                     </a>
                   </div>

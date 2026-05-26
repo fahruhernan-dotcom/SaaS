@@ -61,9 +61,9 @@ function getDeliveryBadge(delivery, now = new Date()) {
     },
     completed: {
       label: 'Terkirim',
-      color: '#34D399',
-      bg: 'rgba(16,185,129,0.08)',
-      border: 'rgba(16,185,129,0.20)',
+      color: '#021a02',
+      bg: 'rgba(2, 26, 2,0.08)',
+      border: 'rgba(2, 26, 2,0.20)',
       icon: '✓'
     }
   }
@@ -208,8 +208,8 @@ export function UnifiedTransactionCard({ sale, onOpenAuditSheet, onPay, _isOwner
           </div>
         ) : sale.payment_status === 'lunas' ? (
           <div className="space-y-1">
-            <p className="text-[10px] uppercase font-bold text-[#10B981] tracking-widest leading-none">TOTAL DIBAYAR</p>
-            <p className={cn("font-display font-bold text-[#10B981] leading-none mt-1 tabular-nums", valSize)}>
+            <p className="text-[10px] uppercase font-bold text-[#021a02] tracking-widest leading-none">TOTAL DIBAYAR</p>
+            <p className={cn("font-display font-bold text-[#021a02] leading-none mt-1 tabular-nums", valSize)}>
               {fmt(totalRevenue)}
             </p>
           </div>
@@ -240,7 +240,7 @@ export function UnifiedTransactionCard({ sale, onOpenAuditSheet, onPay, _isOwner
         <p className={cn("text-[10px] font-black uppercase tracking-widest leading-none", isLoss ? "text-[#F59E0B]" : "text-[#4B6478]")}>
           {isInProgress ? "EST. PROFIT" : "NET PROFIT"}
         </p>
-        <p className={cn("font-display font-bold tabular-nums leading-none mt-1.5 transition-colors", valSize, isInProgress ? "text-[#94A3B8]" : isLoss ? "text-[#F87171]" : "text-[#10B981]")}>
+        <p className={cn("font-display font-bold tabular-nums leading-none mt-1.5 transition-colors", valSize, isInProgress ? "text-[#94A3B8]" : isLoss ? "text-[#F87171]" : "text-[#021a02]")}>
           {isInProgress ? "~" : isLoss ? "−" : "+"}{fmt(Math.abs(netProfit))}
         </p>
       </div>

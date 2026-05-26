@@ -109,7 +109,7 @@ export default function Kandang() {
           onMenuClick={() => setSidebarOpen?.(true)}
           rightElement={
             <Button size="sm" onClick={() => { setEditingFarm(null); setOpenModal(true); }}
-              className="h-9 px-3 bg-[#10B981] hover:bg-emerald-600 text-white font-black rounded-xl gap-1.5 border-none active:scale-95 transition-transform uppercase text-xs tracking-widest"
+              className="h-9 px-3 bg-[#021a02] hover:bg-emerald-600 text-white font-black rounded-xl gap-1.5 border-none active:scale-95 transition-transform uppercase text-xs tracking-widest"
             >
               <Plus size={15} strokeWidth={3} /> Tambah
             </Button>
@@ -124,7 +124,7 @@ export default function Kandang() {
               <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mt-1">{safeNumber(totalEkor).toLocaleString('id-ID')} ekor tersedia</p>
             </div>
             <Button size="sm" onClick={() => { setEditingFarm(null); setOpenModal(true); }}
-              className="bg-[#10B981] hover:bg-emerald-600 text-white font-black rounded-xl h-10 px-5 gap-2 border-none shadow-[0_4px_20px_rgba(16,185,129,0.15)] active:scale-95 transition-transform uppercase text-xs tracking-widest"
+              className="bg-[#021a02] hover:bg-emerald-600 text-white font-black rounded-xl h-10 px-5 gap-2 border-none shadow-[0_4px_20px_rgba(2, 26, 2,0.15)] active:scale-95 transition-transform uppercase text-xs tracking-widest"
             >
               <Plus size={16} strokeWidth={3} /> Tambah
             </Button>
@@ -165,7 +165,7 @@ export default function Kandang() {
                     "flex-shrink-0 px-5 py-2 rounded-full font-black uppercase tracking-widest transition-all border",
                     isDesktop ? "text-[10px]" : "text-xs",
                     (filter === t || (filter === 'Semua' && t === 'Semua')) 
-                    ? 'bg-secondary/10 border-emerald-500/30 text-emerald-400 shadow-[0_4px_12px_rgba(16,185,129,0.1)]' 
+                    ? 'bg-secondary/10 border-emerald-500/30 text-emerald-400 shadow-[0_4px_12px_rgba(2, 26, 2,0.1)]' 
                     : 'bg-white/[0.03] border-white/5 text-[#4B6478] hover:border-white/10'
                 )}
               >
@@ -184,7 +184,7 @@ export default function Kandang() {
                 icon={Warehouse} 
                 title="Kandang Kosong" 
                 description="Tambahkan kandang rekananmu untuk mulai memantau stok dan transaksi." 
-                action={<Button className="bg-[#10B981] font-black h-12 px-6 rounded-2xl uppercase tracking-widest text-xs" onClick={() => setOpenModal(true)}>Tambah Kandang</Button>}
+                action={<Button className="bg-[#021a02] font-black h-12 px-6 rounded-2xl uppercase tracking-widest text-xs" onClick={() => setOpenModal(true)}>Tambah Kandang</Button>}
             />
             ) : (
                 <motion.div 

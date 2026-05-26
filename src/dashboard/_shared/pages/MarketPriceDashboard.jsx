@@ -364,7 +364,7 @@ export default function MarketPriceDashboard() {
         <div className="lg:col-span-2 space-y-6">
           <motion.div variants={fadeUp} initial="hidden" animate="visible">
             <Card className="p-6 md:p-8 bg-[#0C1319] border-white/5 rounded-[28px] relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(16,185,129,0.04)_0%,transparent_70%)] pointer-events-none" />
+              <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(2, 26, 2,0.04)_0%,transparent_70%)] pointer-events-none" />
 
               <div className="flex flex-col gap-4 mb-8 relative z-10">
                 <div className="flex flex-wrap justify-between items-start gap-3">
@@ -393,7 +393,7 @@ export default function MarketPriceDashboard() {
                 <div className="flex flex-wrap items-center gap-4">
                   <LegendItem color="#F59E0B" label="Chickin.id (Ref)" dashed />
                   <LegendItem color="#F97316" label="Arboge.com (Ref)" dashed />
-                  <LegendItem color="#10B981" label="Beli (TernakOS)" />
+                  <LegendItem color="#021a02" label="Beli (TernakOS)" />
                   <LegendItem color="#818CF8" label="Jual (TernakOS)" />
                   <span className="ml-auto text-[9px] font-black text-[#4B6478] uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded-lg border border-white/10">
                     {selectedProvince} · {trendLabel}
@@ -411,8 +411,8 @@ export default function MarketPriceDashboard() {
                     <AreaChart data={trendData}>
                       <defs>
                         <linearGradient id="gradBuy" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10B981" stopOpacity={0.15} />
-                          <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                          <stop offset="5%" stopColor="#021a02" stopOpacity={0.15} />
+                          <stop offset="95%" stopColor="#021a02" stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="gradSell" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#818CF8" stopOpacity={0.1} />
@@ -426,7 +426,7 @@ export default function MarketPriceDashboard() {
                       <Area type="monotone" dataKey="chickin" stroke="#F59E0B" strokeWidth={2} strokeDasharray="5 4" fill="transparent" connectNulls dot={false} />
                       <Area type="monotone" dataKey="arboge" stroke="#F97316" strokeWidth={2} strokeDasharray="3 3" fill="transparent" connectNulls dot={false} />
                       <Area type="monotone" dataKey="platformJual" stroke="#818CF8" strokeWidth={2} fillOpacity={1} fill="url(#gradSell)" connectNulls activeDot={{ r: 5, stroke: '#0C1319', strokeWidth: 2, fill: '#818CF8' }} />
-                      <Area type="monotone" dataKey="platformBeli" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#gradBuy)" connectNulls activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: '#10B981' }} />
+                      <Area type="monotone" dataKey="platformBeli" stroke="#021a02" strokeWidth={3} fillOpacity={1} fill="url(#gradBuy)" connectNulls activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: '#021a02' }} />
                     </AreaChart>
                   </ResponsiveContainer>
                 )}
@@ -481,7 +481,7 @@ export default function MarketPriceDashboard() {
         <div className="space-y-6">
           <motion.div variants={fadeUp} initial="hidden" animate="visible">
             <Card className="bg-[#0C1319] border border-white/5 rounded-[28px] overflow-hidden relative">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.05),transparent_60%)] pointer-events-none" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(2, 26, 2,0.05),transparent_60%)] pointer-events-none" />
               <CardContent className="p-6 relative z-10">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
@@ -593,7 +593,7 @@ function ProvinceSelector({ selected, onSelect, activityMap }) {
 
 function StatCard({ label, value, diff, sub, icon: Icon, isLoading, highlight, spreadPositive }) {
   return (
-    <Card className={cn("border-white/5 rounded-[20px] transition-all", highlight ? "bg-[#0C1319] border-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.05)]" : "bg-[#0C1319]/60")}>
+    <Card className={cn("border-white/5 rounded-[20px] transition-all", highlight ? "bg-[#0C1319] border-emerald-500/20 shadow-[0_0_30px_rgba(2, 26, 2,0.05)]" : "bg-[#0C1319]/60")}>
       <CardContent className="p-4 md:p-5">
         {isLoading ? (
           <div className="space-y-2"><Skeleton className="h-3 w-16 bg-white/5" /><Skeleton className="h-8 w-24 bg-white/5" /></div>
@@ -695,7 +695,7 @@ function SourceInfoRow({ color, label, desc, badge, badgeColor, dotted, isHybrid
     <div className="flex items-start gap-3">
       {isHybrid ? (
          <div className="flex gap-1 mt-2 shrink-0">
-           <div className="w-2 h-2 rounded-full" style={{ background: '#10B981' }} title="Beli" />
+           <div className="w-2 h-2 rounded-full" style={{ background: '#021a02' }} title="Beli" />
            <div className="w-2 h-2 rounded-full" style={{ background: '#818CF8' }} title="Jual" />
          </div>
       ) : (

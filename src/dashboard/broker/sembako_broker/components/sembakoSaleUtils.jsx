@@ -7,7 +7,7 @@ import { formatIDR } from '@/lib/format'
 // ── Palette ──────────────────────────────────────────────────────────────────
 export const C = {
   bg: '#06090F', card: '#1C1208', input: '#231A0E',
-  accent: '#EA580C', amber: '#F59E0B', green: '#34D399', red: '#EF4444',
+  accent: '#EA580C', amber: '#F59E0B', green: '#021a02', red: '#EF4444',
   text: '#FEF3C7', muted: '#92400E',
   border: 'rgba(234,88,12,0.15)', borderAm: 'rgba(245,158,11,0.25)',
 }
@@ -201,7 +201,7 @@ export function ProgressIndicator({ currentStep, steps }) {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0, flex: 1 }}>
               <div style={{
                 width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                background: done ? C.green : active ? 'rgba(52,211,153,0.15)' : 'rgba(255,255,255,0.05)',
+                background: done ? C.green : active ? 'rgba(2, 26, 2,0.15)' : 'rgba(255,255,255,0.05)',
                 border: done ? 'none' : active ? `2px solid ${C.green}` : `2px solid ${C.border}`,
               }}>
                 {done

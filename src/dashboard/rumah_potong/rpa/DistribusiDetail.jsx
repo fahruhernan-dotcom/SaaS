@@ -23,7 +23,7 @@ import { InputRupiah } from '@/components/ui/InputRupiah'
 // ─── Constants & Helpers ──────────────────────────────────────────────────────
 
 const STATUS_CONFIG = {
-  lunas: { label: 'Lunas', color: '#34D399', bg: 'rgba(52,211,153,0.12)' },
+  lunas: { label: 'Lunas', color: '#021a02', bg: 'rgba(2, 26, 2,0.12)' },
   sebagian: { label: 'Sebagian', color: '#60A5FA', bg: 'rgba(96,165,250,0.12)' },
   belum_lunas: { label: 'Belum Lunas', color: '#F59E0B', bg: 'rgba(245,158,11,0.12)' },
 }
@@ -243,11 +243,11 @@ function RecordPaymentSheet({ invoice, onClose }) {
             </div>
           </div>
           <div style={{
-            padding: '10px 12px', background: 'rgba(52,211,153,0.05)', border: '1px solid rgba(52,211,153,0.15)', borderRadius: '10px',
+            padding: '10px 12px', background: 'rgba(2, 26, 2,0.05)', border: '1px solid rgba(2, 26, 2,0.15)', borderRadius: '10px',
             display: 'flex', justifyContent: 'space-between',
           }}>
             <span style={{ fontSize: '13px', color: '#94A3B8' }}>Sisa setelah bayar</span>
-            <span style={{ fontSize: '14px', fontWeight: 700, color: afterPay === 0 ? '#34D399' : '#F59E0B' }}>
+            <span style={{ fontSize: '14px', fontWeight: 700, color: afterPay === 0 ? '#021a02' : '#F59E0B' }}>
               {afterPay === 0 ? 'LUNAS 🎉' : fmt(afterPay)}
             </span>
           </div>
@@ -387,7 +387,7 @@ export default function RPADistribusiDetail() {
                 <div style={{ fontSize: '11px', color: '#4B6478', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <CreditCard size={12} />Outstanding
                 </div>
-                <div style={{ fontSize: '18px', fontWeight: 700, color: stats.outstanding > 0 ? '#F59E0B' : '#34D399' }}>
+                <div style={{ fontSize: '18px', fontWeight: 700, color: stats.outstanding > 0 ? '#F59E0B' : '#021a02' }}>
                   {stats.outstanding > 0 ? fmt(stats.outstanding) : 'Lunas'}
                 </div>
               </div>
@@ -470,7 +470,7 @@ export default function RPADistribusiDetail() {
                         </div>
                         <div>
                           <div style={{ fontSize: '10px', color: '#4B6478' }}>Dibayar</div>
-                          <div style={{ fontSize: '13px', fontWeight: 700, color: '#34D399' }}>{fmt(inv.paid_amount)}</div>
+                          <div style={{ fontSize: '13px', fontWeight: 700, color: '#021a02' }}>{fmt(inv.paid_amount)}</div>
                         </div>
                         <div>
                           <div style={{ fontSize: '10px', color: '#4B6478' }}>Sisa</div>

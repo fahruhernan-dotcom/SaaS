@@ -104,7 +104,7 @@ const S = {
 }
 
 const PAYMENT_OPTIONS = [
-  { value: 'lunas', label: 'Lunas', color: '#10B981' },
+  { value: 'lunas', label: 'Lunas', color: '#021a02' },
   { value: 'belum_lunas', label: 'Belum Lunas', color: '#F87171' },
   { value: 'sebagian', label: 'Sebagian', color: '#F59E0B' },
 ]
@@ -259,8 +259,8 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
       <p className="text-[11px] font-black uppercase tracking-widest text-[#4B6478]">Step 2 — Jual ke Siapa?</p>
 
       {/* Step1 Info Card */}
-      <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.12)', borderRadius: 12, padding: '12px 14px' }}>
-        <p style={{ color: '#34D399', fontSize: 12, margin: 0 }}>
+      <div style={{ background: 'rgba(2, 26, 2,0.06)', border: '1px solid rgba(2, 26, 2,0.12)', borderRadius: 12, padding: '12px 14px' }}>
+        <p style={{ color: '#021a02', fontSize: 12, margin: 0 }}>
           📦 Stok dari <strong>{step1Data?.farm_name || 'Kandang'}</strong> · {safeNum(qty).toLocaleString('id-ID')} ekor · {safeNum(totalWeightKg) > 1000 ? `${(safeNum(totalWeightKg) / 1000).toFixed(2)} ton` : `${safeNum(totalWeightKg).toFixed(1)} kg`} · Modal <strong>{formatIDR(totalModal)}</strong>
         </p>
       </div>
@@ -419,14 +419,14 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
           <div style={{
             marginTop: 8,
             padding: '14px',
-            background: 'rgba(16,185,129,0.06)',
-            border: '1px solid rgba(16,185,129,0.20)',
+            background: 'rgba(2, 26, 2,0.06)',
+            border: '1px solid rgba(2, 26, 2,0.20)',
             borderRadius: '12px',
             display: 'flex',
             flexDirection: 'column',
             gap: 10
           }}>
-            <p style={{ fontSize: '12px', fontWeight: 700, color: '#34D399', textTransform: 'uppercase', letterSpacing: '0.8px', margin: 0 }}>
+            <p style={{ fontSize: '12px', fontWeight: 700, color: '#021a02', textTransform: 'uppercase', letterSpacing: '0.8px', margin: 0 }}>
               RPA Baru
             </p>
             
@@ -562,10 +562,10 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
                             style={{
                               width: '100%',
                               padding: '11px 14px',
-                              background: newRPA.payment_terms === val ? 'rgba(16,185,129,0.10)' : 'transparent',
+                              background: newRPA.payment_terms === val ? 'rgba(2, 26, 2,0.10)' : 'transparent',
                               border: 'none',
                               borderBottom: i < arr.length - 1 ? '1px solid hsl(var(--border))' : 'none',
-                              color: newRPA.payment_terms === val ? '#34D399' : 'hsl(var(--foreground))',
+                              color: newRPA.payment_terms === val ? '#021a02' : 'hsl(var(--foreground))',
                               fontSize: '14px',
                               fontWeight: newRPA.payment_terms === val ? 700 : 400,
                               cursor: 'pointer',
@@ -576,7 +576,7 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
                             }}
                           >
                             <span>{label}</span>
-                            {newRPA.payment_terms === val && <Check size={12} color="#34D399" />}
+                            {newRPA.payment_terms === val && <Check size={12} color="#021a02" />}
                           </button>
                         ))}
                       </div>
@@ -696,7 +696,7 @@ export default function WizardStepJual({ step1Data, onNext, onBack }) {
         <Button type="button" variant="ghost" onClick={onBack} className={`gap-2 text-[#4B6478] hover:text-white font-bold rounded-xl ${isDesktop ? 'h-12' : 'h-10 text-[11px]'}`}>
           <ChevronLeft size={16} /> KEMBALI
         </Button>
-        <Button type="submit" className={`flex-1 rounded-2xl font-black tracking-widest shadow-lg shadow-emerald-500/20 ${isDesktop ? 'h-14 text-sm' : 'h-11 text-[12px]'}`} style={{ background: '#10B981', color: 'white' }}>
+        <Button type="submit" className={`flex-1 rounded-2xl font-black tracking-widest shadow-lg shadow-emerald-500/20 ${isDesktop ? 'h-14 text-sm' : 'h-11 text-[12px]'}`} style={{ background: '#021a02', color: 'white' }}>
           LANJUT KE PENGIRIMAN →
         </Button>
       </div>

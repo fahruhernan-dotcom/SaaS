@@ -26,18 +26,18 @@ function ProgressIndicator({ currentStep, steps }) {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0 }}>
               <div style={{
                 width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                background: done ? '#10B981' : active ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.05)',
-                border: done ? 'none' : active ? '2px solid #10B981' : '2px solid hsl(var(--border))',
+                background: done ? '#021a02' : active ? 'rgba(2, 26, 2,0.15)' : 'rgba(255,255,255,0.05)',
+                border: done ? 'none' : active ? '2px solid #021a02' : '2px solid hsl(var(--border))',
               }}>
                 {done
                   ? <Check size={13} color="white" strokeWidth={3} />
-                  : <span style={{ fontSize: 12, fontWeight: 700, color: active ? '#34D399' : 'hsl(var(--muted-foreground))', fontFamily: 'Sora' }}>{i + 1}</span>
+                  : <span style={{ fontSize: 12, fontWeight: 700, color: active ? '#021a02' : 'hsl(var(--muted-foreground))', fontFamily: 'Sora' }}>{i + 1}</span>
                 }
               </div>
-              <span style={{ fontSize: 10, color: done ? '#10B981' : active ? '#34D399' : 'hsl(var(--muted-foreground))', textAlign: 'center', marginTop: 4, whiteSpace: 'nowrap', padding: '0 2px' }}>{label}</span>
+              <span style={{ fontSize: 10, color: done ? '#021a02' : active ? '#021a02' : 'hsl(var(--muted-foreground))', textAlign: 'center', marginTop: 4, whiteSpace: 'nowrap', padding: '0 2px' }}>{label}</span>
             </div>
             {i < steps.length - 1 && (
-              <div style={{ flex: 1, height: 1, marginTop: 14, background: i < currentStep ? '#10B981' : 'hsl(var(--border))' }} />
+              <div style={{ flex: 1, height: 1, marginTop: 14, background: i < currentStep ? '#021a02' : 'hsl(var(--border))' }} />
             )}
           </React.Fragment>
         )
@@ -65,8 +65,8 @@ function Step0ModeSelect({ onSelect }) {
             onClick={() => setSelected('buy_first')}
             style={{
               width: '100%', textAlign: 'left', padding: pad, borderRadius: 14,
-              background: selected === 'buy_first' ? 'rgba(16,185,129,0.08)' : 'rgba(16,185,129,0.03)',
-              border: selected === 'buy_first' ? '2px solid rgba(16,185,129,0.40)' : '1px solid rgba(16,185,129,0.15)',
+              background: selected === 'buy_first' ? 'rgba(2, 26, 2,0.08)' : 'rgba(2, 26, 2,0.03)',
+              border: selected === 'buy_first' ? '2px solid rgba(2, 26, 2,0.40)' : '1px solid rgba(2, 26, 2,0.15)',
               cursor: 'pointer', transition: 'all 0.2s'
             }}
           >
@@ -105,7 +105,7 @@ function Step0ModeSelect({ onSelect }) {
           >
             <Button
               className={isDesktop ? "w-full h-14 rounded-2xl font-black text-base" : "w-full h-11 rounded-xl font-black text-[13px]"}
-              style={{ background: '#10B981', color: 'white', boxShadow: '0 8px 24px rgba(16,185,129,0.25)' }}
+              style={{ background: '#021a02', color: 'white', boxShadow: '0 8px 24px rgba(2, 26, 2,0.25)' }}
               onClick={() => onSelect(selected)}
             >
               Lanjut →

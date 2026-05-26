@@ -477,7 +477,7 @@ export default function FAQPage() {
                 href="https://wa.me/6281234567890"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold rounded-xl transition-all shadow-[0_4px_20px_rgba(16,185,129,0.25)]"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold rounded-xl transition-all shadow-[0_4px_20px_rgba(2, 26, 2,0.25)]"
               >
                 💬 Hubungi Support via WhatsApp
               </a>

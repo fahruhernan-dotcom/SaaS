@@ -11,7 +11,7 @@ function CheckCircleAnimated() {
         {/* Background fill */}
         <motion.circle
           cx="40" cy="40" r="36"
-          fill="rgba(16,185,129,0.1)"
+          fill="rgba(2, 26, 2,0.1)"
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
@@ -19,7 +19,7 @@ function CheckCircleAnimated() {
         {/* Stroke circle */}
         <motion.circle
           cx="40" cy="40" r="36"
-          stroke="#10B981"
+          stroke="#021a02"
           strokeWidth="2.5"
           strokeLinecap="round"
           fill="none"
@@ -32,7 +32,7 @@ function CheckCircleAnimated() {
         {/* Checkmark */}
         <motion.path
           d="M24 40 L35 51 L57 28"
-          stroke="#10B981"
+          stroke="#021a02"
           strokeWidth="3.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -110,7 +110,7 @@ export default function TransaksiSuccessCard({ isOpen, onClose, onDetail, data }
     buyPrice, sellPrice, netProfit, transactionDate,
   } = data
 
-  const profitColor = netProfit > 0 ? '#10B981' : netProfit < 0 ? '#F87171' : '#94A3B8'
+  const profitColor = netProfit > 0 ? '#021a02' : netProfit < 0 ? '#F87171' : '#94A3B8'
   const isRecorded = data.type === 'recorded'
 
   return (
@@ -135,8 +135,8 @@ export default function TransaksiSuccessCard({ isOpen, onClose, onDetail, data }
             <motion.div
               className="bg-[#0C1319] rounded-3xl p-8 max-w-sm w-full pointer-events-auto"
               style={{
-                border: '1px solid rgba(16,185,129,0.2)',
-                boxShadow: '0 0 60px rgba(16,185,129,0.15)',
+                border: '1px solid rgba(2, 26, 2,0.2)',
+                boxShadow: '0 0 60px rgba(2, 26, 2,0.15)',
               }}
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -188,8 +188,8 @@ export default function TransaksiSuccessCard({ isOpen, onClose, onDetail, data }
                 <div
                   className="rounded-2xl p-4 mb-6 text-center"
                   style={{
-                    background: netProfit >= 0 ? 'rgba(16,185,129,0.06)' : 'rgba(248,113,113,0.06)',
-                    border: `1px solid ${netProfit >= 0 ? 'rgba(16,185,129,0.15)' : 'rgba(248,113,113,0.15)'}`,
+                    background: netProfit >= 0 ? 'rgba(2, 26, 2,0.06)' : 'rgba(248,113,113,0.06)',
+                    border: `1px solid ${netProfit >= 0 ? 'rgba(2, 26, 2,0.15)' : 'rgba(248,113,113,0.15)'}`,
                   }}
                 >
                   <p className="text-[10px] font-bold uppercase tracking-widest text-[#4B6478] mb-1">
@@ -214,7 +214,7 @@ export default function TransaksiSuccessCard({ isOpen, onClose, onDetail, data }
                 {onDetail && (
                   <button
                     onClick={() => { onDetail(); onClose() }}
-                    className="flex-1 py-3 rounded-2xl border border-[#10B981]/30 text-[#10B981] text-sm font-bold hover:bg-emerald-500/5 transition-colors"
+                    className="flex-1 py-3 rounded-2xl border border-[#021a02]/30 text-[#021a02] text-sm font-bold hover:bg-emerald-500/5 transition-colors"
                   >
                     Lihat Detail
                   </button>

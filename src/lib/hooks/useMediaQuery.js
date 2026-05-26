@@ -1,18 +1,21 @@
-import { useState, useEffect } from 'react'
+import { useSyncExternalStore } from 'react'
 
 export function useMediaQuery(query) {
-  // Always start with false to avoid hydration mismatches (React error #418).
-  // The real value is synced after mount via useEffect.
-  const [matches, setMatches] = useState(false)
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
+  const subscribe = (callback) => {
+    if (typeof window === 'undefined') return () => {}
     const mq = window.matchMedia(query)
-    setMatches(mq.matches) // sync immediately after mount
-    const handler = (e) => setMatches(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [query])
+    mq.addEventListener('change', callback)
+    return () => mq.removeEventListener('change', callback)
+  }
 
-  return matches
+  const getSnapshot = () => {
+    if (typeof window === 'undefined') return false
+    return window.matchMedia(query).matches
+  }
+
+  const getServerSnapshot = () => {
+    return false
+  }
+
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 }

@@ -7,6 +7,7 @@ import AppSidebar from '../components/AppSidebar'
 import { Menu } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useNotificationGenerator } from '@/lib/hooks/useNotifications.jsx'
+import { useForceDarkMode } from '@/lib/hooks/useForceDarkMode'
 import { BusinessNameWarningBanner } from '../components/BusinessNameWarningBanner'
 import InstallAppPrompt from '@/components/InstallAppPrompt'
 import { PlanExpiryBanner } from '../components/PlanExpiryBanner'
@@ -19,6 +20,7 @@ import { SidebarProvider } from '@/components/ui/sidebar'
 export default function RumahPotongLayout() {
   const { _profile, loading, tenant, isSuperadmin } = useAuth()
   useNotificationGenerator()
+  useForceDarkMode()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 

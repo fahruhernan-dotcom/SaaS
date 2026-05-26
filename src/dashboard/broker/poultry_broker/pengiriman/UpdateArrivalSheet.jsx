@@ -333,12 +333,12 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
             <style>
               * { margin: 0; padding: 0; box-sizing: border-box; }
               body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8fafc; color: #1e293b; padding: 40px; }
-              .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 2px solid #10B981; }
+              .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 2px solid #021a02; }
               .brand { display: flex; align-items: center; gap: 12px; }
-              .brand-dot { width: 36px; height: 36px; background: #10B981; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 16px; }
+              .brand-dot { width: 36px; height: 36px; background: #021a02; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 16px; }
               .brand-name { font-size: 20px; font-weight: 700; color: #0f172a; }
               .brand-sub { font-size: 12px; color: #64748b; }
-              .badge { background: #f0fdf4; color: #10B981; border: 1px solid #10B981; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+              .badge { background: #f0fdf4; color: #021a02; border: 1px solid #021a02; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 600; }
               h1 { font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
               .subtitle { font-size: 13px; color: #64748b; margin-bottom: 24px; }
               .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 28px; }
@@ -355,7 +355,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
               .berat-col { font-weight: 600; color: #0f172a; }
               .total-card { background: #0f172a; border-radius: 10px; padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
               .total-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #64748b; margin-bottom: 4px; }
-              .total-value { font-size: 28px; font-weight: 800; color: #10B981; }
+              .total-value { font-size: 28px; font-weight: 800; color: #021a02; }
               .selisih-card { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
               .selisih-label { font-size: 12px; color: #92400e; text-transform: uppercase; letter-spacing: 0.08em; }
               .selisih-value { font-size: 18px; font-weight: 700; color: #d97706; }
@@ -426,7 +426,7 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
 
             <div class="selisih-card">
               <div class="selisih-label">Selisih dari Berat Kirim (${initialKg.toFixed(2)} kg)</div>
-              <div class="selisih-value" style="color: ${selisihKg > 0 ? '#d97706' : selisihKg === 0 ? '#10b981' : '#ef4444'}">
+              <div class="selisih-value" style="color: ${selisihKg > 0 ? '#d97706' : selisihKg === 0 ? '#021a02' : '#ef4444'}">
                 ${selisihKg === 0 ? 'Pas ✓' : (selisihKg > 0 ? `- ${selisihKg.toFixed(2)}` : `+ ${Math.abs(selisihKg).toFixed(2)}`)} kg
               </div>
             </div>
@@ -1547,9 +1547,9 @@ export default function UpdateArrivalSheet({ isOpen, onClose, delivery }) {
                         className="w-full h-16 rounded-[24px] font-black text-sm uppercase tracking-[0.2em] text-white active:scale-95 transition-all mt-4 disabled:opacity-60 disabled:pointer-events-none flex items-center justify-center gap-3"
                         style={{
                             background: isLoading
-                                ? 'linear-gradient(135deg, #10B981, #F59E0B)'
-                                : 'linear-gradient(135deg, #10B981 0%, #F59E0B 100%)',
-                            boxShadow: '0 8px 32px -8px rgba(245,158,11,0.5), 0 4px 16px -4px rgba(16,185,129,0.4)',
+                                ? 'linear-gradient(135deg, #021a02, #F59E0B)'
+                                : 'linear-gradient(135deg, #021a02 0%, #F59E0B 100%)',
+                            boxShadow: '0 8px 32px -8px rgba(245,158,11,0.5), 0 4px 16px -4px rgba(2, 26, 2,0.4)',
                         }}
                     >
                         {isLoading ? (

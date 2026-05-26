@@ -127,7 +127,7 @@ export default function Simulator() {
           <Link
             to="/upgrade"
             className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl font-black text-[13px] uppercase tracking-widest text-white transition-all active:scale-95"
-            style={{ background: '#10B981', boxShadow: '0 8px 24px rgba(16,185,129,0.3)' }}
+            style={{ background: '#021a02', boxShadow: '0 8px 24px rgba(2, 26, 2,0.3)' }}
           >
             <Lock size={14} />
             Upgrade ke Pro

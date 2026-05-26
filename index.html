@@ -16,7 +16,19 @@
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Theme init: baca localStorage sebelum render untuk cegah FOUC -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('ternakos_theme_mode');
+        // Default: dark (supaya landing page tetap dark untuk user baru)
+        if (saved === 'light') {
+          document.documentElement.classList.remove('dark');
+        } else {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
     <!-- Title akan di-inject per-halaman oleh SEO component (vite-react-ssg) -->
     <meta name="description" content="Kelola kandang, stok pakan, transaksi, laporan, dan performa ternak dalam satu dashboard digital untuk peternak, broker, distributor, dan RPA.">
     <link rel="canonical" href="https://ternakos.my.id/">

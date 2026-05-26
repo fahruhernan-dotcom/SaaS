@@ -103,8 +103,8 @@ export default function Transaksi() {
                       borderRadius: '6px',
                       fontSize: '10px',
                       fontWeight: 700,
-                      background: txn.payment_status === 'lunas' ? 'rgba(16,185,129,0.12)' : 'rgba(248,113,113,0.12)',
-                      color: txn.payment_status === 'lunas' ? '#34D399' : '#F87171',
+                      background: txn.payment_status === 'lunas' ? 'rgba(2, 26, 2,0.12)' : 'rgba(248,113,113,0.12)',
+                      color: txn.payment_status === 'lunas' ? '#021a02' : '#F87171',
                       textTransform: 'uppercase'
                     }}>
                       {txn.payment_status === 'sebagian' ? 'Sebagian' : txn.payment_status === 'lunas' ? 'Lunas' : 'Belum Lunas'}
@@ -128,7 +128,7 @@ export default function Transaksi() {
                     <div style={{ 
                       fontSize: '18px', 
                       fontWeight: 800, 
-                      color: activeTab === 'jual' ? '#34D399' : '#F1F5F9',
+                      color: activeTab === 'jual' ? '#021a02' : '#F1F5F9',
                       fontFamily: 'Sora'
                     }}>
                       {formatIDRShort(activeTab === 'jual' ? txn.net_revenue : txn.total_modal)}
@@ -150,7 +150,7 @@ export default function Transaksi() {
                     <span style={{ 
                       fontSize: '14px', 
                       fontWeight: 700, 
-                      color: (txn.net_revenue - (txn.total_weight * (txn.purchases.total_modal / txn.purchases.total_weight))) >= 0 ? '#10B981' : '#F87171' 
+                      color: (txn.net_revenue - (txn.total_weight * (txn.purchases.total_modal / txn.purchases.total_weight))) >= 0 ? '#021a02' : '#F87171' 
                     }}>
                       {formatIDRShort(txn.net_revenue - (txn.total_weight * (txn.purchases.total_modal / txn.purchases.total_weight)))}
                     </span>

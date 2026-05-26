@@ -20,7 +20,7 @@ const SAPI_CONFIG = {
   palette: [
     { bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.3)', dotColor: '#FBBF24' },
     { bg: 'rgba(59,130,246,0.08)',  border: 'rgba(59,130,246,0.3)',  dotColor: '#60A5FA' },
-    { bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.3)', dotColor: '#4ADE80' },
+    { bg: 'rgba(2, 26, 2,0.08)', border: 'rgba(2, 26, 2,0.3)', dotColor: '#4ADE80' },
     { bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.3)', dotColor: '#A78BFA' },
     { bg: 'rgba(239,68,68,0.08)',  border: 'rgba(239,68,68,0.3)',  dotColor: '#F87171' },
   ],

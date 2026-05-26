@@ -87,15 +87,15 @@ function TernakOSMockup() {
       <div className="flex items-center gap-2">
         <img src="/logo.png" alt="TernakOS" className="w-6 h-6 rounded-md object-cover border border-white/10" />
         <span className="text-[11px] font-bold text-[#F1F5F9]">TernakOS</span>
-        <span className="ml-auto text-[9px] text-[#10B981] bg-emerald-500/10 px-1.5 py-0.5 rounded-full">● Live</span>
+        <span className="ml-auto text-[9px] text-[#021a02] bg-emerald-500/10 px-1.5 py-0.5 rounded-full">● Live</span>
       </div>
 
       {/* KPI cards row */}
       <div className="grid grid-cols-2 gap-2">
         {[
-          { label: 'FCR Saat Ini', value: '1.62', sub: '↓ dari 1.82', color: '#10B981', good: true },
-          { label: 'IP Score', value: '342', sub: '↑ 18 poin', color: '#10B981', good: true },
-          { label: 'Deplesi', value: '1.2%', sub: 'dalam batas', color: '#34D399', good: true },
+          { label: 'FCR Saat Ini', value: '1.62', sub: '↓ dari 1.82', color: '#021a02', good: true },
+          { label: 'IP Score', value: '342', sub: '↑ 18 poin', color: '#021a02', good: true },
+          { label: 'Deplesi', value: '1.2%', sub: 'dalam batas', color: '#021a02', good: true },
           { label: 'Hari ke-', value: '18', sub: 'Kandang A', color: '#94A3B8', good: null },
         ].map((kpi) => (
           <div
@@ -125,8 +125,8 @@ function TernakOSMockup() {
               style={{
                 height: `${(d.h / maxH) * 100}%`,
                 background: i === miniChart.length - 1
-                  ? '#10B981'
-                  : `rgba(16,185,129,${0.15 + (i / miniChart.length) * 0.35})`,
+                  ? '#021a02'
+                  : `rgba(2, 26, 2,${0.15 + (i / miniChart.length) * 0.35})`,
               }}
             />
           ))}
@@ -216,7 +216,7 @@ export default function Comparison() {
       {/* Header */}
       <AnimatedContent distance={24}>
         <div className="text-center mb-12 max-w-2xl mx-auto">
-          <p className="text-[#10B981] text-xs font-bold uppercase tracking-widest mb-3">
+          <p className="text-[#021a02] text-xs font-bold uppercase tracking-widest mb-3">
             PERBANDINGAN NYATA
           </p>
           <h2 className="font-display text-3xl md:text-4xl font-black text-white leading-tight mb-3">
@@ -231,7 +231,7 @@ export default function Comparison() {
         <div className="max-w-5xl mx-auto">
           <div
             ref={containerRef}
-            className="relative overflow-hidden rounded-2xl border border-white/10 select-none"
+            className="comparison-dark-preserve relative overflow-hidden rounded-2xl border border-white/10 select-none"
             style={{ height: '360px', cursor: isDragging ? 'ew-resize' : 'col-resize' }}
             onMouseDown={(e) => {
               // Allow drag from anywhere in the container

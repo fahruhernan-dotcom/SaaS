@@ -16,8 +16,8 @@ export default function LoadingSpinner({ fullPage = false }) {
         style={{
           width: '32px',
           height: '32px',
-          border: '3px solid rgba(16,185,129,0.1)',
-          borderTop: '3px solid #10B981',
+          border: '3px solid rgba(2, 26, 2,0.1)',
+          borderTop: '3px solid #021a02',
           borderRadius: '50%',
         }}
       />

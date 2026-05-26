@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Lock, ArrowLeft, Building2, MapPin, ChevronDown, X, Key, ChevronRight, CheckCircle2, Sparkles } from 'lucide-react'
 import { useNavigate as useNav } from 'react-router-dom'
+import { useLanguage } from '@/lib/i18n/useLanguage'
 import { supabase } from '@/lib/supabase'
 import { BUSINESS_MODELS, BUSINESS_CATEGORIES, ANIMAL_GROUPS, resolveBusinessVertical } from '@/lib/businessModel'
 import { toTitleCase } from '@/lib/format'
@@ -35,6 +36,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
   const [provinceSearch, setProvinceSearch] = useState('')
   const [provinceOpen, setProvinceOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const { t } = useLanguage()
   const [isSuccess, setIsSuccess] = useState(false) // success animation gate
   const [setupData, setSetupData] = useState({
     batch_name: '',
@@ -109,6 +111,16 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
        label: model?.categoryLabel || 'Bisnis'
     }
   }, [profile, isRoleLocked])
+
+  // Lookups for step labels
+  const stepLabelMap = {
+    'Kategori': t('onboarding_step_category', 'Kategori'),
+    'Hewan': t('onboarding_step_animal', 'Hewan'),
+    'Spesialisasi': t('onboarding_step_specialization', 'Spesialisasi'),
+    'Nama Farm': t('onboarding_step_farm_name', 'Nama Farm'),
+    'Nama Bisnis': t('onboarding_step_business_name', 'Nama Bisnis'),
+    'Setup Awal': t('onboarding_step_initial_setup', 'Setup Awal')
+  }
 
   // Auto-skip step 1 ONLY if role is locked
   useEffect(() => {
@@ -204,7 +216,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
     // --- VALIDATION: Guard against undefined/invalid user_type ---
     if (!model.user_type) {
       console.error('[Onboarding] model.user_type is missing for model:', model.key, model)
-      toast.error('Konfigurasi bisnis tidak valid. Silakan coba lagi.')
+      toast.error(t('onboarding_error_invalid_config', 'Konfigurasi bisnis tidak valid. Silakan coba lagi.'))
       return
     }
 
@@ -262,7 +274,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         if (isNewBusiness) {
           const quota = await checkQuotaUsage(null, profile, 'business')
           if (!quota.canAdd) {
-            toast.error(`Jatah bisnis bapak sudah penuh (${quota.usage}/${quota.limit}). Silakan beli slot tambahan di Portal Add-on.`)
+            toast.error(t('onboarding_error_quota_full', 'Jatah bisnis bapak sudah penuh ({usage}/{limit}). Silakan beli slot tambahan di Portal Add-on.').replace('{usage}', quota.usage).replace('{limit}', quota.limit))
             setLoading(false)
             return
           }
@@ -311,7 +323,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
           try { localStorage.setItem('ternakos_active_tenant_id', rpcData) } catch { /* ok */ }
         }
 
-        toast.success(isNewBusiness ? 'Bisnis baru berhasil dibuat!' : 'Profil bisnis berhasil dibuat!')
+        toast.success(isNewBusiness ? t('onboarding_toast_new_biz_success', 'Bisnis baru berhasil dibuat!') : t('onboarding_toast_profile_success', 'Profil bisnis berhasil dibuat!'))
       }
 
       if (!resolvedTenantId || resolvedTenantId === 'undefined' || !isUUID(resolvedTenantId)) {
@@ -432,7 +444,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               console.error('[Onboarding] Auto trial activation failed:', trialError.message)
             } else {
               console.log('[Onboarding] Auto trial activation success')
-              toast.success(`Trial ${intendedPlan === 'business' ? 'Business' : 'Pro'} 14 hari gratis berhasil diaktifkan!`)
+              toast.success(t('onboarding_toast_trial_success', 'Trial {plan} 14 hari gratis berhasil diaktifkan!').replace('{plan}', intendedPlan === 'business' ? 'Business' : 'Pro'))
             }
           } catch (trialErr) {
             console.error('[Onboarding] Auto trial activation exception:', trialErr)
@@ -514,9 +526,9 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         err.message.toLowerCase().includes('cannot change user_type')
 
       if (isUserTypeLocked) {
-        toast.error('Tidak bisa mengubah tipe bisnis akun ini. Buat bisnis baru lewat menu "Tambah Bisnis".')
+        toast.error(t('onboarding_error_cannot_change_type', 'Tidak bisa mengubah tipe bisnis akun ini. Buat bisnis baru lewat menu "Tambah Bisnis".'))
       } else {
-        toast.error('Gagal menyimpan pilihan. Silakan coba lagi.')
+        toast.error(t('onboarding_error_save_failed', 'Gagal menyimpan pilihan. Silakan coba lagi.'))
       }
       setLoading(false)
     }
@@ -608,9 +620,9 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 18 }}
               className="w-28 h-28 rounded-full flex items-center justify-center"
               style={{
-                background: 'radial-gradient(ellipse at 40% 30%, rgba(16,185,129,0.25), rgba(16,185,129,0.06))',
-                border: '2px solid rgba(16,185,129,0.35)',
-                boxShadow: '0 0 40px rgba(16,185,129,0.2)',
+                background: 'radial-gradient(ellipse at 40% 30%, rgba(2, 26, 2,0.25), rgba(2, 26, 2,0.06))',
+                border: '2px solid rgba(2, 26, 2,0.35)',
+                boxShadow: '0 0 40px rgba(2, 26, 2,0.2)',
               }}
             >
               <span className="text-5xl select-none">{emoji}</span>
@@ -645,7 +657,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               transition={{ delay: 0.3 }}
               className="text-xs font-black uppercase tracking-widest text-emerald-400 mb-1"
             >
-              Bisnis Berhasil Dibuat!
+              {t('onboarding_success_title', 'Bisnis Berhasil Dibuat!')}
             </motion.p>
             <motion.h2
               initial={{ opacity: 0, y: 8 }}
@@ -661,7 +673,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               transition={{ delay: 0.55 }}
               className="text-[13px] text-slate-500 mt-2"
             >
-              Mengarahkan ke dashboard...
+              {t('onboarding_success_redirecting', 'Mengarahkan ke dashboard...')}
             </motion.p>
           </div>
 
@@ -706,7 +718,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         </button>
 
         {/* Top accent line */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent shadow-[0_0_15px_rgba(16,185,129,0.3)]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent shadow-[0_0_15px_rgba(2, 26, 2,0.3)]" />
 
         <div className="text-center mb-6 relative z-10">
           <div className="flex items-center justify-center gap-2 mb-4">
@@ -731,14 +743,14 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                     <div className={cn(
                       'h-1 w-full rounded-full transition-all duration-500',
                       isDone || isActive
-                        ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.35)]'
+                        ? 'bg-emerald-500 shadow-[0_0_8px_rgba(2, 26, 2,0.35)]'
                         : 'bg-white/10'
                     )} />
                     <span className={cn(
                       'text-[8px] font-black uppercase tracking-wider transition-colors duration-300 leading-none',
                       isActive ? 'text-emerald-400' : isDone ? 'text-emerald-600' : 'text-white/15'
                     )}>
-                      {label}
+                      {stepLabelMap[label] || label}
                     </span>
                   </div>
                 )
@@ -757,47 +769,51 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               {step === 1 ? (
                 <>
                   <h2 className="font-display text-xl sm:text-2xl font-black text-white mb-2 leading-tight">
-                    Kamu berbisnis sebagai?
+                    {t('onboarding_cat_title', 'Kamu berbisnis sebagai?')}
                   </h2>
                   <p className="text-[13px] text-slate-400 font-medium">
-                    Pilih kategori bisnis utama kamu.
+                    {t('onboarding_cat_subtitle', 'Pilih kategori bisnis utama kamu.')}
                   </p>
                 </>
               ) : isAnimalStep ? (
                 <>
                   <h2 className="font-display text-xl sm:text-2xl font-black text-white mb-2 leading-tight">
-                    Jenis hewan apa? 🐄
+                    {t('onboarding_animal_title', 'Jenis hewan apa? 🐄')}
                   </h2>
                   <p className="text-[13px] text-slate-400 font-medium">
-                    Pilih jenis ternak utama bapak.
+                    {t('onboarding_animal_subtitle', 'Pilih jenis ternak utama bapak.')}
                   </p>
                 </>
               ) : isSubRoleStep ? (
                 <>
                   <h2 className="font-display text-xl sm:text-2xl font-black text-white mb-1.5 leading-tight">
-                    {isNewBusiness ? `Bisnis ${primaryRoleInfo?.label || 'Baru'}` : 'Spesialisasi Bisnis'}
+                    {isNewBusiness 
+                      ? t('onboarding_title_new_business_type', 'Bisnis {type}').replace('{type}', primaryRoleInfo ? t('biz_cat_' + primaryRoleInfo.category + '_label', primaryRoleInfo.label) : t('onboarding_title_new_business_fallback', 'Baru'))
+                      : t('onboarding_title_specialization', 'Spesialisasi Bisnis')}
                   </h2>
                   <p className="text-[13px] text-slate-400 font-medium leading-relaxed max-w-[320px] mx-auto">
                     {isNewBusiness 
-                      ? `Pilih spesialisasi unit ${primaryRoleInfo?.label?.toLowerCase() || 'bisnis'} tambahan.`
-                      : 'Lengkapi profil agar dashboard sesuai kebutuhanmu.'}
+                      ? t('onboarding_desc_new_business', 'Pilih spesialisasi unit bisnis tambahan.')
+                      : t('onboarding_desc_specialization', 'Lengkapi profil agar dashboard sesuai kebutuhanmu.')}
                   </p>
                 </>
               ) : isNameStep ? (
                 <>
                   <h2 className="font-display text-xl sm:text-2xl font-black text-white mb-1.5 leading-tight">
-                    Nama {category === 'peternak' ? 'farm' : 'bisnis'} bapak?
+                    {category === 'peternak' 
+                      ? t('onboarding_name_title_farm', 'Nama farm bapak?') 
+                      : t('onboarding_name_title_biz', 'Nama bisnis bapak?')}
                   </h2>
                   <p className="text-[13px] text-slate-400 font-medium leading-relaxed">
                     {category === 'peternak' 
-                      ? 'Berikan nama yang unik untuk lokasi farm ini.'
-                      : 'Nama ini akan tampil di seluruh laporan dan invoice.'}
+                      ? t('onboarding_name_desc_farm', 'Berikan nama yang unik untuk lokasi farm ini.') 
+                      : t('onboarding_name_desc_biz', 'Nama ini akan tampil di seluruh laporan dan invoice.')}
                   </p>
                 </>
               ) : isSetupStep ? (
                 <>
                   <h2 className="font-display text-xl sm:text-2xl font-black text-white mb-1.5 flex items-center justify-center gap-2.5 leading-tight">
-                    Setup Batch Pertama{' '}
+                    {t('onboarding_setup_batch_title', 'Setup Batch Pertama')}{' '}
                     <span className="animate-bounce-slow">
                       {VERTICAL_SETUP_CONFIG[selected]?.emoji || '🐄'}
                     </span>
@@ -829,18 +845,18 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                 <button
                   type="button"
                   onClick={() => setInviteOpen(v => !v)}
-                  className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] hover:bg-white/[0.04] text-[#4B6478] hover:text-slate-300 transition-all"
+                  className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-2xl border border-white/5 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all active:scale-[0.99]"
                 >
                   <span className="flex items-center gap-2 text-[13px] font-medium">
                     <Key size={14} />
-                    Punya kode undangan?
+                    {t('onboarding_invite_button', 'Punya kode undangan?')}
                   </span>
                   <ChevronRight
                     size={14}
                     className={cn('transition-transform duration-200', inviteOpen && 'rotate-90')}
                   />
                 </button>
-
+ 
                 <AnimatePresence>
                   {inviteOpen && (
                     <motion.div
@@ -856,7 +872,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                           maxLength={6}
                           value={inviteInput}
                           onChange={e => setInviteInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
-                          placeholder="KODE6X"
+                          placeholder={t('onboarding_invite_placeholder', 'KODE6X')}
                           className="flex-1 h-11 rounded-xl bg-[#111C24] border border-white/8 px-4 font-mono font-black text-base tracking-[0.25em] text-white placeholder:text-white/20 focus:outline-none focus:border-emerald-500/50 transition-colors uppercase"
                           onKeyDown={e => {
                             if (e.key === 'Enter' && inviteInput.length === 6) handleInviteSubmit()
@@ -869,11 +885,11 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                           onClick={handleInviteSubmit}
                           className="h-11 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-[#052c1e] font-black text-sm transition-all"
                         >
-                          Masuk
+                          {t('onboarding_invite_submit', 'Masuk')}
                         </button>
                       </div>
                       <p className="text-[11px] text-[#4B6478] mt-1.5 px-1">
-                        Kode diberikan oleh pemilik bisnis / farm yang mengundangmu.
+                        {t('onboarding_invite_note', 'Kode diberikan oleh pemilik bisnis / farm yang mengundangmu.')}
                       </p>
                     </motion.div>
                   )}
@@ -911,7 +927,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                   className="flex items-center justify-center gap-2 w-full mt-6 py-2 text-slate-500 hover:text-white transition-colors text-sm font-bold"
                 >
                   <ArrowLeft size={16} />
-                  Kembali
+                  {t('common.back', 'Kembali')}
                 </button>
               )}
             </motion.div>
@@ -946,7 +962,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                   className="flex items-center justify-center gap-2 w-full mt-6 py-2 text-slate-500 hover:text-white transition-colors text-sm font-bold"
                 >
                   <ArrowLeft size={16} />
-                  Kembali
+                  {t('common.back', 'Kembali')}
                 </button>
               )}
             </motion.div>
@@ -962,7 +978,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               <div className="mb-6">
                 <label className="flex items-center gap-2.5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 ml-1">
                   <Building2 size={12} className="text-slate-500" />
-                  Nama Bisnis <span className="text-emerald-500/50">*</span>
+                  {category === 'peternak' ? t('onboarding_name_label_farm', 'Nama Farm') : t('onboarding_name_label_biz', 'Nama Bisnis')} <span className="text-emerald-500/50">*</span>
                 </label>
                 <div className="relative group">
                   <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
@@ -971,7 +987,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                     value={businessName}
                     onChange={(e) => handleNameChange(e.target.value)}
                     onBlur={(e) => handleNameChange(toTitleCase(e.target.value))}
-                    placeholder="Contoh: Poultry Farm Jaya"
+                    placeholder={t('onboarding_name_placeholder', 'Contoh: Poultry Farm Jaya')}
                     maxLength={80}
                     autoFocus
                     className={cn(
@@ -988,22 +1004,24 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                 {/* Status messages */}
                 <div className="min-h-[24px] mt-2.5 px-1">
                   {businessName.trim().length > 0 && businessName.trim().length < 3 && (
-                    <p className="text-[12px] text-red-400 font-medium">Nama bisnis minimal 3 karakter</p>
+                    <p className="text-[12px] text-red-400 font-medium">
+                      {category === 'peternak' ? t('onboarding_name_min_farm', 'Nama farm minimal 3 karakter') : t('onboarding_name_min_biz', 'Nama bisnis minimal 3 karakter')}
+                    </p>
                   )}
                   {businessName.trim().length >= 3 && nameChecking && (
                     <div className="flex items-center gap-2.5 text-[12px] text-slate-500 font-medium font-display">
                       <div className="w-3 h-3 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" />
-                      Mengecek ketersediaan...
+                      {t('onboarding_name_checking', 'Mengecek ketersediaan...')}
                     </div>
                   )}
                   {businessName.trim().length >= 3 && !nameChecking && nameTaken && (
                     <p className="text-[12px] text-red-500 font-medium animate-in fade-in slide-in-from-left-2 duration-300">
-                      ❌ Nama "<strong>{toTitleCase(businessName)}</strong>" sudah terpakai.
+                      {t('onboarding_name_taken', '❌ Nama "{name}" sudah terpakai.').replace('{name}', toTitleCase(businessName))}
                     </p>
                   )}
                   {businessName.trim().length >= 3 && !nameChecking && !nameTaken && (
                     <p className="text-[12px] text-emerald-500 font-bold animate-in fade-in slide-in-from-left-2 duration-300">
-                      ✅ <strong>{toTitleCase(businessName)}</strong> tersedia
+                      {t('onboarding_name_available', '✅ {name} tersedia').replace('{name}', toTitleCase(businessName))}
                     </p>
                   )}
                 </div>
@@ -1013,7 +1031,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               <div className="mb-8 relative">
                 <label className="flex items-center gap-2.5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 ml-1">
                   <MapPin size={12} className="text-slate-500" />
-                  Provinsi <span className="text-emerald-500/50">*</span>
+                  {t('onboarding_province_label', 'Provinsi')} <span className="text-emerald-500/50">*</span>
                 </label>
                 
                 <div className="relative group">
@@ -1029,10 +1047,10 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                       setProvinceSearch('')
                       setProvinceOpen(true)
                     }}
-                    placeholder={province || 'Ketik nama provinsi...'}
+                    placeholder={province || t('onboarding_province_placeholder', 'Ketik nama provinsi...')}
                     className={cn(
                       "relative w-full h-14 pl-5 pr-12 bg-[#111C24] border rounded-2xl text-white font-medium text-[15px] outline-none transition-all duration-300",
-                      province ? "border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.05)]" : "border-white/5 focus:border-white/10"
+                      province ? "border-emerald-500/30 shadow-[0_0_15px_rgba(2, 26, 2,0.05)]" : "border-white/5 focus:border-white/10"
                     )}
                   />
                   <div 
@@ -1074,7 +1092,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                         ))
                       ) : (
                         <div className="py-8 text-center">
-                          <p className="text-sm text-slate-500 italic">Provinsi tidak ditemukan</p>
+                          <p className="text-sm text-slate-500 italic">{t('onboarding_province_not_found', 'Provinsi tidak ditemukan')}</p>
                         </div>
                       )}
                     </motion.div>
@@ -1096,10 +1114,10 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                 {loading ? (
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-emerald-900/30 border-t-emerald-900 rounded-full animate-spin" />
-                    Menyimpan...
+                    {t('common.saving', 'Menyimpan...')}
                   </div>
                 ) : (
-                  <>Lanjutkan <ArrowLeft size={16} className="rotate-180" /></>
+                  <>{t('common.continue', 'Lanjutkan')} <ArrowLeft size={16} className="rotate-180" /></>
                 )}
               </motion.button>
 
@@ -1108,9 +1126,10 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                 className="flex items-center justify-center gap-2 w-full mt-6 py-2 text-slate-500 hover:text-white transition-colors text-sm font-bold"
               >
                 <ArrowLeft size={16} />
-                Kembali
+                {t('common.back', 'Kembali')}
               </button>
             </motion.div>
+
           ) : isSetupStep ? (
             <motion.div
               key="step-setup"
@@ -1124,6 +1143,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                   selectedModel={selected}
                   setupData={setupData}
                   setSetupData={setSetupData}
+                  t={t}
                 />
               </div>
 
@@ -1139,10 +1159,10 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                 {loading ? (
                    <div className="flex items-center gap-3">
                     <div className="w-5 h-5 border-3 border-amber-900/30 border-t-amber-900 rounded-full animate-spin" />
-                    Menyimpan...
+                    {t('common.saving', 'Menyimpan...')}
                   </div>
                 ) : (
-                  <>Selesaikan Setup <ArrowLeft size={18} className="rotate-180" /></>
+                  <>{t('onboarding_setup_complete', 'Selesaikan Setup')} <ArrowLeft size={18} className="rotate-180" /></>
                 )}
               </motion.button>
 
@@ -1151,7 +1171,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                   onClick={() => saveAndComplete()}
                   className="w-full py-2.5 text-slate-500 hover:text-slate-300 text-[13px] font-bold transition-colors"
                 >
-                  Lewati untuk sekarang
+                  {t('onboarding_setup_skip', 'Lewati untuk sekarang')}
                 </button>
 
                 <button
@@ -1159,7 +1179,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                   className="flex items-center justify-center gap-2 w-full py-2 text-slate-600 hover:text-slate-400 transition-colors text-xs font-bold"
                 >
                   <ArrowLeft size={14} />
-                  Kembali ke Nama Bisnis
+                  {t('onboarding_setup_back_to_name', 'Kembali ke Nama Bisnis')}
                 </button>
               </div>
             </motion.div>
@@ -1171,25 +1191,28 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
 }
 
 function CategoryCard({ cat, onClick }) {
+  const { t } = useLanguage()
+  const labelKey = `biz_cat_${cat.key}_label`
+  const descKey = `biz_cat_${cat.key}_desc`
   return (
     <motion.div
       whileTap={{ scale: 0.98 }}
-      whileHover={{ scale: 1.01, borderColor: 'rgba(16,185,129,0.2)' }}
+      whileHover={{ scale: 1.01, borderColor: 'rgba(2, 26, 2,0.2)' }}
       onClick={onClick}
       className="group relative bg-[#111C24] border border-white/5 rounded-2xl p-5 cursor-pointer transition-all duration-300 hover:bg-[#15232d] shadow-lg hover:shadow-emerald-500/5"
     >
       <div className="flex items-center gap-5">
         <div className="w-14 h-14 bg-emerald-500/10 rounded-xl flex items-center justify-center text-3xl flex-shrink-0 group-hover:scale-110 transition-transform duration-500 border border-emerald-500/10 group-hover:border-emerald-500/30 group-hover:bg-emerald-500/20 overflow-hidden">
           {typeof cat.icon === 'string' && cat.icon.includes('/')
-            ? <img src={cat.icon} alt={cat.label} className="w-full h-full object-cover scale-110" />
+            ? <img src={cat.icon} alt={t(labelKey, cat.label)} className="w-full h-full object-cover scale-110" />
             : cat.icon}
         </div>
         <div className="flex-1">
           <h4 className="font-display font-bold text-[16px] text-white group-hover:text-emerald-400 transition-colors duration-300">
-            {cat.label}
+            {t(labelKey, cat.label)}
           </h4>
           <p className="font-body text-[12px] text-slate-500 mt-1 leading-relaxed">
-            {cat.description}
+            {t(descKey, cat.description)}
           </p>
         </div>
         <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-600 group-hover:text-emerald-400 group-hover:bg-emerald-500/10 transition-all duration-300">
@@ -1201,6 +1224,10 @@ function CategoryCard({ cat, onClick }) {
 }
 
 function ModelCard({ model, selected, onClick }) {
+  const { t } = useLanguage()
+  const isAnimal = ['ayam', 'bebek', 'domba', 'kambing', 'sapi', 'babi'].includes(model.key)
+  const labelKey = isAnimal ? `animal_group_${model.key}_label` : `biz_model_${model.key}_label`
+  const descKey = isAnimal ? `animal_group_${model.key}_desc` : `biz_model_${model.key}_desc`
   return (
     <motion.div
       whileTap={!model.comingSoon ? { scale: 0.98 } : {}}
@@ -1210,7 +1237,7 @@ function ModelCard({ model, selected, onClick }) {
         "group relative border rounded-2xl p-4 transition-all duration-300 flex items-center gap-4",
         model.comingSoon ? "bg-white/[0.02] border-white/5 opacity-50 cursor-not-allowed" : 
         selected 
-          ? "bg-emerald-500/5 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.1)] cursor-pointer" 
+          ? "bg-emerald-500/5 border-emerald-500/40 shadow-[0_0_15px_rgba(2, 26, 2,0.1)] cursor-pointer" 
           : "bg-[#111C24] border-white/5 hover:border-white/10 hover:bg-[#15232d] cursor-pointer"
       )}
     >
@@ -1221,7 +1248,7 @@ function ModelCard({ model, selected, onClick }) {
           : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10"
       )}>
         {typeof model.icon === 'string' && model.icon.includes('/')
-          ? <img src={model.icon} alt={model.label} className="w-full h-full object-cover scale-110" />
+          ? <img src={model.icon} alt={t(labelKey, model.label)} className="w-full h-full object-cover scale-110" />
           : model.icon}
       </div>
       <div className="flex-1 min-w-0">
@@ -1230,7 +1257,7 @@ function ModelCard({ model, selected, onClick }) {
             "font-display font-bold text-[15px] truncate transition-colors",
             selected ? "text-emerald-400" : "text-white"
           )}>
-            {model.label}
+            {t(labelKey, model.label)}
           </h4>
           {model.comingSoon && (
             <span className="text-[9px] font-black tracking-widest text-[#FBBF24] bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full uppercase">
@@ -1239,13 +1266,13 @@ function ModelCard({ model, selected, onClick }) {
           )}
         </div>
         <p className="font-body text-[11px] text-slate-500 leading-relaxed truncate">
-          {model.description}
+          {t(descKey, model.description)}
         </p>
       </div>
       <div className={cn(
         "w-6 h-6 rounded-full flex items-center justify-center transition-all duration-500 border-1.5",
         selected 
-          ? "bg-emerald-500 border-transparent shadow-[0_0_10px_rgba(16,185,129,0.3)]" 
+          ? "bg-emerald-500 border-transparent shadow-[0_0_10px_rgba(2, 26, 2,0.3)]" 
           : "border-white/10"
       )}>
         {model.comingSoon ? <Lock size={10} className="text-white/20" /> : selected && <Check size={12} className="text-[#052c1e] font-black" strokeWidth={4} />}

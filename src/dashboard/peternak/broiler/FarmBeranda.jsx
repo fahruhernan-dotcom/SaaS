@@ -210,7 +210,7 @@ function ActiveCycleSection({ cycle, farmId, navigate, peternakBase, vaccRecords
             className="h-full rounded-full transition-all duration-500"
             style={{
               width: `${progress}%`,
-              background: progress >= 100 ? '#34D399' : 'linear-gradient(90deg, #7C3AED 0%, #10B981 100%)',
+              background: progress >= 100 ? '#021a02' : 'linear-gradient(90deg, #7C3AED 0%, #021a02 100%)',
             }}
           />
         </div>
@@ -241,9 +241,9 @@ function ActiveCycleSection({ cycle, farmId, navigate, peternakBase, vaccRecords
           <span
             className="text-[10px] font-bold px-2.5 py-1 rounded-full border cursor-pointer"
             style={{
-              color: vaccDoneCount >= 4 ? '#34D399' : nextVacc && age > (nextVacc.windowEnd ?? 0) ? '#F87171' : '#F59E0B',
-              background: vaccDoneCount >= 4 ? 'rgba(52,211,153,0.08)' : 'rgba(245,158,11,0.08)',
-              borderColor: vaccDoneCount >= 4 ? 'rgba(52,211,153,0.2)' : 'rgba(245,158,11,0.2)',
+              color: vaccDoneCount >= 4 ? '#021a02' : nextVacc && age > (nextVacc.windowEnd ?? 0) ? '#F87171' : '#F59E0B',
+              background: vaccDoneCount >= 4 ? 'rgba(2, 26, 2,0.08)' : 'rgba(245,158,11,0.08)',
+              borderColor: vaccDoneCount >= 4 ? 'rgba(2, 26, 2,0.2)' : 'rgba(245,158,11,0.2)',
             }}
             onClick={() => navigate(`${peternakBase}/vaksinasi?cycle=${cycle.id}`)}
           >
@@ -497,7 +497,7 @@ export default function FarmBeranda() {
           <div className="grid grid-cols-4 gap-2">
             {[
               { icon: BarChart2,     label: 'Laporan', path: `${peternakBase}/kandang/${farmId}/siklus`,         color: PURPLE_LIGHT, show: p?.canViewLaporan   ?? true },
-              { icon: ClipboardList, label: 'Input',   path: `${peternakBase}/kandang/${farmId}/input`,          color: '#34D399',    show: p?.canInputHarian   ?? true },
+              { icon: ClipboardList, label: 'Input',   path: `${peternakBase}/kandang/${farmId}/input`,          color: '#021a02',    show: p?.canInputHarian   ?? true },
               { icon: Package,       label: 'Pakan',   path: `${peternakBase}/kandang/${farmId}/pakan`,          color: '#60A5FA',    show: p?.canViewPakan     ?? true },
               { icon: Syringe,       label: 'Vaksin',  path: `${peternakBase}/vaksinasi?cycle=${cycle?.id ?? ''}`, color: '#F59E0B', show: p?.canViewVaksinasi ?? true },
             ].filter(item => item.show !== false).map(({ icon: Icon, label, path, color }) => (

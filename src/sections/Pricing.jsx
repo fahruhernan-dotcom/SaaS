@@ -14,7 +14,7 @@ import { useAuth } from '@/lib/hooks/useAuth';
 
 // Social proof avatars for BUSINESS card
 const AVATARS = [
-  { bg: '#10B981', initials: 'BP' },
+  { bg: '#021a02', initials: 'BP' },
   { bg: '#7C3AED', initials: 'SA' },
   { bg: '#F59E0B', initials: 'RK' },
   { bg: '#3B82F6', initials: 'DW' },
@@ -50,7 +50,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
             x: (rect.left + rect.width / 2) / window.innerWidth,
             y: (rect.top + rect.height / 2) / window.innerHeight,
           },
-          colors: ['#10B981', '#34D399', '#F59E0B'],
+          colors: ['#021a02', '#021a02', '#F59E0B'],
         });
       }
     }
@@ -235,47 +235,44 @@ const Pricing = ({ activeRole, setActiveRole }) => {
   const faqs = [
     { q: 'Bisa cancel kapan saja?', a: 'Tentu. Tidak ada kontrak panjang. Anda bisa berhenti berlangganan kapan saja.' },
     { q: 'Kalau HP rusak, data saya hilang?', a: 'Tidak. Semua data tersimpan aman di cloud TernakOS. Cukup login di HP baru, semua data kembali seperti semula.' },
-    { q: 'Komoditas apa yang didukung sekarang?', a: 'Saat ini TernakOS berfokus pada ayam broiler dan pejantan. Kami akan terus menambah komoditas lain.' },
+    { q: 'Komoditas apa yang didukung sekarang?', a: 'Saat ini TernakOS berfokus pada sapi potong, domba, kambing, ayam broiler dan pejantan. Kami akan terus menambah komoditas lain.' },
     { q: 'Apakah data saya aman?', a: 'Sangat aman. Kami menggunakan enkripsi kelas bank untuk melindungi data transaksi dan harga pasar Anda. Data Anda tidak akan dibagikan ke pihak ketiga.' },
   ];
 
   return (
-    <section id="harga" className="bg-[#06090F] section-padding relative overflow-hidden">
-      {/* Background Glows */}
-      <div className="absolute top-1/4 left-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
+    <section id="harga" className="bg-bg-base py-20 px-5 border-t border-border-subtle relative overflow-hidden">
 
       <div className="max-w-[1280px] mx-auto px-5 relative z-10">
         <div className="text-center mb-10">
           <AnimatedContent direction="vertical" distance={20}>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-3.5">
-              <Sparkles size={12} className="text-emerald-500" />
-              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.2em]">PRICING PLANS</span>
+            <div className="badge-premium mb-3.5">
+              <Sparkles size={12} />
+              <span className="text-[9px] font-black uppercase tracking-[0.2em]">PRICING PLANS</span>
             </div>
           </AnimatedContent>
 
           <AnimatedContent direction="vertical" distance={30} delay={0.1}>
-            <h2 className="font-display text-2xl md:text-3xl font-black text-white mb-3.5 uppercase tracking-tight">
+            <h2 className="font-display text-2xl md:text-3xl font-normal text-text-primary mb-3.5 uppercase tracking-tight">
               PILIH PLAN <span className="text-emerald-500">TERBAIKMU</span>
             </h2>
           </AnimatedContent>
 
           <AnimatedContent direction="vertical" distance={20} delay={0.2}>
-            <p className="text-[#94A3B8] max-w-lg mx-auto mb-8 text-sm font-medium leading-relaxed">
+            <p className="text-text-secondary max-w-lg mx-auto mb-8 text-sm md:text-base font-medium leading-relaxed">
               Mulai gratis selamanya dengan paket Starter, atau pilih plan Pro/Business untuk fitur yang lebih powerful.
             </p>
           </AnimatedContent>
 
           {/* Role Toggle Tabs */}
           <AnimatedContent direction="vertical" distance={20} delay={0.25} className="flex justify-center mb-8">
-            <div className="inline-flex bg-[#111C24] border border-white/10 p-1.5 rounded-full relative z-20 shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
+            <div className="inline-flex bg-bg-2 border border-border-default p-1 rounded-full shadow-sm">
               {['broker', 'peternak', 'rpa'].map((role) => (
                 <button
                   key={role}
                   onClick={() => setActiveRole(role)}
-                  className={`px-4 sm:px-6 md:px-8 py-2.5 rounded-full font-display text-[10px] font-black tracking-[0.2em] uppercase transition-all duration-300 ${activeRole === role
-                      ? 'bg-emerald-500/10 text-emerald-400 shadow-[0_2px_12px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/20'
-                      : 'text-[#4B6478] hover:text-white hover:bg-white/[0.03]'
+                  className={`px-5 py-2.5 rounded-full font-body text-[11px] font-bold tracking-wider uppercase transition-all duration-300 ${activeRole === role
+                      ? 'bg-emerald-500 text-white shadow-sm'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-bg-3/50'
                     }`}
                 >
                   {role}
@@ -287,17 +284,17 @@ const Pricing = ({ activeRole, setActiveRole }) => {
           {/* Toggle Switch */}
           <AnimatedContent direction="vertical" distance={20} delay={0.3}>
             <div className="flex items-center justify-center gap-4 mb-8">
-              <span className={`text-[11px] font-black uppercase tracking-widest ${!isAnnual ? 'text-white' : 'text-[#4B6478]'}`}>
+              <span className={`text-[11px] font-black uppercase tracking-widest ${!isAnnual ? 'text-text-primary' : 'text-text-muted'}`}>
                 Bulanan
               </span>
               <div ref={switchRef}>
                 <Switch checked={isAnnual} onCheckedChange={handleToggle} />
               </div>
               <div className="flex items-center gap-2">
-                <span className={`text-[11px] font-black uppercase tracking-widest ${isAnnual ? 'text-white' : 'text-[#4B6478]'}`}>
+                <span className={`text-[11px] font-black uppercase tracking-widest ${isAnnual ? 'text-text-primary' : 'text-text-muted'}`}>
                   Tahunan
                 </span>
-                <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase tracking-widest">
+                <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 text-[9px] font-black uppercase tracking-widest">
                   Hemat {discountPctDisplay}%
                 </span>
               </div>
@@ -307,7 +304,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
 
         {/* Mobile Plan Tabs */}
         <div className="md:hidden flex justify-center mb-6">
-          <div className="inline-flex bg-[#111C24] border border-white/10 p-1 rounded-full">
+          <div className="inline-flex bg-bg-2 border border-border-default p-1 rounded-full">
             {plans.map((plan, idx) => (
               <button
                 key={plan.name}
@@ -315,8 +312,8 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                 className={cn(
                   'px-4 py-2 rounded-full text-xs font-black uppercase tracking-wider transition-all duration-200',
                   mobilePlanIdx === idx
-                    ? plan.isPopular ? 'bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30' : 'bg-white/10 text-white'
-                    : 'text-[#4B6478] hover:text-white/70'
+                    ? plan.isPopular ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/30' : 'bg-bg-3 text-text-primary'
+                    : 'text-text-muted hover:text-text-primary/70'
                 )}
               >
                 {plan.name}
@@ -326,7 +323,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
         </div>
 
         {/* Pricing Cards — Mobile: single card, Desktop: 3-col grid */}
-        <div className="hidden md:grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-center">
+        <div className="hidden md:grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
           {plans.map((plan, idx) => (
             <motion.div
               key={plan.name}
@@ -339,15 +336,15 @@ const Pricing = ({ activeRole, setActiveRole }) => {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: idx * 0.1 }}
               className={cn(
-                'relative p-2 md:p-8 rounded-xl md:rounded-[32px] border flex flex-col h-full transition-all duration-300',
+                'relative p-6 md:p-8 rounded-[24px] border flex flex-col h-full transition-all duration-300',
                 plan.isPopular
-                  ? 'bg-[#0C1319] border-emerald-500 border-[1.5px] md:border-2 shadow-[0_12px_24px_-8px_rgba(16,185,129,0.2)] md:shadow-[0_32px_64px_-16px_rgba(16,185,129,0.2)] z-10'
-                  : 'bg-[#0C1319] border-white/8 hover:border-white/20'
+                  ? 'bg-bg-1 border-emerald-500 border-2 shadow-card z-10'
+                  : 'bg-bg-2/50 border-border-default hover:border-border-strong shadow-card'
               )}
             >
               {/* Popular badge */}
               {plan.isPopular && (
-                <div className="absolute -top-3 md:-top-4 left-1/2 -translate-x-1/2 px-2 md:px-4 py-0.5 md:py-1 rounded-full bg-emerald-500 text-white text-[7px] md:text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 whitespace-nowrap z-20">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-emerald-500 text-white text-[9px] font-bold uppercase tracking-wider shadow-sm whitespace-nowrap z-20">
                   Paling Populer
                 </div>
               )}
@@ -356,10 +353,10 @@ const Pricing = ({ activeRole, setActiveRole }) => {
               <div className="mb-3 md:mb-8">
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-1 md:gap-2 mb-2 md:mb-6">
                   <div className="flex flex-col gap-0.5 md:gap-1">
-                    <span className={cn('text-[7px] md:text-[10px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em]', plan.isPopular ? 'text-emerald-500' : 'text-[#4B6478]')}>
+                    <span className={cn('text-[9px] font-black uppercase tracking-wider', plan.isPopular ? 'text-emerald-500' : 'text-text-muted')}>
                       {plan.name === 'ENTERPRISE' ? '' : plan.subtitle}
                     </span>
-                    <h3 className="font-display text-[11px] md:text-2xl font-black text-white uppercase leading-none md:leading-normal">{plan.name}</h3>
+                    <h3 className="font-display text-[11px] md:text-2xl font-black text-text-primary uppercase leading-none md:leading-normal">{plan.name}</h3>
                   </div>
 
                   {/* Social proof avatars — BUSINESS only */}
@@ -369,14 +366,14 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                         {AVATARS.map((av, i) => (
                           <div
                             key={i}
-                            className="w-7 h-7 rounded-full border-2 border-[#0C1319] flex items-center justify-center text-[8px] font-black text-white shrink-0"
+                            className="w-7 h-7 rounded-full border-2 border-bg-1 flex items-center justify-center text-[8px] font-black text-white shrink-0"
                             style={{ backgroundColor: av.bg }}
                           >
                             {av.initials}
                           </div>
                         ))}
                       </div>
-                      <span className="text-[9px] font-bold text-[#94A3B8]">
+                      <span className="text-[9px] font-bold text-text-secondary">
                         {activeBizLabel}
                       </span>
                     </div>
@@ -387,32 +384,32 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                 <div className="mb-2 md:mb-4">
                   {plan.price === 'Gratis' ? (
                     <div className="h-6 md:h-12 flex items-center">
-                      <span className="text-xs md:text-4xl font-black text-white uppercase tracking-tight">GRATIS</span>
+                      <span className="text-xs md:text-4xl font-black text-text-primary uppercase tracking-tight">GRATIS</span>
                     </div>
                   ) : plan.price === 'Custom' ? (
                     <div className="h-6 md:h-12 flex items-center">
-                      <span className="text-xs md:text-4xl font-black text-white uppercase tracking-tight">CUSTOM</span>
+                      <span className="text-xs md:text-4xl font-black text-text-primary uppercase tracking-tight">CUSTOM</span>
                     </div>
                   ) : (
                     <div className="space-y-0.5 md:space-y-1">
                       {/* Anchoring: strikethrough original price */}
                       <div className="flex flex-col md:flex-row md:items-center gap-0 md:gap-2">
-                        <span className="text-[8px] md:text-sm font-bold text-[#4B6478] line-through">
+                        <span className="text-[8px] md:text-sm font-bold text-text-muted line-through">
                           {formatRupiah(plan.anchorPrice)}
                         </span>
-                        <span className="hidden md:inline-block px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 text-[9px] font-black uppercase tracking-widest">
+                        <span className="hidden md:inline-block px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[9px] font-black uppercase tracking-widest">
                           Hemat Rp {formatRupiah(plan.savingAmount)}/bln
                         </span>
                       </div>
 
                       {/* Actual price with animated number */}
                       <div className="flex items-baseline gap-0.5 md:gap-1 h-6 md:h-10">
-                        <span className="text-[10px] md:text-lg font-black text-white tracking-tight mr-0.5">Rp</span>
+                        <span className="text-[10px] md:text-lg font-black text-text-primary tracking-tight mr-0.5">Rp</span>
                         <AnimatedPrice
                           value={isAnnual ? plan.annualPrice : plan.monthlyPrice}
-                          className="text-[13px] md:text-4xl font-black text-white tabular-nums tracking-tighter"
+                          className="text-[13px] md:text-4xl font-black text-text-primary tabular-nums tracking-tighter"
                         />
-                        <span className="text-[#4B6478] text-[7px] md:text-[10px] font-black uppercase tracking-widest ml-0.5">/Bln</span>
+                        <span className="text-text-muted text-[7px] md:text-[10px] font-black uppercase tracking-widest ml-0.5">/Bln</span>
                       </div>
                     </div>
                   )}
@@ -440,15 +437,15 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                     exit={{ opacity: 0, height: 0 }}
                     className="hidden md:flex items-start gap-2 px-3 py-2.5 rounded-xl bg-emerald-500/8 border border-emerald-500/15 mb-4"
                   >
-                    <Sparkles size={12} className="text-emerald-400 shrink-0 mt-0.5" />
-                    <span className="text-[11px] font-bold text-emerald-400 leading-snug">
+                    <Sparkles size={12} className="text-emerald-500 dark:text-emerald-400 shrink-0 mt-0.5" />
+                    <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 leading-snug">
                       Hemat Rp {formatRupiah(plan.annualLoss)}/tahun dengan beralih ke Plan Tahunan
                     </span>
                   </motion.div>
                 )}
 
                 {/* Subtitle / desc */}
-                <p className="hidden md:block text-[#94A3B8] text-xs leading-relaxed mb-8">
+                <p className="hidden md:block text-text-secondary text-xs leading-relaxed mb-8">
                   {plan.description}
                 </p>
               </div>
@@ -465,7 +462,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                     </div>
                     <span className={cn(
                       'text-[7px] md:text-[14px] leading-tight md:leading-relaxed transition-colors line-clamp-1 md:line-clamp-none',
-                      feature.highlight ? 'text-white font-bold' : 'text-[#94A3B8] font-medium group-hover/feat:text-white'
+                      feature.highlight ? 'text-text-primary font-bold' : 'text-text-secondary font-medium group-hover/feat:text-text-primary'
                     )}>
                       {feature.text}
                     </span>
@@ -482,10 +479,10 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                 <Button
                   asChild
                   className={cn(
-                    'w-full py-2 md:py-6 h-auto font-display text-[8px] md:text-sm font-black uppercase tracking-widest rounded-lg md:rounded-2xl transition-all duration-300 active:scale-95',
+                    'w-full py-2 md:py-6 h-auto font-display text-[8px] md:text-sm font-black uppercase tracking-widest rounded-full transition-all duration-300 active:scale-95 border',
                     plan.isPopular
-                      ? 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-500/25'
-                      : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
+                      ? 'bg-emerald-500 hover:bg-emerald-400 text-white border-transparent shadow-lg shadow-emerald-500/25'
+                      : 'bg-bg-3/20 hover:bg-bg-3/50 text-text-primary border-border-default'
                   )}
                 >
                   {plan.href.startsWith('http') ? (
@@ -509,7 +506,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                 {/* 30-Day Guarantee Label */}
                 <div className="flex items-center justify-center gap-1 opacity-60 md:opacity-100">
                   <CheckCircle2 size={7} className="md:w-3 md:h-3 text-emerald-500" />
-                  <span className="text-[6px] md:text-[11px] font-bold text-[#4B6478] uppercase tracking-widest leading-none">
+                  <span className="text-[6px] md:text-[11px] font-bold text-text-muted uppercase tracking-widest leading-none">
                     Garansi 30 Hari
                   </span>
                 </div>
@@ -518,8 +515,8 @@ const Pricing = ({ activeRole, setActiveRole }) => {
               {/* Social proof bottom — BUSINESS (Desktop ONLY) */}
               {plan.isSocial && (
                 <div className="hidden md:flex items-center justify-center gap-1.5 mt-4">
-                  <Users size={11} className="text-[#4B6478]" />
-                  <span className="text-[10px] font-bold text-[#4B6478]">
+                  <Users size={11} className="text-text-muted" />
+                  <span className="text-[10px] font-bold text-text-muted">
                     Dipercaya {activeBizLabel}
                   </span>
                 </div>
@@ -538,10 +535,10 @@ const Pricing = ({ activeRole, setActiveRole }) => {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
               className={cn(
-                'relative p-6 rounded-2xl border flex flex-col transition-all',
+                'relative p-6 rounded-2xl border flex flex-col transition-all shadow-card',
                 plans[mobilePlanIdx].isPopular
-                  ? 'bg-[#0C1319] border-emerald-500 border-2 shadow-[0_16px_40px_-8px_rgba(16,185,129,0.25)]'
-                  : 'bg-[#0C1319] border-white/8'
+                  ? 'bg-bg-1 border-emerald-500 border-2'
+                  : 'bg-bg-2 border-border-subtle'
               )}
             >
               {plans[mobilePlanIdx].isPopular && (
@@ -553,21 +550,21 @@ const Pricing = ({ activeRole, setActiveRole }) => {
               <div className="mb-5">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <span className={cn('text-[10px] font-black uppercase tracking-[0.15em]', plans[mobilePlanIdx].isPopular ? 'text-emerald-500' : 'text-[#4B6478]')}>
+                    <span className={cn('text-[10px] font-black uppercase tracking-[0.15em]', plans[mobilePlanIdx].isPopular ? 'text-emerald-500' : 'text-text-muted')}>
                       {plans[mobilePlanIdx].subtitle}
                     </span>
-                    <h3 className="font-display text-xl font-black text-white uppercase">{plans[mobilePlanIdx].name}</h3>
+                    <h3 className="font-display text-xl font-black text-text-primary uppercase">{plans[mobilePlanIdx].name}</h3>
                   </div>
                   {plans[mobilePlanIdx].isSocial && (
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex -space-x-2">
                         {AVATARS.slice(0, 3).map((av, i) => (
-                          <div key={i} className="w-6 h-6 rounded-full border-2 border-[#0C1319] flex items-center justify-center text-[7px] font-black text-white shrink-0" style={{ backgroundColor: av.bg }}>
+                          <div key={i} className="w-6 h-6 rounded-full border-2 border-bg-1 flex items-center justify-center text-[7px] font-black text-white shrink-0" style={{ backgroundColor: av.bg }}>
                             {av.initials}
                           </div>
                         ))}
                       </div>
-                      <span className="text-[9px] font-bold text-[#94A3B8]">
+                      <span className="text-[9px] font-bold text-text-secondary">
                         {activeBizLabel}
                       </span>
                     </div>
@@ -577,24 +574,24 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                 {/* Price */}
                 <div className="mb-3">
                   {plans[mobilePlanIdx].price === 'Gratis' ? (
-                    <span className="text-3xl font-black text-white uppercase">GRATIS</span>
+                    <span className="text-3xl font-black text-text-primary uppercase">GRATIS</span>
                   ) : (
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-[#4B6478] line-through">
+                        <span className="text-sm font-bold text-text-muted line-through">
                           Rp {formatRupiah(plans[mobilePlanIdx].anchorPrice)}
                         </span>
-                        <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 text-[10px] font-black uppercase">
+                        <span className="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-black uppercase">
                           Hemat {Math.round((1 - (isAnnual ? plans[mobilePlanIdx].annualPrice : plans[mobilePlanIdx].monthlyPrice) / plans[mobilePlanIdx].anchorPrice) * 100)}%
                         </span>
                       </div>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-base font-black text-white">Rp</span>
+                        <span className="text-base font-black text-text-primary">Rp</span>
                         <AnimatedPrice
                           value={isAnnual ? plans[mobilePlanIdx].annualPrice : plans[mobilePlanIdx].monthlyPrice}
-                          className="text-3xl font-black text-white tabular-nums tracking-tighter"
+                          className="text-3xl font-black text-text-primary tabular-nums tracking-tighter"
                         />
-                        <span className="text-[#4B6478] text-xs font-black uppercase">/Bln</span>
+                        <span className="text-text-muted text-xs font-black uppercase">/Bln</span>
                       </div>
                     </div>
                   )}
@@ -609,7 +606,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                   </div>
                 )}
 
-                <p className="text-[#94A3B8] text-sm leading-relaxed">{plans[mobilePlanIdx].description}</p>
+                <p className="text-text-secondary text-sm leading-relaxed">{plans[mobilePlanIdx].description}</p>
               </div>
 
               {/* Features — ALL shown */}
@@ -624,7 +621,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                     </div>
                     <span className={cn(
                       'text-sm leading-relaxed',
-                      feature.highlight ? 'text-white font-bold' : 'text-[#94A3B8] font-medium'
+                      feature.highlight ? 'text-text-primary font-bold' : 'text-text-secondary font-medium'
                     )}>
                       {feature.text}
                     </span>
@@ -637,10 +634,10 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                 <Button
                   asChild
                   className={cn(
-                    'w-full py-4 h-auto font-display text-sm font-black uppercase tracking-widest rounded-xl transition-all duration-300 active:scale-95',
+                    'w-full py-4 h-auto font-display text-sm font-black uppercase tracking-widest rounded-full transition-all duration-300 active:scale-95 border',
                     plans[mobilePlanIdx].isPopular
-                      ? 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-500/25'
-                      : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
+                      ? 'bg-emerald-500 hover:bg-emerald-400 text-white border-transparent shadow-lg shadow-emerald-500/25'
+                      : 'bg-bg-3/20 hover:bg-bg-3/55 text-text-primary border-border-default'
                   )}
                 >
                   <Link
@@ -657,7 +654,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                 </Button>
                 <div className="flex items-center justify-center gap-1.5">
                   <CheckCircle2 size={12} className="text-emerald-500" />
-                  <span className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest">Garansi 30 Hari</span>
+                  <span className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Garansi 30 Hari</span>
                 </div>
               </div>
             </motion.div>
@@ -667,26 +664,26 @@ const Pricing = ({ activeRole, setActiveRole }) => {
         {/* FAQ Section */}
         <div className="max-w-xl mx-auto mt-16">
           <div className="text-center mb-10">
-            <h3 className="font-display text-lg font-black text-white uppercase tracking-[0.15em]">Pertanyaan Umum</h3>
+            <h3 className="font-display text-lg font-normal text-text-primary uppercase tracking-[0.15em]">Pertanyaan Umum</h3>
           </div>
 
           <div className="space-y-2">
             {faqs.map((faq, i) => (
               <div
                 key={i}
-                className="rounded-xl border border-white/5 bg-white/[0.02] overflow-hidden"
+                className="rounded-xl border border-border-subtle bg-bg-2 overflow-hidden shadow-sm"
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
                   className="w-full text-left px-4 py-3.5 flex justify-between items-center bg-transparent group"
                 >
-                  <span className="font-display text-[13px] font-bold text-white uppercase tracking-wide group-hover:text-emerald-500 transition-colors">
+                  <span className="font-display text-[13px] font-bold text-text-primary uppercase tracking-wide group-hover:text-emerald-500 transition-colors">
                     {faq.q}
                   </span>
                   <ChevronDown
                     size={16}
                     className={cn(
-                      'text-[#4B6478] transition-transform duration-300 shrink-0',
+                      'text-text-muted transition-transform duration-300 shrink-0',
                       openFaq === i && 'rotate-180 text-emerald-500'
                     )}
                   />
@@ -699,7 +696,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3, ease: 'easeInOut' }}
                     >
-                      <div className="px-4 pb-4 text-[13px] font-medium text-[#94A3B8] leading-relaxed">
+                      <div className="px-4 pb-4 text-[13px] font-medium text-text-secondary leading-relaxed">
                         {faq.a}
                       </div>
                     </motion.div>

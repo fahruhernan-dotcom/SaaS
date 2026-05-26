@@ -402,7 +402,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
           onClick={() => setStep3Data(p => ({ ...p, enabled: !p.enabled }))}
           style={{
             width: 44, height: 24, borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s', border: 'none',
-            background: step3Data.enabled ? '#10B981' : 'rgba(255,255,255,0.1)',
+            background: step3Data.enabled ? '#021a02' : 'rgba(255,255,255,0.1)',
             position: 'relative', flexShrink: 0
           }}
         >
@@ -502,14 +502,14 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
               <div style={{
                 marginTop: 8,
                 padding: '14px',
-                background: 'rgba(16,185,129,0.06)',
-                border: '1px solid rgba(16,185,129,0.20)',
+                background: 'rgba(2, 26, 2,0.06)',
+                border: '1px solid rgba(2, 26, 2,0.20)',
                 borderRadius: '12px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 10
               }}>
-                <p style={{ fontSize: '11px', fontWeight: 900, color: '#34D399', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+                <p style={{ fontSize: '11px', fontWeight: 900, color: '#021a02', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
                   Kendaraan Baru
                 </p>
                 <div className="grid grid-cols-2 gap-2">
@@ -638,14 +638,14 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
                 <div style={{
                   marginTop: 8,
                   padding: '14px',
-                  background: 'rgba(16,185,129,0.06)',
-                  border: '1px solid rgba(16,185,129,0.20)',
+                  background: 'rgba(2, 26, 2,0.06)',
+                  border: '1px solid rgba(2, 26, 2,0.20)',
                   borderRadius: '12px',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 10
                 }}>
-                  <p style={{ fontSize: '11px', fontWeight: 900, color: '#34D399', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+                  <p style={{ fontSize: '11px', fontWeight: 900, color: '#021a02', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
                     Sopir Baru
                   </p>
                   <div className="grid grid-cols-2 gap-2">
@@ -759,7 +759,7 @@ export default function WizardStepPengiriman({ step1Data, step2Data, mode, step3
       <div className={`sticky bottom-0 z-10 bg-[#0C1319] border-t border-white/10 ${isDesktop ? 'p-4 px-5 space-y-4' : 'p-3 px-4 space-y-3'}`}>
         <button type="button" onClick={handlePreSubmit} disabled={submitting}
           className={`w-full rounded-2xl font-black tracking-[0.15em] text-white flex items-center justify-center gap-2.5 transition-all active:scale-[0.98] ${isDesktop ? 'h-14 text-sm' : 'h-11 text-[12px]'}`}
-          style={{ background: '#10B981', boxShadow: '0 12px 24px -8px rgba(16,185,129,0.4)', opacity: submitting ? 0.7 : 1 }}
+          style={{ background: '#021a02', boxShadow: '0 12px 24px -8px rgba(2, 26, 2,0.4)', opacity: submitting ? 0.7 : 1 }}
         >
           {submitting ? <><Loader2 size={18} className="animate-spin" /> MENYIMPAN...</> : <><Truck size={18} /> SIMPAN TRANSAKSI</>}
         </button>

@@ -20,7 +20,7 @@ export default function GroupCard({ Icon, title, desc, features, delay = 0 }) {
     <FadeUp delay={delay} className="h-full">
       <motion.div
         whileHover={{ scale: 1.02, y: -4 }}
-        className="group relative bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01))] rounded-2xl p-7 border border-white/8 hover:border-emerald-500/40 hover:shadow-[0_20px_45px_rgba(16,185,129,0.12)] transition-all duration-300 h-full flex flex-col overflow-hidden"
+        className="group relative bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01))] rounded-2xl p-7 border border-white/8 hover:border-emerald-500/40 hover:shadow-[0_20px_45px_rgba(2, 26, 2,0.12)] transition-all duration-300 h-full flex flex-col overflow-hidden"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/0 via-emerald-500/0 to-emerald-500/0 group-hover:from-emerald-500/5 group-hover:to-transparent transition-all duration-500" />
 

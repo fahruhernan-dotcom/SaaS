@@ -11,8 +11,8 @@
 // ── PETERNAK ─────────────────────────────────────────────────────────────────
 export const PETERNAK_TIM_CONFIG = {
   // Warna
-  accent: '#10B981',
-  accentHover: '#059669',
+  accent: '#021a02',
+  accentHover: '#021a02',
   accentRgb: '16, 185, 129',
 
   // Role badge map

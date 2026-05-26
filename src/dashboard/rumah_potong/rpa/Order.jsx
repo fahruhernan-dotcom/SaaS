@@ -37,9 +37,9 @@ const STATUS_TABS = [
 const STATUS_CONFIG = {
   open: { label: 'Menunggu', color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', icon: Clock },
   responded: { label: 'Direspon', color: '#60A5FA', bg: 'rgba(96,165,250,0.12)', icon: CheckCircle2 },
-  confirmed: { label: 'Dikonfirmasi', color: '#34D399', bg: 'rgba(52,211,153,0.12)', icon: CheckCircle2 },
+  confirmed: { label: 'Dikonfirmasi', color: '#021a02', bg: 'rgba(2, 26, 2,0.12)', icon: CheckCircle2 },
   in_delivery: { label: 'Dikirim', color: '#A78BFA', bg: 'rgba(167,139,250,0.12)', icon: Truck },
-  delivered: { label: 'Terkirim', color: '#34D399', bg: 'rgba(52,211,153,0.12)', icon: Truck },
+  delivered: { label: 'Terkirim', color: '#021a02', bg: 'rgba(2, 26, 2,0.12)', icon: Truck },
   completed: { label: 'Selesai', color: '#4B6478', bg: 'rgba(75,100,120,0.12)', icon: CheckCircle2 },
   cancelled: { label: 'Dibatalkan', color: '#EF4444', bg: 'rgba(239,68,68,0.12)', icon: XCircle },
 }

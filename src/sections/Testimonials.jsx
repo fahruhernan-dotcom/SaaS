@@ -49,9 +49,9 @@ const Testimonials = () => {
         
         <div className="text-center mb-[40px] md:mb-[60px]">
           <AnimatedContent direction="vertical" distance={30} delay={0}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.14)', borderRadius: '99px', padding: '5px 14px', marginBottom: '16px' }}>
-              <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10B981', animation: 'pulse-dot 2s infinite' }}/>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: '#34D399', letterSpacing: '2px', textTransform: 'uppercase' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(2, 26, 2,0.06)', border: '1px solid rgba(2, 26, 2,0.14)', borderRadius: '99px', padding: '5px 14px', marginBottom: '16px' }}>
+              <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#021a02', animation: 'pulse-dot 2s infinite' }}/>
+              <span style={{ fontSize: '11px', fontWeight: 600, color: '#021a02', letterSpacing: '2px', textTransform: 'uppercase' }}>
                 TESTIMONI
               </span>
             </div>

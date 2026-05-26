@@ -29,8 +29,8 @@ const inputStyle = {
 
 const infoBoxStyle = {
   padding: '10px 14px',
-  background: 'rgba(52,211,153,0.06)',
-  border: '1px solid rgba(52,211,153,0.15)',
+  background: 'rgba(2, 26, 2,0.06)',
+  border: '1px solid rgba(2, 26, 2,0.15)',
   borderRadius: 10,
 }
 
@@ -242,7 +242,7 @@ export default function SiklusSheet({ open, onClose }) {
           {/* Estimated harvest date display */}
           {estimatedHarvest && (
             <div style={infoBoxStyle}>
-              <span style={{ fontSize: 12, color: '#34D399' }}>
+              <span style={{ fontSize: 12, color: '#021a02' }}>
                 📅 Estimasi panen: <strong>{estimatedHarvest}</strong>
               </span>
             </div>

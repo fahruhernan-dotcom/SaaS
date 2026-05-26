@@ -323,7 +323,7 @@ export function SembakoDeliveryDetailSheet({ delivery, onClose }) {
     pending:   { label: 'Disiapkan',   bg: 'rgba(255,255,255,0.06)', color: '#94A3B8' },
     on_route:  { label: 'Di Jalan',    bg: 'rgba(59,130,246,0.12)',  color: '#60A5FA' },
     arrived:   { label: 'Tiba',        bg: 'rgba(245,158,11,0.12)',  color: '#FBBF24' },
-    delivered: { label: 'Terkirim',    bg: 'rgba(52,211,153,0.12)',  color: '#34D399' },
+    delivered: { label: 'Terkirim',    bg: 'rgba(2, 26, 2,0.12)',  color: '#021a02' },
   }
   const meta = statusMeta[delivery.status] || statusMeta.pending
 

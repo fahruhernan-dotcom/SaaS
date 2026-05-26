@@ -210,15 +210,15 @@ export default function Beranda() {
               width: '40px',
               height: '40px',
               borderRadius: '50%',
-              background: 'rgba(16,185,129,0.15)',
-              border: '1px solid rgba(16,185,129,0.25)',
+              background: 'rgba(2, 26, 2,0.15)',
+              border: '1px solid rgba(2, 26, 2,0.25)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontFamily: 'Sora, sans-serif',
               fontSize: '14px',
               fontWeight: 800,
-              color: '#34D399'
+              color: '#021a02'
             }}>
               {(profile?.full_name ?? 'User').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
             </div>
@@ -229,10 +229,10 @@ export default function Beranda() {
               right: '-2px',
               width: '12px',
               height: '12px',
-              background: '#10B981',
+              background: '#021a02',
               borderRadius: '50%',
               border: '2px solid #06090F',
-              boxShadow: '0 0 10px rgba(16,185,129,0.4)',
+              boxShadow: '0 0 10px rgba(2, 26, 2,0.4)',
               animation: 'pulse-dot 2s infinite'
             }} />
             <style>
@@ -261,7 +261,7 @@ export default function Beranda() {
             label="Catat Beli" 
             sub="Dari Kandang" 
             icon={PackagePlus} 
-            color="#10B981" 
+            color="#021a02" 
             onClick={() => setModalType('beli')}
           />
           <ActionButton 
@@ -352,7 +352,7 @@ export default function Beranda() {
         <section style={{ marginTop: '28px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h2 style={{ fontSize: '16px', fontFamily: 'Sora, sans-serif', fontWeight: 700 }}> Transaksi Hari Ini</h2>
-            <button style={{ color: '#10B981', fontSize: '12px', fontWeight: 600, background: 'none', border: 'none' }}>
+            <button style={{ color: '#021a02', fontSize: '12px', fontWeight: 600, background: 'none', border: 'none' }}>
               Lihat Semua
             </button>
           </div>
@@ -383,11 +383,11 @@ export default function Beranda() {
                     width: '40px',
                     height: '40px',
                     borderRadius: '12px',
-                    background: tx.type === 'sale' ? 'rgba(59,130,246,0.08)' : 'rgba(16,185,129,0.08)',
+                    background: tx.type === 'sale' ? 'rgba(59,130,246,0.08)' : 'rgba(2, 26, 2,0.08)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: tx.type === 'sale' ? '#3B82F6' : '#10B981'
+                    color: tx.type === 'sale' ? '#3B82F6' : '#021a02'
                   }}>
                     {tx.type === 'sale' ? <ArrowUpRight size={20} /> : <ArrowDownRight size={20} />}
                   </div>
@@ -400,7 +400,7 @@ export default function Beranda() {
                     </p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontSize: '14px', fontWeight: 700, color: tx.type === 'sale' ? '#3B82F6' : '#10B981' }}>
+                    <p style={{ fontSize: '14px', fontWeight: 700, color: tx.type === 'sale' ? '#3B82F6' : '#021a02' }}>
                       {tx.type === 'sale' ? '+' : '-'}{formatIDRShort(safeNumber(tx.type === 'sale' ? tx.total_revenue : tx.total_modal))}
                     </p>
                     <p style={{ fontSize: '10px', color: '#4B6478', marginTop: '2px' }}>
@@ -474,7 +474,7 @@ function ActionButton({ label, sub, icon: Icon, color, onClick }) {
 
 function StatCard({ label, value, subtext, variant, icon: Icon }) {
   const themes = {
-    emerald: { bg: 'rgba(16,185,129,0.05)', color: '#10B981', border: 'rgba(16,185,129,0.08)' },
+    emerald: { bg: 'rgba(2, 26, 2,0.05)', color: '#021a02', border: 'rgba(2, 26, 2,0.08)' },
     red: { bg: 'rgba(248,113,113,0.05)', color: '#F87171', border: 'rgba(248,113,113,0.08)' },
     blue: { bg: 'rgba(59,130,246,0.05)', color: '#3B82F6', border: 'rgba(59,130,246,0.08)' },
     gold: { bg: 'rgba(245,158,11,0.05)', color: '#F59E0B', border: 'rgba(245,158,11,0.08)' },

@@ -29,11 +29,11 @@ export function SembakoSuccessCard({ isOpen, onClose, data, onPrint }) {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-            style={{ width: 80, height: 80, borderRadius: '24px', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 0 40px rgba(16,185,129,0.2)' }}
+            style={{ width: 80, height: 80, borderRadius: '24px', background: 'rgba(2, 26, 2,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 0 40px rgba(2, 26, 2,0.2)' }}
           >
             <motion.svg width="40" height="40" viewBox="0 0 50 50">
-              <motion.circle cx="25" cy="25" r="22" fill="none" stroke="#10B981" strokeWidth="4" initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }} transition={{ duration: 0.5, ease: "easeOut" }} />
-              <motion.path d="M 14 26 L 22 34 L 38 16" fill="transparent" stroke="#10B981" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.4, delay: 0.3, ease: "easeOut" }} />
+              <motion.circle cx="25" cy="25" r="22" fill="none" stroke="#021a02" strokeWidth="4" initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }} transition={{ duration: 0.5, ease: "easeOut" }} />
+              <motion.path d="M 14 26 L 22 34 L 38 16" fill="transparent" stroke="#021a02" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.4, delay: 0.3, ease: "easeOut" }} />
             </motion.svg>
           </motion.div>
 

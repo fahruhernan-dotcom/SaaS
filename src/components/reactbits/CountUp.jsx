@@ -15,15 +15,23 @@ function CountUp({
   style = {},
 }) {
   const ref = useRef(null)
-  const isInView = useInView(ref, { once: true, margin: '-50px' })
+  const isInView = useInView(ref, { once: true, margin: '0px' })
   const count = useMotionValue(direction === 'down' ? to : from)
   const [displayValue, setDisplayValue] = useState(
     direction === 'down' ? to : from
   )
 
+  const onStartRef = useRef(onStart)
+  const onEndRef = useRef(onEnd)
+
+  useEffect(() => {
+    onStartRef.current = onStart
+    onEndRef.current = onEnd
+  }, [onStart, onEnd])
+
   useEffect(() => {
     if (!isInView) return
-    if (onStart) onStart()
+    if (onStartRef.current) onStartRef.current()
     
     const target = direction === 'down' ? from : to
     const controls = animate(count, target, {
@@ -36,11 +44,11 @@ function CountUp({
           : String(rounded)
         setDisplayValue(formatted)
       },
-      onComplete: () => { if (onEnd) onEnd() }
+      onComplete: () => { if (onEndRef.current) onEndRef.current() }
     })
     
     return controls.stop
-  }, [isInView])
+  }, [isInView, to, from, direction, duration, separator, count])
 
   return (
     <span ref={ref} className={className} style={style}>

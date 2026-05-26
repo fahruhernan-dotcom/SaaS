@@ -154,7 +154,7 @@ export function FormBayarModal({ isOpen, onClose, sale, onSuccess }) {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-14 bg-[#10B981] hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg"
+              className="w-full h-14 bg-[#021a02] hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg"
             >
               {isLoading ? <Loader2 size={16} className="animate-spin" /> : 'KONFIRMASI PEMBAYARAN'}
             </Button>

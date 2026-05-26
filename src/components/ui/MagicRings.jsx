@@ -106,8 +106,8 @@ const Ring = ({
 };
 
 const MagicRings = ({
-  color = "#10B981",
-  colorTwo = "#34D399",
+  color = "#021a02",
+  colorTwo = "#021a02",
   ringCount = 5,
   speed = 0.7,
   attenuation = 10,

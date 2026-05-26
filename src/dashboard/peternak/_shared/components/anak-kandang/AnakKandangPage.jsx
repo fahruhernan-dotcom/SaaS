@@ -83,7 +83,7 @@ export default function AnakKandangPage({ hideMobileHeader = false }) {
         <div className="grid grid-cols-3 gap-4">
           {[
             { label: 'Total Pekerja', value: workers.length, icon: '👥', accent: '#94A3B8' },
-            { label: 'Aktif', value: workers.filter(w => w.status === 'aktif').length, icon: '✅', accent: '#34D399' },
+            { label: 'Aktif', value: workers.filter(w => w.status === 'aktif').length, icon: '✅', accent: '#021a02' },
             { label: 'Nonaktif', value: workers.filter(w => w.status === 'nonaktif').length, icon: '⛔', accent: '#F87171' },
           ].map(s => (
             <div

@@ -133,7 +133,7 @@ export default function Invite() {
   // Handle Valid Invite State
   return (
     <div className="min-h-screen bg-bg-1 flex flex-col items-center justify-center p-6 text-center">
-      <div className="bg-bg-2 border border-em-500/30 rounded-2xl p-8 max-w-md w-full shadow-[0_10px_40px_rgba(16,185,129,0.1)] flex flex-col items-center">
+      <div className="bg-bg-2 border border-em-500/30 rounded-2xl p-8 max-w-md w-full shadow-[0_10px_40px_rgba(2, 26, 2,0.1)] flex flex-col items-center">
         <div className="w-16 h-16 rounded-full bg-em-500/10 border border-em-500/20 flex items-center justify-center text-em-400 mb-6 relative">
           <Building2 size={32} />
           <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-bg-2 border border-border-def flex items-center justify-center shadow-lg">

@@ -89,7 +89,7 @@ export default function SecurityPage() {
         {/* ═══ HERO ═══════════════════════════════════════════════════════ */}
         <section className="relative px-5 md:px-10 lg:px-20 pt-32 pb-20 overflow-hidden">
           <div className="absolute inset-0 pointer-events-none">
-            <Particles quantity={30} color="#10B981" opacity={0.06} className="absolute inset-0" />
+            <Particles quantity={30} color="#021a02" opacity={0.06} className="absolute inset-0" />
             <div className="absolute -top-[10%] right-[10%] w-[500px] h-[500px] rounded-full bg-emerald-500/5 blur-[120px]" />
           </div>
 
@@ -253,7 +253,7 @@ export default function SecurityPage() {
                   <div className="flex flex-wrap justify-center gap-4">
                     <Link
                       to="/register"
-                      className="inline-flex items-center gap-2 px-7 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-all shadow-[0_4px_20px_rgba(16,185,129,0.3)]"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-all shadow-[0_4px_20px_rgba(2, 26, 2,0.3)]"
                     >
                       Mulai Gratis
                       <ArrowRight size={16} />

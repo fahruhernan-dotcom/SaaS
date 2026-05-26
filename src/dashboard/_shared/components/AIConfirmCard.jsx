@@ -371,7 +371,7 @@ function InlineEditField({ fieldKey, value, isDirty, onEdit, options }) {
             if (e.key === 'Escape') setEditing(false)
           }}
           onBlur={() => handleSave()}
-          className={`bg-[#0C1319] border border-emerald-500/60 rounded-lg py-1 text-[12px] font-bold text-white focus:outline-none text-right transition-all shadow-[0_0_10px_rgba(16,185,129,0.1)] ${isCurrency ? 'pl-7 pr-2 w-full' : 'px-2 w-full'}`}
+          className={`bg-[#0C1319] border border-emerald-500/60 rounded-lg py-1 text-[12px] font-bold text-white focus:outline-none text-right transition-all shadow-[0_0_10px_rgba(2, 26, 2,0.1)] ${isCurrency ? 'pl-7 pr-2 w-full' : 'px-2 w-full'}`}
         />
       </div>
     </div>

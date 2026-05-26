@@ -414,8 +414,8 @@ function CycleCard({ cycle, onInputHarian, onDetail, onClose, onLaporan, onInvoi
               style={{
                 width: `${progress}%`,
                 background: progress >= 100
-                  ? '#34D399'
-                  : 'linear-gradient(90deg, #7C3AED 0%, #10B981 100%)',
+                  ? '#021a02'
+                  : 'linear-gradient(90deg, #7C3AED 0%, #021a02 100%)',
               }}
             />
           </div>

@@ -425,7 +425,7 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
                                 <motion.div 
                                   animate={{ scale: [1, 1.2, 1] }} 
                                   transition={{ duration: 2, repeat: Infinity }}
-                                  className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]"
+                                  className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(2, 26, 2,0.8)]"
                                 />
                                </div>
                               <div className="flex items-center gap-2.5">
@@ -457,7 +457,7 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
                              </div>
                              <div className="text-right">
                                <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest leading-none mb-1">Total Penjualan</p>
-                               <p className={cn("font-display font-black text-emerald-400 tabular-nums leading-none drop-shadow-[0_0_15px_rgba(16,185,129,0.3)]", isDesktop ? "text-2xl" : "text-lg")}>{formatIDR(totalRevenue)}</p>
+                               <p className={cn("font-display font-black text-emerald-400 tabular-nums leading-none drop-shadow-[0_0_15px_rgba(2, 26, 2,0.3)]", isDesktop ? "text-2xl" : "text-lg")}>{formatIDR(totalRevenue)}</p>
                              </div>
                           </div>
                         </div>
@@ -607,7 +607,7 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
                 <Button
                   onClick={handleUpdateSale}
                   disabled={isUpdating}
-                  className={cn("bg-[#10B981] hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20", isDesktop ? "h-12" : "h-10")}
+                  className={cn("bg-[#021a02] hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20", isDesktop ? "h-12" : "h-10")}
                 >
                   {isUpdating ? <Loader2 size={16} className="animate-spin mr-2" /> : 'Simpan'}
                 </Button>
@@ -617,7 +617,7 @@ export function SaleAuditSheet({ isOpen, onOpenChange, saleId, data, isLoading, 
             {data?.payment_status !== 'lunas' && !isLoading && (delivery?.status === 'arrived' || delivery?.status === 'completed') && (
                   <Button
                     onClick={() => setIsPaymentOpen(true)}
-                    className={cn("w-full bg-[#10B981] hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20", isDesktop ? "h-12" : "h-10")}
+                    className={cn("w-full bg-[#021a02] hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg shadow-emerald-500/20", isDesktop ? "h-12" : "h-10")}
                   >
                     Catat Bayar
                   </Button>

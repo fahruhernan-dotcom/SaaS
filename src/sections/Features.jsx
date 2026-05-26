@@ -9,25 +9,25 @@ const Features = ({ activeRole }) => {
   const content = useMemo(() => ({
     broker: {
       block1: {
-        badge: "TRANSAKSI & PROFIT",
-        title: "Transkasi Cepat. Profit Terlihat Jelas.",
-        desc: "Input pembelian dari kandang dan penjualan ke RPA secara real-time. Margin per kg, total profit, serta biaya armada dihitung otomatis tanpa kalkulator.",
-        checklist: ['Kalkulator margin profit otomatis', 'Manajemen rute & biaya armada', 'Transaksi Jual/Beli Real-time'],
+        badge: "TRANSAKSI & MARGIN",
+        title: "Transaksi Jual/Beli & Margin",
+        desc: "Pencatatan timbangan kandang vs RPA secara real-time. Margin per kg, total profit bersih, serta biaya uang jalan armada dihitung otomatis tanpa kalkulator.",
+        checklist: ['Kalkulator margin profit bersih otomatis', 'Rekap rute & biaya solar armada', 'Pencatatan timbangan kandang vs RPA'],
         mockup: {
           label: "Catat Penjualan Baru",
           items: ["Harga Jual: Rp 23.000/kg", "Total Berat: 2.100 kg"],
           profit: 5880000,
-          stats: "Margin: Rp 2.800/kg · ROI: 14.3%",
+          stats: "Margin Bersih: Rp 2.800/kg · ROI: 14.3%",
           progress: "68%"
         }
       },
       block2: {
         badge: "TRACKER PIUTANG",
-        title: "Piutang RPA & Hutang Peternak Terkendali.",
-        desc: "Lacak piutang dari RPA dan hutang ke peternak di satu tempat. Tandai lunas, cek jatuh tempo, dan lihat analitik kas Anda tanpa membuka buku besar.",
-        checklist: ['Pelacakan Piutang RPA otomatis', 'Notifikasi jatuh tempo pembayaran', 'Rekap arus kas terintegrasi'],
+        title: "Lacak Piutang RPA",
+        desc: "Tandai nota lunas, set pengingat jatuh tempo piutang RPA, dan pantau pengeluaran solar armada tanpa repot rekap manual.",
+        checklist: ['Pelacakan piutang RPA otomatis', 'Notifikasi jatuh tempo nota tagihan', 'Pencatatan kas operasional & solar'],
         mockup: {
-          label: "Piutang Aktif",
+          label: "Piutang RPA Aktif",
           badge: "3 belum lunas",
           items: [
             { name: 'RPA Prima Jaya', amount: 'Rp 44jt', date: 'Jatuh tempo 14 Mar', avatar: 'PJ', bg: 'bg-emerald-600' },
@@ -39,13 +39,13 @@ const Features = ({ activeRole }) => {
     },
     peternak: {
       block1: {
-        badge: "KANDANG MAP & TASKS",
-        title: "Pantau Kandang & Tim dengan Interaktif.",
-        desc: "Akses Mobile Kandang Map untuk melihat status setiap blok. Buat penugasan (Daily Tasks) untuk anak kandang dan pantau operasional dari genggaman.",
-        checklist: ['Mobile Kandang Map interaktif', 'Penugasan Tim (Daily Task)', 'Pencatatan mortalitas & pakan'],
+        badge: "RECORDING KANDANG",
+        title: "Recording & IP Score",
+        desc: "Input pakan, mortalitas harian, dan timbangan sampling. FCR harian, Indeks Performan (IP), dan status deplesi terhitung otomatis.",
+        checklist: ['Hitung FCR & IP harian otomatis', 'Pencatatan deplesi & pakan kandang', 'Dashboard performa per kandang'],
         mockup: {
-          label: "STATUS KANDANG",
-          items: ["Kandang Blok A · Hari ke-28", "Tugas Harian: 4/5 Selesai"],
+          label: "STATUS KANDANG AKTIF",
+          items: ["Kandang Blok A · Hari ke-28", "Recording Harian: 4/5 Kandang"],
           profit: 1.72,
           profitPrefix: "FCR: ",
           profitSuffix: "",
@@ -55,17 +55,17 @@ const Features = ({ activeRole }) => {
         }
       },
       block2: {
-        badge: "BIAYA OPERASIONAL",
-        title: "Lacak Setiap Rupiah yang Keluar.",
-        desc: "Sistem pencatatan biaya operasional yang detail. Dari biaya listrik hingga vitamin, ketahui harga pokok produksi (HPP) Anda sebelum masa panen tiba.",
-        checklist: ['Kalkulasi HPP otomatis', 'Rekap pengeluaran operasional', 'InputRupiah untuk validasi data'],
+        badge: "REKAP BIAYA & HPP",
+        title: "Rekap HPP & Biaya OVK",
+        desc: "Lacak setiap pengeluaran sapronak, biaya pakan starter/finisher, vitamin, hingga sewa kandang. HPP per kg terhitung sebelum panen dimulai.",
+        checklist: ['Kalkulasi HPP per kg otomatis', 'Rekap pengeluaran pakan & OVK', 'Sistem validasi pengeluaran tim'],
         mockup: {
-          label: "BIAYA OPERASIONAL",
+          label: "PENGELUARAN SIKLUS",
           badge: "Bulan Ini",
           items: [
-            { name: 'Pakan Starter', amount: 'Rp 14jt', date: 'Total 40 sak', avatar: 'PS', bg: 'bg-emerald-600', subBadge: 'LUNAS' },
-            { name: 'Listrik & Air', amount: 'Rp 1.2jt', date: 'Beban Tetap', avatar: 'LA', bg: 'bg-[#0891B2]', subBadge: 'LUNAS' },
-            { name: 'Vitamin & OVK', amount: 'Rp 2.8jt', date: 'Vaksin ND', avatar: 'VO', bg: 'bg-amber-500', subBadge: 'LUNAS' }
+            { name: 'Pakan Starter (Sak)', amount: 'Rp 14jt', date: 'Total 40 sak', avatar: 'PS', bg: 'bg-emerald-600', subBadge: 'LUNAS' },
+            { name: 'Listrik & Air Kandang', amount: 'Rp 1.2jt', date: 'Beban Tetap', avatar: 'LA', bg: 'bg-[#0891B2]', subBadge: 'LUNAS' },
+            { name: 'Vitamin & Vaksin OVK', amount: 'Rp 2.8jt', date: 'Vaksin ND', avatar: 'VO', bg: 'bg-amber-500', subBadge: 'LUNAS' }
           ]
         }
       }
@@ -73,12 +73,12 @@ const Features = ({ activeRole }) => {
     rpa: {
       block1: {
         badge: "MANAJEMEN PRODUKSI",
-        title: "Kontrol Penuh Produksi & Karkas.",
-        desc: "Catat jumlah ayam hidup yang masuk, hitung persentase yield karkas otomatis, dan pantau hasil potongan per produk dengan tingkat akurasi tinggi.",
-        checklist: ['Manajemen Produksi & Potong', 'Perhitungan yield karkas otomatis', 'Integrasi pembelian dari Broker'],
+        title: "Potong & Yield Karkas",
+        desc: "Input berat livebird datang, hitung persentase konversi daging (yield karkas) otomatis harian, dan pantau hasil susut potong.",
+        checklist: ['Manajemen potongan & karkas', 'Perhitungan yield karkas otomatis', 'Rekap susut berat livebird datang'],
         mockup: {
-          label: "PRODUKSI HARI INI",
-          items: ["Ayam Hidup Masuk: 3.500 kg", "Hasil Karkas: 2.450 kg"],
+          label: "PRODUKSI POTONG HARI INI",
+          items: ["Livebird Masuk: 3.500 kg", "Karkas Bersih: 2.450 kg"],
           profit: 70,
           profitPrefix: "Yield: ",
           profitSuffix: "%",
@@ -87,15 +87,15 @@ const Features = ({ activeRole }) => {
         }
       },
       block2: {
-        badge: "STOK GUDANG",
-        title: "Stok Barang Real-time & Pelacakan Hutang.",
-        desc: "Tidak ada lagi barang hilang atau hutang yang terlewat. Pantau stok produk potongan di gudang dan kelola hutang ke broker dengan rapi.",
-        checklist: ['Manajemen Stok Gudang realtime', 'Pelacakan Hutang ke Broker', 'Riwayat keluar-masuk barang'],
+        badge: "STOK GUDANG & HUTANG",
+        title: "Stok Cold Storage & Hutang",
+        desc: "Pantau ketersediaan dada, paha, karkas di cold storage harian. Lacak sisa hutang dan riwayat pelunasan ke masing-masing broker.",
+        checklist: ['Stok Cold Storage real-time', 'Pelacakan sisa hutang broker', 'Riwayat serah terima livebird'],
         mockup: {
-          label: "HUTANG & STOK",
+          label: "COLD STORAGE & HUTANG",
           badge: "Aman",
           items: [
-            { name: 'Broker Sentosa', amount: 'Rp 32jt', date: 'Jatuh tempo 15 Mar', avatar: 'BS', bg: 'bg-emerald-600' },
+            { name: 'Broker Sentosa (Ayam)', amount: 'Rp 32jt', date: 'Jatuh tempo 15 Mar', avatar: 'BS', bg: 'bg-emerald-600' },
             { name: 'Dada Mentok (Stok)', amount: '1.200 kg', date: 'Gudang A', avatar: 'DM', bg: 'bg-[#0891B2]' },
             { name: 'Paha Bawah (Stok)', amount: '850 kg', date: 'Gudang B', avatar: 'PB', bg: 'bg-amber-500' }
           ]
@@ -105,7 +105,7 @@ const Features = ({ activeRole }) => {
     sembako: {
       block1: {
         badge: "PEMBELIAN SUPPLIER",
-        title: "Catat Pembelian Sembako Lebih Aman.",
+        title: "Pembelian Supplier & PO",
         desc: "Input data pembelian barang dari supplier dengan mudah. Sistem memvalidasi metode pembayaran (tunai/hutang) untuk mencegah selisih uang kas.",
         checklist: ['Validasi Pembayaran Lunas', 'Rekap Hutang Supplier', 'Otomatis tambah stok gudang'],
         mockup: {
@@ -121,7 +121,7 @@ const Features = ({ activeRole }) => {
       },
       block2: {
         badge: "KASIR PENJUALAN",
-        title: "Penjualan Cepat dengan Sales Wizard.",
+        title: "Kasir Penjualan",
         desc: "Proses transaksi kasir menjadi sangat mudah dengan Sales Wizard. Fitur retur, pelacakan pengiriman kurir, dan potong stok otomatis tanpa ribet.",
         checklist: ['Kasir Cepat (Sales Wizard)', 'Fitur Retur Barang', 'Laporan & Analytics Lengkap'],
         mockup: {
@@ -137,7 +137,7 @@ const Features = ({ activeRole }) => {
     }
   }), []);
 
-  const active = content[activeRole];
+  const active = content[activeRole] || content.broker;
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-10%" });
 
@@ -149,7 +149,7 @@ const Features = ({ activeRole }) => {
         width: (el) => el.getAttribute('data-width'),
         duration: 1500,
         easing: 'easeOutElastic(1, .6)',
-        delay: 500
+        delay: 300
       });
 
       // Staggered list items entry
@@ -157,7 +157,7 @@ const Features = ({ activeRole }) => {
         targets: '.feature-mockup-item',
         translateX: [20, 0],
         opacity: [0, 1],
-        delay: anime.stagger(100, { start: 600 }),
+        delay: anime.stagger(80, { start: 400 }),
         duration: 800,
         easing: 'easeOutExpo'
       });
@@ -165,193 +165,190 @@ const Features = ({ activeRole }) => {
   }, [isInView, activeRole]);
 
   return (
-    <section id="fitur" className="bg-[#0C1319]" ref={sectionRef}>
-      <AnimatePresence mode="wait">
-        <motion.div
-           key={activeRole}
-           initial={{ opacity: 0 }}
-           animate={{ opacity: 1 }}
-           exit={{ opacity: 0 }}
-           transition={{ duration: 0.3 }}
-        >
-          {/* Feature 1 */}
-          <div className="section-padding relative overflow-hidden">
-            <div className="max-w-[1280px] mx-auto">
-              <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-center">
-                <div className="flex-1">
-                  <AnimatedContent direction="horizontal" reverse={true} distance={50} delay={0}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.14)', borderRadius: '99px', padding: '5px 14px', marginBottom: '16px' }}>
-                      <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10B981', animation: 'pulse-dot 2s infinite' }}/>
-                      <span style={{ fontSize: '11px', fontWeight: 600, color: '#34D399', letterSpacing: '2px', textTransform: 'uppercase' }}>
-                        {active.block1.badge}
-                      </span>
+    <section id="fitur" className="bg-bg-base py-20 px-5 border-t border-border-subtle" ref={sectionRef}>
+      <div className="max-w-[1280px] mx-auto">
+        
+        {/* Title Block */}
+        <div className="text-center mb-12">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-[#021a02] mb-3">
+            EKSPLORASI FITUR
+          </p>
+          <h2 className="font-['Sora'] text-2xl md:text-3xl font-normal text-text-primary leading-tight">
+            Alur Kerja Lebih Rapi, Pencatatan Lebih Valid
+          </h2>
+        </div>
+
+        {/* Bento Grid */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeRole}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.25 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+          >
+            {/* Bento Card 1: Core operations (Col Span 2) */}
+            <div className="lg:col-span-2 bg-bg-1 border border-border-default rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-8 justify-between shadow-card hover:border-border-strong transition-all duration-300">
+              
+              <div className="flex-1 flex flex-col justify-between">
+                <div>
+                  <span className="badge-premium mb-4 text-[9px] py-0.5 px-2.5">
+                    {active.block1.badge}
+                  </span>
+                  <h3 className="font-display text-lg md:text-xl font-bold text-text-primary mb-3">
+                    {active.block1.title}
+                  </h3>
+                  <p className="text-[13px] md:text-sm text-text-secondary leading-relaxed mb-6">
+                    {active.block1.desc}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  {active.block1.checklist.map((item, idx) => (
+                    <div key={idx} className="flex items-start gap-2.5">
+                      <div className="w-[16px] h-[16px] flex items-center justify-center text-emerald-500 shrink-0 mt-[3px]">
+                        <AnimatedCheckmark className="w-full h-full" />
+                      </div>
+                      <span className="text-[13px] text-text-secondary">{item}</span>
                     </div>
-                  </AnimatedContent>
-                  <AnimatedContent direction="horizontal" reverse={true} distance={50} delay={0.1}>
-                    <h3 className="section-h2 mb-[12px]">
-                      {active.block1.title}
-                    </h3>
-                  </AnimatedContent>
-                  <AnimatedContent direction="horizontal" reverse={true} distance={50} delay={0.2}>
-                    <p className="section-subtitle mb-[20px]">
-                      {active.block1.desc}
-                    </p>
-                  </AnimatedContent>
-                  
-                  <div className="space-y-[9px]">
-                    {active.block1.checklist.map((item, i) => (
-                      <AnimatedContent key={i} direction="vertical" distance={20} delay={0.3 + i * 0.07}>
-                        <div className="flex items-start gap-[10px]">
-                          <div className="w-[18px] h-[18px] min-w-[18px] flex items-center justify-center text-em-400 shrink-0 mt-[3px]">
-                            <AnimatedCheckmark className="w-full h-full" />
-                          </div>
-                          <span className="font-body text-[14px] text-tx-2 leading-[1.55]">{item}</span>
-                        </div>
-                      </AnimatedContent>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mockup Preview Panel */}
+              <div className="flex-1 bg-bg-2 border border-border-subtle rounded-2xl p-5 flex flex-col justify-between max-w-sm w-full mx-auto md:mx-0">
+                <div>
+                  <div className="flex gap-[6px] mb-[12px] opacity-40">
+                    <div className="w-[6px] h-[6px] rounded-full bg-border-strong"></div>
+                    <div className="w-[6px] h-[6px] rounded-full bg-border-strong"></div>
+                    <div className="w-[6px] h-[6px] rounded-full bg-border-strong"></div>
+                  </div>
+                  <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-3">
+                    {active.block1.mockup.label}
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {active.block1.mockup.items.map((item, idx) => (
+                      <div key={idx} className="feature-mockup-item bg-bg-1 border border-border-subtle rounded-lg px-3 py-2" style={{ opacity: 0 }}>
+                        <p className="text-[12px] font-medium text-text-secondary">{item}</p>
+                      </div>
                     ))}
                   </div>
                 </div>
 
-                <AnimatedContent direction="horizontal" distance={50} delay={0.2} className="flex-1 w-full mt-8 lg:mt-0">
-                  <div className="bg-bg-2 border border-border-def rounded-[18px] p-[20px] relative overflow-hidden shadow-lg">
-                    <div className="flex gap-[6px] mb-[16px]">
-                      <div className="w-[8px] h-[8px] rounded-full bg-[#FF5F57]"></div>
-                      <div className="w-[8px] h-[8px] rounded-full bg-[#FEBC2E]"></div>
-                      <div className="w-[8px] h-[8px] rounded-full bg-[#28C840]"></div>
-                    </div>
+                <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-4 mt-4">
+                  <p className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mb-1">
+                    {active.block1.mockup.isFCR ? "DATA EVALUASI" : "JUMLAH TRANSAKSI"}
+                  </p>
+                  <p className="font-display text-lg font-black text-emerald-600 dark:text-emerald-400">
+                    {active.block1.mockup.isFCR ? (
+                      <>FCR: {active.block1.mockup.profit}</>
+                    ) : (
+                      <CountUp 
+                        from={0} 
+                        to={active.block1.mockup.profit} 
+                        duration={1.5} 
+                        separator="." 
+                        prefix={active.block1.mockup.profitPrefix || "Rp "}
+                        suffix={active.block1.mockup.profitSuffix || ""}
+                      />
+                    )}
+                  </p>
+                  <p className="text-[10px] text-text-secondary mt-1 font-medium">{active.block1.mockup.stats}</p>
+                  
+                  <div className="h-1 bg-border-subtle rounded-full mt-3 overflow-hidden">
+                    <div 
+                      className="feature-progress-fill bg-emerald-500 h-full w-0" 
+                      data-width={active.block1.mockup.progress}
+                    />
+                  </div>
+                </div>
+              </div>
 
-                    <p className="font-body text-[11px] text-tx-3 font-semibold mb-[12px] relative z-10">{active.block1.mockup.label}</p>
-                    
-                    <div className="flex flex-col gap-[8px]">
-                       {active.block1.mockup.items.map((item, i) => (
-                         <div key={i} className="feature-mockup-item bg-bg-3 rounded-lg px-[12px] py-[10px]" style={{ opacity: 0 }}>
-                           <p className="font-body text-[13px] text-tx-2">{item}</p>
-                         </div>
-                       ))}
-                    </div>
+            </div>
 
-                    <div className="bg-[rgba(16,185,129,0.08)] border border-[rgba(16,185,129,0.20)] rounded-[12px] p-[16px] mt-[12px] relative z-10">
-                      <p className="font-display text-[9px] text-em-400 uppercase tracking-widest font-bold mb-[4px]">
-                        {active.block1.mockup.isFCR ? "DATA SIKLUS" : "PROFIT BERSIH"}
-                      </p>
-                      <p className="font-display text-[22px] font-extrabold text-em-400 mb-[4px]">
-                        {active.block1.mockup.isFCR ? (
-                          <>FCR: {active.block1.mockup.profit}</>
-                        ) : (
-                          <CountUp 
-                            from={0} 
-                            to={active.block1.mockup.profit} 
-                            duration={1.5} 
-                            separator="." 
-                            prefix={active.block1.mockup.profitPrefix || "Rp "}
-                            suffix={active.block1.mockup.profitSuffix || ""}
-                          />
+            {/* Bento Card 2: Financial tracking (Col Span 1) */}
+            <div className="bg-bg-1 border border-border-default rounded-3xl p-6 md:p-8 flex flex-col justify-between shadow-card hover:border-border-strong transition-all duration-300">
+              
+              <div>
+                <span className="badge-premium mb-4 text-[9px] py-0.5 px-2.5">
+                  {active.block2.badge}
+                </span>
+                <h3 className="font-display text-lg md:text-xl font-bold text-text-primary mb-3">
+                  {active.block2.title}
+                </h3>
+                <p className="text-[13px] md:text-sm text-text-secondary leading-relaxed mb-6">
+                  {active.block2.desc}
+                </p>
+              </div>
+
+              {/* Rows List preview */}
+              <div className="bg-bg-2 border border-border-subtle rounded-2xl p-4 flex flex-col gap-2">
+                <div className="flex justify-between items-center pb-2 border-b border-border-subtle">
+                  <span className="text-[10px] font-bold text-text-primary">{active.block2.mockup.label}</span>
+                  <span className="text-[9px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold px-1.5 py-0.5 rounded border border-emerald-500/15">
+                    {active.block2.mockup.badge}
+                  </span>
+                </div>
+
+                <div className="flex flex-col">
+                  {active.block2.mockup.items.map((item, idx) => (
+                    <div key={idx} className={`flex items-center justify-between py-2 border-b border-border-subtle/50 last:border-0`}>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className={`w-7 h-7 rounded-full ${item.bg} text-white font-display font-bold text-[10px] flex items-center justify-center shrink-0`}>
+                          {item.avatar}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[12px] font-bold text-text-primary truncate">{item.name}</p>
+                          <p className="text-[9px] text-text-secondary">{item.date}</p>
+                        </div>
+                      </div>
+
+                      <div className="text-right flex flex-col items-end gap-1">
+                        <span className="text-[11px] font-bold text-text-primary tabular-nums">
+                          {item.amount}
+                        </span>
+                        {item.subBadge && (
+                          <span className="text-[8px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold px-1 py-0.2 rounded border border-emerald-500/15">
+                            {item.subBadge}
+                          </span>
                         )}
-                      </p>
-                      <p className="font-body text-[11px] text-tx-3 font-medium">{active.block1.mockup.stats}</p>
-                      
-                      <div style={{ height: '3px', background: 'rgba(255,255,255,0.06)', borderRadius: '99px', marginTop: '12px', overflow: 'hidden' }}>
-                        <div 
-                          className="feature-progress-fill" 
-                          data-width={active.block1.mockup.progress}
-                          style={{ height: '100%', width: '0%', background: 'linear-gradient(90deg, #10B981, #34D399)', borderRadius: '99px' }}
-                        />
                       </div>
                     </div>
-                  </div>
-                </AnimatedContent>
-              </div>
-            </div>
-          </div>
-
-          {/* Feature 2 */}
-          <div className="section-fade-bottom section-padding">
-            <div className="max-w-[1280px] mx-auto">
-              <div className="flex flex-col lg:flex-row-reverse gap-10 lg:gap-16 items-center">
-                <div className="flex-1">
-                  <AnimatedContent direction="horizontal" distance={50} delay={0}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.14)', borderRadius: '99px', padding: '5px 14px', marginBottom: '16px' }}>
-                      <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10B981', animation: 'pulse-dot 2s infinite' }}/>
-                      <span style={{ fontSize: '11px', fontWeight: 600, color: '#34D399', letterSpacing: '2px', textTransform: 'uppercase' }}>
-                        {active.block2.badge}
-                      </span>
-                    </div>
-                  </AnimatedContent>
-                  <AnimatedContent direction="horizontal" distance={50} delay={0.1}>
-                    <h3 className="section-h2 mb-[12px]">
-                      {active.block2.title}
-                    </h3>
-                  </AnimatedContent>
-                  <AnimatedContent direction="horizontal" distance={50} delay={0.2}>
-                    <p className="section-subtitle mb-[20px]">
-                      {active.block2.desc}
-                    </p>
-                  </AnimatedContent>
-                  
-                  <div className="space-y-[9px]">
-                    {active.block2.checklist.map((item, i) => (
-                      <AnimatedContent key={i} direction="vertical" distance={20} delay={0.3 + i * 0.07}>
-                        <div className="flex items-start gap-[10px]">
-                          <div className="w-[18px] h-[18px] min-w-[18px] flex items-center justify-center text-em-400 shrink-0 mt-[3px]">
-                            <AnimatedCheckmark className="w-full h-full" />
-                          </div>
-                          <span className="font-body text-[14px] text-tx-2 leading-[1.55]">{item}</span>
-                        </div>
-                      </AnimatedContent>
-                    ))}
-                  </div>
+                  ))}
                 </div>
+              </div>
 
-                <AnimatedContent direction="horizontal" reverse={true} distance={50} delay={0.2} className="flex-1 w-full mt-8 lg:mt-0">
-                  <div className="bg-bg-2 border border-border-def rounded-[18px] p-[20px] relative overflow-hidden shadow-lg">
-                    <div className="flex gap-[6px] mb-[16px]">
-                      <div className="w-[8px] h-[8px] rounded-full bg-[#FF5F57]"></div>
-                      <div className="w-[8px] h-[8px] rounded-full bg-[#FEBC2E]"></div>
-                      <div className="w-[8px] h-[8px] rounded-full bg-[#28C840]"></div>
-                    </div>
+            </div>
 
-                    <div className="flex justify-between items-center mb-[16px] relative z-10">
-                       <p className="font-display text-[12px] text-tx-1 font-bold">{active.block2.mockup.label}</p>
-                       <span className={`font-body text-[10px] ${activeRole === 'peternak' ? 'bg-em-glow text-em-400' : 'bg-red-bg text-red'} px-[8px] py-[2px] rounded-full font-bold`}>
-                         {active.block2.mockup.badge}
-                       </span>
-                    </div>
+            {/* Bento Card 3: Live Market / Integrasi (Col Span 3) */}
+            <div className="lg:col-span-3 bg-bg-2 border border-border-default rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-8 justify-between shadow-card hover:border-border-strong transition-all duration-300">
+              <div className="flex-1 text-left">
+                <span className="badge-premium text-[9px] py-0.5 px-2.5 mb-3">
+                  KONEKTIVITAS SISTEM
+                </span>
+                <h3 className="font-display text-lg md:text-xl font-bold text-text-primary mb-3">
+                  Terintegrasi Penuh Antara Timbangan, Gudang, dan Keuangan
+                </h3>
+                <p className="text-[13px] md:text-sm text-text-secondary leading-relaxed max-w-xl">
+                  Satu input data di timbangan lapangan otomatis memotong stok pakan peternak, menambah saldo hutang broker, dan merapikan mutasi kas di keuangan. Tanpa double input, meminimalisir manipulasi timbangan di jalan.
+                </p>
+              </div>
 
-                    <div className="flex flex-col">
-                      {active.block2.mockup.items.map((item, i) => (
-                        <div key={i} className={`flex items-center gap-[10px] pt-[12px] pb-[10px] ${i !== 2 ? 'border-b border-border-sub' : ''}`}>
-                          <div className={`w-[32px] h-[32px] rounded-full ${item.bg} text-white font-display font-bold text-[11px] flex items-center justify-center shrink-0`}>
-                            {item.avatar}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-body text-[13px] text-tx-1 font-semibold leading-tight mb-0.5 truncate">{item.name}</p>
-                            <p className="font-body text-[11px] text-tx-3">{item.date}</p>
-                          </div>
-                          <div className="text-right flex flex-col items-end gap-1.5 ml-2">
-                            <div className="flex items-center gap-2">
-                              <p className={`font-display text-[13px] font-bold ${activeRole === 'peternak' ? 'text-tx-1' : 'text-red'} tabular-nums whitespace-nowrap`}>
-                                {item.amount}
-                              </p>
-                              {item.subBadge && (
-                                <span className="text-[8px] font-black bg-em-500/10 text-em-400 px-1.5 py-0.5 rounded border border-em-500/20">
-                                  {item.subBadge}
-                                </span>
-                              )}
-                            </div>
-                            <button className={`${activeRole === 'peternak' ? 'bg-secondary/10 text-tx-3' : 'bg-em-glow text-em-400'} text-[10px] font-bold py-[3px] px-[8px] rounded-full`}>
-                              {activeRole === 'peternak' ? 'Detail' : 'Lunas'}
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </AnimatedContent>
+              <div className="flex items-center gap-3 shrink-0 self-center md:self-end">
+                <a
+                  href="/register"
+                  className="px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-display font-bold text-xs uppercase tracking-wider rounded-[99px] transition-all shadow-sm active:scale-95 text-center"
+                >
+                  Coba Gratis 14 Hari
+                </a>
               </div>
             </div>
-          </div>
-        </motion.div>
-      </AnimatePresence>
+
+          </motion.div>
+        </AnimatePresence>
+
+      </div>
     </section>
   );
 };

@@ -99,17 +99,17 @@ export function UpdateDeliverySheet({
                               {
                                 label: 'Berat tiba',
                                 value: formatWeight(arrivedWeight),
-                                color: '#34D399'
+                                color: '#021a02'
                               },
                               {
                                 label: 'Susut berat',
                                 value: formatWeight(shrinkage),
-                                color: shrinkage > 0 ? '#F87171' : '#34D399'
+                                color: shrinkage > 0 ? '#F87171' : '#021a02'
                               },
                               {
                                 label: 'Mati di perjalanan',
                                 value: formatEkor(mortality),
-                                color: mortality > 0 ? '#F87171' : '#34D399'
+                                color: mortality > 0 ? '#F87171' : '#021a02'
                               },
                             ].map(({ label, value, color }) => (
                               <div key={label} style={{

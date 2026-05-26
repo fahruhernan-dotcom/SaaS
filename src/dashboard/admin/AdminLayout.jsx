@@ -11,6 +11,7 @@ import { getXBasePath } from '@/lib/businessModel'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
+import { useForceDarkMode } from '@/lib/hooks/useForceDarkMode'
 
 const PRIMARY_NAV = [
     { label: 'Overview',       shortLabel: 'Overview',  icon: Home,       path: '/admin' },
@@ -101,7 +102,7 @@ function AdminSidebar() {
                                 strokeWidth={isActive ? 3 : 2}
                                 className={cn(
                                     "transition-all duration-300",
-                                    isActive ? 'scale-110 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'opacity-50 group-hover:opacity-100'
+                                    isActive ? 'scale-110 drop-shadow-[0_0_8px_rgba(2, 26, 2,0.4)]' : 'opacity-50 group-hover:opacity-100'
                                 )}
                             />
                             <span className="relative z-10">{item.label}</span>
@@ -214,7 +215,7 @@ function AdminBottomNav({ onOpenMenu }) {
                                 isActive ? 'text-emerald-400 bg-emerald-500/5' : 'text-slate-500 hover:text-white'
                             }`}
                         >
-                            <Icon size={isActive ? 20 : 18} className={isActive ? 'drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]' : ''} />
+                            <Icon size={isActive ? 20 : 18} className={isActive ? 'drop-shadow-[0_0_8px_rgba(2, 26, 2,0.5)]' : ''} />
                             <span className={`text-[8px] font-black uppercase tracking-[0.1em] ${isActive ? 'opacity-100' : 'opacity-60'}`}>{item.shortLabel}</span>
                         </Link>
                     )
@@ -337,6 +338,7 @@ export default function AdminLayout({ children }) {
     const isDesktop = useMediaQuery('(min-width: 1024px)')
     const [menuOpen, setMenuOpen] = useState(false)
     const location = useLocation()
+    useForceDarkMode()
 
     return (
         <div className="min-h-screen bg-[#06090F] selection:bg-emerald-500/30 selection:text-emerald-200 overflow-x-hidden relative">

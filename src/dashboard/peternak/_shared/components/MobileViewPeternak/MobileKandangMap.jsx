@@ -18,7 +18,7 @@ export function MobileKandangMap({ className = '' }) {
       {/* Header strip */}
       <div className="px-4 py-3.5 flex items-center justify-between border-b border-white/10">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(2, 26, 2,0.5)] animate-pulse" />
           <div>
             <div className="text-[13px] font-semibold text-white tracking-tight">4 kandang aktif</div>
             <div className="text-[11px] text-[#94A3B8]">Live · diperbarui 2 menit lalu</div>
@@ -45,7 +45,7 @@ export function MobileKandangMap({ className = '' }) {
           {pens.map(pen => {
             const fillPct = pen.count / pen.capacity
             const toneColor = pen.status === 'ok' ? 'emerald' : pen.status === 'warn' ? 'amber' : 'red'
-            const statusColor = toneColor === 'emerald' ? '#10B981' : toneColor === 'amber' ? '#F59E0B' : '#EF4444'
+            const statusColor = toneColor === 'emerald' ? '#021a02' : toneColor === 'amber' ? '#F59E0B' : '#EF4444'
             
             return (
               <div 

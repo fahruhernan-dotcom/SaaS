@@ -441,8 +441,8 @@ export default function AnalisisPerformaPage() {
                     <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
                       <defs>
                         <linearGradient id="perfGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%"  stopColor="#10B981" stopOpacity={0.25} />
-                          <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                          <stop offset="5%"  stopColor="#021a02" stopOpacity={0.25} />
+                          <stop offset="95%" stopColor="#021a02" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
@@ -461,11 +461,11 @@ export default function AnalisisPerformaPage() {
                       <Area
                         type="monotone"
                         dataKey="value"
-                        stroke="#10B981"
+                        stroke="#021a02"
                         strokeWidth={2}
                         fill="url(#perfGradient)"
-                        dot={{ r: 3, fill: '#10B981', strokeWidth: 0 }}
-                        activeDot={{ r: 5, fill: '#10B981', strokeWidth: 0 }}
+                        dot={{ r: 3, fill: '#021a02', strokeWidth: 0 }}
+                        activeDot={{ r: 5, fill: '#021a02', strokeWidth: 0 }}
                         connectNulls={false}
                       />
                     </AreaChart>

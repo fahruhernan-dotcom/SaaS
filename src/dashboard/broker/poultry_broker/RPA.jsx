@@ -140,7 +140,7 @@ export default function RPA() {
                 onMenuClick={() => setSidebarOpen?.(true)}
                 rightElement={
                   <Button size="sm" onClick={() => { setEditingRPA(null); setOpenModal(true); }}
-                    className="h-9 px-3 bg-[#10B981] hover:bg-[#0D9668] text-white font-black uppercase tracking-widest text-xs rounded-xl gap-1.5 border-none active:scale-95 transition-all"
+                    className="h-9 px-3 bg-[#021a02] hover:bg-[#0D9668] text-white font-black uppercase tracking-widest text-xs rounded-xl gap-1.5 border-none active:scale-95 transition-all"
                   >
                     <Plus size={15} /> Tambah
                   </Button>
@@ -155,7 +155,7 @@ export default function RPA() {
                     <p className="text-[11px] font-bold text-[#4B6478] uppercase mt-1">{rpas?.length || 0} pembeli terdaftar</p>
                   </div>
                   <Button size="sm" onClick={() => { setEditingRPA(null); setOpenModal(true); }}
-                    className="bg-[#10B981] hover:bg-[#0D9668] text-white font-black uppercase tracking-widest text-[10px] rounded-xl px-4 gap-2 border-none shadow-[0_4px_12px_rgba(16,185,129,0.2)] h-10 transition-all active:scale-95"
+                    className="bg-[#021a02] hover:bg-[#0D9668] text-white font-black uppercase tracking-widest text-[10px] rounded-xl px-4 gap-2 border-none shadow-[0_4px_12px_rgba(2, 26, 2,0.2)] h-10 transition-all active:scale-95"
                   >
                     <Plus size={16} /> Tambah
                   </Button>
@@ -212,7 +212,7 @@ export default function RPA() {
                         description="Tambahkan pembeli pertamamu untuk mulai mencatat penjualan dan melacak piutang."
                         action={
                             <Button
-                                className={cn("bg-[#10B981] hover:bg-emerald-600 h-11 px-6 font-black uppercase tracking-widest rounded-xl border-none transition-all active:scale-95", isDesktop ? "text-[10px]" : "text-xs")}
+                                className={cn("bg-[#021a02] hover:bg-emerald-600 h-11 px-6 font-black uppercase tracking-widest rounded-xl border-none transition-all active:scale-95", isDesktop ? "text-[10px]" : "text-xs")}
                                 onClick={() => setOpenModal(true)}
                             >
                                 Tambah RPA Pertama
@@ -325,7 +325,7 @@ function RPACard({ rpa, isDesktop, onClick, _onEdit }) {
             >
                 <div className="flex gap-4 items-center flex-1">
                     <Avatar className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
-                        <AvatarFallback className="bg-transparent text-[#34D399] font-display font-black text-lg">
+                        <AvatarFallback className="bg-transparent text-[#021a02] font-display font-black text-lg">
                             {initials}
                         </AvatarFallback>
                     </Avatar>
@@ -347,7 +347,7 @@ function RPACard({ rpa, isDesktop, onClick, _onEdit }) {
                             <a
                                 href={`tel:${rpa.phone}`}
                                 onClick={(e) => e.stopPropagation()}
-                                className="flex items-center gap-1.5 font-bold text-[#4B6478] hover:text-[#34D399] transition-colors min-h-[24px] text-[11px]"
+                                className="flex items-center gap-1.5 font-bold text-[#4B6478] hover:text-[#021a02] transition-colors min-h-[24px] text-[11px]"
                             >
                                 <Phone size={12} className="text-emerald-500/40" /> {rpa.phone}
                             </a>
@@ -369,7 +369,7 @@ function RPACard({ rpa, isDesktop, onClick, _onEdit }) {
                                 </p>
                             </>
                         ) : (
-                            <div className="flex items-center gap-1 text-[#34D399] font-black uppercase tracking-wider text-[11px]">
+                            <div className="flex items-center gap-1 text-[#021a02] font-black uppercase tracking-wider text-[11px]">
                                 <CheckCircle2 size={13} strokeWidth={3} /> Lunas
                             </div>
                         )}
@@ -640,7 +640,7 @@ export function RPAForm({ rpa, isDesktop, _onClose, onSubmit, onDelete }) {
                 )}
                 <Button
                     type="submit"
-                    className={cn("flex-1 h-14 rounded-2xl bg-[#10B981] hover:bg-[#0D9668] font-black border-none shadow-lg shadow-emerald-500/10 uppercase tracking-widest transition-all active:scale-95", isDesktop ? "text-xs" : "text-sm")}
+                    className={cn("flex-1 h-14 rounded-2xl bg-[#021a02] hover:bg-[#0D9668] font-black border-none shadow-lg shadow-emerald-500/10 uppercase tracking-widest transition-all active:scale-95", isDesktop ? "text-xs" : "text-sm")}
                     disabled={isLoading}
                 >
                     {isLoading ? 'Menyimpan...' : (rpa ? 'Simpan Perubahan' : 'Tambah RPA Baru')}

@@ -293,7 +293,7 @@ export default function InvoicePreviewModal({ type, data, isOpen, onClose }) {
                 <Link
                   to="/upgrade"
                   onClick={onClose}
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-black text-sm rounded-xl transition-colors shadow-[0_4px_20px_rgba(16,185,129,0.3)]"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-black text-sm rounded-xl transition-colors shadow-[0_4px_20px_rgba(2, 26, 2,0.3)]"
                 >
                   Lihat Paket Pro →
                 </Link>
@@ -357,7 +357,7 @@ export default function InvoicePreviewModal({ type, data, isOpen, onClose }) {
             {({ loading }) => (
               <Button
                 disabled={loading}
-                className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-[10px] sm:text-xs uppercase tracking-widest rounded-xl shadow-[0_4px_16px_rgba(16,185,129,0.25)] active:scale-95 transition-transform disabled:opacity-60"
+                className="w-full h-11 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-[10px] sm:text-xs uppercase tracking-widest rounded-xl shadow-[0_4px_16px_rgba(2, 26, 2,0.25)] active:scale-95 transition-transform disabled:opacity-60"
               >
                 {loading ? (
                   <Loader2 size={14} className="animate-spin mr-1 sm:mr-2" />

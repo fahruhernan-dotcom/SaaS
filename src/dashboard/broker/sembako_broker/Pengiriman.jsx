@@ -135,7 +135,7 @@ function DeliveryCard({ delivery, onStart, onArrive, onComplete, highlighted, on
     pending:   { label: 'Disiapkan',  bg: 'rgba(255,255,255,0.06)', color: '#94A3B8' },
     on_route:  { label: 'Di Jalan',   bg: 'rgba(59,130,246,0.12)',  color: '#60A5FA', pulse: true },
     arrived:   { label: 'Tiba',       bg: 'rgba(245,158,11,0.12)',  color: '#FBBF24' },
-    delivered: { label: 'Terkirim',   bg: 'rgba(52,211,153,0.12)',  color: '#34D399' },
+    delivered: { label: 'Terkirim',   bg: 'rgba(2, 26, 2,0.12)',  color: '#021a02' },
   }
 
   const meta = statusMeta[delivery.status] || statusMeta.pending
@@ -293,7 +293,7 @@ function DeliveryCard({ delivery, onStart, onArrive, onComplete, highlighted, on
             <div className="flex items-center gap-3 mb-2">
               <div
                 className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.15), rgba(245,158,11,0.15))' }}
+                style={{ background: 'linear-gradient(135deg, rgba(2, 26, 2,0.15), rgba(245,158,11,0.15))' }}
               >
                 <CheckCircle2 size={20} style={{ color: '#F59E0B' }} />
               </div>
@@ -375,7 +375,7 @@ function DeliveryCard({ delivery, onStart, onArrive, onComplete, highlighted, on
             <AlertDialogAction
               onClick={() => onComplete(delivery.id)}
               className="flex-1 h-11 font-black uppercase text-xs tracking-wider text-white border-0"
-              style={{ background: 'linear-gradient(135deg, #10B981 0%, #F59E0B 100%)' }}
+              style={{ background: 'linear-gradient(135deg, #021a02 0%, #F59E0B 100%)' }}
             >
               Ya, Selesaikan
             </AlertDialogAction>
@@ -391,7 +391,7 @@ function SummaryCard({ label, value, icon: Icon, color, subLabel }) {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const colors = {
     blue:    { bg: 'rgba(59,130,246,0.08)',  border: 'rgba(59,130,246,0.15)',  text: '#60A5FA',  dot: 'bg-blue-500' },
-    emerald: { bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.15)', text: '#34D399',  dot: 'bg-emerald-500' },
+    emerald: { bg: 'rgba(2, 26, 2,0.08)',  border: 'rgba(2, 26, 2,0.15)', text: '#021a02',  dot: 'bg-emerald-500' },
     amber:   { bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.15)', text: '#FBBF24',  dot: 'bg-amber-500' },
   }
   const c = colors[color] || colors.blue

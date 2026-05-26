@@ -533,7 +533,7 @@ export default function HargaPasarPublic() {
       {isMounted && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
           <Particles
-            particleColors={['#10B981', '#34D399', '#059669']}
+            particleColors={['#021a02', '#021a02', '#021a02']}
             particleCount={window.innerWidth < 768 ? 25 : 50}
             speed={0.2}
             particleBaseSize={1.4}
@@ -544,7 +544,7 @@ export default function HargaPasarPublic() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1.2 }}
-        className="fixed top-[-120px] left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(16,185,129,0.18),transparent_70%)] animate-glow-breathe z-0 pointer-events-none md:w-[800px] md:h-[800px]"
+        className="fixed top-[-120px] left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(2, 26, 2,0.18),transparent_70%)] animate-glow-breathe z-0 pointer-events-none md:w-[800px] md:h-[800px]"
       />
 
       <Navbar />
@@ -746,7 +746,7 @@ export default function HargaPasarPublic() {
         {/* ── HYBRID CHART: Real Platform Data vs Chickin.id ── */}
         <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.15 }}>
           <Card className="bg-[#0C1319] border-white/5 rounded-[28px] relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(16,185,129,0.04)_0%,transparent_70%)] pointer-events-none" />
+            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(2, 26, 2,0.04)_0%,transparent_70%)] pointer-events-none" />
             <CardContent className="p-6 md:p-8">
               {/* Header */}
               <div className="flex flex-col gap-4 mb-8 relative z-10">
@@ -779,7 +779,7 @@ export default function HargaPasarPublic() {
                 <div className="flex flex-wrap items-center gap-4">
                   <LegendDot color="#F59E0B" label="Chickin.id (Ref)" dashed />
                   <LegendDot color="#F97316" label="Arboge.com (Ref)" dashed />
-                  <LegendDot color="#10B981" label="Beli Nyata (TernakOS)" />
+                  <LegendDot color="#021a02" label="Beli Nyata (TernakOS)" />
                   <LegendDot color="#818CF8" label="Jual Nyata (TernakOS)" />
                   <span className="ml-auto text-[9px] font-black text-[#4B6478] uppercase tracking-widest">
                     {currentProvince || 'Jawa Tengah'} · {hybridPeriod === 'weekly' ? 'Minggu Ini' : 'Bulan Ini'}
@@ -802,8 +802,8 @@ export default function HargaPasarPublic() {
                     <AreaChart data={hybridChartData}>
                       <defs>
                         <linearGradient id="gradBuy" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10B981" stopOpacity={0.15} />
-                          <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                          <stop offset="5%" stopColor="#021a02" stopOpacity={0.15} />
+                          <stop offset="95%" stopColor="#021a02" stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="gradSell" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#818CF8" stopOpacity={0.1} />
@@ -817,7 +817,7 @@ export default function HargaPasarPublic() {
                       <Area type="monotone" dataKey="chickin" stroke="#F59E0B" strokeWidth={2} strokeDasharray="5 4" fill="transparent" connectNulls dot={false} />
                       <Area type="monotone" dataKey="arboge" stroke="#F97316" strokeWidth={2} strokeDasharray="3 3" fill="transparent" connectNulls dot={false} />
                       <Area type="monotone" dataKey="platformJual" stroke="#818CF8" strokeWidth={2} fillOpacity={1} fill="url(#gradSell)" connectNulls activeDot={{ r: 5, stroke: '#0C1319', strokeWidth: 2, fill: '#818CF8' }} />
-                      <Area type="monotone" dataKey="platformBeli" stroke="#10B981" strokeWidth={3} fillOpacity={1} fill="url(#gradBuy)" connectNulls activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: '#10B981' }} />
+                      <Area type="monotone" dataKey="platformBeli" stroke="#021a02" strokeWidth={3} fillOpacity={1} fill="url(#gradBuy)" connectNulls activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: '#021a02' }} />
                     </AreaChart>
                   </ResponsiveContainer>
                 )}
@@ -845,7 +845,7 @@ export default function HargaPasarPublic() {
                   <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-1">Analisis Margin Platform</p>
                   <h2 className="text-xl font-black text-white">Tren Jual Beli Broker</h2>
                   <div className="flex items-center gap-4 mt-3">
-                    <LegendDot color="#10B981" label="Harga Beli (Kandang)" />
+                    <LegendDot color="#021a02" label="Harga Beli (Kandang)" />
                     <LegendDot color="#6366F1" label="Harga Jual (Pasar/RPA)" />
                   </div>
                 </div>
@@ -882,8 +882,8 @@ export default function HargaPasarPublic() {
                     }))} margin={{ top: 4, right: 4, bottom: 0, left: 8 }}>
                     <defs>
                       <linearGradient id="gradB2" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.25} />
-                        <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                        <stop offset="5%" stopColor="#021a02" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="#021a02" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="gradS2" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#6366F1" stopOpacity={0.25} />
@@ -898,7 +898,7 @@ export default function HargaPasarPublic() {
                       labelFormatter={formatShortDate}
                       formatter={v => formatIDR(v)}
                     />
-                    <Area type="monotone" dataKey="Harga Beli" stroke="#10B981" strokeWidth={2} fill="url(#gradB2)" dot={false} activeDot={{ r: 4, fill: '#10B981' }} />
+                    <Area type="monotone" dataKey="Harga Beli" stroke="#021a02" strokeWidth={2} fill="url(#gradB2)" dot={false} activeDot={{ r: 4, fill: '#021a02' }} />
                     <Area type="monotone" dataKey="Harga Jual" stroke="#6366F1" strokeWidth={2} fill="url(#gradS2)" dot={false} activeDot={{ r: 4, fill: '#6366F1' }} />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -1107,7 +1107,7 @@ export default function HargaPasarPublic() {
         <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.4 }}>
           <Card className="bg-[#0C1319] border-white/10 overflow-hidden relative group hover:border-emerald-500/30 transition-all duration-500 rounded-[28px]">
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-indigo-500/5 pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity" />
-            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(16,185,129,0.07)_0%,transparent_70%)] pointer-events-none" />
+            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(2, 26, 2,0.07)_0%,transparent_70%)] pointer-events-none" />
             <CardContent className="p-8 md:p-12 relative">
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 md:gap-12">
                 <div className="space-y-4 max-w-2xl">

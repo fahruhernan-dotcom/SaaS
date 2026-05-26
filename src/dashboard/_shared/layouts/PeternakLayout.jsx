@@ -6,6 +6,7 @@ import DesktopSidebarLayout from './DesktopSidebarLayout'
 import AppSidebar from '../components/AppSidebar'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useNotificationGenerator } from '@/lib/hooks/useNotifications.jsx'
+import { useForceDarkMode } from '@/lib/hooks/useForceDarkMode'
 import { BusinessNameWarningBanner } from '../components/BusinessNameWarningBanner'
 import { PlanExpiryBanner } from '../components/PlanExpiryBanner'
 import { SidebarProvider } from '@/components/ui/sidebar'
@@ -16,6 +17,7 @@ export default function PeternakLayout() {
   const { _profile, loading, tenant, isSuperadmin } = useAuth()
   const location = useLocation()
   useNotificationGenerator()
+  useForceDarkMode()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [_rightAction, setRightAction] = useState(null)

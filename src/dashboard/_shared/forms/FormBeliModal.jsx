@@ -118,8 +118,8 @@ export default function FormBeliModal({ isOpen, onClose }) {
         {/* Live Preview */}
         {totalWeight > 0 && (
           <div style={{
-            background: 'rgba(16,185,129,0.06)',
-            border: '1px solid rgba(16,185,129,0.15)',
+            background: 'rgba(2, 26, 2,0.06)',
+            border: '1px solid rgba(2, 26, 2,0.15)',
             borderRadius: '12px',
             padding: '16px',
             marginTop: '8px'
@@ -134,7 +134,7 @@ export default function FormBeliModal({ isOpen, onClose }) {
             </div>
             <div style={{ ...previewRow, borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px', marginTop: '8px' }}>
               <span style={{ color: '#F1F5F9' }}>TOTAL MODAL:</span>
-              <span style={{ fontWeight: 800, color: '#34D399', fontSize: '16px' }}>{formatIDR(totalModal)}</span>
+              <span style={{ fontWeight: 800, color: '#021a02', fontSize: '16px' }}>{formatIDR(totalModal)}</span>
             </div>
           </div>
         )}
@@ -145,7 +145,7 @@ export default function FormBeliModal({ isOpen, onClose }) {
           style={{
             marginTop: '12px',
             padding: '16px',
-            background: '#10B981',
+            background: '#021a02',
             border: 'none',
             borderRadius: '12px',
             color: 'white',

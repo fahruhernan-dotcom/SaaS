@@ -48,7 +48,7 @@ function stockPercent(product) {
 
 function stockColor(pct) {
   if (pct === null) return '#4B5563'
-  if (pct > 50) return '#34D399'
+  if (pct > 50) return '#021a02'
   if (pct > 20) return '#FBBF24'
   return '#F87171'
 }
@@ -65,7 +65,7 @@ function marginInfo(product) {
   const { sell_price, avg_buy_price } = product
   if (!sell_price || !avg_buy_price || avg_buy_price === 0) return null
   const margin = ((sell_price - avg_buy_price) / sell_price) * 100
-  return { pct: margin.toFixed(1), color: margin > 15 ? '#34D399' : margin > 5 ? '#FBBF24' : '#F87171' }
+  return { pct: margin.toFixed(1), color: margin > 15 ? '#021a02' : margin > 5 ? '#FBBF24' : '#F87171' }
 }
 
 // ── Sheet overlay ─────────────────────────────────────────────────────────────
@@ -634,7 +634,7 @@ export default function Produk() {
       {/* Stats row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, padding: '16px 16px 0' }}>
         <StatCard label="Total Produk"  value={stats.total}         color={C.text} />
-        <StatCard label="Stok Menipis"  value={stats.lowStock}      color={stats.lowStock > 0 ? '#F87171' : '#34D399'} sub={stats.lowStock > 0 ? 'perlu restock' : 'aman'} />
+        <StatCard label="Stok Menipis"  value={stats.lowStock}      color={stats.lowStock > 0 ? '#F87171' : '#021a02'} sub={stats.lowStock > 0 ? 'perlu restock' : 'aman'} />
         <StatCard label="Nilai Stok"    value={`Rp ${stats.nilaiStok >= 1_000_000 ? (stats.nilaiStok / 1_000_000).toFixed(1) + 'jt' : fmt(stats.nilaiStok)}`} color={C.accent} />
       </div>
 

@@ -19,7 +19,7 @@ const CONTENT = {
     ],
     stats: [
       { value: '3 jam/minggu', label: 'dihemat' },
-      { value: '98%+',         label: 'akurasi piutang' },
+      { value: '98%+',         label: 'ukurasi piutang' },
       { value: '0',            label: 'transaksi terlewat' },
     ],
   },
@@ -65,36 +65,45 @@ const CONTENT = {
 
 // ─── Column component ──────────────────────────────────────────────────────────
 
+// ─── Column component ──────────────────────────────────────────────────────────
+
 function Column({ items, variant }) {
   const isBefore = variant === 'before'
   return (
     <div
-      className="flex-1 rounded-2xl border p-5 flex flex-col gap-3"
-      style={{
-        background: isBefore ? 'rgba(239,68,68,0.04)' : 'rgba(16,185,129,0.05)',
-        borderColor: isBefore ? 'rgba(239,68,68,0.18)' : 'rgba(16,185,129,0.2)',
-      }}
+      className={`flex-1 rounded-2xl border p-6 flex flex-col gap-4 shadow-sm transition-all duration-300 ${
+        isBefore 
+          ? 'bg-bg-2 border-border-default' 
+          : 'bg-bg-1 border-emerald-500/30 shadow-[0_12px_40px_rgba(2, 26, 2,0.03)] dark:shadow-[0_12px_40px_rgba(2, 26, 2,0.06)]'
+      }`}
     >
-      {/* Column heading */}
-      <p
-        className="text-[10px] font-bold uppercase tracking-widest mb-1"
-        style={{ color: isBefore ? '#F87171' : '#34D399' }}
-      >
-        {isBefore ? '✗  Sebelum TernakOS' : '✓  Dengan TernakOS'}
-      </p>
+      {/* Column heading tag */}
+      <div className="flex">
+        <span
+          className={`inline-flex items-center rounded-full px-3 py-1 text-[9px] font-bold tracking-wider uppercase border ${
+            isBefore 
+              ? 'bg-red-500/5 border-red-500/20 text-red-500' 
+              : 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600 dark:text-emerald-400'
+          }`}
+        >
+          {isBefore ? '✗  Sebelum TernakOS' : '✓  Setelah TernakOS'}
+        </span>
+      </div>
 
       {/* Items */}
-      {items.map((text, i) => (
-        <div key={i} className="flex items-start gap-2.5">
-          {isBefore
-            ? <XCircle size={15} className="shrink-0 mt-0.5 text-red-400" />
-            : <CheckCircle2 size={15} className="shrink-0 mt-0.5 text-emerald-400" />
-          }
-          <span className="text-sm leading-snug" style={{ color: isBefore ? '#94A3B8' : '#CBD5E1' }}>
-            {text}
-          </span>
-        </div>
-      ))}
+      <div className="flex flex-col gap-3">
+        {items.map((text, i) => (
+          <div key={i} className="flex items-start gap-2.5">
+            {isBefore
+              ? <XCircle size={15} className="shrink-0 mt-0.5 text-red-400" />
+              : <CheckCircle2 size={15} className="shrink-0 mt-0.5 text-emerald-500" />
+            }
+            <span className={`text-[13px] md:text-sm leading-relaxed ${isBefore ? 'text-text-secondary' : 'text-text-primary font-medium'}`}>
+              {text}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -103,14 +112,14 @@ function Column({ items, variant }) {
 
 function StatsRow({ stats }) {
   return (
-    <div className="mt-5 grid grid-cols-3 gap-3">
+    <div className="mt-6 grid grid-cols-3 gap-4">
       {stats.map((s, i) => (
         <div
           key={i}
-          className="rounded-xl border border-white/[0.07] bg-[#111C24] px-4 py-3 text-center"
+          className="rounded-2xl border border-border-default bg-bg-1 px-4 py-4 text-center shadow-sm hover:shadow-md transition-shadow"
         >
-          <p className="font-['Sora'] text-lg font-extrabold text-white leading-none mb-1">{s.value}</p>
-          <p className="text-[11px] text-[#4B6478]">{s.label}</p>
+          <p className="font-['Sora'] text-base md:text-lg font-black text-text-primary leading-none mb-1.5">{s.value}</p>
+          <p className="text-[11px] text-text-secondary font-medium uppercase tracking-wider">{s.label}</p>
         </div>
       ))}
     </div>
@@ -123,15 +132,15 @@ export default function BeforeAfter({ activeRole = 'broker' }) {
   const data = CONTENT[activeRole] ?? CONTENT.broker
 
   return (
-    <section className="bg-[#06090F] py-24 px-4">
+    <section className="bg-bg-base py-20 px-5 border-t border-border-subtle">
 
       {/* Section header */}
-      <div className="text-center mb-10">
-        <p className="text-[11px] font-bold uppercase tracking-widest text-[#10B981] mb-4">
-          TRANSFORMASI NYATA
+      <div className="text-center mb-12">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-[#021a02] mb-3">
+          TRANSFORMASI OPERASIONAL
         </p>
-        <h2 className="font-['Sora'] text-4xl md:text-5xl font-bold text-white leading-tight">
-          Dari Excel berantakan<br />menjadi insight yang actionable.
+        <h2 className="font-['Sora'] text-2xl md:text-3xl font-normal text-text-primary leading-tight">
+          Dari Excel Berantakan Menjadi Dasbor Otomatis
         </h2>
       </div>
 
@@ -140,13 +149,13 @@ export default function BeforeAfter({ activeRole = 'broker' }) {
         <AnimatePresence mode="wait">
           <motion.div
             key={activeRole}
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.28, ease: 'easeInOut' }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.22 }}
           >
             {/* 2-column cards */}
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col md:flex-row gap-6">
               <Column items={data.before} variant="before" />
               <Column items={data.after}  variant="after"  />
             </div>

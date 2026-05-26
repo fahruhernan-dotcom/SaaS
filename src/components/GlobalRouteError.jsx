@@ -2,10 +2,12 @@ import React from 'react';
 import { useRouteError, useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
+import { useLanguage } from '@/lib/i18n/useLanguage';
 
 export default function GlobalRouteError() {
   const error = useRouteError();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   
   console.error("Global route error caught by errorElement:", error);
 
@@ -20,12 +22,12 @@ export default function GlobalRouteError() {
         </div>
         
         <h1 className="font-['Sora'] font-black text-white text-2xl mb-3">
-          Sistem Gagal Memuat
+          {t('error_system_failed', 'Sistem Gagal Memuat')}
         </h1>
         
         <div className="bg-white/[0.02] border border-white/[0.05] p-3 rounded-xl mb-6 w-full text-left">
            <p className="text-[#4B6478] text-[11px] font-mono break-all line-clamp-2 uppercase tracking-wide">
-             [ERR] {error?.statusText || error?.message || 'Kami tidak dapat memuat rute atau memproses data jaringan yang Anda tuju.'}
+             [ERR] {error?.statusText || error?.message || t('error_route_default', 'Kami tidak dapat memuat rute atau memproses data jaringan yang Anda tuju.')}
            </p>
         </div>
 
@@ -35,7 +37,7 @@ export default function GlobalRouteError() {
             className="w-full h-12 rounded-xl bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-black shadow-lg shadow-red-500/20"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
-            Muat Ulang Halaman
+            {t('error_reload_page', 'Muat Ulang Halaman')}
           </Button>
           <Button 
             variant="outline"
@@ -43,7 +45,7 @@ export default function GlobalRouteError() {
             className="w-full h-12 rounded-xl border-white/10 bg-transparent hover:bg-white/5 text-[#94A3B8] font-bold"
           >
             <Home className="w-4 h-4 mr-2" />
-            Kembali ke Beranda
+            {t('error_back_home', 'Kembali ke Beranda')}
           </Button>
         </div>
       </div>

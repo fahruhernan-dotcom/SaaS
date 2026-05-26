@@ -436,7 +436,7 @@ function DesktopDashboard({
         </div>
         <Button
           onClick={() => setWizardOpen(true)}
-          className="h-14 px-8 bg-[#10B981] hover:bg-[#059669] text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
+          className="h-14 px-8 bg-[#021a02] hover:bg-[#021a02] text-white font-black text-xs uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
         >
           <Plus size={18} className="mr-2" /> Catat Transaksi
         </Button>
@@ -480,7 +480,7 @@ function DesktopDashboard({
                       {formatIDR(chartPeriod === 'weekly' ? data?.chart?.totalNetProfitWeekly : data?.chart?.totalNetProfitMonthly)}
                     </p>
                   </div>
-                  <Badge className="bg-[#10B981]/10 text-[#10B981] border-none text-[10px] font-black uppercase tracking-widest px-3 py-1">
+                  <Badge className="bg-[#021a02]/10 text-[#021a02] border-none text-[10px] font-black uppercase tracking-widest px-3 py-1">
                     {chartPeriod === 'weekly' ? 'Minggu Ini' : 'Bulan Ini'}
                   </Badge>
                 </div>
@@ -515,8 +515,8 @@ function DesktopDashboard({
                 >
                   <defs>
                     <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                      <stop offset="5%" stopColor="#021a02" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#021a02" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
@@ -536,11 +536,11 @@ function DesktopDashboard({
                   <Area
                     type="monotone"
                     dataKey="profit"
-                    stroke="#10B981"
+                    stroke="#021a02"
                     strokeWidth={3}
                     fillOpacity={1}
                     fill="url(#colorProfit)"
-                    activeDot={{ r: 6, stroke: '#111C24', strokeWidth: 2, fill: '#10B981' }}
+                    activeDot={{ r: 6, stroke: '#111C24', strokeWidth: 2, fill: '#021a02' }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -615,7 +615,7 @@ function MobileDashboard({
     if (!data) return []
     const items = []
     ;(data?.events?.todayActivites || []).forEach(s => {
-      items.push({ id: `sale-${s.id}`, type: 'Transaksi', label: s.rpa_clients?.rpa_name || 'RPA', amount: calcNetProfit(s), date: s.transaction_date, color: '#10B981', Icon: ArrowLeftRight })
+      items.push({ id: `sale-${s.id}`, type: 'Transaksi', label: s.rpa_clients?.rpa_name || 'RPA', amount: calcNetProfit(s), date: s.transaction_date, color: '#021a02', Icon: ArrowLeftRight })
     })
     ;(data?.events?.payments || []).forEach(p => {
       items.push({ id: `pay-${p.id}`, type: 'Pembayaran', label: p.sales?.rpa_clients?.rpa_name || 'Pembayaran', amount: p.amount, date: p.payment_date || p.created_at, color: '#818CF8', Icon: CircleCheck })
@@ -656,7 +656,7 @@ function MobileDashboard({
       {/* ── 2. BUSINESS SUMMARY CARD ── */}
       <motion.div variants={fadeUp} className="px-4 mb-4">
         <div className="rounded-[22px] p-5 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0D1F2E 0%, #112233 55%, #0A1A28 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
-          <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.13) 0%, transparent 70%)' }} />
+          <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(2, 26, 2,0.13) 0%, transparent 70%)' }} />
           <div className="absolute -bottom-8 -left-8 w-28 h-28 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.09) 0%, transparent 70%)' }} />
           <div className="flex justify-between items-start mb-5 relative z-10">
             <div>
@@ -685,7 +685,7 @@ function MobileDashboard({
       {/* ── 3. QUICK ACTIONS 2×2 ── */}
       <motion.div variants={fadeUp} className="px-4 mb-4">
         <div className="grid grid-cols-2 gap-2">
-          <QuickAction icon={Plus}      label="Catat Transaksi" color="#10B981" onClick={() => setWizardOpen(true)} />
+          <QuickAction icon={Plus}      label="Catat Transaksi" color="#021a02" onClick={() => setWizardOpen(true)} />
           <QuickAction icon={Wallet}    label="Piutang RPA"     color="#F87171" onClick={() => navigate('/broker/rpa')} />
           <QuickAction icon={Truck}     label="Pengiriman"      color="#F59E0B" onClick={() => navigate('/broker/pengiriman')} />
           <QuickAction icon={BarChart2} label="Transaksi"       color="#818CF8" onClick={() => navigate('/broker/transaksi')} />
@@ -729,7 +729,7 @@ function MobileDashboard({
               <BarChart data={chartPeriod === 'weekly' ? data?.chart.weekly : data?.chart.monthly} barSize={10} barCategoryGap="30%">
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#4B6478', fontSize: 9, fontWeight: 800 }} dy={6} />
                 <RechartsTooltip content={() => null} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-                <Bar dataKey="profit" radius={[4, 4, 0, 0]} fill="#10B981" />
+                <Bar dataKey="profit" radius={[4, 4, 0, 0]} fill="#021a02" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -764,7 +764,7 @@ function KPICardNew({ label, value, sub, icon: Icon, onClick, trend, small, comp
           <div className={cn(
             "font-black tabular-nums py-0.5 px-2 rounded-lg",
             small ? "text-xs" : "text-[10px]",
-            trend >= 0 ? "bg-[#10B981]/10 text-[#10B981]" : "bg-red-500/10 text-red-500"
+            trend >= 0 ? "bg-[#021a02]/10 text-[#021a02]" : "bg-red-500/10 text-red-500"
           )}>
             {trend >= 0 ? '↑' : '↓'} {Math.abs(trend).toFixed(0)}%
           </div>
@@ -825,7 +825,7 @@ function CustomChartTooltip({ active, payload }) {
       
       <div className="mb-3">
         <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-[0.15em] mb-1">Total Profit</p>
-        <p className="text-base font-black text-[#34D399] tabular-nums">{formatIDR(data.profit)}</p>
+        <p className="text-base font-black text-[#021a02] tabular-nums">{formatIDR(data.profit)}</p>
       </div>
 
       <div className="border-t border-white/5 pt-3">
@@ -856,10 +856,10 @@ function AgendaSection({ data, selectedDate, setSelectedDate, currentMonth, setC
   const filteredEvents = useMemo(() => {
     if (!data?.events) return []
     const all = [
-      ...data.events.harvests.map(e => ({ ...e, type: 'Panen', date: e.estimated_harvest_date, icon: Scissors, color: '#10B981', dot: 'bg-[#10B981]' })),
+      ...data.events.harvests.map(e => ({ ...e, type: 'Panen', date: e.estimated_harvest_date, icon: Scissors, color: '#021a02', dot: 'bg-[#021a02]' })),
       ...data.events.dues.map(e => ({ ...e, type: 'Piutang', date: e.due_date, icon: Wallet, color: '#F87171', dot: 'bg-[#F87171]' })),
       ...data.events.deliveries.map(e => ({ ...e, type: 'Pengiriman', date: format(new Date(e.created_at), 'yyyy-MM-dd'), icon: Truck, color: '#F59E0B', dot: 'bg-[#F59E0B]' })),
-      ...data.events.payments.map(e => ({ ...e, type: 'Pembayaran', date: e.payment_date, icon: CircleCheck, color: '#10B981', dot: 'bg-[#10B981]' }))
+      ...data.events.payments.map(e => ({ ...e, type: 'Pembayaran', date: e.payment_date, icon: CircleCheck, color: '#021a02', dot: 'bg-[#021a02]' }))
     ]
     
     let result = all.filter(e => isSameDay(new Date(e.date), selectedDate))
@@ -1022,7 +1022,7 @@ function EventDetailSheet({ selectedEvent, onClose, brokerBase, navigate }) {
             
             <button 
               onClick={() => { onClose(); navigate(`${brokerBase}/rpa`) }}
-              className="w-full mt-6 h-12 bg-emerald-500 rounded-xl font-display font-black text-sm text-white shadow-[0_8px_24px_rgba(16,185,129,0.25)] active:scale-95 transition-all">
+              className="w-full mt-6 h-12 bg-emerald-500 rounded-xl font-display font-black text-sm text-white shadow-[0_8px_24px_rgba(2, 26, 2,0.25)] active:scale-95 transition-all">
               Lihat Detail RPA →
             </button>
           </>
@@ -1051,7 +1051,7 @@ function EventDetailSheet({ selectedEvent, onClose, brokerBase, navigate }) {
             
             <button 
               onClick={() => { onClose(); navigate(`${brokerBase}/pengiriman`) }}
-              className="w-full mt-6 h-12 bg-emerald-500 rounded-xl font-display font-black text-sm text-white shadow-[0_8px_24px_rgba(16,185,129,0.25)] active:scale-95 transition-all">
+              className="w-full mt-6 h-12 bg-emerald-500 rounded-xl font-display font-black text-sm text-white shadow-[0_8px_24px_rgba(2, 26, 2,0.25)] active:scale-95 transition-all">
               Lihat Pengiriman →
             </button>
           </>
@@ -1079,7 +1079,7 @@ function EventDetailSheet({ selectedEvent, onClose, brokerBase, navigate }) {
             
             <button 
               onClick={() => { onClose(); navigate(`${brokerBase}/kandang`) }}
-              className="w-full mt-6 h-12 bg-emerald-500 rounded-xl font-display font-black text-sm text-white shadow-[0_8px_24px_rgba(16,185,129,0.25)] active:scale-95 transition-all">
+              className="w-full mt-6 h-12 bg-emerald-500 rounded-xl font-display font-black text-sm text-white shadow-[0_8px_24px_rgba(2, 26, 2,0.25)] active:scale-95 transition-all">
               Lihat Siklus →
             </button>
           </>
@@ -1106,7 +1106,7 @@ function EventDetailSheet({ selectedEvent, onClose, brokerBase, navigate }) {
             
             <button 
               onClick={() => { onClose(); navigate(`${brokerBase}/transaksi`) }}
-              className="w-full mt-6 h-12 bg-emerald-500 rounded-xl font-display font-black text-sm text-white shadow-[0_8px_24px_rgba(16,185,129,0.25)] active:scale-95 transition-all">
+              className="w-full mt-6 h-12 bg-emerald-500 rounded-xl font-display font-black text-sm text-white shadow-[0_8px_24px_rgba(2, 26, 2,0.25)] active:scale-95 transition-all">
               Lihat Transaksi →
             </button>
           </>
@@ -1163,9 +1163,9 @@ function CalendarHeatmap({ currentMonth, selectedDate, setSelectedDate, events, 
 
           // Intensity logic
           let bgColor = 'transparent'
-          if (count === 1) bgColor = 'rgba(16,185,129,0.15)'
-          if (count === 2) bgColor = 'rgba(16,185,129,0.4)'
-          if (count >= 3) bgColor = 'rgba(16,185,129,0.8)'
+          if (count === 1) bgColor = 'rgba(2, 26, 2,0.15)'
+          if (count === 2) bgColor = 'rgba(2, 26, 2,0.4)'
+          if (count >= 3) bgColor = 'rgba(2, 26, 2,0.8)'
 
           return (
             <div
@@ -1188,7 +1188,7 @@ function CalendarHeatmap({ currentMonth, selectedDate, setSelectedDate, events, 
               </span>
               
               <div className="absolute bottom-1.5 flex gap-0.5">
-                 {events?.harvests.some(e => e.estimated_harvest_date === dayStr) && <div className="w-1 h-1 rounded-full bg-[#10B981]" />}
+                 {events?.harvests.some(e => e.estimated_harvest_date === dayStr) && <div className="w-1 h-1 rounded-full bg-[#021a02]" />}
                  {events?.dues.some(e => e.due_date === dayStr) && <div className="w-1 h-1 rounded-full bg-[#F87171]" />}
                  {events?.deliveries.some(e => format(new Date(e.created_at), 'yyyy-MM-dd') === dayStr) && <div className="w-1 h-1 rounded-full bg-[#F59E0B]" />}
                  {events?.payments.some(e => e.payment_date === dayStr) && <div className="w-1 h-1 rounded-full bg-[#818CF8]" />}
@@ -1293,7 +1293,7 @@ function MarketTrendCard({ province }) {
 
   return (
     <Card className="p-8 bg-[#0C1319] border-white/5 rounded-[32px] relative overflow-hidden group">
-      <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[radial-gradient(circle,rgba(16,185,129,0.03)_0%,transparent_70%)] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[radial-gradient(circle,rgba(2, 26, 2,0.03)_0%,transparent_70%)] pointer-events-none" />
       
       <div className="flex flex-col gap-4 mb-8 relative z-10">
         {/* Row 1: Title + Toggle */}
@@ -1350,7 +1350,7 @@ function MarketTrendCard({ province }) {
 
           <div className="flex items-center gap-4">
             <LegendItem color="#F59E0B" label="Chickin.id" dashed />
-            <LegendItem color="#10B981" label="Harga Beli" />
+            <LegendItem color="#021a02" label="Harga Beli" />
             <LegendItem color="#818CF8" label="Harga Jual" />
           </div>
         </div>
@@ -1361,8 +1361,8 @@ function MarketTrendCard({ province }) {
           <AreaChart data={trendData}>
             <defs>
               <linearGradient id="colorBuy" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10B981" stopOpacity={0.15}/>
-                <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#021a02" stopOpacity={0.15}/>
+                <stop offset="95%" stopColor="#021a02" stopOpacity={0}/>
               </linearGradient>
               <linearGradient id="colorSell" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#818CF8" stopOpacity={0.1}/>
@@ -1386,7 +1386,7 @@ function MarketTrendCard({ province }) {
             {/* Harga Jual ke RPA */}
             <Area type="monotone" dataKey="sellPrice" stroke="#818CF8" strokeWidth={2} fillOpacity={1} fill="url(#colorSell)" connectNulls activeDot={{ r: 5, stroke: '#0C1319', strokeWidth: 2, fill: '#818CF8' }} />
             {/* Harga Beli dari Kandang — dominant */}
-            <Area type="monotone" dataKey="buyPrice" stroke="#10B981" strokeWidth={4} fillOpacity={1} fill="url(#colorBuy)" activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: '#10B981' }} connectNulls />
+            <Area type="monotone" dataKey="buyPrice" stroke="#021a02" strokeWidth={4} fillOpacity={1} fill="url(#colorBuy)" activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: '#021a02' }} connectNulls />
           </AreaChart>
         </ResponsiveContainer>
       </div>

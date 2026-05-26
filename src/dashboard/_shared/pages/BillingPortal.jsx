@@ -6,7 +6,8 @@ import { supabase } from '@/lib/supabase'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 import { formatIDR } from '@/lib/format'
 import { format } from 'date-fns'
-import { id as localeId } from 'date-fns/locale'
+import { id as localeId, enUS as localeEn } from 'date-fns/locale'
+import { useLanguage } from '@/lib/i18n/useLanguage'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -18,7 +19,7 @@ const TEXT_DIM = '#64748B'
 const TEXT_MUTE = '#2A3F52'
 
 const INVOICE_STATUS = {
-  paid:      { label: 'Lunas',    color: '#10B981', bg: 'rgba(16,185,129,0.12)',  icon: <CheckCircle2 size={13} /> },
+  paid:      { label: 'Lunas',    color: '#021a02', bg: 'rgba(2, 26, 2,0.12)',  icon: <CheckCircle2 size={13} /> },
   pending:   { label: 'Menunggu', color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', icon: <Clock size={13} /> },
   expired:   { label: 'Kedaluwarsa', color: '#64748B', bg: 'rgba(100,116,139,0.12)', icon: <XCircle size={13} /> },
   cancelled: { label: 'Dibatalkan',  color: '#F87171', bg: 'rgba(248,113,113,0.12)', icon: <XCircle size={13} /> },
@@ -47,16 +48,18 @@ function useTenantInvoices(tenantIds) {
 // ─── Plan status chip ─────────────────────────────────────────────────────────
 
 function PlanChip({ tenant }) {
+  const { lang, tPlan, t } = useLanguage()
+  const activeLocale = lang === 'en' ? localeEn : localeId
   const sub = getSubscriptionStatus(tenant)
   const colors = {
-    active:  { color: '#10B981', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.25)' },
+    active:  { color: '#021a02', bg: 'rgba(2, 26, 2,0.12)', border: 'rgba(2, 26, 2,0.25)' },
     trial:   { color: '#818CF8', bg: 'rgba(99,102,241,0.12)', border: 'rgba(99,102,241,0.25)' },
     expired: { color: '#F87171', bg: 'rgba(248,113,113,0.12)', border: 'rgba(248,113,113,0.25)' },
     unknown: { color: TEXT_DIM, bg: SURFACE, border: HAIRLINE },
   }
   const c = colors[sub.status] || colors.unknown
   const expiryStr = sub.expiresAt
-    ? format(sub.expiresAt, 'd MMM yyyy', { locale: localeId })
+    ? format(sub.expiresAt, 'd MMM yyyy', { locale: activeLocale })
     : null
 
   return (
@@ -66,11 +69,11 @@ function PlanChip({ tenant }) {
         padding: '3px 10px', borderRadius: 999, fontSize: 11, fontWeight: 800,
         background: c.bg, border: `1px solid ${c.border}`, color: c.color,
       }}>
-        {sub.label}
+        {tPlan(sub.label)}
       </span>
       {expiryStr && (
         <span style={{ fontSize: 10, color: TEXT_MUTE }}>
-          {sub.status === 'expired' ? 'Expired' : 'hingga'} {expiryStr}
+          {sub.status === 'expired' ? t('billing_expired', 'Expired') : t('billing_until', 'hingga')} {expiryStr}
         </span>
       )}
     </div>
@@ -80,6 +83,7 @@ function PlanChip({ tenant }) {
 // ─── Tenant card ──────────────────────────────────────────────────────────────
 
 function TenantCard({ tenant, onUpgrade }) {
+  const { t, tVertical } = useLanguage()
   return (
     <div style={{
       padding: '14px 16px', borderRadius: 14,
@@ -88,17 +92,17 @@ function TenantCard({ tenant, onUpgrade }) {
     }}>
       <div style={{
         width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-        background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.2)',
+        background: 'rgba(2, 26, 2,0.12)', border: '1px solid rgba(2, 26, 2,0.2)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <Building2 size={17} color="#10B981" />
+        <Building2 size={17} color="#021a02" />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontSize: 13, fontWeight: 700, color: TEXT, margin: 0, lineHeight: 1.3 }}>
-          {tenant.business_name || 'Bisnis Saya'}
+          {tenant.business_name || t('index_fallback_biz', 'Bisnis Saya')}
         </p>
         <p style={{ fontSize: 11, color: TEXT_DIM, margin: 0, marginTop: 2 }}>
-          {tenant.business_vertical?.replace(/_/g, ' ') || '—'}
+          {tVertical(tenant.business_vertical) || '—'}
         </p>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
@@ -106,11 +110,11 @@ function TenantCard({ tenant, onUpgrade }) {
         <button
           onClick={() => onUpgrade(tenant)}
           style={{
-            fontSize: 10, fontWeight: 800, color: '#10B981',
+            fontSize: 10, fontWeight: 800, color: '#021a02',
             background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
           }}
         >
-          Kelola →
+          {t('billing_manage_btn', 'Kelola →')}
         </button>
       </div>
     </div>
@@ -120,10 +124,13 @@ function TenantCard({ tenant, onUpgrade }) {
 // ─── Invoice row ──────────────────────────────────────────────────────────────
 
 function InvoiceRow({ invoice, tenantMap }) {
+  const { t, tStatus, tPlan, lang } = useLanguage()
+  const activeLocale = lang === 'en' ? localeEn : localeId
   const s = INVOICE_STATUS[invoice.status] || INVOICE_STATUS.pending
   const dateStr = invoice.paid_at || invoice.created_at
-  const date = dateStr ? format(new Date(dateStr), 'd MMM yyyy', { locale: localeId }) : '—'
+  const date = dateStr ? format(new Date(dateStr), 'd MMM yyyy', { locale: activeLocale }) : '—'
   const tenantName = tenantMap[invoice.tenant_id] || '—'
+  const statusLabel = tStatus(invoice.status)
 
   return (
     <div style={{
@@ -143,7 +150,7 @@ function InvoiceRow({ invoice, tenantMap }) {
           {invoice.invoice_number}
         </p>
         <p style={{ fontSize: 10, color: TEXT_DIM, margin: 0, marginTop: 1 }}>
-          {tenantName} · {invoice.plan?.toUpperCase() || '—'} {invoice.billing_months} bln · {date}
+          {tenantName} · {tPlan(invoice.plan)} {t('billing_months_count_unit', '{months} bln').replace('{months}', invoice.billing_months)} · {date}
         </p>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
@@ -154,10 +161,11 @@ function InvoiceRow({ invoice, tenantMap }) {
           fontSize: 10, fontWeight: 700, color: s.color,
           background: s.bg, padding: '2px 7px', borderRadius: 999,
         }}>
-          {s.label}
+          {statusLabel}
         </span>
       </div>
     </div>
+
   )
 }
 
@@ -166,6 +174,7 @@ function InvoiceRow({ invoice, tenantMap }) {
 export default function BillingPortal() {
   const navigate = useNavigate()
   const { profiles, isSuperadmin } = useAuth()
+  const { t, tPlan } = useLanguage()
 
   // Collect all owned tenants from profiles
   const ownedTenants = profiles
@@ -174,7 +183,7 @@ export default function BillingPortal() {
     .filter((t, i, arr) => arr.findIndex(x => x.id === t.id) === i) // dedupe
 
   const tenantIds = ownedTenants.map(t => t.id)
-  const tenantMap = Object.fromEntries(ownedTenants.map(t => [t.id, t.business_name || 'Bisnis Saya']))
+  const tenantMap = Object.fromEntries(ownedTenants.map(t => [t.id, t.business_name || t('index_fallback_biz', 'Bisnis Saya')]))
 
   const { data: invoices = [], isLoading, refetch } = useTenantInvoices(tenantIds)
 
@@ -205,8 +214,8 @@ export default function BillingPortal() {
             <ArrowLeft size={20} />
           </button>
           <div style={{ flex: 1 }}>
-            <h1 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: TEXT }}>Billing & Langganan</h1>
-            <p style={{ margin: 0, fontSize: 11, color: TEXT_DIM }}>Kelola paket dan riwayat pembayaran</p>
+            <h1 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: TEXT }}>{t('billing_portal_title', 'Billing & Langganan')}</h1>
+            <p style={{ margin: 0, fontSize: 11, color: TEXT_DIM }}>{t('billing_portal_subtitle', 'Kelola paket dan riwayat pembayaran')}</p>
           </div>
           <button
             onClick={() => refetch()}
@@ -223,31 +232,31 @@ export default function BillingPortal() {
           {!isSuperadmin && (
             <div style={{
               margin: '16px 0', padding: '14px 16px', borderRadius: 14,
-              background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)',
+              background: 'rgba(2, 26, 2,0.06)', border: '1px solid rgba(2, 26, 2,0.15)',
               display: 'flex', gap: 0,
             }}>
               <div style={{ flex: 1, textAlign: 'center', borderRight: `1px solid ${HAIRLINE}` }}>
-                <p style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#10B981' }}>{ownedTenants.length}</p>
-                <p style={{ margin: 0, fontSize: 10, color: TEXT_DIM }}>Bisnis</p>
+                <p style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#021a02' }}>{ownedTenants.length}</p>
+                <p style={{ margin: 0, fontSize: 10, color: TEXT_DIM }}>{t('billing_business', 'Bisnis')}</p>
               </div>
               <div style={{ flex: 1, textAlign: 'center', borderRight: `1px solid ${HAIRLINE}` }}>
                 <p style={{ margin: 0, fontSize: 18, fontWeight: 900, color: TEXT }}>{paidInvoices.length}</p>
-                <p style={{ margin: 0, fontSize: 10, color: TEXT_DIM }}>Invoice Lunas</p>
+                <p style={{ margin: 0, fontSize: 10, color: TEXT_DIM }}>{t('billing_paid_invoices', 'Invoice Lunas')}</p>
               </div>
               <div style={{ flex: 1, textAlign: 'center' }}>
                 <p style={{ margin: 0, fontSize: 14, fontWeight: 900, color: TEXT }}>{formatIDR(totalSpent)}</p>
-                <p style={{ margin: 0, fontSize: 10, color: TEXT_DIM }}>Total Dibayar</p>
+                <p style={{ margin: 0, fontSize: 10, color: TEXT_DIM }}>{t('billing_total_paid', 'Total Dibayar')}</p>
               </div>
             </div>
           )}
 
           {/* Bisnis & Plan */}
           <p style={{ fontSize: 11, fontWeight: 800, color: TEXT_MUTE, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '20px 0 10px' }}>
-            Bisnis Saya
+            {t('billing_my_businesses', 'Bisnis Saya')}
           </p>
           {ownedTenants.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '24px 0', color: TEXT_DIM, fontSize: 13 }}>
-              Tidak ada bisnis yang ditemukan
+              {t('billing_no_business', 'Tidak ada bisnis yang ditemukan')}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -266,28 +275,28 @@ export default function BillingPortal() {
             onClick={() => navigate('/upgrade')}
             style={{
               width: '100%', marginTop: 12, padding: '12px 16px',
-              borderRadius: 12, border: '1px dashed rgba(16,185,129,0.3)',
-              background: 'transparent', color: '#10B981',
+              borderRadius: 12, border: '1px dashed rgba(2, 26, 2,0.3)',
+              background: 'transparent', color: '#021a02',
               fontSize: 12, fontWeight: 800, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}
           >
             <CreditCard size={14} />
-            Upgrade / Perpanjang Paket
+            {t('billing_upgrade_renew_btn', 'Upgrade / Perpanjang Paket')}
           </button>
 
           {/* Invoice history */}
           <p style={{ fontSize: 11, fontWeight: 800, color: TEXT_MUTE, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '24px 0 0' }}>
-            Riwayat Pembayaran
+            {t('billing_payment_history', 'Riwayat Pembayaran')}
           </p>
 
           {isLoading ? (
             <div style={{ textAlign: 'center', padding: '32px 0', color: TEXT_DIM, fontSize: 13 }}>
-              Memuat data...
+              {t('billing_loading', 'Memuat data...')}
             </div>
           ) : orderedInvoices.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '32px 0', color: TEXT_MUTE, fontSize: 13 }}>
-              Belum ada riwayat pembayaran
+              {t('billing_no_history', 'Belum ada riwayat pembayaran')}
             </div>
           ) : (
             <div style={{
@@ -313,12 +322,15 @@ export default function BillingPortal() {
             }}>
               <AlertCircle size={14} color="#F59E0B" style={{ flexShrink: 0, marginTop: 1 }} />
               <p style={{ margin: 0, fontSize: 11, color: '#F59E0B', lineHeight: 1.5 }}>
-                Kamu punya <strong>{pendingInvoices.length} invoice pending</strong> yang belum dibayar.{' '}
+                <span dangerouslySetInnerHTML={{
+                  __html: t('billing_pending_invoices_alert', 'Kamu punya <strong>{count} invoice pending</strong> yang belum dibayar.')
+                    .replace('{count}', pendingInvoices.length)
+                }} />{' '}
                 <span
                   onClick={() => navigate('/upgrade')}
                   style={{ textDecoration: 'underline', cursor: 'pointer' }}
                 >
-                  Bayar sekarang →
+                  {t('billing_pay_now', 'Bayar sekarang →')}
                 </span>
               </p>
             </div>

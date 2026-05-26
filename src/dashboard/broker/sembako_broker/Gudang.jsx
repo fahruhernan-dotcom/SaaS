@@ -415,7 +415,7 @@ export default function Gudang() {
       {/* Summary chips */}
       <div style={{ display: 'flex', gap: 10, padding: '14px 16px 0', overflowX: 'auto' }}>
         <Chip label="Nilai Stok" value={`Rp ${totalStokNilai >= 1_000_000 ? (totalStokNilai / 1_000_000).toFixed(1) + 'jt' : new Intl.NumberFormat('id-ID').format(totalStokNilai)}`} color={C.accent} />
-        <Chip label="Stok Menipis" value={`${lowStockCount} produk`} color={lowStockCount > 0 ? '#F87171' : '#34D399'} />
+        <Chip label="Stok Menipis" value={`${lowStockCount} produk`} color={lowStockCount > 0 ? '#F87171' : '#021a02'} />
       </div>
 
       {/* Tabs */}

@@ -19,6 +19,7 @@ import { useAntiSpam } from '@/lib/hooks/useAntiSpam'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { usePlatformStats } from '@/lib/hooks/usePlatformStats'
 import { logError } from '@/lib/logger/errorLogger'
+import { useLanguage } from '@/lib/i18n/useLanguage'
 
 // Components
 import MobileRegister from './MobileRegister'
@@ -84,6 +85,7 @@ const waitForProfile = async (authUserId, maxRetries = 8, interval = 600) => {
 
 export default function Register() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
@@ -260,13 +262,13 @@ export default function Register() {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="hidden md:flex md:w-[45%] relative border-r border-white/5 flex-col justify-center gap-12 p-10 overflow-hidden"
+        className="dark-preserve hidden md:flex md:w-[45%] relative border-r border-white/5 flex-col justify-center gap-12 p-10 overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #0C1319 0%, #060D12 50%, #0A1A12 100%)' }}
       >
-        <div style={{ position: 'absolute', bottom: -100, right: -100, width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: -100, right: -100, width: 400, height: 400, borderRadius: '50%', background: 'radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
         <div style={{
           position: 'absolute', inset: 0,
-          backgroundImage: `linear-gradient(rgba(16,185,129,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(16,185,129,0.03) 1px, transparent 1px)`,
+          backgroundImage: `linear-gradient(rgba(16, 185, 129, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(16, 185, 129, 0.03) 1px, transparent 1px)`,
           backgroundSize: '40px 40px', pointerEvents: 'none'
         }} />
 
@@ -344,20 +346,20 @@ export default function Register() {
       {/* RIGHT PANEL - FORM */}
       <div className="flex-1 flex items-center justify-center px-5 py-8 md:p-8 min-h-screen overflow-y-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }} className="w-full max-w-[400px] py-10">
-          <h1 className="font-display text-2xl font-black text-white mb-2">Buat akun baru</h1>
-          <p className="text-[#4B6478] text-sm mb-8">Gratis selamanya, tanpa kartu kredit.</p>
+          <h1 className="font-display text-2xl font-black text-white mb-2">{t('auth_register_title', 'Buat akun baru')}</h1>
+          <p className="text-[#4B6478] text-sm mb-8">{t('auth_register_desc', 'Gratis selamanya, tanpa kartu kredit.')}</p>
 
           <Button type="button" variant="outline" onClick={handleGoogleSignIn} className="w-full h-11 border-white/10 bg-transparent text-white font-semibold rounded-xl hover:bg-white/5 transition-colors mb-6">
-            <GoogleIcon /> Daftar dengan Google
+            <GoogleIcon /> {t('auth_register_google', 'Daftar dengan Google')}
           </Button>
 
           <div className="flex items-center gap-3 my-6">
-            <Separator className="flex-1 bg-white/5" /><span className="text-[11px] text-[#4B6478] font-bold uppercase tracking-widest">atau</span><Separator className="flex-1 bg-white/5" />
+            <Separator className="flex-1 bg-white/5" /><span className="text-[11px] text-[#4B6478] font-bold uppercase tracking-widest">{t('auth_or', 'atau')}</span><Separator className="flex-1 bg-white/5" />
           </div>
 
           <div className="flex p-1 bg-white/5 rounded-xl border border-white/10 mb-6">
             {['mandiri', 'invite'].map(m => (
-              <button key={m} onClick={() => setMode(m)} className={`flex-1 py-2 text-[13px] font-semibold transition-all rounded-lg ${mode === m ? 'bg-[#10B981] text-white shadow-lg' : 'text-[#94A3B8] hover:text-white'}`}>{m === 'mandiri' ? 'Daftar Mandiri' : 'Pakai Undangan'}</button>
+              <button key={m} onClick={() => setMode(m)} className={`flex-1 py-2 text-[13px] font-semibold transition-all rounded-lg ${mode === m ? 'bg-[#10B981] text-white shadow-lg' : 'text-[#94A3B8] hover:text-white'}`}>{m === 'mandiri' ? t('auth_register_mandiri', 'Daftar Mandiri') : t('auth_register_invite', 'Pakai Undangan')}</button>
             ))}
           </div>
 
@@ -368,46 +370,46 @@ export default function Register() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <HoneypotField />
             <div className="space-y-1.5">
-              <Label className="text-[#94A3B8] text-xs font-semibold ml-1">NAMA LENGKAP</Label>
-              <Input placeholder="Budi Santoso" {...register('fullName')} className="bg-[#111C24] border-white/10 text-white h-11 rounded-xl" />
+              <Label className="text-[#94A3B8] text-xs font-semibold ml-1">{t('auth_fullname_label', 'NAMA LENGKAP')}</Label>
+              <Input placeholder={t('auth_fullname_placeholder', 'Budi Santoso')} {...register('fullName')} className="bg-[#111C24] border-white/10 text-white h-11 rounded-xl" />
               {errors.fullName && <p className="text-xs text-red-500">{errors.fullName.message}</p>}
             </div>
             {mode === 'invite' && (
               <div className="space-y-1.5">
-                <Label className="text-[#94A3B8] text-xs font-semibold ml-1">KODE UNDANGAN</Label>
+                <Label className="text-[#94A3B8] text-xs font-semibold ml-1">{t('auth_invite_code_label', 'KODE UNDANGAN')}</Label>
                 <Input placeholder="CODE12" maxLength={6} {...register('inviteCode')} onChange={e => setValue('inviteCode', e.target.value.toUpperCase())} className="bg-[#111C24] border-white/10 text-white h-11 rounded-xl text-center font-bold tracking-[0.3em]" />
                 {errors.inviteCode && <p className="text-xs text-red-500">{errors.inviteCode.message}</p>}
               </div>
             )}
             <div className="space-y-1.5">
-              <Label className="text-[#94A3B8] text-xs font-semibold ml-1">EMAIL</Label>
-              <Input type="email" placeholder="email@contoh.com" {...register('email')} className="bg-[#111C24] border-white/10 text-white h-11 rounded-xl" />
+              <Label className="text-[#94A3B8] text-xs font-semibold ml-1">{t('auth_email_label_upper', 'EMAIL')}</Label>
+              <Input type="email" placeholder={t('auth_email_placeholder_full', 'email@contoh.com')} {...register('email')} className="bg-[#111C24] border-white/10 text-white h-11 rounded-xl" />
               {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-[#94A3B8] text-xs font-semibold ml-1">PASSWORD</Label>
-                <Input type={showPassword ? 'text' : 'password'} {...register('password')} className="bg-[#111C24] border-white/10 text-white h-11 rounded-xl" />
+               <div className="space-y-1.5">
+                <Label className="text-[#94A3B8] text-xs font-semibold ml-1">{t('auth_password_label_upper', 'PASSWORD')}</Label>
+                <Input type={showPassword ? 'text' : 'password'} placeholder={t('auth_password_placeholder', '••••••••')} {...register('password')} className="bg-[#111C24] border-white/10 text-white h-11 rounded-xl" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[#94A3B8] text-xs font-semibold ml-1">KONFIRMASI</Label>
+                <Label className="text-[#94A3B8] text-xs font-semibold ml-1">{t('auth_confirm_password_label', 'KONFIRMASI')}</Label>
                 <div className="relative">
-                  <Input type={showPassword ? 'text' : 'password'} {...register('confirmPassword')} className="bg-[#111C24] border-white/10 text-white h-11 rounded-xl" />
+                  <Input type={showPassword ? 'text' : 'password'} placeholder={t('auth_password_placeholder', '••••••••')} {...register('confirmPassword')} className="bg-[#111C24] border-white/10 text-white h-11 rounded-xl" />
                   <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4B6478]">{showPassword ? <EyeOff size={16} /> : <Eye size={16} />}</button>
                 </div>
               </div>
             </div>
             <div className="flex items-start gap-2 pt-2">
               <input type="checkbox" {...register('agreedToTerms')} className="mt-1 accent-emerald-500" />
-              <p className="text-xs text-[#4B6478] leading-relaxed">Saya menyetujui <Link to="/terms" className="text-emerald-400">S&K</Link> dan <Link to="/privacy" className="text-emerald-400">Kebijakan Privasi</Link> TernakOS.</p>
+              <p className="text-xs text-[#4B6478] leading-relaxed">{t('auth_register_terms_prefix', 'Saya menyetujui ')}<Link to="/terms" className="text-emerald-400">{t('auth_terms', 'S&K')}</Link>{t('auth_register_terms_mid', ' dan ')}<Link to="/privacy" className="text-emerald-400">{t('auth_privacy', 'Kebijakan Privasi')}</Link>{t('auth_register_terms_suffix', ' TernakOS.')}</p>
             </div>
             {errors.agreedToTerms && <p className="text-xs text-red-500">{errors.agreedToTerms.message}</p>}
             {authError && <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-[13px] text-red-400 flex items-center gap-2"><AlertCircle size={14} />{authError}</div>}
             <Button type="submit" disabled={isLoading || isBlocked} className="w-full bg-[#10B981] hover:bg-emerald-600 text-white font-bold h-11 rounded-xl shadow-[0_4px_20px_rgba(16,185,129,0.2)] mt-4">
-              {isLoading ? 'Memproses...' : cooldown > 0 ? `Tunggu ${cooldown}s` : (mode === 'mandiri' ? 'Daftar Gratis →' : 'Bergabung Tim')}
+              {isLoading ? t('auth_processing', 'Memproses...') : cooldown > 0 ? `Tunggu ${cooldown}s` : (mode === 'mandiri' ? t('auth_register_button', 'Daftar Gratis →') : t('auth_join_team_button', 'Bergabung Tim'))}
             </Button>
           </form>
-          <p className="text-center text-sm text-[#4B6478] mt-8">Sudah punya akun? <Link to="/login" className="text-emerald-400 font-semibold">Masuk Sekarang</Link></p>
+          <p className="text-center text-sm text-[#4B6478] mt-8">{t('auth_already_have_account', 'Sudah punya akun? ')}<Link to="/login" className="text-emerald-400 font-semibold">{t('auth_login_now', 'Masuk Sekarang')}</Link></p>
         </motion.div>
       </div>
     </div>

@@ -64,7 +64,7 @@ const SplineScene = ({ scene, className, style }) => {
       {!isScriptLoaded ? (
         <div className="absolute inset-0 flex items-center justify-center bg-[#0C1319]/50 overflow-hidden" style={{ width: '100%', height: '100%' }}>
           <div className="w-20 h-20 rounded-full bg-emerald-500/10 animate-pulse border border-emerald-500/20" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#10B9810a_0%,_transparent_70%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#021a020a_0%,_transparent_70%)]" />
         </div>
       ) : (
         <div style={{ width: '100%', height: '100%' }} className="overflow-hidden grayscale-[0.2] hover:grayscale-0 transition-all duration-700">

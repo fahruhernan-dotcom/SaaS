@@ -8,12 +8,12 @@ export const tokens = {
   // Borders  
   borderSub:  'rgba(255,255,255,0.05)',
   borderDef:  'rgba(255,255,255,0.08)',
-  borderAcc:  'rgba(16,185,129,0.35)',
+  borderAcc:  'rgba(2, 26, 2,0.35)',
   
   // Brand
-  emerald:    '#10B981',
-  emBright:   '#34D399',
-  emGlow:     'rgba(16,185,129,0.12)',
+  emerald:    '#021a02',
+  emBright:   '#021a02',
+  emGlow:     'rgba(2, 26, 2,0.12)',
   gold:       '#F59E0B',
   
   // Text
@@ -27,7 +27,7 @@ export const tokens = {
   amber:      '#FBBF24',
   
   // Role colors
-  broker:     '#10B981',  // emerald
+  broker:     '#021a02',  // emerald
   peternak:   '#7C3AED',  // purple
   rpa:        '#F59E0B',  // amber
 }

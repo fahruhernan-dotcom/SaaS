@@ -2,31 +2,33 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, ArrowRight, CheckCircle2, BarChart2, Users, ShieldCheck } from 'lucide-react'
+import { useLanguage } from '@/lib/i18n/useLanguage'
 
-const FEATURES = [
+const getFeatures = (t) => [
   {
     icon: BarChart2,
-    title: 'Laporan Real-Time',
-    desc: 'ADG, FCR, dan profit dihitung otomatis setiap saat.',
+    title: t('onboarding_feat1_title', 'Laporan Real-Time'),
+    desc: t('onboarding_feat1_desc', 'ADG, FCR, dan profit dihitung otomatis setiap saat.'),
     color: '#D97706',
   },
   {
     icon: Users,
-    title: 'Manajemen Tim',
-    desc: 'Undang anggota dengan role yang bisa diatur.',
+    title: t('onboarding_feat2_title', 'Manajemen Tim'),
+    desc: t('onboarding_feat2_desc', 'Undang anggota dengan role yang bisa diatur.'),
     color: '#7C3AED',
   },
   {
     icon: ShieldCheck,
-    title: 'Data Aman & Privat',
-    desc: 'Data bisnis kamu terisolasi dan terenkripsi.',
-    color: '#10B981',
+    title: t('onboarding_feat3_title', 'Data Aman & Privat'),
+    desc: t('onboarding_feat3_desc', 'Data bisnis kamu terisolasi dan terenkripsi.'),
+    color: '#021a02',
   },
 ]
 
 export default function WelcomeOnboard() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useLanguage()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -52,6 +54,8 @@ export default function WelcomeOnboard() {
     return () => clearTimeout(t)
   }, [countdown])
 
+  const FEATURES = getFeatures(t)
+
   return (
     <AnimatePresence>
       {visible && (
@@ -69,7 +73,7 @@ export default function WelcomeOnboard() {
             style={{
               background: [
                 'radial-gradient(ellipse 50% 35% at 50% 0%, rgba(124,58,237,0.15) 0%, transparent 70%)',
-                'radial-gradient(ellipse 40% 30% at 80% 80%, rgba(16,185,129,0.08) 0%, transparent 70%)',
+                'radial-gradient(ellipse 40% 30% at 80% 80%, rgba(2, 26, 2,0.08) 0%, transparent 70%)',
               ].join(', '),
             }}
           />
@@ -88,7 +92,7 @@ export default function WelcomeOnboard() {
                   transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                   className="w-24 h-24 rounded-3xl flex items-center justify-center"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(124,58,237,0.2) 0%, rgba(16,185,129,0.15) 100%)',
+                    background: 'linear-gradient(135deg, rgba(124,58,237,0.2) 0%, rgba(2, 26, 2,0.15) 100%)',
                     border: '1.5px solid rgba(124,58,237,0.35)',
                     boxShadow: '0 0 40px rgba(124,58,237,0.15)',
                   }}
@@ -114,7 +118,7 @@ export default function WelcomeOnboard() {
                   transition={{ delay: 0.15 }}
                   className="text-sm font-semibold text-violet-400 mb-2 tracking-wide"
                 >
-                  Halo, {userName}! 👋
+                  {t('onboarding_hello', 'Halo, ')}{userName}! 👋
                 </motion.p>
               ) : null}
               <motion.h1
@@ -123,11 +127,11 @@ export default function WelcomeOnboard() {
                 transition={{ delay: 0.2 }}
                 className="text-3xl font-black text-white mb-3 leading-tight"
               >
-                Selamat datang di<br />
+                {t('onboarding_welcome_title', 'Selamat datang di')}<br />
                 <span
                   className="inline-block"
                   style={{
-                    background: 'linear-gradient(90deg, #A78BFA, #34D399)',
+                    background: 'linear-gradient(90deg, #A78BFA, #021a02)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                   }}
@@ -141,7 +145,7 @@ export default function WelcomeOnboard() {
                 transition={{ delay: 0.3 }}
                 className="text-sm text-white/40 font-medium"
               >
-                Platform manajemen peternakan modern untuk Indonesia.
+                {t('onboarding_welcome_subtitle', 'Platform manajemen peternakan modern untuk Indonesia.')}
               </motion.p>
             </div>
 
@@ -150,14 +154,13 @@ export default function WelcomeOnboard() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35 }}
-              className="rounded-2xl overflow-hidden mb-6"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+              className="rounded-2xl overflow-hidden mb-6 bg-white/[0.03] border border-white/[0.07]"
             >
               {FEATURES.map((feat, i) => (
                 <div
                   key={i}
                   className="flex items-center gap-4 px-5 py-4"
-                  style={{ borderBottom: i < FEATURES.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}
+                  style={{ borderBottom: i < FEATURES.length - 1 ? '1px solid var(--border-sub-val)' : 'none' }}
                 >
                   <div
                     className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
@@ -188,13 +191,13 @@ export default function WelcomeOnboard() {
                 height: '52px',
               }}
             >
-              Mulai Setup Bisnis
+              {t('onboarding_start_setup', 'Mulai Setup Bisnis')}
               <ArrowRight size={16} />
             </motion.button>
 
             {/* Auto-redirect hint */}
             <p className="text-center text-[11px] text-white/25 mt-4">
-              Lanjut otomatis dalam {countdown} detik...
+              {t('onboarding_auto_redirect', 'Lanjut otomatis dalam {countdown} detik...').replace('{countdown}', countdown)}
             </p>
           </motion.div>
         </motion.div>

@@ -312,7 +312,7 @@ export default function AdminActivity() {
                             <div className="space-y-4">
                                 <div className="space-y-2">
                                     <h4 className="text-[11px] font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(2, 26, 2,0.5)]" />
                                         Updated Data Snapshot
                                     </h4>
                                     <div className="rounded-2xl bg-black/40 border border-white/10 p-4 font-mono text-[11px] leading-relaxed overflow-x-auto">

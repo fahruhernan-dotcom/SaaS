@@ -60,7 +60,7 @@ const COMMODITY_GROUPS = [
 
 const TYPE_META = {
   stok_ayam: { label: 'Jual Stok', color: '#A78BFA', bg: 'rgba(124,58,237,0.12)', border: 'rgba(124,58,237,0.3)' },
-  penawaran_broker: { label: 'Penawaran', color: '#34D399', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)' },
+  penawaran_broker: { label: 'Penawaran', color: '#021a02', bg: 'rgba(2, 26, 2,0.12)', border: 'rgba(2, 26, 2,0.3)' },
   permintaan_rpa: { label: 'Permintaan', color: '#FBBF24', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)' },
 }
 
@@ -166,7 +166,7 @@ function ListingCard({ listing }) {
             <span className="text-[#4B6478]">
               {listing.listing_type === 'permintaan_rpa' ? 'Budget Harga' : 'Harga Per Satuan'}
             </span>
-            <span className="font-bold tabular-nums" style={{ color: '#34D399' }}>
+            <span className="font-bold tabular-nums" style={{ color: '#021a02' }}>
               {formatRp(listing.price_per_kg)}
             </span>
           </div>
@@ -264,7 +264,7 @@ export default function MarketPublic() {
           </div>
           <button
             onClick={() => navigate('/register')}
-            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold px-5 py-3 rounded-xl transition-colors shadow-[0_4px_20px_rgba(16,185,129,0.25)] shrink-0"
+            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold px-5 py-3 rounded-xl transition-colors shadow-[0_4px_20px_rgba(2, 26, 2,0.25)] shrink-0"
           >
             <Plus size={16} />
             Pasang Iklan Sekarang
@@ -319,7 +319,7 @@ export default function MarketPublic() {
                   onClick={() => setTypeFilter(t.value)}
                   className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all"
                   style={typeFilter === t.value
-                    ? { background: '#10B981', color: '#fff', border: '1px solid #10B981' }
+                    ? { background: '#021a02', color: '#fff', border: '1px solid #021a02' }
                     : { background: 'rgba(255,255,255,0.04)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.08)' }
                   }
                 >

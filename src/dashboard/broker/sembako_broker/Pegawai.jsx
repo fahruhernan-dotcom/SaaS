@@ -285,9 +285,9 @@ function TabPegawai({ isDesktop }) {
                     onClick={() => setForm({ ...form, status: s.value })}
                     style={{
                       flex: 1, padding: '10px', borderRadius: '12px', fontSize: '12px', fontWeight: 700,
-                      border: form.status === s.value ? `1.5px solid ${s.value === 'aktif' ? '#34D399' : '#F87171'}` : `1.5px solid rgba(255,255,255,0.07)`,
-                      background: form.status === s.value ? (s.value === 'aktif' ? 'rgba(52,211,153,0.1)' : 'rgba(239,68,68,0.1)') : 'rgba(255,255,255,0.04)',
-                      color: form.status === s.value ? (s.value === 'aktif' ? '#34D399' : '#F87171') : '#4B6478',
+                      border: form.status === s.value ? `1.5px solid ${s.value === 'aktif' ? '#021a02' : '#F87171'}` : `1.5px solid rgba(255,255,255,0.07)`,
+                      background: form.status === s.value ? (s.value === 'aktif' ? 'rgba(2, 26, 2,0.1)' : 'rgba(239,68,68,0.1)') : 'rgba(255,255,255,0.04)',
+                      color: form.status === s.value ? (s.value === 'aktif' ? '#021a02' : '#F87171') : '#4B6478',
                       transition: 'all 0.2s'
                     }}
                   >
@@ -562,14 +562,14 @@ function TabPayroll({ isDesktop }) {
                       <td style={{ padding: '8px 6px' }}>
                         <span style={{
                           fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px',
-                          background: isPending ? 'rgba(245,158,11,0.12)' : 'rgba(52,211,153,0.12)',
+                          background: isPending ? 'rgba(245,158,11,0.12)' : 'rgba(2, 26, 2,0.12)',
                           color: isPending ? C.amber : C.green,
                         }}>{isPending ? 'Pending' : 'Paid'}</span>
                       </td>
                       <td style={{ padding: '8px 6px' }}>
                         {isPending && (
                           <button onClick={() => markPaid.mutate(p.id)} style={{
-                            background: 'rgba(52,211,153,0.15)', border: 'none', borderRadius: '6px',
+                            background: 'rgba(2, 26, 2,0.15)', border: 'none', borderRadius: '6px',
                             padding: '4px 10px', cursor: 'pointer', color: C.green, fontSize: '10px', fontWeight: 700,
                             display: 'flex', alignItems: 'center', gap: '4px',
                           }}>
@@ -596,7 +596,7 @@ function TabPayroll({ isDesktop }) {
                     </div>
                     <span style={{
                       fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px',
-                      background: isPending ? 'rgba(245,158,11,0.12)' : 'rgba(52,211,153,0.12)',
+                      background: isPending ? 'rgba(245,158,11,0.12)' : 'rgba(2, 26, 2,0.12)',
                       color: isPending ? C.amber : C.green,
                     }}>{isPending ? 'Pending' : 'Paid'}</span>
                   </div>
@@ -605,7 +605,7 @@ function TabPayroll({ isDesktop }) {
                     <span style={{ fontSize: '15px', fontWeight: 800, color: C.text, fontFamily: 'DM Sans' }}>{formatIDR(p.total_pay)}</span>
                     {isPending && (
                       <button onClick={() => markPaid.mutate(p.id)} style={{
-                        background: 'rgba(52,211,153,0.15)', border: 'none', borderRadius: '8px',
+                        background: 'rgba(2, 26, 2,0.15)', border: 'none', borderRadius: '8px',
                         padding: '6px 12px', cursor: 'pointer', color: C.green, fontSize: '11px', fontWeight: 700,
                       }}>Tandai Lunas</button>
                     )}

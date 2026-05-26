@@ -67,7 +67,7 @@ export default function ForgotPassword() {
     <div className="flex items-center justify-center min-h-screen bg-[#06090F] px-5 py-10 relative overflow-hidden">
       <Particles
         quantity={25}
-        color="#10B981"
+        color="#021a02"
         opacity={0.08}
         className="absolute inset-0 pointer-events-none"
       />
@@ -79,7 +79,7 @@ export default function ForgotPassword() {
         transform: 'translateX(-50%)',
         width: 500, height: 500,
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(2, 26, 2,0.06) 0%, transparent 70%)',
         pointerEvents: 'none'
       }} />
 
@@ -99,8 +99,8 @@ export default function ForgotPassword() {
           />
           <span style={{
             fontFamily: 'Sora', fontSize: '19px', fontWeight: 800,
-            color: '#F1F5F9', letterSpacing: '-0.3px'
-          }}>
+            letterSpacing: '-0.3px'
+          }} className="text-[#F1F5F9]">
             TernakOS
           </span>
         </Link>
@@ -109,8 +109,8 @@ export default function ForgotPassword() {
           {!sent ? (
             <>
               {/* Icon */}
-              <div className="w-12 h-12 bg-[#10B981]/10 border border-[#10B981]/20 rounded-xl flex items-center justify-center mx-auto mb-5">
-                <Mail size={22} className="text-[#10B981]" />
+              <div className="w-12 h-12 bg-[#021a02]/10 border border-[#021a02]/20 rounded-xl flex items-center justify-center mx-auto mb-5">
+                <Mail size={22} className="text-[#021a02]" />
               </div>
 
               <h1 className="text-xl font-bold font-display text-[#F1F5F9] text-center mb-1.5 tracking-tight">
@@ -148,8 +148,8 @@ export default function ForgotPassword() {
                 <div className="space-y-1.5">
                   <Label htmlFor="email" style={{
                     fontSize: '13px', fontWeight: 500,
-                    color: '#94A3B8', marginLeft: '4px', display: 'block'
-                  }}>
+                    marginLeft: '4px', display: 'block'
+                  }} className="text-[#94A3B8]">
                     Email
                   </Label>
                   <Input
@@ -160,16 +160,13 @@ export default function ForgotPassword() {
                     onChange={e => setEmail(e.target.value)}
                     disabled={isLocked}
                     style={{
-                      background: '#111C24',
-                      border: '1px solid rgba(255,255,255,0.09)',
                       borderRadius: '10px',
                       padding: '10px 14px',
                       fontSize: '15px',
-                      color: '#F1F5F9',
                       height: '42px',
                       width: '100%'
                     }}
-                    className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
+                    className="bg-[#111C24] border border-white/10 text-[#F1F5F9] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
                   />
                 </div>
 
@@ -196,14 +193,14 @@ export default function ForgotPassword() {
                   style={{
                     width: '100%',
                     height: '44px',
-                    background: '#10B981',
+                    background: '#021a02',
                     border: 'none',
                     borderRadius: '10px',
                     color: 'white',
                     fontFamily: 'Sora',
                     fontSize: '14px',
                     fontWeight: 700,
-                    boxShadow: '0 4px 20px rgba(16,185,129,0.25)',
+                    boxShadow: '0 4px 20px rgba(2, 26, 2,0.25)',
                     opacity: (!email.trim() || isBlocked) ? 0.5 : 1,
                     marginTop: '4px'
                   }}
@@ -220,8 +217,8 @@ export default function ForgotPassword() {
           ) : (
             /* SUCCESS STATE */
             <div className="text-center py-4">
-              <div className="w-14 h-14 bg-[#10B981]/10 border border-[#10B981]/20 rounded-full flex items-center justify-center mx-auto mb-5">
-                <CheckCircle2 size={28} className="text-[#10B981]" />
+              <div className="w-14 h-14 bg-[#021a02]/10 border border-[#021a02]/20 rounded-full flex items-center justify-center mx-auto mb-5">
+                <CheckCircle2 size={28} className="text-[#021a02]" />
               </div>
 
               <h2 className="text-lg font-bold font-display text-[#F1F5F9] mb-2 tracking-tight">
@@ -230,7 +227,7 @@ export default function ForgotPassword() {
               <p className="text-[13px] text-[#4B6478] leading-relaxed font-medium mb-2">
                 Kami sudah mengirim link reset password ke:
               </p>
-              <p className="text-sm text-[#10B981] font-semibold mb-6">{email}</p>
+              <p className="text-sm text-[#021a02] font-semibold mb-6">{email}</p>
               <p className="text-[12px] text-[#4B6478] leading-relaxed">
                 Cek folder <span className="text-[#94A3B8] font-medium">Inbox</span> atau <span className="text-[#94A3B8] font-medium">Spam</span> kamu. Link akan kadaluarsa dalam 1 jam.
               </p>
@@ -243,16 +240,10 @@ export default function ForgotPassword() {
                 style={{
                   width: '100%',
                   height: '40px',
-                  background: 'transparent',
-                  border: '1px solid rgba(255,255,255,0.10)',
-                  borderRadius: '10px',
-                  color: '#94A3B8',
-                  fontSize: '13px',
-                  fontWeight: 600,
                   marginTop: '20px',
                   opacity: cooldown > 0 ? 0.5 : 1
                 }}
-                className="hover:bg-white/5 transition-colors"
+                className="bg-transparent border border-white/10 text-[#94A3B8] hover:bg-white/5 transition-colors font-semibold text-[13px]"
               >
                 {cooldown > 0 ? `Kirim Ulang (${cooldown}s)` : 'Kirim Ulang'}
               </Button>

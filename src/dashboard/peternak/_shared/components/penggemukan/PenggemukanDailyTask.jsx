@@ -268,7 +268,7 @@ export function PenggemukanDailyTask({ livestockType, hooks, renderExtraReportFi
             className={cn(
               'h-11 px-6 rounded-2xl transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest',
               auditRange === 'day' && tab === 'selesai'
-                ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.2)]'
+                ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 shadow-[0_0_30px_rgba(2, 26, 2,0.2)]'
                 : 'bg-white/[0.02] border border-white/5 text-[#64748B] hover:bg-white/[0.05] hover:text-white'
             )}
           >

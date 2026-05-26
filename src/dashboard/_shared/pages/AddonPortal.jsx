@@ -78,7 +78,7 @@ export default function AddonPortal() {
         >
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 via-transparent to-transparent opacity-50" />
           <div className="relative z-10 text-center mb-8">
-            <div className="w-20 h-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+            <div className="w-20 h-20 rounded-full bg-emerald-500/10 border-2 border-emerald-500/30 flex items-center justify-center mx-auto mb-6 shadow-[0_0_30px_rgba(2, 26, 2,0.2)]">
               <CheckCircle2 size={40} className="text-emerald-500" />
             </div>
             <h2 className="text-2xl font-black text-white uppercase tracking-tight">Tagihan Dibuat!</h2>
@@ -188,7 +188,7 @@ export default function AddonPortal() {
             {hasQuota ? (
               <button
                 onClick={() => navigate('/onboarding?mode=new_business')}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-16 rounded-[24px] font-black uppercase text-sm tracking-widest transition-all shadow-[0_10px_30px_rgba(16,185,129,0.3)] flex items-center justify-center gap-3 active:scale-[0.98]"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-16 rounded-[24px] font-black uppercase text-sm tracking-widest transition-all shadow-[0_10px_30px_rgba(2, 26, 2,0.3)] flex items-center justify-center gap-3 active:scale-[0.98]"
               >
                  <Rocket size={20} /> Pakai Jatah Gratis
               </button>

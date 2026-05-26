@@ -109,6 +109,7 @@ GRANT EXECUTE ON FUNCTION "public"."get_my_tenant_ids" TO "authenticated";
 GRANT EXECUTE ON FUNCTION "public"."get_province_price_trends" TO "postgres";
 GRANT EXECUTE ON FUNCTION "public"."get_province_price_trends" TO "service_role";
 GRANT EXECUTE ON FUNCTION "public"."get_province_price_trends" TO "authenticated";
+GRANT EXECUTE ON FUNCTION "public"."get_province_price_trends" TO "anon";
 GRANT EXECUTE ON FUNCTION "public"."get_public_market_stats" TO "authenticated";
 GRANT EXECUTE ON FUNCTION "public"."get_public_market_stats" TO "service_role";
 GRANT EXECUTE ON FUNCTION "public"."get_public_market_stats" TO "postgres";

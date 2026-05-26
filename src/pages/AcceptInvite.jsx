@@ -378,8 +378,8 @@ export default function AcceptInvite() {
       {view === 'input' && (
         <div className="bg-[#0C1319] border border-white/8 rounded-2xl p-8 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-300">
           <div className="flex justify-center mb-8">
-            <div className="w-16 h-16 bg-[#10B981]/10 rounded-2xl flex items-center justify-center border border-[#10B981]/20">
-              <UserPlus className="text-[#10B981]" size={32} />
+            <div className="w-16 h-16 bg-[#021a02]/10 rounded-2xl flex items-center justify-center border border-[#021a02]/20">
+              <UserPlus className="text-[#021a02]" size={32} />
             </div>
           </div>
 
@@ -401,12 +401,12 @@ export default function AcceptInvite() {
               value={inviteCode}
               onChange={(e) => setInviteCode(e.target.value.toUpperCase().slice(0, 6))}
               disabled={isLocked}
-              className="h-16 text-center text-3xl font-bold tracking-[0.3em] uppercase bg-[#111C24] border-white/10 text-white rounded-xl focus:ring-[#10B981]/20 focus:border-[#10B981]/50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-16 text-center text-3xl font-bold tracking-[0.3em] uppercase bg-[#111C24] border-white/10 text-white rounded-xl focus:ring-[#021a02]/20 focus:border-[#021a02]/50 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <Button
               type="submit"
               disabled={loading || inviteCode.length !== 6 || isLocked}
-              className="w-full h-14 bg-[#10B981] hover:bg-[#34D399] text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full h-14 bg-[#021a02] hover:bg-[#021a02] text-white font-bold rounded-xl shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? <Loader2 className="animate-spin" /> : isLocked ? 'Terkunci' : 'Verifikasi Kode'}
             </Button>
@@ -438,7 +438,7 @@ export default function AcceptInvite() {
           <div className="text-center mb-10">
             <p className="text-[#4B6478] text-sm uppercase tracking-widest font-bold mb-2">Undangan Tim</p>
             <h1 className="text-[#F1F5F9] text-xl font-medium mb-1">Berhasil Verifikasi! Bergabung ke</h1>
-            <h2 className="text-[#10B981] text-3xl font-extrabold tracking-tight">
+            <h2 className="text-[#021a02] text-3xl font-extrabold tracking-tight">
               {invitation.tenants?.business_name}
             </h2>
             <div className="flex justify-center mt-3">
@@ -454,7 +454,7 @@ export default function AcceptInvite() {
               <Button
                 onClick={handleAcceptWithCurrentAccount}
                 disabled={isSubmitting}
-                className="w-full h-14 bg-[#10B981] hover:bg-[#34D399] text-white font-bold rounded-xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-emerald-500/20"
+                className="w-full h-14 bg-[#021a02] hover:bg-[#021a02] text-white font-bold rounded-xl flex items-center justify-center gap-3 transition-all shadow-lg shadow-emerald-500/20"
               >
                 {isSubmitting
                   ? <Loader2 size={20} className="animate-spin" />
@@ -482,7 +482,7 @@ export default function AcceptInvite() {
               className={`w-full h-14 font-bold rounded-xl flex items-center justify-center gap-3 transition-all ${
                 currentUser
                   ? 'bg-white/5 hover:bg-white/10 text-slate-300 border border-white/8'
-                  : 'bg-[#10B981] hover:bg-[#34D399] text-white shadow-lg shadow-emerald-500/20'
+                  : 'bg-[#021a02] hover:bg-[#021a02] text-white shadow-lg shadow-emerald-500/20'
               }`}
             >
               <UserPlus size={20} /> Buat Akun Baru
@@ -576,7 +576,7 @@ export default function AcceptInvite() {
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full h-12 bg-[#10B981] hover:bg-[#34D399] text-white font-bold rounded-xl mt-4 shadow-lg shadow-emerald-500/20"
+              className="w-full h-12 bg-[#021a02] hover:bg-[#021a02] text-white font-bold rounded-xl mt-4 shadow-lg shadow-emerald-500/20"
             >
               {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <ShieldCheck className="mr-2" size={20} />}
               {isSubmitting ? 'Memproses...' : 'Terima Undangan'}
@@ -672,7 +672,7 @@ export default function AcceptInvite() {
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full h-12 bg-[#10B981] hover:bg-[#34D399] text-white font-bold rounded-xl mt-4 shadow-lg shadow-emerald-500/20"
+                  className="w-full h-12 bg-[#021a02] hover:bg-[#021a02] text-white font-bold rounded-xl mt-4 shadow-lg shadow-emerald-500/20"
                 >
                   {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <LogIn className="mr-2" size={20} />}
                   {isSubmitting ? 'Memverifikasi...' : 'Masuk & Terima'}

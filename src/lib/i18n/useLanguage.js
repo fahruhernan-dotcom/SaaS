@@ -4,7 +4,16 @@ import { LanguageContext } from './LanguageProvider'
 export function useLanguage() {
   const context = useContext(LanguageContext)
   if (!context) {
-    throw new Error('useLanguage must be used within a LanguageProvider')
+    return {
+      lang: 'id',
+      setLang: () => {},
+      t: (key, fallback) => fallback ?? key,
+      tRole: (role) => role,
+      tPlan: (plan) => plan,
+      tStatus: (status) => status,
+      tVertical: (vertical) => vertical,
+      languages: []
+    }
   }
   return context
 }

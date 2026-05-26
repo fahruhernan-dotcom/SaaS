@@ -59,7 +59,7 @@ const STANDARD_SCHEDULE = [
     windowEnd: 10,
     method: 'air_minum',
     methodLabel: 'Air Minum',
-    color: '#34D399',
+    color: '#021a02',
     icon: '💧',
     notes: 'Vaksin Gumboro pertama, diberikan lewat air minum 2 jam.',
   },
@@ -83,7 +83,7 @@ const STANDARD_SCHEDULE = [
     windowEnd: 22,
     method: 'air_minum',
     methodLabel: 'Air Minum',
-    color: '#34D399',
+    color: '#021a02',
     icon: '💧',
     notes: 'Booster Gumboro kedua. Wajib sebelum maternal antibodi turun.',
   },
@@ -229,7 +229,7 @@ export default function Vaksinasi() {
                 )}
               </div>
               <div className="flex gap-2 flex-wrap">
-                <StatusChip count={doneCount}    label="Selesai"  color="#34D399" bg="rgba(52,211,153,0.08)"   border="rgba(52,211,153,0.2)" />
+                <StatusChip count={doneCount}    label="Selesai"  color="#021a02" bg="rgba(2, 26, 2,0.08)"   border="rgba(2, 26, 2,0.2)" />
                 <StatusChip count={dueNowCount}  label="Sekarang" color="#F59E0B" bg="rgba(245,158,11,0.08)"   border="rgba(245,158,11,0.2)" />
                 <StatusChip count={overdueCount} label="Terlambat" color="#F87171" bg="rgba(248,113,113,0.08)" border="rgba(248,113,113,0.2)" />
               </div>
@@ -333,7 +333,7 @@ function ScheduleCard({ schedule, isLast, onLog, canCatat = true }) {
   const [expanded, setExpanded] = useState(false)
 
   const statusCfg = {
-    done:     { label: 'Selesai ✓',     bg: 'rgba(52,211,153,0.08)',   border: 'rgba(52,211,153,0.25)',   dot: '#34D399', text: 'text-emerald-400' },
+    done:     { label: 'Selesai ✓',     bg: 'rgba(2, 26, 2,0.08)',   border: 'rgba(2, 26, 2,0.25)',   dot: '#021a02', text: 'text-emerald-400' },
     due_now:  { label: 'Waktunya Kini', bg: 'rgba(245,158,11,0.08)',   border: 'rgba(245,158,11,0.3)',    dot: '#F59E0B', text: 'text-amber-400' },
     overdue:  { label: 'Terlambat ⚠️',  bg: 'rgba(248,113,113,0.08)',  border: 'rgba(248,113,113,0.3)',   dot: '#F87171', text: 'text-red-400' },
     upcoming: { label: `Hari ${schedule.windowStart}–${schedule.windowEnd}`, bg: 'rgba(255,255,255,0.02)', border: 'rgba(255,255,255,0.07)', dot: '#4B6478', text: 'text-[#4B6478]' },

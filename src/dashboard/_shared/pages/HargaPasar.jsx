@@ -371,8 +371,8 @@ export default function HargaPasar() {
                                 <stop offset="95%" stopColor="#4B6478" stopOpacity={0}/>
                             </linearGradient>
                             <linearGradient id="colorJual" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#10B981" stopOpacity={0.1}/>
-                                <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                                <stop offset="5%" stopColor="#021a02" stopOpacity={0.1}/>
+                                <stop offset="95%" stopColor="#021a02" stopOpacity={0}/>
                             </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" vertical={false} />
@@ -397,7 +397,7 @@ export default function HargaPasar() {
                         />
                         <Area 
                             type="monotone" dataKey="jual" 
-                            stroke="#10B981" strokeWidth={2} 
+                            stroke="#021a02" strokeWidth={2} 
                             fillOpacity={1} fill="url(#colorJual)" 
                         />
                         <Area 
@@ -409,7 +409,7 @@ export default function HargaPasar() {
                 </ResponsiveContainer>
                 <div className="flex justify-center gap-6 mt-2 flex-wrap">
                     <LegendItem color="#4B6478" label="Beli" />
-                    <LegendItem color="#10B981" label="Jual" />
+                    <LegendItem color="#021a02" label="Jual" />
                     <LegendItem color="#F97316" label="Arboge (Ref)" dashed />
                 </div>
             </div>
@@ -478,7 +478,7 @@ function ChangeIndicator({ diff }) {
     return (
         <span className={cn(
             "text-[10px] font-black leading-none mt-1 flex items-center gap-0.5",
-            diff > 0 ? "text-[#34D399]" : "text-[#F87171]"
+            diff > 0 ? "text-[#021a02]" : "text-[#F87171]"
         )}>
             {diff > 0 ? '▲' : '▼'}{safeNum(Math.abs(diff)).toLocaleString('id-ID')}
         </span>

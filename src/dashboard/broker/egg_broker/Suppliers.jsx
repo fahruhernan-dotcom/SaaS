@@ -124,7 +124,7 @@ export default function Suppliers() {
           title="Supplier Telur"
           rightElement={
             <Button size="sm" onClick={() => { setEditingSupplier(null); setOpenModal(true); }}
-              className="h-9 px-3 bg-[#10B981] hover:bg-[#0D9668] text-white font-black uppercase text-xs tracking-widest rounded-xl gap-1.5 border-none active:scale-95 transition-all"
+              className="h-9 px-3 bg-[#021a02] hover:bg-[#0D9668] text-white font-black uppercase text-xs tracking-widest rounded-xl gap-1.5 border-none active:scale-95 transition-all"
             >
               <Plus size={15} /> Tambah
             </Button>
@@ -139,7 +139,7 @@ export default function Suppliers() {
               <p className="text-[11px] font-bold text-[#4B6478] uppercase mt-1">{suppliers?.length || 0} MASUK DALAM DATABASE</p>
             </div>
             <Button size="sm" onClick={() => { setEditingSupplier(null); setOpenModal(true); }}
-              className="bg-[#10B981] hover:bg-[#0D9668] text-white font-black uppercase text-[10px] tracking-widest rounded-xl h-10 px-4 gap-2 border-none shadow-[0_4px_12px_rgba(16,185,129,0.2)]"
+              className="bg-[#021a02] hover:bg-[#0D9668] text-white font-black uppercase text-[10px] tracking-widest rounded-xl h-10 px-4 gap-2 border-none shadow-[0_4px_12px_rgba(2, 26, 2,0.2)]"
             >
               <Plus size={16} /> Tambah
             </Button>
@@ -167,7 +167,7 @@ export default function Suppliers() {
             description="Tambahkan supplier pertamamu untuk mulai mencatat stok telur masuk." 
             action={
                 <Button 
-                    className="bg-[#10B981] hover:bg-emerald-600 h-11 px-6 font-black uppercase tracking-widest text-[10px] rounded-xl border-none" 
+                    className="bg-[#021a02] hover:bg-emerald-600 h-11 px-6 font-black uppercase tracking-widest text-[10px] rounded-xl border-none" 
                     onClick={() => setOpenModal(true)}
                 >
                     Tambah Supplier Pertama
@@ -219,7 +219,7 @@ function SupplierCard({ supplier, onEdit }) {
     >
         <div className="flex gap-4 items-center flex-1">
             <Avatar className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20">
-                <AvatarFallback className="bg-transparent text-[#34D399] font-display font-black text-lg">
+                <AvatarFallback className="bg-transparent text-[#021a02] font-display font-black text-lg">
                     {supplier.name.slice(0, 2).toUpperCase()}
                 </AvatarFallback>
             </Avatar>
@@ -314,7 +314,7 @@ function SupplierForm({ supplier, onSave, onDelete }) {
                 )}
                 <Button
                     type="submit"
-                    className="flex-1 h-14 rounded-2xl bg-[#10B981] hover:bg-[#0D9668] text-base font-black border-none shadow-lg uppercase tracking-widest text-xs"
+                    className="flex-1 h-14 rounded-2xl bg-[#021a02] hover:bg-[#0D9668] text-base font-black border-none shadow-lg uppercase tracking-widest text-xs"
                     disabled={isLoading}
                 >
                     {isLoading ? 'Menyimpan...' : (supplier ? 'Simpan Perubahan' : 'Tambah Supplier')}

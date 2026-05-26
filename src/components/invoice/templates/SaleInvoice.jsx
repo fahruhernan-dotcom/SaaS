@@ -14,9 +14,9 @@ const C = {
   light:      '#F9FAFB',
   border:     '#E5E7EB',
   header:     '#0C1319',
-  accent:     '#10B981',
+  accent:     '#021a02',
   accentBg:   '#F0FDF4',
-  accentBorder:'#10B981',
+  accentBorder:'#021a02',
   warn:       '#F59E0B',
   danger:     '#EF4444',
 }
@@ -195,7 +195,7 @@ export function SaleInvoice({ tenant, sale, rpa, farm, delivery, invoiceNumber, 
   const remaining = (Number(sale?.total_revenue) || 0) - (Number(sale?.paid_amount) || 0)
 
   const statusColors = {
-    lunas:       { bg: '#F0FDF4', border: '#10B981', text: '#10B981' },
+    lunas:       { bg: '#F0FDF4', border: '#021a02', text: '#021a02' },
     belum_lunas: { bg: '#FEF3C7', border: '#F59E0B', text: '#F59E0B' },
     sebagian:    { bg: '#EFF6FF', border: '#3B82F6', text: '#3B82F6' },
   }

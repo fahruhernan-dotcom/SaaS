@@ -25,6 +25,7 @@ import BottomNav from './dashboard/_shared/components/BottomNav';
 import AppSidebar from './dashboard/_shared/components/AppSidebar';
 import DesktopSidebarLayout from './dashboard/_shared/layouts/DesktopSidebarLayout';
 import { useMediaQuery } from './lib/hooks/useMediaQuery';
+import { useForceDarkMode } from './lib/hooks/useForceDarkMode';
 import { Menu } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
@@ -218,6 +219,7 @@ function RoleRedirector() {
 
 function DashboardLayout({ children }) {
   useNotificationGenerator()
+  useForceDarkMode()
   const isDesktop = useMediaQuery('(min-width: 1024px)');
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
@@ -326,7 +328,7 @@ function RootLayout() {
 
 const AdminComingSoon = () => (
   <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-    <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(16,185,129,0.15)]">
+    <div className="w-20 h-20 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(2, 26, 2,0.15)]">
       <span className="text-3xl">🚧</span>
     </div>
     <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-2">Segera Hadir</h2>

@@ -24,7 +24,7 @@ export function InputRupiah({
   return (
     <div
       style={{ position: 'relative' }}
-      className="rounded-md transition-shadow duration-200 [&:focus-within]:shadow-[0_0_0_1px_rgba(16,185,129,0.25),0_0_12px_rgba(16,185,129,0.08)]"
+      className="rounded-md transition-shadow duration-200 [&:focus-within]:shadow-[0_0_0_1px_rgba(2, 26, 2,0.25),0_0_12px_rgba(2, 26, 2,0.08)]"
     >
       <span style={{
         position: 'absolute',

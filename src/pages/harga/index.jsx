@@ -129,7 +129,7 @@ export default function HargaPage() {
       {isMounted && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
           <Particles
-            particleColors={['#10B981', '#34D399', '#059669']}
+            particleColors={['#021a02', '#021a02', '#021a02']}
             particleCount={window.innerWidth < 768 ? 25 : 50}
             speed={0.2}
             particleBaseSize={1.4}
@@ -140,7 +140,7 @@ export default function HargaPage() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1.2 }}
-        className="fixed top-[-120px] left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(16,185,129,0.18),transparent_70%)] animate-glow-breathe z-0 pointer-events-none md:w-[800px] md:h-[800px]"
+        className="fixed top-[-120px] left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(2, 26, 2,0.18),transparent_70%)] animate-glow-breathe z-0 pointer-events-none md:w-[800px] md:h-[800px]"
       />
 
       <main className="relative z-10">
@@ -152,7 +152,7 @@ export default function HargaPage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="text-[11px] font-bold uppercase tracking-widest text-[#10B981] mb-6"
+              className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-6"
             >
               HARGA TRANSPARAN
             </motion.p>
@@ -177,7 +177,7 @@ export default function HargaPage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.45, delay: 0.05 }}
-              className={`font-['Sora'] ${isDesktop ? 'text-4xl md:text-5xl lg:text-6xl' : 'text-3xl'} font-black text-white ${isDesktop ? 'leading-tight' : 'leading-[1.2]'} mb-4`}
+              className={`font-['Sora'] ${isDesktop ? 'text-4xl md:text-5xl lg:text-6xl' : 'text-3xl'} font-normal text-white ${isDesktop ? 'leading-tight' : 'leading-[1.2]'} mb-4`}
             >
               Coba gratis {data.trialDays || 14} hari — tanpa kartu kredit.
             </motion.h1>
@@ -357,7 +357,7 @@ export default function HargaPage() {
         <section className="py-24 px-5 bg-[#080D13]">
           <div className="max-w-2xl mx-auto">
             <FadeUp className="text-center mb-12">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#10B981] mb-4">FAQ</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-4">FAQ</p>
               <h2 className="font-['Sora'] text-3xl font-bold text-white">Pertanyaan Umum</h2>
             </FadeUp>
             <FadeUp delay={0.1}>
@@ -387,7 +387,7 @@ export default function HargaPage() {
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
                     <Link
                       to="/register"
-                      className="inline-flex items-center gap-2 px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-all shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_4px_28px_rgba(16,185,129,0.45)] hover:-translate-y-0.5 active:translate-y-0"
+                      className="inline-flex items-center gap-2 px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-all shadow-[0_4px_20px_rgba(2, 26, 2,0.3)] hover:shadow-[0_4px_28px_rgba(2, 26, 2,0.45)] hover:-translate-y-0.5 active:translate-y-0"
                     >
                       Mulai Sekarang
                       <ArrowRight size={16} />

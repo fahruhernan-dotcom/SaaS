@@ -23,7 +23,7 @@ export default function SmartInsight({ insight, className }) {
       className={cn(
         "inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border transition-all duration-300",
         isUp 
-          ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.1)]" 
+          ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-[0_0_15px_rgba(2, 26, 2,0.1)]" 
           : "bg-rose-500/10 border-rose-500/20 text-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.1)]",
         className
       )}

@@ -26,7 +26,7 @@ export default function Orders() {
       <div style={{ padding: '0 20px', margin: '16px 0', display: 'flex', gap: '8px', overflowX: 'auto', scrollbarWidth: 'none' }}>
         <SummaryChip label="Open Orders" value={forecast?.orders?.filter(o => o.status === 'open').length || 0} color="#F87171" />
         <SummaryChip label="Matched" value={forecast?.orders?.filter(o => o.status === 'matched').length || 0} color="#F59E0B" />
-        <SummaryChip label="Total Permintaan" value={formatEkor(forecast?.totalDemand || 0)} color="#10B981" />
+        <SummaryChip label="Total Permintaan" value={formatEkor(forecast?.totalDemand || 0)} color="#021a02" />
       </div>
 
       {/* Filters */}
@@ -42,7 +42,7 @@ export default function Orders() {
               fontWeight: 700,
               textTransform: 'capitalize',
               whiteSpace: 'nowrap',
-              background: filter === f ? '#10B981' : '#111C24',
+              background: filter === f ? '#021a02' : '#111C24',
               color: filter === f ? 'white' : '#94A3B8',
               border: filter === f ? 'none' : '1px solid rgba(255,255,255,0.06)',
             }}
@@ -76,10 +76,10 @@ export default function Orders() {
           right: '20px',
           width: '56px', height: '56px',
           borderRadius: '28px',
-          background: '#10B981',
+          background: '#021a02',
           color: 'white',
           border: 'none',
-          boxShadow: '0 8px 24px rgba(16,185,129,0.3)',
+          boxShadow: '0 8px 24px rgba(2, 26, 2,0.3)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 90
         }}
@@ -152,8 +152,8 @@ function OrderCard({ order }) {
           borderRadius: '6px',
           fontSize: '10px',
           fontWeight: 800,
-          background: order.status === 'open' ? 'rgba(248,113,113,0.15)' : 'rgba(16,185,129,0.15)',
-          color: order.status === 'open' ? '#F87171' : '#10B981',
+          background: order.status === 'open' ? 'rgba(248,113,113,0.15)' : 'rgba(2, 26, 2,0.15)',
+          color: order.status === 'open' ? '#F87171' : '#021a02',
           textTransform: 'uppercase'
         }}>
           {order.status === 'open' ? 'PENDING' : order.status}
@@ -172,7 +172,7 @@ function OrderCard({ order }) {
           <TrendingUp size={14} color="#4B6478" />
           <div>
             <div style={{ fontSize: '10px', color: '#4B6478', fontWeight: 800 }}>TARGET HARGA</div>
-            <div style={{ fontSize: '14px', color: '#10B981', fontWeight: 700 }}>{formatIDR(order.target_price_per_kg || 0)}/kg</div>
+            <div style={{ fontSize: '14px', color: '#021a02', fontWeight: 700 }}>{formatIDR(order.target_price_per_kg || 0)}/kg</div>
           </div>
         </div>
       </div>
@@ -187,7 +187,7 @@ function OrderCard({ order }) {
           style={{
             width: '100%',
             padding: '12px',
-            background: '#10B981',
+            background: '#021a02',
             border: 'none',
             borderRadius: '12px',
             color: 'white',

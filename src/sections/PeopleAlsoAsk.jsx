@@ -67,13 +67,13 @@ const homepageFaqSchema = {
 function FAQItem({ item }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className={`border rounded-xl transition-colors duration-200 ${open ? 'border-white/10 bg-white/[0.03]' : 'border-white/5 hover:border-white/10'}`}>
+    <div className={`border rounded-xl transition-all duration-200 ${open ? 'border-border-default bg-bg-2' : 'border-border-subtle hover:border-border-default'}`}>
       <button
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
         className="w-full text-left flex items-start justify-between gap-4 px-5 py-4 group"
       >
-        <span className="text-sm font-semibold text-[#CBD5E1] leading-snug group-hover:text-white transition-colors">
+        <span className="text-sm font-semibold text-text-secondary leading-snug group-hover:text-text-primary transition-colors">
           {item.q}
         </span>
         <ChevronDown
@@ -92,7 +92,7 @@ function FAQItem({ item }) {
             transition={{ duration: 0.22, ease: 'easeInOut' }}
             style={{ overflow: 'hidden' }}
           >
-            <div className="px-5 pb-4 text-sm text-[#64748B] leading-relaxed">
+            <div className="px-5 pb-4 text-sm text-text-secondary leading-relaxed">
               {item.a}
               {item.link && (
                 <Link
@@ -112,7 +112,7 @@ function FAQItem({ item }) {
 
 export default function PeopleAlsoAsk() {
   return (
-    <section className="bg-[#06090F] py-20 px-5 border-t border-white/5">
+    <section className="bg-bg-base py-20 px-5 border-t border-border-subtle">
       {/* JSON-LD FAQPage schema — bake langsung di homepage untuk Google & AI */}
       <script
         type="application/ld+json"
@@ -131,10 +131,10 @@ export default function PeopleAlsoAsk() {
           <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-400 mb-3">
             People Also Ask
           </p>
-          <h2 className="font-['Sora'] text-2xl md:text-3xl font-bold text-white">
+          <h2 className="font-['Sora'] text-2xl md:text-3xl font-bold text-text-primary">
             Pertanyaan yang Sering Ditanya
           </h2>
-          <p className="text-sm text-[#4B6478] mt-2">
+          <p className="text-sm text-text-muted mt-2">
             Sapi, domba, kambing, broiler, broker — semua ada jawabannya di sini.
           </p>
         </motion.div>

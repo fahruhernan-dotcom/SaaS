@@ -639,7 +639,7 @@ function TokoList({ customers, customerStats, search, selectedArea, onlyHutang }
             <div className="mt-3 flex items-center justify-between rounded-xl bg-[#EA580C]/[0.04] px-3 py-2">
               <div>
                 <p className="text-[8px] font-black uppercase tracking-widest text-[#92400E]">Piutang</p>
-                <p className={cn('text-[12px] font-black tabular-nums', outstanding > 0 ? 'text-[#F87171]' : 'text-[#34D399]')}>
+                <p className={cn('text-[12px] font-black tabular-nums', outstanding > 0 ? 'text-[#F87171]' : 'text-[#021a02]')}>
                   {outstanding > 0 ? formatIDR(outstanding) : 'Lunas'}
                 </p>
               </div>
@@ -766,7 +766,7 @@ function MetricBlock({ label, value, tone = 'default', compact = false }) {
           'font-display font-black tracking-tight',
           compact ? 'text-base' : 'text-xl',
           tone === 'red' && 'text-[#EF4444]',
-          tone === 'green' && 'text-[#34D399]',
+          tone === 'green' && 'text-[#021a02]',
           tone === 'amber' && 'text-[#F59E0B]',
           tone === 'default' && 'text-[#FEF3C7]'
         )}

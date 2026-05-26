@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 const THEME_KEY = 'ternakos_accent_color'
 
 export const THEME_PRESETS = [
-  { name: 'Emerald',  hex: '#10B981', label: 'Default Broker' },
+  { name: 'Emerald',  hex: '#021a02', label: 'Default Broker' },
   { name: 'Orange',   hex: '#EA580C', label: 'Default Sembako' },
   { name: 'Purple',   hex: '#7C3AED', label: 'Default Peternak' },
   { name: 'Amber',    hex: '#F59E0B', label: 'Default RPA' },

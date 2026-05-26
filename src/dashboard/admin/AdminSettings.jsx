@@ -518,7 +518,7 @@ export default function AdminSettings() {
               <button
                 onClick={handleSaveLimits}
                 disabled={savingLimits}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-12 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(16,185,129,0.3)] border border-emerald-400/20 active:scale-[0.98]"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-12 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(2, 26, 2,0.3)] border border-emerald-400/20 active:scale-[0.98]"
               >
                 {savingLimits
                   ? <><Loader2 size={16} className="animate-spin" /> MENYIMPAN LIMIT...</>
@@ -587,7 +587,7 @@ export default function AdminSettings() {
               <button
                 onClick={handleSaveTernakLimits}
                 disabled={savingLimits}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-12 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(16,185,129,0.3)] border border-emerald-400/20 active:scale-[0.98]"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-12 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(2, 26, 2,0.3)] border border-emerald-400/20 active:scale-[0.98]"
               >
                 {savingLimits
                   ? <><Loader2 size={16} className="animate-spin" /> MENYIMPAN...</>
@@ -649,7 +649,7 @@ export default function AdminSettings() {
                     <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1 group-hover:text-emerald-500/60 transition-colors">
                       Kuota Transaksi / Bulan
                     </label>
-                    <div className="h-12 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex items-center px-4 gap-2 text-sm font-black text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]">
+                    <div className="h-12 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex items-center px-4 gap-2 text-sm font-black text-emerald-400 shadow-[inset_0_0_20px_rgba(2, 26, 2,0.05)]">
                       <InfinityIcon size={16} /> Unlimited
                     </div>
                   </div>
@@ -673,7 +673,7 @@ export default function AdminSettings() {
               <button
                 onClick={handleSaveQuota}
                 disabled={savingQuota}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-12 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(16,185,129,0.3)] border border-emerald-400/20 active:scale-[0.98]"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-12 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(2, 26, 2,0.3)] border border-emerald-400/20 active:scale-[0.98]"
               >
                 {savingQuota
                   ? <><Loader2 size={16} className="animate-spin" /> MENYIMPAN...</>
@@ -745,7 +745,7 @@ export default function AdminSettings() {
               <button
                 onClick={handleSaveTrial}
                 disabled={savingTrial}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-12 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(16,185,129,0.3)] border border-emerald-400/20 active:scale-[0.98]"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-12 rounded-2xl font-black uppercase text-[11px] tracking-[0.2em] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(2, 26, 2,0.3)] border border-emerald-400/20 active:scale-[0.98]"
               >
                 {savingTrial
                   ? <><Loader2 size={16} className="animate-spin" /> MENYIMPAN...</>
@@ -1039,7 +1039,7 @@ function ConfirmSaveDialog({ open, onOpenChange, title, configKey, oldValue, new
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white uppercase text-[10px] font-black tracking-widest shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+            className="bg-emerald-500 hover:bg-emerald-600 text-white uppercase text-[10px] font-black tracking-widest shadow-[0_0_20px_rgba(2, 26, 2,0.3)]"
           >
             <Save size={14} className="mr-2" />
             Konfirmasi & Simpan
@@ -1153,7 +1153,7 @@ function PlanLimitCard({ planName, badgeClass, badgeExtra, kandangValue, teamVal
           </div>
         ) : isUnlimited(kandangValue) ? (
           <div className="flex items-center gap-2">
-            <div className="flex-1 h-12 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex items-center px-4 gap-2 text-sm font-black text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]">
+            <div className="flex-1 h-12 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex items-center px-4 gap-2 text-sm font-black text-emerald-400 shadow-[inset_0_0_20px_rgba(2, 26, 2,0.05)]">
               <InfinityIcon size={16} /> Unlimited
             </div>
             <input

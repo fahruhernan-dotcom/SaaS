@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
-
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
@@ -9,6 +7,7 @@ body {
   overflow-x: hidden;
   max-width: 100vw;
   overscroll-behavior-x: none;
+  font-family: var(--font-sans);
 }
 
 #root {
@@ -36,25 +35,25 @@ body {
   left: 0;
   right: 0;
   height: 80px;
-  background: linear-gradient(to bottom, transparent, #06090F);
+  background: linear-gradient(to bottom, transparent, var(--bg-base-val));
   pointer-events: none;
 }
 
 .section-h2 {
-  font-family: 'Sora', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: clamp(24px, 4.5vw, 38px);
   font-weight: 800;
   letter-spacing: -1.2px;
   line-height: 1.15;
-  color: #F1F5F9;
+  color: var(--text-primary-val);
   user-select: none;
   cursor: default;
 }
 
 .section-subtitle {
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   font-size: 15px;
-  color: #64748B;
+  color: var(--text-secondary-val);
   line-height: 1.7;
   user-select: none;
   cursor: default;
@@ -85,15 +84,15 @@ section h1, section h2, section h3 {
 
 /* Featured pricing card border */
 .featured-card-border {
-  background: linear-gradient(135deg, rgba(16,185,129,0.25) 0%, rgba(16,185,129,0.05) 100%);
+  background: linear-gradient(135deg, rgba(2, 26, 2,0.25) 0%, rgba(2, 26, 2,0.05) 100%);
   border-radius: 20px;
   padding: 1px;
 }
 
 /* Pulse glow animation for pricing */
 @keyframes pulse-glow-kf {
-  0%, 100% { box-shadow: 0 0 20px rgba(16,185,129,0.08); }
-  50% { box-shadow: 0 0 35px rgba(16,185,129,0.15); }
+  0%, 100% { box-shadow: 0 0 20px rgba(2, 26, 2,0.08); }
+  50% { box-shadow: 0 0 35px rgba(2, 26, 2,0.15); }
 }
 .animate-pulse-glow {
   animation: pulse-glow-kf 3s ease-in-out infinite;
@@ -113,15 +112,183 @@ section h1, section h2, section h3 {
 
 /* Border accent alias */
 .border-border-acc {
-  border-color: rgba(16, 185, 129, 0.35);
+  border-color: rgba(2, 26, 2, 0.35);
 }
+
+/* Card shadow override - premium soft shadow (increased contrast) */
+.shadow-card {
+  box-shadow: 0 8px 30px -4px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.04), 0 1px 2px rgba(15, 23, 42, 0.03);
+  transition: all 0.2s ease;
+}
+.dark .shadow-card {
+  box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.6), 0 4px 16px -4px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Premium badge style */
+.badge-premium {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: rgba(2, 26, 2, 0.08);
+  border: 1px solid rgba(2, 26, 2, 0.25);
+  color: #021a02; /* emerald-700 for high contrast in light mode */
+  border-radius: 9999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.dark .badge-premium {
+  background-color: rgba(2, 26, 2, 0.12);
+  border: 1px solid rgba(2, 26, 2, 0.25);
+  color: #021a02; /* emerald-400 for dark mode */
+}
+
 
 @layer base {
   :root {
-    --background: 220 14% 4%;
+    /* Shadcn defaults for light mode */
+    --background: 0 0% 98%; /* warm off-white — bukan sage gray yang aneh */
+    --foreground: 222.2 84% 4.9%; /* slate-950 text */
+    --card: 0 0% 100%; /* white cards */
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 160 84% 39%; /* emerald-600 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 217.2 19% 32.5%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 87.4%; /* slightly darker slate-200 for border contrast */
+    --input: 214.3 31.8% 87.4%;
+    --ring: 160 84% 39%;
+    --radius: 0.75rem;
+    --chart-1: 160 84% 39%;
+    --chart-2: 217 91% 60%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 262 83% 58%;
+    --chart-5: 0 72% 70%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 222.2 84% 4.9%;
+    --sidebar-primary: 160 84% 39%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
+    --sidebar-border: 214.3 31.8% 87.4%;
+    --sidebar-ring: 160 84% 39%;
+
+    /* Extended Color Variables for Light Mode */
+    --bg-base-val: #FAFAFA; /* off-white bersih */
+    --bg-1-val: #FFFFFF;    /* white panels */
+    --bg-2-val: #F6F9F5;    /* warm sage-50 cards */
+    --bg-3-val: #DFE5DF;    /* sage-200 inputs */
+    --text-primary-val: #0F172A;   /* slate-900 */
+    --text-secondary-val: #273041; /* slate-800 - darker for 15% more contrast */
+    --text-muted-val: #4A5568;     /* slate-600 - darker for more contrast */
+    --text-accent-val: #059669;    /* emerald-600 - slightly darker for contrast */
+    
+    --border-sub-val: rgba(15, 23, 42, 0.08); /* bumped contrast */
+    --border-def-val: rgba(15, 23, 42, 0.13); /* bumped contrast */
+    --border-strong-val: rgba(15, 23, 42, 0.22); /* bumped contrast */
+    --border-acc-val: rgba(2, 26, 2, 0.35); /* bumped contrast */
+
+    --grid-color-val: rgba(15, 23, 42, 0.04);
+    --watermark-color-val: rgba(15, 23, 42, 0.02);
+
+    /* Mobile Views Light Mode */
+    --mobile-card-bg: rgba(255, 255, 255, 0.75);
+    --mobile-card-border: rgba(0, 0, 0, 0.08);
+    --mobile-header-bg: radial-gradient(circle at 15% 15%, #021a02 0%, #FAFAFA 100%);
+    --mobile-input-bg: rgba(255, 255, 255, 0.85);
+    --mobile-input-border: rgba(0, 0, 0, 0.08);
+    --mobile-input-border-hover: rgba(0, 0, 0, 0.18);
+    --mobile-button-secondary-bg: rgba(0, 0, 0, 0.04);
+    --mobile-button-secondary-border: rgba(0, 0, 0, 0.08);
+    --mobile-button-secondary-text: #334155;
+    --mobile-button-secondary-hover-bg: rgba(0, 0, 0, 0.08);
+
+    /* Fonts */
+    --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+    /* Colors - Forest Palette */
+    --forest-900: #052E16;
+    --forest-950: #021a02;
+
+    /* Colors - Brand Palette */
+    --brand-50:  #ECFDF5;
+    --brand-100: #D1FAE5;
+    --brand-200: #A7F3D0;
+    --brand-300: #6EE7B7;
+    --brand-400: #34D399;
+    --brand-500: #021a02;
+    --brand-600: #059669;
+    --brand-700: #047857;
+
+    /* Semantic Variables */
+    --bg-page: #FBFCF8;
+    --bg-surface: #FFFFFF;
+    --bg-subtle: #F8FAFC;
+    --text-primary: #0F172A;
+    --text-secondary: #334155;
+    --text-muted: #64748B;
+    --border-soft: #E2E8F0;
+    --border-muted: #EDF2F7;
+
+    /* Status Colors */
+    --success: #021a02;
+    --info: #0EA5E9;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --purple: #8B5CF6;
+
+    /* Typography Scale */
+    --text-display-size: clamp(3rem, 7vw, 5.5rem);
+    --text-display-line: 0.95;
+    --text-display-letter: -0.055em;
+    --text-h1-size: clamp(2.5rem, 5vw, 4.5rem);
+    --text-h1-line: 1;
+    --text-h1-letter: -0.045em;
+    --text-h2-size: clamp(2rem, 4vw, 3rem);
+    --text-h2-line: 1.1;
+    --text-h2-letter: -0.035em;
+    --text-h3-size: 1.5rem;
+    --text-h3-line: 1.25;
+    --text-body-lg-size: 1.125rem;
+    --text-body-lg-line: 1.75;
+    --text-body-size: 1rem;
+    --text-body-line: 1.625;
+    --text-small-size: 0.875rem;
+    --text-small-line: 1.5;
+    --text-caption-size: 0.75rem;
+    --text-caption-line: 1.4;
+
+    /* Radius System */
+    --radius-tko-xs: 6px;
+    --radius-tko-sm: 8px;
+    --radius-tko-md: 12px;
+    --radius-tko-lg: 16px;
+    --radius-tko-xl: 20px;
+    --radius-tko-2xl: 24px;
+    --radius-tko-3xl: 32px;
+    --radius-tko-full: 999px;
+
+    /* Shadow System */
+    --shadow-tko-xs: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --shadow-tko-sm: 0 4px 12px rgba(15, 23, 42, 0.08);
+    --shadow-tko-md: 0 12px 32px rgba(15, 23, 42, 0.10);
+    --shadow-tko-lg: 0 24px 60px rgba(15, 23, 42, 0.14);
+    --shadow-tko-brand: 0 12px 28px rgba(2, 26, 2, 0.24);
+  }
+
+  .dark {
+    /* Shadcn defaults for dark mode */
+    --background: 220 14% 4%; /* original dark */
     --foreground: 210 40% 96%;
-    --em-400: #34D399;
-    --em-500: #10B981;
     --card: 215 22% 8%;
     --card-foreground: 210 40% 96%;
     --popover: 215 22% 8%;
@@ -139,12 +306,6 @@ section h1, section h2, section h3 {
     --border: 215 20% 13%;
     --input: 215 19% 11%;
     --ring: 160 84% 39%;
-    --radius: 0.75rem;
-    --chart-1: 160 84% 39%;
-    --chart-2: 217 91% 60%;
-    --chart-3: 38 92% 50%;
-    --chart-4: 262 83% 58%;
-    --chart-5: 0 72% 70%;
     --sidebar-background: 215 25% 6%;
     --sidebar-foreground: 210 40% 96%;
     --sidebar-primary: 160 84% 39%;
@@ -153,6 +314,48 @@ section h1, section h2, section h3 {
     --sidebar-accent-foreground: 210 40% 96%;
     --sidebar-border: 215 20% 10%;
     --sidebar-ring: 160 84% 39%;
+
+    /* Semantic Variable Overrides for Dark Mode */
+    --bg-page: #021a02;
+    --bg-surface: #061A0A;
+    --bg-subtle: #0B2410;
+    --border-soft: rgba(255, 255, 255, 0.10);
+    --border-muted: rgba(255, 255, 255, 0.06);
+    --text-primary: #F8FAFC;
+    --text-secondary: rgba(248, 250, 252, 0.72);
+    --text-muted: rgba(248, 250, 252, 0.52);
+    --brand-500: #34D399; /* main CTA for dark mode */
+    --brand-600: #021a02; /* CTA hover override for dark mode */
+
+    /* Extended Color Variables for Dark Mode */
+    --bg-base-val: #06090F;
+    --bg-1-val: #0C1319;
+    --bg-2-val: #111C24;
+    --bg-3-val: #162230;
+    --text-primary-val: #F1F5F9;
+    --text-secondary-val: #94A3B8;
+    --text-muted-val: #4B6478;
+    --text-accent-val: #34D399;
+    
+    --border-sub-val: rgba(255, 255, 255, 0.05);
+    --border-def-val: rgba(255, 255, 255, 0.09);
+    --border-strong-val: rgba(255, 255, 255, 0.16);
+    --border-acc-val: rgba(2, 26, 2, 0.35);
+
+    --grid-color-val: rgba(255, 255, 255, 0.025);
+    --watermark-color-val: rgba(255, 255, 255, 0.02);
+
+    /* Mobile Views Dark Mode */
+    --mobile-card-bg: rgba(6, 9, 15, 0.4);
+    --mobile-card-border: rgba(255, 255, 255, 0.05);
+    --mobile-header-bg: radial-gradient(circle at 15% 15%, #021a02 0%, #0d1117 80%);
+    --mobile-input-bg: rgba(13, 17, 23, 0.7);
+    --mobile-input-border: rgba(255, 255, 255, 0.03);
+    --mobile-input-border-hover: rgba(255, 255, 255, 0.12);
+    --mobile-button-secondary-bg: rgba(255, 255, 255, 0.03);
+    --mobile-button-secondary-border: rgba(255, 255, 255, 0.08);
+    --mobile-button-secondary-text: #e2e8f0;
+    --mobile-button-secondary-hover-bg: rgba(255, 255, 255, 0.07);
   }
 }
 
@@ -164,13 +367,13 @@ section h1, section h2, section h3 {
 body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   margin: 0;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Sora', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 ::-webkit-scrollbar {
@@ -183,17 +386,17 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(16, 185, 129, 0.2);
+  background: rgba(2, 26, 2, 0.2);
   border-radius: 99px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(16, 185, 129, 0.4);
+  background: rgba(2, 26, 2, 0.4);
 }
 
 ::selection {
-  background: rgba(16, 185, 129, 0.2);
-  color: #34D399;
+  background: rgba(2, 26, 2, 0.2);
+  color: #021a02;
 }
 
 @keyframes pulse-dot {
@@ -242,9 +445,9 @@ canvas ~ div > a {
   }
 }
 .is-dragging-over {
-  border-color: #10B981 !important;
-  box-shadow: 0 0 30px rgba(16, 185, 129, 0.2), inset 0 0 0 4px rgba(16, 185, 129, 0.1) !important;
-  background-color: rgba(16, 185, 129, 0.08) !important;
+  border-color: #021a02 !important;
+  box-shadow: 0 0 30px rgba(2, 26, 2, 0.2), inset 0 0 0 4px rgba(2, 26, 2, 0.1) !important;
+  background-color: rgba(2, 26, 2, 0.08) !important;
   transition: all 0.2s ease-out !important;
 }
 .is-parent-of-dragged {
@@ -254,3 +457,451 @@ canvas ~ div > a {
 .is-parent-of-dragged > div:last-child {
   overflow: visible !important;
 }
+
+/* ===================================================================
+   LIGHT MODE OVERRIDES FOR LANDING PAGES
+   Aktif ketika html TIDAK punya class .dark
+   =================================================================== */
+
+/* ── Comparison slider mockup — selalu dark (intentional demo visual) ── */
+html:not(.dark) .comparison-dark-preserve,
+html:not(.dark) .comparison-dark-preserve * {
+  background-color: revert !important;
+  color: revert !important;
+  border-color: revert !important;
+}
+
+/* Only apply when NOT in dark mode */
+html:not(.dark) .bg-\[\#06090F\]  { background-color: #FAFAFA !important; }
+html:not(.dark) .bg-\[\#080D13\]  { background-color: #F5F5F5 !important; }
+html:not(.dark) .bg-\[\#0C1319\]  { background-color: #FFFFFF !important; }
+html:not(.dark) .bg-\[\#111C24\]  { background-color: #F8F8F8 !important; }
+html:not(.dark) .bg-\[\#162230\]  { background-color: #F0F0F0 !important; }
+
+html:not(.dark) .text-\[\#F1F5F9\] { color: #0F172A !important; }
+html:not(.dark) .text-\[\#94A3B8\] { color: #475569 !important; }
+html:not(.dark) .text-\[\#CBD5E1\] { color: #64748B !important; }
+html:not(.dark) .text-\[\#4B6478\] { color: #6B7280 !important; }
+html:not(.dark) .text-\[\#64748B\] { color: #6B7280 !important; }
+html:not(.dark) .text-\[\#8899A6\] { color: #6B7280 !important; }
+html:not(.dark) .text-\[\#7F8EA0\] { color: #6B7280 !important; }
+
+/* ── text-white → dark text di light mode ── */
+/* Tujuan: semua heading/paragraph putih menjadi gelap */
+html:not(.dark) h1.text-white,
+html:not(.dark) h2.text-white,
+html:not(.dark) h3.text-white,
+html:not(.dark) h4.text-white,
+html:not(.dark) p.text-white,
+html:not(.dark) span.text-white {
+  color: #0F172A !important;
+}
+
+/* ── EXCEPTION: Button/link dengan text-white tetap putih HANYA jika memiliki background solid ── */
+html:not(.dark) a.text-white.bg-emerald-500,
+html:not(.dark) button.text-white.bg-emerald-500,
+html:not(.dark) a.text-white.bg-emerald-600,
+html:not(.dark) button.text-white.bg-emerald-600,
+html:not(.dark) a.text-white.bg-emerald-700,
+html:not(.dark) button.text-white.bg-emerald-700,
+html:not(.dark) a.text-white.bg-em-500,
+html:not(.dark) button.text-white.bg-em-500,
+html:not(.dark) a.text-white.bg-em-600,
+html:not(.dark) button.text-white.bg-em-600,
+html:not(.dark) a.text-white.bg-\[\#021a02\],
+html:not(.dark) button.text-white.bg-\[\#021a02\],
+html:not(.dark) a.text-white.bg-primary,
+html:not(.dark) button.text-white.bg-primary,
+html:not(.dark) a.text-white.bg-secondary,
+html:not(.dark) button.text-white.bg-secondary,
+html:not(.dark) a.text-white.bg-destructive,
+html:not(.dark) button.text-white.bg-destructive,
+html:not(.dark) a.text-white[class*="bg-emerald"],
+html:not(.dark) button.text-white[class*="bg-emerald"],
+html:not(.dark) a.text-white[class*="bg-amber"],
+html:not(.dark) button.text-white[class*="bg-amber"],
+html:not(.dark) a.text-white[class*="bg-blue"],
+html:not(.dark) button.text-white[class*="bg-blue"],
+html:not(.dark) a.text-white[class*="bg-indigo"],
+html:not(.dark) button.text-white[class*="bg-indigo"],
+html:not(.dark) a.text-white[class*="bg-violet"],
+html:not(.dark) button.text-white[class*="bg-violet"],
+html:not(.dark) a.text-white[class*="bg-purple"],
+html:not(.dark) button.text-white[class*="bg-purple"],
+html:not(.dark) a.text-white[class*="bg-rose"],
+html:not(.dark) button.text-white[class*="bg-rose"],
+html:not(.dark) a.text-white[class*="bg-red"],
+html:not(.dark) button.text-white[class*="bg-red"],
+html:not(.dark) a.text-white[class*="data-[state=active]:bg"],
+html:not(.dark) button.text-white[class*="data-[state=active]:bg"] {
+  color: #FFFFFF !important;
+}
+
+/* Jika button/link tidak memiliki class bg solid di atas, text-white-nya berubah jadi gelap di light mode */
+html:not(.dark) a.text-white:not([class*="bg-emerald"]):not([class*="bg-em-"]):not([class*="bg-primary"]):not([class*="bg-[#021a02]"]):not([class*="bg-amber"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="data-[state=active]:bg"]),
+html:not(.dark) button.text-white:not([class*="bg-emerald"]):not([class*="bg-em-"]):not([class*="bg-primary"]):not([class*="bg-[#021a02]"]):not([class*="bg-amber"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="data-[state=active]:bg"]) {
+  color: #0F172A !important;
+}
+
+/* Span/p di dalam button atau link dengan background solid tetap putih */
+html:not(.dark) a[class*="bg-emerald"] span.text-white,
+html:not(.dark) button[class*="bg-emerald"] span.text-white,
+html:not(.dark) a[class*="bg-em-"] span.text-white,
+html:not(.dark) button[class*="bg-em-"] span.text-white,
+html:not(.dark) a.bg-primary span.text-white,
+html:not(.dark) button.bg-primary span.text-white,
+html:not(.dark) a.bg-\[\#021a02\] span.text-white,
+html:not(.dark) button.bg-\[\#021a02\] span.text-white,
+html:not(.dark) a[class*="bg-amber"] span.text-white,
+html:not(.dark) button[class*="bg-amber"] span.text-white,
+html:not(.dark) a[class*="bg-blue"] span.text-white,
+html:not(.dark) button[class*="bg-blue"] span.text-white,
+html:not(.dark) a[class*="bg-indigo"] span.text-white,
+html:not(.dark) button[class*="bg-indigo"] span.text-white,
+html:not(.dark) a[class*="bg-violet"] span.text-white,
+html:not(.dark) button[class*="bg-violet"] span.text-white,
+html:not(.dark) a[class*="bg-purple"] span.text-white,
+html:not(.dark) button[class*="bg-purple"] span.text-white,
+html:not(.dark) a[class*="bg-rose"] span.text-white,
+html:not(.dark) button[class*="bg-rose"] span.text-white,
+html:not(.dark) a[class*="bg-red"] span.text-white,
+html:not(.dark) button[class*="bg-red"] span.text-white,
+html:not(.dark) a[class*="data-[state=active]:bg"] span.text-white,
+html:not(.dark) button[class*="data-[state=active]:bg"] span.text-white,
+
+html:not(.dark) a[class*="bg-emerald"] p.text-white,
+html:not(.dark) button[class*="bg-emerald"] p.text-white,
+html:not(.dark) a[class*="bg-em-"] p.text-white,
+html:not(.dark) button[class*="bg-em-"] p.text-white,
+html:not(.dark) a.bg-primary p.text-white,
+html:not(.dark) button.bg-primary p.text-white,
+html:not(.dark) a.bg-\[\#021a02\] p.text-white,
+html:not(.dark) button.bg-\[\#021a02\] p.text-white,
+html:not(.dark) a[class*="bg-amber"] p.text-white,
+html:not(.dark) button[class*="bg-amber"] p.text-white,
+html:not(.dark) a[class*="bg-blue"] p.text-white,
+html:not(.dark) button[class*="bg-blue"] p.text-white,
+html:not(.dark) a[class*="bg-indigo"] p.text-white,
+html:not(.dark) button[class*="bg-indigo"] p.text-white,
+html:not(.dark) a[class*="bg-violet"] p.text-white,
+html:not(.dark) button[class*="bg-violet"] p.text-white,
+html:not(.dark) a[class*="bg-purple"] p.text-white,
+html:not(.dark) button[class*="bg-purple"] p.text-white,
+html:not(.dark) a[class*="bg-rose"] p.text-white,
+html:not(.dark) button[class*="bg-rose"] p.text-white,
+html:not(.dark) a[class*="bg-red"] p.text-white,
+html:not(.dark) button[class*="bg-red"] p.text-white,
+html:not(.dark) a[class*="data-[state=active]:bg"] p.text-white,
+html:not(.dark) button[class*="data-[state=active]:bg"] p.text-white {
+  color: #FFFFFF !important;
+}
+
+/* Jika tidak ada background solid di atas, span/p di dalam button/link berubah jadi gelap di light mode */
+html:not(.dark) a:not([class*="bg-emerald"]):not([class*="bg-em-"]):not([class*="bg-primary"]):not([class*="bg-[#021a02]"]):not([class*="bg-amber"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="data-[state=active]:bg"]) span.text-white,
+html:not(.dark) button:not([class*="bg-emerald"]):not([class*="bg-em-"]):not([class*="bg-primary"]):not([class*="bg-[#021a02]"]):not([class*="bg-amber"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="data-[state=active]:bg"]) span.text-white,
+html:not(.dark) a:not([class*="bg-emerald"]):not([class*="bg-em-"]):not([class*="bg-primary"]):not([class*="bg-[#021a02]"]):not([class*="bg-amber"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="data-[state=active]:bg"]) p.text-white,
+html:not(.dark) button:not([class*="bg-emerald"]):not([class*="bg-em-"]):not([class*="bg-primary"]):not([class*="bg-[#021a02]"]):not([class*="bg-amber"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="data-[state=active]:bg"]) p.text-white {
+  color: #0F172A !important;
+}
+
+/* Teks di dalam element dengan bg emerald tetap putih */
+html:not(.dark) .bg-emerald-500 span,
+html:not(.dark) .bg-emerald-600 span,
+html:not(.dark) .bg-em-500 span,
+html:not(.dark) .bg-\[\#021a02\] span,
+html:not(.dark) .bg-emerald-500 p,
+html:not(.dark) .bg-emerald-600 p {
+  color: #FFFFFF !important;
+}
+
+/* ── Border overrides (Comprehensive) ── */
+html:not(.dark) [class*="border-white/"] { border-color: rgba(15, 23, 42, 0.08) !important; }
+html:not(.dark) [class*="border-white/5"]  { border-color: rgba(0, 0, 0, 0.05) !important; }
+html:not(.dark) [class*="border-white/8"]  { border-color: rgba(0, 0, 0, 0.08) !important; }
+html:not(.dark) [class*="border-white/10"] { border-color: rgba(0, 0, 0, 0.10) !important; }
+html:not(.dark) [class*="border-white/15"] { border-color: rgba(0, 0, 0, 0.12) !important; }
+html:not(.dark) [class*="border-white/20"] { border-color: rgba(0, 0, 0, 0.16) !important; }
+html:not(.dark) [class*="border-white/30"] { border-color: rgba(0, 0, 0, 0.24) !important; }
+
+/* ── Background opacity overrides (Comprehensive) ── */
+html:not(.dark) [class*="bg-white/"] { background-color: rgba(0, 0, 0, 0.03) !important; }
+html:not(.dark) [class*="bg-white/5"]   { background-color: rgba(0, 0, 0, 0.04) !important; }
+html:not(.dark) [class*="bg-white/10"]  { background-color: rgba(0, 0, 0, 0.06) !important; }
+html:not(.dark) [class*="bg-white/20"]  { background-color: rgba(0, 0, 0, 0.10) !important; }
+
+/* ── Hover backgrounds override for white transparent classes ── */
+html:not(.dark) [class*="hover:bg-white/"]:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* ── Navbar/header sticky backgrounds ── */
+html:not(.dark) .bg-\[\#0C1319\]\/60 { background-color: rgba(255, 255, 255, 0.90) !important; }
+html:not(.dark) .bg-\[\#06090F\]\/90 { background-color: rgba(250, 250, 250, 0.92) !important; }
+html:not(.dark) .bg-\[\#06090F\]\/95 { background-color: rgba(250, 250, 250, 0.96) !important; }
+
+/* ── Color accent colors — gelap di light mode ── */
+html:not(.dark) .text-emerald-300 { color: #021a02 !important; }
+html:not(.dark) .text-emerald-400 { color: #021a02 !important; }
+html:not(.dark) .text-emerald-500 { color: #021a02 !important; }
+html:not(.dark) .text-\[\#021a02\] { color: #021a02 !important; }
+html:not(.dark) .text-\[\#021a02\] { color: #021a02 !important; }
+html:not(.dark) .text-amber-300   { color: #D97706 !important; }
+html:not(.dark) .text-amber-400   { color: #D97706 !important; }
+html:not(.dark) .text-amber-500   { color: #B45309 !important; }
+html:not(.dark) .text-blue-400    { color: #2563EB !important; }
+html:not(.dark) .text-blue-500    { color: #1D4ED8 !important; }
+html:not(.dark) .text-purple-400  { color: #7C3AED !important; }
+html:not(.dark) .text-purple-500  { color: #6D28D9 !important; }
+html:not(.dark) .text-rose-400    { color: #E11D48 !important; }
+html:not(.dark) .text-rose-500    { color: #BE123C !important; }
+html:not(.dark) .text-teal-400    { color: #0D9488 !important; }
+html:not(.dark) .text-teal-500    { color: #0F766E !important; }
+
+/* ── Input fields ── */
+html:not(.dark) input:not([type="range"]),
+html:not(.dark) textarea,
+html:not(.dark) select {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  border-color: rgba(0, 0, 0, 0.18) !important;
+}
+html:not(.dark) input::placeholder,
+html:not(.dark) textarea::placeholder {
+  color: #9CA3AF !important;
+}
+
+/* ===================================================================
+   FITUR PAGE & COMPONENTS — Hard-coded dark color overrides
+   Halaman /fitur menggunakan color hex langsung, bukan CSS variables
+   =================================================================== */
+
+/* ── Background containers ── */
+html:not(.dark) .bg-\[\#06090F\] { background-color: #FAFAFA !important; }
+html:not(.dark) .bg-\[\#080D13\] { background-color: #F5F5F5 !important; }
+html:not(.dark) .bg-\[\#0C1319\] { background-color: #FFFFFF !important; }
+html:not(.dark) .bg-\[\#0C1319\]\/80 { background-color: rgba(255, 255, 255, 0.80) !important; }
+html:not(.dark) .bg-\[\#0C1319\]\/60 { background-color: rgba(255, 255, 255, 0.60) !important; }
+html:not(.dark) .bg-\[\#0C1319\]\/50 { background-color: rgba(255, 255, 255, 0.50) !important; }
+html:not(.dark) .bg-\[\#0C1319\]\/30 { background-color: rgba(255, 255, 255, 0.30) !important; }
+
+html:not(.dark) .bg-\[\#111C24\] { background-color: #F0F4F8 !important; }
+html:not(.dark) .bg-\[\#111c24\] { background-color: #F0F4F8 !important; }
+html:not(.dark) .bg-\[\#111C24\]\/80 { background-color: rgba(240, 244, 248, 0.80) !important; }
+
+/* ── Tab bar container (FiturPage sticky top) ── */
+html:not(.dark) .bg-\[\#06090F\]\/95 { background-color: rgba(250,250,250,0.96) !important; }
+
+/* ── text-white and other hardcoded text color variants ── */
+html:not(.dark) .text-\[\#F1F5F9\] { color: #0F172A !important; }
+html:not(.dark) .text-\[\#CBD5E1\] { color: #1E293B !important; }
+html:not(.dark) .text-\[\#94A3B8\] { color: #475569 !important; }
+html:not(.dark) .text-\[\#4B6478\] { color: #475569 !important; }
+html:not(.dark) .text-\[\#64748B\] { color: #334155 !important; }
+
+html:not(.dark) .text-white\/40 { color: rgba(15,23,42,0.45) !important; }
+html:not(.dark) .text-white\/50 { color: rgba(15,23,42,0.55) !important; }
+html:not(.dark) .text-white\/60 { color: rgba(15,23,42,0.65) !important; }
+html:not(.dark) .text-white\/70 { color: rgba(15,23,42,0.75) !important; }
+html:not(.dark) .text-white\/80 { color: rgba(15,23,42,0.85) !important; }
+
+/* ── bg-white opacity variants ── */
+html:not(.dark) .bg-white\/\[0\.08\] { background-color: rgba(0,0,0,0.07) !important; }
+html:not(.dark) .bg-white\/\[0\.05\] { background-color: rgba(0,0,0,0.04) !important; }
+html:not(.dark) .bg-white\/5        { background-color: rgba(0,0,0,0.04) !important; }
+html:not(.dark) .bg-white\/\[0\.03\]  { background-color: rgba(0,0,0,0.03) !important; }
+html:not(.dark) .bg-white\/\[0\.02\]  { background-color: rgba(0,0,0,0.02) !important; }
+html:not(.dark) .bg-white\/\[0\.015\] { background-color: rgba(0,0,0,0.02) !important; }
+
+/* ── border-white opacity variants ── */
+html:not(.dark) .border-white\/8  { border-color: rgba(0,0,0,0.08) !important; }
+html:not(.dark) .border-white\/10 { border-color: rgba(0,0,0,0.10) !important; }
+html:not(.dark) .border-white\/15 { border-color: rgba(0,0,0,0.12) !important; }
+html:not(.dark) .border-white\/20 { border-color: rgba(0,0,0,0.20) !important; }
+html:not(.dark) .border-white\/30 { border-color: rgba(0,0,0,0.30) !important; }
+
+/* ── GroupCard background (linear-gradient with rgba white) ── */
+/* GroupCard: bg-[linear-gradient(135deg,rgba(255,255,255,0.05),...)] */
+/* Di light mode, gradient putih di background putih = invisible card */
+html:not(.dark) [class*="bg-\[linear-gradient(135deg,rgba(255,255,255"] {
+  background: rgba(0,0,0,0.04) !important;
+  border-color: rgba(0,0,0,0.10) !important;
+}
+
+/* ── Global text-white Overrides (except inside buttons, links, solid colors) ── */
+html:not(.dark) h1.text-white,
+html:not(.dark) h2.text-white,
+html:not(.dark) h3.text-white,
+html:not(.dark) h4.text-white,
+html:not(.dark) h5.text-white,
+html:not(.dark) h6.text-white,
+html:not(.dark) strong.text-white,
+html:not(.dark) div.text-white:not(button *):not(a *),
+html:not(.dark) p.text-white:not(button *):not(a *),
+html:not(.dark) span.text-white:not(button *):not(a *):not(.badge *):not([class*="bg-emerald"] *):not([class*="bg-amber"] *):not([class*="bg-violet"] *) {
+  color: #0F172A !important;
+}
+
+/* ── Hover Text/Opacity Overrides ── */
+html:not(.dark) .hover\:text-white:hover {
+  color: #0F172A !important;
+}
+html:not(.dark) .group:hover .group-hover\:text-white {
+  color: #0F172A !important;
+}
+html:not(.dark) .hover\:text-emerald-400:hover {
+  color: #059669 !important;
+}
+html:not(.dark) .hover\:text-amber-400:hover {
+  color: #D97706 !important;
+}
+
+/* ── Solid Accent Background Text Protection ── */
+html:not(.dark) .bg-emerald-500 .text-white,
+html:not(.dark) .bg-emerald-600 .text-white,
+html:not(.dark) .bg-emerald-700 .text-white,
+html:not(.dark) .bg-amber-500 .text-white,
+html:not(.dark) .bg-amber-600 .text-white {
+  color: #FFFFFF !important;
+}
+
+/* ── FAQItem / Accordion headers ── */
+html:not(.dark) summary span.text-white { color: #1E293B !important; }
+
+
+/* ===================================================================
+   TARGETED .fitur-page OVERRIDES
+   Menggunakan class 'fitur-page' sebagai namespace agar override
+   tidak mencemari komponen lain yang sengaja pakai dark styling
+   =================================================================== */
+
+/* Root page background & text */
+html:not(.dark) .fitur-page {
+  background-color: #FAFAFA !important;
+  color: #0F172A !important;
+}
+
+/* Semua heading putih di dalam fitur-page */
+html:not(.dark) .fitur-page h1,
+html:not(.dark) .fitur-page h2,
+html:not(.dark) .fitur-page h3 {
+  color: #0F172A !important;
+}
+
+/* Semua span/p yang pakai text-white di dalam fitur-page menjadi gelap */
+html:not(.dark) .fitur-page .text-white { color: #0F172A !important; }
+html:not(.dark) .fitur-page .text-white\/40 { color: rgba(15,23,42,0.45) !important; }
+html:not(.dark) .fitur-page .text-white\/50 { color: rgba(15,23,42,0.55) !important; }
+/* Exception: button di dalam emerald bg tetap putih */
+html:not(.dark) .fitur-page .bg-emerald-500 .text-white,
+html:not(.dark) .fitur-page .bg-emerald-500 { color: #FFFFFF !important; }
+html:not(.dark) .fitur-page a.bg-emerald-500 { color: #FFFFFF !important; }
+
+/* Sticky tab bar */
+html:not(.dark) .fitur-page .sticky {
+  background-color: rgba(250,250,250,0.96) !important;
+  border-color: rgba(0,0,0,0.08) !important;
+}
+
+/* Tab button container pill */
+html:not(.dark) .fitur-page .inline-flex.bg-\[\#111C24\],
+html:not(.dark) .fitur-page .inline-flex.rounded-full {
+  background-color: #E8EDF2 !important;
+  border-color: rgba(0,0,0,0.10) !important;
+}
+
+/* GroupCard cards */
+html:not(.dark) .fitur-page .rounded-2xl,
+html:not(.dark) .fitur-page .rounded-3xl {
+  background-color: #FFFFFF !important;
+  border-color: rgba(0,0,0,0.08) !important;
+}
+
+/* Section backgrounds */
+html:not(.dark) .fitur-page section {
+  background-color: #FAFAFA !important;
+}
+
+/* Before/After dark section */
+html:not(.dark) .fitur-page .py-20.bg-\[\#080D13\] {
+  background-color: #F0F4F8 !important;
+}
+
+/* CTA section */
+html:not(.dark) .fitur-page .py-24 {
+  background-color: #FAFAFA !important;
+}
+
+
+/* ===================================================================
+   DARK THEME PRESERVATION (DARK PRESERVE SYSTEM)
+   Restores original dark colors inside .dark-preserve containers 
+   even when the main page is in light mode.
+   =================================================================== */
+
+/* backgrounds */
+.dark-preserve,
+.dark-preserve.bg-\[\#06090F\],
+.dark-preserve .bg-\[\#06090F\] { background-color: #06090F !important; }
+.dark-preserve.bg-\[\#080D13\],
+.dark-preserve .bg-\[\#080D13\] { background-color: #080D13 !important; }
+.dark-preserve.bg-\[\#0C1319\],
+.dark-preserve .bg-\[\#0C1319\] { background-color: #0C1319 !important; }
+.dark-preserve.bg-\[\#111C24\],
+.dark-preserve .bg-\[\#111C24\] { background-color: #111C24 !important; }
+.dark-preserve.bg-\[\#162230\],
+.dark-preserve .bg-\[\#162230\] { background-color: #162230 !important; }
+.dark-preserve .bg-\[\#0C1319\]\/80 { background-color: rgba(12, 19, 25, 0.8) !important; }
+
+/* text colors */
+.dark-preserve.text-white,
+.dark-preserve .text-white { color: #FFFFFF !important; }
+.dark-preserve.text-\[\#F1F5F9\],
+.dark-preserve .text-\[\#F1F5F9\] { color: #F1F5F9 !important; }
+.dark-preserve.text-\[\#CBD5E1\],
+.dark-preserve .text-\[\#CBD5E1\] { color: #CBD5E1 !important; }
+.dark-preserve.text-\[\#94A3B8\],
+.dark-preserve .text-\[\#94A3B8\] { color: #94A3B8 !important; }
+.dark-preserve.text-\[\#4B6478\],
+.dark-preserve .text-\[\#4B6478\] { color: #4B6478 !important; }
+.dark-preserve.text-\[\#64748B\],
+.dark-preserve .text-\[\#64748B\] { color: #64748B !important; }
+.dark-preserve.text-\[\#8899A6\],
+.dark-preserve .text-\[\#8899A6\] { color: #8899A6 !important; }
+.dark-preserve.text-\[\#7F8EA0\],
+.dark-preserve .text-\[\#7F8EA0\] { color: #7F8EA0 !important; }
+
+/* headings & tags inside dark preserve */
+.dark-preserve h1, .dark-preserve h1.text-white,
+.dark-preserve h2, .dark-preserve h2.text-white,
+.dark-preserve h3, .dark-preserve h3.text-white,
+.dark-preserve h4, .dark-preserve h4.text-white,
+.dark-preserve h5, .dark-preserve h5.text-white,
+.dark-preserve h6, .dark-preserve h6.text-white,
+.dark-preserve p, .dark-preserve p.text-white,
+.dark-preserve span, .dark-preserve span.text-white,
+.dark-preserve strong, .dark-preserve strong.text-white {
+  color: #FFFFFF !important;
+}
+
+/* transparent borders & background opacities */
+.dark-preserve [class*="border-white/"] { border-color: revert !important; }
+.dark-preserve [class*="bg-white/"] { background-color: revert !important; }
+.dark-preserve .border-white\/5 { border-color: rgba(255, 255, 255, 0.05) !important; }
+.dark-preserve .border-white\/8 { border-color: rgba(255, 255, 255, 0.08) !important; }
+.dark-preserve .border-white\/10 { border-color: rgba(255, 255, 255, 0.10) !important; }
+.dark-preserve .border-white\/20 { border-color: rgba(255, 255, 255, 0.20) !important; }
+.dark-preserve .bg-white\/5 { background-color: rgba(255, 255, 255, 0.04) !important; }
+.dark-preserve .bg-white\/10 { background-color: rgba(255, 255, 255, 0.06) !important; }
+.dark-preserve .bg-white\/20 { background-color: rgba(255, 255, 255, 0.10) !important; }
+
+/* emerald/accent text in dark preserve */
+.dark-preserve .text-emerald-300 { color: #6EE7B7 !important; }
+.dark-preserve .text-emerald-400 { color: #34D399 !important; }
+.dark-preserve .text-emerald-500 { color: #021a02 !important; }
+.dark-preserve .text-emerald-600 { color: #059669 !important; }
+.dark-preserve .text-em-400 { color: #34D399 !important; }
+.dark-preserve .text-em-500 { color: #021a02 !important; }
+.dark-preserve .text-em-600 { color: #059669 !important; }
+
+
+

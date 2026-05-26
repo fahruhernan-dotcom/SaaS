@@ -57,7 +57,7 @@ export default function EggBeranda() {
         <div className="flex gap-3">
             <Button 
                 onClick={() => navigate('/broker/pos')}
-                className="bg-[#10B981] hover:bg-emerald-600 h-14 px-8 font-black uppercase tracking-widest text-[11px] rounded-[20px] border-none shadow-[0_8px_24px_rgba(16,185,129,0.2)] gap-3"
+                className="bg-[#021a02] hover:bg-emerald-600 h-14 px-8 font-black uppercase tracking-widest text-[11px] rounded-[20px] border-none shadow-[0_8px_24px_rgba(2, 26, 2,0.2)] gap-3"
             >
                 <Plus size={18} strokeWidth={3} />
                 Catat Penjualan

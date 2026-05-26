@@ -1547,8 +1547,8 @@ function DriverDetailSheet({ driver, onClose }) {
         <Sheet open={!!driver} onOpenChange={onClose}>
             <SheetContent side={isDesktop ? "right" : "bottom"} className={cn("bg-[#0C1319] border-white/8 p-0 flex flex-col", isDesktop ? "w-full sm:max-w-[520px] border-l" : "h-[90dvh] rounded-t-[40px] border-t")}>
                 <div className="p-6 border-b border-white/5 flex gap-4 items-center">
-                    <Avatar className="h-14 w-14 rounded-[20px] border border-white/5 shrink-0" style={{ backgroundColor: driver?.isUnregistered ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)' }}>
-                        <AvatarFallback className="bg-transparent font-display font-black text-lg uppercase" style={{ color: driver?.isUnregistered ? '#EF4444' : '#34D399' }}>
+                    <Avatar className="h-14 w-14 rounded-[20px] border border-white/5 shrink-0" style={{ backgroundColor: driver?.isUnregistered ? 'rgba(239, 68, 68, 0.1)' : 'rgba(2, 26, 2, 0.1)' }}>
+                        <AvatarFallback className="bg-transparent font-display font-black text-lg uppercase" style={{ color: driver?.isUnregistered ? '#EF4444' : '#021a02' }}>
                             {driver?.isUnregistered ? '?' : driver?.full_name?.substring(0, 2)}
                         </AvatarFallback>
                     </Avatar>

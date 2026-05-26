@@ -142,7 +142,7 @@ export function SembakoOnboardingChecklist({ productsCount, batchesCount, custom
           </span>
           <span style={{
             fontSize: '10px', fontWeight: 800, letterSpacing: '0.05em',
-            color: progressPct >= 50 ? '#34D399' : C.accent,
+            color: progressPct >= 50 ? '#021a02' : C.accent,
           }}>
             {completedCount}/{STEPS.length}
           </span>
@@ -158,7 +158,7 @@ export function SembakoOnboardingChecklist({ productsCount, batchesCount, custom
             style={{
               height: '100%', borderRadius: 3,
               background: progressPct >= 75
-                ? 'linear-gradient(90deg, #34D399, #10B981)'
+                ? 'linear-gradient(90deg, #021a02, #021a02)'
                 : `linear-gradient(90deg, ${C.accent}, #F97316)`,
             }}
           />
@@ -179,8 +179,8 @@ export function SembakoOnboardingChecklist({ productsCount, batchesCount, custom
               style={{
                 display: 'flex', alignItems: 'center', gap: '12px',
                 padding: '12px 14px', borderRadius: '14px',
-                background: done ? 'rgba(52,211,153,0.06)' : C.card,
-                border: `1px solid ${done ? 'rgba(52,211,153,0.2)' : C.border}`,
+                background: done ? 'rgba(2, 26, 2,0.06)' : C.card,
+                border: `1px solid ${done ? 'rgba(2, 26, 2,0.2)' : C.border}`,
                 cursor: done ? 'default' : 'pointer',
                 textAlign: 'left', width: '100%',
                 opacity: done ? 0.75 : 1,
@@ -190,11 +190,11 @@ export function SembakoOnboardingChecklist({ productsCount, batchesCount, custom
               {/* Step number / check */}
               <div style={{
                 width: 30, height: 30, borderRadius: 9, flexShrink: 0,
-                background: done ? 'rgba(52,211,153,0.15)' : `${C.accent}18`,
+                background: done ? 'rgba(2, 26, 2,0.15)' : `${C.accent}18`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 {done
-                  ? <Check size={14} color="#34D399" strokeWidth={3} />
+                  ? <Check size={14} color="#021a02" strokeWidth={3} />
                   : <span style={{ fontSize: '11px', fontWeight: 900, color: C.accent }}>{idx + 1}</span>
                 }
               </div>
@@ -202,7 +202,7 @@ export function SembakoOnboardingChecklist({ productsCount, batchesCount, custom
               {/* Label */}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{
-                  fontSize: '13px', fontWeight: 700, color: done ? '#34D399' : C.text,
+                  fontSize: '13px', fontWeight: 700, color: done ? '#021a02' : C.text,
                   margin: 0, lineHeight: 1.2,
                   textDecoration: done ? 'line-through' : 'none',
                 }}>

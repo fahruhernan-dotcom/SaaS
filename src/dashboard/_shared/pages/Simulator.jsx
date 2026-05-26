@@ -27,7 +27,7 @@ export default function Simulator() {
           
           <div style={{ background: '#111C24', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px', padding: '20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-              <Calculator size={18} color="#10B981" />
+              <Calculator size={18} color="#021a02" />
               <span style={{ fontFamily: 'Sora', fontWeight: 800, color: '#F1F5F9' }}>Input Parameter</span>
             </div>
 
@@ -45,11 +45,11 @@ export default function Simulator() {
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             style={{ 
-              background: profit >= 0 ? 'linear-gradient(135deg, #10B981, #059669)' : 'linear-gradient(135deg, #EF4444, #DC2626)',
+              background: profit >= 0 ? 'linear-gradient(135deg, #021a02, #021a02)' : 'linear-gradient(135deg, #EF4444, #DC2626)',
               borderRadius: '24px',
               padding: '24px',
               color: 'white',
-              boxShadow: profit >= 0 ? '0 10px 30px rgba(16,185,129,0.3)' : '0 10px 30px rgba(239,68,68,0.3)'
+              boxShadow: profit >= 0 ? '0 10px 30px rgba(2, 26, 2,0.3)' : '0 10px 30px rgba(239,68,68,0.3)'
             }}
           >
             <div style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', opacity: 0.8, letterSpacing: '1px', marginBottom: '4px' }}>
@@ -104,7 +104,7 @@ function SliderInput({ label, value, min, max, step, onChange }) {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
         <label style={{ fontSize: '12px', fontWeight: 600, color: '#4B6478', textTransform: 'uppercase' }}>{label}</label>
-        <span style={{ fontSize: '14px', fontWeight: 800, color: '#10B981' }}>{label.includes('kg') && !label.includes('/kg') ? value : formatIDR(value)}</span>
+        <span style={{ fontSize: '14px', fontWeight: 800, color: '#021a02' }}>{label.includes('kg') && !label.includes('/kg') ? value : formatIDR(value)}</span>
       </div>
       <input
         type="range"

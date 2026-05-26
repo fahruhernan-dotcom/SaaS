@@ -61,7 +61,7 @@ const StatsBar = () => {
   }, [isInView]);
 
   return (
-    <section className="bg-[#0A0F16] py-4 md:py-8 px-4 md:px-[80px]" ref={ref}>
+    <section className="bg-bg-base border-b border-border-subtle py-4 md:py-8 px-4 md:px-[80px]" ref={ref}>
       <motion.div
         className="max-w-[1280px] mx-auto"
         initial={{ opacity: 0 }}
@@ -72,16 +72,16 @@ const StatsBar = () => {
           {items.map((item, i) => (
             <div
               key={i}
-              className="stat-card bg-[#0A0F16] text-center p-2 md:p-[20px_12px] flex flex-col justify-center"
+              className="stat-card bg-bg-base text-center p-2 md:p-[20px_12px] flex flex-col justify-center"
               style={{ opacity: 0 }}
             >
               {/* Nilai */}
-              <div className="font-display font-extrabold text-[#F1F5F9] tracking-tighter leading-none text-[12px] md:text-[32px] lg:text-[42px]">
+              <div className="font-display font-extrabold text-text-primary tracking-tighter leading-none text-[12px] md:text-[32px] lg:text-[42px]">
                 {item.value}
               </div>
 
               {/* Label + live dot */}
-              <div className="mt-1 md:mt-2 font-bold tracking-tight md:tracking-widest text-[7px] md:text-[11px] flex items-center justify-center gap-1 text-[#4B6478]">
+              <div className="mt-1 md:mt-2 font-bold tracking-tight md:tracking-widest text-[7px] md:text-[11px] flex items-center justify-center gap-1 text-text-secondary">
                 {item.isLive && (
                   <span
                     className="w-[5px] h-[5px] rounded-full bg-emerald-400 animate-pulse inline-block"
@@ -99,7 +99,7 @@ const StatsBar = () => {
           initial={{ opacity: 0 }}
           animate={isInView ? { opacity: 0.35 } : { opacity: 0 }}
           transition={{ delay: 1, duration: 1 }}
-          className="text-center text-[7px] md:text-[10px] text-[#4B6478] mt-4 md:mt-6 uppercase tracking-[0.18em] font-bold"
+          className="text-center text-[7px] md:text-[10px] text-text-muted mt-4 md:mt-6 uppercase tracking-[0.18em] font-bold"
         >
           *Data diperbarui otomatis setiap jam dari transaksi nyata
         </motion.p>

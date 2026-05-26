@@ -84,19 +84,19 @@ function Stars({ count = 5 }) {
 
 function TestimonialCard({ t }) {
   return (
-    <div className="bg-[#0C1319] border border-white/5 rounded-2xl p-3 md:p-6 mb-2 md:mb-4 group hover:border-emerald-500/20 transition-all duration-500">
+    <div className="bg-bg-1 border border-border-def rounded-2xl p-3 md:p-6 mb-2 md:mb-4 group hover:border-border-acc transition-all duration-500">
       <div className="flex items-center gap-2 md:gap-4 mb-3 md:mb-6">
         <div 
-          className="w-8 h-8 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-emerald-500/20 grayscale group-hover:grayscale-0 transition-all duration-700 flex items-center justify-center font-display font-black text-white/20 text-xs md:text-base bg-emerald-500/10"
+          className="w-8 h-8 md:w-12 md:h-12 rounded-full overflow-hidden border-2 border-border-acc grayscale group-hover:grayscale-0 transition-all duration-700 flex items-center justify-center font-display font-black text-text-primary/20 text-xs md:text-base bg-emerald-500/10"
         >
           {t.avatar}
         </div>
         <div>
-          <h4 className="font-display font-black text-white text-[11px] md:text-base uppercase tracking-tight">{t.name}</h4>
+          <h4 className="font-display font-black text-text-primary text-[11px] md:text-base uppercase tracking-tight">{t.name}</h4>
           <p className="text-emerald-500 font-bold text-[9px] md:text-xs uppercase tracking-widest">{t.role}</p>
         </div>
       </div>
-      <p className="text-[#94A3B8] text-[11px] md:text-sm font-medium leading-relaxed italic">
+      <p className="text-text-secondary text-[11px] md:text-sm font-medium leading-relaxed italic">
         "{t.text}"
       </p>
     </div>
@@ -134,7 +134,7 @@ const COL3 = TESTIMONIALS.slice(6, 9)
 
 export default function TestimonialsNew() {
   return (
-    <section className="py-24 bg-[#06090F] w-full overflow-hidden">
+    <section className="py-24 bg-bg-base w-full overflow-hidden">
       {/* Keyframes injected via style tag */}
       <style>{`
         @keyframes scrollUp {
@@ -146,10 +146,10 @@ export default function TestimonialsNew() {
       {/* Header */}
       <AnimatedContent distance={20}>
         <div className="text-center mb-12 px-4">
-          <p className="text-[#10B981] text-xs font-bold uppercase tracking-widest mb-3">
+          <p className="text-[#021a02] text-xs font-bold uppercase tracking-widest mb-3">
             DARI PELAKU INDUSTRI
           </p>
-          <h2 className="font-display text-3xl md:text-4xl font-black text-white leading-tight">
+          <h2 className="font-display text-3xl md:text-4xl font-normal text-text-primary leading-tight">
             Mereka sudah merasakan perbedaannya.
           </h2>
         </div>
@@ -163,12 +163,12 @@ export default function TestimonialsNew() {
         {/* Top fade */}
         <div
           className="absolute top-0 left-0 right-0 h-20 pointer-events-none z-10"
-          style={{ background: 'linear-gradient(to bottom, #06090F, transparent)' }}
+          style={{ background: 'linear-gradient(to bottom, var(--bg-base-val), transparent)' }}
         />
         {/* Bottom fade */}
         <div
           className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none z-10"
-          style={{ background: 'linear-gradient(to top, #06090F, transparent)' }}
+          style={{ background: 'linear-gradient(to top, var(--bg-base-val), transparent)' }}
         />
 
         {/* 2 or 3 columns */}

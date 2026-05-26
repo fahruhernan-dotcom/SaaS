@@ -37,13 +37,13 @@ function Calendar({
         day_button: cn(
           "h-10 w-10 p-0 font-bold text-[11px] uppercase tracking-tight transition-all rounded-xl flex items-center justify-center hover:bg-[#162230] text-white",
         ),
-        today: "text-[#10B981] font-black underline underline-offset-4",
-        selected: "bg-[#10B981] text-white hover:bg-[#10B981] hover:text-white focus:bg-[#10B981] focus:text-white shadow-lg shadow-[#10B981]/20",
+        today: "text-[#021a02] font-black underline underline-offset-4",
+        selected: "bg-[#021a02] text-white hover:bg-[#021a02] hover:text-white focus:bg-[#021a02] focus:text-white shadow-lg shadow-[#021a02]/20",
         outside: "text-[#4B6478] opacity-20 pointer-events-none",
         disabled: "text-[#4B6478] opacity-10",
         range_middle: "aria-selected:bg-[#162230] aria-selected:text-white rounded-none",
-        range_start: "aria-selected:bg-[#10B981] aria-selected:text-white rounded-l-xl",
-        range_end: "aria-selected:bg-[#10B981] aria-selected:text-white rounded-r-xl",
+        range_start: "aria-selected:bg-[#021a02] aria-selected:text-white rounded-l-xl",
+        range_end: "aria-selected:bg-[#021a02] aria-selected:text-white rounded-r-xl",
         ...classNames,
       }}
       components={{

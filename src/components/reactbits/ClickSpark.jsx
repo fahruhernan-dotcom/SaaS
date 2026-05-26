@@ -2,7 +2,7 @@ import { useRef, useCallback } from 'react'
 
 function ClickSpark({
   children,
-  sparkColor = '#10B981',
+  sparkColor = '#021a02',
   sparkSize = 8,
   sparkRadius = 15,
   sparkCount = 8,

@@ -34,7 +34,7 @@ export default function AISuccessCard({ entry, onUndo, onClose, undoCountdown })
       initial={{ opacity: 0, scale: 0.95, y: 10 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: -10 }}
-      className="bg-[#111C24] mx-4 rounded-3xl p-6 border border-emerald-500/20 shadow-[0_10px_40px_rgba(16,185,129,0.1)] relative"
+      className="bg-[#111C24] mx-4 rounded-3xl p-6 border border-emerald-500/20 shadow-[0_10px_40px_rgba(2, 26, 2,0.1)] relative"
     >
       <div className="flex justify-center mb-4">
         <div className="w-16 h-16 rounded-full border-2 border-emerald-500 flex items-center justify-center bg-emerald-500/10">

@@ -40,6 +40,7 @@ import { getBusinessModel, BUSINESS_MODELS, resolveBusinessVertical } from '@/li
 import { isSuperadmin, isOwner, isStaff, isViewOnly } from '@/lib/auth'
 import { useTheme } from '@/lib/hooks/useTheme'
 import { peternakPermissions } from '@/lib/hooks/usePeternakPermissions'
+import { useLanguage } from '@/lib/i18n/useLanguage'
 import DrawerLainnya from './DrawerLainnya'
 
 const ICON_MAP = {
@@ -52,6 +53,7 @@ const ICON_MAP = {
 // ── Single tab button ──────────────────────────────────────────────────────────
 function NavItem({ tab, active, color, onClick }) {
   const Icon = ICON_MAP[tab.icon] || Home
+  const { t } = useLanguage()
 
   const measureRef = useRef(null)
   const [contentWidth, setContentWidth] = useState(20)
@@ -97,7 +99,7 @@ function NavItem({ tab, active, color, onClick }) {
           visibility: 'hidden',
         }}
       >
-        {tab.label}
+        {t(tab.label, tab.label)}
       </span>
 
       {/* Icon + animated label */}
@@ -122,7 +124,7 @@ function NavItem({ tab, active, color, onClick }) {
             lineHeight: 1,
           }}
         >
-          {tab.label}
+          {t(tab.label, tab.label)}
         </motion.span>
       </div>
 
@@ -186,6 +188,7 @@ function CenterFAB({ color, onClick }) {
 // ── Peternak Dock Tab ─────────────────────────────────────────────────────────
 function PeternakNavItem({ tab, active, color, onClick }) {
   const Icon = ICON_MAP[tab.icon] || Home
+  const { t } = useLanguage()
   return (
     <motion.button
       onClick={onClick}
@@ -214,7 +217,7 @@ function PeternakNavItem({ tab, active, color, onClick }) {
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
           style={{ fontSize: '12px', fontWeight: 700, fontFamily: 'DM Sans', color, whiteSpace: 'nowrap', overflow: 'hidden', display: 'block', lineHeight: 1 }}
         >
-          {tab.label}
+          {t(tab.label, tab.label)}
         </motion.span>
       </motion.div>
     </motion.button>
@@ -252,6 +255,7 @@ function BrokerNavItem({ tab, active, color, onClick }) {
 
 // ── Sembako Speed Dial FAB ────────────────────────────────────────────────────
 function SpeedDial({ color, open, onToggle, items }) {
+  const { t } = useLanguage()
   return (
     <>
       {/* Speed dial container */}
@@ -302,7 +306,7 @@ function SpeedDial({ color, open, onToggle, items }) {
                     <item.icon size={14} color={color} strokeWidth={2.5} />
                   </div>
                   <span style={{ fontSize: '13px', fontWeight: 800, color: '#F1F5F9', letterSpacing: '-0.01em' }}>
-                    {item.label}
+                    {t(item.label, item.label)}
                   </span>
                 </motion.button>
               ))}
@@ -392,7 +396,7 @@ export default function BottomNav() {
   // BRANDING: Theme implementation
   const isSembako = vertical === 'distributor_sembako' || vertical === 'sembako_broker'
   const isDombaFattening = isPeternakDombaFattening(profile, tenant, vertical)
-  const color = (isSembako ? '#EA580C' : (accentColor || model?.color || '#10B981'))
+  const color = (isSembako ? '#EA580C' : (accentColor || model?.color || '#021a02'))
 
   // Domba Fattening green tokens (override when speed dial is used)
   const DOMBA_GREEN = '#22C55E'

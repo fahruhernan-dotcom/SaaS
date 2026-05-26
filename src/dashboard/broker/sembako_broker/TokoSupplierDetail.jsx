@@ -43,7 +43,7 @@ import {
 // ── Palette Sembako Premium ───────────────────────────────────────────────────
 const C = {
   bg: '#06090F', card: '#111C24', accent: '#EA580C', 
-  green: '#10B981', red: '#F87171', amber: '#F59E0B',
+  green: '#021a02', red: '#F87171', amber: '#F59E0B',
   muted: '#4B6478', text: '#F1F5F9', border: 'rgba(255,255,255,0.06)'
 }
 

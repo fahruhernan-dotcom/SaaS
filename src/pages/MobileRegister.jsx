@@ -5,6 +5,7 @@ import {
   Loader2, AlertCircle 
 } from 'lucide-react'
 import ShaderBackground from '@/components/ui/shader-background'
+import { useLanguage } from '@/lib/i18n/useLanguage'
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" className="shrink-0" style={{ marginRight: 10 }}>
@@ -21,21 +22,31 @@ export default function MobileRegister({
   setValue, errors, onSubmit, handleGoogleSignIn, navigate, HoneypotField 
 }) {
   const containerRef = useRef(null)
+  const { t } = useLanguage()
 
   useEffect(() => {
     import('animejs').then(({ animate, createTimeline, stagger }) => {
-      createTimeline({ defaults: { ease: 'outElastic(1, 0.6)', duration: 750 } })
-        .add('.mr-stagger', {
-          opacity: [0, 1],
-          translateY: [32, 0],
-        }, stagger(80))
+      if (!containerRef.current) return
 
-      animate('.mr-logo-wrap', {
-        scale: [0.5, 1],
-        opacity: [0, 1],
-        ease: 'outElastic(1, 0.5)',
-        duration: 900,
-      })
+      const mrStagger = containerRef.current.querySelectorAll('.mr-stagger')
+      const mrLogoWrap = containerRef.current.querySelector('.mr-logo-wrap')
+
+      if (mrStagger.length > 0) {
+        createTimeline({ defaults: { ease: 'outElastic(1, 0.6)', duration: 750 } })
+          .add(mrStagger, {
+            opacity: [0, 1],
+            translateY: [32, 0],
+          }, stagger(80))
+      }
+
+      if (mrLogoWrap) {
+        animate(mrLogoWrap, {
+          scale: [0.5, 1],
+          opacity: [0, 1],
+          ease: 'outElastic(1, 0.5)',
+          duration: 900,
+        })
+      }
     })
   }, [])
 
@@ -44,29 +55,26 @@ export default function MobileRegister({
       <ShaderBackground />
       <div style={{ 
         width: '100%', maxWidth: 420, minHeight: '100vh', 
-        background: 'rgba(6, 9, 15, 0.4)', backdropFilter: 'blur(32px)',
+        background: 'var(--mobile-card-bg)', backdropFilter: 'blur(32px)',
         overflow: 'hidden', display: 'flex', flexDirection: 'column',
-        position: 'relative', zIndex: 1, border: '1px solid rgba(255, 255, 255, 0.05)',
+        position: 'relative', zIndex: 1, border: '1px solid var(--mobile-card-border)',
       }}>
-        <div style={{ position: 'relative' }}>
-          <div style={{ 
-            background: 'radial-gradient(circle at 15% 15%, #065f46 0%, #0d1117 80%)', 
-            padding: '32px 32px 40px', position: 'relative', overflow: 'hidden' 
-          }}>
-            <Link to="/" className="mr-logo-wrap" style={{ display: 'inline-flex', alignItems: 'center', gap: 14, marginBottom: 20, textDecoration: 'none', cursor: 'pointer', opacity: 0 }}>
-              <div style={{ position: 'relative', width: 38, height: 38, flexShrink: 0 }}>
-                <div style={{ position: 'absolute', inset: -6, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', filter: 'blur(10px)' }} />
-                <img src="/logo.png" alt="TernakOS" style={{ width: 38, height: 38, borderRadius: 10, objectFit: 'cover', position: 'relative', zIndex: 1, display: 'block', border: '1px solid rgba(255,255,255,0.05)' }} />
+        <div className="relative">
+          <div className="bg-[var(--mobile-header-bg)] p-[32px_32px_40px] relative overflow-hidden">
+            <Link to="/" className="mr-logo-wrap inline-flex items-center gap-[14px] mb-[20px] no-underline cursor-pointer opacity-0">
+              <div className="relative w-[38px] h-[38px] shrink-0">
+                <div className="absolute inset-[-6px] rounded-full bg-[rgba(255,255,255,0.08)] blur-[10px]" />
+                <img src="/logo.png" alt="TernakOS" className="w-[38px] h-[38px] rounded-[10px] object-cover relative z-[1] block border border-[var(--mobile-card-border)]" />
               </div>
-              <span className="font-display" style={{ color: 'white', fontWeight: 800, fontSize: 20, letterSpacing: '-0.04em', lineHeight: 1 }}>TernakOS</span>
+              <span className="font-display text-[#F1F5F9]" style={{ fontWeight: 800, fontSize: 20, letterSpacing: '-0.04em', lineHeight: 1 }}>TernakOS</span>
             </Link>
 
-            <div className="mr-stagger" style={{ opacity: 0 }}>
-              <h1 className="font-display" style={{ color: 'white', margin: '0 0 8px', fontSize: 24, fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.04em' }}>
-                Buat akun baru 🚀
+            <div className="mr-stagger opacity-0">
+              <h1 className="font-display text-[#F1F5F9]" style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.04em' }}>
+                {t('auth_register_title', 'Buat akun baru')} 🚀
               </h1>
-              <p className="font-body" style={{ color: '#94a3b8', margin: 0, fontSize: 14, fontWeight: 500, lineHeight: 1.4 }}>
-                Gratis selamanya, tanpa kartu kredit.
+              <p className="font-body text-[#94A3B8]" style={{ margin: 0, fontSize: 14, fontWeight: 500, lineHeight: 1.4 }}>
+                {t('auth_register_desc', 'Gratis selamanya, tanpa kartu kredit.')}
               </p>
             </div>
             <svg viewBox="0 0 420 40" preserveAspectRatio="none" style={{ position: 'absolute', bottom: -1, left: 0, width: '100%', height: 32, pointerEvents: 'none', zIndex: 10 }}>
@@ -78,7 +86,7 @@ export default function MobileRegister({
 
         <div style={{ flex: 1, padding: '12px 32px 48px' }}>
           {/* Mode Switcher */}
-          <div className="mr-stagger" style={{ display: 'flex', padding: 4, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, marginBottom: 32, opacity: 0 }}>
+          <div className="mr-stagger" style={{ display: 'flex', padding: 4, background: 'var(--mobile-button-secondary-bg)', border: '1px solid var(--mobile-button-secondary-border)', borderRadius: 16, marginBottom: 32, opacity: 0 }}>
             {['mandiri', 'invite'].map((m) => (
               <button
                 key={m}
@@ -92,7 +100,7 @@ export default function MobileRegister({
                   cursor: 'pointer'
                 }}
               >
-                {m === 'mandiri' ? 'Daftar Mandiri' : 'Pakai Undangan'}
+                {m === 'mandiri' ? t('auth_register_mandiri', 'Daftar Mandiri') : t('auth_register_invite', 'Pakai Undangan')}
               </button>
             ))}
           </div>
@@ -101,9 +109,9 @@ export default function MobileRegister({
             <HoneypotField />
             
             <div className="mr-stagger" style={{ marginBottom: 20, opacity: 0 }}>
-              <label style={{ display: 'block', color: '#64748b', fontSize: 12, fontWeight: 600, marginBottom: 12, letterSpacing: '0.05em' }}>NAMA LENGKAP</label>
+              <label className="block text-[12px] font-semibold mb-[12px] tracking-[0.05em] font-body text-[var(--text-muted)]">{t('auth_fullname_label', 'NAMA LENGKAP')}</label>
               <AnimatedMobileInput
-                placeholder="Budi Santoso"
+                placeholder={t('auth_fullname_placeholder', 'Budi Santoso')}
                 {...register('fullName')}
                 icon={<User size={18} strokeWidth={1.5} />}
               />
@@ -112,7 +120,7 @@ export default function MobileRegister({
 
             {mode === 'invite' && (
               <div className="mr-stagger" style={{ marginBottom: 20, opacity: 0 }}>
-                <label style={{ display: 'block', color: '#64748b', fontSize: 12, fontWeight: 600, marginBottom: 12, letterSpacing: '0.05em' }}>KODE UNDANGAN</label>
+                <label className="block text-[12px] font-semibold mb-[12px] tracking-[0.05em] font-body text-[var(--text-muted)]">{t('auth_invite_code_label', 'KODE UNDANGAN')}</label>
                 <AnimatedMobileInput
                   placeholder="CODE12"
                   {...register('inviteCode')}
@@ -124,10 +132,10 @@ export default function MobileRegister({
             )}
 
             <div className="mr-stagger" style={{ marginBottom: 20, opacity: 0 }}>
-              <label style={{ display: 'block', color: '#64748b', fontSize: 12, fontWeight: 600, marginBottom: 12, letterSpacing: '0.05em' }}>EMAIL</label>
+              <label className="block text-[12px] font-semibold mb-[12px] tracking-[0.05em] font-body text-[var(--text-muted)]">{t('auth_email_label_upper', 'EMAIL')}</label>
               <AnimatedMobileInput
                 type="email"
-                placeholder="nama@email.com"
+                placeholder={t('auth_email_placeholder_full', 'nama@email.com')}
                 {...register('email')}
                 icon={<Mail size={18} strokeWidth={1.5} />}
               />
@@ -135,10 +143,10 @@ export default function MobileRegister({
             </div>
 
             <div className="mr-stagger" style={{ marginBottom: 20, opacity: 0 }}>
-              <label style={{ display: 'block', color: '#64748b', fontSize: 12, fontWeight: 600, marginBottom: 12, letterSpacing: '0.05em' }}>PASSWORD</label>
+              <label className="block text-[12px] font-semibold mb-[12px] tracking-[0.05em] font-body text-[var(--text-muted)]">{t('auth_password_label_upper', 'PASSWORD')}</label>
               <AnimatedMobileInput
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Password Baru"
+                placeholder={t('auth_password_placeholder', '••••••••')}
                 {...register('password')}
                 icon={<Lock size={17} />}
                 rightIcon={
@@ -153,8 +161,8 @@ export default function MobileRegister({
             <div className="mr-stagger" style={{ marginBottom: 24, opacity: 0 }}>
               <label style={{ display: 'flex', alignItems: 'start', gap: 10, cursor: 'pointer' }}>
                 <input type="checkbox" {...register('agreedToTerms')} style={{ marginTop: 3, width: 16, height: 16, accentColor: '#22c55e' }} />
-                <span style={{ color: '#94a3b8', fontSize: 12, lineHeight: 1.5 }}>
-                  Setuju dengan <Link to="/terms" style={{ color: '#22c55e' }}>Syarat</Link> dan <Link to="/privacy" style={{ color: '#22c55e' }}>Kebijakan</Link> kami.
+                <span className="text-text-muted" style={{ fontSize: 12, lineHeight: 1.5 }}>
+                  {t('auth_register_terms_prefix', 'Setuju dengan ')}<Link to="/terms" style={{ color: '#22c55e' }}>{t('auth_terms', 'Syarat')}</Link>{t('auth_register_terms_mid', ' dan ')}<Link to="/privacy" style={{ color: '#22c55e' }}>{t('auth_privacy', 'Kebijakan')}</Link>{t('auth_register_terms_suffix', ' kami.')}
                 </span>
               </label>
               {errors.agreedToTerms && <p style={{ color: '#f87171', fontSize: 11, marginTop: 4 }}>{errors.agreedToTerms.message}</p>}
@@ -177,7 +185,7 @@ export default function MobileRegister({
                   boxShadow: '0 4px 24px rgba(34,197,94,0.3)', opacity: (isLoading || googleLoading || isBlocked) ? 0.6 : 1
                 }}
               >
-                {isLoading ? <><Loader2 size={16} className="animate-spin" /> ...</> : cooldown > 0 ? `Tunggu ${cooldown}s` : (mode === 'mandiri' ? 'Daftar Gratis →' : 'Bergabung Tim')}
+                {isLoading ? <><Loader2 size={16} className="animate-spin" /> ...</> : cooldown > 0 ? `Tunggu ${cooldown}s` : (mode === 'mandiri' ? t('auth_register_button', 'Daftar Gratis →') : t('auth_join_team_button', 'Bergabung Tim'))}
               </button>
             </div>
           </form>
@@ -185,7 +193,7 @@ export default function MobileRegister({
           {/* New Positioned Google Login Layout BELOW Masuk */}
           <div className="mr-stagger" style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '24px 0', opacity: 0 }}>
             <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.05))' }} />
-            <span style={{ color: '#475569', fontSize: 11, fontWeight: 700, letterSpacing: '0.2em' }}>ATAU</span>
+            <span style={{ color: '#475569', fontSize: 11, fontWeight: 700, letterSpacing: '0.2em' }}>{t('auth_or', 'atau').toUpperCase()}</span>
             <div style={{ flex: 1, height: 1, background: 'linear-gradient(to left, transparent, rgba(255,255,255,0.05))' }} />
           </div>
 
@@ -193,22 +201,21 @@ export default function MobileRegister({
             <button
               type="button"
               onClick={handleGoogleSignIn}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '14px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, color: '#e2e8f0', fontSize: 15, fontWeight: 600, cursor: 'pointer', backdropFilter: 'blur(8px)' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.borderColor = 'rgba(34,197,94,0.3)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '14px', borderRadius: 16, fontSize: 15, fontWeight: 600, cursor: 'pointer', backdropFilter: 'blur(8px)' }}
+              className="bg-white/[0.03] border border-white/8 text-[#F1F5F9] hover:bg-white/[0.07] hover:border-emerald-500/30 transition-all"
             >
-              <GoogleIcon /> Daftar dengan Google
+              <GoogleIcon /> {t('auth_register_google', 'Daftar dengan Google')}
             </button>
           </div>
 
           <div className="mr-stagger" style={{ textAlign: 'center', marginTop: 28, opacity: 0 }}>
-            <p style={{ color: '#64748b', fontSize: 13 }}>Sudah punya akun?</p>
+            <p className="text-text-muted text-[13px]">{t('auth_already_have_account', 'Sudah punya akun?')}</p>
             <button
               type="button"
               onClick={() => navigate('/login')}
-              style={{ width: '100%', padding: '13px', background: 'transparent', border: '1.5px solid #2d3748', borderRadius: 14, color: '#a3a3a3', fontSize: 15, fontWeight: 600, marginTop: 12, cursor: 'pointer' }}
+              className="w-full p-[13px] rounded-[14px] text-[15px] font-semibold cursor-pointer transition-all font-body bg-transparent border border-[var(--mobile-card-border)] text-text-muted hover:border-emerald-500 hover:text-emerald-500"
             >
-              Masuk Sekarang
+              {t('auth_login_now', 'Masuk Sekarang')}
             </button>
           </div>
         </div>
@@ -231,18 +238,18 @@ function AnimatedMobileInput({ type, placeholder, value, onChange, icon, rightIc
         input:-webkit-autofill,
         input:-webkit-autofill:hover, 
         input:-webkit-autofill:focus {
-          -webkit-text-fill-color: #f1f5f9 !important;
-          -webkit-box-shadow: 0 0 0px 1000px #0a1118 inset !important;
+          -webkit-text-fill-color: var(--text-primary-val) !important;
+          -webkit-box-shadow: 0 0 0px 1000px var(--mobile-input-bg) inset !important;
           transition: background-color 500000s ease-in-out 0s;
           caret-color: #22c55e !important;
         }
       `}</style>
 
       <div style={{
-        display: 'flex', alignItems: 'center', padding: '14px 16px', background: 'rgba(13, 17, 23, 0.7)', borderRadius: 14,
-        border: focused ? '1.5px solid rgba(34, 197, 94, 0.45)' : (isHovered ? '1.5px solid rgba(255, 255, 255, 0.12)' : '1.5px solid rgba(255, 255, 255, 0.03)'),
+        display: 'flex', alignItems: 'center', padding: '14px 16px', background: 'var(--mobile-input-bg)', borderRadius: 14,
+        border: focused ? '1.5px solid rgba(34, 197, 94, 0.45)' : (isHovered ? '1.5px solid var(--mobile-input-border-hover)' : '1.5px solid var(--mobile-input-border)'),
         transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-        boxShadow: focused ? '0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(34, 197, 94, 0.05)' : 'none'
+        boxShadow: focused ? '0 12px 40px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(34, 197, 94, 0.05)' : 'none'
       }}>
         <div style={{ color: focused ? '#22c55e' : '#475569', transition: 'color 0.3s', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, marginRight: 16, flexShrink: 0 }}>
           {icon}
@@ -251,7 +258,8 @@ function AnimatedMobileInput({ type, placeholder, value, onChange, icon, rightIc
           type={type} placeholder={placeholder} value={value} onChange={onChange}
           onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
           {...rest}
-          style={{ flex: 1, background: 'transparent', border: 'none', color: '#f1f5f9', fontSize: 16, outline: 'none', caretColor: '#22c55e', padding: 0, width: '100%' }}
+          style={{ flex: 1, background: 'transparent', border: 'none', fontSize: 16, outline: 'none', caretColor: '#22c55e', padding: 0, width: '100%' }}
+          className="text-[var(--text-primary-val)]"
         />
         {rightIcon && <div style={{ marginLeft: 10, display: 'flex', alignItems: 'center', color: '#475569' }}>{rightIcon}</div>}
       </div>

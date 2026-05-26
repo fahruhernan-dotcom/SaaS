@@ -65,7 +65,7 @@ export default function AboutUs() {
           <div className="absolute inset-0 pointer-events-none">
             <Particles
               quantity={40}
-              color="#10B981"
+              color="#021a02"
               opacity={0.1}
               className="absolute inset-0"
             />
@@ -88,8 +88,8 @@ export default function AboutUs() {
                     gradientUnits="userSpaceOnUse"
                     gradientTransform="translate(200 200) rotate(90) scale(400)"
                   >
-                    <stop stopColor="#10B981" />
-                    <stop offset="1" stopColor="#10B981" stopOpacity="0" />
+                    <stop stopColor="#021a02" />
+                    <stop offset="1" stopColor="#021a02" stopOpacity="0" />
                   </radialGradient>
                 </defs>
               </svg>
@@ -108,12 +108,12 @@ export default function AboutUs() {
                 }}
               />
               <div className="relative z-10 space-y-8 max-w-xl mx-auto md:mx-0">
-                <div className="inline-block px-4 py-1.5 rounded-full bg-[#10B981]/10 border border-[#10B981]/20">
+                <div className="inline-block px-4 py-1.5 rounded-full bg-[#021a02]/10 border border-[#021a02]/20">
                   <ShinyText
                     text="Dibangun oleh peternak, untuk seluruh rantai pasok"
                     disabled={false}
                     speed={3}
-                    className="text-[#10B981] text-sm font-bold"
+                    className="text-[#021a02] text-sm font-bold"
                   />
                 </div>
 
@@ -135,7 +135,7 @@ export default function AboutUs() {
                   <div className="pt-8 flex flex-wrap gap-4">
                     <Link
                       to="/register"
-                      className="px-8 py-4 bg-[#10B981] hover:bg-[#34D399] text-white font-bold rounded-2xl transition-all shadow-lg shadow-emerald-500/20"
+                      className="px-8 py-4 bg-[#021a02] hover:bg-[#021a02] text-white font-bold rounded-2xl transition-all shadow-lg shadow-emerald-500/20"
                     >
                       Mulai Gratis Sekarang
                     </Link>
@@ -212,7 +212,7 @@ export default function AboutUs() {
           <div className="max-w-6xl mx-auto px-6">
 
             <FadeUp className="text-center mb-12">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#10B981] mb-5">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-5">
                 SUDAH BISA DIPAKAI
               </p>
               <h2 className="font-display text-4xl font-bold text-white leading-tight mb-3">
@@ -306,7 +306,7 @@ export default function AboutUs() {
           <div className="max-w-6xl mx-auto px-6">
 
             <FadeUp className="text-center mb-16">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#10B981] mb-5">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-5">
                 UNTUK SIAPA
               </p>
               <h2 className="font-display text-4xl font-bold text-white leading-tight">
@@ -393,7 +393,7 @@ export default function AboutUs() {
                 },
               ].map(({ Icon, iconCls, iconBg, badge, badgeCls, hoverBorder, title, pain, features }, i) => (
                 <FadeUp key={i} delay={i * 0.1}>
-                  <div className={`group relative bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01))] rounded-3xl p-8 border border-white/8 ${hoverBorder} transition-all duration-300 h-full flex flex-col shadow-[0_8px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_20px_45px_rgba(16,185,129,0.12)]`}>
+                  <div className={`group relative bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01))] rounded-3xl p-8 border border-white/8 ${hoverBorder} transition-all duration-300 h-full flex flex-col shadow-[0_8px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_20px_45px_rgba(2, 26, 2,0.12)]`}>
                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/0 via-emerald-500/0 to-emerald-500/0 group-hover:from-emerald-500/5 group-hover:to-transparent transition-all duration-500 rounded-3xl" />
                     <div className={`relative z-10 w-12 h-12 rounded-2xl ${iconBg} flex items-center justify-center mb-6 shrink-0 group-hover:scale-110 transition-transform duration-300`}>
                       <Icon size={24} className={iconCls} />
@@ -428,7 +428,7 @@ export default function AboutUs() {
               {/* KIRI — Narasi */}
               <div className="md:col-span-3">
                 <FadeUp>
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-[#10B981] mb-5">
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-5">
                     ASAL USUL
                   </p>
                   <h2 className="font-display text-4xl font-bold text-white leading-tight mb-8">
@@ -459,7 +459,7 @@ export default function AboutUs() {
                   ].map(({ Icon, text }, i) => (
                     <FadeUp key={i} delay={0.4 + i * 0.08}>
                       <div className="flex items-center gap-3">
-                        <Icon size={16} className="text-[#10B981] shrink-0" />
+                        <Icon size={16} className="text-[#021a02] shrink-0" />
                         <span className="text-[#94A3B8] text-sm">{text}</span>
                       </div>
                     </FadeUp>
@@ -516,7 +516,7 @@ export default function AboutUs() {
                     }}
                   />
                   <div className="founder-placeholder hidden absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#0C1319] to-[#06090F]">
-                    <span className="font-display text-6xl font-black text-[#10B981]">FH</span>
+                    <span className="font-display text-6xl font-black text-[#021a02]">FH</span>
                   </div>
 
                   {/* Overlay gradient bawah */}
@@ -524,7 +524,7 @@ export default function AboutUs() {
 
                   {/* Floating badge */}
                   <div className="absolute bottom-5 left-5 bg-[#0C1319]/90 border border-white/10 rounded-xl px-4 py-2 backdrop-blur-sm shadow-xl">
-                    <div className="text-[#10B981] text-xs font-bold leading-tight">Peternak & Developer</div>
+                    <div className="text-[#021a02] text-xs font-bold leading-tight">Peternak & Developer</div>
                     <div className="text-[#4B6478] text-[10px] mt-0.5">Surakarta, Jawa Tengah</div>
                   </div>
                 </div>
@@ -537,7 +537,7 @@ export default function AboutUs() {
                 viewport={{ once: true }}
                 className="w-full md:w-[60%] md:pl-10 pt-8 md:pt-0"
               >
-                <div className="inline-block text-[9px] font-bold tracking-widest uppercase text-[#10B981] bg-[#10B981]/8 border border-[#10B981]/20 rounded-full px-3 py-1 mb-4">
+                <div className="inline-block text-[9px] font-bold tracking-widest uppercase text-[#021a02] bg-[#021a02]/8 border border-[#021a02]/20 rounded-full px-3 py-1 mb-4">
                   FOUNDER & CEO
                 </div>
 
@@ -545,7 +545,7 @@ export default function AboutUs() {
                   Fahrurosadi Hernan Sakti
                 </h3>
 
-                <p className="text-[#10B981] text-sm font-semibold mb-5">
+                <p className="text-[#021a02] text-sm font-semibold mb-5">
                   Founder & CEO · TernakOS
                 </p>
 
@@ -559,7 +559,7 @@ export default function AboutUs() {
                     <span
                       key={i}
                       className={`text-[10px] font-medium rounded-md px-3 py-1.5 border ${tag.type === 'emerald'
-                        ? 'bg-[#10B981]/8 border-[#10B981]/15 text-[#34D399]'
+                        ? 'bg-[#021a02]/8 border-[#021a02]/15 text-[#021a02]'
                         : 'bg-white/4 border-white/8 text-[#94A3B8]'
                         }`}
                     >
@@ -568,14 +568,14 @@ export default function AboutUs() {
                   ))}
                 </div>
 
-                <div className="border-l-2 border-[#10B981]/40 pl-4 mb-6">
+                <div className="border-l-2 border-[#021a02]/40 pl-4 mb-6">
                   <p className="italic text-[#4B6478] text-sm leading-relaxed">
                     "Saya membangun TernakOS karena saya ada di industri ini — bukan sekadar mengamatinya dari luar. Dari kandang ke kode, semua berasal dari pengalaman nyata."
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2 text-[10px] text-[#4B6478]">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#10B981] opacity-60" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#021a02] opacity-60" />
                   Surakarta, Jawa Tengah — Jantung industri peternakan Indonesia
                 </div>
               </motion.div>
@@ -590,7 +590,7 @@ export default function AboutUs() {
           <div className="max-w-6xl mx-auto px-6">
 
             <FadeUp className="text-center mb-16">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#10B981] mb-5">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-5">
                 ARAH KAMI
               </p>
               <h2 className="font-display text-4xl font-bold text-white leading-tight">
@@ -642,7 +642,7 @@ export default function AboutUs() {
           <div className="max-w-4xl mx-auto px-6">
 
             <FadeUp className="text-center mb-4">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#10B981] mb-5">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-5">
                 NILAI YANG KAMI PEGANG
               </p>
               <h2 className="font-display text-4xl font-bold text-white leading-tight">
@@ -687,7 +687,7 @@ export default function AboutUs() {
           <div className="max-w-4xl mx-auto px-6">
             <FadeUp>
               <div className="bg-[#0C1319] rounded-3xl p-12 md:p-16 border border-white/8 text-center">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-[#10B981] mb-6">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-6">
                   KEJUJURAN KAMI
                 </p>
                 <h2 className="font-display text-4xl md:text-5xl font-bold text-white leading-tight mb-12">
@@ -719,7 +719,7 @@ export default function AboutUs() {
           <div className="max-w-5xl mx-auto px-6">
 
             <FadeUp className="text-center mb-20">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#10B981] mb-5">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-5">
                 ROADMAP
               </p>
               <h2 className="font-display text-4xl font-bold text-white leading-tight">
@@ -829,7 +829,7 @@ export default function AboutUs() {
                   <div className="flex flex-wrap items-center justify-center gap-4">
                     <Link
                       to="/register"
-                      className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-all shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_4px_28px_rgba(16,185,129,0.45)]"
+                      className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-all shadow-[0_4px_20px_rgba(2, 26, 2,0.3)] hover:shadow-[0_4px_28px_rgba(2, 26, 2,0.45)]"
                     >
                       Mulai Coba Sekarang
                       <ArrowRight size={18} />

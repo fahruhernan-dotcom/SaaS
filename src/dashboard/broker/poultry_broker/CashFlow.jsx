@@ -635,8 +635,8 @@ export default function CashFlow() {
                                 <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="gradGreen" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#10B981" stopOpacity={0.2} />
-                                            <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                                            <stop offset="5%" stopColor="#021a02" stopOpacity={0.2} />
+                                            <stop offset="95%" stopColor="#021a02" stopOpacity={0} />
                                         </linearGradient>
                                         <linearGradient id="gradRed" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="#F87171" stopOpacity={0.2} />
@@ -665,10 +665,10 @@ export default function CashFlow() {
                                     <Line 
                                         type="monotone" 
                                         dataKey="saldo" 
-                                        stroke="#10B981" 
+                                        stroke="#021a02" 
                                         strokeWidth={3} 
                                         dot={false}
-                                        activeDot={{ r: 6, fill: '#10B981', stroke: '#0C1319', strokeWidth: 3 }}
+                                        activeDot={{ r: 6, fill: '#021a02', stroke: '#0C1319', strokeWidth: 3 }}
                                     />
                                     
                                     <Line 
@@ -683,7 +683,7 @@ export default function CashFlow() {
                                     <Line 
                                         type="monotone" 
                                         dataKey="proyeksi" 
-                                        stroke="#10B981" 
+                                        stroke="#021a02" 
                                         strokeWidth={1.5} 
                                         strokeDasharray="6 3" 
                                         dot={false}
@@ -703,10 +703,10 @@ export default function CashFlow() {
                                         wrapperStyle={{ paddingTop: 20 }}
                                         content={({ payload: _payload }) => (
                                             <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
-                                                <LegendItem color="#10B981" label="Saldo Minggu Ini" />
+                                                <LegendItem color="#021a02" label="Saldo Minggu Ini" />
                                                 <LegendItem color="#4B6478" label="Minggu Lalu" dashed />
-                                                <LegendItem color="#10B981" label="Proyeksi" dashed opacity={0.5} />
-                                                <LegendItem color="#10B981" label="Pembayaran Masuk" dot />
+                                                <LegendItem color="#021a02" label="Proyeksi" dashed opacity={0.5} />
+                                                <LegendItem color="#021a02" label="Pembayaran Masuk" dot />
                                             </div>
                                         )}
                                     />
@@ -1215,8 +1215,8 @@ function PaymentDot(props) {
     if (payload.paymentEvent === null) return null
     return (
         <g>
-            <circle cx={cx} cy={cy} r={8} fill="#10B981" fillOpacity={0.2} />
-            <circle cx={cx} cy={cy} r={4} fill="#10B981" stroke="#0C1319" strokeWidth={2} />
+            <circle cx={cx} cy={cy} r={8} fill="#021a02" fillOpacity={0.2} />
+            <circle cx={cx} cy={cy} r={4} fill="#021a02" stroke="#0C1319" strokeWidth={2} />
         </g>
     )
 }

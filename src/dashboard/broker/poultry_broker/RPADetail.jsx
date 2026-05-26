@@ -869,7 +869,7 @@ function FormPaymentModal({ sale, onClose }) {
 
             <Button
                 type="submit"
-                className="w-full h-11 rounded-xl bg-[#10B981] hover:bg-[#0D9668] text-sm font-black border-none shadow-lg shadow-emerald-500/20 uppercase tracking-[0.15em] transition-all active:scale-[0.98]"
+                className="w-full h-11 rounded-xl bg-[#021a02] hover:bg-[#0D9668] text-sm font-black border-none shadow-lg shadow-emerald-500/20 uppercase tracking-[0.15em] transition-all active:scale-[0.98]"
                 disabled={isLoading}
             >
                 {isLoading ? 'Menyimpan...' : 'Konfirmasi Pembayaran'}

@@ -151,7 +151,7 @@ export function SembakoSaleDetailSheet({ isOpen, onOpenChange, sale, onEdit }) {
 
             {/* Section: Profit Analysis (Owner Only) */}
             {isOwner && (
-              <div style={{ background: 'rgba(52,211,153,0.05)', borderRadius: '16px', padding: '16px', border: `1px solid rgba(52,211,153,0.15)` }}>
+              <div style={{ background: 'rgba(2, 26, 2,0.05)', borderRadius: '16px', padding: '16px', border: `1px solid rgba(2, 26, 2,0.15)` }}>
                 <p style={{ ...sLabel, color: C.green }}>ANALISIS LABA (INTERNAL)</p>
                 <div style={{ marginTop: '8px' }}>
                   <DetailRow label="Total COGS / Modal" value={formatIDR(totalCogs)} />

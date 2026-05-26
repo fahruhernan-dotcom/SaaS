@@ -96,8 +96,8 @@ export default function ResetPassword() {
     const hasSpecial = /[^A-Za-z0-9]/.test(password)
     const score = [hasUpper, hasNumber, hasSpecial, password.length >= 12].filter(Boolean).length
     if (score <= 1) return { level: 2, label: 'Sedang', color: '#FBBF24' }
-    if (score <= 2) return { level: 3, label: 'Kuat', color: '#34D399' }
-    return { level: 4, label: 'Sangat Kuat', color: '#10B981' }
+    if (score <= 2) return { level: 3, label: 'Kuat', color: '#021a02' }
+    return { level: 4, label: 'Sangat Kuat', color: '#021a02' }
   }
 
   const strength = getStrength()
@@ -106,7 +106,7 @@ export default function ResetPassword() {
     <div className="flex items-center justify-center min-h-screen bg-[#06090F] px-5 py-10 relative overflow-hidden">
       <Particles
         quantity={25}
-        color="#10B981"
+        color="#021a02"
         opacity={0.08}
         className="absolute inset-0 pointer-events-none"
       />
@@ -117,7 +117,7 @@ export default function ResetPassword() {
         transform: 'translateX(-50%)',
         width: 500, height: 500,
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(16,185,129,0.06) 0%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(2, 26, 2,0.06) 0%, transparent 70%)',
         pointerEvents: 'none'
       }} />
 
@@ -137,8 +137,8 @@ export default function ResetPassword() {
           />
           <span style={{
             fontFamily: 'Sora', fontSize: '19px', fontWeight: 800,
-            color: '#F1F5F9', letterSpacing: '-0.3px'
-          }}>
+            letterSpacing: '-0.3px'
+          }} className="text-[#F1F5F9]">
             TernakOS
           </span>
         </Link>
@@ -160,9 +160,9 @@ export default function ResetPassword() {
                 onClick={() => navigate('/forgot-password')}
                 style={{
                   width: '100%', height: '44px',
-                  background: '#10B981', border: 'none', borderRadius: '10px',
+                  background: '#021a02', border: 'none', borderRadius: '10px',
                   color: 'white', fontFamily: 'Sora', fontSize: '14px', fontWeight: 700,
-                  boxShadow: '0 4px 20px rgba(16,185,129,0.25)'
+                  boxShadow: '0 4px 20px rgba(2, 26, 2,0.25)'
                 }}
                 className="hover:bg-emerald-600 transition-colors"
               >
@@ -172,8 +172,8 @@ export default function ResetPassword() {
           ) : success ? (
             /* SUCCESS STATE */
             <div className="text-center py-4">
-              <div className="w-14 h-14 bg-[#10B981]/10 border border-[#10B981]/20 rounded-full flex items-center justify-center mx-auto mb-5">
-                <CheckCircle2 size={28} className="text-[#10B981]" />
+              <div className="w-14 h-14 bg-[#021a02]/10 border border-[#021a02]/20 rounded-full flex items-center justify-center mx-auto mb-5">
+                <CheckCircle2 size={28} className="text-[#021a02]" />
               </div>
               <h2 className="text-lg font-bold font-display text-[#F1F5F9] mb-2 tracking-tight">
                 Password Diubah!
@@ -182,14 +182,14 @@ export default function ResetPassword() {
                 Password berhasil diperbarui. Kamu akan diarahkan ke halaman login...
               </p>
               <div className="mt-5">
-                <Loader2 size={20} className="animate-spin text-[#10B981] mx-auto" />
+                <Loader2 size={20} className="animate-spin text-[#021a02] mx-auto" />
               </div>
             </div>
           ) : (
             /* FORM */
             <>
-              <div className="w-12 h-12 bg-[#10B981]/10 border border-[#10B981]/20 rounded-xl flex items-center justify-center mx-auto mb-5">
-                <Lock size={22} className="text-[#10B981]" />
+              <div className="w-12 h-12 bg-[#021a02]/10 border border-[#021a02]/20 rounded-xl flex items-center justify-center mx-auto mb-5">
+                <Lock size={22} className="text-[#021a02]" />
               </div>
 
               <h1 className="text-xl font-bold font-display text-[#F1F5F9] text-center mb-1.5 tracking-tight">
@@ -211,8 +211,8 @@ export default function ResetPassword() {
                 <div className="space-y-1.5">
                   <Label htmlFor="password" style={{
                     fontSize: '13px', fontWeight: 500,
-                    color: '#94A3B8', marginLeft: '4px', display: 'block'
-                  }}>
+                    marginLeft: '4px', display: 'block'
+                  }} className="text-[#94A3B8]">
                     Password Baru
                   </Label>
                   <div className="relative">
@@ -223,27 +223,25 @@ export default function ResetPassword() {
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       disabled={!sessionReady}
-                      style={{
-                        background: '#111C24',
-                        border: '1px solid rgba(255,255,255,0.09)',
-                        borderRadius: '10px',
-                        padding: '10px 44px 10px 14px',
-                        fontSize: '15px',
-                        color: '#F1F5F9',
-                        height: '42px',
-                        width: '100%'
-                      }}
-                      className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
+                    style={{
+                      borderRadius: '10px',
+                      padding: '10px 44px 10px 14px',
+                      fontSize: '15px',
+                      height: '42px',
+                      width: '100%'
+                    }}
+                    className="bg-[#111C24] border border-white/10 text-[#F1F5F9] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      style={{
+                    style={{
                         position: 'absolute', right: '14px', top: '50%',
                         transform: 'translateY(-50%)', background: 'none',
-                        border: 'none', cursor: 'pointer', color: '#4B6478',
+                        border: 'none', cursor: 'pointer',
                         display: 'flex', alignItems: 'center', padding: 0
                       }}
+                      className="text-[#4B6478]"
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
@@ -260,7 +258,7 @@ export default function ResetPassword() {
                               height: '3px',
                               flex: 1,
                               borderRadius: '2px',
-                              background: i <= strength.level ? strength.color : 'rgba(255,255,255,0.08)',
+                              background: i <= strength.level ? strength.color : 'rgba(120,120,120,0.15)',
                               transition: 'background 0.3s'
                             }}
                           />
@@ -277,8 +275,8 @@ export default function ResetPassword() {
                 <div className="space-y-1.5">
                   <Label htmlFor="confirmPassword" style={{
                     fontSize: '13px', fontWeight: 500,
-                    color: '#94A3B8', marginLeft: '4px', display: 'block'
-                  }}>
+                    marginLeft: '4px', display: 'block'
+                  }} className="text-[#94A3B8]">
                     Konfirmasi Password
                   </Label>
                   <Input
@@ -289,16 +287,13 @@ export default function ResetPassword() {
                     onChange={e => setConfirmPassword(e.target.value)}
                     disabled={!sessionReady}
                     style={{
-                      background: '#111C24',
-                      border: `1px solid ${confirmPassword && confirmPassword !== password ? 'rgba(248,113,113,0.4)' : 'rgba(255,255,255,0.09)'}`,
                       borderRadius: '10px',
                       padding: '10px 14px',
                       fontSize: '15px',
-                      color: '#F1F5F9',
                       height: '42px',
                       width: '100%'
                     }}
-                    className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
+                    className={`bg-[#111C24] border ${confirmPassword && confirmPassword !== password ? 'border-red-400/50' : 'border-white/10'} text-[#F1F5F9] focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20`}
                   />
                   {confirmPassword && confirmPassword !== password && (
                     <p className="text-xs text-red-400 mt-1 ml-1">Password tidak cocok</p>
@@ -328,14 +323,14 @@ export default function ResetPassword() {
                   style={{
                     width: '100%',
                     height: '44px',
-                    background: '#10B981',
+                    background: '#021a02',
                     border: 'none',
                     borderRadius: '10px',
                     color: 'white',
                     fontFamily: 'Sora',
                     fontSize: '14px',
                     fontWeight: 700,
-                    boxShadow: '0 4px 20px rgba(16,185,129,0.25)',
+                    boxShadow: '0 4px 20px rgba(2, 26, 2,0.25)',
                     opacity: (!password || !confirmPassword || !sessionReady) ? 0.5 : 1,
                     marginTop: '4px'
                   }}

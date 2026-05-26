@@ -108,7 +108,7 @@ export default function AdminBeranda() {
   // ── Derived data ──
   const pieData = [
     { name: 'Starter', value: stats.tenants.starter, color: '#4B6478' },
-    { name: 'Pro', value: stats.tenants.pro, color: '#10B981' },
+    { name: 'Pro', value: stats.tenants.pro, color: '#021a02' },
     { name: 'Business', value: stats.tenants.business, color: '#F59E0B' },
   ]
 
@@ -206,8 +206,8 @@ export default function AdminBeranda() {
             <AreaChart data={stats.tenants.growthData} margin={{ top: 10, right: 25, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="emeraldGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="rgba(16,185,129,0.2)" />
-                  <stop offset="100%" stopColor="rgba(16,185,129,0)" />
+                  <stop offset="0%" stopColor="rgba(2, 26, 2,0.2)" />
+                  <stop offset="100%" stopColor="rgba(2, 26, 2,0)" />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
@@ -228,7 +228,7 @@ export default function AdminBeranda() {
               <Area
                 type="monotone"
                 dataKey="count"
-                stroke="#10B981"
+                stroke="#021a02"
                 strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#emeraldGradient)"

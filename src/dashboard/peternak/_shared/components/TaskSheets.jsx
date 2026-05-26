@@ -563,7 +563,7 @@ export function CompleteTaskSheet({
                        
                        <div className="grid grid-cols-3 gap-3">
                         {[
-                          { id: 'habis', label: 'Habis/Puas', icon: '👍', active: 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_30px_rgba(16,185,129,0.3)]' },
+                          { id: 'habis', label: 'Habis/Puas', icon: '👍', active: 'bg-emerald-500 border-emerald-400 text-white shadow-[0_0_30px_rgba(2, 26, 2,0.3)]' },
                           { id: 'sedikit', label: 'Sisa Sedikit', icon: '🟡', active: 'bg-amber-500 border-amber-400 text-slate-900 shadow-[0_0_30px_rgba(245,158,11,0.3)]' },
                           { id: 'banyak', label: 'Sisa Banyak', icon: '🔴', active: 'bg-rose-500 border-rose-400 text-white shadow-[0_0_30px_rgba(244,63,94,0.3)]' },
                         ].map((opt) => {
@@ -617,7 +617,7 @@ export function CompleteTaskSheet({
             ) : (
               <>
                 <Button variant="ghost" onClick={() => onOpenChange(false)} className="h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-transparent px-5 lg:px-8">Batal</Button>
-                <Button onClick={handleComplete} disabled={updateStatus.isPending} className="flex-1 h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-emerald-500 hover:bg-emerald-600 border-none shadow-[0_0_20px_rgba(16,185,129,0.3)] text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
+                <Button onClick={handleComplete} disabled={updateStatus.isPending} className="flex-1 h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-emerald-500 hover:bg-emerald-600 border-none shadow-[0_0_20px_rgba(2, 26, 2,0.3)] text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
                   {updateStatus.isPending ? 'Menyimpan...' : 'Selesaikan Tugas'}
                 </Button>
               </>

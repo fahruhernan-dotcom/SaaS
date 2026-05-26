@@ -23,7 +23,7 @@ import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 const ACCENT = {
   green: {
     btn: 'bg-emerald-600 hover:bg-emerald-500',
-    btnShadow: 'shadow-[0_4px_20px_rgba(16,185,129,0.25)]',
+    btnShadow: 'shadow-[0_4px_20px_rgba(2, 26, 2,0.25)]',
     text: 'text-emerald-400',
     labelText: 'text-emerald-400/80',
     selectActive: 'bg-emerald-600/20 border-emerald-500/40 text-emerald-400',
@@ -1074,7 +1074,7 @@ function SaleCard({ sale, onClick }) {
         </div>
         <div className="text-right">
           <p className="text-sm font-black text-emerald-400 font-['Sora'] leading-tight">Rp {Number(sale.total_revenue_idr || 0).toLocaleString('id-ID')}</p>
-          <span className={cn('text-[9px] font-black px-1.5 py-0.5 rounded-lg border inline-block mt-1', sale.is_paid ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.1)]' : 'text-amber-400 bg-amber-500/10 border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.1)]')}>
+          <span className={cn('text-[9px] font-black px-1.5 py-0.5 rounded-lg border inline-block mt-1', sale.is_paid ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_10px_rgba(2, 26, 2,0.1)]' : 'text-amber-400 bg-amber-500/10 border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.1)]')}>
             {sale.is_paid ? 'LUNAS' : 'PIUTANG'}
           </span>
         </div>

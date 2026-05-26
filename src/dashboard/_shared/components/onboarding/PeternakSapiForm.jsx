@@ -11,9 +11,14 @@ const TEMPLATE_PACKAGES = [
   { key: '180', label: '180 Hari — Semi-Intensif', desc: 'Hijauan + konsentrat, target ADG ~0.8 kg/hari' },
 ]
 
-export default function PeternakSapiForm({ data, onChange }) {
+export default function PeternakSapiForm({ data, onChange, t }) {
   const set = (key, val) => onChange({ ...data, [key]: val })
   const [templateEnabled, setTemplateEnabled] = useState(false)
+ 
+  const packages = [
+    { key: '150', label: t('setup_sapi_temp_150_title', '150 Hari — Intensif'), desc: t('setup_sapi_temp_150_desc', 'Konsentrat penuh, target ADG ~1 kg/hari') },
+    { key: '180', label: t('setup_sapi_temp_180_title', '180 Hari — Semi-Intensif'), desc: t('setup_sapi_temp_180_desc', 'Hijauan + konsentrat, target ADG ~0.8 kg/hari') },
+  ]
 
   const fieldLabelStyle = "flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.15em] text-amber-500/80 mb-1.5 ml-1"
   const inputContainerStyle = "relative transition-all duration-300"
@@ -26,7 +31,7 @@ export default function PeternakSapiForm({ data, onChange }) {
         <div className={inputContainerStyle}>
           <Label className={fieldLabelStyle}>
             <Warehouse size={12} className="text-amber-500" />
-            Kandang <span className="text-amber-500/50 ml-0.5">*</span>
+            {t('setup_kandang_label', 'Nama Kandang')} <span className="text-amber-500/50 ml-0.5">*</span>
           </Label>
           <Input
             type="text"
@@ -41,7 +46,7 @@ export default function PeternakSapiForm({ data, onChange }) {
         <div className={inputContainerStyle}>
           <Label className={fieldLabelStyle}>
             <Hash size={12} className="text-amber-500" />
-            Nama Batch <span className="text-amber-500/50 ml-0.5">*</span>
+            {t('setup_batch_name_label', 'Nama Batch')} <span className="text-amber-500/50 ml-0.5">*</span>
           </Label>
           <Input
             type="text"
@@ -58,7 +63,7 @@ export default function PeternakSapiForm({ data, onChange }) {
         <div className={inputContainerStyle}>
           <Label className={fieldLabelStyle}>
             <Calendar size={12} className="text-amber-500" />
-            Tanggal Mulai <span className="text-amber-500/50 ml-0.5">*</span>
+            {t('setup_tanggal_mulai_label', 'Tanggal Mulai')} <span className="text-amber-500/50 ml-0.5">*</span>
           </Label>
           <DatePicker
             value={data.start_date || new Date().toISOString().split('T')[0]}
@@ -72,7 +77,7 @@ export default function PeternakSapiForm({ data, onChange }) {
         <div className={inputContainerStyle}>
           <Label className={fieldLabelStyle}>
             <PawPrint size={12} className="text-amber-500" />
-            Populasi (Ekor) <span className="text-amber-500/50 ml-0.5">*</span>
+            {t('setup_populasi_label', 'Populasi (Ekor)')} <span className="text-amber-500/50 ml-0.5">*</span>
           </Label>
           <Input
             type="number"
@@ -90,7 +95,7 @@ export default function PeternakSapiForm({ data, onChange }) {
         <div className={inputContainerStyle}>
           <Label className={fieldLabelStyle}>
             <Scale size={12} className="text-amber-500" />
-            Berat Avg (kg)
+            {t('setup_berat_avg_label', 'Berat Avg (kg)')}
           </Label>
           <div className="relative">
             <Input
@@ -110,7 +115,7 @@ export default function PeternakSapiForm({ data, onChange }) {
         <div className={inputContainerStyle}>
           <Label className={fieldLabelStyle}>
             <BadgePercent size={12} className="text-amber-500" />
-            Harga Beli (Rp/kg)
+            {t('setup_harga_beli_label', 'Harga Beli (Rp/kg)')}
           </Label>
           <Input
             type="number"
@@ -132,7 +137,7 @@ export default function PeternakSapiForm({ data, onChange }) {
             <Calculator size={16} />
           </div>
           <p className="text-[10px] text-slate-400 font-medium leading-relaxed italic">
-            "Untuk menghitung <span className="text-amber-400 font-bold not-italic">ADG</span> & <span className="text-emerald-400 font-bold not-italic">profit</span> secara otomatis."
+            {t('setup_sapi_info_text', 'Untuk menghitung ADG & profit secara otomatis.')}
           </p>
         </div>
       </div>
@@ -145,8 +150,8 @@ export default function PeternakSapiForm({ data, onChange }) {
               <Sparkles size={15} className="text-[#A78BFA]" />
             </div>
             <div>
-              <p className="text-sm font-black text-white">Mulai dengan Template TernakOS</p>
-              <p className="text-[10px] text-[#4B6478] font-medium mt-0.5">Jadwal tugas otomatis sesuai SNI feedlot</p>
+              <p className="text-sm font-black text-white">{t('setup_sapi_template_title', 'Mulai dengan Template TernakOS')}</p>
+              <p className="text-[10px] text-[#4B6478] font-medium mt-0.5">{t('setup_sapi_template_desc', 'Jadwal tugas otomatis sesuai SNI feedlot')}</p>
             </div>
           </div>
           <Switch
@@ -160,7 +165,7 @@ export default function PeternakSapiForm({ data, onChange }) {
 
         {templateEnabled && (
           <div className="p-4 space-y-2 border-t border-[#7C3AED]/10 bg-[#7C3AED]/[0.03]">
-            {TEMPLATE_PACKAGES.map(pkg => {
+            {packages.map(pkg => {
               const active = data.templateType === pkg.key
               return (
                 <button

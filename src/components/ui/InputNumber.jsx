@@ -164,8 +164,8 @@ export function InputNumber({
             transition: 'background 0.1s, color 0.1s',
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.background = 'rgba(16,185,129,0.10)'
-            e.currentTarget.style.color = '#34D399'
+            e.currentTarget.style.background = 'rgba(2, 26, 2,0.10)'
+            e.currentTarget.style.color = '#021a02'
           }}
           onMouseLeave={e => {
             e.currentTarget.style.background = 'transparent'
@@ -191,8 +191,8 @@ export function InputNumber({
             transition: 'background 0.1s, color 0.1s',
           }}
           onMouseEnter={e => {
-            e.currentTarget.style.background = 'rgba(16,185,129,0.10)'
-            e.currentTarget.style.color = '#34D399'
+            e.currentTarget.style.background = 'rgba(2, 26, 2,0.10)'
+            e.currentTarget.style.color = '#021a02'
           }}
           onMouseLeave={e => {
             e.currentTarget.style.background = 'transparent'

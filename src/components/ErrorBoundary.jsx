@@ -74,7 +74,7 @@ export default class ErrorBoundary extends Component {
               hasError: false, error: null
             })}
             style={{
-              background: '#10B981',
+              background: '#021a02',
               color: 'white',
               border: 'none',
               borderRadius: 8,

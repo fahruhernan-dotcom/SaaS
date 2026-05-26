@@ -214,7 +214,7 @@ export default function AppSidebar({ open, onClose }) {
   const brokerBase = getBrokerBasePath(tenant)
   const peternakBase = getXBasePath(tenant, profile)
   
-  const color = accentColor || (isSembako ? '#EA580C' : isEgg ? '#7C3AED' : isRPA ? '#F59E0B' : '#10B981')
+  const color = accentColor || (isSembako ? '#EA580C' : isEgg ? '#7C3AED' : isRPA ? '#F59E0B' : '#021a02')
 
   const getBerandaPath = (v, t = tenant) => {
     const bBase = getBrokerBasePath(t)
@@ -465,7 +465,7 @@ export default function AppSidebar({ open, onClose }) {
   // Subscription status — single source of truth
   const getStatusColor = (status) => {
     switch (status) {
-      case 'active':   return { color: '#10B981', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.25)' }
+      case 'active':   return { color: '#021a02', bg: 'rgba(2, 26, 2,0.12)', border: 'rgba(2, 26, 2,0.25)' }
       case 'trial':    return { color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.25)' }
       case 'expired':  return { color: '#F87171', bg: 'rgba(248,113,113,0.12)', border: 'rgba(248,113,113,0.25)' }
       default:         return { color: '#64748B', bg: 'rgba(100,116,139,0.10)', border: 'rgba(100,116,139,0.20)' }
@@ -1107,7 +1107,7 @@ export default function AppSidebar({ open, onClose }) {
               <div style={{
                 height: '100%',
                 width: `${Math.max(8, (sub.daysLeft / (sub.status === 'trial' ? 14 : 30)) * 100)}%`,
-                background: sub.daysLeft <= 3 ? '#F87171' : sub.daysLeft <= 7 ? '#F59E0B' : '#10B981',
+                background: sub.daysLeft <= 3 ? '#F87171' : sub.daysLeft <= 7 ? '#F59E0B' : '#021a02',
                 borderRadius: '99px', transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
               }} />
             </div>
@@ -1119,15 +1119,15 @@ export default function AppSidebar({ open, onClose }) {
               onClick={() => navigate('/upgrade')}
               style={{
                 width: '100%', marginTop: '10px', padding: '8px 12px',
-                background: sub.status === 'expired' ? 'rgba(248,113,113,0.1)' : 'rgba(16,185,129,0.1)',
-                color: sub.status === 'expired' ? '#F87171' : '#10B981',
-                border: `1px solid ${sub.status === 'expired' ? 'rgba(248,113,113,0.2)' : 'rgba(16,185,129,0.2)'}`,
+                background: sub.status === 'expired' ? 'rgba(248,113,113,0.1)' : 'rgba(2, 26, 2,0.1)',
+                color: sub.status === 'expired' ? '#F87171' : '#021a02',
+                border: `1px solid ${sub.status === 'expired' ? 'rgba(248,113,113,0.2)' : 'rgba(2, 26, 2,0.2)'}`,
                 borderRadius: '10px', fontSize: '11px', fontWeight: 800, fontFamily: 'Sora',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                 transition: 'all 0.2s'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = sub.status === 'expired' ? 'rgba(248,113,113,0.15)' : 'rgba(16,185,129,0.15)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = sub.status === 'expired' ? 'rgba(248,113,113,0.1)' : 'rgba(16,185,129,0.1)'}
+              onMouseEnter={(e) => e.currentTarget.style.background = sub.status === 'expired' ? 'rgba(248,113,113,0.15)' : 'rgba(2, 26, 2,0.15)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = sub.status === 'expired' ? 'rgba(248,113,113,0.1)' : 'rgba(2, 26, 2,0.1)'}
             >
               <CreditCard size={13} />
               {sub.status === 'expired' ? 'Perbarui Sekarang' : 'Perpanjang Plan'}
@@ -1141,10 +1141,10 @@ export default function AppSidebar({ open, onClose }) {
                 onClick={handleStartProTrial}
                 style={{
                   width: '100%', padding: '8px 12px',
-                  background: '#10B981', color: 'white', border: 'none', borderRadius: '8px',
+                  background: '#021a02', color: 'white', border: 'none', borderRadius: '8px',
                   fontSize: '12px', fontWeight: 700, fontFamily: 'Sora', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justify: 'center', gap: '6px',
-                  boxShadow: '0 2px 12px rgba(16,185,129,0.25)', transition: 'all 0.2s'
+                  boxShadow: '0 2px 12px rgba(2, 26, 2,0.25)', transition: 'all 0.2s'
                 }}
               >
                 <Sparkles size={14} />
@@ -1179,7 +1179,7 @@ export default function AppSidebar({ open, onClose }) {
                   {(profile?.role || isSuperadmin) && (
                     <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shrink-0 ${
                       isSuperadmin ? 'bg-amber-500/10 text-amber-500' :
-                      isOwner(profile) ? 'bg-[#10B981]/10 text-[#10B981]' :
+                      isOwner(profile) ? 'bg-[#021a02]/10 text-[#021a02]' :
                       isStaff(profile) ? 'bg-blue-500/10 text-blue-400' :
                       'bg-white/5 text-[#4B6478]'
                     }`}>

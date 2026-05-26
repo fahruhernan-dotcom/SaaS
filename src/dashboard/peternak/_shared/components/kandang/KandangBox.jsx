@@ -46,7 +46,7 @@ export default function KandangBox({
   if (isOver) {
     borderColor = isFull && !isHolding
       ? 'border-red-500 ring-4 ring-red-500/10 shadow-[0_0_30px_rgba(239,68,68,0.2)]'
-      : 'border-emerald-500 ring-4 ring-emerald-500/10 shadow-[0_0_30px_rgba(16,185,129,0.2)]'
+      : 'border-emerald-500 ring-4 ring-emerald-500/10 shadow-[0_0_30px_rgba(2, 26, 2,0.2)]'
     bgGradient = isFull && !isHolding ? 'bg-red-500/[0.08]' : 'bg-emerald-500/[0.08]'
   } else if (isHolding) {
     borderColor = 'border-dashed border-emerald-500/20 hover:border-emerald-500/40'

@@ -197,13 +197,13 @@ export function SaleSheet({ batchId, animals, onSale, isPending, animalLabel = '
 
       <div className="px-5 py-4 border-t border-white/5 bg-[#0C1319]">
         {step === 1 ? (
-          <button disabled={selectedIds.size === 0} onClick={() => setStep(2)} className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_4px_20px_rgba(16,185,129,0.25)]">
+          <button disabled={selectedIds.size === 0} onClick={() => setStep(2)} className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_4px_20px_rgba(2, 26, 2,0.25)]">
             Lanjut ({selectedIds.size} Dipilih) →
           </button>
         ) : (
           <div className="flex gap-2">
             <button onClick={() => setStep(1)} className="flex-1 h-12 bg-white/5 border border-white/10 hover:bg-white/10 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-colors">Kembali</button>
-            <button form="sale-form" type="submit" disabled={isPending} className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_4px_20px_rgba(16,185,129,0.25)]">
+            <button form="sale-form" type="submit" disabled={isPending} className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_4px_20px_rgba(2, 26, 2,0.25)]">
               {isPending ? 'Menyimpan...' : 'Konfirmasi Jual'}
             </button>
           </div>

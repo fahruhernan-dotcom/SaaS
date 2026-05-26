@@ -12,7 +12,7 @@ export function SembakoStatCard({ label, value, icon: Icon, color = 'accent', su
   const colorClasses = {
     accent: 'from-[#EA580C]/20 to-[#EA580C]/5 text-[#EA580C] border-[#EA580C]/10',
     amber: 'from-[#F59E0B]/20 to-[#F59E0B]/5 text-[#F59E0B] border-[#F59E0B]/10',
-    green: 'from-[#34D399]/20 to-[#34D399]/5 text-[#34D399] border-[#34D399]/10',
+    green: 'from-[#021a02]/20 to-[#021a02]/5 text-[#021a02] border-[#021a02]/10',
     red: 'from-[#EF4444]/20 to-[#EF4444]/5 text-[#EF4444] border-[#EF4444]/10',
   }
 
@@ -82,7 +82,7 @@ export function SembakoEmptyState({
   const colors = {
     accent: 'text-[#EA580C]/30 bg-[#EA580C]/5 border-[#EA580C]/10 hover:border-[#EA580C]/20',
     amber: 'text-[#F59E0B]/30 bg-[#F59E0B]/5 border-[#F59E0B]/10 hover:border-[#F59E0B]/20',
-    green: 'text-[#34D399]/30 bg-[#34D399]/5 border-[#34D399]/10 hover:border-[#34D399]/20',
+    green: 'text-[#021a02]/30 bg-[#021a02]/5 border-[#021a02]/10 hover:border-[#021a02]/20',
     red: 'text-[#EF4444]/30 bg-[#EF4444]/5 border-[#EF4444]/10 hover:border-[#EF4444]/20',
   }
 

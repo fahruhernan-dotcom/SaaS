@@ -63,7 +63,7 @@ const submitBtnStyle = {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CONDITION_OPTIONS = [
-  { value: 'normal',   label: '✅ Normal',  color: '#34D399' },
+  { value: 'normal',   label: '✅ Normal',  color: '#021a02' },
   { value: 'waspada',  label: '⚠️ Waspada', color: '#F59E0B' },
   { value: 'kritis',   label: '🔴 Kritis',  color: '#F87171' },
 ]
@@ -76,13 +76,13 @@ const FEED_TYPE_OPTIONS = [
 ]
 
 const LITTER_OPTIONS = [
-  { value: 'kering', label: '✅ Kering',  color: '#34D399' },
+  { value: 'kering', label: '✅ Kering',  color: '#021a02' },
   { value: 'lembab', label: '⚠️ Lembab', color: '#F59E0B' },
   { value: 'basah',  label: '🔴 Basah',   color: '#F87171' },
 ]
 
 const AMMONIA_OPTIONS = [
-  { value: 'tidak_ada', label: '✅ Tidak Ada', color: '#34D399' },
+  { value: 'tidak_ada', label: '✅ Tidak Ada', color: '#021a02' },
   { value: 'ringan',    label: '🟡 Ringan',    color: '#A3E635' },
   { value: 'sedang',    label: '⚠️ Sedang',   color: '#F59E0B' },
   { value: 'kuat',      label: '🔴 Kuat',      color: '#F87171' },

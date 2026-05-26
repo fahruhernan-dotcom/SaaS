@@ -215,7 +215,7 @@ function WorkerCard({ w, config, isDimmed }) {
       </button>
       <div className="h-0.5 bg-white/5 mx-4">
         <div
-          className={cn('h-full transition-all duration-500', isDimmed ? 'bg-white/20' : w.rate >= 90 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : w.rate >= 60 ? 'bg-amber-500' : 'bg-rose-500')}
+          className={cn('h-full transition-all duration-500', isDimmed ? 'bg-white/20' : w.rate >= 90 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(2, 26, 2,0.5)]' : w.rate >= 60 ? 'bg-amber-500' : 'bg-rose-500')}
           style={{ width: `${w.rate}%` }}
         />
       </div>

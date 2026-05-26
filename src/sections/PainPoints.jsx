@@ -8,131 +8,130 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AnimatedContent from '../components/reactbits/AnimatedContent';
-import TiltedCard from '../components/reactbits/TiltedCard';
 
 const PainPoints = ({ activeRole, setActiveRole }) => {
 
   const content = useMemo(() => ({
     broker: {
-      title: "Kenapa Broker Masih Struggle di Era Digital?",
+      title: "Kenapa Operasional Broker Sering Kebobolan?",
       points: [
         {
-          icon: <Calculator size={13} strokeWidth={2} />,
-          label: "CAPEK HITUNG MARGIN",
-          title: "Capek hitung margin manual?",
-          desc: "Setiap transaksi kamu hitung sendiri pakai kalkulator atau Excel. Kalau banyak transaksi, mudah salah dan makan waktu."
+          icon: <Scale size={13} strokeWidth={2} />,
+          label: "SELISIH TIMBANGAN",
+          title: "Selisih HPP & Timbangan?",
+          desc: "Margin per transaksi meleset dan tidak akurat karena perhitungan susut bobot pakan & jalan masih dilakukan manual."
         },
         {
           icon: <AlertCircle size={13} strokeWidth={2} />,
-          label: "LUPA RPA YANG BELUM BAYAR",
-          title: "Lupa RPA yang belum bayar?",
-          desc: "Hutang dari 5 RPA berbeda, jatuh tempo beda-beda. Satu kelewat bisa bikin cashflow kamu berantakan."
+          label: "PIUTANG JATUH TEMPO",
+          title: "Piutang RPA Terselip?",
+          desc: "Hutang dari banyak RPA berbeda dengan jatuh tempo acak. Satu nota terlewat bisa mengacaukan modal putar Anda."
         },
         {
           icon: <Phone size={13} strokeWidth={2} />,
-          label: "TELEPON SATU-SATU",
-          title: "Telepon satu-satu cek stok kandang?",
-          desc: "Mau tahu ayam mana yang siap panen, kamu harus hubungi peternak satu per satu. Buang waktu."
+          label: "CEK KESIAPAN KANDANG",
+          title: "Buta Kesiapan Kandang?",
+          desc: "Harus telepon puluhan peternak satu per satu hanya untuk menanyakan umur panen dan perkiraan tonase livebird."
         },
         {
           icon: <TrendingDown size={13} strokeWidth={2} />,
-          label: "CASH FLOW BERANTAKAN",
-          title: "Tidak tahu arus kas bisnis minggu ini?",
-          desc: "Pemasukan dan pengeluaran tercampur. Susah tahu kapan bisnis untung atau rugi."
+          label: "CASH FLOW TERCAMPUR",
+          title: "Kasir & Keuangan Tercampur?",
+          desc: "Pemasukan operasional, uang jalan sopir, dan komisi harian bercampur dengan uang pribadi. Evaluasi profit bulanan jadi bias."
         },
         {
           icon: <Truck size={13} strokeWidth={2} />,
-          label: "ARMADA TIDAK TERPANTAU",
-          title: "Biaya kirim membengkak tidak ketahuan?",
-          desc: "Biaya solar, portal, dan uang jalan sopir tidak tercatat. Margin terkikis diam-diam."
+          label: "ONGKOS ARMADA",
+          title: "Bocor Uang Solar & Portal?",
+          desc: "Biaya operasional sopir, solar, dan portal tol tidak terekap rapi, mengikis margin bersih secara diam-diam."
         },
         {
           icon: <Scale size={13} strokeWidth={2} />,
-          label: "SUSUT PENGIRIMAN",
-          title: "Ayam susut di jalan, rugi tidak terhitung?",
-          desc: "Berat tiba berbeda dari berat kirim. Kerugian susut tidak pernah dihitung dengan benar."
+          label: "SUSUT BOBOT JALAN",
+          title: "Susut Bobot di Jalan?",
+          desc: "Berat ayam tiba di RPA menyusut drastis dibanding saat muat di kandang, namun kerugian susut tidak terhitung detail."
         }
       ]
     },
     peternak: {
-      title: "Kenapa Peternak Masih Struggle di Era Digital?",
+      title: "Kenapa Peternak Sering Rugi di Akhir Siklus?",
       points: [
         {
           icon: <Activity size={13} strokeWidth={2} />,
-          label: "PANTAU PERFORMA",
-          title: "Susah pantau FCR, ADG & efisiensi pakan?",
-          desc: "Hitung konversi pakan atau pertambahan bobot harian manual. Mudah salah dan sulit ambil keputusan tepat — baik untuk broiler, sapi, domba, maupun kambing."
+          label: "PERFORMA FCR & IP",
+          title: "FCR & IP Dihitung Manual?",
+          desc: "Konversi pakan dan Indeks Performan baru dihitung saat panen selesai. Terlambat mendeteksi pemborosan pakan harian."
         },
         {
           icon: <Calendar size={13} strokeWidth={2} />,
-          label: "PREDIKSI PANEN",
-          title: "Tidak tahu kapan ternak siap jual?",
-          desc: "Estimasi panen masih pakai feeling. Sering meleset dari target bobot, bikin rugi operasional — berlaku untuk semua jenis ternak."
+          label: "ESTIMASI PANEN",
+          title: "Target Bobot Meleset?",
+          desc: "Memprediksi waktu panen dan bobot optimal hanya pakai feeling, berisiko terkena penalti broker jika bobot meleset."
         },
         {
           icon: <Package size={13} strokeWidth={2} />,
-          label: "STOK PAKAN",
-          title: "Stok pakan habis tidak ketahuan?",
-          desc: "Tidak ada sistem peringatan stok. Tiba-tiba kurang, panik beli dadakan dengan harga mahal."
+          label: "MANAJEMEN PAKAN",
+          title: "Stok Pakan Habis Dadakan?",
+          desc: "Tidak ada alert sisa pakan di kandang. Tiba-tiba pakan habis di tengah program feeding, memaksa beli eceran dengan harga mahal."
         },
         {
           icon: <Users size={13} strokeWidth={2} />,
-          label: "KONEKSI BUYER",
-          title: "Susah cari pembeli untuk hasil ternak?",
-          desc: "Jual sapi, domba, kambing, atau ayam masih andalkan kenalan. Tidak ada platform untuk listing stok ke broker atau RPA."
+          label: "KETERBATASAN AKSES",
+          title: "Tergantung Satu Tengkulak?",
+          desc: "Kesulitan mencari alternatif pembeli livebird saat panen raya karena informasi pasar tertutup."
         },
         {
           icon: <FileText size={13} strokeWidth={2} />,
-          label: "PENCATATAN HARIAN",
-          title: "Catat pakan, bobot & mortalitas masih pakai buku?",
-          desc: "Data harian tersebar di buku catatan berbeda. Susah rekap dan mudah hilang — terutama saat kelola banyak batch."
+          label: "RECORDING KANDANG",
+          title: "Buku Kandang Basah & Hilang?",
+          desc: "Catatan harian pakan, obat, dan mortalitas masih di kertas kandang yang rawan basah, kotor, dan susah direkap."
         },
         {
           icon: <LayoutDashboard size={13} strokeWidth={2} />,
-          label: "TIDAK ADA LAPORAN",
-          title: "Tidak tahu performa per batch atau per siklus?",
-          desc: "Tidak ada laporan otomatis. Susah evaluasi dan bandingkan performa antar batch, antar kandang, atau antar periode."
+          label: "REKAP SIKLUS",
+          title: "HPP Siklus Tidak Jelas?",
+          desc: "Kesulitan menghitung harga pokok produksi per ekor/kg setelah dikurangi biaya DOC, pakan, OVK, dan operasional tim."
         }
       ]
     },
     rpa: {
-      title: "Kenapa RPA Masih Struggle di Era Digital?",
+      title: "Kenapa Operasional RPA Sering Selisih?",
       points: [
         {
           icon: <Wallet size={13} strokeWidth={2} />,
-          label: "KELOLA HUTANG",
-          title: "Susah pantau hutang ke banyak broker?",
-          desc: "Hutang dari 10 broker berbeda dengan jatuh tempo berbeda. Satu saja kelewat bisa mengganggu operasional."
-        },
-        {
-          icon: <TrendingUp size={13} strokeWidth={2} />,
-          label: "HARGA PASAR",
-          title: "Tidak tahu harga pasar hari ini?",
-          desc: "Negosiasi harga masih pakai feeling. Seringkali kemahalan atau kehilangan supplier potensial."
-        },
-        {
-          icon: <ClipboardList size={13} strokeWidth={2} />,
-          label: "KELOLA ORDER",
-          title: "Kewalahan kelola order mingguan?",
-          desc: "Order dari banyak sumber tanpa sistem terpusat. Mudah terlewat dan mengecewakan pelanggan."
-        },
-        {
-          icon: <Truck size={13} strokeWidth={2} />,
-          label: "LACAK PENGIRIMAN",
-          title: "Tidak tahu ayam sudah tiba atau belum?",
-          desc: "Konfirmasi pengiriman masih lewat telepon. Tidak ada tracking real-time."
+          label: "REKAP HUTANG",
+          title: "Dispute Tagihan Broker?",
+          desc: "Selisih pencatatan timbangan tim terima vs data kirim broker memicu perdebatan jumlah pembayaran."
         },
         {
           icon: <TrendingUp size={13} strokeWidth={2} />,
           label: "NEGOSIASI HARGA",
-          title: "Beli ayam kemahalan karena tidak tahu harga pasar?",
-          desc: "Tidak ada referensi harga harian. Broker bisa minta harga seenaknya."
+          title: "Beli Livebird Kemahalan?",
+          desc: "Melakukan negosiasi harga beli dengan broker tanpa referensi harga real-time harian di wilayah sekitar."
+        },
+        {
+          icon: <ClipboardList size={13} strokeWidth={2} />,
+          label: "PELACAKAN ORDER",
+          title: "Order Pelanggan Tercecer?",
+          desc: "Pesanan karkas dari pasar atau restoran menumpuk di chat WA tanpa sistem pencatatan stok siap kirim."
+        },
+        {
+          icon: <Truck size={13} strokeWidth={2} />,
+          label: "STATUS PENGIRIMAN",
+          title: "Buta Status Pengiriman?",
+          desc: "Memantau jam keberangkatan dan estimasi kedatangan armada pengiriman ayam masih manual via telepon."
+        },
+        {
+          icon: <TrendingUp size={13} strokeWidth={2} />,
+          label: "HARGA LIVEBIRD",
+          title: "Selisih Timbangan Tiba?",
+          desc: "Berat susut pengiriman livebird tidak terdokumentasi rapi, membuat biaya pokok pembelian membengkak."
         },
         {
           icon: <Scale size={13} strokeWidth={2} />,
-          label: "SUSUT TIDAK TERHITUNG",
-          title: "Berat ayam tiba selalu berkurang?",
-          desc: "Susut pengiriman tidak pernah dicatat resmi. Kerugian tidak terdokumentasi."
+          label: "SUSUT KARKAS",
+          title: "Susut Bobot Tidak Tercatat?",
+          desc: "Rasio konversi dari berat ayam hidup menjadi karkas siap jual (yield karkas) tidak terpantau harian."
         }
       ]
     }
@@ -141,30 +140,28 @@ const PainPoints = ({ activeRole, setActiveRole }) => {
   const activeContent = content[activeRole];
 
   return (
-    <section className="bg-[#06090F] section-fade-bottom section-padding">
+    <section className="bg-bg-base py-20 px-5 border-t border-border-subtle">
       <div className="max-w-[1280px] mx-auto">
         
-        <div className="text-center mb-[30px] md:mb-[45px]">
+        <div className="text-center mb-[40px] md:mb-[56px]">
           <AnimatedContent direction="vertical" distance={30} delay={0}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.14)', borderRadius: '99px', padding: '5px 14px', marginBottom: '16px' }}>
-              <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#10B981', animation: 'pulse-dot 2s infinite' }}/>
-              <span style={{ fontSize: '10px', fontWeight: 600, color: '#34D399', letterSpacing: '2px', textTransform: 'uppercase' }}>
-                MASALAH YANG KAMI SELESAIKAN
-              </span>
+            <div className="badge-premium mb-4">
+              <div className="w-[5px] h-[5px] rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse-dot" />
+              <span>KENDALA UTAMA INDUSTRI</span>
             </div>
           </AnimatedContent>
 
-          {/* Role Toggle Pill */}
+          {/* Role Toggle Switch (Attio style) */}
           <AnimatedContent direction="vertical" distance={20} delay={0.05} className="flex justify-center mb-8">
-            <div className="inline-flex bg-[#111C24] border border-white/10 p-1.5 rounded-full relative z-20 shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
+            <div className="inline-flex bg-bg-2 border border-border-default p-1 rounded-full shadow-sm">
               {['broker', 'peternak', 'rpa'].map((role) => (
                 <button
                   key={role}
                   onClick={() => setActiveRole(role)}
-                  className={`px-4 sm:px-6 md:px-8 py-2 rounded-full font-body text-[10px] font-bold tracking-widest uppercase transition-all duration-300 ${
+                  className={`px-5 py-2.5 rounded-full font-body text-[11px] font-bold tracking-wider uppercase transition-all duration-300 ${
                     activeRole === role
-                      ? 'bg-[rgba(16,185,129,0.15)] text-[#34D399] shadow-[0_2px_10px_rgba(16,185,129,0.2)]'
-                      : 'text-[#4B6478] hover:text-[#F1F5F9] hover:bg-white/[0.02]'
+                      ? 'bg-emerald-500 text-white shadow-sm'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-bg-3/50'
                   }`}
                 >
                   {role}
@@ -174,13 +171,13 @@ const PainPoints = ({ activeRole, setActiveRole }) => {
           </AnimatedContent>
 
           <AnimatedContent direction="vertical" distance={40} delay={0.1}>
-            <h2 className="section-h2 mb-[12px] min-h-[80px] md:min-h-0">
+            <h2 className="font-display text-2xl md:text-3xl font-normal text-text-primary mb-[12px]">
               {activeContent.title}
             </h2>
           </AnimatedContent>
           <AnimatedContent direction="vertical" distance={30} delay={0.2}>
-            <p className="section-subtitle max-w-[300px] mx-auto md:max-w-[480px]">
-              Bukan karena tidak mau. Karena belum ada tools yang cukup simpel dan relevan untuk mereka.
+            <p className="text-text-secondary text-sm md:text-base max-w-[500px] mx-auto leading-relaxed">
+              Bukan karena tidak mau. Karena belum ada tools yang cukup simpel dan relevan untuk pencatatan harian mereka.
             </p>
           </AnimatedContent>
         </div>
@@ -189,37 +186,31 @@ const PainPoints = ({ activeRole, setActiveRole }) => {
           <AnimatePresence mode="wait">
             <motion.div 
               key={activeRole}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="grid grid-cols-3 md:grid-cols-3 gap-1.5 md:gap-6"
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.25 }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-6"
             >
               {activeContent.points.map((point, i) => (
-                <div
-                  key={i}
-                  className="h-full"
-                >
-                  <div className="bg-[#111C24] border border-white/10 rounded-lg md:rounded-[24px] p-2 md:p-7 h-full relative overflow-hidden transition-all">
+                <div key={i} className="h-full">
+                  <div className="bg-bg-1 border border-border-default rounded-2xl p-6 h-full relative transition-all duration-300 hover:border-border-strong shadow-card flex flex-col justify-between">
+                    
+                    <div>
+                      {/* Badge pill */}
+                      <div className="inline-flex items-center gap-1.5 bg-bg-2 border border-border-subtle rounded-full px-2.5 py-1 mb-4 text-[10px] font-bold text-text-secondary uppercase tracking-wider">
+                        {point.icon}
+                        {point.label}
+                      </div>
 
-                    {/* Ghost number background */}
-                    <span className="absolute top-1 md:top-4 right-1.5 md:right-5 text-[24px] md:text-[80px] font-black font-display text-emerald-500/5 select-none pointer-events-none leading-none">
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-
-                    {/* Badge pill */}
-                    <div className="inline-flex items-center gap-1 md:gap-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-1.5 md:px-3 py-0.5 md:py-1 mb-2 md:mb-4 text-[7px] md:text-[11px] font-black text-emerald-400 uppercase tracking-tight md:tracking-widest">
-                      <span className="hidden md:inline">{point.icon}</span>
-                      {point.label}
+                      {/* Title */}
+                      <h3 className="font-display text-[15px] md:text-[17px] font-bold text-text-primary mb-2 leading-[1.3]">
+                        {point.title}
+                      </h3>
                     </div>
 
-                    {/* Title */}
-                    <h3 className="font-display text-[10px] md:text-[17px] font-bold text-[#F1F5F9] mb-1 md:mb-3 leading-[1.2] md:leading-[1.4]">
-                      {point.title}
-                    </h3>
-
                     {/* Description */}
-                    <p className="text-[8.5px] md:text-[14px] text-[#4B6478] md:text-[#64748B] leading-[1.4] md:leading-[1.7] m-0">
+                    <p className="text-[13px] md:text-[14px] text-text-secondary leading-relaxed mt-2">
                       {point.desc}
                     </p>
 

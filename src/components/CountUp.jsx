@@ -3,7 +3,7 @@ import { motion, useMotionValue, useTransform, animate, useInView } from 'framer
 
 export default function CountUp({ from = 0, to, duration = 1.5, prefix = '', suffix = '' }) {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: '-80px' });
+  const isInView = useInView(ref, { once: true, margin: '0px' });
   const count = useMotionValue(from);
   const rounded = useTransform(count, v => prefix + Math.round(v).toLocaleString('id-ID') + suffix);
 

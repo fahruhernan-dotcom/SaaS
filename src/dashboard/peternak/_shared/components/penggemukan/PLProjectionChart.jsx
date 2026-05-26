@@ -28,7 +28,7 @@ export function PLProjectionChart({ batches, feedLogs, operationalCosts, sales }
     return [
       { name: 'Biaya Keluar', value: Math.round(totalCost / 1_000_000), color: '#EF4444' },
       { name: 'Proj. Revenue', value: Math.round(projectedRevenue / 1_000_000), color: '#22C55E' },
-      { name: 'Est. Profit', value: Math.round(projectedProfit / 1_000_000), color: projectedProfit >= 0 ? '#10B981' : '#F59E0B' },
+      { name: 'Est. Profit', value: Math.round(projectedProfit / 1_000_000), color: projectedProfit >= 0 ? '#021a02' : '#F59E0B' },
     ]
   }, [batches, feedLogs, operationalCosts, sales])
 

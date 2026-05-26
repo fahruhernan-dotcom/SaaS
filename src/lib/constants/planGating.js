@@ -111,7 +111,7 @@ export const RPH_PLAN_CONFIG = {
 // Documented here for cross-reference. Implementation lives in broker_ayam pages.
 export const POULTRY_BROKER_PLAN_CONFIG = {
   vertical: 'poultry_broker',
-  accentColor: '#10B981',
+  accentColor: '#021a02',
 
   starter: {
     transaksi: { allowed: true, quotaPerMonth: FALLBACK_TRANSACTION_QUOTA },

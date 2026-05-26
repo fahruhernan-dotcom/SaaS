@@ -6,7 +6,7 @@ import { WA_URL } from '@/lib/constants/contact';
 
 const Footer = () => {
   return (
-    <footer className="bg-[#030508] relative overflow-hidden" style={{ padding: '40px clamp(20px, 5vw, 80px) 32px' }}>
+    <footer className="bg-bg-base relative overflow-hidden border-t border-border-subtle" style={{ padding: '40px clamp(20px, 5vw, 80px) 32px' }}>
       {/* Large Watermark */}
       <div style={{
         position: 'absolute',
@@ -15,7 +15,7 @@ const Footer = () => {
         fontFamily: 'Sora',
         fontSize: 'clamp(80px, 15vw, 140px)',
         fontWeight: 900,
-        color: 'rgba(255,255,255,0.02)',
+        color: 'var(--watermark-color-val)',
         userSelect: 'none',
         pointerEvents: 'none',
         whiteSpace: 'nowrap',
@@ -35,15 +35,15 @@ const Footer = () => {
               <img
                 src="/logo.png"
                 alt="TernakOS"
-                style={{ width: 36, height: 36, borderRadius: 10, objectFit: 'cover', display: 'block', border: '1px solid rgba(255,255,255,0.07)' }}
+                style={{ width: 36, height: 36, borderRadius: 10, objectFit: 'cover', display: 'block', border: '1px solid var(--border-def-val)' }}
                 className="group-hover:scale-105 transition-transform duration-200 relative z-10"
               />
             </div>
-            <span className="font-['Sora'] text-xl font-black text-white tracking-tight leading-none">
+            <span className="font-['Sora'] text-xl font-black text-text-primary tracking-tight leading-none">
               Ternak<span className="text-emerald-500">OS</span>
             </span>
           </Link>
-          <p className="font-body text-[13px] text-tx-3 leading-[1.6] max-w-[280px] mx-auto md:mx-0">
+          <p className="font-body text-[13px] text-text-secondary leading-[1.6] max-w-[280px] mx-auto md:mx-0">
             Platform manajemen bisnis peternakan terlengkap di Indonesia.
           </p>
         </div>
@@ -53,7 +53,7 @@ const Footer = () => {
 
           {/* Produk */}
           <div>
-            <h4 className="font-body text-[11px] font-bold tracking-wide text-tx-1 mb-[12px]">PRODUK</h4>
+            <h4 className="font-body text-[11px] font-bold tracking-wide text-text-primary mb-[12px]">PRODUK</h4>
             <ul className="space-y-[6px]">
               {[
                 { name: 'Fitur',       to: '/fitur' },
@@ -63,7 +63,7 @@ const Footer = () => {
                 { name: 'Blog',        to: '/blog' },
               ].map((link, i) => (
                 <li key={i}>
-                  <Link to={link.to} className="font-body text-[13px] text-tx-3 hover:text-tx-1 block transition-colors duration-150">
+                  <Link to={link.to} className="font-body text-[13px] text-text-secondary hover:text-text-primary block transition-colors duration-150">
                     {link.name}
                   </Link>
                 </li>
@@ -73,7 +73,7 @@ const Footer = () => {
 
           {/* Perusahaan */}
           <div>
-            <h4 className="font-body text-[11px] font-bold tracking-wide text-tx-1 mb-[12px]">PERUSAHAAN</h4>
+            <h4 className="font-body text-[11px] font-bold tracking-wide text-text-primary mb-[12px]">PERUSAHAAN</h4>
             <ul className="space-y-[6px]">
               {[
                 { name: 'Tentang Kami', to: '/tentang-kami' },
@@ -82,7 +82,7 @@ const Footer = () => {
                 { name: 'Karir',        to: '#' },
               ].map((link, i) => (
                 <li key={i}>
-                  <Link to={link.to} className="font-body text-[13px] text-tx-3 hover:text-tx-1 block transition-colors duration-150">
+                  <Link to={link.to} className="font-body text-[13px] text-text-secondary hover:text-text-primary block transition-colors duration-150">
                     {link.name}
                   </Link>
                 </li>
@@ -92,13 +92,13 @@ const Footer = () => {
 
           {/* Social — external, keep <a> */}
           <div>
-            <h4 className="font-body text-[12px] font-bold tracking-wide text-tx-1 mb-[14px]">IKUTI KAMI</h4>
+            <h4 className="font-body text-[12px] font-bold tracking-wide text-text-primary mb-[14px]">IKUTI KAMI</h4>
             <div className="flex gap-[12px] flex-wrap">
               {[Instagram, Smartphone, TiktokIcon].map((Icon, i) => (
                 <a
                   key={i}
                   href="#"
-                  className="w-[32px] h-[32px] border border-border-def rounded-[8px] flex items-center justify-center text-tx-3 hover:border-em-400 hover:text-em-400 transition-colors"
+                  className="w-[32px] h-[32px] border border-border-default rounded-[8px] flex items-center justify-center text-text-secondary hover:border-em-400 hover:text-em-400 transition-colors bg-bg-1"
                 >
                   <Icon size={16} />
                 </a>
@@ -108,7 +108,7 @@ const Footer = () => {
 
           {/* Support */}
           <div>
-            <h4 className="font-body text-[10px] font-bold tracking-wide text-tx-1 mb-[12px]">SUPPORT</h4>
+            <h4 className="font-body text-[10px] font-bold tracking-wide text-text-primary mb-[12px]">SUPPORT</h4>
             <ul className="space-y-[6px]">
               {/* WhatsApp — external, keep <a> */}
               <li>
@@ -116,7 +116,7 @@ const Footer = () => {
                   href={WA_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-body text-[12px] text-tx-3 hover:text-tx-1 block transition-colors duration-150"
+                  className="font-body text-[12px] text-text-secondary hover:text-text-primary block transition-colors duration-150"
                 >
                   WhatsApp Admin
                 </a>
@@ -126,7 +126,7 @@ const Footer = () => {
                 { name: 'Status Sistem', to: '#' },
               ].map((link, i) => (
                 <li key={i}>
-                  <Link to={link.to} className="font-body text-[12px] text-tx-3 hover:text-tx-1 block transition-colors duration-150">
+                  <Link to={link.to} className="font-body text-[12px] text-text-secondary hover:text-text-primary block transition-colors duration-150">
                     {link.name}
                   </Link>
                 </li>
@@ -137,14 +137,14 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-border-sub pt-[24px] flex flex-col md:flex-row justify-center md:justify-between items-center gap-[8px] md:gap-[16px] text-center">
-          <p className="font-body text-[11px] text-tx-3" suppressHydrationWarning>© {new Date().getFullYear()} TernakOS. All rights reserved.</p>
-          <div className="flex items-center gap-[12px] text-[11px] text-tx-3">
-            <Link to="/privacy" className="hover:text-tx-1 transition-colors">Kebijakan Privasi</Link>
+        <div className="border-t border-border-subtle pt-[24px] flex flex-col md:flex-row justify-center md:justify-between items-center gap-[8px] md:gap-[16px] text-center">
+          <p className="font-body text-[11px] text-text-muted" suppressHydrationWarning>© {new Date().getFullYear()} TernakOS. All rights reserved.</p>
+          <div className="flex items-center gap-[12px] text-[11px] text-text-muted">
+            <Link to="/privacy" className="hover:text-text-primary transition-colors">Kebijakan Privasi</Link>
             <span>·</span>
-            <Link to="/terms" className="hover:text-tx-1 transition-colors">Syarat &amp; Ketentuan</Link>
+            <Link to="/terms" className="hover:text-text-primary transition-colors">Syarat &amp; Ketentuan</Link>
             <span>·</span>
-            <Link to="/keamanan" className="hover:text-tx-1 transition-colors">Keamanan</Link>
+            <Link to="/keamanan" className="hover:text-text-primary transition-colors">Keamanan</Link>
           </div>
         </div>
 

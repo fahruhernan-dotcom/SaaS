@@ -13,7 +13,7 @@ export default function TopBar({ title, subtitle, showBack = false, rightAction,
   const pageTitle = usePageTitle()
   const vertical = resolveBusinessVertical(profile, tenant)
   const model = BUSINESS_MODELS[vertical]
-  const color = model?.color || '#10B981'
+  const color = model?.color || '#021a02'
 
   const displayTitle = title || pageTitle
   const isBeranda = displayTitle === 'Beranda'

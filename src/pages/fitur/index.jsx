@@ -86,7 +86,7 @@ export default function FiturPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] overflow-x-hidden">
+    <div className="fitur-page min-h-screen bg-[#06090F] text-[#F1F5F9] overflow-x-hidden">
       <SEO
         title={`${hero.eyebrow} - Fitur TernakOS | Platform Peternakan Digital #1 Indonesia`}
         description={`${hero.sub} Setup kurang dari 15 menit, berjalan di HP Android, tanpa instalasi apapun.`}
@@ -105,7 +105,7 @@ export default function FiturPage() {
           )}
           <div className="absolute inset-0 z-0 pointer-events-none">
             <Particles
-              particleColors={isSembako ? ['#F59E0B', '#FBBF24', '#D97706'] : ['#10B981', '#34D399', '#059669']}
+              particleColors={isSembako ? ['#F59E0B', '#FBBF24', '#D97706'] : ['#021a02', '#021a02', '#021a02']}
               particleCount={typeof window !== 'undefined' && window.innerWidth < 768 ? 20 : 40}
               speed={0.3}
               particleBaseSize={1.2}
@@ -282,7 +282,7 @@ export default function FiturPage() {
         <section className="py-20 px-5 bg-[#06090F]">
           <div className="max-w-5xl mx-auto">
             <FadeUp className="text-center mb-12">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#10B981] mb-4">SEMUA ROLE</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-4">SEMUA ROLE</p>
               <h2 className="font-['Sora'] text-3xl font-bold text-white">Tersedia untuk Semua Role</h2>
             </FadeUp>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -375,7 +375,7 @@ export default function FiturPage() {
                       <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Link
                           to="/register"
-                          className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-all shadow-[0_4px_20px_rgba(16,185,129,0.3)] hover:shadow-[0_4px_28px_rgba(16,185,129,0.45)] whitespace-nowrap"
+                          className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-all shadow-[0_4px_20px_rgba(2, 26, 2,0.3)] hover:shadow-[0_4px_28px_rgba(2, 26, 2,0.45)] whitespace-nowrap"
                         >
                           {hero.cta}
                           <ArrowRight size={18} />

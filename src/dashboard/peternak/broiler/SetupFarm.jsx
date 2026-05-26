@@ -571,11 +571,11 @@ export default function SetupFarm({ onSuccess, onCancel }) {
 function UpgradeGate({ plan, currentCount, kandangLimit, onBack, onUpgrade }) {
   const isStarter = plan === 'starter'
   const fillPct   = Math.round((currentCount / Math.max(kandangLimit, 1)) * 100)
-  const barColor  = fillPct >= 100 ? '#F87171' : fillPct >= 80 ? '#F59E0B' : '#34D399'
+  const barColor  = fillPct >= 100 ? '#F87171' : fillPct >= 80 ? '#F59E0B' : '#021a02'
 
   const PLAN_META = {
     starter:  { label: 'Starter',  color: '#94A3B8' },
-    pro:      { label: 'Pro',      color: '#34D399' },
+    pro:      { label: 'Pro',      color: '#021a02' },
     business: { label: 'Business', color: '#F59E0B' },
   }
   const meta = PLAN_META[plan] ?? PLAN_META.starter
@@ -615,7 +615,7 @@ function UpgradeGate({ plan, currentCount, kandangLimit, onBack, onUpgrade }) {
             <div style={{ height: '100%', width: `${Math.min(100, fillPct)}%`, background: barColor, borderRadius: 99, transition: 'width 0.4s ease' }} />
           </div>
         </div>
-        <button onClick={onUpgrade} style={{ width: '100%', background: '#10B981', color: 'white', border: 'none', borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 800, cursor: 'pointer', fontFamily: 'Sora' }}>
+        <button onClick={onUpgrade} style={{ width: '100%', background: '#021a02', color: 'white', border: 'none', borderRadius: 12, padding: '14px', fontSize: 14, fontWeight: 800, cursor: 'pointer', fontFamily: 'Sora' }}>
           Upgrade Sekarang
         </button>
         <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#4B6478', fontSize: 13, cursor: 'pointer', fontFamily: 'DM Sans', padding: '4px', textAlign: 'center' }}>

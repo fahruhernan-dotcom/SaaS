@@ -86,7 +86,7 @@ export function AuthProvider({ children }) {
       }
     })
 
-    legacyProfiles.forEach(lp => {
+    lpSafe.forEach(lp => {
       if (!combined.some(c => c.tenant_id === lp.tenant_id)) {
         combined.push(lp)
       }

@@ -41,7 +41,7 @@ const INVOICE_STATUS_TABS = [
 ]
 
 const STATUS_CONFIG = {
-  lunas: { label: 'Lunas', color: '#34D399', bg: 'rgba(52,211,153,0.12)' },
+  lunas: { label: 'Lunas', color: '#021a02', bg: 'rgba(2, 26, 2,0.12)' },
   sebagian: { label: 'Sebagian', color: '#60A5FA', bg: 'rgba(96,165,250,0.12)' },
   belum_lunas: { label: 'Belum Lunas', color: '#F59E0B', bg: 'rgba(245,158,11,0.12)' },
 }
@@ -186,7 +186,7 @@ function InvoiceCard({ inv, onPay, _onDetail, onPrintInvoice }) {
         </div>
         <div>
           <div style={{ fontSize: '11px', color: '#4B6478' }}>Dibayar</div>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: '#34D399' }}>{fmt(inv.paid_amount)}</div>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: '#021a02' }}>{fmt(inv.paid_amount)}</div>
         </div>
         <div>
           <div style={{ fontSize: '11px', color: '#4B6478' }}>Sisa</div>
@@ -574,7 +574,7 @@ function CreateInvoiceSheet({ open, onClose, customers, products }) {
               <span style={{ fontSize: '13px', color: '#94A3B8', fontWeight: 600 }}>Gross Profit</span>
               <span style={{
                 fontSize: '14px', fontWeight: 700,
-                color: totals.grossProfit >= 0 ? '#34D399' : '#EF4444',
+                color: totals.grossProfit >= 0 ? '#021a02' : '#EF4444',
               }}>
                 {fmt(totals.grossProfit)}
               </span>
@@ -601,7 +601,7 @@ function CreateInvoiceSheet({ open, onClose, customers, products }) {
             type="button"
             onClick={handleSubmit}
             disabled={createInvoice.isPending}
-            className="w-full h-12 bg-emerald-500 rounded-xl font-bold text-white text-sm shadow-[0_8px_24px_rgba(16,185,129,0.25)] active:scale-[0.97] transition-transform disabled:opacity-50"
+            className="w-full h-12 bg-emerald-500 rounded-xl font-bold text-white text-sm shadow-[0_8px_24px_rgba(2, 26, 2,0.25)] active:scale-[0.97] transition-transform disabled:opacity-50"
           >
             {createInvoice.isPending ? 'Menyimpan...' : 'Simpan Invoice'}
           </button>
@@ -717,12 +717,12 @@ function RecordPaymentSheet({ invoice, onClose }) {
           </div>
 
           <div style={{
-            padding: '12px 16px', background: 'rgba(52,211,153,0.05)',
-            border: '1px solid rgba(52,211,153,0.15)', borderRadius: '12px',
+            padding: '12px 16px', background: 'rgba(2, 26, 2,0.05)',
+            border: '1px solid rgba(2, 26, 2,0.15)', borderRadius: '12px',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}>
             <span style={{ fontSize: '14px', color: '#94A3B8' }}>Sisa setelah bayar</span>
-            <span style={{ fontSize: '16px', fontWeight: 700, color: afterPay === 0 ? '#34D399' : '#F59E0B' }}>
+            <span style={{ fontSize: '16px', fontWeight: 700, color: afterPay === 0 ? '#021a02' : '#F59E0B' }}>
               {afterPay === 0 ? 'LUNAS 🎉' : fmt(afterPay)}
             </span>
           </div>
@@ -733,7 +733,7 @@ function RecordPaymentSheet({ invoice, onClose }) {
             type="button"
             onClick={handleSubmit}
             disabled={recordPayment.isPending || !amount || Number(amount) <= 0}
-            className="w-full h-12 bg-emerald-500 rounded-xl font-bold text-white text-sm shadow-[0_8px_24px_rgba(16,185,129,0.25)] active:scale-[0.97] transition-transform disabled:opacity-50"
+            className="w-full h-12 bg-emerald-500 rounded-xl font-bold text-white text-sm shadow-[0_8px_24px_rgba(2, 26, 2,0.25)] active:scale-[0.97] transition-transform disabled:opacity-50"
           >
             {recordPayment.isPending ? 'Menyimpan...' : 'Konfirmasi Pembayaran'}
           </button>
@@ -873,7 +873,7 @@ function CustomerFormSheet({ open, customer, onClose }) {
 
         <div className="sticky bottom-0 bg-[#0C1319] px-5 pt-3 pb-[calc(16px+env(safe-area-inset-bottom))] border-t border-white/10 z-20">
           <button type="button" onClick={handleSubmit} disabled={isPending}
-            className="w-full h-12 bg-emerald-500 rounded-xl font-bold text-white text-sm shadow-[0_8px_24px_rgba(16,185,129,0.25)] active:scale-[0.97] transition-transform disabled:opacity-50">
+            className="w-full h-12 bg-emerald-500 rounded-xl font-bold text-white text-sm shadow-[0_8px_24px_rgba(2, 26, 2,0.25)] active:scale-[0.97] transition-transform disabled:opacity-50">
             {isPending ? 'Menyimpan...' : isEdit ? 'Simpan Toko' : 'Tambah Toko'}
           </button>
         </div>
@@ -961,20 +961,20 @@ function ProductFormSheet({ open, onClose }) {
 
           {margin && (
             <div style={{
-              padding: '12px 16px', background: 'rgba(52,211,153,0.05)',
-              border: '1px solid rgba(52,211,153,0.15)', borderRadius: '12px',
+              padding: '12px 16px', background: 'rgba(2, 26, 2,0.05)',
+              border: '1px solid rgba(2, 26, 2,0.15)', borderRadius: '12px',
               fontSize: '14px', color: '#94A3B8',
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
               <span>Estimasi Margin</span>
-              <span style={{ color: '#34D399', fontWeight: 700 }}>{margin}%</span>
+              <span style={{ color: '#021a02', fontWeight: 700 }}>{margin}%</span>
             </div>
           )}
         </div>
 
         <div className="sticky bottom-0 bg-[#0C1319] px-5 pt-3 pb-[calc(16px+env(safe-area-inset-bottom))] border-t border-white/10 z-20">
           <button type="button" onClick={handleSubmit} disabled={createProduct.isPending}
-            className="w-full h-12 bg-emerald-500 rounded-xl font-bold text-white text-sm shadow-[0_8px_24px_rgba(16,185,129,0.25)] active:scale-[0.97] transition-transform disabled:opacity-50">
+            className="w-full h-12 bg-emerald-500 rounded-xl font-bold text-white text-sm shadow-[0_8px_24px_rgba(2, 26, 2,0.25)] active:scale-[0.97] transition-transform disabled:opacity-50">
             {createProduct.isPending ? 'Menyimpan...' : 'Tambah Produk'}
           </button>
         </div>
@@ -1183,7 +1183,7 @@ export default function RPADistribusi() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '20px' }}>
               {[
                 { label: 'Total Piutang', value: fmt(stats.totalOutstanding), color: '#F59E0B', warn: stats.totalOutstanding > 0 },
-                { label: 'Revenue Bulan Ini', value: fmt(stats.revenueThisMonth), color: '#34D399' },
+                { label: 'Revenue Bulan Ini', value: fmt(stats.revenueThisMonth), color: '#021a02' },
                 { label: 'Invoice Lunas', value: stats.lunas, color: '#60A5FA' },
                 { label: 'Jatuh Tempo', value: stats.overdue, color: '#EF4444', warn: stats.overdue > 0 },
               ].map(s => (
@@ -1362,7 +1362,7 @@ export default function RPADistribusi() {
                               <td style={{ padding: '12px 14px', fontSize: '13px', color: '#94A3B8' }}>{fmtDate(inv.transaction_date)}</td>
                               <td style={{ padding: '12px 14px', fontSize: '13px', color: od ? '#EF4444' : '#94A3B8' }}>{fmtDate(inv.due_date)}</td>
                               <td style={{ padding: '12px 14px', fontSize: '13px', color: '#F1F5F9', fontWeight: 600 }}>{fmt(inv.total_amount)}</td>
-                              <td style={{ padding: '12px 14px', fontSize: '13px', color: '#34D399' }}>{fmt(inv.paid_amount)}</td>
+                              <td style={{ padding: '12px 14px', fontSize: '13px', color: '#021a02' }}>{fmt(inv.paid_amount)}</td>
                               <td style={{ padding: '12px 14px', fontSize: '13px', color: '#F59E0B', fontWeight: 600 }}>
                                 {fmt(inv.remaining_amount ?? (inv.total_amount - inv.paid_amount))}
                               </td>
@@ -1548,7 +1548,7 @@ export default function RPADistribusi() {
                             <div style={{ fontSize: '13px', fontWeight: 700, color: '#F59E0B' }}>{fmt(p.sell_price)}/kg</div>
                             <div style={{ fontSize: '11px', color: '#4B6478' }}>HPP: {fmt(p.cost_price)}/kg</div>
                             {margin && (
-                              <div style={{ fontSize: '11px', color: '#34D399', fontWeight: 600 }}>Margin {margin}%</div>
+                              <div style={{ fontSize: '11px', color: '#021a02', fontWeight: 600 }}>Margin {margin}%</div>
                             )}
                           </div>
                         </div>

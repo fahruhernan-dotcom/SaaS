@@ -296,7 +296,7 @@ export default function AdminSubscriptions() {
         </div>
         <Button
           onClick={() => setIsGenerateOpen(true)}
-          className="relative z-10 hidden md:flex bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl h-12 px-6 text-[11px] font-black uppercase tracking-[0.2em] shadow-[0_4px_20px_rgba(16,185,129,0.3)] shrink-0 transition-all active:scale-95 group/btn overflow-hidden"
+          className="relative z-10 hidden md:flex bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl h-12 px-6 text-[11px] font-black uppercase tracking-[0.2em] shadow-[0_4px_20px_rgba(2, 26, 2,0.3)] shrink-0 transition-all active:scale-95 group/btn overflow-hidden"
         >
           <div className="absolute inset-0 bg-white/10 translate-y-full group-hover/btn:translate-y-0 transition-transform duration-300" />
           <Plus size={16} className="mr-2 relative z-10" /> 
@@ -469,7 +469,7 @@ export default function AdminSubscriptions() {
                             <Button
                               size="sm"
                               onClick={() => handleOpenDetail(inv)}
-                              className="h-9 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white transition-all text-[10px] font-black uppercase tracking-widest px-4 shadow-[0_4px_15px_rgba(16,185,129,0.2)]"
+                              className="h-9 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white transition-all text-[10px] font-black uppercase tracking-widest px-4 shadow-[0_4px_15px_rgba(2, 26, 2,0.2)]"
                             >
                               Konfirmasi
                             </Button>
@@ -666,7 +666,7 @@ export default function AdminSubscriptions() {
 
                 {/* ── Amount banner ── */}
                 <div className="mx-5 mt-4 mb-1 rounded-2xl p-4 flex items-center justify-between"
-                  style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.2)' }}
+                  style={{ background: 'rgba(2, 26, 2,0.07)', border: '1px solid rgba(2, 26, 2,0.2)' }}
                 >
                   <div>
                     <p className="text-[10px] font-bold text-emerald-500/60 uppercase tracking-widest mb-0.5">Total Tagihan</p>
@@ -743,7 +743,7 @@ export default function AdminSubscriptions() {
                     <section>
                       <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-widest mb-2">Riwayat Konfirmasi</p>
                       <div className="flex items-center gap-3 p-3 rounded-xl"
-                        style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)' }}
+                        style={{ background: 'rgba(2, 26, 2,0.06)', border: '1px solid rgba(2, 26, 2,0.15)' }}
                       >
                         <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                           <Check size={14} strokeWidth={3} />
@@ -774,7 +774,7 @@ export default function AdminSubscriptions() {
                     <div className="px-5 py-4 border-t border-white/5 bg-[#0A0F14] shrink-0 space-y-3">
                       {isMidtrans ? (
                         <div className="flex items-center gap-3 p-3 rounded-xl"
-                          style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)' }}
+                          style={{ background: 'rgba(2, 26, 2,0.06)', border: '1px solid rgba(2, 26, 2,0.2)' }}
                         >
                           <CreditCard size={16} className="text-emerald-400 shrink-0" />
                           <div>
@@ -1063,7 +1063,7 @@ export default function AdminSubscriptions() {
               <Button
                 type="submit"
                 disabled={createInvoice.isPending || !genForm.tenantId || genFinal <= 0 || genHasPending}
-                className="flex-1 h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[11px] tracking-[0.2em] shadow-[0_4px_20px_rgba(16,185,129,0.3)] disabled:opacity-50 transition-all active:scale-95"
+                className="flex-1 h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[11px] tracking-[0.2em] shadow-[0_4px_20px_rgba(2, 26, 2,0.3)] disabled:opacity-50 transition-all active:scale-95"
               >
                 {createInvoice.isPending ? 'Proses...' : <><FileText size={16} className="mr-2" /> Generate</>}
               </Button>
@@ -1138,7 +1138,7 @@ export default function AdminSubscriptions() {
                 </Button>
                 <Button
                   type="submit"
-                  className="flex-1 h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[11px] tracking-[0.2em] shadow-[0_4px_20px_rgba(16,185,129,0.3)] transition-all active:scale-95"
+                  className="flex-1 h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black uppercase text-[11px] tracking-[0.2em] shadow-[0_4px_20px_rgba(2, 26, 2,0.3)] transition-all active:scale-95"
                 >
                   {editingBank ? 'Simpan' : '+ Tambah'}
                 </Button>
@@ -1152,7 +1152,7 @@ export default function AdminSubscriptions() {
       <div className="md:hidden fixed bottom-20 right-4 z-40 animate-in translate-y-4 duration-500 pb-[env(safe-area-inset-bottom)]">
         <Button
           onClick={() => setIsGenerateOpen(true)}
-          className="w-14 h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-[0_10px_30px_rgba(16,185,129,0.4)] border border-emerald-400/20 active:scale-90 transition-transform flex items-center justify-center p-0"
+          className="w-14 h-14 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-[0_10px_30px_rgba(2, 26, 2,0.4)] border border-emerald-400/20 active:scale-90 transition-transform flex items-center justify-center p-0"
         >
           <Plus size={28} />
         </Button>
@@ -1380,7 +1380,7 @@ function StatCard({ label, value, icon: Icon, color, isUrgent }) {
 function PlanBadge({ plan }) {
   const styles = {
     starter: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
-    pro: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]',
+    pro: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shadow-[0_0_15px_rgba(2, 26, 2,0.1)]',
     business: 'bg-amber-500/15 text-amber-400 border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)]'
   }
   return (
@@ -1393,7 +1393,7 @@ function PlanBadge({ plan }) {
 function StatusBadge({ status }) {
   const styles = {
     pending: 'bg-amber-500/15 text-amber-500 border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.15)] animate-pulse-slow',
-    paid: 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.15)]',
+    paid: 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30 shadow-[0_0_20px_rgba(2, 26, 2,0.15)]',
     expired: 'bg-red-500/15 text-red-500 border-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.15)]',
     cancelled: 'bg-white/5 text-[#4B6478] border-white/10'
   }

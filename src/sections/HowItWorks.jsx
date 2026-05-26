@@ -4,33 +4,33 @@ import AnimatedContent from '../components/reactbits/AnimatedContent';
 const HowItWorks = ({ activeRole }) => {
   const stepsConfig = {
     broker: [
-      { num: "01", title: "Daftar Gratis", desc: "Buat akun 30 detik. Pilih role Broker atau Peternak." },
-      { num: "02", title: "Setup Bisnis", desc: "Tambah kandang rekanan dan daftar RPA pembeli. Sekali setup." },
-      { num: "03", title: "Catat & Pantau", desc: "Mulai catat transaksi secara digital. Pantau profit dan stok secara real-time." }
+      { num: "01", title: "Daftar Gratis", desc: "Buat akun dalam 30 detik. Pilih peran Broker atau Peternak." },
+      { num: "02", title: "Setup Bisnis", desc: "Daftarkan kandang rekanan dan pelanggan RPA Anda. Cukup sekali setup." },
+      { num: "03", title: "Catat & Pantau", desc: "Mulai catat transaksi secara digital. Pantau margin profit dan sisa piutang harian." }
     ],
     peternak: [
-      { num: "01", title: "Daftar Gratis", desc: "Buat akun 30 detik. Pilih role Peternak." },
-      { num: "02", title: "Input Kandang", desc: "Tambah kandang dan mulai siklus budidaya pertama." },
-      { num: "03", title: "Catat & Analisis", desc: "Input harian otomatis hitung FCR dan prediksi waktu panen." }
+      { num: "01", title: "Daftar Gratis", desc: "Buat akun dalam 30 detik. Pilih peran Peternak." },
+      { num: "02", title: "Setup Kandang", desc: "Tambahkan kandang dan mulai siklus budidaya perdana Anda." },
+      { num: "03", title: "Catat Harian", desc: "Input pakan & mortalitas harian. Pantau perkembangan FCR dan prediksi panen." }
     ],
     rpa: [
-      { num: "01", title: "Daftar Gratis", desc: "Buat akun 30 detik. Pilih role RPA." },
-      { num: "02", title: "Tambah Broker", desc: "Daftarkan broker langganan sebagai supplier." },
-      { num: "03", title: "Order & Pantau", desc: "Buat order, pantau pengiriman, catat pembayaran — semua dalam satu dashboard." }
+      { num: "01", title: "Daftar Gratis", desc: "Buat akun dalam 30 detik. Pilih peran RPA." },
+      { num: "02", title: "Tambah Broker", desc: "Daftarkan broker langganan Anda sebagai supplier livebird." },
+      { num: "03", title: "Order & Yield", desc: "Buat order livebird, catat hasil potong karkas, dan pantau yield produksi." }
     ]
   };
 
   const steps = stepsConfig[activeRole] || stepsConfig.broker;
 
   return (
-    <section id="cara-kerja" className="bg-[#06090F] section-fade-bottom section-padding">
+    <section id="cara-kerja" className="bg-bg-base section-fade-bottom section-padding">
       <div className="max-w-[1280px] mx-auto overflow-hidden">
         
         <div className="text-center mb-[40px] md:mb-[50px]">
           <AnimatedContent direction="vertical" distance={20} delay={0}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.14)', borderRadius: '99px', padding: '4px 12px', marginBottom: '12px' }}>
-              <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#10B981', animation: 'pulse-dot 2s infinite' }}/>
-              <span style={{ fontSize: '10px', fontWeight: 600, color: '#34D399', letterSpacing: '2px', textTransform: 'uppercase' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(2, 26, 2,0.06)', border: '1px solid rgba(2, 26, 2,0.14)', borderRadius: '99px', padding: '4px 12px', marginBottom: '12px' }}>
+              <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#021a02', animation: 'pulse-dot 2s infinite' }}/>
+              <span style={{ fontSize: '10px', fontWeight: 600, color: '#021a02', letterSpacing: '2px', textTransform: 'uppercase' }}>
                 MULAI DALAM MENIT
               </span>
             </div>
@@ -46,11 +46,11 @@ const HowItWorks = ({ activeRole }) => {
           <AnimatePresence mode="wait">
             <motion.div 
               key={activeRole}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-              className="grid grid-cols-3 lg:flex-row gap-2 md:gap-[40px] lg:gap-[0px] relative z-10"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.22 }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-16 relative z-10"
             >
               {steps.map((step, i) => (
                 <div 
@@ -65,31 +65,31 @@ const HowItWorks = ({ activeRole }) => {
                         initial={{ scaleX: 0 }}
                         whileInView={{ scaleX: 1 }}
                         viewport={{ once: true }}
-                        transition={{ duration: 1, ease: 'easeInOut', delay: 0.6 + i * 0.2 }}
+                        transition={{ duration: 0.6, ease: 'easeInOut', delay: 0.2 }}
                         style={{ originX: 0 }}
-                        className="w-full h-full bg-gradient-to-r from-em-500/40 via-em-500/20 to-transparent border-t border-dashed border-em-500/30"
+                        className="w-full h-full bg-border-default border-t border-dashed border-border-default"
                       />
                     </div>
                   )}
 
                   {/* Step Circle Container */}
-                  <div className="relative mb-3 md:mb-6">
+                  <div className="relative mb-4">
                     {/* Ring */}
-                    <div className="w-[44px] h-[44px] md:w-[88px] md:h-[88px] rounded-full bg-[#111C24] border border-border-acc flex items-center justify-center relative z-10 group transition-all duration-300 hover:border-em-500/60 shadow-[0_0_20px_rgba(16,185,129,0.1)]">
-                      <span className="font-display text-[15px] md:text-[28px] font-black text-[#F1F5F9] transition-colors duration-300 group-hover:text-em-400">
+                    <div className="w-[64px] h-[64px] md:w-[88px] md:h-[88px] rounded-full bg-bg-2 border border-border-default flex items-center justify-center relative z-10 group transition-all duration-300 hover:border-emerald-500 shadow-sm">
+                      <span className="font-display text-[18px] md:text-[28px] font-black text-text-primary transition-colors duration-300 group-hover:text-emerald-500">
                         {step.num}
                       </span>
                     </div>
                   </div>
                   
-                  <div className="max-w-full">
-                    <p className="hidden md:block font-body text-[10px] font-bold text-em-400 tracking-[1.5px] uppercase mb-[8px]">
+                  <div className="max-w-xs mx-auto">
+                    <p className="font-body text-[10px] font-bold text-emerald-500 tracking-[1.5px] uppercase mb-2">
                       Langkah {i + 1}
                     </p>
-                    <h3 className="font-display text-[10px] md:text-[18px] font-bold text-[#F1F5F9] mb-[10px] leading-tight px-1 uppercase tracking-tight">
+                    <h3 className="font-display text-[15px] md:text-[18px] font-bold text-text-primary mb-2 leading-tight uppercase tracking-tight">
                       {step.title}
                     </h3>
-                    <p className="hidden md:block text-[#64748B] text-sm leading-[1.6] px-4 font-medium">
+                    <p className="text-text-secondary text-[13px] md:text-sm leading-relaxed px-2 font-medium">
                       {step.desc}
                     </p>
                   </div>

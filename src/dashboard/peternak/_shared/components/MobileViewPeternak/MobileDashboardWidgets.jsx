@@ -31,7 +31,7 @@ export function MetricCell({ label, value, unit, tone, divider, sparkData, class
         {sparkData && (
           <Sparkline 
             data={sparkData} 
-            color="#10B981" 
+            color="#021a02" 
             width={42} 
             height={20} 
             className="shrink-0"

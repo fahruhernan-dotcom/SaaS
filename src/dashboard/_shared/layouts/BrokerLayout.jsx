@@ -9,6 +9,7 @@ import { resolveBusinessVertical } from '@/lib/businessModel'
 import BusinessModelOverlay from '../components/BusinessModelOverlay'
 import AIChatBubble from '@/dashboard/broker/ai/AIChatBubble'
 import { useNotificationGenerator } from '@/lib/hooks/useNotifications.jsx'
+import { useForceDarkMode } from '@/lib/hooks/useForceDarkMode'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { BusinessNameWarningBanner } from '../components/BusinessNameWarningBanner'
@@ -148,6 +149,7 @@ function PoultryBrokerPrefetcher() {
 export default function BrokerLayout() {
   const { profile, tenant, loading, isSuperadmin, refetchProfile } = useAuth()
   useNotificationGenerator()
+  useForceDarkMode()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 

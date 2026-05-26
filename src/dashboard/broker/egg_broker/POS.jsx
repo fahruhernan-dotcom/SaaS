@@ -178,7 +178,7 @@ export default function POS() {
                   <p className={cn("font-bold text-[#4B6478] uppercase mt-1 tracking-widest", isDesktop ? "text-[10px]" : "text-[11px]")}>Tersedia: {item.current_stock_butir} butir</p>
                 </div>
                 <div className="bg-white/5 p-3 rounded-2xl">
-                  <Plus size={isDesktop ? 20 : 22} className="text-[#34D399]" />
+                  <Plus size={isDesktop ? 20 : 22} className="text-[#021a02]" />
                 </div>
               </div>
             </Card>
@@ -261,7 +261,7 @@ export default function POS() {
           <Button 
             onClick={handleSubmit}
             disabled={isSubmitting || cart.length === 0 || !selectedCustomerId}
-            className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 rounded-2xl font-black uppercase tracking-widest text-sm shadow-[0_8px_32px_rgba(16,185,129,0.3)] border-none active:scale-95 transition-all"
+            className="w-full h-14 bg-emerald-500 hover:bg-emerald-600 rounded-2xl font-black uppercase tracking-widest text-sm shadow-[0_8px_32px_rgba(2, 26, 2,0.3)] border-none active:scale-95 transition-all"
           >
             {isSubmitting ? <Loader2 className="animate-spin" /> : 'Selesaikan Transaksi'}
           </Button>
@@ -274,21 +274,21 @@ export default function POS() {
  function SuccessView({ invoice, onReset }) {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   return (
-    <div className="min-h-screen bg-[#06090F] flex items-center justify-center p-6 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.05)_0%,transparent_100%)]">
+    <div className="min-h-screen bg-[#06090F] flex items-center justify-center p-6 bg-[radial-gradient(circle_at_center,rgba(2, 26, 2,0.05)_0%,transparent_100%)]">
       <motion.div 
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         className={cn("w-full bg-[#0C1319] border border-white/5 rounded-[40px] text-center space-y-6 shadow-2xl overflow-hidden relative", isDesktop ? "max-w-[440px] p-10" : "max-w-full p-8")}
       >
         <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4 relative z-10" style={{ width: isDesktop ? 80 : 72, height: isDesktop ? 80 : 72 }}>
-          <CheckCircle2 size={isDesktop ? 40 : 36} className="text-[#34D399]" />
+          <CheckCircle2 size={isDesktop ? 40 : 36} className="text-[#021a02]" />
         </div>
         <div className="space-y-3 relative z-10">
           <h2 className={cn("font-black text-white uppercase tracking-tight", isDesktop ? "text-2xl" : "text-xl")}>Transaksi Berhasil!</h2>
           <p className={cn("font-bold text-[#4B6478] uppercase tracking-widest", isDesktop ? "text-xs" : "text-[10px]")}>Invoice: {invoice}</p>
         </div>
         <div className="pt-4 space-y-3 relative z-10">
-          <Button className="w-full h-15 bg-emerald-500 hover:bg-emerald-600 rounded-[20px] font-black uppercase tracking-widest text-[11px] border-none shadow-[0_8px_24px_rgba(16,185,129,0.2)]">Cetak Struk</Button>
+          <Button className="w-full h-15 bg-emerald-500 hover:bg-emerald-600 rounded-[20px] font-black uppercase tracking-widest text-[11px] border-none shadow-[0_8px_24px_rgba(2, 26, 2,0.2)]">Cetak Struk</Button>
           <Button variant="ghost" onClick={onReset} className="w-full h-12 text-[#4B6478] font-bold hover:text-white uppercase text-[11px]">Kembali ke POS</Button>
         </div>
       </motion.div>

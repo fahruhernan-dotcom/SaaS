@@ -34,7 +34,7 @@ const fmtDate = (d) => {
 
 const marginColor = (pct) => {
   const n = Number(pct)
-  if (n >= 15) return '#34D399'
+  if (n >= 15) return '#021a02'
   if (n >= 10) return '#F59E0B'
   return '#EF4444'
 }
@@ -275,16 +275,16 @@ export default function RPALaporanMargin() {
 
           {/* Gross Profit */}
           <div style={{
-            background: profitPositive ? 'rgba(52,211,153,0.05)' : 'rgba(239,68,68,0.05)',
-            border: `1px solid ${profitPositive ? 'rgba(52,211,153,0.15)' : 'rgba(239,68,68,0.15)'}`,
+            background: profitPositive ? 'rgba(2, 26, 2,0.05)' : 'rgba(239,68,68,0.05)',
+            border: `1px solid ${profitPositive ? 'rgba(2, 26, 2,0.15)' : 'rgba(239,68,68,0.15)'}`,
             borderRadius: '12px', padding: '14px',
           }}>
             <div style={{ fontSize: '11px', color: '#4B6478', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-              {profitPositive ? <TrendingUp size={12} color="#34D399" /> : <TrendingDown size={12} color="#EF4444" />}
+              {profitPositive ? <TrendingUp size={12} color="#021a02" /> : <TrendingDown size={12} color="#EF4444" />}
               GROSS PROFIT
             </div>
             {isLoading ? <Skeleton h={28} rounded={6} /> : (
-              <div style={{ fontSize: isDesktop ? '18px' : '15px', fontWeight: 700, color: profitPositive ? '#34D399' : '#EF4444' }}>
+              <div style={{ fontSize: isDesktop ? '18px' : '15px', fontWeight: 700, color: profitPositive ? '#021a02' : '#EF4444' }}>
                 {fmt(data?.totalProfit)}
               </div>
             )}
@@ -292,8 +292,8 @@ export default function RPALaporanMargin() {
 
           {/* Margin % */}
           <div style={{
-            background: `rgba(${mc === '#34D399' ? '52,211,153' : mc === '#F59E0B' ? '245,158,11' : '239,68,68'},0.05)`,
-            border: `1px solid rgba(${mc === '#34D399' ? '52,211,153' : mc === '#F59E0B' ? '245,158,11' : '239,68,68'},0.2)`,
+            background: `rgba(${mc === '#021a02' ? '52,211,153' : mc === '#F59E0B' ? '245,158,11' : '239,68,68'},0.05)`,
+            border: `1px solid rgba(${mc === '#021a02' ? '52,211,153' : mc === '#F59E0B' ? '245,158,11' : '239,68,68'},0.2)`,
             borderRadius: '12px', padding: '14px',
           }}>
             <div style={{ fontSize: '11px', color: '#4B6478', marginBottom: '6px' }}>MARGIN %</div>
@@ -332,7 +332,7 @@ export default function RPALaporanMargin() {
                 <Legend wrapperStyle={{ fontSize: '12px', color: '#94A3B8', paddingTop: '8px' }} />
                 <Bar dataKey="revenue" name="Revenue" fill="#F59E0B" fillOpacity={0.8} radius={[3, 3, 0, 0]} />
                 <Bar dataKey="cost" name="HPP" fill="rgba(255,255,255,0.15)" radius={[3, 3, 0, 0]} />
-                <Line dataKey="profit" name="Profit" stroke="#34D399" strokeWidth={2} dot={false} type="monotone" />
+                <Line dataKey="profit" name="Profit" stroke="#021a02" strokeWidth={2} dot={false} type="monotone" />
               </ComposedChart>
             </ResponsiveContainer>
           )}
@@ -368,7 +368,7 @@ export default function RPALaporanMargin() {
                       <td style={tdStyle()}><span style={{ fontSize: '12px', fontWeight: 600, color: '#E2E8F0' }}>{row.name}</span></td>
                       <td style={tdStyle('right')}><span style={{ fontSize: '12px' }}>{row.qty.toFixed(1)}</span></td>
                       <td style={tdStyle('right')}><span style={{ fontSize: '12px', color: '#F59E0B' }}>{fmtShort(row.revenue)}</span></td>
-                      <td style={tdStyle('right')}><span style={{ fontSize: '12px', color: row.profit >= 0 ? '#34D399' : '#EF4444' }}>{fmtShort(row.profit)}</span></td>
+                      <td style={tdStyle('right')}><span style={{ fontSize: '12px', color: row.profit >= 0 ? '#021a02' : '#EF4444' }}>{fmtShort(row.profit)}</span></td>
                       <td style={tdStyle('right')}><span style={{ fontSize: '12px', color: marginColor(row.margin), fontWeight: 700 }}>{row.margin}%</span></td>
                     </tr>
                   ))}
@@ -381,7 +381,7 @@ export default function RPALaporanMargin() {
                     <td style={{ ...tdStyle('right'), fontWeight: 700, color: '#F59E0B', borderBottom: 'none' }}>
                       {fmtShort(productRows.reduce((s, r) => s + r.revenue, 0))}
                     </td>
-                    <td style={{ ...tdStyle('right'), fontWeight: 700, color: '#34D399', borderBottom: 'none' }}>
+                    <td style={{ ...tdStyle('right'), fontWeight: 700, color: '#021a02', borderBottom: 'none' }}>
                       {fmtShort(productRows.reduce((s, r) => s + r.profit, 0))}
                     </td>
                     <td style={{ ...tdStyle('right'), borderBottom: 'none' }}>
@@ -422,7 +422,7 @@ export default function RPALaporanMargin() {
                       </td>
                       <td style={{ ...tdStyle('center') }}><span style={{ fontSize: '12px' }}>{row.invoiceCount}</span></td>
                       <td style={tdStyle('right')}><span style={{ fontSize: '12px', color: '#F59E0B' }}>{fmtShort(row.revenue)}</span></td>
-                      <td style={tdStyle('right')}><span style={{ fontSize: '12px', color: row.profit >= 0 ? '#34D399' : '#EF4444' }}>{fmtShort(row.profit)}</span></td>
+                      <td style={tdStyle('right')}><span style={{ fontSize: '12px', color: row.profit >= 0 ? '#021a02' : '#EF4444' }}>{fmtShort(row.profit)}</span></td>
                       <td style={tdStyle('right')}><span style={{ fontSize: '12px', color: marginColor(row.margin), fontWeight: 700 }}>{row.margin}%</span></td>
                     </tr>
                   ))}
@@ -498,7 +498,7 @@ export default function RPALaporanMargin() {
                         </tr>
                       ) : filteredInvoices.map((inv, _idx) => {
                         const profit = inv.net_profit || (inv.total_amount - inv.total_cost) || 0
-                        const STATUS_COLOR = { lunas: '#34D399', sebagian: '#60A5FA', belum_lunas: '#F59E0B' }
+                        const STATUS_COLOR = { lunas: '#021a02', sebagian: '#60A5FA', belum_lunas: '#F59E0B' }
                         return (
                           <tr key={inv.id}>
                             <td style={{ ...tdStyle(), fontFamily: 'monospace', fontSize: '11px', color: '#F59E0B' }}>{inv.invoice_number}</td>
@@ -508,12 +508,12 @@ export default function RPALaporanMargin() {
                             <td style={{ ...tdStyle(), fontSize: '12px' }}>{fmtDate(inv.transaction_date)}</td>
                             <td style={{ ...tdStyle('right'), fontSize: '12px', color: '#F59E0B' }}>{fmt(inv.total_amount)}</td>
                             <td style={{ ...tdStyle('right'), fontSize: '12px', color: '#94A3B8' }}>{fmt(inv.total_cost)}</td>
-                            <td style={{ ...tdStyle('right'), fontSize: '12px', color: profit >= 0 ? '#34D399' : '#EF4444', fontWeight: 600 }}>
+                            <td style={{ ...tdStyle('right'), fontSize: '12px', color: profit >= 0 ? '#021a02' : '#EF4444', fontWeight: 600 }}>
                               {fmt(profit)}
                             </td>
                             <td style={tdStyle()}>
                               <span style={{
-                                background: `rgba(${STATUS_COLOR[inv.payment_status] === '#34D399' ? '52,211,153' : STATUS_COLOR[inv.payment_status] === '#60A5FA' ? '96,165,250' : '245,158,11'},0.12)`,
+                                background: `rgba(${STATUS_COLOR[inv.payment_status] === '#021a02' ? '52,211,153' : STATUS_COLOR[inv.payment_status] === '#60A5FA' ? '96,165,250' : '245,158,11'},0.12)`,
                                 color: STATUS_COLOR[inv.payment_status] ?? '#94A3B8',
                                 padding: '2px 8px', borderRadius: '16px', fontSize: '11px', fontWeight: 700,
                               }}>

@@ -706,7 +706,7 @@ export default function Transaksi() {
           )}>
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center"
-                style={{ background: quota.isAtLimit ? 'rgba(248,113,113,0.15)' : 'rgba(16,185,129,0.12)' }}>
+                style={{ background: quota.isAtLimit ? 'rgba(248,113,113,0.15)' : 'rgba(2, 26, 2,0.12)' }}>
                 <span className="text-[11px]">{quota.isAtLimit ? '🔒' : '📊'}</span>
               </div>
               <div className="min-w-0">
@@ -728,7 +728,7 @@ export default function Transaksi() {
                     className="h-full rounded-full transition-all duration-500"
                     style={{
                       width: `${Math.min(100, (quota.used / quota.limit) * 100)}%`,
-                      background: quota.remaining <= 5 ? '#F59E0B' : '#10B981',
+                      background: quota.remaining <= 5 ? '#F59E0B' : '#021a02',
                     }}
                   />
                 </div>
@@ -783,7 +783,7 @@ export default function Transaksi() {
         {/* Summary Card */}
         <motion.div variants={fadeUp} initial="hidden" animate="visible" className="px-4 mb-4">
           <div className="rounded-[22px] p-5 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #0D1F2E 0%, #112233 55%, #0A1A28 100%)', border: '1px solid rgba(255,255,255,0.07)' }}>
-            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)' }} />
+            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(2, 26, 2,0.12) 0%, transparent 70%)' }} />
             <div className="absolute -bottom-8 -left-8 w-28 h-28 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)' }} />
             <div className="flex justify-between items-end relative z-10">
               <div>

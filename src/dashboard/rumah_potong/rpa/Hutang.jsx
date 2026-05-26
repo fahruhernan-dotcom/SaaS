@@ -306,14 +306,14 @@ export default function RPAHutang() {
           </div>
           <div style={{
             background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(52,211,153,0.15)',
+            border: '1px solid rgba(2, 26, 2,0.15)',
             borderRadius: '12px', padding: '14px',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-              <ArrowUpRight size={14} color="#34D399" />
+              <ArrowUpRight size={14} color="#021a02" />
               <span style={{ fontSize: '11px', color: '#4B6478' }}>Sudah Dibayar</span>
             </div>
-            <div style={{ fontSize: '16px', fontWeight: 700, color: '#34D399' }}>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#021a02' }}>
               {isLoading ? '—' : fmt(totalDibayar)}
             </div>
           </div>
@@ -326,7 +326,7 @@ export default function RPAHutang() {
               <Wallet size={14} color={sisaHutang > 0 ? '#F59E0B' : '#4B6478'} />
               <span style={{ fontSize: '11px', color: '#4B6478' }}>Sisa Hutang</span>
             </div>
-            <div style={{ fontSize: '16px', fontWeight: 700, color: sisaHutang > 0 ? '#F59E0B' : '#34D399' }}>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: sisaHutang > 0 ? '#F59E0B' : '#021a02' }}>
               {isLoading ? '—' : sisaHutang > 0 ? fmt(sisaHutang) : 'Lunas'}
             </div>
           </div>
@@ -426,7 +426,7 @@ export default function RPAHutang() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <div style={{
                         width: '34px', height: '34px', borderRadius: '8px',
-                        background: 'rgba(52,211,153,0.1)',
+                        background: 'rgba(2, 26, 2,0.1)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: '16px',
                       }}>
@@ -444,7 +444,7 @@ export default function RPAHutang() {
                         )}
                       </div>
                     </div>
-                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#34D399' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#021a02' }}>
                       {fmt(p.amount)}
                     </div>
                   </div>

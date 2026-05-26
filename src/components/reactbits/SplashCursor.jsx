@@ -104,12 +104,12 @@ const DISPLAY_FRAG = `
  * SplashCursor
  *
  * Props:
- *   COLOR  — hex string for the splash color (default '#10B981' emerald)
+ *   COLOR  — hex string for the splash color (default '#021a02' emerald)
  *
  * Renders a fixed full-screen canvas behind everything (z-index: 0, pointer-events: none)
  * so it does not block clicks. Use z-index management on your content to sit above it.
  */
-function SplashCursor({ COLOR = '#10B981' }) {
+function SplashCursor({ COLOR = '#021a02' }) {
   const canvasRef = useRef(null)
 
   useEffect(() => {

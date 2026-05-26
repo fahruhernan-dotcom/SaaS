@@ -809,9 +809,9 @@ export default function AdminUsers() {
                             const isPro = detailSub.plan === 'pro'
                             const isBusiness = detailSub.plan === 'business'
                             const isTrial = detailSub.status === 'trial'
-                            const bg = isTrial ? 'rgba(245,158,11,0.1)' : isPro ? 'rgba(16,185,129,0.1)' : isBusiness ? 'rgba(99,102,241,0.1)' : 'rgba(255,255,255,0.05)'
-                            const border = isTrial ? 'rgba(245,158,11,0.2)' : isPro ? 'rgba(16,185,129,0.2)' : isBusiness ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.1)'
-                            const color = isTrial ? '#F59E0B' : isPro ? '#10B981' : isBusiness ? '#6366F1' : '#4B6478'
+                            const bg = isTrial ? 'rgba(245,158,11,0.1)' : isPro ? 'rgba(2, 26, 2,0.1)' : isBusiness ? 'rgba(99,102,241,0.1)' : 'rgba(255,255,255,0.05)'
+                            const border = isTrial ? 'rgba(245,158,11,0.2)' : isPro ? 'rgba(2, 26, 2,0.2)' : isBusiness ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.1)'
+                            const color = isTrial ? '#F59E0B' : isPro ? '#021a02' : isBusiness ? '#6366F1' : '#4B6478'
 
                             return (
                               <>
@@ -887,7 +887,7 @@ export default function AdminUsers() {
                               Aktif {p.last_seen_at ? formatDistanceToNow(new Date(p.last_seen_at), { addSuffix: true, locale: localeId }) : 'Baru-baru ini'}
                             </p>
                           </div>
-                          <div className={`w-2 h-2 rounded-full ${p.is_active ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,1)]' : 'bg-gray-600'}`} />
+                          <div className={`w-2 h-2 rounded-full ${p.is_active ? 'bg-emerald-500 shadow-[0_0_8px_rgba(2, 26, 2,1)]' : 'bg-gray-600'}`} />
                         </div>
                       ))}
                     </div>
