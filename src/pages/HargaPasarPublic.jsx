@@ -933,12 +933,12 @@ export default function HargaPasarPublic() {
 
         {/* ── HISTORY TABLE ── */}
         <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.3 }}>
-          <Card className="bg-[#0C1319] border-white/5 rounded-[28px]">
+          <Card className="bg-bg-1 border border-border-subtle rounded-[28px]">
             <CardContent className="p-6 md:p-8">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                  <h2 className="text-xl font-black text-white uppercase tracking-tight">Riwayat Harga Terbaru</h2>
-                  <p className="text-[10px] text-[#4B6478] mt-1 uppercase tracking-widest font-bold">10 Data Terakhir</p>
+                  <h2 className="text-xl font-black text-text-primary uppercase tracking-tight">Riwayat Harga Terbaru</h2>
+                  <p className="text-[10px] text-text-muted mt-1 uppercase tracking-widest font-bold">10 Data Terakhir</p>
                 </div>
                 <div className="flex h-8 px-3 items-center rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-black text-emerald-400 uppercase tracking-widest">
                   🔴 Live Database
@@ -946,7 +946,7 @@ export default function HargaPasarPublic() {
               </div>
               {isLoading ? (
                 <div className="space-y-2">
-                  {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full bg-white/5 rounded" />)}
+                  {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full bg-border-subtle/50 rounded" />)}
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -955,7 +955,7 @@ export default function HargaPasarPublic() {
                   </span>
                   <table className="w-full text-sm min-w-[480px]">
                     <thead>
-                      <tr className="border-b border-white/5 text-[10px] text-[#4B6478] font-black uppercase tracking-widest">
+                      <tr className="border-b border-border-subtle text-[10px] text-text-muted font-black uppercase tracking-widest">
                         <th className="text-left pb-3">Tanggal</th>
                         <th className="text-left pb-3">Wilayah</th>
                         <th className="text-right pb-3">Harga Beli</th>
@@ -965,19 +965,19 @@ export default function HargaPasarPublic() {
                     </thead>
                     <tbody>
                       {tableRows.map((row, i) => (
-                        <tr key={row.price_date} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors">
-                          <td className="py-3 text-white font-bold">
+                        <tr key={row.price_date} className="border-b border-border-subtle last:border-0 hover:bg-white/[0.02] dark:hover:bg-white/[0.01] transition-colors">
+                          <td className="py-3 text-text-primary font-bold">
                             <div className="flex items-center gap-2">
                               {i === 0 && <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />}
                               {formatShortDate(row.price_date)}
-                              {row.price_date === TODAY && <span className="text-[9px] text-emerald-400 font-black uppercase">Hari ini</span>}
+                              {row.price_date === TODAY && <span className="text-[9px] text-emerald-600 dark:text-brand-500 font-black uppercase">Hari ini</span>}
                             </div>
                           </td>
-                          <td className="py-3 text-[#4B6478] text-xs font-medium capitalize">{row.region ?? 'Nasional'}</td>
-                          <td className="py-3 text-right text-white tabular-nums font-bold">{formatIDR(row.avg_buy_price)}</td>
-                          <td className="py-3 text-right text-white tabular-nums font-bold">{formatIDR(row.avg_sell_price)}</td>
+                          <td className="py-3 text-text-secondary text-xs font-medium capitalize">{row.region ?? 'Nasional'}</td>
+                          <td className="py-3 text-right text-text-primary tabular-nums font-bold">{formatIDR(row.avg_buy_price)}</td>
+                          <td className="py-3 text-right text-text-primary tabular-nums font-bold">{formatIDR(row.avg_sell_price)}</td>
                           <td className="py-3 text-right tabular-nums">
-                            <span className={cn("font-black text-sm", row.broker_margin > 0 ? "text-emerald-400" : "text-[#4B6478]")}>
+                            <span className={cn("font-black text-sm", row.broker_margin > 0 ? "text-emerald-600 dark:text-brand-500" : "text-text-muted")}>
                               {row.broker_margin > 0 ? '+' : ''}{formatIDR(row.broker_margin)}
                             </span>
                           </td>

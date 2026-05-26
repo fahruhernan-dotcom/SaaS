@@ -397,34 +397,34 @@ export default function MarketPriceDashboard() {
               <h3 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Riwayat Update</h3>
               <span className="text-[10px] font-bold text-[#4B6478]">{dedupedPrices.length} records</span>
             </div>
-            <Card className="bg-[#0C1319] border-white/5 rounded-[24px] overflow-hidden">
+            <Card className="bg-bg-1 border border-border-subtle rounded-[24px] overflow-hidden">
               <ScrollArea className="w-full">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-white/5 bg-white/[0.02]">
-                      <th className="p-4 text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Tanggal</th>
-                      <th className="p-4 text-[10px] font-black text-[#4B6478] uppercase text-right">Beli (Kandang)</th>
-                      <th className="p-4 text-[10px] font-black text-[#4B6478] uppercase text-right">Jual (RPA/Pasar)</th>
-                      <th className="p-4 text-[10px] font-black text-[#4B6478] uppercase text-right">Margin</th>
-                      <th className="p-4 text-[10px] font-black text-[#4B6478] uppercase text-center">Sumber</th>
+                    <tr className="border-b border-border-subtle bg-white/[0.01]">
+                      <th className="p-4 text-[10px] font-black text-text-muted uppercase tracking-widest">Tanggal</th>
+                      <th className="p-4 text-[10px] font-black text-text-muted uppercase text-right">Beli (Kandang)</th>
+                      <th className="p-4 text-[10px] font-black text-text-muted uppercase text-right">Jual (RPA/Pasar)</th>
+                      <th className="p-4 text-[10px] font-black text-text-muted uppercase text-right">Margin</th>
+                      <th className="p-4 text-[10px] font-black text-text-muted uppercase text-center">Sumber</th>
                     </tr>
                   </thead>
                   <tbody>
                     {scraperLoading ? (
                       Array(6).fill(0).map((_, i) => (
-                        <tr key={i}><td colSpan={5} className="p-4"><Skeleton className="h-4 w-full bg-white/5" /></td></tr>
+                        <tr key={i}><td colSpan={5} className="p-4"><Skeleton className="h-4 w-full bg-border-subtle/50" /></td></tr>
                       ))
                     ) : !dedupedPrices.length ? (
-                      <tr><td colSpan={5} className="p-8 text-center text-[#4B6478] text-sm font-bold">Belum ada data untuk {selectedProvince}</td></tr>
+                      <tr><td colSpan={5} className="p-8 text-center text-text-muted text-sm font-bold">Belum ada data untuk {selectedProvince}</td></tr>
                     ) : dedupedPrices.slice(0, 14).map((p, i) => (
-                      <tr key={i} className={cn("border-b border-white/5 transition-colors", p.price_date === TODAY_STR ? "bg-emerald-500/5" : "hover:bg-white/[0.02]")}>
-                        <td className="p-4 text-xs font-bold text-slate-300 flex items-center gap-2">
+                      <tr key={i} className={cn("border-b border-border-subtle transition-colors", p.price_date === TODAY_STR ? "bg-emerald-500/5" : "hover:bg-white/[0.02] dark:hover:bg-white/[0.01]")}>
+                        <td className="p-4 text-xs font-bold text-text-primary flex items-center gap-2">
                           {p.price_date === TODAY_STR && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />}
                           {formatDate(p.price_date, 'dd MMM yyyy')}
                         </td>
-                        <td className="p-4 text-xs font-bold text-slate-400 text-right tabular-nums">{formatIDR(p.avg_buy_price).replace('Rp ', '')}</td>
-                        <td className="p-4 text-xs font-black text-white text-right tabular-nums">{formatIDR(p.avg_sell_price).replace('Rp ', '')}</td>
-                        <td className="p-4 text-xs font-black text-emerald-400 text-right tabular-nums">{formatIDR(p.broker_margin).replace('Rp ', '')}</td>
+                        <td className="p-4 text-xs font-bold text-text-secondary text-right tabular-nums">{formatIDR(p.avg_buy_price).replace('Rp ', '')}</td>
+                        <td className="p-4 text-xs font-black text-text-primary text-right tabular-nums">{formatIDR(p.avg_sell_price).replace('Rp ', '')}</td>
+                        <td className="p-4 text-xs font-black text-emerald-600 dark:text-brand-500 text-right tabular-nums">{formatIDR(p.broker_margin).replace('Rp ', '')}</td>
                         <td className="p-4 text-center"><SourceBadge source={p.source} /></td>
                       </tr>
                     ))}
