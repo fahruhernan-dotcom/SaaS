@@ -76,73 +76,68 @@ const MarketPrice = ({ activeRole }) => {
     return trendData[trendData.length - 1];
   }, [trendData]);
 
-  const displayBuyPrice = latestData?.buyPrice || 19800;
-  const displaySellPrice = latestData?.sellPrice || 23200;
-  const displayMargin = latestData?.margin || (displaySellPrice - displayBuyPrice);
 
-  const buyPriceDelta = useMemo(() => {
-    if (!trendData || trendData.length < 2) return 300;
-    let latestIdx = -1;
-    let prevIdx = -1;
-    for (let i = trendData.length - 1; i >= 0; i--) {
-      if (trendData[i].buyPrice !== null) {
-        if (latestIdx === -1) {
-          latestIdx = i;
-        } else if (prevIdx === -1) {
-          prevIdx = i;
-          break;
-        }
-      }
-    }
-    if (latestIdx !== -1 && prevIdx !== -1) {
-      return trendData[latestIdx].buyPrice - trendData[prevIdx].buyPrice;
-    }
-    return 300;
-  }, [trendData]);
-
-  const sellPriceDelta = useMemo(() => {
-    if (!trendData || trendData.length < 2) return 200;
-    let latestIdx = -1;
-    let prevIdx = -1;
-    for (let i = trendData.length - 1; i >= 0; i--) {
-      if (trendData[i].sellPrice !== null) {
-        if (latestIdx === -1) {
-          latestIdx = i;
-        } else if (prevIdx === -1) {
-          prevIdx = i;
-          break;
-        }
-      }
-    }
-    if (latestIdx !== -1 && prevIdx !== -1) {
-      return trendData[latestIdx].sellPrice - trendData[prevIdx].sellPrice;
-    }
-    return 200;
-  }, [trendData]);
 
   const formatRupiah = (val) => {
     if (val === null || val === undefined) return '-';
     return 'Rp ' + val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   };
 
-  const chartPoints = useMemo(() => {
-    if (!trendData || trendData.length === 0) {
-      return {
-        buyPath: "M0,80 Q10,75 20,80 T40,70 T60,65 T80,55 T100,50",
-        sellPath: "M0,45 Q15,40 30,30 T50,35 T75,20 T100,10",
-        sellArea: "M0,45 Q15,40 30,30 T50,35 T75,20 T100,10 L100,100 L0,100 Z"
-      };
-    }
-
-    let lastBuy = 19800;
-    let lastSell = 23200;
-    const points = trendData.map((d) => {
-      const buy = d.buyPrice !== null ? d.buyPrice : lastBuy;
-      const sell = d.sellPrice !== null ? d.sellPrice : lastSell;
-      lastBuy = buy;
-      lastSell = sell;
-      return { buy, sell };
+  // Generate seeded realistic fallback data when no real RPC data exists
+  const simulatedData = useMemo(() => {
+    const baseDate = new Date();
+    // Use week number as seed so it's consistent within a week but changes weekly
+    const weekSeed = Math.floor(baseDate.getTime() / (7 * 24 * 60 * 60 * 1000));
+    const pseudo = (i) => {
+      const x = Math.sin(weekSeed * 127 + i * 31.7) * 10000;
+      return x - Math.floor(x);
+    };
+    const days = 7;
+    let buy = 19200 + Math.round(pseudo(0) * 1200);
+    let sell = buy + 3000 + Math.round(pseudo(1) * 800);
+    return Array.from({ length: days }, (_, i) => {
+      const dBuy  = Math.round((pseudo(i * 2 + 2) - 0.45) * 600);
+      const dSell = Math.round((pseudo(i * 2 + 3) - 0.45) * 500);
+      buy  = Math.max(17500, Math.min(22000, buy  + dBuy));
+      sell = Math.max(buy + 2500, Math.min(26000, sell + dSell));
+      return { buyPrice: buy, sellPrice: sell };
     });
+  }, []);
+
+  // Use real trendData if available, otherwise simulated
+  const hasRealData = useMemo(() =>
+    trendData && trendData.length > 0 && trendData.some(d => d.buyPrice !== null)
+  , [trendData]);
+
+  const effectiveData = hasRealData ? trendData : simulatedData;
+
+  // Display prices — use last point of effective data
+  const displayBuyPrice  = effectiveData[effectiveData.length - 1]?.buyPrice  ?? 19800;
+  const displaySellPrice = effectiveData[effectiveData.length - 1]?.sellPrice ?? 23200;
+  const displayMargin    = displaySellPrice - displayBuyPrice;
+
+  // Delta vs previous day
+  const buyPriceDelta = useMemo(() => {
+    const src = effectiveData;
+    if (src.length < 2) return 300;
+    const last = src[src.length - 1]?.buyPrice ?? 0;
+    const prev = src[src.length - 2]?.buyPrice ?? 0;
+    return last - prev;
+  }, [effectiveData]);
+
+  const sellPriceDelta = useMemo(() => {
+    const src = effectiveData;
+    if (src.length < 2) return 200;
+    const last = src[src.length - 1]?.sellPrice ?? 0;
+    const prev = src[src.length - 2]?.sellPrice ?? 0;
+    return last - prev;
+  }, [effectiveData]);
+
+  const chartPoints = useMemo(() => {
+    const points = effectiveData.map((d) => ({
+      buy:  d.buyPrice  ?? 19800,
+      sell: d.sellPrice ?? 23200
+    }));
 
     const allPrices = points.flatMap(p => [p.buy, p.sell]);
     const minPrice = Math.min(...allPrices);
@@ -156,18 +151,19 @@ const MarketPrice = ({ activeRole }) => {
 
     const total = points.length;
     const mapped = points.map((p, i) => {
-      const x = total > 1 ? (i / (total - 1)) * 100 : 50;
-      const buyY = 90 - ((p.buy - chartMin) / chartRange) * 80;
+      const x    = total > 1 ? (i / (total - 1)) * 100 : 50;
+      const buyY  = 90 - ((p.buy  - chartMin) / chartRange) * 80;
       const sellY = 90 - ((p.sell - chartMin) / chartRange) * 80;
       return { x, buyY, sellY, buy: p.buy, sell: p.sell, margin: p.sell - p.buy };
     });
 
-    const buyPath = "M" + mapped.map(p => `${p.x.toFixed(1)},${p.buyY.toFixed(1)}`).join(" L");
-    const sellPath = "M" + mapped.map(p => `${p.x.toFixed(1)},${p.sellY.toFixed(1)}`).join(" L");
-    const sellArea = sellPath + ` L100,100 L0,100 Z`;
+    const buyPath  = 'M' + mapped.map(p => `${p.x.toFixed(1)},${p.buyY.toFixed(1)}`).join(' L');
+    const sellPath = 'M' + mapped.map(p => `${p.x.toFixed(1)},${p.sellY.toFixed(1)}`).join(' L');
+    const sellArea = sellPath + ' L100,100 L0,100 Z';
 
     return { buyPath, sellPath, sellArea, mapped };
-  }, [trendData]);
+  }, [effectiveData]);
+
 
   const handleMouseMove = (e) => {
     if (!chartRef.current || !chartPoints.mapped) return;
@@ -374,16 +370,16 @@ const MarketPrice = ({ activeRole }) => {
                    {/* Gradient Fill */}
                    <defs>
                       <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="rgba(2, 26, 2,0.15)" />
-                        <stop offset="100%" stopColor="rgba(2, 26, 2,0)" />
+                        <stop offset="0%" stopColor="rgba(78, 115, 78, 0.2)" />
+                        <stop offset="100%" stopColor="rgba(78, 115, 78, 0)" />
                       </linearGradient>
                    </defs>
-                   {/* Buy Line (dashed) */}
                    <path 
                      ref={buyPathRef}
                      d={chartPoints.buyPath} 
                      fill="none" 
-                     stroke="rgba(2, 26, 2,0.25)" 
+                     stroke="var(--emerald-400)" 
+                     strokeOpacity="0.35"
                      strokeWidth="1.5" 
                      strokeDasharray="4 4" 
                    />
@@ -398,7 +394,7 @@ const MarketPrice = ({ activeRole }) => {
                      ref={pathRef}
                      d={chartPoints.sellPath} 
                      fill="none" 
-                     stroke="#021a02" 
+                     stroke="var(--emerald-500)" 
                      strokeWidth="2" 
                      strokeLinecap="round" 
                    />

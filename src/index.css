@@ -139,9 +139,9 @@ section h1, section h2, section h3 {
   letter-spacing: 0.02em;
 }
 .dark .badge-premium {
-  background-color: rgba(2, 26, 2, 0.12);
-  border: 1px solid rgba(2, 26, 2, 0.25);
-  color: #021a02; /* emerald-400 for dark mode */
+  background-color: rgba(78, 115, 78, 0.15); /* #4e734e/15 */
+  border: 1px solid rgba(78, 115, 78, 0.35); /* #4e734e/35 */
+  color: #8cb88c; /* emerald-300 forest tone — readable on dark bg */
 }
 
 

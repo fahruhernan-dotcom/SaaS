@@ -222,7 +222,7 @@ const Hero = () => {
 
         {/* Mockup Card (Visual Side - Attio CRM Style browser mockup) */}
         <div
-          className="hero-mockup w-full max-w-[1040px] text-left relative mx-auto"
+          className="hero-mockup w-full max-w-[1320px] text-left relative mx-auto"
           style={{ opacity: 0 }}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
@@ -284,7 +284,7 @@ const Hero = () => {
               </div>
 
               {/* Dashboard Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-[170px_1fr] h-[340px] overflow-hidden">
+              <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] h-[600px] overflow-hidden">
 
                 {/* Sidebar */}
                 <div className="hidden sm:block bg-bg-2/30 border-r border-border-subtle p-[16px_12px]">
@@ -350,7 +350,7 @@ const Hero = () => {
                             {mockupTab === 'finance' && "Keuangan HPP: "}
                           </span>
                           {mockupTab === 'overview' && "Memantau performa makro bisnis penggemukan & breeding domba bapak secara real-time."}
-                          {mockupTab === 'batches' && "Mempermudah tracking populasi domba masuk, umur pemeliharaan, serta FCR pakan harian."}
+                          {mockupTab === 'batches' && "Mempermudah tracking populasi domba masuk, umur pemeliharaan, serta ADG (pertambahan bobot harian) per koloni."}
                           {mockupTab === 'cards' && "Pencatatan riwayat bobot badan individual secara digital terintegrasi microchip/eartag RFID."}
                           {mockupTab === 'feed' && "Memberi peringatan otomatis saat stok konsentrat pakan menipis untuk menghindari kekosongan pakan."}
                           {mockupTab === 'breeding' && "Lacak masa konsepsi kawin alam/IB, kehamilan indukan, hingga tingkat kelahiran cempe sehat."}
@@ -419,18 +419,18 @@ const Hero = () => {
                     )}
 
                     {mockupTab === 'batches' && (
-                      <div className="flex flex-col gap-1.5 max-h-[170px] overflow-y-auto pr-1">
+                      <div className="flex flex-col gap-1.5 max-h-[280px] overflow-y-auto pr-1">
                         <div className="bg-bg-2 border border-border-subtle rounded-[10px] p-2 flex justify-between items-center shadow-sm">
                           <div>
                             <p className="font-display text-[11px] font-bold text-text-primary">Batch Texel Fattening A</p>
-                            <p className="text-[8px] text-text-secondary">Populasi: 150 ekor • Umur: Hari ke-45 • FCR: 3.9</p>
+                            <p className="text-[8px] text-text-secondary">Populasi: 150 ekor • Umur: Hari ke-45 • ADG: 210 g/hari</p>
                           </div>
                           <span className="text-[9px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold px-1.5 py-0.5 rounded">Rata-rata: 32.4 kg</span>
                         </div>
                         <div className="bg-bg-2 border border-border-subtle rounded-[10px] p-2 flex justify-between items-center shadow-sm">
                           <div>
                             <p className="font-display text-[11px] font-bold text-text-primary">Batch Dorper Cross B</p>
-                            <p className="text-[8px] text-text-secondary">Populasi: 200 ekor • Umur: Hari ke-30 • FCR: 4.1</p>
+                            <p className="text-[8px] text-text-secondary">Populasi: 200 ekor • Umur: Hari ke-30 • ADG: 188 g/hari</p>
                           </div>
                           <span className="text-[9px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold px-1.5 py-0.5 rounded">Rata-rata: 26.8 kg</span>
                         </div>
@@ -440,6 +440,27 @@ const Hero = () => {
                             <p className="text-[8px] text-text-secondary">Populasi: 100 ekor • Status: Kawin Koloni • Indukan: 85 ekor</p>
                           </div>
                           <span className="text-[9px] bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold px-1.5 py-0.5 rounded">Kebuntingan: 42%</span>
+                        </div>
+                        <div className="bg-bg-2 border border-border-subtle rounded-[10px] p-2 flex justify-between items-center shadow-sm">
+                          <div>
+                            <p className="font-display text-[11px] font-bold text-text-primary">Batch Garut Fattening D</p>
+                            <p className="text-[8px] text-text-secondary">Populasi: 120 ekor • Umur: Hari ke-20 • ADG: 196 g/hari</p>
+                          </div>
+                          <span className="text-[9px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold px-1.5 py-0.5 rounded">Rata-rata: 22.1 kg</span>
+                        </div>
+                        <div className="bg-bg-2 border border-border-subtle rounded-[10px] p-2 flex justify-between items-center shadow-sm">
+                          <div>
+                            <p className="font-display text-[11px] font-bold text-text-primary">Batch Sapudi Breeding E</p>
+                            <p className="text-[8px] text-text-secondary">Populasi: 75 ekor • Status: Bunting • Indukan: 60 ekor</p>
+                          </div>
+                          <span className="text-[9px] bg-purple-500/10 text-purple-600 dark:text-purple-400 font-bold px-1.5 py-0.5 rounded">Kebuntingan: 68%</span>
+                        </div>
+                        <div className="bg-bg-2 border border-border-subtle rounded-[10px] p-2 flex justify-between items-center shadow-sm">
+                          <div>
+                            <p className="font-display text-[11px] font-bold text-text-primary">Batch Peranakan Etawa F</p>
+                            <p className="text-[8px] text-text-secondary">Populasi: 90 ekor • Produksi Susu: 1.8 L/ekor/hari</p>
+                          </div>
+                          <span className="text-[9px] bg-sky-500/10 text-sky-600 dark:text-sky-400 font-bold px-1.5 py-0.5 rounded">Total: 162 L/hari</span>
                         </div>
                       </div>
                     )}
