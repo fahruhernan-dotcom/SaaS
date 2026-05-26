@@ -277,7 +277,7 @@ export default function MarketPriceDashboard() {
     : null
 
   return (
-    <div className="bg-[#06090F] min-h-screen pb-28 relative overflow-hidden">
+    <div className="bg-bg-base text-tx-1 min-h-screen pb-28 relative overflow-hidden">
       {/* BG Glow */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-500/4 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-500/3 rounded-full blur-[120px] pointer-events-none" />
@@ -293,10 +293,10 @@ export default function MarketPriceDashboard() {
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">Live Market Intelligence</span>
             </div>
-            <h1 className="text-3xl font-display font-black text-white tracking-tight uppercase leading-none">
+            <h1 className="text-3xl font-display font-black text-tx-1 tracking-tight uppercase leading-none">
               Harga Pasar
             </h1>
-            <p className="text-sm text-[#4B6478] font-medium mt-1.5 max-w-md">
+            <p className="text-sm text-tx-3 font-medium mt-1.5 max-w-md">
               Data harga harian broiler berdasarkan scraper + transaksi nyata platform.
             </p>
           </div>
@@ -337,13 +337,13 @@ export default function MarketPriceDashboard() {
                     <button
                       onClick={() => setTrendPeriod('weekly')}
                       className={cn("px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all",
-                        trendPeriod === 'weekly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:text-[#94A3B8]"
+                        trendPeriod === 'weekly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:text-tx-2"
                       )}
                     >Mingguan</button>
                     <button
                       onClick={() => setTrendPeriod('monthly')}
                       className={cn("px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ml-0.5",
-                        trendPeriod === 'monthly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:text-[#94A3B8]"
+                        trendPeriod === 'monthly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:text-tx-2"
                       )}
                     >Bulanan</button>
                   </div>
@@ -377,14 +377,14 @@ export default function MarketPriceDashboard() {
                           <stop offset="95%" stopColor="#818CF8" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
-                      <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fill: '#4B6478', fontSize: 10, fontWeight: 800 }} dy={10} interval={trendPeriod === 'monthly' ? 4 : 0} />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-sub-val)" />
+                      <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted-val)', fontSize: 10, fontWeight: 800 }} dy={10} interval={trendPeriod === 'monthly' ? 4 : 0} />
                       <YAxis hide domain={['dataMin - 3000', 'dataMax + 2000']} />
                       <RechartsTooltip content={<HybridTooltip />} />
                       <Area type="monotone" dataKey="chickin" stroke="#F59E0B" strokeWidth={2} strokeDasharray="5 4" fill="transparent" connectNulls dot={false} />
                       <Area type="monotone" dataKey="arboge" stroke="#F97316" strokeWidth={2} strokeDasharray="3 3" fill="transparent" connectNulls dot={false} />
-                      <Area type="monotone" dataKey="platformJual" stroke="#818CF8" strokeWidth={2} fillOpacity={1} fill="url(#gradSell)" connectNulls activeDot={{ r: 5, stroke: '#0C1319', strokeWidth: 2, fill: '#818CF8' }} />
-                      <Area type="monotone" dataKey="platformBeli" stroke="var(--brand-500)" strokeWidth={3} fillOpacity={1} fill="url(#gradBuy)" connectNulls activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: 'var(--brand-500)' }} />
+                      <Area type="monotone" dataKey="platformJual" stroke="#818CF8" strokeWidth={2} fillOpacity={1} fill="url(#gradSell)" connectNulls activeDot={{ r: 5, stroke: 'var(--bg-1-val)', strokeWidth: 2, fill: '#818CF8' }} />
+                      <Area type="monotone" dataKey="platformBeli" stroke="var(--brand-500)" strokeWidth={3} fillOpacity={1} fill="url(#gradBuy)" connectNulls activeDot={{ r: 6, stroke: 'var(--bg-1-val)', strokeWidth: 2, fill: 'var(--brand-500)' }} />
                     </AreaChart>
                   </ResponsiveContainer>
                 )}
@@ -394,19 +394,19 @@ export default function MarketPriceDashboard() {
 
           <motion.div variants={fadeUp} initial="hidden" animate="visible">
             <div className="flex items-center justify-between px-1 mb-3">
-              <h3 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em]">Riwayat Update</h3>
-              <span className="text-[10px] font-bold text-[#4B6478]">{dedupedPrices.length} records</span>
+              <h3 className="text-[11px] font-black text-tx-3 uppercase tracking-[0.2em]">Riwayat Update</h3>
+              <span className="text-[10px] font-bold text-tx-3">{dedupedPrices.length} records</span>
             </div>
             <Card className="bg-bg-1 border border-border-subtle rounded-[24px] overflow-hidden">
               <ScrollArea className="w-full">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-border-subtle bg-white/[0.01]">
-                      <th className="p-4 text-[10px] font-black text-text-muted uppercase tracking-widest">Tanggal</th>
-                      <th className="p-4 text-[10px] font-black text-text-muted uppercase text-right">Beli (Kandang)</th>
-                      <th className="p-4 text-[10px] font-black text-text-muted uppercase text-right">Jual (RPA/Pasar)</th>
-                      <th className="p-4 text-[10px] font-black text-text-muted uppercase text-right">Margin</th>
-                      <th className="p-4 text-[10px] font-black text-text-muted uppercase text-center">Sumber</th>
+                      <th className="p-4 text-[10px] font-black text-tx-3 uppercase tracking-widest">Tanggal</th>
+                      <th className="p-4 text-[10px] font-black text-tx-3 uppercase text-right">Beli (Kandang)</th>
+                      <th className="p-4 text-[10px] font-black text-tx-3 uppercase text-right">Jual (RPA/Pasar)</th>
+                      <th className="p-4 text-[10px] font-black text-tx-3 uppercase text-right">Margin</th>
+                      <th className="p-4 text-[10px] font-black text-tx-3 uppercase text-center">Sumber</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -415,15 +415,15 @@ export default function MarketPriceDashboard() {
                         <tr key={i}><td colSpan={5} className="p-4"><Skeleton className="h-4 w-full bg-border-subtle/50" /></td></tr>
                       ))
                     ) : !dedupedPrices.length ? (
-                      <tr><td colSpan={5} className="p-8 text-center text-text-muted text-sm font-bold">Belum ada data untuk {selectedProvince}</td></tr>
+                      <tr><td colSpan={5} className="p-8 text-center text-tx-3 text-sm font-bold">Belum ada data untuk {selectedProvince}</td></tr>
                     ) : dedupedPrices.slice(0, 14).map((p, i) => (
                       <tr key={i} className={cn("border-b border-border-subtle transition-colors", p.price_date === TODAY_STR ? "bg-emerald-500/5" : "hover:bg-white/[0.02] dark:hover:bg-white/[0.01]")}>
-                        <td className="p-4 text-xs font-bold text-text-primary flex items-center gap-2">
+                        <td className="p-4 text-xs font-bold text-tx-1 flex items-center gap-2">
                           {p.price_date === TODAY_STR && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />}
                           {formatDate(p.price_date, 'dd MMM yyyy')}
                         </td>
-                        <td className="p-4 text-xs font-bold text-text-secondary text-right tabular-nums">{formatIDR(p.avg_buy_price).replace('Rp ', '')}</td>
-                        <td className="p-4 text-xs font-black text-text-primary text-right tabular-nums">{formatIDR(p.avg_sell_price).replace('Rp ', '')}</td>
+                        <td className="p-4 text-xs font-bold text-tx-2 text-right tabular-nums">{formatIDR(p.avg_buy_price).replace('Rp ', '')}</td>
+                        <td className="p-4 text-xs font-black text-tx-1 text-right tabular-nums">{formatIDR(p.avg_sell_price).replace('Rp ', '')}</td>
                         <td className="p-4 text-xs font-black text-emerald-600 dark:text-brand-500 text-right tabular-nums">{formatIDR(p.broker_margin).replace('Rp ', '')}</td>
                         <td className="p-4 text-center"><SourceBadge source={p.source} /></td>
                       </tr>
@@ -438,7 +438,7 @@ export default function MarketPriceDashboard() {
 
         <div className="space-y-6">
           <motion.div variants={fadeUp} initial="hidden" animate="visible">
-            <Card className="bg-[#0C1319] border border-white/5 rounded-[28px] overflow-hidden relative">
+            <Card className="bg-bg-1 border border-border-subtle rounded-[28px] overflow-hidden relative">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(2, 26, 2,0.05),transparent_60%)] pointer-events-none" />
               <CardContent className="p-6 relative z-10">
                 <div className="flex items-center gap-2 mb-4">
@@ -447,7 +447,7 @@ export default function MarketPriceDashboard() {
                   </div>
                   <div>
                     <p className="text-[9px] font-black text-emerald-400 uppercase tracking-[0.2em]">Metodologi Data</p>
-                    <h3 className="text-sm font-black text-white">Hybrid Intelligence</h3>
+                    <h3 className="text-sm font-black text-tx-1">Hybrid Intelligence</h3>
                   </div>
                 </div>
                 <div className="space-y-4">
@@ -586,7 +586,7 @@ function HybridTooltip({ active, payload }) {
   const margin = (d.platformBeli && d.platformJual) ? d.platformJual - d.platformBeli : null
   return (
     <div className="bg-bg-1 border border-border-subtle p-4 rounded-2xl shadow-2xl min-w-[200px] backdrop-blur-xl">
-      <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-3">{d.displayDate}</p>
+      <p className="text-[10px] font-black text-tx-3 uppercase tracking-[0.2em] mb-3">{d.displayDate}</p>
       <div className="space-y-2.5">
         {[
           { label: 'Chickin.id (Ref)', val: d.chickin, color: 'text-amber-500 font-bold' },
@@ -595,8 +595,8 @@ function HybridTooltip({ active, payload }) {
           { label: 'Jual (TernakOS)', val: d.platformJual, color: 'text-indigo-600 dark:text-indigo-400 font-black' },
         ].map(({ label, val, color }) => (
           <div key={label} className="flex justify-between items-center gap-4">
-            <span className="text-[11px] text-text-secondary font-bold">{label}</span>
-            <span className={cn("text-sm font-black tabular-nums", val ? color : 'text-text-muted')}>
+            <span className="text-[11px] text-tx-2 font-bold">{label}</span>
+            <span className={cn("text-sm font-black tabular-nums", val ? color : 'text-tx-3')}>
               {val ? formatIDR(val) : '—'}
             </span>
           </div>
@@ -606,7 +606,7 @@ function HybridTooltip({ active, payload }) {
         <div className="mt-3 pt-3 border-t border-border-subtle space-y-1.5">
           {spread != null && (
             <div className="flex justify-between items-center">
-              <span className="text-[9px] font-black text-text-muted uppercase tracking-wider">Efisiensi Beli</span>
+              <span className="text-[9px] font-black text-tx-3 uppercase tracking-wider">Efisiensi Beli</span>
               <span className={cn('text-xs font-black tabular-nums', spread >= 0 ? 'text-emerald-600 dark:text-brand-500' : 'text-rose-600 dark:text-rose-400')}>
                 {spread > 0 ? '+' : ''}{formatIDR(spread)}
               </span>
@@ -614,7 +614,7 @@ function HybridTooltip({ active, payload }) {
           )}
           {margin != null && (
             <div className="flex justify-between items-center">
-              <span className="text-[9px] font-black text-text-muted uppercase tracking-wider">Margin/kg</span>
+              <span className="text-[9px] font-black text-tx-3 uppercase tracking-wider">Margin/kg</span>
               <span className={cn('text-xs font-black tabular-nums', margin >= 0 ? 'text-emerald-600 dark:text-brand-500' : 'text-rose-600 dark:text-rose-400')}>
                 {margin > 0 ? '+' : ''}{formatIDR(margin)}
               </span>

@@ -93,7 +93,7 @@ function StatCard({ label, value, sub, trend, isLoading, highlight }) {
   const Icon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus
   const trendColor =
     trend === 'up' ? 'text-emerald-400' :
-      trend === 'down' ? 'text-red-400' : 'text-[#4B6478]'
+      trend === 'down' ? 'text-red-400' : 'text-tx-3'
 
   return (
     <Card className={cn(
@@ -109,8 +109,8 @@ function StatCard({ label, value, sub, trend, isLoading, highlight }) {
           </>
         ) : (
           <>
-            <p className="text-[10px] text-[#4B6478] font-black uppercase tracking-[0.2em] mb-2">{label}</p>
-            <p className={cn("text-2xl font-black tracking-tight tabular-nums", highlight ? "text-emerald-400" : "text-white")}>{value}</p>
+            <p className="text-[10px] text-tx-3 font-black uppercase tracking-[0.2em] mb-2">{label}</p>
+            <p className={cn("text-2xl font-black tracking-tight tabular-nums", highlight ? "text-emerald-400" : "text-tx-1")}>{value}</p>
             <div className={cn('flex items-center gap-1.5 mt-1.5 text-[10px] font-bold uppercase tracking-wider', trendColor)}>
               <Icon size={11} />
               <span>{sub}</span>
@@ -129,7 +129,7 @@ function HybridTooltip({ active, payload }) {
   const margin = (d.platformBeli && d.platformJual) ? d.platformJual - d.platformBeli : null
   return (
     <div className="bg-bg-1 border border-border-subtle p-4 rounded-2xl shadow-2xl min-w-[200px] backdrop-blur-xl">
-      <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-3">{d.displayDate}</p>
+      <p className="text-[10px] font-black text-tx-3 uppercase tracking-[0.2em] mb-3">{d.displayDate}</p>
       <div className="space-y-2.5">
         {[
           { label: 'Chickin.id (Ref)', val: d.chickin, color: 'text-amber-500 font-bold' },
@@ -138,8 +138,8 @@ function HybridTooltip({ active, payload }) {
           { label: 'Jual (TernakOS)', val: d.platformJual, color: 'text-indigo-600 dark:text-indigo-400 font-black' },
         ].map(({ label, val, color }) => (
           <div key={label} className="flex justify-between items-center gap-4">
-            <span className="text-[11px] text-text-secondary font-bold">{label}</span>
-            <span className={cn("text-sm font-black tabular-nums", val ? color : 'text-text-muted')}>
+            <span className="text-[11px] text-tx-2 font-bold">{label}</span>
+            <span className={cn("text-sm font-black tabular-nums", val ? color : 'text-tx-3')}>
               {val ? formatIDR(val) : '—'}
             </span>
           </div>
@@ -149,7 +149,7 @@ function HybridTooltip({ active, payload }) {
         <div className="mt-3 pt-3 border-t border-border-subtle space-y-1.5">
           {spread != null && (
             <div className="flex justify-between items-center">
-              <span className="text-[9px] font-black text-text-muted uppercase tracking-wider">Efisiensi Beli</span>
+              <span className="text-[9px] font-black text-tx-3 uppercase tracking-wider">Efisiensi Beli</span>
               <span className={cn('text-xs font-black tabular-nums', spread >= 0 ? 'text-emerald-600 dark:text-brand-500' : 'text-rose-600 dark:text-rose-400')}>
                 {spread > 0 ? '+' : ''}{formatIDR(spread)}
               </span>
@@ -157,7 +157,7 @@ function HybridTooltip({ active, payload }) {
           )}
           {margin != null && (
             <div className="flex justify-between items-center">
-              <span className="text-[9px] font-black text-text-muted uppercase tracking-wider">Margin/kg</span>
+              <span className="text-[9px] font-black text-tx-3 uppercase tracking-wider">Margin/kg</span>
               <span className={cn('text-xs font-black tabular-nums', margin >= 0 ? 'text-emerald-600 dark:text-brand-500' : 'text-rose-600 dark:text-rose-400')}>
                 {margin > 0 ? '+' : ''}{formatIDR(margin)}
               </span>
@@ -176,18 +176,18 @@ function BrokerTrendTooltip({ active, payload }) {
   const sellVal = d['Harga Jual']
   return (
     <div className="bg-bg-1 border border-border-subtle p-4 rounded-2xl shadow-2xl min-w-[200px] backdrop-blur-xl">
-      <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-3">
+      <p className="text-[10px] font-black text-tx-3 uppercase tracking-[0.2em] mb-3">
         {d.date ? formatShortDate(d.date) : ''}
       </p>
       <div className="space-y-2.5">
         <div className="flex justify-between items-center gap-4">
-          <span className="text-[11px] text-text-secondary font-bold">Harga Beli</span>
+          <span className="text-[11px] text-tx-2 font-bold">Harga Beli</span>
           <span className="text-sm font-black tabular-nums text-emerald-600 dark:text-brand-500">
             {buyVal ? formatIDR(buyVal) : '—'}
           </span>
         </div>
         <div className="flex justify-between items-center gap-4">
-          <span className="text-[11px] text-text-secondary font-bold">Harga Jual</span>
+          <span className="text-[11px] text-tx-2 font-bold">Harga Jual</span>
           <span className="text-sm font-black tabular-nums text-indigo-600 dark:text-indigo-400">
             {sellVal ? formatIDR(sellVal) : '—'}
           </span>
@@ -203,7 +203,7 @@ function LegendDot({ color, label, dashed }) {
       {dashed
         ? <div className="w-4 h-0 border-t-2 border-dashed" style={{ borderColor: color }} />
         : <div className="w-2 h-2 rounded-full" style={{ background: color }} />}
-      <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider">{label}</span>
+      <span className="text-[9px] font-black text-tx-3 uppercase tracking-wider">{label}</span>
     </div>
   )
 }
@@ -540,7 +540,7 @@ export default function HargaPasarPublic() {
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-[#06090F] min-h-screen text-white font-body relative overflow-hidden">
+    <div className="bg-bg-base text-tx-1 min-h-screen font-body relative overflow-hidden">
       <SEO
         title={seoTitle}
         description={seoDesc}
@@ -591,14 +591,14 @@ export default function HargaPasarPublic() {
             </div>
             {activeProvinces > 0 && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
-                <Activity size={10} className="text-[#4B6478]" />
-                <span className="text-[10px] text-[#4B6478] font-black uppercase tracking-widest">{activeProvinces} Provinsi Aktif Minggu Ini</span>
+                <Activity size={10} className="text-tx-3" />
+                <span className="text-[10px] text-tx-3 font-black uppercase tracking-widest">{activeProvinces} Provinsi Aktif Minggu Ini</span>
               </div>
             )}
             {totalPlatformTx > 0 && (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
-                <Database size={10} className="text-[#4B6478]" />
-                <span className="text-[10px] text-[#4B6478] font-black uppercase tracking-widest">{totalPlatformTx}+ Transaksi 7 Hari</span>
+                <Database size={10} className="text-tx-3" />
+                <span className="text-[10px] text-tx-3 font-black uppercase tracking-widest">{totalPlatformTx}+ Transaksi 7 Hari</span>
               </div>
             )}
           </div>
@@ -614,15 +614,15 @@ export default function HargaPasarPublic() {
                   className="group-hover:scale-105 transition-transform duration-200 relative z-10"
                 />
               </div>
-              <span className="font-['Sora'] font-black text-2xl text-white tracking-tight leading-none">
+              <span className="font-['Sora'] font-black text-2xl text-tx-1 tracking-tight leading-none">
                 Ternak<span className="text-emerald-500">OS</span>
               </span>
             </div>
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white leading-[1.1] tracking-tight uppercase max-w-3xl">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-tx-1 leading-[1.1] tracking-tight uppercase max-w-3xl">
               Harga Ayam Broiler Hidup{currentProvince ? ` di ${currentProvince}` : ''}{' '}
               <span className="text-emerald-500">Hari Ini</span>
             </h1>
-            <p className="text-[#94A3B8] text-sm md:text-base font-medium max-w-2xl leading-relaxed mt-4" suppressHydrationWarning>
+            <p className="text-tx-2 text-sm md:text-base font-medium max-w-2xl leading-relaxed mt-4" suppressHydrationWarning>
               {currentProvince
                 ? `Update ${todayFmtId}. Data harga ayam broiler hidup hari ini untuk wilayah ${currentProvince} dari transaksi nyata broker + referensi Chickin.id.`
                 : `Update ${todayFmtId}. Harga ayam broiler hidup hari ini nasional — rata-rata transaksi nyata broker aktif di seluruh Indonesia.`}
@@ -632,14 +632,14 @@ export default function HargaPasarPublic() {
           {/* Province Selector - Moved Up for UX */}
           <div className="space-y-3 pb-2">
             <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest pl-1">📍 Pilih Wilayah Anda:</p>
-            <div className="flex flex-col md:flex-row md:items-center gap-4 p-1.5 rounded-2xl bg-white/[0.02] border border-white/5 backdrop-blur-sm w-full">
+            <div className="flex flex-col md:flex-row md:items-center gap-4 p-1.5 rounded-2xl bg-bg-2 border border-border-subtle backdrop-blur-sm w-full">
               <div className="flex flex-wrap items-center gap-1.5 p-1">
                 <Button
                   variant="ghost" size="sm"
                   onClick={() => navigate('/harga-pasar')}
                   className={cn(
                     "rounded-xl text-[10px] font-black uppercase tracking-widest px-4 h-9 transition-all",
-                    !currentProvince ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:bg-white/5"
+                    !currentProvince ? "bg-emerald-500 text-tx-1 shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:bg-bg-3/50"
                   )}
                 >
                   Nasional
@@ -650,7 +650,7 @@ export default function HargaPasarPublic() {
                     onClick={() => navigate(`/harga-pasar/${provinceToSlug(p)}`)}
                     className={cn(
                       "rounded-xl text-[10px] font-black uppercase tracking-widest px-4 h-9 transition-all",
-                      currentProvince === p ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:bg-white/5"
+                      currentProvince === p ? "bg-emerald-500 text-tx-1 shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:bg-bg-3/50"
                     )}
                   >
                     {p}
@@ -659,7 +659,7 @@ export default function HargaPasarPublic() {
               </div>
               <div className="hidden md:block w-px h-6 bg-white/10 mx-1" />
               <div className="flex-1 flex items-center gap-3 px-3 min-w-[240px]">
-                <div className="flex items-center gap-2 text-[10px] text-[#4B6478] font-black uppercase tracking-widest">
+                <div className="flex items-center gap-2 text-[10px] text-tx-3 font-black uppercase tracking-widest">
                   <Search size={14} />
                   <span>Cari Wilayah</span>
                 </div>
@@ -667,24 +667,24 @@ export default function HargaPasarPublic() {
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline" role="combobox" aria-expanded={open}
-                      className="flex-1 justify-between h-9 bg-white/5 border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-white/10 transition-all px-4"
+                      className="flex-1 justify-between h-9 bg-white/5 border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-tx-1 hover:bg-white/10 transition-all px-4"
                     >
                       {currentProvince ? currentProvince : "Pilih dari 38 Provinsi..."}
                       <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[300px] p-0 bg-[#0C1319] border-white/10 shadow-2xl">
+                  <PopoverContent className="w-[300px] p-0 bg-bg-1 border border-border-subtle shadow-2xl">
                     <Command className="bg-transparent">
                       <CommandInput placeholder="Ketik nama provinsi..." className="h-11 text-xs" />
                       <CommandList className="max-h-[350px]">
-                        <CommandEmpty className="py-6 text-center text-xs text-[#4B6478]">Provinsi tidak ditemukan.</CommandEmpty>
-                        <CommandGroup heading="Akses Cepat" className="px-2 text-[9px] font-black uppercase tracking-widest text-[#4B6478] opacity-50">
-                          <CommandItem onSelect={() => { navigate('/harga-pasar'); setOpen(false) }} className="flex items-center gap-2 rounded-lg cursor-pointer text-[10px] font-bold uppercase py-2.5">
+                        <CommandEmpty className="py-6 text-center text-xs text-tx-3">Provinsi tidak ditemukan.</CommandEmpty>
+                        <CommandGroup heading="Akses Cepat" className="px-2 text-[9px] font-black uppercase tracking-widest text-tx-3 opacity-50">
+                          <CommandItem onSelect={() => { navigate('/harga-pasar'); setOpen(false) }} className="flex items-center gap-2 rounded-lg cursor-pointer text-[10px] font-bold uppercase py-2.5 hover:bg-bg-2">
                             <MapPin size={12} className="text-emerald-500" /> Seluruh Indonesia
                           </CommandItem>
                         </CommandGroup>
                         {Object.entries(REGION_GROUPS).map(([group, provinces]) => (
-                          <CommandGroup key={group} heading={group} className="px-2 mt-2 text-[9px] font-black uppercase tracking-widest text-[#4B6478]">
+                          <CommandGroup key={group} heading={group} className="px-2 mt-2 text-[9px] font-black uppercase tracking-widest text-tx-3">
                             {provinces.map((p) => (
                               <CommandItem
                                 key={p} value={p}
@@ -692,8 +692,8 @@ export default function HargaPasarPublic() {
                                 className="flex items-center justify-between rounded-lg cursor-pointer text-[10px] font-bold uppercase py-2.5 hover:bg-emerald-500/10 group"
                               >
                                 <div className="flex items-center gap-2">
-                                  <MapPin size={12} className={cn("transition-colors", currentProvince === p ? "text-emerald-500" : "text-[#4B6478] group-hover:text-emerald-500")} />
-                                  <span className={cn(currentProvince === p ? "text-emerald-500" : "text-white")}>{p}</span>
+                                  <MapPin size={12} className={cn("transition-colors", currentProvince === p ? "text-emerald-500" : "text-tx-3 group-hover:text-emerald-500")} />
+                                  <span className={cn(currentProvince === p ? "text-emerald-500" : "text-tx-1")}>{p}</span>
                                   {activityMap?.[p] && <span className="flex h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse ml-0.5" />}
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -713,14 +713,14 @@ export default function HargaPasarPublic() {
           </div>
 
           {latestRow && (
-            <div className="flex flex-wrap items-center gap-4 text-xs text-[#4B6478]">
+            <div className="flex flex-wrap items-center gap-4 text-xs text-tx-3">
               <div className="flex items-center gap-2">
                 <Clock size={12} />
                 <span>Update: {formatDate(latestRow.price_date)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin size={12} className={isFallback ? "text-amber-400" : "text-emerald-500"} />
-                <span className={cn("font-bold", isFallback ? "text-amber-400" : "text-white")}>
+                <span className={cn("font-bold", isFallback ? "text-amber-400" : "text-tx-1")}>
                   {currentProvince || 'Seluruh Indonesia (Rata-rata)'}
                 </span>
               </div>
@@ -773,7 +773,7 @@ export default function HargaPasarPublic() {
 
         {/* ── HYBRID CHART: Real Platform Data vs Chickin.id ── */}
         <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.15 }}>
-          <Card className="bg-[#0C1319] border-white/5 rounded-[28px] relative overflow-hidden">
+          <Card className="bg-bg-1 border border-border-subtle rounded-[28px] relative overflow-hidden">
             <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(2, 26, 2,0.04)_0%,transparent_70%)] pointer-events-none" />
             <CardContent className="p-6 md:p-8">
               {/* Header */}
@@ -784,22 +784,22 @@ export default function HargaPasarPublic() {
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">Data Real Platform + Referensi Pasar</p>
                     </div>
-                    <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Hybrid Market Intelligence</h2>
-                    <p className="text-[11px] text-[#4B6478] mt-1 max-w-md">
+                    <h2 className="text-xl md:text-2xl font-black text-tx-1 tracking-tight">Hybrid Market Intelligence</h2>
+                    <p className="text-[11px] text-tx-3 mt-1 max-w-md">
                       Dibanding platform lain, kami punya data transaksi nyata broker — bukan sekadar scraping.
                     </p>
                   </div>
-                  <div className="flex bg-black/40 p-1 rounded-xl border border-white/5 shrink-0">
+                  <div className="flex bg-bg-2/80 p-1 rounded-xl border border-border-subtle shrink-0">
                     <button
                       onClick={() => setHybridPeriod('weekly')}
                       className={cn("px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all",
-                        hybridPeriod === 'weekly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:text-[#94A3B8]"
+                        hybridPeriod === 'weekly' ? "bg-emerald-500 text-tx-1 shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:text-[#94A3B8]"
                       )}
                     >Mingguan</button>
                     <button
                       onClick={() => setHybridPeriod('monthly')}
                       className={cn("px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ml-0.5",
-                        hybridPeriod === 'monthly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:text-[#94A3B8]"
+                        hybridPeriod === 'monthly' ? "bg-emerald-500 text-tx-1 shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:text-[#94A3B8]"
                       )}
                     >Bulanan</button>
                   </div>
@@ -809,7 +809,7 @@ export default function HargaPasarPublic() {
                   <LegendDot color="#F97316" label="Arboge.com (Ref)" dashed />
                   <LegendDot color="var(--brand-500)" label="Beli Nyata (TernakOS)" />
                   <LegendDot color="#818CF8" label="Jual Nyata (TernakOS)" />
-                  <span className="ml-auto text-[9px] font-black text-[#4B6478] uppercase tracking-widest">
+                  <span className="ml-auto text-[9px] font-black text-tx-3 uppercase tracking-widest">
                     {currentProvince || 'Jawa Tengah'} · {hybridPeriod === 'weekly' ? 'Minggu Ini' : 'Bulan Ini'}
                   </span>
                 </div>
@@ -822,8 +822,8 @@ export default function HargaPasarPublic() {
                     <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center">
                       <BarChart3 size={20} className="text-emerald-400/50" />
                     </div>
-                    <p className="text-sm font-bold text-[#4B6478]">Data platform belum tersedia untuk periode ini</p>
-                    <p className="text-[11px] text-[#4B6478]/70">Semakin banyak broker bergabung, semakin akurat datanya.</p>
+                    <p className="text-sm font-bold text-tx-3">Data platform belum tersedia untuk periode ini</p>
+                    <p className="text-[11px] text-tx-3/70">Semakin banyak broker bergabung, semakin akurat datanya.</p>
                   </div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
@@ -838,23 +838,23 @@ export default function HargaPasarPublic() {
                           <stop offset="95%" stopColor="#818CF8" stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.03)" />
-                      <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fill: '#4B6478', fontSize: 10, fontWeight: 800 }} dy={10} interval={hybridPeriod === 'monthly' ? 4 : 0} />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-sub-val)" />
+                      <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted-val)', fontSize: 10, fontWeight: 800 }} dy={10} interval={hybridPeriod === 'monthly' ? 4 : 0} />
                       <YAxis hide domain={['dataMin - 3000', 'dataMax + 2000']} />
                       <Tooltip content={<HybridTooltip />} />
                       <Area type="monotone" dataKey="chickin" stroke="#F59E0B" strokeWidth={2} strokeDasharray="5 4" fill="transparent" connectNulls dot={false} />
                       <Area type="monotone" dataKey="arboge" stroke="#F97316" strokeWidth={2} strokeDasharray="3 3" fill="transparent" connectNulls dot={false} />
-                      <Area type="monotone" dataKey="platformJual" stroke="#818CF8" strokeWidth={2} fillOpacity={1} fill="url(#gradSell)" connectNulls activeDot={{ r: 5, stroke: '#0C1319', strokeWidth: 2, fill: '#818CF8' }} />
-                      <Area type="monotone" dataKey="platformBeli" stroke="var(--brand-500)" strokeWidth={3} fillOpacity={1} fill="url(#gradBuy)" connectNulls activeDot={{ r: 6, stroke: '#0C1319', strokeWidth: 2, fill: 'var(--brand-500)' }} />
+                      <Area type="monotone" dataKey="platformJual" stroke="#818CF8" strokeWidth={2} fillOpacity={1} fill="url(#gradSell)" connectNulls activeDot={{ r: 5, stroke: 'var(--bg-1-val)', strokeWidth: 2, fill: '#818CF8' }} />
+                      <Area type="monotone" dataKey="platformBeli" stroke="var(--brand-500)" strokeWidth={3} fillOpacity={1} fill="url(#gradBuy)" connectNulls activeDot={{ r: 6, stroke: 'var(--bg-1-val)', strokeWidth: 2, fill: 'var(--brand-500)' }} />
                     </AreaChart>
                   </ResponsiveContainer>
                 )}
               </div>
 
               {/* Data Source Note */}
-              <div className="mt-6 pt-4 border-t border-white/5 flex flex-wrap items-center gap-2">
+              <div className="mt-6 pt-4 border-t border-border-subtle flex flex-wrap items-center gap-2">
                 <ShieldCheck size={12} className="text-emerald-400" />
-                <p className="text-[10px] text-[#4B6478] font-medium">
+                <p className="text-[10px] text-tx-3 font-medium">
                   <span className="text-emerald-400 font-black">Garis hijau & ungu</span> = transaksi nyata broker TernakOS.{' '}
                   <span className="text-amber-400 font-black">Kuning</span> = referensi Chickin.id.{' '}
                   <span className="text-orange-400 font-black">Oranye</span> = realisasi Arboge.com.
@@ -866,29 +866,29 @@ export default function HargaPasarPublic() {
 
         {/* ── TREN JUAL BELI PLATFORM ── */}
         <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }}>
-          <Card className="bg-[#0C1319] border-white/5 rounded-[28px]">
+          <Card className="bg-bg-1 border border-border-subtle rounded-[28px]">
             <CardContent className="p-6 md:p-8">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>
-                  <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.2em] mb-1">Analisis Margin Platform</p>
-                  <h2 className="text-xl font-black text-white">Tren Jual Beli Broker</h2>
+                  <p className="text-[10px] font-black text-tx-3 uppercase tracking-[0.2em] mb-1">Analisis Margin Platform</p>
+                  <h2 className="text-xl font-black text-tx-1">Tren Jual Beli Broker</h2>
                   <div className="flex items-center gap-4 mt-3">
                     <LegendDot color="var(--brand-500)" label="Harga Beli (Kandang)" />
                     <LegendDot color="#6366F1" label="Harga Jual (Pasar/RPA)" />
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
+                  <div className="flex bg-bg-2/80 p-1 rounded-xl border border-white/5">
                     <button
                       onClick={() => setHybridPeriod('weekly')}
                       className={cn("px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all",
-                        hybridPeriod === 'weekly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:text-[#94A3B8]"
+                        hybridPeriod === 'weekly' ? "bg-emerald-500 text-tx-1 shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:text-[#94A3B8]"
                       )}
                     >Mingguan</button>
                     <button
                       onClick={() => setHybridPeriod('monthly')}
                       className={cn("px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ml-0.5",
-                        hybridPeriod === 'monthly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-[#4B6478] hover:text-[#94A3B8]"
+                        hybridPeriod === 'monthly' ? "bg-emerald-500 text-tx-1 shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:text-[#94A3B8]"
                       )}
                     >Bulanan</button>
                   </div>
@@ -919,8 +919,8 @@ export default function HargaPasarPublic() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" />
-                    <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fill: '#4B6478', fontSize: 10 }} axisLine={false} tickLine={false} interval={hybridPeriod === 'monthly' ? 4 : 0} />
-                    <YAxis tickFormatter={v => `${(v / 1000).toFixed(0)}k`} tick={{ fill: '#4B6478', fontSize: 10 }} axisLine={false} tickLine={false} width={38} />
+                    <XAxis dataKey="date" tickFormatter={formatShortDate} tick={{ fill: 'var(--text-muted-val)', fontSize: 10 }} axisLine={false} tickLine={false} interval={hybridPeriod === 'monthly' ? 4 : 0} />
+                    <YAxis tickFormatter={v => `${(v / 1000).toFixed(0)}k`} tick={{ fill: 'var(--text-muted-val)', fontSize: 10 }} axisLine={false} tickLine={false} width={38} />
                     <Tooltip content={<BrokerTrendTooltip />} />
                     <Area type="monotone" dataKey="Harga Beli" stroke="var(--brand-500)" strokeWidth={2} fill="url(#gradB2)" dot={false} activeDot={{ r: 4, fill: 'var(--brand-500)' }} />
                     <Area type="monotone" dataKey="Harga Jual" stroke="#6366F1" strokeWidth={2} fill="url(#gradS2)" dot={false} activeDot={{ r: 4, fill: '#6366F1' }} />
@@ -937,8 +937,8 @@ export default function HargaPasarPublic() {
             <CardContent className="p-6 md:p-8">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                  <h2 className="text-xl font-black text-text-primary uppercase tracking-tight">Riwayat Harga Terbaru</h2>
-                  <p className="text-[10px] text-text-muted mt-1 uppercase tracking-widest font-bold">10 Data Terakhir</p>
+                  <h2 className="text-xl font-black text-tx-1 uppercase tracking-tight">Riwayat Harga Terbaru</h2>
+                  <p className="text-[10px] text-tx-3 mt-1 uppercase tracking-widest font-bold">10 Data Terakhir</p>
                 </div>
                 <div className="flex h-8 px-3 items-center rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-black text-emerald-400 uppercase tracking-widest">
                   🔴 Live Database
@@ -955,7 +955,7 @@ export default function HargaPasarPublic() {
                   </span>
                   <table className="w-full text-sm min-w-[480px]">
                     <thead>
-                      <tr className="border-b border-border-subtle text-[10px] text-text-muted font-black uppercase tracking-widest">
+                      <tr className="border-b border-border-subtle text-[10px] text-tx-3 font-black uppercase tracking-widest">
                         <th className="text-left pb-3">Tanggal</th>
                         <th className="text-left pb-3">Wilayah</th>
                         <th className="text-right pb-3">Harga Beli</th>
@@ -966,18 +966,18 @@ export default function HargaPasarPublic() {
                     <tbody>
                       {tableRows.map((row, i) => (
                         <tr key={row.price_date} className="border-b border-border-subtle last:border-0 hover:bg-white/[0.02] dark:hover:bg-white/[0.01] transition-colors">
-                          <td className="py-3 text-text-primary font-bold">
+                          <td className="py-3 text-tx-1 font-bold">
                             <div className="flex items-center gap-2">
                               {i === 0 && <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />}
                               {formatShortDate(row.price_date)}
                               {row.price_date === TODAY && <span className="text-[9px] text-emerald-600 dark:text-brand-500 font-black uppercase">Hari ini</span>}
                             </div>
                           </td>
-                          <td className="py-3 text-text-secondary text-xs font-medium capitalize">{row.region ?? 'Nasional'}</td>
-                          <td className="py-3 text-right text-text-primary tabular-nums font-bold">{formatIDR(row.avg_buy_price)}</td>
-                          <td className="py-3 text-right text-text-primary tabular-nums font-bold">{formatIDR(row.avg_sell_price)}</td>
+                          <td className="py-3 text-tx-2 text-xs font-medium capitalize">{row.region ?? 'Nasional'}</td>
+                          <td className="py-3 text-right text-tx-1 tabular-nums font-bold">{formatIDR(row.avg_buy_price)}</td>
+                          <td className="py-3 text-right text-tx-1 tabular-nums font-bold">{formatIDR(row.avg_sell_price)}</td>
                           <td className="py-3 text-right tabular-nums">
-                            <span className={cn("font-black text-sm", row.broker_margin > 0 ? "text-emerald-600 dark:text-brand-500" : "text-text-muted")}>
+                            <span className={cn("font-black text-sm", row.broker_margin > 0 ? "text-emerald-600 dark:text-brand-500" : "text-tx-3")}>
                               {row.broker_margin > 0 ? '+' : ''}{formatIDR(row.broker_margin)}
                             </span>
                           </td>
@@ -995,8 +995,8 @@ export default function HargaPasarPublic() {
         <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.35 }}>
           <div className="text-center mb-10">
             <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-2">Keunggulan Data</p>
-            <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">Mengapa Data Kami Berbeda?</h2>
-            <p className="text-sm text-[#4B6478] mt-2 max-w-lg mx-auto">
+            <h2 className="text-2xl md:text-3xl font-black text-tx-1 uppercase tracking-tight">Mengapa Data Kami Berbeda?</h2>
+            <p className="text-sm text-tx-3 mt-2 max-w-lg mx-auto">
               Bukan sekedar scraper. TernakOS mengumpulkan data transaksi nyata dari broker aktif di seluruh Indonesia.
             </p>
           </div>
@@ -1021,7 +1021,7 @@ export default function HargaPasarPublic() {
                 badge: 'Akurat'
               },
             ].map(({ icon, title, body, badge }) => (
-              <Card key={title} className="bg-[#0C1319] border-white/5 hover:border-emerald-500/20 transition-all duration-300 group rounded-[20px]">
+              <Card key={title} className="bg-bg-1 border border-border-subtle hover:border-emerald-500/20 transition-all duration-300 group rounded-[20px] shadow-sm">
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-start justify-between">
                     <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500/20 group-hover:scale-105 transition-all duration-300">
@@ -1029,8 +1029,8 @@ export default function HargaPasarPublic() {
                     </div>
                     <span className="text-[9px] font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full uppercase tracking-widest">{badge}</span>
                   </div>
-                  <h3 className="text-base font-black text-white uppercase tracking-tight">{title}</h3>
-                  <p className="text-sm text-[#4B6478] leading-relaxed font-medium">{body}</p>
+                  <h3 className="text-base font-black text-tx-1 uppercase tracking-tight">{title}</h3>
+                  <p className="text-sm text-tx-3 leading-relaxed font-medium">{body}</p>
                 </CardContent>
               </Card>
             ))}
@@ -1044,7 +1044,7 @@ export default function HargaPasarPublic() {
 
             <div className="text-center mb-12">
               <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-2">Proses Data</p>
-              <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">Bagaimana Kami Mendapatkan Harga?</h2>
+              <h2 className="text-2xl md:text-3xl font-black text-tx-1 uppercase tracking-tight">Bagaimana Kami Mendapatkan Harga?</h2>
             </div>
 
             <div className="grid md:grid-cols-3 gap-8 relative">
@@ -1069,8 +1069,8 @@ export default function HargaPasarPublic() {
                   <div className="w-12 h-12 rounded-2xl bg-[#0C1319] border border-white/10 flex items-center justify-center mx-auto text-emerald-400 font-black text-lg shadow-xl">
                     {s.step}
                   </div>
-                  <h3 className="text-sm font-black text-white uppercase tracking-tight">{s.title}</h3>
-                  <p className="text-xs text-[#4B6478] leading-relaxed max-w-[200px] mx-auto font-medium">{s.desc}</p>
+                  <h3 className="text-sm font-black text-tx-1 uppercase tracking-tight">{s.title}</h3>
+                  <p className="text-xs text-tx-3 leading-relaxed max-w-[200px] mx-auto font-medium">{s.desc}</p>
                 </div>
               ))}
             </div>
@@ -1081,7 +1081,7 @@ export default function HargaPasarPublic() {
         <motion.section initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4, delay: 0.3 }}>
           <div className="text-center mb-10">
             <p className="text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em] mb-2">Transparansi</p>
-            <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">Perbandingan Data</h2>
+            <h2 className="text-2xl md:text-3xl font-black text-tx-1 uppercase tracking-tight">Perbandingan Data</h2>
             <span className="text-[10px] md:text-xs font-medium text-tx-3 ml-2" suppressHydrationWarning>
               Update: {todayFmt}
             </span>
@@ -1091,7 +1091,7 @@ export default function HargaPasarPublic() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-white/5 text-[10px] text-[#4B6478] font-black uppercase tracking-widest border-b border-white/5">
+                    <tr className="bg-white/5 text-[10px] text-tx-3 font-black uppercase tracking-widest border-b border-white/5">
                       <th className="px-6 py-4 text-left">Fitur Data Pasar</th>
                       <th className="px-6 py-4 text-center bg-emerald-500/10 text-emerald-400">TernakOS</th>
                       <th className="px-6 py-4 text-center">Chickin.id</th>
@@ -1108,15 +1108,15 @@ export default function HargaPasarPublic() {
                       { f: 'Privasi Data Terjamin', t: true, c: true, p: true },
                     ].map((row, i) => (
                       <tr key={i} className="hover:bg-white/[0.01] transition-colors">
-                        <td className="px-6 py-4 font-medium text-white/80">{row.f}</td>
+                        <td className="px-6 py-4 font-medium text-tx-1/80">{row.f}</td>
                         <td className="px-6 py-4 text-center bg-emerald-500/5">
                           {row.t ? <Check className="mx-auto text-emerald-400" size={18} /> : <div className="mx-auto w-4 h-0.5 bg-white/10 rounded" />}
                         </td>
                         <td className="px-6 py-4 text-center">
-                          {row.c ? <Check className="mx-auto text-[#4B6478]" size={16} /> : <div className="mx-auto w-4 h-0.5 bg-white/10 rounded" />}
+                          {row.c ? <Check className="mx-auto text-tx-3" size={16} /> : <div className="mx-auto w-4 h-0.5 bg-white/10 rounded" />}
                         </td>
                         <td className="px-6 py-4 text-center">
-                          {row.p ? <Check className="mx-auto text-[#4B6478]" size={16} /> : <div className="mx-auto w-4 h-0.5 bg-white/10 rounded" />}
+                          {row.p ? <Check className="mx-auto text-tx-3" size={16} /> : <div className="mx-auto w-4 h-0.5 bg-white/10 rounded" />}
                         </td>
                       </tr>
                     ))}
@@ -1139,7 +1139,7 @@ export default function HargaPasarPublic() {
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     <span className="text-[10px] text-emerald-400 font-black uppercase tracking-widest">Bergabung & Berkontribusi</span>
                   </div>
-                  <h2 className="text-2xl md:text-4xl font-black text-white leading-tight uppercase tracking-tight">
+                  <h2 className="text-2xl md:text-4xl font-black text-tx-1 leading-tight uppercase tracking-tight">
                     Kontribusikan data Anda,<br className="hidden md:block" />
                     <span className="text-emerald-500">dapatkan insight lebih akurat</span>
                   </h2>
@@ -1163,7 +1163,7 @@ export default function HargaPasarPublic() {
                 </div>
                 <div className="flex flex-col sm:flex-row lg:flex-col gap-4 shrink-0">
                   <Button
-                    className="h-14 px-8 bg-emerald-500 hover:bg-emerald-400 text-white text-[13px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
+                    className="h-14 px-8 bg-emerald-500 hover:bg-emerald-400 text-tx-1 text-[13px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
                     asChild
                   >
                     <Link to="/register">
@@ -1172,7 +1172,7 @@ export default function HargaPasarPublic() {
                   </Button>
                   <Button
                     variant="outline"
-                    className="h-14 px-8 border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/20 text-[13px] font-black uppercase tracking-widest rounded-2xl active:scale-95 transition-all"
+                    className="h-14 px-8 border-white/10 bg-white/5 text-tx-1 hover:bg-white/10 hover:border-white/20 text-[13px] font-black uppercase tracking-widest rounded-2xl active:scale-95 transition-all"
                     asChild
                   >
                     <a href="https://wa.me/628123456789?text=Halo%2C%20saya%20tertarik%20coba%20TernakOS" target="_blank" rel="noopener noreferrer">

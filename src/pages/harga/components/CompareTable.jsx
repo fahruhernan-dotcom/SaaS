@@ -7,19 +7,19 @@ function Cell({ value }) {
   if (value === null || value === undefined) {
     return (
       <td className="px-4 py-3 text-center">
-        <Minus size={14} className="mx-auto text-white/15" />
+        <Minus size={14} className="mx-auto text-tx-3/20" />
       </td>
     )
   }
   if (value === true) {
     return (
       <td className="px-4 py-3 text-center">
-        <Check size={14} className="mx-auto text-emerald-400" />
+        <Check size={14} className="mx-auto text-emerald-500 dark:text-emerald-400" />
       </td>
     )
   }
   return (
-    <td className="px-4 py-3 text-center text-xs font-semibold text-white/70">{value}</td>
+    <td className="px-4 py-3 text-center text-xs font-semibold text-tx-2">{value}</td>
   )
 }
 
@@ -32,7 +32,7 @@ export default function CompareTable({ role }) {
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-center gap-2 py-3 text-xs font-bold text-[#64748B] hover:text-white/70 transition-colors cursor-pointer bg-transparent border-none"
+        className="w-full flex items-center justify-center gap-2 py-3 text-xs font-bold text-tx-3 hover:text-tx-1 transition-colors cursor-pointer bg-transparent border-none"
       >
         <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
           <ChevronDown size={14} />
@@ -49,31 +49,31 @@ export default function CompareTable({ role }) {
             transition={{ duration: 0.25 }}
             style={{ overflow: 'hidden' }}
           >
-            <div className="overflow-x-auto rounded-2xl border border-white/8 mt-2">
+            <div className="overflow-x-auto rounded-2xl border border-border-subtle mt-2 bg-bg-1">
               <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="border-b border-white/8 bg-white/[0.02]">
-                    <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-[#4B6478] w-1/3">Fitur</th>
-                    <th className="px-4 py-3 text-center text-[10px] font-bold uppercase tracking-widest text-[#4B6478]">Starter</th>
-                    <th className="px-4 py-3 text-center text-[10px] font-bold uppercase tracking-widest text-[#4B6478]">Pro</th>
-                    <th className="px-4 py-3 text-center text-[10px] font-bold uppercase tracking-widest text-emerald-400 bg-emerald-500/5">Business ⚡</th>
+                  <tr className="border-b border-border-subtle bg-bg-2/50">
+                    <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-tx-3 w-1/3">Fitur</th>
+                    <th className="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-tx-3">Starter</th>
+                    <th className="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-tx-3">Pro</th>
+                    <th className="px-4 py-3 text-center text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 bg-emerald-500/5">Business ⚡</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((row, i) => (
                     <tr
-                      key={row.label}
-                      className={`border-b border-white/5 last:border-0 ${i % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.015]'}`}
+                       key={row.label}
+                       className={`border-b border-border-subtle/50 last:border-0 ${i % 2 === 0 ? 'bg-transparent' : 'bg-bg-2/20'}`}
                     >
-                      <td className="px-4 py-3 text-xs font-medium text-[#94A3B8]">{row.label}</td>
+                      <td className="px-4 py-3 text-xs font-medium text-tx-2">{row.label}</td>
                       <Cell value={row.starter} />
                       <Cell value={row.pro} />
-                      <td className="px-4 py-3 text-center bg-emerald-500/[0.03]">
+                      <td className="px-4 py-3 text-center bg-emerald-500/[0.02] dark:bg-emerald-500/[0.04]">
                         {row.biz === null || row.biz === undefined
-                          ? <Minus size={14} className="mx-auto text-white/15" />
+                          ? <Minus size={14} className="mx-auto text-tx-3/20" />
                           : row.biz === true
-                            ? <Check size={14} className="mx-auto text-emerald-400" />
-                            : <span className="text-xs font-semibold text-emerald-300">{row.biz}</span>
+                            ? <Check size={14} className="mx-auto text-emerald-500 dark:text-emerald-400" />
+                            : <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-300">{row.biz}</span>
                         }
                       </td>
                     </tr>
