@@ -308,9 +308,9 @@ export default function MarketPriceDashboard() {
               activityMap={activityMap}
             />
 
-            <div className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 flex items-center gap-2.5">
-              <Clock size={13} className="text-[#4B6478]" />
-              <span className="text-xs font-bold text-slate-300">
+            <div className="bg-bg-2 border border-border-subtle rounded-xl px-4 py-2.5 flex items-center gap-2.5">
+              <Clock size={13} className="text-tx-3" />
+              <span className="text-xs font-bold text-tx-2">
                 {latestRow ? formatDate(latestRow.price_date) : 'Belum ada data'}
               </span>
             </div>
@@ -322,7 +322,7 @@ export default function MarketPriceDashboard() {
       <section className="px-6 grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
         <div className="lg:col-span-2 space-y-6">
           <motion.div variants={fadeUp} initial="hidden" animate="visible">
-            <Card className="p-6 md:p-8 bg-[#0C1319] border-white/5 rounded-[28px] relative overflow-hidden">
+            <Card className="p-6 md:p-8 bg-bg-1 border border-border-subtle rounded-[28px] relative overflow-hidden">
               <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(2, 26, 2,0.04)_0%,transparent_70%)] pointer-events-none" />
 
               <div className="flex flex-col gap-4 mb-8 relative z-10">
@@ -333,7 +333,7 @@ export default function MarketPriceDashboard() {
                     </div>
                     <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Hybrid Market Insight</h2>
                   </div>
-                  <div className="flex bg-black/40 p-1 rounded-xl border border-white/5 shrink-0">
+                  <div className="flex bg-bg-2/80 p-1 rounded-xl border border-border-subtle shrink-0">
                     <button
                       onClick={() => setTrendPeriod('weekly')}
                       className={cn("px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all",
@@ -353,7 +353,7 @@ export default function MarketPriceDashboard() {
                   <LegendItem color="#F97316" label="Arboge.com (Ref)" dashed />
                   <LegendItem color="var(--brand-500)" label="Beli (TernakOS)" />
                   <LegendItem color="#818CF8" label="Jual (TernakOS)" />
-                  <span className="ml-auto text-[9px] font-black text-[#4B6478] uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded-lg border border-white/10">
+                  <span className="ml-auto text-[9px] font-black text-tx-3 uppercase tracking-widest bg-bg-2 px-2 py-0.5 rounded-lg border border-border-subtle">
                     {selectedProvince} · {trendLabel}
                   </span>
                 </div>
@@ -401,7 +401,7 @@ export default function MarketPriceDashboard() {
               <ScrollArea className="w-full">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-border-subtle bg-white/[0.01]">
+                    <tr className="border-b border-border-subtle bg-bg-2/20">
                       <th className="p-4 text-[10px] font-black text-tx-3 uppercase tracking-widest">Tanggal</th>
                       <th className="p-4 text-[10px] font-black text-tx-3 uppercase text-right">Beli (Kandang)</th>
                       <th className="p-4 text-[10px] font-black text-tx-3 uppercase text-right">Jual (RPA/Pasar)</th>
@@ -417,7 +417,7 @@ export default function MarketPriceDashboard() {
                     ) : !dedupedPrices.length ? (
                       <tr><td colSpan={5} className="p-8 text-center text-tx-3 text-sm font-bold">Belum ada data untuk {selectedProvince}</td></tr>
                     ) : dedupedPrices.slice(0, 14).map((p, i) => (
-                      <tr key={i} className={cn("border-b border-border-subtle transition-colors", p.price_date === TODAY_STR ? "bg-emerald-500/5" : "hover:bg-white/[0.02] dark:hover:bg-white/[0.01]")}>
+                      <tr key={i} className={cn("border-b border-border-subtle transition-colors", p.price_date === TODAY_STR ? "bg-emerald-500/5" : "hover:bg-bg-2/40")}>
                         <td className="p-4 text-xs font-bold text-tx-1 flex items-center gap-2">
                           {p.price_date === TODAY_STR && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />}
                           {formatDate(p.price_date, 'dd MMM yyyy')}
@@ -461,9 +461,9 @@ export default function MarketPriceDashboard() {
                     badgeColor="text-emerald-400 bg-emerald-500/10" 
                   />
                 </div>
-                <div className="mt-5 pt-4 border-t border-white/5">
-                  <p className="text-[10px] text-[#4B6478] font-medium leading-relaxed">
-                    ⚠️ Data bersifat <span className="text-white font-bold">read-only</span>. Digunakan sebagai acuan posisi beli dan jual broker di pasar regional.
+                <div className="mt-5 pt-4 border-t border-border-subtle">
+                  <p className="text-[10px] text-tx-3 font-medium leading-relaxed">
+                    ⚠️ Data bersifat <span className="text-tx-1 font-bold">read-only</span>. Digunakan sebagai acuan posisi beli dan jual broker di pasar regional.
                   </p>
                 </div>
               </CardContent>
@@ -471,20 +471,20 @@ export default function MarketPriceDashboard() {
           </motion.div>
 
           <motion.div variants={fadeUp} initial="hidden" animate="visible">
-            <h3 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.2em] px-1 mb-3">Wawasan Komoditas</h3>
+            <h3 className="text-[11px] font-black text-tx-3 uppercase tracking-[0.2em] px-1 mb-3">Wawasan Komoditas</h3>
             <div className="space-y-3">
               {[
                 { title: 'TernakOS vs Chickin', desc: 'Kami fokus pada data transaksi nyata broker.', icon: Activity },
                 { title: 'Positioning Harga', desc: 'Bandingkan posisi beli Anda vs referensi pasar.', icon: ShieldCheck },
               ].map((item, i) => (
-                <Card key={i} className="bg-[#111C24] border border-white/5 rounded-2xl group cursor-default">
+                <Card key={i} className="bg-bg-2 border border-border-subtle rounded-2xl group cursor-default">
                   <CardContent className="p-4 flex gap-4">
-                    <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center shrink-0 group-hover:bg-emerald-500/10 group-hover:text-emerald-400 transition-colors text-[#4B6478]">
+                    <div className="w-9 h-9 rounded-xl bg-bg-3 flex items-center justify-center shrink-0 group-hover:bg-emerald-500/10 group-hover:text-emerald-400 transition-colors text-tx-3">
                       <item.icon size={17} />
                     </div>
                     <div>
-                      <h4 className="text-[12px] font-black text-white uppercase tracking-tight">{item.title}</h4>
-                      <p className="text-[11px] text-[#4B6478] font-medium leading-relaxed mt-0.5">{item.desc}</p>
+                      <h4 className="text-[12px] font-black text-tx-1 uppercase tracking-tight">{item.title}</h4>
+                      <p className="text-[11px] text-tx-3 font-medium leading-relaxed mt-0.5">{item.desc}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -506,7 +506,7 @@ function ProvinceSelector({ selected, onSelect, activityMap }) {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="h-10 bg-[#111C24] border-white/10 font-black rounded-xl flex justify-between items-center px-4 gap-3 uppercase tracking-widest hover:bg-white/5 transition-all text-[10px] min-w-[200px]"
+          className="h-10 bg-bg-2 border-border-subtle font-black rounded-xl flex justify-between items-center px-4 gap-3 uppercase tracking-widest hover:bg-bg-3 transition-all text-[10px] min-w-[200px]"
         >
           <div className="flex items-center gap-2">
             <MapPin size={13} className="text-emerald-400 shrink-0" />
@@ -515,18 +515,18 @@ function ProvinceSelector({ selected, onSelect, activityMap }) {
           <ChevronsUpDown size={13} className="opacity-50 shrink-0" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] p-0 bg-[#0C1319] border-white/10 shadow-2xl">
+      <PopoverContent className="w-[300px] p-0 bg-bg-1 border-border-subtle shadow-2xl">
         <Command className="bg-transparent">
           <CommandInput placeholder="Cari provinsi..." className="h-11 font-bold" />
           <CommandList className="max-h-[350px]">
             <CommandEmpty className="py-4 text-center text-[10px] font-black uppercase opacity-50">Tidak ditemukan.</CommandEmpty>
-            <CommandGroup heading="Akses Cepat" className="px-2 text-[9px] font-black uppercase tracking-widest text-[#4B6478] opacity-50">
+            <CommandGroup heading="Akses Cepat" className="px-2 text-[9px] font-black uppercase tracking-widest text-tx-3 opacity-50">
               <CommandItem onSelect={() => { onSelect('Seluruh Indonesia'); setOpen(false) }} className="flex items-center gap-2 rounded-lg cursor-pointer text-[10px] font-bold uppercase py-2.5">
                 <MapPin size={12} className="text-emerald-500" /> Seluruh Indonesia
               </CommandItem>
             </CommandGroup>
             {Object.entries(REGION_GROUPS).map(([group, provinces]) => (
-              <CommandGroup key={group} heading={group} className="px-2 mt-2 text-[9px] font-black uppercase tracking-widest text-[#4B6478]">
+              <CommandGroup key={group} heading={group} className="px-2 mt-2 text-[9px] font-black uppercase tracking-widest text-tx-3">
                 {provinces.map((p) => (
                   <CommandItem
                     key={p} value={p}
@@ -534,8 +534,8 @@ function ProvinceSelector({ selected, onSelect, activityMap }) {
                     className="flex items-center justify-between rounded-lg cursor-pointer text-[10px] font-bold uppercase py-2.5 hover:bg-emerald-500/10 group"
                   >
                     <div className="flex items-center gap-2">
-                      <MapPin size={12} className={cn("transition-colors", selected === p ? "text-emerald-500" : "text-[#4B6478] group-hover:text-emerald-500")} />
-                      <span className={cn(selected === p ? "text-emerald-500" : "text-white")}>{p}</span>
+                      <MapPin size={12} className={cn("transition-colors", selected === p ? "text-emerald-500" : "text-tx-3 group-hover:text-emerald-500")} />
+                      <span className={cn(selected === p ? "text-emerald-500" : "text-tx-1")}>{p}</span>
                     </div>
                     {activityMap?.[p] && <span className="text-[8px] text-emerald-500/70 font-black">🔥 {activityMap[p]} TRX</span>}
                   </CommandItem>
@@ -551,26 +551,26 @@ function ProvinceSelector({ selected, onSelect, activityMap }) {
 
 function StatCard({ label, value, diff, sub, icon: Icon, isLoading, highlight, spreadPositive }) {
   return (
-    <Card className={cn("border-white/5 rounded-[20px] transition-all", highlight ? "bg-[#0C1319] border-emerald-500/20 shadow-[0_0_30px_rgba(2, 26, 2,0.05)]" : "bg-[#0C1319]/60")}>
+    <Card className={cn("border-border-subtle rounded-[20px] transition-all", highlight ? "bg-bg-1 border-emerald-500/20 shadow-[0_0_30px_rgba(2, 26, 2,0.05)]" : "bg-bg-1/60")}>
       <CardContent className="p-4 md:p-5">
         {isLoading ? (
-          <div className="space-y-2"><Skeleton className="h-3 w-16 bg-white/5" /><Skeleton className="h-8 w-24 bg-white/5" /></div>
+          <div className="space-y-2"><Skeleton className="h-3 w-16 bg-bg-2" /><Skeleton className="h-8 w-24 bg-bg-2" /></div>
         ) : (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest leading-tight">{label}</span>
-              <Icon size={13} className={cn(highlight || spreadPositive ? 'text-emerald-400' : 'text-[#4B6478]')} />
+              <span className="text-[10px] font-black text-tx-3 uppercase tracking-widest leading-tight">{label}</span>
+              <Icon size={13} className={cn(highlight || spreadPositive ? 'text-emerald-400' : 'text-tx-3')} />
             </div>
             <div>
-              <span className={cn("text-2xl font-black tabular-nums tracking-tight block", highlight || spreadPositive ? 'text-emerald-400' : 'text-white')}>
+              <span className={cn("text-2xl font-black tabular-nums tracking-tight block", highlight || spreadPositive ? 'text-emerald-400' : 'text-tx-1')}>
                 {value ? formatIDR(value).replace('Rp ', '') : '—'}
               </span>
               {diff !== undefined && (
-                <span className={cn("text-[9px] font-black flex items-center gap-0.5 uppercase mt-0.5", diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-rose-400' : 'text-[#4B6478]')}>
+                <span className={cn("text-[9px] font-black flex items-center gap-0.5 uppercase mt-0.5", diff > 0 ? 'text-emerald-400' : diff < 0 ? 'text-rose-400' : 'text-tx-3')}>
                   {diff > 0 ? '▲' : diff < 0 ? '▼' : '●'} {Math.abs(diff).toLocaleString('id-ID')}
                 </span>
               )}
-              {sub && <span className={cn("text-[10px] font-bold mt-0.5 block", spreadPositive ? 'text-emerald-500/70' : 'text-[#4B6478]')}>{sub}</span>}
+              {sub && <span className={cn("text-[10px] font-bold mt-0.5 block", spreadPositive ? 'text-emerald-500/70' : 'text-tx-3')}>{sub}</span>}
             </div>
           </div>
         )}
@@ -633,7 +633,7 @@ function SourceBadge({ source }) {
     arboge_referensi: { label: 'Arboge Ref', color: 'text-amber-400 bg-amber-500/10' },
     arboge_realisasi: { label: 'Arboge Real', color: 'text-orange-400 bg-orange-500/10' },
   }
-  const s = map[source] || { label: source || '—', color: 'text-[#4B6478] bg-white/5' }
+  const s = map[source] || { label: source || '—', color: 'text-tx-3 bg-bg-2' }
   return <span className={cn('text-[9px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-lg', s.color)}>{s.label}</span>
 }
 
@@ -643,7 +643,7 @@ function LegendItem({ color, label, dashed = false }) {
       {dashed
         ? <div className="w-4 h-0 border-t-2 border-dashed" style={{ borderColor: color }} />
         : <div className="w-2 h-2 rounded-full" style={{ background: color }} />}
-      <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-wider">{label}</span>
+      <span className="text-[9px] font-black text-tx-3 uppercase tracking-wider">{label}</span>
     </div>
   )
 }
@@ -653,7 +653,7 @@ function SourceInfoRow({ color, label, desc, badge, badgeColor, dotted, isHybrid
     <div className="flex items-start gap-3">
       {isHybrid ? (
          <div className="flex gap-1 mt-2 shrink-0">
-           <div className="w-2 h-2 rounded-full" style={{ background: '#021a02' }} title="Beli" />
+           <div className="w-2 h-2 rounded-full" style={{ background: 'var(--brand-500)' }} title="Beli" />
            <div className="w-2 h-2 rounded-full" style={{ background: '#818CF8' }} title="Jual" />
          </div>
       ) : (
@@ -664,10 +664,10 @@ function SourceInfoRow({ color, label, desc, badge, badgeColor, dotted, isHybrid
       )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-[11px] font-black text-white uppercase tracking-tight">{label}</span>
+          <span className="text-[11px] font-black text-tx-1 uppercase tracking-tight">{label}</span>
           <span className={cn('text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded', badgeColor)}>{badge}</span>
         </div>
-        <p className="text-[10px] text-[#4B6478] font-medium leading-relaxed">{desc}</p>
+        <p className="text-[10px] text-tx-3 font-medium leading-relaxed">{desc}</p>
       </div>
     </div>
   )
