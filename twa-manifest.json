@@ -11,12 +11,12 @@
   "navigationDividerColorDark": "#16a34a",
   "backgroundColor": "#ffffff",
   "enableNotifications": false,
-  "startUrl": "/",
+  "startUrl": "/app",
   "iconUrl": "https://ternakos.my.id/icons/icon-512.png",
   "maskableIconUrl": "https://ternakos.my.id/icons/maskable-icon-512.png",
   "monochromeIconUrl": "https://ternakos.my.id/icons/icon-512.png",
-  "appVersion": "1.1.0",
-  "appVersionCode": 2,
+  "appVersion": "1.2.0",
+  "appVersionCode": 3,
   "signingKey": {
     "path": "android-signing/ternakos.keystore",
     "alias": "ternakos"

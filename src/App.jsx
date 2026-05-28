@@ -195,7 +195,7 @@ function RoleRedirector() {
   if (loading) return <LoadingScreen />;
   
   // Superadmin redirects to /admin only if not explicitly on a business path
-  if (isSuperadmin(profile) && (location.pathname === '/' || location.pathname === '/home' || location.pathname === '/dashboard')) {
+  if (isSuperadmin(profile) && ['/', '/home', '/dashboard', '/app'].includes(location.pathname)) {
     return <Navigate to="/admin" replace />;
   }
 
@@ -506,6 +506,9 @@ export const routes = createRoutesFromElements(
         <DashboardLayout><MarketPriceDashboard /></DashboardLayout>
       </ProtectedRoute>
     } />
+
+    {/* App Entrypoint — PWA/TWA start_url. Auth-aware: no session → /login, not onboarded → /onboarding, onboarded → dashboard */}
+    <Route path="/app" element={<RoleRedirector />} />
 
     {/* Root Redirector */}
     <Route path="/home" element={<RoleRedirector />} />
