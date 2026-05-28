@@ -9,7 +9,6 @@ import { cn } from '@/lib/utils'
 import { PALETTE } from './constants'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { MobileHeader } from '@/dashboard/peternak/_shared/components/MobileViewPeternak/MobileHeader'
-import { MobileBatchRow } from '@/dashboard/peternak/_shared/components/MobileViewPeternak/MobileBatchRow'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -107,6 +106,14 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
   const [pendingRect, setPendingRect] = useState(null)
   const [pendingName, setPendingName] = useState('')
   const [dragging, setDragging] = useState(null)
+  const [mobileBatchSheetOpen, setMobileBatchSheetOpen] = useState(false)
+
+  // Force helicopter view on mobile to prevent broken Denah view rendering
+  useEffect(() => {
+    if (isMobile && viewMode !== 'helicopter') {
+      setViewMode('helicopter')
+    }
+  }, [isMobile, viewMode])
 
   // Click-outside to close batch dropdown
   useEffect(() => {
@@ -217,18 +224,7 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
         {isMobile ? (
           <MobileHeader 
             title={viewMode === 'helicopter' ? (pageTitle ?? 'Helicopter View') : 'Denah Lantai'}
-            rightElement={
-              <div className="flex items-center gap-2">
-                {!isAllBatches && (
-                  <button 
-                    onClick={() => setAddSheet(true)}
-                    className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white active:scale-95 transition-transform"
-                  >
-                    <Plus size={20} />
-                  </button>
-                )}
-              </div>
-            }
+            rightElement={null}
           />
         ) : (
           <SafeBrokerPageHeader
@@ -294,6 +290,42 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
           />
         </div>
       </div>
+
+      {isMobile && (
+        <div className="px-4 py-3 bg-[#0C1319]/80 border-b border-white/[0.05] backdrop-blur-md flex items-center justify-between gap-3 shrink-0 z-30">
+          {/* First position: Batch selector button */}
+          <button
+            onClick={() => setMobileBatchSheetOpen(true)}
+            className="h-11 px-4 bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] active:scale-95 rounded-xl flex items-center gap-2 text-xs font-black tracking-widest text-emerald-400 uppercase transition-all"
+          >
+            <span>
+              {selectedBatch === 'all'
+                ? '🌾 Semua'
+                : batches.find(b => b.id === selectedBatch)?.batch_code?.slice(-6) ?? '—'}
+            </span>
+            <ChevronDown size={14} className="text-emerald-400/70" />
+          </button>
+
+          {/* Middle position: Compact active animals count */}
+          <span className="text-[10px] font-black uppercase text-[#8CA0B3] bg-white/[0.02] border border-white/[0.04] px-3 py-2 rounded-lg">
+            {animals.filter(a => a.status === 'active').length} Ekor
+          </span>
+
+          {/* Last position: "+ Kandang" action button or a locked badge indicator */}
+          {!isAllBatches ? (
+            <button
+              onClick={() => setAddSheet(true)}
+              className="h-11 px-4 bg-emerald-500 text-white rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-1.5 active:scale-95 transition-transform shadow-lg shadow-emerald-500/20"
+            >
+              <Plus size={14} /> Kandang
+            </button>
+          ) : (
+            <div className="w-11 h-11 bg-white/[0.02] border border-white/[0.05] rounded-xl flex items-center justify-center text-[#4B6478]" title="Pilih batch untuk tambah kandang">
+              <Plus size={16} className="opacity-45" />
+            </div>
+          )}
+        </div>
+      )}
       {/* ── Batch Dropdown Panel (fixed, escapes overflow:hidden) ── */}
       <AnimatePresence>
         {batchDropdownOpen && triggerRect && (
@@ -353,6 +385,58 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Mobile Batch Selector Sheet */}
+      <Sheet open={mobileBatchSheetOpen} onOpenChange={setMobileBatchSheetOpen}>
+        <SheetContent side="bottom" className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 p-0 flex flex-col rounded-t-[40px] max-h-[80vh] z-[9999] pointer-events-auto">
+          <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+            <SheetHeader className="text-left text-white">
+              <SheetTitle className="font-['Sora'] font-black text-xl uppercase tracking-tight">Pilih Batch Siklus</SheetTitle>
+              <p className="text-xs text-[#4B6478] font-bold uppercase tracking-widest">Saring populasi ternak berdasarkan siklus aktif.</p>
+            </SheetHeader>
+            <div className="space-y-3 pt-2">
+              {/* Semua Batch option */}
+              <button
+                onClick={() => { setSelectedBatch('all'); setMobileBatchSheetOpen(false) }}
+                className={cn(
+                  'flex items-center gap-4 w-full h-14 px-5 rounded-2xl text-left border transition-all active:scale-98',
+                  selectedBatch === 'all'
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 font-black'
+                    : 'bg-white/[0.02] border-white/[0.06] text-[#8CA0B3] hover:text-white font-bold'
+                )}
+              >
+                <span className="text-xl">🌾</span>
+                <span className="text-xs uppercase tracking-widest flex-1">Semua Batch</span>
+                {selectedBatch === 'all' && <Check size={16} className="text-emerald-400 shrink-0" />}
+              </button>
+
+              {batches.map(b => {
+                const color = batchColorMap[b.id]
+                const isActive = selectedBatch === b.id
+                return (
+                  <button
+                    key={b.id}
+                    onClick={() => { setSelectedBatch(b.id); setMobileBatchSheetOpen(false) }}
+                    className={cn(
+                      'flex items-center gap-4 w-full h-14 px-5 rounded-2xl text-left border transition-all active:scale-98',
+                      isActive
+                        ? 'bg-white/[0.04] border-white/[0.1] text-white font-black'
+                        : 'bg-white/[0.02] border-white/[0.06] text-[#8CA0B3] hover:text-white font-bold'
+                    )}
+                  >
+                    <span
+                      className="w-3.5 h-3.5 rounded-full shrink-0"
+                      style={{ backgroundColor: color?.dotColor ?? '#4B6478' }}
+                    />
+                    <span className="text-xs uppercase tracking-widest flex-1">{b.batch_code}</span>
+                    {isActive && <Check size={16} className="text-emerald-400 shrink-0" />}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Animal detail overlay */}
       <AnimatePresence>
@@ -431,6 +515,16 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
                 isAllBatches={isAllBatches}
               />
             )}
+
+            {isMobile && (
+              <div className="p-5 bg-emerald-500/[0.03] border border-emerald-500/10 rounded-[2rem] flex items-start gap-3">
+                <Info size={16} className="text-emerald-400 shrink-0 mt-0.5" />
+                <p className="text-[11px] text-[#8CA0B3] font-medium leading-relaxed">
+                  Denah presisi dioptimalkan untuk desktop. Di mobile, gunakan tampilan grid dan ketuk ternak untuk detail atau memindahkan kandang secara manual.
+                </p>
+              </div>
+            )}
+
             <div>
               <div className="flex items-center gap-4 mb-8">
                 <h2 className="text-[11px] font-black text-[#4B6478] uppercase tracking-[0.3em]">Area Produksi</h2>
@@ -498,7 +592,14 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
                 </div>
                 <div className="mt-6 p-6 rounded-[2.5rem] bg-emerald-500/[0.03] border border-emerald-500/10 flex items-center gap-5">
                   <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0"><ArrowRightLeft size={20} className="text-emerald-500" /></div>
-                  <div><p className="text-sm font-['Sora'] font-black text-white uppercase tracking-tight">Manual Alokasi</p><p className="text-[11px] text-[#4B6478] font-bold mt-1">Drag ear-tag ke kandang tujuan untuk memindahkan alokasi secara visual.</p></div>
+                  <div>
+                    <p className="text-sm font-['Sora'] font-black text-white uppercase tracking-tight">Manual Alokasi</p>
+                    <p className="text-[11px] text-[#4B6478] font-bold mt-1">
+                      {isMobile 
+                        ? 'Ketuk token ear-tag untuk melihat detail & memindahkan lokasi ternak secara manual.'
+                        : 'Drag ear-tag ke kandang tujuan untuk memindahkan alokasi secara visual.'}
+                    </p>
+                  </div>
                 </div>
               </div>
             )}

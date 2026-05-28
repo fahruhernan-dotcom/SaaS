@@ -315,7 +315,9 @@ export function PenggemukanKesehatan({ config, hooks }) {
 
   if (loadingBatches || loadingLogs) return <LoadingSpinner fullPage />
 
-  const accentActive = config.accentActiveClass || 'bg-green-600 border-green-500 text-white'
+  const accentActive = (config.accentActiveClass === 'bg-green-600 border-green-500 text-white')
+    ? 'bg-emerald-600 border-emerald-500 text-white'
+    : (config.accentActiveClass || 'bg-emerald-600 border-emerald-500 text-white')
 
   return (
     <div className="text-slate-100 pb-24">
@@ -413,12 +415,20 @@ export function PenggemukanKesehatan({ config, hooks }) {
       {activeView === 'riwayat' && (
         <>
           {!activeBatch ? (
-            <div className="px-4 py-20 text-center">
-              <div className="w-16 h-16 bg-white/[0.03] rounded-full flex items-center justify-center mx-auto mb-4 border border-white/[0.06]">
-                <HeartPulse size={24} className="text-[#4B6478]" />
+            <div className="px-4 py-20 text-center max-w-md mx-auto">
+              <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-emerald-500/20">
+                <HeartPulse size={24} className="text-emerald-400" />
               </div>
-              <p className="text-sm font-bold text-white mb-1">Pilih Batch Terlebih Dahulu</p>
-              <p className="text-xs text-[#4B6478]">Kamu perlu memiliki batch aktif untuk mencatat kesehatan</p>
+              <h3 className="font-['Sora'] text-base font-black text-white mb-2">Pilih Batch Terlebih Dahulu</h3>
+              <p className="text-xs text-[#4B6478] leading-relaxed mb-6">
+                Manajemen kesehatan, obat-obatan, dan vaksin memerlukan siklus batch aktif.
+              </p>
+              <button
+                onClick={() => navigate(`${config.BASE}/batch`)}
+                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-[11px] tracking-widest rounded-2xl transition-all shadow-lg shadow-emerald-500/20"
+              >
+                Mulai Siklus Baru
+              </button>
             </div>
           ) : (
             <div className="px-4 mt-6">
@@ -429,7 +439,7 @@ export function PenggemukanKesehatan({ config, hooks }) {
                 </h2>
                 <button
                   onClick={() => setShowAdd(true)}
-                  className="px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-lg shadow-green-600/10"
+                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-lg shadow-emerald-600/10"
                 >
                   <Plus size={14} /> Catat Penanganan
                 </button>
@@ -437,9 +447,16 @@ export function PenggemukanKesehatan({ config, hooks }) {
 
               <div className="space-y-3">
                 {filteredLogs.length === 0 ? (
-                  <div className="text-center py-12 bg-white/[0.02] border border-dashed border-white/10 rounded-[32px]">
-                    <Activity size={24} className="text-[#4B6478] mx-auto mb-2 opacity-20" />
-                    <p className="text-xs text-[#4B6478]">Belum ada laporan untuk kategori ini</p>
+                  <div className="text-center py-12 bg-white/[0.01] border border-dashed border-white/[0.05] rounded-3xl p-6">
+                    <HeartPulse size={32} className="mx-auto text-[#4B6478] mb-3 opacity-60" />
+                    <p className="text-sm font-bold text-white mb-1">Belum Ada Laporan Medis</p>
+                    <p className="text-xs text-[#4B6478] mb-4">Catat penanganan medis, vaksin, cacingan, atau insiden kandang untuk batch ini.</p>
+                    <button
+                      onClick={() => setShowAdd(true)}
+                      className="px-4 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/20 text-emerald-400 text-xs font-black rounded-xl transition-all"
+                    >
+                      Catat Penanganan Pertama
+                    </button>
                   </div>
                 ) : (
                   filteredLogs.map(log => {

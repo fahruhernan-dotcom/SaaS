@@ -46,12 +46,12 @@ const Features = ({ activeRole }) => {
         mockup: {
           label: "STATUS KANDANG AKTIF",
           items: ["Kandang Blok A · Hari ke-28", "Recording Harian: 4/5 Kandang"],
-          profit: 1.72,
-          profitPrefix: "FCR: ",
-          profitSuffix: "",
-          stats: "IP Score: 345 (Sangat Baik)",
+          profit: 68,
+          profitPrefix: "ADG: ",
+          profitSuffix: " g/hari",
+          stats: "IP Score: 345 · FCR: 1.72",
           progress: "80%",
-          isFCR: true
+          isFCR: false
         }
       },
       block2: {
@@ -238,21 +238,17 @@ const Features = ({ activeRole }) => {
 
                 <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-4 mt-4">
                   <p className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider mb-1">
-                    {active.block1.mockup.isFCR ? "DATA EVALUASI" : "JUMLAH TRANSAKSI"}
+                    DATA EVALUASI
                   </p>
                   <p className="font-display text-lg font-black text-emerald-600 dark:text-emerald-400">
-                    {active.block1.mockup.isFCR ? (
-                      <>FCR: {active.block1.mockup.profit}</>
-                    ) : (
-                      <CountUp 
-                        from={0} 
-                        to={active.block1.mockup.profit} 
-                        duration={1.5} 
-                        separator="." 
-                        prefix={active.block1.mockup.profitPrefix || "Rp "}
-                        suffix={active.block1.mockup.profitSuffix || ""}
-                      />
-                    )}
+                    <CountUp 
+                      from={0} 
+                      to={active.block1.mockup.profit} 
+                      duration={1.5} 
+                      separator="." 
+                      prefix={active.block1.mockup.profitPrefix || "Rp "}
+                      suffix={active.block1.mockup.profitSuffix || ""}
+                    />
                   </p>
                   <p className="text-[10px] text-text-secondary mt-1 font-medium">{active.block1.mockup.stats}</p>
                   

@@ -1220,7 +1220,7 @@ export function PenggemukanPenjualan({ config, hooks }) {
                   disabled={isAllBatches}
                   title={isAllBatches ? `Pilih batch spesifik untuk menambah ${animalLabel.toLowerCase()}` : undefined}
                   onClick={() => navigate(BASE + '/ternak')}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(22,163,74,0.3)] active:scale-[0.98] transition-all"
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(16,185,129,0.3)] active:scale-[0.98] transition-all"
                 >
                   <Plus size={14} strokeWidth={3} />
                   Tambah
@@ -1350,7 +1350,15 @@ export function PenggemukanPenjualan({ config, hooks }) {
         <div className="px-6 py-28 text-center">
           <ShoppingBag size={48} className="mx-auto text-white/5 mb-4" />
           <p className="font-['Sora'] font-black text-white text-base">Belum Ada Data Batch</p>
-          <p className="text-[12px] text-[#4B6478] mt-2 max-w-[240px] mx-auto leading-relaxed">Buat batch baru terlebih dahulu di halaman Data Ternak.</p>
+          <p className="text-[12px] text-[#4B6478] mt-2 max-w-[260px] mx-auto leading-relaxed">
+            Buat batch aktif terlebih dahulu di halaman Batch Aktif sebelum mencatat penjualan.
+          </p>
+          <button
+            onClick={() => navigate(BASE + '/batch')}
+            className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(16,185,129,0.2)] active:scale-[0.98] transition-all cursor-pointer uppercase tracking-wider"
+          >
+            <Plus size={14} strokeWidth={3} /> Buka Batch Aktif
+          </button>
         </div>
       ) : !selectedBatchId ? (
         <div className="px-6 py-28 text-center">
@@ -1361,59 +1369,102 @@ export function PenggemukanPenjualan({ config, hooks }) {
       ) : (
         <div className="px-5 pt-5 space-y-6">
 
-          {/* KPI Cards */}
-          <div className="grid grid-cols-2 gap-3">
-            {[
-              { label: 'Total Pendapatan', value: `Rp ${fmt(kpi.total)}`, icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
-              { label: 'Ekor Terjual', value: `${kpi.ekor} Ekor`, icon: Package, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
-              { label: 'Rata-rata / Ekor', value: kpi.avgPerEkor > 0 ? `Rp ${fmt(kpi.avgPerEkor)}` : '—', icon: TrendingUp, color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20' },
-              { label: 'Piutang Belum Lunas', value: kpi.piutang > 0 ? `Rp ${fmt(kpi.piutang)}` : 'Nihil', icon: kpi.piutang > 0 ? AlertCircle : CheckCircle2, color: kpi.piutang > 0 ? 'text-amber-400' : 'text-emerald-400', bg: kpi.piutang > 0 ? 'bg-amber-500/10' : 'bg-emerald-500/10', border: kpi.piutang > 0 ? 'border-amber-500/20' : 'border-emerald-500/20' },
-            ].map(({ label, value, icon: Icon, color, bg, border }) => (
-              <div key={label} className={cn('rounded-2xl p-4 border', bg, border)}>
-                <Icon size={16} className={cn(color, 'mb-2')} />
-                <p className={cn('text-base font-black font-["Sora"] leading-tight', color)}>{value}</p>
-                <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-widest mt-1">{label}</p>
-              </div>
-            ))}
-          </div>
+          {(() => {
+            const hasSalesData = Array.isArray(sales) && sales.length > 0
+            const canRecordSale = perm.canInputPenjualan && !isAllBatches && selectedBatch?.status === 'active'
 
-          {/* HPP Panel — only for species that support it */}
-          {hasHpp && perm.canViewBiayaTab && !isAllBatches && (
-            <HppPanel batchId={selectedBatchId} useHppBatch={useHppBatch} />
-          )}
+            if (!hasSalesData) {
+              // No sales yet — skip KPI noise, show focused empty state
+              return (
+                <div className="py-20 text-center border border-dashed border-white/[0.06] rounded-[32px] bg-white/[0.01] px-6">
+                  <ShoppingBag size={40} className="mx-auto text-white/5 mb-4 opacity-50" />
+                  <p className="text-xs font-black text-white uppercase tracking-widest font-['Sora'] mb-1">Belum Ada Penjualan</p>
+                  
+                  {isAllBatches ? (
+                    <p className="text-[11px] text-[#4B6478] mt-1 mb-5 max-w-[260px] mx-auto leading-relaxed">
+                      Pilih batch spesifik dari dropdown di atas untuk melihat riwayat atau mencatat transaksi penjualan baru.
+                    </p>
+                  ) : !perm.canInputPenjualan ? (
+                    <p className="text-[11px] text-amber-400/80 mt-1 mb-5 max-w-[260px] mx-auto leading-relaxed">
+                      Anda tidak memiliki izin untuk mencatat transaksi penjualan.
+                    </p>
+                  ) : selectedBatch?.status !== 'active' ? (
+                    <p className="text-[11px] text-slate-400 mt-1 mb-5 max-w-[260px] mx-auto leading-relaxed">
+                      Batch ini sudah diselesaikan (tutup), sehingga tidak dapat mencatat transaksi penjualan baru.
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-[11px] text-slate-400 mt-1 mb-5 max-w-[260px] mx-auto leading-relaxed">
+                        Catat transaksi penjualan pertama untuk mulai memantau pendapatan dan performa batch ini.
+                      </p>
+                      {canRecordSale && (
+                        <button
+                          onClick={() => { setSelectedSale(null); setShowSaleSheet(true) }}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(37,99,235,0.3)] active:scale-[0.98] transition-all cursor-pointer uppercase tracking-wider"
+                        >
+                          <ShoppingBag size={14} strokeWidth={3} /> Catat Penjualan Pertama
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              )
+            }
 
-          {/* Piutang Warning */}
-          {kpi.piutang > 0 && (
-            <div className="bg-amber-500/5 border border-amber-500/15 rounded-2xl p-4 flex gap-3">
-              <AlertCircle size={18} className="text-amber-400 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs font-black text-amber-300">Ada transaksi yang belum lunas!</p>
-                <p className="text-[11px] text-[#4B6478] mt-0.5">Segera konfirmasi pembayaran dari pembeli.</p>
-              </div>
-            </div>
-          )}
+            // Sales exist — show full analytics
+            return (
+              <>
+                {/* KPI Cards */}
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Total Pendapatan', value: `Rp ${fmt(kpi.total)}`, icon: DollarSign, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+                    { label: 'Ekor Terjual', value: `${kpi.ekor} Ekor`, icon: Package, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
+                    { label: 'Rata-rata / Ekor', value: kpi.avgPerEkor > 0 ? `Rp ${fmt(kpi.avgPerEkor)}` : '—', icon: TrendingUp, color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20' },
+                    { label: 'Piutang Belum Lunas', value: kpi.piutang > 0 ? `Rp ${fmt(kpi.piutang)}` : 'Nihil', icon: kpi.piutang > 0 ? AlertCircle : CheckCircle2, color: kpi.piutang > 0 ? 'text-amber-400' : 'text-emerald-400', bg: kpi.piutang > 0 ? 'bg-amber-500/10' : 'bg-emerald-500/10', border: kpi.piutang > 0 ? 'border-amber-500/20' : 'border-emerald-500/20' },
+                  ].map(({ label, value, icon: Icon, color, bg, border }) => (
+                    <div key={label} className={cn('rounded-2xl p-4 border', bg, border)}>
+                      <Icon size={16} className={cn(color, 'mb-2')} />
+                      <p className={cn('text-base font-black font-["Sora"] leading-tight', color)}>{value}</p>
+                      <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-widest mt-1">{label}</p>
+                    </div>
+                  ))}
+                </div>
 
-          {/* Daftar Transaksi */}
-          <div>
-            <h2 className="font-['Sora'] font-black text-sm text-white mb-3 flex items-center gap-2">
-              <ShoppingBag size={15} className="text-[#4B6478]" />
-              Riwayat Transaksi
-            </h2>
+                {/* HPP Panel — only for species that support it */}
+                {hasHpp && perm.canViewBiayaTab && !isAllBatches && (
+                  <HppPanel batchId={selectedBatchId} useHppBatch={useHppBatch} />
+                )}
 
-            {loadSales ? (
-              <div className="py-12 flex justify-center"><LoadingSpinner /></div>
-            ) : sales.length === 0 ? (
-              <div className="py-20 text-center border-2 border-dashed border-white/[0.04] rounded-[32px] bg-white/[0.01]">
-                <ShoppingBag size={40} className="mx-auto text-white/5 mb-4" />
-                <p className="text-xs font-black text-[#4B6478] uppercase tracking-widest">Belum ada penjualan</p>
-                <p className="text-[11px] text-[#4B6478] mt-1">Mulai catat transaksi dengan menekan tombol "Jual" di atas.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {sales.map(s => <SaleCard key={s.id} sale={s} onClick={setSelectedSale} />)}
-              </div>
-            )}
-          </div>
+                {/* Piutang Warning */}
+                {kpi.piutang > 0 && (
+                  <div className="bg-amber-500/5 border border-amber-500/15 rounded-2xl p-4 flex gap-3">
+                    <AlertCircle size={18} className="text-amber-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-black text-amber-300">Ada transaksi yang belum lunas!</p>
+                      <p className="text-[11px] text-[#4B6478] mt-0.5">Segera konfirmasi pembayaran dari pembeli.</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Daftar Transaksi */}
+                <div>
+                  <h2 className="font-['Sora'] font-black text-sm text-white mb-3 flex items-center gap-2">
+                    <ShoppingBag size={15} className="text-[#4B6478]" />
+                    Riwayat Transaksi
+                  </h2>
+
+                  {loadSales ? (
+                    <div className="py-12 flex justify-center"><LoadingSpinner /></div>
+                  ) : (
+                    <div className="space-y-3">
+                      {sales.map(s => <SaleCard key={s.id} sale={s} onClick={setSelectedSale} />)}
+                    </div>
+                  )}
+                </div>
+              </>
+            )
+          })()}
+
         </div>
       )}
 

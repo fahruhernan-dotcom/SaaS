@@ -5,7 +5,6 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { calcHariDiFarm } from '@/lib/hooks/useKdPenggemukanData'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
-import NotificationBell from '@/dashboard/_shared/components/NotificationBell'
 import { useTernakLimit } from '@/lib/hooks/useTernakLimit'
 import {
   AnimalCard,
@@ -151,7 +150,6 @@ export function PenggemukanTernak({ config, hooks }) {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <NotificationBell />
             {limitLabel && (
               <span className={`text-[10px] font-black px-2 py-1 rounded-lg border ${!canAdd ? 'text-red-400 bg-red-500/10 border-red-500/20' : 'text-[#4B6478] bg-white/5 border-white/5'}`}>
                 {limitLabel}
@@ -176,7 +174,7 @@ export function PenggemukanTernak({ config, hooks }) {
               disabled={isAllBatches || !canAdd}
               title={isAllBatches ? 'Pilih batch spesifik untuk menambah ternak' : upgradeTitle}
               onClick={() => setSheet('add')}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(22,163,74,0.3)] active:scale-[0.98] transition-all"
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(16,185,129,0.3)] active:scale-[0.98] transition-all"
             >
               <Plus size={14} strokeWidth={3} /> Tambah
             </button>
@@ -201,6 +199,11 @@ export function PenggemukanTernak({ config, hooks }) {
               <ChevronDown size={14} className="text-[#4B6478] shrink-0" />
             </motion.div>
           </button>
+          {isAllBatches && batches.length > 0 && (
+            <p className="text-[10px] text-amber-400/90 font-semibold mt-2.5 ml-1 leading-relaxed">
+              ⚠️ Pilih batch spesifik untuk menambah, menimbang, atau menjual ternak.
+            </p>
+          )}
         </div>
       </header>
 
@@ -244,9 +247,67 @@ export function PenggemukanTernak({ config, hooks }) {
               />
             ))}
             {filtered.length === 0 && (
-              <div className="text-center py-20 border-2 border-dashed border-white/[0.03] rounded-[32px] bg-white/[0.01]">
-                <Search size={32} className="mx-auto text-white/5 mb-3" />
-                <p className="text-xs font-black text-[#4B6478] uppercase tracking-widest">Data Tidak Ditemukan</p>
+              <div className="text-center py-16 border border-dashed border-white/[0.06] rounded-[2rem] bg-white/[0.01] px-6">
+                {animals.length === 0 ? (
+                  <>
+                    <Search size={32} className="mx-auto text-white/5 mb-3" />
+                    {isAllBatches ? (
+                      // Dead-end fix: Semua Batch selected, Tambah is disabled — guide user
+                      <>
+                        <p className="text-xs font-black text-white uppercase tracking-widest font-['Sora'] mb-1">Belum Ada Ternak Terdaftar</p>
+                        {batches.length > 0 ? (
+                          <>
+                            <p className="text-[10px] text-[#4B6478] mb-5 max-w-[260px] mx-auto leading-relaxed">
+                              Pilih batch spesifik dari dropdown di atas untuk mulai menambahkan ternak. Setelah memilih batch, tombol Tambah Ternak akan aktif.
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-[10px] text-[#4B6478] mb-5 max-w-[260px] mx-auto leading-relaxed">
+                              Buat batch aktif terlebih dahulu, lalu tambahkan ternak ke dalamnya.
+                            </p>
+                            <button
+                              onClick={() => navigate(`${BASE}/batch`)}
+                              className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(16,185,129,0.2)] active:scale-[0.98] transition-all cursor-pointer uppercase tracking-wider"
+                            >
+                              <Plus size={14} strokeWidth={3} /> Buka Batch Aktif
+                            </button>
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      // Specific batch selected, no animals yet — show Tambah CTA
+                      <>
+                        <p className="text-xs font-black text-white uppercase tracking-widest font-['Sora'] mb-1">Belum Ada Ternak Terdaftar</p>
+                        <p className="text-[10px] text-[#4B6478] mb-5 max-w-[245px] mx-auto leading-relaxed">
+                          Daftarkan ternak pertama Anda ke dalam batch ini untuk mulai memantau perkembangan bobot.
+                        </p>
+                        <button
+                          disabled={!canAdd}
+                          title={upgradeTitle}
+                          onClick={() => setSheet('add')}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(16,185,129,0.3)] active:scale-[0.98] transition-all cursor-pointer"
+                        >
+                          <Plus size={14} strokeWidth={3} /> Tambah Ternak
+                        </button>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Search size={32} className="mx-auto text-white/5 mb-3" />
+                    <p className="text-xs font-black text-white uppercase tracking-widest font-['Sora'] mb-1">Data Tidak Ditemukan</p>
+                    <p className="text-[10px] text-[#4B6478] mb-5 max-w-[245px] mx-auto leading-relaxed">
+                      Tidak ada ternak yang cocok dengan pencarian atau filter saat ini.
+                    </p>
+                    <button
+                      onClick={() => { setSearch(''); setFilter('all') }}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/20 text-emerald-400 text-[10px] font-black font-['Sora'] rounded-xl transition-all active:scale-95 cursor-pointer uppercase tracking-wider"
+                    >
+                      Reset Filter
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>

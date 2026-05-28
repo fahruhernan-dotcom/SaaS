@@ -5,7 +5,7 @@ import {
   Lock, Save, AlertTriangle, Scale, Syringe, Trash2,
   Plus, ClipboardList, Activity, Info, Wand2
 } from 'lucide-react'
-import { format, parseISO, endOfWeek, endOfMonth, eachDayOfInterval } from 'date-fns'
+import { format, parseISO, endOfMonth, eachDayOfInterval, addDays } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,8 @@ import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { toast } from 'sonner'
 import { getRandomizedSample } from '@/dashboard/peternak/_shared/utils/taskUtils'
 import { CONTAINER_PRESETS } from '@/lib/constants/taskTemplates'
+
+const EMPTY_ARRAY = []
 
 export function ContainerCalcField({ field, reportData, setReportData, disabled }) {
   const stateKey   = field.id                  // e.g. '_wadah_hijauan'
@@ -128,11 +130,16 @@ export function CompleteTaskSheet({
   const [ortsCategory, setOrtsCategory] = useState(null)
   const [showSuccess, setShowSuccess] = useState(false)
   const [batchSplits, setBatchSplits] = useState([])
+  const [isCompleting, setIsCompleting] = useState(false)
 
   const addWeight = hooks.useAddWeight()
   const addFeed = hooks.useAddFeed()
 
-  const { data: activeBatches = [] } = hooks.useActiveBatches()
+  const { data: activeBatchesData } = hooks.useActiveBatches()
+  const activeBatches = useMemo(() => {
+    return activeBatchesData || EMPTY_ARRAY
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeBatchesData?.map(b => `${b.id}-${b.total_animals || 0}`).join(',')])
   const effectiveBatchId = useMemo(() => {
     if (task?.batch_id) return task.batch_id
     if (!activeBatches.length) return null
@@ -153,10 +160,11 @@ export function CompleteTaskSheet({
       return getRandomizedSample(rawAnimals, seed, 0.1)
     }
     return rawAnimals
-  }, [animalsQuery.data, task?.title, task?.batch_id, task?.due_date, effectiveBatchId])
+  }, [animalsQuery.data, task, effectiveBatchId])
 
   useEffect(() => {
     if (open && task) {
+      setIsCompleting(false)
       try {
         const parsed = JSON.parse(task.notes || '{}')
         if (parsed._version === '2.0') {
@@ -193,6 +201,7 @@ export function CompleteTaskSheet({
         setBatchSplits([])
       }
     } else if (!open) {
+      setIsCompleting(false)
       setNotes('')
       setReportData({})
       setWeighingData({ animal_id: '', weight_kg: '', girth_cm: '' })
@@ -328,13 +337,19 @@ export function CompleteTaskSheet({
               <SheetHeader className="text-left space-y-2">
                 {!isDesktop && <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-4" />}
                 <SheetTitle className="font-display font-bold text-2xl lg:text-4xl text-white tracking-tight">
-                  {isAuditMode ? 'Audit Tugas' : 'Detail Laporan'}
+                  {task.status === 'selesai'
+                    ? (isAuditMode ? 'Audit Tugas' : 'Laporan Penyelesaian')
+                    : (!isCompleting ? 'Detail Tugas Harian' : 'Laporan Penyelesaian')}
                 </SheetTitle>
                 <p className="text-sm font-medium text-slate-400">
-                  {isAuditMode ? 'Laporan yang dikirim oleh anggota tim.' : 'Lengkapi data verifikasi operasional.'}
+                  {task.status === 'selesai'
+                    ? (isAuditMode ? 'Laporan yang dikirim oleh anggota tim.' : 'Laporan penyelesaian tugas operasional.')
+                    : (!isCompleting ? 'Lihat instruksi dan status tugas operasional.' : 'Lengkapi catatan/verifikasi sebelum menyelesaikan tugas.')}
                 </p>
                 <SheetDescription className="sr-only">
-                  {isAuditMode ? 'Panel audit tugas operasional' : 'Panel detail laporan tugas harian'}
+                  {task.status === 'selesai'
+                    ? (isAuditMode ? 'Panel audit tugas operasional' : 'Panel detail tugas harian')
+                    : 'Panel detail tugas harian'}
                 </SheetDescription>
               </SheetHeader>
 
@@ -372,8 +387,17 @@ export function CompleteTaskSheet({
                   </div>
                 </div>
 
-                {(reportConfig || isMultiAnimalTask || (isAuditMode && (Object.keys(reportData).length > 0 || weighingEntries.length > 0 || healthEntries.length > 0))) && (
-                   <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                {task.description && (
+                  <div className="p-4 border border-white/5 bg-white/[0.01] rounded-2xl space-y-2">
+                    <span className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.3em] block">Deskripsi / Instruksi</span>
+                    <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">{task.description}</p>
+                  </div>
+                )}
+
+                {((isAuditMode || task.status === 'selesai')
+                  ? (Object.keys(reportData).length > 0 || weighingEntries.length > 0 || healthEntries.length > 0)
+                  : (isCompleting && (reportConfig || isMultiAnimalTask))) && (
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                       <div className="flex items-center gap-4 px-4 text-[#64748B]">
                          <div className="h-[1px] flex-1 bg-white/5" /><span className="text-[9px] font-black uppercase tracking-[0.4em]">{isAuditMode ? 'Data Laporan Lapangan' : 'Reporting Schema'}</span><div className="h-[1px] flex-1 bg-white/5" />
                       </div>
@@ -506,7 +530,7 @@ export function CompleteTaskSheet({
                    </div>
                 )}
 
-                 {(task.task_type === 'pakan' || task.task_type === 'pemberian_pakan') && !isAuditMode && batchSplits.length > 1 && (
+                 {(task.task_type === 'pakan' || task.task_type === 'pemberian_pakan') && !isAuditMode && task.status !== 'selesai' && isCompleting && batchSplits.length > 1 && (
                     <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
                       <div className="flex items-center gap-4 px-4 text-[#64748B]">
                         <div className="h-[1px] flex-1 bg-white/5" />
@@ -554,7 +578,7 @@ export function CompleteTaskSheet({
                     </div>
                  )}
 
-                 {(task.task_type === 'pakan' || task.task_type === 'pemberian_pakan') && !isAuditMode && (
+                 {(task.task_type === 'pakan' || task.task_type === 'pemberian_pakan') && !isAuditMode && task.status !== 'selesai' && isCompleting && (
                     <div className="space-y-6 pt-2 animate-in slide-in-from-top-4 duration-700">
                        <div className="flex flex-col gap-2 ml-4">
                           <label className="text-[10px] font-black text-orange-400 uppercase tracking-[0.4em]">Feedback Sisa Pakan Sebelumnya *</label>
@@ -588,7 +612,7 @@ export function CompleteTaskSheet({
                     </div>
                  )}
 
-                 {(notes || !isAuditMode) && (
+                 {(isAuditMode || task.status === 'selesai' || isCompleting) && (
                   <div className="space-y-4">
                     <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">
                       {isAuditMode ? 'Catatan dari Lapangan' : 'Observation Notes'}
@@ -612,11 +636,24 @@ export function CompleteTaskSheet({
         </div>
         {!showSuccess && (
           <div className="p-5 lg:p-8 border-t border-white/5 bg-[#0C1319] shrink-0 flex items-center gap-3 lg:gap-4">
-            {isAuditMode ? (
+            {isAuditMode || task.status === 'selesai' ? (
               <Button onClick={() => onOpenChange(false)} className="flex-1 h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-sm transition-all">Tutup</Button>
-            ) : (
+            ) : !isCompleting ? (
               <>
                 <Button variant="ghost" onClick={() => onOpenChange(false)} className="h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-transparent px-5 lg:px-8">Batal</Button>
+                {reportConfig || isMultiAnimalTask ? (
+                  <Button onClick={() => setIsCompleting(true)} className="flex-1 h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-emerald-500 hover:bg-emerald-600 border-none shadow-[0_0_20px_rgba(2, 26, 2,0.3)] text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
+                    Mulai Tugas
+                  </Button>
+                ) : (
+                  <Button onClick={handleComplete} disabled={updateStatus.isPending} className="flex-1 h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-emerald-500 hover:bg-emerald-600 border-none shadow-[0_0_20px_rgba(2, 26, 2,0.3)] text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
+                    {updateStatus.isPending ? 'Menyimpan...' : 'Tandai Selesai'}
+                  </Button>
+                )}
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" onClick={() => setIsCompleting(false)} className="h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-transparent px-5 lg:px-8">Kembali</Button>
                 <Button onClick={handleComplete} disabled={updateStatus.isPending} className="flex-1 h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-emerald-500 hover:bg-emerald-600 border-none shadow-[0_0_20px_rgba(2, 26, 2,0.3)] text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
                   {updateStatus.isPending ? 'Menyimpan...' : 'Selesaikan Tugas'}
                 </Button>
@@ -629,6 +666,16 @@ export function CompleteTaskSheet({
   )
 }
 
+const DAYS = [
+  { value: 1, label: 'Senin' },
+  { value: 2, label: 'Selasa' },
+  { value: 3, label: 'Rabu' },
+  { value: 4, label: 'Kamis' },
+  { value: 5, label: 'Jumat' },
+  { value: 6, label: 'Sabtu' },
+  { value: 0, label: 'Minggu' },
+]
+
 export function AdHocTaskSheet({ 
   open, onOpenChange, isDesktop, 
   hooks, livestockType, 
@@ -636,33 +683,91 @@ export function AdHocTaskSheet({
 }) {
   const { data: batches = [] } = hooks.useBatches()
   const { data: team = [] } = useAssignableMembers()
-  const [form, setForm] = useState({ title: '', task_type: 'lainnya', kandang_name: '', assigned_profile_id: '', due_date: format(new Date(), 'yyyy-MM-dd'), due_time: format(new Date(), 'HH:mm:ss'), description: '', repetition: 'sekali' })
+  const [form, setForm] = useState({ 
+    title: '', 
+    task_type: 'lainnya', 
+    kandang_name: '', 
+    assigned_profile_id: '', 
+    due_date: format(new Date(), 'yyyy-MM-dd'), 
+    due_time: format(new Date(), 'HH:mm:ss'), 
+    description: '', 
+    repetition: 'sekali',
+    repetition_days: [1, 2, 3, 4, 5, 6, 0]
+  })
+  const [showDaysDropdown, setShowDaysDropdown] = useState(false)
+
+  useEffect(() => {
+    if (open) {
+      setForm({
+        title: '',
+        task_type: 'lainnya',
+        kandang_name: '',
+        assigned_profile_id: '',
+        due_date: format(new Date(), 'yyyy-MM-dd'),
+        due_time: format(new Date(), 'HH:mm:ss'),
+        description: '',
+        repetition: 'sekali',
+        repetition_days: [1, 2, 3, 4, 5, 6, 0]
+      })
+      setShowDaysDropdown(false)
+    }
+  }, [open])
   
   const kandangs = useMemo(() => [...new Set(batches.map(b => b.kandang_name).filter(Boolean))], [batches])
   const handleSave = () => {
     if (!form.title) return toast.error('Judul tugas wajib diisi')
     
+    if (form.repetition === 'mingguan' && form.repetition_days.length === 0) {
+      return toast.error('Silakan pilih setidaknya satu hari pengulangan')
+    }
+    
     let payloads = []
     const basePayload = { 
       title: form.title, task_type: form.task_type, 
-      kandang_name: form.kandang_name === 'none' ? null : form.kandang_name, 
-      assigned_profile_id: form.assigned_profile_id === 'none' ? null : form.assigned_profile_id,
+      kandang_name: (form.kandang_name === 'none' || form.kandang_name === '') ? null : form.kandang_name, 
+      assigned_profile_id: (form.assigned_profile_id === 'none' || form.assigned_profile_id === '') ? null : form.assigned_profile_id,
       due_time: form.due_time, description: form.description,
       livestock_type: livestockType,
     }
 
     const startDate = parseISO(form.due_date)
     let endDate = startDate
-    if (form.repetition === 'mingguan') endDate = endOfWeek(startDate, { weekStartsOn: 1 })
+    if (form.repetition === 'harian') endDate = addDays(startDate, 29)
+    else if (form.repetition === 'mingguan') endDate = addDays(startDate, 6)
     else if (form.repetition === 'bulanan') endDate = endOfMonth(startDate)
 
     const intervalDays = eachDayOfInterval({ start: startDate, end: endDate })
-    for (const day of intervalDays) { payloads.push({ ...basePayload, due_date: format(day, 'yyyy-MM-dd') }) }
+    
+    const filteredDays = intervalDays.filter(day => {
+      if (form.repetition === 'mingguan') {
+        const dayOfWeek = day.getDay()
+        return form.repetition_days.includes(dayOfWeek)
+      }
+      return true
+    })
 
-    createTask.mutate(payloads.length === 1 ? payloads[0] : payloads, { onSuccess: () => { 
-      onOpenChange(false); 
-      setForm({ title: '', task_type: 'lainnya', kandang_name: '', assigned_profile_id: '', due_date: format(new Date(), 'yyyy-MM-dd'), due_time: format(new Date(), 'HH:mm:ss'), description: '', repetition: 'sekali' }); 
-    }})
+    for (const day of filteredDays) { payloads.push({ ...basePayload, due_date: format(day, 'yyyy-MM-dd') }) }
+
+    createTask.mutate(payloads.length === 1 ? payloads[0] : payloads, { 
+      onSuccess: () => { 
+        onOpenChange(false); 
+        setForm({ 
+          title: '', 
+          task_type: 'lainnya', 
+          kandang_name: '', 
+          assigned_profile_id: '', 
+          due_date: format(new Date(), 'yyyy-MM-dd'), 
+          due_time: format(new Date(), 'HH:mm:ss'), 
+          description: '', 
+          repetition: 'sekali',
+          repetition_days: [1, 2, 3, 4, 5, 6, 0]
+        }); 
+        setShowDaysDropdown(false);
+      },
+      onError: (err) => {
+        console.error('Gagal membuat tugas ad-hoc:', err)
+      }
+    })
   }
 
   const uniqueTaskTypes = useMemo(() => {
@@ -726,12 +831,79 @@ export function AdHocTaskSheet({
             </div>
             <div className="space-y-2">
               <label className="text-xs font-bold text-[#94A3B8]">Pengulangan Tugas</label>
-              <Select value={form.repetition} onValueChange={v => setForm(f => ({ ...f, repetition: v }))}>
+              <Select 
+                value={form.repetition} 
+                onValueChange={v => setForm(f => {
+                  const nextRepDays = (v === 'mingguan' && f.repetition_days.length === 0) 
+                    ? [1, 2, 3, 4, 5, 6, 0] 
+                    : f.repetition_days;
+                  return { ...f, repetition: v, repetition_days: nextRepDays };
+                })}
+              >
                 <SelectTrigger className="h-12 rounded-xl bg-white/5 border-white/10 px-4 text-sm text-white"><SelectValue placeholder="Sekali Saja" /></SelectTrigger>
-                <SelectContent className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-xl"><SelectItem value="sekali" className="rounded-lg">Sekali Saja</SelectItem><SelectItem value="mingguan" className="rounded-lg">Hasilkan untuk 1 Minggu (7 Tugas)</SelectItem><SelectItem value="bulanan" className="rounded-lg">Hasilkan untuk 1 Bulan (30 Tugas)</SelectItem></SelectContent>
+                <SelectContent className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-xl">
+                  <SelectItem value="sekali" className="rounded-lg">Sekali Saja</SelectItem>
+                  <SelectItem value="harian" className="rounded-lg">Setiap Hari (Harian — 30 Tugas)</SelectItem>
+                  <SelectItem value="mingguan" className="rounded-lg">Hasilkan untuk 1 Minggu</SelectItem>
+                  <SelectItem value="bulanan" className="rounded-lg">Hasilkan untuk 1 Bulan (30 Tugas)</SelectItem>
+                </SelectContent>
               </Select>
               <p className="text-[10px] text-[#4B6478] px-1 mt-1">Sistem akan secara otomatis membuat tugas-tugas terpisah untuk hari-hari selanjutnya.</p>
             </div>
+
+            {form.repetition === 'mingguan' && (
+              <div className="space-y-2 relative">
+                <label className="text-xs font-bold text-[#94A3B8]">Hari Pengulangan</label>
+                <button
+                  type="button"
+                  onClick={() => setShowDaysDropdown(!showDaysDropdown)}
+                  className="w-full h-12 rounded-xl bg-white/5 border border-white/10 px-4 text-sm text-left text-white flex items-center justify-between hover:bg-white/10 transition-all focus:outline-none"
+                >
+                  <span className="truncate">
+                    {form.repetition_days.length === 0
+                      ? 'Pilih hari'
+                      : form.repetition_days.length === 7
+                      ? 'Semua hari dipilih'
+                      : `${form.repetition_days.length} hari dipilih`}
+                  </span>
+                  <span className="text-white/40 text-xs">▼</span>
+                </button>
+                
+                {showDaysDropdown && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowDaysDropdown(false)} />
+                    <div className="absolute left-0 right-0 mt-1 bg-[#0C1319]/95 backdrop-blur-xl border border-white/10 rounded-xl p-2 z-20 space-y-1 shadow-2xl max-h-[220px] overflow-y-auto custom-scrollbar">
+                      {DAYS.map(day => {
+                        const isChecked = form.repetition_days.includes(day.value)
+                        return (
+                          <button
+                            key={day.value}
+                            type="button"
+                            onClick={() => {
+                              setForm(f => {
+                                const exists = f.repetition_days.includes(day.value)
+                                const next = exists
+                                  ? f.repetition_days.filter(d => d !== day.value)
+                                  : [...f.repetition_days, day.value]
+                                return { ...f, repetition_days: next }
+                              })
+                            }}
+                            className={cn(
+                              "w-full text-left px-3 h-10 rounded-lg flex items-center justify-between hover:bg-white/5 transition-all text-sm focus:outline-none",
+                              isChecked ? "text-white font-bold bg-white/5" : "text-white/60"
+                            )}
+                          >
+                            <span>{day.label}</span>
+                            {isChecked && <CheckCircle2 size={16} className="text-emerald-500" />}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             <div className="space-y-2">
               <label className="text-xs font-bold text-[#94A3B8]">Catatan / Instruksi</label>
               <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Instruksi spesifik atau keterangan tambahan..." className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm text-white focus:bg-white/10 focus:border-[#7C3AED]/50 outline-none min-h-[100px] resize-none placeholder:text-white/20" />
@@ -784,7 +956,11 @@ export function IncidentReportSheet({
   open, onOpenChange, isDesktop,
   config: _config, hooks, livestockType: _livestockType
 }) {
-  const { data: batches = [] } = hooks.useActiveBatches()
+  const { data: batchesData } = hooks.useActiveBatches()
+  const batches = useMemo(() => {
+    return batchesData || EMPTY_ARRAY
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [batchesData?.map(b => b.id).join(',')])
   const addLog = hooks.useAddHealth()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [category, setCategory] = useState('kesehatan')

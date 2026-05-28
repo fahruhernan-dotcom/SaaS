@@ -179,7 +179,9 @@ export default function HargaPage() {
               transition={{ duration: 0.45, delay: 0.05 }}
               className={`font-['Sora'] ${isDesktop ? 'text-4xl md:text-5xl lg:text-6xl' : 'text-3xl'} font-normal text-white ${isDesktop ? 'leading-tight' : 'leading-[1.2]'} mb-4`}
             >
-              Coba gratis {data.trialDays || 14} hari — tanpa kartu kredit.
+              Coba gratis {data.trialDays || 14} hari.
+              <br />
+              Tanpa kartu kredit.
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 12 }}

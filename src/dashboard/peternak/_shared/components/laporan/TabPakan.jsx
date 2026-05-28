@@ -10,9 +10,11 @@ import { StatCard, SectionTitle, BatchSelector, fmtRp, fmtNum } from './shared'
  *   feedLogs      — array dari useFeedLogsByBatches()
  *   weightHistory — array dari useBatchWeightHistoryByBatches()
  */
-export default function TabPakan({ batches, animals, feedLogs, weightHistory }) {
+export default function TabPakan({ batches, animals, feedLogs, weightHistory, navigate, BASE }) {
   const [selectedBatch, setSelectedBatch] = useState('all')
-  const batchIds = selectedBatch === 'all' ? batches.map(b => b.id) : [selectedBatch]
+  const batchIds = useMemo(() => {
+    return selectedBatch === 'all' ? batches.map(b => b.id) : [selectedBatch]
+  }, [selectedBatch, batches])
 
   const stats = useMemo(() => {
     const filtered = feedLogs.filter(f => batchIds.includes(f.batch_id))
@@ -61,7 +63,7 @@ export default function TabPakan({ batches, animals, feedLogs, weightHistory }) 
       <BatchSelector batches={batches} activeBatchId={selectedBatch} onChange={setSelectedBatch} />
 
       {/* FCR hero */}
-      <div className="bg-white/[0.03] border border-white/[0.06] rounded-[28px] p-6">
+      <div className="bg-white/[0.03] border border-white/[0.06] rounded-[28px] p-6 relative overflow-hidden">
         <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-[0.3em] mb-1">Feed Conversion Ratio</p>
         <p className={cn(
           'text-5xl font-black font-["Sora"] tracking-tighter mb-2',
@@ -71,22 +73,37 @@ export default function TabPakan({ batches, animals, feedLogs, weightHistory }) 
         )}>
           {stats.fcr != null ? fmtNum(stats.fcr) : '—'}
         </p>
-        <p className="text-[11px] text-[#4B6478] font-medium">
-          {stats.fcr != null
-            ? `${fmtNum(stats.totalKonsumsi)} kg pakan → ${fmtNum(stats.totalGainKg)} kg pertambahan bobot`
-            : 'Perlu data timbang untuk hitung FCR'}
-        </p>
-        <div className="mt-3 flex gap-2 flex-wrap">
-          {[
-            { range: '≤6',  label: 'Sangat Baik', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
-            { range: '7–10', label: 'Normal',     color: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
-            { range: '>10', label: 'Boros',        color: 'bg-rose-500/20 text-rose-400 border-rose-500/30' },
-          ].map(x => (
-            <span key={x.range} className={cn('text-[9px] font-black px-2 py-0.5 rounded-md border uppercase tracking-wider', x.color)}>
-              FCR {x.range} = {x.label}
-            </span>
-          ))}
-        </div>
+
+        {stats.fcr != null ? (
+          <>
+            <p className="text-[11px] text-[#4B6478] font-medium mb-3">
+              {`${fmtNum(stats.totalKonsumsi)} kg pakan → ${fmtNum(stats.totalGainKg)} kg pertambahan bobot`}
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              {[
+                { range: '≤6',  label: 'Sangat Baik', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+                { range: '7–10', label: 'Normal',     color: 'bg-amber-500/20 text-amber-400 border-amber-500/30' },
+                { range: '>10', label: 'Boros',        color: 'bg-rose-500/20 text-rose-400 border-rose-500/30' },
+              ].map(x => (
+                <span key={x.range} className={cn('text-[9px] font-black px-2 py-0.5 rounded-md border uppercase tracking-wider', x.color)}>
+                  FCR {x.range} = {x.label}
+                </span>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="mt-4 pt-4 border-t border-white/[0.04] space-y-3">
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Perlu data timbang untuk menghitung FCR. Catat penimbangan berkala untuk membandingkan jumlah pakan yang dikonsumsi dengan pertambahan berat badan.
+            </p>
+            <button
+              onClick={() => navigate(`${BASE}/ternak`)}
+              className="inline-flex items-center px-4 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/20 text-emerald-400 font-black uppercase text-[10px] tracking-widest rounded-xl transition-all"
+            >
+              Timbang Ternak Sekarang
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Stats grid */}
@@ -146,9 +163,22 @@ export default function TabPakan({ batches, animals, feedLogs, weightHistory }) 
       )}
 
       {stats.totalLogs === 0 && (
-        <div className="text-center py-16 border border-dashed border-white/10 rounded-[32px]">
-          <Wheat size={32} className="mx-auto text-white/5 mb-3" />
-          <p className="text-xs font-black text-[#4B6478] uppercase tracking-widest">Belum ada data pakan</p>
+        <div className="text-center py-12 px-5 border border-dashed border-white/10 rounded-[32px] bg-white/[0.01]">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex items-center justify-center mx-auto mb-4">
+            <Wheat size={22} className="text-emerald-500/40" />
+          </div>
+          <h3 className="font-['Sora'] font-black text-sm text-white mb-1">
+            Belum Ada Pakan Tercatat
+          </h3>
+          <p className="text-xs text-slate-400 max-w-xs mx-auto leading-relaxed mb-5">
+            Belum ada pakan tercatat untuk batch ini. Catat konsumsi pakan harian untuk memantau FCR.
+          </p>
+          <button
+            onClick={() => navigate(`${BASE}/stok-pakan`)}
+            className="inline-flex items-center px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-[10px] tracking-widest rounded-xl transition-all shadow-lg shadow-emerald-500/10"
+          >
+            Catat Konsumsi Pakan
+          </button>
         </div>
       )}
     </div>

@@ -11,8 +11,10 @@ import { StatCard, SectionTitle, BatchSelector, PLRow, fmtRp, fmtNum } from './s
  *   feedLogs   — array dari useFeedLogsByBatches()
  *   opCosts    — array dari useOperationalCostsByBatches()
  *   healthLogs — array dari useHealthLogsByBatches()
+ *   navigate   — useNavigate()
+ *   BASE       — prefix route string
  */
-export default function TabKeuangan({ batches, animals, sales, feedLogs, opCosts, healthLogs = [] }) {
+export default function TabKeuangan({ batches, animals, sales, feedLogs, opCosts, healthLogs = [], navigate, BASE }) {
   const [selectedBatch, setSelectedBatch] = useState('all')
 
   const activeBatches = selectedBatch === 'all' ? batches : batches.filter(b => b.id === selectedBatch)
@@ -90,33 +92,59 @@ export default function TabKeuangan({ batches, animals, sales, feedLogs, opCosts
     <div className="space-y-6">
       <BatchSelector batches={batches} activeBatchId={selectedBatch} onChange={setSelectedBatch} />
 
-      {/* Net profit hero */}
-      <div className={cn(
-        'rounded-[28px] p-6 relative overflow-hidden shadow-xl',
-        pl.netProfit >= 0
-          ? 'bg-gradient-to-br from-emerald-700 to-green-800 shadow-green-900/30'
-          : 'bg-gradient-to-br from-rose-700 to-rose-900 shadow-rose-900/30',
-      )}>
-        <div className="absolute top-0 right-0 p-4 opacity-10">
-          {pl.netProfit >= 0 ? <TrendingUp size={80} /> : <TrendingDown size={80} />}
-        </div>
-        <div className="relative z-10 text-white">
-          <p className="text-[10px] text-white/70 font-black uppercase tracking-[0.2em] mb-1">Net Profit / Rugi</p>
-          <p className="text-3xl font-black font-['Sora'] mb-3 tracking-tight">{fmtRp(Math.abs(pl.netProfit))}</p>
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="bg-white/10 px-3 py-1.5 rounded-xl border border-white/10">
-              <p className="text-[9px] text-white/60 font-bold uppercase mb-0.5">Margin</p>
-              <p className="text-xs font-black">{fmtNum(pl.margin)}%</p>
+      {/* Net profit hero or Status Card when no sales yet */}
+      {pl.ekorTerjual === 0 ? (
+        <div className="bg-blue-500/5 border border-blue-500/20 rounded-[28px] p-6 relative overflow-hidden">
+          <div className="flex gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+              <span className="text-xl">📈</span>
             </div>
-            {pl.profitPerEkor != null && (
-              <div className="bg-white/10 px-3 py-1.5 rounded-xl border border-white/10">
-                <p className="text-[9px] text-white/60 font-bold uppercase mb-0.5">Per Ekor</p>
-                <p className="text-xs font-black">{fmtRp(pl.profitPerEkor)}</p>
+            <div className="flex-1 space-y-3">
+              <div>
+                <h3 className="font-['Sora'] font-black text-base text-white leading-snug">
+                  Siklus Sedang Berjalan (Belum Ada Penjualan)
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed mt-1">
+                  Pendapatan dan keuntungan bersih akan terhitung otomatis saat transaksi penjualan ternak mulai dicatat.
+                </p>
               </div>
-            )}
+              <button
+                onClick={() => navigate(`${BASE}/penjualan`)}
+                className="inline-flex items-center px-4 py-2.5 bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/20 text-blue-400 font-black uppercase text-[10px] tracking-widest rounded-xl transition-all"
+              >
+                Catat Transaksi Penjualan
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className={cn(
+          'rounded-[28px] p-6 relative overflow-hidden shadow-xl',
+          pl.netProfit >= 0
+            ? 'bg-gradient-to-br from-emerald-700 to-green-800 shadow-green-900/30'
+            : 'bg-gradient-to-br from-rose-700 to-rose-900 shadow-rose-900/30',
+        )}>
+          <div className="absolute top-0 right-0 p-4 opacity-10">
+            {pl.netProfit >= 0 ? <TrendingUp size={80} /> : <TrendingDown size={80} />}
+          </div>
+          <div className="relative z-10 text-white">
+            <p className="text-[10px] text-white/70 font-black uppercase tracking-[0.2em] mb-1.5">Net Profit / Rugi</p>
+            <p className="text-3xl font-black font-['Sora'] mb-4 tracking-tight">{fmtRp(Math.abs(pl.netProfit))}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="bg-white/10 px-3 py-1.5 rounded-xl border border-white/10">
+                <p className="text-[9px] text-white/60 font-bold uppercase mb-0.5">Margin</p>
+                <p className="text-xs font-black">{fmtNum(pl.margin)}%</p>
+              </div>
+              {pl.profitPerEkor != null && (
+                <div className="bg-white/10 px-3 py-1.5 rounded-xl border border-white/10">
+                  <p className="text-[9px] text-white/60 font-bold uppercase mb-0.5">Per Ekor</p>
+                  <p className="text-xs font-black">{fmtRp(pl.profitPerEkor)}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Warnings */}
       {pl.warnPakanTanpaBiaya && (

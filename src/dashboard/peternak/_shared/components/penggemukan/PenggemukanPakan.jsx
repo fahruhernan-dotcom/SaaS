@@ -670,9 +670,15 @@ export function PenggemukanPakan({ config, hooks }) {
 
   if (loadingBatches || (activeBatch && loadingLogs)) return <LoadingSpinner fullPage />
 
-  const accent = config.accentColorClass || 'bg-green-600 border-green-500 text-white'
-  const focusCls = config.accentFocusClass || 'focus:border-green-500/50'
-  const btnCls = config.buttonClass || 'bg-green-600 hover:bg-green-500'
+  const accent = (config.accentColorClass === 'bg-green-600 border-green-500 text-white')
+    ? 'bg-emerald-600 border-emerald-500 text-white'
+    : (config.accentColorClass || 'bg-emerald-600 border-emerald-500 text-white')
+  const focusCls = (config.accentFocusClass === 'focus:border-green-500/50')
+    ? 'focus:border-emerald-500/50'
+    : (config.accentFocusClass || 'focus:border-emerald-500/50')
+  const btnCls = (config.buttonClass === 'bg-green-600 hover:bg-green-500')
+    ? 'bg-emerald-600 hover:bg-emerald-500'
+    : (config.buttonClass || 'bg-emerald-600 hover:bg-emerald-500')
 
   return (
     <div className="text-slate-100 pb-24">
@@ -729,12 +735,20 @@ export function PenggemukanPakan({ config, hooks }) {
       </header>
 
       {batches.length === 0 ? (
-        <div className="px-4 py-20 text-center">
-          <div className="w-16 h-16 bg-white/[0.03] rounded-full flex items-center justify-center mx-auto mb-4 border border-white/[0.06]">
-            <Wheat size={24} className="text-[#4B6478]" />
+        <div className="px-4 py-20 text-center max-w-md mx-auto">
+          <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-emerald-500/20">
+            <Wheat size={24} className="text-emerald-400" />
           </div>
-          <p className="text-sm font-bold text-white mb-1">Belum Ada Batch Aktif</p>
-          <p className="text-xs text-[#4B6478]">Kamu perlu memiliki batch aktif untuk mencatat pakan</p>
+          <h3 className="font-['Sora'] text-base font-black text-white mb-2">Belum Ada Batch Aktif</h3>
+          <p className="text-xs text-[#4B6478] leading-relaxed mb-6">
+            Anda perlu memiliki minimal satu batch aktif untuk mencatat konsumsi pakan dan alokasi biaya operasional.
+          </p>
+          <button
+            onClick={() => navigate(`${config.BASE}/batch`)}
+            className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-[11px] tracking-widest rounded-2xl transition-all shadow-lg shadow-emerald-500/20"
+          >
+            Mulai Siklus Penggemukan Baru
+          </button>
         </div>
       ) : (
         <div className="px-4 mt-6">
@@ -775,7 +789,19 @@ export function PenggemukanPakan({ config, hooks }) {
 
               <div className="space-y-3">
                 {logs.length === 0 ? (
-                  <p className="text-center py-8 text-xs text-[#4B6478]">Belum ada catatan pakan untuk batch ini</p>
+                  <div className="text-center py-12 bg-white/[0.01] border border-dashed border-white/[0.05] rounded-3xl p-6">
+                    <Wheat size={32} className="mx-auto text-[#4B6478] mb-3 opacity-60" />
+                    <p className="text-sm font-bold text-white mb-1">Belum ada Catatan Konsumsi Pakan</p>
+                    <p className="text-xs text-[#4B6478] mb-4">Catat pemberian pakan hari ini untuk melacak rata-rata konsumsi.</p>
+                    {canInputPakan && (
+                      <button
+                        onClick={() => setShowAdd(true)}
+                        className="px-4 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/20 text-emerald-400 text-xs font-black rounded-xl transition-all"
+                      >
+                        Beri Pakan Hari Ini
+                      </button>
+                    )}
+                  </div>
                 ) : logs.map(log => (
                   <div key={log.id} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 transition-all hover:bg-white/[0.05]">
                     <div className="flex items-start justify-between mb-3">

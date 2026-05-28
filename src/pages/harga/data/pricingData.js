@@ -127,7 +127,7 @@ const _peternakBase = {
   starterFeatures: [
     '1 kandang / batch aktif',
     'Input harian unlimited',
-    'Tugas harian anak kandang',
+    'Pencatatan tugas harian mandiri',
     'Laporan dasar',
   ],
   starterMissing: [
@@ -135,6 +135,7 @@ const _peternakBase = {
     'Jumlah ternak melebihi kuota starter',
     'Export laporan PDF/Excel',
     'Undang anggota tim',
+    'Penugasan tim & anak kandang',
   ],
 }
 
@@ -237,6 +238,7 @@ export const PRICING_DATA = {
       'Kandang ke-2 dan seterusnya',
       'Export laporan PDF/Excel',
       'Undang anggota tim',
+      'Penugasan tim & anak kandang',
     ],
     proFeatures: [
       '2 kandang broiler aktif',

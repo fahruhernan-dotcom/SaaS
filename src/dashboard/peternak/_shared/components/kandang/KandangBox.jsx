@@ -189,6 +189,15 @@ export default function KandangBox({
           )}
         </AnimatePresence>
       </div>
+
+      {/* Mobile touch helper */}
+      {animalsInKandang.length > 0 && (
+        <div className="px-5 py-2.5 border-t border-white/[0.03] bg-white/[0.01] flex items-center justify-center lg:hidden pointer-events-none shrink-0 rounded-b-[2.5rem]">
+          <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest text-center">
+            👉 Ketuk token untuk detail & pindah kandang
+          </span>
+        </div>
+      )}
     </motion.div>
   )
 }

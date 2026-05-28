@@ -927,3 +927,32 @@ html:not(.dark) .fitur-page .py-24 {
 .bg-brand-500 {
   background-color: var(--brand-500) !important;
 }
+
+/* ── SMOOTH THEME SWITCHING TRANSITION ── */
+/* Applying high-performance CSS transition to elements affected by dark/light mode toggles */
+body,
+.bg-bg-base,
+.bg-bg-1,
+.bg-bg-2,
+.bg-bg-3,
+.border-border-default,
+.border-border-subtle,
+.border-border-strong,
+.text-text-primary,
+.text-text-secondary,
+.text-text-muted,
+.text-text-accent,
+input,
+label,
+span:not(.dark-preserve *),
+p:not(.dark-preserve *),
+h1:not(.dark-preserve *),
+h2:not(.dark-preserve *),
+h3:not(.dark-preserve *),
+h4:not(.dark-preserve *) {
+  transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}

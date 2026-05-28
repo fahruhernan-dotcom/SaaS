@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react'
-import { Zap, Plus, Menu, ChevronDown, ChevronUp, ChevronRight, Droplets, X, Trash2, Search, Calendar, CreditCard, FileText, ShoppingBag, ArrowLeft, Filter, Info, Clock, Check } from 'lucide-react'
+import { Zap, Plus, Menu, ChevronDown, ChevronUp, ChevronRight, Droplets, X, Trash2, Search, Calendar, CreditCard, FileText, ShoppingBag, ArrowLeft, Filter, Info, Clock, Check, AlertTriangle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useLocation, useOutletContext } from 'react-router-dom'
+import { useLocation, useOutletContext, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { DatePicker } from '@/components/ui/DatePicker'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
@@ -39,12 +40,15 @@ function fmtDate(d) {
 export default function ListrikAirPage() {
   const { setSidebarOpen } = useOutletContext() || {}
   const location = useLocation()
+  const navigate = useNavigate()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   const animalType = location.pathname.includes('domba') ? 'domba'
     : location.pathname.includes('kambing') ? 'kambing'
     : location.pathname.includes('sapi') ? 'sapi'
     : null
+
+  const BASE = `/peternak/peternak_${animalType}_penggemukan`
 
   const { data: dombaBatches = [] } = useDombaActiveBatches()
   const { data: kambingBatches = [] } = useKambingActiveBatches()
@@ -125,6 +129,10 @@ export default function ListrikAirPage() {
   const handleAdd = () => {
     const amount = Number(form.amount_idr) || 0
     if (amount <= 0) return
+    if (activeBatches.length === 0) {
+      toast.error('Tidak dapat menyimpan biaya karena tidak ada batch aktif!')
+      return
+    }
     addOpsCost.mutate(
       {
         batches: activeBatches,
@@ -210,7 +218,27 @@ export default function ListrikAirPage() {
                 </div>
               </div>
 
-              {activeBatches.length > 0 && (
+              {activeBatches.length === 0 ? (
+                <div className="bg-rose-500/5 border border-rose-500/15 rounded-2xl p-4 flex gap-3">
+                  <AlertTriangle size={18} className="text-rose-400 shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-xs font-black text-rose-300 leading-snug">Tidak Ada Batch Aktif</p>
+                    <p className="text-[11px] text-[#4B6478] mt-1 leading-relaxed">
+                      Biaya operasional tidak dapat dialokasikan karena tidak ada siklus penggemukan yang sedang berjalan saat ini.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowSheet(false)
+                        navigate(`${BASE}/batch`)
+                      }}
+                      className="mt-3 inline-flex items-center px-3.5 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/20 text-emerald-400 font-black uppercase text-[9px] tracking-widest rounded-xl transition-all"
+                    >
+                      Mulai Siklus Baru
+                    </button>
+                  </div>
+                </div>
+              ) : (
                 <div className="bg-blue-500/5 border border-blue-500/15 rounded-2xl p-4 flex gap-3">
                   <Info size={18} className="text-blue-400 shrink-0 mt-0.5" />
                   <div>
@@ -288,8 +316,8 @@ export default function ListrikAirPage() {
                   <button
                     type="button"
                     onClick={handleAdd}
-                    disabled={!(Number(form.amount_idr) > 0) || addOpsCost.isPending}
-                    className="w-full h-14 bg-yellow-500 hover:bg-yellow-400 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-black font-black rounded-[20px] transition-all text-sm shadow-[0_8px_24px_rgba(234,179,8,0.25)]"
+                    disabled={!(Number(form.amount_idr) > 0) || activeBatches.length === 0 || addOpsCost.isPending}
+                    className="w-full h-14 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-30 disabled:bg-white/[0.04] disabled:text-[#4B6478] disabled:border-white/[0.05] disabled:cursor-not-allowed text-white font-black rounded-[20px] transition-all text-sm shadow-[0_8px_24px_rgba(16,185,129,0.15)] disabled:shadow-none active:scale-[0.98]"
                   >
                     {addOpsCost.isPending ? 'Menyimpan...' : 'Simpan & Alokasikan'}
                   </button>
@@ -329,7 +357,7 @@ export default function ListrikAirPage() {
             <NotificationBell />
             <button
               onClick={() => setShowSheet(true)}
-              className="h-14 px-8 bg-yellow-500 hover:bg-yellow-400 text-black font-['Sora'] font-black text-sm rounded-[20px] flex items-center gap-3 transition-all shadow-[0_10px_30px_rgba(234,179,8,0.25)] active:scale-[0.97] group"
+              className="h-14 px-8 bg-emerald-600 hover:bg-emerald-500 text-white font-['Sora'] font-black text-sm rounded-[20px] flex items-center gap-3 transition-all shadow-[0_10px_30px_rgba(16,185,129,0.15)] active:scale-[0.97] group"
             >
               <Plus size={20} strokeWidth={3} className="group-hover:rotate-90 transition-transform duration-300" /> 
               Catat Biaya
@@ -430,13 +458,38 @@ export default function ListrikAirPage() {
 
         {/* Records Container */}
         <div className="bg-[#0C1319]/50 backdrop-blur-md border border-white/[0.08] rounded-[40px] overflow-hidden shadow-2xl shadow-black/40">
-          {filteredCosts.length === 0 ? (
-            <div className="py-32 text-center">
+          {opsCosts.length === 0 ? (
+            <div className="py-24 text-center px-6 max-w-sm mx-auto">
+              <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-emerald-500/20">
+                <Zap size={28} className="text-emerald-400" />
+              </div>
+              <h3 className="font-['Sora'] font-black text-lg text-white mb-2">Belum Ada Catatan Listrik & Air</h3>
+              <p className="text-xs text-[#4B6478] leading-relaxed mb-6">
+                Catat tagihan rutin listrik, air, dan pemeliharaan farm lainnya untuk alokasi HPP otomatis.
+              </p>
+              <button
+                onClick={() => setShowSheet(true)}
+                className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-[11px] tracking-widest rounded-2xl transition-all shadow-lg shadow-emerald-500/20"
+              >
+                Catat Tagihan Pertama
+              </button>
+            </div>
+          ) : filteredCosts.length === 0 ? (
+            <div className="py-24 text-center">
               <div className="w-20 h-20 rounded-full bg-white/[0.02] border border-dashed border-white/10 flex items-center justify-center mx-auto mb-6">
                 <Search size={32} className="text-[#4B6478] opacity-40" />
               </div>
               <p className="text-sm font-black text-white tracking-wide uppercase">Catatan tidak ditemukan</p>
-              <p className="text-xs text-[#4B6478] mt-2">Gunakan filter atau kata kunci lain untuk mencari data</p>
+              <p className="text-xs text-[#4B6478] mt-2 mb-5">Gunakan kata kunci atau filter lain untuk mencari data.</p>
+              <button
+                onClick={() => {
+                  setSearchQuery('')
+                  setFilter('semua')
+                }}
+                className="inline-flex items-center px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black uppercase text-[10px] tracking-widest rounded-xl transition-all"
+              >
+                Reset Filter
+              </button>
             </div>
           ) : (
             <div className="divide-y divide-white/[0.04]">
@@ -603,7 +656,7 @@ export default function ListrikAirPage() {
           <NotificationBell />
           <button
             onClick={() => setShowSheet(true)}
-            className="w-11 h-11 bg-yellow-500 text-black rounded-2xl flex items-center justify-center transition-all active:scale-90 shadow-[0_8px_20px_rgba(234,179,8,0.3)]"
+            className="w-11 h-11 bg-emerald-600 text-white rounded-2xl flex items-center justify-center transition-all active:scale-90 shadow-[0_8px_20px_rgba(16,185,129,0.2)]"
           >
             <Plus size={22} strokeWidth={3} />
           </button>
@@ -693,13 +746,40 @@ export default function ListrikAirPage() {
             </div>
           </div>
 
-          {filteredCosts.length === 0 ? (
+           {opsCosts.length === 0 ? (
+            <div className="py-16 text-center bg-[#0C1319]/50 rounded-[32px] border border-dashed border-white/[0.08] px-6">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex items-center justify-center mx-auto mb-4">
+                <Zap size={20} className="text-emerald-500/40" />
+              </div>
+              <h3 className="font-['Sora'] font-black text-sm text-white mb-1">
+                Belum Ada Catatan Listrik & Air
+              </h3>
+              <p className="text-[11px] text-[#4B6478] max-w-xs mx-auto leading-relaxed mb-5">
+                Catat tagihan rutin listrik, air, dan pemeliharaan farm lainnya untuk alokasi HPP otomatis.
+              </p>
+              <button
+                onClick={() => setShowSheet(true)}
+                className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-[10px] tracking-widest rounded-xl transition-all shadow-lg shadow-emerald-500/10"
+              >
+                Catat Tagihan Pertama
+              </button>
+            </div>
+          ) : filteredCosts.length === 0 ? (
             <div className="py-24 text-center bg-[#0C1319]/50 rounded-[32px] border border-dashed border-white/[0.08] px-8">
               <div className="w-16 h-16 rounded-full bg-white/[0.02] flex items-center justify-center mx-auto mb-5 border border-white/5">
                 <Search size={24} className="text-white/10" />
               </div>
-              <p className="text-xs font-black text-[#4B6478] uppercase tracking-[0.2em]">Data Kosong</p>
-              <p className="text-[10px] text-[#4B6478]/50 mt-2 leading-relaxed">Belum ada catatan pengeluaran yang ditemukan</p>
+              <p className="text-xs font-black text-white tracking-wide uppercase">Catatan tidak ditemukan</p>
+              <p className="text-[10px] text-[#4B6478]/50 mt-2 mb-4 leading-relaxed">Gunakan kata kunci atau filter lain untuk mencari data.</p>
+              <button
+                onClick={() => {
+                  setSearchQuery('')
+                  setFilter('semua')
+                }}
+                className="inline-flex items-center px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black uppercase text-[10px] tracking-widest rounded-xl transition-all"
+              >
+                Reset Filter
+              </button>
             </div>
           ) : (
             <div className="space-y-4">

@@ -639,7 +639,7 @@ export default function HargaPasarPublic() {
                   onClick={() => navigate('/harga-pasar')}
                   className={cn(
                     "rounded-xl text-[10px] font-black uppercase tracking-widest px-4 h-9 transition-all",
-                    !currentProvince ? "bg-emerald-500 text-tx-1 shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:bg-bg-3/50"
+                    !currentProvince ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:bg-bg-3/50"
                   )}
                 >
                   Nasional
@@ -650,7 +650,7 @@ export default function HargaPasarPublic() {
                     onClick={() => navigate(`/harga-pasar/${provinceToSlug(p)}`)}
                     className={cn(
                       "rounded-xl text-[10px] font-black uppercase tracking-widest px-4 h-9 transition-all",
-                      currentProvince === p ? "bg-emerald-500 text-tx-1 shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:bg-bg-3/50"
+                      currentProvince === p ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:bg-bg-3/50"
                     )}
                   >
                     {p}
@@ -793,13 +793,13 @@ export default function HargaPasarPublic() {
                     <button
                       onClick={() => setHybridPeriod('weekly')}
                       className={cn("px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all",
-                        hybridPeriod === 'weekly' ? "bg-emerald-500 text-tx-1 shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:text-[#94A3B8]"
+                        hybridPeriod === 'weekly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:text-[#94A3B8]"
                       )}
                     >Mingguan</button>
                     <button
                       onClick={() => setHybridPeriod('monthly')}
                       className={cn("px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ml-0.5",
-                        hybridPeriod === 'monthly' ? "bg-emerald-500 text-tx-1 shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:text-[#94A3B8]"
+                        hybridPeriod === 'monthly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:text-[#94A3B8]"
                       )}
                     >Bulanan</button>
                   </div>
@@ -882,13 +882,13 @@ export default function HargaPasarPublic() {
                     <button
                       onClick={() => setHybridPeriod('weekly')}
                       className={cn("px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all",
-                        hybridPeriod === 'weekly' ? "bg-emerald-500 text-tx-1 shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:text-[#94A3B8]"
+                        hybridPeriod === 'weekly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:text-[#94A3B8]"
                       )}
                     >Mingguan</button>
                     <button
                       onClick={() => setHybridPeriod('monthly')}
                       className={cn("px-4 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ml-0.5",
-                        hybridPeriod === 'monthly' ? "bg-emerald-500 text-tx-1 shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:text-[#94A3B8]"
+                        hybridPeriod === 'monthly' ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-tx-3 hover:text-[#94A3B8]"
                       )}
                     >Bulanan</button>
                   </div>
@@ -1086,19 +1086,19 @@ export default function HargaPasarPublic() {
               Update: {todayFmt}
             </span>
           </div>
-          <Card className="bg-[#0C1319] border-white/5 overflow-hidden rounded-[24px]">
+          <Card className="bg-bg-1 border border-border-subtle overflow-hidden rounded-[24px]">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-white/5 text-[10px] text-tx-3 font-black uppercase tracking-widest border-b border-white/5">
+                    <tr className="bg-bg-2/50 text-[10px] text-tx-3 font-black uppercase tracking-widest border-b border-border-subtle">
                       <th className="px-6 py-4 text-left">Fitur Data Pasar</th>
                       <th className="px-6 py-4 text-center bg-emerald-500/10 text-emerald-400">TernakOS</th>
                       <th className="px-6 py-4 text-center">Chickin.id</th>
                       <th className="px-6 py-4 text-center">Portal Lain</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5">
+                  <tbody className="divide-y divide-border-subtle/50">
                     {[
                       { f: 'Berdasar Transaksi Nyata', t: true, c: false, p: false },
                       { f: 'Harga Beli (Farm Gate)', t: true, c: true, p: true },
@@ -1107,16 +1107,16 @@ export default function HargaPasarPublic() {
                       { f: 'Analisis Margin Broker', t: true, c: false, p: false },
                       { f: 'Privasi Data Terjamin', t: true, c: true, p: true },
                     ].map((row, i) => (
-                      <tr key={i} className="hover:bg-white/[0.01] transition-colors">
+                      <tr key={i} className="hover:bg-bg-2/30 transition-colors">
                         <td className="px-6 py-4 font-medium text-tx-1/80">{row.f}</td>
                         <td className="px-6 py-4 text-center bg-emerald-500/5">
-                          {row.t ? <Check className="mx-auto text-emerald-400" size={18} /> : <div className="mx-auto w-4 h-0.5 bg-white/10 rounded" />}
+                          {row.t ? <Check className="mx-auto text-emerald-400" size={18} /> : <div className="mx-auto w-4 h-0.5 bg-border-strong dark:bg-white/10 rounded" />}
                         </td>
                         <td className="px-6 py-4 text-center">
-                          {row.c ? <Check className="mx-auto text-tx-3" size={16} /> : <div className="mx-auto w-4 h-0.5 bg-white/10 rounded" />}
+                          {row.c ? <Check className="mx-auto text-tx-3" size={16} /> : <div className="mx-auto w-4 h-0.5 bg-border-strong dark:bg-white/10 rounded" />}
                         </td>
                         <td className="px-6 py-4 text-center">
-                          {row.p ? <Check className="mx-auto text-tx-3" size={16} /> : <div className="mx-auto w-4 h-0.5 bg-white/10 rounded" />}
+                          {row.p ? <Check className="mx-auto text-tx-3" size={16} /> : <div className="mx-auto w-4 h-0.5 bg-border-strong dark:bg-white/10 rounded" />}
                         </td>
                       </tr>
                     ))}
@@ -1129,7 +1129,7 @@ export default function HargaPasarPublic() {
 
         {/* ── CTA ── */}
         <motion.section initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.4 }}>
-          <Card className="bg-[#0C1319] border-white/10 overflow-hidden relative group hover:border-emerald-500/30 transition-all duration-500 rounded-[28px]">
+          <Card className="bg-bg-1 border border-border-subtle overflow-hidden relative group hover:border-emerald-500/30 transition-all duration-500 rounded-[28px] shadow-sm">
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-indigo-500/5 pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity" />
             <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[radial-gradient(circle,rgba(2, 26, 2,0.07)_0%,transparent_70%)] pointer-events-none" />
             <CardContent className="p-8 md:p-12 relative">
@@ -1143,7 +1143,7 @@ export default function HargaPasarPublic() {
                     Kontribusikan data Anda,<br className="hidden md:block" />
                     <span className="text-emerald-500">dapatkan insight lebih akurat</span>
                   </h2>
-                  <p className="text-sm md:text-base text-[#94A3B8] leading-relaxed font-medium">
+                  <p className="text-sm md:text-base text-tx-2 leading-relaxed font-medium">
                     Setiap broker yang bergabung memperkaya data rata-rata provinsi.
                     Semakin banyak broker aktif, semakin akurat harga pasar yang ditampilkan — untuk kepentingan semua pelaku bisnis ayam broiler.
                   </p>
@@ -1154,7 +1154,7 @@ export default function HargaPasarPublic() {
                       'Lihat tren harga per provinsi',
                       'Bandingkan vs harga pasar',
                     ].map(f => (
-                      <div key={f} className="flex items-center gap-2 text-[11px] text-[#94A3B8] font-medium">
+                      <div key={f} className="flex items-center gap-2 text-[11px] text-tx-3 font-medium">
                         <Check size={12} className="text-emerald-400" />
                         {f}
                       </div>
@@ -1163,7 +1163,7 @@ export default function HargaPasarPublic() {
                 </div>
                 <div className="flex flex-col sm:flex-row lg:flex-col gap-4 shrink-0">
                   <Button
-                    className="h-14 px-8 bg-emerald-500 hover:bg-emerald-400 text-tx-1 text-[13px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
+                    className="h-14 px-8 bg-emerald-500 hover:bg-emerald-400 text-white text-[13px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
                     asChild
                   >
                     <Link to="/register">
@@ -1172,7 +1172,7 @@ export default function HargaPasarPublic() {
                   </Button>
                   <Button
                     variant="outline"
-                    className="h-14 px-8 border-white/10 bg-white/5 text-tx-1 hover:bg-white/10 hover:border-white/20 text-[13px] font-black uppercase tracking-widest rounded-2xl active:scale-95 transition-all"
+                    className="h-14 px-8 border border-border-subtle dark:border-white/10 bg-bg-2 dark:bg-white/5 text-tx-1 hover:bg-bg-3 dark:hover:bg-white/10 hover:border-border-strong dark:hover:border-white/20 text-[13px] font-black uppercase tracking-widest rounded-2xl active:scale-95 transition-all"
                     asChild
                   >
                     <a href="https://wa.me/628123456789?text=Halo%2C%20saya%20tertarik%20coba%20TernakOS" target="_blank" rel="noopener noreferrer">

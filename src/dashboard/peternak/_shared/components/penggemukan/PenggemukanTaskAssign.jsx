@@ -112,7 +112,7 @@ function DraggableTaskCard({ task, assignmentOverride, isDragOverlay = false, dr
       }
     : undefined
 
-  const typeCfg = TASK_TYPE_CFG[task.template?.task_type] ?? TASK_TYPE_CFG.lainnya
+  const typeCfg = TASK_TYPE_CFG[task.task_type || task.template?.task_type] ?? TASK_TYPE_CFG.lainnya
   const TypeIcon = typeCfg.icon
   const statusCfg = STATUS_CFG[task.status] ?? STATUS_CFG.pending
   const assignedName = assignmentOverride?.workerName ?? task.worker?.full_name
@@ -157,7 +157,7 @@ function DraggableTaskCard({ task, assignmentOverride, isDragOverlay = false, dr
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="text-xs font-bold text-white truncate leading-tight">{task.template?.title ?? task.title ?? '—'}</p>
+          <p className="text-xs font-bold text-white truncate leading-tight">{task.title ?? task.template?.title ?? '—'}</p>
           {task.status === 'selesai' && task.report_data?.feed_orts_category && (
             <span className="text-[14px]">
               {task.report_data.feed_orts_category === 'habis' ? '👍' : task.report_data.feed_orts_category === 'sedikit' ? '🟡' : '🔴'}

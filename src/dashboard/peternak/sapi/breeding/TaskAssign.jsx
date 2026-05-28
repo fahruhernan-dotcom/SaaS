@@ -78,7 +78,7 @@ function DraggableTaskCard({ task, assignmentOverride, isDragOverlay = false }) 
     ? { transform: CSS.Translate.toString(transform) }
     : undefined
 
-  const typeCfg = TASK_TYPE_CFG[task.template?.task_type] ?? TASK_TYPE_CFG.lainnya
+  const typeCfg = TASK_TYPE_CFG[task.task_type || task.template?.task_type] ?? TASK_TYPE_CFG.lainnya
   const TypeIcon = typeCfg.icon
   const assignedName = assignmentOverride?.workerName
     ?? task.worker?.full_name

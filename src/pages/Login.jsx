@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import {
   Eye, EyeOff, AlertCircle, Loader2,
-  TrendingUp, Truck, BarChart2, Clock, Shield, Users, Zap, Mail, Lock
+  TrendingUp, Truck, BarChart2, Clock, Shield, Users, Zap, Mail, Lock,
+  Sun, Moon
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getBrokerBasePath, getPeternakBasePath, useAuth } from '../lib/hooks/useAuth'
@@ -41,6 +42,28 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [rememberMe, setRememberMe] = useState(false)
+  const [theme, setTheme] = useState('light')
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('ternakos_theme_mode') || 'light'
+    setTheme(savedTheme)
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [])
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light'
+    setTheme(newTheme)
+    localStorage.setItem('ternakos_theme_mode', newTheme)
+    if (newTheme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }
 
   const { user, profile, loading: authLoading, isSuperadmin } = useAuth()
 
@@ -200,7 +223,7 @@ export default function Login() {
   const propsBag = {
     email, setEmail, password, setPassword, showPassword, setShowPassword,
     isLoading, error, handleLogin, handleGoogleSignIn, navigate,
-    rememberMe, setRememberMe,
+    rememberMe, setRememberMe, theme, toggleTheme
   }
 
   if (!isDesktop) {
@@ -210,10 +233,10 @@ export default function Login() {
   return <DesktopLoginView {...propsBag} />
 }
 
-function DesktopLoginView({ email, setEmail, password, setPassword, showPassword, setShowPassword, isLoading, error, handleLogin, handleGoogleSignIn, navigate, rememberMe, setRememberMe }) {
+function DesktopLoginView({ email, setEmail, password, setPassword, showPassword, setShowPassword, isLoading, error, handleLogin, handleGoogleSignIn, navigate, rememberMe, setRememberMe, theme, toggleTheme }) {
   const { t } = useLanguage()
   return (
-    <div className="flex min-h-screen bg-[#06090F] overflow-x-hidden">
+    <div className="flex min-h-screen bg-bg-base overflow-x-hidden">
       {/* LOGO (Absolute Positioned) */}
       <Link to="/" className="absolute top-8 left-12 flex items-center gap-2 z-50 group cursor-pointer">
         <img
@@ -226,8 +249,8 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
           fontFamily: 'Sora',
           fontSize: '20px',
           fontWeight: 800,
-          color: '#F1F5F9',
-          letterSpacing: '-0.3px'
+          letterSpacing: '-0.3px',
+          color: '#ffffff'
         }}>
           TernakOS
         </span>
@@ -238,28 +261,36 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="dark-preserve hidden md:flex md:w-1/2 relative overflow-hidden flex-col justify-center px-12 py-16 bg-[#06090F]"
+        className="dark-preserve hidden md:flex md:w-1/2 relative overflow-hidden flex-col justify-center px-12 py-16"
+        style={{ 
+          background: 'radial-gradient(circle at 10% 20%, rgba(6, 182, 212, 0.15) 0%, transparent 45%), radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.15) 0%, transparent 45%), linear-gradient(135deg, #090e14 0%, #0d1520 100%)'
+        }}
       >
-        {/* Decorations */}
+        {/* Glowing Orbs */}
         <div style={{
           position: 'absolute',
-          bottom: 0, left: 0,
-          width: '100%', height: '100%',
-          background: 'radial-gradient(ellipse at 0% 100%, rgba(16, 185, 129, 0.12) 0%, transparent 60%)',
-          pointerEvents: 'none'
+          top: '10%', left: '-10%',
+          width: '350px', height: '350px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, rgba(16, 185, 129, 0) 70%)',
+          filter: 'blur(50px)',
+          pointerEvents: 'none',
         }} />
         <div style={{
           position: 'absolute',
-          top: 0, right: 0,
-          width: '100%', height: '100%',
-          background: 'radial-gradient(ellipse at 100% 0%, rgba(16, 185, 129, 0.04) 0%, transparent 50%)',
-          pointerEvents: 'none'
+          bottom: '10%', right: '-10%',
+          width: '400px', height: '400px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, rgba(6, 182, 212, 0) 70%)',
+          filter: 'blur(60px)',
+          pointerEvents: 'none',
         }} />
         
         <Particles
-          quantity={40}
-          color="#10B981"
-          opacity={0.08}
+          particleCount={75}
+          particleColors={['#6EE7B7', '#34D399', '#10B981', '#22D3EE']}
+          particleBaseSize={1.8}
+          speed={0.3}
           className="absolute inset-0 pointer-events-none"
         />
 
@@ -270,14 +301,22 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
             {/* STATS ROW */}
             <div className="flex gap-3 mt-8">
               {[
-                { icon: <Clock className="w-4 h-4 text-[#10B981] mb-2" />, val: "< 2 Min", label: "Catat Transaksi" },
-                { icon: <Zap className="w-4 h-4 text-[#10B981] mb-2" />, val: "Real-time", label: "Update Harga" },
-                { icon: <Shield className="w-4 h-4 text-[#10B981] mb-2" />, val: "100%", label: "Data Aman" },
+                { icon: <Clock className="w-4 h-4 text-emerald-300 mb-2" />, val: "< 2 Min", label: "Catat Transaksi" },
+                { icon: <Zap className="w-4 h-4 text-emerald-300 mb-2" />, val: "Real-time", label: "Update Harga" },
+                { icon: <Shield className="w-4 h-4 text-emerald-300 mb-2" />, val: "100%", label: "Data Aman" },
               ].map((stat, i) => (
-                <div key={i} className="bg-[#0C1319]/80 border border-white/8 rounded-xl p-3 flex-1 flex flex-col items-start transition-colors hover:bg-[#0C1319]">
+                <div 
+                  key={i} 
+                  className="backdrop-blur-md rounded-xl p-3 flex-1 flex flex-col items-start transition-all duration-300 hover:scale-[1.02] hover:translate-y-[-2px] cursor-default" 
+                  style={{ 
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)', 
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    boxShadow: '0 4px 20px 0 rgba(0, 0, 0, 0.2)'
+                  }}
+                >
                   {stat.icon}
-                  <div className="font-display text-base font-bold text-[#10B981]">{stat.val}</div>
-                  <div className="text-[#94A3B8] text-[10px] mt-0.5 font-medium">{stat.label}</div>
+                  <div className="font-display text-base font-bold" style={{ color: '#ffffff' }}>{stat.val}</div>
+                  <div className="text-[10px] mt-0.5 font-medium" style={{ color: '#94a3b8' }}>{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -308,13 +347,21 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
                   desc: "Broker, peternak, dan RPA dalam satu ekosistem terintegrasi." 
                 },
               ].map((item, i) => (
-                <div key={i} className="bg-[#0C1319]/80 border border-white/8 rounded-xl p-3.5 flex flex-col gap-2 transition-all hover:border-white/12">
-                  <div className="w-7 h-7 bg-[#10B981]/10 border border-[#10B981]/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                    {React.cloneElement(item.icon, { size: 14, className: "text-[#10B981]" })}
+                <div 
+                  key={i} 
+                  className="backdrop-blur-md rounded-xl p-3.5 flex flex-col gap-2 transition-all duration-300 hover:scale-[1.02] hover:translate-y-[-2px] cursor-default" 
+                  style={{ 
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)', 
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    boxShadow: '0 4px 20px 0 rgba(0, 0, 0, 0.2)'
+                  }}
+                >
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.2)' }}>
+                    {React.cloneElement(item.icon, { size: 14, style: { color: '#6EE7B7' } })}
                   </div>
                   <div>
-                    <h4 className="text-[#F1F5F9] text-[13px] font-semibold mt-1">{item.title}</h4>
-                    <p className="text-[#4B6478] text-[11px] leading-relaxed font-medium">{item.desc}</p>
+                    <h4 className="text-[13px] font-semibold mt-1" style={{ color: '#ffffff' }}>{item.title}</h4>
+                    <p className="text-[11px] leading-relaxed font-medium" style={{ color: '#94a3b8' }}>{item.desc}</p>
                   </div>
                 </div>
               ))}
@@ -325,17 +372,25 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
         {/* TESTIMONIAL */}
         <AnimatedContent delay={0.8} distance={20}>
           <div className="mt-8 relative z-10">
-            <div className="bg-[#0C1319]/80 border-l-2 border-[#10B981] rounded-xl p-4">
-              <p className="text-[#94A3B8] text-xs italic leading-relaxed">
+            <div 
+              className="backdrop-blur-md rounded-xl p-4 transition-all duration-300 hover:scale-[1.01] cursor-default" 
+              style={{ 
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)', 
+                border: '1px solid rgba(255, 255, 255, 0.08)', 
+                borderLeft: '3px solid #34D399',
+                boxShadow: '0 4px 20px 0 rgba(0, 0, 0, 0.2)'
+              }}
+            >
+              <p className="text-xs italic leading-relaxed" style={{ color: '#cbd5e1' }}>
                 "Dulu catat transaksi pakai buku, sekarang semua langsung keliatan profit hari ini. TernakOS sangat membantu bisnis saya."
               </p>
               <div className="flex gap-2 items-center mt-3">
-                <div className="w-7 h-7 rounded-full bg-[#10B981]/20 border border-[#10B981]/30 flex items-center justify-center text-[10px] font-bold text-[#10B981] font-display">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold font-display" style={{ backgroundColor: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.2)', color: '#6EE7B7' }}>
                   PH
                 </div>
                 <div>
-                  <p className="text-[#F1F5F9] text-xs font-semibold">Pak Harto</p>
-                  <p className="text-[#4B6478] text-[10px]">Broker Ayam, Boyolali</p>
+                  <p className="text-xs font-semibold" style={{ color: '#ffffff' }}>Pak Harto</p>
+                  <p className="text-[10px]" style={{ color: '#94a3b8' }}>Broker Ayam, Boyolali</p>
                 </div>
               </div>
             </div>
@@ -344,22 +399,46 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
       </motion.div>
 
       {/* RIGHT PANEL - FORM */}
-      <div className="flex-1 md:w-1/2 w-full flex items-center justify-center px-6 md:px-12 py-16 bg-[#080D13] md:border-l border-white/5 min-h-screen">
+      <div className="flex-1 md:w-1/2 w-full flex items-center justify-center px-6 md:px-12 py-16 bg-bg-base md:border-l border-border-subtle min-h-screen">
         <AnimatedContent direction="right" delay={0.2} distance={40} className="w-full max-w-md">
-          <div className="w-full bg-[#0C1319] border border-white/8 rounded-2xl p-8">
+          <div className="w-full bg-bg-1 border border-border-default rounded-2xl p-8 relative overflow-hidden">
+            {/* Theme Toggle Button (Desktop inside Form Card) */}
+            <motion.button
+              type="button"
+              onClick={toggleTheme}
+              className="absolute top-6 right-6 z-50 w-9 h-9 rounded-xl flex items-center justify-center border border-border-default bg-bg-2/30 hover:bg-bg-3/20 transition-all focus:outline-none shrink-0"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              aria-label="Toggle Theme"
+              style={{ color: 'var(--text-primary-val)', borderColor: 'var(--border-def-val)' }}
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={theme}
+                  initial={{ y: -8, opacity: 0, rotate: -45 }}
+                  animate={{ y: 0, opacity: 1, rotate: 0 }}
+                  exit={{ y: 8, opacity: 0, rotate: 45 }}
+                  transition={{ duration: 0.15 }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+                </motion.div>
+              </AnimatePresence>
+            </motion.button>
+
             {/* HEADER (Mobile Logo) */}
             <Link to="/" className="md:hidden flex items-center justify-center gap-2 mb-8 group">
               <img src="/logo.png" alt="TernakOS" style={{ width: 28, height: 28, borderRadius: '8px', objectFit: 'cover' }} className="group-hover:scale-110 transition-transform" />
               <span style={{
                 fontFamily:'Sora', fontWeight:800,
-                fontSize:'18px', color:'#F1F5F9'
-              }}>TernakOS</span>
+                fontSize:'18px'
+              }} className="text-text-primary">TernakOS</span>
             </Link>
             
-            <h1 className="text-xl font-bold font-display text-[#F1F5F9] mb-1 tracking-tight">
+            <h1 className="text-xl font-bold font-display text-text-primary mb-1 tracking-tight">
               {t('auth_welcome_back', 'Selamat datang kembali')}
             </h1>
-            <p className="text-[13px] text-[#4B6478] mb-6 leading-relaxed font-medium">
+            <p className="text-[13px] text-text-secondary mb-6 leading-relaxed font-medium">
               {t('auth_welcome_desc', 'Masukkan email dan password kamu untuk masuk')}
             </p>
 
@@ -368,22 +447,7 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
                 type="button"
                 variant="outline"
                 onClick={handleGoogleSignIn}
-                style={{
-                  width: '100%',
-                  height: '44px',
-                  background: 'transparent',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: '10px',
-                  color: '#4B6478',
-                  fontFamily: 'Sora',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-                className="hover:bg-white/5 transition-colors"
+                className="w-full h-[44px] bg-transparent border border-border-default rounded-[10px] text-text-secondary font-['Sora'] text-[14px] font-semibold flex items-center justify-center gap-2 hover:bg-bg-2 hover:border-border-strong transition-colors"
               >
                 <svg width="16" height="16" viewBox="0 0 18 18">
                   <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.259h2.908c1.702-1.567 2.684-3.874 2.684-6.617z"/>
@@ -396,21 +460,15 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
             </div>
 
             <div className="flex items-center gap-3 mb-6">
-              <Separator className="flex-1 bg-white/5" />
-              <span className="text-[12px] text-[#4B6478] whitespace-nowrap uppercase tracking-widest font-bold">{t('auth_or', 'atau')}</span>
-              <Separator className="flex-1 bg-white/5" />
+              <Separator className="flex-1 bg-border-subtle" />
+              <span className="text-[12px] text-text-muted whitespace-nowrap uppercase tracking-widest font-bold">{t('auth_or', 'atau')}</span>
+              <Separator className="flex-1 bg-border-subtle" />
             </div>
 
             <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} className="space-y-4">
               {/* Email field */}
               <div className="space-y-1.5">
-                <Label htmlFor="email" style={{
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: '#94A3B8',
-                  marginLeft: '4px',
-                  display: 'block'
-                }}>
+                <Label htmlFor="email" className="text-[13px] font-medium text-text-secondary ml-1 block">
                   {t('auth_email_label', 'Email')}
                 </Label>
                 <Input
@@ -420,29 +478,14 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
                   placeholder={t('auth_email_placeholder', 'Email')}
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  style={{
-                    background: '#111C24',
-                    border: '1px solid rgba(255,255,255,0.09)',
-                    borderRadius: '10px',
-                    padding: '10px 14px',
-                    fontSize: '15px',
-                    color: '#F1F5F9',
-                    height: '42px',
-                    width: '100%',
-                    outline: 'none'
-                  }}
-                  className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
+                  className="bg-bg-2 border border-border-default rounded-[10px] px-[14px] py-[10px] text-[15px] text-text-primary h-[42px] w-full outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
                 />
               </div>
               
               {/* Password field */}
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center ml-1 pr-1">
-                  <Label htmlFor="password" style={{
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    color: '#94A3B8'
-                  }}>
+                  <Label htmlFor="password" className="text-[13px] font-medium text-text-secondary">
                     {t('auth_password_label', 'Password')}
                   </Label>
                   <button
@@ -470,18 +513,7 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
                   placeholder={t('auth_password_placeholder', '••••••••')}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                    style={{
-                      background: '#111C24',
-                      border: '1px solid rgba(255,255,255,0.09)',
-                      borderRadius: '10px',
-                      padding: '10px 44px 10px 14px',
-                      fontSize: '15px',
-                      color: '#F1F5F9',
-                      height: '42px',
-                      width: '100%',
-                      outline: 'none'
-                    }}
-                    className="focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
+                    className="bg-bg-2 border border-border-default rounded-[10px] pl-[14px] pr-[44px] py-[10px] text-[15px] text-text-primary h-[42px] w-full outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20"
                   />
                   <button
                     type="button"
@@ -516,7 +548,7 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
                   onChange={e => setRememberMe(e.target.checked)}
                   style={{ width: 15, height: 15, accentColor: '#10B981', cursor: 'pointer', flexShrink: 0 }}
                 />
-                <label htmlFor="rememberMe" style={{ fontSize: '13px', color: '#94A3B8', cursor: 'pointer', userSelect: 'none' }}>
+                <label htmlFor="rememberMe" className="text-[13px] text-text-secondary cursor-pointer select-none">
                   {t('auth_remember_me', 'Ingat saya')}
                 </label>
               </div>
@@ -544,14 +576,13 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
                 style={{
                   width: '100%',
                   height: '44px',
-                  background: '#10B981',
                   border: 'none',
                   borderRadius: '10px',
                   color: 'white',
                   fontFamily: 'Sora',
                   fontSize: '14px',
                   fontWeight: 700,
-                  boxShadow: '0 4px 20px rgba(16, 185, 129, 0.25)',
+                  boxShadow: '0 4px 20px rgba(29, 87, 68, 0.25)',
                   cursor: isLoading || !email || !password
                     ? 'not-allowed' : 'pointer',
                   opacity: !email || !password ? 0.5 : 1,
@@ -561,7 +592,7 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
                   gap: '8px',
                   marginTop: '10px'
                 }}
-                className="hover:bg-emerald-600 transition-colors"
+                className="bg-[#1D5744] hover:bg-[#10B981] transition-all duration-200"
               >
                 {isLoading ? (
                   <><Loader2 size={16} className="animate-spin" />
@@ -571,31 +602,20 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
             </form>
             
             <div className="flex items-center gap-3 my-8">
-              <Separator className="flex-1 bg-white/5" />
-              <span className="text-[12px] text-[#4B6478] whitespace-nowrap">{t('auth_no_account', 'Belum punya akun?')}</span>
-              <Separator className="flex-1 bg-white/5" />
+              <Separator className="flex-1 bg-border-subtle" />
+              <span className="text-[12px] text-text-secondary whitespace-nowrap">{t('auth_no_account', 'Belum punya akun?')}</span>
+              <Separator className="flex-1 bg-border-subtle" />
             </div>
             
             <Button
               variant="outline"
               onClick={() => navigate('/register')}
-              style={{
-                width: '100%',
-                height: '44px',
-                background: 'transparent',
-                border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: '10px',
-                color: '#F1F5F9',
-                fontFamily: 'Sora',
-                fontSize: '14px',
-                fontWeight: 600
-              }}
-              className="hover:bg-white/5 transition-colors"
+              className="w-full h-[44px] bg-transparent border border-border-default rounded-[10px] text-text-primary font-['Sora'] text-[14px] font-semibold hover:bg-bg-2 hover:border-border-strong transition-colors"
             >
               {t('auth_register_now', 'Daftar Sekarang — Gratis')}
             </Button>
             
-            <p className="text-[12px] text-[#4B6478] text-center mt-8 leading-relaxed">
+            <p className="text-[12px] text-text-secondary text-center mt-8 leading-relaxed">
               {t('auth_terms_prefix', 'Dengan masuk, kamu menyetujui ')}
               <Link 
                 to="/terms" 
@@ -623,7 +643,7 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
   )
 }
 
-function MobileLoginView({ email, setEmail, password, setPassword, showPassword, setShowPassword, isLoading, error, handleLogin, handleGoogleSignIn, navigate, rememberMe, setRememberMe }) {
+function MobileLoginView({ email, setEmail, password, setPassword, showPassword, setShowPassword, isLoading, error, handleLogin, handleGoogleSignIn, navigate, rememberMe, setRememberMe, theme, toggleTheme }) {
   const containerRef = useRef(null)
   const { t } = useLanguage()
 
@@ -681,7 +701,8 @@ function MobileLoginView({ email, setEmail, password, setPassword, showPassword,
         flexDirection: 'column',
         position: 'relative',
         zIndex: 1,
-        border: '1px solid var(--mobile-card-border)'
+        border: '1px solid var(--mobile-card-border)',
+        transition: 'background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
       }}>
         <div style={{ position: 'relative' }}>
           {/* Refined Mesh Gradient Header */}
@@ -691,6 +712,30 @@ function MobileLoginView({ email, setEmail, password, setPassword, showPassword,
             position: 'relative', 
             overflow: 'hidden',
           }}>
+            {/* Theme Toggle Button (Mobile inside Header Card) */}
+            <motion.button
+              type="button"
+              onClick={toggleTheme}
+              className="absolute top-6 right-6 z-50 w-9 h-9 rounded-xl flex items-center justify-center border border-border-default bg-bg-2/30 hover:bg-bg-3/20 transition-all focus:outline-none shrink-0"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              aria-label="Toggle Theme"
+              style={{ color: 'var(--text-primary-val)', borderColor: 'var(--border-def-val)' }}
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={theme}
+                  initial={{ y: -8, opacity: 0, rotate: -45 }}
+                  animate={{ y: 0, opacity: 1, rotate: 0 }}
+                  exit={{ y: 8, opacity: 0, rotate: 45 }}
+                  transition={{ duration: 0.15 }}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+                </motion.div>
+              </AnimatePresence>
+            </motion.button>
+
             <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice">
               <circle className="ml-circle opacity-20" cx="360" cy="10"  r="160" fill="none" stroke="currentColor" strokeWidth="0.5" />
               <circle className="ml-circle opacity-10" cx="-40" cy="220" r="180" fill="none" stroke="currentColor" strokeWidth="0.5" />
@@ -782,7 +827,10 @@ function MobileLoginView({ email, setEmail, password, setPassword, showPassword,
               <button
                 type="submit"
                 disabled={isLoading || !email || !password}
-                className="w-full p-[14px] bg-emerald-500 disabled:bg-emerald-900 border-none rounded-[14px] text-white text-[16px] font-bold font-sans cursor-pointer flex items-center justify-center gap-[8px] tracking-[0.01em] shadow-[0_4px_24px_rgba(34,197,94,0.3)] transition-all disabled:opacity-55 disabled:shadow-none"
+                style={{
+                  boxShadow: isLoading || !email || !password ? 'none' : '0 4px 24px rgba(29, 87, 68, 0.3)',
+                }}
+                className="w-full p-[14px] bg-[#1D5744] hover:bg-[#10B981] border-none rounded-[14px] text-white text-[16px] font-bold font-sans cursor-pointer flex items-center justify-center gap-[8px] tracking-[0.01em] transition-all disabled:opacity-55 disabled:shadow-none"
               >
                 {isLoading ? <><Loader2 size={16} className="animate-spin" /> {t('auth_logging_in', 'Masuk...')}</> : t('auth_login_button_mobile', 'Masuk →')}
               </button>

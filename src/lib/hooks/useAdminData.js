@@ -258,7 +258,7 @@ export const useDeletePaymentSetting = () => {
 export const useCreateInvoice = () => {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ tenantId, plan, billingMonths, amount, notes }) => {
+    mutationFn: async ({ tenantId, plan, billingMonths, amount, notes, discount_code }) => {
       const timestamp = Date.now().toString(36).toUpperCase()
       const random = crypto.getRandomValues(new Uint8Array(4))
         .reduce((str, b) => str + b.toString(16).padStart(2, '0'), '')
@@ -276,15 +276,16 @@ export const useCreateInvoice = () => {
           notes: notes || null,
           status: 'pending',
           payment_method: 'manual',
-          payment_provider: 'manual'
+          payment_provider: 'manual',
+          discount_code: discount_code || null
         })
-        .select('id')
+        .select('id, amount')
         .single()
       if (error) {
         logSupabaseError(error, { table: 'subscription_invoices', operation: 'insert', component: 'useCreateInvoice', actionName: 'admin.invoice.create' })
         throw error
       }
-      return { invoiceNumber, invoiceId: row.id }
+      return { invoiceNumber, invoiceId: row.id, amount: row.amount }
     },
     onSuccess: ({ invoiceNumber }) => {
       queryClient.invalidateQueries(['admin-invoices'])

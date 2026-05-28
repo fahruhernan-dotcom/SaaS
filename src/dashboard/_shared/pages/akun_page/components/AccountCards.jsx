@@ -481,14 +481,15 @@ function LimitRow({ label, used, cap, subtitle, accent: accentColor }) {
 
 // ─── Section 5.5: Vertical Shortcuts ─────────────────────────
 
-function getVerticalShortcuts(rawVertical, basePath, t) {
+function getVerticalShortcuts(rawVertical, basePath, t, isStarter = false) {
   const bp = basePath || ''
   if (!rawVertical || rawVertical.startsWith('peternak_') || rawVertical === 'peternak') {
     return [
       { icon: 'clipboard', label: t('shortcut_daily_task'), path: bp + '/daily_task' },
       { icon: 'package',   label: t('shortcut_pakan'),   path: bp + '/pakan' },
       { icon: 'barchart',  label: t('shortcut_laporan'),   path: bp + '/laporan' },
-      { icon: 'users',     label: t('shortcut_tim'),       path: bp + '/tim' },
+      // Tim: Pro feature only — hidden for Starter
+      ...(!isStarter ? [{ icon: 'users', label: t('shortcut_tim'), path: bp + '/tim' }] : []),
     ]
   }
   if (rawVertical === 'poultry_broker') {
@@ -546,9 +547,9 @@ const SHORTCUT_ICONS = {
   settings:  <Settings size={16} />,
 }
 
-export function VerticalShortcutsCard({ rawVertical, basePath, accent, navigate }) {
+export function VerticalShortcutsCard({ rawVertical, basePath, accent, navigate, isStarter = false }) {
   const { t } = useLanguage()
-  const shortcuts = getVerticalShortcuts(rawVertical, basePath, t)
+  const shortcuts = getVerticalShortcuts(rawVertical, basePath, t, isStarter)
   if (!shortcuts.length) return null
   return (
     <Section title={t('shortcuts_section')} icon={<LayoutGrid size={13} />} iconColor={accent.base} delay={0.17}>
@@ -596,7 +597,10 @@ function PrefRow({ icon, label, desc, open, onToggle, noBorder, children }) {
           width: '100%', display: 'flex', alignItems: 'center', gap: 12,
           padding: '10px 4px',
           borderBottom: open || noBorder ? 'none' : `1px solid ${T.hairline}`,
-          background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left',
+          borderTop: 'none',
+          borderLeft: 'none',
+          borderRight: 'none',
+          background: 'transparent', cursor: 'pointer', textAlign: 'left',
           borderRadius: 0,
         }}
       >
@@ -908,9 +912,12 @@ export function HelpAboutCard({ navigate, canDeleteBusiness, onDeleteClick }) {
             onClick={it.onClick}
             style={{
               width: '100%', textAlign: 'left',
-              background: 'transparent', border: 'none', cursor: 'pointer',
-              padding: '10px 4px',
               borderBottom: i < items.length - 1 ? `1px solid ${T.hairline}` : 'none',
+              borderTop: 'none',
+              borderLeft: 'none',
+              borderRight: 'none',
+              background: 'transparent', cursor: 'pointer',
+              padding: '10px 4px',
               display: 'flex', alignItems: 'center', gap: 12,
             }}
           >

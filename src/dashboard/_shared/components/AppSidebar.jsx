@@ -100,7 +100,6 @@ export default function AppSidebar({ open, onClose }) {
     () => /^\/peternak\/[^/]+\/kandang\//.test(location.pathname)
   )
   const userDropdownRef = useRef(null)
-  const [showTrialChoices, setShowTrialChoices] = useState(false)
 
   // Get dynamic trial configuration from admin settings
   const { data: planConfigs } = usePlanConfigs()
@@ -214,7 +213,7 @@ export default function AppSidebar({ open, onClose }) {
   const brokerBase = getBrokerBasePath(tenant)
   const peternakBase = getXBasePath(tenant, profile)
   
-  const color = accentColor || (isSembako ? '#EA580C' : isEgg ? '#7C3AED' : isRPA ? '#F59E0B' : '#021a02')
+  const color = accentColor || (isSembako ? '#EA580C' : isEgg ? '#7C3AED' : isRPA ? '#F59E0B' : isDombaPenggemukan ? '#10B981' : '#021a02')
 
   const getBerandaPath = (v, t = tenant) => {
     const bBase = getBrokerBasePath(t)
@@ -465,7 +464,7 @@ export default function AppSidebar({ open, onClose }) {
   // Subscription status — single source of truth
   const getStatusColor = (status) => {
     switch (status) {
-      case 'active':   return { color: '#021a02', bg: 'rgba(2, 26, 2,0.12)', border: 'rgba(2, 26, 2,0.25)' }
+      case 'active':   return { color: '#34D399', bg: 'rgba(52, 211, 153, 0.1)', border: 'rgba(52, 211, 153, 0.2)' }
       case 'trial':    return { color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.25)' }
       case 'expired':  return { color: '#F87171', bg: 'rgba(248,113,113,0.12)', border: 'rgba(248,113,113,0.25)' }
       default:         return { color: '#64748B', bg: 'rgba(100,116,139,0.10)', border: 'rgba(100,116,139,0.20)' }
@@ -506,7 +505,10 @@ export default function AppSidebar({ open, onClose }) {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
-                  className="bg-secondary border border-border rounded-xl group-data-[collapsible=icon]:border-none group-data-[collapsible=icon]:bg-transparent hover:bg-white/[0.03] transition-colors"
+                  className={isDombaPenggemukan 
+                    ? "bg-[#0C1319] hover:bg-[#111C24] border border-white/5 rounded-2xl p-2.5 h-auto transition-all shadow-md shadow-black/10 group-data-[collapsible=icon]:border-none group-data-[collapsible=icon]:bg-transparent"
+                    : "bg-secondary border border-border rounded-xl group-data-[collapsible=icon]:border-none group-data-[collapsible=icon]:bg-transparent hover:bg-white/[0.03] transition-colors"
+                  }
                 >
                   <div 
                     className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0 border overflow-hidden"
@@ -763,7 +765,9 @@ export default function AppSidebar({ open, onClose }) {
                 />
               </button>
             ) : (
-              <SidebarGroupLabel className="text-[10px] font-bold tracking-[0.15em] text-muted-foreground px-2 mb-1">
+              <SidebarGroupLabel className={`text-[10px] font-bold tracking-[0.15em] text-muted-foreground px-2 mb-1 ${
+                isDombaPenggemukan ? 'mt-4 first:mt-0 mb-2 text-[#4B6478] tracking-[0.2em]' : ''
+              }`}>
                 {group.label}
               </SidebarGroupLabel>
             )}
@@ -781,19 +785,32 @@ export default function AppSidebar({ open, onClose }) {
                     ? `${item.title} — Upgrade ke ${item.planRequired === 'business' ? 'Business' : 'Pro'}`
                     : `${item.title} (Segera Hadir)`
                   return (
-                    <SidebarMenuItem key={item.title}>
+                    <SidebarMenuItem key={item.title} className={isDombaPenggemukan ? "relative flex items-center w-full" : ""}>
+                      {isDombaPenggemukan && isActive && !isLocked && (
+                        <div 
+                          className="absolute left-[-2px] top-1/2 -translate-y-1/2 w-[3px] h-[20px] rounded-r-md z-20" 
+                          style={{ backgroundColor: color }}
+                        />
+                      )}
                       <SidebarMenuButton
                         asChild={!isLocked}
                         isActive={isActive}
                         tooltip={isLocked ? lockTooltip : item.title}
                         className={`rounded-xl mb-0.5 transition-all duration-200 ${
+                          isDombaPenggemukan ? 'h-[44px] py-2.5 px-3.5' : ''
+                        } ${
                           isLocked
                             ? 'opacity-40 cursor-not-allowed'
                             : isActive
                               ? 'bg-opacity-10'
                               : 'hover:bg-white/[0.03] text-foreground'
                         }`}
-                        style={isActive && !isLocked ? { background: `${color}18`, border: `1px solid ${color}33`, color: color } : {}}
+                        style={isActive && !isLocked ? { 
+                          background: `${color}18`, 
+                          border: `1px solid ${color}33`, 
+                          color: color,
+                          boxShadow: isDombaPenggemukan ? `0 4px 12px ${color}0D` : undefined
+                        } : {}}
                       >
                         {isLocked ? (
                           <div className="flex items-center gap-3 w-full px-2 py-1.5">
@@ -991,35 +1008,76 @@ export default function AppSidebar({ open, onClose }) {
 
         {/* ── LAINNYA ── */}
         <SidebarGroup className="mt-2">
-          <SidebarGroupLabel className="text-[10px] font-bold tracking-[0.15em] text-muted-foreground px-2 mb-1">
+          <SidebarGroupLabel className={`text-[10px] font-bold tracking-[0.15em] text-muted-foreground px-2 mb-1 ${
+            isDombaPenggemukan ? 'mt-4 first:mt-0 mb-2 text-[#4B6478] tracking-[0.2em]' : ''
+          }`}>
             LAINNYA
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {(isPoultry || isPeternak) && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={location.pathname === '/dashboard/harga-pasar'} className="rounded-xl mb-0.5 hover:bg-white/[0.03]">
+                <SidebarMenuItem className={isDombaPenggemukan ? "relative flex items-center w-full" : ""}>
+                  {isDombaPenggemukan && location.pathname === '/dashboard/harga-pasar' && (
+                    <div 
+                      className="absolute left-[-2px] top-1/2 -translate-y-1/2 w-[3px] h-[20px] rounded-r-md z-20" 
+                      style={{ backgroundColor: color }}
+                    />
+                  )}
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname === '/dashboard/harga-pasar'} 
+                    className={`rounded-xl mb-0.5 ${
+                      isDombaPenggemukan ? 'h-[44px] py-2.5 px-3.5' : 'hover:bg-white/[0.03]'
+                    }`}
+                    style={isDombaPenggemukan && location.pathname === '/dashboard/harga-pasar' ? { background: `${color}18`, border: `1px solid ${color}33`, color: color } : {}}
+                  >
                     <NavLink to="/dashboard/harga-pasar" className="flex items-center gap-3 w-full">
-                      <BarChart2 size={18} className="text-muted-foreground" />
-                      <span className="font-body text-[14px] font-medium text-foreground">Harga Pasar</span>
+                      <BarChart2 size={18} style={isDombaPenggemukan && location.pathname === '/dashboard/harga-pasar' ? { color: color } : {}} className={isDombaPenggemukan && location.pathname === '/dashboard/harga-pasar' ? '' : 'text-muted-foreground'} />
+                      <span className={`font-body text-[14px] ${isDombaPenggemukan && location.pathname === '/dashboard/harga-pasar' ? 'font-semibold' : 'font-medium'}`} style={isDombaPenggemukan && location.pathname === '/dashboard/harga-pasar' ? { color: color } : {}}>Harga Pasar</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location.pathname === '/market'} className="rounded-xl mb-0.5 hover:bg-white/[0.03]">
+              <SidebarMenuItem className={isDombaPenggemukan ? "relative flex items-center w-full" : ""}>
+                {isDombaPenggemukan && location.pathname === '/market' && (
+                  <div 
+                    className="absolute left-[-2px] top-1/2 -translate-y-1/2 w-[3px] h-[20px] rounded-r-md z-20" 
+                    style={{ backgroundColor: color }}
+                  />
+                )}
+                <SidebarMenuButton 
+                  asChild 
+                  isActive={location.pathname === '/market'} 
+                  className={`rounded-xl mb-0.5 ${
+                    isDombaPenggemukan ? 'h-[44px] py-2.5 px-3.5' : 'hover:bg-white/[0.03]'
+                  }`}
+                  style={isDombaPenggemukan && location.pathname === '/market' ? { background: `${color}18`, border: `1px solid ${color}33`, color: color } : {}}
+                >
                   <NavLink to="/market" className="flex items-center gap-3 w-full">
-                    <Building2 size={18} className="text-muted-foreground" />
-                    <span className="font-body text-[14px] font-medium text-foreground">TernakOS Market</span>
+                    <Building2 size={18} style={isDombaPenggemukan && location.pathname === '/market' ? { color: color } : {}} className={isDombaPenggemukan && location.pathname === '/market' ? '' : 'text-muted-foreground'} />
+                    <span className={`font-body text-[14px] ${isDombaPenggemukan && location.pathname === '/market' ? 'font-semibold' : 'font-medium'}`} style={isDombaPenggemukan && location.pathname === '/market' ? { color: color } : {}}>TernakOS Market</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               {!isSembako && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={location.pathname === akunPath} className="rounded-xl mb-0.5 hover:bg-white/[0.03]">
+                <SidebarMenuItem className={isDombaPenggemukan ? "relative flex items-center w-full" : ""}>
+                  {isDombaPenggemukan && location.pathname === akunPath && (
+                    <div 
+                      className="absolute left-[-2px] top-1/2 -translate-y-1/2 w-[3px] h-[20px] rounded-r-md z-20" 
+                      style={{ backgroundColor: color }}
+                    />
+                  )}
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname === akunPath} 
+                    className={`rounded-xl mb-0.5 ${
+                      isDombaPenggemukan ? 'h-[44px] py-2.5 px-3.5' : 'hover:bg-white/[0.03]'
+                    }`}
+                    style={isDombaPenggemukan && location.pathname === akunPath ? { background: `${color}18`, border: `1px solid ${color}33`, color: color } : {}}
+                  >
                     <NavLink to={akunPath} className="flex items-center gap-3 w-full">
-                      <User size={18} className="text-muted-foreground" />
-                      <span className="font-body text-[14px] font-medium text-foreground">Akun & Profil</span>
+                      <User size={18} style={isDombaPenggemukan && location.pathname === akunPath ? { color: color } : {}} className={isDombaPenggemukan && location.pathname === akunPath ? '' : 'text-muted-foreground'} />
+                      <span className={`font-body text-[14px] ${isDombaPenggemukan && location.pathname === akunPath ? 'font-semibold' : 'font-medium'}`} style={isDombaPenggemukan && location.pathname === akunPath ? { color: color } : {}}>Akun & Profil</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -1065,7 +1123,7 @@ export default function AppSidebar({ open, onClose }) {
             <div>
               <p style={{
                 fontSize: '10px', fontWeight: 700,
-                color: '#4B6478',
+                color: '#6B8CAA',
                 textTransform: 'uppercase', letterSpacing: '0.8px', margin: 0
               }}>
                 {isSuperadmin ? 'Status Akun' : 'Plan Aktif'}
@@ -1107,7 +1165,7 @@ export default function AppSidebar({ open, onClose }) {
               <div style={{
                 height: '100%',
                 width: `${Math.max(8, (sub.daysLeft / (sub.status === 'trial' ? 14 : 30)) * 100)}%`,
-                background: sub.daysLeft <= 3 ? '#F87171' : sub.daysLeft <= 7 ? '#F59E0B' : '#021a02',
+                background: sub.daysLeft <= 3 ? '#F87171' : sub.daysLeft <= 7 ? '#F59E0B' : '#34D399',
                 borderRadius: '99px', transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
               }} />
             </div>
@@ -1119,15 +1177,15 @@ export default function AppSidebar({ open, onClose }) {
               onClick={() => navigate('/upgrade')}
               style={{
                 width: '100%', marginTop: '10px', padding: '8px 12px',
-                background: sub.status === 'expired' ? 'rgba(248,113,113,0.1)' : 'rgba(2, 26, 2,0.1)',
-                color: sub.status === 'expired' ? '#F87171' : '#021a02',
-                border: `1px solid ${sub.status === 'expired' ? 'rgba(248,113,113,0.2)' : 'rgba(2, 26, 2,0.2)'}`,
+                background: sub.status === 'expired' ? 'rgba(248,113,113,0.1)' : 'rgba(52,211,153,0.08)',
+                color: sub.status === 'expired' ? '#F87171' : '#34D399',
+                border: `1px solid ${sub.status === 'expired' ? 'rgba(248,113,113,0.2)' : 'rgba(52,211,153,0.2)'}`,
                 borderRadius: '10px', fontSize: '11px', fontWeight: 800, fontFamily: 'Sora',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                 transition: 'all 0.2s'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = sub.status === 'expired' ? 'rgba(248,113,113,0.15)' : 'rgba(2, 26, 2,0.15)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = sub.status === 'expired' ? 'rgba(248,113,113,0.1)' : 'rgba(2, 26, 2,0.1)'}
+              onMouseEnter={(e) => e.currentTarget.style.background = sub.status === 'expired' ? 'rgba(248,113,113,0.15)' : 'rgba(52,211,153,0.14)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = sub.status === 'expired' ? 'rgba(248,113,113,0.1)' : 'rgba(52,211,153,0.08)'}
             >
               <CreditCard size={13} />
               {sub.status === 'expired' ? 'Perbarui Sekarang' : 'Perpanjang Plan'}
@@ -1141,10 +1199,10 @@ export default function AppSidebar({ open, onClose }) {
                 onClick={handleStartProTrial}
                 style={{
                   width: '100%', padding: '8px 12px',
-                  background: '#021a02', color: 'white', border: 'none', borderRadius: '8px',
+                  background: 'rgba(52,211,153,0.15)', color: '#34D399', border: '1px solid rgba(52,211,153,0.25)', borderRadius: '8px',
                   fontSize: '12px', fontWeight: 700, fontFamily: 'Sora', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justify: 'center', gap: '6px',
-                  boxShadow: '0 2px 12px rgba(2, 26, 2,0.25)', transition: 'all 0.2s'
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  boxShadow: '0 2px 12px rgba(52,211,153,0.10)', transition: 'all 0.2s'
                 }}
               >
                 <Sparkles size={14} />
@@ -1235,16 +1293,20 @@ export default function AppSidebar({ open, onClose }) {
           {/* Trigger button */}
           <button
             onClick={() => setDropdownOpen(prev => !prev)}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl hover:bg-white/[0.03] transition-colors"
+            className={`w-full flex items-center gap-2.5 rounded-xl hover:bg-white/[0.03] transition-colors ${
+              isDombaPenggemukan ? 'px-3 py-1.5' : 'px-3 py-2.5'
+            }`}
           >
             <div className="w-8 h-8 rounded-full bg-emerald-500/15 border-2 border-emerald-500/25 flex items-center justify-center font-display font-extrabold text-[12px] text-emerald-400 flex-shrink-0 uppercase">
               {userInitials}
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-[13px] font-semibold truncate leading-tight text-foreground">
+              <p className={`${isDombaPenggemukan ? 'text-[12px] text-slate-300 font-medium' : 'text-[13px] font-semibold text-foreground'} truncate leading-tight`}>
                 {profile?.full_name || 'User'}
               </p>
-              <p className="text-[11px] text-muted-foreground truncate">{user?.email}</p>
+              <p className={`${isDombaPenggemukan ? 'text-[10px] text-slate-500' : 'text-[11px] text-muted-foreground'} truncate mt-0.5`}>
+                {user?.email}
+              </p>
             </div>
             <ChevronsUpDown size={14} className="text-muted-foreground shrink-0" />
           </button>

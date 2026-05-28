@@ -6,6 +6,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import { logError } from '@/lib/logger/errorLogger'
 import { useLanguage } from '@/lib/i18n/useLanguage'
+import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
 
 import {
   T,
@@ -66,6 +67,11 @@ export default function AkunPage() {
     label: tRole(role)
   }
   const showBilling = BILLING_ROLES.includes(role)
+
+  // Plan gating — use active tenant (staff on a Pro tenant get Pro features)
+  const _sub = getSubscriptionStatus(activeTenant)
+  const _isPro = isSuperadmin || ['pro', 'business'].includes(_sub.plan) || _sub.status === 'trial'
+  const isStarter = !_isPro
 
   const isMultiTenant = (profiles?.length ?? 0) > 1
   const planKey = billingTenant?.plan || 'none'
@@ -176,6 +182,7 @@ export default function AkunPage() {
           <VerticalShortcutsCard
             rawVertical={rawVertical} basePath={basePath}
             accent={accent} navigate={navigate}
+            isStarter={isStarter}
           />
         )}
 

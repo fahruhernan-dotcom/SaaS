@@ -151,7 +151,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
         case 'peternak': return [
           { text: 'Manajemen Kandang Interaktif', highlight: false },
           { text: 'Pencatatan biaya operasional detail', highlight: false },
-          { text: 'Penugasan Tim (Daily Task)', highlight: false },
+          { text: 'Kolaborasi & Penugasan Tim (Anak Kandang)', highlight: false },
           { text: 'Kalkulasi FCR & IP Score Otomatis', highlight: true },
           { text: 'Prediksi panen & bobot', highlight: false },
           { text: 'Harga pasar realtime', highlight: false },

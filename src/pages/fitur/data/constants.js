@@ -32,8 +32,8 @@ export const SHARED = [
   },
   {
     Icon: 'ShieldCheck',
-    title: 'RBAC 4 Level Role',
-    desc: 'Owner, Manajer, Staff, dan View Only — masing-masing dengan akses menu berbeda. Undang anggota tim via kode 6 digit.',
+    title: 'RBAC 4 Level Role (Pro+)',
+    desc: 'Owner, Manajer, Staff, dan View Only (tersedia di plan Pro ke atas). Undang anggota tim dengan kode 6 digit. Plan Starter dibatasi untuk Owner saja.',
   },
   {
     Icon: 'Lock',
@@ -69,7 +69,7 @@ export const FAQ_COMMON = [
   },
   {
     q: 'Apakah ada fitur undang karyawan atau tim?',
-    a: 'Ada. Owner bisa undang anggota tim via kode 6 digit. Setiap anggota dapat role berbeda: Staff, View Only, Sopir — dengan batasan akses yang sesuai jabatannya.',
+    a: 'Ada. Mulai dari plan Pro, Owner bisa undang anggota tim via kode 6 digit. Setiap anggota dapat role berbeda: Staff, View Only, Sopir — dengan batasan akses yang sesuai jabatannya. Pada plan Starter, akses dibatasi untuk Owner saja (mandiri).',
   },
   {
     q: 'Apakah TernakOS bisa dipakai di laptop atau komputer?',

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -7,6 +7,7 @@ import {
   Receipt, BarChart3, ShieldCheck, Headphones, Infinity as InfinityIcon,
   ChevronDown, ChevronUp, Star, Building2, Clock,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { usePricingConfig, useCreateInvoice, useActivateTrial, usePlanConfigs, useHasPendingInvoice } from '@/lib/hooks/useAdminData'
@@ -140,11 +141,11 @@ const PLAN_META = {
     label:       'Pro',
     tagline:     'Untuk bisnis yang berkembang',
     icon:        <Zap size={20} />,
-    color:       '#021a02',
-    colorMid:    'rgba(2, 26, 2,0.15)',
-    colorLow:    'rgba(2, 26, 2,0.08)',
-    colorBorder: 'rgba(2, 26, 2,0.35)',
-    glow:        '0 0 40px rgba(2, 26, 2,0.15)',
+    color:       '#34D399',
+    colorMid:    'rgba(52, 211, 153, 0.2)',
+    colorLow:    'rgba(52, 211, 153, 0.05)',
+    colorBorder: 'rgba(52, 211, 153, 0.3)',
+    glow:        '0 0 40px rgba(52, 211, 153, 0.15)',
     badge:       null,
   },
   business: {
@@ -152,10 +153,10 @@ const PLAN_META = {
     tagline:     'Untuk operasi skala besar',
     icon:        <Crown size={20} />,
     color:       '#F59E0B',
-    colorMid:    'rgba(245,158,11,0.15)',
-    colorLow:    'rgba(245,158,11,0.08)',
-    colorBorder: 'rgba(245,158,11,0.35)',
-    glow:        '0 0 40px rgba(245,158,11,0.15)',
+    colorMid:    'rgba(245, 158, 11, 0.2)',
+    colorLow:    'rgba(245, 158, 11, 0.05)',
+    colorBorder: 'rgba(245, 158, 11, 0.3)',
+    glow:        '0 0 40px rgba(245, 158, 11, 0.15)',
     badge:       'Populer',
   },
 }
@@ -226,8 +227,8 @@ function PlanCard({ planKey, meta, price, isSelected, onSelect, features, _billi
       onClick={() => onSelect(planKey)}
       className="relative w-full text-left rounded-2xl p-4 sm:p-5 transition-all duration-200 focus:outline-none"
       style={{
-        background: isSelected ? meta.colorLow : '#0C1319',
-        border: `1.5px solid ${isSelected ? meta.colorBorder : 'rgba(255,255,255,0.08)'}`,
+        background: isSelected ? (planKey === 'pro' ? 'rgba(16, 185, 129, 0.05)' : 'rgba(245, 158, 11, 0.05)') : '#0C1319',
+        border: `1.5px solid ${isSelected ? (planKey === 'pro' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)') : 'rgba(255,255,255,0.08)'}`,
         boxShadow: isSelected ? meta.glow : 'none',
       }}
     >
@@ -244,7 +245,7 @@ function PlanCard({ planKey, meta, price, isSelected, onSelect, features, _billi
       {/* Selected checkmark */}
       {isSelected && (
         <div
-          className="absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center"
+          className="absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center animate-in zoom-in-50 duration-300"
           style={{ background: meta.color }}
         >
           <Check size={11} color="#000" strokeWidth={3} />
@@ -252,36 +253,36 @@ function PlanCard({ planKey, meta, price, isSelected, onSelect, features, _billi
       )}
 
       {/* Plan header */}
-      <div className="flex items-center gap-2 mb-2" style={{ color: meta.color }}>
+      <div className="flex items-center gap-2 mb-2" style={{ color: planKey === 'pro' ? '#A7F3D0' : '#FDE68A' }}>
         {meta.icon}
-        <span className="font-display font-black text-base text-white">{tPlan(planKey)}</span>
+        <span className={cn("font-display font-black text-base", planKey === 'pro' ? "text-emerald-300" : "text-amber-300")}>{tPlan(planKey)}</span>
       </div>
 
       {/* Price */}
       <div className="mb-1">
         <div className="flex items-baseline gap-1.5">
-          <span className="font-display font-black text-xl" style={{ color: meta.color }}>
+          <span className={cn("font-display font-black text-xl", planKey === 'pro' ? "text-emerald-300" : "text-amber-300")}>
             {monthlyDisplay}
           </span>
-          <span className="text-[11px] text-[#4B6478]">{t('billing_per_month', '/bln')}</span>
+          <span className="text-[11px] text-slate-400">{t('billing_per_month', '/bln')}</span>
         </div>
         {discount > 0 && originalMonthly && (
-          <div className="text-[10px] text-[#4B6478] line-through mt-0.5">{originalMonthly}{t('billing_per_month', '/bln')}</div>
+          <div className="text-[10px] text-slate-500 line-through mt-0.5">{originalMonthly}{t('billing_per_month', '/bln')}</div>
         )}
       </div>
 
-      <p className="text-[11px] text-[#4B6478]">{tagline}</p>
+      <p className="text-[11px] text-slate-400">{tagline}</p>
 
       {/* Features mini-list (3 items) */}
       <div className="mt-3 space-y-1.5">
         {features.slice(0, 3).map((f, i) => (
           <div key={i} className="flex items-center gap-2">
-            <div style={{ color: meta.color, flexShrink: 0 }}>{f.icon}</div>
-            <span className="text-[11px] text-[#64748B] leading-tight">{f.text}</span>
+            <div style={{ color: planKey === 'pro' ? '#34D399' : '#F59E0B', flexShrink: 0 }}>{f.icon}</div>
+            <span className="text-[11px] text-slate-300 leading-tight">{f.text}</span>
           </div>
         ))}
         {features.length > 3 && (
-          <div className="text-[10px] font-semibold mt-1" style={{ color: meta.color }}>
+          <div className="text-[10px] font-semibold mt-1" style={{ color: planKey === 'pro' ? '#34D399' : '#F59E0B' }}>
             {t('upgrade_more_features', '+{count} fitur lainnya ↓').replace('{count}', features.length - 3)}
           </div>
         )}
@@ -297,19 +298,19 @@ function FeatureSection({ planKey, meta, features, billingMonths, basePrice, dis
   return (
     <div
       className="rounded-2xl overflow-hidden"
-      style={{ border: `1px solid ${meta.colorBorder}`, background: meta.colorLow }}
+      style={{ border: `1px solid ${planKey === 'pro' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)'}`, background: planKey === 'pro' ? 'rgba(16, 185, 129, 0.03)' : 'rgba(245, 158, 11, 0.03)' }}
     >
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between px-4 py-3 text-left"
       >
         <div className="flex items-center gap-2">
-          <div style={{ color: meta.color }}>{meta.icon}</div>
-          <span className="font-display font-bold text-sm text-white">
+          <div style={{ color: planKey === 'pro' ? '#6EE7B7' : '#FCD34D' }}>{meta.icon}</div>
+          <span className={cn("font-display font-bold text-sm", planKey === 'pro' ? "text-emerald-300" : "text-amber-300")}>
             {t('upgrade_all_features_of', 'Semua fitur {label}').replace('{label}', tPlan(planKey))}
           </span>
         </div>
-        <div style={{ color: meta.color }}>
+        <div style={{ color: planKey === 'pro' ? '#6EE7B7' : '#FCD34D' }}>
           {isExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
         </div>
       </button>
@@ -328,11 +329,11 @@ function FeatureSection({ planKey, meta, features, billingMonths, basePrice, dis
                 <div key={i} className="flex items-start gap-3">
                   <div
                     className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                    style={{ background: meta.colorMid, color: meta.color }}
+                    style={{ background: planKey === 'pro' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)', color: planKey === 'pro' ? '#34D399' : '#F59E0B' }}
                   >
                     {f.icon}
                   </div>
-                  <span className="text-[12px] text-[#94A3B8] leading-snug">{f.text}</span>
+                  <span className="text-[12px] text-slate-300 leading-snug">{f.text}</span>
                 </div>
               ))}
             </div>
@@ -343,7 +344,7 @@ function FeatureSection({ planKey, meta, features, billingMonths, basePrice, dis
   )
 }
 
-function BillingSelector({ value, onChange }) {
+function BillingSelector({ value, onChange, selectedPlan }) {
   const { t } = useLanguage()
   return (
     <div className="grid grid-cols-4 gap-2">
@@ -354,22 +355,25 @@ function BillingSelector({ value, onChange }) {
             key={opt.months}
             whileTap={{ scale: 0.95 }}
             onClick={() => onChange(opt.months)}
-            className="relative flex flex-col items-center justify-center py-3 rounded-xl text-center transition-all"
-            style={{
-              background: isSelected ? 'rgba(2, 26, 2,0.1)' : '#0C1319',
-              border: `1.5px solid ${isSelected ? '#021a02' : 'rgba(255,255,255,0.08)'}`,
-              color: isSelected ? '#021a02' : '#4B6478',
-            }}
+            className={cn(
+              "relative flex flex-col items-center justify-center py-3 rounded-xl text-center transition-all border font-display font-bold text-[11px] sm:text-xs leading-tight focus:outline-none focus:ring-1",
+              isSelected
+                ? selectedPlan === 'pro'
+                  ? "bg-emerald-500/10 border-emerald-400/40 text-emerald-300 focus:ring-emerald-400"
+                  : "bg-amber-500/10 border-amber-500/40 text-amber-300 focus:ring-amber-400"
+                : "bg-[#0F1720] border-white/10 text-slate-300 hover:bg-[#121A22] hover:text-white focus:ring-white/20"
+            )}
           >
             {opt.discount > 0 && (
               <div
-                className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-full text-[9px] font-black"
-                style={{ background: '#021a02', color: '#000' }}
+                className={cn(
+                  "absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded-full text-[9px] font-black bg-emerald-500 text-white"
+                )}
               >
                 -{opt.discount}%
               </div>
             )}
-            <span className="font-display font-bold text-[11px] sm:text-xs leading-tight">
+            <span>
               {opt.months === 12
                 ? t('billing_1_year', '1 Tahun')
                 : t('billing_months_count', `${opt.months} Bln`).replace('{months}', opt.months)}
@@ -389,25 +393,25 @@ const PAYMENT_STATUS_META = {
     icon: <CheckCircle2 size={18} />,
     title: 'Pembayaran diterima!',
     body: 'Plan kamu sedang diaktifkan. Refresh halaman dalam 1–2 menit.',
-    color: '#021a02',
-    bg: 'rgba(2, 26, 2,0.08)',
-    border: 'rgba(2, 26, 2,0.25)',
+    color: '#34D399',
+    bg: 'rgba(52, 211, 153, 0.05)',
+    border: 'rgba(52, 211, 153, 0.2)',
   },
   unfinish: {
     icon: <AlertCircle size={18} />,
     title: 'Pembayaran belum selesai',
     body: 'Kamu menutup halaman pembayaran sebelum selesai. Klik tombol upgrade untuk melanjutkan.',
     color: '#F59E0B',
-    bg: 'rgba(245,158,11,0.08)',
-    border: 'rgba(245,158,11,0.25)',
+    bg: 'rgba(245,158,11,0.05)',
+    border: 'rgba(245,158,11,0.2)',
   },
   error: {
     icon: <XCircle size={18} />,
     title: 'Pembayaran gagal',
     body: 'Terjadi kesalahan saat memproses pembayaran. Coba lagi atau hubungi admin.',
     color: '#EF4444',
-    bg: 'rgba(239,68,68,0.08)',
-    border: 'rgba(239,68,68,0.25)',
+    bg: 'rgba(239,68,68,0.05)',
+    border: 'rgba(239,68,68,0.2)',
   },
 }
 
@@ -430,6 +434,14 @@ export default function UpgradePlan() {
   const [expandedFeature, setExpandedFeature] = useState('pro')
   const [redirecting, setRedirecting] = useState(false)
 
+  const [promoInput, setPromoInput] = useState('')
+  const [appliedPromo, setAppliedPromo] = useState('')
+  const [promoError, setPromoError] = useState('')
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false)
+
+  const [previewResult, setPreviewResult] = useState(null)
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false)
+
   const pricingRole  = getPricingRole(tenant)
   const starterQuota = planConfigs?.transaction_quota?.starter ?? FALLBACK_TRANSACTION_QUOTA
   const roleFeatures = getRoleFeatures(pricingRole, starterQuota, t)
@@ -439,8 +451,136 @@ export default function UpgradePlan() {
 
   const basePrice  = pricing?.[pricingRole]?.[selectedPlan]?.price || 0
   const discount   = BILLING_OPTIONS.find(o => o.months === billingMonths)?.discount || 0
-  const total      = Math.round(basePrice * billingMonths * (1 - discount / 100))
-  const savedAmount = Math.round(basePrice * billingMonths) - total
+
+  useEffect(() => {
+    const htmlEl = document.documentElement
+    const hasDark = htmlEl.classList.contains('dark')
+    if (!hasDark) {
+      htmlEl.classList.add('dark')
+    }
+    return () => {
+      if (!hasDark) {
+        htmlEl.classList.remove('dark')
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+    if (!profile?.tenant_id || !selectedPlan) return
+
+    async function fetchPreview() {
+      setIsLoadingPreview(true)
+      try {
+        const { data, error } = await supabase.rpc('preview_subscription_checkout', {
+          p_tenant_id: profile.tenant_id,
+          p_plan: selectedPlan,
+          p_billing_months: billingMonths,
+          p_discount_code: appliedPromo || null,
+        })
+
+        if (!active) return
+
+        if (error) {
+          console.error('Failed to preview checkout:', error)
+          let msg = t('upgrade_toast_midtrans_failed', 'Gagal memproses perhitungan harga.')
+          if (error.message?.includes('PRICING_ROLE_NOT_FOUND')) {
+            msg = t('pricing_role_not_found', 'Tipe pricing bisnis tidak terdaftar')
+          } else if (error.message?.includes('DISCOUNT_NOT_FOUND')) {
+            msg = t('discount_not_found', 'Kode diskon tidak ditemukan')
+          } else if (error.message?.includes('DISCOUNT_INACTIVE')) {
+            msg = t('discount_inactive', 'Kode diskon tidak aktif')
+          } else if (error.message?.includes('DISCOUNT_EXPIRED')) {
+            msg = t('discount_expired', 'Kode diskon sudah kedaluwarsa')
+          } else if (error.message?.includes('DISCOUNT_USAGE_LIMIT')) {
+            msg = t('discount_usage_limit', 'Kuota kode diskon sudah habis')
+          } else if (error.message?.includes('DISCOUNT_PLAN_NOT_ALLOWED')) {
+            msg = t('discount_plan_not_allowed', 'Kode diskon tidak berlaku untuk plan ini')
+          } else if (error.message?.includes('DISCOUNT_ROLE_NOT_ALLOWED')) {
+            msg = t('discount_role_not_allowed', 'Kode diskon tidak berlaku untuk jenis bisnis ini')
+          } else {
+            msg = error.message
+          }
+          setPreviewResult(null)
+          if (appliedPromo) {
+            setAppliedPromo('')
+            setPromoError(msg)
+          }
+        } else {
+          setPreviewResult(data)
+        }
+      } catch (_err) {
+        if (!active) return
+        setPreviewResult(null)
+      } finally {
+        if (active) setIsLoadingPreview(false)
+      }
+    }
+
+    fetchPreview()
+    return () => {
+      active = false
+    }
+  }, [profile?.tenant_id, selectedPlan, billingMonths, appliedPromo, t])
+
+  const handleApplyPromo = async (e) => {
+    e.preventDefault()
+    const code = promoInput.trim().toUpperCase()
+    if (!code) return
+
+    setIsValidatingPromo(true)
+    setPromoError('')
+
+    try {
+      const { error } = await supabase.rpc('preview_subscription_checkout', {
+        p_tenant_id: profile.tenant_id,
+        p_plan: selectedPlan,
+        p_billing_months: billingMonths,
+        p_discount_code: code,
+      })
+
+      if (error) {
+        let msg = 'Gagal memproses kode diskon.'
+        if (error.message?.includes('DISCOUNT_NOT_FOUND')) {
+          msg = 'Kode diskon tidak ditemukan'
+        } else if (error.message?.includes('DISCOUNT_INACTIVE')) {
+          msg = 'Kode diskon tidak aktif'
+        } else if (error.message?.includes('DISCOUNT_EXPIRED')) {
+          msg = 'Kode diskon sudah kedaluwarsa'
+        } else if (error.message?.includes('DISCOUNT_USAGE_LIMIT')) {
+          msg = 'Kuota kode diskon sudah habis'
+        } else if (error.message?.includes('DISCOUNT_PLAN_NOT_ALLOWED')) {
+          msg = 'Kode diskon tidak berlaku untuk plan ini'
+        } else if (error.message?.includes('DISCOUNT_ROLE_NOT_ALLOWED')) {
+          msg = 'Kode diskon tidak berlaku untuk jenis bisnis ini'
+        } else {
+          msg = error.message
+        }
+        setPromoError(msg)
+        toast.error(msg)
+      } else {
+        setAppliedPromo(code)
+        setPromoInput(code)
+        toast.success('Kode diskon berhasil diterapkan!')
+      }
+    } catch (err) {
+      setPromoError(err.message || 'Error')
+    } finally {
+      setIsValidatingPromo(false)
+    }
+  }
+
+  const handleRemovePromo = () => {
+    setAppliedPromo('')
+    setPromoInput('')
+    setPromoError('')
+    toast.info('Kode diskon dihapus.')
+  }
+
+  const displayOriginalAmount = previewResult?.original_amount ?? (basePrice * billingMonths)
+  const displayDurationDiscount = previewResult?.duration_discount_amount ?? Math.round(basePrice * billingMonths * (discount / 100))
+  const displayPromoDiscount = previewResult?.discount_amount ?? 0
+  const displayFinalAmount = previewResult?.final_amount ?? (basePrice * billingMonths - displayDurationDiscount)
 
   const activeLocale  = lang === 'en' ? localeEn : localeId
   const renewalBase   = isRenewal && sub.expiresAt > new Date() ? sub.expiresAt : new Date()
@@ -491,7 +631,7 @@ export default function UpgradePlan() {
       <span style={{ color: paymentMeta.color, flexShrink: 0, marginTop: 1 }}>{paymentMeta.icon}</span>
       <div>
         <p className="font-display font-black text-[13px] text-white leading-tight mb-0.5">{paymentTrans.title}</p>
-        <p className="text-[12px] text-[#4B6478]">{paymentTrans.body}</p>
+        <p className="text-[12px] text-slate-300">{paymentTrans.body}</p>
       </div>
     </motion.div>
   )
@@ -507,7 +647,8 @@ export default function UpgradePlan() {
         tenantId:     profile.tenant_id,
         plan:         selectedPlan,
         billingMonths,
-        amount:       total,
+        amount:       displayFinalAmount,
+        discount_code: appliedPromo || null,
         notes:        `${isRenewal ? t('upgrade_renew', 'Perpanjang') : t('upgrade_to', 'Upgrade ke')} ${tPlan(selectedPlan)} — ${billingMonths} bulan`,
       })
       setRedirecting(true)
@@ -545,14 +686,13 @@ export default function UpgradePlan() {
 
   const trialBlock = canTrial ? (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(99,102,241,0.25)' }}
+      className="rounded-2xl overflow-hidden border border-indigo-500/25"
     >
       <div style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(168,85,247,0.06))' }}
         className="p-4 flex items-center gap-4"
       >
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ background: 'rgba(99,102,241,0.2)' }}>
-          <Zap size={18} color="#818CF8" />
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-indigo-500/20">
+          <Zap size={18} className="text-indigo-400" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-display font-black text-sm text-white leading-tight">
@@ -560,7 +700,7 @@ export default function UpgradePlan() {
               .replace('{plan}', tPlan(selectedPlan))
               .replace('{days}', trialDays)}
           </p>
-          <p className="text-[11px] text-[#64748B] mt-0.5">{t('upgrade_trial_subtitle', 'Tidak perlu kartu kredit. Batalkan kapan saja.')}</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">{t('upgrade_trial_subtitle', 'Tidak perlu kartu kredit. Batalkan kapan saja.')}</p>
         </div>
         <motion.button
           whileTap={{ scale: 0.96 }}
@@ -579,15 +719,14 @@ export default function UpgradePlan() {
             )
           }}
           disabled={activateTrial.isPending}
-          className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-black text-[12px] disabled:opacity-60"
-          style={{ background: '#818CF8', color: '#fff' }}
+          className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl font-display font-black text-[12px] disabled:opacity-60 bg-indigo-600 hover:bg-indigo-500 text-white transition-all focus:outline-none focus:ring-1 focus:ring-indigo-400"
         >
           {activateTrial.isPending ? <Loader2 size={13} className="animate-spin" /> : t('upgrade_try_free', 'Coba Gratis')}
         </motion.button>
       </div>
     </motion.div>
   ) : trialUsed && sub.status !== 'trial' ? (
-    <p className="text-[11px] text-[#2A3F52] text-center">{t('upgrade_trial_used', 'Trial sudah pernah digunakan.')}</p>
+    <p className="text-[11px] text-slate-500 text-center">{t('upgrade_trial_used', 'Trial sudah pernah digunakan.')}</p>
   ) : null
 
   const featureSections = (
@@ -608,44 +747,108 @@ export default function UpgradePlan() {
 
   const priceSummary = (
     <motion.div layout className="rounded-2xl overflow-hidden"
-      style={{ background: '#0C1319', border: `1px solid ${currentPlanMeta.colorBorder}` }}
+      style={{ background: '#0C1319', border: `1px solid ${selectedPlan === 'pro' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(245, 158, 11, 0.25)'}` }}
     >
       <div className="p-4 space-y-2.5">
         <div className="flex items-center justify-between text-[13px]">
-          <span className="text-[#4B6478]">{t('Plan', 'Plan')}</span>
-          <span className="font-semibold" style={{ color: currentPlanMeta.color }}>{tPlan(selectedPlan)}</span>
+          <span className="text-slate-300">{t('Plan', 'Plan')}</span>
+          <span className="font-semibold" style={{ color: selectedPlan === 'pro' ? '#6EE7B7' : '#FCD34D' }}>{tPlan(selectedPlan)}</span>
         </div>
         <div className="flex items-center justify-between text-[13px]">
-          <span className="text-[#4B6478]">{t('upgrade_price_per_month', 'Harga/bulan')}</span>
-          <span className="text-[#94A3B8] font-semibold">{basePrice ? formatIDR(basePrice) : '—'}</span>
+          <span className="text-slate-300">{t('upgrade_price_per_month', 'Harga/bulan')}</span>
+          <span className="text-slate-100 font-semibold">{basePrice ? formatIDR(basePrice) : '—'}</span>
         </div>
         <div className="flex items-center justify-between text-[13px]">
-          <span className="text-[#4B6478]">{t('upgrade_duration', 'Durasi')}</span>
-          <span className="text-[#94A3B8] font-semibold">
+          <span className="text-slate-300">{t('upgrade_normal_price', 'Harga normal')}</span>
+          <span className="text-slate-100 font-semibold">{displayOriginalAmount ? formatIDR(displayOriginalAmount) : '—'}</span>
+        </div>
+        <div className="flex items-center justify-between text-[13px]">
+          <span className="text-slate-300">{t('upgrade_duration', 'Durasi')}</span>
+          <span className="text-slate-100 font-semibold">
             {billingMonths === 12
               ? t('billing_1_year', '1 Tahun')
               : t('billing_months_count', `${billingMonths} Bln`).replace('{months}', billingMonths)}
           </span>
         </div>
-        {discount > 0 && (
+        {displayDurationDiscount > 0 && (
           <div className="flex items-center justify-between text-[13px]">
             <span className="text-emerald-400 font-semibold">{t('upgrade_discount_percent', 'Diskon {discount}%').replace('{discount}', discount)}</span>
-            <span className="text-emerald-400 font-semibold">-{formatIDR(savedAmount)}</span>
+            <span className="text-emerald-400 font-semibold">-{formatIDR(displayDurationDiscount)}</span>
+          </div>
+        )}
+        {displayPromoDiscount > 0 && (
+          <div className="flex items-center justify-between text-[13px]">
+            <span className="text-emerald-400 font-semibold">{t('promo_discount', 'Diskon Kode')} ({appliedPromo})</span>
+            <span className="text-emerald-400 font-semibold">-{formatIDR(displayPromoDiscount)}</span>
           </div>
         )}
         <div className="flex items-center justify-between text-[12px]">
-          <span className="text-[#4B6478]">{t('upgrade_active_until', 'Aktif hingga')}</span>
-          <span className="font-bold" style={{ color: currentPlanMeta.color }}>{newExpiryStr}</span>
+          <span className="text-slate-300">{t('upgrade_active_until', 'Aktif hingga')}</span>
+          <span className="font-bold" style={{ color: selectedPlan === 'pro' ? '#6EE7B7' : '#FCD34D' }}>{newExpiryStr}</span>
         </div>
       </div>
-      <div className="px-4 py-3 flex items-center justify-between"
-        style={{ background: 'rgba(255,255,255,0.03)', borderTop: '1px solid rgba(255,255,255,0.06)' }}
-      >
-        <span className="font-display font-black text-base text-white">{t('upgrade_total_pay', 'Total Bayar')}</span>
-        <motion.span key={total} initial={{ scale: 1.1, opacity: 0.6 }} animate={{ scale: 1, opacity: 1 }}
-          className="font-display font-black text-xl" style={{ color: currentPlanMeta.color }}
+
+      {/* Input Kode Diskon */}
+      <div className="px-4 pb-4 border-t border-white/[0.04] pt-4 bg-[#0F1720]/40">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+            {t('promo_code_label', 'Kode Diskon')}
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={promoInput}
+              onChange={(e) => {
+                setPromoInput(e.target.value)
+                setPromoError('')
+              }}
+              disabled={isValidatingPromo || redirecting}
+              placeholder={t('promo_code_placeholder', 'CONTOH: PROMO10')}
+              className="flex-1 bg-[#0B1118] border border-white/10 rounded-xl px-3 py-2 text-xs font-display font-semibold uppercase tracking-wider text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 transition-colors"
+            />
+            {appliedPromo ? (
+              <button
+                type="button"
+                onClick={handleRemovePromo}
+                disabled={redirecting}
+                className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-display font-bold text-xs rounded-xl border border-red-500/20 transition-all focus:outline-none"
+              >
+                {t('remove_promo', 'Hapus')}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleApplyPromo}
+                disabled={!promoInput.trim() || isValidatingPromo || redirecting}
+                className={cn(
+                  "px-4 py-2 font-display font-bold text-xs rounded-xl transition-all focus:outline-none",
+                  !promoInput.trim() || isValidatingPromo || redirecting
+                    ? "bg-white/5 text-slate-500 border border-white/10"
+                    : "bg-emerald-600 hover:bg-emerald-500 text-white"
+                )}
+              >
+                {isValidatingPromo ? <Loader2 size={12} className="animate-spin" /> : t('apply_promo', 'Terapkan')}
+              </button>
+            )}
+          </div>
+          {promoError && (
+            <p className="text-[10px] text-red-400 font-semibold mt-0.5">{promoError}</p>
+          )}
+          {appliedPromo && !promoError && (
+            <p className="text-[10px] text-emerald-400 font-semibold mt-0.5 flex items-center gap-1">
+              <CheckCircle2 size={11} className="text-emerald-400" />
+              {t('promo_code_applied', 'Kode diskon berhasil diterapkan!')}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="px-4 py-3 flex items-center justify-between bg-white/[0.02] border-t border-white/[0.06]">
+        <span className="font-display font-black text-base text-slate-100">{t('upgrade_total_pay', 'Total Bayar')}</span>
+        <motion.span key={displayFinalAmount} initial={{ scale: 1.1, opacity: 0.6 }} animate={{ scale: 1, opacity: 1 }}
+          className={cn("font-display font-black text-xl", selectedPlan === 'pro' ? "text-emerald-300" : "text-amber-300")}
         >
-          {total ? formatIDR(total) : '—'}
+          {displayFinalAmount ? formatIDR(displayFinalAmount) : '—'}
         </motion.span>
       </div>
     </motion.div>
@@ -655,13 +858,13 @@ export default function UpgradePlan() {
     <motion.button
       whileTap={{ scale: 0.98 }}
       onClick={handleSubmit}
-      disabled={createInvoice.isPending || redirecting || !basePrice}
-      className="w-full py-4 rounded-2xl font-display font-black text-[15px] transition-all disabled:opacity-60"
-      style={{
-        background: currentPlanMeta.color,
-        color: selectedPlan === 'business' ? '#000' : '#fff',
-        boxShadow: `0 4px 28px ${currentPlanMeta.colorMid}`,
-      }}
+      disabled={createInvoice.isPending || redirecting || !basePrice || isLoadingPreview}
+      className={cn(
+        "w-full py-4 rounded-2xl font-display font-black text-[15px] transition-all disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#06090F]",
+        selectedPlan === 'pro'
+          ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_4px_28px_rgba(16,185,129,0.2)] focus:ring-emerald-500"
+          : "bg-amber-600 hover:bg-amber-500 text-white shadow-[0_4px_28px_rgba(217,119,6,0.2)] focus:ring-amber-500"
+      )}
     >
       {redirecting ? (
         <span className="flex items-center justify-center gap-2">
@@ -676,7 +879,7 @@ export default function UpgradePlan() {
           {currentPlanMeta.icon}
           {isRenewal ? t('upgrade_renew', 'Perpanjang') : t('upgrade_to', 'Upgrade ke')} {tPlan(selectedPlan)}
           <span className="opacity-60">·</span>
-          {total ? formatIDR(total) : '—'}
+          {displayFinalAmount ? formatIDR(displayFinalAmount) : '—'}
         </span>
       )}
     </motion.button>
@@ -684,28 +887,24 @@ export default function UpgradePlan() {
 
   const addonLink = (
     <button onClick={() => navigate('/dashboard/addons')}
-      className="w-full flex items-center justify-between p-3 rounded-xl"
-      style={{ background: 'rgba(168,85,247,0.04)', border: '1px solid rgba(168,85,247,0.12)' }}
+      className="w-full flex items-center justify-between p-3.5 rounded-xl bg-purple-500/5 border border-purple-500/10 hover:bg-purple-500/10 hover:border-purple-500/20 transition-all active:scale-[0.99] focus:outline-none focus:ring-1 focus:ring-purple-400"
     >
       <div className="flex items-center gap-2">
-        <Building2 size={14} color="#A855F7" />
-        <span className="text-[12px] text-[#64748B]">{t('upgrade_need_more_biz_slots', 'Butuh slot bisnis tambahan?')}</span>
+        <Building2 size={14} className="text-purple-400" />
+        <span className="text-[12px] text-slate-300">{t('upgrade_need_more_biz_slots', 'Butuh slot bisnis tambahan?')}</span>
       </div>
       <span className="text-[11px] font-bold text-purple-400">{t('upgrade_start_from_idr', 'Mulai Rp 150rb →')}</span>
     </button>
   )
 
   const heroBadges = (
-    <div className="flex items-center gap-2 mb-3 flex-wrap">
-      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"
-        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#4B6478' }}
-      >
-        {t('upgrade_active_plan', 'Plan aktif:')}&nbsp;<span className="text-emerald-400">{tPlan(sub.label?.toLowerCase() || 'starter')}</span>
+    <div className="flex items-center gap-2 mb-3 flex-wrap animate-in fade-in duration-500">
+      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-500/10 border border-emerald-400/25 text-slate-300">
+        {t('upgrade_active_plan', 'Plan aktif:')}&nbsp;
+        <span className="text-emerald-300 font-extrabold">{tPlan(sub.label?.toLowerCase() || 'starter')}</span>
       </div>
       {sub.status === 'trial' && (
-        <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-black"
-          style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)', color: '#818CF8' }}
-        >
+        <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-black bg-indigo-500/10 border border-indigo-500/20 text-indigo-300">
           <Clock size={9} /> {t('upgrade_trial_active', 'Trial aktif')}
         </div>
       )}
@@ -715,14 +914,14 @@ export default function UpgradePlan() {
   const billingSelector = (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest">{t('upgrade_sub_duration', 'Durasi Berlangganan')}</p>
+        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">{t('upgrade_sub_duration', 'Durasi Berlangganan')}</p>
         {discount > 0 && (
           <span className="text-[11px] font-black text-emerald-400">
             {t('upgrade_save_percent', 'Hemat {discount}% ✓').replace('{discount}', discount)}
           </span>
         )}
       </div>
-      <BillingSelector value={billingMonths} onChange={setBillingMonths} />
+      <BillingSelector value={billingMonths} onChange={setBillingMonths} selectedPlan={selectedPlan} />
     </div>
   )
 
@@ -732,11 +931,17 @@ export default function UpgradePlan() {
     <div className="pointer-events-none fixed inset-0 transition-all duration-700"
       style={{
         background: selectedPlan === 'pro'
-          ? 'radial-gradient(ellipse 60% 40% at 50% -10%, rgba(2, 26, 2,0.1) 0%, transparent 70%)'
-          : 'radial-gradient(ellipse 60% 40% at 50% -10%, rgba(245,158,11,0.1) 0%, transparent 70%)',
+          ? 'radial-gradient(ellipse 60% 40% at 50% -10%, rgba(16, 185, 129,0.06) 0%, transparent 70%)'
+          : 'radial-gradient(ellipse 60% 40% at 50% -10%, rgba(245,158,11,0.08) 0%, transparent 70%)',
       }}
     />
   )
+
+  // ── Desktop: two-column layout ────────────────────────────────────────────
+
+
+
+  // ── Mobile: single-column with sticky CTA ────────────────────────────────
 
   // ── Desktop: two-column layout ────────────────────────────────────────────
 
@@ -750,12 +955,12 @@ export default function UpgradePlan() {
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <button onClick={() => navigate(-1)}
-                className="flex items-center gap-2 text-[13px] font-semibold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5 hover:border-white/10 transition-all active:scale-[0.98]"
+                className="flex items-center gap-2 text-[13px] font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/10 hover:border-white/20 transition-all active:scale-[0.98] focus:outline-none focus:ring-1 focus:ring-white/20"
               >
                 <ArrowLeft size={14} /> {t('common.back', 'Kembali')}
               </button>
               <button onClick={() => navigate('/dashboard')}
-                className="flex items-center gap-2 text-[13px] font-semibold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/15 px-4 py-2 rounded-xl border border-emerald-500/10 hover:border-emerald-500/20 transition-all active:scale-[0.98]"
+                className="flex items-center gap-2 text-[13px] font-semibold text-emerald-300 hover:text-emerald-200 bg-emerald-500/5 hover:bg-emerald-500/10 px-4 py-2 rounded-xl border border-emerald-400/30 transition-all active:scale-[0.98] focus:outline-none focus:ring-1 focus:ring-emerald-400"
               >
                 <Building2 size={14} /> {t('Dashboard', 'Dashboard')}
               </button>
@@ -765,10 +970,10 @@ export default function UpgradePlan() {
 
           {/* Hero heading */}
           <div className="mb-8">
-            <h1 className="font-display font-black text-4xl text-white leading-tight mb-2">
+            <h1 className="font-display font-black text-4xl text-slate-100 leading-tight mb-2">
               {isRenewal ? t('upgrade_renew_plan_title', 'Perpanjang Plan') : t('upgrade_upgrade_plan_title', 'Upgrade Plan')}
             </h1>
-            <p className="text-[14px] text-[#4B6478]">
+            <p className="text-[14px] text-[#8EA3B7]">
               {t('upgrade_hero_desc', '{vertical} · Pilih plan & durasi, harga berubah otomatis').replace('{vertical}', roleFeatures.label)}
             </p>
           </div>
@@ -790,12 +995,12 @@ export default function UpgradePlan() {
             {/* Right — sticky order panel */}
             <div className="sticky top-8 space-y-4">
               <div>
-                <p className="text-[11px] font-bold text-[#4B6478] uppercase tracking-widest mb-3">{t('upgrade_order_summary', 'Ringkasan Pesanan')}</p>
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">{t('upgrade_order_summary', 'Ringkasan Pesanan')}</p>
                 {priceSummary}
               </div>
               <div>
                 {ctaButton}
-                <p className="text-center text-[10px] text-[#2A3F52] mt-2">
+                <p className="text-center text-[10px] text-slate-500 mt-2">
                   {t('upgrade_secure_payment_footer', 'Pembayaran aman via Midtrans · Aktif hingga {date}').replace('{date}', newExpiryStr)}
                 </p>
               </div>
@@ -815,12 +1020,12 @@ export default function UpgradePlan() {
 
         <div className="flex items-center gap-3 mb-6">
           <button onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-[13px] font-semibold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/5 hover:border-white/10 transition-all active:scale-[0.98]"
+            className="flex items-center gap-2 text-[13px] font-semibold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/10 hover:border-white/20 transition-all active:scale-[0.98] focus:outline-none focus:ring-1 focus:ring-white/20"
           >
             <ArrowLeft size={14} /> {t('common.back', 'Kembali')}
           </button>
           <button onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-2 text-[13px] font-semibold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/15 px-4 py-2 rounded-xl border border-emerald-500/10 hover:border-emerald-500/20 transition-all active:scale-[0.98]"
+            className="flex items-center gap-2 text-[13px] font-semibold text-emerald-300 hover:text-emerald-200 bg-emerald-500/5 hover:bg-emerald-500/10 px-4 py-2 rounded-xl border border-emerald-400/30 transition-all active:scale-[0.98] focus:outline-none focus:ring-1 focus:ring-emerald-400"
           >
             <Building2 size={14} /> {t('Dashboard', 'Dashboard')}
           </button>
@@ -828,10 +1033,10 @@ export default function UpgradePlan() {
 
         <div className="mb-6">
           {heroBadges}
-          <h1 className="font-display font-black text-[26px] text-white leading-tight mb-1">
+          <h1 className="font-display font-black text-[26px] text-slate-100 leading-tight mb-1">
             {isRenewal ? t('upgrade_renew_plan_title', 'Perpanjang Plan') : t('upgrade_upgrade_plan_title', 'Upgrade Plan')}
           </h1>
-          <p className="text-[13px] text-[#4B6478]">
+          <p className="text-[13px] text-[#8EA3B7]">
             {t('upgrade_hero_desc', '{vertical} · Pilih plan & durasi, harga berubah otomatis').replace('{vertical}', roleFeatures.label)}
           </p>
         </div>
@@ -854,7 +1059,7 @@ export default function UpgradePlan() {
       >
         <div className="max-w-lg mx-auto">
           {ctaButton}
-          <p className="text-center text-[10px] text-[#2A3F52] mt-2">
+          <p className="text-center text-[10px] text-slate-500 mt-2">
             {t('upgrade_secure_payment_footer', 'Pembayaran aman via Midtrans · Aktif hingga {date}').replace('{date}', newExpiryStr)}
           </p>
         </div>

@@ -1034,7 +1034,10 @@ export function useAddFarmOpsCost(animalType) {
   const table = animalType ? `${animalType}_penggemukan_operational_costs` : null
   return useMutation({
     mutationFn: async ({ batches, log_date, item_name, amount_idr, notes }) => {
-      if (!table || !batches?.length) return
+      if (!table) return
+      if (!batches?.length) {
+        throw new Error('Tidak ada batch aktif untuk alokasi biaya!')
+      }
       const totalAnimals = batches.reduce((s, b) => s + (b.total_animals || 0), 0)
       const rows = batches.map((b, i) => {
         const proportion = totalAnimals > 0 ? (b.total_animals || 0) / totalAnimals : 1 / batches.length

@@ -10,14 +10,13 @@ import SEO from '../components/SEO';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import SplineScene from '../components/SplineScene';
-import ShinyText from '../components/reactbits/ShinyText';
 import BlurText from '../components/reactbits/BlurText';
 import AnimatedContent from '../components/reactbits/AnimatedContent';
 import Particles from '../components/reactbits/Particles';
 import CountUp from '../components/reactbits/CountUp';
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery';
 import { usePlatformStats } from '@/lib/hooks/usePlatformStats';
-import '../components/reactbits/ShinyText.css';
+
 
 // ─── Animation helper ─────────────────────────────────────────────────────────
 
@@ -44,7 +43,7 @@ export default function AboutUs() {
   const DASH = '\u2014'; // em dash untuk loading state
 
   return (
-    <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans selection:bg-emerald-500/30 overflow-x-hidden">
+    <div className="min-h-screen bg-bg-base text-text-primary font-sans selection:bg-emerald-500/30 overflow-x-hidden">
       <SEO
         title="Tentang Kami - TernakOS | Platform Agribisnis: Peternak, Broker, RPA & Sembako"
         description="TernakOS adalah platform manajemen agribisnis Indonesia — mendukung peternak broiler, domba, kambing & sapi, broker ayam, broker telur, distributor sembako, dan RPA. Dibangun oleh peternak, untuk seluruh rantai pasok."
@@ -58,8 +57,8 @@ export default function AboutUs() {
             SECTION HERO — LOCKED: DO NOT MODIFY
         ══════════════════════════════════════════════ */}
         <section
-          className="relative px-5 md:px-10 lg:px-20 pt-32 pb-16 md:h-[750px] lg:h-[800px] flex items-center overflow-hidden"
-          style={{ background: '#06090F' }}
+          className="relative px-5 md:px-10 lg:px-20 pt-32 pb-16 md:h-[750px] lg:h-[800px] flex items-center overflow-hidden bg-bg-base"
+          style={{ background: 'var(--bg-base-val, #06090F)' }}
         >
           {/* Background Effects */}
           <div className="absolute inset-0 pointer-events-none">
@@ -103,45 +102,41 @@ export default function AboutUs() {
               <div
                 className="absolute left-[-100vw] right-0 inset-y-0 pointer-events-none"
                 style={{
-                  background: 'linear-gradient(to right, #06090F 60%, transparent 100%)',
+                  background: 'linear-gradient(to right, var(--bg-base-val, #06090F) 60%, transparent 100%)',
                   zIndex: 1
                 }}
               />
               <div className="relative z-10 space-y-8 max-w-xl mx-auto md:mx-0">
-                <div className="inline-block px-4 py-1.5 rounded-full bg-[#021a02]/10 border border-[#021a02]/20">
-                  <ShinyText
-                    text="Dibangun oleh peternak, untuk seluruh rantai pasok"
-                    disabled={false}
-                    speed={3}
-                    className="text-[#021a02] text-sm font-bold"
-                  />
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#f0fdf4] dark:bg-emerald-950/20 border border-slate-200 dark:border-white/10 text-emerald-800 dark:text-emerald-300 text-sm font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                  <span>Dibangun oleh peternak, untuk seluruh rantai pasok</span>
                 </div>
 
                 <div className="space-y-4">
                   <BlurText
-                    text="Kami tahu bisnis peternakan — karena kami bagian dari industri ini."
+                    text="Kami tahu bisnis peternakan karena kami bagian dari industri ini."
                     delay={100}
                     animateBy="words"
                     direction="top"
-                    className={`font-display ${isDesktop ? 'text-5xl lg:text-6xl' : 'text-3xl'} font-black text-white ${isDesktop ? 'leading-[1.1]' : 'leading-[1.2]'} tracking-tight`}
+                    className={`font-display ${isDesktop ? 'text-5xl lg:text-6xl' : 'text-3xl'} font-black text-text-primary ${isDesktop ? 'leading-[1.1]' : 'leading-[1.2]'} tracking-tight`}
                   />
                 </div>
 
                 <AnimatedContent distance={20} duration={0.6}>
-                  <p className="text-[#94A3B8] text-base lg:text-lg max-w-xl leading-relaxed">
+                  <p className="text-text-secondary text-base lg:text-lg max-w-xl leading-relaxed">
                     TernakOS lahir dari frustrasi nyata di lapangan, dibangun dengan teknologi terkini, untuk industri yang sudah waktunya bertransformasi.
                   </p>
 
                   <div className="pt-8 flex flex-wrap gap-4">
                     <Link
                       to="/register"
-                      className="px-8 py-4 bg-[#021a02] hover:bg-[#021a02] text-white font-bold rounded-2xl transition-all shadow-lg shadow-emerald-500/20"
+                      className="px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-emerald-500/20"
                     >
                       Mulai Gratis Sekarang
                     </Link>
                     <a
                       href="#cerita"
-                      className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white font-bold rounded-2xl transition-all border border-white/10"
+                      className="px-8 py-4 bg-bg-3/40 hover:bg-bg-3/70 text-text-primary font-bold rounded-2xl transition-all border border-border-default"
                     >
                       Pelajari Lebih Lanjut
                     </a>
@@ -164,7 +159,7 @@ export default function AboutUs() {
         {/* ══════════════════════════════════════════════
             SECTION: STATS BAR
         ══════════════════════════════════════════════ */}
-        <section className="bg-[#0C1319] border-y border-white/8 py-12">
+        <section className="bg-bg-1 border-y border-border-subtle py-12">
           <div className="max-w-5xl mx-auto px-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {[
@@ -189,11 +184,11 @@ export default function AboutUs() {
                   isLive: false,
                 },
               ].map((stat, i) => (
-                <FadeUp key={i} delay={i * 0.1} className={`text-center ${i < 3 ? 'md:border-r border-white/8' : ''}`}>
-                  <div className="font-display text-3xl font-black text-white mb-1">
+                <FadeUp key={i} delay={i * 0.1} className={`text-center ${i < 3 ? 'md:border-r border-border-subtle' : ''}`}>
+                  <div className="font-display text-3xl font-black text-text-primary mb-1">
                     {stat.value}
                   </div>
-                  <div className="flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-widest text-[#4B6478] mt-1">
+                  <div className="flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-widest text-text-muted mt-1">
                     {stat.isLive && (
                       <span className="w-[5px] h-[5px] rounded-full bg-emerald-400 animate-pulse inline-block" title="Data real-time" />
                     )}
@@ -208,17 +203,17 @@ export default function AboutUs() {
         {/* ══════════════════════════════════════════════
             SECTION: SUDAH BISA DIPAKAI
         ══════════════════════════════════════════════ */}
-        <section className="py-20 bg-[#06090F]">
+        <section className="py-20 bg-bg-base">
           <div className="max-w-6xl mx-auto px-6">
 
             <FadeUp className="text-center mb-12">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-5">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-300 mb-5">
                 SUDAH BISA DIPAKAI
               </p>
-              <h2 className="font-display text-4xl font-bold text-white leading-tight mb-3">
+              <h2 className="font-display text-4xl font-bold text-text-primary leading-tight mb-3">
                 Semua vertikal ini sudah live — hari ini.
               </h2>
-              <p className="text-[#94A3B8] text-sm">Tidak ada yang masih "coming soon" di bagian ini.</p>
+              <p className="text-text-secondary text-sm">Tidak ada yang masih "coming soon" di bagian ini.</p>
             </FadeUp>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -227,70 +222,70 @@ export default function AboutUs() {
                   badge: 'PETERNAK',
                   title: 'Broiler / Ayam Pedaging',
                   desc: 'FCR, deplesi, siklus & biaya produksi per kg.',
-                  badgeCls: 'bg-emerald-500/10 text-emerald-400',
+                  badgeCls: 'bg-[#f0fdf4] dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300',
                   borderCls: 'hover:border-emerald-500/25',
-                  dotCls: 'bg-emerald-400',
+                  dotCls: 'bg-emerald-500',
                 },
                 {
                   badge: 'PETERNAK',
                   title: 'Fattening Domba, Kambing & Sapi',
                   desc: 'ADG, FCR, mortalitas & laba per ekor per batch.',
-                  badgeCls: 'bg-emerald-500/10 text-emerald-400',
+                  badgeCls: 'bg-[#f0fdf4] dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300',
                   borderCls: 'hover:border-emerald-500/25',
-                  dotCls: 'bg-emerald-400',
+                  dotCls: 'bg-emerald-500',
                 },
                 {
                   badge: 'PETERNAK',
                   title: 'Breeding Domba, Kambing & Sapi',
                   desc: 'Kelola induk, reproduksi & penjualan bibit.',
-                  badgeCls: 'bg-emerald-500/10 text-emerald-400',
+                  badgeCls: 'bg-[#f0fdf4] dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300',
                   borderCls: 'hover:border-emerald-500/25',
-                  dotCls: 'bg-emerald-400',
+                  dotCls: 'bg-emerald-500',
                 },
                 {
                   badge: 'BROKER',
                   title: 'Broker Ayam',
                   desc: 'Margin, piutang RPA & susut pengiriman real-time.',
-                  badgeCls: 'bg-blue-500/10 text-blue-400',
+                  badgeCls: 'bg-blue-50 dark:bg-blue-950/20 text-blue-800 dark:text-blue-300',
                   borderCls: 'hover:border-blue-500/25',
-                  dotCls: 'bg-blue-400',
+                  dotCls: 'bg-blue-500',
                 },
                 {
                   badge: 'BROKER',
                   title: 'Broker Telur',
                   desc: 'Stok tray, POS penjualan & piutang agen.',
-                  badgeCls: 'bg-violet-500/10 text-violet-400',
+                  badgeCls: 'bg-violet-50 dark:bg-violet-950/20 text-violet-800 dark:text-violet-300',
                   borderCls: 'hover:border-violet-500/25',
-                  dotCls: 'bg-violet-400',
+                  dotCls: 'bg-violet-500',
                 },
                 {
                   badge: 'DISTRIBUTOR',
                   title: 'Distributor Sembako',
                   desc: 'Stok multi-produk, invoice, piutang & payroll.',
-                  badgeCls: 'bg-orange-500/10 text-orange-400',
+                  badgeCls: 'bg-orange-50 dark:bg-orange-950/20 text-orange-800 dark:text-orange-300',
                   borderCls: 'hover:border-orange-500/25',
-                  dotCls: 'bg-orange-400',
+                  dotCls: 'bg-orange-500',
                 },
                 {
                   badge: 'RUMAH POTONG',
                   title: 'RPA Ayam',
                   desc: 'Order, hutang ke broker & laporan margin produk.',
-                  badgeCls: 'bg-amber-500/10 text-amber-400',
+                  badgeCls: 'bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300',
                   borderCls: 'hover:border-amber-500/25',
-                  dotCls: 'bg-amber-400',
+                  dotCls: 'bg-amber-500',
                 },
               ].map(({ badge, title, desc, badgeCls, borderCls, dotCls }, i) => (
                 <FadeUp key={i} delay={i * 0.06}>
-                  <div className={`bg-[#0C1319] border border-white/8 ${borderCls} rounded-2xl p-5 transition-all duration-300 h-full flex flex-col gap-3`}>
+                  <div className={`bg-bg-1 border border-border-subtle ${borderCls} rounded-2xl p-5 transition-all duration-300 h-full flex flex-col gap-3`}>
                     <div className="flex items-center justify-between">
-                      <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${badgeCls}`}>{badge}</span>
-                      <span className="flex items-center gap-1.5 text-[10px] text-[#4B6478]">
+                      <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full ${badgeCls} border border-slate-200 dark:border-white/10`}>{badge}</span>
+                      <span className="flex items-center gap-1.5 text-[10px] text-text-muted">
                         <span className={`w-[5px] h-[5px] rounded-full ${dotCls} animate-pulse`} />
                         Live
                       </span>
                     </div>
-                    <h3 className="font-display text-[15px] font-bold text-white leading-snug">{title}</h3>
-                    <p className="text-[13px] text-[#94A3B8] leading-relaxed mt-auto">{desc}</p>
+                    <h3 className="font-display text-[15px] font-bold text-text-primary leading-snug">{title}</h3>
+                    <p className="text-[13px] text-text-secondary leading-relaxed mt-auto">{desc}</p>
                   </div>
                 </FadeUp>
               ))}
@@ -302,14 +297,14 @@ export default function AboutUs() {
         {/* ══════════════════════════════════════════════
             SECTION: DIBANGUN UNTUK SIAPA
         ══════════════════════════════════════════════ */}
-        <section className="py-24 bg-[#06090F]">
+        <section className="py-24 bg-bg-base">
           <div className="max-w-6xl mx-auto px-6">
 
             <FadeUp className="text-center mb-16">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-5">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-300 mb-5">
                 UNTUK SIAPA
               </p>
-              <h2 className="font-display text-4xl font-bold text-white leading-tight">
+              <h2 className="font-display text-4xl font-bold text-text-primary leading-tight">
                 Dibangun untuk pelaku industri nyata.
               </h2>
             </FadeUp>
@@ -318,10 +313,10 @@ export default function AboutUs() {
               {[
                 {
                   Icon: Bird,
-                  iconCls: 'text-emerald-400',
+                  iconCls: 'text-emerald-500 dark:text-emerald-400',
                   iconBg: 'bg-emerald-500/10',
                   badge: 'PETERNAK UNGGAS',
-                  badgeCls: 'bg-emerald-500/10 text-emerald-400',
+                  badgeCls: 'bg-[#f0fdf4] dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300',
                   hoverBorder: 'hover:border-emerald-500/30',
                   title: 'Peternak Unggas',
                   pain: 'Pantau FCR, deplesi, dan siklus — catat panen per kg dari HP.',
@@ -333,10 +328,10 @@ export default function AboutUs() {
                 },
                 {
                   Icon: Leaf,
-                  iconCls: 'text-green-400',
+                  iconCls: 'text-green-500 dark:text-green-400',
                   iconBg: 'bg-green-500/10',
                   badge: 'PETERNAK RUMINANSIA',
-                  badgeCls: 'bg-green-500/10 text-green-400',
+                  badgeCls: 'bg-[#f0fdf4] dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300',
                   hoverBorder: 'hover:border-green-500/30',
                   title: 'Domba / Kambing / Sapi',
                   pain: 'Kelola batch fattening atau program breeding — ADG dan laba per ekor tersaji otomatis.',
@@ -348,10 +343,10 @@ export default function AboutUs() {
                 },
                 {
                   Icon: Handshake,
-                  iconCls: 'text-blue-400',
+                  iconCls: 'text-blue-500 dark:text-blue-400',
                   iconBg: 'bg-blue-500/10',
                   badge: 'BROKER',
-                  badgeCls: 'bg-blue-500/10 text-blue-400',
+                  badgeCls: 'bg-blue-50 dark:bg-blue-950/20 text-blue-800 dark:text-blue-300',
                   hoverBorder: 'hover:border-blue-500/30',
                   title: 'Broker Ayam & Telur',
                   pain: 'Beli dari kandang, jual ke RPA — margin dan piutang terpantau real-time.',
@@ -363,10 +358,10 @@ export default function AboutUs() {
                 },
                 {
                   Icon: Package,
-                  iconCls: 'text-orange-400',
+                  iconCls: 'text-orange-500 dark:text-orange-400',
                   iconBg: 'bg-orange-500/10',
                   badge: 'DISTRIBUTOR',
-                  badgeCls: 'bg-orange-500/10 text-orange-400',
+                  badgeCls: 'bg-orange-50 dark:bg-orange-950/20 text-orange-800 dark:text-orange-300',
                   hoverBorder: 'hover:border-orange-500/30',
                   title: 'Distributor Sembako',
                   pain: 'Distribusi ke puluhan toko — stok, invoice, piutang, dan gaji pegawai dalam satu layar.',
@@ -378,10 +373,10 @@ export default function AboutUs() {
                 },
                 {
                   Icon: Factory,
-                  iconCls: 'text-amber-400',
+                  iconCls: 'text-amber-500 dark:text-amber-400',
                   iconBg: 'bg-amber-500/10',
                   badge: 'RUMAH POTONG',
-                  badgeCls: 'bg-amber-500/10 text-amber-400',
+                  badgeCls: 'bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300',
                   hoverBorder: 'hover:border-amber-500/30',
                   title: 'RPA Ayam',
                   pain: 'Beli dari broker, potong, distribusi — hutang dan margin terpantau dari kedua sisi.',
@@ -393,19 +388,19 @@ export default function AboutUs() {
                 },
               ].map(({ Icon, iconCls, iconBg, badge, badgeCls, hoverBorder, title, pain, features }, i) => (
                 <FadeUp key={i} delay={i * 0.1}>
-                  <div className={`group relative bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01))] rounded-3xl p-8 border border-white/8 ${hoverBorder} transition-all duration-300 h-full flex flex-col shadow-[0_8px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_20px_45px_rgba(2, 26, 2,0.12)]`}>
+                  <div className={`group relative bg-bg-1/40 dark:bg-white/[0.02] border border-border-subtle dark:border-white/8 ${hoverBorder} transition-all duration-300 h-full flex flex-col shadow-card hover:shadow-[0_20px_45px_rgba(2,26,2,0.12)] rounded-3xl p-8`}>
                     <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/0 via-emerald-500/0 to-emerald-500/0 group-hover:from-emerald-500/5 group-hover:to-transparent transition-all duration-500 rounded-3xl" />
                     <div className={`relative z-10 w-12 h-12 rounded-2xl ${iconBg} flex items-center justify-center mb-6 shrink-0 group-hover:scale-110 transition-transform duration-300`}>
                       <Icon size={24} className={iconCls} />
                     </div>
-                    <span className={`relative z-10 inline-block text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-4 self-start ${badgeCls} border border-white/5`}>
+                    <span className={`relative z-10 inline-block text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-4 self-start ${badgeCls} border border-slate-200 dark:border-white/10`}>
                       {badge}
                     </span>
-                    <h3 className="relative z-10 font-['Sora'] text-xl font-bold text-white mb-3 tracking-tight">{title}</h3>
-                    <p className="relative z-10 text-[#94A3B8] text-sm leading-relaxed mb-6 font-medium">{pain}</p>
+                    <h3 className="relative z-10 font-['Sora'] text-xl font-bold text-text-primary mb-3 tracking-tight">{title}</h3>
+                    <p className="relative z-10 text-text-secondary text-sm leading-relaxed mb-6 font-medium">{pain}</p>
                     <ul className="relative z-10 space-y-3 mt-auto">
                       {features.map((f, j) => (
-                        <li key={j} className="flex items-start gap-3 text-[13px] text-[#94A3B8]">
+                        <li key={j} className="flex items-start gap-3 text-[13px] text-text-secondary">
                           <Check size={14} className="text-emerald-400 shrink-0 mt-0.5" />
                           {f}
                         </li>
@@ -421,17 +416,17 @@ export default function AboutUs() {
         {/* ══════════════════════════════════════════════
             SECTION: ASAL USUL
         ══════════════════════════════════════════════ */}
-        <section id="cerita" className="py-24 bg-[#080D13]">
+        <section id="cerita" className="py-24 bg-bg-base">
           <div className="max-w-6xl mx-auto px-6">
             <div className="grid md:grid-cols-5 gap-12 md:gap-16 items-start">
 
               {/* KIRI — Narasi */}
               <div className="md:col-span-3">
                 <FadeUp>
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-5">
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-300 mb-5">
                     ASAL USUL
                   </p>
-                  <h2 className="font-display text-4xl font-bold text-white leading-tight mb-8">
+                  <h2 className="font-display text-4xl font-bold text-text-primary leading-tight mb-8">
                     Dibangun dari kandang, bukan dari ruang rapat.
                   </h2>
                 </FadeUp>
@@ -446,7 +441,7 @@ export default function AboutUs() {
                     'TernakOS dibangun untuk membantu peternak melihat angka yang selama ini tersembunyi: HPP per ekor, BEP jual, biaya operasional, margin bersih, dan performa kandang. Karena digitalisasi bukan sekadar memindahkan catatan kertas ke layar HP — tapi membuat peternak punya kendali atas angka bisnisnya sendiri.',
                   ].map((p, i) => (
                     <FadeUp key={i} delay={0.1 + i * 0.08}>
-                      <p className="text-[#94A3B8] leading-relaxed">{p}</p>
+                      <p className="text-text-secondary leading-relaxed">{p}</p>
                     </FadeUp>
                   ))}
                 </div>
@@ -459,8 +454,8 @@ export default function AboutUs() {
                   ].map(({ Icon, text }, i) => (
                     <FadeUp key={i} delay={0.4 + i * 0.08}>
                       <div className="flex items-center gap-3">
-                        <Icon size={16} className="text-[#021a02] shrink-0" />
-                        <span className="text-[#94A3B8] text-sm">{text}</span>
+                        <Icon size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span className="text-text-secondary text-sm">{text}</span>
                       </div>
                     </FadeUp>
                   ))}
@@ -471,17 +466,17 @@ export default function AboutUs() {
               <FadeUp delay={0.25} className="md:col-span-2">
                 <div className="relative">
                   <div className="absolute inset-0 bg-emerald-500/3 rounded-3xl blur-xl pointer-events-none" />
-                  <div className="relative bg-[#0C1319] rounded-3xl p-8 border border-white/8">
+                  <div className="relative bg-bg-1 rounded-3xl p-8 border border-border-subtle shadow-card">
                     <p
                       className="font-display text-8xl text-emerald-500/15 leading-none select-none mb-2"
                       aria-hidden="true"
                     >
                       "
                     </p>
-                    <p className="font-display text-lg font-medium text-white leading-relaxed">
+                    <p className="font-display text-lg font-medium text-text-primary leading-relaxed">
                       Satu kesalahan pencatatan bisa mengubah untung menjadi rugi. Tapi satu sistem yang tepat bisa membantu peternak melihat bisnisnya dengan lebih jernih.
                     </p>
-                    <p className="text-sm text-[#4B6478] mt-4">— Fahrurosadi, Founder TernakOS</p>
+                    <p className="text-sm text-text-muted mt-4">— Fahrurosadi, Founder TernakOS</p>
                   </div>
                 </div>
               </FadeUp>
@@ -493,7 +488,7 @@ export default function AboutUs() {
         {/* ══════════════════════════════════════════════
             SECTION FOUNDER — LOCKED: DO NOT MODIFY
         ══════════════════════════════════════════════ */}
-        <section className="py-24 bg-[#06090F] w-full">
+        <section className="py-24 bg-bg-base w-full">
           <div className="max-w-5xl mx-auto px-6">
             <div className="flex flex-col md:flex-row gap-10 md:gap-16 items-start">
               {/* KOLOM KIRI — FOTO */}
@@ -503,7 +498,7 @@ export default function AboutUs() {
                 viewport={{ once: true }}
                 className="w-full md:w-[40%]"
               >
-                <div className="relative overflow-hidden rounded-2xl min-h-[280px] md:min-h-[420px] bg-gradient-to-br from-[#0C1319] to-[#06090F] border border-white/8 group">
+                <div className="relative overflow-hidden rounded-2xl min-h-[280px] md:min-h-[420px] bg-gradient-to-br from-bg-1 to-bg-base border border-border-subtle group shadow-card">
                   <img
                     src="/founder.jpg"
                     alt="Founder TernakOS"
@@ -515,17 +510,17 @@ export default function AboutUs() {
                       if (placeholder) placeholder.style.display = 'flex';
                     }}
                   />
-                  <div className="founder-placeholder hidden absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[#0C1319] to-[#06090F]">
-                    <span className="font-display text-6xl font-black text-[#021a02]">FH</span>
+                  <div className="founder-placeholder hidden absolute inset-0 flex items-center justify-center bg-gradient-to-br from-bg-1 to-bg-base">
+                    <span className="font-display text-6xl font-black text-emerald-600 dark:text-emerald-400">FH</span>
                   </div>
 
                   {/* Overlay gradient bawah */}
-                  <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#06090F] to-transparent pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-bg-base to-transparent pointer-events-none" />
 
                   {/* Floating badge */}
-                  <div className="absolute bottom-5 left-5 bg-[#0C1319]/90 border border-white/10 rounded-xl px-4 py-2 backdrop-blur-sm shadow-xl">
-                    <div className="text-[#021a02] text-xs font-bold leading-tight">Peternak & Developer</div>
-                    <div className="text-[#4B6478] text-[10px] mt-0.5">Surakarta, Jawa Tengah</div>
+                  <div className="absolute bottom-5 left-5 bg-bg-1/90 border border-border-subtle rounded-xl px-4 py-2 backdrop-blur-sm shadow-xl">
+                    <div className="text-emerald-600 dark:text-emerald-400 text-xs font-bold leading-tight">Peternak & Developer</div>
+                    <div className="text-text-muted text-[10px] mt-0.5">Surakarta, Jawa Tengah</div>
                   </div>
                 </div>
               </motion.div>
@@ -537,15 +532,15 @@ export default function AboutUs() {
                 viewport={{ once: true }}
                 className="w-full md:w-[60%] md:pl-10 pt-8 md:pt-0"
               >
-                <div className="inline-block text-[9px] font-bold tracking-widest uppercase text-[#021a02] bg-[#021a02]/8 border border-[#021a02]/20 rounded-full px-3 py-1 mb-4">
+                <div className="inline-block text-[9px] font-bold tracking-widest uppercase text-emerald-800 dark:text-emerald-300 bg-[#f0fdf4] dark:bg-emerald-950/20 border border-slate-200 dark:border-white/10 rounded-full px-3 py-1 mb-4">
                   FOUNDER & CEO
                 </div>
 
-                <h3 className="font-display text-3xl font-bold text-[#F1F5F9] tracking-tight mb-1">
+                <h3 className="font-display text-3xl font-bold text-text-primary tracking-tight mb-1">
                   Fahrurosadi Hernan Sakti
                 </h3>
 
-                <p className="text-[#021a02] text-sm font-semibold mb-5">
+                <p className="text-emerald-800 dark:text-emerald-300 text-sm font-semibold mb-5">
                   Founder & CEO · TernakOS
                 </p>
 
@@ -559,8 +554,8 @@ export default function AboutUs() {
                     <span
                       key={i}
                       className={`text-[10px] font-medium rounded-md px-3 py-1.5 border ${tag.type === 'emerald'
-                        ? 'bg-[#021a02]/8 border-[#021a02]/15 text-[#021a02]'
-                        : 'bg-white/4 border-white/8 text-[#94A3B8]'
+                        ? 'bg-[#f0fdf4] dark:bg-emerald-950/20 border border-slate-200 dark:border-white/10 text-emerald-800 dark:text-emerald-300'
+                        : 'bg-bg-2 border border-slate-200 dark:border-white/10 text-text-secondary'
                         }`}
                     >
                       {tag.text}
@@ -568,14 +563,14 @@ export default function AboutUs() {
                   ))}
                 </div>
 
-                <div className="border-l-2 border-[#021a02]/40 pl-4 mb-6">
-                  <p className="italic text-[#4B6478] text-sm leading-relaxed">
+                <div className="border-l-2 border-emerald-500/40 pl-4 mb-6">
+                  <p className="italic text-text-muted text-sm leading-relaxed">
                     "Saya membangun TernakOS karena saya ada di industri ini — bukan sekadar mengamatinya dari luar. Dari kandang ke kode, semua berasal dari pengalaman nyata."
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 text-[10px] text-[#4B6478]">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#021a02] opacity-60" />
+                <div className="flex items-center gap-2 text-[10px] text-text-muted">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 opacity-60" />
                   Surakarta, Jawa Tengah — Jantung industri peternakan Indonesia
                 </div>
               </motion.div>
@@ -586,37 +581,37 @@ export default function AboutUs() {
         {/* ══════════════════════════════════════════════
             SECTION: VISI & MISI
         ══════════════════════════════════════════════ */}
-        <section className="py-24 bg-[#080D13]">
+        <section className="py-24 bg-bg-base">
           <div className="max-w-6xl mx-auto px-6">
 
             <FadeUp className="text-center mb-16">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-5">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-300 mb-5">
                 ARAH KAMI
               </p>
-              <h2 className="font-display text-4xl font-bold text-white leading-tight">
+              <h2 className="font-display text-4xl font-bold text-text-primary leading-tight">
                 Visi &amp; Misi
               </h2>
             </FadeUp>
 
             <div className="grid md:grid-cols-2 gap-6">
               <FadeUp delay={0.1}>
-                <div className="bg-[#0C1319] rounded-3xl p-8 border border-white/8 border-l-2 border-l-emerald-500 h-full flex flex-col">
+                <div className="bg-bg-1 rounded-3xl p-8 border border-border-subtle border-l-2 border-l-emerald-500 h-full flex flex-col shadow-card">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-5 shrink-0">
-                    <Eye size={20} className="text-emerald-400" />
+                    <Eye size={20} className="text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  <h3 className="font-display text-xl font-bold text-white mb-4">Visi</h3>
-                  <p className="text-[#94A3B8] leading-relaxed">
+                  <h3 className="font-display text-xl font-bold text-text-primary mb-4">Visi</h3>
+                  <p className="text-text-secondary leading-relaxed">
                     Menjadi ekosistem digital peternakan terpercaya di Indonesia — tempat setiap peternak, broker, dan mitra bisnis terhubung, bertumbuh, dan bersaing secara adil berdasarkan data yang nyata.
                   </p>
                 </div>
               </FadeUp>
 
               <FadeUp delay={0.2}>
-                <div className="bg-[#0C1319] rounded-3xl p-8 border border-white/8 h-full flex flex-col">
+                <div className="bg-bg-1 rounded-3xl p-8 border border-border-subtle h-full flex flex-col shadow-card">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-5 shrink-0">
-                    <Target size={20} className="text-emerald-400" />
+                    <Target size={20} className="text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  <h3 className="font-display text-xl font-bold text-white mb-4">Misi</h3>
+                  <h3 className="font-display text-xl font-bold text-text-primary mb-4">Misi</h3>
                   <ul className="space-y-4">
                     {[
                       'Mendigitalisasi seluruh rantai bisnis peternakan dalam satu platform yang mudah digunakan siapapun',
@@ -624,8 +619,8 @@ export default function AboutUs() {
                       'Membangun fondasi data agar setiap pelaku usaha bisa mengambil keputusan berdasarkan fakta',
                     ].map((item, i) => (
                       <li key={i} className="flex items-start gap-3">
-                        <CheckCircle size={16} className="text-emerald-400 shrink-0 mt-0.5" />
-                        <span className="text-[#94A3B8] text-sm leading-relaxed">{item}</span>
+                        <CheckCircle size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                        <span className="text-text-secondary text-sm leading-relaxed">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -638,14 +633,14 @@ export default function AboutUs() {
         {/* ══════════════════════════════════════════════
             SECTION: NILAI YANG KAMI PEGANG
         ══════════════════════════════════════════════ */}
-        <section className="py-24 bg-[#06090F]">
+        <section className="py-24 bg-bg-base">
           <div className="max-w-4xl mx-auto px-6">
 
             <FadeUp className="text-center mb-4">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-5">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-300 mb-5">
                 NILAI YANG KAMI PEGANG
               </p>
-              <h2 className="font-display text-4xl font-bold text-white leading-tight">
+              <h2 className="font-display text-4xl font-bold text-text-primary leading-tight">
                 Prinsip yang membentuk produk kami.
               </h2>
             </FadeUp>
@@ -657,20 +652,20 @@ export default function AboutUs() {
                 { num: '03', Icon: Heart, title: 'Keberpihakan', body: 'Berpihak pada peternak kecil dan broker independen — mereka yang selama ini tidak punya akses ke tools yang layak, tapi menanggung risiko bisnis yang sama besarnya.' },
               ].map(({ num, Icon, title, body }, i) => (
                 <FadeUp key={i} delay={i * 0.08}>
-                  <div className={`flex items-start gap-6 md:gap-10 py-10 ${i < 2 ? 'border-b border-white/5' : ''}`}>
+                  <div className={`flex items-start gap-6 md:gap-10 py-10 ${i < 2 ? 'border-b border-border-subtle' : ''}`}>
                     <span
-                      className="font-display text-6xl md:text-7xl font-black text-white/5 leading-none shrink-0 select-none w-16 text-right"
+                      className="font-display text-6xl md:text-7xl font-black text-text-primary/5 leading-none shrink-0 select-none w-16 text-right"
                       aria-hidden="true"
                     >
                       {num}
                     </span>
                     <div className="flex items-start gap-4 flex-1">
                       <div className="bg-emerald-500/10 rounded-xl p-2 shrink-0 mt-0.5">
-                        <Icon size={24} className="text-emerald-400" />
+                        <Icon size={24} className="text-emerald-600 dark:text-emerald-400" />
                       </div>
                       <div>
-                        <h3 className="font-display text-xl font-bold text-white mb-2">{title}</h3>
-                        <p className="text-[#94A3B8] leading-relaxed">{body}</p>
+                        <h3 className="font-display text-xl font-bold text-text-primary mb-2">{title}</h3>
+                        <p className="text-text-secondary leading-relaxed">{body}</p>
                       </div>
                     </div>
                   </div>
@@ -683,14 +678,14 @@ export default function AboutUs() {
         {/* ══════════════════════════════════════════════
             SECTION: KEJUJURAN CALLOUT
         ══════════════════════════════════════════════ */}
-        <section className="py-24 bg-[#080D13]">
+        <section className="py-24 bg-bg-base">
           <div className="max-w-4xl mx-auto px-6">
             <FadeUp>
-              <div className="bg-[#0C1319] rounded-3xl p-12 md:p-16 border border-white/8 text-center">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-6">
+              <div className="bg-bg-1 rounded-3xl p-12 md:p-16 border border-border-subtle text-center shadow-card">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-300 mb-6">
                   KEJUJURAN KAMI
                 </p>
-                <h2 className="font-display text-4xl md:text-5xl font-bold text-white leading-tight mb-12">
+                <h2 className="font-display text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-12">
                   Kami percaya pada kejujuran —<br />termasuk tentang diri kami sendiri.
                 </h2>
 
@@ -702,8 +697,8 @@ export default function AboutUs() {
                     'Bootstrap & independent — tidak ada investor yang mendikte arah produk kami',
                   ].map((item, i) => (
                     <div key={i} className="flex items-start gap-3">
-                      <CheckCircle size={16} className="text-emerald-400 shrink-0 mt-0.5" />
-                      <p className="text-[#94A3B8] text-sm leading-relaxed">{item}</p>
+                      <CheckCircle size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                      <p className="text-text-secondary text-sm leading-relaxed">{item}</p>
                     </div>
                   ))}
                 </div>
@@ -715,19 +710,19 @@ export default function AboutUs() {
         {/* ══════════════════════════════════════════════
             SECTION: ROADMAP
         ══════════════════════════════════════════════ */}
-        <section className="py-24 bg-[#06090F]">
+        <section className="py-24 bg-bg-base">
           <div className="max-w-5xl mx-auto px-6">
 
             <FadeUp className="text-center mb-20">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-5">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-800 dark:text-emerald-300 mb-5">
                 ROADMAP
               </p>
-              <h2 className="font-display text-4xl font-bold text-white leading-tight">
+              <h2 className="font-display text-4xl font-bold text-text-primary leading-tight">
                 Roadmap Pengembangan
               </h2>
             </FadeUp>
 
-            <div className="space-y-0 relative border-l-2 border-white/5 ml-4 md:ml-0">
+            <div className="space-y-0 relative border-l-2 border-border-subtle ml-4 md:ml-0">
               {[
                 {
                   time: '2026 Q1',
@@ -764,40 +759,40 @@ export default function AboutUs() {
                   <div className="relative pl-12 pb-14 last:pb-0">
                     <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 z-10 ${item.status === 'selesai' ? 'bg-emerald-500 border-emerald-500' :
                         item.status === 'ongoing' ? 'bg-[#F59E0B] border-[#F59E0B] animate-pulse' :
-                          'bg-[#111C24] border-white/20'
+                          'bg-bg-2 border-slate-200 dark:border-white/10'
                       }`} />
 
-                    <div className={`bg-[#0C1319] border rounded-3xl p-8 transition-all duration-300 ${item.status === 'selesai' ? 'border-emerald-500/20' :
+                    <div className={`bg-bg-1 border rounded-3xl p-8 transition-all duration-300 shadow-card ${item.status === 'selesai' ? 'border-emerald-500/20' :
                         item.status === 'ongoing' ? 'border-amber-500/20' :
-                          'border-white/5'
+                          'border-border-subtle'
                       }`}>
                       <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
                         <div className="flex items-center gap-3">
-                          <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${item.status === 'selesai' ? 'bg-emerald-500/10 text-emerald-400' :
-                              item.status === 'ongoing' ? 'bg-amber-500/10 text-amber-400' :
-                                'bg-white/5 text-[#4B6478]'
+                          <span className={`text-[10px] font-bold px-3 py-1 rounded-full ${item.status === 'selesai' ? 'bg-[#f0fdf4] dark:bg-emerald-950/20 border border-slate-200 dark:border-white/10 text-emerald-800 dark:text-emerald-300' :
+                              item.status === 'ongoing' ? 'bg-amber-50 dark:bg-amber-950/20 border border-slate-200 dark:border-white/10 text-amber-800 dark:text-amber-300' :
+                                'bg-bg-2 border border-slate-200 dark:border-white/10 text-text-muted'
                             }`}>{item.time}</span>
-                          <h4 className="font-display text-xl font-bold text-white uppercase tracking-tight">{item.title}</h4>
+                          <h4 className="font-display text-xl font-bold text-text-primary uppercase tracking-tight">{item.title}</h4>
                         </div>
                         <div>
                           {item.status === 'selesai' && (
-                            <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full uppercase tracking-widest">
+                            <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-[#f0fdf4] dark:bg-emerald-950/20 border border-slate-200 dark:border-white/10 px-3 py-1 rounded-full uppercase tracking-widest">
                               <CheckCircle size={10} /> Rilis
                             </span>
                           )}
                           {item.status === 'ongoing' && (
-                            <span className="flex items-center gap-1.5 text-[10px] font-bold text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full uppercase tracking-widest animate-pulse">
+                            <span className="flex items-center gap-1.5 text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/20 border border-slate-200 dark:border-white/10 px-3 py-1 rounded-full uppercase tracking-widest animate-pulse">
                               <Calendar size={10} /> In Progress
                             </span>
                           )}
                           {item.status === 'planned' && (
-                            <span className="flex items-center gap-1.5 text-[10px] font-bold text-[#4B6478] bg-white/5 px-3 py-1 rounded-full uppercase tracking-widest">
+                            <span className="flex items-center gap-1.5 text-[10px] font-bold text-text-muted bg-bg-2 border border-slate-200 dark:border-white/10 px-3 py-1 rounded-full uppercase tracking-widest">
                               <Rocket size={10} /> Planned
                             </span>
                           )}
                         </div>
                       </div>
-                      <p className="text-[#94A3B8] text-sm leading-relaxed">{item.desc}</p>
+                      <p className="text-text-secondary text-sm leading-relaxed">{item.desc}</p>
                     </div>
                   </div>
                 </FadeUp>
@@ -809,20 +804,20 @@ export default function AboutUs() {
         {/* ══════════════════════════════════════════════
             SECTION: CTA BOTTOM
         ══════════════════════════════════════════════ */}
-        <section className="py-24 bg-[#080D13]">
+        <section className="py-24 bg-bg-base">
           <div className="max-w-4xl mx-auto px-6">
             <FadeUp>
-              <div className="relative rounded-3xl p-12 md:p-16 text-center border border-emerald-500/20 overflow-hidden">
+              <div className="relative rounded-3xl p-12 md:p-16 text-center border border-emerald-500/20 overflow-hidden shadow-card">
                 {/* Gradient background */}
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent pointer-events-none rounded-3xl" />
                 {/* Glow */}
                 <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-80 h-40 bg-emerald-500/10 blur-3xl pointer-events-none" />
 
                 <div className="relative z-10">
-                  <h2 className="font-display text-4xl font-bold text-white leading-tight mb-4">
+                  <h2 className="font-display text-4xl font-bold text-text-primary leading-tight mb-4">
                     Siap bergabung dengan ekosistem<br />peternakan modern?
                   </h2>
-                  <p className="text-[#94A3B8] text-lg mb-10">
+                  <p className="text-text-secondary text-lg mb-10">
                     Daftar dan mulai gratis selamanya. Tanpa perlu kartu kredit.
                   </p>
 
@@ -836,7 +831,7 @@ export default function AboutUs() {
                     </Link>
                     <a
                       href="/#fitur"
-                      className="px-8 py-4 border border-white/20 hover:border-white/40 text-white font-bold rounded-xl transition-colors"
+                      className="px-8 py-4 border border-border-default hover:border-border-strong text-text-primary font-bold rounded-xl transition-colors"
                     >
                       Lihat Fitur
                     </a>
@@ -844,7 +839,7 @@ export default function AboutUs() {
                       href="https://wa.me/6281358925505?text=Halo%2C%20saya%20ingin%20tahu%20lebih%20lanjut%20tentang%20TernakOS"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-8 py-4 border border-emerald-500/30 hover:border-emerald-500/60 text-emerald-400 font-bold rounded-xl transition-colors"
+                      className="px-8 py-4 border border-emerald-500/30 hover:border-emerald-500/60 text-emerald-600 dark:text-emerald-400 font-bold rounded-xl transition-colors"
                     >
                       Tanya via WhatsApp
                     </a>

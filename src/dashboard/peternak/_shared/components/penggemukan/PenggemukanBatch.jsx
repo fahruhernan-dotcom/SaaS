@@ -625,7 +625,7 @@ export function PenggemukanBatch({ config, hooks, KandangMiniMap }) {
     <div className="flex flex-col h-full bg-[#06090F]">
       {isMobile ? (
         <MobileHeader
-          title="Batch Cycle"
+          title="Manajemen Batch"
           rightElement={
             <div className="flex items-center gap-2">
               {perm.canBuatSiklus && (
@@ -641,7 +641,7 @@ export function PenggemukanBatch({ config, hooks, KandangMiniMap }) {
         />
       ) : (
         <BrokerPageHeader
-          title="Batch Cycle"
+          title="Manajemen Batch"
           subtitle="Manajemen siklus fattening dan tracking performa per kelompok."
           icon={<TrendingUp size={20} className="text-green-400" />}
           actionButton={
@@ -678,9 +678,9 @@ export function PenggemukanBatch({ config, hooks, KandangMiniMap }) {
           {!active.length ? (
             <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-white/[0.04] rounded-[3rem] bg-white/[0.01]">
                <Activity size={40} className="text-white/5 mb-4" />
-               <p className="text-xs font-black text-[#4B6478] uppercase tracking-widest mb-4">No Active Cycle Found</p>
+               <p className="text-xs font-black text-[#4B6478] uppercase tracking-widest mb-4">Tidak Ada Siklus Aktif</p>
                {perm.canBuatSiklus && (
-                 <Button variant="outline" onClick={() => setShowCreate(true)} className="border-white/10 text-white/40 hover:text-white rounded-xl uppercase text-[10px] font-black h-9">Start New Batch</Button>
+                 <Button variant="outline" onClick={() => setShowCreate(true)} className="border-white/10 text-white/40 hover:text-white rounded-xl uppercase text-[10px] font-black h-9">Mulai Batch Baru</Button>
                )}
             </div>
           ) : (

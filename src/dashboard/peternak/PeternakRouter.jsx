@@ -1,5 +1,7 @@
 import React from 'react'
 import { useParams } from 'react-router-dom'
+import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
+import StarterPlanWall from '@/dashboard/_shared/components/StarterPlanWall'
 
 // ─── Broiler ──────────────────────────────────────────────────────────────────
 import BroilerBeranda      from './broiler/Beranda'
@@ -116,13 +118,13 @@ import { getLivestockTypeFromSubType } from '@/lib/constants/taskTemplates'
 import { useAuth } from '@/lib/hooks/useAuth'
 import PeternakTutorialOverlay from './_shared/components/PeternakTutorialOverlay'
 import WelcomeOnlyOverlay from '@/dashboard/_shared/components/WelcomeOnlyOverlay'
-import { isOwner, isManager, isSuperadmin } from '@/lib/auth'
+import { isOwner, isManager, isSuperadmin as isSuperadminRole } from '@/lib/auth'
 
-// ─── Route Guard ──────────────────────────────────────────────────────────────
+// ─── Route Guards ─────────────────────────────────────────────────────────────
 function PeternakAdminGuard({ children }) {
   const { profile, loading } = useAuth()
   if (loading) return <LoadingSpinner fullPage />
-  const isAllowed = isOwner(profile) || isSuperadmin(profile)
+  const isAllowed = isOwner(profile) || isSuperadminRole(profile)
   if (!isAllowed) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center text-slate-400">
@@ -139,10 +141,34 @@ function PeternakAdminGuard({ children }) {
   return children
 }
 
+/**
+ * PeternakPlanGuard — blocks Starter-plan users from Pro-gated peternak pages.
+ * Renders StarterPlanWall in-place; does NOT redirect.
+ * Pro features: task_assign, task_settings, tim (team management).
+ * daily_task remains accessible for all plans.
+ */
+function PeternakPlanGuard({ children }) {
+  const { tenant, isSuperadmin, loading } = useAuth()
+  if (loading) return <LoadingSpinner fullPage />
+  if (isSuperadmin) return children
+  const sub = getSubscriptionStatus(tenant)
+  const isPro = ['pro', 'business'].includes(sub.plan) || sub.status === 'trial'
+  if (!isPro) {
+    return (
+      <StarterPlanWall
+        featureName="Fitur PRO"
+        description="Penugasan Tim dan Manajemen Tim tersedia di paket Pro."
+        upgradePath="/dashboard/upgrade"
+      />
+    )
+  }
+  return children
+}
+
 function PeternakManagerGuard({ children }) {
   const { profile, loading } = useAuth()
   if (loading) return <LoadingSpinner fullPage />
-  const isAllowed = isOwner(profile) || isManager(profile) || isSuperadmin(profile)
+  const isAllowed = isOwner(profile) || isManager(profile) || isSuperadminRole(profile)
   if (!isAllowed) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center text-slate-400">
@@ -183,7 +209,7 @@ export function PeternakPageRouter({ page }) {
       daily_task:     <BroilerDailyTask />,
       'harga-pasar':  <HargaPasar />,
       akun:           <Akun />,
-      tim:            <TimManajemenPage />,
+      tim:            <PeternakPlanGuard><TimManajemenPage /></PeternakPlanGuard>,
       atur:           <PeternakAdminGuard><BroilerFarmSettings /></PeternakAdminGuard>,
       ...AI,
     },
@@ -193,7 +219,7 @@ export function PeternakPageRouter({ page }) {
       laporan:       <LayerBeranda />,
       daily_task:    <LayerDailyTask />,
       'harga-pasar': <HargaPasar />,
-      tim:           <TimManajemenPage />,
+      tim:           <PeternakPlanGuard><TimManajemenPage /></PeternakPlanGuard>,
       akun:          <Akun />,
       ...AI,
     },
@@ -206,13 +232,13 @@ export function PeternakPageRouter({ page }) {
       laporan:        <SapiLaporan />,
       'kandang-view': <SapiKandangView />,
       daily_task:     <SapiDailyTask />,
-      task_settings:  <PeternakManagerGuard><SapiTaskSettings /></PeternakManagerGuard>,
-      task_assign:    <PeternakManagerGuard><SapiTaskAssign /></PeternakManagerGuard>,
+      task_settings:  <PeternakPlanGuard><PeternakManagerGuard><SapiTaskSettings /></PeternakManagerGuard></PeternakPlanGuard>,
+      task_assign:    <PeternakPlanGuard><PeternakManagerGuard><SapiTaskAssign /></PeternakManagerGuard></PeternakPlanGuard>,
       'quick-add':    <SapiQuickAdd />,
       penjualan:      <SapiPenjualan />,
       'listrik-air':  <ListrikAirPage />,
       'harga-pasar':  <HargaPasar />,
-      tim:            <TimManajemenPage />,
+      tim:            <PeternakPlanGuard><TimManajemenPage /></PeternakPlanGuard>,
       akun:           <Akun />,
       ...AI,
     },
@@ -224,11 +250,11 @@ export function PeternakPageRouter({ page }) {
       'stok-pakan':  <SapiBreedingPakan />,
       laporan:       <SapiBreedingLaporan />,
       daily_task:    <SapiBreedingDailyTask />,
-      task_settings: <PeternakManagerGuard><SapiBreedingTaskSettings /></PeternakManagerGuard>,
-      task_assign:   <PeternakManagerGuard><SapiBreedingTaskAssign /></PeternakManagerGuard>,
+      task_settings: <PeternakPlanGuard><PeternakManagerGuard><SapiBreedingTaskSettings /></PeternakManagerGuard></PeternakPlanGuard>,
+      task_assign:   <PeternakPlanGuard><PeternakManagerGuard><SapiBreedingTaskAssign /></PeternakManagerGuard></PeternakPlanGuard>,
       'listrik-air': <ListrikAirPage />,
       'harga-pasar': <HargaPasar />,
-      tim:           <TimManajemenPage />,
+      tim:           <PeternakPlanGuard><TimManajemenPage /></PeternakPlanGuard>,
       akun:          <Akun />,
       ...AI,
     },
@@ -241,13 +267,13 @@ export function PeternakPageRouter({ page }) {
       laporan:        <DombaLaporan />,
       'kandang-view': <DombaKandangView />,
       daily_task:     <DombaDailyTask />,
-      task_settings:  <PeternakManagerGuard><DombaTaskSettings /></PeternakManagerGuard>,
-      task_assign:    <PeternakManagerGuard><DombaTaskAssign /></PeternakManagerGuard>,
+      task_settings:  <PeternakPlanGuard><PeternakManagerGuard><DombaTaskSettings /></PeternakManagerGuard></PeternakPlanGuard>,
+      task_assign:    <PeternakPlanGuard><PeternakManagerGuard><DombaTaskAssign /></PeternakManagerGuard></PeternakPlanGuard>,
       penjualan:      <DombaPenjualan />,
       'quick-add':    <DombaQuickAdd />,
       'listrik-air':  <ListrikAirPage />,
       'harga-pasar':  <HargaPasar />,
-      tim:            <TimManajemenPage />,
+      tim:            <PeternakPlanGuard><TimManajemenPage /></PeternakPlanGuard>,
       akun:           <Akun />,
       ...AI,
     },
@@ -259,10 +285,10 @@ export function PeternakPageRouter({ page }) {
       'stok-pakan':  <DombaBreedingPakan />,
       laporan:       <DombaBreedingLaporan />,
       daily_task:    <DombaBreedingDailyTask />,
-      task_settings: <PeternakManagerGuard><DombaBreedingTaskSettings /></PeternakManagerGuard>,
-      task_assign:   <PeternakManagerGuard><DombaBreedingTaskAssign /></PeternakManagerGuard>,
+      task_settings: <PeternakPlanGuard><PeternakManagerGuard><DombaBreedingTaskSettings /></PeternakManagerGuard></PeternakPlanGuard>,
+      task_assign:   <PeternakPlanGuard><PeternakManagerGuard><DombaBreedingTaskAssign /></PeternakManagerGuard></PeternakPlanGuard>,
       'harga-pasar': <HargaPasar />,
-      tim:           <TimManajemenPage />,
+      tim:           <PeternakPlanGuard><TimManajemenPage /></PeternakPlanGuard>,
       akun:          <Akun />,
       ...AI,
     },
@@ -275,13 +301,13 @@ export function PeternakPageRouter({ page }) {
       laporan:        <KambingLaporan />,
       'kandang-view': <KambingKandangView />,
       daily_task:     <KambingDailyTask />,
-      task_settings:  <PeternakManagerGuard><KambingTaskSettings /></PeternakManagerGuard>,
-      task_assign:    <PeternakManagerGuard><KambingTaskAssign /></PeternakManagerGuard>,
+      task_settings:  <PeternakPlanGuard><PeternakManagerGuard><KambingTaskSettings /></PeternakManagerGuard></PeternakPlanGuard>,
+      task_assign:    <PeternakPlanGuard><PeternakManagerGuard><KambingTaskAssign /></PeternakManagerGuard></PeternakPlanGuard>,
       penjualan:      <KambingPenjualan />,
       'quick-add':    <KambingQuickAdd />,
       'listrik-air':  <ListrikAirPage />,
       'harga-pasar':  <HargaPasar />,
-      tim:            <TimManajemenPage />,
+      tim:            <PeternakPlanGuard><TimManajemenPage /></PeternakPlanGuard>,
       akun:           <Akun />,
       ...AI,
     },
@@ -293,10 +319,10 @@ export function PeternakPageRouter({ page }) {
       'stok-pakan':  <KambingBreedingPakan />,
       laporan:       <KambingBreedingLaporan />,
       daily_task:    <KambingBreedingDailyTask />,
-      task_settings: <PeternakManagerGuard><KambingBreedingTaskSettings /></PeternakManagerGuard>,
-      task_assign:   <PeternakManagerGuard><KambingBreedingTaskAssign /></PeternakManagerGuard>,
+      task_settings: <PeternakPlanGuard><PeternakManagerGuard><KambingBreedingTaskSettings /></PeternakManagerGuard></PeternakPlanGuard>,
+      task_assign:   <PeternakPlanGuard><PeternakManagerGuard><KambingBreedingTaskAssign /></PeternakManagerGuard></PeternakPlanGuard>,
       'harga-pasar': <HargaPasar />,
-      tim:           <TimManajemenPage />,
+      tim:           <PeternakPlanGuard><TimManajemenPage /></PeternakPlanGuard>,
       akun:          <Akun />,
       ...AI,
     },
@@ -310,7 +336,7 @@ export function PeternakPageRouter({ page }) {
       'stok-pakan':  <KambingPerahInventory />,
       daily_task:    <KambingPerahDailyTask />,
       'harga-pasar': <HargaPasar />,
-      tim:           <TimManajemenPage />,
+      tim:           <PeternakPlanGuard><TimManajemenPage /></PeternakPlanGuard>,
       akun:          <Akun />,
       ...AI,
     },

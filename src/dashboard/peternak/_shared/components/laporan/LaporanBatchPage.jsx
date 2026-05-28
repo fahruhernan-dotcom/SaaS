@@ -72,6 +72,46 @@ export default function LaporanBatchPage({
 
   if (loadingBatches) return <LoadingSpinner fullPage />
 
+  if (batches.length === 0) {
+    return (
+      <div className="text-slate-100 pb-24 min-h-[60vh] flex flex-col justify-center">
+        <header className="px-5 pt-8 pb-5 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.05] mb-8">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#4B6478] hover:text-white transition-all shadow-inner"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div>
+              <h1 className="font-['Sora'] font-black text-2xl text-white tracking-tight leading-none mb-1">
+                Analisa & Laporan
+              </h1>
+              <p className="text-[11px] text-[#4B6478] font-black uppercase tracking-widest">
+                0 BATCH AKTIF · {livestockLabel}
+              </p>
+            </div>
+          </div>
+        </header>
+        <div className="px-5 max-w-md mx-auto text-center py-10">
+          <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-emerald-500/20">
+            <span className="text-2xl">📊</span>
+          </div>
+          <h2 className="font-['Sora'] font-black text-lg text-white mb-2">Analisa & Laporan Penggemukan</h2>
+          <p className="text-xs text-[#4B6478] leading-relaxed mb-6">
+            Mulai siklus batch penggemukan pertama Anda untuk mengaktifkan analisa performa, finansial, efisiensi pakan, dan kepatuhan tugas.
+          </p>
+          <button
+            onClick={() => navigate(`${BASE}/batch`)}
+            className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase text-[11px] tracking-widest rounded-2xl transition-all shadow-lg shadow-emerald-500/20"
+          >
+            Mulai Siklus Penggemukan Baru
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   const activeBatchesCount = batches.filter(b => b.status === 'active').length
 
   return (
@@ -143,6 +183,8 @@ export default function LaporanBatchPage({
                 feedLogs={feedLogs}
                 opCosts={opCosts}
                 healthLogs={healthLogs}
+                navigate={navigate}
+                BASE={BASE}
               />
             )}
             {tab === 'pakan'     && (
@@ -151,6 +193,8 @@ export default function LaporanBatchPage({
                 animals={animals}
                 feedLogs={feedLogs}
                 weightHistory={weightHistory}
+                navigate={navigate}
+                BASE={BASE}
               />
             )}
             {tab === 'kesehatan' && (

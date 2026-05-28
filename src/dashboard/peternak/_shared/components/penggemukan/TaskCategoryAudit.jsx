@@ -3,12 +3,12 @@ import { Clock, CheckCircle2, CircleDashed, ChevronRight, ChevronLeft } from 'lu
 import { format } from 'date-fns'
 
 const TASK_CATEGORY_MAP = {
-  pakan: { label: 'Morning Feeding', time: '08:00', avatar: 'https://i.pravatar.cc/150?u=12', color: 'bg-emerald-400', textColor: 'text-emerald-400' },
-  kesehatan: { label: 'Health Check', time: '09:00', avatar: 'https://i.pravatar.cc/150?u=32', color: 'bg-amber-400', textColor: 'text-amber-400' },
-  kebersihan_kandang: { label: 'Pen Cleaning', time: '12:00', avatar: 'https://i.pravatar.cc/150?u=44', color: 'bg-blue-400', textColor: 'text-blue-400' },
-  pemberian_pakan: { label: 'Afternoon Feeding', time: '15:00', avatar: 'https://i.pravatar.cc/150?u=68', color: 'bg-orange-400', textColor: 'text-orange-400' },
-  kebersihan: { label: 'Pen Cleaning', time: '12:00', avatar: 'https://i.pravatar.cc/150?u=44', color: 'bg-blue-400', textColor: 'text-blue-400' },
-  ceklis_kesehatan: { label: 'Health Check', time: '09:00', avatar: 'https://i.pravatar.cc/150?u=32', color: 'bg-amber-400', textColor: 'text-amber-400' },
+  pakan: { label: 'Pakan Pagi', time: '08:00', avatar: 'https://i.pravatar.cc/150?u=12', color: 'bg-emerald-400', textColor: 'text-emerald-400' },
+  kesehatan: { label: 'Cek Kesehatan', time: '09:00', avatar: 'https://i.pravatar.cc/150?u=32', color: 'bg-amber-400', textColor: 'text-amber-400' },
+  kebersihan_kandang: { label: 'Kebersihan Kandang', time: '12:00', avatar: 'https://i.pravatar.cc/150?u=44', color: 'bg-blue-400', textColor: 'text-blue-400' },
+  pemberian_pakan: { label: 'Pakan Sore', time: '15:00', avatar: 'https://i.pravatar.cc/150?u=68', color: 'bg-orange-400', textColor: 'text-orange-400' },
+  kebersihan: { label: 'Kebersihan Kandang', time: '12:00', avatar: 'https://i.pravatar.cc/150?u=44', color: 'bg-blue-400', textColor: 'text-blue-400' },
+  ceklis_kesehatan: { label: 'Cek Kesehatan', time: '09:00', avatar: 'https://i.pravatar.cc/150?u=32', color: 'bg-amber-400', textColor: 'text-amber-400' },
   timbang: { label: 'Timbang', time: '07:00', avatar: 'https://i.pravatar.cc/150?u=11', color: 'bg-purple-400', textColor: 'text-purple-400' },
   reproduksi: { label: 'Reproduksi', time: '11:00', avatar: 'https://i.pravatar.cc/150?u=22', color: 'bg-pink-400', textColor: 'text-pink-400' },
   lainnya: { label: 'Lainnya', time: '16:00', avatar: 'https://i.pravatar.cc/150?u=99', color: 'bg-slate-400', textColor: 'text-slate-400' },
@@ -19,7 +19,7 @@ export function TaskCategoryAudit({ tasks, onNavigate }) {
     const order = ['pakan', 'kesehatan', 'kebersihan_kandang', 'pemberian_pakan', 'lainnya']
     const map = {}
     tasks.forEach(t => {
-      let type = t.template?.task_type || 'lainnya'
+      let type = t.task_type || t.template?.task_type || 'lainnya'
       // normalize types mapping to same output
       if (type === 'kebersihan') type = 'kebersihan_kandang'
       if (type === 'ceklis_kesehatan') type = 'kesehatan'
@@ -54,7 +54,7 @@ export function TaskCategoryAudit({ tasks, onNavigate }) {
     <section className="px-4 mt-2">
       <div className="bg-gradient-to-br from-[#1A3331] to-[#121E23] border border-white/[0.03] rounded-3xl p-5 sm:p-6 relative overflow-hidden shadow-2xl">
         <div className="flex items-center justify-between mb-8 relative z-10">
-          <h2 className="font-['Sora'] font-bold text-base sm:text-lg text-white">Daily Task Audit</h2>
+          <h2 className="font-['Sora'] font-bold text-base sm:text-lg text-white">Audit Tugas Harian</h2>
           <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] transition-colors border border-white/5 text-xs text-[#94A3B8] font-semibold cursor-pointer">
             <Clock size={12} className="text-white/40" />
             Hari ini
@@ -80,7 +80,7 @@ export function TaskCategoryAudit({ tasks, onNavigate }) {
               const total = groupTasks.length
               const pct = total > 0 ? Math.round((done / total) * 100) : 0
 
-              let statusText = 'Pending'
+              let statusText = 'Tertunda'
               let statusColor = 'text-[#4B6478]'
               let barColor = 'bg-white/10'
               let StatusIcon = CircleDashed
@@ -88,14 +88,14 @@ export function TaskCategoryAudit({ tasks, onNavigate }) {
               let iconColor = 'text-white/40'
 
               if (pct === 100) {
-                statusText = '100% Completed'
+                statusText = '100% Selesai'
                 statusColor = meta.textColor
                 barColor = meta.color
                 StatusIcon = CheckCircle2
                 iconBg = 'bg-emerald-500'
                 iconColor = 'text-white'
               } else if (pct > 0) {
-                statusText = `${pct}% in Progress`
+                statusText = `${pct}% Berjalan`
                 statusColor = meta.textColor
                 barColor = meta.color
                 StatusIcon = Clock

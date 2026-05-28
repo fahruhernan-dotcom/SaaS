@@ -77,7 +77,7 @@ function DraggableTaskCard({ task, assignmentOverride, isDragOverlay = false }) 
     ? { transform: CSS.Translate.toString(transform) }
     : undefined
 
-  const typeCfg = TASK_TYPE_CFG[task.template?.task_type] ?? TASK_TYPE_CFG.lainnya
+  const typeCfg = TASK_TYPE_CFG[task.task_type || task.template?.task_type] ?? TASK_TYPE_CFG.lainnya
   const TypeIcon = typeCfg.icon
   const statusCfg = STATUS_CFG[task.status] ?? STATUS_CFG.pending
   const assignedName = assignmentOverride?.workerName
@@ -120,7 +120,7 @@ function DraggableTaskCard({ task, assignmentOverride, isDragOverlay = false }) 
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-bold text-white truncate leading-tight">{task.template?.title ?? task.title ?? '—'}</p>
+        <p className="text-xs font-bold text-white truncate leading-tight">{task.title ?? task.template?.title ?? '—'}</p>
         <div className="flex items-center gap-2 mt-0.5">
           {task.kandang_name && (
             <span className="text-[10px] text-[#4B6478] font-medium truncate">{task.kandang_name}</span>

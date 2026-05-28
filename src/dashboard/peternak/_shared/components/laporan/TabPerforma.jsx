@@ -87,12 +87,12 @@ export default function TabPerforma({ batches, animals, sales, weightHistory, he
         />
         <StatCard
           label="Mortalitas"
-          value={`${fmtNum(stats.mortalitasRate)}%`}
-          sub={`${stats.kematianCount} dari ${stats.totalAnimals} ekor`}
+          value={stats.totalAnimals === 0 ? '—' : `${fmtNum(stats.mortalitasRate)}%`}
+          sub={stats.totalAnimals === 0 ? 'Belum ada data' : `${stats.kematianCount} dari ${stats.totalAnimals} ekor`}
           icon={Activity}
-          color={stats.mortalitasRate > 5 ? 'text-rose-400' : 'text-green-400'}
-          bg={stats.mortalitasRate > 5 ? 'bg-rose-500/10' : 'bg-green-500/10'}
-          border={stats.mortalitasRate > 5 ? 'border-rose-500/20' : 'border-green-500/20'}
+          color={stats.totalAnimals === 0 ? 'text-[#4B6478]' : stats.mortalitasRate > 5 ? 'text-rose-400' : 'text-green-400'}
+          bg={stats.totalAnimals === 0 ? 'bg-white/[0.02]' : stats.mortalitasRate > 5 ? 'bg-rose-500/10' : 'bg-green-500/10'}
+          border={stats.totalAnimals === 0 ? 'border-white/[0.05]' : stats.mortalitasRate > 5 ? 'border-rose-500/20' : 'border-green-500/20'}
         />
         <StatCard
           label="Total Ternak"
@@ -110,15 +110,41 @@ export default function TabPerforma({ batches, animals, sales, weightHistory, he
         />
       </div>
 
-      {/* ADG benchmark */}
-      <div className="bg-blue-500/5 border border-blue-500/10 rounded-[24px] p-4 flex gap-3">
-        <Info size={14} className="text-blue-400 shrink-0 mt-0.5" />
-        <p className="text-[11px] text-slate-400 leading-relaxed">
-          Target ADG ideal adalah{' '}
-          <span className="text-blue-300 font-bold">{adgBenchmark}</span>.
-          ADG aktual dihitung dari selisih timbangan pertama dan terakhir per ekor.
-        </p>
-      </div>
+      {/* ADG benchmark or Unavailable helper notice */}
+      {stats.avgADG === null ? (
+        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-[24px] p-5 relative overflow-hidden">
+          <div className="flex gap-4">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+              <span className="text-lg">⚖️</span>
+            </div>
+            <div className="flex-1 space-y-3">
+              <div>
+                <h3 className="font-['Sora'] font-black text-sm text-white leading-snug">
+                  ADG & Performa Belum Aktif
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed mt-1">
+                  Timbang ternak secara berkala minimal 2 kali untuk melihat pertambahan bobot harian.
+                </p>
+              </div>
+              <button
+                onClick={() => navigate(`${BASE}/ternak`)}
+                className="inline-flex items-center px-4 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/20 text-emerald-400 font-black uppercase text-[10px] tracking-widest rounded-xl transition-all"
+              >
+                Timbang Ternak Sekarang
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-blue-500/5 border border-blue-500/10 rounded-[24px] p-4 flex gap-3">
+          <Info size={14} className="text-blue-400 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            Target ADG ideal adalah{' '}
+            <span className="text-blue-300 font-bold">{adgBenchmark}</span>.
+            ADG aktual dihitung dari selisih timbangan pertama dan terakhir per ekor.
+          </p>
+        </div>
+      )}
 
       {/* Batch list */}
       <div>
