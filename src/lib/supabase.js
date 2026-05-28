@@ -1,9 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 import { supabaseAuthStorage } from './supabaseStorage'
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder-project.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-anon-key'
+
 export const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY,
+  supabaseUrl,
+  supabaseAnonKey,
   {
     auth: {
       // Bypass Web Locks API — browser ini tidak follow LockManager spec
