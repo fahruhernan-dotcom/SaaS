@@ -77,9 +77,8 @@ android-signing/
 *.key
 *.crt
 *.p12
-android/
-
 # Capacitor — local environment files
 local.properties
 .capacitor/
+
 

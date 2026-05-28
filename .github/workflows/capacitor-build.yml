@@ -41,7 +41,7 @@ jobs:
 
       # ── Install dependencies ───────────────────────────────────────────────────
       - name: Install npm dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       # ── Build Vite (dist/) ────────────────────────────────────────────────────
       - name: Build web assets
