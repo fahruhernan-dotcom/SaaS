@@ -69,6 +69,18 @@ else
     exit 1
 fi
 
+# ── Android App Links: verify /.well-known/assetlinks.json is public ──────────
+echo ""
+echo "==> Verifying Android App Links (assetlinks.json)..."
+ASSETLINKS_URL="https://ternakos.my.id/.well-known/assetlinks.json"
+ASL_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$ASSETLINKS_URL")
+if [ "$ASL_STATUS" = "200" ]; then
+    echo "    ✓ assetlinks.json: HTTP $ASL_STATUS — Android App Links OK"
+else
+    echo "    ✗ assetlinks.json: HTTP $ASL_STATUS — PERINGATAN: Deep link OAuth Android mungkin tidak berfungsi!"
+    echo "      Pastikan nginx/ternakos.conf memiliki blok location ^~ /.well-known/"
+fi
+
 # ── SEO: Ping Google & Bing sitemap ─────────────────────────────────────────
 echo ""
 echo "==> Pinging search engines with new sitemap..."
@@ -138,4 +150,28 @@ else
   echo " masih menyajikan cache lama. Tunggu 1-2 menit lalu"
   echo " cek langsung via Google Search Console 'Test Live URL'"
 fi
+echo "======================================================"
+
+# ── Capacitor Android Build (via GitHub Actions) ──────────────────────────────
+echo ""
+echo "======================================================"
+echo " 📱 CAPACITOR ANDROID BUILD"
+echo "======================================================"
+echo " APK/AAB TIDAK dibangun di server ini."
+echo " Build Android Capacitor dilakukan via GitHub Actions:"
+echo ""
+echo "   Cara 1 — Push tag baru:"
+echo "     git tag v1.2.1  (ganti sesuai versi)"
+echo "     git push origin v1.2.1"
+echo ""
+echo "   Cara 2 — Manual dispatch:"
+echo "     Buka: https://github.com/[REPO]/actions"
+echo "     Pilih workflow: 'Build Android APK/AAB (Capacitor)'"
+echo "     Klik 'Run workflow'"
+echo ""
+echo "   Setelah build selesai, download APK dari tab Artifacts."
+echo "   Pastikan keystore secrets sudah dikonfigurasi di:"
+echo "   Settings → Secrets → Actions:"
+echo "     KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD"
+echo "     VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY"
 echo "======================================================"

@@ -73,6 +73,7 @@ const AdminInfo         = lazy(() => import('./dashboard/admin/AdminInfo'))
 
 import { getXBasePath, resolveBusinessVertical, BUSINESS_MODELS } from './lib/businessModel'
 import { isSuperadmin } from '@/lib/auth'
+import { isCapacitor } from '@/lib/capacitor'
 
 // ── Vertical-aware beranda path ───────────────────────────────────────────────
 function getVerticalBeranda(tenant, profile) {
@@ -286,6 +287,36 @@ function AppContentLayout() {
 }
 
 function RootLayout() {
+  useEffect(() => {
+    let backButtonListenerPromise;
+
+    if (typeof window !== 'undefined' && isCapacitor()) {
+      const setupBackButton = async () => {
+        try {
+          const { App } = await import('@capacitor/app');
+          return await App.addListener('backButton', ({ canGoBack }) => {
+            if (canGoBack) {
+              window.history.back();
+            } else {
+              App.exitApp();
+            }
+          });
+        } catch (err) {
+          console.error('Failed to set up back button listener', err);
+        }
+      };
+      backButtonListenerPromise = setupBackButton();
+    }
+
+    return () => {
+      if (backButtonListenerPromise) {
+        backButtonListenerPromise.then(listener => {
+          if (listener) listener.remove();
+        }).catch(() => {});
+      }
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>

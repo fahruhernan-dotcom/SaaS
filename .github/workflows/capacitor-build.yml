@@ -1,0 +1,140 @@
+name: Build Android APK/AAB (Capacitor)
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      debug_build:
+        description: 'Enable WebView debugging in this build'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['true', 'false']
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-capacitor-android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: android-signing
+
+    steps:
+      # ── Checkout ──────────────────────────────────────────────────────────────
+      - uses: actions/checkout@v4
+
+      # ── Java (Gradle requires JDK 17) ─────────────────────────────────────────
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # ── Node.js ───────────────────────────────────────────────────────────────
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ── Install dependencies ───────────────────────────────────────────────────
+      - name: Install npm dependencies
+        run: npm ci
+
+      # ── Build Vite (dist/) ────────────────────────────────────────────────────
+      - name: Build web assets
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_MAIA_API_KEY: ${{ secrets.VITE_MAIA_API_KEY }}
+          VITE_AI_MODEL: ${{ secrets.VITE_AI_MODEL }}
+          VITE_GLM_API_KEY: ${{ secrets.VITE_GLM_API_KEY }}
+          VITE_WHATSAPP_NUMBER: ${{ secrets.VITE_WHATSAPP_NUMBER }}
+
+      # ── Capacitor: add Android platform (if not cached) ───────────────────────
+      - name: Add Capacitor Android platform
+        run: |
+          # Only add if android/ doesn't already exist
+          if [ ! -d "android" ]; then
+            npx cap add android
+            echo "android/ platform added"
+          else
+            echo "android/ already exists, skipping add"
+          fi
+
+      # ── Capacitor: sync web → native ─────────────────────────────────────────
+      - name: Sync Capacitor (web assets → android/)
+        run: npx cap sync android
+
+      # ── Accept Android SDK licenses ───────────────────────────────────────────
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses 2>/dev/null || true
+
+      # ── Restore signing keystore ──────────────────────────────────────────────
+      - name: Restore signing keystore
+        run: |
+          mkdir -p android/app
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/app/ternakos.keystore
+          BYTES=$(wc -c < android/app/ternakos.keystore)
+          echo "Keystore restored: $BYTES bytes"
+          if [ "$BYTES" -lt 100 ]; then
+            echo "ERROR: KEYSTORE_BASE64 secret is empty or invalid."
+            exit 1
+          fi
+
+      # ── Create local.properties (Android SDK path for Gradle) ─────────────────
+      - name: Create local.properties
+        run: |
+          echo "sdk.dir=${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}" > android/local.properties
+          echo "local.properties written:"
+          cat android/local.properties
+
+      # ── Enable WebView debugging if requested ─────────────────────────────────
+      - name: Patch WebView debugging flag
+        if: ${{ github.event.inputs.debug_build == 'true' }}
+        run: |
+          # Patch capacitor.config.ts to enable webContentsDebuggingEnabled
+          sed -i 's/webContentsDebuggingEnabled: false/webContentsDebuggingEnabled: true/' capacitor.config.ts
+          echo "WebView debugging ENABLED for this build"
+
+      # ── Build APK + AAB ───────────────────────────────────────────────────────
+      - name: Build Release APK + AAB
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease bundleRelease \
+            -Pandroid.injected.signing.store.file="$(pwd)/app/ternakos.keystore" \
+            -Pandroid.injected.signing.store.password="${{ secrets.KEYSTORE_PASSWORD }}" \
+            -Pandroid.injected.signing.key.alias="${{ secrets.KEY_ALIAS }}" \
+            -Pandroid.injected.signing.key.password="${{ secrets.KEY_PASSWORD }}" \
+            --no-daemon \
+            --stacktrace
+
+      # ── Locate build outputs ──────────────────────────────────────────────────
+      - name: Locate build artifacts
+        run: |
+          echo "=== APK files ==="
+          find android -name "*.apk" 2>/dev/null || echo "No APK found"
+          echo "=== AAB files ==="
+          find android -name "*.aab" 2>/dev/null || echo "No AAB found"
+
+      # ── Upload APK ────────────────────────────────────────────────────────────
+      - name: Upload signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ternakos-capacitor-apk-${{ github.run_number }}
+          path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+          retention-days: 30
+
+      # ── Upload AAB (Play Store) ───────────────────────────────────────────────
+      - name: Upload AAB (Play Store)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ternakos-capacitor-aab-${{ github.run_number }}
+          path: android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: warn
+          retention-days: 30

@@ -8,6 +8,8 @@ import {
   ChevronDown, ChevronUp, Star, Building2, Clock,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { logError } from '@/lib/logger/errorLogger'
+import { openBrowserUrl } from '@/lib/capacitor'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { usePricingConfig, useCreateInvoice, useActivateTrial, usePlanConfigs, useHasPendingInvoice } from '@/lib/hooks/useAdminData'
@@ -660,7 +662,9 @@ export default function UpgradePlan() {
         setRedirecting(false)
         return
       }
-      window.location.assign(fnData.redirect_url)
+      // On Capacitor (Android), opens in Chrome Custom Tab so Midtrans Snap works correctly.
+      // On web, falls back to window.location.assign (same-tab redirect).
+      openBrowserUrl(fnData.redirect_url)
     } catch (_) {
       setRedirecting(false)
     }
