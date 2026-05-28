@@ -13,6 +13,26 @@ export default class ErrorBoundary extends Component {
   
   componentDidCatch(error, info) {
     console.error('ErrorBoundary caught:', error, info)
+    
+    // Auto-reload on ChunkLoadError / failed dynamically imported module
+    const isChunkLoadError = error && (
+      /failed to fetch dynamically imported module/i.test(error.message) ||
+      /chunkloaderror/i.test(error.message) ||
+      error.message?.includes('Loading chunk')
+    );
+
+    if (isChunkLoadError) {
+      const lastReload = sessionStorage.getItem('last_chunk_reload');
+      const now = Date.now();
+      // Only reload if the last reload was more than 10 seconds ago to prevent infinite loop if offline
+      if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
+        sessionStorage.setItem('last_chunk_reload', String(now));
+        console.warn('Dynamic import chunk failed. Forcing page reload to sync assets...');
+        window.location.reload();
+        return;
+      }
+    }
+
     // Fire-and-forget — never await in lifecycle methods
     logError({
       level: 'error',
