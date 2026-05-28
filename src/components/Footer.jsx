@@ -61,11 +61,23 @@ const Footer = () => {
                 { name: 'Harga Pasar', to: '/harga-pasar' },
                 { name: 'FAQ',         to: '/faq' },
                 { name: 'Blog',        to: '/blog' },
+                { name: 'Download Android (APK)', href: 'https://github.com/fahruhernan-dotcom/SaaS/actions/runs/26570279873/artifacts/7264021711', isExternal: true },
               ].map((link, i) => (
                 <li key={i}>
-                  <Link to={link.to} className="font-body text-[13px] text-text-secondary hover:text-text-primary block transition-colors duration-150">
-                    {link.name}
-                  </Link>
+                  {link.isExternal ? (
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-body text-[13px] text-text-secondary hover:text-text-primary block transition-colors duration-150"
+                    >
+                      {link.name}
+                    </a>
+                  ) : (
+                    <Link to={link.to} className="font-body text-[13px] text-text-secondary hover:text-text-primary block transition-colors duration-150">
+                      {link.name}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

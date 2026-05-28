@@ -192,6 +192,18 @@ const Hero = () => {
             </div>
           </div>
 
+          {/* Download Android APK Link */}
+          <div className="hero-cta-item mb-6" style={{ opacity: 0 }}>
+            <a
+              href="https://github.com/fahruhernan-dotcom/SaaS/actions/runs/26570279873/artifacts/7264021711"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline transition-all"
+            >
+              <span>📱 Download Aplikasi Android (APK)</span>
+            </a>
+          </div>
+
           {/* Social Proof */}
           <div
             className="hero-social-proof flex items-center justify-center gap-[12px] text-[13px] text-text-secondary"

@@ -78,13 +78,24 @@ export default function InstallAppPrompt() {
         ) : (
           <>
             <p className="text-xs text-[#94A3B8] mt-0.5">Akses lebih cepat dari home screen</p>
-            <button
-              onClick={handleInstall}
-              className="mt-2 px-3 py-1.5 bg-green-700 hover:bg-green-600 active:bg-green-800
-                         text-white text-xs font-medium rounded-lg transition-colors"
-            >
-              Install
-            </button>
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={handleInstall}
+                className="px-3 py-1.5 bg-green-700 hover:bg-green-600 active:bg-green-800
+                           text-white text-xs font-medium rounded-lg transition-colors"
+              >
+                Install PWA
+              </button>
+              <a
+                href="https://github.com/fahruhernan-dotcom/SaaS/actions/runs/26570279873/artifacts/7264021711"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 bg-[#1E293B] hover:bg-[#334155] border border-white/10
+                           text-white text-xs font-medium rounded-lg transition-colors flex items-center justify-center"
+              >
+                Download APK
+              </a>
+            </div>
           </>
         )}
       </div>
