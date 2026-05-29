@@ -503,6 +503,31 @@ export function PenggemukanPakan({ config, hooks }) {
     }
   }, [costs])
 
+  // Phase 4: date-grouping for feed history
+  const feedDateGroups = useMemo(() => {
+    const groups = {}
+    logs.forEach(log => {
+      const key = log.log_date || 'unknown'
+      if (!groups[key]) groups[key] = []
+      groups[key].push(log)
+    })
+    return groups
+  }, [logs])
+  const feedSortedDates = useMemo(
+    () => Object.keys(feedDateGroups).sort((a, b) => b.localeCompare(a)),
+    [feedDateGroups]
+  )
+
+  const fmtGroupDate = (d) =>
+    new Date(d).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })
+
+  const sisakColor = (cat, kg) => {
+    if (cat === 'habis')   return { label: 'Habis',   cls: 'text-emerald-400' }
+    if (cat === 'sedikit') return { label: 'Sedikit', cls: 'text-amber-400' }
+    if (cat === 'banyak')  return { label: 'Banyak',  cls: 'text-rose-400' }
+    return { label: `${(kg || 0).toFixed(1)} kg`, cls: 'text-amber-400' }
+  }
+
   const targetBatch = formBatchId ? batches.find(b => b.id === formBatchId) : activeBatch
 
   const handleSubmit = async (e) => {
@@ -681,7 +706,7 @@ export function PenggemukanPakan({ config, hooks }) {
     : (config.buttonClass || 'bg-emerald-600 hover:bg-emerald-500')
 
   return (
-    <div className="text-slate-100 pb-24">
+    <div className="text-slate-100 pb-28">
       {/* Header */}
       <header className="px-4 pt-6 pb-5 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.04]">
         <div className="flex items-center gap-3 mb-4">
@@ -692,25 +717,44 @@ export function PenggemukanPakan({ config, hooks }) {
         </div>
 
         {batches.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
-            <button
-              onClick={() => setSelectedBatchId('all')}
-              className={cn('flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all border',
-                isAllBatches ? accent : 'bg-white/[0.03] border-white/[0.06] text-[#4B6478]')}
-            >
-              Semua
-            </button>
-            {batches.map(b => (
+          <>
+            {/* Mobile: compact dropdown-style selector */}
+            <div className="sm:hidden">
+              <div className="relative">
+                <select
+                  value={selectedBatchId}
+                  onChange={e => setSelectedBatchId(e.target.value)}
+                  className="w-full appearance-none bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 pr-10 text-xs font-bold text-white focus:outline-none"
+                >
+                  <option value="all" className="bg-[#0C1319]">Semua Batch</option>
+                  {batches.map(b => (
+                    <option key={b.id} value={b.id} className="bg-[#0C1319]">{b.batch_code}</option>
+                  ))}
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4B6478] pointer-events-none" />
+              </div>
+            </div>
+            {/* Desktop: horizontal chips */}
+            <div className="hidden sm:flex gap-2 overflow-x-auto no-scrollbar py-1">
               <button
-                key={b.id}
-                onClick={() => setSelectedBatchId(b.id)}
+                onClick={() => setSelectedBatchId('all')}
                 className={cn('flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all border',
-                  selectedBatchId === b.id && !isAllBatches ? accent : 'bg-white/[0.03] border-white/[0.06] text-[#4B6478]')}
+                  isAllBatches ? accent : 'bg-white/[0.03] border-white/[0.06] text-[#4B6478]')}
               >
-                {b.batch_code}
+                Semua
               </button>
-            ))}
-          </div>
+              {batches.map(b => (
+                <button
+                  key={b.id}
+                  onClick={() => setSelectedBatchId(b.id)}
+                  className={cn('flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all border',
+                    selectedBatchId === b.id && !isAllBatches ? accent : 'bg-white/[0.03] border-white/[0.06] text-[#4B6478]')}
+                >
+                  {b.batch_code}
+                </button>
+              ))}
+            </div>
+          </>
         )}
 
         {/* Tabs — only if operational costs are enabled */}
@@ -756,109 +800,127 @@ export function PenggemukanPakan({ config, hooks }) {
           {/* ── KONSUMSI TAB ── */}
           {activeTab === 'konsumsi' && (
             <>
-              <div className="grid grid-cols-2 gap-3 mb-8">
-                <div className="bg-green-600/[0.05] border border-green-600/10 rounded-2xl p-4">
-                  <p className="text-[10px] text-green-500/60 font-bold uppercase tracking-wider mb-1">Total Konsumsi</p>
-                  <p className="text-xl font-black text-white font-['Sora']">{stats.total} <span className="text-xs font-normal text-[#4B6478]">kg</span></p>
+              {/* Phase 2 — Chunked summary card */}
+              <div className="mb-6 bg-white/[0.025] border border-white/[0.06] rounded-2xl p-4">
+                {/* Primary: total konsumsi */}
+                <div className="flex items-end justify-between mb-3">
+                  <div>
+                    <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-widest mb-0.5">Total Konsumsi</p>
+                    <p className="text-2xl font-black text-white font-['Sora'] leading-none">
+                      {stats.total} <span className="text-sm font-normal text-[#4B6478]">kg</span>
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-widest mb-0.5">Rata-rata/hari</p>
+                    <p className="text-lg font-black text-white font-['Sora'] leading-none">
+                      {stats.avg} <span className="text-xs font-normal text-[#4B6478]">kg</span>
+                    </p>
+                  </div>
                 </div>
-                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
-                  <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-wider mb-1">Rata-rata/Hari</p>
-                  <p className="text-xl font-black text-white font-['Sora']">{stats.avg} <span className="text-xs font-normal text-[#4B6478]">kg</span></p>
-                </div>
-                <div className="bg-emerald-600/[0.04] border border-emerald-600/10 rounded-2xl p-4">
-                  <p className="text-[10px] text-emerald-500/60 font-bold uppercase tracking-wider mb-1">Total Hijauan</p>
-                  <p className="text-xl font-black text-white font-['Sora']">{stats.hijauan} <span className="text-xs font-normal text-[#4B6478]">kg</span></p>
-                </div>
-                <div className="bg-blue-600/[0.04] border border-blue-600/10 rounded-2xl p-4">
-                  <p className="text-[10px] text-blue-500/60 font-bold uppercase tracking-wider mb-1">Total Konsentrat</p>
-                  <p className="text-xl font-black text-white font-['Sora']">{stats.konsentrat} <span className="text-xs font-normal text-[#4B6478]">kg</span></p>
+                {/* Breakdown chips */}
+                <div className="flex gap-2 pt-3 border-t border-white/[0.05]">
+                  <div className="flex-1 flex items-center gap-2 bg-emerald-500/[0.07] border border-emerald-500/[0.15] rounded-xl px-3 py-2">
+                    <span className="text-[9px] font-black text-emerald-400/70 uppercase tracking-widest leading-none">Hijauan</span>
+                    <span className="text-sm font-black text-emerald-300 ml-auto">{stats.hijauan} <span className="text-[10px] font-normal">kg</span></span>
+                  </div>
+                  <div className="flex-1 flex items-center gap-2 bg-blue-500/[0.07] border border-blue-500/[0.15] rounded-xl px-3 py-2">
+                    <span className="text-[9px] font-black text-blue-400/70 uppercase tracking-widest leading-none">Konsentrat</span>
+                    <span className="text-sm font-black text-blue-300 ml-auto">{stats.konsentrat} <span className="text-[10px] font-normal">kg</span></span>
+                  </div>
                 </div>
               </div>
 
+              {/* Phase 3 — Section header + CTA */}
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-['Sora'] font-bold text-sm text-white">Riwayat Pemberian Pakan</h2>
                 {canInputPakan && (
                   <button
                     onClick={() => setShowAdd(true)}
-                    className={cn('px-3 py-1.5 text-white text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1.5', btnCls)}
+                    className={cn('min-h-[44px] px-4 text-white text-[11px] font-bold rounded-xl transition-colors flex items-center gap-1.5', btnCls)}
                   >
                     <Plus size={14} /> Catat Pakan
                   </button>
                 )}
               </div>
 
-              <div className="space-y-3">
-                {logs.length === 0 ? (
-                  <div className="text-center py-12 bg-white/[0.01] border border-dashed border-white/[0.05] rounded-3xl p-6">
-                    <Wheat size={32} className="mx-auto text-[#4B6478] mb-3 opacity-60" />
-                    <p className="text-sm font-bold text-white mb-1">Belum ada Catatan Konsumsi Pakan</p>
-                    <p className="text-xs text-[#4B6478] mb-4">Catat pemberian pakan hari ini untuk melacak rata-rata konsumsi.</p>
-                    {canInputPakan && (
-                      <button
-                        onClick={() => setShowAdd(true)}
-                        className="px-4 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/20 text-emerald-400 text-xs font-black rounded-xl transition-all"
-                      >
-                        Beri Pakan Hari Ini
-                      </button>
-                    )}
-                  </div>
-                ) : logs.map(log => (
-                  <div key={log.id} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 transition-all hover:bg-white/[0.05]">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center border border-green-500/20">
-                          <Calendar size={14} className="text-green-400" />
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-white">
-                            {new Date(log.log_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
-                          </p>
-                          <p className="text-[10px] text-[#4B6478]">
-                            {isAllBatches && log.batch_id && batchCodeMap[log.batch_id] && (
-                              <span className="text-emerald-400/80 mr-1">{batchCodeMap[log.batch_id]} ·</span>
-                            )}
-                            {log.kandang_name ? `${log.kandang_name} · ` : ''}{log.created_by_name || 'Tim'}
-                          </p>
-                        </div>
+              {/* Phase 4+5+6 — Date-grouped, compact feed cards */}
+              {logs.length === 0 ? (
+                <div className="text-center py-10 bg-white/[0.01] border border-dashed border-white/[0.05] rounded-3xl">
+                  <Wheat size={28} className="mx-auto text-[#4B6478] mb-3 opacity-60" />
+                  <p className="text-sm font-bold text-white mb-1">Belum ada Catatan Konsumsi Pakan</p>
+                  <p className="text-xs text-[#4B6478] mb-4">Catat pemberian pakan hari ini untuk melacak rata-rata konsumsi.</p>
+                  {canInputPakan && (
+                    <button
+                      onClick={() => setShowAdd(true)}
+                      className="px-4 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/20 text-emerald-400 text-xs font-black rounded-xl transition-all"
+                    >
+                      Beri Pakan Hari Ini
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  {feedSortedDates.map(dateKey => (
+                    <div key={dateKey}>
+                      {/* Date group header */}
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest whitespace-nowrap">
+                          {dateKey === 'unknown' ? 'Tanpa Tanggal' : fmtGroupDate(dateKey)}
+                        </span>
+                        <div className="h-px bg-white/[0.05] flex-1" />
                       </div>
-                      {canHapusPakan && hooks.useDeleteFeedLog && (
-                        <button onClick={() => handleDelete(log.id)} className="p-1.5 text-red-500/40 hover:text-red-500 transition-colors">
-                          <Trash2 size={14} />
-                        </button>
-                      )}
+                      {/* Cards for this date */}
+                      <div className="space-y-2">
+                        {feedDateGroups[dateKey].map(log => {
+                          const consumed = getConsumed(log)
+                          const sisa = sisakColor(log.feed_orts_category, log.sisa_pakan_kg)
+                          return (
+                            <div key={log.id} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl px-3.5 py-3 transition-all hover:bg-white/[0.05]">
+                              {/* Row 1: icon + title + consumed + delete */}
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shrink-0">
+                                  <Wheat size={13} className="text-emerald-400" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-bold text-white leading-tight truncate">
+                                    {log.task_title || log.kandang_name || 'Pemberian Pakan'}
+                                  </p>
+                                  {isAllBatches && log.batch_id && batchCodeMap[log.batch_id] && (
+                                    <p className="text-[9px] text-emerald-400/70 font-bold mt-0.5">{batchCodeMap[log.batch_id]}</p>
+                                  )}
+                                </div>
+                                <p className="text-sm font-black text-white shrink-0">{consumed.toFixed(1)} <span className="text-[10px] font-normal text-[#4B6478]">kg</span></p>
+                                {canHapusPakan && hooks.useDeleteFeedLog && (
+                                  <button onClick={() => handleDelete(log.id)} className="p-1 text-red-500/20 hover:text-red-500 transition-colors shrink-0 ml-1">
+                                    <Trash2 size={13} />
+                                  </button>
+                                )}
+                              </div>
+                              {/* Row 2: breakdown + sisa */}
+                              <div className="flex items-center gap-2 mt-2 pl-[2.625rem] flex-wrap">
+                                {(log.hijauan_kg || 0) > 0 && (
+                                  <span className="text-[10px] font-bold text-emerald-300">🌿 {(log.hijauan_kg).toFixed(1)} kg</span>
+                                )}
+                                {(log.konsentrat_kg || 0) > 0 && (
+                                  <span className="text-[10px] font-bold text-blue-300">🌾 {(log.konsentrat_kg).toFixed(1)} kg</span>
+                                )}
+                                <span className={cn('text-[10px] font-bold ml-auto shrink-0', sisa.cls)}>Sisa: {sisa.label}</span>
+                              </div>
+                              {/* Footer: notes */}
+                              {log.notes && (
+                                <div className="mt-1.5 pl-[2.625rem] flex items-start gap-1.5">
+                                  <Info size={10} className="text-[#4B6478] shrink-0 mt-0.5" />
+                                  <p className="text-[9px] text-[#4B6478] italic leading-relaxed">{log.notes}</p>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
                     </div>
-
-                    <div className="grid grid-cols-4 gap-2 py-2 border-t border-white/[0.04]">
-                      <div>
-                        <p className="text-[9px] text-[#4B6478] mb-0.5 font-bold uppercase tracking-widest">Hijauan</p>
-                        <p className="text-xs font-bold text-emerald-300">{(log.hijauan_kg || 0).toFixed(1)} kg</p>
-                      </div>
-                      <div>
-                        <p className="text-[9px] text-[#4B6478] mb-0.5 font-bold uppercase tracking-widest">Konsentrat</p>
-                        <p className="text-xs font-bold text-blue-300">{(log.konsentrat_kg || 0).toFixed(1)} kg</p>
-                      </div>
-                      <div>
-                        <p className="text-[9px] text-[#4B6478] mb-0.5 font-bold uppercase tracking-widest">Sisa</p>
-                        {log.feed_orts_category === 'habis' ? <p className="text-xs font-bold text-emerald-400">👍 Habis</p>
-                        : log.feed_orts_category === 'sedikit' ? <p className="text-xs font-bold text-amber-400">🟡 Sedikit</p>
-                        : log.feed_orts_category === 'banyak' ? <p className="text-xs font-bold text-rose-400">🔴 Banyak</p>
-                        : <p className="text-xs font-bold text-amber-400">{(log.sisa_pakan_kg || 0).toFixed(1)} kg</p>}
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[9px] text-[#4B6478] mb-0.5 font-bold uppercase tracking-widest">Konsumsi</p>
-                        <p className="text-xs font-bold text-green-400">{getConsumed(log).toFixed(1)} kg</p>
-                      </div>
-                    </div>
-
-                    {log.notes && (
-                      <div className="mt-2 flex items-start gap-2 p-2 bg-white/[0.02] rounded-lg">
-                        <Info size={12} className="text-[#4B6478] shrink-0 mt-0.5" />
-                        <p className="text-[10px] text-[#4B6478] italic leading-relaxed">{log.notes}</p>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </>
           )}
 
