@@ -40,6 +40,7 @@ const SafeBrokerPageHeader = BrokerPageHeader || (() => null);
  */
 export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
   const { emoji } = speciesConfig
+  const isMobile = useMediaQuery('(max-width: 1024px)')
 
   // ── Data ──────────────────────────────────────────────────────────────────
   const { data: batches = [], isLoading: loadingBatches } = hooks.useActiveBatches()
@@ -213,7 +214,6 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
-  const isMobile = useMediaQuery('(max-width: 1024px)')
 
   if (loadingBatches) return <LoadingSpinner fullPage />
   const normalKandangs = kandangs.filter(k => !k.is_holding)
