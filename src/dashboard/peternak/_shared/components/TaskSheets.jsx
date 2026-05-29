@@ -362,21 +362,25 @@ export function CompleteTaskSheet({
   const [locVerified, setLocVerified] = useState(false)
   const [userCoords, setUserCoords] = useState(null)
 
+  const targetFarm = useMemo(() => {
+    if (!task || !task.kandang_name) return null
+    const kName = task.kandang_name.trim().toLowerCase()
+    return farms.find(f => f.farm_name.trim().toLowerCase() === kName)
+  }, [farms, task])
+
+  const hasGeofence = useMemo(() => {
+    return !!(targetFarm && targetFarm.latitude != null && targetFarm.longitude != null)
+  }, [targetFarm])
+
   // Reset location state when task changes or when sheet is opened/closed
   useEffect(() => {
     setLocChecking(false)
     setLocDistance(null)
     setGpsAccuracy(null)
     setLocError(null)
-    setLocVerified(false)
+    setLocVerified(!hasGeofence)
     setUserCoords(null)
-  }, [task?.id, open])
-
-  const targetFarm = useMemo(() => {
-    if (!task || !task.kandang_name) return null
-    const kName = task.kandang_name.trim().toLowerCase()
-    return farms.find(f => f.farm_name.trim().toLowerCase() === kName)
-  }, [farms, task])
+  }, [task?.id, open, hasGeofence])
 
   const activeFarm = useMemo(() => {
     if (targetFarm && targetFarm.latitude != null && targetFarm.longitude != null) {
@@ -390,6 +394,13 @@ export function CompleteTaskSheet({
   }, [targetFarm, farms, isStaff])
 
   const checkLocation = async (onSuccessCallback) => {
+    if (!hasGeofence) {
+      setLocVerified(true)
+      setLocChecking(false)
+      if (onSuccessCallback) onSuccessCallback()
+      return
+    }
+
     setLocChecking(true)
     setLocError(null)
     setLocDistance(null)
@@ -776,7 +787,7 @@ export function CompleteTaskSheet({
                   </div>
                 )}
 
-                {!(isAuditMode || task.status === 'selesai') && !isCompleting && (
+                {hasGeofence && !(isAuditMode || task.status === 'selesai') && !isCompleting && (
                   <div className="space-y-4 animate-in fade-in slide-in-from-top-3 duration-500">
                     <div className="flex items-center gap-4 px-1 text-[#64748B]">
                       <span className="text-[10px] font-black uppercase tracking-[0.3em]">Geofence & Kehadiran</span>

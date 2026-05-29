@@ -198,6 +198,10 @@ export function InteractiveCheckCard({
     return farms.find(f => f.farm_name.trim().toLowerCase() === kName)
   }, [farms, task])
 
+  const hasGeofence = useMemo(() => {
+    return !!(targetFarm && targetFarm.latitude != null && targetFarm.longitude != null)
+  }, [targetFarm])
+
   const activeFarm = useMemo(() => {
     if (targetFarm && targetFarm.latitude != null && targetFarm.longitude != null) {
       return targetFarm
@@ -210,6 +214,8 @@ export function InteractiveCheckCard({
   }, [targetFarm, farms, isStaff])
 
   const verifyGeofence = async () => {
+    if (!hasGeofence) return true
+
     try {
       const position = await getCurrentPosition({
         enableHighAccuracy: true,
