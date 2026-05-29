@@ -368,6 +368,7 @@ const AdminComingSoon = () => (
   </div>
 );
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const routes = createRoutesFromElements(
   <Route errorElement={<GlobalRouteError />} hydrateFallbackElement={<LoadingScreen />}>
     <Route element={<RootLayout />}>
