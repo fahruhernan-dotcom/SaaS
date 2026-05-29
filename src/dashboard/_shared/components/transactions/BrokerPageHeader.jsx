@@ -20,17 +20,17 @@ export function BrokerPageHeader({
   isViewOnly 
 }) {
   return (
-    <header className="px-5 pt-8 pb-4 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 space-y-4">
-      <div className="flex justify-between items-center gap-4">
-        <div>
-          <h1 className="font-display text-2xl font-black text-white tracking-tight uppercase leading-none">{title}</h1>
+    <header className="px-4 pt-6 pb-3 md:px-5 md:pt-8 md:pb-4 sticky top-0 bg-[#06090F]/80 backdrop-blur-md z-30 space-y-3 md:space-y-4">
+      <div className="flex flex-wrap items-center gap-2 md:gap-4 md:flex-nowrap md:justify-between">
+        <div className="flex-1 min-w-0">
+          <h1 className="font-display text-xl md:text-2xl font-black text-white tracking-tight uppercase leading-none truncate">{title}</h1>
           {subtitle && (
             <p className={cn("font-bold text-[#4B6478] uppercase mt-1 tracking-widest", isDesktop ? "text-[10px]" : "text-xs")}>
               {subtitle}
             </p>
           )}
         </div>
-        <div className="flex items-center gap-3 flex-1 justify-end">
+        <div className="flex items-center gap-2 md:gap-3 shrink-0 md:flex-1 md:justify-end">
           {onSearchChange && (
             <div className="relative max-w-xs w-full hidden md:block">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4B6478]" />
