@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 import { X, QrCode } from 'lucide-react'
 import { toast } from 'sonner'
+import { logError } from '@/lib/logger/errorLogger'
 
 // Strict regex for UUID v4
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -97,9 +98,18 @@ export default function QRScannerModal({ onClose, onScanSuccess }) {
           }
         )
       } catch (err) {
-        console.error('Html5Qrcode start error:', err)
+        const errMsg = err?.message || String(err)
         setErrorMsg('Izin kamera dibutuhkan untuk scan QR.')
         toast.error('Izin kamera dibutuhkan untuk scan QR.')
+        // Log camera error — raw QR content is never logged here
+        logError({
+          level: 'warn',
+          source: 'frontend',
+          component: 'QRScannerModal',
+          actionName: 'camera_start',
+          error: { message: errMsg, code: 'QR_CAMERA_START_FAILED' },
+          metadata: { browser: navigator?.userAgent?.slice(0, 120) ?? null },
+        })
       }
     }
 

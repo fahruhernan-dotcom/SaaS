@@ -140,7 +140,7 @@ export function AnimalDetailSheet({ animal, onUpdate, isPending, breedSuggestion
               { label: 'Tanggal Masuk',  value: animal.entry_date ? new Date(animal.entry_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '—' },
               { label: 'Usia Masuk',     value: animal.entry_age_months ? `${animal.entry_age_months} bulan` : '—' },
               { label: 'Akurasi Usia',   value: animal.age_confidence || '—' },
-              { label: 'Cara Perolehan', value: animal.acquisition_type === 'beli' ? 'Beli / Pasar' : animal.acquisition_type === 'lahir_sendiri' ? 'Lahir sendiri' : 'Hibah' },
+              { label: 'Cara Perolehan', value: animal.acquisition_type === 'beli' ? 'Beli / Pasar' : animal.acquisition_type === 'lahir_sendiri' ? 'Lahir Sendiri' : animal.acquisition_type === 'hibah' ? 'Hibah' : '—' },
               { label: 'Asal / Sumber',  value: animal.source || '—' },
               { label: 'Harga Beli',     value: animal.purchase_price_idr ? `Rp ${Number(animal.purchase_price_idr).toLocaleString('id-ID')}` : '—' },
               { label: 'BCS Masuk',      value: animal.entry_bcs ? `${animal.entry_bcs} / 5` : '—' },
