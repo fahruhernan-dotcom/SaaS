@@ -18,7 +18,7 @@ gsap.registerPlugin(Draggable)
  * @param {function} props.onDragStart      - compatibility for native drop zones
  * @param {object|null} props.batchColor  - palette entry when in all-batch mode
  */
-export default function AnimalToken({ animal, speciesConfig, onClick, onDragStart: _onDragStart, batchColor }) {
+export default function AnimalToken({ animal, speciesConfig, onClick, onDragStart: _onDragStart, batchColor, isSelected }) {
   const { emoji, weightRecordsKey, calcADG, adgThresholds } = speciesConfig
   const records = animal[weightRecordsKey] ?? []
   const adg = calcADG(records, animal.entry_date, animal.entry_weight_kg)
@@ -29,6 +29,9 @@ export default function AnimalToken({ animal, speciesConfig, onClick, onDragStar
   const cardRef = useRef(null)
 
   useEffect(() => {
+    const isMobileViewport = window.innerWidth <= 1024
+    if (isMobileViewport) return
+
     const target = cardRef.current
     if (!target) return
 
@@ -112,19 +115,22 @@ export default function AnimalToken({ animal, speciesConfig, onClick, onDragStar
     return () => {
       if (draggable[0]) draggable[0].kill()
     }
-  }, [animal.id])
+  }, [animal.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div
       ref={cardRef}
-      onClick={onClick}
+      onClick={(e) => {
+        e.stopPropagation()
+        onClick?.(e)
+      }}
       className={cn(
         'relative border rounded-xl p-2.5 cursor-pointer select-none transition-all duration-200 hover:brightness-125 active:scale-[0.97]',
-        !batchColor && cn(tier.bg, tier.border),
+        isSelected ? 'border-amber-400 ring-2 ring-amber-400/50 shadow-[0_0_15px_rgba(251,191,36,0.4)] animate-pulse' : (!batchColor && cn(tier.bg, tier.border)),
       )}
       style={{
         ...(batchColor ? { background: batchColor.bg, borderColor: batchColor.border } : {}),
-        touchAction: 'none'
+        touchAction: typeof window !== 'undefined' && window.innerWidth <= 1024 ? 'auto' : 'none'
       }}
     >
       <div

@@ -34,6 +34,7 @@ export default function KandangBox({
   kandang, animalsInKandang,
   dragOver, onDragOver, onDragLeave, onDrop,
   onAnimalClick, onKandangDoubleClick,
+  onKandangClick, selectedAnimalForMoveId,
   speciesConfig, batchColorMap, isAllBatches,
 }) {
   const { weightRecordsKey, calcADG, adgThresholds } = speciesConfig
@@ -90,6 +91,7 @@ export default function KandangBox({
       onDragLeave={onDragLeave}
       onDrop={(e) => onDrop(e, kandang)}
       onDoubleClick={() => onKandangDoubleClick(kandang)}
+      onClick={() => onKandangClick?.(kandang)}
       className={cn('group h-full flex flex-col rounded-[2.5rem] border-2 transition-all duration-300 relative shadow-2xl cursor-pointer isolate', borderColor, bgGradient)}
     >
       {/* Clipped background elements (Watermark) */}
@@ -184,6 +186,7 @@ export default function KandangBox({
                 onClick={() => onAnimalClick(a)}
                 onDragStart={onDragStart}
                 batchColor={isAllBatches ? batchColorMap?.[a.batch_id] : undefined}
+                isSelected={selectedAnimalForMoveId === a.id}
               />
             ))
           )}
@@ -194,7 +197,7 @@ export default function KandangBox({
       {animalsInKandang.length > 0 && (
         <div className="px-5 py-2.5 border-t border-white/[0.03] bg-white/[0.01] flex items-center justify-center lg:hidden pointer-events-none shrink-0 rounded-b-[2.5rem]">
           <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest text-center">
-            👉 Ketuk token untuk detail & pindah kandang
+            👉 Ketuk ternak, lalu ketuk kandang lain untuk memindahkan
           </span>
         </div>
       )}

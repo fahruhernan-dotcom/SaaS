@@ -92,6 +92,7 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
   const [editingKandang, setEditingKandang] = useState(null)
   const [activeDetailKandang, setActiveDetailKandang] = useState(null)
   const [selectedAnimal, setSelectedAnimal] = useState(null)
+  const [selectedAnimalForMove, setSelectedAnimalForMove] = useState(null)
   const [calcMode, setCalcMode] = useState('dimensi')
   const [form, setForm] = useState({ name: '', capacity: '', panjang: '', lebar: '', standard: '1.5' })
   const [batchDropdownOpen, setBatchDropdownOpen] = useState(false)
@@ -172,6 +173,48 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
     moveAnimal.mutate(
       { animalId: selectedAnimal.id, kandangId: targetK.id, kandangSlot: targetK.name, batchId: selectedAnimal.batch_id ?? activeBatchId },
       { onSuccess: () => { toast.success(`${selectedAnimal.ear_tag} dipindah ke ${targetK.name}`); setSelectedAnimal(null) } }
+    )
+  }
+
+  const handleAnimalClick = (animal) => {
+    if (isMobile) {
+      if (selectedAnimalForMove && selectedAnimalForMove.id === animal.id) {
+        setSelectedAnimal(animal)
+        setSelectedAnimalForMove(null)
+      } else {
+        setSelectedAnimalForMove(animal)
+        toast.info(`Ternak ${animal.ear_tag} terpilih. Ketuk kandang tujuan untuk memindahkan.`, {
+          duration: 3000,
+          id: 'animal-move-toast'
+        })
+      }
+    } else {
+      setSelectedAnimal(animal)
+    }
+  }
+
+  const handleKandangClick = (kandang) => {
+    if (!selectedAnimalForMove) return
+
+    if (selectedAnimalForMove.kandang_id === kandang.id) {
+      setSelectedAnimalForMove(null)
+      toast.dismiss('animal-move-toast')
+      return
+    }
+
+    const current = groupedAnimals[kandang.id]?.length || 0
+    if (!kandang.is_holding && kandang.capacity > 0 && current >= kandang.capacity) {
+      return toast.error(`Kandang ${kandang.name} penuh!`)
+    }
+
+    moveAnimal.mutate(
+      { animalId: selectedAnimalForMove.id, kandangId: kandang.id, kandangSlot: kandang.name, batchId: selectedAnimalForMove.batch_id ?? activeBatchId },
+      {
+        onSuccess: () => {
+          toast.success(`${selectedAnimalForMove.ear_tag} dipindah ke ${kandang.name}`)
+          setSelectedAnimalForMove(null)
+        }
+      }
     )
   }
 
@@ -555,8 +598,10 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
                           onDragOver={handleDragOver}
                           onDragLeave={() => setDragOverKandang(null)}
                           onDrop={handleDrop}
-                          onAnimalClick={setSelectedAnimal}
+                          onAnimalClick={handleAnimalClick}
                           onKandangDoubleClick={setEditingKandang}
+                          onKandangClick={handleKandangClick}
+                          selectedAnimalForMoveId={selectedAnimalForMove?.id}
                           speciesConfig={speciesConfig}
                           batchColorMap={batchColorMap}
                           isAllBatches={isAllBatches}
@@ -583,8 +628,10 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
                     onDragOver={handleDragOver}
                     onDragLeave={() => setDragOverKandang(null)}
                     onDrop={handleDrop}
-                    onAnimalClick={setSelectedAnimal}
+                    onAnimalClick={handleAnimalClick}
                     onKandangDoubleClick={setEditingKandang}
+                    onKandangClick={handleKandangClick}
+                    selectedAnimalForMoveId={selectedAnimalForMove?.id}
                     speciesConfig={speciesConfig}
                     batchColorMap={batchColorMap}
                     isAllBatches={isAllBatches}
@@ -596,7 +643,7 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
                     <p className="text-sm font-['Sora'] font-black text-white uppercase tracking-tight">Manual Alokasi</p>
                     <p className="text-[11px] text-[#4B6478] font-bold mt-1">
                       {isMobile 
-                        ? 'Ketuk token ear-tag untuk melihat detail & memindahkan lokasi ternak secara manual.'
+                        ? 'Ketuk ternak untuk memilih, lalu ketuk kandang tujuan untuk memindahkan. Ketuk dua kali untuk detail.'
                         : 'Drag ear-tag ke kandang tujuan untuk memindahkan alokasi secara visual.'}
                     </p>
                   </div>
