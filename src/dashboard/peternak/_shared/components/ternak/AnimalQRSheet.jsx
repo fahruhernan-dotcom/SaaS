@@ -10,9 +10,10 @@ const DEFAULT_LABEL_SIZE_CM = 8
 const QR_CANVAS_PX = 220
 
 // ─── QR content format — must stay compatible with QRScannerModal ───────────
-// Format: ternakos:animal:<uuid>
+// URL format: any scanner opens browser → ScanRedirect → correct animal page
+// QRScannerModal also supports ?animalId= URL parsing natively.
 function buildQRContent(animalId) {
-  return `ternakos:animal:${animalId}`
+  return `https://ternakos.my.id/scan?animalId=${animalId}`
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

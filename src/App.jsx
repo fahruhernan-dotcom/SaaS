@@ -45,6 +45,7 @@ import HubungiKami from './pages/HubungiKami';
 import BlogPage from './pages/BlogPage';
 import BlogPostPage from './pages/BlogPostPage';
 import NotFound from './pages/NotFound';
+import ScanRedirect from './pages/ScanRedirect';
 
 // Auth-protected dashboard pages — lazy loaded (not SSG, client-only)
 const PeternakLayout       = lazy(() => import('./dashboard/_shared/layouts/PeternakLayout'))
@@ -397,6 +398,8 @@ export const routes = createRoutesFromElements(
     <Route path="/forgot-password" element={<ForgotPassword />} />
     <Route path="/reset-password" element={<ResetPassword />} />
     <Route path="/auth/callback" element={<AuthCallback />} />
+    {/* QR name tag link — opened by any scanner app */}
+    <Route path="/scan" element={<ScanRedirect />} />
     <Route path="/upgrade" element={
       <ProtectedRoute>
         <UpgradePlan />
