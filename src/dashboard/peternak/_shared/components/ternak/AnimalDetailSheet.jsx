@@ -52,6 +52,8 @@ export function AnimalDetailSheet({ animal, onUpdate, isPending, breedSuggestion
         sex:                data.sex,
         entry_weight_kg:    Number(data.entry_weight_kg) || 0,
         entry_age_months:   data.entry_age_months || null,
+        age_confidence:     data.age_confidence || null,
+        acquisition_type:   data.acquisition_type || null,
         entry_bcs:          data.entry_bcs || null,
         entry_condition:    data.entry_condition,
         source:             data.source?.trim() || null,
