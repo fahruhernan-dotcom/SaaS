@@ -505,10 +505,7 @@ export default function AppSidebar({ open, onClose }) {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
-                  className={isDombaPenggemukan 
-                    ? "bg-[#0C1319] hover:bg-[#111C24] border border-white/5 rounded-2xl p-2.5 h-auto transition-all shadow-md shadow-black/10 group-data-[collapsible=icon]:border-none group-data-[collapsible=icon]:bg-transparent"
-                    : "bg-secondary border border-border rounded-xl group-data-[collapsible=icon]:border-none group-data-[collapsible=icon]:bg-transparent hover:bg-white/[0.03] transition-colors"
-                  }
+                  className="bg-[#121A23] hover:bg-[#182434] border border-white/[0.08] rounded-xl p-2.5 h-auto transition-all shadow-md shadow-black/15 group-data-[collapsible=icon]:border-none group-data-[collapsible=icon]:bg-transparent"
                 >
                   <div 
                     className="w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0 border overflow-hidden"
@@ -524,23 +521,23 @@ export default function AppSidebar({ open, onClose }) {
                     )}
                   </div>
                   <div className="flex-1 overflow-hidden text-left ml-2.5">
-                    <p className="text-[13px] font-bold truncate leading-tight text-foreground">
+                    <p className="text-[13px] font-bold truncate leading-tight text-slate-100">
                       {tenant?.business_name || 'My Business'}
                     </p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5 font-medium tracking-wide">
+                    <p className="text-[10px] text-slate-400 mt-0.5 font-medium tracking-wide">
                       {activeVerticalInfo.label}
                     </p>
                   </div>
-                  <ChevronsUpDown size={14} className="text-muted-foreground ml-auto" />
+                  <ChevronsUpDown size={14} className="text-slate-400 ml-auto" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 side="bottom"
                 align="start"
-                className="w-64 bg-[#0C1319] border border-border rounded-xl p-1.5 shadow-2xl"
+                className="w-64 bg-[#121A23] border border-white/[0.08] rounded-xl p-1.5 shadow-2xl shadow-black/50 z-50"
               >
                 <div className="px-2 py-1.5 mb-1 flex items-center justify-between">
-                  <p className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+                  <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
                     Bisnis Anda ({quota.usage})
                   </p>
                 </div>
@@ -579,14 +576,13 @@ export default function AppSidebar({ open, onClose }) {
                           navigate(targetPath)
                           setTenantMenuOpen(false)
                         }}
-                        className={`gap-3 rounded-lg p-2 cursor-pointer transition-colors focus:bg-accent focus:text-foreground mb-1 ${
-                          isActive ? 'bg-opacity-10' : 'hover:bg-accent text-foreground'
+                        className={`gap-3 rounded-lg p-2.5 cursor-pointer transition-all mb-1 flex items-center focus:bg-white/[0.06] focus:text-white ${
+                          isActive ? 'bg-emerald-500/8 border border-emerald-500/20 text-white' : 'hover:bg-[#182434] hover:text-white text-slate-300 border border-transparent'
                         }`}
-                        style={isActive ? { color: color, background: `${color}18` } : {}}
                       >
                         <div 
                           className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0 transition-colors overflow-hidden"
-                          style={isActive ? { background: `${color}33`, boxShadow: `0 0 10px ${color}1A` } : { background: 'rgba(255,255,255,0.05)' }}
+                          style={isActive ? { background: `rgba(16, 185, 129, 0.15)`, border: `1px solid rgba(16, 185, 129, 0.25)`, boxShadow: `0 0 10px rgba(16, 185, 129, 0.1)` } : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.06)' }}
                         >
                           {(() => {
                             const vIcon = getVerticalInfo(p.tenants?.business_vertical).icon
@@ -598,20 +594,20 @@ export default function AppSidebar({ open, onClose }) {
                           })()}
                         </div>
                         <div className="flex-1 overflow-hidden">
-                          <p className={`text-[13px] truncate leading-tight ${isActive ? 'font-bold' : 'font-medium'}`}>
+                          <p className={`text-[13px] truncate leading-tight ${isActive ? 'font-extrabold text-slate-100' : 'font-semibold text-slate-300'}`}>
                             {p.tenants?.business_name || 'My Business'}
                           </p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                          <p className="text-[10px] text-slate-400 mt-0.5 font-medium">
                             {getVerticalInfo(p.tenants?.business_vertical).label}
                           </p>
                         </div>
-                         {isActive && <Check size={14} style={{ color: color }} className="flex-shrink-0" />}
+                         {isActive && <Check size={14} className="text-emerald-400 flex-shrink-0" />}
                       </DropdownMenuItem>
                     )
                   })}
                 </ScrollArea>
 
-                <DropdownMenuSeparator className="my-1.5 bg-border" />
+                <DropdownMenuSeparator className="my-1.5 bg-white/[0.06]" />
 
                 <DropdownMenuItem
                   onSelect={() => {
@@ -622,13 +618,13 @@ export default function AppSidebar({ open, onClose }) {
                     }
                     window.setTimeout(() => setIsAddingBusiness(true), 0)
                   }}
-                  className={`gap-3 rounded-lg p-2 text-muted-foreground transition-colors cursor-pointer hover:bg-accent hover:text-foreground focus:bg-accent focus:text-foreground`}
+                  className="gap-3 rounded-lg p-2.5 text-slate-300 transition-colors cursor-pointer hover:bg-white/[0.04] hover:text-white focus:bg-white/[0.06] focus:text-white flex items-center"
                   title={!canAddBusiness ? 'Kuota bisnis penuh. Beli slot tambahan.' : undefined}
                 >
                   <div className="w-6 h-6 rounded flex items-center justify-center bg-white/5 flex-shrink-0">
                     {canAddBusiness ? <Plus size={14} /> : <Lock size={14} className="text-amber-400" />}
                   </div>
-                  <span className={`text-[13px] font-medium flex-1 ${!canAddBusiness ? 'text-amber-400/80' : ''}`}>
+                  <span className={`text-[13px] font-semibold flex-1 ${!canAddBusiness ? 'text-amber-400/80' : ''}`}>
                     {canAddBusiness ? 'Tambah Bisnis Baru' : 'Beli Slot Bisnis Baru'}
                   </span>
                   {!canAddBusiness && (
@@ -639,7 +635,7 @@ export default function AppSidebar({ open, onClose }) {
             </DropdownMenu>
 
             <Sheet open={isAddingBusiness} onOpenChange={setIsAddingBusiness}>
-              <SheetContent hideClose side={isDesktop ? 'right' : 'bottom'} className={`bg-[#090E14] border-border text-foreground p-0 flex flex-col ${isDesktop ? 'w-[400px] h-full' : 'w-full rounded-t-[28px] max-h-[90vh]'}`}>
+              <SheetContent hideClose side={isDesktop ? 'right' : 'bottom'} className={`bg-[#0D141B] border-border text-foreground p-0 flex flex-col ${isDesktop ? 'w-[400px] h-full' : 'w-full rounded-t-[28px] max-h-[90vh]'}`}>
                 {/* Scrollable Container */}
                 <div className="flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar relative">
                   {/* Header with Background Gradient */}
@@ -650,7 +646,7 @@ export default function AppSidebar({ open, onClose }) {
                       <SheetTitle className="font-display font-extrabold text-2xl bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">Multi-Tenant</SheetTitle>
                       <button 
                         onClick={() => setIsAddingBusiness(false)}
-                        className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-muted-foreground hover:text-white hover:bg-white/10 transition-all active:scale-95"
+                        className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#94A3B8] hover:text-white hover:bg-white/10 transition-all active:scale-95"
                       >
                         <X size={18} />
                       </button>
@@ -664,7 +660,7 @@ export default function AppSidebar({ open, onClose }) {
                     {/* Hero Card - More Compact */}
                     <div className="relative group mb-5">
                       <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-3xl blur opacity-10 group-hover:opacity-25 transition duration-1000"></div>
-                      <div className="relative bg-[#0C141D] border border-white/5 rounded-3xl p-5 overflow-hidden">
+                      <div className="relative bg-[#121A23] border border-white/8 rounded-3xl p-5 overflow-hidden">
                         <div className="absolute right-[-10px] top-[-10px] w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl" />
                         
                         <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4 text-emerald-400">
@@ -704,7 +700,7 @@ export default function AppSidebar({ open, onClose }) {
                 </div>
 
                 {/* Footer Actions - Sticky at bottom */}
-                <div className="p-6 pt-2 pb-6 border-t border-white/5 bg-[#090E14] z-20">
+                <div className="p-6 pt-2 pb-6 border-t border-white/5 bg-[#0D141B] z-20">
                   <div className="flex flex-col gap-2.5">
                     {canAddBusiness ? (
                       <button
@@ -755,18 +751,18 @@ export default function AppSidebar({ open, onClose }) {
                 onClick={() => setUtamaCollapsed(v => !v)}
                 className="w-full flex items-center justify-between px-2 mb-1 bg-transparent border-none cursor-pointer group"
               >
-                <span className="text-[10px] font-bold tracking-[0.15em] text-muted-foreground group-hover:text-slate-400 transition-colors">
+                <span className="text-[10px] font-bold tracking-[0.15em] text-slate-400 group-hover:text-slate-350 transition-colors">
                   {group.label}
                 </span>
                 <ChevronDown
                   size={12}
-                  className="text-muted-foreground group-hover:text-slate-400 transition-all duration-200"
+                  className="text-slate-400 group-hover:text-slate-350 transition-all duration-200"
                   style={{ transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)' }}
                 />
               </button>
             ) : (
-              <SidebarGroupLabel className={`text-[10px] font-bold tracking-[0.15em] text-muted-foreground px-2 mb-1 ${
-                isDombaPenggemukan ? 'mt-4 first:mt-0 mb-2 text-[#4B6478] tracking-[0.2em]' : ''
+              <SidebarGroupLabel className={`text-[10px] font-bold tracking-[0.15em] text-slate-400 px-2 mb-1 ${
+                isDombaPenggemukan ? 'mt-4 first:mt-0 mb-2 text-slate-400 tracking-[0.2em]' : ''
               }`}>
                 {group.label}
               </SidebarGroupLabel>
@@ -800,10 +796,10 @@ export default function AppSidebar({ open, onClose }) {
                           isDombaPenggemukan ? 'h-[44px] py-2.5 px-3.5' : ''
                         } ${
                           isLocked
-                            ? 'opacity-40 cursor-not-allowed'
+                            ? 'opacity-50 cursor-not-allowed'
                             : isActive
                               ? 'bg-opacity-10'
-                              : 'hover:bg-white/[0.03] text-foreground'
+                              : 'hover:bg-white/[0.04] text-slate-300 hover:text-white'
                         }`}
                         style={isActive && !isLocked ? { 
                           background: `${color}18`, 
@@ -816,10 +812,10 @@ export default function AppSidebar({ open, onClose }) {
                           <div className="flex items-center gap-3 w-full px-2 py-1.5">
                             <item.icon
                               size={18}
-                              className="text-muted-foreground"
+                              className="text-slate-500"
                               strokeWidth={2}
                             />
-                            <span className="font-body text-[14px] flex-1 font-medium text-muted-foreground">
+                            <span className="font-body text-[14px] flex-1 font-medium text-slate-500">
                               {item.title}
                             </span>
                             {item.badge ? (
@@ -831,22 +827,22 @@ export default function AppSidebar({ open, onClose }) {
                                 PRO
                               </span>
                             ) : (
-                              <Lock size={12} className="text-muted-foreground" />
+                              <Lock size={12} className="text-slate-500" />
                             )}
                           </div>
                         ) : (
-                          <NavLink to={item.url} data-tutorial={item.dataTutorial} className="flex items-center gap-3 w-full">
+                          <NavLink to={item.url} data-tutorial={item.dataTutorial} className="flex items-center gap-3 w-full group">
                             <item.icon
                               size={18}
                               style={isActive ? { color: color } : {}}
-                              className={!isActive ? 'text-muted-foreground' : ''}
+                              className={!isActive ? 'text-slate-400 group-hover:text-slate-200 transition-colors' : ''}
                               strokeWidth={isActive ? 2.5 : 2}
                             />
-                            <span className={`font-body text-[14px] flex-1  ${isActive ? 'font-semibold' : 'font-medium'}`} style={isActive ? { color: color } : {}}>
+                            <span className={`font-body text-[14px] flex-1 ${isActive ? 'font-semibold text-white' : 'font-medium text-slate-300 group-hover:text-white transition-colors'}`} style={isActive ? { color: color } : {}}>
                               {item.title}
                             </span>
                             {item.badge && (
-                              <span className="text-[9px] font-black bg-amber-500/15 text-amber-500 border border-amber-500/25 rounded-[4px] px-1.5 py-0.5  animate-pulse">
+                              <span className="text-[9px] font-black bg-amber-500/15 text-amber-500 border border-amber-500/25 rounded-[4px] px-1.5 py-0.5 animate-pulse">
                                 {item.badge}
                               </span>
                             )}
@@ -1008,8 +1004,8 @@ export default function AppSidebar({ open, onClose }) {
 
         {/* ── LAINNYA ── */}
         <SidebarGroup className="mt-2">
-          <SidebarGroupLabel className={`text-[10px] font-bold tracking-[0.15em] text-muted-foreground px-2 mb-1 ${
-            isDombaPenggemukan ? 'mt-4 first:mt-0 mb-2 text-[#4B6478] tracking-[0.2em]' : ''
+          <SidebarGroupLabel className={`text-[10px] font-bold tracking-[0.15em] text-slate-400 px-2 mb-1 ${
+            isDombaPenggemukan ? 'mt-4 first:mt-0 mb-2 text-slate-400 tracking-[0.2em]' : ''
           }`}>
             LAINNYA
           </SidebarGroupLabel>
@@ -1221,7 +1217,7 @@ export default function AppSidebar({ open, onClose }) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -8, scale: 0.96 }}
                 transition={{ duration: 0.15, ease: 'easeOut' }}
-                className="absolute bottom-full left-0 right-0 mb-2 bg-[#162230] border border-white/10 rounded-2xl overflow-hidden shadow-xl shadow-black/40 z-50"
+                className="absolute bottom-full left-0 right-0 mb-2 bg-[#121A23] border border-white/[0.08] rounded-2xl overflow-hidden shadow-xl shadow-black/40 z-50"
               >
                 {/* User info header */}
                 <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/8">
@@ -1318,15 +1314,15 @@ export default function AppSidebar({ open, onClose }) {
   const renderMobileSwitcher = () => {
     return (
       <Sheet open={mobileSwitcherOpen} onOpenChange={setMobileSwitcherOpen}>
-        <SheetContent side="bottom" className="bg-[#0C1319] border-t border-border rounded-t-2xl p-4 z-[9999]">
+        <SheetContent side="bottom" className="bg-[#121A23] border-t border-white/[0.08] rounded-t-2xl p-4 z-[9999] shadow-2xl shadow-black/50">
           <SheetHeader className="text-left mb-4">
-            <SheetTitle className="text-foreground text-lg font-bold">Ganti Model Bisnis</SheetTitle>
-            <SheetDescription className="text-muted-foreground text-xs">
+            <SheetTitle className="text-slate-100 text-lg font-bold">Ganti Model Bisnis</SheetTitle>
+            <SheetDescription className="text-slate-400 text-xs">
               Pilih bisnis Anda untuk beralih ruang kerja.
             </SheetDescription>
           </SheetHeader>
           
-          <ScrollArea className="max-h-[50vh] mb-4">
+          <ScrollArea className="max-h-[60vh] mb-4">
             <div className="flex flex-col gap-2">
               {profiles.map((p) => {
                 const isActive = p.tenant_id === tenant?.id
@@ -1349,26 +1345,25 @@ export default function AppSidebar({ open, onClose }) {
                       if (!isDesktop) onClose?.()
                       navigate(targetPath)
                     }}
-                    className={`w-full flex items-center gap-3 rounded-xl p-3 cursor-pointer transition-colors text-left ${
-                      isActive ? 'border' : 'bg-white/5 border border-white/5 hover:bg-white/10'
+                    className={`w-full flex items-center gap-3 rounded-xl p-3 cursor-pointer transition-all text-left ${
+                      isActive ? 'bg-emerald-500/8 border border-emerald-500/20 text-white' : 'bg-white/[0.02] border border-white/[0.06] hover:bg-[#182434] hover:text-white text-slate-300'
                     }`}
-                    style={isActive ? { background: `${color}18`, borderColor: `${color}33` } : {}}
                   >
                     <div 
                       className="w-10 h-10 rounded-lg flex items-center justify-center text-lg flex-shrink-0 transition-colors"
-                      style={isActive ? { background: `${color}33`, boxShadow: `0 0 10px ${color}1A` } : { background: '#090E14' }}
+                      style={isActive ? { background: `rgba(16, 185, 129, 0.15)`, border: `1px solid rgba(16, 185, 129, 0.25)` } : { background: '#0D141B', border: '1px solid rgba(255,255,255,0.06)' }}
                     >
                       {getVerticalInfo(p.tenants?.business_vertical).icon}
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      <p className={`text-[14px] truncate leading-tight ${isActive ? 'font-bold' : 'font-semibold text-foreground'}`} style={isActive ? { color: color } : {}}>
+                      <p className={`text-[14px] truncate leading-tight ${isActive ? 'font-extrabold text-slate-100' : 'font-semibold text-slate-300'}`}>
                         {p.tenants?.business_name || 'My Business'}
                       </p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                      <p className="text-[11px] text-slate-400 mt-0.5">
                         {getVerticalInfo(p.tenants?.business_vertical).label}
                       </p>
                     </div>
-                    {isActive && <Check size={18} style={{ color: color }} className="flex-shrink-0" />}
+                    {isActive && <Check size={18} className="text-emerald-400 flex-shrink-0" />}
                   </button>
                 )
               })}
@@ -1402,7 +1397,7 @@ export default function AppSidebar({ open, onClose }) {
     return (
       <>
         <Sheet open={open} onOpenChange={(val) => !val && onClose?.()}>
-          <SheetContent side="left" className="p-0 border-r border-[#1e293b] w-[280px] flex flex-col overflow-hidden" style={{ background: '#090E14' }}>
+          <SheetContent side="left" className="p-0 border-r border-white/[0.08] w-[280px] flex flex-col overflow-hidden animate-in fade-in duration-200" style={{ background: '#0D141B' }}>
             <SheetHeader className="sr-only">
               <SheetTitle>Navigasi Sidebar</SheetTitle>
               <SheetDescription>Menu navigasi utama aplikasi TernakOS.</SheetDescription>
@@ -1421,7 +1416,7 @@ export default function AppSidebar({ open, onClose }) {
 
   return (
     <>
-      <Sidebar collapsible="offcanvas" style={{ background: '#090E14' }}>
+      <Sidebar collapsible="offcanvas" style={{ background: '#0D141B' }}>
         {sidebarContent}
       </Sidebar>
       {renderMobileSwitcher()}

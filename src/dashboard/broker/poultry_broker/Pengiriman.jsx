@@ -328,8 +328,8 @@ export default function Pengiriman() {
                 {isDesktop && (
                     <div className="flex justify-between items-end">
                         <div>
-                            <h1 className="font-display text-3xl font-black tracking-tight uppercase">Pengiriman & Loss</h1>
-                            <p className="text-[#4B6478] font-bold text-sm mt-1 uppercase tracking-wider">Pantau logistik dan kerugian lapangan</p>
+                            <h1 className="font-sans text-3xl font-bold tracking-tight uppercase">Pengiriman & Loss</h1>
+                            <p className="text-slate-400 font-normal text-sm mt-1 uppercase tracking-wider">Pantau logistik dan kerugian lapangan</p>
                         </div>
                     </div>
                 )}
@@ -366,13 +366,13 @@ export default function Pengiriman() {
                     <TabsList className={cn("bg-secondary/10 p-1.5 rounded-[20px] w-full", isDesktop && "max-w-[400px]")}>
                         <TabsTrigger
                             value="pengiriman"
-                            className={cn("rounded-2xl transition-all data-[state=active]:bg-emerald-500 data-[state=active]:text-white font-black uppercase tracking-widest flex-1", isDesktop ? "text-[10px] py-3" : "text-[11px] py-2.5")}
+                            className={cn("rounded-2xl transition-all data-[state=active]:bg-emerald-500 data-[state=active]:text-white font-bold uppercase tracking-widest flex-1", isDesktop ? "text-[10px] py-3" : "text-[11px] py-2.5")}
                         >
                             Pengiriman
                         </TabsTrigger>
                         <TabsTrigger
                             value="loss"
-                            className={cn("rounded-2xl transition-all data-[state=active]:bg-red-500 data-[state=active]:text-white font-black uppercase tracking-widest flex-1", isDesktop ? "text-[10px] py-3" : "text-[11px] py-2.5")}
+                            className={cn("rounded-2xl transition-all data-[state=active]:bg-red-500 data-[state=active]:text-white font-bold uppercase tracking-widest flex-1", isDesktop ? "text-[10px] py-3" : "text-[11px] py-2.5")}
                         >
                             Loss Report
                         </TabsTrigger>
@@ -431,12 +431,12 @@ export default function Pengiriman() {
                        <LossSummary lossReports={lossReports} />
 
                        <div className={cn("flex justify-between items-center", isDesktop ? "mb-6" : "mb-4")}>
-                           <h2 className="font-display font-black text-sm uppercase tracking-widest text-[#4B6478]">Riwayat Kerugian</h2>
+                           <h2 className="font-sans font-semibold text-sm uppercase tracking-widest text-slate-400">Riwayat Kerugian</h2>
                            <Button 
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setIsCreateLossOpen(true)}
-                                className="h-8 rounded-xl border-white/5 bg-secondary/10 text-[9px] font-black uppercase tracking-widest text-[#F1F5F9]"
+                                className="h-8 rounded-xl border-white/5 bg-secondary/10 text-[9px] font-bold uppercase tracking-widest text-[#F1F5F9]"
                            >
                                <Plus size={12} className="mr-1" /> Catat Kerugian
                            </Button>
@@ -527,21 +527,21 @@ export default function Pengiriman() {
             <AlertDialog open={!!confirmEditArrivalDelivery} onOpenChange={() => setConfirmEditArrivalDelivery(null)}>
                 <AlertDialogContent className="bg-[#0C1319] border-white/10 rounded-[32px] max-w-[400px]">
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="text-white font-display text-xl font-black uppercase tracking-tight">Edit Data Kedatangan?</AlertDialogTitle>
-                        <AlertDialogDescription className="text-[#4B6478] font-bold text-xs uppercase leading-relaxed">
+                        <AlertDialogTitle className="font-sans text-xl font-bold uppercase tracking-tight text-white">Edit Data Kedatangan?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-slate-400 font-normal text-xs uppercase leading-relaxed">
                             Data kedatangan yang sudah tersimpan akan diubah. 
                             Pastikan data baru sudah benar sebelum menyimpan.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="gap-2 mt-4">
-                        <AlertDialogCancel className="rounded-2xl border-white/5 bg-secondary/10 text-[#4B6478] font-black text-[10px] uppercase hover:bg-secondary/20">Batal</AlertDialogCancel>
+                        <AlertDialogCancel className="rounded-2xl border-white/5 bg-secondary/10 text-slate-400 font-bold text-[10px] uppercase hover:bg-secondary/20">Batal</AlertDialogCancel>
                         <AlertDialogAction 
                             onClick={() => {
                                 setSelectedDelivery(confirmEditArrivalDelivery)
                                 setIsUpdateArrivalOpen(true)
                                 setConfirmEditArrivalDelivery(null)
                             }}
-                            className="rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-black text-[10px] uppercase"
+                            className="rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-[10px] uppercase"
                         >
                             Ya, Edit
                         </AlertDialogAction>

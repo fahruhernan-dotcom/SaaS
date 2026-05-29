@@ -54,29 +54,29 @@ export default function CreateLossSheet({ isOpen, onClose, _initialData }) {
         <Sheet open={isOpen} onOpenChange={onClose}>
             <SheetContent side="right" className="bg-[#0C1319] border-l border-white/10 p-6 h-full text-left overflow-y-auto w-full sm:max-w-md">
                 <SheetHeader className="mb-6">
-                    <SheetTitle className="text-white font-display text-2xl font-black uppercase tracking-tight">Catat Kerugian Lapangan</SheetTitle>
-                    <SheetDescription className="text-[#4B6478] font-bold uppercase text-[10px] tracking-widest mt-1">Gunakan ini untuk kerugian di luar pengiriman otomatis</SheetDescription>
+                    <SheetTitle className="text-white font-sans text-2xl font-bold uppercase tracking-tight">Catat Kerugian Lapangan</SheetTitle>
+                    <SheetDescription className="text-slate-400 font-normal uppercase text-[10px] tracking-widest mt-1">Gunakan ini untuk kerugian di luar pengiriman otomatis</SheetDescription>
                 </SheetHeader>
 
                 <form onSubmit={handleCreate} className="space-y-6 pb-20">
                     <div className="space-y-5">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Jenis Kerugian *</Label>
+                                <Label className="text-[10px] font-normal uppercase tracking-widest text-slate-400 ml-1">Jenis Kerugian *</Label>
                                 <Select name="loss_type" defaultValue="mortality_kandang">
-                                    <SelectTrigger className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase text-white shadow-inner">
+                                    <SelectTrigger className="h-14 rounded-2xl bg-[#121A23] border border-white/[0.08] font-semibold text-xs uppercase text-white shadow-inner">
                                         <SelectValue placeholder="PILIH JENIS" />
                                     </SelectTrigger>
-                                    <SelectContent className="bg-[#111C24] border-white/10">
-                                        <SelectItem value="mortality_kandang" className="text-xs font-black uppercase">Mortalitas Kandang</SelectItem>
-                                        <SelectItem value="underweight" className="text-xs font-black uppercase">Berat Tidak Capai Target</SelectItem>
-                                        <SelectItem value="buyer_complaint" className="text-xs font-black uppercase">Komplain Buyer / Reject</SelectItem>
-                                        <SelectItem value="other" className="text-xs font-black uppercase">Lain-lain</SelectItem>
+                                    <SelectContent className="bg-[#121A23] border border-white/[0.08]">
+                                        <SelectItem value="mortality_kandang" className="text-xs font-semibold uppercase">Mortalitas Kandang</SelectItem>
+                                        <SelectItem value="underweight" className="text-xs font-semibold uppercase">Berat Tidak Capai Target</SelectItem>
+                                        <SelectItem value="buyer_complaint" className="text-xs font-semibold uppercase">Komplain Buyer / Reject</SelectItem>
+                                        <SelectItem value="other" className="text-xs font-semibold uppercase">Lain-lain</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Tanggal *</Label>
+                                <Label className="text-[10px] font-normal uppercase tracking-widest text-slate-400 ml-1">Tanggal *</Label>
                                 <DatePicker 
                                     value={reportDate}
                                     onChange={setReportDate}
@@ -88,30 +88,30 @@ export default function CreateLossSheet({ isOpen, onClose, _initialData }) {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Jumlah (Ekor)</Label>
-                                <Input name="chicken_count" type="number" placeholder="0" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs" />
+                                <Label className="text-[10px] font-normal uppercase tracking-widest text-slate-400 ml-1">Jumlah (Ekor)</Label>
+                                <Input name="chicken_count" type="number" placeholder="0" className="h-14 rounded-2xl bg-[#121A23] border border-white/[0.08] font-semibold text-xs" />
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Berat Total (kg)</Label>
-                                <Input name="weight_loss_kg" type="number" step="0.1" placeholder="0.0" className="h-14 rounded-2xl bg-[#111C24] border-white/5 font-black text-xs" />
+                                <Label className="text-[10px] font-normal uppercase tracking-widest text-slate-400 ml-1">Berat Total (kg)</Label>
+                                <Input name="weight_loss_kg" type="number" step="0.1" placeholder="0.0" className="h-14 rounded-2xl bg-[#121A23] border border-white/[0.08] font-semibold text-xs" />
                             </div>
                         </div>
-
+ 
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Estimasi Nominal Kerugian (Rp) *</Label>
-                            <Input required name="financial_loss" type="number" placeholder="0" className="h-16 rounded-2xl bg-[#111C24] border-white/5 font-black text-lg text-red-400" />
+                            <Label className="text-[10px] font-normal uppercase tracking-widest text-slate-400 ml-1">Estimasi Nominal Kerugian (Rp) *</Label>
+                            <Input required name="financial_loss" type="number" placeholder="0" className="h-16 rounded-2xl bg-[#121A23] border border-white/[0.08] font-bold text-lg text-red-400" />
                         </div>
-
+ 
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] ml-1">Keterangan / Alasan</Label>
-                            <Textarea name="description" placeholder="JELASKAN PENYEBAB KERUGIAN..." className="rounded-2xl bg-[#111C24] border-white/5 font-black text-xs uppercase p-4 min-h-[100px]" />
+                            <Label className="text-[10px] font-normal uppercase tracking-widest text-slate-400 ml-1">Keterangan / Alasan</Label>
+                            <Textarea name="description" placeholder="JELASKAN PENYEBAB KERUGIAN..." className="rounded-2xl bg-[#121A23] border border-white/[0.08] font-semibold text-xs uppercase p-4 min-h-[100px]" />
                         </div>
                     </div>
 
                     <SheetFooter>
                         <Button 
                             disabled={isLoading}
-                            className="w-full h-16 bg-red-500 hover:bg-red-600 text-white font-black text-xs uppercase tracking-[0.2em] rounded-[24px] shadow-xl shadow-red-500/20 active:scale-95 transition-all mt-4"
+                            className="w-full h-16 bg-red-500 hover:bg-red-600 text-white font-bold text-xs uppercase tracking-[0.2em] rounded-[24px] shadow-xl shadow-red-500/20 active:scale-95 transition-all mt-4"
                         >
                             {isLoading ? 'MENYIMPAN...' : 'SIMPAN LAPORAN KERUGIAN'}
                         </Button>

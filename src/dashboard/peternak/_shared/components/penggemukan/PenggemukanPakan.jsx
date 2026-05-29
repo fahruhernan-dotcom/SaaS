@@ -946,105 +946,127 @@ export function PenggemukanPakan({ config, hooks }) {
       {/* ── ADD FEED LOG MODAL ── */}
       <AnimatePresence>
         {showAdd && (
-          <div className="fixed inset-0 z-[4000] flex items-end justify-center sm:items-center sm:p-4">
+          <div className="fixed inset-0 z-[4000] flex flex-col justify-end sm:justify-center sm:items-center sm:p-4">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowAdd(false)}
               className="absolute inset-0 bg-[#06090F]/80 backdrop-blur-sm" />
             <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              className="relative w-full max-w-md bg-[#0C1319] border-t sm:border border-white/[0.06] rounded-t-[32px] sm:rounded-[32px] p-6 pb-10 shadow-2xl overflow-y-auto max-h-[90vh] no-scrollbar">
-              <div className="flex items-center justify-between mb-6">
+              className="relative w-full max-w-md bg-[#0C1319] border-t sm:border border-white/[0.06] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col h-[100dvh] min-h-[100dvh] max-h-[100dvh] sm:h-auto sm:min-h-0 sm:max-h-[90vh] overflow-hidden no-scrollbar">
+              
+              <div className="sticky top-0 shrink-0 bg-[#0C1319] z-10 px-6 py-4 flex items-center justify-between border-b border-white/[0.04]">
                 <h3 className="font-['Sora'] font-black text-lg text-white">Input Log Pakan</h3>
-                <button onClick={() => setShowAdd(false)} className="p-2 -mr-2 text-[#4B6478]"><X size={20} /></button>
+                <button
+                  type="button"
+                  onClick={() => setShowAdd(false)}
+                  className="w-11 h-11 -mr-2 flex items-center justify-center text-[#4B6478] hover:text-white transition-colors"
+                  aria-label="Tutup form"
+                >
+                  <X size={20} />
+                </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {isAllBatches && (
-                  <div>
-                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Pilih Batch</label>
-                    <select required value={formBatchId || batches[0]?.id} onChange={e => setFormBatchId(e.target.value)}
-                      className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors', focusCls)}>
-                      {batches.map(b => <option key={b.id} value={b.id} className="bg-[#0C1319]">{b.batch_code}</option>)}
-                    </select>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Tanggal Pemberian</label>
-                  <input type="date" required value={form.log_date}
-                    onChange={e => setForm({ ...form, log_date: e.target.value })}
-                    className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors', focusCls)} />
-                </div>
-
-                {config.logSchema === 'kandang' && (
-                  <div className="grid grid-cols-2 gap-3">
+              <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 overflow-y-auto overscroll-contain no-scrollbar px-6 py-4 space-y-4 pb-28">
+                  {isAllBatches && (
                     <div>
-                      <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Nama Kandang *</label>
-                      <input type="text" required placeholder="KDG-F2" value={form.kandang_name}
-                        onChange={e => setForm({ ...form, kandang_name: e.target.value })}
-                        className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none transition-colors', focusCls)} />
+                      <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Pilih Batch</label>
+                      <select required value={formBatchId || batches[0]?.id} onChange={e => setFormBatchId(e.target.value)}
+                        className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors', focusCls)}>
+                        {batches.map(b => <option key={b.id} value={b.id} className="bg-[#0C1319]">{b.batch_code}</option>)}
+                      </select>
                     </div>
+                  )}
+
+                  <div>
+                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Tanggal Pemberian</label>
+                    <input type="date" required value={form.log_date}
+                      onChange={e => setForm({ ...form, log_date: e.target.value })}
+                      className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors', focusCls)} />
+                  </div>
+
+                  {config.logSchema === 'kandang' && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Nama Kandang *</label>
+                        <input type="text" required placeholder="KDG-F2" value={form.kandang_name}
+                          onChange={e => setForm({ ...form, kandang_name: e.target.value })}
+                          className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none transition-colors', focusCls)} />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Jumlah Ternak *</label>
+                        <InputNumber placeholder="12" value={form.animal_count}
+                          onChange={val => setForm({ ...form, animal_count: val })}
+                          className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors', focusCls)} />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4">
+                    {[['hijauan_kg','Hijauan (kg)'],['konsentrat_kg','Konsentrat (kg)']].map(([key, label]) => (
+                      <div key={key}>
+                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">{label}</label>
+                        <InputNumber step={0.1} placeholder="0.0" value={form[key]} suffix="kg"
+                          onChange={val => setForm({ ...form, [key]: val })}
+                          className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors', focusCls)} />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Jumlah Ternak *</label>
-                      <InputNumber placeholder="12" value={form.animal_count}
-                        onChange={val => setForm({ ...form, animal_count: val })}
+                      <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Dedak (kg)</label>
+                      <InputNumber step={0.1} placeholder="0.0" value={form.dedak_kg} suffix="kg"
+                        onChange={val => setForm({ ...form, dedak_kg: val })}
                         className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors', focusCls)} />
                     </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-amber-400 uppercase mb-1.5 ml-1 tracking-widest">Sisa Pakan (kg)</label>
+                      <InputNumber step={0.1} placeholder="0.0" value={form.sisa_pakan_kg} suffix="kg"
+                        onChange={val => setForm({ ...form, sisa_pakan_kg: val })}
+                        className={cn('bg-white/[0.03] border-white/[0.06] text-amber-400 placeholder:text-[#4B6478] font-black focus:border-violet-500/50 transition-colors', focusCls)} />
+                    </div>
                   </div>
-                )}
 
-                <div className="grid grid-cols-2 gap-4">
-                  {[['hijauan_kg','Hijauan (kg)'],['konsentrat_kg','Konsentrat (kg)']].map(([key, label]) => (
-                    <div key={key}>
-                      <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">{label}</label>
-                      <InputNumber step={0.1} placeholder="0.0" value={form[key]} suffix="kg"
-                        onChange={val => setForm({ ...form, [key]: val })}
+                  <div>
+                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Lainnya (kg)</label>
+                    <InputNumber step={0.1} placeholder="0.0" value={form.other_feed_kg} suffix="kg"
+                      onChange={val => setForm({ ...form, other_feed_kg: val })}
+                      className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors', focusCls)} />
+                  </div>
+
+                  {config.logSchema === 'kandang' && (
+                    <div>
+                      <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Biaya Pakan Hari Ini (Rp) <span className="normal-case text-amber-400/70 font-medium">— penting untuk HPP</span></label>
+                      <InputRupiah placeholder="0" value={form.feed_cost_idr}
+                        onChange={val => setForm({ ...form, feed_cost_idr: val })}
                         className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors', focusCls)} />
                     </div>
-                  ))}
-                </div>
+                  )}
 
-                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Dedak (kg)</label>
-                    <InputNumber step={0.1} placeholder="0.0" value={form.dedak_kg} suffix="kg"
-                      onChange={val => setForm({ ...form, dedak_kg: val })}
-                      className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors', focusCls)} />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-amber-400 uppercase mb-1.5 ml-1 tracking-widest">Sisa Pakan (kg)</label>
-                    <InputNumber step={0.1} placeholder="0.0" value={form.sisa_pakan_kg} suffix="kg"
-                      onChange={val => setForm({ ...form, sisa_pakan_kg: val })}
-                      className={cn('bg-white/[0.03] border-white/[0.06] text-amber-400 placeholder:text-[#4B6478] font-black focus:border-violet-500/50 transition-colors', focusCls)} />
+                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Catatan</label>
+                    <textarea placeholder="Catatan pakan..." rows={2} value={form.notes}
+                      onChange={e => setForm({ ...form, notes: e.target.value })}
+                      className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none resize-none transition-colors', focusCls)} />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Lainnya (kg)</label>
-                  <InputNumber step={0.1} placeholder="0.0" value={form.other_feed_kg} suffix="kg"
-                    onChange={val => setForm({ ...form, other_feed_kg: val })}
-                    className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors', focusCls)} />
+                <div className="sticky bottom-0 shrink-0 bg-[#0C1319] border-t border-white/[0.04] px-6 py-4 sm:py-6 flex gap-3 z-10" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowAdd(false)}
+                    className="flex-1 min-h-[44px] bg-white/[0.04] hover:bg-white/[0.08] text-[#4B6478] hover:text-white font-bold rounded-2xl transition-all"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className={cn('flex-1 min-h-[44px] text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2', btnCls)}
+                  >
+                    {isSubmitting ? 'Menyimpan...' : 'Simpan Log Pakan'}
+                  </button>
                 </div>
-
-                {config.logSchema === 'kandang' && (
-                  <div>
-                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Biaya Pakan Hari Ini (Rp) <span className="normal-case text-amber-400/70 font-medium">— penting untuk HPP</span></label>
-                    <InputRupiah placeholder="0" value={form.feed_cost_idr}
-                      onChange={val => setForm({ ...form, feed_cost_idr: val })}
-                      className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors', focusCls)} />
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Catatan</label>
-                  <textarea placeholder="Catatan pakan..." rows={2} value={form.notes}
-                    onChange={e => setForm({ ...form, notes: e.target.value })}
-                    className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none resize-none transition-colors', focusCls)} />
-                </div>
-
-                <button type="submit" disabled={isSubmitting}
-                  className={cn('w-full disabled:bg-white/[0.03] disabled:text-[#4B6478] text-white font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-2 mt-4', btnCls)}>
-                  {isSubmitting ? 'Menyimpan...' : 'Simpan Log Pakan'}
-                </button>
               </form>
             </motion.div>
           </div>
@@ -1055,237 +1077,259 @@ export function PenggemukanPakan({ config, hooks }) {
       {config.hasOperationalCosts && (
         <AnimatePresence>
           {showAddCost && (
-            <div className="fixed inset-0 z-[4000] flex items-end justify-center sm:items-center sm:p-4">
+            <div className="fixed inset-0 z-[4000] flex flex-col justify-end sm:justify-center sm:items-center sm:p-4">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 onClick={resetCostForm}
                 className="absolute inset-0 bg-[#06090F]/80 backdrop-blur-sm" />
               <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-                className="relative w-full max-w-md bg-[#0C1319] border-t sm:border border-white/[0.06] rounded-t-[32px] sm:rounded-[32px] p-6 pb-10 shadow-2xl overflow-y-auto max-h-[90vh] no-scrollbar">
-                <div className="flex items-center justify-between mb-6">
+                className="relative w-full max-w-md bg-[#0C1319] border-t sm:border border-white/[0.06] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col h-[100dvh] min-h-[100dvh] max-h-[100dvh] sm:h-auto sm:min-h-0 sm:max-h-[90vh] overflow-hidden no-scrollbar">
+                
+                <div className="sticky top-0 shrink-0 bg-[#0C1319] z-10 px-6 py-4 flex items-center justify-between border-b border-white/[0.04]">
                   <h3 className="font-['Sora'] font-black text-lg text-white">Catat Biaya / Belanja</h3>
-                  <button onClick={resetCostForm} className="p-2 -mr-2 text-[#4B6478]"><X size={20} /></button>
+                  <button
+                    type="button"
+                    onClick={resetCostForm}
+                    className="w-11 h-11 -mr-2 flex items-center justify-center text-[#4B6478] hover:text-white transition-colors"
+                    aria-label="Tutup form"
+                  >
+                    <X size={20} />
+                  </button>
                 </div>
 
-                <form onSubmit={handleAddCost} className="space-y-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Tanggal</label>
-                    <input type="date" value={costForm.log_date}
-                      onChange={e => setCostForm({ ...costForm, log_date: e.target.value })}
-                      className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-colors" />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Kategori</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { id: 'pakan',        emoji: '🌿', label: 'Pakan',         hint: 'Stok hijauan, konsentrat, dll' },
-                        { id: 'listrik_air',  emoji: '💡', label: 'Listrik & Air', hint: 'Tagihan rutin kandang' },
-                        { id: 'tenaga_kerja', emoji: '👷', label: 'Tenaga Kerja',  hint: 'Upah & gaji pekerja' },
-                        { id: 'lainnya',      emoji: '📦', label: 'Lainnya',       hint: 'Obat-obatan, transportasi, dll' },
-                      ].map(c => (
-                        <button key={c.id} type="button"
-                          onClick={() => setCostForm(f => ({
-                            ...f,
-                            category: c.id,
-                            is_shared: false,
-                            unit: c.id === 'pakan' ? 'kg' : '-',
-                          }))}
-                          className={cn(
-                            'flex flex-col gap-0.5 px-3 py-2.5 rounded-xl border text-left transition-all',
-                            costForm.category === c.id
-                              ? 'bg-violet-500/15 border-violet-500/40 text-violet-300'
-                              : 'bg-white/[0.02] border-white/[0.06] text-[#4B6478]',
-                          )}
-                        >
-                          <span className="text-sm">{c.emoji}</span>
-                          <span className="text-[10px] font-black uppercase tracking-wide leading-tight">{c.label}</span>
-                          <span className="text-[9px] font-normal normal-case leading-tight opacity-60">{c.hint}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {isAllBatches && (
+                <form onSubmit={handleAddCost} className="flex-1 flex flex-col overflow-hidden">
+                  <div className="flex-1 overflow-y-auto overscroll-contain no-scrollbar px-6 py-4 space-y-4 pb-28">
                     <div>
-                      <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Batch Target</label>
-                      {batchTargetLocked ? (
-                        <div className="flex items-center justify-between px-4 py-3 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                      <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Tanggal</label>
+                      <input type="date" value={costForm.log_date}
+                        onChange={e => setCostForm({ ...costForm, log_date: e.target.value })}
+                        className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-colors" />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Kategori</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { id: 'pakan',        emoji: '🌿', label: 'Pakan',         hint: 'Stok hijauan, konsentrat, dll' },
+                          { id: 'listrik_air',  emoji: '💡', label: 'Listrik & Air', hint: 'Tagihan rutin kandang' },
+                          { id: 'tenaga_kerja', emoji: '👷', label: 'Tenaga Kerja',  hint: 'Upah & gaji pekerja' },
+                          { id: 'lainnya',      emoji: '📦', label: 'Lainnya',       hint: 'Obat-obatan, transportasi, dll' },
+                        ].map(c => (
+                          <button key={c.id} type="button"
+                            onClick={() => setCostForm(f => ({
+                              ...f,
+                              category: c.id,
+                              is_shared: false,
+                              unit: c.id === 'pakan' ? 'kg' : '-',
+                            }))}
+                            className={cn(
+                              'flex flex-col gap-0.5 px-3 py-2.5 rounded-xl border text-left transition-all',
+                              costForm.category === c.id
+                                ? 'bg-violet-500/15 border-violet-500/40 text-violet-300'
+                                : 'bg-white/[0.02] border-white/[0.06] text-[#4B6478]',
+                            )}
+                          >
+                            <span className="text-sm">{c.emoji}</span>
+                            <span className="text-[10px] font-black uppercase tracking-wide leading-tight">{c.label}</span>
+                            <span className="text-[9px] font-normal normal-case leading-tight opacity-60">{c.hint}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {isAllBatches && (
+                      <div>
+                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Batch Target</label>
+                        {batchTargetLocked ? (
+                          <div className="flex items-center justify-between px-4 py-3 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm">🏠</span>
+                              <div>
+                                <p className="text-sm font-bold text-white">Seluruh Kandang</p>
+                                <p className="text-[10px] text-[#4B6478]">Dibagi proporsional ke semua batch aktif</p>
+                              </div>
+                            </div>
+                            <button type="button"
+                              onClick={() => { setBatchTargetLocked(false); setFormBatchId(batches[0]?.id || null); setCostForm(f => ({ ...f, is_shared: false })) }}
+                              className="text-[10px] font-black text-violet-400 border border-violet-500/30 bg-violet-500/8 px-2.5 py-1 rounded-lg hover:bg-violet-500/15 transition">
+                              🔓 Ubah
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex gap-2">
+                            <select value={formBatchId || batches[0]?.id} onChange={e => setFormBatchId(e.target.value)}
+                              className="flex-1 bg-white/[0.03] border border-violet-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-colors">
+                              {batches.map(b => <option key={b.id} value={b.id} className="bg-[#0C1319]">{b.kandang_name || b.batch_code}</option>)}
+                            </select>
+                            <button type="button"
+                              onClick={() => { setBatchTargetLocked(true); setFormBatchId(null); setCostForm(f => ({ ...f, is_shared: true })) }}
+                              className="px-3 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-[#4B6478] hover:text-white hover:border-white/20 transition text-xs font-black">
+                              🔒
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {isPakanCost ? (
+                      <div className="space-y-3 p-4 bg-emerald-500/5 border border-emerald-500/15 rounded-2xl">
+                        <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Detail Pembelian Pakan</p>
+                        <div>
+                          <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Jenis Pakan</label>
+                          <div className="grid grid-cols-4 gap-2">
+                            {[{ id: 'hijauan', label: 'Hijauan', emoji: '🌿' }, { id: 'konsentrat', label: 'Konsentrat', emoji: '🌾' }, { id: 'dedak', label: 'Dedak', emoji: '🟤' }, { id: 'lainnya', label: 'Lainnya', emoji: '📦' }].map(ft => (
+                              <button key={ft.id} type="button"
+                                onClick={() => setCostForm(f => ({ ...f, feed_type: ft.id, item_name: `Beli Pakan ${ft.label}` }))}
+                                className={cn('flex flex-col items-center py-2.5 rounded-xl border text-center transition-all',
+                                  costForm.feed_type === ft.id ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300' : 'bg-white/[0.02] border-white/[0.06] text-[#4B6478]')}>
+                                <span className="text-base mb-1">{ft.emoji}</span>
+                                <span className="text-[9px] font-black uppercase tracking-wide">{ft.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Jumlah (kg)</label>
+                            <InputNumber step={0.1} placeholder="0" value={costForm.quantity} suffix="kg"
+                              onChange={val => {
+                                const kg = val
+                                const total = Math.round((parseFloat(kg) || 0) * (parseFloat(costForm.harga_per_kg) || 0))
+                                setCostForm(f => ({ ...f, quantity: kg, unit: 'kg', amount_idr: total > 0 ? String(total) : f.amount_idr }))
+                              }}
+                              className="bg-black/30 border-white/[0.06] text-white placeholder:text-[#4B6478] font-bold font-['Sora'] text-right" />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Harga / kg (Rp)</label>
+                            <InputRupiah placeholder="0" value={costForm.harga_per_kg}
+                              onChange={val => {
+                                const harga = val
+                                const total = Math.round((parseFloat(costForm.quantity) || 0) * (parseFloat(harga) || 0))
+                                setCostForm(f => ({ ...f, harga_per_kg: harga, amount_idr: total > 0 ? String(total) : f.amount_idr }))
+                              }}
+                              className="w-full bg-black/30 border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:border-emerald-500/50 font-bold transition-colors" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">
+                            Total Biaya (Rp) {pakanTotalAuto > 0 && <span className="text-emerald-400 normal-case font-bold">— auto-hitung</span>}
+                          </label>
+                          <InputRupiah placeholder="0"
+                            value={pakanTotalAuto > 0 ? pakanTotalAuto : costForm.amount_idr}
+                            onChange={val => setCostForm(f => ({ ...f, amount_idr: String(val) }))}
+                            className="w-full bg-black/30 border-emerald-500/20 rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:border-emerald-500/50 font-black transition-colors" />
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div>
+                          <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">
+                            {costForm.category === 'tenaga_kerja' ? 'Nama / Keterangan Upah' : 'Nama / Keterangan'}
+                          </label>
+                          <input type="text" required
+                            placeholder={
+                              costForm.category === 'tenaga_kerja' ? 'Contoh: Upah kandang, gaji mingguan...'
+                              : costForm.category === 'listrik_air' ? 'Contoh: Tagihan listrik Mei...'
+                              : 'Keterangan biaya...'
+                            }
+                            value={costForm.item_name}
+                            onChange={e => setCostForm({ ...costForm, item_name: e.target.value })}
+                            className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 transition-colors" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">
+                            Total Biaya (Rp)
+                          </label>
+                          <InputRupiah
+                            placeholder={costForm.category === 'tenaga_kerja' ? 'Contoh: 150000' : 'Contoh: 500000'}
+                            value={costForm.amount_idr}
+                            onChange={val => setCostForm({ ...costForm, amount_idr: val })}
+                            className="w-full bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 font-bold transition-colors" />
+                        </div>
+                      </>
+                    )}
+
+                    {batches.length > 1 && (
+                      <div>
+                        <label className="flex items-center justify-between px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl cursor-pointer hover:bg-white/[0.05] transition">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm">🏠</span>
+                            <Share2 size={14} className={costForm.is_shared ? 'text-violet-400' : 'text-[#4B6478]'} />
                             <div>
-                              <p className="text-sm font-bold text-white">Seluruh Kandang</p>
-                              <p className="text-[10px] text-[#4B6478]">Dibagi proporsional ke semua batch aktif</p>
+                              <p className="text-xs font-black text-white">Biaya Bersama</p>
+                              <p className="text-[10px] text-[#4B6478]">Bagi proporsional ke semua batch aktif</p>
                             </div>
                           </div>
-                          <button type="button"
-                            onClick={() => { setBatchTargetLocked(false); setFormBatchId(batches[0]?.id || null); setCostForm(f => ({ ...f, is_shared: false })) }}
-                            className="text-[10px] font-black text-violet-400 border border-violet-500/30 bg-violet-500/8 px-2.5 py-1 rounded-lg hover:bg-violet-500/15 transition">
-                            🔓 Ubah
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2">
-                          <select value={formBatchId || batches[0]?.id} onChange={e => setFormBatchId(e.target.value)}
-                            className="flex-1 bg-white/[0.03] border border-violet-500/30 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-colors">
-                            {batches.map(b => <option key={b.id} value={b.id} className="bg-[#0C1319]">{b.kandang_name || b.batch_code}</option>)}
-                          </select>
-                          <button type="button"
-                            onClick={() => { setBatchTargetLocked(true); setFormBatchId(null); setCostForm(f => ({ ...f, is_shared: true })) }}
-                            className="px-3 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-[#4B6478] hover:text-white hover:border-white/20 transition text-xs font-black">
-                            🔒
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {isPakanCost ? (
-                    <div className="space-y-3 p-4 bg-emerald-500/5 border border-emerald-500/15 rounded-2xl">
-                      <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Detail Pembelian Pakan</p>
-                      <div>
-                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Jenis Pakan</label>
-                        <div className="grid grid-cols-4 gap-2">
-                          {[{ id: 'hijauan', label: 'Hijauan', emoji: '🌿' }, { id: 'konsentrat', label: 'Konsentrat', emoji: '🌾' }, { id: 'dedak', label: 'Dedak', emoji: '🟤' }, { id: 'lainnya', label: 'Lainnya', emoji: '📦' }].map(ft => (
-                            <button key={ft.id} type="button"
-                              onClick={() => setCostForm(f => ({ ...f, feed_type: ft.id, item_name: `Beli Pakan ${ft.label}` }))}
-                              className={cn('flex flex-col items-center py-2.5 rounded-xl border text-center transition-all',
-                                costForm.feed_type === ft.id ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300' : 'bg-white/[0.02] border-white/[0.06] text-[#4B6478]')}>
-                              <span className="text-base mb-1">{ft.emoji}</span>
-                              <span className="text-[9px] font-black uppercase tracking-wide">{ft.label}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Jumlah (kg)</label>
-                          <InputNumber step={0.1} placeholder="0" value={costForm.quantity} suffix="kg"
-                            onChange={val => {
-                              const kg = val
-                              const total = Math.round((parseFloat(kg) || 0) * (parseFloat(costForm.harga_per_kg) || 0))
-                              setCostForm(f => ({ ...f, quantity: kg, unit: 'kg', amount_idr: total > 0 ? String(total) : f.amount_idr }))
-                            }}
-                            className="bg-black/30 border-white/[0.06] text-white placeholder:text-[#4B6478] font-bold font-['Sora'] text-right" />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Harga / kg (Rp)</label>
-                          <InputRupiah placeholder="0" value={costForm.harga_per_kg}
-                            onChange={val => {
-                              const harga = val
-                              const total = Math.round((parseFloat(costForm.quantity) || 0) * (parseFloat(harga) || 0))
-                              setCostForm(f => ({ ...f, harga_per_kg: harga, amount_idr: total > 0 ? String(total) : f.amount_idr }))
-                            }}
-                            className="w-full bg-black/30 border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:border-emerald-500/50 font-bold transition-colors" />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">
-                          Total Biaya (Rp) {pakanTotalAuto > 0 && <span className="text-emerald-400 normal-case font-bold">— auto-hitung</span>}
-                        </label>
-                        <InputRupiah placeholder="0"
-                          value={pakanTotalAuto > 0 ? pakanTotalAuto : costForm.amount_idr}
-                          onChange={val => setCostForm(f => ({ ...f, amount_idr: String(val) }))}
-                          className="w-full bg-black/30 border-emerald-500/20 rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:border-emerald-500/50 font-black transition-colors" />
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div>
-                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">
-                          {costForm.category === 'tenaga_kerja' ? 'Nama / Keterangan Upah' : 'Nama / Keterangan'}
-                        </label>
-                        <input type="text" required
-                          placeholder={
-                            costForm.category === 'tenaga_kerja' ? 'Contoh: Upah kandang, gaji mingguan...'
-                            : costForm.category === 'listrik_air' ? 'Contoh: Tagihan listrik Mei...'
-                            : 'Keterangan biaya...'
-                          }
-                          value={costForm.item_name}
-                          onChange={e => setCostForm({ ...costForm, item_name: e.target.value })}
-                          className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 transition-colors" />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">
-                          Total Biaya (Rp)
-                        </label>
-                        <InputRupiah
-                          placeholder={costForm.category === 'tenaga_kerja' ? 'Contoh: 150000' : 'Contoh: 500000'}
-                          value={costForm.amount_idr}
-                          onChange={val => setCostForm({ ...costForm, amount_idr: val })}
-                          className="w-full bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 font-bold transition-colors" />
-                      </div>
-                    </>
-                  )}
-
-                  {batches.length > 1 && (
-                    <div>
-                      <label className="flex items-center justify-between px-4 py-3 bg-white/[0.03] border border-white/[0.06] rounded-xl cursor-pointer hover:bg-white/[0.05] transition">
-                        <div className="flex items-center gap-2">
-                          <Share2 size={14} className={costForm.is_shared ? 'text-violet-400' : 'text-[#4B6478]'} />
-                          <div>
-                            <p className="text-xs font-black text-white">Biaya Bersama</p>
-                            <p className="text-[10px] text-[#4B6478]">Bagi proporsional ke semua batch aktif</p>
+                          <div
+                            onClick={() => setCostForm(f => ({ ...f, is_shared: !f.is_shared }))}
+                            className={cn('w-11 h-6 rounded-full border flex items-center relative transition-all duration-300 cursor-pointer',
+                              costForm.is_shared ? 'bg-violet-600 border-violet-500' : 'bg-white/10 border-white/20')}>
+                            <div className={cn('w-4 h-4 bg-white rounded-full shadow absolute transition-all duration-300', costForm.is_shared ? 'left-[26px]' : 'left-1')} />
                           </div>
-                        </div>
-                        <div
-                          onClick={() => setCostForm(f => ({ ...f, is_shared: !f.is_shared }))}
-                          className={cn('w-11 h-6 rounded-full border flex items-center relative transition-all duration-300 cursor-pointer',
-                            costForm.is_shared ? 'bg-violet-600 border-violet-500' : 'bg-white/10 border-white/20')}>
-                          <div className={cn('w-4 h-4 bg-white rounded-full shadow absolute transition-all duration-300', costForm.is_shared ? 'left-[26px]' : 'left-1')} />
-                        </div>
-                      </label>
+                        </label>
 
-                      {costForm.is_shared && costForm.amount_idr && (
-                        <div className="mt-2 bg-violet-500/5 border border-violet-500/15 rounded-xl p-3 space-y-1.5">
-                          <p className="text-[9px] font-black text-violet-400/70 uppercase tracking-widest mb-2">Preview Alokasi</p>
-                          {(() => {
-                            const total = parseInt(costForm.amount_idr) || 0
-                            const totalAnimals = batches.reduce((s, b) => s + (b.total_animals || 0), 0)
-                            return batches.map((b, i) => {
-                              const proportion = totalAnimals > 0 ? (b.total_animals || 0) / totalAnimals : 1 / batches.length
-                              const allocated = i === batches.length - 1
-                                ? total - batches.slice(0, -1).reduce((s, bb) => {
-                                    const p = totalAnimals > 0 ? (bb.total_animals || 0) / totalAnimals : 1 / batches.length
-                                    return s + Math.round(total * p)
-                                  }, 0)
-                                : Math.round(total * proportion)
-                              return (
-                                <div key={b.id} className="flex items-center justify-between">
-                                  <div className="flex items-center gap-2">
-                                    <span className={cn('text-[10px] font-black', b.id === activeBatch?.id ? 'text-white' : 'text-[#4B6478]')}>{b.batch_code}</span>
-                                    <span className="text-[9px] text-[#4B6478]">{b.total_animals || 0} ekor · {Math.round(proportion * 100)}%</span>
+                        {costForm.is_shared && costForm.amount_idr && (
+                          <div className="mt-2 bg-violet-500/5 border border-violet-500/15 rounded-xl p-3 space-y-1.5">
+                            <p className="text-[9px] font-black text-violet-400/70 uppercase tracking-widest mb-2">Preview Alokasi</p>
+                            {(() => {
+                              const total = parseInt(costForm.amount_idr) || 0
+                              const totalAnimals = batches.reduce((s, b) => s + (b.total_animals || 0), 0)
+                              return batches.map((b, i) => {
+                                const proportion = totalAnimals > 0 ? (b.total_animals || 0) / totalAnimals : 1 / batches.length
+                                const allocated = i === batches.length - 1
+                                  ? total - batches.slice(0, -1).reduce((s, bb) => {
+                                      const p = totalAnimals > 0 ? (bb.total_animals || 0) / totalAnimals : 1 / batches.length
+                                      return s + Math.round(total * p)
+                                    }, 0)
+                                  : Math.round(total * proportion)
+                                return (
+                                  <div key={b.id} className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <span className={cn('text-[10px] font-black', b.id === activeBatch?.id ? 'text-white' : 'text-[#4B6478]')}>{b.batch_code}</span>
+                                      <span className="text-[9px] text-[#4B6478]">{b.total_animals || 0} ekor · {Math.round(proportion * 100)}%</span>
+                                    </div>
+                                    <span className="text-[11px] font-black text-violet-300">Rp {allocated.toLocaleString('id-ID')}</span>
                                   </div>
-                                  <span className="text-[11px] font-black text-violet-300">Rp {allocated.toLocaleString('id-ID')}</span>
-                                </div>
-                              )
-                            })
-                          })()}
+                                )
+                              })
+                            })()}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!isPakanCost && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Jumlah (Opsional)</label>
+                          <InputNumber step={0.1} placeholder="0.0" value={costForm.quantity}
+                            onChange={val => setCostForm({ ...costForm, quantity: val })}
+                            className="bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors" />
                         </div>
-                      )}
-                    </div>
-                  )}
-
-                  {!isPakanCost && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Jumlah (Opsional)</label>
-                        <InputNumber step={0.1} placeholder="0.0" value={costForm.quantity}
-                          onChange={val => setCostForm({ ...costForm, quantity: val })}
-                          className="bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors" />
+                        <div>
+                          <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Satuan</label>
+                          <input type="text" placeholder="sak / kg / ml" value={costForm.unit}
+                            onChange={e => setCostForm({ ...costForm, unit: e.target.value })}
+                            className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-colors" />
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Satuan</label>
-                        <input type="text" placeholder="sak / kg / ml" value={costForm.unit}
-                          onChange={e => setCostForm({ ...costForm, unit: e.target.value })}
-                          className="w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-colors" />
-                      </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
 
-                  <button type="submit" disabled={isSubmitting}
-                    className="w-full bg-violet-600 hover:bg-violet-500 disabled:bg-white/[0.03] disabled:text-[#4B6478] text-white font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-2 mt-4">
-                    {isSubmitting ? 'Menyimpan...' : 'Simpan Catatan Biaya'}
-                  </button>
+                  <div className="sticky bottom-0 shrink-0 bg-[#0C1319] border-t border-white/[0.04] px-6 py-4 sm:py-6 flex gap-3 z-10" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}>
+                    <button
+                      type="button"
+                      onClick={resetCostForm}
+                      className="flex-1 min-h-[44px] bg-white/[0.04] hover:bg-white/[0.08] text-[#4B6478] hover:text-white font-bold rounded-2xl transition-all"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex-1 min-h-[44px] bg-violet-600 hover:bg-violet-500 disabled:bg-white/[0.03] disabled:text-[#4B6478] text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2"
+                    >
+                      {isSubmitting ? 'Menyimpan...' : 'Simpan Catatan Biaya'}
+                    </button>
+                  </div>
                 </form>
               </motion.div>
             </div>

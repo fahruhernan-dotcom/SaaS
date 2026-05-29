@@ -23,9 +23,9 @@ export function SummaryCard({ label, value, icon: Icon, color, subLabel }) {
                 <Icon size={isDesktop ? 48 : 32} strokeWidth={1.5} />
             </div>
             <div className="relative z-10 flex flex-col items-start text-left">
-                <p className={cn("font-black uppercase tracking-[0.2em] opacity-60 mb-1", isDesktop ? "text-[10px]" : "text-[9px]")}>{label}</p>
-                <h3 className={cn("font-black tabular-nums tracking-tight", isDesktop ? "text-2xl" : "text-lg")}>{value}</h3>
-                {subLabel && <p className={cn("font-bold mt-0.5 opacity-40 uppercase tracking-widest italic", isDesktop ? "text-[9px]" : "text-[8px]")}>{subLabel}</p>}
+                <p className={cn("font-sans font-normal uppercase tracking-[0.2em] opacity-80 mb-1", isDesktop ? "text-[10px]" : "text-[9px]")}>{label}</p>
+                <h3 className={cn("font-sans font-bold tabular-nums tracking-tight", isDesktop ? "text-2xl" : "text-lg")}>{value}</h3>
+                {subLabel && <p className={cn("font-sans font-normal mt-0.5 opacity-60 uppercase tracking-widest italic", isDesktop ? "text-[9px]" : "text-[8px]")}>{subLabel}</p>}
             </div>
         </Card>
     )
@@ -37,11 +37,11 @@ export function FilterPill({ label, active, onClick }) {
         <button
             onClick={onClick}
             className={cn(
-                "rounded-2xl font-black uppercase tracking-widest transition-all shrink-0",
+                "rounded-2xl font-sans font-semibold uppercase tracking-widest transition-all shrink-0",
                 isDesktop ? "h-10 px-6 text-[10px]" : "h-9 px-5 text-[11px]",
                 active
                     ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                    : "bg-white/5 text-[#4B6478] hover:bg-white/10"
+                    : "bg-white/5 text-slate-400 hover:bg-white/10"
             )}
         >
             {label}
@@ -65,13 +65,13 @@ export function EmptyState({ icon: Icon, title, description, actionLabel, onActi
             <div className={cn("w-20 h-20 rounded-[32px] border flex items-center justify-center mb-6 transition-all", colors[color])}>
                 <Icon size={32} strokeWidth={2} />
             </div>
-            <h3 className="font-display text-lg font-black text-white uppercase tracking-tight">{title}</h3>
-            <p className="text-[#4B6478] text-sm font-bold mt-2 max-w-[240px] leading-relaxed uppercase tracking-wide italic">{description}</p>
+            <h3 className="font-sans text-lg font-bold text-white uppercase tracking-tight">{title}</h3>
+            <p className="text-slate-400 text-sm font-normal mt-2 max-w-[240px] leading-relaxed uppercase tracking-wide italic">{description}</p>
             {actionLabel && (
                 <Button 
                     variant="outline"
                     onClick={onAction}
-                    className={cn("mt-8 h-12 px-6 rounded-2xl border-white/10 bg-secondary/10 text-white font-black uppercase tracking-widest hover:bg-secondary/20", isDesktop ? "text-[11px]" : "text-xs")}
+                    className={cn("mt-8 h-12 px-6 rounded-2xl border-white/10 bg-secondary/10 text-white font-sans font-bold uppercase tracking-widest hover:bg-secondary/20", isDesktop ? "text-[11px]" : "text-xs")}
                 >
                     {actionLabel}
                 </Button>
