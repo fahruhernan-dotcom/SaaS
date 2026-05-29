@@ -30,6 +30,7 @@ export default function SembakoPenjualan() {
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     if (params.get('action') === 'new') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOpenWizard(true)
     }
   }, [location.search])
@@ -60,6 +61,27 @@ function TabInvoice({ isDesktop, openWizard, setOpenWizard }) {
   const [search, setSearch] = useState('')
   const [invoiceFilter, setInvoiceFilter] = useState('all')
   const [page, setPage] = useState(0)
+  const [selectedSaleId, setSelectedSaleId] = useState(null)
+  const [showDetail, setShowDetail] = useState(false)
+  const [editSaleId, setEditSaleId] = useState(null)
+
+  // Context preservation: auto-open sale detail sheet if saleId is passed
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const saleId = params.get('saleId')
+    if (saleId && sales.length > 0) {
+      const match = sales.find(s => s.id === saleId)
+      if (match) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSelectedSaleId(saleId)
+        setShowDetail(true)
+        const newParams = new URLSearchParams(location.search)
+        newParams.delete('saleId')
+        const searchStr = newParams.toString()
+        navigate(location.pathname + (searchStr ? `?${searchStr}` : ''), { replace: true })
+      }
+    }
+  }, [location.search, sales, navigate, location.pathname])
   const PER_PAGE = 20
 
   const stats = useMemo(() => {
@@ -79,10 +101,6 @@ function TabInvoice({ isDesktop, openWizard, setOpenWizard }) {
     { label: 'Invoice Lunas', value: stats.lunas, color: 'green' },
     { label: 'Lewat Jatuh Tempo', value: stats.overdue, color: stats.overdue > 0 ? 'red' : 'green' },
   ]), [stats])
-
-  const [selectedSaleId, setSelectedSaleId] = useState(null)
-  const [showDetail, setShowDetail] = useState(false)
-  const [editSaleId, setEditSaleId] = useState(null)
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
@@ -228,7 +246,7 @@ function TabInvoice({ isDesktop, openWizard, setOpenWizard }) {
                     }}
                   />
                 </div>
-                <p className="text-[9px] text-right mt-0.5" style={{ color: '#4B6478' }}>{quota.remaining} sisa</p>
+                <p className="text-[9px] text-right mt-0.5" style={{ color: '#94A3B8' }}>{quota.remaining} sisa</p>
               </div>
             )}
             {quota.isAtLimit && (

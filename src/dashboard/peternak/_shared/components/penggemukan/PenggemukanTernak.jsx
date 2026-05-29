@@ -1,10 +1,11 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react'
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Search, Check, ListPlus, ChevronDown, Filter, ShoppingBag } from 'lucide-react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { calcHariDiFarm } from '@/lib/hooks/useKdPenggemukanData'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
+import { toast } from 'sonner'
 import { useTernakLimit } from '@/lib/hooks/useTernakLimit'
 import {
   AnimalCard,
@@ -50,6 +51,7 @@ export function PenggemukanTernak({ config, hooks }) {
 
   const [params]   = useSearchParams()
   const navigate   = useNavigate()
+  const location   = useLocation()
 
   const { canAdd, currentCount, limit, isUnlimited } = useTernakLimit(limitType)
   const limitLabel   = !isUnlimited ? `${currentCount}/${limit} ekor` : null
@@ -107,6 +109,39 @@ export function PenggemukanTernak({ config, hooks }) {
   const [filter, setFilter]           = useState('active')
   const [sheet, setSheet]             = useState(null)   // 'add' | 'bulk' | 'sale' | animal-object
   const [weighAnimal, setWeighAnimal] = useState(null)
+
+  // Helper to remove animalId query param without creating a trailing "?"
+  const removeAnimalIdParam = useCallback((newParams) => {
+    newParams.delete('animalId')
+    const query = newParams.toString()
+    navigate(query ? `${location.pathname}?${query}` : location.pathname, { replace: true })
+  }, [navigate, location.pathname])
+
+  // ── Query param deep linking & tenant validation ──
+  const animalIdParam = params.get('animalId')
+  useEffect(() => {
+    if (animalIdParam && !loadingBatches && !loadingAnimals) {
+      if (animals.length > 0) {
+        const found = animals.find(a => a.id === animalIdParam)
+        if (found) {
+          setSheet(found)
+        } else {
+          toast.error('QR ternak tidak valid atau bukan milik bisnis aktif.')
+          removeAnimalIdParam(new URLSearchParams(params))
+        }
+      } else {
+        toast.error('QR ternak tidak valid atau bukan milik bisnis aktif.')
+        removeAnimalIdParam(new URLSearchParams(params))
+      }
+    }
+  }, [animalIdParam, animals, loadingBatches, loadingAnimals, params, removeAnimalIdParam])
+
+  const handleCloseDetail = () => {
+    setSheet(null)
+    if (params.get('animalId')) {
+      removeAnimalIdParam(new URLSearchParams(params))
+    }
+  }
 
   const isSamplingMode = params.get('sampling') === 'true'
   const selectedBatch  = useMemo(() => batches.find(b => b.id === selectedBatchId), [batches, selectedBatchId])
@@ -392,7 +427,7 @@ export function PenggemukanTernak({ config, hooks }) {
             animal={sheet}
             onUpdate={updateAnimal} isPending={updatingAnimal}
             breedSuggestions={breedSuggestions}
-            onClose={() => setSheet(null)}
+            onClose={handleCloseDetail}
           />
         )}
         {weighAnimal && (

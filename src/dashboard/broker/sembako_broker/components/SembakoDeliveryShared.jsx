@@ -173,9 +173,9 @@ export function SembakoTimeline({ delivery, status: statusProp }) {
                 <p className={cn(
                   'font-black uppercase tracking-widest',
                   isDesktop ? 'text-[8px]' : 'text-[9px]',
-                  isCurrent && status !== 'pending' ? 'text-white' : isDone ? 'text-blue-400' : 'text-[#4B6478]'
+                  isCurrent && status !== 'pending' ? 'text-white' : isDone ? 'text-blue-400' : 'text-[#64748B]'
                 )}>{step.label}</p>
-                <p className={cn('font-bold tabular-nums', isDesktop ? 'text-[8px]' : 'text-[9px]', time ? 'text-[#94A3B8]' : 'text-[#4B6478]')}>
+                <p className={cn('font-bold tabular-nums', isDesktop ? 'text-[8px]' : 'text-[9px]', time ? 'text-[#94A3B8]' : 'text-[#64748B]')}>
                   {time || '--:--'}
                 </p>
               </div>
@@ -253,13 +253,13 @@ function EditTimestampSheet({ delivery, open, onClose }) {
           <SheetTitle className="text-white font-black text-base uppercase tracking-tight flex items-center gap-2">
             <Pencil size={15} className="text-amber-400" /> Edit Waktu Pengiriman
           </SheetTitle>
-          <SheetDescription className="text-[#4B6478] text-[11px] font-bold">
+          <SheetDescription className="text-[#94A3B8] text-[11px] font-bold">
             Koreksi waktu jika dicatat secara manual setelah kejadian.
           </SheetDescription>
         </SheetHeader>
         <div className="px-6 py-5 space-y-4 overflow-y-auto">
           <div className="space-y-1.5">
-            <label className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest flex items-center gap-1.5">
+            <label className="text-[9px] font-black text-[#94A3B8] uppercase tracking-widest flex items-center gap-1.5">
               <Truck size={10} /> Waktu Berangkat
             </label>
             <input
@@ -270,7 +270,7 @@ function EditTimestampSheet({ delivery, open, onClose }) {
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest flex items-center gap-1.5">
+            <label className="text-[9px] font-black text-[#94A3B8] uppercase tracking-widest flex items-center gap-1.5">
               <MapPin size={10} /> Waktu Tiba
             </label>
             <input
@@ -281,7 +281,7 @@ function EditTimestampSheet({ delivery, open, onClose }) {
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest flex items-center gap-1.5">
+            <label className="text-[9px] font-black text-[#94A3B8] uppercase tracking-widest flex items-center gap-1.5">
               <CheckCircle2 size={10} /> Waktu Selesai
             </label>
             <input
@@ -323,7 +323,7 @@ export function SembakoDeliveryDetailSheet({ delivery, onClose }) {
     pending:   { label: 'Disiapkan',   bg: 'rgba(255,255,255,0.06)', color: '#94A3B8' },
     on_route:  { label: 'Di Jalan',    bg: 'rgba(59,130,246,0.12)',  color: '#60A5FA' },
     arrived:   { label: 'Tiba',        bg: 'rgba(245,158,11,0.12)',  color: '#FBBF24' },
-    delivered: { label: 'Terkirim',    bg: 'rgba(2, 26, 2,0.12)',  color: '#021a02' },
+    delivered: { label: 'Terkirim',    bg: 'rgba(16, 185, 129, 0.1)',  color: '#34D399' },
   }
   const meta = statusMeta[delivery.status] || statusMeta.pending
 
@@ -373,7 +373,7 @@ export function SembakoDeliveryDetailSheet({ delivery, onClose }) {
               <div>
                 <SheetTitle className="text-white font-black text-xl uppercase tracking-tight">Detail Pengiriman</SheetTitle>
                 <SheetDescription className="sr-only">Rincian pengiriman sembako</SheetDescription>
-                <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest mt-1">{fmtDate(delivery.delivery_date)}</p>
+                <p className="text-[10px] font-black text-[#94A3B8] uppercase tracking-widest mt-1">{fmtDate(delivery.delivery_date)}</p>
               </div>
               <span
                 className="px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest"
@@ -388,11 +388,11 @@ export function SembakoDeliveryDetailSheet({ delivery, onClose }) {
             {/* Rute */}
             <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-4 grid grid-cols-2 gap-4">
               <div>
-                <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mb-1">Dari</p>
+                <p className="text-[9px] font-black text-[#94A3B8] uppercase tracking-widest mb-1">Dari</p>
                 <p className="text-sm font-black text-white">Gudang Utama</p>
               </div>
               <div className="text-right">
-                <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mb-1">Ke Customer</p>
+                <p className="text-[9px] font-black text-[#94A3B8] uppercase tracking-widest mb-1">Ke Customer</p>
                 <p className="text-sm font-black text-white">{customer}</p>
               </div>
             </div>
@@ -400,14 +400,14 @@ export function SembakoDeliveryDetailSheet({ delivery, onClose }) {
             {/* Kendaraan & Sopir */}
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-2xl bg-[#111C24] border border-white/5 p-4 space-y-1">
-                <div className="flex items-center gap-1.5 text-[#4B6478] mb-1">
+                <div className="flex items-center gap-1.5 text-[#94A3B8] mb-1">
                   <Truck size={11} /><span className="text-[9px] font-black uppercase tracking-widest">Kendaraan</span>
                 </div>
                 <p className="text-sm font-black text-white uppercase">{delivery.vehicle_type || '—'}</p>
-                <p className="text-[10px] font-bold text-[#4B6478] uppercase">{delivery.vehicle_plate || '—'}</p>
+                <p className="text-[10px] font-bold text-[#94A3B8] uppercase">{delivery.vehicle_plate || '—'}</p>
               </div>
               <div className="rounded-2xl bg-[#111C24] border border-white/5 p-4 space-y-1">
-                <div className="flex items-center gap-1.5 text-[#4B6478] mb-1">
+                <div className="flex items-center gap-1.5 text-[#94A3B8] mb-1">
                   <User size={11} /><span className="text-[9px] font-black uppercase tracking-widest">Sopir</span>
                 </div>
                 <p className="text-sm font-black text-white uppercase">{emp?.full_name || delivery.driver_name || '—'}</p>
@@ -416,14 +416,14 @@ export function SembakoDeliveryDetailSheet({ delivery, onClose }) {
 
             {/* Timeline */}
             <div className="rounded-2xl bg-[#111C24] border border-white/5 p-4">
-              <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mb-4">Timeline Logistik</p>
+              <p className="text-[9px] font-black text-[#94A3B8] uppercase tracking-widest mb-4">Timeline Logistik</p>
               <SembakoTimeline delivery={delivery} />
             </div>
 
             {/* Durasi Perjalanan */}
             {duration && (
               <div className="rounded-2xl bg-blue-500/5 border border-blue-500/10 px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[#4B6478]">
+                <div className="flex items-center gap-2 text-[#94A3B8]">
                   <Clock size={12} />
                   <span className="text-[10px] font-black uppercase tracking-widest">Lama Perjalanan</span>
                 </div>
@@ -434,12 +434,12 @@ export function SembakoDeliveryDetailSheet({ delivery, onClose }) {
             {/* Muatan */}
             {items.length > 0 && (
               <div>
-                <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mb-2">Muatan ({items.length} produk)</p>
+                <p className="text-[9px] font-black text-[#94A3B8] uppercase tracking-widest mb-2">Muatan ({items.length} produk)</p>
                 <div className="rounded-2xl bg-[#111C24] border border-white/5 overflow-hidden">
                   {items.map((it, i) => (
                     <div key={i} className="flex items-center justify-between px-4 py-3" style={{ borderTop: i > 0 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
                       <div className="flex items-center gap-2 min-w-0">
-                        <Package size={12} className="text-[#4B6478] shrink-0" />
+                        <Package size={12} className="text-[#94A3B8] shrink-0" />
                         <span className="text-[12px] font-bold text-white truncate">{it.product_name}</span>
                       </div>
                       <span className="text-[11px] font-black text-[#94A3B8] shrink-0 ml-2">{it.quantity} {it.unit || 'pcs'}</span>
@@ -453,7 +453,7 @@ export function SembakoDeliveryDetailSheet({ delivery, onClose }) {
             {sale && (
               <div className="rounded-2xl bg-white/[0.02] border border-white/5 px-4 py-3 flex items-center justify-between">
                 <div>
-                  <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Invoice</p>
+                  <p className="text-[9px] font-black text-[#94A3B8] uppercase tracking-widest">Invoice</p>
                   <p className="text-[12px] font-black text-white mt-0.5">{sale.invoice_number}</p>
                 </div>
                 <p className="text-sm font-black" style={{ color: C.accent }}>{formatIDR(sale.total_amount)}</p>
@@ -463,7 +463,7 @@ export function SembakoDeliveryDetailSheet({ delivery, onClose }) {
             {/* Catatan */}
             {delivery.notes && (
               <div>
-                <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mb-2">Catatan</p>
+                <p className="text-[9px] font-black text-[#94A3B8] uppercase tracking-widest mb-2">Catatan</p>
                 <p className="text-[12px] font-bold text-[#94A3B8] italic bg-white/[0.02] rounded-2xl px-4 py-3 border border-white/5">
                   "{delivery.notes}"
                 </p>
@@ -513,7 +513,7 @@ export function SembakoDeliveryDetailSheet({ delivery, onClose }) {
                 <Button
                   variant="ghost"
                   disabled
-                  className="w-full h-10 opacity-40 text-[#4B6478] font-black uppercase tracking-widest text-[10px]"
+                  className="w-full h-10 opacity-40 text-[#94A3B8] font-black uppercase tracking-widest text-[10px]"
                 >
                   <CheckCircle2 size={13} className="mr-1.5" /> Terkirim
                 </Button>
@@ -581,33 +581,33 @@ export function SembakoDeliveryDetailSheet({ delivery, onClose }) {
               <div className="space-y-3">
                 <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4 space-y-2 text-[11px]">
                   <div className="flex justify-between pb-2 border-b border-white/5">
-                    <span className="text-[#4B6478] font-black uppercase tracking-widest">Ringkasan</span>
+                    <span className="text-[#94A3B8] font-black uppercase tracking-widest">Ringkasan</span>
                     <Truck size={13} className="text-emerald-500/50" />
                   </div>
                   <div className="grid grid-cols-2 gap-y-2">
-                    <span className="text-[#4B6478] font-bold uppercase">Tujuan</span>
+                    <span className="text-[#94A3B8] font-bold uppercase">Tujuan</span>
                     <span className="text-white font-black text-right truncate">{customer}</span>
-                    <span className="text-[#4B6478] font-bold uppercase">Sopir</span>
+                    <span className="text-[#94A3B8] font-bold uppercase">Sopir</span>
                     <span className="text-white font-black text-right truncate">{emp?.full_name || delivery.driver_name || '—'}</span>
                     {fmt(delivery.departed_at) && <>
-                      <span className="text-[#4B6478] font-bold uppercase">Berangkat</span>
+                      <span className="text-[#94A3B8] font-bold uppercase">Berangkat</span>
                       <span className="text-white font-black text-right">{fmt(delivery.departed_at)}</span>
                     </>}
                     {fmt(delivery.arrived_at) && <>
-                      <span className="text-[#4B6478] font-bold uppercase">Tiba</span>
+                      <span className="text-[#94A3B8] font-bold uppercase">Tiba</span>
                       <span className="text-white font-black text-right">{fmt(delivery.arrived_at)}</span>
                     </>}
                     {duration && <>
-                      <span className="text-[#4B6478] font-bold uppercase">Lama Jalan</span>
+                      <span className="text-[#94A3B8] font-bold uppercase">Lama Jalan</span>
                       <span className="text-blue-400 font-black text-right">{duration}</span>
                     </>}
                     {items.length > 0 && <>
-                      <span className="text-[#4B6478] font-bold uppercase">Muatan</span>
+                      <span className="text-[#94A3B8] font-bold uppercase">Muatan</span>
                       <span className="text-white font-black text-right">{items.length} jenis produk</span>
                     </>}
                   </div>
                 </div>
-                <p className="text-[#4B6478] text-[11px] font-bold uppercase tracking-wider">
+                <p className="text-[#94A3B8] text-[11px] font-bold uppercase tracking-wider">
                   Status pengiriman akan berubah menjadi Terkirim.
                 </p>
               </div>

@@ -135,7 +135,7 @@ function DeliveryCard({ delivery, onStart, onArrive, onComplete, highlighted, on
     pending:   { label: 'Disiapkan',  bg: 'rgba(255,255,255,0.06)', color: '#94A3B8' },
     on_route:  { label: 'Di Jalan',   bg: 'rgba(59,130,246,0.12)',  color: '#60A5FA', pulse: true },
     arrived:   { label: 'Tiba',       bg: 'rgba(245,158,11,0.12)',  color: '#FBBF24' },
-    delivered: { label: 'Terkirim',   bg: 'rgba(2, 26, 2,0.12)',  color: '#021a02' },
+    delivered: { label: 'Terkirim',   bg: 'rgba(16, 185, 129, 0.1)',  color: '#34D399' },
   }
 
   const meta = statusMeta[delivery.status] || statusMeta.pending
@@ -180,7 +180,7 @@ function DeliveryCard({ delivery, onStart, onArrive, onComplete, highlighted, on
                 </div>
                 <h4 className={cn('font-display font-black text-white uppercase tracking-tight truncate', isDesktop ? 'text-sm max-w-[150px]' : 'text-[13px]')}>{rpaName}</h4>
               </div>
-              <span className={cn('font-black text-[#4B6478] uppercase tracking-widest shrink-0', isDesktop ? 'text-[10px]' : 'text-[9px] text-right leading-tight')}>
+              <span className={cn('font-black text-[#94A3B8] uppercase tracking-widest shrink-0', isDesktop ? 'text-[10px]' : 'text-[9px] text-right leading-tight')}>
                 {fmtDate(delivery.delivery_date)}
               </span>
             </div>
@@ -188,14 +188,14 @@ function DeliveryCard({ delivery, onStart, onArrive, onComplete, highlighted, on
             {/* Rute */}
             <div className={cn('bg-white/[0.02] flex items-center gap-3 cursor-pointer', isDesktop ? 'px-6 py-4' : 'px-4 py-3')} onClick={onShowDetail}>
               <div className="flex-1 min-w-0">
-                <p className={cn('font-black text-[#4B6478] uppercase tracking-widest mb-1', isDesktop ? 'text-[10px]' : 'text-[9px]')}>Dari lokasi</p>
+                <p className={cn('font-black text-[#94A3B8] uppercase tracking-widest mb-1', isDesktop ? 'text-[10px]' : 'text-[9px]')}>Dari lokasi</p>
                 <p className={cn('font-black text-[#94A3B8] truncate', isDesktop ? 'text-xs' : 'text-[11px]')}>Gudang Utama</p>
               </div>
               <div className={cn('rounded-full border border-white/5 bg-secondary/10 flex items-center justify-center text-blue-500/40 shrink-0', isDesktop ? 'w-10 h-10' : 'w-7 h-7')}>
                 <Truck size={isDesktop ? 18 : 14} strokeWidth={2.5} />
               </div>
               <div className="flex-1 min-w-0 text-right">
-                <p className={cn('font-black text-[#4B6478] uppercase tracking-widest mb-1', isDesktop ? 'text-[10px]' : 'text-[9px]')}>Ke Customer</p>
+                <p className={cn('font-black text-[#94A3B8] uppercase tracking-widest mb-1', isDesktop ? 'text-[10px]' : 'text-[9px]')}>Ke Customer</p>
                 <p className={cn('font-black text-[#F1F5F9] truncate', isDesktop ? 'text-xs' : 'text-[11px]')}>{rpaName}</p>
               </div>
             </div>
@@ -203,7 +203,7 @@ function DeliveryCard({ delivery, onStart, onArrive, onComplete, highlighted, on
             {/* Detail Grid */}
             <div className={cn('grid grid-cols-3 cursor-pointer', isDesktop ? 'p-6 gap-6' : 'p-4 gap-3')} onClick={onShowDetail}>
               <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-[#4B6478]">
+                <div className="flex items-center gap-1.5 text-[#94A3B8]">
                   <Truck size={12} strokeWidth={2.5} />
                   <span className={cn('font-black uppercase tracking-widest', isDesktop ? 'text-[9px]' : 'text-[10px]')}>Kendaraan</span>
                 </div>
@@ -212,7 +212,7 @@ function DeliveryCard({ delivery, onStart, onArrive, onComplete, highlighted, on
                 </span>
               </div>
               <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-[#4B6478]">
+                <div className="flex items-center gap-1.5 text-[#94A3B8]">
                   <User size={12} strokeWidth={2.5} />
                   <span className={cn('font-black uppercase tracking-widest', isDesktop ? 'text-[9px]' : 'text-[10px]')}>Sopir</span>
                 </div>
@@ -221,7 +221,7 @@ function DeliveryCard({ delivery, onStart, onArrive, onComplete, highlighted, on
                 </span>
               </div>
               <div className="space-y-1">
-                <div className="flex items-center gap-1.5 text-[#4B6478]">
+                <div className="flex items-center gap-1.5 text-[#94A3B8]">
                   <Package size={12} strokeWidth={2.5} />
                   <span className={cn('font-black uppercase tracking-widest', isDesktop ? 'text-[9px]' : 'text-[10px]')}>Muatan</span>
                 </div>
@@ -265,7 +265,8 @@ function DeliveryCard({ delivery, onStart, onArrive, onComplete, highlighted, on
                   <Button
                     variant="ghost"
                     disabled
-                    className={cn('flex-1 h-9 opacity-40 text-[#4B6478] font-black uppercase tracking-widest', isDesktop ? 'text-[10px]' : 'text-[10px]')}
+                    className={cn('flex-1 h-9 opacity-40 font-black uppercase tracking-widest', isDesktop ? 'text-[10px]' : 'text-[10px]')}
+                    style={{ color: '#94A3B8' }}
                   >
                     <CheckCircle2 size={13} className="mr-1.5" /> Terkirim
                   </Button>
@@ -306,7 +307,7 @@ function DeliveryCard({ delivery, onStart, onArrive, onComplete, highlighted, on
                 {/* Blok 1 – Detail Logistik */}
                 <div className="rounded-xl bg-white/[0.03] border border-white/5 p-4 space-y-2.5 text-[11px]">
                   <div className="flex justify-between pb-2 border-b border-white/5 items-center">
-                    <span className="text-[#4B6478] font-black uppercase tracking-widest">Detail Logistik</span>
+                    <span className="text-[#94A3B8] font-black uppercase tracking-widest">Detail Logistik</span>
                     <Truck size={14} className="text-emerald-500/50" />
                   </div>
                   {(() => {
@@ -336,18 +337,18 @@ function DeliveryCard({ delivery, onStart, onArrive, onComplete, highlighted, on
 
                     return (
                       <div className="grid grid-cols-2 gap-y-2">
-                        <span className="text-[#4B6478] font-bold uppercase">Tujuan</span>
+                        <span className="text-[#94A3B8] font-bold uppercase">Tujuan</span>
                         <span className="text-white font-black text-right truncate">{customer}</span>
-                        <span className="text-[#4B6478] font-bold uppercase">Sopir</span>
+                        <span className="text-[#94A3B8] font-bold uppercase">Sopir</span>
                         <span className="text-white font-black text-right truncate">{driver}</span>
-                        <span className="text-[#4B6478] font-bold uppercase">Kendaraan</span>
+                        <span className="text-[#94A3B8] font-bold uppercase">Kendaraan</span>
                         <span className="text-white font-black text-right">{vehicle}</span>
-                        <span className="text-[#4B6478] font-bold uppercase">Waktu Tiba</span>
+                        <span className="text-[#94A3B8] font-bold uppercase">Waktu Tiba</span>
                         <span className="text-white font-black text-right">{waktuTiba}</span>
-                        <span className="text-[#4B6478] font-bold uppercase">Lama Jalan</span>
+                        <span className="text-[#94A3B8] font-bold uppercase">Lama Jalan</span>
                         <span className="text-white font-black text-right">{lamaJalan}</span>
                         {its.length > 0 && <>
-                          <span className="text-[#4B6478] font-bold uppercase">Muatan</span>
+                          <span className="text-[#94A3B8] font-bold uppercase">Muatan</span>
                           <span className="text-white font-black text-right">{totalQty} item ({its.length} SKU)</span>
                         </>}
                       </div>
@@ -358,10 +359,10 @@ function DeliveryCard({ delivery, onStart, onArrive, onComplete, highlighted, on
                 {/* Blok 2 – Status note */}
                 <div className="rounded-xl bg-emerald-500/[0.03] border border-emerald-500/10 p-4 space-y-2.5 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-[#4B6478] font-bold uppercase text-[11px] tracking-wider">Status Baru</span>
+                    <span className="text-[#94A3B8] font-bold uppercase text-[11px] tracking-wider">Status Baru</span>
                     <span className="text-emerald-400 font-black text-[11px]">TERKIRIM</span>
                   </div>
-                  <p className="text-[#4B6478] text-[11px] font-bold uppercase tracking-wider">
+                  <p className="text-[#94A3B8] text-[11px] font-bold uppercase tracking-wider">
                     Setelah diselesaikan, status pengiriman tidak dapat diubah kembali ke &ldquo;Tiba&rdquo;.
                   </p>
                 </div>
@@ -391,7 +392,7 @@ function SummaryCard({ label, value, icon: Icon, color, subLabel }) {
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const colors = {
     blue:    { bg: 'rgba(59,130,246,0.08)',  border: 'rgba(59,130,246,0.15)',  text: '#60A5FA',  dot: 'bg-blue-500' },
-    emerald: { bg: 'rgba(2, 26, 2,0.08)',  border: 'rgba(2, 26, 2,0.15)', text: '#021a02',  dot: 'bg-emerald-500' },
+    emerald: { bg: 'rgba(16, 185, 129, 0.08)',  border: 'rgba(16, 185, 129, 0.15)', text: '#34D399',  dot: 'bg-emerald-500' },
     amber:   { bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.15)', text: '#FBBF24',  dot: 'bg-amber-500' },
   }
   const c = colors[color] || colors.blue
@@ -402,10 +403,10 @@ function SummaryCard({ label, value, icon: Icon, color, subLabel }) {
     >
       <div className="flex items-center gap-2 mb-2">
         <div className={cn('w-1.5 h-1.5 rounded-full', c.dot)} />
-        <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">{label}</p>
+        <p className="text-[9px] font-black text-[#94A3B8] uppercase tracking-widest">{label}</p>
       </div>
       <p className="text-2xl font-black" style={{ color: c.text }}>{value}</p>
-      {subLabel && <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest mt-1">{subLabel}</p>}
+      {subLabel && <p className="text-[9px] font-bold text-[#94A3B8] uppercase tracking-widest mt-1">{subLabel}</p>}
     </div>
   )
 }

@@ -43,15 +43,26 @@ export default function SmartInsight({ insight, className }) {
         <span className="text-[11px] font-black tracking-wide uppercase">
           {isUp ? 'Profit Growth' : 'Profit Declining'}
         </span>
-        <span className="w-1 h-1 rounded-full bg-current opacity-30" />
-        <span className="text-[12px] font-bold tabular-nums">
-          {isUp ? '+' : '-'}{insight.value}%
-        </span>
+        {insight.value !== undefined &&
+          insight.value !== null &&
+          insight.value !== '' &&
+          insight.value !== '-' &&
+          insight.value !== '- %' &&
+          !String(insight.value).includes('NaN') &&
+          !String(insight.value).includes('undefined') &&
+          !isNaN(Number(insight.value)) && (
+            <>
+              <span className="w-1 h-1 rounded-full bg-current opacity-30" />
+              <span className="text-[12px] font-bold tabular-nums">
+                {isUp ? '+' : '-'}{insight.value}%
+              </span>
+            </>
+          )}
       </div>
 
       <div className="h-3 w-px bg-current opacity-10 mx-0.5" />
 
-      <p className="text-[11px] font-medium opacity-80 whitespace-nowrap">
+      <p className="text-[11px] font-semibold text-slate-200 whitespace-nowrap">
         dibanding minggu lalu
       </p>
 

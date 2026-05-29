@@ -3,7 +3,7 @@ import { formatIDR } from '@/lib/format'
 
 const COLOR_MAP = {
   red:   { text: '#F87171', bg: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.18)',   bar: '#EF4444' },
-  green: { text: '#021a02', bg: 'rgba(2, 26, 2,0.07)',  border: 'rgba(2, 26, 2,0.15)',  bar: '#021a02' },
+  green: { text: '#34D399', bg: 'rgba(16,185,129,0.08)',  border: 'rgba(16,185,129,0.18)',  bar: '#10B981' },
   amber: { text: '#FBBF24', bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.18)',  bar: '#F59E0B' },
   default:{ text: '#FEF3C7', bg: 'rgba(234,88,12,0.06)', border: 'rgba(234,88,12,0.15)',   bar: '#EA580C' },
 }

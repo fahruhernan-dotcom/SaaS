@@ -33,6 +33,7 @@ import {
   FileText,
   Sparkles,
   PackagePlus,
+  QrCode,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth, getBrokerBasePath } from '@/lib/hooks/useAuth'
@@ -42,6 +43,7 @@ import { useTheme } from '@/lib/hooks/useTheme'
 import { peternakPermissions } from '@/lib/hooks/usePeternakPermissions'
 import { useLanguage } from '@/lib/i18n/useLanguage'
 import DrawerLainnya from './DrawerLainnya'
+import QRScannerModal from './QRScannerModal'
 
 const ICON_MAP = {
   Home, ArrowLeftRight, Building2, User, Users, MoreHorizontal,
@@ -426,6 +428,7 @@ export default function BottomNav() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [fabMenuOpen, setFabMenuOpen] = useState(false)
   const [peternakFabMenuOpen, setPeternakFabMenuOpen] = useState(false)
+  const [scanQrOpen, setScanQrOpen] = useState(false)
   const { accentColor } = useTheme()
 
   // Centralized Business Vertical Resolution (SCALABLE ARCHITECTURE)
@@ -499,6 +502,7 @@ export default function BottomNav() {
   // ── Domba Fattening Speed Dial items ─────────────────────────────────────────
   const DOMBA_BASE = '/peternak/peternak_domba_penggemukan'
   const dombaSpeedItems = isDombaFattening ? [
+    { label: 'Scan QR',         icon: QrCode,      onClick: () => { setPeternakFabMenuOpen(false); setScanQrOpen(true) } },
     { label: 'Log Pakan',       icon: Wheat,       onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/stok-pakan`) } },
     { label: 'Batch Baru',      icon: PackagePlus, onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/batch`) } },
     { label: 'Catatan Harian',  icon: FileText,    onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/daily_task`) } },
@@ -753,6 +757,15 @@ export default function BottomNav() {
         onClose={() => setDrawerOpen(false)}
         userType={profile?.user_type}
       />
+      {scanQrOpen && (
+        <QRScannerModal
+          onClose={() => setScanQrOpen(false)}
+          onScanSuccess={(animalId) => {
+            setScanQrOpen(false)
+            navigate(`${peternakBase}/ternak?batch=all&animalId=${animalId}`)
+          }}
+        />
+      )}
     </>
   )
 }

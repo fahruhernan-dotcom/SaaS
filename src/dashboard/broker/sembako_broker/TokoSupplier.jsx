@@ -357,7 +357,7 @@ function TokoActions({ compact = false, autoOpen = false }) {
             <SheetTitle className="text-left font-display text-2xl font-black uppercase tracking-tight text-[#FEF3C7]">
               Tambah Toko Baru
             </SheetTitle>
-            <SheetDescription className="text-left text-xs text-[#92400E]">
+            <SheetDescription className="text-left text-xs text-[#94A3B8]">
               Simpan customer sembako baru untuk transaksi penjualan dan piutang.
             </SheetDescription>
           </SheetHeader>
@@ -440,7 +440,7 @@ function TokoActions({ compact = false, autoOpen = false }) {
                         'transition-colors',
                         score <= form.reliability_score
                           ? 'fill-amber-400 text-amber-400'
-                          : 'fill-transparent text-[#92400E]'
+                          : 'fill-transparent text-[#EA580C]/25'
                       )}
                     />
                   </button>
@@ -503,7 +503,7 @@ function SupplierActions({ compact = false }) {
             <SheetTitle className="text-left font-display text-2xl font-black uppercase tracking-tight text-[#FEF3C7]">
               Tambah Supplier
             </SheetTitle>
-            <SheetDescription className="text-left text-xs text-[#92400E]">
+            <SheetDescription className="text-left text-xs text-[#94A3B8]">
               Tambahkan partner pengadaan baru untuk pembelian batch stok.
             </SheetDescription>
           </SheetHeader>
@@ -623,11 +623,11 @@ function TokoList({ customers, customerStats, search, selectedArea, onlyHutang }
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[10px] font-bold text-[#92400E]">{customer.area || 'Tanpa Area'}</span>
+                  <span className="text-[10px] font-bold text-[#94A3B8]">{customer.area || 'Tanpa Area'}</span>
                   {customer.phone && (
                     <>
                       <span className="text-[#EA580C]/20">·</span>
-                      <span className="text-[10px] font-bold text-[#92400E]">{customer.phone}</span>
+                      <span className="text-[10px] font-bold text-[#94A3B8]">{customer.phone}</span>
                     </>
                   )}
                 </div>
@@ -638,17 +638,17 @@ function TokoList({ customers, customerStats, search, selectedArea, onlyHutang }
             {/* Row 2: metrics strip */}
             <div className="mt-3 flex items-center justify-between rounded-xl bg-[#EA580C]/[0.04] px-3 py-2">
               <div>
-                <p className="text-[8px] font-black uppercase tracking-widest text-[#92400E]">Piutang</p>
-                <p className={cn('text-[12px] font-black tabular-nums', outstanding > 0 ? 'text-[#F87171]' : 'text-[#021a02]')}>
+                <p className="text-[8px] font-black uppercase tracking-widest text-[#94A3B8]">Piutang</p>
+                <p className={cn('text-[12px] font-black tabular-nums', outstanding > 0 ? 'text-[#F87171]' : 'text-[#34D399]')}>
                   {outstanding > 0 ? formatIDR(outstanding) : 'Lunas'}
                 </p>
               </div>
               <div className="text-center">
-                <p className="text-[8px] font-black uppercase tracking-widest text-[#92400E]">Invoice</p>
+                <p className="text-[8px] font-black uppercase tracking-widest text-[#94A3B8]">Invoice</p>
                 <p className="text-[12px] font-black text-[#FEF3C7]">{invoiceCount}</p>
               </div>
               <div className="text-right">
-                <p className="text-[8px] font-black uppercase tracking-widest text-[#92400E]">Terakhir</p>
+                <p className="text-[8px] font-black uppercase tracking-widest text-[#94A3B8]">Terakhir</p>
                 <p className="text-[11px] font-bold text-[#FEF3C7]">{lastTxDate || '—'}</p>
               </div>
               <div className="flex gap-0.5">
@@ -656,7 +656,7 @@ function TokoList({ customers, customerStats, search, selectedArea, onlyHutang }
                   <Star
                     key={score}
                     size={9}
-                    className={cn(score <= (customer.reliability_score || 0) ? 'fill-amber-400 text-amber-400' : 'text-[#EA580C]/10')}
+                    className={cn(score <= (customer.reliability_score || 0) ? 'fill-amber-400 text-amber-400' : 'text-[#EA580C]/25')}
                   />
                 ))}
               </div>
@@ -724,7 +724,7 @@ function SupplierList({ suppliers, supplierStats, search }) {
                   {supplier.supplier_name}
                 </h3>
 
-                <div className="mt-1 flex flex-wrap items-center gap-3 text-[10px] font-black uppercase text-[#92400E]">
+                <div className="mt-1 flex flex-wrap items-center gap-3 text-[10px] font-black uppercase text-[#94A3B8]">
                   {supplier.phone && <MiniInfo icon={Phone} text={supplier.phone} />}
                   {lastDate && <MiniInfo icon={MapPin} text={`Batch ${lastDate}`} />}
                 </div>
@@ -747,7 +747,7 @@ function SupplierList({ suppliers, supplierStats, search }) {
 function Field({ label, children }) {
   return (
     <div className="space-y-2">
-      <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-[#92400E]">
+      <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-[#94A3B8]">
         {label}
       </label>
       {children}
@@ -758,7 +758,7 @@ function Field({ label, children }) {
 function MetricBlock({ label, value, tone = 'default', compact = false }) {
   return (
     <div className="space-y-1">
-      <p className="text-[9px] font-black uppercase tracking-widest text-[#92400E]">
+      <p className="text-[9px] font-black uppercase tracking-widest text-[#94A3B8]">
         {label}
       </p>
       <p
@@ -766,7 +766,7 @@ function MetricBlock({ label, value, tone = 'default', compact = false }) {
           'font-display font-black tracking-tight',
           compact ? 'text-base' : 'text-xl',
           tone === 'red' && 'text-[#EF4444]',
-          tone === 'green' && 'text-[#021a02]',
+          tone === 'green' && 'text-[#34D399]',
           tone === 'amber' && 'text-[#F59E0B]',
           tone === 'default' && 'text-[#FEF3C7]'
         )}

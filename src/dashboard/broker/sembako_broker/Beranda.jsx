@@ -5,12 +5,12 @@ import {
   CreditCard, TrendingUp, Package, Receipt,
   BarChart2, User, ShoppingCart, Warehouse, Users, Clock,
   Plus, Menu, X, Shield, AlertTriangle, ChevronRight, ChevronLeft,
-  Truck, Wallet, CalendarX,
+  Truck, Wallet, CalendarX, ChevronDown, ChevronUp,
 } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
 import { useSembakoDashboardStats, useSembakoSales, useSembakoEmployees, useSembakoDeliveries, useSembakoProducts, useSembakoSuppliers } from '@/lib/hooks/useSembakoData'
-import { formatIDR, formatIDRShort } from '@/lib/format'
+import { formatIDR } from '@/lib/format'
 import NotificationBell from '@/dashboard/_shared/components/NotificationBell'
 import { BrokerMobileHeader } from '@/dashboard/broker/_shared/components/BrokerMobileHeader'
 import {
@@ -80,9 +80,9 @@ function fmtDate(d) {
 }
 
 const STATUS_STYLE = {
-  lunas:       { bg: 'rgba(2, 26, 2,0.12)',  color: '#021a02', label: 'Lunas'      },
-  sebagian:    { bg: 'rgba(245,158,11,0.12)',  color: '#F59E0B', label: 'Sebagian'   },
-  belum_lunas: { bg: 'rgba(239,68,68,0.20)',   color: '#EF4444', label: 'Belum Lunas', border: 'rgba(239,68,68,0.4)' },
+  lunas:       { bg: 'rgba(16, 185, 129, 0.1)',  color: '#34D399', label: 'Lunas', border: 'rgba(16, 185, 129, 0.2)' },
+  sebagian:    { bg: 'rgba(245, 158, 11, 0.1)',  color: '#FBBF24', label: 'Sebagian', border: 'rgba(245, 158, 11, 0.2)' },
+  belum_lunas: { bg: 'rgba(239, 68, 68, 0.1)',   color: '#F87171', label: 'Belum Lunas', border: 'rgba(239, 68, 68, 0.2)' },
 }
 
 // Navigation local components removed (extracted to SembakoNavigation.jsx)
@@ -91,7 +91,7 @@ const STATUS_STYLE = {
 // ── KPI Card (horizontal, compact) ────────────────────────────────────────────
 // Icon beside text — reduces card height ~35% vs stacked layout
 function KPICard({ icon: Icon, label, value, sub, accentColor = C.accent, urgent, badge, trend }) {
-  const hasBadge = (badge && !trend) || trend != null
+  const hasBadge = true
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -111,7 +111,7 @@ function KPICard({ icon: Icon, label, value, sub, accentColor = C.accent, urgent
     >
       {/* Icon pill */}
       <div style={{
-        width: '32px', height: '32px', borderRadius: '9px', flexShrink: 0, marginTop: '2px',
+        width: '32px', height: '32px', borderRadius: '99px', flexShrink: 0, marginTop: '2px',
         background: `${accentColor}18`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
@@ -147,17 +147,20 @@ function KPICard({ icon: Icon, label, value, sub, accentColor = C.accent, urgent
           <span style={{
             display: 'inline-block', marginTop: '4px',
             background: trend != null
-              ? (trend >= 0 ? 'rgba(2, 26, 2,0.12)' : 'rgba(239,68,68,0.12)')
-              : 'rgba(239,68,68,0.15)',
+              ? (trend >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)')
+              : 'rgba(148, 163, 184, 0.1)',
             color: trend != null
-              ? (trend >= 0 ? '#021a02' : '#EF4444')
-              : '#EF4444',
+              ? (trend >= 0 ? '#34D399' : '#F87171')
+              : '#94A3B8',
             fontSize: '8px', fontWeight: 800, padding: '2px 5px',
             borderRadius: '4px', letterSpacing: '0.02em', whiteSpace: 'nowrap',
+            border: trend != null
+              ? (trend >= 0 ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)')
+              : '1px solid rgba(148, 163, 184, 0.2)',
           }}>
             {trend != null
               ? `${trend >= 0 ? '↑' : '↓'} ${Math.abs(trend).toFixed(0)}%`
-              : badge}
+              : (badge || 'Belum ada pembanding')}
           </span>
         )}
       </div>
@@ -166,14 +169,18 @@ function KPICard({ icon: Icon, label, value, sub, accentColor = C.accent, urgent
 }
 
 // ── Invoice Row ────────────────────────────────────────────────────────────────
-function InvoiceRow({ sale }) {
+function InvoiceRow({ sale, onClick }) {
   const st = STATUS_STYLE[sale.payment_status] || STATUS_STYLE.belum_lunas
   const name = sale.sembako_customers?.customer_name || sale.customer_name || '-'
   return (
-    <div style={{
-      background: C.input, borderRadius: '10px', padding: '10px 12px',
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px',
-    }}>
+    <div
+      onClick={onClick}
+      style={{
+        background: C.input, borderRadius: '10px', padding: '10px 12px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px',
+        cursor: onClick ? 'pointer' : 'default',
+      }}
+    >
       <div style={{ minWidth: 0, flex: 1 }}>
         <p style={{ fontSize: '13px', fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {name}
@@ -282,10 +289,10 @@ function ProfitChart({ weeklyData, monthlyData, chartPeriod, setChartPeriod, isD
                 <stop offset="95%" stopColor={C.accent} stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(234,88,12,0.05)" vertical={false} />
-            <XAxis dataKey="name" stroke="#4B3B2A" fontSize={10} tickLine={false} axisLine={false} minTickGap={16} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(234,88,12,0.15)" vertical={false} />
+            <XAxis dataKey="name" stroke="#94A3B8" fontSize={10} tickLine={false} axisLine={false} minTickGap={16} />
             <YAxis
-              stroke="#4B3B2A" fontSize={10} tickLine={false} axisLine={false}
+              stroke="#94A3B8" fontSize={10} tickLine={false} axisLine={false}
               tickFormatter={(v) => v >= 1000000 ? (v/1000000).toFixed(1)+'jt' : v >= 1000 ? (v/1000).toFixed(0)+'rb' : v}
             />
             <Tooltip content={<ChartTooltip />} cursor={{ stroke: 'rgba(234,88,12,0.2)', strokeWidth: 1 }} />
@@ -352,7 +359,9 @@ function CalendarHeatmap({ currentMonth, selectedDate, setSelectedDate, piutangD
 }
 
 // ── Agenda Section ─────────────────────────────────────────────────────────────
-function AgendaSection({ sales, deliveries, selectedDate, setSelectedDate, currentMonth, setCurrentMonth, agendaFilter, setAgendaFilter }) {
+function AgendaSection({ sales, deliveries, selectedDate, setSelectedDate, currentMonth, setCurrentMonth, agendaFilter, setAgendaFilter, isMobile }) {
+  const [showCalendar, setShowCalendar] = useState(!isMobile)
+
   const piutangEvents = useMemo(() =>
     sales.filter(s => s.payment_status !== 'lunas' && s.due_date)
       .map(s => ({ ...s, type: 'Piutang', date: s.due_date, icon: Wallet, color: '#EF4444' })),
@@ -368,13 +377,12 @@ function AgendaSection({ sales, deliveries, selectedDate, setSelectedDate, curre
   const piutangDates = useMemo(() => new Set(piutangEvents.map(e => e.date)), [piutangEvents])
   const deliveryDates = useMemo(() => new Set(deliveryEvents.map(e => e.date)), [deliveryEvents])
 
-  const allEvents = [...piutangEvents, ...deliveryEvents]
-
   const filteredEvents = useMemo(() => {
+    const allEvents = [...piutangEvents, ...deliveryEvents]
     let list = allEvents.filter(e => e.date && isSameDay(new Date(e.date), selectedDate))
     if (agendaFilter !== 'Semua') list = list.filter(e => e.type === agendaFilter)
     return list
-  }, [allEvents, selectedDate, agendaFilter])  
+  }, [piutangEvents, deliveryEvents, selectedDate, agendaFilter])  
 
   const mStr = format(currentMonth, 'yyyy-MM')
   const monthPiutang = piutangEvents.filter(e => e.date?.startsWith(mStr)).reduce((s, e) => s + (e.remaining_amount || 0), 0)
@@ -387,36 +395,57 @@ function AgendaSection({ sales, deliveries, selectedDate, setSelectedDate, curre
         <span style={{ fontSize: '11px', fontWeight: 800, color: C.accent, letterSpacing: '0.1em' }}>AGENDA</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: C.muted, display: 'flex', padding: '4px' }}>
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#94A3B8', display: 'flex', padding: '4px' }}>
             <ChevronLeft size={14} />
           </button>
           <span style={{ fontSize: '11px', fontWeight: 700, color: C.text, minWidth: '80px', textAlign: 'center' }}>
             {format(currentMonth, 'MMM yyyy', { locale: idLocale })}
           </span>
           <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: C.muted, display: 'flex', padding: '4px' }}>
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#94A3B8', display: 'flex', padding: '4px' }}>
             <ChevronRight size={14} />
           </button>
         </div>
       </div>
 
+      {/* Calendar toggle on mobile */}
+      {isMobile && (
+        <button
+          onClick={() => setShowCalendar(!showCalendar)}
+          style={{
+            width: '100%', height: '38px', borderRadius: '10px',
+            background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}`,
+            fontSize: '11px', fontWeight: 700, color: C.text,
+            marginBottom: '12px', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+            WebkitTapHighlightColor: 'transparent',
+          }}
+        >
+          {showCalendar ? 'Sembunyikan Kalender' : 'Tampilkan Kalender'}
+        </button>
+      )}
+
       {/* Calendar */}
-      <CalendarHeatmap
-        currentMonth={currentMonth}
-        selectedDate={selectedDate}
-        setSelectedDate={setSelectedDate}
-        piutangDates={piutangDates}
-        deliveryDates={deliveryDates}
-      />
+      {showCalendar && (
+        <div style={{ marginBottom: '12px' }}>
+          <CalendarHeatmap
+            currentMonth={currentMonth}
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+            piutangDates={piutangDates}
+            deliveryDates={deliveryDates}
+          />
+        </div>
+      )}
 
       {/* Summary chips */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', margin: '12px 0' }}>
         <div style={{ background: C.input, borderRadius: '10px', padding: '8px 10px' }}>
-          <p style={{ fontSize: '9px', fontWeight: 800, color: C.muted, letterSpacing: '0.08em', marginBottom: '2px' }}>PIUTANG BULAN INI</p>
+          <p style={{ fontSize: '9px', fontWeight: 800, color: '#94A3B8', letterSpacing: '0.08em', marginBottom: '2px' }}>PIUTANG BULAN INI</p>
           <p style={{ fontSize: '13px', fontWeight: 800, color: '#EF4444' }}>{formatIDR(monthPiutang)}</p>
         </div>
         <div style={{ background: C.input, borderRadius: '10px', padding: '8px 10px' }}>
-          <p style={{ fontSize: '9px', fontWeight: 800, color: C.muted, letterSpacing: '0.08em', marginBottom: '2px' }}>PENGIRIMAN AKTIF</p>
+          <p style={{ fontSize: '9px', fontWeight: 800, color: '#94A3B8', letterSpacing: '0.08em', marginBottom: '2px' }}>PENGIRIMAN AKTIF</p>
           <p style={{ fontSize: '13px', fontWeight: 800, color: C.amber }}>{monthDeliveries}</p>
         </div>
       </div>
@@ -444,8 +473,8 @@ function AgendaSection({ sales, deliveries, selectedDate, setSelectedDate, curre
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '240px', overflowY: 'auto' }}>
         {filteredEvents.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
-            <CalendarX size={24} color={C.muted} style={{ margin: '0 auto 6px', opacity: 0.4 }} />
-            <p style={{ fontSize: '12px', color: C.muted }}>Tidak ada agenda</p>
+            <CalendarX size={24} color="#94A3B8" style={{ margin: '0 auto 6px', opacity: 0.4 }} />
+            <p style={{ fontSize: '12px', color: '#94A3B8' }}>Tidak ada agenda</p>
           </div>
         ) : (
           filteredEvents.map((e, i) => {
@@ -586,7 +615,13 @@ function DesktopBeranda({ stats, sales, employees, navigate, name, salesLoading,
                       <p>Belum ada invoice</p>
                     </div>
                   : <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {recentSales.map(s => <InvoiceRow key={s.id} sale={s} />)}
+                      {recentSales.map(s => (
+                        <InvoiceRow
+                          key={s.id}
+                          sale={s}
+                          onClick={() => navigate(`${brokerBase}/penjualan?saleId=${s.id}`)}
+                        />
+                      ))}
                     </div>
               }
             </div>
@@ -611,6 +646,7 @@ function DesktopBeranda({ stats, sales, employees, navigate, name, salesLoading,
           setCurrentMonth={setCurrentMonth}
           agendaFilter={agendaFilter}
           setAgendaFilter={setAgendaFilter}
+          isMobile={false}
         />
 
       </div>
@@ -618,9 +654,9 @@ function DesktopBeranda({ stats, sales, employees, navigate, name, salesLoading,
   )
 }
 
-function CollectionReminders({ sales, navigate, brokerBase }) {
-  const now = new Date()
+function CollectionReminders({ sales, navigate, brokerBase, maxItems = 5, isMobile }) {
   const reminders = useMemo(() => {
+    const now = new Date()
     return sales
       .filter(s => s.payment_status !== 'lunas' && s.due_date && !s.is_deleted)
       .map(s => {
@@ -630,20 +666,39 @@ function CollectionReminders({ sales, navigate, brokerBase }) {
       })
       .filter(s => s.daysDiff <= 3) // Today, overdue, or next 3 days
       .sort((a, b) => a.daysDiff - b.daysDiff)
-      .slice(0, 5)
   }, [sales])
+
+  const visibleReminders = useMemo(() => reminders.slice(0, maxItems), [reminders, maxItems])
 
   if (reminders.length === 0) return null
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-      style={{ background: 'rgba(239,68,68,0.04)', border: `1px solid rgba(239,68,68,0.15)`, borderRadius: '16px', padding: '16px', marginBottom: '24px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-        <Clock size={16} color="#EF4444" />
-        <span style={{ fontSize: '11px', fontWeight: 800, color: '#EF4444', letterSpacing: '0.1em' }}>PENAGIHAN JATUH TEMPO</span>
+      style={{
+        background: 'rgba(239,68,68,0.04)',
+        border: `1px solid rgba(239,68,68,0.15)`,
+        borderRadius: '16px',
+        padding: '14px',
+        marginBottom: isMobile ? '12px' : '24px'
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Clock size={16} color="#EF4444" />
+          <span style={{ fontSize: '11px', fontWeight: 800, color: '#EF4444', letterSpacing: '0.1em' }}>PENAGIHAN JATUH TEMPO</span>
+          <span style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444', fontSize: '9px', fontWeight: 700, padding: '1px 6px', borderRadius: '5px' }}>{reminders.length}</span>
+        </div>
+        {isMobile && reminders.length > maxItems && (
+          <button
+            onClick={() => navigate(`${brokerBase}/penjualan`)}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: C.accent, fontSize: '11px', fontWeight: 700, padding: 0 }}
+          >
+            Lihat semua
+          </button>
+        )}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
-        {reminders.map(s => (
+      <div style={isMobile ? { display: 'flex', flexDirection: 'column', gap: '8px' } : { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '10px' }}>
+        {visibleReminders.map(s => (
           <div key={s.id} style={{ background: C.card, borderRadius: '12px', padding: '12px', border: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
              <div>
                <p style={{ fontSize: '13px', fontWeight: 800, color: C.text }}>{s.sembako_customers?.customer_name || s.customer_name}</p>
@@ -654,9 +709,9 @@ function CollectionReminders({ sales, navigate, brokerBase }) {
              <div style={{ textAlign: 'right' }}>
                <p style={{ fontSize: '14px', fontWeight: 900, color: C.text }}>{formatIDR(s.remaining_amount)}</p>
                <button 
-                onClick={() => navigate(`${brokerBase}/penjualan`)}
+                onClick={() => navigate(`${brokerBase}/penjualan?saleId=${s.id}`)}
                 style={{ fontSize: '10px', color: C.accent, fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-                  Detail <ChevronRight size={10} inline="true" />
+                  Detail <ChevronRight size={10} style={{ display: 'inline', verticalAlign: 'middle', marginTop: '-2px' }} />
                </button>
              </div>
           </div>
@@ -685,148 +740,210 @@ function OnboardingWrapper({ setStokOpen }) {
 }
 
 // ── Mobile version ────────────────────────────────────────────────────────────
-function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, _profile, _tenant, _profiles, _switchTenant, insight, chartPeriod, setChartPeriod, weeklyChartData, monthlyChartData, deliveries, selectedDate, setSelectedDate, currentMonth, setCurrentMonth, agendaFilter, setAgendaFilter, setStokOpen }) {
+function MobileBeranda({
+  stats,
+  sales,
+  products = [],
+  deliveries,
+  navigate,
+  tenant,
+  insight,
+  chartPeriod,
+  setChartPeriod,
+  weeklyChartData,
+  monthlyChartData,
+  selectedDate,
+  setSelectedDate,
+  currentMonth,
+  setCurrentMonth,
+  agendaFilter,
+  setAgendaFilter,
+  setStokOpen,
+  salesLoading,
+}) {
   const { brokerType } = useParams()
   const brokerBase = `/broker/${brokerType}`
   const { setSidebarOpen } = useOutletContext()
-  const now = new Date()
-  const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000)
-  const recentSales      = useMemo(() => sales.slice(0, 5), [sales])
-  const invoiceThisMonth = sales.filter(s => new Date(s.transaction_date) > thirtyDaysAgo).length
-  const activeEmployees  = employees.filter(e => e.status === 'aktif').length
-  const lowStock  = stats?.stok?.lowStock || []
-  const overdue   = stats?.penjualan?.overdueCount || 0
-  const totalExp  = (stats?.pengeluaran?.totalExpenseThisMonth || 0) + (stats?.pengeluaran?.totalPayrollThisMonth || 0)
+
+  // Collapsible states
+  const [showTodayDetail, setShowTodayDetail] = useState(false)
+  const [showInventoryDetail, setShowInventoryDetail] = useState(false)
+  const [showFinanceDetail, setShowFinanceDetail] = useState(false)
+
+  const todayStr = useMemo(() => format(new Date(), 'yyyy-MM-dd'), [])
+
+  // Today's Sales Calculations
+  const todaySales = useMemo(() => sales.filter(s => s.transaction_date?.slice(0, 10) === todayStr), [sales, todayStr])
+  const todayOmzet = useMemo(() => todaySales.reduce((sum, s) => sum + Number(s.total_amount || 0), 0), [todaySales])
+  const todayProfit = useMemo(() => todaySales.reduce((sum, s) => sum + Number(s.net_profit || 0), 0), [todaySales])
+  const todayCash = useMemo(() => todaySales.reduce((sum, s) => sum + Number(s.paid_amount || 0), 0), [todaySales])
+  const todayPiutang = useMemo(() => todaySales.reduce((sum, s) => sum + Number(s.remaining_amount || 0), 0), [todaySales])
+  const cashPct = useMemo(() => todayOmzet > 0 ? (todayCash / todayOmzet) * 100 : 0, [todayCash, todayOmzet])
+
+  // Top 5 products by stock value (current_stock * avg_buy_price)
+  const topProducts = useMemo(() => {
+    return [...products]
+      .sort((a, b) => (b.current_stock * b.avg_buy_price) - (a.current_stock * a.avg_buy_price))
+      .slice(0, 5)
+  }, [products])
+
+  // Active/pending deliveries
+  const pendingDeliveries = useMemo(() => deliveries.filter(d => d.status !== 'delivered'), [deliveries])
+  const visibleDeliveries = useMemo(() => pendingDeliveries.slice(0, 3), [pendingDeliveries])
+
+  // Recent sales (capped at 3 for mobile)
+  const recentSales = useMemo(() => sales.slice(0, 3), [sales])
+
+  const lowStock = stats?.stok?.lowStock || []
+  const totalExp = (stats?.pengeluaran?.totalExpenseThisMonth || 0) + (stats?.pengeluaran?.totalPayrollThisMonth || 0)
 
   return (
     <>
-      <BrokerMobileHeader showGreeting onMenuClick={() => setSidebarOpen(true)} />
+      <BrokerMobileHeader
+        showGreeting
+        businessLabel={tenant?.business_name || 'DISTRIBUTOR SEMBAKO'}
+        onMenuClick={() => setSidebarOpen(true)}
+      />
 
-      <div style={{ padding: '16px 16px 100px' }}>
+      <div style={{ padding: '12px 16px 128px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-        {/* Greeting */}
-        <div style={{ marginBottom: '18px' }}>
-          <h1 style={{
-            fontSize: '18px', fontWeight: 800, color: C.text,
-            fontFamily: 'DM Sans', lineHeight: 1.2,
-          }}>
-            Selamat datang, {name} 👋
-          </h1>
-          <p style={{ fontSize: '11px', color: C.muted, marginTop: '2px', fontWeight: 600, letterSpacing: '0.08em' }}>
-            DASHBOARD DISTRIBUTOR SEMBAKO
-          </p>
-          <SmartInsight insight={insight} className="mt-2" />
-        </div>
+        {/* SmartInsight compactly placed below header */}
+        {insight && (
+          <div style={{ marginTop: '-4px' }}>
+            <SmartInsight insight={insight} />
+          </div>
+        )}
 
         {/* Onboarding checklist for new users */}
         <OnboardingWrapper setStokOpen={setStokOpen} />
 
-        {/* Revenue hero card */}
+        {/* Today's Sales & Cash Summary Card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           style={{
-            background: 'linear-gradient(135deg, #2D1A08 0%, #1C1208 100%)',
+            background: 'linear-gradient(135deg, #1C1208 0%, #0F0A05 100%)',
             borderRadius: '18px',
-            padding: '16px 18px',
-            border: '1px solid rgba(234,88,12,0.25)',
-            marginBottom: '12px',
+            padding: '16px',
+            border: '1px solid rgba(234,88,12,0.2)',
           }}
         >
-          <p style={{ fontSize: '10px', color: C.muted, fontWeight: 700, letterSpacing: '0.1em', marginBottom: '4px' }}>
-            REVENUE BULAN INI
-          </p>
-          <p style={{ fontSize: '26px', fontWeight: 900, color: C.text, fontFamily: 'DM Sans', lineHeight: 1 }}>
-            {formatIDR(stats?.penjualan?.revenueThisMonth || 0)}
-          </p>
-          <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
-            <span style={{ fontSize: '11px', color: C.muted }}>
-              Net Profit (after ops):{' '}
-              <span style={{ color: '#021a02', fontWeight: 700 }}>
-                {formatIDR(stats?.penjualan?.netProfitThisMonth || 0)}
-              </span>
-            </span>
-            <span style={{ fontSize: '11px', color: C.muted }}>
-              Invoice:{' '}
-              <span style={{ color: C.text, fontWeight: 700 }}>{invoiceThisMonth}</span>
-            </span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <p style={{ fontSize: '9px', color: '#94A3B8', fontWeight: 700, letterSpacing: '0.1em', marginBottom: '4px' }}>
+                HARI INI
+              </p>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                <span style={{ fontSize: '22px', fontWeight: 900, color: C.text, fontFamily: 'DM Sans' }}>
+                  {formatIDR(todayOmzet)}
+                </span>
+                <span style={{ fontSize: '10px', color: '#10B981', fontWeight: 700 }}>
+                  Profit: {formatIDR(todayProfit)}
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowTodayDetail(!showTodayDetail)}
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: `1px solid ${C.border}`,
+                borderRadius: '8px',
+                padding: '6px 10px',
+                fontSize: '11px',
+                fontWeight: 700,
+                color: C.text,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              {showTodayDetail ? 'Tutup' : 'Detail'}
+              {showTodayDetail ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
           </div>
+
+          <AnimatePresence>
+            {showTodayDetail && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                style={{ overflow: 'hidden', marginTop: '12px', borderTop: `1px solid rgba(255,255,255,0.05)`, paddingTop: '12px' }}
+              >
+                {/* Cash vs Receivables distribution */}
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#94A3B8', marginBottom: '6px' }}>
+                    <span>Cash Diterima: <strong style={{ color: '#F59E0B' }}>{formatIDR(todayCash)}</strong></span>
+                    <span>Piutang Baru: <strong style={{ color: '#EF4444' }}>{formatIDR(todayPiutang)}</strong></span>
+                  </div>
+                  <div style={{ background: 'rgba(255,255,255,0.06)', height: '8px', borderRadius: '4px', overflow: 'hidden', display: 'flex' }}>
+                    <div style={{ width: `${cashPct}%`, background: '#F59E0B', height: '100%' }} />
+                    <div style={{ flex: 1, background: '#EF4444', height: '100%' }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: '#94A3B8', marginTop: '4px' }}>
+                    <span>{cashPct.toFixed(0)}% Cash</span>
+                    <span>{(100 - cashPct).toFixed(0)}% Piutang</span>
+                  </div>
+                </div>
+
+                {/* List of today's invoices */}
+                <div>
+                  <p style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 700, letterSpacing: '0.05em', marginBottom: '8px' }}>
+                    TRANSAKSI HARI INI ({todaySales.length})
+                  </p>
+                  {todaySales.length === 0 ? (
+                    <p style={{ fontSize: '11px', color: '#94A3B8', fontStyle: 'italic', textAlign: 'center', padding: '12px 0' }}>
+                      Belum ada transaksi hari ini.
+                    </p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {todaySales.map(s => (
+                        <div
+                          key={s.id}
+                          onClick={() => navigate(`${brokerBase}/penjualan?saleId=${s.id}`)}
+                          style={{
+                            background: 'rgba(255,255,255,0.03)',
+                            borderRadius: '10px',
+                            padding: '10px 12px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                            border: '1px solid rgba(255,255,255,0.02)',
+                          }}
+                        >
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <p style={{ fontSize: '12px', fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {s.sembako_customers?.customer_name || s.customer_name || '-'}
+                            </p>
+                            <p style={{ fontSize: '10px', color: '#94A3B8' }}>{s.invoice_number}</p>
+                          </div>
+                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                            <p style={{ fontSize: '12px', fontWeight: 700, color: C.text }}>
+                              {formatIDR(s.total_amount)}
+                            </p>
+                            <span style={{
+                              fontSize: '8px',
+                              fontWeight: 900,
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              background: s.payment_status === 'lunas' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                              color: s.payment_status === 'lunas' ? '#34D399' : '#F87171',
+                              border: s.payment_status === 'lunas' ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)',
+                            }}>
+                              {s.payment_status?.toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
-
-        {/* Profit Chart */}
-        <ProfitChart weeklyData={weeklyChartData} monthlyData={monthlyChartData} chartPeriod={chartPeriod} setChartPeriod={setChartPeriod} isDesktop={false} />
-
-        {/* 2×2 KPI grid — compact horizontal cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px' }}>
-          <KPICard
-            icon={CreditCard}
-            label="Piutang Toko"
-            value={formatIDRShort(stats?.penjualan?.totalOutstanding || 0)}
-            sub={overdue > 0 ? `${overdue} jatuh tempo` : 'Lancar'}
-            urgent={(stats?.penjualan?.totalOutstanding || 0) > 0}
-          />
-          <KPICard
-            icon={Package}
-            label="Nilai Stok"
-            value={formatIDRShort(stats?.stok?.nilaiStok || 0)}
-            sub={`${stats?.stok?.totalProduk || 0} produk`}
-            accentColor={C.amber}
-            badge={lowStock.length > 0 ? `${lowStock.length} tipis` : null}
-          />
-          <KPICard
-            icon={Receipt}
-            label="Pengeluaran"
-            value={formatIDRShort(totalExp)}
-            sub="Incl. gaji"
-            accentColor="#EF4444"
-          />
-          <KPICard
-            icon={TrendingUp}
-            label="Pegawai Aktif"
-            value={activeEmployees}
-            sub={`${stats?.stok?.totalProduk || 0} produk aktif`}
-            accentColor="#A78BFA"
-          />
-        </div>
-
-        {/* Quick actions row */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-          <button
-            onClick={() => setStokOpen(true)}
-            style={{
-              flex: 1, height: '42px', borderRadius: '12px',
-              background: 'rgba(234,88,12,0.1)', border: '1px solid rgba(234,88,12,0.25)',
-              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-              color: C.accent, fontWeight: 700, fontSize: '13px',
-            }}
-          >
-            <Package size={15} /> Stok
-          </button>
-          <button
-            onClick={() => navigate(`${brokerBase}/penjualan?action=new`)}
-            style={{
-              flex: 1.5, height: '42px', borderRadius: '12px',
-              background: C.accent, border: 'none', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-              color: '#fff', fontWeight: 700, fontSize: '13px',
-              boxShadow: '0 4px 14px rgba(234,88,12,0.35)',
-            }}
-          >
-            <Plus size={15} /> Jual
-          </button>
-          <button
-            onClick={() => navigate(`${brokerBase}/gudang`)}
-            style={{
-              height: '42px', width: '42px', borderRadius: '12px',
-              background: 'rgba(234,88,12,0.1)',
-              border: '1px solid rgba(234,88,12,0.25)',
-              cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            <Warehouse size={17} color={C.accent} />
-          </button>
-        </div>
 
         {/* Low Stock Alert */}
         {lowStock.length > 0 && (
@@ -834,21 +951,30 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
             style={{
               background: 'rgba(245,158,11,0.06)', border: `1px solid ${C.borderAm}`,
-              borderRadius: '14px', padding: '14px', marginBottom: '16px',
+              borderRadius: '14px', padding: '14px',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-              <AlertTriangle size={14} color={C.amber} />
-              <span style={{ fontSize: '10px', fontWeight: 800, color: C.amber, letterSpacing: '0.1em' }}>STOK MENIPIS</span>
-              <span style={{ background: 'rgba(245,158,11,0.15)', color: C.amber, fontSize: '9px', fontWeight: 700, padding: '1px 6px', borderRadius: '5px' }}>{lowStock.length}</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlertTriangle size={14} color={C.amber} />
+                <span style={{ fontSize: '10px', fontWeight: 800, color: C.amber, letterSpacing: '0.1em' }}>STOK MENIPIS</span>
+                <span style={{ background: 'rgba(245,158,11,0.15)', color: C.amber, fontSize: '9px', fontWeight: 700, padding: '1px 6px', borderRadius: '5px' }}>{lowStock.length}</span>
+              </div>
+              <button
+                onClick={() => navigate(`${brokerBase}/gudang`)}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: C.accent, fontSize: '11px', fontWeight: 700, padding: 0 }}
+              >
+                Lihat semua
+              </button>
             </div>
-            {lowStock.map(p => (
+            {lowStock.slice(0, 3).map(p => (
               <div key={p.id} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 background: C.card, borderRadius: '9px', padding: '9px 11px', marginBottom: '6px',
+                gap: '8px'
               }}>
-                <div>
-                  <p style={{ fontSize: '12px', fontWeight: 700, color: C.text }}>{p.product_name}</p>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <p style={{ fontSize: '12px', fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.product_name}</p>
                   <p style={{ fontSize: '10px', color: C.muted, marginTop: '1px' }}>
                     Sisa {p.current_stock} {p.unit || ''} · Min {p.min_stock_alert}
                   </p>
@@ -857,8 +983,9 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
                   onClick={() => navigate(`${brokerBase}/gudang?action=tambah&product=${p.id}`)}
                   style={{
                     background: 'rgba(234,88,12,0.15)', border: `1px solid rgba(234,88,12,0.3)`,
-                    color: C.accent, borderRadius: '7px', padding: '4px 9px',
+                    color: C.accent, borderRadius: '7px', padding: '6px 12px',
                     fontSize: '11px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+                    minHeight: '32px'
                   }}
                 >
                   Tambah
@@ -868,8 +995,366 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
           </motion.div>
         )}
 
-        {/* Agenda */}
-        <div style={{ marginBottom: '14px' }}>
+        {/* Overdue Collection Reminders (max 3 items) */}
+        <CollectionReminders
+          sales={sales}
+          navigate={navigate}
+          brokerBase={brokerBase}
+          maxItems={3}
+          isMobile={true}
+        />
+
+        {/* Pending Deliveries Alert */}
+        {visibleDeliveries.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            style={{
+              background: 'rgba(59,130,246,0.06)', border: `1px solid rgba(59,130,246,0.15)`,
+              borderRadius: '14px', padding: '14px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Truck size={14} color="#60A5FA" />
+                <span style={{ fontSize: '10px', fontWeight: 800, color: '#60A5FA', letterSpacing: '0.1em' }}>PENGIRIMAN PENDING</span>
+                <span style={{ background: 'rgba(59,130,246,0.15)', color: '#60A5FA', fontSize: '9px', fontWeight: 700, padding: '1px 6px', borderRadius: '5px' }}>{pendingDeliveries.length}</span>
+              </div>
+              <button
+                onClick={() => navigate(`${brokerBase}/pengiriman`)}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: C.accent, fontSize: '11px', fontWeight: 700, padding: 0 }}
+              >
+                Lihat semua
+              </button>
+            </div>
+            {visibleDeliveries.map(d => {
+              const customerName = d.sembako_sales?.sembako_customers?.customer_name || d.sembako_sales?.customer_name || d.delivery_area || 'Umum'
+              const statusLabel = d.status === 'pending' ? 'Disiapkan' : d.status === 'on_route' ? 'Di Jalan' : d.status === 'arrived' ? 'Tiba' : d.status
+              return (
+                <div key={d.id} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  background: C.card, borderRadius: '9px', padding: '9px 11px', marginBottom: '6px',
+                  gap: '8px'
+                }}>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <p style={{ fontSize: '12px', fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{customerName}</p>
+                    <p style={{ fontSize: '10px', color: C.muted, marginTop: '1px' }}>
+                      Invoice: {d.sembako_sales?.invoice_number || '—'} · Status: <span style={{ color: d.status === 'on_route' ? '#60A5FA' : d.status === 'arrived' ? '#FBBF24' : C.muted, fontWeight: 700 }}>{statusLabel}</span>
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => navigate(`${brokerBase}/pengiriman?highlightDelivery=${d.id}`)}
+                    style={{
+                      background: 'rgba(59,130,246,0.15)', border: `1px solid rgba(59,130,246,0.3)`,
+                      color: '#60A5FA', borderRadius: '7px', padding: '6px 12px',
+                      fontSize: '11px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+                      minHeight: '32px'
+                    }}
+                  >
+                    Lacak
+                  </button>
+                </div>
+              )
+            })}
+          </motion.div>
+        )}
+
+        {/* Quick Actions Grid */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {/* Row 1: Primary actions */}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => navigate(`${brokerBase}/penjualan?action=new`)}
+              style={{
+                flex: 1, height: '48px', borderRadius: '12px',
+                background: C.accent, border: 'none', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                color: '#fff', fontWeight: 700, fontSize: '13px',
+                boxShadow: '0 4px 14px rgba(234,88,12,0.35)',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <Plus size={16} /> Catat Jual
+            </button>
+            <button
+              onClick={() => setStokOpen(true)}
+              style={{
+                flex: 1, height: '48px', borderRadius: '12px',
+                background: 'rgba(234,88,12,0.1)', border: '1px solid rgba(234,88,12,0.25)',
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                color: C.accent, fontWeight: 700, fontSize: '13px',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <Package size={16} /> Tambah Stok
+            </button>
+          </div>
+          {/* Row 2: Secondary actions (>=44px tap target height) */}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => navigate(`${brokerBase}/produk?action=new`)}
+              style={{
+                flex: 1, height: '44px', borderRadius: '10px',
+                background: C.card, border: `1px solid ${C.border}`,
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                color: C.text, fontWeight: 700, fontSize: '11px',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <Plus size={12} className="text-orange-500" /> + Produk
+            </button>
+            <button
+              onClick={() => navigate(`${brokerBase}/toko-supplier?action=new`)}
+              style={{
+                flex: 1, height: '44px', borderRadius: '10px',
+                background: C.card, border: `1px solid ${C.border}`,
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                color: C.text, fontWeight: 700, fontSize: '11px',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <Plus size={12} className="text-orange-500" /> + Toko
+            </button>
+            <button
+              onClick={() => navigate(`${brokerBase}/laporan`)}
+              style={{
+                flex: 1, height: '44px', borderRadius: '10px',
+                background: C.card, border: `1px solid ${C.border}`,
+                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                color: C.text, fontWeight: 700, fontSize: '11px',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <Receipt size={12} className="text-orange-500" /> + Pengeluaran
+            </button>
+          </div>
+        </div>
+
+        {/* Inventory Snapshot Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            background: C.card,
+            borderRadius: '16px',
+            padding: '14px',
+            border: `1px solid ${C.border}`,
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <div style={{
+                width: '32px', height: '32px', borderRadius: '9px',
+                background: 'rgba(245,158,11,0.08)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Warehouse size={16} color={C.amber} />
+              </div>
+              <div>
+                <p style={{ fontSize: '9px', color: C.muted, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '2px' }}>
+                  NILAI STOK GUDANG
+                </p>
+                <p style={{ fontSize: '16px', fontWeight: 800, color: C.text, fontFamily: 'DM Sans', lineHeight: 1.1 }}>
+                  {formatIDR(stats?.stok?.nilaiStok || 0)}
+                </p>
+                <p style={{ fontSize: '9px', color: '#94A3B8', marginTop: '2px' }}>
+                  {stats?.stok?.totalProduk || 0} jenis produk aktif
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowInventoryDetail(!showInventoryDetail)}
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: `1px solid ${C.border}`,
+                borderRadius: '8px',
+                padding: '6px 10px',
+                fontSize: '11px',
+                fontWeight: 700,
+                color: C.text,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              {showInventoryDetail ? 'Tutup' : 'Detail'}
+              {showInventoryDetail ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
+          </div>
+
+          <AnimatePresence>
+            {showInventoryDetail && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                style={{ overflow: 'hidden', marginTop: '12px', borderTop: `1px solid rgba(255,255,255,0.05)`, paddingTop: '12px' }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <p style={{ fontSize: '10px', color: C.muted, fontWeight: 700, letterSpacing: '0.05em' }}>
+                    TOP 5 PRODUK TERBANYAK
+                  </p>
+                  <button
+                    onClick={() => navigate(`${brokerBase}/gudang`)}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px', color: C.accent, fontSize: '11px', fontWeight: 600 }}
+                  >
+                    Gudang <ChevronRight size={11} />
+                  </button>
+                </div>
+                {topProducts.length === 0 ? (
+                  <p style={{ fontSize: '11px', color: C.muted, fontStyle: 'italic', textAlign: 'center', padding: '12px 0' }}>
+                    Belum ada produk terdaftar.
+                  </p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {topProducts.map(p => (
+                      <div
+                        key={p.id}
+                        onClick={() => navigate(`${brokerBase}/gudang?product=${p.id}`)}
+                        style={{
+                          background: 'rgba(255,255,255,0.03)',
+                          borderRadius: '10px',
+                          padding: '10px 12px',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <p style={{ fontSize: '12px', fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.product_name}</p>
+                          <p style={{ fontSize: '10px', color: C.muted, marginTop: '2px' }}>Stok: {p.current_stock} {p.unit || ''}</p>
+                        </div>
+                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                          <p style={{ fontSize: '12px', fontWeight: 700, color: C.text }}>
+                            {formatIDR(p.current_stock * p.avg_buy_price)}
+                          </p>
+                          {p.current_stock <= p.min_stock_alert && p.min_stock_alert > 0 && (
+                            <span style={{ fontSize: '8px', fontWeight: 800, color: '#EF4444', textTransform: 'uppercase' }}>Tipis</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Finance Snapshot Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            background: C.card,
+            borderRadius: '16px',
+            padding: '14px',
+            border: `1px solid ${C.border}`,
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <div style={{
+                width: '32px', height: '32px', borderRadius: '9px',
+                background: 'rgba(239,68,68,0.08)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Wallet size={16} color="#EF4444" />
+              </div>
+              <div>
+                <p style={{ fontSize: '9px', color: C.muted, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '2px' }}>
+                  PIUTANG TOKO & OUTSTANDING
+                </p>
+                <p style={{ fontSize: '16px', fontWeight: 800, color: C.text, fontFamily: 'DM Sans', lineHeight: 1.1 }}>
+                  {formatIDR(stats?.penjualan?.totalOutstanding || 0)}
+                </p>
+                <p style={{ fontSize: '9px', color: '#94A3B8', marginTop: '2px' }}>
+                  Pengeluaran bulan ini: {formatIDR(totalExp)}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowFinanceDetail(!showFinanceDetail)}
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: `1px solid ${C.border}`,
+                borderRadius: '8px',
+                padding: '6px 10px',
+                fontSize: '11px',
+                fontWeight: 700,
+                color: C.text,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              {showFinanceDetail ? 'Tutup' : 'Detail'}
+              {showFinanceDetail ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
+          </div>
+
+          <AnimatePresence>
+            {showFinanceDetail && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                style={{ overflow: 'hidden', marginTop: '12px', borderTop: `1px solid rgba(255,255,255,0.05)`, paddingTop: '12px' }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <p style={{ fontSize: '10px', color: C.muted, fontWeight: 700, letterSpacing: '0.05em' }}>
+                    DESKRIPSI KEUANGAN BULAN INI
+                  </p>
+                  <button
+                    onClick={() => navigate(`${brokerBase}/laporan`)}
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px', color: C.accent, fontSize: '11px', fontWeight: 600 }}
+                  >
+                    Laporan <ChevronRight size={11} />
+                  </button>
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', padding: '10px 12px' }}>
+                    <div>
+                      <p style={{ fontSize: '11px', color: C.muted }}>Penjualan Kotor (Gross Profit)</p>
+                      <p style={{ fontSize: '13px', fontWeight: 700, color: C.text, marginTop: '2px' }}>{formatIDR(stats?.penjualan?.grossProfitThisMonth || 0)}</p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', padding: '10px 12px' }}>
+                    <div>
+                      <p style={{ fontSize: '11px', color: C.muted }}>Operasional (Expenses)</p>
+                      <p style={{ fontSize: '13px', fontWeight: 700, color: C.text, marginTop: '2px' }}>{formatIDR(stats?.pengeluaran?.totalExpenseThisMonth || 0)}</p>
+                    </div>
+                  </div>
+
+                  <div 
+                    onClick={() => navigate(`${brokerBase}/pegawai`)}
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '10px', padding: '10px 12px', cursor: 'pointer' }}
+                  >
+                    <div>
+                      <p style={{ fontSize: '11px', color: C.muted }}>Gaji Pegawai (Payroll) ↗</p>
+                      <p style={{ fontSize: '13px', fontWeight: 700, color: C.text, marginTop: '2px' }}>{formatIDR(stats?.pengeluaran?.totalPayrollThisMonth || 0)}</p>
+                    </div>
+                    <span style={{ fontSize: '10px', color: C.accent, fontWeight: 700 }}>Kelola Pegawai</span>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: '10px', padding: '10px 12px' }}>
+                    <div>
+                      <p style={{ fontSize: '11px', color: '#10B981', fontWeight: 700 }}>Profit Bersih (Net Profit)</p>
+                      <p style={{ fontSize: '15px', fontWeight: 900, color: '#10B981', marginTop: '2px' }}>{formatIDR(stats?.penjualan?.netProfitThisMonth || 0)}</p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Agenda Section */}
+        <div>
           <AgendaSection
             sales={sales}
             deliveries={deliveries}
@@ -879,14 +1364,25 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
             setCurrentMonth={setCurrentMonth}
             agendaFilter={agendaFilter}
             setAgendaFilter={setAgendaFilter}
+            isMobile={true}
           />
         </div>
 
-        {/* Invoice terbaru */}
+        {/* Profit Chart */}
+        <div>
+          <ProfitChart
+            weeklyData={weeklyChartData}
+            monthlyData={monthlyChartData}
+            chartPeriod={chartPeriod}
+            setChartPeriod={setChartPeriod}
+            isDesktop={false}
+          />
+        </div>
+
+        {/* Invoice Terbaru (Sliced to max 3 on mobile) */}
         <div style={{
           background: C.card, borderRadius: '16px',
           padding: '14px', border: `1px solid ${C.border}`,
-          marginBottom: '14px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
             <span style={{ fontSize: '11px', fontWeight: 800, color: C.accent, letterSpacing: '0.1em' }}>
@@ -908,25 +1404,15 @@ function MobileBeranda({ stats, sales, employees, navigate, name, salesLoading, 
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
-              {recentSales.map(s => <InvoiceRow key={s.id} sale={s} />)}
+              {recentSales.map(s => (
+                <InvoiceRow
+                  key={s.id}
+                  sale={s}
+                  onClick={() => navigate(`${brokerBase}/penjualan?saleId=${s.id}`)}
+                />
+              ))}
             </div>
           )}
-        </div>
-
-        {/* Ringkasan quick stats */}
-        <div style={{
-          background: C.card, borderRadius: '16px',
-          padding: '14px', border: `1px solid ${C.border}`,
-        }}>
-          <span style={{ fontSize: '11px', fontWeight: 800, color: C.accent, letterSpacing: '0.1em', display: 'block', marginBottom: '10px' }}>
-            RINGKASAN
-          </span>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
-            <QuickStatRow label="Produk Aktif"       value={stats?.stok?.totalProduk || 0} />
-            <QuickStatRow label="Pegawai Aktif"       value={activeEmployees} />
-            <QuickStatRow label="Invoice Bulan Ini"   value={invoiceThisMonth} />
-            <QuickStatRow label="Invoice Jatuh Tempo" value={overdue > 0 ? <span style={{ color: '#EF4444' }}>{overdue}</span> : '0'} />
-          </div>
         </div>
 
       </div>
@@ -1013,6 +1499,7 @@ export default function SembakoBeranda() {
       const diff = ((w0 - w1) / Math.abs(w1)) * 100
       insight = {
         type: diff >= 0 ? 'up' : 'down',
+        value: Math.abs(diff).toFixed(0),
         text: diff >= 0
           ? `↑ Profit naik +${Math.abs(diff).toFixed(0)}% dibanding minggu lalu`
           : `↓ Profit turun ${Math.abs(diff).toFixed(0)}% dibanding minggu lalu`,
@@ -1046,7 +1533,7 @@ export default function SembakoBeranda() {
   if (isSuppError) return <div style={{ minHeight: '100vh', background: C.bg }}><SembakoErrorState error={suppError} onRetry={refetchSupp} /></div>
 
   const sharedProps = {
-    stats, sales, employees, deliveries, navigate, name, salesLoading,
+    stats, sales, employees, deliveries, products, navigate, name, salesLoading,
     insight, kpiTrends, chartPeriod, setChartPeriod,
     weeklyChartData, monthlyChartData,
     selectedDate, setSelectedDate,

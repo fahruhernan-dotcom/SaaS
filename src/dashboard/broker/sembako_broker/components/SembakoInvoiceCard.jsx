@@ -25,7 +25,7 @@ function getDeliveryBadge(deliveries) {
   const anyDelivered = deliveries.some(d => d.status === 'delivered')
 
   if (allDelivered) {
-    return { label: 'Terkirim', color: '#021a02', bg: 'rgba(2, 26, 2,0.08)', border: 'rgba(2, 26, 2,0.20)', icon: '✓' }
+    return { label: 'Terkirim', color: '#34D399', bg: 'rgba(16, 185, 129, 0.08)', border: 'rgba(16, 185, 129, 0.20)', icon: '✓' }
   }
   if (anyInTransit || anyDelivered) {
     return { label: 'Di Jalan', color: '#FBBF24', bg: 'rgba(251,191,36,0.08)', border: 'rgba(251,191,36,0.15)', icon: '🚚' }
@@ -47,7 +47,7 @@ function MiniDeliveryRow({ delivery, onStart, onComplete, onNavigate }) {
   const statusMeta = {
     pending:   { label: 'Disiapkan', color: '#94A3B8', bg: 'rgba(148,163,184,0.1)' },
     on_route:  { label: 'Di Jalan',  color: '#60A5FA', bg: 'rgba(59,130,246,0.1)', pulse: true },
-    delivered: { label: 'Selesai',   color: '#021a02', bg: 'rgba(2, 26, 2,0.1)' },
+    delivered: { label: 'Selesai',   color: '#34D399', bg: 'rgba(16, 185, 129, 0.1)' },
   }
   const meta = statusMeta[delivery.status] || statusMeta.pending
   const emp = delivery.sembako_employees
@@ -84,19 +84,19 @@ function MiniDeliveryRow({ delivery, onStart, onComplete, onNavigate }) {
           )}
           {meta.label}
         </span>
-        <span style={{ fontSize: '10px', color: C.muted, fontWeight: 700 }}>{fmtDate(delivery.delivery_date)}</span>
+        <span style={{ fontSize: '10px', color: '#94A3B8', fontWeight: 700 }}>{fmtDate(delivery.delivery_date)}</span>
       </div>
 
       {/* Row 2: driver + vehicle */}
       <div style={{ display: 'flex', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: 0 }}>
-          <User size={10} color={C.muted} style={{ flexShrink: 0 }} />
+          <User size={10} color="#94A3B8" style={{ flexShrink: 0 }} />
           <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {emp?.full_name || delivery.driver_name || '—'}
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-          <Truck size={10} color={C.muted} style={{ flexShrink: 0 }} />
+          <Truck size={10} color="#94A3B8" style={{ flexShrink: 0 }} />
           <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 700 }}>{vehicle}</span>
         </div>
       </div>
@@ -114,7 +114,7 @@ function MiniDeliveryRow({ delivery, onStart, onComplete, onNavigate }) {
       {delivery.status === 'on_route' && (
         <button
           onClick={() => onComplete(delivery.id)}
-          style={{ ...sBtn(true), padding: '7px', fontSize: '11px', width: '100%', marginTop: '2px', background: '#021a02' }}
+          style={{ ...sBtn(true), padding: '7px', fontSize: '11px', width: '100%', marginTop: '2px', background: '#10B981' }}
         >
           ✓ Selesaikan
         </button>
@@ -154,9 +154,9 @@ function SaleDeliveryPanel({ sale, onOpenDetail }) {
       {/* Section header */}
       <p style={{
         fontSize: '9px', fontWeight: 900, letterSpacing: '0.18em', textTransform: 'uppercase',
-        color: C.muted, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '5px',
+        color: '#94A3B8', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '5px',
       }}>
-        <Truck size={11} color={C.muted} />
+        <Truck size={11} color="#94A3B8" />
         Pengiriman ({saleDeliveries.length})
       </p>
 
@@ -253,7 +253,7 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery, isDes
           <h3 className="font-display font-bold text-sm text-[#F1F5F9] leading-none uppercase tracking-tight truncate">
             {customerName}
           </h3>
-          <p className="text-xs font-medium text-[#4B6478] mt-1.5 tabular-nums truncate">
+          <p className="text-xs font-medium text-[#94A3B8] mt-1.5 tabular-nums truncate">
             {sale.invoice_number || '-'} · {fmtDateLocal(sale.transaction_date)}
             {sale.due_date ? ` · Tempo: ${fmtDateLocal(sale.due_date)}` : ''}
           </p>
@@ -263,8 +263,8 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery, isDes
         <span style={{
           display: 'inline-flex', alignItems: 'center',
           padding: '2px 8px', borderRadius: '99px',
-          background: isLunas ? 'rgba(2, 26, 2,0.1)' : isSebagian ? 'rgba(251,191,36,0.1)' : 'rgba(239,68,68,0.1)',
-          color: isLunas ? '#021a02' : isSebagian ? '#FBBF24' : '#F87171',
+          background: isLunas ? 'rgba(16, 185, 129, 0.1)' : isSebagian ? 'rgba(251,191,36,0.1)' : 'rgba(239,68,68,0.1)',
+          color: isLunas ? '#34D399' : isSebagian ? '#FBBF24' : '#F87171',
           fontSize: '8px', fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase',
         }}>
           {paymentLabel}
@@ -291,8 +291,8 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery, isDes
         <span style={{
           display: 'inline-flex', alignItems: 'center', flexShrink: 0,
           padding: '2px 7px', borderRadius: '99px',
-          background: isLunas ? 'rgba(2, 26, 2,0.1)' : isSebagian ? 'rgba(251,191,36,0.1)' : 'rgba(239,68,68,0.1)',
-          color: isLunas ? '#021a02' : isSebagian ? '#FBBF24' : '#F87171',
+          background: isLunas ? 'rgba(16, 185, 129, 0.1)' : isSebagian ? 'rgba(251,191,36,0.1)' : 'rgba(239,68,68,0.1)',
+          color: isLunas ? '#34D399' : isSebagian ? '#FBBF24' : '#F87171',
           fontSize: '8px', fontWeight: 900, letterSpacing: '0.1em', textTransform: 'uppercase',
         }}>
           {isLunas ? 'LUNAS' : isSebagian ? 'SEBAGIAN' : 'BELUM LUNAS'}
@@ -301,14 +301,14 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery, isDes
         <motion.div
           animate={{ rotate: expanded ? 180 : 0 }}
           transition={{ duration: 0.2 }}
-          className="shrink-0 text-[#4B6478]"
+          className="shrink-0 text-[#94A3B8]"
         >
           <ChevronDown size={15} />
         </motion.div>
       </div>
       {/* Row 2: invoice info + delivery badge */}
       <div className="flex items-center justify-between pl-10">
-        <p className="text-[10px] font-medium text-[#4B6478] tabular-nums truncate">
+        <p className="text-[10px] font-medium text-[#94A3B8] tabular-nums truncate">
           {sale.invoice_number || '-'} · {fmtDateLocal(sale.transaction_date)}
         </p>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '9px', fontWeight: 900, padding: '2px 7px', borderRadius: '99px', background: deliveryBadge.bg, border: `1px solid ${deliveryBadge.border}`, color: deliveryBadge.color, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
@@ -325,8 +325,8 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery, isDes
       <div className="text-left">
         {isLunas ? (
           <div className="space-y-1">
-            <p className="text-[10px] uppercase font-bold text-[#021a02] tracking-widest leading-none">TOTAL DIBAYAR</p>
-            <p className={cn('font-display font-bold text-[#021a02] leading-none mt-1 tabular-nums', valSize)}>
+            <p className="text-[10px] uppercase font-bold text-[#34D399] tracking-widest leading-none">TOTAL DIBAYAR</p>
+            <p className={cn('font-display font-bold text-[#34D399] leading-none mt-1 tabular-nums', valSize)}>
               {fmt(sale.total_amount || 0)}
             </p>
           </div>
@@ -351,7 +351,7 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery, isDes
       </div>
 
       <div className="text-right">
-        <p className="text-[10px] font-black uppercase tracking-widest leading-none text-[#4B6478]">TOTAL TAGIHAN</p>
+        <p className="text-[10px] font-black uppercase tracking-widest leading-none text-[#94A3B8]">TOTAL TAGIHAN</p>
         <p className={cn('font-display font-bold tabular-nums leading-none mt-1.5 text-[#F1F5F9]', valSize)}>
           {fmt(sale.total_amount || 0)}
         </p>
@@ -364,7 +364,7 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery, isDes
     <div className="grid grid-cols-[1fr_1fr_1.6fr] gap-4">
       {/* Kolom 1: ITEM */}
       <div className="space-y-2 text-left border-r border-white/[0.08] pr-4 min-w-0">
-        <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Item</p>
+        <p className="text-[10px] font-black text-[#94A3B8] uppercase tracking-widest">Item</p>
         <p className="font-display text-[22px] font-bold text-[#F1F5F9] tabular-nums leading-none">
           {items.length} <span className="text-xs font-normal text-[#94A3B8] ml-0.5">jenis</span>
         </p>
@@ -372,13 +372,13 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery, isDes
           {topItem && (
             <p className="text-[11px] font-medium text-[#94A3B8] truncate">{topItem.product_name}</p>
           )}
-          <p className="text-[11px] font-medium text-[#4B6478]">Total {totalQty} {itemUnit}</p>
+          <p className="text-[11px] font-medium text-[#94A3B8]">Total {totalQty} {itemUnit}</p>
         </div>
       </div>
 
       {/* Kolom 2: TAGIHAN */}
       <div className="space-y-2 text-left border-r border-white/[0.08] pr-4 min-w-0">
-        <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Tagihan</p>
+        <p className="text-[10px] font-black text-[#94A3B8] uppercase tracking-widest">Tagihan</p>
         <p className="font-display text-[22px] font-bold text-[#F1F5F9] tabular-nums leading-none">
           {formatIDR(sale.total_amount || 0)}
         </p>
@@ -392,16 +392,16 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery, isDes
 
       {/* Kolom 3: PENGIRIMAN */}
       <div className="space-y-3 text-left min-w-0">
-        <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Pengiriman</p>
+        <p className="text-[10px] font-black text-[#94A3B8] uppercase tracking-widest">Pengiriman</p>
         <div className="grid grid-cols-1 gap-y-3">
           <div className="space-y-1">
-            <p className="text-[10px] font-bold text-[#4B6478] uppercase leading-none">Status Kirim</p>
+            <p className="text-[10px] font-bold text-[#94A3B8] uppercase leading-none">Status Kirim</p>
             <p className="text-[13px] font-black leading-none" style={{ color: deliveryBadge.color }}>
               {deliveryBadge.label}
             </p>
           </div>
           <div className="space-y-1">
-            <p className="text-[10px] font-bold text-[#4B6478] leading-none">Total Trip</p>
+            <p className="text-[10px] font-bold text-[#94A3B8] leading-none">Total Trip</p>
             <p className="text-[13px] font-semibold text-[#F1F5F9] tabular-nums leading-none">
               {deliveries.length > 0 ? deliveries.length : '—'}
             </p>
@@ -430,26 +430,26 @@ export function SembakoInvoiceCard({ sale, onOpenDetail, onManageDelivery, isDes
       <div className="flex items-baseline justify-between gap-2">
         <div className="flex items-baseline gap-1 flex-1 min-w-0">
           <span className="text-[13px] font-bold text-[#F1F5F9] tabular-nums leading-none">{items.length}</span>
-          <span className="text-[9px] font-medium text-[#4B6478] leading-none">jenis</span>
-          <span className="text-[9px] text-[#4B6478] leading-none mx-0.5">·</span>
+          <span className="text-[9px] font-medium text-[#94A3B8] leading-none">jenis</span>
+          <span className="text-[9px] text-[#94A3B8] leading-none mx-0.5">·</span>
           <span className="text-[13px] font-bold text-[#F1F5F9] tabular-nums leading-none">{totalQty}</span>
-          <span className="text-[9px] font-medium text-[#4B6478] leading-none">{itemUnit}</span>
+          <span className="text-[9px] font-medium text-[#94A3B8] leading-none">{itemUnit}</span>
         </div>
         <span className="font-display text-[14px] font-bold text-[#F1F5F9] tabular-nums leading-none shrink-0">
-          {formatIDRShort(sale.total_amount || 0)}
+          {expanded ? formatIDR(sale.total_amount || 0) : formatIDRShort(sale.total_amount || 0)}
         </span>
       </div>
 
       {/* Row 2: top product + payment summary */}
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[9px] font-medium text-[#4B6478] truncate flex-1">
+        <span className="text-[9px] font-medium text-[#94A3B8] truncate flex-1">
           {topItem?.product_name || '—'}
         </span>
         {isLunas ? (
-          <span className="text-[10px] font-black text-[#021a02] shrink-0">✓ Lunas</span>
+          <span className="text-[10px] font-black text-[#34D399] shrink-0">✓ Lunas</span>
         ) : (
           <span className="text-[10px] font-black text-[#F87171] tabular-nums shrink-0">
-            Sisa {formatIDRShort(sale.remaining_amount || 0)}
+            Sisa {expanded ? formatIDR(sale.remaining_amount || 0) : formatIDRShort(sale.remaining_amount || 0)}
           </span>
         )}
       </div>
