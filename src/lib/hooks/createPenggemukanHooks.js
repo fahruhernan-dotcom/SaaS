@@ -640,7 +640,7 @@ export function createPenggemukanHooks(prefix) {
     const { tenant } = useAuth()
     return useMutation({
       mutationFn: async ({ animalId, _batchId, updates }) => {
-        const { entry_age_months, age_confidence, acquisition_type, ...rest } = updates
+        const { entry_age_months, ...rest } = updates
         const finalUpdates = { ...rest }
         if (entry_age_months !== undefined) {
           finalUpdates.age_estimate = entry_age_months ? String(entry_age_months) : null
