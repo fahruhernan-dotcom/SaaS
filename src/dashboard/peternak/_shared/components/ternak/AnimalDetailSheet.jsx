@@ -7,6 +7,8 @@ import { calcHariDiFarm, calcADGFromRecords } from '@/lib/hooks/useKdPenggemukan
 import { STATUS_CONFIG } from './constants'
 import { BreedCombobox } from './BreedCombobox'
 import { AnimalQRSheet } from './AnimalQRSheet'
+import { logError } from '@/lib/logger/errorLogger'
+import { toast } from 'sonner'
 
 // Props:
 //   animal           — animal object (with _weightRecords pre-normalized)
@@ -43,24 +45,60 @@ export function AnimalDetailSheet({ animal, onUpdate, isPending, breedSuggestion
   })
 
   const onSave = (data) => {
-    onUpdate({
-      animalId: animal.id,
-      batchId:  animal.batch_id,
-      updates: {
-        ear_tag:            data.ear_tag.trim(),
-        breed:              data.breed?.trim() || null,
-        sex:                data.sex,
-        entry_weight_kg:    Number(data.entry_weight_kg) || 0,
-        entry_age_months:   data.entry_age_months || null,
-        age_confidence:     data.age_confidence || null,
-        acquisition_type:   data.acquisition_type || null,
-        entry_bcs:          data.entry_bcs || null,
-        entry_condition:    data.entry_condition,
-        source:             data.source?.trim() || null,
-        notes:              data.notes?.trim() || null,
-        purchase_price_idr: Number(data.purchase_price_idr) || 0,
-      }
-    }, { onSuccess: () => setIsEditing(false) })
+    try {
+      onUpdate({
+        animalId: animal.id,
+        batchId:  animal.batch_id,
+        updates: {
+          ear_tag:            data.ear_tag?.trim() || '',
+          breed:              data.breed?.trim() || null,
+          sex:                data.sex,
+          entry_weight_kg:    Number(data.entry_weight_kg) || 0,
+          entry_age_months:   data.entry_age_months || null,
+          age_confidence:     data.age_confidence || null,
+          acquisition_type:   data.acquisition_type || null,
+          entry_bcs:          data.entry_bcs || null,
+          entry_condition:    data.entry_condition,
+          source:             data.source?.trim() || null,
+          notes:              data.notes?.trim() || null,
+          purchase_price_idr: Number(data.purchase_price_idr) || 0,
+        }
+      }, {
+        onSuccess: () => setIsEditing(false),
+        onError: (err) => {
+          logError({
+            level: 'error',
+            source: 'frontend',
+            component: 'AnimalDetailSheet',
+            actionName: 'peternak.animal.update.onError',
+            error: {
+              message: err.message,
+              stack: err.stack,
+            },
+            metadata: {
+              animalId: animal.id,
+              batchId: animal.batch_id,
+            }
+          })
+        }
+      })
+    } catch (err) {
+      logError({
+        level: 'error',
+        source: 'frontend',
+        component: 'AnimalDetailSheet',
+        actionName: 'peternak.animal.update.onSave_catch',
+        error: {
+          message: err.message,
+          stack: err.stack,
+        },
+        metadata: {
+          animalId: animal.id,
+          batchId: animal.batch_id,
+        }
+      })
+      toast.error('Gagal memproses data: ' + err.message)
+    }
   }
 
   const inputCls = 'w-full h-10 px-3 bg-[#111C24] border border-white/10 rounded-xl text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-green-500/50'
