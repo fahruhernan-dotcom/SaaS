@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { X, Edit2, Activity } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { X, Edit2, Activity, Printer } from 'lucide-react'
 import { useForm, Controller } from 'react-hook-form'
 import { cn } from '@/lib/utils'
 import { calcHariDiFarm, calcADGFromRecords } from '@/lib/hooks/useKdPenggemukanData'
 import { STATUS_CONFIG } from './constants'
 import { BreedCombobox } from './BreedCombobox'
+import { AnimalQRSheet } from './AnimalQRSheet'
 
 // Props:
 //   animal           — animal object (with _weightRecords pre-normalized)
@@ -15,6 +16,7 @@ import { BreedCombobox } from './BreedCombobox'
 //   onClose          — fn
 export function AnimalDetailSheet({ animal, onUpdate, isPending, breedSuggestions = [], onClose }) {
   const [isEditing, setIsEditing] = useState(false)
+  const [showQR, setShowQR] = useState(false)
 
   const weightRecords = animal._weightRecords ?? []
   const hari    = calcHariDiFarm(animal.entry_date, animal.exit_date)
@@ -62,6 +64,7 @@ export function AnimalDetailSheet({ animal, onUpdate, isPending, breedSuggestion
   const inputCls = 'w-full h-10 px-3 bg-[#111C24] border border-white/10 rounded-xl text-sm text-white placeholder:text-[#4B6478] focus:outline-none focus:border-green-500/50'
 
   return (
+    <>
     <motion.div
       initial={{ x: '100%', opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
@@ -80,6 +83,14 @@ export function AnimalDetailSheet({ animal, onUpdate, isPending, breedSuggestion
             <p className="text-[11px] text-[#4B6478] font-bold uppercase">{animal.breed || 'Breed tidak diketahui'} · {animal.sex === 'betina' ? 'Betina' : 'Jantan'}</p>
           </div>
           <div className="flex items-center gap-2">
+            {/* QR print — opens AnimalQRSheet */}
+            <button
+              onClick={() => setShowQR(true)}
+              title="Cetak QR Name Tag"
+              className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[#94A3B8] hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <Printer size={14} />
+            </button>
             <button
               onClick={() => setIsEditing(e => !e)}
               className={cn('w-8 h-8 rounded-full border flex items-center justify-center transition-colors', isEditing ? 'bg-green-500/20 border-green-500/40 text-green-400' : 'bg-white/5 border-white/10 text-[#94A3B8] hover:text-white hover:bg-white/10')}
@@ -230,5 +241,13 @@ export function AnimalDetailSheet({ animal, onUpdate, isPending, breedSuggestion
         </div>
       )}
     </motion.div>
+
+    {/* QR Name Tag Sheet — rendered outside the slide panel so it stacks on top */}
+    <AnimatePresence>
+      {showQR && (
+        <AnimalQRSheet animal={animal} onClose={() => setShowQR(false)} />
+      )}
+    </AnimatePresence>
+  </>
   )
 }
