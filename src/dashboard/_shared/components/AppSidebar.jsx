@@ -534,7 +534,7 @@ export default function AppSidebar({ open, onClose }) {
               <DropdownMenuContent
                 side="bottom"
                 align="start"
-                className="w-64 bg-[#121A23] border border-white/[0.08] rounded-xl p-1.5 shadow-2xl shadow-black/50 z-50"
+                className="w-64 bg-[#121A23] border border-white/[0.08] rounded-xl p-1.5 shadow-2xl shadow-black/50 z-[9999]"
               >
                 <div className="px-2 py-1.5 mb-1 flex items-center justify-between">
                   <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
