@@ -14,6 +14,9 @@ import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { toast } from 'sonner'
 import { getUrgencyLabel } from '@/dashboard/peternak/_shared/utils/taskUtils'
 import { ContainerCalcField } from '@/dashboard/peternak/_shared/components/TaskSheets'
+import { usePeternakFarms } from '@/lib/hooks/usePeternakData'
+import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
+import { calculateDistance, getCurrentPosition } from '@/dashboard/peternak/_shared/utils/geofenceUtils'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -50,7 +53,7 @@ const safeTime = (task) => {
   return t
 }
 
-export const TaskCard = ({ task, onClick, TASK_TYPE_CFG, STATUS_CFG, members = [] }) => {
+export const TaskCard = ({ task, onClick, TASK_TYPE_CFG, STATUS_CFG, members = [], activeFilter, auditRange }) => {
   const cfg = TASK_TYPE_CFG[task.task_type] || TASK_TYPE_CFG.lainnya
   const st = STATUS_CFG[task.status] || STATUS_CFG.pending
   const urgency = getUrgencyLabel(task)
@@ -69,7 +72,7 @@ export const TaskCard = ({ task, onClick, TASK_TYPE_CFG, STATUS_CFG, members = [
       className="group"
     >
       <div className={cn(
-        "relative rounded-2xl lg:rounded-[32px] overflow-hidden border transition-all duration-200",
+        "relative rounded-xl lg:rounded-[32px] overflow-hidden border transition-all duration-200",
         task.status === 'selesai'     ? "bg-[#0B1310] border-emerald-500/[0.15]" :
         task.status === 'terlambat'   ? "bg-[#150C0E] border-rose-500/[0.25]"    :
         task.status === 'in_progress' ? "bg-[#0B0F18] border-blue-500/[0.20]"   :
@@ -77,53 +80,55 @@ export const TaskCard = ({ task, onClick, TASK_TYPE_CFG, STATUS_CFG, members = [
       )}>
         {/* Left status stripe (mobile only) */}
         <div className={cn(
-          "lg:hidden absolute left-0 top-0 bottom-0 w-[3px]",
+          "lg:hidden absolute left-0 top-0 bottom-0 w-[2.5px]",
           task.status === 'selesai'     ? "bg-emerald-500" :
           task.status === 'terlambat'   ? "bg-rose-500"    :
           task.status === 'in_progress' ? "bg-blue-500"    :
           "bg-white/10"
         )} />
         {/* Main body */}
-        <div className="p-4 lg:p-5 pl-5 lg:pl-5 flex items-start gap-4">
+        <div className="p-3 lg:p-5 pl-4 lg:pl-5 flex items-start gap-3 lg:gap-4">
           {/* Task-type icon */}
           <div className={cn(
-            "w-12 h-12 rounded-2xl border flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105 shadow-lg",
+            "w-9.5 h-9.5 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl border flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105 shadow-lg",
             cfg.bg, cfg.border, cfg.shadow
           )}>
-            <cfg.icon size={22} className={cfg.color} />
+            <cfg.icon className={cn(cfg.color, "w-5 h-5 lg:w-5.5 lg:h-5.5")} />
           </div>
 
           <div className="min-w-0 flex-1">
             {/* Title + status badge */}
-            <div className="flex items-start justify-between gap-2 mb-1.5">
+            <div className="flex items-start justify-between gap-2 mb-1">
               <h3 className={cn(
-                "font-bold text-[13px] lg:text-sm leading-tight line-clamp-2 flex-1 min-w-0",
+                "font-bold text-xs lg:text-sm leading-tight line-clamp-2 flex-1 min-w-0",
                 isDone ? "text-white/50 line-through" : "text-white group-hover:text-purple-200 transition-colors"
               )}>
                 {task.title}
               </h3>
-              <div className={cn(
-                "shrink-0 px-2.5 py-1 rounded-full text-[9px] font-black uppercase border tracking-widest whitespace-nowrap",
-                st.color, st.bg, st.border
-              )}>
-                {st.label}
-              </div>
+              {(!activeFilter || activeFilter === 'semua' || activeFilter !== task.status) && (
+                <div className={cn(
+                  "shrink-0 px-2 py-0.5 rounded-lg text-[8px] lg:px-2.5 lg:py-1 lg:rounded-full lg:text-[9px] font-black uppercase border tracking-widest whitespace-nowrap",
+                  st.color, st.bg, st.border
+                )}>
+                  {st.label}
+                </div>
+              )}
             </div>
 
             {/* Metadata chips */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <div className="flex items-center gap-1.5">
-                <MapPin size={10} className="text-[#64748B]" />
-                <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">{task.kandang_name || 'Global'}</span>
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 lg:gap-x-3 lg:gap-y-1">
+              <div className="flex items-center gap-1">
+                <MapPin size={9} className="text-[#64748B]" />
+                <span className="text-[9.5px] font-bold text-[#64748B] uppercase tracking-wider">{task.kandang_name || 'Global'}</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <Clock size={10} className="text-[#64748B]" />
-                <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider">{displayTime}</span>
+              <div className="flex items-center gap-1">
+                <Clock size={9} className="text-[#64748B]" />
+                <span className="text-[9.5px] font-bold text-[#64748B] uppercase tracking-wider">{displayTime}</span>
               </div>
               {task.status === 'selesai' && (
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/5 border border-emerald-500/20">
-                  <UserCheck size={10} className="text-emerald-400" />
-                  <span className="text-[9.5px] font-black text-emerald-400 uppercase tracking-wider">
+                <div className="flex items-center gap-1 px-1.5 py-0.25 rounded bg-emerald-500/5 border border-emerald-500/10">
+                  <UserCheck size={9} className="text-emerald-400" />
+                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-wider">
                     {getExactName(task, members)}
                   </span>
                 </div>
@@ -131,12 +136,12 @@ export const TaskCard = ({ task, onClick, TASK_TYPE_CFG, STATUS_CFG, members = [
             </div>
 
             {/* Urgency badge — visible on all screen sizes */}
-            {urgency && (
+            {urgency && !(auditRange === 'day' && urgency.label === 'HARI INI') && (
               <div className={cn(
-                "inline-flex items-center gap-1.5 mt-2.5 px-2.5 py-1 rounded-xl text-[9px] font-black border uppercase tracking-[0.12em]",
+                "inline-flex items-center gap-1 mt-1.5 lg:mt-2.5 px-2 py-0.5 lg:px-2.5 lg:py-1 rounded-lg lg:rounded-xl text-[8px] lg:text-[9px] font-black border uppercase tracking-[0.12em]",
                 urgency.color
               )}>
-                <Sparkles size={10} /> {urgency.label}
+                <Sparkles size={9} /> {urgency.label}
               </div>
             )}
           </div>
@@ -144,9 +149,9 @@ export const TaskCard = ({ task, onClick, TASK_TYPE_CFG, STATUS_CFG, members = [
 
         {/* CTA bar — only pending tasks on mobile, gives clear tap affordance */}
         {isPending && (
-          <div className="px-4 pb-4 lg:hidden">
-            <div className="flex items-center justify-between h-10 px-4 rounded-xl bg-[#7C3AED]/[0.08] border border-[#7C3AED]/20 text-[#A78BFA]">
-              <span className="text-[10px] font-black uppercase tracking-widest">Lapor Selesai</span>
+          <div className="px-3 pb-3 lg:hidden">
+            <div className="flex items-center justify-between h-11 px-3.5 rounded-xl bg-[#7C3AED]/[0.08] border border-[#7C3AED]/20 text-[#A78BFA] active:bg-[#7C3AED]/15 transition-all">
+              <span className="text-[9.5px] font-black uppercase tracking-widest">Lapor Selesai</span>
               <ChevronRight size={14} className="opacity-60" />
             </div>
           </div>
@@ -169,7 +174,9 @@ export function InteractiveCheckCard({
   hooks, updateStatus, linkRecord,
   profile, livestockType: _livestockType,
   renderExtraReportFields, // Function to render livestock specific fields (like FAMACHA)
-  members = []
+  members = [],
+  activeFilter,
+  auditRange
 }) {
   const cfg = TASK_TYPE_CFG[task.task_type] || TASK_TYPE_CFG.lainnya
   const isSelesai = task.status === 'selesai'
@@ -180,6 +187,79 @@ export function InteractiveCheckCard({
   const [weighingEntries, setWeighingEntries] = useState([])
   const [healthData, setHealthData] = useState({ animal_id: '', medicine_name: '', dosage: '', notes: '' })
   const [healthEntries, setHealthEntries] = useState([])
+
+  const { data: farms = [] } = usePeternakFarms()
+  const permissions = usePeternakPermissions()
+  const isStaff = permissions.isStaff && !permissions.isOwner && !permissions.isManajer
+
+  const targetFarm = useMemo(() => {
+    if (!task || !task.kandang_name) return null
+    const kName = task.kandang_name.trim().toLowerCase()
+    return farms.find(f => f.farm_name.trim().toLowerCase() === kName)
+  }, [farms, task])
+
+  const activeFarm = useMemo(() => {
+    if (targetFarm && targetFarm.latitude != null && targetFarm.longitude != null) {
+      return targetFarm
+    }
+    // Fallback to first valid farm ONLY for owner/admin
+    if (!isStaff) {
+      return farms.find(f => f.latitude != null && f.longitude != null)
+    }
+    return null
+  }, [targetFarm, farms, isStaff])
+
+  const verifyGeofence = async () => {
+    try {
+      const position = await getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      })
+
+      const { latitude, longitude, accuracy } = position.coords
+
+      if (accuracy > 100 && isStaff) {
+        toast.error('Akurasi lokasi rendah, silakan coba lagi di area terbuka.')
+        return false
+      }
+
+      if (accuracy > 100) {
+        toast.warning('Akurasi lokasi rendah, coba pindah ke area terbuka.')
+      }
+
+      if (!activeFarm || activeFarm.latitude == null || activeFarm.longitude == null) {
+        if (isStaff) {
+          toast.error('Lokasi kandang untuk tugas ini belum diatur. Hubungi owner/admin.')
+          return false
+        } else {
+          toast.warning('Lokasi kandang belum cocok/di luar radius. Bypass sebagai owner/manajer.')
+          return true
+        }
+      }
+
+      const dist = calculateDistance(latitude, longitude, activeFarm.latitude, activeFarm.longitude)
+      if (dist <= 150) {
+        return true
+      } else {
+        if (isStaff) {
+          toast.error(`Di luar area: Anda berada ${Math.round(dist)}m dari kandang. Pekerjaan harus diselesaikan di dekat area kandang.`)
+          return false
+        } else {
+          toast.warning('Lokasi kandang belum cocok/di luar radius. Bypass sebagai owner/manajer.')
+          return true
+        }
+      }
+    } catch (err) {
+      console.error('Geolocation error:', err)
+      if (err.code === 1) {
+        toast.error('Akses lokasi ditolak. Mohon izinkan akses GPS pada browser Anda.')
+      } else {
+        toast.error('Gagal mendeteksi lokasi GPS.')
+      }
+      return false
+    }
+  }
 
   const addWeight = hooks.useAddWeight()
   const addHealth = hooks.useAddHealth()
@@ -228,7 +308,7 @@ export function InteractiveCheckCard({
       setWeighingEntries([])
       setHealthEntries([])
     }
-  }, [task.notes])
+  }, [task.notes]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAction = async (e) => {
     e.stopPropagation()
@@ -240,6 +320,10 @@ export function InteractiveCheckCard({
       onToggle()
       return
     }
+
+    // Geofence check before saving/finalizing
+    const isLocValid = await verifyGeofence()
+    if (!isLocValid) return
 
     if (hasForm) {
       if (reportConfig) {
@@ -266,6 +350,8 @@ export function InteractiveCheckCard({
     if (!weighingData.animal_id || !weighingData.weight_kg) {
       return toast.error(`Pilih ${config.animalLabel} dan masukkan berat`)
     }
+    const isLocValid = await verifyGeofence()
+    if (!isLocValid) return
     try {
       const selectedAnimal = animals.find(a => a.id === weighingData.animal_id)
       const record = await addWeight.mutateAsync({
@@ -314,6 +400,8 @@ export function InteractiveCheckCard({
     if (!healthData.animal_id || !name) {
       return toast.error(`Pilih ${config.animalLabel} dan isi nama ${isVax ? 'vaksin' : 'obat'}`)
     }
+    const isLocValid = await verifyGeofence()
+    if (!isLocValid) return
     try {
       const selectedAnimal = animals.find(a => a.id === healthData.animal_id)
       const record = await addHealth.mutateAsync({
@@ -365,18 +453,18 @@ export function InteractiveCheckCard({
       layout
       style={{ position: 'relative', zIndex: isExpanded ? 20 : 1 }}
       className={cn(
-        "group flex flex-col rounded-2xl border transition-all duration-200 overflow-hidden",
+        "group flex flex-col rounded-xl lg:rounded-2xl border transition-all duration-200 overflow-hidden",
         isSelesai
           ? "bg-[#06090F] border-emerald-500/20"
           : isExpanded ? "bg-[#0C1319] border-[#7C3AED]/40 ring-1 ring-[#7C3AED]/20 shadow-xl" : "bg-[#0C1319] border-white/5 hover:border-purple-500/30 hover:bg-[#06090F]"
       )}
     >
-      <div className="flex items-stretch min-h-[64px] lg:min-h-[80px]">
+      <div className="flex items-stretch min-h-[58px] lg:min-h-[80px]">
         <button 
           onClick={isSelesai ? handleUnlock : handleAction}
           disabled={(!isSelesai && (updateStatus.isPending || addWeight.isPending || addHealth.isPending))}
           className={cn(
-            "w-12 lg:w-16 shrink-0 flex flex-col items-center justify-center transition-all relative z-10",
+            "w-11 lg:w-16 shrink-0 flex flex-col items-center justify-center transition-all relative z-10",
             isSelesai 
               ? "bg-slate-900 text-slate-500 hover:text-emerald-400 border-r border-white/5" 
               : hasForm && isExpanded 
@@ -387,37 +475,41 @@ export function InteractiveCheckCard({
           {updateStatus.isPending || addWeight.isPending || addHealth.isPending ? (
              <LoadingSpinner className="w-5 h-5" />
           ) : isSelesai ? (
-             <div className="flex flex-col items-center gap-1 group-hover:scale-110 transition-transform">
-                <Lock size={18} className="text-emerald-500/50" />
-                <span className="text-[7px] font-bold uppercase text-emerald-500/40">Locked</span>
+             <div className="flex flex-col items-center gap-0.5 group-hover:scale-110 transition-transform">
+                <Lock size={15} className="text-emerald-500/50" />
+                <span className="text-[6.5px] font-bold uppercase text-emerald-500/40">Locked</span>
              </div>
           ) : (
             <div className={cn(
-              "w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-all",
+              "w-7 h-7 lg:w-8 lg:h-8 rounded-lg border-2 flex items-center justify-center transition-all",
               (hasForm && isExpanded) || (isMultiAnimalTask && entriesCount > 0)
                 ? "border-purple-500 bg-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]" 
                 : "border-current bg-transparent"
             )}>
               {isMultiAnimalTask && (entriesCount > 0 || isExpanded) && animals.length > 0
-                ? <span className="text-[11px] font-black leading-none">{entriesCount}<span className="text-[8px] font-bold opacity-60">/{animals.length}</span></span>
-                : (hasForm && isExpanded) ? <Save size={18} strokeWidth={3} /> : <CheckCircle2 size={20} strokeWidth={3} />}
+                ? <span className="text-[10px] font-black leading-none">{entriesCount}<span className="text-[7.5px] font-bold opacity-60">/{animals.length}</span></span>
+                : (hasForm && isExpanded) ? <Save size={15} strokeWidth={3} /> : <CheckCircle2 size={16} strokeWidth={3} />}
             </div>
           )}
         </button>
 
-        <div onClick={handleAction} className="flex-1 p-3 lg:p-4 flex items-center justify-between transition-colors cursor-pointer">
-          <div className="flex-1 min-w-0 pr-2 lg:pr-4">
-            <div className="flex items-center gap-2 mb-1.5">
-               <span className={cn("text-[9px] font-black uppercase py-0.5 px-1.5 rounded bg-white/5", cfg.color)}>{cfg.label}</span>
-               {isCarryover && <span className="text-[8px] font-black text-rose-400 uppercase tracking-widest bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20 animate-pulse">Terlewat</span>}
-               {isSelesai && <span className="text-[8px] font-black text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Selesai</span>}
+        <div onClick={handleAction} className="flex-1 p-2.5 lg:p-4 flex items-center justify-between transition-colors cursor-pointer">
+          <div className="flex-1 min-w-0 pr-1.5 lg:pr-4">
+            <div className="flex items-center gap-1.5 mb-1">
+               <span className={cn("text-[8.5px] font-black uppercase py-0.25 px-1 rounded bg-white/5", cfg.color)}>{cfg.label}</span>
+               {isCarryover && (!activeFilter || activeFilter === 'semua' || activeFilter !== 'terlambat') && (
+                 <span className="text-[8px] font-black text-rose-400 uppercase tracking-widest bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20 animate-pulse">Terlewat</span>
+               )}
+               {isSelesai && (!activeFilter || activeFilter === 'semua' || activeFilter !== 'selesai') && (
+                 <span className="text-[8px] font-black text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Selesai</span>
+               )}
             </div>
-            <h4 className={cn("text-[13px] lg:text-sm font-bold line-clamp-2 transition-colors", isSelesai ? "text-slate-500 line-through" : "text-white group-hover:text-purple-300")}>{task.title}</h4>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 opacity-60">
-               <div className="flex items-center gap-1"><MapPin size={10} /><span className="text-[10px] lg:text-[9px] font-bold uppercase tracking-wider">{task.kandang_name || 'Global'}</span></div>
+            <h4 className={cn("text-xs lg:text-sm font-bold line-clamp-2 transition-colors", isSelesai ? "text-slate-500 line-through" : "text-white group-hover:text-purple-300")}>{task.title}</h4>
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 mt-1 opacity-60">
+               <div className="flex items-center gap-1"><MapPin size={9} /><span className="text-[9.5px] font-bold uppercase tracking-wider">{task.kandang_name || 'Global'}</span></div>
                <div className="flex items-center gap-1">
-                 <Clock size={10} />
-                 <span className="text-[10px] lg:text-[9px] font-bold uppercase tracking-wider">
+                 <Clock size={9} />
+                 <span className="text-[9.5px] font-bold uppercase tracking-wider">
                    {isSelesai && task.completed_at
                      ? `${format(new Date(task.completed_at), 'HH:mm')} WIB`
                      : task.due_time ? `${task.due_time.substring(0, 5)} WIB` : '--:--'}
@@ -425,16 +517,16 @@ export function InteractiveCheckCard({
                </div>
                {isSelesai && (
                  <div className="flex items-center gap-1 text-emerald-400/80">
-                   <User size={10} />
-                    <span className="text-[10px] lg:text-[9px] font-bold uppercase tracking-wider">
+                   <User size={9} />
+                    <span className="text-[9.5px] font-bold uppercase tracking-wider">
                       {getExactName(task, members)}
                     </span>
                  </div>
                )}
             </div>
           </div>
-          {urgency && !isSelesai && (
-             <div className={cn("flex px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border shrink-0", urgency.color)}>{urgency.label}</div>
+          {urgency && !isSelesai && !(auditRange === 'day' && urgency.label === 'HARI INI') && (
+             <div className={cn("flex px-2 py-0.5 lg:px-3 lg:py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border shrink-0", urgency.color)}>{urgency.label}</div>
           )}
         </div>
       </div>
@@ -511,6 +603,8 @@ export function InteractiveCheckCard({
                       <Button
                         onClick={async (ev) => {
                           ev.stopPropagation()
+                          const isLocValid = await verifyGeofence()
+                          if (!isLocValid) return
                           try {
                             const finalNotes = JSON.stringify({ _version: '2.0', report: {}, weighing_entries: weighingEntries, health_entries: healthEntries, batch_id: effectiveBatchId })
                             await updateStatus.mutateAsync({ id: task.id, status: 'selesai', notes: finalNotes })

@@ -12,7 +12,7 @@ import BroilerAnakKandang  from './broiler/AnakKandang'
 import BroilerLaporanSiklus from './broiler/LaporanSiklus'
 import BroilerFarmBeranda  from './broiler/FarmBeranda'
 import BroilerSetupFarm    from './broiler/SetupFarm'
-import BroilerFarmSettings from './broiler/FarmSettings'
+import FarmSettingsPage from './broiler/FarmSettings'
 import BroilerVaksinasi    from './broiler/Vaksinasi'
 import BroilerDailyTask    from './broiler/DailyTask'
 import TimManajemenPage    from './_shared/pages/tim/TimManajemenPage'
@@ -210,7 +210,7 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar':  <HargaPasar />,
       akun:           <Akun />,
       tim:            <PeternakPlanGuard><TimManajemenPage /></PeternakPlanGuard>,
-      atur:           <PeternakAdminGuard><BroilerFarmSettings /></PeternakAdminGuard>,
+      atur:           <PeternakAdminGuard><FarmSettingsPage /></PeternakAdminGuard>,
       ...AI,
     },
     peternak_layer: {
@@ -221,6 +221,7 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar': <HargaPasar />,
       tim:           <PeternakPlanGuard><TimManajemenPage /></PeternakPlanGuard>,
       akun:          <Akun />,
+      atur:          <PeternakAdminGuard><FarmSettingsPage /></PeternakAdminGuard>,
       ...AI,
     },
     peternak_sapi_penggemukan: {
@@ -240,6 +241,7 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar':  <HargaPasar />,
       tim:            <PeternakPlanGuard><TimManajemenPage /></PeternakPlanGuard>,
       akun:           <Akun />,
+      atur:           <PeternakAdminGuard><FarmSettingsPage /></PeternakAdminGuard>,
       ...AI,
     },
     peternak_sapi_breeding: {
@@ -256,6 +258,7 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar': <HargaPasar />,
       tim:           <PeternakPlanGuard><TimManajemenPage /></PeternakPlanGuard>,
       akun:          <Akun />,
+      atur:          <PeternakAdminGuard><FarmSettingsPage /></PeternakAdminGuard>,
       ...AI,
     },
     peternak_domba_penggemukan: {
@@ -275,6 +278,7 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar':  <HargaPasar />,
       tim:            <PeternakPlanGuard><TimManajemenPage /></PeternakPlanGuard>,
       akun:           <Akun />,
+      atur:           <PeternakAdminGuard><FarmSettingsPage /></PeternakAdminGuard>,
       ...AI,
     },
     peternak_domba_breeding: {
@@ -290,6 +294,7 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar': <HargaPasar />,
       tim:           <PeternakPlanGuard><TimManajemenPage /></PeternakPlanGuard>,
       akun:          <Akun />,
+      atur:          <PeternakAdminGuard><FarmSettingsPage /></PeternakAdminGuard>,
       ...AI,
     },
     peternak_kambing_penggemukan: {
@@ -309,6 +314,7 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar':  <HargaPasar />,
       tim:            <PeternakPlanGuard><TimManajemenPage /></PeternakPlanGuard>,
       akun:           <Akun />,
+      atur:           <PeternakAdminGuard><FarmSettingsPage /></PeternakAdminGuard>,
       ...AI,
     },
     peternak_kambing_breeding: {
@@ -324,6 +330,7 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar': <HargaPasar />,
       tim:           <PeternakPlanGuard><TimManajemenPage /></PeternakPlanGuard>,
       akun:          <Akun />,
+      atur:          <PeternakAdminGuard><FarmSettingsPage /></PeternakAdminGuard>,
       ...AI,
     },
     peternak_kambing_perah: {
@@ -338,6 +345,7 @@ export function PeternakPageRouter({ page }) {
       'harga-pasar': <HargaPasar />,
       tim:           <PeternakPlanGuard><TimManajemenPage /></PeternakPlanGuard>,
       akun:          <Akun />,
+      atur:          <PeternakAdminGuard><FarmSettingsPage /></PeternakAdminGuard>,
       ...AI,
     },
   }

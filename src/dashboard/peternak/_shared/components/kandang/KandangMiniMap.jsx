@@ -236,8 +236,8 @@ export default function KandangMiniMap({ batchIds, className, onAnimalClick, onK
       className={cn(
         'w-full relative overflow-hidden rounded-2xl bg-white/[0.015] cursor-default transition-all duration-500',
         fitMode
-          ? `${config.fitModeBorder} min-h-[320px] lg:min-h-[400px] max-h-[700px]`
-          : 'border border-white/[0.04] min-h-[200px] lg:min-h-[280px] max-h-[600px]',
+          ? `${config.fitModeBorder} min-h-[220px] md:min-h-[320px] lg:min-h-[400px] max-h-[700px]`
+          : 'border border-white/[0.04] min-h-[160px] md:min-h-[200px] lg:min-h-[280px] max-h-[600px]',
         className
       )}
       style={{
@@ -260,24 +260,26 @@ export default function KandangMiniMap({ batchIds, className, onAnimalClick, onK
             onClick={(e) => { e.stopPropagation(); setIs3D(prev => !prev) }}
             title={is3D ? 'Kembali ke 2D' : 'Tampilan 3D Isometrik'}
             className={cn(
-              'w-auto h-7 px-2.5 rounded-lg backdrop-blur-sm border flex items-center gap-1.5 transition-all active:scale-90',
-              is3D ? config.threeDBtn?.active : config.threeDBtn?.inactive
+              'rounded-lg backdrop-blur-sm border flex items-center justify-center transition-all active:scale-90',
+              is3D ? config.threeDBtn?.active : config.threeDBtn?.inactive,
+              'w-8 h-8 p-0 md:w-auto md:h-7 md:px-2.5 md:gap-1.5'
             )}
           >
             <Cuboid size={13} />
-            <span className="text-[10px] font-black uppercase tracking-wider">3D <span className="opacity-50 text-[8px]">[PRO]</span></span>
+            <span className="hidden md:inline text-[10px] font-black uppercase tracking-wider">3D <span className="opacity-50 text-[8px]">[PRO]</span></span>
           </button>
         )}
         <button
           onClick={(e) => { e.stopPropagation(); setFitMode(f => !f) }}
           title={fitMode ? 'Reset zoom (normal)' : 'Fit ke layar'}
           className={cn(
-            'w-full h-7 px-2.5 rounded-lg backdrop-blur-sm border flex items-center gap-1.5 justify-center transition-all active:scale-90',
-            fitMode ? config.fitModeBtn.active : config.fitModeBtn.inactive
+            'rounded-lg backdrop-blur-sm border flex items-center justify-center transition-all active:scale-90',
+            fitMode ? config.fitModeBtn.active : config.fitModeBtn.inactive,
+            'w-8 h-8 p-0 md:w-auto md:h-7 md:px-2.5 md:gap-1.5'
           )}
         >
           {fitMode ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
-          <span className="text-[9px] font-bold uppercase tracking-wide">{fitMode ? 'Normal' : 'Fit'}</span>
+          <span className="hidden md:inline text-[9px] font-bold uppercase tracking-wide">{fitMode ? 'Normal' : 'Fit'}</span>
         </button>
       </div>
 
@@ -378,12 +380,12 @@ export default function KandangMiniMap({ batchIds, className, onAnimalClick, onK
                 </div>
                 <div>
                   <h3 className="font-['Sora'] font-black text-[11px] text-white uppercase tracking-tight leading-none mb-0.5">{activeKandang.name}</h3>
-                  <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest leading-none">Inventaris</p>
+                  <p className="text-[9px] font-black text-[#8DA2B5] uppercase tracking-widest leading-none">Inventaris</p>
                 </div>
               </div>
               <button
                 onClick={(e) => { e.stopPropagation(); setActiveKandangId(null) }}
-                className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-[#4B6478] hover:text-white transition-all"
+                className="w-7 h-7 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-[#8DA2B5] hover:text-white transition-all"
               >
                 <X size={12} />
               </button>
@@ -404,8 +406,8 @@ export default function KandangMiniMap({ batchIds, className, onAnimalClick, onK
                     <span className="text-[10px] font-black text-white uppercase tracking-tight">{a.ear_tag}</span>
                   </div>
                   <div className="flex items-center gap-1 opacity-60">
-                    <Scale size={9} className="text-[#4B6478]" />
-                    <span className="text-[9px] font-bold text-[#4B6478]">{a.latest_weight_kg || a.entry_weight_kg} kg</span>
+                    <Scale size={9} className="text-[#8DA2B5]" />
+                    <span className="text-[9px] font-bold text-[#8DA2B5]">{a.latest_weight_kg || a.entry_weight_kg} kg</span>
                   </div>
                 </div>
               ))}
@@ -418,7 +420,7 @@ export default function KandangMiniMap({ batchIds, className, onAnimalClick, onK
             </div>
 
             <div className="mt-4 pt-3 border-t border-white/5 flex justify-between items-center">
-              <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest leading-none">Populasi</p>
+              <p className="text-[9px] font-black text-[#8DA2B5] uppercase tracking-widest leading-none">Populasi</p>
               <p className="text-[10px] font-black text-white leading-none">{(groupedAnimals[activeKandang.id] || []).length} / {activeKandang.capacity} Ekor</p>
             </div>
           </motion.div>

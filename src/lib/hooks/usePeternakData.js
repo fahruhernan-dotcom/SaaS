@@ -186,15 +186,19 @@ export const useUpdatePeternakFarm = () => {
   const queryClient = useQueryClient()
   const { tenant } = useAuth()
   return useMutation({
-    mutationFn: async ({ id, farm_name, location, province, capacity, kandang_count, livestock_type, business_model, mitra_company }) => {
+    mutationFn: async ({ id, farm_name, location, province, capacity, kandang_count, livestock_type, business_model, mitra_company, latitude, longitude }) => {
+      const updateData = {
+        farm_name, location, province,
+        capacity, kandang_count,
+        livestock_type, business_model, mitra_company,
+        updated_at: new Date().toISOString()
+      }
+      if (latitude !== undefined) updateData.latitude = latitude
+      if (longitude !== undefined) updateData.longitude = longitude
+
       const { error } = await supabase
         .from('peternak_farms')
-        .update({
-          farm_name, location, province,
-          capacity, kandang_count,
-          livestock_type, business_model, mitra_company,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', id)
       if (error) {
         logSupabaseError(error, { table: 'peternak_farms', operation: 'update', component: 'usePeternakData', actionName: 'peternak.farm.update' })

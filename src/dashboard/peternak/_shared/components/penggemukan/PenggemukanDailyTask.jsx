@@ -225,41 +225,43 @@ export function PenggemukanDailyTask({ livestockType, hooks, renderExtraReportFi
         )}
       />
 
-      <div className="max-w-[1700px] mx-auto mb-4 lg:mb-8 lg:px-5">
-        <div className="flex gap-2 px-4 lg:hidden overflow-x-auto no-scrollbar pb-1">
-          <button
-            onClick={() => { setAuditRange('day'); setTab('selesai'); setSelectedDate(new Date()) }}
-            className={cn(
-              'h-9 px-4 rounded-2xl transition-all flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest shrink-0',
-              auditRange === 'day' && tab === 'selesai'
-                ? 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-400'
-                : 'bg-white/[0.03] border border-white/[0.06] text-[#64748B]'
-            )}
-          >
-            <Activity size={12} /> Hari Ini
-          </button>
-          <button
-            onClick={() => { setAuditRange('week'); setTab('selesai') }}
-            className={cn(
-              'h-9 px-4 rounded-2xl transition-all flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest shrink-0',
-              auditRange === 'week' && tab === 'selesai'
-                ? 'bg-blue-500/20 border border-blue-500/30 text-blue-400'
-                : 'bg-white/[0.03] border border-white/[0.06] text-[#64748B]'
-            )}
-          >
-            <CalendarIcon size={12} /> Minggu
-          </button>
-          <button
-            onClick={() => { setAuditRange('month'); setTab('selesai') }}
-            className={cn(
-              'h-9 px-4 rounded-2xl transition-all flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest shrink-0',
-              auditRange === 'month' && tab === 'selesai'
-                ? 'bg-purple-500/20 border border-purple-500/30 text-purple-400'
-                : 'bg-white/[0.03] border border-white/[0.06] text-[#64748B]'
-            )}
-          >
-            <ClipboardList size={12} /> Bulan
-          </button>
+      <div className="max-w-[1700px] mx-auto mb-3 lg:mb-8 lg:px-5">
+        <div className="px-4 lg:hidden mb-1">
+          <div className="bg-white/[0.02] border border-white/[0.05] p-0.5 rounded-xl flex w-full">
+            <button
+              onClick={() => { setAuditRange('day'); setTab('selesai'); setSelectedDate(new Date()) }}
+              className={cn(
+                'flex-1 h-7.5 rounded-lg transition-all flex items-center justify-center gap-1 text-[9px] font-black uppercase tracking-wider',
+                auditRange === 'day' && tab === 'selesai'
+                  ? 'bg-emerald-500/15 border border-emerald-500/20 text-emerald-400 shadow-sm'
+                  : 'text-[#64748B] border border-transparent'
+              )}
+            >
+              <Activity size={11} /> Hari Ini
+            </button>
+            <button
+              onClick={() => { setAuditRange('week'); setTab('selesai') }}
+              className={cn(
+                'flex-1 h-7.5 rounded-lg transition-all flex items-center justify-center gap-1 text-[9px] font-black uppercase tracking-wider',
+                auditRange === 'week' && tab === 'selesai'
+                  ? 'bg-blue-500/15 border border-blue-500/20 text-blue-400 shadow-sm'
+                  : 'text-[#64748B] border border-transparent'
+              )}
+            >
+              <CalendarIcon size={11} /> Minggu
+            </button>
+            <button
+              onClick={() => { setAuditRange('month'); setTab('selesai') }}
+              className={cn(
+                'flex-1 h-7.5 rounded-lg transition-all flex items-center justify-center gap-1 text-[9px] font-black uppercase tracking-wider',
+                auditRange === 'month' && tab === 'selesai'
+                  ? 'bg-purple-500/15 border border-purple-500/20 text-purple-400 shadow-sm'
+                  : 'text-[#64748B] border border-transparent'
+              )}
+            >
+              <ClipboardList size={11} /> Bulan
+            </button>
+          </div>
         </div>
 
         <div className="hidden lg:flex flex-wrap items-center gap-3">
@@ -301,7 +303,7 @@ export function PenggemukanDailyTask({ livestockType, hooks, renderExtraReportFi
 
       <SummaryTiles stats={stats} />
 
-      <main className={cn('px-4 pb-5 lg:px-5 max-w-[1700px] mx-auto', isDesktop ? 'grid grid-cols-[380px_1fr] gap-12 items-start' : 'flex flex-col')}>
+      <main className={cn('px-4 pb-28 lg:pb-8 lg:px-5 max-w-[1700px] mx-auto', isDesktop ? 'grid grid-cols-[380px_1fr] gap-12 items-start' : 'flex flex-col')}>
         <aside className="space-y-4 lg:space-y-8 lg:sticky lg:top-36 mb-4 lg:mb-0">
           <WeekOrbit selectedDate={selectedDate} onSelect={setSelectedDate} monthTasks={monthTasks} />
 
@@ -368,6 +370,8 @@ export function PenggemukanDailyTask({ livestockType, hooks, renderExtraReportFi
                               livestockType={livestockType}
                               renderExtraReportFields={renderExtraReportFields}
                               members={members}
+                              activeFilter={tab}
+                              auditRange={auditRange}
                             />
                           ) : (
                             <TaskCard
@@ -376,6 +380,8 @@ export function PenggemukanDailyTask({ livestockType, hooks, renderExtraReportFi
                               TASK_TYPE_CFG={TASK_TYPE_CFG}
                               STATUS_CFG={STATUS_CFG}
                               members={members}
+                              activeFilter={tab}
+                              auditRange={auditRange}
                             />
                           )}
                         </motion.div>

@@ -52,7 +52,7 @@ export function MobileHeader({ title, onMenuClick, onProfileClick, rightElement,
         <div className="absolute inset-0 bg-gradient-to-r from-[#06090F] via-[#06090F]/70 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#06090F] via-transparent to-transparent" />
 
-        <div className="relative px-5 pt-16 pb-5 flex items-center justify-between">
+        <div className="relative px-5 pt-12 pb-3.5 flex items-center justify-between">
           <div>
             {businessLabel && (
               <p className="text-[10px] text-green-400/60 font-black uppercase tracking-[0.2em] mb-1">

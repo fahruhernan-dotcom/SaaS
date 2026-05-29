@@ -72,7 +72,7 @@ export function MobileTaskProgress({
         <DonutRing value={done} max={total} size={64} stroke={6} color="#22C55E">
           <div className="text-center leading-none">
             <div className="text-[15px] font-black text-white tabular-nums">{done}/{total}</div>
-            <div className="text-[8px] text-[#4B6478] font-bold mt-0.5">selesai</div>
+            <div className="text-[8px] text-[#8DA2B5] font-bold mt-0.5">selesai</div>
           </div>
         </DonutRing>
 
@@ -81,13 +81,13 @@ export function MobileTaskProgress({
           <p className="text-[15px] font-bold text-white tracking-tight mb-1">
             {doing > 0 ? `${doing} sedang berjalan` : done === total ? 'Semua selesai ✓' : 'Tepat jadwal'}
           </p>
-          <p className="text-[12px] text-[#4B6478] truncate">
+          <p className="text-[12px] text-[#8DA2B5] truncate">
             Berikutnya: <span className="text-white/80 font-semibold">{nextLabel}</span>
             {nextTime && <> · {nextTime}</>}
           </p>
         </div>
 
-        <ChevronRight size={16} className="text-[#4B6478] shrink-0" />
+        <ChevronRight size={16} className="text-[#8DA2B5] shrink-0" />
       </div>
 
       {/* Mini task strip */}

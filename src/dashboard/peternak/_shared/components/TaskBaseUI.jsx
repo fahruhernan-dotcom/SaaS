@@ -43,59 +43,60 @@ export const SummaryTiles = ({ stats }) => {
     <>
       {/* ── Mobile hero card ──────────────────────────────────────────────────── */}
       <motion.div
-        className="lg:hidden px-4 pb-4"
+        className="lg:hidden px-4 pb-3"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: 'spring', damping: 20 }}
       >
-        <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4">
-          {/* Progress ring + numbers */}
-          <div className="flex items-center gap-4 mb-3.5">
-            <div className="relative w-[64px] h-[64px] shrink-0">
-              <svg viewBox="0 0 48 48" className="w-full h-full -rotate-90">
-                <circle cx="24" cy="24" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="4.5" />
-                <motion.circle
-                  cx="24" cy="24" r={r}
-                  fill="none"
-                  stroke={ringColor}
-                  strokeWidth="4.5"
-                  strokeLinecap="round"
-                  strokeDasharray={circ}
-                  initial={{ strokeDashoffset: circ }}
-                  animate={{ strokeDashoffset: circ * (1 - pct / 100) }}
-                  transition={{ duration: 0.8, ease: 'easeOut' }}
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[12px] font-black text-white tabular-nums">{pct}%</span>
+        <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl p-3">
+          <div className="flex items-center justify-between gap-3">
+            {/* Left side: progress ring + numbers */}
+            <div className="flex items-center gap-3">
+              <div className="relative w-11 h-11 shrink-0">
+                <svg viewBox="0 0 48 48" className="w-full h-full -rotate-90">
+                  <circle cx="24" cy="24" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="4.5" />
+                  <motion.circle
+                    cx="24" cy="24" r={r}
+                    fill="none"
+                    stroke={ringColor}
+                    strokeWidth="4.5"
+                    strokeLinecap="round"
+                    strokeDasharray={circ}
+                    initial={{ strokeDashoffset: circ }}
+                    animate={{ strokeDashoffset: circ * (1 - pct / 100) }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[10px] font-black text-white tabular-nums">{pct}%</span>
+                </div>
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-baseline gap-0.5 leading-none">
+                  <span className="text-xl font-black text-white tabular-nums tracking-tighter">{stats.selesai}</span>
+                  <span className="text-xs text-[#4B6478] font-bold">/{stats.total}</span>
+                </div>
+                <p className="text-[8.5px] text-[#4B6478] font-bold uppercase tracking-wider mt-0.5 leading-none">Selesai</p>
               </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-baseline gap-1 mb-0.5">
-                <span className="text-[38px] font-black text-white tabular-nums leading-none tracking-tighter">{stats.selesai}</span>
-                <span className="text-[20px] text-[#4B6478] font-bold">/{stats.total}</span>
+
+            {/* Vertical divider */}
+            <div className="h-8 w-px bg-white/[0.06]" />
+
+            {/* Right side: status metrics inline */}
+            <div className="flex items-center gap-3.5">
+              <div className="flex flex-col items-center">
+                <span className="text-xs font-black text-emerald-400 tabular-nums leading-none">{stats.selesai}</span>
+                <span className="text-[8px] text-[#64748B] font-bold uppercase tracking-widest mt-1">Selesai</span>
               </div>
-              <p className="text-[12px] text-[#4B6478] font-medium leading-tight">tugas selesai</p>
-              {stats.complianceTrend !== undefined && stats.complianceTrend !== 0 && (
-                <span className={cn('text-[10px] font-black mt-1 inline-block', stats.complianceTrend >= 0 ? 'text-emerald-400' : 'text-rose-400')}>
-                  {stats.complianceTrend >= 0 ? '↑' : '↓'} {Math.abs(stats.complianceTrend).toFixed(0)}% vs minggu lalu
-                </span>
-              )}
-            </div>
-          </div>
-          {/* Mini stat row */}
-          <div className="grid grid-cols-3 border-t border-white/[0.06] pt-3">
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="text-[20px] font-black text-emerald-400 tabular-nums leading-none">{stats.selesai}</span>
-              <span className="text-[10px] text-[#4B6478] font-medium mt-0.5">Selesai</span>
-            </div>
-            <div className="flex flex-col items-center gap-0.5 border-l border-white/[0.06]">
-              <span className="text-[20px] font-black text-amber-400 tabular-nums leading-none">{stats.pending}</span>
-              <span className="text-[10px] text-[#4B6478] font-medium mt-0.5">Pending</span>
-            </div>
-            <div className="flex flex-col items-center gap-0.5 border-l border-white/[0.06]">
-              <span className="text-[20px] font-black text-rose-400 tabular-nums leading-none">{stats.terlambat}</span>
-              <span className="text-[10px] text-[#4B6478] font-medium mt-0.5">Terlambat</span>
+              <div className="flex flex-col items-center">
+                <span className="text-xs font-black text-amber-400 tabular-nums leading-none">{stats.pending}</span>
+                <span className="text-[8px] text-[#64748B] font-bold uppercase tracking-widest mt-1">Pending</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="text-xs font-black text-rose-400 tabular-nums leading-none">{stats.terlambat}</span>
+                <span className="text-[8px] text-[#64748B] font-bold uppercase tracking-widest mt-1">Late</span>
+              </div>
             </div>
           </div>
         </div>
@@ -141,9 +142,9 @@ export const WeekOrbit = ({ selectedDate, onSelect, monthTasks }) => {
   }, [selectedDate])
 
   return (
-    <GlassCard className="p-4 mb-6 rounded-[32px] bg-white/[0.02] border-white/5">
-      <div className="flex items-center gap-2">
-        <button onClick={() => navigateWeek(-1)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-slate-500 hover:text-white shrink-0"><ChevronLeft size={16} /></button>
+    <GlassCard className="p-2.5 lg:p-4 mb-3 lg:mb-6 rounded-2xl lg:rounded-[32px] bg-white/[0.02] border-white/5">
+      <div className="flex items-center gap-1.5">
+        <button onClick={() => navigateWeek(-1)} className="w-7 h-7 lg:w-8 lg:h-8 flex items-center justify-center rounded-lg lg:rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-slate-500 hover:text-white shrink-0"><ChevronLeft size={14} /></button>
         <div className="flex-1 flex gap-1 items-stretch">
           {days.map((day) => {
             const active = isSameDay(day, selectedDate)
@@ -156,19 +157,19 @@ export const WeekOrbit = ({ selectedDate, onSelect, monthTasks }) => {
                 key={day.toISOString()} 
                 onClick={() => onSelect(day)}
                 className={cn(
-                  "flex-1 max-h-[64px] flex flex-col items-center justify-center py-2 rounded-xl transition-all duration-300 relative group",
+                  "flex-1 min-h-[44px] lg:max-h-[64px] flex flex-col items-center justify-center py-1 lg:py-2 rounded-lg lg:rounded-xl transition-all duration-300 relative group",
                   active ? "bg-[#7C3AED] text-white shadow-lg" : "text-slate-500 hover:bg-white/5",
                   !active && isToday ? "border border-[#7C3AED]/40" : ""
                 )}
               >
-                <span className={cn("text-[10px] font-bold uppercase tracking-tighter mb-0.5", active ? "text-white/80" : "text-[#4B6478]")}>{format(day, 'EEEEEE', { locale: idLocale })}</span>
-                <span className="text-lg font-bold leading-none">{format(day, 'd')}</span>
-                {dayHasTask && !active && <div className="absolute bottom-1.5 w-1 h-1 bg-purple-500 rounded-full" />}
+                <span className={cn("text-[8px] lg:text-[10px] font-bold uppercase tracking-tighter mb-0.5", active ? "text-white/80" : "text-[#4B6478]")}>{format(day, 'EEEEEE', { locale: idLocale })}</span>
+                <span className="text-sm lg:text-lg font-bold leading-none">{format(day, 'd')}</span>
+                {dayHasTask && !active && <div className="absolute bottom-1 w-1 h-1 bg-purple-500 rounded-full" />}
               </button>
             )
           })}
         </div>
-        <button onClick={() => navigateWeek(1)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-slate-500 hover:text-white shrink-0"><ChevronRight size={16} /></button>
+        <button onClick={() => navigateWeek(1)} className="w-7 h-7 lg:w-8 lg:h-8 flex items-center justify-center rounded-lg lg:rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-slate-500 hover:text-white shrink-0"><ChevronRight size={14} /></button>
       </div>
     </GlassCard>
   )

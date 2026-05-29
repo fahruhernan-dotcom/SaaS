@@ -54,7 +54,7 @@ export function MobileFinancePeek({
     <Card className={className} onClick={onNavigate}>
       <div className="flex justify-between items-baseline mb-4">
         <div>
-          <div className="text-[11px] text-[#4B6478] font-bold tracking-[0.12em] uppercase mb-1.5">
+          <div className="text-[11px] text-[#8DA2B5] font-bold tracking-[0.12em] uppercase mb-1.5">
             Estimasi laba bersih
           </div>
           <div className={`text-[28px] font-black leading-none tracking-tight tabular-nums ${profitOk ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -71,7 +71,7 @@ export function MobileFinancePeek({
 
       <div className="flex justify-between mt-3.5 text-[12px]">
         <div>
-          <div className="text-[#4B6478] mb-0.5 font-medium">Total biaya</div>
+          <div className="text-[#8DA2B5] mb-0.5 font-medium">Total biaya</div>
           <div className="text-white font-bold tabular-nums">{fmtRp(cost)}</div>
         </div>
         {onNavigate && (
@@ -80,7 +80,7 @@ export function MobileFinancePeek({
           </div>
         )}
         <div className="text-right">
-          <div className="text-[#4B6478] mb-0.5 font-medium">Proyeksi omzet</div>
+          <div className="text-[#8DA2B5] mb-0.5 font-medium">Proyeksi omzet</div>
           <div className="text-white font-bold tabular-nums">{fmtRp(revenue)}</div>
         </div>
       </div>

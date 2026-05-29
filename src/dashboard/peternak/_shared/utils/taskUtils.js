@@ -19,16 +19,51 @@ export function getUrgencyLabel(task) {
 }
 
 /**
+ * Helper to determine if a task is overdue (terlambat) based on status, date, or time
+ */
+export function isOverdueTask(task) {
+  if (task.status === 'selesai' || task.status === 'dilewati') return false
+  if (task.status === 'terlambat') return true
+
+  const now = new Date()
+  const todayStr = format(now, 'yyyy-MM-dd')
+  if (task.due_date < todayStr) return true
+
+  if (task.due_date === todayStr && task.due_time) {
+    const [h, m, s] = task.due_time.split(':')
+    const dueDateTime = new Date(now)
+    dueDateTime.setHours(parseInt(h, 10), parseInt(m, 10), parseInt(s || 0, 10))
+    if (isBefore(dueDateTime, now)) return true
+  }
+
+  return false
+}
+
+/**
  * Common task sorting logic
  */
 export function sortTasksByPriority(tasks) {
-  const getPriority = (s) => {
-    if (s === 'in_progress') return 0
-    if (s === 'terlambat') return 1
-    if (s === 'pending') return 2
+  const getPriority = (t) => {
+    if (isOverdueTask(t)) return 0
+    if (t.status === 'in_progress') return 1
+    if (t.status === 'pending') return 2
     return 3
   }
-  return [...tasks].sort((a, b) => getPriority(a.status) - getPriority(b.status))
+  return [...tasks].sort((a, b) => {
+    const pA = getPriority(a)
+    const pB = getPriority(b)
+    if (pA !== pB) return pA - pB
+    
+    // Sort by due date first
+    if (a.due_date !== b.due_date) {
+      return a.due_date.localeCompare(b.due_date)
+    }
+    // Sort by due time second
+    if (a.due_time && b.due_time) {
+      return a.due_time.localeCompare(b.due_time)
+    }
+    return 0
+  })
 }
 
 /**

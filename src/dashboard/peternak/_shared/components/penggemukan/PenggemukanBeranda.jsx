@@ -341,7 +341,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                         {step.label}
                       </span>
                       {isDisabled && step.helperText && (
-                        <span className="text-[9px] font-semibold text-[#4B6478] mt-0.5 animate-pulse">
+                        <span className="text-[9px] font-semibold text-[#8DA2B5] mt-0.5 animate-pulse">
                           {step.helperText}
                         </span>
                       )}
@@ -575,6 +575,23 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
               </div>
             )}
 
+            {/* AKSI CEPAT */}
+            {!isNewUserEmptyState && (
+              <div>
+                <MobileSectionHeader label="Aksi cepat" />
+                <div className="px-5">
+                  <MobileQuickActions
+                    onAction={(key) => {
+                      if (key === 'timbang') navigate(`${BASE}/ternak`)
+                      else if (key === 'pakan') navigate(`${BASE}/stok-pakan`)
+                      else if (key === 'sehat') navigate(`${BASE}/kesehatan`)
+                      else if (key === 'catatan') navigate(`${BASE}/daily_task`)
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
             {/* PERLU PERHATIAN — only if alerts exist and not in first-run state */}
             {!isNewUserEmptyState && alerts.length > 0 && (
               <div>
@@ -597,7 +614,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                         <AlertTriangle size={15} className={a.type === 'danger' ? 'text-red-400' : 'text-amber-400'} />
                       </div>
                       <p className="flex-1 text-[12px] text-white/90 font-medium leading-snug line-clamp-2">{a.msg}</p>
-                      <ChevronRight size={14} className="text-[#4B6478] shrink-0" />
+                      <ChevronRight size={14} className="text-[#8DA2B5] shrink-0" />
                     </button>
                   ))}
                 </div>
@@ -672,7 +689,7 @@ export function PenggemukanBeranda({ config, hooks, KandangMiniMap }) {
                       </button>
                     </div>
                   ) : (
-                    <KandangMiniMap batchIds={activeBatches.map(b => b.id)} className="min-h-[320px] sm:min-h-[400px]" />
+                    <KandangMiniMap batchIds={activeBatches.map(b => b.id)} className="min-h-[220px] sm:min-h-[320px] md:min-h-[400px]" />
                   )}
                 </div>
               </div>

@@ -18,13 +18,13 @@ function MetricCell({ label, value, unit, tone, divider, sparkData, sparkColor }
 
   return (
     <div className={`py-3 px-3.5 flex flex-col gap-1 ${divider ? 'border-l border-white/[0.06]' : ''}`}>
-      <span className="text-[9px] font-bold text-[#4B6478] uppercase tracking-[0.12em]">{label}</span>
+      <span className="text-[9px] font-bold text-[#8DA2B5] uppercase tracking-[0.12em]">{label}</span>
       <div className="flex items-baseline justify-between gap-1">
         <div className="flex items-baseline gap-0.5">
           <span className={`text-lg font-black leading-none tracking-tight tabular-nums ${toneColor}`}>
             {value}
           </span>
-          <span className="text-[10px] text-[#4B6478] font-semibold">{unit}</span>
+          <span className="text-[10px] text-[#8DA2B5] font-semibold">{unit}</span>
         </div>
         {sparkData && <Sparkline data={sparkData} color={sparkColor || '#22C55E'} width={42} height={18} />}
       </div>
@@ -59,7 +59,7 @@ export function MobileHeroKPI({
         <div className="flex items-center justify-between mb-3.5">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(2, 26, 2,0.6)]" />
-            <span className="text-[10px] font-bold text-[#4B6478] uppercase tracking-[0.15em]">
+            <span className="text-[10px] font-bold text-[#8DA2B5] uppercase tracking-[0.15em]">
               Total populasi aktif
             </span>
           </div>
@@ -75,10 +75,10 @@ export function MobileHeroKPI({
           <span className="text-[56px] font-black leading-none tracking-[-3px] text-white tabular-nums">
             {totalEkor}
           </span>
-          <span className="text-base text-[#4B6478] font-semibold">ekor</span>
+          <span className="text-base text-[#8DA2B5] font-semibold">ekor</span>
         </div>
 
-        <p className="text-[13px] text-[#4B6478] font-medium">
+        <p className="text-[13px] text-[#8DA2B5] font-medium">
           {activeBatchCount} batch berjalan
           {harvestSoonCount > 0 && <> · <span className="text-emerald-400/80">{harvestSoonCount} ekor siap panen ≤30 hari</span></>}
         </p>

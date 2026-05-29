@@ -7,7 +7,7 @@ import React from 'react'
 export function MobileSectionHeader({ label, action, onAction }) {
   return (
     <div className="flex items-center justify-between px-5 mb-3">
-      <span className="text-[11px] font-bold text-[#4B6478] uppercase tracking-[0.12em]">
+      <span className="text-[11px] font-bold text-[#8DA2B5] uppercase tracking-[0.12em]">
         {label}
       </span>
       {action && onAction && (
@@ -19,7 +19,7 @@ export function MobileSectionHeader({ label, action, onAction }) {
         </button>
       )}
       {action && !onAction && (
-        <span className="text-[11px] font-bold text-[#4B6478] bg-white/[0.06] px-2 py-0.5 rounded-full">
+        <span className="text-[11px] font-bold text-[#8DA2B5] bg-white/[0.06] px-2 py-0.5 rounded-full">
           {action}
         </span>
       )}

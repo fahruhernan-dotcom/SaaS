@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   Home,
@@ -54,95 +54,46 @@ const ICON_MAP = {
 function NavItem({ tab, active, color, onClick }) {
   const Icon = ICON_MAP[tab.icon] || Home
   const { t } = useLanguage()
-
-  const measureRef = useRef(null)
-  const [contentWidth, setContentWidth] = useState(20)
-
-  useEffect(() => {
-    if (measureRef.current) {
-      setContentWidth(20 + 5 + measureRef.current.scrollWidth)
-    }
-  }, [tab.label])
+  const labelText = t(tab.label, tab.label)
 
   return (
     <motion.button
       onClick={onClick}
       whileTap={{ scale: 0.88 }}
+      aria-label={labelText}
+      title={labelText}
       style={{
         flex: 1,
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: '4px',
         background: 'transparent',
         border: 'none',
         cursor: 'pointer',
-        padding: '10px 2px 8px',
+        padding: '8px 2px',
         minWidth: 0,
         WebkitTapHighlightColor: 'transparent',
       }}
     >
-      {/* Hidden span to measure text width */}
-      <span
-        ref={measureRef}
-        aria-hidden="true"
+      <motion.div
+        animate={active ? { backgroundColor: `${color}22` } : { backgroundColor: 'transparent' }}
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
         style={{
-          position: 'fixed',
-          top: '-9999px',
-          left: '-9999px',
-          fontSize: '12px',
-          fontWeight: 700,
-          fontFamily: 'DM Sans',
-          whiteSpace: 'nowrap',
-          pointerEvents: 'none',
-          visibility: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: 12,
+          width: 44,
+          height: 44, // Fitts's Law touch target
         }}
       >
-        {t(tab.label, tab.label)}
-      </span>
-
-      {/* Icon + animated label */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', overflow: 'hidden' }}>
         <Icon
           size={20}
           color={active ? color : '#4B6478'}
           strokeWidth={active ? 2.5 : 1.8}
-          style={{ flexShrink: 0, transition: 'color 0.2s ease' }}
+          style={{ transition: 'color 0.2s ease' }}
         />
-        <motion.span
-          animate={{ maxWidth: active ? '90px' : '0px', opacity: active ? 1 : 0 }}
-          transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-          style={{
-            fontSize: '12px',
-            fontWeight: 700,
-            fontFamily: 'DM Sans',
-            color: color,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            display: 'block',
-            lineHeight: 1,
-          }}
-        >
-          {t(tab.label, tab.label)}
-        </motion.span>
-      </div>
-
-      {/* Sliding underline */}
-      <div style={{ height: '2px', width: `${contentWidth}px`, overflow: 'hidden' }}>
-        <AnimatePresence>
-          {active && (
-            <motion.div
-              layoutId="bottom-nav-underline"
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              exit={{ scaleX: 0 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-              style={{ height: '2px', width: '100%', background: color, borderRadius: '2px', transformOrigin: 'center' }}
-            />
-          )}
-        </AnimatePresence>
-      </div>
+      </motion.div>
     </motion.button>
   )
 }
@@ -185,52 +136,17 @@ function CenterFAB({ color, onClick }) {
   )
 }
 
-// ── Peternak Dock Tab ─────────────────────────────────────────────────────────
+// ── Peternak Dock Tab (icon-only, matching Broker style) ─────────────────────
 function PeternakNavItem({ tab, active, color, onClick }) {
   const Icon = ICON_MAP[tab.icon] || Home
   const { t } = useLanguage()
+  const labelText = t(tab.label, tab.label)
   return (
     <motion.button
       onClick={onClick}
       whileTap={{ scale: 0.88 }}
-      style={{
-        background: 'none', border: 'none', cursor: 'pointer',
-        padding: '4px 4px',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        WebkitTapHighlightColor: 'transparent',
-        position: 'relative',
-      }}
-    >
-      <motion.div
-        animate={active ? { backgroundColor: `${color}22`, paddingLeft: 14, paddingRight: 14 } : { backgroundColor: 'transparent', paddingLeft: 10, paddingRight: 10 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          borderRadius: 12,
-          paddingTop: 8, paddingBottom: 8,
-          overflow: 'hidden',
-        }}
-      >
-        <Icon size={20} color={active ? color : 'rgba(255,255,255,0.4)'} strokeWidth={active ? 2.5 : 2} style={{ flexShrink: 0 }} />
-        <motion.span
-          animate={{ maxWidth: active ? 80 : 0, opacity: active ? 1 : 0 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-          style={{ fontSize: '12px', fontWeight: 700, fontFamily: 'DM Sans', color, whiteSpace: 'nowrap', overflow: 'hidden', display: 'block', lineHeight: 1 }}
-        >
-          {t(tab.label, tab.label)}
-        </motion.span>
-      </motion.div>
-    </motion.button>
-  )
-}
-
-// ── Broker Dock Tab (icon-only, no text) ─────────────────────────────────────
-function BrokerNavItem({ tab, active, color, onClick }) {
-  const Icon = ICON_MAP[tab.icon] || Home
-  return (
-    <motion.button
-      onClick={onClick}
-      whileTap={{ scale: 0.88 }}
+      aria-label={labelText}
+      title={labelText}
       style={{
         background: 'none', border: 'none', cursor: 'pointer',
         padding: '4px 4px',
@@ -244,7 +160,41 @@ function BrokerNavItem({ tab, active, color, onClick }) {
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           borderRadius: 12,
-          width: 40, height: 40,
+          width: 44, height: 44, // Fitts's Law touch target size
+        }}
+      >
+        <Icon size={20} color={active ? color : 'rgba(255,255,255,0.4)'} strokeWidth={active ? 2.5 : 2} />
+      </motion.div>
+    </motion.button>
+  )
+}
+
+
+// ── Broker Dock Tab (icon-only, no text) ─────────────────────────────────────
+function BrokerNavItem({ tab, active, color, onClick }) {
+  const Icon = ICON_MAP[tab.icon] || Home
+  const { t } = useLanguage()
+  const labelText = t(tab.label, tab.label)
+  return (
+    <motion.button
+      onClick={onClick}
+      whileTap={{ scale: 0.88 }}
+      aria-label={labelText}
+      title={labelText}
+      style={{
+        background: 'none', border: 'none', cursor: 'pointer',
+        padding: '4px 4px',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        WebkitTapHighlightColor: 'transparent',
+      }}
+    >
+      <motion.div
+        animate={active ? { backgroundColor: `${color}22` } : { backgroundColor: 'transparent' }}
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          borderRadius: 12,
+          width: 44, height: 44, // Fitts's Law touch target standardized to 44px
         }}
       >
         <Icon size={20} color={active ? color : 'rgba(255,255,255,0.4)'} strokeWidth={active ? 2.5 : 2} />
@@ -340,8 +290,97 @@ function SpeedDial({ color, open, onToggle, items }) {
 // Keep backward-compat alias
 const SembakoSpeedDial = SpeedDial
 
-// ── Peternak Speed Dial (green-themed, same UX as Sembako) ────────────────────
-const PeternakSpeedDial = SpeedDial
+// ── Peternak Speed Dial (green-themed, variable width content-aware) ──────────
+function PeternakSpeedDial({ color, open, onToggle, items }) {
+  const { t } = useLanguage()
+  return (
+    <>
+      {/* Speed dial container */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '4px 6px', position: 'relative', zIndex: 3500 }}>
+        {/* Action items */}
+        <AnimatePresence>
+          {open && (
+            <div style={{
+              position: 'absolute',
+              bottom: 'calc(100% + 10px)',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+              alignItems: 'center',
+              zIndex: 3500,
+            }}>
+              {items.map((item, i) => (
+                <motion.button
+                  key={item.label}
+                  initial={{ opacity: 0, y: 12, scale: 0.85 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.9 }}
+                  transition={{ duration: 0.18, delay: i * 0.04, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  onClick={item.onClick}
+                  whileTap={{ scale: 0.93 }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    minHeight: '56px',
+                    padding: '10px 20px 10px 16px',
+                    borderRadius: '16px',
+                    background: 'rgba(10,15,22,0.95)',
+                    border: `1px solid ${color}40`,
+                    cursor: 'pointer',
+                    WebkitTapHighlightColor: 'transparent',
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+                    width: 'fit-content',
+                    maxWidth: '240px',
+                  }}
+                >
+                  <div style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '12px',
+                    background: `${color}18`,
+                    border: `1px solid ${color}30`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    <item.icon size={16} color={color} strokeWidth={2.5} />
+                  </div>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#F1F5F9', letterSpacing: '-0.01em' }}>
+                    {t(item.label, item.label)}
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* FAB button */}
+        <motion.button
+          onClick={onToggle}
+          whileTap={{ scale: 0.90 }}
+          whileHover={{ scale: 1.05 }}
+          animate={{ rotate: open ? 45 : 0 }}
+          transition={{ duration: 0.2 }}
+          style={{
+            width: 44, height: 44, borderRadius: 14,
+            background: color,
+            border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: open ? `0 6px 24px ${color}80` : `0 4px 16px ${color}60`,
+            WebkitTapHighlightColor: 'transparent',
+          }}
+        >
+          <Plus size={22} color="white" strokeWidth={2.5} />
+        </motion.button>
+      </div>
+    </>
+  )
+}
 
 // ── Helper: is this Peternak Domba Fattening? ────────────────────────────────
 function isPeternakDombaFattening(profile, tenant, vertical) {
@@ -460,12 +499,12 @@ export default function BottomNav() {
   // ── Domba Fattening Speed Dial items ─────────────────────────────────────────
   const DOMBA_BASE = '/peternak/peternak_domba_penggemukan'
   const dombaSpeedItems = isDombaFattening ? [
-    { label: 'Timbang Ternak',  icon: Scale,       onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/ternak`) } },
     { label: 'Log Pakan',       icon: Wheat,       onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/stok-pakan`) } },
-    { label: 'Catat Kesehatan', icon: HeartPulse,  onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/kesehatan`) } },
-    { label: 'Bersih Kandang',  icon: Sparkles,    onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/daily_task`) } },
-    { label: 'Catatan Harian',  icon: FileText,    onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/daily_task`) } },
     { label: 'Batch Baru',      icon: PackagePlus, onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/batch`) } },
+    { label: 'Catatan Harian',  icon: FileText,    onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/daily_task`) } },
+    { label: 'Bersih Kandang',  icon: Sparkles,    onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/daily_task`) } },
+    { label: 'Timbang Ternak',  icon: Scale,       onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/ternak`) } },
+    { label: 'Catat Kesehatan', icon: HeartPulse,  onClick: () => { setPeternakFabMenuOpen(false); navigate(`${DOMBA_BASE}/kesehatan`) } },
   ] : null
 
   // Role-based filtering — use model.category (already resolved) rather than profile.user_type

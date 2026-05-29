@@ -505,6 +505,7 @@ export const routes = createRoutesFromElements(
       <Route path="kandang/:farmId/laporan"   element={<PeternakPageRouter page="laporan" />} />
       <Route path="kandang/:farmId/pakan"     element={<PeternakPageRouter page="stok-pakan" />} />
       <Route path="kandang/:farmId/vaksinasi" element={<Navigate to="../../vaksinasi" replace />} />
+      <Route path="kandang/:farmId/atur"      element={<PeternakPageRouter page="atur" />} />
     </Route>
 
     <Route path="/rpa-buyer" element={<Navigate to="/rumah_potong/rpa/beranda" replace />} />

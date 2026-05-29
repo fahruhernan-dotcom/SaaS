@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   CheckCircle2, Clock, MapPin, Sparkles, 
   Lock, Save, AlertTriangle, Scale, Syringe, Trash2,
-  Plus, ClipboardList, Activity, Info, Wand2
+  Plus, ClipboardList, Activity, Info, Wand2, Compass, Loader2
 } from 'lucide-react'
 import { format, parseISO, endOfMonth, eachDayOfInterval, addDays } from 'date-fns'
 import { id as idLocale } from 'date-fns/locale'
@@ -17,6 +17,10 @@ import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { toast } from 'sonner'
 import { getRandomizedSample } from '@/dashboard/peternak/_shared/utils/taskUtils'
 import { CONTAINER_PRESETS } from '@/lib/constants/taskTemplates'
+import { usePeternakFarms } from '@/lib/hooks/usePeternakData'
+import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
+import { calculateDistance, getCurrentPosition, getRelativeXY } from '@/dashboard/peternak/_shared/utils/geofenceUtils'
+
 
 const EMPTY_ARRAY = []
 
@@ -114,6 +118,217 @@ export function ContainerCalcField({ field, reportData, setReportData, disabled 
   )
 }
 
+function GeofenceMiniMap({ activeFarm, userCoords, locDistance, locChecking }) {
+  // Center is (100, 100)
+  const cx = 100
+  const cy = 100
+
+  // 150m geofence radius
+  const baseGeofenceMeters = 150
+
+  const hasFarmCoords = activeFarm && activeFarm.latitude != null && activeFarm.longitude != null
+  const hasUserCoords = userCoords && userCoords.latitude != null && userCoords.longitude != null
+
+  // Calculate dynamic scale (pixels per meter)
+  const scale = useMemo(() => {
+    if (!hasFarmCoords) return 0.4 // default: 0.4px per meter (60px represents 150m)
+    if (!hasUserCoords || !locDistance) {
+      return 0.4 // default
+    }
+    const distance = locDistance
+    const mapRadiusMeters = Math.max(180, distance * 1.3) // keep padding
+    return 80 / mapRadiusMeters
+  }, [hasFarmCoords, hasUserCoords, locDistance])
+
+  const relative = useMemo(() => {
+    if (!hasFarmCoords || !hasUserCoords) return null
+    return getRelativeXY(
+      userCoords.latitude,
+      userCoords.longitude,
+      activeFarm.latitude,
+      activeFarm.longitude
+    )
+  }, [hasFarmCoords, hasUserCoords, activeFarm, userCoords])
+
+  const userSvg = useMemo(() => {
+    if (!relative || !scale) return null
+    const svgX = cx + relative.x * scale
+    const svgY = cy - relative.y * scale
+    return { x: svgX, y: svgY }
+  }, [relative, scale])
+
+  const inRadius = locDistance != null && locDistance <= baseGeofenceMeters
+
+  return (
+    <div className="relative w-full h-[180px] rounded-2xl border border-white/5 bg-black/35 overflow-hidden flex items-center justify-center group/map">
+      {/* Background Subtle Grid Effect */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:14px_24px] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,#0C1319_95%)] pointer-events-none" />
+
+      {/* SVG Map Canvas */}
+      <svg viewBox="0 0 200 200" className="w-[180px] h-[180px] shrink-0 relative z-10">
+        <defs>
+          <radialGradient id="geofenceGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor={inRadius ? "#10B981" : "#F59E0B"} stopOpacity="0.15" />
+            <stop offset="100%" stopColor={inRadius ? "#10B981" : "#F59E0B"} stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        {hasFarmCoords && (
+          <>
+            {/* Geofence Circle Radius */}
+            <circle 
+              cx={cx} 
+              cy={cy} 
+              r={baseGeofenceMeters * scale} 
+              fill="url(#geofenceGlow)" 
+              stroke={inRadius ? "#10B981" : "#F59E0B"} 
+              strokeWidth="1.2" 
+              strokeDasharray="4 3" 
+              opacity="0.75"
+              className="transition-all duration-500"
+            />
+
+            {/* Radar Scan Waves (when checking or location unknown) */}
+            {(locChecking || !hasUserCoords) && (
+              <>
+                <circle cx={cx} cy={cy} r="10" fill="none" stroke="#10B981" strokeWidth="1" opacity="0.6">
+                  <animate attributeName="r" values="10;80" dur="2.5s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.6;0" dur="2.5s" repeatCount="indefinite" />
+                </circle>
+                <circle cx={cx} cy={cy} r="10" fill="none" stroke="#10B981" strokeWidth="1" opacity="0.6">
+                  <animate attributeName="r" values="10;80" begin="1.25s" dur="2.5s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.6;0" begin="1.25s" dur="2.5s" repeatCount="indefinite" />
+                </circle>
+              </>
+            )}
+
+            {/* Line connecting Farm Pin and User */}
+            {hasUserCoords && userSvg && (
+              <line 
+                x1={cx} 
+                y1={cy} 
+                x2={userSvg.x} 
+                y2={userSvg.y} 
+                stroke={inRadius ? "#10B981" : "#F43F5E"} 
+                strokeWidth="1" 
+                strokeDasharray="3 3" 
+                opacity="0.5"
+              />
+            )}
+
+            {/* Center Destination Pin (Kandang) */}
+            <g transform={`translate(${cx}, ${cy})`}>
+              <circle cx="0" cy="0" r="12" fill="rgba(239, 68, 68, 0.15)" className="animate-pulse" />
+              <path 
+                d="M0 -10 C -4.5 -10, -8 -6.5, -8 -2 C -8 2, 0 10, 0 10 C 0 10, 8 2, 8 -2 C 8 -6.5, 4.5 -10, 0 -10 Z" 
+                fill="#EF4444" 
+                stroke="#0C1319"
+                strokeWidth="1"
+              />
+              <circle cx="0" cy="-3" r="2.5" fill="#FFFFFF" />
+            </g>
+          </>
+        )}
+
+        {/* User Marker */}
+        {hasUserCoords && userSvg && (
+          <g>
+            <circle cx={userSvg.x} cy={userSvg.y} r="10" fill="none" stroke="#3B82F6" strokeWidth="1.5" opacity="0.4">
+              <animate attributeName="r" values="6;16" dur="2s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.6;0" dur="2s" repeatCount="indefinite" />
+            </circle>
+            <circle cx={userSvg.x} cy={userSvg.y} r="5" fill="#3B82F6" stroke="#FFFFFF" strokeWidth="1.5" />
+          </g>
+        )}
+
+        {/* No Coordinate Warning State Map */}
+        {!hasFarmCoords && (
+          <g transform={`translate(${cx}, ${cy})`}>
+            <circle cx="0" cy="0" r="30" fill="rgba(245, 158, 11, 0.05)" stroke="rgba(245, 158, 11, 0.2)" strokeDasharray="3 3" />
+            <path d="M-6 8 L6 8 L0 -4 Z" fill="#F59E0B" opacity="0.8" />
+            <circle cx="0" cy="5" r="1.5" fill="#FFFFFF" />
+            <circle cx="0" cy="1" r="1.2" fill="#FFFFFF" />
+          </g>
+        )}
+      </svg>
+
+      {/* Map Header Overlay Info */}
+      <div className="absolute top-3 left-4 right-4 z-20 flex items-center justify-between pointer-events-none">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Map Preview</span>
+          <span className="text-[10px] font-bold text-white/50 leading-none">
+            {activeFarm?.farm_name || 'Lokasi Kandang'}
+          </span>
+        </div>
+        <div className="px-2 py-0.5 rounded bg-black/60 border border-white/5 text-[9px] font-black text-slate-400 uppercase tracking-wider">
+          Radius: {baseGeofenceMeters}m
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function GeofenceStatusCard({ state, distance, accuracy, isStaff }) {
+  let bgClass = "bg-blue-500/5 border-blue-500/10 text-blue-400"
+  let icon = <MapPin className="text-blue-400 shrink-0 mt-0.5" size={18} />
+  let title = "Akses Lokasi Diperlukan"
+  let description = "Izinkan akses GPS untuk memverifikasi kehadiran Anda di area kandang sebelum memulai tugas."
+
+  if (state === 'checking') {
+    bgClass = "bg-[#0C1319]/40 border-white/5 text-[#4B6478]"
+    icon = (
+      <div className="w-[18px] h-[18px] rounded-full border-2 border-[#4B6478] border-t-white animate-spin shrink-0 mt-0.5" />
+    )
+    title = "Mengecek Lokasi..."
+    description = "Sedang mengambil data GPS presisi dari perangkat Anda..."
+  } else if (state === 'denied') {
+    bgClass = "bg-rose-500/5 border-rose-500/10 text-rose-400"
+    icon = <Lock className="text-rose-400 shrink-0 mt-0.5" size={18} />
+    title = "Akses Lokasi Ditolak"
+    description = "Aktifkan GPS dan izinkan akses lokasi pada browser Anda untuk dapat memulai tugas."
+  } else if (state === 'no_coordinates') {
+    bgClass = "bg-amber-500/5 border-amber-500/10 text-amber-400"
+    icon = <AlertTriangle className="text-amber-400 shrink-0 mt-0.5" size={18} />
+    title = "Lokasi Kandang Belum Diatur"
+    description = isStaff 
+      ? "Koordinat untuk kandang ini belum diset oleh admin. Silakan hubungi admin Anda."
+      : "Koordinat kandang belum diset. Bypass aktif untuk owner/manajer."
+  } else if (state === 'outside') {
+    if (isStaff) {
+      bgClass = "bg-rose-500/5 border-rose-500/10 text-rose-400"
+      icon = <AlertTriangle className="text-rose-400 shrink-0 mt-0.5" size={18} />
+      title = "Di Luar Area Geofence"
+      description = `Jarak Anda saat ini ${Math.round(distance)}m dari kandang. Anda harus berada di radius 150m untuk melapor.`
+    } else {
+      bgClass = "bg-amber-500/5 border-amber-500/10 text-amber-400"
+      icon = <AlertTriangle className="text-amber-400 shrink-0 mt-0.5" size={18} />
+      title = "Di Luar Radius (Bypass)"
+      description = `Jarak Anda saat ini ${Math.round(distance)}m dari kandang. Anda dapat melewati pemeriksaan ini sebagai owner/manajer.`
+    }
+  } else if (state === 'low_accuracy') {
+    bgClass = "bg-amber-500/5 border-amber-500/10 text-amber-400"
+    icon = <Compass className="text-amber-400 shrink-0 mt-0.5" size={18} />
+    title = "Akurasi Lokasi Rendah"
+    description = `Akurasi sinyal GPS perangkat Anda saat ini: ${Math.round(accuracy)}m. Pindahlah ke area terbuka agar akurasi lebih baik.`
+  } else if (state === 'valid') {
+    bgClass = "bg-emerald-500/5 border-emerald-500/10 text-emerald-400"
+    icon = <CheckCircle2 className="text-emerald-400 shrink-0 mt-0.5" size={18} />
+    title = "Lokasi Terverifikasi"
+    description = `Anda berada ${Math.round(distance)}m dari kandang (di dalam radius geofence).`
+  }
+
+  return (
+    <div className={cn("p-4 rounded-2xl border flex gap-3 transition-all duration-300", bgClass)}>
+      {icon}
+      <div className="flex-1 flex flex-col gap-0.5 min-w-0">
+        <span className="text-xs font-black uppercase tracking-wider leading-none mb-1">{title}</span>
+        <span className="text-[11px] font-medium leading-relaxed opacity-85 text-slate-300">{description}</span>
+      </div>
+    </div>
+  )
+}
+
 export function CompleteTaskSheet({ 
   open, onOpenChange, task, isDesktop, onSuccess, showSuccessAnimation: _showSuccessAnimation,
   isOwnerView, config, TASK_TYPE_CFG, TASK_REPORT_CONFIG,
@@ -131,6 +346,176 @@ export function CompleteTaskSheet({
   const [showSuccess, setShowSuccess] = useState(false)
   const [batchSplits, setBatchSplits] = useState([])
   const [isCompleting, setIsCompleting] = useState(false)
+
+  const { data: farms = [] } = usePeternakFarms()
+  const permissions = usePeternakPermissions()
+  const isStaff = permissions.isStaff && !permissions.isOwner && !permissions.isManajer
+
+  const isAuditMode = isOwnerView && task?.status === 'selesai'
+  const isMultiAnimalTask = (task?.task_type === 'timbang' || task?.task_type === 'vaksinasi' || task?.task_type === 'obat_cacing') && config?.usesIndividualAnimals && !isAuditMode
+  const reportConfig = isMultiAnimalTask ? null : (task ? TASK_REPORT_CONFIG[task.task_type] : null)
+
+  const [locChecking, setLocChecking] = useState(false)
+  const [locDistance, setLocDistance] = useState(null)
+  const [gpsAccuracy, setGpsAccuracy] = useState(null)
+  const [locError, setLocError] = useState(null)
+  const [locVerified, setLocVerified] = useState(false)
+  const [userCoords, setUserCoords] = useState(null)
+
+  // Reset location state when task changes or when sheet is opened/closed
+  useEffect(() => {
+    setLocChecking(false)
+    setLocDistance(null)
+    setGpsAccuracy(null)
+    setLocError(null)
+    setLocVerified(false)
+    setUserCoords(null)
+  }, [task?.id, open])
+
+  const targetFarm = useMemo(() => {
+    if (!task || !task.kandang_name) return null
+    const kName = task.kandang_name.trim().toLowerCase()
+    return farms.find(f => f.farm_name.trim().toLowerCase() === kName)
+  }, [farms, task])
+
+  const activeFarm = useMemo(() => {
+    if (targetFarm && targetFarm.latitude != null && targetFarm.longitude != null) {
+      return targetFarm
+    }
+    // Fallback to first valid farm ONLY for owner/admin
+    if (!isStaff) {
+      return farms.find(f => f.latitude != null && f.longitude != null)
+    }
+    return null
+  }, [targetFarm, farms, isStaff])
+
+  const checkLocation = async (onSuccessCallback) => {
+    setLocChecking(true)
+    setLocError(null)
+    setLocDistance(null)
+    setGpsAccuracy(null)
+
+    try {
+      const position = await getCurrentPosition({
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      })
+
+      const { latitude, longitude, accuracy } = position.coords
+      setGpsAccuracy(accuracy)
+      setUserCoords({ latitude, longitude })
+
+      if (accuracy > 100 && isStaff) {
+        setLocError('LOW_ACCURACY')
+        setLocChecking(false)
+        toast.error('Akurasi lokasi rendah, silakan coba lagi di area terbuka.')
+        return
+      }
+
+      if (accuracy > 100) {
+        toast.warning('Akurasi lokasi rendah, coba pindah ke area terbuka.')
+      }
+
+      // Check if farm coordinate exists
+      if (!activeFarm || activeFarm.latitude == null || activeFarm.longitude == null) {
+        if (isStaff) {
+          setLocError('NO_COORDINATES')
+          setLocChecking(false)
+          toast.error('Lokasi kandang untuk tugas ini belum diatur. Hubungi owner/admin.')
+          return
+        } else {
+          // Owner/Admin bypass
+          setLocVerified(true)
+          setLocChecking(false)
+          toast.warning('Lokasi kandang belum cocok/di luar radius. Bypass sebagai owner/manajer.')
+          if (onSuccessCallback) onSuccessCallback()
+          return
+        }
+      }
+
+      const dist = calculateDistance(latitude, longitude, activeFarm.latitude, activeFarm.longitude)
+      setLocDistance(dist)
+
+      if (dist <= 150) {
+        setLocVerified(true)
+        setLocChecking(false)
+        if (onSuccessCallback) onSuccessCallback()
+      } else {
+        if (isStaff) {
+          setLocError('OUT_OF_RADIUS')
+          setLocChecking(false)
+          toast.error(`Di luar area: Anda berada ${Math.round(dist)}m dari kandang.`)
+        } else {
+          // Owner/Admin bypass
+          setLocVerified(true)
+          setLocChecking(false)
+          toast.warning('Lokasi kandang belum cocok/di luar radius. Bypass sebagai owner/manajer.')
+          if (onSuccessCallback) onSuccessCallback()
+        }
+      }
+    } catch (err) {
+      setLocChecking(false)
+      setUserCoords(null)
+      console.error('Geolocation error:', err)
+      if (err.code === 1) { // PERMISSION_DENIED
+        setLocError('PERMISSION_DENIED')
+        toast.error('Akses lokasi ditolak. Mohon izinkan akses GPS pada browser Anda.')
+      } else {
+        setLocError('Gagal mengambil lokasi. Coba lagi.')
+        toast.error('Gagal mendeteksi lokasi GPS.')
+      }
+    }
+  }
+
+  const handleLaporAction = async (normalAction) => {
+    if (locVerified) {
+      normalAction()
+      return
+    }
+    checkLocation(normalAction)
+  }
+
+  const geofenceState = useMemo(() => {
+    if (locChecking) return 'checking'
+    if (locError === 'PERMISSION_DENIED') return 'denied'
+    if (locError === 'NO_COORDINATES') return 'no_coordinates'
+    if (locError === 'OUT_OF_RADIUS') return 'outside'
+    if (locError === 'LOW_ACCURACY') return 'low_accuracy'
+    
+    if (locVerified) {
+      if (locDistance !== null && locDistance > 150) {
+        return 'outside'
+      }
+      if (!activeFarm || activeFarm.latitude == null || activeFarm.longitude == null) {
+        return 'no_coordinates'
+      }
+      return 'valid'
+    }
+    
+    return 'required'
+  }, [locChecking, locError, locVerified, locDistance, activeFarm])
+
+  const isCtaDisabled = locChecking || (isStaff && locError === 'NO_COORDINATES')
+
+  let ctaLabel = 'Cek Lokasi'
+  if (task && (task.status === 'pending' || task.status === 'in_progress')) {
+    const isStart = reportConfig || isMultiAnimalTask ? !isCompleting : false
+    const baseVerb = isStart ? 'Mulai Tugas' : (isCompleting ? 'Selesaikan Tugas' : 'Tandai Selesai')
+    
+    if (locChecking) {
+      ctaLabel = 'Mengecek Lokasi...'
+    } else if (locVerified) {
+      ctaLabel = baseVerb
+    } else if (locError === 'PERMISSION_DENIED') {
+      ctaLabel = 'Izinkan Lokasi'
+    } else if (locError === 'NO_COORDINATES' && isStaff) {
+      ctaLabel = 'Lokasi Belum Diatur'
+    } else {
+      ctaLabel = 'Cek Lokasi'
+    }
+  }
+
 
   const addWeight = hooks.useAddWeight()
   const addFeed = hooks.useAddFeed()
@@ -214,9 +599,6 @@ export function CompleteTaskSheet({
   }, [open, task, activeBatches])
 
   if (!task) return null
-  const isAuditMode = isOwnerView && task.status === 'selesai'
-  const isMultiAnimalTask = (task.task_type === 'timbang' || task.task_type === 'vaksinasi' || task.task_type === 'obat_cacing') && config.usesIndividualAnimals && !isAuditMode
-  const reportConfig = isMultiAnimalTask ? null : TASK_REPORT_CONFIG[task.task_type]
 
   async function handleComplete() {
     const isPakan = task.task_type === 'pakan' || task.task_type === 'pemberian_pakan'
@@ -391,6 +773,41 @@ export function CompleteTaskSheet({
                   <div className="p-4 border border-white/5 bg-white/[0.01] rounded-2xl space-y-2">
                     <span className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.3em] block">Deskripsi / Instruksi</span>
                     <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">{task.description}</p>
+                  </div>
+                )}
+
+                {!(isAuditMode || task.status === 'selesai') && !isCompleting && (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-top-3 duration-500">
+                    <div className="flex items-center gap-4 px-1 text-[#64748B]">
+                      <span className="text-[10px] font-black uppercase tracking-[0.3em]">Geofence & Kehadiran</span>
+                      <div className="h-[1px] flex-1 bg-white/5" />
+                    </div>
+
+                    <GeofenceMiniMap 
+                      activeFarm={activeFarm} 
+                      userCoords={userCoords} 
+                      locDistance={locDistance} 
+                      locChecking={locChecking}
+                      locError={locError}
+                    />
+
+                    <GeofenceStatusCard 
+                      state={geofenceState}
+                      distance={locDistance}
+                      accuracy={gpsAccuracy}
+                      isStaff={isStaff}
+                    />
+
+                    <div className="grid grid-cols-2 gap-3 text-left">
+                      <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col gap-1">
+                        <span className="text-[9px] font-black text-[#64748B] uppercase tracking-widest leading-none">Lokasi Kandang</span>
+                        <span className="text-xs font-bold text-white truncate">{task.kandang_name || 'Global Farm'}</span>
+                      </div>
+                      <div className="p-4 rounded-2xl bg-white/[0.01] border border-white/5 flex flex-col gap-1">
+                        <span className="text-[9px] font-black text-[#64748B] uppercase tracking-widest leading-none">Radius Area</span>
+                        <span className="text-xs font-bold text-white">150 meter</span>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -635,30 +1052,44 @@ export function CompleteTaskSheet({
           )}
         </div>
         {!showSuccess && (
-          <div className="p-5 lg:p-8 border-t border-white/5 bg-[#0C1319] shrink-0 flex items-center gap-3 lg:gap-4">
-            {isAuditMode || task.status === 'selesai' ? (
-              <Button onClick={() => onOpenChange(false)} className="flex-1 h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-sm transition-all">Tutup</Button>
-            ) : !isCompleting ? (
-              <>
-                <Button variant="ghost" onClick={() => onOpenChange(false)} className="h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-transparent px-5 lg:px-8">Batal</Button>
-                {reportConfig || isMultiAnimalTask ? (
-                  <Button onClick={() => setIsCompleting(true)} className="flex-1 h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-emerald-500 hover:bg-emerald-600 border-none shadow-[0_0_20px_rgba(2, 26, 2,0.3)] text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
-                    Mulai Tugas
+          <div className="p-5 lg:p-8 border-t border-white/5 bg-[#0C1319] shrink-0 flex flex-col gap-3">
+            <div className="flex items-center gap-3 lg:gap-4">
+              {isAuditMode || task.status === 'selesai' ? (
+                <Button onClick={() => onOpenChange(false)} className="flex-1 h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-sm transition-all">Tutup</Button>
+              ) : !isCompleting ? (
+                <>
+                  <Button variant="ghost" onClick={() => onOpenChange(false)} className="h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-transparent px-5 lg:px-8">Batal</Button>
+                  {reportConfig || isMultiAnimalTask ? (
+                    <Button 
+                      onClick={() => handleLaporAction(() => setIsCompleting(true))} 
+                      disabled={isCtaDisabled}
+                      className="flex-1 h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-emerald-500 hover:bg-emerald-600 border-none shadow-[0_0_20px_rgba(2, 26, 2,0.3)] text-white font-bold text-sm transition-all flex items-center justify-center gap-2"
+                    >
+                      {ctaLabel}
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={() => handleLaporAction(handleComplete)} 
+                      disabled={isCtaDisabled || updateStatus.isPending}
+                      className="flex-1 h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-emerald-500 hover:bg-emerald-600 border-none shadow-[0_0_20px_rgba(2, 26, 2,0.3)] text-white font-bold text-sm transition-all flex items-center justify-center gap-2"
+                    >
+                      {updateStatus.isPending ? 'Menyimpan...' : ctaLabel}
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Button variant="ghost" onClick={() => setIsCompleting(false)} className="h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-transparent px-5 lg:px-8">Kembali</Button>
+                  <Button 
+                    onClick={() => handleLaporAction(handleComplete)} 
+                    disabled={isCtaDisabled || updateStatus.isPending}
+                    className="flex-1 h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-emerald-500 hover:bg-emerald-600 border-none shadow-[0_0_20px_rgba(2, 26, 2,0.3)] text-white font-bold text-sm transition-all flex items-center justify-center gap-2"
+                  >
+                    {updateStatus.isPending ? 'Menyimpan...' : ctaLabel}
                   </Button>
-                ) : (
-                  <Button onClick={handleComplete} disabled={updateStatus.isPending} className="flex-1 h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-emerald-500 hover:bg-emerald-600 border-none shadow-[0_0_20px_rgba(2, 26, 2,0.3)] text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
-                    {updateStatus.isPending ? 'Menyimpan...' : 'Tandai Selesai'}
-                  </Button>
-                )}
-              </>
-            ) : (
-              <>
-                <Button variant="ghost" onClick={() => setIsCompleting(false)} className="h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold text-sm transition-all border border-transparent px-5 lg:px-8">Kembali</Button>
-                <Button onClick={handleComplete} disabled={updateStatus.isPending} className="flex-1 h-12 lg:h-14 rounded-xl lg:rounded-2xl bg-emerald-500 hover:bg-emerald-600 border-none shadow-[0_0_20px_rgba(2, 26, 2,0.3)] text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
-                  {updateStatus.isPending ? 'Menyimpan...' : 'Selesaikan Tugas'}
-                </Button>
-              </>
-            )}
+                </>
+              )}
+            </div>
           </div>
         )}
       </SheetContent>

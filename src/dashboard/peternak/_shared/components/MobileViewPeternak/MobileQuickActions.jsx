@@ -1,12 +1,12 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Scale, Utensils, Heart, BookOpen } from 'lucide-react'
+import { Scale, Wheat, HeartPulse, FileText } from 'lucide-react'
 
 const ACTIONS = [
-  { key: 'timbang', label: 'Timbang',   sub: 'Catat bobot',     Icon: Scale,    accent: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  { key: 'pakan',   label: 'Pakan',     sub: 'Log pemberian',   Icon: Utensils, accent: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  { key: 'sehat',   label: 'Kesehatan', sub: 'Vaksin · obat',   Icon: Heart,    accent: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  { key: 'catatan', label: 'Catatan',   sub: 'Insiden harian',  Icon: BookOpen,  accent: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+  { key: 'timbang', label: 'Timbang',   sub: 'Catat bobot',     Icon: Scale,      accent: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+  { key: 'pakan',   label: 'Pakan',     sub: 'Log pakan',       Icon: Wheat,      accent: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+  { key: 'sehat',   label: 'Kesehatan', sub: 'Catat kesehatan', Icon: HeartPulse, accent: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+  { key: 'catatan', label: 'Catatan',   sub: 'Catatan harian',  Icon: FileText,   accent: 'text-emerald-400', bg: 'bg-emerald-500/10' },
 ]
 
 export function MobileQuickActions({ onAction }) {
@@ -26,7 +26,7 @@ export function MobileQuickActions({ onAction }) {
           </div>
           <div className="min-w-0">
             <div className="text-[14px] font-bold text-white leading-tight">{label}</div>
-            <div className="text-[11px] text-[#4B6478] font-medium mt-0.5">{sub}</div>
+            <div className="text-[11px] text-[#8DA2B5] font-medium mt-0.5">{sub}</div>
           </div>
         </motion.button>
       ))}

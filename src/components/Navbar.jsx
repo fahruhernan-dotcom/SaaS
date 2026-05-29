@@ -426,55 +426,23 @@ const Navbar = ({ authPage = false }) => {
               transition={{ delay: 0.25, duration: 0.4 }}
               className="flex items-center gap-3"
             >
-              {/* Theme Toggle Button */}
-              <motion.button
-                onClick={toggleTheme}
-                className="w-9 h-9 rounded-xl flex items-center justify-center border border-border-default bg-bg-2/30 hover:bg-bg-3/20 transition-all focus:outline-none shrink-0"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                aria-label="Toggle Theme"
-                style={{ color: 'var(--text-primary-val)', borderColor: 'var(--border-def-val)' }}
-              >
-                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-              </motion.button>
-
-              {authPage ? (
-                <motion.a
-                  href="/"
-                  style={{
-                    height: '36px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '0 16px',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    fontFamily: "'DM Sans', sans-serif",
-                    color: 'var(--text-secondary-val)',
-                    background: 'transparent',
-                    border: '1px solid var(--border-def-val)',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease',
-                    textDecoration: 'none'
-                  }}
-                  whileHover={{
-                    color: 'var(--text-primary-val)',
-                    borderColor: 'var(--border-strong-val)',
-                    background: 'var(--border-sub-val)',
-                  }}
-                  whileTap={{ scale: 0.97 }}
+              {/* Desktop CTA Wrapper */}
+              <div className="hidden md:flex items-center gap-3">
+                {/* Theme Toggle Button */}
+                <motion.button
+                  onClick={toggleTheme}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center border border-border-default bg-bg-2/30 hover:bg-bg-3/20 transition-all focus:outline-none shrink-0"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  aria-label="Toggle Theme"
+                  style={{ color: 'var(--text-primary-val)', borderColor: 'var(--border-def-val)' }}
                 >
-                  Beranda
-                </motion.a>
-              ) : (
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                  <motion.button
-                    onClick={() => navigate('/login')}
-                    className="nav-action-btn hidden md:block"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5, delay: 0.5 }}
+                  {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+                </motion.button>
+
+                {authPage ? (
+                  <motion.a
+                    href="/"
                     style={{
                       height: '36px',
                       display: 'flex',
@@ -487,9 +455,10 @@ const Navbar = ({ authPage = false }) => {
                       color: 'var(--text-secondary-val)',
                       background: 'transparent',
                       border: '1px solid var(--border-def-val)',
-                      borderRadius: '99px',
+                      borderRadius: '8px',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
+                      textDecoration: 'none'
                     }}
                     whileHover={{
                       color: 'var(--text-primary-val)',
@@ -498,66 +467,132 @@ const Navbar = ({ authPage = false }) => {
                     }}
                     whileTap={{ scale: 0.97 }}
                   >
-                    Masuk
-                  </motion.button>
-  
-                  <motion.button
-                    onClick={() => navigate('/register')}
-                    className="nav-action-btn hidden md:block"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1, transition: { duration: 0.5, delay: 0.6 } }}
-                    style={{
-                      height: '36px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '0 18px',
-                      fontSize: '14px',
-                      fontWeight: 700,
-                      fontFamily: "'DM Sans', sans-serif",
-                      color: '#ffffff',
-                      background: '#021a02',
-                      border: 'none',
-                      borderRadius: '99px',
-                      cursor: 'pointer',
-                      position: 'relative',
-                      overflow: 'hidden',
-                      boxShadow: '0 0 0 1px rgba(2, 26, 2,0.25), 0 4px 16px rgba(2, 26, 2,0.18)',
-                    }}
-                    whileHover={{
-                      background: '#021a02',
-                      boxShadow: '0 0 0 1px rgba(2, 26, 2,0.35), 0 6px 22px rgba(2, 26, 2,0.28)',
-                      y: -1,
-                    }}
-                    whileTap={{ scale: 0.97, y: 0 }}
-                    transition={{ duration: 0.15 }}
-                  >
-                    {/* Shimmer sweep */}
-                    <motion.div
+                    Beranda
+                  </motion.a>
+                ) : (
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <motion.button
+                      onClick={() => navigate('/login')}
+                      className="nav-action-btn"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5, delay: 0.5 }}
                       style={{
-                        position: 'absolute',
-                        top: 0, left: '-100%',
-                        width: '60%', height: '100%',
-                        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
-                        transform: 'skewX(-20deg)',
+                        height: '36px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0 16px',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        fontFamily: "'DM Sans', sans-serif",
+                        color: 'var(--text-secondary-val)',
+                        background: 'transparent',
+                        border: '1px solid var(--border-def-val)',
+                        borderRadius: '99px',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
                       }}
-                      whileHover={{ left: '160%' }}
-                      transition={{ duration: 0.5, ease: 'easeInOut' }}
-                    />
-                    Coba Gratis
+                      whileHover={{
+                        color: 'var(--text-primary-val)',
+                        borderColor: 'var(--border-strong-val)',
+                        background: 'var(--border-sub-val)',
+                      }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      Masuk
+                    </motion.button>
+     
+                    <motion.button
+                      onClick={() => navigate('/register')}
+                      className="nav-action-btn"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1, transition: { duration: 0.5, delay: 0.6 } }}
+                      style={{
+                        height: '36px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0 18px',
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        fontFamily: "'DM Sans', sans-serif",
+                        color: '#ffffff',
+                        background: '#021a02',
+                        border: 'none',
+                        borderRadius: '99px',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        boxShadow: '0 0 0 1px rgba(2, 26, 2,0.25), 0 4px 16px rgba(2, 26, 2,0.18)',
+                      }}
+                      whileHover={{
+                        background: '#021a02',
+                        boxShadow: '0 0 0 1px rgba(2, 26, 2,0.35), 0 6px 22px rgba(2, 26, 2,0.28)',
+                        y: -1,
+                      }}
+                      whileTap={{ scale: 0.97, y: 0 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      {/* Shimmer sweep */}
+                      <motion.div
+                        style={{
+                          position: 'absolute',
+                          top: 0, left: '-100%',
+                          width: '60%', height: '100%',
+                          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
+                          transform: 'skewX(-20deg)',
+                        }}
+                        whileHover={{ left: '160%' }}
+                        transition={{ duration: 0.5, ease: 'easeInOut' }}
+                      />
+                      Coba Gratis
+                    </motion.button>
+                  </div>
+                )}
+              </div>
+              
+              {/* Mobile Theme/Menu Wrapper */}
+              {!authPage && (
+                <div className="flex md:hidden items-center gap-3">
+                  {/* Compact Mobile Theme Toggle (Fitts's Law compliant: 40px touch target) */}
+                  <motion.button
+                    onClick={toggleTheme}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center border border-border-default bg-bg-2/30 hover:bg-bg-3/20 transition-all focus:outline-none shrink-0"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    aria-label="Toggle Theme"
+                    style={{ color: 'var(--text-primary-val)', borderColor: 'var(--border-def-val)' }}
+                  >
+                    {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
                   </motion.button>
+
+                  {/* Hamburger menu trigger (Fitts's Law compliant: 40px touch target) */}
+                  <button 
+                    className="text-tx-2 p-2 flex flex-col justify-center items-center gap-1.5 w-10 h-10 focus:outline-none z-[110] relative rounded-xl hover:bg-bg-3/20 transition-all"
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  >
+                    <motion.div animate={{ rotate: isMobileMenuOpen ? 45 : 0, y: isMobileMenuOpen ? 8 : 0 }} className="w-5 h-0.5 bg-tx-2 rounded-full transition-transform"></motion.div>
+                    <motion.div animate={{ opacity: isMobileMenuOpen ? 0 : 1 }} className="w-5 h-0.5 bg-tx-2 rounded-full transition-opacity"></motion.div>
+                    <motion.div animate={{ rotate: isMobileMenuOpen ? -45 : 0, y: isMobileMenuOpen ? -8 : 0 }} className="w-5 h-0.5 bg-tx-2 rounded-full transition-transform"></motion.div>
+                  </button>
                 </div>
               )}
-              
-              {!authPage && (
-                <button 
-                  className="md:hidden text-tx-2 p-1 flex flex-col justify-center items-center gap-1.5 w-8 h-8 focus:outline-none z-[110] relative"
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                >
-                  <motion.div animate={{ rotate: isMobileMenuOpen ? 45 : 0, y: isMobileMenuOpen ? 8 : 0 }} className="w-5 h-0.5 bg-tx-2 rounded-full transition-transform"></motion.div>
-                  <motion.div animate={{ opacity: isMobileMenuOpen ? 0 : 1 }} className="w-5 h-0.5 bg-tx-2 rounded-full transition-opacity"></motion.div>
-                  <motion.div animate={{ rotate: isMobileMenuOpen ? -45 : 0, y: isMobileMenuOpen ? -8 : 0 }} className="w-5 h-0.5 bg-tx-2 rounded-full transition-transform"></motion.div>
-                </button>
+
+              {/* Mobile theme toggle only (for authPage where menu is not needed) */}
+              {authPage && (
+                <div className="flex md:hidden items-center gap-3">
+                  <motion.button
+                    onClick={toggleTheme}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center border border-border-default bg-bg-2/30 hover:bg-bg-3/20 transition-all focus:outline-none shrink-0"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    aria-label="Toggle Theme"
+                    style={{ color: 'var(--text-primary-val)', borderColor: 'var(--border-def-val)' }}
+                  >
+                    {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+                  </motion.button>
+                </div>
               )}
             </motion.div>
           </motion.div>
