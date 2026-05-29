@@ -762,12 +762,7 @@ export default function BottomNav() {
           onClose={() => setScanQrOpen(false)}
           onScanSuccess={(animalId) => {
             setScanQrOpen(false)
-            // Derive base from current URL — more reliable than profile.sub_type
-            // which may still be null at scan time or default to broiler.
-            // Pattern: /peternak/<sub_type>/... → extract /peternak/<sub_type>
-            const pathMatch = location.pathname.match(/^(\/peternak\/[^/]+)/)
-            const base = pathMatch?.[1] ?? peternakBase
-            navigate(`${base}/ternak?batch=all&animalId=${animalId}`)
+            navigate(`/scan?animalId=${animalId}`)
           }}
         />
       )}
