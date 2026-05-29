@@ -6,8 +6,15 @@ import {
   Scale, Syringe,
   Activity, ClipboardList, Utensils,
   Check, RefreshCcw,
-  Sparkles, AlertTriangle, Lock
+  Sparkles, AlertTriangle, Lock,
+  MoreVertical
 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   usePeternakTaskTemplates,
   useCreateTaskTemplate,
@@ -154,13 +161,16 @@ function Checkbox({ checked, onCheckedChange, className, disabled = false, accen
 
 function SummaryStrip({ items = [], accent }) {
   return (
-    <div className={cn("border-b border-white/[0.04] px-5 py-4 flex flex-wrap gap-4 items-center overflow-x-auto no-scrollbar", accent.stripBg)}>
+    <div className={cn(
+      "border-b border-white/[0.04] px-5 py-2.5 sm:py-4 flex flex-wrap gap-4 items-center overflow-x-auto no-scrollbar", 
+      accent.stripBg
+    )}>
       {items.map((item) => (
-        <div key={item.label} className="min-w-[140px] px-6 border-r border-white/5 last:border-0">
-          <p className="font-black text-[#4B6478] uppercase tracking-widest leading-none mb-2 text-[9px]">
+        <div key={item.label} className="px-4 sm:px-6 border-r border-white/5 last:border-0 flex sm:flex-col items-center sm:items-start gap-2 sm:gap-0">
+          <p className="font-black text-[#4B6478] uppercase tracking-widest leading-none mb-0 sm:mb-2 text-[8px] sm:text-[9px]">
             {item.label}
           </p>
-          <p className="font-bold text-lg text-white tabular-nums">
+          <p className="font-bold text-sm sm:text-lg text-white tabular-nums">
             {item.value}
           </p>
         </div>
@@ -171,7 +181,15 @@ function SummaryStrip({ items = [], accent }) {
 
 // ─── TemplateItemMobile ───────────────────────────────────────────────────────
 
-function TemplateItemMobile({ template, onEdit, onDelete, isSelected, onToggleSelect, accent }) {
+function TemplateItemMobile({
+  template,
+  onEdit,
+  onDelete,
+  isSelected,
+  onToggleSelect,
+  isSelectionMode,
+  accent,
+}) {
   const cfg = TASK_TYPE_CFG[template.task_type] || TASK_TYPE_CFG.lainnya
   const refresh = useGenerateInstancesFromTemplate()
   const { profile } = useAuth()
@@ -181,74 +199,123 @@ function TemplateItemMobile({ template, onEdit, onDelete, isSelected, onToggleSe
     template.title?.includes('Timbang Total (90 Hari)')
   const isLocked = isProtected && !isOwner
 
+  const hasAssignee = !!(template.assignee?.full_name || template.default_assignee_worker_id)
+  const assigneeName = template.assignee?.full_name || 'Petugas'
+  const shortAssigneeName = assigneeName.split(' ')[0]
+
   return (
-    <BrokerBaseCard
-      onClick={() => !isLocked && onEdit(template)}
-      isDesktop={false}
+    <div
+      onClick={() => {
+        if (isLocked) return
+        if (isSelectionMode) {
+          onToggleSelect()
+        } else {
+          onEdit(template)
+        }
+      }}
       className={cn(
-        "mb-4 bg-white/[0.02] border-white/[0.06] rounded-2xl p-4 transition-all duration-300",
-        isSelected && cn(accent.bgSubtle, accent.border, "scale-[0.98] shadow-inner"),
+        "flex items-center gap-3 bg-white/[0.02] border border-white/[0.06] rounded-2xl p-3.5 mb-2.5 transition-all duration-200 active:scale-[0.99]",
+        isSelected && cn(accent.bgSubtle, accent.border, "shadow-inner"),
         isLocked && "opacity-60 grayscale-[0.3]"
       )}
-      header={
-        <div className="flex items-center gap-4">
+    >
+      {/* Checkbox (Only in selection mode) */}
+      {isSelectionMode && (
+        <div className="shrink-0 mr-1">
           <Checkbox
             checked={isSelected}
             onCheckedChange={onToggleSelect}
-            className="mr-1"
             disabled={isLocked}
             accent={accent}
           />
-          <div className={cn("w-10 h-10 rounded-xl border flex items-center justify-center shadow-inner", cfg.bg, cfg.border)}>
-            <cfg.icon size={18} className={cfg.color} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="font-bold text-sm text-white truncate">{template.title}</h3>
-              {isLocked && <Lock size={10} className="text-amber-500/50" />}
-            </div>
-            <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-wider mt-1">
-              {template.recurring_type} • {template.kandang_name || 'Semua Kandang'}
-            </p>
-          </div>
         </div>
-      }
-      footer={
-        <div className="flex w-full items-center justify-between mt-4 bg-white/[0.02] -mx-4 -mb-4 px-4 py-3 rounded-b-2xl border-t border-white/[0.04]">
-          <div className="flex items-center gap-2">
-            <Users size={12} className="text-[#4B6478]" />
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              {template.assignee?.full_name?.split(' ')[0] || 'UNASSIGNED'}
-            </span>
-          </div>
-          <div className="flex gap-2">
-            {!isLocked ? (
-              <>
-                <Button
-                  variant="ghost" size="icon"
-                  className="h-8 w-8 text-red-500/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
-                  onClick={(e) => { e.stopPropagation(); onDelete(template.id) }}
-                >
-                  <Trash2 size={14} />
-                </Button>
-                <Button
-                  variant="ghost" size="icon"
-                  className={cn("h-8 w-8 rounded-lg transition-all", accent.refreshHover)}
-                  onClick={(e) => { e.stopPropagation(); refresh.mutate(template.id) }}
-                  disabled={refresh.isPending}
-                >
-                  <RefreshCcw size={14} className={refresh.isPending ? "animate-spin" : ""} />
-                </Button>
-              </>
-            ) : (
-              <div className="px-2 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-[8px] font-black text-amber-500/70 uppercase tracking-widest flex items-center gap-1">
-                <Lock size={8} /> Proyek Strategis
-              </div>
-            )}
-          </div>
+      )}
+
+      {/* Task Icon */}
+      <div className={cn("w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 shadow-inner", cfg.bg, cfg.border)}>
+        <cfg.icon size={18} className={cfg.color} />
+      </div>
+
+      {/* Task Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 mb-0.5">
+          <h3 className="font-bold text-sm text-white line-clamp-2 leading-snug">
+            {template.title}
+          </h3>
+          {isLocked && <Lock size={10} className="text-amber-500/50 shrink-0" />}
         </div>
-      }
-    />
+        <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-wider flex items-center gap-1.5">
+          <span>{template.recurring_type}</span>
+          <span>•</span>
+          <span className="truncate max-w-[120px]">{template.kandang_name || 'Semua Kandang'}</span>
+          {template.linked_data_entry && (
+            <>
+              <span>•</span>
+              <span className={cn("inline-flex items-center gap-0.5 text-[8px] font-black tracking-widest uppercase", accent.text)}>
+                Entry
+              </span>
+            </>
+          )}
+        </p>
+      </div>
+
+      {/* Right Side: Assignment Status Pill & Actions Menu */}
+      <div className="flex items-center gap-2 shrink-0">
+        {/* Assignment Pill */}
+        <div className={cn(
+          "px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border",
+          hasAssignee 
+            ? "bg-green-500/10 border-green-500/20 text-green-400" 
+            : "bg-amber-500/10 border-amber-500/20 text-amber-400"
+        )}>
+          {hasAssignee ? shortAssigneeName : 'Belum Assign'}
+        </div>
+
+        {/* Dropdown Actions Menu */}
+        {!isSelectionMode && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+              <button className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[#4B6478] hover:text-white hover:bg-white/10 transition-all">
+                <MoreVertical size={14} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-2xl w-48 p-1.5 shadow-2xl z-[5000]">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (!isLocked) onEdit(template)
+                }}
+                disabled={isLocked}
+                className="text-xs font-bold rounded-xl cursor-pointer text-slate-300 hover:text-white"
+              >
+                Edit Template
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation()
+                  refresh.mutate(template.id)
+                }}
+                disabled={refresh.isPending || isLocked}
+                className="text-xs font-bold rounded-xl cursor-pointer text-slate-300 hover:text-white"
+              >
+                {refresh.isPending ? 'Memproses...' : 'Terapkan ke Jadwal'}
+              </DropdownMenuItem>
+              {!isLocked && (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDelete(template.id)
+                  }}
+                  className="text-xs font-bold rounded-xl cursor-pointer text-red-400 hover:text-red-300 focus:text-red-300"
+                >
+                  Hapus Template
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -338,7 +405,7 @@ function TemplateFormSheet({ open, onOpenChange, template, isDesktop, hooks, con
                 onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
                 placeholder="Contoh: Pemberian Pakan Pagi"
                 className={cn(
-                  "w-full min-h-[44px] h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-5 text-base font-bold focus:outline-none transition-all placeholder:text-white/10",
+                  "w-full min-h-[44px] h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-5 text-base font-bold text-white focus:outline-none transition-all placeholder:text-white/10",
                   accent.inputFocus
                 )}
               />
@@ -349,31 +416,31 @@ function TemplateFormSheet({ open, onOpenChange, template, isDesktop, hooks, con
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Jenis Tugas</label>
                 <select
-                  value={form.task_type}
+                  value={form.task_type || ''}
                   onChange={e => setForm(f => ({ ...f, task_type: e.target.value }))}
                   className={cn(
-                    "w-full min-h-[44px] h-14 bg-[#111C24] border border-white/10 rounded-2xl px-5 text-sm font-bold focus:outline-none transition-all appearance-none",
+                    "w-full min-h-[44px] h-14 bg-[#111C24] border border-white/10 rounded-2xl px-5 text-sm font-bold text-white focus:outline-none transition-all appearance-none",
                     accent.inputFocus
                   )}
                 >
                   {Object.entries(TASK_TYPE_CFG).map(([k, v]) => (
-                    <option key={k} value={k}>{v.label}</option>
+                    <option key={k} value={k} className="bg-[#111C24] text-white">{v.label}</option>
                   ))}
                 </select>
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Kandang</label>
                 <select
-                  value={form.kandang_name}
+                  value={form.kandang_name || ''}
                   onChange={e => setForm(f => ({ ...f, kandang_name: e.target.value }))}
                   className={cn(
-                    "w-full min-h-[44px] h-14 bg-[#111C24] border border-white/10 rounded-2xl px-5 text-sm font-bold focus:outline-none transition-all appearance-none",
+                    "w-full min-h-[44px] h-14 bg-[#111C24] border border-white/10 rounded-2xl px-5 text-sm font-bold text-white focus:outline-none transition-all appearance-none",
                     accent.inputFocus
                   )}
                 >
-                  <option value="">Semua Kandang</option>
+                  <option value="" className="bg-[#111C24] text-white">Semua Kandang</option>
                   {kandangOptions.map(name => (
-                    <option key={name} value={name}>{name}</option>
+                    <option key={name} value={name} className="bg-[#111C24] text-white">{name}</option>
                   ))}
                 </select>
               </div>
@@ -385,10 +452,10 @@ function TemplateFormSheet({ open, onOpenChange, template, isDesktop, hooks, con
                 <label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Waktu (WIB)</label>
                 <input
                   type="time"
-                  value={form.due_time}
+                  value={form.due_time || ''}
                   onChange={e => setForm(f => ({ ...f, due_time: e.target.value }))}
                   className={cn(
-                    "w-full min-h-[44px] h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-5 text-base font-bold focus:outline-none transition-all",
+                    "w-full min-h-[44px] h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-5 text-base font-bold text-white focus:outline-none transition-all",
                     accent.inputFocus
                   )}
                 />
@@ -396,16 +463,16 @@ function TemplateFormSheet({ open, onOpenChange, template, isDesktop, hooks, con
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Default Assignee</label>
                 <select
-                  value={form.default_assignee_worker_id}
+                  value={form.default_assignee_worker_id || ''}
                   onChange={e => setForm(f => ({ ...f, default_assignee_worker_id: e.target.value }))}
                   className={cn(
-                    "w-full min-h-[44px] h-14 bg-[#111C24] border border-white/10 rounded-2xl px-5 text-sm font-bold focus:outline-none transition-all appearance-none",
+                    "w-full min-h-[44px] h-14 bg-[#111C24] border border-white/10 rounded-2xl px-5 text-sm font-bold text-white focus:outline-none transition-all appearance-none",
                     accent.inputFocus
                   )}
                 >
-                  <option value="">Auto-Assign (Off)</option>
+                  <option value="" className="bg-[#111C24] text-white">Auto-Assign (Off)</option>
                   {workers.map(w => (
-                    <option key={w.id} value={w.id}>{w.full_name}</option>
+                    <option key={w.id} value={w.id} className="bg-[#111C24] text-white">{w.full_name}</option>
                   ))}
                 </select>
               </div>
@@ -418,15 +485,15 @@ function TemplateFormSheet({ open, onOpenChange, template, isDesktop, hooks, con
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Frekuensi</label>
                 <select
-                  value={form.recurring_type}
+                  value={form.recurring_type || ''}
                   onChange={e => setForm(f => ({ ...f, recurring_type: e.target.value }))}
                   className={cn(
-                    "w-full min-h-[44px] h-14 bg-[#111C24] border border-white/10 rounded-2xl px-5 text-sm font-bold focus:outline-none transition-all appearance-none",
+                    "w-full min-h-[44px] h-14 bg-[#111C24] border border-white/10 rounded-2xl px-5 text-sm font-bold text-white focus:outline-none transition-all appearance-none",
                     accent.inputFocus
                   )}
                 >
                   {RECURRING_TYPES.map(t => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
+                    <option key={t.value} value={t.value} className="bg-[#111C24] text-white">{t.label}</option>
                   ))}
                 </select>
               </div>
@@ -621,9 +688,9 @@ function PresetTemplateSheet({ open, onOpenChange, existingTemplates, isDesktop,
                 accent.inputFocus
               )}
             >
-              <option value="">-- Pilih batch aktif --</option>
+              <option value="" className="bg-[#111C24] text-white">-- Pilih batch aktif --</option>
               {activeBatches.map(b => (
-                <option key={b.id} value={b.id}>{b.batch_code} • {b.kandang_name}</option>
+                <option key={b.id} value={b.id} className="bg-[#111C24] text-white">{b.batch_code} • {b.kandang_name}</option>
               ))}
             </select>
             {activeBatches.length === 0 && (
@@ -672,6 +739,8 @@ export function PenggemukanTaskSettings({ config, hooks }) {
   const { profile } = useAuth()
 
   const [selectedIds, setSelectedIds] = useState(new Set())
+  const [isSelectionMode, setIsSelectionMode] = useState(false)
+  const [mobileFilter, setMobileFilter] = useState('semua')
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [taskToDelete, setTaskToDelete] = useState(null)
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -686,12 +755,27 @@ export function PenggemukanTaskSettings({ config, hooks }) {
   const refresh = useGenerateInstancesFromTemplate()
 
   const filteredTemplates = useMemo(() => {
-    if (!searchQuery) return templates
-    return templates.filter(t =>
-      t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.kandang_name?.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  }, [templates, searchQuery])
+    let result = templates
+    if (searchQuery) {
+      result = result.filter(t =>
+        t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        t.kandang_name?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+    // Mobile filter
+    if (!isDesktop) {
+      if (mobileFilter === 'harian') {
+        result = result.filter(t => t.recurring_type === 'harian')
+      } else if (mobileFilter === 'sekali') {
+        result = result.filter(t => t.recurring_type === 'sekali')
+      } else if (mobileFilter === 'input_data') {
+        result = result.filter(t => t.linked_data_entry)
+      } else if (mobileFilter === 'belum_assign') {
+        result = result.filter(t => !t.default_assignee_worker_id && !t.assignee?.id)
+      }
+    }
+    return result
+  }, [templates, searchQuery, mobileFilter, isDesktop])
 
   const stats = useMemo(() => ([
     { label: 'Total Template', value: templates.length },
@@ -744,25 +828,45 @@ export function PenggemukanTaskSettings({ config, hooks }) {
   useEffect(() => {
     if (!isDesktop) {
       setRightAction(
-        <button
-          onClick={handleAddNew}
-          className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white", accent.bg, accent.shadow)}
-        >
-          <Plus size={20} />
-        </button>
+        <div className="flex items-center gap-2">
+          {filteredTemplates.length > 0 && (
+            <button
+              onClick={() => setIsSelectionMode(prev => {
+                if (prev) {
+                  setSelectedIds(new Set())
+                }
+                return !prev
+              })}
+              className={cn(
+                "px-3 h-10 rounded-xl flex items-center justify-center text-xs font-bold border transition-all",
+                isSelectionMode 
+                  ? "bg-amber-500/10 border-amber-500/30 text-amber-400" 
+                  : "bg-white/5 border-white/10 text-slate-400"
+              )}
+            >
+              {isSelectionMode ? 'Selesai' : 'Pilih'}
+            </button>
+          )}
+          <button
+            onClick={handleAddNew}
+            className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-white", accent.bg, accent.shadow)}
+          >
+            <Plus size={20} />
+          </button>
+        </div>
       )
     } else {
       setRightAction(null)
     }
-  }, [setRightAction, isDesktop])
+  }, [setRightAction, isDesktop, isSelectionMode, filteredTemplates.length])
 
   if (isLoading) return <LoadingSpinner fullPage />
 
   return (
-    <div className="min-h-screen bg-[#06090F] text-slate-100 pb-24 lg:pb-0 font-body">
+    <div className="min-h-screen bg-[#06090F] text-slate-100 pb-32 lg:pb-0 font-body">
       <BrokerPageHeader
         title={config.pageTitle}
-        subtitle={config.pageSubtitle}
+        subtitle={!isDesktop ? `${templates.filter(t => t.is_active).length} template aktif · ${templates.filter(t => t.linked_data_entry).length} input data` : config.pageSubtitle}
         isDesktop={isDesktop}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -796,6 +900,35 @@ export function PenggemukanTaskSettings({ config, hooks }) {
       <SummaryStrip items={stats} accent={accent} />
 
       <main className="p-5 max-w-[1600px] mx-auto">
+        {/* Mobile Filter Chips */}
+        {!isDesktop && (
+          <div className="flex gap-2 overflow-x-auto no-scrollbar py-2 px-1 mb-4">
+            {[
+              { id: 'semua', label: 'Semua' },
+              { id: 'harian', label: 'Harian' },
+              { id: 'sekali', label: 'Sekali Saja' },
+              { id: 'input_data', label: 'Input Data' },
+              { id: 'belum_assign', label: 'Belum Assign' },
+            ].map(chip => {
+              const active = mobileFilter === chip.id
+              return (
+                <button
+                  key={chip.id}
+                  onClick={() => setMobileFilter(chip.id)}
+                  className={cn(
+                    "shrink-0 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all border",
+                    active 
+                      ? cn(accent.bgSubtle, accent.border, accent.text, "shadow-inner") 
+                      : "bg-white/[0.02] border-white/[0.06] text-[#4B6478] hover:bg-white/[0.04]"
+                  )}
+                >
+                  {chip.label}
+                </button>
+              )
+            })}
+          </div>
+        )}
+
         <AnimatePresence mode="wait">
           {!isDesktop ? (
             <motion.div key="mobile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-1">
@@ -815,6 +948,7 @@ export function PenggemukanTaskSettings({ config, hooks }) {
                     isSelected={selectedIds.has(t.id)}
                     onToggleSelect={() => toggleSelection(t.id)}
                     onDelete={(id) => handleDeleteConfirm(id)}
+                    isSelectionMode={isSelectionMode}
                     accent={accent}
                   />
                 ))
@@ -980,7 +1114,10 @@ export function PenggemukanTaskSettings({ config, hooks }) {
             <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
-                onClick={() => setSelectedIds(new Set())}
+                onClick={() => {
+                  setSelectedIds(new Set())
+                  setIsSelectionMode(false)
+                }}
                 className="text-xs font-bold uppercase tracking-wider text-slate-400 hover:text-white"
               >
                 Batal

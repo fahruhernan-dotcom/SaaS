@@ -462,7 +462,7 @@ function TemplateFormSheet({ open, onOpenChange, template, isDesktop, livestockT
                   className="w-full h-12 bg-[#111C24] border border-white/5 rounded-xl px-4 text-sm text-white focus:border-[#7C3AED] outline-none appearance-none"
                 >
                   {Object.entries(TASK_TYPE_CFG).map(([k, v]) => (
-                    <option key={k} value={k}>{v.label}</option>
+                    <option key={k} value={k} className="bg-[#111C24] text-white">{v.label}</option>
                   ))}
                 </select>
               </div>
@@ -473,9 +473,9 @@ function TemplateFormSheet({ open, onOpenChange, template, isDesktop, livestockT
                   onChange={e => setForm(f => ({ ...f, kandang_name: e.target.value }))}
                   className="w-full h-12 bg-[#111C24] border border-white/5 rounded-xl px-4 text-sm text-white focus:border-[#7C3AED] outline-none appearance-none"
                 >
-                  <option value="">Semua Kandang</option>
+                  <option value="" className="bg-[#111C24] text-white">Semua Kandang</option>
                   {kandangOptions.map(name => (
-                    <option key={name} value={name}>{name}</option>
+                    <option key={name} value={name} className="bg-[#111C24] text-white">{name}</option>
                   ))}
                 </select>
               </div>
@@ -506,7 +506,7 @@ function TemplateFormSheet({ open, onOpenChange, template, isDesktop, livestockT
                     className="w-full h-12 bg-[#111C24] border border-white/5 rounded-xl px-4 text-sm text-white focus:border-[#7C3AED] outline-none appearance-none"
                   >
                     {RECURRING_TYPES.map(t => (
-                      <option key={t.value} value={t.value}>{t.label}</option>
+                      <option key={t.value} value={t.value} className="bg-[#111C24] text-white">{t.label}</option>
                     ))}
                   </select>
                 </div>
@@ -560,9 +560,9 @@ function TemplateFormSheet({ open, onOpenChange, template, isDesktop, livestockT
                 onChange={e => setForm(f => ({ ...f, default_assignee_worker_id: e.target.value }))}
                 className="w-full h-12 bg-[#111C24] border border-white/5 rounded-xl px-4 text-sm text-white focus:border-[#7C3AED] outline-none appearance-none font-medium"
               >
-                <option value="">-- Pilih Pekerja --</option>
+                <option value="" className="bg-[#111C24] text-white">-- Pilih Pekerja --</option>
                 {workers.map(w => (
-                  <option key={w.id} value={w.id}>{w.full_name}</option>
+                  <option key={w.id} value={w.id} className="bg-[#111C24] text-white">{w.full_name}</option>
                 ))}
               </select>
             </div>

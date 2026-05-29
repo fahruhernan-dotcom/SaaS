@@ -29,9 +29,10 @@ export default function AnimalDetailSheet({ animal, kandangs, speciesConfig, onC
   const sisiHari   = Math.max(0, targetHari - hari)
 
   const recentRecords = useMemo(() => {
-    if (!records.length) return []
-    return [...records].sort((a, b) => new Date(b.weigh_date) - new Date(a.weigh_date)).slice(0, 4)
-  }, [records])
+    const recs = animal[weightRecordsKey] ?? []
+    if (!recs.length) return []
+    return [...recs].sort((a, b) => new Date(b.weigh_date) - new Date(a.weigh_date)).slice(0, 4)
+  }, [animal, weightRecordsKey])
 
   const moveTargets = kandangs.filter(k => k.id !== animal.kandang_id)
 
@@ -39,7 +40,7 @@ export default function AnimalDetailSheet({ animal, kandangs, speciesConfig, onC
     <motion.div
       initial={{ x: '100%', opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: '100%', opacity: 0 }}
       transition={{ type: 'spring', damping: 28, stiffness: 250 }}
-      className="fixed inset-y-0 right-0 w-[380px] max-w-full z-50 bg-[#0A1015]/97 backdrop-blur-xl border-l border-white/[0.08] shadow-[-10px_0_50px_rgba(0,0,0,0.7)] flex flex-col"
+      className="fixed inset-y-0 right-0 w-[380px] max-w-full z-[4000] bg-[#0A1015]/97 backdrop-blur-xl border-l border-white/[0.08] shadow-[-10px_0_50px_rgba(0,0,0,0.7)] flex flex-col"
     >
       <div className="absolute -top-10 right-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -69,7 +70,7 @@ export default function AnimalDetailSheet({ animal, kandangs, speciesConfig, onC
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto px-6 pt-5 pb-32 md:pb-8 space-y-4 custom-scrollbar">
         {/* KPI row */}
         <div className="grid grid-cols-3 gap-2">
           {[

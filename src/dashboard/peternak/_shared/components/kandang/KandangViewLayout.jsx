@@ -485,7 +485,7 @@ export default function KandangViewLayout({ speciesConfig, hooks, pageTitle }) {
       <AnimatePresence>
         {selectedAnimal && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-40" onClick={() => setSelectedAnimal(null)} />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-[3999]" onClick={() => setSelectedAnimal(null)} />
             <AnimalDetailSheet animal={selectedAnimal} kandangs={kandangs} speciesConfig={speciesConfig} onClose={() => setSelectedAnimal(null)} onMove={handleMoveFromSheet} />
           </>
         )}

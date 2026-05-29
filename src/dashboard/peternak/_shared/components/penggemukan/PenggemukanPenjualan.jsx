@@ -73,6 +73,7 @@ const fmt = (n) => Math.round(n).toLocaleString('id-ID')
 
 function HppPanel({ batchId, useHppBatch }) {
   const [expanded, setExpanded] = useState(false)
+  const [activeMetricId, setActiveMetricId] = useState(null)
   const hpp = useHppBatch(batchId)
 
   if (hpp.isLoading) return (
@@ -87,7 +88,7 @@ function HppPanel({ batchId, useHppBatch }) {
     profitLoss, produksiCount,
     kgPakanTotal, hargaRataPerKg,
     warnPakanTanpaBiaya, ternakTanpaHarga = 0, allDead,
-    animalDaysBatch = 0, overheadActiveHeadSample = 0, overheadPeriods = [],
+    animalDaysBatch = 0, overheadActiveHeadSample = 0,
     animalDaysFormulaText = '',
   } = hpp
 
@@ -101,6 +102,163 @@ function HppPanel({ batchId, useHppBatch }) {
     ...(totalBiayaKesehatan > 0 ? [{ label: 'Kesehatan', value: totalBiayaKesehatan, color: 'bg-rose-500' }] : []),
   ]
   const totalForBar = totalHpp || 1
+
+  const renderMetricDetail = (metricId) => {
+    const runningCost = totalBiayaPakan + totalBiayaGajiOverhead + totalBiayaOpsLain
+    const costPerHeadPerDay = animalDaysBatch > 0 ? Math.round(runningCost / animalDaysBatch) : 0
+
+    const details = {
+      total_hpp: {
+        title: 'Total HPP Berjalan',
+        formula: 'Total HPP = Modal Beli + Pakan Terpakai + Overhead + Biaya Ops + Kesehatan',
+        components: [
+          { label: 'Modal Beli', value: totalModalBeli },
+          { label: 'Pakan Terpakai', value: totalBiayaPakan },
+          ...(totalBiayaGajiOverhead > 0 ? [{ label: 'Overhead Periodik Harian', value: totalBiayaGajiOverhead }] : []),
+          { label: 'Biaya Ops Lain', value: totalBiayaOpsLain },
+          ...(totalBiayaKesehatan > 0 ? [{ label: 'Kesehatan', value: totalBiayaKesehatan }] : []),
+        ],
+        explanation: 'Akumulasi seluruh biaya berjalan yang dialokasikan untuk pemeliharaan batch ini.'
+      },
+      modal_beli: {
+        title: 'Modal Beli',
+        formula: 'Total Harga Beli Ternak Aktif',
+        components: [
+          { label: 'Jumlah Ekor Aktif', text: `${aktifCount} ekor` },
+          { label: 'Rata-rata Modal / Ekor', text: `Rp ${fmt(Math.round(totalModalBeli / (aktifCount || 1)))}` },
+          { label: 'Kontribusi HPP', text: `${totalHpp > 0 ? Math.round(totalModalBeli / totalHpp * 100) : 0}%` }
+        ],
+        explanation: 'Modal awal pembelian bibit/ternak yang saat ini masih hidup (aktif) di kandang.'
+      },
+      pakan_terpakai: {
+        title: 'Pakan Terpakai',
+        formula: 'Total Pakan Terpakai × Rata-rata Harga Pakan',
+        components: [
+          { label: 'Total Konsumsi', text: `${kgPakanTotal.toFixed(1)} kg` },
+          { label: 'Rata-rata Harga', text: `Rp ${fmt(hargaRataPerKg)}/kg` },
+          { label: 'Kontribusi HPP', text: `${totalHpp > 0 ? Math.round(totalBiayaPakan / totalHpp * 100) : 0}%` }
+        ],
+        explanation: 'Biaya pakan yang telah dikonsumsi oleh ternak dalam batch selama pemeliharaan.'
+      },
+      overhead: {
+        title: 'Overhead Periodik Harian',
+        formula: 'Akumulasi Alokasi Overhead Harian per Ekor Aktif',
+        components: [
+          { label: 'Total Overhead Dialokasikan', text: `Rp ${fmt(totalBiayaGajiOverhead)}` },
+          { label: 'Rata-rata Denominator', text: `~${overheadActiveHeadSample} ekor` },
+          { label: 'Kontribusi HPP', text: `${totalHpp > 0 ? Math.round(totalBiayaGajiOverhead / totalHpp * 100) : 0}%` }
+        ],
+        explanation: 'Biaya gaji, sewa, listrik, dll. yang dibagikan secara adil setiap harinya ke ternak yang aktif. Jumlah populasi yang sedikit membuat overhead per ekor lebih tinggi.'
+      },
+      biaya_ops: {
+        title: 'Biaya Operasional',
+        formula: 'Total Biaya Operasional Lain di Luar Pakan & Overhead',
+        components: [
+          { label: 'Total Biaya Ops', text: `Rp ${fmt(totalBiayaOpsLain)}` },
+          { label: 'Kontribusi HPP', text: `${totalHpp > 0 ? Math.round(totalBiayaOpsLain / totalHpp * 100) : 0}%` }
+        ],
+        explanation: 'Biaya logistik, vitamin umum, transportasi, perawatan kandang, dll.'
+      },
+      kesehatan: {
+        title: 'Kesehatan',
+        formula: 'Total Pengeluaran Obat, Vaksin & Medis',
+        components: [
+          { label: 'Total Biaya Kesehatan', text: `Rp ${fmt(totalBiayaKesehatan)}` },
+          { label: 'Kontribusi HPP', text: `${totalHpp > 0 ? Math.round(totalBiayaKesehatan / totalHpp * 100) : 0}%` }
+        ],
+        explanation: 'Biaya obat-obatan khusus, vitamin medis, vaksinasi, desinfektan, atau jasa medis dokter hewan.'
+      },
+      hpp_ekor: {
+        title: 'HPP / Ekor',
+        formula: 'Total HPP Berjalan ÷ Total Ekor Terdaftar (Termasuk yang terjual/mati)',
+        components: [
+          { label: 'Total HPP Berjalan', text: `Rp ${fmt(totalHpp)}` },
+          { label: 'Total Produksi', text: `${produksiCount} ekor` },
+          { label: 'Perhitungan', text: `Rp ${fmt(totalHpp)} ÷ ${produksiCount} ekor = Rp ${fmt(hppPerEkor)}` }
+        ],
+        explanation: 'Rata-rata investasi modal dan biaya berjalan yang telah melekat pada setiap ekor ternak.'
+      },
+      bep_ekor: {
+        title: 'BEP / Ekor',
+        formula: 'HPP per Ekor + Target Margin 20%',
+        components: [
+          { label: 'HPP per Ekor', text: `Rp ${fmt(hppPerEkor)}` },
+          { label: 'Target Margin (20%)', text: `Rp ${fmt(Math.round(hppPerEkor * 0.2))}` },
+          { label: 'Perhitungan', text: `Rp ${fmt(hppPerEkor)} + Rp ${fmt(Math.round(hppPerEkor * 0.2))} = Rp ${fmt(bepPerEkor)}` }
+        ],
+        explanation: 'Harga jual minimal per ekor agar Anda mendapat keuntungan kotor 20%.'
+      },
+      bep_hari_ini: {
+        title: 'BEP Jual Hari Ini',
+        formula: bepSisaPerKg > 0
+          ? '(Total HPP + 20% Margin - Pendapatan Penjualan) ÷ Total Bobot Aktif'
+          : '(Total HPP + 20% Margin - Pendapatan Penjualan) ÷ Sisa Ternak Aktif',
+        components: [
+          { label: 'Total HPP Berjalan', text: `Rp ${fmt(totalHpp)}` },
+          { label: 'Target Margin (20%)', text: `Rp ${fmt(Math.round(totalHpp * 0.2))}` },
+          { label: 'Total Pendapatan Jual', text: `Rp ${fmt(totalPendapatan)}` },
+          { label: 'Sisa Ternak Aktif', text: `${aktifCount} ekor` },
+          ...(bepSisaPerKg > 0 ? [
+            { label: 'Total Bobot Aktif', text: `${totalActiveWeightKg.toFixed(1)} kg` },
+            { label: 'Rata-rata Bobot / Ekor', text: `${avgActiveWeightKg.toFixed(1)} kg/ekor` }
+          ] : []),
+          {
+            label: 'Perhitungan',
+            text: bepSisaPerKg > 0
+              ? `(Rp ${fmt(totalHpp)} + Rp ${fmt(Math.round(totalHpp * 0.2))} - Rp ${fmt(totalPendapatan)}) ÷ ${totalActiveWeightKg.toFixed(1)} kg = Rp ${fmt(bepSisaPerKg)}/kg`
+              : `(Rp ${fmt(totalHpp)} + Rp ${fmt(Math.round(totalHpp * 0.2))} - Rp ${fmt(totalPendapatan)}) ÷ ${aktifCount} ekor = Rp ${fmt(bepSisa)}/ekor`
+          }
+        ],
+        explanation: 'Angka ini adalah estimasi harga jual minimal per kg/ekor agar seluruh biaya dan margin target tertutup hari ini.'
+      },
+      biaya_harian: {
+        title: 'Biaya Berjalan / Ekor / Hari',
+        formula: '(Pakan Terpakai + Overhead + Biaya Ops) ÷ Total Ekor-Hari Aktif',
+        components: [
+          { label: 'Total Biaya Berjalan', text: `Rp ${fmt(runningCost)}` },
+          { label: 'Total Ekor-Hari Aktif', text: `${animalDaysBatch.toLocaleString('id-ID')} ekor-hari` },
+          { label: 'Rumus Ekor-Hari', text: animalDaysFormulaText || 'Akumulasi ternak aktif per hari sejak masuk batch' },
+          { label: 'Perhitungan', text: `Rp ${fmt(runningCost)} ÷ ${animalDaysBatch.toLocaleString('id-ID')} = Rp ${fmt(costPerHeadPerDay)}` }
+        ],
+        explanation: 'Biaya operasional harian rata-rata per ekor. Menggunakan denominator ekor-hari agar adil bagi ternak yang sudah keluar/mati.'
+      }
+    }
+
+    const d = details[metricId]
+    if (!d) return null
+
+    return (
+      <div className="bg-[#111C24] border border-white/[0.06] rounded-xl p-3.5 space-y-3">
+        <div>
+          <h4 className="text-xs font-black text-white font-['Sora'] uppercase tracking-wider">{d.title}</h4>
+          <p className="text-[9px] text-[#4B6478] font-bold mt-1.5 uppercase tracking-wider">CARA HITUNG</p>
+          <p className="text-xs text-amber-300 font-medium font-mono bg-black/30 px-2.5 py-1.5 rounded-lg border border-white/[0.04] mt-1 break-words leading-relaxed">
+            {d.formula}
+          </p>
+        </div>
+
+        {d.components && (
+          <div className="space-y-1.5 border-t border-white/[0.04] pt-2.5">
+            <p className="text-[9px] text-[#4B6478] font-black uppercase tracking-widest">VARIABEL & SUMBER DATA</p>
+            <div className="grid gap-1.5">
+              {d.components.map((c, i) => (
+                <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 bg-white/[0.01] px-2.5 py-1.5 rounded-lg border border-white/[0.02]">
+                  <span className="text-[10px] font-bold text-[#4B6478] uppercase tracking-wide">{c.label}</span>
+                  <span className="text-xs font-black text-white">
+                    {c.value !== undefined ? `Rp ${fmt(c.value)}` : c.text}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="text-[10px] text-[#4B6478]/90 leading-relaxed border-t border-white/[0.04] pt-2">
+          {d.explanation}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-[#0C1421] border border-white/[0.07] rounded-2xl overflow-hidden">
@@ -177,6 +335,23 @@ function HppPanel({ batchId, useHppBatch }) {
 
               {/* Cost breakdown bar */}
               <div className={cn(!warnPakanTanpaBiaya && ternakTanpaHarga === 0 && !allDead && 'pt-3')}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Total HPP Berjalan</span>
+                  <button
+                    type="button"
+                    onClick={() => setActiveMetricId(prev => prev === 'total_hpp' ? null : 'total_hpp')}
+                    aria-expanded={activeMetricId === 'total_hpp'}
+                    className={cn(
+                      "text-[9px] px-2 py-0.5 rounded-md font-bold flex items-center gap-1 transition-all border",
+                      activeMetricId === 'total_hpp'
+                        ? "bg-amber-500/20 border-amber-500/30 text-amber-400 font-extrabold"
+                        : "bg-white/5 border-white/10 text-[#4B6478] hover:text-white"
+                    )}
+                  >
+                    <span>Cara hitung</span>
+                    {activeMetricId === 'total_hpp' ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                  </button>
+                </div>
                 <div className="flex h-2 rounded-full overflow-hidden gap-px mb-3">
                   {costParts.map(p => (
                     <div
@@ -186,130 +361,161 @@ function HppPanel({ batchId, useHppBatch }) {
                     />
                   ))}
                 </div>
-                <div className={cn('grid gap-2', costParts.length <= 3 ? 'grid-cols-3' : costParts.length === 4 ? 'grid-cols-4' : 'grid-cols-3')}>
-                  {costParts.map(p => (
-                    <div key={p.label} className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-2.5">
-                      <div className={cn('w-2 h-2 rounded-full mb-1.5', p.color)} />
-                      <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">{p.label}</p>
-                      <p className="text-xs font-black text-white">Rp {fmt(p.value)}</p>
-                      <p className="text-[9px] text-[#4B6478]">{totalHpp > 0 ? Math.round((p.value / totalHpp) * 100) : 0}%</p>
-                      {p.label === 'Pakan Terpakai' && hargaRataPerKg > 0 && (
-                        <p className="text-[9px] text-emerald-400/70 mt-1 leading-tight">
-                          {kgPakanTotal.toFixed(1)} kg × Rp {fmt(hargaRataPerKg)}/kg
+                <div className={cn(
+                  'grid gap-2',
+                  costParts.length <= 3
+                    ? 'grid-cols-2 sm:grid-cols-3'
+                    : 'grid-cols-2 md:grid-cols-4'
+                )}>
+                  {costParts.map(p => {
+                    const idMap = {
+                      'Modal Beli': 'modal_beli',
+                      'Pakan Terpakai': 'pakan_terpakai',
+                      'Overhead Periodik Harian': 'overhead',
+                      'Biaya Ops': 'biaya_ops',
+                      'Kesehatan': 'kesehatan'
+                    }
+                    const metricId = idMap[p.label] || p.label.toLowerCase()
+                    const isActive = activeMetricId === metricId
+                    return (
+                      <button
+                        type="button"
+                        key={p.label}
+                        onClick={() => setActiveMetricId(prev => prev === metricId ? null : metricId)}
+                        aria-expanded={isActive}
+                        className={cn(
+                          "bg-white/[0.02] border rounded-xl p-2.5 text-left transition-all hover:bg-white/[0.04] focus:outline-none focus:ring-1 focus:ring-amber-500/50 min-h-[44px]",
+                          isActive ? "border-amber-500/40 bg-amber-500/[0.02]" : "border-white/[0.05]"
+                        )}
+                      >
+                        <div className="flex items-center justify-between mb-1.5">
+                          <div className={cn('w-2 h-2 rounded-full', p.color)} />
+                          <div className="flex items-center gap-1 text-[9px] text-[#4B6478] font-bold">
+                            <span>Detail</span>
+                            {isActive ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                          </div>
+                        </div>
+                        <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest leading-none mb-1">{p.label}</p>
+                        <p className="text-xs font-black text-white leading-none">Rp {fmt(p.value)}</p>
+                        <p className="text-[9px] text-[#4B6478] mt-1">
+                          {totalHpp > 0 ? Math.round((p.value / totalHpp) * 100) : 0}%
                         </p>
-                      )}
-                      {p.label === 'Pakan Terpakai' && hargaRataPerKg === 0 && !warnPakanTanpaBiaya && (
-                        <p className="text-[9px] text-[#4B6478]/60 mt-1 leading-tight italic">Catat beli pakan dulu</p>
-                      )}
-                    {p.label === 'Overhead Periodik Harian' && (
-                        <>
-                          <p
-                            className="text-[9px] text-pink-400/70 mt-1 leading-tight"
-                            title="Biaya periodik seperti gaji dibagi ke ternak aktif pada periode tersebut. Jika populasi sedikit, biaya per ekor akan lebih tinggi."
-                          >
-                            prorata harian
-                          </p>
-                          {overheadActiveHeadSample > 0 && (
-                            <p
-                              className="text-[9px] text-pink-300/60 mt-0.5 leading-tight"
-                              title={`Rata-rata denominator alokasi overhead dari ${(overheadPeriods ?? []).length} periode pembayaran. Tanda ~ berarti estimasi rata-rata tertimbang.`}
-                            >
-                              ÷ ~{overheadActiveHeadSample} ekor
-                              {(overheadPeriods ?? []).length > 1 && ' (rata-rata)'}
-                            </p>
-                          )}
-                          <p
-                            className="text-[8px] text-[#4B6478]/60 mt-1 leading-tight italic cursor-help"
-                            title="Biaya periodik seperti gaji dibagi ke ternak aktif pada periode tersebut. Jika populasi sedikit, biaya per ekor akan lebih tinggi. Pada farm besar (150+ ekor), overhead per ekor jauh lebih rendah."
-                          >
-                            ⓘ populasi kecil = overhead/ekor tinggi
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  ))}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
               {/* Key metrics */}
-              <div className="grid grid-cols-3 gap-2">
-                <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-3">
-                  <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest mb-1">HPP / Ekor</p>
-                  <p className="text-sm font-black text-white font-['Sora']">Rp {fmt(hppPerEkor)}</p>
-                  <p className="text-[9px] text-[#4B6478] mt-0.5">{produksiCount} ekor</p>
-                </div>
-                <div className="bg-amber-500/5 border border-amber-500/15 rounded-xl p-3">
-                  <p className="text-[9px] font-black text-amber-400/70 uppercase tracking-widest mb-1">BEP / Ekor</p>
-                  <p className="text-sm font-black text-amber-300 font-['Sora']">Rp {fmt(bepPerEkor)}</p>
-                  <p className="text-[9px] text-[#4B6478] mt-0.5">HPP +20% margin</p>
-                </div>
-                <div className={cn(
-                  'rounded-xl p-3 border',
-                  aktifCount > 0
-                    ? 'bg-orange-500/5 border-orange-500/15'
-                    : 'bg-white/[0.02] border-white/[0.05]'
-                )}>
-                  <p className="text-[9px] font-black text-orange-400/70 uppercase tracking-widest mb-1"
-                    title="Harga minimum per kg jika seluruh ternak dijual HARI INI, pada bobot aktual saat ini. Makin berat saat panen, makin turun angka ini."
-                  >BEP Jual Hari Ini</p>
-                  <p className={cn('text-sm font-black font-["Sora"]', aktifCount > 0 ? 'text-orange-300' : 'text-[#4B6478]')}>
-                    {aktifCount > 0
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {[
+                  {
+                    id: 'hpp_ekor',
+                    label: 'HPP / Ekor',
+                    value: `Rp ${fmt(hppPerEkor)}`,
+                    sub: `${produksiCount} ekor`,
+                    colSpan: 'col-span-1 sm:col-span-1',
+                    order: 'order-2 sm:order-1',
+                    bg: 'bg-white/[0.02] border-white/[0.05]'
+                  },
+                  {
+                    id: 'bep_ekor',
+                    label: 'BEP / Ekor',
+                    value: `Rp ${fmt(bepPerEkor)}`,
+                    sub: 'HPP +20% margin',
+                    colSpan: 'col-span-1 sm:col-span-1',
+                    order: 'order-3 sm:order-2',
+                    bg: 'bg-amber-500/5 border-amber-500/15'
+                  },
+                  {
+                    id: 'bep_hari_ini',
+                    label: 'BEP Jual Hari Ini',
+                    value: aktifCount > 0
                       ? bepSisaPerKg > 0 ? `Rp ${fmt(bepSisaPerKg)}/kg` : `Rp ${fmt(bepSisa)}/ekor`
-                      : '—'}
-                  </p>
-                  <p className="text-[9px] text-[#4B6478] mt-0.5">
-                    {aktifCount > 0
+                      : '—',
+                    sub: aktifCount > 0
                       ? avgActiveWeightKg > 0
                         ? `${aktifCount} ekor · ~${avgActiveWeightKg.toFixed(1)} kg/ekor`
                         : `${aktifCount} ekor sisa`
-                      : ''}
-                  </p>
-                </div>
+                      : '',
+                    colSpan: 'col-span-2 sm:col-span-1',
+                    order: 'order-1 sm:order-3',
+                    bg: aktifCount > 0 ? 'bg-orange-500/5 border-orange-500/15' : 'bg-white/[0.02] border-white/[0.05]'
+                  }
+                ].map(item => {
+                  const isActive = activeMetricId === item.id
+                  return (
+                    <button
+                      type="button"
+                      key={item.id}
+                      onClick={() => setActiveMetricId(prev => prev === item.id ? null : item.id)}
+                      aria-expanded={isActive}
+                      className={cn(
+                        "rounded-xl p-3 text-left transition-all border hover:bg-white/[0.04] focus:outline-none focus:ring-1 focus:ring-amber-500/50 min-h-[44px]",
+                        item.colSpan,
+                        item.order,
+                        isActive ? "border-amber-500/40 bg-amber-500/[0.02]" : item.bg
+                      )}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">{item.label}</p>
+                        <div className="flex items-center gap-1 text-[9px] text-[#4B6478] font-bold">
+                          <span>Detail</span>
+                          {isActive ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                        </div>
+                      </div>
+                      <p className="text-sm font-black text-white font-['Sora'] leading-tight">{item.value}</p>
+                      <p className="text-[9px] text-[#4B6478] mt-1">{item.sub}</p>
+                    </button>
+                  )
+                })}
               </div>
 
               {/* ── Biaya berjalan / ekor / hari ─────────────────────────────── */}
               {(() => {
                 const runningCost = totalBiayaPakan + totalBiayaGajiOverhead + totalBiayaOpsLain
-                // animalDaysBatch = 0 → belum ada data hewan, jangan tampilkan
                 if (animalDaysBatch <= 0 || runningCost <= 0) return null
                 const costPerHeadPerDay = Math.round(runningCost / animalDaysBatch)
+                const isActive = activeMetricId === 'biaya_harian'
                 return (
-                  <div
-                    className="bg-pink-500/5 border border-pink-500/10 rounded-xl p-3 space-y-1"
-                    title="(Pakan Terpakai + Overhead + Biaya Ops) ÷ total ekor-hari aktif batch ini. Makin besar populasi atau makin cepat panen, makin kecil angka ini."
+                  <button
+                    type="button"
+                    onClick={() => setActiveMetricId(prev => prev === 'biaya_harian' ? null : 'biaya_harian')}
+                    aria-expanded={isActive}
+                    className={cn(
+                      "w-full text-left bg-pink-500/5 border rounded-xl p-3 flex flex-col gap-1 transition-all hover:bg-pink-500/[0.08] focus:outline-none focus:ring-1 focus:ring-pink-500/50 min-h-[44px]",
+                      isActive ? "border-pink-500/40 bg-pink-500/[0.02]" : "border-pink-500/10"
+                    )}
                   >
-                    {/* ── Baris utama: label + nilai ── */}
-                    <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between w-full">
                       <div>
                         <p className="text-[9px] font-black text-pink-400/70 uppercase tracking-widest">Biaya Berjalan / Ekor / Hari</p>
                         <p className="text-sm font-black text-pink-300 font-['Sora']">Rp {fmt(costPerHeadPerDay)}</p>
                       </div>
-                      <p className="text-[9px] text-[#4B6478]/80 leading-relaxed max-w-[110px] text-right mt-0.5">
-                        Makin banyak ekor atau makin cepat panen, makin rendah angka ini
-                      </p>
+                      <div className="flex items-center gap-1 text-[9px] text-[#4B6478] font-bold">
+                        <span>Detail</span>
+                        {isActive ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                      </div>
                     </div>
-
-                    {/* ── Formula denominator ── */}
-                    <div className="bg-white/[0.03] rounded-lg p-2 space-y-0.5">
-                      {animalDaysFormulaText ? (
-                        <p
-                          className="text-[9px] text-pink-200/60 font-mono leading-snug break-all"
-                          title="Ekor-hari dihitung dari jumlah ternak aktif per hari sejak masuk batch. Ternak terjual/mati tidak dihitung setelah tanggal keluarnya."
-                        >
-                          {animalDaysFormulaText}
-                        </p>
-                      ) : (
-                        <p className="text-[9px] text-[#4B6478] font-mono">
-                          Rp {fmt(runningCost)} ÷ {animalDaysBatch.toLocaleString('id-ID')} ekor-hari
-                        </p>
-                      )}
-                      <p className="text-[8px] text-[#4B6478]/60 italic leading-snug">
-                        Ekor-hari = akumulasi ternak aktif per hari sejak masuk batch
-                      </p>
-                    </div>
-                  </div>
+                  </button>
                 )
               })()}
+
+              {/* ── Detailed Calculation Panel ── */}
+              <AnimatePresence mode="wait">
+                {activeMetricId && (
+                  <motion.div
+                    key="metric-detail-panel"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    {renderMetricDetail(activeMetricId)}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* ── Dual BEP: Kas vs Akrual (show only if hutang exists) ──── */}
               {totalHutang > 0 && aktifCount > 0 && (
@@ -346,32 +552,6 @@ function HppPanel({ batchId, useHppBatch }) {
                   </div>
                 ))}
               </div>
-
-              {/* BEP sisa explanation */}
-              {aktifCount > 0 && bepSisa > 0 && !allDead && (
-                <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-3 space-y-1.5">
-                  <div className="flex gap-2">
-                    <ArrowUpDown size={12} className="text-orange-400 shrink-0 mt-0.5" />
-                    <p className="text-[10px] text-[#4B6478] leading-relaxed">
-                      <span className="text-white font-black">BEP jika dijual hari ini:</span>{' '}
-                      {bepSisaPerKg > 0
-                        ? <><span className="text-orange-300 font-black">Rp {fmt(bepSisaPerKg)}/kg</span>
-                            {avgActiveWeightKg > 0 && (
-                              <span className="text-[#4B6478]"> (~{avgActiveWeightKg.toFixed(1)} kg/ekor · total {totalActiveWeightKg > 0 ? totalActiveWeightKg.toFixed(1) : '—'} kg)</span>
-                            )}
-                          </>
-                        : <span className="text-orange-300 font-black">Rp {fmt(bepSisa)}/ekor</span>
-                      }{' '}untuk menutup semua biaya + margin 20%.
-                    </p>
-                  </div>
-                  <p className="text-[9px] text-[#4B6478]/70 leading-relaxed pl-5">
-                    Dihitung dari total HPP berjalan dibagi total bobot aktif saat ini.{' '}
-                    <span className="text-[#4B6478]">
-                      Angka akan turun jika bobot panen naik — wajar tinggi saat ternak masih muda/ringan.
-                    </span>
-                  </p>
-                </div>
-              )}
 
               {aktifCount === 0 && hasRevenue && !allDead && (
                 <div className={cn(
@@ -1162,6 +1342,64 @@ export function PenggemukanPenjualan({ config, hooks }) {
     return { total, ekor, piutang, avgPerEkor }
   }, [sales, selectedBatchId])
 
+  const renderActionButtons = (isMobileView) => {
+    if (!perm.canInputPenjualan) return null
+
+    if (isMobileView) {
+      return (
+        <div className="flex items-center gap-2 w-full mt-4 sm:hidden">
+          <button
+            disabled={isAllBatches || selectedBatch?.status !== 'active'}
+            onClick={() => { setSelectedSale(null); setShowSaleSheet(true) }}
+            className="flex-1 h-11 min-h-[44px] flex items-center justify-center gap-2 px-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(37,99,235,0.3)] active:scale-[0.98] transition-all"
+          >
+            <ShoppingBag size={14} strokeWidth={3} />
+            Jual
+          </button>
+          <button
+            disabled={isAllBatches}
+            onClick={() => navigate(BASE + '/ternak')}
+            className="flex-1 h-11 min-h-[44px] flex items-center justify-center gap-2 px-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(16,185,129,0.3)] active:scale-[0.98] transition-all"
+          >
+            <Plus size={14} strokeWidth={3} />
+            Tambah
+          </button>
+        </div>
+      )
+    }
+
+    return (
+      <div className="hidden sm:flex items-center gap-2">
+        <button
+          disabled={isAllBatches || selectedBatch?.status !== 'active'}
+          title={isAllBatches ? 'Pilih batch spesifik untuk menjual banyak' : selectedBatch?.status !== 'active' ? 'Batch sudah selesai' : 'Jual Banyak'}
+          onClick={() => { setSelectedSale(null); setShowSaleSheet(true) }}
+          className="w-10 h-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-xl text-[#4B6478] hover:text-white hover:bg-white/10 transition-all shadow-inner disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <ListMinus size={18} />
+        </button>
+        <button
+          disabled={isAllBatches || selectedBatch?.status !== 'active'}
+          title={isAllBatches ? 'Pilih batch spesifik untuk menjual' : selectedBatch?.status !== 'active' ? 'Batch sudah selesai' : undefined}
+          onClick={() => { setSelectedSale(null); setShowSaleSheet(true) }}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(37,99,235,0.3)] active:scale-[0.98] transition-all"
+        >
+          <ShoppingBag size={14} strokeWidth={3} />
+          Jual
+        </button>
+        <button
+          disabled={isAllBatches}
+          title={isAllBatches ? `Pilih batch spesifik untuk menambah ${animalLabel.toLowerCase()}` : undefined}
+          onClick={() => navigate(BASE + '/ternak')}
+          className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(16,185,129,0.3)] active:scale-[0.98] transition-all"
+        >
+          <Plus size={14} strokeWidth={3} />
+          Tambah
+        </button>
+      </div>
+    )
+  }
+
   if (loadBatches) return <LoadingSpinner fullPage />
 
   if (!perm.canViewPenjualan) {
@@ -1178,10 +1416,11 @@ export function PenggemukanPenjualan({ config, hooks }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#060B0F] pb-24">
+    <div className="min-h-screen bg-[#060B0F] pb-28 w-full max-w-full overflow-x-hidden">
       {/* Header */}
       <header className="px-4 pt-6 pb-5 bg-gradient-to-b from-[#0C1319] to-[#06090F] border-b border-white/[0.04]">
-        <div className="flex items-center justify-between mb-4">
+        {/* Desktop Header */}
+        <div className="hidden sm:flex items-center justify-between mb-4">
           <div className="flex flex-col">
             <h1 className="font-['Sora'] font-black text-[22px] leading-tight text-white tracking-tight uppercase">
               Penjualan
@@ -1196,42 +1435,39 @@ export function PenggemukanPenjualan({ config, hooks }) {
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          {renderActionButtons(false)}
+        </div>
+
+        {/* Mobile Header */}
+        <div className="flex sm:hidden flex-col gap-2 mb-4">
+          <div className="flex items-center justify-between">
+            <h1 className="font-['Sora'] font-black text-xl leading-tight text-white tracking-tight uppercase">
+              Penjualan
+            </h1>
             {perm.canInputPenjualan && (
-              <>
-                <button
-                  disabled={isAllBatches || selectedBatch?.status !== 'active'}
-                  title={isAllBatches ? 'Pilih batch spesifik untuk menjual banyak' : selectedBatch?.status !== 'active' ? 'Batch sudah selesai' : 'Jual Banyak'}
-                  onClick={() => { setSelectedSale(null); setShowSaleSheet(true) }}
-                  className="w-10 h-10 flex items-center justify-center bg-white/5 border border-white/10 rounded-xl text-[#4B6478] hover:text-white hover:bg-white/10 transition-all shadow-inner disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <ListMinus size={18} />
-                </button>
-                <button
-                  disabled={isAllBatches || selectedBatch?.status !== 'active'}
-                  title={isAllBatches ? 'Pilih batch spesifik untuk menjual' : selectedBatch?.status !== 'active' ? 'Batch sudah selesai' : undefined}
-                  onClick={() => { setSelectedSale(null); setShowSaleSheet(true) }}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(37,99,235,0.3)] active:scale-[0.98] transition-all"
-                >
-                  <ShoppingBag size={14} strokeWidth={3} />
-                  Jual
-                </button>
-                <button
-                  disabled={isAllBatches}
-                  title={isAllBatches ? `Pilih batch spesifik untuk menambah ${animalLabel.toLowerCase()}` : undefined}
-                  onClick={() => navigate(BASE + '/ternak')}
-                  className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(16,185,129,0.3)] active:scale-[0.98] transition-all"
-                >
-                  <Plus size={14} strokeWidth={3} />
-                  Tambah
-                </button>
-              </>
+              <button
+                disabled={isAllBatches || selectedBatch?.status !== 'active'}
+                onClick={() => { setSelectedSale(null); setShowSaleSheet(true) }}
+                className="w-9 h-9 flex items-center justify-center bg-white/5 border border-white/10 rounded-xl text-[#4B6478] hover:text-white transition-all disabled:opacity-40"
+                title="Jual Banyak"
+              >
+                <ListMinus size={16} />
+              </button>
             )}
+          </div>
+          <div className="flex items-center gap-2 text-[10px] text-[#4B6478] font-['Plus_Jakarta_Sans'] font-bold tracking-wider uppercase">
+            <span className="flex items-center gap-1">
+              <span className="text-[#00F5FF]">{animals.filter(a => a.status === 'active').length}</span> AKTIF
+            </span>
+            <span className="text-white/10">•</span>
+            <span className="flex items-center gap-1">
+              <span className="text-white">{animals.length}</span> TERDAFTAR
+            </span>
           </div>
         </div>
 
         {/* BATCH SELECTOR (Standardized) */}
-        <div ref={selectWrapperRef}>
+        <div ref={selectWrapperRef} className="w-full max-w-full">
           <button
             ref={selectTriggerRef}
             onClick={() => {
@@ -1247,7 +1483,7 @@ export function PenggemukanPenjualan({ config, hooks }) {
             {isAllBatches ? (
               <>
                 <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
-                <span className="flex-1 text-left">
+                <span className="flex-1 text-left truncate">
                   Semua Batch
                   <span className="text-[#4B6478] font-medium ml-2 text-xs">{batches.length} batch · {animals.length} ekor</span>
                 </span>
@@ -1255,17 +1491,20 @@ export function PenggemukanPenjualan({ config, hooks }) {
             ) : (
               <>
                 <span className="w-2 h-2 rounded-full bg-green-400 shrink-0" />
-                <span className="flex-1 text-left">
+                <span className="flex-1 text-left truncate">
                   {selectedBatch?.batch_code ?? '—'}
                   <span className="text-[#4B6478] font-medium ml-2 text-xs">{selectedBatch?.kandang_name}</span>
                 </span>
               </>
             )}
-            <motion.div animate={{ rotate: isSelectOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-              <ChevronDown size={14} className="text-[#4B6478] shrink-0" />
+            <motion.div animate={{ rotate: isSelectOpen ? 180 : 0 }} transition={{ duration: 0.2 }} className="shrink-0">
+              <ChevronDown size={14} className="text-[#4B6478]" />
             </motion.div>
           </button>
         </div>
+
+        {/* Mobile Action Buttons (Row 4) */}
+        {renderActionButtons(true)}
       </header>
 
       {/* Batch Select Portal/Menu */}
@@ -1411,7 +1650,7 @@ export function PenggemukanPenjualan({ config, hooks }) {
 
                 {/* Empty State / Daftar Transaksi */}
                 {!hasSalesData ? (
-                  <div className="py-20 text-center border border-dashed border-white/[0.06] rounded-[32px] bg-white/[0.01] px-6">
+                  <div className="py-10 sm:py-20 text-center border border-dashed border-white/[0.06] rounded-[32px] bg-white/[0.01] px-6">
                     <ShoppingBag size={40} className="mx-auto text-white/5 mb-4 opacity-50" />
                     <p className="text-xs font-black text-white uppercase tracking-widest font-['Sora'] mb-1">Belum Ada Penjualan</p>
                     
@@ -1435,7 +1674,7 @@ export function PenggemukanPenjualan({ config, hooks }) {
                         {canRecordSale && (
                           <button
                             onClick={() => { setSelectedSale(null); setShowSaleSheet(true) }}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(37,99,235,0.3)] active:scale-[0.98] transition-all cursor-pointer uppercase tracking-wider"
+                            className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 h-11 min-h-[44px] bg-blue-600 hover:bg-blue-500 rounded-xl text-white text-xs font-black font-['Sora'] shadow-[0_4px_12px_rgba(37,99,235,0.3)] active:scale-[0.98] transition-all cursor-pointer uppercase tracking-wider"
                           >
                             <ShoppingBag size={14} strokeWidth={3} /> Catat Penjualan Pertama
                           </button>
