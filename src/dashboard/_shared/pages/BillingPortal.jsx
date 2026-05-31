@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, CheckCircle2, XCircle, Clock, AlertCircle, CreditCard, Building2, RefreshCw } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, XCircle, Clock, AlertCircle, CreditCard, Building2, RefreshCw, Loader2 } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
@@ -10,6 +10,10 @@ import { format } from 'date-fns'
 import { id as localeId, enUS as localeEn } from 'date-fns/locale'
 import { useLanguage } from '@/lib/i18n/useLanguage'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
+import { useCancelPendingInvoice } from '@/lib/hooks/useAdminData'
+import { toast } from 'sonner'
+import { logError } from '@/lib/logger/errorLogger'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -42,7 +46,10 @@ function useTenantInvoices(tenantIds) {
         .in('tenant_id', tenantIds)
         .order('created_at', { ascending: false })
         .limit(50)
-      if (error) throw error
+      if (error) {
+        logSupabaseError(error, { table: 'subscription_invoices', operation: 'select', component: 'BillingPortal', actionName: 'user.invoices.fetch' })
+        throw error
+      }
       return data || []
     },
   })
@@ -132,7 +139,7 @@ function TenantCard({ tenant, onUpgrade }) {
 
 // ─── Desktop Table Component ─────────────────────────────────────────────────
 
-function InvoicesTable({ invoices, tenantMap }) {
+function InvoicesTable({ invoices, tenantMap, isBillingCapable, onCancelClick }) {
   const { tStatus, tPlan, lang } = useLanguage()
   const activeLocale = lang === 'en' ? localeEn : localeId
 
@@ -169,13 +176,26 @@ function InvoicesTable({ invoices, tenantMap }) {
                 <td style={{ padding: '14px 16px', fontSize: 12, color: TEXT_DIM }}>{date}</td>
                 <td style={{ padding: '14px 16px', fontSize: 13, fontWeight: 800, color: TEXT }}>{formatIDR(inv.amount)}</td>
                 <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                  <span style={{
-                    fontSize: 10, fontWeight: 700, color: s.color,
-                    background: s.bg, padding: '4px 10px', borderRadius: 999,
-                    border: `1px solid ${s.color}25`
-                  }}>
-                    {statusLabel}
-                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                    <span style={{
+                      fontSize: 10, fontWeight: 700, color: s.color,
+                      background: s.bg, padding: '4px 10px', borderRadius: 999,
+                      border: `1px solid ${s.color}25`
+                    }}>
+                      {statusLabel}
+                    </span>
+                    {inv.status === 'pending' && isBillingCapable && (
+                      <button
+                        onClick={() => onCancelClick(inv)}
+                        style={{
+                          fontSize: 11, color: '#EF4444', background: 'none', border: 'none',
+                          textDecoration: 'underline', cursor: 'pointer', padding: 0, fontWeight: 600
+                        }}
+                      >
+                        Batalkan
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             )
@@ -188,7 +208,7 @@ function InvoicesTable({ invoices, tenantMap }) {
 
 // ─── Mobile Card Component ───────────────────────────────────────────────────
 
-function InvoiceCard({ invoice, tenantMap }) {
+function InvoiceCard({ invoice, tenantMap, isBillingCapable, onCancelClick }) {
   const { tStatus, tPlan, lang } = useLanguage()
   const activeLocale = lang === 'en' ? localeEn : localeId
   const s = INVOICE_STATUS[invoice.status] || INVOICE_STATUS.pending
@@ -230,9 +250,22 @@ function InvoiceCard({ invoice, tenantMap }) {
           <span style={{ fontSize: 13, fontWeight: 800, color: TEXT, display: 'block' }}>
             {formatIDR(invoice.amount)}
           </span>
-          <span style={{ fontSize: 10, color: TEXT_DIM, display: 'block', marginTop: 2 }}>
-            {date}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginTop: 4 }}>
+            {invoice.status === 'pending' && isBillingCapable && (
+              <button
+                onClick={() => onCancelClick(invoice)}
+                style={{
+                  fontSize: 11, color: '#EF4444', background: 'none', border: 'none',
+                  textDecoration: 'underline', cursor: 'pointer', padding: 0, fontWeight: 600
+                }}
+              >
+                Batalkan
+              </button>
+            )}
+            <span style={{ fontSize: 10, color: TEXT_DIM }}>
+              {date}
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -329,10 +362,22 @@ function InvoiceCardSkeleton() {
 
 export default function BillingPortal() {
   const navigate = useNavigate()
-  const { profiles, isSuperadmin } = useAuth()
+  const { profile, profiles, isSuperadmin, refetchProfile } = useAuth()
   const { t } = useLanguage()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
   const [activeTab, setActiveTab] = useState('aktif')
+
+  // Resolve active role using profile.role or profile.app_role as fallback.
+  // Backend RPC remains source of truth for authorization.
+  const activeRole = (profile?.role || profile?.app_role || '').toLowerCase()
+  const isBillingCapable = isSuperadmin || ['owner', 'admin', 'manajer', 'manager'].includes(activeRole)
+
+  const [cancelInvoiceData, setCancelInvoiceData] = useState(null)
+  const cancelPendingInvoice = useCancelPendingInvoice()
+
+  const handleCancelClick = (invoice) => {
+    setCancelInvoiceData(invoice)
+  }
 
   useEffect(() => {
     const htmlEl = document.documentElement
@@ -357,6 +402,66 @@ export default function BillingPortal() {
   const tenantMap = Object.fromEntries(ownedTenants.map(t => [t.id, t.business_name || t('index_fallback_biz', 'Bisnis Saya')]))
 
   const { data: invoices = [], isLoading, refetch } = useTenantInvoices(tenantIds)
+
+  const confirmCancelPendingInvoice = async () => {
+    if (!cancelInvoiceData || cancelPendingInvoice.isPending) return
+    try {
+      const res = await cancelPendingInvoice.mutateAsync({
+        invoiceId: cancelInvoiceData.id,
+        tenantId: cancelInvoiceData.tenant_id
+      })
+
+      if (res?.ok) {
+        toast.success('Invoice pending berhasil dibatalkan.')
+        refetch()
+        if (refetchProfile) refetchProfile()
+        setCancelInvoiceData(null)
+      } else {
+        const errType = res?.error
+        let errorMsg = 'Invoice tidak dapat dibatalkan.'
+        if (errType === 'UNAUTHORIZED') {
+          errorMsg = 'Kamu tidak punya akses untuk membatalkan invoice ini.'
+        } else if (errType === 'INVOICE_NOT_FOUND') {
+          errorMsg = 'Invoice tidak ditemukan.'
+        } else if (errType === 'INVOICE_NOT_PENDING') {
+          errorMsg = 'Invoice sudah tidak pending.'
+          refetch()
+          if (refetchProfile) refetchProfile()
+        } else if (errType === 'INVOICE_ALREADY_PAID_OR_PROCESSING') {
+          errorMsg = 'Invoice sudah diproses pembayaran, tidak bisa dibatalkan.'
+          refetch()
+          if (refetchProfile) refetchProfile()
+        }
+        logError({
+          level: 'error',
+          source: 'frontend',
+          component: 'BillingPortal',
+          actionName: 'user.invoice.cancel.failed_response',
+          error: new Error(`Cancel pending invoice failed with status: ${errType}`),
+          metadata: {
+            invoiceId: cancelInvoiceData?.id,
+            tenantId: cancelInvoiceData?.tenant_id,
+            response: res,
+          }
+        })
+        toast.error(errorMsg)
+        setCancelInvoiceData(null)
+      }
+    } catch (err) {
+      logError({
+        error: err,
+        message: 'Exception in confirmCancelPendingInvoice',
+        component: 'BillingPortal',
+        actionName: 'user.invoice.cancel.catch',
+        metadata: {
+          invoiceId: cancelInvoiceData?.id,
+          tenantId: cancelInvoiceData?.tenant_id,
+        }
+      })
+      toast.error(err?.message || 'Gagal membatalkan invoice. Hubungi admin.')
+      setCancelInvoiceData(null)
+    }
+  }
 
   // Separate invoices by status
   const paidInvoices    = invoices.filter(i => i.status === 'paid')
@@ -457,18 +562,36 @@ export default function BillingPortal() {
               display: 'flex', gap: 10, alignItems: 'flex-start',
             }}>
               <AlertCircle size={14} color="#F59E0B" style={{ flexShrink: 0, marginTop: 1 }} />
-              <p style={{ margin: 0, fontSize: 11, color: '#F59E0B', lineHeight: 1.5 }}>
-                <span dangerouslySetInnerHTML={{
-                  __html: t('billing_pending_invoices_alert', 'Kamu punya <strong>{count} invoice pending</strong> yang belum dibayar.')
-                    .replace('{count}', pendingInvoices.length)
-                }} />{' '}
-                <span
-                  onClick={() => navigate('/upgrade')}
-                  style={{ textDecoration: 'underline', cursor: 'pointer', fontWeight: 700 }}
-                >
-                  {t('billing_pay_now', 'Bayar sekarang →')}
-                </span>
-              </p>
+              <div style={{ flex: 1 }}>
+                <p style={{ margin: 0, fontSize: 11, color: '#F59E0B', lineHeight: 1.5 }}>
+                  <span dangerouslySetInnerHTML={{
+                    __html: t('billing_pending_invoices_alert', 'Kamu punya <strong>{count} invoice pending</strong> yang belum dibayar.')
+                      .replace('{count}', pendingInvoices.length)
+                  }} />{' '}
+                  <span
+                    onClick={() => navigate('/upgrade')}
+                    style={{ textDecoration: 'underline', cursor: 'pointer', fontWeight: 700 }}
+                  >
+                    {t('billing_pay_now', 'Bayar sekarang →')}
+                  </span>
+                </p>
+                {isBillingCapable && (
+                  <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                    {pendingInvoices.map((inv) => (
+                      <button
+                        key={inv.id}
+                        onClick={() => handleCancelClick(inv)}
+                        style={{
+                          fontSize: 11, color: '#EF4444', background: 'none', border: 'none',
+                          textDecoration: 'underline', cursor: 'pointer', padding: 0, fontWeight: 700
+                        }}
+                      >
+                        Batalkan #{inv.invoice_number}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -612,11 +735,11 @@ export default function BillingPortal() {
               ) : (
                 <div>
                   {isDesktop ? (
-                    <InvoicesTable invoices={orderedInvoices} tenantMap={tenantMap} />
+                    <InvoicesTable invoices={orderedInvoices} tenantMap={tenantMap} isBillingCapable={isBillingCapable} onCancelClick={handleCancelClick} />
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {orderedInvoices.map((inv) => (
-                        <InvoiceCard key={inv.id} invoice={inv} tenantMap={tenantMap} />
+                        <InvoiceCard key={inv.id} invoice={inv} tenantMap={tenantMap} isBillingCapable={isBillingCapable} onCancelClick={handleCancelClick} />
                       ))}
                     </div>
                   )}
@@ -627,6 +750,118 @@ export default function BillingPortal() {
 
         </div>
       </div>
+
+      {/* Cancellation Confirmation Dialog */}
+      {cancelInvoiceData && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          background: 'rgba(0,0,0,0.75)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 20,
+        }}>
+          <div style={{
+            width: '100%',
+            maxWidth: 440,
+            background: '#0C1319',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 20,
+            padding: 24,
+            boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{
+                width: 40,
+                height: 40,
+                borderRadius: 12,
+                background: 'rgba(239, 68, 68, 0.1)',
+                color: '#EF4444',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <AlertCircle size={20} />
+              </div>
+              <h3 style={{ fontSize: 16, fontWeight: 800, color: '#F1F5F9', margin: 0, fontFamily: 'Sora, sans-serif' }}>
+                Batalkan invoice pending?
+              </h3>
+            </div>
+            
+            <div style={{ fontSize: 13, color: '#CBD5E1', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: 12, fontFamily: 'Sora, sans-serif' }}>
+              <p style={{ margin: 0 }}>
+                Invoice ini akan dibatalkan di TernakOS agar kamu bisa membuat invoice baru. Jika kamu masih memiliki link pembayaran Midtrans lama, jangan lanjutkan pembayaran dari link tersebut setelah invoice dibatalkan.
+              </p>
+              <div style={{
+                padding: '10px 12px',
+                borderRadius: 10,
+                background: 'rgba(245,158,11,0.07)',
+                border: '1px solid rgba(245,158,11,0.2)',
+                fontSize: 12,
+                color: '#F59E0B',
+                fontWeight: 600,
+              }}>
+                Invoice dibatalkan di TernakOS. Jika sudah melakukan pembayaran, jangan batalkan dan hubungi admin.
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+              <button
+                type="button"
+                onClick={() => setCancelInvoiceData(null)}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  background: 'transparent',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: '#CBD5E1',
+                  borderRadius: 12,
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  fontFamily: 'Sora, sans-serif',
+                }}
+              >
+                Kembali
+              </button>
+              <button
+                type="button"
+                onClick={confirmCancelPendingInvoice}
+                disabled={cancelPendingInvoice.isPending}
+                style={{
+                  flex: 1.5,
+                  padding: '12px',
+                  background: '#EF4444',
+                  border: 'none',
+                  color: '#fff',
+                  borderRadius: 12,
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  fontFamily: 'Sora, sans-serif',
+                  boxShadow: '0 6px 18px rgba(239, 68, 68, 0.25)',
+                }}
+              >
+                {cancelPendingInvoice.isPending ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  'Batalkan Invoice'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

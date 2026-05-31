@@ -8,11 +8,10 @@ import {
   ChevronDown, ChevronUp, Star, Building2, Clock,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { logError } from '@/lib/logger/errorLogger'
 import { openBrowserUrl } from '@/lib/capacitor'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useMediaQuery } from '@/lib/hooks/useMediaQuery'
-import { usePricingConfig, useCreateInvoice, useActivateTrial, usePlanConfigs, useHasPendingInvoice } from '@/lib/hooks/useAdminData'
+import { usePricingConfig, useCreateInvoice, useActivateTrial, usePlanConfigs, useHasPendingInvoice, useCancelPendingInvoice } from '@/lib/hooks/useAdminData'
 import { supabase } from '@/lib/supabase'
 import { formatIDR } from '@/lib/format'
 import { getSubscriptionStatus } from '@/lib/subscriptionUtils'
@@ -21,6 +20,8 @@ import { format, addMonths } from 'date-fns'
 import { id as localeId, enUS as localeEn } from 'date-fns/locale'
 import { toast } from 'sonner'
 import { useLanguage } from '@/lib/i18n/useLanguage'
+import { logError } from '@/lib/logger/errorLogger'
+import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 
 // ─── Billing options ─────────────────────────────────────────────────────────
 
@@ -346,24 +347,29 @@ function FeatureSection({ planKey, meta, features, billingMonths, basePrice, dis
   )
 }
 
-function BillingSelector({ value, onChange, selectedPlan }) {
+function BillingSelector({ value, onChange, selectedPlan, allowedMonths = null }) {
   const { t } = useLanguage()
   return (
     <div className="grid grid-cols-4 gap-2">
       {BILLING_OPTIONS.map((opt) => {
         const isSelected = value === opt.months
+        const isAllowed = !allowedMonths || allowedMonths.includes(opt.months)
+
         return (
           <motion.button
             key={opt.months}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => onChange(opt.months)}
+            whileTap={isAllowed ? { scale: 0.95 } : {}}
+            onClick={() => isAllowed && onChange(opt.months)}
+            disabled={!isAllowed}
             className={cn(
               "relative flex flex-col items-center justify-center py-3 rounded-xl text-center transition-all border font-display font-bold text-[11px] sm:text-xs leading-tight focus:outline-none focus:ring-1",
               isSelected
                 ? selectedPlan === 'pro'
                   ? "bg-emerald-500/10 border-emerald-400/40 text-emerald-300 focus:ring-emerald-400"
                   : "bg-amber-500/10 border-amber-500/40 text-amber-300 focus:ring-amber-400"
-                : "bg-[#0F1720] border-white/10 text-slate-300 hover:bg-[#121A22] hover:text-white focus:ring-white/20"
+                : isAllowed
+                  ? "bg-[#0F1720] border-white/10 text-slate-300 hover:bg-[#121A22] hover:text-white focus:ring-white/20"
+                  : "bg-[#0A0E12] border-white/5 text-slate-600 cursor-not-allowed opacity-30"
             )}
           >
             {opt.discount > 0 && (
@@ -417,16 +423,53 @@ const PAYMENT_STATUS_META = {
   },
 }
 
+function mapRpcErrorMessage(message, defaultMsg = 'Gagal memproses.') {
+  if (!message) return defaultMsg
+  if (message.includes('ACCESS_DENIED')) {
+    return 'Kamu belum punya akses ke bisnis ini.'
+  }
+  if (message.includes('DISCOUNT_NOT_FOUND')) {
+    return 'Kode diskon tidak ditemukan.'
+  }
+  if (message.includes('DISCOUNT_INACTIVE')) {
+    return 'Kode diskon tidak aktif.'
+  }
+  if (message.includes('DISCOUNT_EXPIRED')) {
+    return 'Kode diskon sudah kedaluwarsa.'
+  }
+  if (message.includes('DISCOUNT_USAGE_LIMIT')) {
+    return 'Kuota kode diskon sudah habis.'
+  }
+  if (message.includes('DISCOUNT_PLAN_NOT_ALLOWED')) {
+    return 'Kode diskon tidak berlaku untuk paket ini.'
+  }
+  if (message.includes('DISCOUNT_ROLE_NOT_ALLOWED')) {
+    return 'Kode diskon tidak berlaku untuk jenis bisnis ini.'
+  }
+  if (message.includes('DISCOUNT_BILLING_MONTHS_NOT_ALLOWED')) {
+    return 'Kode diskon tidak berlaku untuk durasi langganan ini.'
+  }
+  return message
+}
+
 export default function UpgradePlan() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { profile, tenant } = useAuth()
+  const { profile, tenant, refetchProfile } = useAuth()
   const { data: pricing } = usePricingConfig()
   const createInvoice  = useCreateInvoice()
   const activateTrial  = useActivateTrial()
   const { data: planConfigs = {} } = usePlanConfigs()
-  const { data: hasPendingInvoice } = useHasPendingInvoice(profile?.tenant_id)
+  const { data: pendingInvoice } = useHasPendingInvoice(profile?.tenant_id)
+  const cancelPendingInvoice = useCancelPendingInvoice()
   const { lang, t, tPlan } = useLanguage()
+
+  // Resolve active role using profile.role or profile.app_role as fallback.
+  // Backend RPC remains source of truth for authorization.
+  const activeRole = (profile?.role || profile?.app_role || '').toLowerCase()
+  const isBillingCapable = ['owner', 'admin', 'manajer', 'manager'].includes(activeRole)
+
+  const [cancelInvoiceData, setCancelInvoiceData] = useState(null)
 
   const [selectedPlan, setSelectedPlan] = useState(() => {
     const p = searchParams.get('plan')
@@ -485,34 +528,42 @@ export default function UpgradePlan() {
 
         if (error) {
           console.error('Failed to preview checkout:', error)
-          let msg = t('upgrade_toast_midtrans_failed', 'Gagal memproses perhitungan harga.')
-          if (error.message?.includes('PRICING_ROLE_NOT_FOUND')) {
-            msg = t('pricing_role_not_found', 'Tipe pricing bisnis tidak terdaftar')
-          } else if (error.message?.includes('DISCOUNT_NOT_FOUND')) {
-            msg = t('discount_not_found', 'Kode diskon tidak ditemukan')
-          } else if (error.message?.includes('DISCOUNT_INACTIVE')) {
-            msg = t('discount_inactive', 'Kode diskon tidak aktif')
-          } else if (error.message?.includes('DISCOUNT_EXPIRED')) {
-            msg = t('discount_expired', 'Kode diskon sudah kedaluwarsa')
-          } else if (error.message?.includes('DISCOUNT_USAGE_LIMIT')) {
-            msg = t('discount_usage_limit', 'Kuota kode diskon sudah habis')
-          } else if (error.message?.includes('DISCOUNT_PLAN_NOT_ALLOWED')) {
-            msg = t('discount_plan_not_allowed', 'Kode diskon tidak berlaku untuk plan ini')
-          } else if (error.message?.includes('DISCOUNT_ROLE_NOT_ALLOWED')) {
-            msg = t('discount_role_not_allowed', 'Kode diskon tidak berlaku untuk jenis bisnis ini')
-          } else {
-            msg = error.message
-          }
+          logSupabaseError(error, {
+            operation: 'rpc',
+            component: 'UpgradePlan',
+            actionName: 'checkout.preview.rpc_error',
+            tenantId: profile?.tenant_id,
+          })
+          const msg = mapRpcErrorMessage(error.message, t('upgrade_toast_midtrans_failed', 'Gagal memproses perhitungan harga.'))
           setPreviewResult(null)
           if (appliedPromo) {
             setAppliedPromo('')
             setPromoError(msg)
+            toast.error(msg)
           }
         } else {
           setPreviewResult(data)
+          if (data?.discount_applies_to_billing_months && data.discount_applies_to_billing_months.length > 0) {
+            const allowed = data.discount_applies_to_billing_months
+            if (!allowed.includes(billingMonths)) {
+              setBillingMonths(allowed[0])
+            }
+          }
         }
       } catch (_err) {
         if (!active) return
+        logError({
+          error: _err,
+          message: 'Exception in fetchPreview subscription checkout',
+          component: 'UpgradePlan',
+          actionName: 'checkout.preview.catch',
+          metadata: {
+            tenantId: profile?.tenant_id,
+            plan: selectedPlan,
+            billingMonths,
+            appliedPromo,
+          }
+        })
         setPreviewResult(null)
       } finally {
         if (active) setIsLoadingPreview(false)
@@ -542,22 +593,14 @@ export default function UpgradePlan() {
       })
 
       if (error) {
-        let msg = 'Gagal memproses kode diskon.'
-        if (error.message?.includes('DISCOUNT_NOT_FOUND')) {
-          msg = 'Kode diskon tidak ditemukan'
-        } else if (error.message?.includes('DISCOUNT_INACTIVE')) {
-          msg = 'Kode diskon tidak aktif'
-        } else if (error.message?.includes('DISCOUNT_EXPIRED')) {
-          msg = 'Kode diskon sudah kedaluwarsa'
-        } else if (error.message?.includes('DISCOUNT_USAGE_LIMIT')) {
-          msg = 'Kuota kode diskon sudah habis'
-        } else if (error.message?.includes('DISCOUNT_PLAN_NOT_ALLOWED')) {
-          msg = 'Kode diskon tidak berlaku untuk plan ini'
-        } else if (error.message?.includes('DISCOUNT_ROLE_NOT_ALLOWED')) {
-          msg = 'Kode diskon tidak berlaku untuk jenis bisnis ini'
-        } else {
-          msg = error.message
-        }
+        logSupabaseError(error, {
+          operation: 'rpc',
+          component: 'UpgradePlan',
+          actionName: 'promo.apply.rpc_error',
+          tenantId: profile?.tenant_id,
+          metadata: { code }
+        })
+        const msg = mapRpcErrorMessage(error.message, 'Gagal memproses kode diskon.')
         setPromoError(msg)
         toast.error(msg)
       } else {
@@ -566,6 +609,16 @@ export default function UpgradePlan() {
         toast.success('Kode diskon berhasil diterapkan!')
       }
     } catch (err) {
+      logError({
+        error: err,
+        message: 'Exception in handleApplyPromo',
+        component: 'UpgradePlan',
+        actionName: 'promo.apply.catch',
+        metadata: {
+          tenantId: profile?.tenant_id,
+          code,
+        }
+      })
       setPromoError(err.message || 'Error')
     } finally {
       setIsValidatingPromo(false)
@@ -577,6 +630,68 @@ export default function UpgradePlan() {
     setPromoInput('')
     setPromoError('')
     toast.info('Kode diskon dihapus.')
+  }
+
+  const handleCancelPendingInvoice = () => {
+    if (!pendingInvoice) return
+    setCancelInvoiceData(pendingInvoice)
+  }
+
+  const confirmCancelPendingInvoice = async () => {
+    if (!cancelInvoiceData || cancelPendingInvoice.isPending) return
+    try {
+      const res = await cancelPendingInvoice.mutateAsync({
+        invoiceId: cancelInvoiceData.id,
+        tenantId: profile?.tenant_id
+      })
+
+      if (res?.ok) {
+        toast.success(t('upgrade_toast_invoice_cancelled_success', 'Invoice pending berhasil dibatalkan.'))
+        refetchProfile()
+        setCancelInvoiceData(null)
+      } else {
+        const errType = res?.error
+        let errorMsg = t('upgrade_toast_invoice_cancel_failed', 'Invoice tidak dapat dibatalkan.')
+        if (errType === 'UNAUTHORIZED') {
+          errorMsg = t('upgrade_toast_invoice_cancel_unauthorized', 'Kamu tidak punya akses untuk membatalkan invoice ini.')
+        } else if (errType === 'INVOICE_NOT_FOUND') {
+          errorMsg = t('upgrade_toast_invoice_cancel_not_found', 'Invoice tidak ditemukan.')
+        } else if (errType === 'INVOICE_NOT_PENDING') {
+          errorMsg = t('upgrade_toast_invoice_cancel_not_pending', 'Invoice sudah tidak pending.')
+          refetchProfile()
+        } else if (errType === 'INVOICE_ALREADY_PAID_OR_PROCESSING') {
+          errorMsg = t('upgrade_toast_invoice_cancel_already_paid', 'Invoice sudah diproses pembayaran, tidak bisa dibatalkan.')
+          refetchProfile()
+        }
+        logError({
+          level: 'error',
+          source: 'frontend',
+          component: 'UpgradePlan',
+          actionName: 'user.invoice.cancel.failed_response',
+          error: new Error(`Cancel pending invoice failed with status: ${errType}`),
+          metadata: {
+            invoiceId: cancelInvoiceData?.id,
+            tenantId: profile?.tenant_id,
+            response: res,
+          }
+        })
+        toast.error(errorMsg)
+        setCancelInvoiceData(null)
+      }
+    } catch (err) {
+      logError({
+        error: err,
+        message: 'Exception in confirmCancelPendingInvoice',
+        component: 'UpgradePlan',
+        actionName: 'user.invoice.cancel.catch',
+        metadata: {
+          invoiceId: cancelInvoiceData?.id,
+          tenantId: profile?.tenant_id,
+        }
+      })
+      toast.error(err?.message || t('upgrade_toast_invoice_cancel_failed', 'Gagal membatalkan invoice. Hubungi admin.'))
+      setCancelInvoiceData(null)
+    }
   }
 
   const displayOriginalAmount = previewResult?.original_amount ?? (basePrice * billingMonths)
@@ -640,8 +755,9 @@ export default function UpgradePlan() {
 
   const handleSubmit = async () => {
     if (!profile?.tenant_id) return
-    if (hasPendingInvoice === true) {
-      toast.warning(t('upgrade_toast_pending_invoice', 'Kamu sudah memiliki invoice pending. Tunggu konfirmasi admin atau hubungi admin untuk membatalkannya terlebih dahulu.'))
+    if (pendingInvoice) {
+      // Don't block silently — the banner UI below already shows the cancel option
+      toast.warning(t('upgrade_toast_pending_invoice', 'Batalkan invoice lama terlebih dahulu untuk melanjutkan.'))
       return
     }
     try {
@@ -658,14 +774,48 @@ export default function UpgradePlan() {
         body: { invoice_id: invoiceId },
       })
       if (fnError || !fnData?.redirect_url) {
-        toast.error(t('upgrade_toast_midtrans_failed', 'Gagal menghubungi payment gateway. Silakan coba lagi atau hubungi admin.'))
+        const is422 = fnError && (fnError.status === 422 || (fnError.context && fnError.context.status === 422) || fnError.message?.includes('422'))
+
+        logError({
+          error: fnError || new Error('Missing redirect_url from midtrans function'),
+          message: is422 ? 'Midtrans transaction failed with status 422' : 'Failed to create midtrans transaction',
+          component: 'UpgradePlan',
+          actionName: is422 ? 'billing.midtrans_create_transaction.failed' : 'checkout.submit.midtrans_error',
+          metadata: {
+            invoice_id: invoiceId,
+            tenant_id: profile?.tenant_id,
+            plan: selectedPlan,
+            amount: displayFinalAmount,
+            status: 'pending',
+            provider_status: null
+          }
+        })
+
+        if (is422) {
+          toast.error('Pembayaran tidak dapat diproses. Sistem akan membatasi minimum pembayaran Rp5.000. Silakan coba ulang.')
+        } else {
+          toast.error(t('upgrade_toast_midtrans_failed', 'Gagal menghubungi payment gateway. Silakan coba lagi atau hubungi admin.'))
+        }
         setRedirecting(false)
         return
       }
       // On Capacitor (Android), opens in Chrome Custom Tab so Midtrans Snap works correctly.
       // On web, falls back to window.location.assign (same-tab redirect).
       openBrowserUrl(fnData.redirect_url)
-    } catch (_) {
+    } catch (err) {
+      logError({
+        error: err,
+        message: 'Exception in handleSubmit checkout',
+        component: 'UpgradePlan',
+        actionName: 'checkout.submit.catch',
+        metadata: {
+          tenantId: profile?.tenant_id,
+          plan: selectedPlan,
+          billingMonths,
+          amount: displayFinalAmount,
+          discount_code: appliedPromo || null,
+        }
+      })
       setRedirecting(false)
     }
   }
@@ -753,6 +903,39 @@ export default function UpgradePlan() {
     <motion.div layout className="rounded-2xl overflow-hidden"
       style={{ background: '#0C1319', border: `1px solid ${selectedPlan === 'pro' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(245, 158, 11, 0.25)'}` }}
     >
+      {/* ── Pending Invoice Banner ── */}
+      {pendingInvoice && (
+        <div className="px-4 pt-4 pb-0">
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-start gap-3 p-3 rounded-xl mb-0"
+            style={{ background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.25)' }}
+          >
+            <AlertCircle size={15} className="text-amber-400 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-bold text-amber-300 leading-tight">
+                Ada invoice pending #{pendingInvoice.invoice_number}
+              </p>
+              <p className="text-[11px] text-amber-400/70 mt-0.5">
+                {formatIDR(pendingInvoice.amount)} · {isBillingCapable ? 'Batalkan untuk buat invoice baru' : 'Hubungi admin untuk membatalkannya'}
+              </p>
+            </div>
+            {isBillingCapable && (
+              <button
+                type="button"
+                onClick={handleCancelPendingInvoice}
+                disabled={cancelPendingInvoice.isPending}
+                className="shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-black text-red-400 border border-red-500/25 bg-red-500/10 hover:bg-red-500/20 transition-all disabled:opacity-50 focus:outline-none"
+              >
+                {cancelPendingInvoice.isPending
+                  ? <Loader2 size={11} className="animate-spin" />
+                  : 'Batalkan'}
+              </button>
+            )}
+          </motion.div>
+        </div>
+      )}
       <div className="p-4 space-y-2.5">
         <div className="flex items-center justify-between text-[13px]">
           <span className="text-slate-300">{t('Plan', 'Plan')}</span>
@@ -839,11 +1022,18 @@ export default function UpgradePlan() {
             <p className="text-[10px] text-red-400 font-semibold mt-0.5">{promoError}</p>
           )}
           {appliedPromo && !promoError && (
-            <p className="text-[10px] text-emerald-400 font-semibold mt-0.5 flex items-center gap-1">
-              <CheckCircle2 size={11} className="text-emerald-400" />
-              {t('promo_code_applied', 'Kode diskon berhasil diterapkan!')}
+            <p className="text-[10px] text-emerald-400 font-semibold mt-0.5 flex items-center gap-1 leading-snug">
+              <CheckCircle2 size={11} className="text-emerald-400 shrink-0" />
+              <span>
+                {displayFinalAmount === 5000
+                  ? 'Voucher berhasil diterapkan. Kamu cukup membayar Rp5.000 untuk aktivasi paket.'
+                  : t('promo_code_applied', 'Kode diskon berhasil diterapkan!')}
+              </span>
             </p>
           )}
+          <p className="text-[10px] text-slate-400 mt-1">
+            Pembayaran minimum setelah voucher adalah Rp5.000.
+          </p>
         </div>
       </div>
 
@@ -925,7 +1115,12 @@ export default function UpgradePlan() {
           </span>
         )}
       </div>
-      <BillingSelector value={billingMonths} onChange={setBillingMonths} selectedPlan={selectedPlan} />
+      <BillingSelector
+        value={billingMonths}
+        onChange={setBillingMonths}
+        selectedPlan={selectedPlan}
+        allowedMonths={previewResult?.discount_applies_to_billing_months}
+      />
     </div>
   )
 
@@ -1011,6 +1206,52 @@ export default function UpgradePlan() {
             </div>
           </div>
         </div>
+        {/* Cancellation Confirmation Dialog */}
+        {cancelInvoiceData && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="w-full max-w-md bg-[#0C1319] border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col gap-4 animate-in zoom-in-95 duration-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center shrink-0">
+                  <AlertCircle size={20} />
+                </div>
+                <h3 className="font-display font-black text-base text-slate-100">
+                  Batalkan invoice pending?
+                </h3>
+              </div>
+              
+              <div className="text-[13px] text-slate-300 leading-relaxed flex flex-col gap-3">
+                <p>
+                  Invoice ini akan dibatalkan di TernakOS agar kamu bisa membuat invoice baru. Jika kamu masih memiliki link pembayaran Midtrans lama, jangan lanjutkan pembayaran dari link tersebut setelah invoice dibatalkan.
+                </p>
+                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400 font-semibold">
+                  Invoice dibatalkan di TernakOS. Jika sudah melakukan pembayaran, jangan batalkan dan hubungi admin.
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-2">
+                <button
+                  type="button"
+                  onClick={() => setCancelInvoiceData(null)}
+                  className="flex-1 py-2.5 bg-transparent border border-white/10 text-slate-300 rounded-xl font-semibold text-xs transition-colors hover:bg-white/5"
+                >
+                  Kembali
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmCancelPendingInvoice}
+                  disabled={cancelPendingInvoice.isPending}
+                  className="flex-[1.5] py-2.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-red-600/25"
+                >
+                  {cancelPendingInvoice.isPending ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    'Batalkan Invoice'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -1068,6 +1309,53 @@ export default function UpgradePlan() {
           </p>
         </div>
       </div>
+
+      {/* Cancellation Confirmation Dialog */}
+      {cancelInvoiceData && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[#0C1319] border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col gap-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center shrink-0">
+                <AlertCircle size={20} />
+              </div>
+              <h3 className="font-display font-black text-base text-slate-100">
+                Batalkan invoice pending?
+              </h3>
+            </div>
+            
+            <div className="text-[13px] text-slate-300 leading-relaxed flex flex-col gap-3">
+              <p>
+                Invoice ini akan dibatalkan di TernakOS agar kamu bisa membuat invoice baru. Jika kamu masih memiliki link pembayaran Midtrans lama, jangan lanjutkan pembayaran dari link tersebut setelah invoice dibatalkan.
+              </p>
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400 font-semibold">
+                Invoice dibatalkan di TernakOS. Jika sudah melakukan pembayaran, jangan batalkan dan hubungi admin.
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-2">
+              <button
+                type="button"
+                onClick={() => setCancelInvoiceData(null)}
+                className="flex-1 py-2.5 bg-transparent border border-white/10 text-slate-300 rounded-xl font-semibold text-xs transition-colors hover:bg-white/5"
+              >
+                Kembali
+              </button>
+              <button
+                type="button"
+                onClick={confirmCancelPendingInvoice}
+                disabled={cancelPendingInvoice.isPending}
+                className="flex-[1.5] py-2.5 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-red-600/25"
+              >
+                {cancelPendingInvoice.isPending ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  'Batalkan Invoice'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

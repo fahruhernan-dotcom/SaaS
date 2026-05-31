@@ -38,6 +38,16 @@ import { formatIDR, formatDate } from '@/lib/format'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { InputRupiah } from '@/components/ui/InputRupiah'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 const PRICING_FEATURES = [
   { label: 'Multi-Tenant (1 Bisnis)', starter: true, pro: true, business: true },
@@ -77,6 +87,7 @@ export default function AdminPricing() {
   const [editingPricing, setEditingPricing] = useState(null)
   const [savingRole, setSavingRole] = useState(null)
   const [formKey, setFormKey] = useState(0)
+  const [deactivateVoucher, setDeactivateVoucher] = useState(null)
 
   // ── New: Add-on & Limit state ─────────────────────────────────────────────
   const [addonPricing, setAddonPricing] = useState({
@@ -227,7 +238,7 @@ export default function AdminPricing() {
       max_usage: formData.get('max_usage') ? parseInt(formData.get('max_usage')) : null
     }
 
-    if (payload.discount_type === 'percentage' && payload.discount_value > 100) {
+    if (payload.discount_type === 'percent' && payload.discount_value > 100) {
       toast.error('Persentase tidak boleh lebih dari 100%')
       return
     }
@@ -937,13 +948,13 @@ export default function AdminPricing() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest ml-1">TIPE</label>
-                    <Select name="discount_type" defaultValue="percentage">
+                    <Select name="discount_type" defaultValue="percent">
                       <SelectTrigger className="bg-black/40 border-white/10 h-12 rounded-xl text-sm">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-[#111C24] border-white/10 text-white">
-                        <SelectItem value="percentage">Persentase (%)</SelectItem>
-                        <SelectItem value="fixed">Nominal (Rp)</SelectItem>
+                        <SelectItem value="percent">Persentase (%)</SelectItem>
+                        <SelectItem value="nominal">Nominal (Rp)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1053,7 +1064,7 @@ export default function AdminPricing() {
                           </td>
                           <td className="px-6 py-4">
                             <p className="text-[14px] font-black text-white">
-                              {v.discount_type === 'percentage' ? `${v.discount_value}%` : formatIDR(v.discount_value)}
+                              {v.discount_type === 'percent' ? `${v.discount_value}%` : formatIDR(v.discount_value)}
                             </p>
                           </td>
                           <td className="px-6 py-4 space-y-1">
@@ -1086,14 +1097,20 @@ export default function AdminPricing() {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => { if (confirm('Hapus voucher ini?')) deleteVoucher.mutate(v.id) }}
-                              className="h-8 w-8 p-0 rounded-lg text-[#4B6478] hover:bg-red-500/10 hover:text-red-500"
-                            >
-                              <Trash2 size={14} />
-                            </Button>
+                            {v.is_active ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDeactivateVoucher(v)}
+                                className="text-red-400 hover:bg-red-500/10 hover:text-red-500 font-bold text-xs h-8 px-2.5 rounded-lg"
+                              >
+                                Nonaktifkan
+                              </Button>
+                            ) : (
+                              <span className="text-[11px] font-bold text-[#4B6478] uppercase tracking-wider mr-2 select-none">
+                                Nonaktif
+                              </span>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -1238,6 +1255,32 @@ export default function AdminPricing() {
           </Button>
         </div>
       )}
+
+      {/* Confirmation Dialog for Voucher Deactivation */}
+      <AlertDialog open={!!deactivateVoucher} onOpenChange={v => !v && setDeactivateVoucher(null)}>
+        <AlertDialogContent className="bg-[#0C1319] border border-white/10 text-white rounded-3xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-bold text-xl text-white">Nonaktifkan Kode Diskon?</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              Apakah Anda yakin ingin menonaktifkan kode diskon {deactivateVoucher?.code}? Setelah dinonaktifkan, kode diskon ini tidak dapat digunakan lagi oleh pengguna baru.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white/5 border-white/10 hover:bg-white/10 text-white rounded-xl">Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deactivateVoucher) {
+                  deleteVoucher.mutate(deactivateVoucher.id)
+                  setDeactivateVoucher(null)
+                }
+              }}
+              className="bg-red-600 hover:bg-red-500 text-white rounded-xl"
+            >
+              Nonaktifkan
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -222,7 +222,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
 
     setLoading(true)
     try {
-      const targetAuthId = profile?.auth_user_id || user?.id
+      const targetAuthId = user?.id || profile?.auth_user_id
       
       const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
 
@@ -356,25 +356,33 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
       })
 
       const profilePayload = {
+        auth_user_id: targetAuthId,
+        tenant_id: resolvedTenantId,
         user_type: model.user_type,
         business_model_selected: true,
         onboarded: true,
+        full_name: profile?.full_name || user?.user_metadata?.full_name || '',
+        role: profile?.role || 'owner',
+        phone: profile?.phone || user?.user_metadata?.phone || '',
+        is_active: profile?.is_active ?? true,
       }
       if (profile && 'sub_type' in profile) {
         profilePayload.sub_type = model.sub_type || null
+      } else {
+        profilePayload.sub_type = model.sub_type || null
+      }
+      if (profile?.avatar_url) {
+        profilePayload.avatar_url = profile.avatar_url
       }
 
       // SCOPED BY tenant_id: user may have multiple profile rows (multi-tenant).
-      // Without this scope, the trigger that forbids changing user_type fires for
-      // OTHER tenants' profiles even when this tenant's user_type is unchanged.
+      // We use upsert with onConflict to allow recovery of missing profiles for legacy users.
       const { error: profError } = await supabase
         .from('profiles')
-        .update(profilePayload)
-        .eq('auth_user_id', targetAuthId)
-        .eq('tenant_id', resolvedTenantId)
+        .upsert(profilePayload, { onConflict: 'auth_user_id,tenant_id' })
 
       if (profError) {
-        console.error('[Onboarding] profiles PATCH failed:', {
+        console.error('[Onboarding] profiles upsert failed:', {
           code: profError.code,
           message: profError.message,
           details: profError.details,
@@ -383,13 +391,34 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         })
         logSupabaseError(profError, {
           table: 'profiles',
-          operation: 'update',
+          operation: 'upsert',
           component: 'BusinessModelOverlay',
           actionName: 'onboarding.update_profile',
         })
         throw profError
       }
-      console.log('[Onboarding] profiles PATCH success')
+      console.log('[Onboarding] profiles upsert success')
+
+      // --- DEFENSIVE RECOVERY: Ensure owner tenant membership exists ---
+      // Scoped strictly to the active onboarding tenant (resolvedTenantId) and current authenticated user (targetAuthId).
+      const { error: memberError } = await supabase
+        .from('tenant_memberships')
+        .upsert({
+          tenant_id: resolvedTenantId,
+          auth_user_id: targetAuthId,
+          role: profile?.role || 'owner',
+          full_name: profile?.full_name || user?.user_metadata?.full_name || '',
+        }, { onConflict: 'auth_user_id,tenant_id' })
+
+      if (memberError) {
+        console.warn('[Onboarding] Defensive tenant_memberships upsert failed:', memberError.message)
+        logSupabaseError(memberError, {
+          table: 'tenant_memberships',
+          operation: 'upsert',
+          component: 'BusinessModelOverlay',
+          actionName: 'onboarding.defensive_membership_upsert',
+        })
+      }
 
       if (resolvedTenantId) {
         const subType = model.sub_type || ''

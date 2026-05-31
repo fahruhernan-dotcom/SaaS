@@ -303,18 +303,40 @@ export const useHasPendingInvoice = (tenantId) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('subscription_invoices')
-        .select('id')
+        .select('id, invoice_number, amount')
         .eq('tenant_id', tenantId)
         .eq('status', 'pending')
         .limit(1)
         .maybeSingle()
-      if (error) return false
-      return !!data
+      if (error) return null
+      return data ?? null  // null = no pending, object = has pending
     },
     enabled: !!tenantId,
     staleTime: 10_000,
   })
 }
+
+export const useCancelPendingInvoice = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ invoiceId }) => {
+      const { data, error } = await supabase.rpc('cancel_pending_invoice', {
+        p_invoice_id: invoiceId,
+      })
+      if (error) {
+        logSupabaseError(error, { table: 'subscription_invoices', operation: 'rpc', component: 'useCancelPendingInvoice', actionName: 'user.invoice.cancel' })
+        throw error
+      }
+      return data
+    },
+    onSuccess: (data, variables) => {
+      const { tenantId } = variables
+      queryClient.invalidateQueries({ queryKey: ['invoice-pending-check', tenantId] })
+      queryClient.invalidateQueries({ queryKey: ['billing-invoices'] })
+    },
+  })
+}
+
 
 export const useUpsertPaymentSetting = () => {
   const queryClient = useQueryClient()
@@ -452,16 +474,19 @@ export const useDeleteDiscountCode = () => {
     mutationFn: async (id) => {
       const { error } = await supabase
         .from('discount_codes')
-        .delete()
+        .update({ is_active: false })
         .eq('id', id)
       if (error) {
-        logSupabaseError(error, { table: 'discount_codes', operation: 'delete', component: 'useDeleteDiscountCode', actionName: 'admin.discount.delete' })
+        logSupabaseError(error, { table: 'discount_codes', operation: 'update', component: 'useDeleteDiscountCode', actionName: 'admin.discount.soft_disable' })
         throw error
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['discount-codes'])
-      toast.success('Kode diskon dihapus')
+      toast.success('Kode diskon berhasil dinonaktifkan.')
+    },
+    onError: (error) => {
+      toast.error('Gagal menonaktifkan kode diskon: ' + error.message)
     }
   })
 }

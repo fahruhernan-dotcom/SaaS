@@ -37,6 +37,7 @@ export function logSupabaseError(error, {
   component = null,
   actionName = null,
   tenantId = null,
+  metadata = {},
 } = {}) {
   if (!error) return
 
@@ -59,6 +60,7 @@ export function logSupabaseError(error, {
       hint: error.hint || null,
       errorClass,
       ...(tenantId ? { tenantId } : {}),
+      ...metadata,
     },
   })
 }
