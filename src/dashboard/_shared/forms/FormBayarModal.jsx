@@ -151,7 +151,7 @@ export default function FormBayarModal({ isOpen, onClose, rpa }) {
           disabled={isSubmitting}
           style={{
             padding: '16px',
-            background: '#021a02',
+            background: '#10B981',
             border: 'none',
             borderRadius: '12px',
             color: 'white',

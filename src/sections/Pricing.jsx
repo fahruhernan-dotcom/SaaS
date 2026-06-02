@@ -481,7 +481,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                   className={cn(
                     'w-full py-2 md:py-6 h-auto font-display text-[8px] md:text-sm font-black uppercase tracking-widest rounded-full transition-all duration-300 active:scale-95 border',
                     plan.isPopular
-                      ? 'bg-emerald-500 hover:bg-emerald-400 text-white border-transparent shadow-lg shadow-emerald-500/25'
+                      ? 'bg-emerald-500 hover:bg-emerald-600 text-white border-transparent shadow-lg shadow-emerald-500/25'
                       : 'bg-bg-3/20 hover:bg-bg-3/50 text-text-primary border-border-default'
                   )}
                 >
@@ -636,7 +636,7 @@ const Pricing = ({ activeRole, setActiveRole }) => {
                   className={cn(
                     'w-full py-4 h-auto font-display text-sm font-black uppercase tracking-widest rounded-full transition-all duration-300 active:scale-95 border',
                     plans[mobilePlanIdx].isPopular
-                      ? 'bg-emerald-500 hover:bg-emerald-400 text-white border-transparent shadow-lg shadow-emerald-500/25'
+                      ? 'bg-emerald-500 hover:bg-emerald-600 text-white border-transparent shadow-lg shadow-emerald-500/25'
                       : 'bg-bg-3/20 hover:bg-bg-3/55 text-text-primary border-border-default'
                   )}
                 >

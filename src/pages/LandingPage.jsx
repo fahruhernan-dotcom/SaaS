@@ -42,7 +42,7 @@ const LandingPage = () => {
       "name": cfg.company_name ?? "TernakOS",
       "url": cfg.company_url ?? "https://ternakos.my.id",
       "logo": cfg.company_logo_url ?? "https://ternakos.my.id/logo.png",
-      "description": cfg.company_description ?? "Platform SaaS manajemen peternakan #1 di Indonesia — mendukung peternak sapi potong, domba, kambing, broiler, broker ayam, broker telur, agen sembako, dan RPA. Fitur: batch fattening, ADG, FCR, piutang, laporan laba-rugi, dan monitoring harga pasar real-time.",
+      "description": cfg.company_description ?? "Platform SaaS manajemen peternakan #1 di Indonesia yang mendukung peternak sapi potong, domba, kambing, broiler, broker ayam, broker telur, agen sembako, dan RPA. Fitur: batch fattening, ADG, FCR, piutang, laporan laba-rugi, dan monitoring harga pasar real-time.",
       "contactPoint": {
         "@type": "ContactPoint",
         "telephone": cfg.company_phone ?? "+6281358925505",

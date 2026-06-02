@@ -115,7 +115,7 @@ const FEED_TYPE_LABELS = { 'BR-1': 'Starter BR-1', 'BR-2': 'Grower BR-2', 'BR-3'
 const EXPENSE_TYPES = [
   { value: 'doc',          label: '🐣 DOC',              color: '#A78BFA' },
   { value: 'pakan',        label: '🌾 Pakan',            color: '#F59E0B' },
-  { value: 'obat_vaksin',  label: '💊 Obat & Vaksin',   color: '#021a02' },
+  { value: 'obat_vaksin',  label: '💊 Obat & Vaksin',   color: '#10B981' },
   { value: 'listrik_air',  label: '💡 Listrik & Air',    color: '#60A5FA' },
   { value: 'sewa_kandang', label: '🏠 Sewa Kandang',     color: '#F87171' },
   { value: 'tenaga_kerja', label: '👷 Tenaga Kerja',     color: '#FB923C' },
@@ -255,7 +255,7 @@ export default function LaporanSiklus() {
           <div className="flex gap-2 min-w-max">
             {sortedCycles.map(c => {
               const isSelected = cycle?.id === c.id
-              const statusDot = c.status === 'harvested' ? '#021a02' : c.status === 'active' ? '#A78BFA' : '#F87171'
+              const statusDot = c.status === 'harvested' ? '#10B981' : c.status === 'active' ? '#A78BFA' : '#F87171'
               return (
                 <button
                   key={c.id}
@@ -554,7 +554,7 @@ function CycleReport({ cycle, tenantId, navigate, p }) {
                   formatter={v => ({ berat: 'Berat Aktual (kg)', cobb: 'Cobb 500 Target', pakan: 'Pakan (kg)', mati: 'Kematian' }[v] ?? v)}
                 />
                 <Bar   yAxisId="right" dataKey="mati"  fill="#F87171" opacity={0.6} radius={[2, 2, 0, 0]} maxBarSize={18} name="mati" />
-                <Line  yAxisId="left"  dataKey="cobb"  stroke="#021a02" strokeWidth={1.5} strokeDasharray="5 3" dot={false} connectNulls name="cobb" opacity={0.6} />
+                <Line  yAxisId="left"  dataKey="cobb"  stroke="#10B981" strokeWidth={1.5} strokeDasharray="5 3" dot={false} connectNulls name="cobb" opacity={0.6} />
                 <Line  yAxisId="left"  dataKey="berat" stroke="#A78BFA" strokeWidth={2} dot={{ r: 2, fill: '#7C3AED' }} connectNulls name="berat" />
                 <Line  yAxisId="left"  dataKey="pakan" stroke="#F59E0B" strokeWidth={2} strokeDasharray="4 2" dot={false} connectNulls name="pakan" />
               </ComposedChart>
@@ -587,7 +587,7 @@ function CycleReport({ cycle, tenantId, navigate, p }) {
                   formatter={(v, name) => [`${v}°C`, name === 'pagi' ? 'Suhu Pagi' : 'Suhu Sore']}
                 />
                 <ReferenceLine y={32} stroke="rgba(248,113,113,0.3)" strokeDasharray="3 3" label={{ value: '32°C max', fill: '#F87171', fontSize: 9, position: 'right' }} />
-                <ReferenceLine y={28} stroke="rgba(2, 26, 2,0.3)" strokeDasharray="3 3" label={{ value: '28°C min', fill: '#021a02', fontSize: 9, position: 'right' }} />
+                <ReferenceLine y={28} stroke="rgba(16, 185, 129, 0.3)" strokeDasharray="3 3" label={{ value: '28°C min', fill: '#10B981', fontSize: 9, position: 'right' }} />
                 <Line dataKey="pagi" stroke="#60A5FA" strokeWidth={2} dot={{ r: 2 }} connectNulls name="pagi" />
                 <Line dataKey="sore" stroke="#F59E0B" strokeWidth={2} dot={{ r: 2 }} connectNulls name="sore" />
                 <Legend wrapperStyle={{ fontSize: 10, color: '#4B6478', paddingTop: 6 }}
@@ -671,7 +671,7 @@ function CycleReport({ cycle, tenantId, navigate, p }) {
                   <div className="flex items-center gap-1.5">
                     <div className="h-1.5 rounded-full" style={{
                       width: `${Math.round((v / envStats.totalDays) * 48)}px`,
-                      background: k === 'kering' ? '#021a02' : k === 'lembab' ? '#F59E0B' : '#F87171',
+                      background: k === 'kering' ? '#10B981' : k === 'lembab' ? '#F59E0B' : '#F87171',
                       minWidth: 4,
                     }} />
                     <span className="text-[10px] text-[#4B6478] w-7 text-right">{v}x</span>
@@ -688,7 +688,7 @@ function CycleReport({ cycle, tenantId, navigate, p }) {
                   <div className="flex items-center gap-1.5">
                     <div className="h-1.5 rounded-full" style={{
                       width: `${Math.round((v / envStats.totalDays) * 48)}px`,
-                      background: k === 'tidak_ada' ? '#021a02' : k === 'ringan' ? '#A3E635' : k === 'sedang' ? '#F59E0B' : '#F87171',
+                      background: k === 'tidak_ada' ? '#10B981' : k === 'ringan' ? '#A3E635' : k === 'sedang' ? '#F59E0B' : '#F87171',
                       minWidth: 4,
                     }} />
                     <span className="text-[10px] text-[#4B6478] w-7 text-right">{v}x</span>
@@ -738,14 +738,14 @@ function CycleReport({ cycle, tenantId, navigate, p }) {
                         </td>
                         <td className="px-3 py-2 text-[10px]">
                           {r.litter_condition
-                            ? <span style={{ color: r.litter_condition === 'kering' ? '#021a02' : r.litter_condition === 'lembab' ? '#F59E0B' : '#F87171' }}>
+                            ? <span style={{ color: r.litter_condition === 'kering' ? '#10B981' : r.litter_condition === 'lembab' ? '#F59E0B' : '#F87171' }}>
                                 {LITTER_LABELS[r.litter_condition]}
                               </span>
                             : <span className="text-[#4B6478]">—</span>}
                         </td>
                         <td className="px-3 py-2 text-[10px]">
                           {r.ammonia_level
-                            ? <span style={{ color: r.ammonia_level === 'tidak_ada' ? '#021a02' : r.ammonia_level === 'ringan' ? '#A3E635' : r.ammonia_level === 'sedang' ? '#F59E0B' : '#F87171' }}>
+                            ? <span style={{ color: r.ammonia_level === 'tidak_ada' ? '#10B981' : r.ammonia_level === 'ringan' ? '#A3E635' : r.ammonia_level === 'sedang' ? '#F59E0B' : '#F87171' }}>
                                 {AMMONIA_LABELS[r.ammonia_level]}
                               </span>
                             : <span className="text-[#4B6478]">—</span>}
@@ -855,7 +855,7 @@ function CycleReport({ cycle, tenantId, navigate, p }) {
                 <p className="font-['Sora'] text-base font-extrabold text-amber-400">{formatIDR(kpi.hpp)}</p>
                 <p className="text-[10px] text-[#4B6478] mt-1">Harga Pokok Produksi per kg</p>
                 {kpi.sellPrice && (
-                  <p className="text-[10px] mt-1 font-bold" style={{ color: kpi.sellPrice > kpi.hpp ? '#021a02' : '#F87171' }}>
+                  <p className="text-[10px] mt-1 font-bold" style={{ color: kpi.sellPrice > kpi.hpp ? '#10B981' : '#F87171' }}>
                     {kpi.sellPrice > kpi.hpp
                       ? `✅ Margin +${formatIDR(kpi.sellPrice - kpi.hpp)}/kg`
                       : `🔴 Jual di bawah HPP`}
@@ -895,7 +895,7 @@ function CycleReport({ cycle, tenantId, navigate, p }) {
                 </p>
                 <p className="text-[10px] text-[#4B6478] mt-1">Minimum panen impas</p>
                 {kpi.alive > 0 && (
-                  <p className="text-[10px] mt-1 font-bold" style={{ color: kpi.alive >= kpi.bepEkor ? '#021a02' : '#F87171' }}>
+                  <p className="text-[10px] mt-1 font-bold" style={{ color: kpi.alive >= kpi.bepEkor ? '#10B981' : '#F87171' }}>
                     {kpi.alive >= kpi.bepEkor ? `✅ Populasi cukup` : `⚠️ Kurang ${(kpi.bepEkor - kpi.alive).toLocaleString('id-ID')} ekor`}
                   </p>
                 )}

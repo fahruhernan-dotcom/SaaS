@@ -76,12 +76,12 @@ const COMMODITY_GROUPS = [
 
 const TYPE_META = {
   stok_ayam:        { label: 'Stok Peternak',    color: '#A78BFA', bg: 'rgba(124,58,237,0.12)',  border: 'rgba(124,58,237,0.3)'  },
-  penawaran_broker: { label: 'Penawaran Broker',  color: '#021a02', bg: 'rgba(2, 26, 2,0.12)', border: 'rgba(2, 26, 2,0.3)'  },
+  penawaran_broker: { label: 'Penawaran Broker',  color: '#10B981', bg: 'rgba(16, 185, 129, 0.12)', border: 'rgba(16, 185, 129, 0.3)'  },
   permintaan_rpa:   { label: 'Permintaan RPA',    color: '#FBBF24', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)'  },
 }
 
 const STATUS_META = {
-  active:  { label: 'Aktif',      color: '#021a02', bg: 'rgba(2, 26, 2,0.12)'  },
+  active:  { label: 'Aktif',      color: '#10B981', bg: 'rgba(16, 185, 129, 0.12)'  },
   closed:  { label: 'Ditutup',    color: '#94A3B8', bg: 'rgba(148,163,184,0.1)'  },
   expired: { label: 'Kadaluarsa', color: '#F87171', bg: 'rgba(248,113,113,0.12)' },
 }
@@ -301,7 +301,7 @@ function ListingCard({ listing }) {
             <span className="text-[#4B6478]">
               {listing.listing_type === 'permintaan_rpa' ? 'Budget Harga' : 'Harga Per Satuan'}
             </span>
-            <span className="font-bold tabular-nums" style={{ color: '#021a02' }}>
+            <span className="font-bold tabular-nums" style={{ color: '#10B981' }}>
               {formatRp(listing.price_per_kg)}
             </span>
           </div>
@@ -505,7 +505,7 @@ function SheetPasangIklan({ isOpen, onClose, profile }) {
                 <div
                   key={n}
                   className="h-1 rounded-full flex-1 transition-all"
-                  style={{ background: n <= step ? '#021a02' : 'rgba(255,255,255,0.08)' }}
+                  style={{ background: n <= step ? '#10B981' : 'rgba(255,255,255,0.08)' }}
                 />
               ))}
             </div>
@@ -530,7 +530,7 @@ function SheetPasangIklan({ isOpen, onClose, profile }) {
                     icon: '/assets/icons/models/role_broker.png',
                     title: 'Tawarkan Ayam',
                     desc: 'Saya broker — ingin tawarkan ayam ke RPA atau buyer',
-                    color: '#021a02',
+                    color: '#10B981',
                   },
                   {
                     type: 'permintaan_rpa',
@@ -838,7 +838,7 @@ export default function Market() {
         </div>
         <button
           onClick={() => setSheetOpen(true)}
-          className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-colors shadow-[0_4px_20px_rgba(2, 26, 2,0.25)] shrink-0"
+          className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold px-4 py-2.5 rounded-xl transition-colors shadow-[0_4px_20px_rgba(16, 185, 129, 0.25)] shrink-0"
         >
           <Plus size={15} />
           Pasang Iklan
@@ -890,7 +890,7 @@ export default function Market() {
               onClick={() => setTypeFilter(t.value)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all"
               style={typeFilter === t.value
-                ? { background: '#021a02', color: '#fff', border: '1px solid #021a02' }
+                ? { background: '#10B981', color: '#fff', border: '1px solid #10B981' }
                 : { background: 'rgba(255,255,255,0.04)', color: '#94A3B8', border: '1px solid rgba(255,255,255,0.08)' }
               }
             >

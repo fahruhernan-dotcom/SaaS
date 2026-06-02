@@ -166,12 +166,12 @@ const CURATED_FAQ_SCHEMA = [
   {
     '@type': 'Question',
     name: 'Jenis peternakan apa saja yang didukung TernakOS?',
-    acceptedAnswer: { '@type': 'Answer', text: 'TernakOS mendukung enam kategori bisnis peternakan: (1) Peternak Unggas — broiler mandiri dan mitra sistem kemitraan INTI-Plasma. (2) Peternak Sapi — fattening (penggemukan) dan breeding (pembibitan). (3) Peternak Domba — fattening dan breeding. (4) Peternak Kambing — fattening, breeding, dan perah (susu). (5) Broker & Trader — broker ayam, broker telur, dan agen sembako/distributor. (6) Industri Hilir — rumah potong ayam (RPA). Modul sapi perah sedang dalam pengembangan aktif.' },
+    acceptedAnswer: { '@type': 'Answer', text: 'TernakOS mendukung enam kategori bisnis peternakan: (1) Peternak Unggas (broiler mandiri dan mitra sistem kemitraan INTI-Plasma). (2) Peternak Sapi (fattening/penggemukan dan breeding/pembibitan). (3) Peternak Domba (fattening dan breeding). (4) Peternak Kambing (fattening, breeding, dan perah/susu). (5) Broker & Trader (broker ayam, broker telur, dan agen sembako/distributor). (6) Industri Hilir (rumah potong ayam/RPA). Modul sapi perah sedang dalam pengembangan aktif.' },
   },
   {
     '@type': 'Question',
     name: 'Apakah TernakOS bisa untuk peternak sapi?',
-    acceptedAnswer: { '@type': 'Answer', text: 'Ya, TernakOS sepenuhnya mendukung peternak sapi. Tersedia dua modul sapi: (1) Sapi Fattening (Penggemukan) — kelola batch sapi masuk, catat pertumbuhan harian, hitung ADG, FCR, R/C ratio, BEP, denah kandang per pen, kartu ternak digital per ekor, dan laporan laba-rugi per batch. (2) Sapi Breeding (Pembibitan) — manajemen database herd, IB atau kawin alam, tracking kehamilan, pencatatan kelahiran pedet, dan laporan conception rate serta calving interval.' },
+    acceptedAnswer: { '@type': 'Answer', text: 'Ya, TernakOS sepenuhnya mendukung peternak sapi. Tersedia dua modul sapi: (1) Sapi Fattening (Penggemukan) untuk kelola batch sapi masuk, catat pertumbuhan harian, hitung ADG, FCR, R/C ratio, BEP, denah kandang per pen, kartu ternak digital per ekor, dan laporan laba-rugi per batch. (2) Sapi Breeding (Pembibitan) untuk manajemen database herd, IB atau kawin alam, tracking kehamilan, pencatatan kelahiran pedet, dan laporan conception rate serta calving interval.' },
   },
   {
     '@type': 'Question',
@@ -181,7 +181,7 @@ const CURATED_FAQ_SCHEMA = [
   {
     '@type': 'Question',
     name: 'Apa perbedaan antara peran peternak, broker, dan RPA di TernakOS?',
-    acceptedAnswer: { '@type': 'Answer', text: 'Di TernakOS, tiga peran ini memiliki fungsi berbeda: (1) Peternak — mengelola kandang/farm, mencatat produksi, pakan, kesehatan ternak, dan performa per siklus/batch. (2) Broker — mengelola rantai distribusi: beli dari peternak, jual ke RPA atau pasar, catat hutang/piutang, dan kelola pengiriman. (3) RPA (Rumah Potong Ayam) — mengelola order masuk dari broker/pelanggan, stok bahan baku, hutang ke supplier, dan distribusi produk jadi. Satu akun bisa memiliki kombinasi beberapa tipe bisnis sekaligus.' },
+    acceptedAnswer: { '@type': 'Answer', text: 'Di TernakOS, tiga peran ini memiliki fungsi berbeda: (1) Peternak untuk mengelola kandang/farm, mencatat produksi, pakan, kesehatan ternak, dan performa per siklus/batch. (2) Broker untuk mengelola rantai distribusi: beli dari peternak, jual ke RPA atau pasar, catat hutang/piutang, dan kelola pengiriman. (3) RPA (Rumah Potong Ayam) untuk mengelola order masuk dari broker/pelanggan, stok bahan baku, hutang ke supplier, dan distribusi produk jadi. Satu akun bisa memiliki kombinasi beberapa tipe bisnis sekaligus.' },
   },
   {
     '@type': 'Question',
@@ -191,7 +191,7 @@ const CURATED_FAQ_SCHEMA = [
   {
     '@type': 'Question',
     name: 'Apakah TernakOS bisa untuk bisnis selain peternakan, seperti perdagangan telur atau sembako?',
-    acceptedAnswer: { '@type': 'Answer', text: 'Ya. TernakOS bukan hanya untuk kandang — platform ini juga mencakup rantai pasok terkait peternakan: (1) Broker Telur — POS berbasis grade (Grade A/B/C), manajemen stok per grade, dan pencatatan piutang pelanggan. (2) Agen/Distributor Sembako — manajemen stok FIFO multi-item (beras, minyak, gula, dll), laporan penjualan, dan analisis margin. Kedua modul ini berdiri sendiri, sehingga bisa digunakan tanpa harus punya kandang.' },
+    acceptedAnswer: { '@type': 'Answer', text: 'Ya. TernakOS bukan hanya untuk kandang, karena platform ini juga mencakup rantai pasok terkait peternakan: (1) Broker Telur (POS berbasis grade A/B/C, manajemen stok per grade, dan pencatatan piutang pelanggan). (2) Agen/Distributor Sembako (manajemen stok FIFO multi-item seperti beras, minyak, gula, laporan penjualan, dan analisis margin). Kedua modul ini berdiri sendiri, sehingga bisa digunakan tanpa harus punya kandang.' },
   },
   {
     '@type': 'Question',
@@ -206,12 +206,12 @@ const CURATED_FAQ_SCHEMA = [
   {
     '@type': 'Question',
     name: 'Apakah data bisnis saya aman di TernakOS?',
-    acceptedAnswer: { '@type': 'Answer', text: 'Ya. TernakOS menggunakan Row Level Security (RLS) PostgreSQL — standar keamanan bank — yang memastikan data bisnis kamu tidak bisa diakses oleh pengguna lain meskipun berada di platform yang sama. Setiap bisnis terisolasi penuh.' },
+    acceptedAnswer: { '@type': 'Answer', text: 'Ya. TernakOS menggunakan Row Level Security (RLS) PostgreSQL (standar keamanan bank) yang memastikan data bisnis kamu tidak bisa diakses oleh pengguna lain meskipun berada di platform yang sama. Setiap bisnis terisolasi penuh.' },
   },
   {
     '@type': 'Question',
     name: 'Apakah TernakOS bisa dipakai untuk lebih dari satu jenis bisnis dalam satu akun?',
-    acceptedAnswer: { '@type': 'Answer', text: 'Bisa. Satu akun login bisa terhubung ke beberapa bisnis sekaligus — misalnya kamu punya kandang broiler sekaligus usaha broker ayam. Tinggal switch bisnis dari dashboard utama tanpa perlu login ulang.' },
+    acceptedAnswer: { '@type': 'Answer', text: 'Bisa. Satu akun login bisa terhubung ke beberapa bisnis sekaligus, misalnya kamu punya kandang broiler sekaligus usaha broker ayam. Tinggal switch bisnis dari dashboard utama tanpa perlu login ulang.' },
   },
   {
     '@type': 'Question',
@@ -275,7 +275,7 @@ export default function FAQPage() {
   return (
     <div className="min-h-screen bg-[#06090F] text-[#F1F5F9] font-sans selection:bg-emerald-500/30 overflow-x-hidden">
       <SEO
-        title="FAQ TernakOS — Sapi, Domba, Kambing, Broiler, Broker & RPA | Semua yang Perlu Anda Tahu"
+        title="FAQ TernakOS: Sapi, Domba, Kambing, Broiler, Broker & RPA | Semua yang Perlu Anda Tahu"
         description="TernakOS mendukung peternak sapi, domba, kambing, broiler, broker ayam, broker telur, agen sembako, dan RPA. Temukan jawaban lengkap tentang fitur, keamanan, dan harga di halaman FAQ."
         path="/faq"
         schema={faqSchema}
@@ -314,7 +314,7 @@ export default function FAQPage() {
               Pertanyaan yang <span className="text-emerald-400">Sering Ditanya</span>
             </h1>
             <p className="text-[#4B6478] text-base md:text-lg max-w-xl mx-auto leading-relaxed mb-8">
-              {totalVisible} pertanyaan tersedia — temukan jawaban seputar fitur, keamanan, harga, dan cara kerja TernakOS.
+              {totalVisible} pertanyaan tersedia untuk menemukan jawaban seputar fitur, keamanan, harga, dan cara kerja TernakOS.
             </p>
 
             {/* Search */}

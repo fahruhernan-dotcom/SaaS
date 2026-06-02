@@ -26,7 +26,7 @@ export default function StokVirtual() {
       {/* Summary Chips */}
       <div style={{ padding: '0 20px', margin: '16px 0', display: 'flex', gap: '8px', overflowX: 'auto', scrollbarWidth: 'none' }}>
         <SummaryChip label="Total Stok" value={formatEkor(stats.total)} color="#94A3B8" />
-        <SummaryChip label="Siap Panen" value={formatEkor(stats.ready)} color="#021a02" />
+        <SummaryChip label="Siap Panen" value={formatEkor(stats.ready)} color="#10B981" />
         <SummaryChip label="Terpesan" value={formatEkor(stats.booked)} color="#F59E0B" />
       </div>
 
@@ -43,7 +43,7 @@ export default function StokVirtual() {
               fontWeight: 700,
               textTransform: 'capitalize',
               whiteSpace: 'nowrap',
-              background: filter === f ? '#021a02' : '#111C24',
+              background: filter === f ? '#10B981' : '#111C24',
               color: filter === f ? 'white' : '#94A3B8',
               border: filter === f ? 'none' : '1px solid rgba(255,255,255,0.06)',
             }}
@@ -77,10 +77,10 @@ export default function StokVirtual() {
           right: '20px',
           width: '56px', height: '56px',
           borderRadius: '28px',
-          background: '#021a02',
+          background: '#10B981',
           color: 'white',
           border: 'none',
-          boxShadow: '0 8px 24px rgba(2, 26, 2,0.3)',
+          boxShadow: '0 8px 24px rgba(16, 185, 129, 0.3)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 90
         }}
@@ -115,7 +115,7 @@ function SummaryChip({ label, value, color }) {
 
 function BatchCard({ batch }) {
   const progress = Math.min((batch.avg_weight_kg / 1.8) * 100, 100);
-  const progressColor = progress < 80 ? '#F87171' : progress < 95 ? '#F59E0B' : '#021a02';
+  const progressColor = progress < 80 ? '#F87171' : progress < 95 ? '#F59E0B' : '#10B981';
 
   return (
     <motion.div
@@ -137,7 +137,7 @@ function BatchCard({ batch }) {
             borderRadius: '14px',
             background: 'rgba(255,255,255,0.03)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#021a02'
+            color: '#10B981'
           }}>
             <Package size={22} />
           </div>
@@ -155,8 +155,8 @@ function BatchCard({ batch }) {
           borderRadius: '6px',
           fontSize: '10px',
           fontWeight: 800,
-          background: batch.status === 'ready' ? 'rgba(2, 26, 2,0.15)' : 'rgba(245,158,11,0.15)',
-          color: batch.status === 'ready' ? '#021a02' : '#F59E0B',
+          background: batch.status === 'ready' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245,158,11,0.15)',
+          color: batch.status === 'ready' ? '#10B981' : '#F59E0B',
           textTransform: 'uppercase'
         }}>
           {batch.status}

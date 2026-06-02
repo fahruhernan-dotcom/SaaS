@@ -21,7 +21,7 @@ const FEED_TYPE_LABELS = {
 const FEED_TYPE_OPTIONS = Object.entries(FEED_TYPE_LABELS).map(([value, label]) => ({ value, label }))
 
 function getStatus(qty) {
-  if (qty >= 500)  return { label: 'Aman',    color: '#021a02', pulse: false }
+  if (qty >= 500)  return { label: 'Aman',    color: '#10B981', pulse: false }
   if (qty >= 100)  return { label: 'Cukup',   color: '#FBBF24', pulse: false }
   return                  { label: 'Menipis', color: '#F87171', pulse: true  }
 }
@@ -495,13 +495,13 @@ export default function PeternakPakan() {
           label="Total Stok"
           value={`${totalKg.toLocaleString('id-ID', { maximumFractionDigits: 0 })} kg`}
           sub="semua kandang"
-          color="#021a02"
+          color="#10B981"
         />
         <StatsCard
           label="Stok Menipis"
           value={lowCount}
           sub="< 100 kg"
-          color={lowCount > 0 ? '#F87171' : '#021a02'}
+          color={lowCount > 0 ? '#F87171' : '#10B981'}
         />
       </div>
 

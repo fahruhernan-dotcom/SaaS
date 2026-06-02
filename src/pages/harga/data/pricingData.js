@@ -72,7 +72,7 @@ export const FAQ_LIST = [
   },
   {
     q: 'Apakah TernakBot AI tersedia di Starter?',
-    a: 'TernakBot AI tersedia eksklusif di plan Business — unlimited sesi, Analisis Performa, Prediksi Hasil, dan AI Audit Log. Starter dan Pro belum mendapatkan akses TernakBot.',
+    a: 'TernakBot AI tersedia eksklusif di plan Business dengan unlimited sesi, Analisis Performa, Prediksi Hasil, dan AI Audit Log. Starter dan Pro belum mendapatkan akses TernakBot.',
   },
 ]
 
@@ -243,9 +243,9 @@ export const PRICING_DATA = {
     proFeatures: [
       '2 kandang broiler aktif',
       'Siklus lengkap: chick-in → panen (status Growing/Ready/Panen)',
-      'Input harian: mortalitas, pakan, bobot — FCR realtime',
+      'Input harian: mortalitas, pakan, bobot, untuk melihat FCR realtime',
       'Standar Cobb500 sebagai benchmark bobot harian',
-      'Jadwal vaksinasi: ND+IB, Gumboro, booster — log per dosis',
+      'Jadwal vaksinasi: ND+IB, Gumboro, booster, serta log per dosis',
       'Laporan siklus: FCR final, IP Score, HPP/kg, laba-rugi',
       'Stok pakan: Starter/Grower/Finisher + alert menipis',
       'Tugas harian + penugasan anak kandang',

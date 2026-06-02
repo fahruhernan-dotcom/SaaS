@@ -264,7 +264,7 @@ export default function MarketPublic() {
           </div>
           <button
             onClick={() => navigate('/register')}
-            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold px-5 py-3 rounded-xl transition-colors shadow-[0_4px_20px_rgba(2, 26, 2,0.25)] shrink-0"
+            className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold px-5 py-3 rounded-xl transition-colors shadow-[0_4px_20px_rgba(2, 26, 2,0.25)] shrink-0"
           >
             <Plus size={16} />
             Pasang Iklan Sekarang

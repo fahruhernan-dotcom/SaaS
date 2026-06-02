@@ -53,7 +53,7 @@ const avatarStyle = {
 const workerNameStyle  = { fontFamily: 'Sora', fontWeight: 700, fontSize: 14, color: '#F1F5F9' }
 const workerFarmStyle  = { fontSize: 11, color: '#4B6478', marginTop: 2 }
 const statusBadgeStyle = { fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 99, flexShrink: 0 }
-const activeStatusStyle   = { background: 'rgba(2, 26, 2,0.1)',  color: '#021a02', border: '1px solid rgba(2, 26, 2,0.2)' }
+const activeStatusStyle   = { background: 'rgba(16, 185, 129, 0.1)',  color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.2)' }
 const inactiveStatusStyle = { background: 'rgba(248,113,113,0.08)', color: '#F87171', border: '1px solid rgba(248,113,113,0.15)' }
 
 const salaryRowStyle  = { display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }
@@ -150,7 +150,7 @@ function initials(name) {
 }
 
 const PAYMENT_TYPES = [
-  { value: 'gaji',  label: '💰 Gaji',       color: '#021a02' },
+  { value: 'gaji',  label: '💰 Gaji',       color: '#10B981' },
   { value: 'bonus', label: '🎁 Bonus',       color: '#A78BFA' },
   { value: 'makan', label: '🍱 Uang Makan',  color: '#F59E0B' },
   { value: 'lain',  label: '📌 Lainnya',     color: '#94A3B8' },
@@ -331,7 +331,7 @@ function WorkerCard({ worker, onEdit, onPayment }) {
             {worker.fcr_target > 0 && (
               <div style={salaryItemStyle}>
                 <span style={salaryLabelStyle}>Target FCR</span>
-                <span style={{ ...salaryValueStyle, color: '#021a02' }}>
+                <span style={{ ...salaryValueStyle, color: '#10B981' }}>
                   ≤ {worker.fcr_target}
                 </span>
               </div>
@@ -577,14 +577,14 @@ function WorkerSheet({ open, onClose, worker, farms, onSaved }) {
                   style={{
                     flex: 1, padding: '10px 8px',
                     background: form.status === s.value
-                      ? s.value === 'aktif' ? 'rgba(2, 26, 2,0.1)' : 'rgba(248,113,113,0.1)'
+                      ? s.value === 'aktif' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(248,113,113,0.1)'
                       : 'rgba(255,255,255,0.04)',
                     border: `1.5px solid ${form.status === s.value
-                      ? s.value === 'aktif' ? '#021a02' : '#F87171'
+                      ? s.value === 'aktif' ? '#10B981' : '#F87171'
                       : 'rgba(255,255,255,0.07)'}`,
                     borderRadius: 10,
                     color: form.status === s.value
-                      ? s.value === 'aktif' ? '#021a02' : '#F87171'
+                      ? s.value === 'aktif' ? '#10B981' : '#F87171'
                       : '#4B6478',
                     fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.15s',
                   }}

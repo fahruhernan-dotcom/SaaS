@@ -12,9 +12,9 @@ const MarketPrice = ({ activeRole }) => {
   const content = useMemo(() => ({
     broker: {
       title: <>Data Harga Pasar yang <br/><span className="text-emerald-500">Selalu Up-to-Date</span></>,
-      desc: "Setiap kali broker mencatat transaksi, harga secara otomatis masuk to sistem. Kamu tahu rata-rata harga pasar hari ini — bahkan sebelum mulai negosiasi.",
+      desc: "Setiap kali broker mencatat transaksi, harga secara otomatis masuk ke sistem. Kamu tahu rata-rata harga pasar hari ini, bahkan sebelum mulai negosiasi.",
       checklist: [
-        'Data dari transaksi nyata — bukan rumor WA',
+        'Data dari transaksi nyata, bukan rumor WA',
         '3 Sumber Data: Scraper Nasional, Admin Regional, & Transaksi User',
         'Analisis per Provinsi untuk akurasi maksimal'
       ]
@@ -303,7 +303,7 @@ const MarketPrice = ({ activeRole }) => {
             className="w-full flex-1 bg-bg-1 border border-border-default rounded-[24px] p-6 md:p-8 relative overflow-hidden shadow-sm hover:border-border-strong transition-all duration-300"
           >
              <div className="relative z-10 flex justify-between items-center mb-6 border-b border-border-subtle pb-4">
-                <p className="text-[11px] md:text-xs font-bold text-text-primary uppercase tracking-wider">Data Harga Pasar — Regional & Nasional</p>
+                <p className="text-[11px] md:text-xs font-bold text-text-primary uppercase tracking-wider">Data Harga Pasar (Regional & Nasional)</p>
                 <div className="flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/15">
                   <span ref={dotRef} className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                   <span className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Live</span>

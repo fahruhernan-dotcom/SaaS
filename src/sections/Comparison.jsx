@@ -87,15 +87,15 @@ function TernakOSMockup() {
       <div className="flex items-center gap-2">
         <img src="/logo.png" alt="TernakOS" className="w-6 h-6 rounded-md object-cover border border-white/10" />
         <span className="text-[11px] font-bold text-[#F1F5F9]">TernakOS</span>
-        <span className="ml-auto text-[9px] text-[#021a02] bg-emerald-500/10 px-1.5 py-0.5 rounded-full">● Live</span>
+        <span className="ml-auto text-[9px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">● Live</span>
       </div>
 
       {/* KPI cards row */}
       <div className="grid grid-cols-2 gap-2">
         {[
-          { label: 'FCR Saat Ini', value: '1.62', sub: '↓ dari 1.82', color: '#021a02', good: true },
-          { label: 'IP Score', value: '342', sub: '↑ 18 poin', color: '#021a02', good: true },
-          { label: 'Deplesi', value: '1.2%', sub: 'dalam batas', color: '#021a02', good: true },
+          { label: 'FCR Saat Ini', value: '1.62', sub: '↓ dari 1.82', color: '#22c55e', good: true },
+          { label: 'IP Score', value: '342', sub: '↑ 18 poin', color: '#22c55e', good: true },
+          { label: 'Deplesi', value: '1.2%', sub: 'dalam batas', color: '#22c55e', good: true },
           { label: 'Hari ke-', value: '18', sub: 'Kandang A', color: '#94A3B8', good: null },
         ].map((kpi) => (
           <div
@@ -125,8 +125,8 @@ function TernakOSMockup() {
               style={{
                 height: `${(d.h / maxH) * 100}%`,
                 background: i === miniChart.length - 1
-                  ? '#021a02'
-                  : `rgba(2, 26, 2,${0.15 + (i / miniChart.length) * 0.35})`,
+                  ? '#22c55e'
+                  : `rgba(34, 197, 94,${0.15 + (i / miniChart.length) * 0.35})`,
               }}
             />
           ))}
@@ -216,7 +216,7 @@ export default function Comparison() {
       {/* Header */}
       <AnimatedContent distance={24}>
         <div className="text-center mb-12 max-w-2xl mx-auto">
-          <p className="text-[#021a02] text-xs font-bold uppercase tracking-widest mb-3">
+          <p className="text-[#021a02] dark:text-emerald-400 text-xs font-bold uppercase tracking-widest mb-3">
             PERBANDINGAN NYATA
           </p>
           <h2 className="font-display text-3xl md:text-4xl font-black text-white leading-tight mb-3">
@@ -263,7 +263,7 @@ export default function Comparison() {
               </div>
               {/* Watermark */}
               <div className="absolute bottom-3 right-3 opacity-30">
-                <span className="text-[10px] font-mono text-gray-500">Google Sheets — Manual</span>
+                <span className="text-[10px] font-mono text-gray-500">Google Sheets (Manual)</span>
               </div>
               {/* Fixed-width inner so content doesn't compress */}
               <div style={{ width: containerWidth, height: '100%' }}>

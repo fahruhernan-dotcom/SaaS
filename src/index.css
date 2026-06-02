@@ -154,7 +154,7 @@ section h1, section h2, section h3 {
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 160 84% 39%; /* emerald-600 */
+    --primary: 120 67% 14.3%; /* forest green (#0c3d0c) */
     --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -166,29 +166,29 @@ section h1, section h2, section h3 {
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 87.4%; /* slightly darker slate-200 for border contrast */
     --input: 214.3 31.8% 87.4%;
-    --ring: 160 84% 39%;
+    --ring: 120 67% 14.3%;
     --radius: 0.75rem;
-    --chart-1: 160 84% 39%;
+    --chart-1: 120 67% 14.3%;
     --chart-2: 217 91% 60%;
     --chart-3: 38 92% 50%;
     --chart-4: 262 83% 58%;
     --chart-5: 0 72% 70%;
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 222.2 84% 4.9%;
-    --sidebar-primary: 160 84% 39%;
+    --sidebar-primary: 120 67% 14.3%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 40% 96.1%;
     --sidebar-accent-foreground: 222.2 47.4% 11.2%;
     --sidebar-border: 214.3 31.8% 87.4%;
-    --sidebar-ring: 160 84% 39%;
+    --sidebar-ring: 120 67% 14.3%;
 
     /* Extended Color Variables for Light Mode */
-    --emerald-50: #f0fdf4;
-    --emerald-300: #86efac;
-    --emerald-400: #4ade80;
-    --emerald-500: #22c55e;
-    --emerald-600: #16a34a;
-    --em-500: #22c55e;
+    --emerald-50: #f0f7f0;
+    --emerald-300: #8cb88c;
+    --emerald-400: #4d9e4d;
+    --emerald-500: #0c3d0c; /* #0c3d0c forest green */
+    --emerald-600: #063306; /* #063306 forest green */
+    --em-500: #0c3d0c;
   
     --bg-base-val: #FAFAFA; /* off-white bersih */
     --bg-1-val: #FFFFFF;    /* white panels */
@@ -197,7 +197,7 @@ section h1, section h2, section h3 {
     --text-primary-val: #0F172A;   /* slate-900 */
     --text-secondary-val: #273041; /* slate-800 - darker for 15% more contrast */
     --text-muted-val: #4A5568;     /* slate-600 - darker for more contrast */
-    --text-accent-val: #059669;    /* emerald-600 - slightly darker for contrast */
+    --text-accent-val: #0c3d0c;    /* forest-500 */
     
     --border-sub-val: rgba(15, 23, 42, 0.08); /* bumped contrast */
     --border-def-val: rgba(15, 23, 42, 0.13); /* bumped contrast */
@@ -227,14 +227,14 @@ section h1, section h2, section h3 {
     --forest-950: #021a02;
 
     /* Colors - Brand Palette */
-    --brand-50:  #ECFDF5;
-    --brand-100: #D1FAE5;
-    --brand-200: #A7F3D0;
-    --brand-300: #6EE7B7;
-    --brand-400: #34D399;
-    --brand-500: #22c55e;
-    --brand-600: #16a34a;
-    --brand-700: #15803d;
+    --brand-50:  #f0f7f0;
+    --brand-100: #dceddc;
+    --brand-200: #b3dfb3;
+    --brand-300: #8cb88c;
+    --brand-400: #4d9e4d;
+    --brand-500: #0c3d0c;
+    --brand-600: #063306;
+    --brand-700: #042004;
 
     /* Semantic Variables */
     --bg-page: #FBFCF8;
@@ -300,8 +300,8 @@ section h1, section h2, section h3 {
     --card-foreground: 210 40% 96%;
     --popover: 215 22% 8%;
     --popover-foreground: 210 40% 96%;
-    --primary: 160 84% 39%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 120 22% 63.5%; /* forest green (#8cb88c) */
+    --primary-foreground: 222.2 47.4% 11.2%; /* dark text on light primary */
     --secondary: 215 19% 11%;
     --secondary-foreground: 210 40% 96%;
     --muted: 215 19% 11%;
@@ -312,15 +312,15 @@ section h1, section h2, section h3 {
     --destructive-foreground: 0 0% 100%;
     --border: 215 20% 13%;
     --input: 215 19% 11%;
-    --ring: 160 84% 39%;
+    --ring: 120 22% 63.5%;
     --sidebar-background: 215 25% 6%;
     --sidebar-foreground: 210 40% 96%;
-    --sidebar-primary: 160 84% 39%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: 120 22% 63.5%;
+    --sidebar-primary-foreground: 222.2 47.4% 11.2%;
     --sidebar-accent: 215 19% 11%;
     --sidebar-accent-foreground: 210 40% 96%;
     --sidebar-border: 215 20% 10%;
-    --sidebar-ring: 160 84% 39%;
+    --sidebar-ring: 120 22% 63.5%;
 
     /* Semantic Variable Overrides for Dark Mode */
     --bg-page: #021a02;
@@ -331,16 +331,16 @@ section h1, section h2, section h3 {
     --text-primary: #F8FAFC;
     --text-secondary: rgba(248, 250, 252, 0.72);
     --text-muted: rgba(248, 250, 252, 0.52);
-    --brand-500: #22c55e; /* main brand green for dark mode — bright green */
-    --brand-600: #16a34a; /* CTA hover override for dark mode */
+    --brand-500: #8cb88c; /* main brand forest green for dark mode */
+    --brand-600: #749e74; /* CTA hover override for dark mode */
 
-    /* Extended Color Variables for Dark Mode — based on #22c55e green scale */
-    --emerald-50:  #f0fdf4; /* lightest tint */
-    --emerald-300: #86efac; /* light accent */
-    --emerald-400: #4ade80; /* icon / text accent */
-    --emerald-500: #22c55e; /* base brand green */
-    --emerald-600: #16a34a; /* darker — hover backgrounds */
-    --em-500: #22c55e;
+    /* Extended Color Variables for Dark Mode — based on forest green scale */
+    --emerald-50:  #f0f7f0; /* lightest tint */
+    --emerald-300: #8cb88c; /* light accent */
+    --emerald-400: #a2e0a2; /* icon / text accent */
+    --emerald-500: #8cb88c; /* base brand green */
+    --emerald-600: #749e74; /* darker — hover backgrounds */
+    --em-500: #8cb88c;
   
     --bg-base-val: #06090F;
     --bg-1-val: #0C1319;
@@ -349,7 +349,7 @@ section h1, section h2, section h3 {
     --text-primary-val: #F1F5F9;
     --text-secondary-val: #94A3B8;
     --text-muted-val: #4B6478;
-    --text-accent-val: #22c55e;  /* green-500 tone — readable on dark bg */
+    --text-accent-val: #8cb88c;  /* forest green 500 — readable on dark bg */
     
     --border-sub-val: rgba(255, 255, 255, 0.05);
     --border-def-val: rgba(255, 255, 255, 0.09);
@@ -409,8 +409,12 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 ::selection {
-  background: rgba(2, 26, 2, 0.2);
-  color: #021a02;
+  background-color: #0c3d0c !important;
+  color: #FFFFFF !important;
+}
+::-moz-selection {
+  background-color: #0c3d0c !important;
+  color: #FFFFFF !important;
 }
 
 @keyframes pulse-dot {
@@ -500,18 +504,22 @@ html:not(.dark) .text-\[\#64748B\] { color: #6B7280 !important; }
 html:not(.dark) .text-\[\#8899A6\] { color: #6B7280 !important; }
 html:not(.dark) .text-\[\#7F8EA0\] { color: #6B7280 !important; }
 
-/* ── text-white → dark text di light mode ── */
-/* Tujuan: semua heading/paragraph putih menjadi gelap */
-html:not(.dark) h1.text-white,
-html:not(.dark) h2.text-white,
-html:not(.dark) h3.text-white,
-html:not(.dark) h4.text-white,
-html:not(.dark) p.text-white,
-html:not(.dark) span.text-white {
-  color: #0F172A !important;
-}
 
-/* ── EXCEPTION: Button/link dengan text-white tetap putih HANYA jika memiliki background solid ── */
+
+/* ── EXCEPTION: Button/link/span/div dengan text-white tetap putih HANYA jika memiliki background solid ── */
+html:not(.dark) .text-white[class*="bg-emerald"],
+html:not(.dark) .text-white[class*="bg-em-"],
+html:not(.dark) .text-white.bg-\[\#021a02\],
+html:not(.dark) .text-white.bg-primary,
+html:not(.dark) .text-white.bg-secondary,
+html:not(.dark) .text-white.bg-destructive,
+html:not(.dark) .text-white[class*="bg-amber"],
+html:not(.dark) .text-white[class*="bg-blue"],
+html:not(.dark) .text-white[class*="bg-indigo"],
+html:not(.dark) .text-white[class*="bg-violet"],
+html:not(.dark) .text-white[class*="bg-purple"],
+html:not(.dark) .text-white[class*="bg-rose"],
+html:not(.dark) .text-white[class*="bg-red"],
 html:not(.dark) a.text-white.bg-emerald-500,
 html:not(.dark) button.text-white.bg-emerald-500,
 html:not(.dark) a.text-white.bg-emerald-600,
@@ -552,8 +560,8 @@ html:not(.dark) button.text-white[class*="data-[state=active]:bg"] {
 }
 
 /* Jika button/link tidak memiliki class bg solid di atas, text-white-nya berubah jadi gelap di light mode */
-html:not(.dark) a.text-white:not([class*="bg-emerald"]):not([class*="bg-em-"]):not([class*="bg-primary"]):not([class*="bg-[#021a02]"]):not([class*="bg-amber"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="data-[state=active]:bg"]),
-html:not(.dark) button.text-white:not([class*="bg-emerald"]):not([class*="bg-em-"]):not([class*="bg-primary"]):not([class*="bg-[#021a02]"]):not([class*="bg-amber"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="data-[state=active]:bg"]) {
+html:not(.dark) a.text-white:not([class*="bg-emerald"]):not([class*="bg-em-"]):not([class*="bg-primary"]):not([class*="bg-[#021a02]"]):not([class*="bg-amber"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="data-[state=active]:bg"]):not(.dark *):not(.dark-preserve *),
+html:not(.dark) button.text-white:not([class*="bg-emerald"]):not([class*="bg-em-"]):not([class*="bg-primary"]):not([class*="bg-[#021a02]"]):not([class*="bg-amber"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="data-[state=active]:bg"]):not(.dark *):not(.dark-preserve *) {
   color: #0F172A !important;
 }
 
@@ -611,10 +619,10 @@ html:not(.dark) button[class*="data-[state=active]:bg"] p.text-white {
 }
 
 /* Jika tidak ada background solid di atas, span/p di dalam button/link berubah jadi gelap di light mode */
-html:not(.dark) a:not([class*="bg-emerald"]):not([class*="bg-em-"]):not([class*="bg-primary"]):not([class*="bg-[#021a02]"]):not([class*="bg-amber"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="data-[state=active]:bg"]) span.text-white,
-html:not(.dark) button:not([class*="bg-emerald"]):not([class*="bg-em-"]):not([class*="bg-primary"]):not([class*="bg-[#021a02]"]):not([class*="bg-amber"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="data-[state=active]:bg"]) span.text-white,
-html:not(.dark) a:not([class*="bg-emerald"]):not([class*="bg-em-"]):not([class*="bg-primary"]):not([class*="bg-[#021a02]"]):not([class*="bg-amber"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="data-[state=active]:bg"]) p.text-white,
-html:not(.dark) button:not([class*="bg-emerald"]):not([class*="bg-em-"]):not([class*="bg-primary"]):not([class*="bg-[#021a02]"]):not([class*="bg-amber"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="data-[state=active]:bg"]) p.text-white {
+html:not(.dark) a:not([class*="bg-emerald"]):not([class*="bg-em-"]):not([class*="bg-primary"]):not([class*="bg-[#021a02]"]):not([class*="bg-amber"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="data-[state=active]:bg"]) span.text-white:not(.dark *):not(.dark-preserve *),
+html:not(.dark) button:not([class*="bg-emerald"]):not([class*="bg-em-"]):not([class*="bg-primary"]):not([class*="bg-[#021a02]"]):not([class*="bg-amber"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="data-[state=active]:bg"]) span.text-white:not(.dark *):not(.dark-preserve *),
+html:not(.dark) a:not([class*="bg-emerald"]):not([class*="bg-em-"]):not([class*="bg-primary"]):not([class*="bg-[#021a02]"]):not([class*="bg-amber"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="data-[state=active]:bg"]) p.text-white:not(.dark *):not(.dark-preserve *),
+html:not(.dark) button:not([class*="bg-emerald"]):not([class*="bg-em-"]):not([class*="bg-primary"]):not([class*="bg-[#021a02]"]):not([class*="bg-amber"]):not([class*="bg-blue"]):not([class*="bg-indigo"]):not([class*="bg-violet"]):not([class*="bg-purple"]):not([class*="bg-rose"]):not([class*="bg-red"]):not([class*="data-[state=active]:bg"]) p.text-white:not(.dark *):not(.dark-preserve *) {
   color: #0F172A !important;
 }
 
@@ -654,9 +662,9 @@ html:not(.dark) .bg-\[\#06090F\]\/90 { background-color: rgba(250, 250, 250, 0.9
 html:not(.dark) .bg-\[\#06090F\]\/95 { background-color: rgba(250, 250, 250, 0.96) !important; }
 
 /* ── Color accent colors — gelap di light mode ── */
-html:not(.dark) .text-emerald-300 { color: #86efac !important; }
-html:not(.dark) .text-emerald-400 { color: #4ade80 !important; }
-html:not(.dark) .text-emerald-500 { color: #22c55e !important; }
+html:not(.dark) .text-emerald-300 { color: #8cb88c !important; }
+html:not(.dark) .text-emerald-400 { color: #4d9e4d !important; }
+html:not(.dark) .text-emerald-500 { color: #0c3d0c !important; }
 html:not(.dark) .text-\[\#021a02\] { color: #021a02 !important; }
 html:not(.dark) .text-\[\#021a02\] { color: #021a02 !important; }
 html:not(.dark) .text-amber-300   { color: #D97706 !important; }
@@ -742,16 +750,16 @@ html:not(.dark) [class*="bg-[linear-gradient(135deg,rgba(255,255,255"] {
 }
 
 /* ── Global text-white Overrides (except inside buttons, links, solid colors) ── */
-html:not(.dark) h1.text-white,
-html:not(.dark) h2.text-white,
-html:not(.dark) h3.text-white,
-html:not(.dark) h4.text-white,
-html:not(.dark) h5.text-white,
-html:not(.dark) h6.text-white,
-html:not(.dark) strong.text-white,
-html:not(.dark) div.text-white:not(button *):not(a *),
-html:not(.dark) p.text-white:not(button *):not(a *),
-html:not(.dark) span.text-white:not(button *):not(a *):not(.badge *):not([class*="bg-emerald"] *):not([class*="bg-amber"] *):not([class*="bg-violet"] *) {
+html:not(.dark) h1.text-white:not(.dark *):not(.dark-preserve *),
+html:not(.dark) h2.text-white:not(.dark *):not(.dark-preserve *),
+html:not(.dark) h3.text-white:not(.dark *):not(.dark-preserve *),
+html:not(.dark) h4.text-white:not(.dark *):not(.dark-preserve *),
+html:not(.dark) h5.text-white:not(.dark *):not(.dark-preserve *),
+html:not(.dark) h6.text-white:not(.dark *):not(.dark-preserve *),
+html:not(.dark) strong.text-white:not(.dark *):not(.dark-preserve *),
+html:not(.dark) div.text-white:not(button *):not(a *):not([class*="bg-emerald"]):not([class*="bg-amber"]):not([class*="bg-violet"]):not(.dark *):not(.dark-preserve *),
+html:not(.dark) p.text-white:not(button *):not(a *):not([class*="bg-emerald"]):not([class*="bg-amber"]):not([class*="bg-violet"]):not(.dark *):not(.dark-preserve *),
+html:not(.dark) span.text-white:not(button *):not(a *):not(.badge *):not([class*="bg-emerald"]):not([class*="bg-emerald"] *):not([class*="bg-amber"]):not([class*="bg-amber"] *):not([class*="bg-violet"]):not([class*="bg-violet"] *):not(.dark *):not(.dark-preserve *) {
   color: #0F172A !important;
 }
 
@@ -956,3 +964,29 @@ h4:not(.dark-preserve *) {
               box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1),
               backdrop-filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* ── Custom Selection Styles ── */
+/* Default (Light Mode / Light Containers) */
+html:not(.dark) ::selection {
+  background-color: #0c3d0c !important;
+  color: #FFFFFF !important;
+}
+html:not(.dark) ::-moz-selection {
+  background-color: #0c3d0c !important;
+  color: #FFFFFF !important;
+}
+
+/* Dark Mode / Dark Containers (.dark or .dark-preserve) */
+html.dark ::selection,
+.dark ::selection,
+.dark-preserve ::selection {
+  background-color: #8cb88c !important;
+  color: #0F172A !important;
+}
+html.dark ::-moz-selection,
+.dark ::-moz-selection,
+.dark-preserve ::-moz-selection {
+  background-color: #8cb88c !important;
+  color: #0F172A !important;
+}
+

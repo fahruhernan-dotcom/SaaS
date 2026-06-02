@@ -34,13 +34,13 @@ const QUICK_PROMPTS = [
 function EmptyStateIllustration() {
   return (
     <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <rect x="8" y="16" width="52" height="38" rx="10" fill="#021a02" fillOpacity="0.12" stroke="#021a02" strokeOpacity="0.3" strokeWidth="1.5"/>
-      <rect x="16" y="26" width="28" height="3" rx="1.5" fill="#021a02" fillOpacity="0.4"/>
-      <rect x="16" y="33" width="20" height="3" rx="1.5" fill="#021a02" fillOpacity="0.25"/>
-      <rect x="16" y="40" width="24" height="3" rx="1.5" fill="#021a02" fillOpacity="0.25"/>
-      <path d="M14 54 L8 62" stroke="#021a02" strokeOpacity="0.3" strokeWidth="1.5" strokeLinecap="round"/>
-      <circle cx="58" cy="52" r="14" fill="#0C1319" stroke="#021a02" strokeOpacity="0.3" strokeWidth="1.5"/>
-      <path d="M53 52 L57 56 L63 48" stroke="#021a02" strokeOpacity="0.7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      <rect x="8" y="16" width="52" height="38" rx="10" fill="#10B981" fillOpacity="0.12" stroke="#10B981" strokeOpacity="0.3" strokeWidth="1.5"/>
+      <rect x="16" y="26" width="28" height="3" rx="1.5" fill="#10B981" fillOpacity="0.4"/>
+      <rect x="16" y="33" width="20" height="3" rx="1.5" fill="#10B981" fillOpacity="0.25"/>
+      <rect x="16" y="40" width="24" height="3" rx="1.5" fill="#10B981" fillOpacity="0.25"/>
+      <path d="M14 54 L8 62" stroke="#10B981" strokeOpacity="0.3" strokeWidth="1.5" strokeLinecap="round"/>
+      <circle cx="58" cy="52" r="14" fill="#0C1319" stroke="#10B981" strokeOpacity="0.3" strokeWidth="1.5"/>
+      <path d="M53 52 L57 56 L63 48" stroke="#10B981" strokeOpacity="0.7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }

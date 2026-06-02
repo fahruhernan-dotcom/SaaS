@@ -26,8 +26,16 @@ export default function ManajemenPage({ roleConfig, workerTab }) {
 
   const [activeTab, setActiveTab] = useState(workerTab ? workerTab.id : 'tim')
 
-  const accent = roleConfig?.accent || '#021a02'
-  const _accentStyle = { color: accent, borderColor: accent }
+  const rgb = roleConfig?.accentRgb || '16, 185, 129' // Fallback to emerald
+  const activeStyle = {
+    backgroundColor: `rgba(${rgb}, 0.15)`,
+    borderColor: `rgba(${rgb}, 0.25)`,
+    color: `rgb(${rgb})`,
+  }
+  const inactiveStyle = {
+    borderColor: 'transparent',
+    color: '#4B6478',
+  }
 
   // If no workerTab → render Tim directly without any tab chrome
   if (!workerTab) {
@@ -45,12 +53,11 @@ export default function ManajemenPage({ roleConfig, workerTab }) {
           <div className="h-14 px-4 flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen?.(true)}
-              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 active:scale-90 transition-transform"
-              style={{ background: `${accent}14`, border: `1px solid ${accent}2e` }}
+              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 active:scale-90 transition-transform bg-white/[0.03] border border-white/[0.06]"
             >
-              <Menu size={18} style={{ color: accent }} />
+              <Menu size={18} style={{ color: `rgb(${rgb})` }} />
             </button>
-            <div className="flex gap-1.5 bg-white/[0.04] rounded-xl p-1 flex-1">
+            <div className="flex gap-1.5 bg-white/[0.02] border border-white/[0.04] rounded-xl p-1 flex-1">
               {TABS.map(tab => {
                 const Icon = tab.icon
                 const active = activeTab === tab.id
@@ -59,10 +66,10 @@ export default function ManajemenPage({ roleConfig, workerTab }) {
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={cn(
-                      'flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all',
-                      active ? 'text-white shadow-sm' : 'text-[#4B6478] hover:text-white/60'
+                      'flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border',
+                      active ? 'font-extrabold shadow-sm' : 'border-transparent text-[#4B6478] hover:text-white/60'
                     )}
-                    style={active ? { background: accent } : {}}
+                    style={active ? activeStyle : inactiveStyle}
                   >
                     <Icon size={12} />
                     <span className="hidden xs:inline">{tab.label.split(' ')[0]}</span>
@@ -77,8 +84,8 @@ export default function ManajemenPage({ roleConfig, workerTab }) {
 
       {/* Desktop tab bar */}
       {isDesktop && (
-        <div className="px-8 pt-8 pb-0">
-          <div className="flex items-end gap-6 border-b border-white/[0.06]">
+        <div className="px-8 pt-8">
+          <div className="inline-flex bg-white/[0.02] border border-white/[0.04] p-1 rounded-xl">
             {TABS.map(tab => {
               const Icon = tab.icon
               const active = activeTab === tab.id
@@ -87,18 +94,13 @@ export default function ManajemenPage({ roleConfig, workerTab }) {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    'pb-3 flex items-center gap-2 text-sm font-bold border-b-2 transition-all -mb-px',
-                    active ? 'text-white' : 'border-transparent text-[#4B6478] hover:text-white/60'
+                    'flex items-center gap-2 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-lg transition-all border',
+                    active ? 'font-extrabold shadow-sm' : 'text-[#4B6478] hover:text-slate-300'
                   )}
-                  style={active ? { borderBottomColor: accent } : {}}
+                  style={active ? activeStyle : inactiveStyle}
                 >
-                  <Icon size={15} style={active ? { color: accent } : {}} />
-                  {tab.label}
-                  {active && tab.desc && (
-                    <span className="text-[10px] font-normal text-[#4B6478] ml-1 hidden md:inline">
-                      · {tab.desc}
-                    </span>
-                  )}
+                  <Icon size={14} />
+                  <span>{tab.label}</span>
                 </button>
               )
             })}

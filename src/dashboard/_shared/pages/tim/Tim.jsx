@@ -33,7 +33,7 @@ import { PETERNAK_TIM_CONFIG } from './timConfigs'
 export default function Tim({ hideMobileHeader = false, roleConfig }) {
   const cfg = roleConfig || PETERNAK_TIM_CONFIG
   const ROLE_BADGE_MAP = cfg.roleBadgeMap
-  const accent = cfg.accent || '#021a02'
+  const accent = cfg.accent || '#10B981'
   const cardRadius = cfg.cardRadius || '16px'
   const cardBg = cfg.cardBg || '#0C1319'
   const inputBg = cfg.inputBg || '#111C24'
@@ -721,7 +721,7 @@ export default function Tim({ hideMobileHeader = false, roleConfig }) {
 
 function InviteSheet({ isOpen, onClose, onSubmit, isPending, showCode, inviteCode, roleConfig }) {
   const cfg = roleConfig || PETERNAK_TIM_CONFIG
-  const accent = cfg.accent || '#021a02'
+  const accent = cfg.accent || '#10B981'
   const inviteRoles = cfg.inviteRoles || []
   const defaultInviteRole = cfg.defaultInviteRole || 'staff'
   const _inviteCodeTitle = cfg.inviteCodeTitle || 'Kode Undangan Tim'
@@ -798,10 +798,10 @@ function InviteSheet({ isOpen, onClose, onSubmit, isPending, showCode, inviteCod
             </form>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center space-y-8 animate-in fade-in zoom-in duration-300">
-              <div className="w-full bg-[#0C1319] border border-[#021a02]/30 rounded-2xl p-8 text-center space-y-6 shadow-xl shadow-emerald-500/5">
+              <div className="w-full bg-[#0C1319] border border-[#10B981]/30 rounded-2xl p-8 text-center space-y-6 shadow-xl shadow-emerald-500/5">
                 <h3 className="text-tx-3 text-xs font-bold uppercase tracking-[0.2em]">Kode Undangan Tim</h3>
                 
-                <div className="font-display text-4xl font-black text-[#021a02] tracking-[0.4em] py-6 bg-[#021a02]/5 rounded-2xl border border-[#021a02]/10">
+                <div className="font-display text-4xl font-black text-[#10B981] tracking-[0.4em] py-6 bg-[#10B981]/5 rounded-2xl border border-[#10B981]/10">
                   {inviteCode}
                 </div>
 

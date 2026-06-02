@@ -4,20 +4,20 @@ export const groups = [
   {
     Icon: RefreshCw,
     title: 'Multi-Batch Fattening & Breeding',
-    desc: 'Kelola beberapa batch sekaligus — tutup batch lama, buka batch baru tanpa gangguan.',
+    desc: 'Kelola beberapa batch sekaligus dengan menutup batch lama dan membuka batch baru tanpa gangguan.',
     features: [
       'Buat & tutup batch dengan tanggal masuk dan target panen',
       'Dukung dua model: Penggemukan (Fattening) & Breeding',
       'Status batch: Aktif, Siap Jual',
       'Ringkasan populasi, nilai batch, FCR, & R/C ratio realtime',
-      'BEP otomatis per batch — tahu kapan balik modal',
+      'BEP otomatis per batch untuk mengetahui kapan balik modal',
       'Multi-batch paralel dalam satu akun',
     ],
   },
   {
     Icon: TrendingUp,
     title: 'Kartu Ternak & ADG per Ekor',
-    desc: 'Setiap sapi punya kartu digital — dari beli masuk sampai jual keluar.',
+    desc: 'Setiap sapi punya kartu digital mulai dari beli masuk sampai jual keluar.',
     features: [
       'Profil per ekor: ear tag, ras, bobot masuk, target bobot',
       'Log penimbangan rutin dengan ADG otomatis',
@@ -29,7 +29,7 @@ export const groups = [
   {
     Icon: Home,
     title: 'Denah Kandang Interaktif',
-    desc: 'Visualisasi posisi setiap sapi — lihat performa sekilas tanpa buka kartu satu-satu.',
+    desc: 'Visualisasi posisi setiap sapi untuk melihat performa sekilas tanpa buka kartu satu-satu.',
     features: [
       'Layout kandang interaktif per batch',
       'Dot warna berdasarkan tier ADG per ekor',
@@ -67,7 +67,7 @@ export const groups = [
   {
     Icon: BarChart2,
     title: 'Laporan Batch, Penjualan & Keuangan',
-    desc: 'Laba-rugi per batch terhitung otomatis — tidak perlu Excel lagi.',
+    desc: 'Laba-rugi per batch terhitung otomatis, sehingga tidak perlu Excel lagi.',
     features: [
       'Laporan batch closure: FCR final, R/C ratio, HPP/kg, laba-rugi',
       'HPP per kg/ekor terhitung dari semua biaya masuk',
@@ -82,12 +82,12 @@ export const groups = [
 export const hero = {
   eyebrow: 'Solusi Peternak Sapi',
   headline: 'Pantau ADG, FCR, dan BEP Sapi dari Satu Dashboard.',
-  sub: 'Sistem lengkap untuk sapi penggemukan & breeding — tracking bobot per ekor, penugasan tim anak kandang, reproduksi, hingga laporan keuangan batch otomatis.',
+  sub: 'Sistem lengkap untuk sapi penggemukan & breeding yang mencakup tracking bobot per ekor, penugasan tim anak kandang, reproduksi, hingga laporan keuangan batch otomatis.',
   cta: 'Mulai Kelola Kandang Sapi',
 }
 
 export const beforeAfter = [
-  { before: 'Catat bobot sapi di buku, susah cari histori per ekor', after: 'Kartu ternak digital dengan ADG otomatis — prediksi panen realtime' },
+  { before: 'Catat bobot sapi di buku, susah cari histori per ekor', after: 'Kartu ternak digital dengan ADG otomatis untuk prediksi panen secara real-time' },
   { before: 'Tidak tahu apakah batch sudah balik modal atau belum', after: 'BEP & R/C ratio tersedia otomatis sejak hari pertama batch' },
   { before: 'Delegasi tugas anak kandang lewat pesan WhatsApp', after: 'Penugasan digital dengan tracking penyelesaian harian' },
   { before: 'Jadwal IB dan kelahiran tidak terdokumentasi', after: 'Manajemen reproduksi: conception rate & calving interval terekam' },
@@ -97,7 +97,7 @@ export const beforeAfter = [
 export const faq = [
   {
     q: 'Apa itu ADG dan bagaimana TernakOS menghitungnya?',
-    a: 'ADG (Average Daily Gain) adalah rata-rata pertambahan bobot harian sapi — kunci efisiensi di usaha fattening. TernakOS menghitung ADG otomatis: (Bobot Terkini − Bobot Masuk) ÷ Jumlah Hari di Farm. Setiap kali kamu input penimbangan baru, ADG dan prediksi tanggal panen langsung diperbarui.',
+    a: 'ADG (Average Daily Gain) adalah rata-rata pertambahan bobot harian sapi yang menjadi kunci efisiensi di usaha fattening. TernakOS menghitung ADG otomatis: (Bobot Terkini − Bobot Masuk) ÷ Jumlah Hari di Farm. Setiap kali kamu input penimbangan baru, ADG dan prediksi tanggal panen langsung diperbarui.',
   },
   {
     q: 'Bagaimana TernakOS mengelola batch sapi penggemukan?',
@@ -117,6 +117,6 @@ export const faq = [
   },
   {
     q: 'Apa itu R/C Ratio dan BEP di peternakan sapi?',
-    a: 'R/C Ratio (Revenue to Cost) mengukur efisiensi: R/C > 1 artinya usaha menguntungkan. BEP (Break Even Point) adalah titik balik modal — kapan pendapatan penjualan sapi menutupi semua biaya. TernakOS menghitung keduanya otomatis per batch berdasarkan data biaya dan harga jual aktual.',
+    a: 'R/C Ratio (Revenue to Cost) mengukur efisiensi: R/C > 1 artinya usaha menguntungkan. BEP (Break Even Point) adalah titik balik modal yang menunjukkan kapan pendapatan penjualan sapi menutupi semua biaya. TernakOS menghitung keduanya otomatis per batch berdasarkan data biaya dan harga jual aktual.',
   },
 ]

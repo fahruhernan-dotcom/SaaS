@@ -46,7 +46,7 @@ export default function AboutUs() {
     <div className="min-h-screen bg-bg-base text-text-primary font-sans selection:bg-emerald-500/30 overflow-x-hidden">
       <SEO
         title="Tentang Kami - TernakOS | Platform Agribisnis: Peternak, Broker, RPA & Sembako"
-        description="TernakOS adalah platform manajemen agribisnis Indonesia — mendukung peternak broiler, domba, kambing & sapi, broker ayam, broker telur, distributor sembako, dan RPA. Dibangun oleh peternak, untuk seluruh rantai pasok."
+        description="TernakOS adalah platform manajemen agribisnis Indonesia yang mendukung peternak broiler, domba, kambing & sapi, broker ayam, broker telur, distributor sembako, dan RPA. Dibangun oleh peternak, untuk seluruh rantai pasok."
         path="/tentang-kami"
       />
       <Navbar />
@@ -211,7 +211,7 @@ export default function AboutUs() {
                 SUDAH BISA DIPAKAI
               </p>
               <h2 className="font-display text-4xl font-bold text-text-primary leading-tight mb-3">
-                Semua vertikal ini sudah live — hari ini.
+                Semua vertikal ini sudah live hari ini.
               </h2>
               <p className="text-text-secondary text-sm">Tidak ada yang masih "coming soon" di bagian ini.</p>
             </FadeUp>
@@ -319,7 +319,7 @@ export default function AboutUs() {
                   badgeCls: 'bg-[#f0fdf4] dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300',
                   hoverBorder: 'hover:border-emerald-500/30',
                   title: 'Peternak Unggas',
-                  pain: 'Pantau FCR, deplesi, dan siklus — catat panen per kg dari HP.',
+                  pain: 'Pantau FCR, deplesi, dan siklus, serta catat panen per kg dari HP.',
                   features: [
                     'FCR & IP Score otomatis tiap input harian',
                     'Estimasi panen dari data pertumbuhan nyata',
@@ -334,7 +334,7 @@ export default function AboutUs() {
                   badgeCls: 'bg-[#f0fdf4] dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-300',
                   hoverBorder: 'hover:border-green-500/30',
                   title: 'Domba / Kambing / Sapi',
-                  pain: 'Kelola batch fattening atau program breeding — ADG dan laba per ekor tersaji otomatis.',
+                  pain: 'Kelola batch fattening atau program breeding, dengan metrik ADG dan laba per ekor tersaji otomatis.',
                   features: [
                     'ADG & FCR per batch dengan alert abnormal',
                     'Tracking kesehatan & vaksinasi per ekor',
@@ -349,7 +349,7 @@ export default function AboutUs() {
                   badgeCls: 'bg-blue-50 dark:bg-blue-950/20 text-blue-800 dark:text-blue-300',
                   hoverBorder: 'hover:border-blue-500/30',
                   title: 'Broker Ayam & Telur',
-                  pain: 'Beli dari kandang, jual ke RPA — margin dan piutang terpantau real-time.',
+                  pain: 'Beli dari kandang, jual ke RPA, dengan margin dan piutang terpantau real-time.',
                   features: [
                     'Piutang RPA dengan alert jatuh tempo otomatis',
                     'Margin per transaksi & susut pengiriman',
@@ -364,7 +364,7 @@ export default function AboutUs() {
                   badgeCls: 'bg-orange-50 dark:bg-orange-950/20 text-orange-800 dark:text-orange-300',
                   hoverBorder: 'hover:border-orange-500/30',
                   title: 'Distributor Sembako',
-                  pain: 'Distribusi ke puluhan toko — stok, invoice, piutang, dan gaji pegawai dalam satu layar.',
+                  pain: 'Distribusi ke puluhan toko, dengan stok, invoice, piutang, dan gaji pegawai dalam satu layar.',
                   features: [
                     'Stok multi-produk dengan notifikasi habis',
                     'Invoice & piutang pelanggan dengan due date',
@@ -379,7 +379,7 @@ export default function AboutUs() {
                   badgeCls: 'bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300',
                   hoverBorder: 'hover:border-amber-500/30',
                   title: 'RPA Ayam',
-                  pain: 'Beli dari broker, potong, distribusi — hutang dan margin terpantau dari kedua sisi.',
+                  pain: 'Beli dari broker, potong, distribusi, dengan hutang dan margin terpantau dari kedua sisi.',
                   features: [
                     'Hutang ke broker tercatat transparan kedua pihak',
                     'Order management & tracking distribusi produk',
@@ -438,7 +438,7 @@ export default function AboutUs() {
                     'Biaya pakan mungkin tercatat, tapi biaya tenaga, obat, listrik, air, transport, penyusutan kandang, kematian, susut bobot, dan waktu kerja keluarga sering terlewat. Akhirnya harga jual lebih sering mengikuti pasar, bukan dihitung dari HPP yang utuh.',
                     'Di banyak kasus, ternak dianggap seperti tabungan: beli bibit, pelihara, lalu jual saat butuh uang. Padahal di balik itu, ada biaya pemeliharaan yang diam-diam menggerus margin.',
                     'Ketika peternak tidak memegang angka pasti, posisi tawar ikut melemah. Pembeli yang punya hitungan lebih rapi bisa menentukan harga dengan lebih percaya diri, sementara peternak sulit membuktikan berapa sebenarnya batas aman harga jual mereka.',
-                    'TernakOS dibangun untuk membantu peternak melihat angka yang selama ini tersembunyi: HPP per ekor, BEP jual, biaya operasional, margin bersih, dan performa kandang. Karena digitalisasi bukan sekadar memindahkan catatan kertas ke layar HP — tapi membuat peternak punya kendali atas angka bisnisnya sendiri.',
+                    'TernakOS dibangun untuk membantu peternak melihat angka yang selama ini tersembunyi: HPP per ekor, BEP jual, biaya operasional, margin bersih, dan performa kandang. Karena digitalisasi bukan sekadar memindahkan catatan kertas ke layar HP, tapi membuat peternak punya kendali atas angka bisnisnya sendiri.',
                   ].map((p, i) => (
                     <FadeUp key={i} delay={0.1 + i * 0.08}>
                       <p className="text-text-secondary leading-relaxed">{p}</p>
@@ -565,13 +565,13 @@ export default function AboutUs() {
 
                 <div className="border-l-2 border-emerald-500/40 pl-4 mb-6">
                   <p className="italic text-text-muted text-sm leading-relaxed">
-                    "Saya membangun TernakOS karena saya ada di industri ini — bukan sekadar mengamatinya dari luar. Dari kandang ke kode, semua berasal dari pengalaman nyata."
+                    "Saya membangun TernakOS karena saya ada di industri ini, bukan sekadar mengamatinya dari luar. Dari kandang ke kode, semua berasal dari pengalaman nyata."
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2 text-[10px] text-text-muted">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 opacity-60" />
-                  Surakarta, Jawa Tengah — Jantung industri peternakan Indonesia
+                  Surakarta, Jawa Tengah (Jantung industri peternakan Indonesia)
                 </div>
               </motion.div>
             </div>
@@ -601,7 +601,7 @@ export default function AboutUs() {
                   </div>
                   <h3 className="font-display text-xl font-bold text-text-primary mb-4">Visi</h3>
                   <p className="text-text-secondary leading-relaxed">
-                    Menjadi ekosistem digital peternakan terpercaya di Indonesia — tempat setiap peternak, broker, dan mitra bisnis terhubung, bertumbuh, dan bersaing secara adil berdasarkan data yang nyata.
+                    Menjadi ekosistem digital peternakan terpercaya di Indonesia, sebagai tempat setiap peternak, broker, dan mitra bisnis terhubung, bertumbuh, dan bersaing secara adil berdasarkan data yang nyata.
                   </p>
                 </div>
               </FadeUp>
@@ -647,9 +647,9 @@ export default function AboutUs() {
 
             <div>
               {[
-                { num: '01', Icon: Eye, title: 'Transparansi', body: 'Kami bangun fitur yang membuat semua angka terlihat jelas — HPP, BEP, margin, dan biaya operasional terbuka di depan mata, bukan tersembunyi di balik rumus Excel.' },
-                { num: '02', Icon: Wrench, title: 'Pragmatisme', body: 'Setiap fitur lahir dari kebutuhan nyata di lapangan. Kami tidak membangun sesuatu karena terdengar keren — tapi karena ada peternak atau broker yang butuh itu hari ini.' },
-                { num: '03', Icon: Heart, title: 'Keberpihakan', body: 'Berpihak pada peternak kecil dan broker independen — mereka yang selama ini tidak punya akses ke tools yang layak, tapi menanggung risiko bisnis yang sama besarnya.' },
+                { num: '01', Icon: Eye, title: 'Transparansi', body: 'Kami bangun fitur yang membuat semua angka terlihat jelas, seperti HPP, BEP, margin, dan biaya operasional terbuka di depan mata, bukan tersembunyi di balik rumus Excel.' },
+                { num: '02', Icon: Wrench, title: 'Pragmatisme', body: 'Setiap fitur lahir dari kebutuhan nyata di lapangan. Kami tidak membangun sesuatu karena terdengar keren, melainkan karena ada peternak atau broker yang butuh itu hari ini.' },
+                { num: '03', Icon: Heart, title: 'Keberpihakan', body: 'Berpihak pada peternak kecil dan broker independen, mereka yang selama ini tidak punya akses ke tools yang layak, tapi menanggung risiko bisnis yang sama besarnya.' },
               ].map(({ num, Icon, title, body }, i) => (
                 <FadeUp key={i} delay={i * 0.08}>
                   <div className={`flex items-start gap-6 md:gap-10 py-10 ${i < 2 ? 'border-b border-border-subtle' : ''}`}>
@@ -686,15 +686,15 @@ export default function AboutUs() {
                   KEJUJURAN KAMI
                 </p>
                 <h2 className="font-display text-4xl md:text-5xl font-bold text-text-primary leading-tight mb-12">
-                  Kami percaya pada kejujuran —<br />termasuk tentang diri kami sendiri.
+                  Kami percaya pada kejujuran, termasuk tentang diri kami sendiri.
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-left">
                   {[
                     'Harga pasar kami 100% dari transaksi nyata user, bukan scraping atau estimasi',
-                    'Produk berkembang dari feedback nyata di lapangan — setiap fitur diuji peternak dan broker aktif sebelum rilis',
-                    'Dibangun solo oleh founder yang juga peternak — bukan tim besar dengan asumsi teoritis',
-                    'Bootstrap & independent — tidak ada investor yang mendikte arah produk kami',
+                    'Produk berkembang dari feedback nyata di lapangan, di mana setiap fitur diuji peternak dan broker aktif sebelum rilis',
+                    'Dibangun solo oleh founder yang juga peternak, bukan tim besar dengan asumsi teoritis',
+                    'Bootstrap & independent, tanpa investor yang mendikte arah produk kami',
                   ].map((item, i) => (
                     <div key={i} className="flex items-start gap-3">
                       <CheckCircle size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
@@ -752,7 +752,7 @@ export default function AboutUs() {
                   time: '2027',
                   status: 'planned',
                   title: 'TernakOS Market & Mobile App',
-                  desc: 'Marketplace antar pelaku usaha — peternak, broker, dan buyer terhubung langsung dalam satu ekosistem. Plus aplikasi Android native untuk akses lebih cepat langsung dari kandang.',
+                  desc: 'Marketplace antar pelaku usaha yang mempertemukan peternak, broker, dan buyer dalam satu ekosistem, ditambah aplikasi Android native untuk akses lebih cepat langsung dari kandang.',
                 },
               ].map((item, i) => (
                 <FadeUp key={i} delay={i * 0.1}>

@@ -38,7 +38,7 @@ const PILLARS = [
     Icon: Database,
     color: 'blue',
     title: 'Row-Level Security',
-    body: 'Setiap baris data terlindungi oleh RLS Supabase. Tenant A tidak pernah bisa membaca data Tenant B — bahkan di level query database.',
+    body: 'Setiap baris data terlindungi oleh RLS Supabase. Tenant A tidak pernah bisa membaca data Tenant B, bahkan di level query database.',
   },
   {
     Icon: Server,
@@ -62,7 +62,7 @@ const PILLARS = [
     Icon: Globe,
     color: 'teal',
     title: 'Tidak Ada Third-Party Tracking',
-    body: 'Data Anda tidak dijual, tidak dibagi, tidak digunakan untuk iklan. TernakOS berdiri sendiri — tidak ada investor yang mendikte kebijakan data kami.',
+    body: 'Data Anda tidak dijual, tidak dibagi, tidak digunakan untuk iklan. TernakOS berdiri sendiri, tidak ada investor yang mendikte kebijakan data kami.',
   },
 ];
 
@@ -219,10 +219,10 @@ export default function SecurityPage() {
                   {[
                     'Data transaksi Anda tidak pernah dibagikan ke pihak ketiga',
                     'Harga pasar yang muncul 100% berasal dari transaksi nyata user, bukan estimasi',
-                    'Anda bisa meminta penghapusan data kapan saja — respons dalam 72 jam',
+                    'Anda bisa meminta penghapusan data kapan saja, dengan respons dalam 72 jam',
                     'Tidak ada iklan, tidak ada profiling, tidak ada data mining untuk kepentingan komersial',
                     'Admin Anda bisa melihat log aktivitas seluruh anggota tim secara real-time',
-                    'Backup data tersedia — ekspor ke Excel/CSV bisa dilakukan kapan saja dari dashboard',
+                    'Backup data tersedia, ekspor ke Excel/CSV bisa dilakukan kapan saja dari dashboard',
                   ].map((item, i) => (
                     <div key={i} className="flex items-start gap-3">
                       <CheckCircle size={15} className="text-emerald-400 shrink-0 mt-0.5" />
@@ -253,7 +253,7 @@ export default function SecurityPage() {
                   <div className="flex flex-wrap justify-center gap-4">
                     <Link
                       to="/register"
-                      className="inline-flex items-center gap-2 px-7 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl transition-all shadow-[0_4px_20px_rgba(2, 26, 2,0.3)]"
+                      className="inline-flex items-center gap-2 px-7 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-all shadow-[0_4px_20px_rgba(2, 26, 2,0.3)]"
                     >
                       Mulai Gratis
                       <ArrowRight size={16} />

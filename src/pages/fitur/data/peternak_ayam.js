@@ -4,7 +4,7 @@ export const groups = [
   {
     Icon: Home,
     title: 'Multi-Kandang, Multi-Model Bisnis',
-    desc: 'Setup farm sekali, kelola semua kandang dari satu dashboard — dukung model mandiri maupun kemitraan.',
+    desc: 'Setup farm sekali, kelola semua kandang dari satu dashboard, mendukung model mandiri maupun kemitraan.',
     features: [
       'Dukung Mandiri & Kemitraan (CP, Japfa, dll) dalam satu akun',
       'Setup detail INTI perusahaan + harga kontrak kemitraan',
@@ -86,14 +86,14 @@ export const groups = [
 export const hero = {
   eyebrow: 'Solusi Peternak Ayam Broiler',
   headline: 'Cetak Indeks Performa (IP) Tertinggi dengan Manajemen Kandang Berbasis Data.',
-  sub: 'Catat FCR, mortalitas, dan vaksinasi harian — semua terhitung otomatis. Bandingkan performa antar siklus kandang.\n\n*Ayam Layer (Petelur) sedang dikembangkan — tersedia segera.*',
+  sub: 'Catat FCR, mortalitas, dan vaksinasi harian untuk melihat perhitungan otomatis. Bandingkan performa antar siklus kandang.\n\n*Ayam Layer (Petelur) sedang dikembangkan dan tersedia segera.*',
   cta: 'Mulai Kelola Kandang Ayam',
 }
 
 export const beforeAfter = [
   { before: 'Catat kematian ayam di kertas, mudah hilang', after: 'Recording harian digital, tersimpan otomatis per siklus di cloud' },
   { before: 'Hitung FCR manual pakai kalkulator, sering meleset', after: 'FCR & IP Score terhitung otomatis setiap hari dari data aktual' },
-  { before: 'Jadwal vaksinasi lupa atau terlewat', after: 'Jadwal vaksinasi standar Cobb — alert otomatis ke HP pengelola' },
+  { before: 'Jadwal vaksinasi lupa atau terlewat', after: 'Jadwal vaksinasi standar Cobb dengan alert otomatis ke HP pengelola' },
   { before: 'Tidak bisa bandingkan performa antar siklus', after: 'Laporan siklus + grafik tren bobot vs standar Cobb500' },
   { before: 'Tidak tahu profit sebelum panen selesai', after: 'Estimasi laba-rugi + HPP/kg tersedia real-time sepanjang siklus' },
 ]
@@ -129,6 +129,6 @@ export const faq = [
   },
   {
     q: 'Kapan fitur Ayam Layer (Petelur) tersedia?',
-    a: 'Fitur peternak ayam layer (petelur) sedang dalam pengembangan — termasuk recording produksi telur harian, HDP (Hen Day Production), dan laporan produksi. Subscriber Pro akan mendapat akses otomatis saat fitur live.',
+    a: 'Fitur peternak ayam layer (petelur) sedang dalam pengembangan, termasuk recording produksi telur harian, HDP (Hen Day Production), dan laporan produksi. Subscriber Pro akan mendapat akses otomatis saat fitur live.',
   },
 ]

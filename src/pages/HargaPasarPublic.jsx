@@ -221,11 +221,11 @@ export default function HargaPasarPublic() {
 
   const todayFmt = (() => { const d = new Date(); return `${d.getDate()} ${['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][d.getMonth()]} ${d.getFullYear()}` })()
   const seoTitle = currentProvince
-    ? `Harga Ayam Broiler Hidup Hari Ini di ${currentProvince} — Update ${todayFmt} | TernakOS`
-    : `Harga Ayam Broiler Hidup Hari Ini — Update Harian Real Data | TernakOS`
+    ? `Harga Ayam Broiler Hidup Hari Ini di ${currentProvince} (Update ${todayFmt}) | TernakOS`
+    : `Harga Ayam Broiler Hidup Hari Ini (Update Harian Real Data) | TernakOS`
   const seoDesc = currentProvince
-    ? `Harga ayam broiler hidup hari ini di ${currentProvince} — ${todayFmt}. Data dari transaksi nyata broker + referensi Chickin.id. Update otomatis setiap hari.`
-    : `Harga ayam broiler hidup hari ini — ${todayFmt}. Data dari transaksi nyata broker aktif seluruh Indonesia. Bandingkan harga kandang vs pasar per provinsi.`
+    ? `Harga ayam broiler hidup hari ini di ${currentProvince} per ${todayFmt}. Data dari transaksi nyata broker + referensi Chickin.id. Update otomatis setiap hari.`
+    : `Harga ayam broiler hidup hari ini per ${todayFmt}. Data dari transaksi nyata broker aktif seluruh Indonesia. Bandingkan harga kandang vs pasar per provinsi.`
   const seoPath = currentProvince
     ? `/harga-pasar/${provinceToSlug(currentProvince)}`
     : '/harga-pasar'
@@ -490,7 +490,7 @@ export default function HargaPasarPublic() {
         },
         {
           '@type': 'Dataset',
-          'name': `Harga Ayam Broiler Hidup Harian — ${provinceLabel}`,
+          'name': `Harga Ayam Broiler Hidup Harian (${provinceLabel})`,
           'description': `Data harga ayam broiler hidup per kg untuk wilayah ${provinceLabel}. Mencakup harga beli di kandang dan harga jual ke pasar/RPA. Diperbarui setiap hari dari transaksi nyata broker aktif di platform TernakOS.`,
           'url': currentProvince
             ? `https://ternakos.my.id/harga-pasar/${provinceToSlug(currentProvince)}`
@@ -625,7 +625,7 @@ export default function HargaPasarPublic() {
             <p className="text-tx-2 text-sm md:text-base font-medium max-w-2xl leading-relaxed mt-4" suppressHydrationWarning>
               {currentProvince
                 ? `Update ${todayFmtId}. Data harga ayam broiler hidup hari ini untuk wilayah ${currentProvince} dari transaksi nyata broker + referensi Chickin.id.`
-                : `Update ${todayFmtId}. Harga ayam broiler hidup hari ini nasional — rata-rata transaksi nyata broker aktif di seluruh Indonesia.`}
+                : `Update ${todayFmtId}. Harga ayam broiler hidup hari ini nasional berdasarkan rata-rata transaksi nyata broker aktif di seluruh Indonesia.`}
             </p>
           </div>
 
@@ -786,7 +786,7 @@ export default function HargaPasarPublic() {
                     </div>
                     <h2 className="text-xl md:text-2xl font-black text-tx-1 tracking-tight">Hybrid Market Intelligence</h2>
                     <p className="text-[11px] text-tx-3 mt-1 max-w-md">
-                      Dibanding platform lain, kami punya data transaksi nyata broker — bukan sekadar scraping.
+                      Dibanding platform lain, kami punya data transaksi nyata broker, bukan sekadar scraping.
                     </p>
                   </div>
                   <div className="flex bg-bg-2/80 p-1 rounded-xl border border-border-subtle shrink-0">
@@ -1005,7 +1005,7 @@ export default function HargaPasarPublic() {
               {
                 icon: <Database size={20} className="text-emerald-400" />,
                 title: 'Data Transaksi Nyata',
-                body: 'Harga beli dan jual pada chart berasal dari transaksi nyata broker yang menggunakan platform ini — bukan estimasi atau perhitungan manual. Setiap transaksi masuk ke rata-rata provinsi secara real-time.',
+                body: 'Harga beli dan jual pada chart berasal dari transaksi nyata broker yang menggunakan platform ini, bukan estimasi atau perhitungan manual. Setiap transaksi masuk to rata-rata provinsi secara real-time.',
                 badge: 'Eksklusif'
               },
               {
@@ -1145,7 +1145,7 @@ export default function HargaPasarPublic() {
                   </h2>
                   <p className="text-sm md:text-base text-tx-2 leading-relaxed font-medium">
                     Setiap broker yang bergabung memperkaya data rata-rata provinsi.
-                    Semakin banyak broker aktif, semakin akurat harga pasar yang ditampilkan — untuk kepentingan semua pelaku bisnis ayam broiler.
+                    Semakin banyak broker aktif, semakin akurat harga pasar yang ditampilkan untuk kepentingan semua pelaku bisnis ayam broiler.
                   </p>
                   <div className="flex flex-wrap gap-4 pt-2">
                     {[
@@ -1163,7 +1163,7 @@ export default function HargaPasarPublic() {
                 </div>
                 <div className="flex flex-col sm:flex-row lg:flex-col gap-4 shrink-0">
                   <Button
-                    className="h-14 px-8 bg-emerald-500 hover:bg-emerald-400 text-white text-[13px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
+                    className="h-14 px-8 bg-emerald-500 hover:bg-emerald-600 text-white text-[13px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-95 transition-all"
                     asChild
                   >
                     <Link to="/register">

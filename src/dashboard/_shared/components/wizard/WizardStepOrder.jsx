@@ -138,7 +138,7 @@ const S = {
 }
 
 const PAYMENT_OPTIONS = [
-  { value: 'lunas', label: 'Lunas', color: '#021a02' },
+  { value: 'lunas', label: 'Lunas', color: '#10B981' },
   { value: 'belum_lunas', label: 'Belum Lunas', color: '#F87171' },
   { value: 'sebagian', label: 'Sebagian', color: '#F59E0B' },
 ]
@@ -352,10 +352,10 @@ export default function WizardStepOrder({ onNext, onBack }) {
                               style={{
                                 width: '100%',
                                 padding: '11px 14px',
-                                background: weightUnit === unit ? 'rgba(2, 26, 2,0.10)' : 'transparent',
+                                background: weightUnit === unit ? 'rgba(16, 185, 129, 0.10)' : 'transparent',
                                 border: 'none',
                                 borderBottom: unit !== 'rit' ? '1px solid hsl(var(--border))' : 'none',
-                                color: weightUnit === unit ? '#021a02' : 'hsl(var(--foreground))',
+                                color: weightUnit === unit ? '#10B981' : 'hsl(var(--foreground))',
                                 fontSize: '14px',
                                 fontWeight: weightUnit === unit ? 700 : 400,
                                 cursor: 'pointer',
@@ -366,7 +366,7 @@ export default function WizardStepOrder({ onNext, onBack }) {
                               }}
                             >
                               <span className="uppercase">{unit}</span>
-                              {weightUnit === unit && <Check size={13} color="#021a02" />}
+                              {weightUnit === unit && <Check size={13} color="#10B981" />}
                             </button>
                           ))}
                         </div>
@@ -442,7 +442,7 @@ export default function WizardStepOrder({ onNext, onBack }) {
         <Button type="button" variant="ghost" onClick={onBack} className="gap-1.5 text-[#4B6478] hover:text-white font-bold h-12 rounded-xl">
           <ChevronLeft size={16} /> Kembali
         </Button>
-        <Button type="submit" className="flex-1 h-12 rounded-2xl font-black" style={{ background: '#021a02', color: 'white' }}>
+        <Button type="submit" className="flex-1 h-12 rounded-2xl font-black" style={{ background: '#10B981', color: 'white' }}>
           Lanjut → Cari Kandang
         </Button>
       </div>

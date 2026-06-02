@@ -144,7 +144,7 @@ export default function FormJualModal({ isOpen, onClose }) {
                   fontSize: '12px',
                   fontWeight: 700,
                   textTransform: 'capitalize',
-                  background: watched.payment_status === status ? '#021a02' : 'rgba(255,255,255,0.05)',
+                  background: watched.payment_status === status ? '#10B981' : 'rgba(255,255,255,0.05)',
                   color: watched.payment_status === status ? 'white' : '#4B6478',
                   border: 'none',
                   cursor: 'pointer'
@@ -182,8 +182,8 @@ export default function FormJualModal({ isOpen, onClose }) {
         {/* Live Profit Preview */}
         {totalWeight > 0 && selectedPurchase && (
           <div style={{
-            background: profit >= 0 ? 'rgba(2, 26, 2,0.08)' : 'rgba(248,113,113,0.08)',
-            border: `1px solid ${profit >= 0 ? 'rgba(2, 26, 2,0.2)' : 'rgba(248,113,113,0.2)'}`,
+            background: profit >= 0 ? 'rgba(16, 185, 129, 0.08)' : 'rgba(248,113,113,0.08)',
+            border: `1px solid ${profit >= 0 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(248,113,113,0.2)'}`,
             borderRadius: '16px',
             padding: '16px',
             marginTop: '8px'
@@ -201,12 +201,12 @@ export default function FormJualModal({ isOpen, onClose }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <div>
                   <div style={{ fontSize: '11px', fontWeight: 600, color: '#4B6478', marginBottom: '2px' }}>PROFIT ESTIMASI</div>
-                  <div style={{ fontSize: '24px', fontWeight: 800, color: profit >= 0 ? '#021a02' : '#F87171', fontFamily: 'Sora' }}>
+                  <div style={{ fontSize: '24px', fontWeight: 800, color: profit >= 0 ? '#10B981' : '#F87171', fontFamily: 'Sora' }}>
                     {profit >= 0 ? '+' : ''}{formatIDR(profit)}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: profit >= 0 ? '#021a02' : '#F87171' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: profit >= 0 ? '#10B981' : '#F87171' }}>
                     ROI: {roi.toFixed(1)}%
                   </div>
                   <div style={{ fontSize: '12px', color: '#4B6478' }}>
@@ -236,4 +236,4 @@ const labelStyle = { display: 'block', fontSize: '11px', fontWeight: 600, color:
 const inputStyle = { width: '100%', padding: '12px 14px', background: '#111C24', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', color: '#F1F5F9', fontSize: '16px', fontFamily: 'DM Sans', outline: 'none' };
 const errorStyle = { fontSize: '12px', color: '#F87171', marginTop: '4px' };
 const previewRow = { display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94A3B8', margin: '3px 0' };
-const submitBtnStyle = (loading) => ({ marginTop: '12px', padding: '16px', background: '#021a02', border: 'none', borderRadius: '12px', color: 'white', fontWeight: 800, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, boxShadow: '0 4px 16px rgba(2, 26, 2,0.2)' });
+const submitBtnStyle = (loading) => ({ marginTop: '12px', padding: '16px', background: '#10B981', border: 'none', borderRadius: '12px', color: 'white', fontWeight: 800, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1, boxShadow: '0 4px 16px rgba(16, 185, 129, 0.2)' });

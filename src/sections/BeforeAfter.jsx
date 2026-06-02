@@ -136,7 +136,7 @@ export default function BeforeAfter({ activeRole = 'broker' }) {
 
       {/* Section header */}
       <div className="text-center mb-12">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-[#021a02] mb-3">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-[#021a02] dark:text-emerald-400 mb-3">
           TRANSFORMASI OPERASIONAL
         </p>
         <h2 className="font-['Sora'] text-2xl md:text-3xl font-normal text-text-primary leading-tight">

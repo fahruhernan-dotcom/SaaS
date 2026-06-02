@@ -94,9 +94,9 @@ export default function MobileRegister({
                 onClick={() => setMode(m)}
                 style={{
                   flex: 1, padding: '10px', borderRadius: 12, fontSize: 13, fontWeight: 600, transition: 'all 0.3s ease',
-                  background: mode === m ? 'rgba(34, 197, 94, 0.1)' : 'transparent',
-                  color: mode === m ? '#22c55e' : '#64748b',
-                  border: mode === m ? '1px solid rgba(34, 197, 94, 0.2)' : '1px solid transparent',
+                  background: mode === m ? 'rgba(12, 61, 12, 0.1)' : 'transparent',
+                  color: mode === m ? 'var(--text-accent-val)' : '#64748b',
+                  border: mode === m ? '1px solid rgba(12, 61, 12, 0.2)' : '1px solid transparent',
                   cursor: 'pointer'
                 }}
               >
@@ -160,9 +160,9 @@ export default function MobileRegister({
 
             <div className="mr-stagger" style={{ marginBottom: 24, opacity: 0 }}>
               <label style={{ display: 'flex', alignItems: 'start', gap: 10, cursor: 'pointer' }}>
-                <input type="checkbox" {...register('agreedToTerms')} style={{ marginTop: 3, width: 16, height: 16, accentColor: '#22c55e' }} />
+                <input type="checkbox" {...register('agreedToTerms')} style={{ marginTop: 3, width: 16, height: 16, accentColor: 'var(--emerald-500)' }} />
                 <span className="text-text-muted" style={{ fontSize: 12, lineHeight: 1.5 }}>
-                  {t('auth_register_terms_prefix', 'Setuju dengan ')}<Link to="/terms" style={{ color: '#22c55e' }}>{t('auth_terms', 'Syarat')}</Link>{t('auth_register_terms_mid', ' dan ')}<Link to="/privacy" style={{ color: '#22c55e' }}>{t('auth_privacy', 'Kebijakan')}</Link>{t('auth_register_terms_suffix', ' kami.')}
+                  {t('auth_register_terms_prefix', 'Setuju dengan ')}<Link to="/terms" style={{ color: 'var(--text-accent-val)' }}>{t('auth_terms', 'Syarat')}</Link>{t('auth_register_terms_mid', ' dan ')}<Link to="/privacy" style={{ color: 'var(--text-accent-val)' }}>{t('auth_privacy', 'Kebijakan')}</Link>{t('auth_register_terms_suffix', ' kami.')}
                 </span>
               </label>
               {errors.agreedToTerms && <p style={{ color: '#f87171', fontSize: 11, marginTop: 4 }}>{errors.agreedToTerms.message}</p>}
@@ -180,9 +180,9 @@ export default function MobileRegister({
                 type="submit"
                 disabled={isLoading || googleLoading || isBlocked}
                 style={{
-                  width: '100%', padding: '14px', background: '#22c55e', border: 'none', borderRadius: 14, color: 'white',
+                  width: '100%', padding: '14px', background: 'var(--emerald-500)', border: 'none', borderRadius: 14, color: 'white',
                   fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  boxShadow: '0 4px 24px rgba(34,197,94,0.3)', opacity: (isLoading || googleLoading || isBlocked) ? 0.6 : 1
+                  boxShadow: '0 4px 24px rgba(12,61,12,0.3)', opacity: (isLoading || googleLoading || isBlocked) ? 0.6 : 1
                 }}
               >
                 {isLoading ? <><Loader2 size={16} className="animate-spin" /> ...</> : cooldown > 0 ? `Tunggu ${cooldown}s` : (mode === 'mandiri' ? t('auth_register_button', 'Daftar Gratis →') : t('auth_join_team_button', 'Bergabung Tim'))}
@@ -241,29 +241,29 @@ function AnimatedMobileInput({ type, placeholder, value, onChange, icon, rightIc
           -webkit-text-fill-color: var(--text-primary-val) !important;
           -webkit-box-shadow: 0 0 0px 1000px var(--mobile-input-bg) inset !important;
           transition: background-color 500000s ease-in-out 0s;
-          caret-color: #22c55e !important;
+          caret-color: var(--emerald-500) !important;
         }
       `}</style>
 
       <div style={{
         display: 'flex', alignItems: 'center', padding: '14px 16px', background: 'var(--mobile-input-bg)', borderRadius: 14,
-        border: focused ? '1.5px solid rgba(34, 197, 94, 0.45)' : (isHovered ? '1.5px solid var(--mobile-input-border-hover)' : '1.5px solid var(--mobile-input-border)'),
+        border: focused ? '1.5px solid var(--emerald-500)' : (isHovered ? '1.5px solid var(--mobile-input-border-hover)' : '1.5px solid var(--mobile-input-border)'),
         transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-        boxShadow: focused ? '0 12px 40px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(34, 197, 94, 0.05)' : 'none'
+        boxShadow: focused ? '0 12px 40px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(12, 61, 12, 0.05)' : 'none'
       }}>
-        <div style={{ color: focused ? '#22c55e' : '#475569', transition: 'color 0.3s', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, marginRight: 16, flexShrink: 0 }}>
+        <div style={{ color: focused ? 'var(--text-accent-val)' : '#475569', transition: 'color 0.3s', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, marginRight: 16, flexShrink: 0 }}>
           {icon}
         </div>
         <input
           type={type} placeholder={placeholder} value={value} onChange={onChange}
           onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
           {...rest}
-          style={{ flex: 1, background: 'transparent', border: 'none', fontSize: 16, outline: 'none', caretColor: '#22c55e', padding: 0, width: '100%' }}
+          style={{ flex: 1, background: 'transparent', border: 'none', fontSize: 16, outline: 'none', caretColor: 'var(--emerald-500)', padding: 0, width: '100%' }}
           className="text-[var(--text-primary-val)]"
         />
         {rightIcon && <div style={{ marginLeft: 10, display: 'flex', alignItems: 'center', color: '#475569' }}>{rightIcon}</div>}
       </div>
-      <div style={{ position: 'absolute', bottom: 0, left: '15%', transform: `scaleX(${focused ? 1 : 0})`, width: '70%', height: 1.5, background: 'linear-gradient(90deg, transparent 0%, #22c55e 50%, transparent 100%)', transition: 'transform 0.6s cubic-bezier(0.19, 1, 0.22, 1)', transformOrigin: 'center', opacity: focused ? 0.8 : 0, zIndex: 2 }} />
+      <div style={{ position: 'absolute', bottom: 0, left: '15%', transform: `scaleX(${focused ? 1 : 0})`, width: '70%', height: 1.5, background: 'linear-gradient(90deg, transparent 0%, var(--emerald-500) 50%, transparent 100%)', transition: 'transform 0.6s cubic-bezier(0.19, 1, 0.22, 1)', transformOrigin: 'center', opacity: focused ? 0.8 : 0, zIndex: 2 }} />
     </div>
   )
 }

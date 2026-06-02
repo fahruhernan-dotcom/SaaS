@@ -75,7 +75,7 @@ export default function TermsPage() {
           {/* 02 */}
           <TermSection number="02" title="Penerimaan Ketentuan">
             <p>
-              Dengan mendaftar, masuk, atau menggunakan platform TernakOS — baik melalui email/password maupun melalui Akun Google (Google Sign-In) — Anda secara tegas menyetujui Syarat & Ketentuan ini serta Kebijakan Privasi kami yang berlaku secara bersamaan.
+              Dengan mendaftar, masuk, atau menggunakan platform TernakOS, baik melalui email/password maupun melalui Akun Google (Google Sign-In), Anda secara tegas menyetujui Syarat & Ketentuan ini serta Kebijakan Privasi kami yang berlaku secara bersamaan.
             </p>
             <p className="mt-4">
               Jika Anda menggunakan platform atas nama entitas bisnis atau perusahaan, Anda menyatakan bahwa Anda memiliki kewenangan hukum untuk mengikat entitas tersebut pada ketentuan ini.
@@ -264,7 +264,7 @@ export default function TermsPage() {
           <TermSection number="11" title="Kepemilikan Data & Hak Kekayaan Intelektual">
             <p><strong className="text-white">Data Bisnis Anda:</strong> Seluruh Data Bisnis yang Anda masukkan ke dalam platform adalah milik Anda sepenuhnya. TernakOS tidak mengklaim hak kepemilikan atas data tersebut. Kami hanya berperan sebagai penyedia infrastruktur dan pengolah data atas instruksi Anda.</p>
             <p className="mt-4"><strong className="text-white">Lisensi Terbatas:</strong> Dengan menggunakan layanan kami, Anda memberikan TernakOS lisensi terbatas, non-eksklusif, dan dapat dicabut untuk memproses Data Bisnis Anda semata-mata dalam rangka menyediakan layanan yang Anda minta.</p>
-            <p className="mt-4"><strong className="text-white">Hak TernakOS:</strong> Seluruh elemen platform TernakOS — termasuk namun tidak terbatas pada kode sumber, desain antarmuka, algoritma, merek, dan logo — adalah milik eksklusif TernakOS Indonesia dan dilindungi oleh hukum hak cipta dan hak kekayaan intelektual Republik Indonesia. Anda tidak diperkenankan menyalin, memodifikasi, mendistribusikan, atau menggunakan elemen tersebut tanpa izin tertulis.</p>
+            <p className="mt-4"><strong className="text-white">Hak TernakOS:</strong> Seluruh elemen platform TernakOS, termasuk namun tidak terbatas pada kode sumber, desain antarmuka, algoritma, merek, dan logo, adalah milik eksklusif TernakOS Indonesia dan dilindungi oleh hukum hak cipta dan hak kekayaan intelektual Republik Indonesia. Anda tidak diperkenankan menyalin, memodifikasi, mendistribusikan, atau menggunakan elemen tersebut tanpa izin tertulis.</p>
             <p className="mt-4"><strong className="text-white">Data Agregat Anonim:</strong> TernakOS dapat menggunakan data yang dianonimkan dan diagregasikan (tanpa informasi yang dapat mengidentifikasi bisnis atau individu Anda) untuk keperluan peningkatan layanan, pengembangan fitur, dan referensi harga pasar komoditas peternakan Indonesia.</p>
           </TermSection>
 
@@ -297,7 +297,7 @@ export default function TermsPage() {
           {/* 15 */}
           <TermSection number="15" title="Perubahan Layanan & Ketentuan">
             <p>
-              TernakOS berhak mengubah Syarat & Ketentuan ini sewaktu-waktu. Untuk perubahan yang bersifat material — seperti perubahan harga, pembatasan fitur, atau kebijakan data — kami akan memberikan pemberitahuan melalui:
+              TernakOS berhak mengubah Syarat & Ketentuan ini sewaktu-waktu. Untuk perubahan yang bersifat material (seperti perubahan harga, pembatasan fitur, atau kebijakan data), kami akan memberikan pemberitahuan melalui:
             </p>
             <ul className="mt-4 space-y-2">
               <BulletItem>Email ke alamat yang terdaftar di akun Anda, minimal 7 hari sebelum berlaku.</BulletItem>

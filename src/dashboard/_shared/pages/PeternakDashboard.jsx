@@ -19,11 +19,11 @@ export default function PeternakDashboard() {
         width: '64px',
         height: '64px',
         borderRadius: '20px',
-        background: 'rgba(2, 26, 2,0.1)',
+        background: 'rgba(16, 185, 129, 0.1)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: '#021a02',
+        color: '#10B981',
         marginBottom: '20px'
       }}>
         <Warehouse size={32} />
@@ -38,12 +38,12 @@ export default function PeternakDashboard() {
 
       <div style={{
         padding: '12px 20px',
-        background: 'rgba(2, 26, 2,0.08)',
-        border: '1px solid rgba(2, 26, 2,0.15)',
+        background: 'rgba(16, 185, 129, 0.08)',
+        border: '1px solid rgba(16, 185, 129, 0.15)',
         borderRadius: '12px',
         fontSize: '13px',
         fontWeight: 600,
-        color: '#021a02',
+        color: '#10B981',
         marginBottom: '40px'
       }}>
         🚀 SEGERA HADIR

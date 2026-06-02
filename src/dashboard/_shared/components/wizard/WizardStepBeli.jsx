@@ -401,14 +401,14 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
           <div style={{
             marginTop: 8,
             padding: '14px',
-            background: 'rgba(2, 26, 2,0.06)',
-            border: '1px solid rgba(2, 26, 2,0.20)',
+            background: 'rgba(16, 185, 129, 0.06)',
+            border: '1px solid rgba(16, 185, 129, 0.20)',
             borderRadius: '12px',
             display: 'flex',
             flexDirection: 'column',
             gap: 10
           }}>
-            <p style={{ fontSize: '11px', fontWeight: 900, color: '#021a02', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+            <p style={{ fontSize: '11px', fontWeight: 900, color: '#10B981', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
               Kandang Baru
             </p>
             <div className="grid grid-cols-2 gap-2">
@@ -590,10 +590,10 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
                             style={{
                               width: '100%',
                               padding: '11px 14px',
-                              background: weightUnit === unit ? 'rgba(2, 26, 2,0.10)' : 'transparent',
+                              background: weightUnit === unit ? 'rgba(16, 185, 129, 0.10)' : 'transparent',
                               border: 'none',
                               borderBottom: unit !== 'rit' ? '1px solid hsl(var(--border))' : 'none',
-                              color: weightUnit === unit ? '#021a02' : 'hsl(var(--foreground))',
+                              color: weightUnit === unit ? '#10B981' : 'hsl(var(--foreground))',
                               fontSize: '14px',
                               fontWeight: weightUnit === unit ? 700 : 400,
                               cursor: 'pointer',
@@ -604,7 +604,7 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
                             }}
                           >
                             <span className="uppercase">{unit}</span>
-                            {weightUnit === unit && <Check size={13} color="#021a02" />}
+                            {weightUnit === unit && <Check size={13} color="#10B981" />}
                           </button>
                         ))}
                       </div>
@@ -697,7 +697,7 @@ export default function WizardStepBeli({ onNext, onBack, title = 'Step 1 — Dar
         <Button type="button" variant="ghost" onClick={onBack} className={`gap-2 text-[#4B6478] hover:text-white font-bold rounded-xl ${isDesktop ? 'h-12' : 'h-10 text-[11px]'}`}>
           <ChevronLeft size={16} /> KEMBALI
         </Button>
-        <Button type="submit" disabled={!farmId || !price || !qty} className={`flex-1 rounded-2xl font-black tracking-widest shadow-lg shadow-emerald-500/20 ${isDesktop ? 'h-14 text-sm' : 'h-11 text-[12px]'}`} style={{ background: '#021a02', color: 'white' }}>
+        <Button type="submit" disabled={!farmId || !price || !qty} className={`flex-1 rounded-2xl font-black tracking-widest shadow-lg shadow-emerald-500/20 ${isDesktop ? 'h-14 text-sm' : 'h-11 text-[12px]'}`} style={{ background: '#10B981', color: 'white' }}>
           LANJUT {orderData ? 'KE SUBMIT' : 'KE PENJUALAN'} →
         </Button>
       </div>

@@ -75,14 +75,14 @@ export default function ConfirmDialog({ isOpen, onClose, onConfirm, title, messa
                 style={{
                   padding: '12px',
                   borderRadius: '12px',
-                  background: isDanger ? '#F87171' : '#021a02',
+                  background: isDanger ? '#F87171' : '#10B981',
                   border: 'none',
-                  color: 'white',
+                  color: isDanger ? 'white' : '#0C1319',
                   fontFamily: 'DM Sans',
                   fontWeight: 700,
                   fontSize: '14px',
                   cursor: 'pointer',
-                  boxShadow: isDanger ? '0 4px 12px rgba(248,113,113,0.2)' : '0 4px 12px rgba(2, 26, 2,0.2)',
+                  boxShadow: isDanger ? '0 4px 12px rgba(248,113,113,0.2)' : '0 4px 12px rgba(16, 185, 129, 0.2)',
                 }}
               >
                 {confirmLabel}

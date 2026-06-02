@@ -406,7 +406,7 @@ export default function FormBeliModal({ onClose }) {
       <Button
         type="submit"
         disabled={isLoading}
-        className="w-full h-14 rounded-2xl bg-[#021a02] hover:bg-[#0D9668] text-white font-black text-base shadow-[0_8px_24px_rgba(2, 26, 2,0.25)] border-none"
+        className="w-full h-14 rounded-2xl bg-[#10B981] hover:bg-[#0D9668] text-[#0C1319] font-black text-base shadow-[0_8px_24px_rgba(16,185,129,0.25)] border-none"
       >
         {isLoading ? (
           <><Loader2 size={20} className="animate-spin mr-2" /> Menyimpan...</>

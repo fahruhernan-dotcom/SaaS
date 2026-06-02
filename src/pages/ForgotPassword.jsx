@@ -109,8 +109,8 @@ export default function ForgotPassword() {
           {!sent ? (
             <>
               {/* Icon */}
-              <div className="w-12 h-12 bg-[#021a02]/10 border border-[#021a02]/20 rounded-xl flex items-center justify-center mx-auto mb-5">
-                <Mail size={22} className="text-[#021a02]" />
+              <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-center mx-auto mb-5">
+                <Mail size={22} className="text-emerald-500" />
               </div>
 
               <h1 className="text-xl font-bold font-display text-[#F1F5F9] text-center mb-1.5 tracking-tight">
@@ -193,18 +193,16 @@ export default function ForgotPassword() {
                   style={{
                     width: '100%',
                     height: '44px',
-                    background: '#021a02',
                     border: 'none',
                     borderRadius: '10px',
                     color: 'white',
                     fontFamily: 'Sora',
                     fontSize: '14px',
                     fontWeight: 700,
-                    boxShadow: '0 4px 20px rgba(2, 26, 2,0.25)',
                     opacity: (!email.trim() || isBlocked) ? 0.5 : 1,
                     marginTop: '4px'
                   }}
-                  className="hover:bg-emerald-600 transition-colors"
+                  className="bg-emerald-500 hover:bg-emerald-600 transition-colors shadow-[0_4px_20px_rgba(12,61,12,0.2)] dark:shadow-[0_4px_20px_rgba(140,184,140,0.15)]"
                 >
                   {isLoading ? (
                     <><Loader2 size={16} className="animate-spin mr-2" /> Mengirim...</>
@@ -217,8 +215,8 @@ export default function ForgotPassword() {
           ) : (
             /* SUCCESS STATE */
             <div className="text-center py-4">
-              <div className="w-14 h-14 bg-[#021a02]/10 border border-[#021a02]/20 rounded-full flex items-center justify-center mx-auto mb-5">
-                <CheckCircle2 size={28} className="text-[#021a02]" />
+              <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-5">
+                <CheckCircle2 size={28} className="text-emerald-500" />
               </div>
 
               <h2 className="text-lg font-bold font-display text-[#F1F5F9] mb-2 tracking-tight">
@@ -227,7 +225,7 @@ export default function ForgotPassword() {
               <p className="text-[13px] text-[#4B6478] leading-relaxed font-medium mb-2">
                 Kami sudah mengirim link reset password ke:
               </p>
-              <p className="text-sm text-[#021a02] font-semibold mb-6">{email}</p>
+              <p className="text-sm text-emerald-500 font-semibold mb-6">{email}</p>
               <p className="text-[12px] text-[#4B6478] leading-relaxed">
                 Cek folder <span className="text-[#94A3B8] font-medium">Inbox</span> atau <span className="text-[#94A3B8] font-medium">Spam</span> kamu. Link akan kadaluarsa dalam 1 jam.
               </p>

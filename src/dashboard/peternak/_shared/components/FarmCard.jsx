@@ -41,9 +41,9 @@ const modelBadgeStyle = {
 }
 
 const mandiriBadgeStyle = {
-  background: 'rgba(2, 26, 2,0.1)',
-  color: '#021a02',
-  border: '1px solid rgba(2, 26, 2,0.2)',
+  background: 'rgba(16, 185, 129, 0.1)',
+  color: '#10B981',
+  border: '1px solid rgba(16, 185, 129, 0.2)',
 }
 
 const kemitraanBadgeStyle = {

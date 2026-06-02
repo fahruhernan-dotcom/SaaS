@@ -45,7 +45,7 @@ export function MobileKandangMap({ className = '' }) {
           {pens.map(pen => {
             const fillPct = pen.count / pen.capacity
             const toneColor = pen.status === 'ok' ? 'emerald' : pen.status === 'warn' ? 'amber' : 'red'
-            const statusColor = toneColor === 'emerald' ? '#021a02' : toneColor === 'amber' ? '#F59E0B' : '#EF4444'
+            const statusColor = toneColor === 'emerald' ? '#10B981' : toneColor === 'amber' ? '#F59E0B' : '#EF4444'
             
             return (
               <div 

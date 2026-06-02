@@ -308,7 +308,7 @@ export default function Register() {
                 }
               ].map((stat, i) => (
                 <div key={i} className="bg-[#0C1319]/80 border border-white/8 rounded-xl p-3 flex-1 transition-all hover:border-white/12">
-                  <div className="font-display text-lg font-bold text-[#10B981]">{stat.val}</div>
+                  <div className="font-display text-lg font-bold text-emerald-500">{stat.val}</div>
                   <div className="text-[#F1F5F9] text-[10px] font-semibold mt-0.5">{stat.label}</div>
                   <div className="text-[#4B6478] text-[9px]">{stat.sub}</div>
                 </div>
@@ -320,7 +320,7 @@ export default function Register() {
             <div className="mt-8 space-y-0">
               {[{ icon: <TrendingUp />, title: "Profit & Cash Flow Real-time", desc: "Margin bersih otomatis terhitung." }, { icon: <Truck />, title: "Tracking Pengiriman & Loss", desc: "Pantau mortalitas dan susut berat." }, { icon: <BarChart2 />, title: "Harga Pasar Transparan", desc: "Data harga dari transaksi nyata." }, { icon: <Clock />, title: "Piutang & Jatuh Tempo", desc: "Pantau semua piutang RPA otomatis." }].map((item, i, arr) => (
                 <div key={i} className={`flex gap-3 items-start py-2.5 ${i !== arr.length - 1 ? 'border-b border-white/5' : ''}`}>
-                  <div className="w-7 h-7 bg-[#10B981]/10 border border-[#10B981]/20 rounded-lg flex items-center justify-center flex-shrink-0">{React.cloneElement(item.icon, { size: 14, className: "text-[#10B981]" })}</div>
+                  <div className="w-7 h-7 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-center flex-shrink-0">{React.cloneElement(item.icon, { size: 14, className: "text-emerald-500" })}</div>
                   <div>
                     <h4 className="text-[#F1F5F9] text-[13px] font-semibold tracking-tight">{item.title}</h4>
                     <p className="text-[#4B6478] text-[11px] mt-0.5 leading-relaxed font-medium">{item.desc}</p>
@@ -332,10 +332,10 @@ export default function Register() {
 
           <AnimatedContent delay={0.8} distance={20}>
             <div className="mt-8">
-              <div className="bg-[#0C1319]/80 border-l-2 border-[#10B981] rounded-xl p-4">
+              <div className="bg-[#0C1319]/80 border-l-2 border-emerald-500 rounded-xl p-4">
                 <p className="text-[#94A3B8] text-xs italic leading-relaxed">"Proses pendaftaran sangat mudah. Dalam hitungan menit, saya sudah bisa input transaksi pertama saya."</p>
                 <div className="flex gap-2 items-center mt-3">
-                  <div className="w-6 h-6 rounded-full bg-[#10B981] flex items-center justify-center text-[10px] font-bold text-[#06090F]">AS</div>
+                  <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center text-[10px] font-bold text-[#06090F]">AS</div>
                   <div><p className="text-[#F1F5F9] text-xs font-semibold">Andi Saputra</p><p className="text-[#4B6478] text-[10px]">Peternak Ayam, Magelang</p></div>
                 </div>
               </div>
@@ -360,8 +360,8 @@ export default function Register() {
 
           <div className="flex p-1 bg-white/5 rounded-xl border border-white/10 mb-6">
             {['mandiri', 'invite'].map(m => (
-              <button key={m} onClick={() => setMode(m)} className={`flex-1 py-2 text-[13px] font-semibold transition-all rounded-lg ${mode === m ? 'bg-[#10B981] text-white shadow-lg' : 'text-[#94A3B8] hover:text-white'}`}>{m === 'mandiri' ? t('auth_register_mandiri', 'Daftar Mandiri') : t('auth_register_invite', 'Pakai Undangan')}</button>
-            ))}
+              <button key={m} onClick={() => setMode(m)} className={`flex-1 py-2 text-[13px] font-semibold transition-all rounded-lg ${mode === m ? 'bg-emerald-500 text-white shadow-lg' : 'text-[#94A3B8] hover:text-white'}`}>{m === 'mandiri' ? t('auth_register_mandiri', 'Daftar Mandiri') : t('auth_register_invite', 'Pakai Undangan')}</button>
+            )) }
           </div>
 
           {isLocked && (
@@ -406,7 +406,7 @@ export default function Register() {
             </div>
             {errors.agreedToTerms && <p className="text-xs text-red-500">{errors.agreedToTerms.message}</p>}
             {authError && <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-[13px] text-red-400 flex items-center gap-2"><AlertCircle size={14} />{authError}</div>}
-            <Button type="submit" disabled={isLoading || isBlocked} className="w-full bg-[#10B981] hover:bg-emerald-600 text-white font-bold h-11 rounded-xl shadow-[0_4px_20px_rgba(16,185,129,0.2)] mt-4">
+            <Button type="submit" disabled={isLoading || isBlocked} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold h-11 rounded-xl shadow-[0_4px_20px_rgba(12,61,12,0.2)] dark:shadow-[0_4px_20px_rgba(140,184,140,0.15)] mt-4">
               {isLoading ? t('auth_processing', 'Memproses...') : cooldown > 0 ? `Tunggu ${cooldown}s` : (mode === 'mandiri' ? t('auth_register_button', 'Daftar Gratis →') : t('auth_join_team_button', 'Bergabung Tim'))}
             </Button>
           </form>

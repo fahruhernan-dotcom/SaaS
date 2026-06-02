@@ -23,12 +23,12 @@ export const SHARED = [
   {
     Icon: 'Bot',
     title: 'TernakBot AI Assistant',
-    desc: 'Tanya langsung: "Batch mana ADG-nya tertinggal?" atau "Ringkas performa bulan ini" — AI merangkum data bisnis kamu dalam hitungan detik.',
+    desc: 'Tanya langsung: "Batch mana ADG-nya tertinggal?" atau "Ringkas performa bulan ini" untuk membuat AI merangkum data bisnis kamu dalam hitungan detik.',
   },
   {
     Icon: 'LayoutDashboard',
     title: 'Dashboard Analisis Real-time',
-    desc: 'Beranda interaktif per farm: ringkasan batch aktif, performa keuangan, dan metrik kunci — diperbarui otomatis tanpa reload.',
+    desc: 'Beranda interaktif per farm: ringkasan batch aktif, performa keuangan, dan metrik kunci yang diperbarui otomatis tanpa reload.',
   },
   {
     Icon: 'ShieldCheck',
@@ -38,7 +38,7 @@ export const SHARED = [
   {
     Icon: 'Lock',
     title: 'Keamanan Data Bank-Grade',
-    desc: 'Row Level Security (RLS) PostgreSQL — data bisnis kamu tidak bisa diakses pengguna lain. Backup otomatis real-time di cloud.',
+    desc: 'Row Level Security (RLS) PostgreSQL memastikan data bisnis kamu tidak bisa diakses pengguna lain. Backup otomatis real-time di cloud.',
   },
 ]
 
@@ -49,7 +49,7 @@ export const FAQ_COMMON = [
   },
   {
     q: 'Berapa lama setup awal TernakOS?',
-    a: 'Rata-rata kurang dari 15 menit. Daftar, pilih tipe bisnis, undang anggota tim — langsung bisa pakai. Tidak perlu instalasi software apapun.',
+    a: 'Rata-rata kurang dari 15 menit. Daftar, pilih tipe bisnis, undang anggota tim, dan langsung bisa pakai. Tidak perlu instalasi software apapun.',
   },
   {
     q: 'Apakah bisa dipakai di HP Android biasa?',
@@ -65,19 +65,19 @@ export const FAQ_COMMON = [
   },
   {
     q: 'Bisakah satu orang punya lebih dari satu bisnis di TernakOS?',
-    a: 'Bisa. Satu akun login bisa terhubung ke beberapa bisnis sekaligus — misalnya kamu punya kandang broiler sekaligus usaha broker ayam. Tinggal switch bisnis dari dashboard.',
+    a: 'Bisa. Satu akun login bisa terhubung ke beberapa bisnis sekaligus, misalnya kamu punya kandang broiler sekaligus usaha broker ayam. Tinggal switch bisnis dari dashboard.',
   },
   {
     q: 'Apakah ada fitur undang karyawan atau tim?',
-    a: 'Ada. Mulai dari plan Pro, Owner bisa undang anggota tim via kode 6 digit. Setiap anggota dapat role berbeda: Staff, View Only, Sopir — dengan batasan akses yang sesuai jabatannya. Pada plan Starter, akses dibatasi untuk Owner saja (mandiri).',
+    a: 'Ada. Mulai dari plan Pro, Owner bisa undang anggota tim via kode 6 digit. Setiap anggota dapat role berbeda: Staff, View Only, Sopir, dengan batasan akses yang sesuai jabatannya. Pada plan Starter, akses dibatasi untuk Owner saja (mandiri).',
   },
   {
     q: 'Apakah TernakOS bisa dipakai di laptop atau komputer?',
-    a: 'Bisa. TernakOS berjalan di semua browser modern — Chrome, Firefox, Safari, Edge — di HP maupun laptop tanpa instalasi apapun.',
+    a: 'Bisa. TernakOS berjalan di semua browser modern (Chrome, Firefox, Safari, Edge) di HP maupun laptop tanpa instalasi apapun.',
   },
   {
     q: 'Bagaimana cara backup data di TernakOS?',
-    a: 'Data tersimpan otomatis di cloud (Supabase PostgreSQL) dengan replikasi real-time. Tidak perlu backup manual — data kamu aman meski HP hilang atau rusak.',
+    a: 'Data tersimpan otomatis di cloud (Supabase PostgreSQL) dengan replikasi real-time. Tidak perlu backup manual karena data kamu aman meski HP hilang atau rusak.',
   },
   {
     q: 'Apakah ada notifikasi otomatis?',

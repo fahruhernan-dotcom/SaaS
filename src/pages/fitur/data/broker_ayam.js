@@ -4,7 +4,7 @@ export const groups = [
   {
     Icon: ArrowLeftRight,
     title: 'Catat Beli & Jual dalam Hitungan Detik',
-    desc: 'Wizard 3 langkah — dari beli kandang sampai audit transaksi & kirim nota ke WhatsApp.',
+    desc: 'Wizard 3 langkah mulai dari beli kandang sampai audit transaksi & kirim nota ke WhatsApp.',
     features: [
       'Catat pembelian dari kandang (harga, bobot, ekor)',
       'Catat penjualan ke RPA/pasar/langsung',
@@ -83,7 +83,7 @@ export const groups = [
 export const hero = {
   eyebrow: 'Solusi Broker Ayam',
   headline: 'Kelola Ratusan Ton Ayam Tanpa Pusing Selisih Timbangan.',
-  sub: 'Dari catat pembelian kandang sampai kirim nota ke WhatsApp pembeli — semua dalam 3 langkah. Hemat 2 jam/hari pencatatan.',
+  sub: 'Dari catat pembelian kandang sampai kirim nota ke WhatsApp pembeli, semuanya dalam 3 langkah. Hemat 2 jam/hari pencatatan.',
   cta: 'Mulai Kelola Transaksi Broker',
 }
 
@@ -97,7 +97,7 @@ export const beforeAfter = [
 export const faq = [
   {
     q: 'Apa itu aplikasi broker ayam dan apa bedanya dengan catatan biasa?',
-    a: 'Aplikasi broker ayam adalah sistem digital untuk mencatat pembelian dari kandang, penjualan ke RPA/pasar, pengiriman, dan piutang dalam satu platform. Berbeda dengan buku atau Excel, data otomatis terhitung — margin, susut timbangan, dan saldo piutang selalu akurat tanpa hitung manual.',
+    a: 'Aplikasi broker ayam adalah sistem digital untuk mencatat pembelian dari kandang, penjualan ke RPA/pasar, pengiriman, dan piutang dalam satu platform. Berbeda dengan buku atau Excel, data otomatis terhitung, sehingga margin, susut timbangan, dan saldo piutang selalu akurat tanpa hitung manual.',
   },
   {
     q: 'Bagaimana cara menghitung margin keuntungan broker ayam secara otomatis?',
@@ -109,7 +109,7 @@ export const faq = [
   },
   {
     q: 'Bagaimana cara kirim nota ke WhatsApp pembeli?',
-    a: 'Setelah transaksi selesai, klik tombol "Kirim Nota" — sistem otomatis membuka WhatsApp dengan nota yang sudah diformat rapi. Pembeli langsung terima detail transaksi tanpa kamu perlu ketik ulang.',
+    a: 'Setelah transaksi selesai, klik tombol "Kirim Nota" untuk membuka WhatsApp secara otomatis dengan nota yang sudah diformat rapi. Pembeli langsung terima detail transaksi tanpa kamu perlu ketik ulang.',
   },
   {
     q: 'Bagaimana cara melacak piutang broker ayam yang belum dibayar?',

@@ -53,7 +53,7 @@ export const groups = [
 export const hero = {
   eyebrow: 'Solusi Rumah Potong Ayam',
   headline: 'Kelola Pembelian Ayam Hidup dan Pengiriman ke Pembeli Tanpa Dokumen Manual.',
-  sub: 'Timbang, potong, kirim — semua tercatat digital dengan laporan harian otomatis.',
+  sub: 'Timbang, potong, kirim, semuanya tercatat digital dengan laporan harian otomatis.',
   cta: 'Kelola Operasional RPA',
 }
 
@@ -71,7 +71,7 @@ export const faq = [
   },
   {
     q: 'Bagaimana TernakOS membantu mengurangi dispute dengan broker?',
-    a: 'Data transaksi di TernakOS tercatat transparan untuk semua pihak. Harga, bobot, tanggal, dan status pembayaran tersimpan digital — tidak ada ruang untuk dispute karena datanya sama-sama bisa dilihat.',
+    a: 'Data transaksi di TernakOS tercatat transparan untuk semua pihak. Harga, bobot, tanggal, dan status pembayaran tersimpan digital, sehingga tidak ada ruang untuk dispute karena datanya sama-sama bisa dilihat.',
   },
   {
     q: 'Apakah bisa integrasi dengan timbangan digital?',

@@ -20,7 +20,7 @@ export default function NotFound() {
       component: 'NotFound',
       actionName: 'route.not_found',
       error: {
-        message: `404 — ${window.location.pathname}`,
+        message: `404: ${window.location.pathname}`,
         code: '404',
         stack: null,
         details: null,

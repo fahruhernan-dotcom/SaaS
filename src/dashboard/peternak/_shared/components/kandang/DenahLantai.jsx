@@ -319,7 +319,7 @@ export default function DenahLantai({
         )}
         <div className="ml-auto flex items-center gap-3">
           <div className="flex items-center gap-1.5">
-            {[{ color: '#021a02', label: 'Bagus' }, { color: '#FBBF24', label: 'Cukup' }, { color: '#F87171', label: 'Rendah' }, { color: '#4B6478', label: 'N/A' }].map(l => (
+            {[{ color: '#10B981', label: 'Bagus' }, { color: '#FBBF24', label: 'Cukup' }, { color: '#F87171', label: 'Rendah' }, { color: '#4B6478', label: 'N/A' }].map(l => (
               <div key={l.label} className="flex items-center gap-1">
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: l.color }} />
                 <span className="text-[8px] font-black text-[#4B6478] uppercase">{l.label}</span>
@@ -386,8 +386,8 @@ export default function DenahLantai({
             />
           ))}
           {drawPreview && (
-            <div style={{ position: 'absolute', left: drawPreview.x * CELL_PX, top: drawPreview.y * CELL_PX, width: drawPreview.w * CELL_PX, height: drawPreview.h * CELL_PX, border: '1.5px dashed rgba(2, 26, 2,0.8)', background: 'rgba(2, 26, 2,0.07)', borderRadius: 4, pointerEvents: 'none', zIndex: 40 }}>
-              <div style={{ position: 'absolute', bottom: 3, right: 5, fontSize: 9, fontWeight: 700, color: '#021a02' }}>{drawPreview.w}×{drawPreview.h}m</div>
+            <div style={{ position: 'absolute', left: drawPreview.x * CELL_PX, top: drawPreview.y * CELL_PX, width: drawPreview.w * CELL_PX, height: drawPreview.h * CELL_PX, border: '1.5px dashed rgba(16, 185, 129, 0.8)', background: 'rgba(16, 185, 129, 0.07)', borderRadius: 4, pointerEvents: 'none', zIndex: 40 }}>
+              <div style={{ position: 'absolute', bottom: 3, right: 5, fontSize: 9, fontWeight: 700, color: '#10B981' }}>{drawPreview.w}×{drawPreview.h}m</div>
             </div>
           )}
           {placedKandangs.length === 0 && unplacedKandangs.length === 0 && (

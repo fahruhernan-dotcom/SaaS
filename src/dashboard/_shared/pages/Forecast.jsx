@@ -32,7 +32,7 @@ export default function Forecast() {
         >
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
             <div style={{ width: '48px', height: '48px', borderRadius: '24px', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Zap size={24} color={isOversupply ? '#021a02' : '#FCA5A5'} fill={isOversupply ? '#021a02' : '#FCA5A5'} />
+              <Zap size={24} color={isOversupply ? '#10B981' : '#FCA5A5'} fill={isOversupply ? '#10B981' : '#FCA5A5'} />
             </div>
           </div>
           <div style={{ fontSize: '11px', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px' }}>
@@ -42,18 +42,18 @@ export default function Forecast() {
             {isOversupply ? 'Oversupply' : 'Shortage (Kurang)'}
           </div>
           <div style={{ fontSize: '13px', color: '#94A3B8' }}>
-            Gap: <b style={{ color: isOversupply ? '#021a02' : '#F87171' }}>{formatEkor(Math.abs(forecast?.netBalance || 0))}</b>
+            Gap: <b style={{ color: isOversupply ? '#10B981' : '#F87171' }}>{formatEkor(Math.abs(forecast?.netBalance || 0))}</b>
           </div>
         </motion.div>
       </div>
 
       <main style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <Section title="Detail Estimasi (7 Hari)">
-          <DataRow label="Potensi Supply (Panen)" value={formatEkor(forecast?.totalSupply || 0)} icon={<TrendingUp size={16} color="#021a02" />} />
+          <DataRow label="Potensi Supply (Panen)" value={formatEkor(forecast?.totalSupply || 0)} icon={<TrendingUp size={16} color="#10B981" />} />
           <DataRow label="Target Demand (Orders)" value={formatEkor(forecast?.totalDemand || 0)} icon={<ClipboardList size={16} color="#F87171" />} />
           <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)' }}>
             <span style={{ fontSize: '13px', fontWeight: 800, color: '#F1F5F9' }}>Net Balance</span>
-            <span style={{ fontSize: '16px', fontWeight: 800, color: isOversupply ? '#021a02' : '#F87171' }}>
+            <span style={{ fontSize: '16px', fontWeight: 800, color: isOversupply ? '#10B981' : '#F87171' }}>
               {isOversupply ? '+' : '-'}{formatEkor(Math.abs(forecast?.netBalance || 0))}
             </span>
           </div>

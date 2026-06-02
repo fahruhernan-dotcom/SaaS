@@ -146,7 +146,7 @@ export default function TestimonialsNew() {
       {/* Header */}
       <AnimatedContent distance={20}>
         <div className="text-center mb-12 px-4">
-          <p className="text-[#021a02] text-xs font-bold uppercase tracking-widest mb-3">
+          <p className="text-[#021a02] dark:text-emerald-400 text-xs font-bold uppercase tracking-widest mb-3">
             DARI PELAKU INDUSTRI
           </p>
           <h2 className="font-display text-3xl md:text-4xl font-normal text-text-primary leading-tight">

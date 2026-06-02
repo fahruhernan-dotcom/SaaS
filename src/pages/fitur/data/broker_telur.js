@@ -4,9 +4,9 @@ export const groups = [
   {
     Icon: ShoppingCart,
     title: 'POS Telur yang Cepat & Akurat',
-    desc: 'Catat penjualan langsung dari grid produk — cart, customer, payment status, invoice selesai dalam hitungan detik.',
+    desc: 'Catat penjualan langsung dari grid produk untuk mengelola cart, customer, payment status, dan invoice selesai dalam hitungan detik.',
     features: [
-      'Grid produk dengan stok realtime — klik untuk tambah ke cart',
+      'Grid produk dengan stok realtime, cukup klik untuk tambah ke cart',
       'Toggle payment: Lunas (cash) atau Piutang/TOP (kredit)',
       'Invoice number otomatis per transaksi',
       'Kalkulasi total + HPP + margin otomatis',
@@ -70,7 +70,7 @@ export const hero = {
 }
 
 export const beforeAfter = [
-  { before: 'Input penjualan satu-satu di buku, sering salah hitung', after: 'POS grid produk — klik, pilih customer, checkout selesai' },
+  { before: 'Input penjualan satu-satu di buku, sering salah hitung', after: 'POS grid produk untuk klik, pilih customer, dan checkout selesai' },
   { before: 'HPP & margin dihitung manual pakai kalkulator', after: 'HPP & margin % otomatis terhitung per grade per transaksi' },
   { before: 'Piutang pelanggan diingat sendiri, sering lupa', after: 'Dashboard piutang per pelanggan realtime dengan filter' },
   { before: 'Stok baru ketahuan habis saat kehabisan', after: 'Alert minimum stok otomatis sebelum kehabisan' },
@@ -79,7 +79,7 @@ export const beforeAfter = [
 export const faq = [
   {
     q: 'Bagaimana cara kirim nota ke WhatsApp pembeli?',
-    a: 'Setelah transaksi selesai, klik tombol "Kirim Nota" — sistem otomatis membuka WhatsApp dengan nota yang sudah diformat rapi.',
+    a: 'Setelah transaksi selesai, klik tombol "Kirim Nota" untuk membuka WhatsApp secara otomatis dengan nota yang sudah diformat rapi.',
   },
   {
     q: 'Bisakah pantau harga telur harian di dashboard?',

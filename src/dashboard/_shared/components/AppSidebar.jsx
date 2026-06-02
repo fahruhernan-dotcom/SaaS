@@ -214,7 +214,7 @@ export default function AppSidebar({ open, onClose }) {
   const brokerBase = getBrokerBasePath(tenant)
   const peternakBase = getXBasePath(tenant, profile)
   
-  const color = accentColor || (isSembako ? '#EA580C' : isEgg ? '#7C3AED' : isRPA ? '#F59E0B' : isFatteningPremium ? '#10B981' : '#021a02')
+  const color = accentColor || (isSembako ? '#EA580C' : isEgg ? '#7C3AED' : isRPA ? '#F59E0B' : '#10B981')
 
   const getBerandaPath = (v, t = tenant) => {
     const bBase = getBrokerBasePath(t)
@@ -1197,7 +1197,7 @@ export default function AppSidebar({ open, onClose }) {
                   {(profile?.role || isSuperadmin) && (
                     <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shrink-0 ${
                       isSuperadmin ? 'bg-amber-500/10 text-amber-500' :
-                      isOwner(profile) ? 'bg-[#021a02]/10 text-[#021a02]' :
+                      isOwner(profile) ? 'bg-[#10B981]/10 text-[#10B981]' :
                       isStaff(profile) ? 'bg-blue-500/10 text-blue-400' :
                       'bg-white/5 text-[#4B6478]'
                     }`}>

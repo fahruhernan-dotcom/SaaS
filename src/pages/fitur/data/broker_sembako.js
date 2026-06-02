@@ -4,7 +4,7 @@ export const groups = [
   {
     Icon: ShoppingCart,
     title: 'Invoice & POS Grosir Digital',
-    desc: 'Buat invoice penjualan multi-item dalam hitungan detik — support satuan ganda, dual harga, dan sistem tempo.',
+    desc: 'Buat invoice penjualan multi-item dalam hitungan detik dengan dukungan satuan ganda, dual harga, dan sistem tempo.',
     features: [
       'Multi-item per invoice: Sak, Ball, Karton, Pcs, Kg, dll',
       'Dual-pricing otomatis: Harga Retail vs Harga Partai',
@@ -57,7 +57,7 @@ export const groups = [
     features: [
       'Laporan laba-rugi: revenue, COGS, gross & net profit',
       'Breakdown pengeluaran: sewa, listrik, BBM, packaging',
-      'Analitik Pareto — produk & customer paling menguntungkan',
+      'Analitik Pareto untuk produk & customer paling menguntungkan',
       'Export laporan PDF & Excel (Business)',
       'Manajemen pegawai + gaji & payroll bulanan',
     ],
@@ -67,13 +67,13 @@ export const groups = [
 export const hero = {
   eyebrow: 'Solusi Agen Sembako',
   headline: 'Stok Bocor? Pantau Keluar Masuk Barang Secara Akurat dengan Sistem FIFO.',
-  sub: 'Kelola ribuan item sembako — beras, minyak, telur — dalam satu invoice tanpa salah hitung.',
+  sub: 'Kelola ribuan item sembako (seperti beras, minyak, telur) dalam satu invoice tanpa salah hitung.',
   cta: 'Coba Manajemen Stok Sembako',
 }
 
 export const beforeAfter = [
   { before: 'Invoice ditulis tangan, sering ada item kelewat', after: 'Invoice digital multi-item selesai dalam 30 detik' },
-  { before: 'Stok dicatat manual, sering selisih saat opname', after: 'Batch tracking otomatis — setiap masuk & keluar tercatat' },
+  { before: 'Stok dicatat manual, sering selisih saat opname', after: 'Batch tracking otomatis untuk mencatat setiap masuk & keluar' },
   { before: 'Piutang toko tidak terpantau, sering dispute', after: 'Dashboard piutang per toko dengan riwayat pembayaran' },
   { before: 'Laporan laba-rugi dihitung di Excel akhir bulan', after: 'Laporan P&L + analitik produk terlaris tersedia realtime' },
 ]
@@ -81,7 +81,7 @@ export const beforeAfter = [
 export const faq = [
   {
     q: 'Apa itu sistem FIFO dan kenapa penting untuk toko sembako?',
-    a: 'FIFO (First In First Out) artinya barang yang masuk lebih dulu harus keluar lebih dulu. Ini mencegah barang mengendap dan expired. TernakOS mengelola FIFO per batch otomatis — kamu tidak perlu urutkan manual.',
+    a: 'FIFO (First In First Out) artinya barang yang masuk lebih dulu harus keluar lebih dulu. Ini mencegah barang mengendap dan expired. TernakOS mengelola FIFO per batch otomatis, sehingga kamu tidak perlu mengurutkannya manual.',
   },
   {
     q: 'Apakah sistem FIFO bisa untuk ratusan item berbeda?',

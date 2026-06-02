@@ -7,7 +7,7 @@ export const MIN_SCALE = 0.15
 export const MAX_SCALE = 4
 
 export const PALETTE = [
-  { bg: 'rgba(2, 26, 2,0.15)',  border: 'rgba(2, 26, 2,0.55)',  text: '#021a02', dotColor: '#021a02' },
+  { bg: 'rgba(16, 185, 129, 0.15)',  border: 'rgba(16, 185, 129, 0.55)',  text: '#A7F3D0', dotColor: '#10B981' },
   { bg: 'rgba(59,130,246,0.15)',  border: 'rgba(59,130,246,0.55)',  text: '#93C5FD', dotColor: '#3B82F6' },
   { bg: 'rgba(245,158,11,0.15)',  border: 'rgba(245,158,11,0.55)',  text: '#FCD34D', dotColor: '#F59E0B' },
   { bg: 'rgba(139,92,246,0.15)',  border: 'rgba(139,92,246,0.55)',  text: '#C4B5FD', dotColor: '#8B5CF6' },
@@ -31,7 +31,7 @@ export function getADGTier(adgKg, thresholds = { good: 0.25, ok: 0.15 }) {
   if (adgKg >= thresholds.good) return {
     color: 'text-emerald-400', dot: 'bg-emerald-400',
     border: 'border-emerald-500/30', bg: 'bg-emerald-500/[0.06]',
-    label: `${adgKg.toFixed(2)} kg`, dotColor: '#021a02'
+    label: `${adgKg.toFixed(2)} kg`, dotColor: '#10B981'
   }
   if (adgKg >= thresholds.ok) return {
     color: 'text-amber-400', dot: 'bg-amber-400',

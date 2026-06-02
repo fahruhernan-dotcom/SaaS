@@ -37,7 +37,7 @@ export const SummaryTiles = ({ stats }) => {
   const pct = stats.total > 0 ? Math.round((stats.selesai / stats.total) * 100) : 0
   const r = 20
   const circ = 2 * Math.PI * r
-  const ringColor = stats.terlambat > 0 ? '#EF4444' : stats.selesai === stats.total && stats.total > 0 ? '#021a02' : '#7C3AED'
+  const ringColor = stats.terlambat > 0 ? '#EF4444' : stats.selesai === stats.total && stats.total > 0 ? '#10B981' : '#7C3AED'
 
   return (
     <>

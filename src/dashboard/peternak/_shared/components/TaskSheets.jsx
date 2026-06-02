@@ -362,10 +362,6 @@ export function CompleteTaskSheet({
   const isMultiAnimalTask = (task?.task_type === 'timbang' || task?.task_type === 'vaksinasi' || task?.task_type === 'obat_cacing') && config?.usesIndividualAnimals && !isAuditMode
   const reportConfig = isMultiAnimalTask ? null : (task ? TASK_REPORT_CONFIG[task.task_type] : null)
   const isHealthTask = task?.task_type === 'vaksinasi' || task?.task_type === 'obat_cacing'
-  const unweighedAnimals = animals.filter(a => !weighingEntries.find(e => e.animal_id === a.id))
-  const untreatedAnimals = animals.filter(a => !healthEntries.find(e => e.animal_id === a.id))
-  const entriesCount = task?.task_type === 'timbang' ? weighingEntries.length : healthEntries.length
-  const animalsDone = animals.length > 0 && entriesCount >= animals.length
 
   const [locChecking, setLocChecking] = useState(false)
   const [locDistance, setLocDistance] = useState(null)
@@ -574,6 +570,11 @@ export function CompleteTaskSheet({
     }
     return rawAnimals
   }, [animalsQuery.data, task, effectiveBatchId])
+
+  const unweighedAnimals = animals.filter(a => !weighingEntries.find(e => e.animal_id === a.id))
+  const untreatedAnimals = animals.filter(a => !healthEntries.find(e => e.animal_id === a.id))
+  const entriesCount = task?.task_type === 'timbang' ? weighingEntries.length : healthEntries.length
+  const animalsDone = animals.length > 0 && entriesCount >= animals.length
 
   useEffect(() => {
     if (open && task) {

@@ -152,7 +152,7 @@ export default function HargaPage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-6"
+              className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] dark:text-emerald-400 mb-6"
             >
               HARGA TRANSPARAN
             </motion.p>
@@ -213,7 +213,7 @@ export default function HargaPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-white mb-0.5">Kamu pakai Starter (Gratis)</p>
                   <p className="text-xs text-[#94A3B8] leading-relaxed">
-                    Upgrade ke Pro untuk unlock fitur lengkap — trial {data?.trialDays || 14} hari gratis, tanpa kartu kredit.
+                    Upgrade ke Pro untuk membuka fitur lengkap, dengan trial {data?.trialDays || 14} hari gratis, tanpa kartu kredit.
                   </p>
                 </div>
               </div>
@@ -359,7 +359,7 @@ export default function HargaPage() {
         <section className="py-24 px-5 bg-[#080D13]">
           <div className="max-w-2xl mx-auto">
             <FadeUp className="text-center mb-12">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-4">FAQ</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] dark:text-emerald-400 mb-4">FAQ</p>
               <h2 className="font-['Sora'] text-3xl font-bold text-white">Pertanyaan Umum</h2>
             </FadeUp>
             <FadeUp delay={0.1}>

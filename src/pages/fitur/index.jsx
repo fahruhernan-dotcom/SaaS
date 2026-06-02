@@ -235,7 +235,7 @@ export default function FiturPage() {
               </p>
               <h2 className="font-['Sora'] text-3xl font-bold text-white">Sebelum & Sesudah TernakOS</h2>
               <p className="text-[#4B6478] text-sm mt-3 max-w-lg mx-auto">
-                Ini bukan janji — ini yang kamu rasakan di hari pertama pakai.
+                Ini bukan janji, melainkan kenyataan yang kamu rasakan di hari pertama pakai.
               </p>
             </FadeUp>
 
@@ -282,7 +282,7 @@ export default function FiturPage() {
         <section className="py-20 px-5 bg-[#06090F]">
           <div className="max-w-5xl mx-auto">
             <FadeUp className="text-center mb-12">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] mb-4">SEMUA ROLE</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#021a02] dark:text-emerald-400 mb-4">SEMUA ROLE</p>
               <h2 className="font-['Sora'] text-3xl font-bold text-white">Tersedia untuk Semua Role</h2>
             </FadeUp>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

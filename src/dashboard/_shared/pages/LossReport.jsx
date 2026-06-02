@@ -65,7 +65,7 @@ export default function LossReport() {
       <main style={{ padding: '0 20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h3 style={{ fontFamily: 'Sora', fontSize: '16px', fontWeight: 800, color: '#F1F5F9' }}>Daftar Kerugian</h3>
-          <button onClick={() => setShowAdd(true)} style={{ background: 'transparent', border: 'none', color: '#021a02', fontSize: '13px', fontWeight: 700 }}>+ Catat Baru</button>
+          <button onClick={() => setShowAdd(true)} style={{ background: 'transparent', border: 'none', color: '#10B981', fontSize: '13px', fontWeight: 700 }}>+ Catat Baru</button>
         </div>
 
         {isLoading ? (
@@ -135,7 +135,7 @@ function LossCard({ report }) {
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: '15px', fontWeight: 800, color: '#F87171' }}>-{formatIDR(report.financial_loss)}</div>
           {report.resolved ? (
-            <div style={{ fontSize: '10px', color: '#021a02', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+            <div style={{ fontSize: '10px', color: '#10B981', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
               <CheckCircle size={10} /> TERATASI
             </div>
           ) : (
@@ -153,7 +153,7 @@ function LossCard({ report }) {
           {report.sales?.rpa_clients?.rpa_name || 'RPA Umum'}
         </div>
         {!report.resolved && (
-          <button style={{ background: 'transparent', border: 'none', color: '#021a02', fontSize: '12px', fontWeight: 750, display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <button style={{ background: 'transparent', border: 'none', color: '#10B981', fontSize: '12px', fontWeight: 750, display: 'flex', alignItems: 'center', gap: '4px' }}>
             Tangani Loss <ChevronRight size={14} />
           </button>
         )}

@@ -220,7 +220,7 @@ export default function HubungiKami() {
 
                   <button 
                     type="submit"
-                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-5 rounded-2xl transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-3 group"
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-5 rounded-2xl transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-3 group"
                   >
                     Kirim via WhatsApp
                     <Send size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />

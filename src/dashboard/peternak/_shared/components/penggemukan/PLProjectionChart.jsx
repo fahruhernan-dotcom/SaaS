@@ -28,7 +28,7 @@ export function PLProjectionChart({ batches, feedLogs, operationalCosts, sales }
     return [
       { name: 'Biaya Keluar', value: Math.round(totalCost / 1_000_000), color: '#EF4444' },
       { name: 'Proj. Revenue', value: Math.round(projectedRevenue / 1_000_000), color: '#22C55E' },
-      { name: 'Est. Profit', value: Math.round(projectedProfit / 1_000_000), color: projectedProfit >= 0 ? '#021a02' : '#F59E0B' },
+      { name: 'Est. Profit', value: Math.round(projectedProfit / 1_000_000), color: projectedProfit >= 0 ? '#10B981' : '#F59E0B' },
     ]
   }, [batches, feedLogs, operationalCosts, sales])
 
@@ -49,6 +49,7 @@ export function PLProjectionChart({ batches, feedLogs, operationalCosts, sales }
           <YAxis tick={{ fontSize: 9, fill: '#4B6478', fontWeight: 'bold' }} axisLine={false} tickLine={false} unit="Jt" />
           <Tooltip
             contentStyle={{ backgroundColor: '#0C1319', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '11px' }}
+            cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
             formatter={(v) => [`Rp ${(v * 1_000_000).toLocaleString('id-ID')}`, '']}
           />
           <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={48}>

@@ -12,7 +12,7 @@ const TOP_FAQS = [
   },
   {
     q: 'Jenis peternakan apa saja yang didukung TernakOS?',
-    a: 'TernakOS mendukung: (1) Unggas — broiler mandiri dan mitra INTI-Plasma. (2) Sapi Potong — fattening (penggemukan) dan breeding. (3) Domba — fattening dan breeding. (4) Kambing — fattening, breeding, dan perah. (5) Broker & Trader — broker ayam, broker telur, agen sembako. (6) RPA — rumah potong ayam. Sapi perah sedang dalam pengembangan aktif.',
+    a: 'TernakOS mendukung: (1) Unggas (broiler mandiri dan mitra INTI-Plasma). (2) Sapi Potong (fattening/penggemukan dan breeding). (3) Domba (fattening dan breeding). (4) Kambing (fattening, breeding, dan perah). (5) Broker & Trader (broker ayam, broker telur, agen sembako). (6) RPA (rumah potong ayam). Sapi perah sedang dalam pengembangan aktif.',
     link: '/fitur',
   },
   {
@@ -32,7 +32,7 @@ const TOP_FAQS = [
   },
   {
     q: 'Apakah TernakOS bisa digunakan di HP?',
-    a: 'Ya. TernakOS adalah Progressive Web App (PWA) yang berjalan langsung di browser HP (Chrome, Safari, Firefox) tanpa perlu download dari Play Store atau App Store. Tambahkan ke home screen untuk pengalaman seperti aplikasi native. Dioptimalkan untuk layar kecil — cocok dipakai langsung di kandang.',
+    a: 'Ya. TernakOS adalah Progressive Web App (PWA) yang berjalan langsung di browser HP (Chrome, Safari, Firefox) tanpa perlu download dari Play Store atau App Store. Tambahkan ke home screen untuk pengalaman seperti aplikasi native. Dioptimalkan untuk layar kecil, cocok dipakai langsung di kandang.',
   },
   {
     q: 'Apakah broker ayam bisa mencatat hutang dan piutang di TernakOS?',
@@ -135,7 +135,7 @@ export default function PeopleAlsoAsk() {
             Pertanyaan yang Sering Ditanya
           </h2>
           <p className="text-sm text-text-muted mt-2">
-            Sapi, domba, kambing, broiler, broker — semua ada jawabannya di sini.
+            Sapi, domba, kambing, broiler, broker, semua ada jawabannya di sini.
           </p>
         </motion.div>
 
@@ -158,7 +158,7 @@ export default function PeopleAlsoAsk() {
             to="/faq"
             className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
           >
-            Lihat semua 200+ FAQ — semua vertikal ternak
+            Lihat semua 200+ FAQ dari semua vertikal ternak
             <ArrowRight size={15} />
           </Link>
         </div>

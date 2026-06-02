@@ -46,7 +46,7 @@ export default function CashFlow() {
           <div style={{ fontSize: '11px', fontWeight: 800, color: '#4B6478', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
             Estimasi Laba Bersih ({period})
           </div>
-          <div style={{ fontFamily: 'Sora', fontSize: '28px', fontWeight: 800, color: '#021a02' }}>
+          <div style={{ fontFamily: 'Sora', fontSize: '28px', fontWeight: 800, color: '#10B981' }}>
             {formatIDR(cashflow?.netCashFlow || 0)}
           </div>
           
@@ -56,7 +56,7 @@ export default function CashFlow() {
                 key={i}
                 initial={{ height: 0 }}
                 animate={{ height: `${h}%` }}
-                style={{ flex: 1, background: 'linear-gradient(180deg, #021a02 0%, rgba(2, 26, 2,0.1) 100%)', borderRadius: '4px 4px 0 0' }}
+                style={{ flex: 1, background: 'linear-gradient(180deg, #10B981 0%, rgba(16, 185, 129, 0.1) 100%)', borderRadius: '4px 4px 0 0' }}
               />
             ))}
           </div>
@@ -71,7 +71,7 @@ export default function CashFlow() {
             onClick={() => setPeriod(p)}
             style={{
               flex: 1, padding: '12px', borderRadius: '14px', fontSize: '13px', fontWeight: 700,
-              background: period === p ? '#021a02' : '#111C24',
+              background: period === p ? '#10B981' : '#111C24',
               color: period === p ? 'white' : '#94A3B8',
               border: period === p ? 'none' : '1px solid rgba(255,255,255,0.06)',
             }}
@@ -83,18 +83,18 @@ export default function CashFlow() {
 
       <main style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <Section title="Rincian Keuangan">
-          <FinanceRow label="Penjualan (Sales)" value={formatIDR(cashflow?.totalPemasukan || 0)} icon={<ArrowUpRight size={16} color="#021a02" />} />
+          <FinanceRow label="Penjualan (Sales)" value={formatIDR(cashflow?.totalPemasukan || 0)} icon={<ArrowUpRight size={16} color="#10B981" />} />
           <FinanceRow label="Pembelian (COGS)" value={formatIDR(cashflow?.totalModal || 0)} icon={<ArrowDownRight size={16} color="#F87171" />} isExpense />
           <FinanceRow label="Logistik & Ops" value={formatIDR(cashflow?.totalTransport || 0)} icon={<ArrowDownRight size={16} color="#F87171" />} isExpense />
           <FinanceRow label="Loss Lapangan" value={formatIDR(cashflow?.totalKerugian || 0)} icon={<ArrowDownRight size={16} color="#F87171" />} isExpense />
         </Section>
 
-        <div style={{ background: 'rgba(2, 26, 2,0.05)', border: '1px solid rgba(2, 26, 2,0.1)', borderRadius: '16px', padding: '16px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-          <Info size={18} color="#021a02" style={{ flexShrink: 0 }} />
+        <div style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.1)', borderRadius: '16px', padding: '16px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+          <Info size={18} color="#10B981" style={{ flexShrink: 0 }} />
           <div>
             <div style={{ fontSize: '13px', fontWeight: 700, color: '#F1F5F9', marginBottom: '4px' }}>Tips Cash Flow</div>
             <div style={{ fontSize: '12px', color: '#94A3B8', lineHeight: 1.5 }}>
-              Margin rata-rata Anda adalah <b style={{ color: '#021a02' }}>Rp 1.250/kg</b>. Pertahankan loss di bawah 1% untuk menjaga profitabilitas.
+              Margin rata-rata Anda adalah <b style={{ color: '#10B981' }}>Rp 1.250/kg</b>. Pertahankan loss di bawah 1% untuk menjaga profitabilitas.
             </div>
           </div>
         </div>
@@ -122,7 +122,7 @@ function FinanceRow({ label, value, icon, isExpense }) {
   return (
     <div style={{ padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: isExpense ? 'rgba(248,113,113,0.1)' : 'rgba(2, 26, 2,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: isExpense ? 'rgba(248,113,113,0.1)' : 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {icon}
         </div>
         <span style={{ fontSize: '13px', fontWeight: 600, color: '#94A3B8' }}>{label}</span>

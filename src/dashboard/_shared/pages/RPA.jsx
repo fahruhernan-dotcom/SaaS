@@ -24,11 +24,11 @@ export default function RPA() {
         subtitle="Kelola pembeli & tagihan" 
         rightAction={
           <button style={{
-            background: 'rgba(2, 26, 2,0.1)',
-            border: '1px solid rgba(2, 26, 2,0.2)',
+            background: 'rgba(16, 185, 129, 0.1)',
+            border: '1px solid rgba(16, 185, 129, 0.2)',
             borderRadius: '10px',
             padding: '8px 12px',
-            color: '#021a02',
+            color: '#10B981',
             fontSize: '12px',
             fontWeight: 700,
             display: 'flex',
@@ -89,10 +89,10 @@ export default function RPA() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                       <div style={{
                         width: '36px', height: '36px',
-                        background: 'rgba(2, 26, 2,0.1)',
+                        background: 'rgba(16, 185, 129, 0.1)',
                         borderRadius: '10px',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '12px', fontWeight: 800, color: '#021a02', fontFamily: 'Sora',
+                        fontSize: '12px', fontWeight: 800, color: '#10B981', fontFamily: 'Sora',
                         overflow: 'hidden'
                       }}>
                         {rpa.profile_img ? (
@@ -107,7 +107,7 @@ export default function RPA() {
                           </span>
                           <span style={{ fontSize: '10px', opacity: 0.3, color: '#4B6478' }}>•</span>
                           <span style={{ fontSize: '11px', color: '#4B6478', display: 'flex', alignItems: 'center', gap: '2px' }}>
-                            <Zap size={10} color="#021a02" /> {rpa.distance_km || 0} km
+                            <Zap size={10} color="#10B981" /> {rpa.distance_km || 0} km
                           </span>
                         </div>
                       </div>
@@ -131,7 +131,7 @@ export default function RPA() {
                     <div style={{ 
                       fontSize: '16px', 
                       fontWeight: 800, 
-                      color: rpa.total_outstanding > 0 ? '#F87171' : '#021a02',
+                      color: rpa.total_outstanding > 0 ? '#F87171' : '#10B981',
                       fontFamily: 'Sora'
                     }}>
                       {formatIDRShort(rpa.total_outstanding)}
@@ -152,7 +152,7 @@ export default function RPA() {
                       style={{
                         flex: 1,
                         padding: '10px',
-                        background: '#021a02',
+                        background: '#10B981',
                         border: 'none',
                         borderRadius: '10px',
                         color: 'white',

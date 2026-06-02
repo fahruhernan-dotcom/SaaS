@@ -438,7 +438,7 @@ export default function BottomNav() {
   // BRANDING: Theme implementation
   const isSembako = vertical === 'distributor_sembako' || vertical === 'sembako_broker'
   const isDombaFattening = isPeternakDombaFattening(profile, tenant, vertical)
-  const color = (isSembako ? '#EA580C' : (accentColor || model?.color || '#021a02'))
+  const color = (isSembako ? '#EA580C' : (accentColor || model?.color || '#10B981'))
 
   // Domba Fattening green tokens (override when speed dial is used)
   const DOMBA_GREEN = '#22C55E'

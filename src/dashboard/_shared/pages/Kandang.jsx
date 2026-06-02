@@ -20,7 +20,7 @@ export default function Kandang() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'ready': return '#021a02';
+      case 'ready': return '#10B981';
       case 'harvested': return '#94A3B8';
       case 'empty': return '#4B6478';
       default: return '#F59E0B';
@@ -52,7 +52,7 @@ export default function Kandang() {
               fontWeight: 700,
               textTransform: 'capitalize',
               whiteSpace: 'nowrap',
-              background: filter === f ? '#021a02' : '#111C24',
+              background: filter === f ? '#10B981' : '#111C24',
               color: filter === f ? 'white' : '#94A3B8',
               border: filter === f ? 'none' : '1px solid rgba(255,255,255,0.06)',
               cursor: 'pointer'
@@ -142,7 +142,7 @@ export default function Kandang() {
                 <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
                   <button 
                     onClick={() => window.open(`tel:${farm.owner_phone}`, '_self')}
-                    style={{ flex: 1, padding: '10px', background: 'rgba(2, 26, 2,0.1)', border: 'none', borderRadius: '12px', color: '#021a02', fontSize: '12px', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    style={{ flex: 1, padding: '10px', background: 'rgba(16, 185, 129, 0.1)', border: 'none', borderRadius: '12px', color: '#10B981', fontSize: '12px', fontWeight: 800, display: 'flex', alignItems: 'center', justifySelf: 'center', gap: '8px' }}
                   >
                     <Phone size={14} /> Hubungi
                   </button>
@@ -163,11 +163,11 @@ export default function Kandang() {
 }
 
 const actionBtnStyle = {
-  background: 'rgba(2, 26, 2,0.1)',
-  border: '1px solid rgba(2, 26, 2,0.2)',
+  background: 'rgba(16, 185, 129, 0.1)',
+  border: '1px solid rgba(16, 185, 129, 0.2)',
   borderRadius: '10px',
   padding: '8px 12px',
-  color: '#021a02',
+  color: '#10B981',
   fontSize: '12px',
   fontWeight: 700,
   display: 'flex', alignItems: 'center', gap: '6px'

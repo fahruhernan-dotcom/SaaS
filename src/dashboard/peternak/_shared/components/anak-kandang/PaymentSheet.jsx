@@ -8,7 +8,7 @@ import { Plus, Loader2, Trash2, X, AlertCircle } from 'lucide-react'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 
 const TYPES = [
-  { value: 'gaji',  label: '💰 Gaji',      color: '#021a02' },
+  { value: 'gaji',  label: '💰 Gaji',      color: '#10B981' },
   { value: 'bonus', label: '🎁 Bonus',      color: '#A78BFA' },
   { value: 'makan', label: '🍱 Uang Makan', color: '#F59E0B' },
   { value: 'lain',  label: '📌 Lainnya',    color: '#94A3B8' },

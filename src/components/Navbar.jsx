@@ -24,7 +24,7 @@ const DropdownItem = ({ to, icon: Icon, title, desc, onClick }) => {
       className="group/item flex items-start gap-3.5 p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all cursor-pointer text-left"
     >
       {/* Icon with Blueprint Grid */}
-      <div className="relative w-9 h-9 shrink-0 rounded-lg overflow-hidden border border-slate-200/60 dark:border-slate-800/60 flex items-center justify-center bg-slate-50/50 dark:bg-slate-900/30 group-hover/item:border-emerald-500/20 group-hover/item:bg-emerald-500/[0.01] transition-all duration-200">
+      <div className="relative w-9 h-9 shrink-0 rounded-lg overflow-hidden border border-slate-200/60 dark:border-slate-800/60 flex items-center justify-center bg-slate-50/50 dark:bg-slate-900/30 group-hover/item:border-[var(--emerald-500)]/20 group-hover/item:bg-[var(--emerald-500)]/[0.01] transition-all duration-200">
         <div 
           className="absolute inset-0 pointer-events-none opacity-40 group-hover/item:opacity-75 transition-opacity"
           style={{
@@ -32,12 +32,12 @@ const DropdownItem = ({ to, icon: Icon, title, desc, onClick }) => {
             backgroundSize: '8px 8px',
           }}
         />
-        <Icon className="w-[18px] h-[18px] text-slate-500 dark:text-slate-400 group-hover/item:text-emerald-500 transition-colors relative z-10" />
+        <Icon className="w-[18px] h-[18px] text-slate-500 dark:text-slate-400 group-hover/item:text-[var(--emerald-500)] transition-colors relative z-10" />
       </div>
       
       {/* Texts */}
       <div className="flex flex-col">
-        <span className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 group-hover/item:text-emerald-600 dark:group-hover/item:text-emerald-400 transition-colors">
+        <span className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 group-hover/item:text-[var(--text-accent-val)] transition-colors">
           {title}
         </span>
         <span className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
@@ -55,7 +55,7 @@ const QuickLink = ({ to, icon: Icon, title, onClick }) => {
       onClick={onClick}
       className="group/quick flex items-center gap-2.5 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-all text-left"
     >
-      <div className="w-7 h-7 rounded-md bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover/quick:text-emerald-500 group-hover/quick:border-emerald-500/20 transition-all">
+      <div className="w-7 h-7 rounded-md bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover/quick:text-[var(--emerald-500)] group-hover/quick:border-[var(--emerald-500)]/20 transition-all">
         <Icon className="w-[14px] h-[14px]" />
       </div>
       <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400 group-hover/quick:text-slate-800 dark:group-hover/quick:text-slate-200 transition-colors">
@@ -155,7 +155,7 @@ const Navbar = ({ authPage = false }) => {
               onClick={() => navigate('/')}
             >
               <div className="relative shrink-0">
-                <div className="absolute inset-0 rounded-[10px] bg-emerald-500/10 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                <div className="absolute inset-0 rounded-[10px] bg-[var(--emerald-500)]/10 blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                 <img
                   src="/logo.png"
                   alt="TernakOS"
@@ -164,7 +164,7 @@ const Navbar = ({ authPage = false }) => {
                 />
               </div>
               <span className="font-['Sora'] font-black text-xl text-text-primary tracking-tight leading-normal">
-                Ternak<span className="text-emerald-500">OS</span>
+                Ternak<span className="text-[var(--emerald-500)]">OS</span>
               </span>
             </motion.div>
 
@@ -248,12 +248,12 @@ const Navbar = ({ authPage = false }) => {
                           {isFitur && (
                             <ChevronDown 
                               size={12} 
-                              className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-emerald-500' : 'text-text-secondary'}`} 
+                              className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-[var(--emerald-500)]' : 'text-text-secondary'}`} 
                               style={{ position: 'relative', zIndex: 1 }}
                             />
                           )}
       
-                          {/* Underline emerald tipis saat hover atau aktif */}
+                           {/* Underline emerald tipis saat hover atau aktif */}
                           <motion.div
                             style={{
                               position: 'absolute',
@@ -262,8 +262,8 @@ const Navbar = ({ authPage = false }) => {
                               right: '20px',
                               height: '2px',
                               background: isActive 
-                                ? '#021a02' 
-                                : 'linear-gradient(90deg, transparent, #021a02, transparent)',
+                                ? 'var(--emerald-500)' 
+                                : 'linear-gradient(90deg, transparent, var(--emerald-500), transparent)',
                               borderRadius: '99px',
                               originX: 0.5,
                             }}
@@ -386,19 +386,19 @@ const Navbar = ({ authPage = false }) => {
                                     </div>
                                   </div>
 
-                                  {/* Bottom banner card */}
+                                   {/* Bottom banner card */}
                                   <div 
-                                    className="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/60 p-3.5 rounded-2xl flex flex-col gap-2 mt-4 cursor-pointer hover:border-emerald-500/20 transition-colors group/banner"
+                                    className="bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-800/60 p-3.5 rounded-2xl flex flex-col gap-2 mt-4 cursor-pointer hover:border-[var(--emerald-500)]/20 transition-colors group/banner"
                                     onClick={() => {
                                       setIsDropdownOpen(false);
                                       navigate('/register');
                                     }}
                                   >
                                     <div className="flex items-center gap-2">
-                                      <div className="w-6 h-6 rounded bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                                      <div className="w-6 h-6 rounded bg-[var(--emerald-500)]/10 flex items-center justify-center text-[var(--emerald-500)]">
                                         <PlayCircle size={14} />
                                       </div>
-                                      <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover/banner:text-emerald-500 transition-colors">
+                                      <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 group-hover/banner:text-[var(--emerald-500)] transition-colors">
                                         Coba Demo
                                       </span>
                                     </div>

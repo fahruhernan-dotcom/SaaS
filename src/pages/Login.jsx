@@ -494,7 +494,7 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
                     onClick={() => navigate('/forgot-password')}
                     style={{
                       fontSize: '12px',
-                      color: '#10B981',
+                      color: 'var(--text-accent-val)',
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
@@ -547,7 +547,7 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
                   id="rememberMe"
                   checked={rememberMe}
                   onChange={e => setRememberMe(e.target.checked)}
-                  style={{ width: 15, height: 15, accentColor: '#10B981', cursor: 'pointer', flexShrink: 0 }}
+                  style={{ width: 15, height: 15, accentColor: 'var(--emerald-500)', cursor: 'pointer', flexShrink: 0 }}
                 />
                 <label htmlFor="rememberMe" className="text-[13px] text-text-secondary cursor-pointer select-none">
                   {t('auth_remember_me', 'Ingat saya')}
@@ -583,7 +583,6 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
                   fontFamily: 'Sora',
                   fontSize: '14px',
                   fontWeight: 700,
-                  boxShadow: '0 4px 20px rgba(29, 87, 68, 0.25)',
                   cursor: isLoading || !email || !password
                     ? 'not-allowed' : 'pointer',
                   opacity: !email || !password ? 0.5 : 1,
@@ -593,7 +592,7 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
                   gap: '8px',
                   marginTop: '10px'
                 }}
-                className="bg-[#1D5744] hover:bg-[#10B981] transition-all duration-200"
+                className="bg-emerald-500 hover:bg-emerald-600 transition-all duration-200 shadow-[0_4px_20px_rgba(12,61,12,0.2)] dark:shadow-[0_4px_20px_rgba(140,184,140,0.15)]"
               >
                 {isLoading ? (
                   <><Loader2 size={16} className="animate-spin" />
@@ -613,7 +612,7 @@ function DesktopLoginView({ email, setEmail, password, setPassword, showPassword
               onClick={() => navigate('/register')}
               className="w-full h-[44px] bg-transparent border border-border-default rounded-[10px] text-text-primary font-['Sora'] text-[14px] font-semibold hover:bg-bg-2 hover:border-border-strong transition-colors"
             >
-              {t('auth_register_now', 'Daftar Sekarang — Gratis')}
+              {t('auth_register_now', 'Daftar Sekarang (Gratis)')}
             </Button>
             
             <p className="text-[12px] text-text-secondary text-center mt-8 leading-relaxed">
@@ -828,10 +827,8 @@ function MobileLoginView({ email, setEmail, password, setPassword, showPassword,
               <button
                 type="submit"
                 disabled={isLoading || !email || !password}
-                style={{
-                  boxShadow: isLoading || !email || !password ? 'none' : '0 4px 24px rgba(29, 87, 68, 0.3)',
-                }}
-                className="w-full p-[14px] bg-[#1D5744] hover:bg-[#10B981] border-none rounded-[14px] text-white text-[16px] font-bold font-sans cursor-pointer flex items-center justify-center gap-[8px] tracking-[0.01em] transition-all disabled:opacity-55 disabled:shadow-none"
+                style={{}}
+                className="w-full p-[14px] bg-emerald-500 hover:bg-emerald-600 border-none rounded-[14px] text-white text-[16px] font-bold font-sans cursor-pointer flex items-center justify-center gap-[8px] tracking-[0.01em] transition-all disabled:opacity-55 disabled:shadow-none shadow-[0_4px_24px_rgba(12,61,12,0.3)] dark:shadow-[0_4px_24px_rgba(140,184,140,0.15)]"
               >
                 {isLoading ? <><Loader2 size={16} className="animate-spin" /> {t('auth_logging_in', 'Masuk...')}</> : t('auth_login_button_mobile', 'Masuk →')}
               </button>
@@ -863,7 +860,7 @@ function MobileLoginView({ email, setEmail, password, setPassword, showPassword,
               onClick={() => navigate('/register')}
               className="w-full p-[13px] rounded-[14px] text-[15px] font-semibold cursor-pointer transition-all font-body bg-transparent border border-[var(--mobile-card-border)] text-[var(--text-muted)] hover:border-emerald-500 hover:text-emerald-500"
             >
-              Daftar Sekarang — Gratis
+              Daftar Sekarang (Gratis)
             </button>
           </div>
           <p className="ml-stagger text-[var(--text-muted)] text-center text-[12px] mt-[22px] leading-[1.6] opacity-0">
@@ -894,7 +891,7 @@ function AnimatedMobileInput({ type, placeholder, value, onChange, icon, rightIc
           -webkit-text-fill-color: var(--text-primary-val) !important;
           -webkit-box-shadow: 0 0 0px 1000px var(--mobile-input-bg) inset !important;
           transition: background-color 500000s ease-in-out 0s;
-          caret-color: #22c55e !important;
+          caret-color: var(--emerald-500) !important;
         }
         input::placeholder {
           color: #475569 !important;
@@ -908,11 +905,11 @@ function AnimatedMobileInput({ type, placeholder, value, onChange, icon, rightIc
         padding: '14px 16px',
         background: 'var(--mobile-input-bg)',
         borderRadius: 14,
-        border: focused ? '1.5px solid rgba(34, 197, 94, 0.45)' : (isHovered ? '1.5px solid var(--mobile-input-border-hover)' : '1.5px solid var(--mobile-input-border)'),
+        border: focused ? '1.5px solid var(--emerald-500)' : (isHovered ? '1.5px solid var(--mobile-input-border-hover)' : '1.5px solid var(--mobile-input-border)'),
         transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-        boxShadow: focused ? '0 12px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(34, 197, 94, 0.05)' : 'none'
+        boxShadow: focused ? '0 12px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(12, 61, 12, 0.05)' : 'none'
       }}>
-        <div style={{ color: focused ? '#22c55e' : '#475569', transition: 'color 0.3s', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, marginRight: 16, flexShrink: 0 }}>
+        <div style={{ color: focused ? 'var(--text-accent-val)' : '#475569', transition: 'color 0.3s', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, marginRight: 16, flexShrink: 0 }}>
           {icon}
         </div>
 
@@ -923,7 +920,7 @@ function AnimatedMobileInput({ type, placeholder, value, onChange, icon, rightIc
           onChange={onChange}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          className="flex-1 bg-transparent border-none text-[var(--text-primary-val)] text-[16px] outline-none font-inherit caret-[#22c55e] p-0 w-full"
+          className="flex-1 bg-transparent border-none text-[var(--text-primary-val)] text-[16px] outline-none font-inherit caret-[var(--emerald-500)] p-0 w-full"
         />
 
         {rightIcon && (
@@ -938,7 +935,7 @@ function AnimatedMobileInput({ type, placeholder, value, onChange, icon, rightIc
         position: 'absolute', bottom: 0, left: '15%',
         transform: `scaleX(${focused ? 1 : 0})`,
         width: '70%', height: 1.5,
-        background: 'linear-gradient(90deg, transparent 0%, #22c55e 50%, transparent 100%)',
+        background: 'linear-gradient(90deg, transparent 0%, var(--emerald-500) 50%, transparent 100%)',
         transition: 'transform 0.6s cubic-bezier(0.19, 1, 0.22, 1)',
         transformOrigin: 'center',
         opacity: focused ? 0.8 : 0,

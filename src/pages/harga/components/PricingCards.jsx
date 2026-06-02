@@ -150,7 +150,7 @@ export function ProCard({ data, billing, annualDiscount, isLoggedIn }) {
 
       {data.addOnNote && (
         <div className="relative z-10 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 mb-5 text-[11px] text-amber-400 leading-relaxed font-medium">
-          💡 Punya lebih dari 1 jenis ternak aktif? Tambahkan +Rp&nbsp;99.000/bln per jenis. Maks 2 add-on — lebih dari itu otomatis lebih hemat upgrade ke Business.
+          💡 Punya lebih dari 1 jenis ternak aktif? Tambahkan +Rp&nbsp;99.000/bln per jenis. Maks 2 add-on, lebih dari itu otomatis lebih hemat upgrade ke Business.
         </div>
       )}
 

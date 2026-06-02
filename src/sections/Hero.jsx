@@ -161,7 +161,7 @@ const Hero = () => {
             className="hero-subheadline text-[14px] md:text-[16px] text-text-secondary leading-relaxed max-w-[520px] mb-6 text-center mx-auto"
             style={{ opacity: 0, fontFamily: "'DM Sans', sans-serif", fontWeight: 400 }}
           >
-            Platform pencatatan mandiri & kemitraan untuk peternak ayam, sapi, domba, dan broker. FCR, HPP, mortalitas, hingga penagihan piutang — semua dalam satu dasbor.
+            Platform pencatatan mandiri & kemitraan untuk peternak ayam, sapi, domba, dan broker. FCR, HPP, mortalitas, hingga penagihan piutang, semuanya dalam satu dasbor.
           </p>
 
           {/* CTA Buttons */}
@@ -377,7 +377,7 @@ const Hero = () => {
                     {/* Header */}
                     <div className="flex items-center justify-between mb-[12px]">
                       <h2 className="text-[11px] font-bold text-text-primary">
-                        {mockupTab === 'overview' && "Dasbor Ternak Domba — CV Indo Domba Jaya"}
+                        {mockupTab === 'overview' && "Dasbor Ternak Domba (CV Indo Domba Jaya)"}
                         {mockupTab === 'batches' && "Daftar Batch Koloni Aktif"}
                         {mockupTab === 'cards' && "Pencarian Kartu Identitas Ternak (RFID)"}
                         {mockupTab === 'feed' && "Manajemen Stok & Nutrisi Pakan"}

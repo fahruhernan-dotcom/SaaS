@@ -145,26 +145,30 @@ function HppPanel({ batchId, useHppBatch }) {
         formula: 'Akumulasi Alokasi Overhead Harian per Ekor Aktif',
         components: [
           { label: 'Total Overhead Dialokasikan', text: `Rp ${fmt(totalBiayaGajiOverhead)}` },
-          { label: 'Rata-rata Denominator', text: `~${overheadActiveHeadSample} ekor` },
-          { label: 'Kontribusi HPP', text: `${totalHpp > 0 ? Math.round(totalBiayaGajiOverhead / totalHpp * 100) : 0}%` }
+          { label: 'Rata-rata Populasi (Denominator)', text: `~${overheadActiveHeadSample} ekor` },
+          { label: 'Kontribusi ke HPP Total', text: `${totalHpp > 0 ? Math.round(totalBiayaGajiOverhead / totalHpp * 100) : 0}%` },
+          { label: 'Overhead Rata-rata / Ekor', text: aktifCount > 0 ? `Rp ${fmt(Math.round(totalBiayaGajiOverhead / aktifCount))}` : '—' },
         ],
-        explanation: 'Biaya gaji, sewa, listrik, dll. yang dibagikan secara adil setiap harinya ke ternak yang aktif. Jumlah populasi yang sedikit membuat overhead per ekor lebih tinggi.'
+        explanation: '__OVERHEAD_EXPANDED__',
       },
       biaya_ops: {
         title: 'Biaya Operasional',
         formula: 'Total Biaya Operasional Lain di Luar Pakan & Overhead',
         components: [
           { label: 'Total Biaya Ops', text: `Rp ${fmt(totalBiayaOpsLain)}` },
-          { label: 'Kontribusi HPP', text: `${totalHpp > 0 ? Math.round(totalBiayaOpsLain / totalHpp * 100) : 0}%` }
+          { label: 'Kontribusi ke HPP Total', text: `${totalHpp > 0 ? Math.round(totalBiayaOpsLain / totalHpp * 100) : 0}%` },
+          { label: 'Rata-rata Ops / Ekor', text: produksiCount > 0 ? `Rp ${fmt(Math.round(totalBiayaOpsLain / produksiCount))}` : '—' },
+          { label: 'Ops / Ekor / Hari', text: animalDaysBatch > 0 ? `Rp ${fmt(Math.round(totalBiayaOpsLain / animalDaysBatch))}` : '—' },
         ],
-        explanation: 'Biaya logistik, vitamin umum, transportasi, perawatan kandang, dll.'
+        explanation: '__BIAYA_OPS_EXPANDED__'
       },
       kesehatan: {
         title: 'Kesehatan',
         formula: 'Total Pengeluaran Obat, Vaksin & Medis',
         components: [
           { label: 'Total Biaya Kesehatan', text: `Rp ${fmt(totalBiayaKesehatan)}` },
-          { label: 'Kontribusi HPP', text: `${totalHpp > 0 ? Math.round(totalBiayaKesehatan / totalHpp * 100) : 0}%` }
+          { label: 'Kontribusi ke HPP Total', text: `${totalHpp > 0 ? Math.round(totalBiayaKesehatan / totalHpp * 100) : 0}%` },
+          { label: 'Rata-rata Kesehatan / Ekor', text: produksiCount > 0 ? `Rp ${fmt(Math.round(totalBiayaKesehatan / produksiCount))}` : '—' },
         ],
         explanation: 'Biaya obat-obatan khusus, vitamin medis, vaksinasi, desinfektan, atau jasa medis dokter hewan.'
       },
@@ -253,8 +257,261 @@ function HppPanel({ batchId, useHppBatch }) {
           </div>
         )}
 
-        <div className="text-[10px] text-[#4B6478]/90 leading-relaxed border-t border-white/[0.04] pt-2">
-          {d.explanation}
+        <div className="border-t border-white/[0.04] pt-2.5 space-y-3">
+          {d.explanation === '__OVERHEAD_EXPANDED__' ? (
+            <div className="space-y-3">
+              {/* What is overhead */}
+              <p className="text-[10px] text-[#94A3B8] leading-relaxed">
+                <span className="text-slate-300 font-bold">Apa itu overhead?</span> Overhead adalah biaya yang <em>tidak langsung</em> terkait satu ekor ternak, tapi wajib dikeluarkan agar kandang bisa beroperasi setiap harinya.
+              </p>
+
+              {/* Cost table */}
+              <div className="bg-black/20 rounded-xl border border-white/[0.04] overflow-hidden">
+                <div className="grid grid-cols-2 gap-0 divide-y divide-white/[0.04]">
+                  {[
+                    ['💰 Gaji & Upah', 'Gaji anak kandang, manajer, satpam'],
+                    ['🏠 Sewa', 'Sewa lahan, kandang, gudang pakan'],
+                    ['⚡ Listrik & Air', 'Pompa, lampu, kipas, tagihan PDAM'],
+                    ['🔧 Perawatan', 'Servis alat, perbaikan kandang'],
+                    ['📋 Administrasi', 'Software, ATK, biaya perizinan'],
+                    ['🚗 Transportasi Umum', 'Ongkir pakan rutin, logistik harian'],
+                  ].map(([icon, desc]) => (
+                    <div key={icon} className="flex items-start gap-2 px-2.5 py-2">
+                      <span className="text-[11px] shrink-0">{icon.split(' ')[0]}</span>
+                      <div>
+                        <p className="text-[9px] font-bold text-slate-300">{icon.split(' ').slice(1).join(' ')}</p>
+                        <p className="text-[9px] text-[#4B6478] leading-relaxed">{desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Formula trace with real numbers */}
+              {(() => {
+                // Daily overhead budget = total overhead / number of days
+                // days = animalDaysBatch / overheadActiveHeadSample (avg pop)
+                const avgPop = overheadActiveHeadSample || aktifCount || 1
+                const estimatedDays = animalDaysBatch > 0 && avgPop > 0
+                  ? Math.round(animalDaysBatch / avgPop)
+                  : 0
+                const dailyOverheadBudget = estimatedDays > 0
+                  ? Math.round(totalBiayaGajiOverhead / estimatedDays)
+                  : 0
+                const overheadPerEkorPerDay = avgPop > 0
+                  ? Math.round(dailyOverheadBudget / avgPop)
+                  : 0
+
+                // Skenario simulasi: budget harian tetap, ubah populasi
+                const sim5  = dailyOverheadBudget > 0 ? Math.round(dailyOverheadBudget / 5) : 0
+                const sim20 = dailyOverheadBudget > 0 ? Math.round(dailyOverheadBudget / 20) : 0
+                const simCurrent = overheadPerEkorPerDay
+
+                return (
+                  <>
+                    {/* How allocation works */}
+                    <div className="bg-pink-500/5 border border-pink-500/15 rounded-xl p-2.5 space-y-2">
+                      <p className="text-[9px] font-black text-pink-400/80 uppercase tracking-widest">Cara Alokasi Harian — Data Aktual Batch Ini</p>
+                      <p className="text-[10px] text-[#94A3B8] leading-relaxed">
+                        Setiap hari, total biaya overhead harian dibagi ke semua ekor <span className="text-pink-300 font-bold">yang aktif hari itu</span>. Ternak yang terjual atau mati tidak lagi menanggung biaya.
+                      </p>
+
+                      {/* Formula dengan angka nyata */}
+                      <div className="space-y-1.5">
+                        <div className="bg-black/30 rounded-lg px-2.5 py-2 border border-white/[0.04] space-y-1">
+                          <p className="text-[9px] text-[#4B6478] font-bold uppercase tracking-wider">Total overhead batch ini</p>
+                          <div className="font-mono text-[9px] text-amber-300 leading-relaxed">
+                            <span className="text-slate-400">Rp {fmt(totalBiayaGajiOverhead)}</span>
+                            <span className="text-[#4B6478]"> (akumulasi selama batch)</span>
+                          </div>
+                        </div>
+                        {estimatedDays > 0 && (
+                          <div className="bg-black/30 rounded-lg px-2.5 py-2 border border-white/[0.04] space-y-1">
+                            <p className="text-[9px] text-[#4B6478] font-bold uppercase tracking-wider">Estimasi durasi aktif batch</p>
+                            <div className="font-mono text-[9px] text-amber-300">
+                              <span className="text-slate-400">{animalDaysBatch.toLocaleString('id-ID')} ekor-hari</span>
+                              <span className="text-[#4B6478]"> ÷ ~{avgPop} ekor = </span>
+                              <span className="text-pink-300 font-bold">~{estimatedDays} hari</span>
+                            </div>
+                          </div>
+                        )}
+                        {dailyOverheadBudget > 0 && (
+                          <div className="bg-black/30 rounded-lg px-2.5 py-2 border border-white/[0.04] space-y-1">
+                            <p className="text-[9px] text-[#4B6478] font-bold uppercase tracking-wider">Budget overhead per hari</p>
+                            <div className="font-mono text-[9px] text-amber-300">
+                              <span className="text-slate-400">Rp {fmt(totalBiayaGajiOverhead)}</span>
+                              <span className="text-[#4B6478]"> ÷ {estimatedDays} hari = </span>
+                              <span className="text-pink-300 font-bold">Rp {fmt(dailyOverheadBudget)} / hari</span>
+                            </div>
+                          </div>
+                        )}
+                        {overheadPerEkorPerDay > 0 && (
+                          <div className="bg-pink-500/10 rounded-lg px-2.5 py-2 border border-pink-500/20 space-y-1">
+                            <p className="text-[9px] text-[#4B6478] font-bold uppercase tracking-wider">Overhead per ekor per hari (rata-rata batch ini)</p>
+                            <div className="font-mono text-[9px] text-amber-300">
+                              <span className="text-slate-400">Rp {fmt(dailyOverheadBudget)}</span>
+                              <span className="text-[#4B6478]"> ÷ ~{avgPop} ekor = </span>
+                              <span className="text-pink-200 font-black text-[11px]">Rp {fmt(overheadPerEkorPerDay)} / ekor / hari</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Fixed cost simulation with real numbers */}
+                    {dailyOverheadBudget > 0 && (
+                      <div className="bg-amber-500/5 border border-amber-500/15 rounded-xl p-2.5 space-y-2">
+                        <p className="text-[9px] font-black text-amber-400/80 uppercase tracking-widest">⚠️ Simulasi: Budget Harian Sama, Populasi Berbeda</p>
+                        <p className="text-[10px] text-[#94A3B8] leading-relaxed">
+                          Biaya overhead bersifat <span className="text-amber-300 font-bold">tetap (fixed cost)</span> — tidak berkurang meski populasi sedikit.
+                          Dengan budget harian <span className="text-amber-300 font-bold">Rp {fmt(dailyOverheadBudget)}/hari</span>:
+                        </p>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg px-2 py-2 text-center">
+                            <p className="font-black text-rose-400 text-[11px]">5 ekor</p>
+                            <p className="font-black text-rose-300 text-[10px] mt-0.5">Rp {fmt(sim5)}</p>
+                            <p className="text-[#4B6478] text-[8px] mt-0.5">/ ekor / hari</p>
+                          </div>
+                          <div className={`border rounded-lg px-2 py-2 text-center ${simCurrent > 0 ? 'bg-pink-500/10 border-pink-500/30' : 'bg-white/[0.04] border-white/[0.06]'}`}>
+                            <p className="font-black text-pink-300 text-[11px]">~{avgPop} ekor</p>
+                            <p className="font-black text-white text-[10px] mt-0.5">Rp {fmt(simCurrent)}</p>
+                            <p className="text-pink-400/70 text-[8px] mt-0.5">aktual batch ini</p>
+                          </div>
+                          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-2 py-2 text-center">
+                            <p className="font-black text-emerald-400 text-[11px]">20 ekor</p>
+                            <p className="font-black text-emerald-300 text-[10px] mt-0.5">Rp {fmt(sim20)}</p>
+                            <p className="text-[#4B6478] text-[8px] mt-0.5">/ ekor / hari</p>
+                          </div>
+                        </div>
+                        {sim5 > 0 && sim20 > 0 && (
+                          <p className="text-[9px] text-[#4B6478] leading-relaxed">
+                            → Jika populasi naik dari {avgPop} ke 20 ekor, overhead per ekor turun dari <span className="text-amber-300 font-bold">Rp {fmt(simCurrent)}</span> menjadi <span className="text-emerald-400 font-bold">Rp {fmt(sim20)}</span>/hari.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
+
+              {/* Practical tip */}
+              <div className="flex items-start gap-2 bg-white/[0.02] rounded-xl p-2.5 border border-white/[0.04]">
+                <span className="text-sm shrink-0">💡</span>
+                <p className="text-[10px] text-[#94A3B8] leading-relaxed">
+                  <span className="text-slate-300 font-bold">Tips Peternak:</span> Memperpendek masa penggemukan dan menjaga populasi kandang tetap penuh adalah cara efektif menurunkan overhead per ekor — langsung menurunkan HPP dan meningkatkan margin.
+                </p>
+              </div>
+            </div>
+          ) : d.explanation === '__BIAYA_OPS_EXPANDED__' ? (
+            <div className="space-y-3">
+              {/* Disambiguation callout — farmer-friendly */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-pink-500/8 border border-pink-500/20 rounded-xl p-2.5">
+                  <p className="text-[9px] font-black text-pink-400 uppercase tracking-wider mb-1">🏠 Overhead</p>
+                  <p className="text-[9px] text-[#94A3B8] leading-relaxed">Gaji, sewa, listrik — <span className="text-pink-300 font-bold">harus bayar walau kandang kosong</span></p>
+                </div>
+                <div className="bg-violet-500/8 border border-violet-500/20 rounded-xl p-2.5">
+                  <p className="text-[9px] font-black text-violet-400 uppercase tracking-wider mb-1">🛒 Biaya Ops</p>
+                  <p className="text-[9px] text-[#94A3B8] leading-relaxed">Vitamin, transport, alat — <span className="text-violet-300 font-bold">keluar karena ada ternak</span></p>
+                </div>
+              </div>
+              <p className="text-[9px] text-[#4B6478] leading-relaxed px-0.5">
+                💬 <span className="text-slate-400 font-bold">Kenapa angkanya beda?</span> Overhead dicatat dari menu gaji/overhead secara rutin. Biaya ops diinput manual saat ada pengeluaran di log harian.
+              </p>
+              <p className="text-[10px] text-[#94A3B8] leading-relaxed">
+                <span className="text-slate-300 font-bold">Apa itu Biaya Operasional?</span> Biaya ops adalah pengeluaran nyata yang terjadi selama pemeliharaan — bukan pakan, bukan gaji rutin — tapi tetap memengaruhi HPP.
+              </p>
+
+              {/* Cost categories */}
+              <div className="bg-black/20 rounded-xl border border-white/[0.04] overflow-hidden">
+                <div className="grid grid-cols-2 gap-0 divide-y divide-white/[0.04]">
+                  {[
+                    ['🚚 Logistik', 'Ongkos angkut ternak, biaya beli/jual'],
+                    ['💊 Vitamin Umum', 'Suplemen, vitamin B-kompleks, probiotik'],
+                    ['🔨 Perawatan Kandang', 'Cat, paku, semen, perbaikan atap/lantai'],
+                    ['🧴 Kebersihan', 'Desinfektan rutin, sabun, alat kebersihan'],
+                    ['🌡️ Alat & Perlengkapan', 'Timbangan, ember, selang, tempat minum/pakan'],
+                    ['📦 Kemasan & Lain-lain', 'Plastik, tali, karung, pengeluaran tak terduga'],
+                  ].map(([icon, desc]) => (
+                    <div key={icon} className="flex items-start gap-2 px-2.5 py-2">
+                      <span className="text-[11px] shrink-0">{icon.split(' ')[0]}</span>
+                      <div>
+                        <p className="text-[9px] font-bold text-slate-300">{icon.split(' ').slice(1).join(' ')}</p>
+                        <p className="text-[9px] text-[#4B6478] leading-relaxed">{desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Formula trace with real numbers */}
+              {(() => {
+                const opsPerEkor = produksiCount > 0 ? Math.round(totalBiayaOpsLain / produksiCount) : 0
+                const opsPerEkorPerHari = animalDaysBatch > 0 ? Math.round(totalBiayaOpsLain / animalDaysBatch) : 0
+                const avgPop = overheadActiveHeadSample || aktifCount || 1
+                const estimatedDays = animalDaysBatch > 0 && avgPop > 0 ? Math.round(animalDaysBatch / avgPop) : 0
+                return (
+                  <div className="bg-violet-500/5 border border-violet-500/15 rounded-xl p-2.5 space-y-2">
+                    <p className="text-[9px] font-black text-violet-400/80 uppercase tracking-widest">Rincian Angka — Data Aktual Batch Ini</p>
+                    <div className="space-y-1.5">
+                      <div className="bg-black/30 rounded-lg px-2.5 py-2 border border-white/[0.04] space-y-1">
+                        <p className="text-[9px] text-[#4B6478] font-bold uppercase tracking-wider">Total biaya ops batch ini</p>
+                        <div className="font-mono text-[9px] text-amber-300">
+                          <span className="text-slate-400">Rp {fmt(totalBiayaOpsLain)}</span>
+                          <span className="text-[#4B6478]"> (akumulasi selama batch)</span>
+                        </div>
+                      </div>
+                      {produksiCount > 0 && (
+                        <div className="bg-black/30 rounded-lg px-2.5 py-2 border border-white/[0.04] space-y-1">
+                          <p className="text-[9px] text-[#4B6478] font-bold uppercase tracking-wider">Rata-rata per ekor (total produksi)</p>
+                          <div className="font-mono text-[9px] text-amber-300">
+                            <span className="text-slate-400">Rp {fmt(totalBiayaOpsLain)}</span>
+                            <span className="text-[#4B6478]"> ÷ {produksiCount} ekor = </span>
+                            <span className="text-violet-300 font-bold">Rp {fmt(opsPerEkor)} / ekor</span>
+                          </div>
+                        </div>
+                      )}
+                      {opsPerEkorPerHari > 0 && estimatedDays > 0 && (
+                        <div className="bg-violet-500/10 rounded-lg px-2.5 py-2 border border-violet-500/20 space-y-1">
+                          <p className="text-[9px] text-[#4B6478] font-bold uppercase tracking-wider">Biaya ops per ekor per hari (rata-rata)</p>
+                          <div className="font-mono text-[9px] text-amber-300">
+                            <span className="text-slate-400">Rp {fmt(totalBiayaOpsLain)}</span>
+                            <span className="text-[#4B6478]"> ÷ {animalDaysBatch.toLocaleString('id-ID')} ekor-hari = </span>
+                            <span className="text-violet-200 font-black text-[11px]">Rp {fmt(opsPerEkorPerHari)} / ekor / hari</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {/* Bedanya dengan overhead */}
+              <div className="bg-white/[0.02] rounded-xl p-2.5 border border-white/[0.04] space-y-1.5">
+                <p className="text-[9px] font-black text-slate-300 uppercase tracking-wider">Bedanya dengan Overhead</p>
+                <div className="grid grid-cols-2 gap-2 text-[9px]">
+                  <div className="bg-pink-500/5 border border-pink-500/15 rounded-lg p-2">
+                    <p className="font-black text-pink-400 mb-0.5">Overhead</p>
+                    <p className="text-[#4B6478] leading-relaxed">Gaji, sewa, listrik — rutin setiap bulan bahkan tanpa ada ternak</p>
+                  </div>
+                  <div className="bg-violet-500/5 border border-violet-500/15 rounded-lg p-2">
+                    <p className="font-black text-violet-400 mb-0.5">Biaya Ops</p>
+                    <p className="text-[#4B6478] leading-relaxed">Pengeluaran aktif terkait pemeliharaan — terjadi karena ada ternak</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tip */}
+              <div className="flex items-start gap-2 bg-white/[0.02] rounded-xl p-2.5 border border-white/[0.04]">
+                <span className="text-sm shrink-0">💡</span>
+                <p className="text-[10px] text-[#94A3B8] leading-relaxed">
+                  <span className="text-slate-300 font-bold">Tips:</span> Catat setiap pengeluaran ops di menu log harian. Angka yang akurat membantu menghitung HPP yang benar dan menentukan harga jual yang tepat.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-[10px] text-[#4B6478]/90 leading-relaxed">{d.explanation}</p>
+          )}
         </div>
       </div>
     )
@@ -395,7 +652,14 @@ function HppPanel({ batchId, useHppBatch }) {
                             {isActive ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
                           </div>
                         </div>
-                        <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest leading-none mb-1">{p.label}</p>
+                        <p className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest leading-none mb-0.5">{p.label}</p>
+                        {/* One-liner disambiguation hint for Overhead & Biaya Ops */}
+                        {p.label === 'Overhead Periodik Harian' && (
+                          <p className="text-[8px] text-pink-400/60 leading-tight mb-1">Rutin, walau kandang kosong</p>
+                        )}
+                        {p.label === 'Biaya Ops' && (
+                          <p className="text-[8px] text-violet-400/60 leading-tight mb-1">Keluar karena ada ternak</p>
+                        )}
                         <p className="text-xs font-black text-white leading-none">Rp {fmt(p.value)}</p>
                         <p className="text-[9px] text-[#4B6478] mt-1">
                           {totalHpp > 0 ? Math.round((p.value / totalHpp) * 100) : 0}%

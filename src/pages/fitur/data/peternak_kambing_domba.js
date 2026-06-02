@@ -16,12 +16,12 @@ export const groups = [
   {
     Icon: Package,
     title: 'Batch Penggemukan: ADG, FCR & BEP',
-    desc: 'Catat masuk, pantau performa, tutup batch saat panen — tanpa kertas.',
+    desc: 'Catat masuk, pantau performa, dan tutup batch saat panen tanpa kertas.',
     features: [
       'Buat batch: tanggal masuk, jumlah ekor, bobot rata-rata',
       'Kartu ternak individual dengan ADG otomatis per ekor',
       'FCR & R/C ratio per batch dihitung realtime',
-      'BEP otomatis — tahu kapan balik modal',
+      'BEP otomatis untuk mengetahui kapan balik modal',
       'Target hari dan target bobot panen per batch',
       'Catat penjualan per ekor atau massal saat batch tutup',
     ],
@@ -29,7 +29,7 @@ export const groups = [
   {
     Icon: Home,
     title: 'Denah Kandang Visual',
-    desc: 'Lihat posisi ternak di kandang — performa batch terbaca sekilas.',
+    desc: 'Lihat posisi ternak di kandang, performa batch terbaca sekilas.',
     features: [
       'Visualisasi layout kandang interaktif',
       'Warna per ternak berdasarkan tier ADG (hijau/kuning/merah)',
@@ -69,7 +69,7 @@ export const groups = [
   {
     Icon: BarChart2,
     title: 'Laporan & Pakan',
-    desc: 'Laba-rugi penggemukan & breeding otomatis — stok pakan terpantau sebelum habis.',
+    desc: 'Laba-rugi penggemukan & breeding otomatis, stok pakan terpantau sebelum habis.',
     features: [
       'Laporan batch closure: HPP/ekor, laba-rugi, penjualan (Penggemukan)',
       'Laporan farm breeding dengan data reproduksi',
@@ -83,7 +83,7 @@ export const groups = [
 export const hero = {
   eyebrow: 'Solusi Peternak Kambing & Domba',
   headline: 'Kelola Batch Penggemukan, Breeding, dan Produksi Susu Perah dalam Satu Platform.',
-  sub: 'Dari koloni penggemukan massal hingga tracking reproduksi breeding dan pencatatan susu harian — kambing, domba, dan kambing perah didukung dalam satu platform digital tanpa kertas.',
+  sub: 'Dari koloni penggemukan massal hingga tracking reproduksi breeding dan pencatatan susu harian, kambing, domba, dan kambing perah didukung dalam satu platform digital tanpa kertas.',
   cta: 'Mulai Kelola Kandang Kambing Domba',
 }
 
@@ -98,7 +98,7 @@ export const beforeAfter = [
 export const faq = [
   {
     q: 'Apa perbedaan modul Penggemukan dan Breeding di TernakOS?',
-    a: 'Penggemukan (Fattening) menggunakan sistem batch koloni — kamu input populasi massal per kandang, tracking ADG, FCR, BEP, dan tutup batch saat panen. Breeding menggunakan tracking individu — setiap ternak punya kartu dengan silsilah, siklus reproduksi, dan rekam medik sendiri.',
+    a: 'Penggemukan (Fattening) menggunakan sistem batch koloni, kamu input populasi massal per kandang, tracking ADG, FCR, BEP, dan tutup batch saat panen. Breeding menggunakan tracking individu, di mana setiap ternak punya kartu dengan silsilah, siklus reproduksi, dan rekam medik sendiri.',
   },
   {
     q: 'Apakah kambing dan domba bisa dikelola dalam satu akun?',
@@ -110,7 +110,7 @@ export const faq = [
   },
   {
     q: 'Bagaimana TernakOS membantu menghitung keuntungan per batch penggemukan?',
-    a: 'TernakOS merangkum semua biaya per batch: harga beli ternak masuk, biaya pakan, biaya operasional (listrik, air), biaya kesehatan — lalu dikurangi pendapatan penjualan. HPP per ekor, R/C ratio, BEP, dan laba bersih per batch langsung tersedia.',
+    a: 'TernakOS merangkum semua biaya per batch: harga beli ternak masuk, biaya pakan, biaya operasional (listrik, air), biaya kesehatan, lalu dikurangi pendapatan penjualan. HPP per ekor, R/C ratio, BEP, dan laba bersih per batch langsung tersedia.',
   },
   {
     q: 'Bagaimana sistem tugas harian untuk anak kandang bekerja?',
@@ -118,6 +118,6 @@ export const faq = [
   },
   {
     q: 'Apakah mendukung tracking IB (Inseminasi Buatan) untuk kambing?',
-    a: 'Ya. Modul Breeding mendukung tracking IB maupun kawin alam — termasuk inseminator, tanggal, status kehamilan, dan pencatatan kelahiran cempe. Conception rate dan calving interval dihitung otomatis dari data yang diinput.',
+    a: 'Ya. Modul Breeding mendukung tracking IB maupun kawin alam, termasuk inseminator, tanggal, status kehamilan, dan pencatatan kelahiran cempe. Conception rate dan calving interval dihitung otomatis dari data yang diinput.',
   },
 ]
