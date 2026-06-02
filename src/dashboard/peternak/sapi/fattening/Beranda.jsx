@@ -19,7 +19,7 @@ const SAPI_CONFIG = {
   mortalityThreshold: 2,
   mortalityWarn: 1,
   animalEmoji: '🐄',
-  chartColors: ['#F59E0B', '#D97706', '#FCD34D', '#FBBF24', '#B45309', '#021a02', '#021a02', '#60A5FA', '#A78BFA', '#F472B6'],
+  chartColors: ['#F59E0B', '#D97706', '#FCD34D', '#FBBF24', '#B45309', '#FB923C', '#F97316', '#60A5FA', '#A78BFA', '#F472B6'],
   BASE: '/peternak/peternak_sapi_penggemukan',
   calcHariDiFarm: calcSapiHariDiFarm,
   calcMortalitas: calcSapiMortalitas,

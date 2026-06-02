@@ -33,10 +33,10 @@ export function PLProjectionChart({ batches, feedLogs, operationalCosts, sales }
   }, [batches, feedLogs, operationalCosts, sales])
 
   if (data.length === 0) return (
-    <div className="h-[180px] flex flex-col items-center justify-center text-center border-2 border-dashed border-white/5 rounded-2xl">
+    <div className="h-[180px] flex flex-col items-center justify-center text-center bg-white/[0.01] border border-white/[0.02] rounded-2xl">
       <Wallet size={24} className="text-white/10 mb-2" />
-      <p className="text-xs font-bold text-white/30">Belum ada data keuangan</p>
-      <p className="text-[10px] text-[#4B6478] mt-1">Catat pakan & penjualan untuk proyeksi</p>
+      <p className="text-xs font-bold text-white/30">Belum ada data laba-rugi</p>
+      <p className="text-[10px] text-[#4B6478] mt-1">Catat pakan, biaya, dan penjualan agar estimasi profit muncul.</p>
     </div>
   )
 

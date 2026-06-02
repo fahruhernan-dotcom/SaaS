@@ -33,7 +33,7 @@ export function BatchCard({ batch, activeCount, computedAdg, config, onClick }) 
       className={`group bg-white/[0.03] hover:bg-white/[0.05] border rounded-3xl p-5 transition-all duration-300 ${
         isCritical ? 'border-red-500/20 hover:border-red-500/30' :
         isNearHarvest ? 'border-amber-500/20 hover:border-amber-500/30' :
-        'border-white/[0.06] hover:border-white/[0.12]'
+        'border-white/[0.03] hover:border-white/[0.08]'
       }`}
     >
       <div className="flex flex-col lg:flex-row gap-5">
@@ -71,7 +71,7 @@ export function BatchCard({ batch, activeCount, computedAdg, config, onClick }) 
             </div>
 
             {/* Time Progress */}
-            <div className="mb-5 bg-white/[0.02] border border-white/[0.04] p-3.5 rounded-2xl">
+            <div className="mb-5 bg-white/[0.02] border border-white/[0.02] p-3.5 rounded-2xl">
               <div className="flex justify-between text-[10px] font-bold uppercase tracking-wide mb-2">
                 <span className="text-[#4B6478]">Hari ke-<span className="text-white">{hari}</span></span>
                 <span className={sisaColor}>{isOverdue ? `${hari - targetDays} Hari Overdue` : `Sisa ${sisaHari} Hari`}</span>
@@ -95,13 +95,13 @@ export function BatchCard({ batch, activeCount, computedAdg, config, onClick }) 
 
           {/* KPI Row */}
           <div className="grid grid-cols-3 gap-2">
-            <div className="bg-white/[0.02] border border-white/[0.04] rounded-2xl p-2.5 text-center">
+            <div className="bg-white/[0.02] border border-white/[0.02] rounded-2xl p-2.5 text-center">
               <p className={`text-[13px] font-black leading-none mb-1 ${mortalitasPct > config.mortalityThreshold ? 'text-red-400' : mortalitasPct > 0 ? 'text-amber-400' : 'text-green-400'}`}>
                 {mortalitasPct}%
               </p>
               <p className="text-[8px] text-[#4B6478] font-black uppercase tracking-widest">Mortalitas</p>
             </div>
-            <div className="bg-white/[0.02] border border-white/[0.04] rounded-2xl p-2.5 text-center relative">
+            <div className="bg-white/[0.02] border border-white/[0.02] rounded-2xl p-2.5 text-center relative">
               <p className={`text-[13px] font-black leading-none mb-1 ${adgColor}`}>
                 {adgDisplay}
               </p>
@@ -112,7 +112,7 @@ export function BatchCard({ batch, activeCount, computedAdg, config, onClick }) 
             </div>
             <button
               onClick={onClick}
-              className="bg-green-500/[0.06] border border-green-500/20 hover:bg-green-500/[0.12] rounded-2xl p-2.5 text-center flex flex-col items-center justify-center transition-all active:scale-95 group/btn"
+              className="bg-green-500/[0.04] border border-green-500/10 hover:bg-green-500/[0.08] hover:border-green-500/20 rounded-2xl p-2.5 text-center flex flex-col items-center justify-center transition-all active:scale-95 group/btn"
             >
               <ArrowUpRight size={14} className="text-green-400 group-hover/btn:scale-110 transition-transform mb-0.5" />
               <p className="text-[8px] text-green-400/70 font-black uppercase tracking-widest">Detail</p>

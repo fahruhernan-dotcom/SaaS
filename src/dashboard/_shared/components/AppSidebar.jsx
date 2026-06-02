@@ -202,6 +202,7 @@ export default function AppSidebar({ open, onClose }) {
   const isDombaBreeding    = vertical === 'peternak_domba_breeding'
   const isKambingPenggemukan = vertical === 'peternak_kambing_penggemukan'
   const isKambingBreeding    = vertical === 'peternak_kambing_breeding'
+  const isFatteningPremium = isDombaPenggemukan || isKambingPenggemukan
   const isSapiPenggemukan    = vertical === 'peternak_sapi_penggemukan'
   const isSapiBreeding       = vertical === 'peternak_sapi_breeding'
   const isRPA      = vertical === 'rumah_potong_rpa' || model?.category === 'rumah_potong'
@@ -213,7 +214,7 @@ export default function AppSidebar({ open, onClose }) {
   const brokerBase = getBrokerBasePath(tenant)
   const peternakBase = getXBasePath(tenant, profile)
   
-  const color = accentColor || (isSembako ? '#EA580C' : isEgg ? '#7C3AED' : isRPA ? '#F59E0B' : isDombaPenggemukan ? '#10B981' : '#021a02')
+  const color = accentColor || (isSembako ? '#EA580C' : isEgg ? '#7C3AED' : isRPA ? '#F59E0B' : isFatteningPremium ? '#10B981' : '#021a02')
 
   const getBerandaPath = (v, t = tenant) => {
     const bBase = getBrokerBasePath(t)
@@ -761,9 +762,7 @@ export default function AppSidebar({ open, onClose }) {
                 />
               </button>
             ) : (
-              <SidebarGroupLabel className={`text-[10px] font-bold tracking-[0.15em] text-slate-400 px-2 mb-1 ${
-                isDombaPenggemukan ? 'mt-4 first:mt-0 mb-2 text-slate-400 tracking-[0.2em]' : ''
-              }`}>
+              <SidebarGroupLabel className="text-[10px] font-bold tracking-[0.15em] text-slate-400 px-2 mb-1">
                 {group.label}
               </SidebarGroupLabel>
             )}
@@ -781,20 +780,12 @@ export default function AppSidebar({ open, onClose }) {
                     ? `${item.title} — Upgrade ke ${item.planRequired === 'business' ? 'Business' : 'Pro'}`
                     : `${item.title} (Segera Hadir)`
                   return (
-                    <SidebarMenuItem key={item.title} className={isDombaPenggemukan ? "relative flex items-center w-full" : ""}>
-                      {isDombaPenggemukan && isActive && !isLocked && (
-                        <div 
-                          className="absolute left-[-2px] top-1/2 -translate-y-1/2 w-[3px] h-[20px] rounded-r-md z-20" 
-                          style={{ backgroundColor: color }}
-                        />
-                      )}
+                    <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
                         asChild={!isLocked}
                         isActive={isActive}
                         tooltip={isLocked ? lockTooltip : item.title}
                         className={`rounded-xl mb-0.5 transition-all duration-200 ${
-                          isDombaPenggemukan ? 'h-[44px] py-2.5 px-3.5' : ''
-                        } ${
                           isLocked
                             ? 'opacity-50 cursor-not-allowed'
                             : isActive
@@ -804,8 +795,7 @@ export default function AppSidebar({ open, onClose }) {
                         style={isActive && !isLocked ? { 
                           background: `${color}18`, 
                           border: `1px solid ${color}33`, 
-                          color: color,
-                          boxShadow: isDombaPenggemukan ? `0 4px 12px ${color}0D` : undefined
+                          color: color
                         } : {}}
                       >
                         {isLocked ? (
@@ -1004,76 +994,50 @@ export default function AppSidebar({ open, onClose }) {
 
         {/* ── LAINNYA ── */}
         <SidebarGroup className="mt-2">
-          <SidebarGroupLabel className={`text-[10px] font-bold tracking-[0.15em] text-slate-400 px-2 mb-1 ${
-            isDombaPenggemukan ? 'mt-4 first:mt-0 mb-2 text-slate-400 tracking-[0.2em]' : ''
-          }`}>
+          <SidebarGroupLabel className="text-[10px] font-bold tracking-[0.15em] text-slate-400 px-2 mb-1">
             LAINNYA
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {(isPoultry || isPeternak) && (
-                <SidebarMenuItem className={isDombaPenggemukan ? "relative flex items-center w-full" : ""}>
-                  {isDombaPenggemukan && location.pathname === '/dashboard/harga-pasar' && (
-                    <div 
-                      className="absolute left-[-2px] top-1/2 -translate-y-1/2 w-[3px] h-[20px] rounded-r-md z-20" 
-                      style={{ backgroundColor: color }}
-                    />
-                  )}
+                <SidebarMenuItem>
                   <SidebarMenuButton 
                     asChild 
                     isActive={location.pathname === '/dashboard/harga-pasar'} 
-                    className={`rounded-xl mb-0.5 ${
-                      isDombaPenggemukan ? 'h-[44px] py-2.5 px-3.5' : 'hover:bg-white/[0.03]'
-                    }`}
-                    style={isDombaPenggemukan && location.pathname === '/dashboard/harga-pasar' ? { background: `${color}18`, border: `1px solid ${color}33`, color: color } : {}}
+                    className="rounded-xl mb-0.5 hover:bg-white/[0.03]"
+                    style={location.pathname === '/dashboard/harga-pasar' ? { background: `${color}18`, border: `1px solid ${color}33`, color: color } : {}}
                   >
                     <NavLink to="/dashboard/harga-pasar" className="flex items-center gap-3 w-full">
-                      <BarChart2 size={18} style={isDombaPenggemukan && location.pathname === '/dashboard/harga-pasar' ? { color: color } : {}} className={isDombaPenggemukan && location.pathname === '/dashboard/harga-pasar' ? '' : 'text-muted-foreground'} />
-                      <span className={`font-body text-[14px] ${isDombaPenggemukan && location.pathname === '/dashboard/harga-pasar' ? 'font-semibold' : 'font-medium'}`} style={isDombaPenggemukan && location.pathname === '/dashboard/harga-pasar' ? { color: color } : {}}>Harga Pasar</span>
+                      <BarChart2 size={18} style={location.pathname === '/dashboard/harga-pasar' ? { color: color } : {}} className={location.pathname === '/dashboard/harga-pasar' ? '' : 'text-muted-foreground'} />
+                      <span className={`font-body text-[14px] ${location.pathname === '/dashboard/harga-pasar' ? 'font-semibold' : 'font-medium'}`} style={location.pathname === '/dashboard/harga-pasar' ? { color: color } : {}}>Harga Pasar</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
-              <SidebarMenuItem className={isDombaPenggemukan ? "relative flex items-center w-full" : ""}>
-                {isDombaPenggemukan && location.pathname === '/market' && (
-                  <div 
-                    className="absolute left-[-2px] top-1/2 -translate-y-1/2 w-[3px] h-[20px] rounded-r-md z-20" 
-                    style={{ backgroundColor: color }}
-                  />
-                )}
+              <SidebarMenuItem>
                 <SidebarMenuButton 
                   asChild 
                   isActive={location.pathname === '/market'} 
-                  className={`rounded-xl mb-0.5 ${
-                    isDombaPenggemukan ? 'h-[44px] py-2.5 px-3.5' : 'hover:bg-white/[0.03]'
-                  }`}
-                  style={isDombaPenggemukan && location.pathname === '/market' ? { background: `${color}18`, border: `1px solid ${color}33`, color: color } : {}}
+                  className="rounded-xl mb-0.5 hover:bg-white/[0.03]"
+                  style={location.pathname === '/market' ? { background: `${color}18`, border: `1px solid ${color}33`, color: color } : {}}
                 >
                   <NavLink to="/market" className="flex items-center gap-3 w-full">
-                    <Building2 size={18} style={isDombaPenggemukan && location.pathname === '/market' ? { color: color } : {}} className={isDombaPenggemukan && location.pathname === '/market' ? '' : 'text-muted-foreground'} />
-                    <span className={`font-body text-[14px] ${isDombaPenggemukan && location.pathname === '/market' ? 'font-semibold' : 'font-medium'}`} style={isDombaPenggemukan && location.pathname === '/market' ? { color: color } : {}}>TernakOS Market</span>
+                    <Building2 size={18} style={location.pathname === '/market' ? { color: color } : {}} className={location.pathname === '/market' ? '' : 'text-muted-foreground'} />
+                    <span className={`font-body text-[14px] ${location.pathname === '/market' ? 'font-semibold' : 'font-medium'}`} style={location.pathname === '/market' ? { color: color } : {}}>TernakOS Market</span>
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               {!isSembako && (
-                <SidebarMenuItem className={isDombaPenggemukan ? "relative flex items-center w-full" : ""}>
-                  {isDombaPenggemukan && location.pathname === akunPath && (
-                    <div 
-                      className="absolute left-[-2px] top-1/2 -translate-y-1/2 w-[3px] h-[20px] rounded-r-md z-20" 
-                      style={{ backgroundColor: color }}
-                    />
-                  )}
+                <SidebarMenuItem>
                   <SidebarMenuButton 
                     asChild 
                     isActive={location.pathname === akunPath} 
-                    className={`rounded-xl mb-0.5 ${
-                      isDombaPenggemukan ? 'h-[44px] py-2.5 px-3.5' : 'hover:bg-white/[0.03]'
-                    }`}
-                    style={isDombaPenggemukan && location.pathname === akunPath ? { background: `${color}18`, border: `1px solid ${color}33`, color: color } : {}}
+                    className="rounded-xl mb-0.5 hover:bg-white/[0.03]"
+                    style={location.pathname === akunPath ? { background: `${color}18`, border: `1px solid ${color}33`, color: color } : {}}
                   >
                     <NavLink to={akunPath} className="flex items-center gap-3 w-full">
-                      <User size={18} style={isDombaPenggemukan && location.pathname === akunPath ? { color: color } : {}} className={isDombaPenggemukan && location.pathname === akunPath ? '' : 'text-muted-foreground'} />
-                      <span className={`font-body text-[14px] ${isDombaPenggemukan && location.pathname === akunPath ? 'font-semibold' : 'font-medium'}`} style={isDombaPenggemukan && location.pathname === akunPath ? { color: color } : {}}>Akun & Profil</span>
+                      <User size={18} style={location.pathname === akunPath ? { color: color } : {}} className={location.pathname === akunPath ? '' : 'text-muted-foreground'} />
+                      <span className={`font-body text-[14px] ${location.pathname === akunPath ? 'font-semibold' : 'font-medium'}`} style={location.pathname === akunPath ? { color: color } : {}}>Akun & Profil</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -1289,18 +1253,16 @@ export default function AppSidebar({ open, onClose }) {
           {/* Trigger button */}
           <button
             onClick={() => setDropdownOpen(prev => !prev)}
-            className={`w-full flex items-center gap-2.5 rounded-xl hover:bg-white/[0.03] transition-colors ${
-              isDombaPenggemukan ? 'px-3 py-1.5' : 'px-3 py-2.5'
-            }`}
+            className="w-full flex items-center gap-2.5 rounded-xl hover:bg-white/[0.03] transition-colors px-3 py-2.5"
           >
             <div className="w-8 h-8 rounded-full bg-emerald-500/15 border-2 border-emerald-500/25 flex items-center justify-center font-display font-extrabold text-[12px] text-emerald-400 flex-shrink-0 uppercase">
               {userInitials}
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <p className={`${isDombaPenggemukan ? 'text-[12px] text-slate-300 font-medium' : 'text-[13px] font-semibold text-foreground'} truncate leading-tight`}>
+              <p className="text-[13px] font-semibold text-foreground truncate leading-tight">
                 {profile?.full_name || 'User'}
               </p>
-              <p className={`${isDombaPenggemukan ? 'text-[10px] text-slate-500' : 'text-[11px] text-muted-foreground'} truncate mt-0.5`}>
+              <p className="text-[11px] text-muted-foreground truncate mt-0.5">
                 {user?.email}
               </p>
             </div>

@@ -17,9 +17,11 @@ import {
   useGenerateInstancesFromTemplate,
   useApplySapiTaskTemplate,
   useApplyDombaTaskTemplate,
+  useApplyKambingTaskTemplate,
 } from '@/lib/hooks/usePeternakTaskData'
 import { useSapiBatches, useSapiActiveBatches } from '@/lib/hooks/useSapiPenggemukanData'
 import { useDombaBatches, useDombaActiveBatches } from '@/lib/hooks/useDombaPenggemukanData'
+import { useKambingBatches, useKambingActiveBatches } from '@/lib/hooks/useKambingPenggemukanData'
 import { TEMPLATE_150_HARI, TEMPLATE_180_HARI } from '@/lib/constants/sapiTaskTemplates'
 import { getLivestockConfig } from '@/lib/constants/taskTemplates'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -367,6 +369,7 @@ function TemplateFormSheet({ open, onOpenChange, template, isDesktop, livestockT
   const hookMap = {
     sapi_penggemukan: { useBatches: useSapiBatches },
     domba_penggemukan: { useBatches: useDombaBatches },
+    kambing_penggemukan: { useBatches: useKambingBatches },
   }
   const useBatches = hookMap[livestockType]?.useBatches || (() => ({ data: [] }))
   const { data: batches = [] } = useBatches()
@@ -605,7 +608,7 @@ function TernakOSTemplateSheet({ open, onOpenChange, existingTemplates, isDeskto
   const hookMap = {
     sapi_penggemukan: { useActiveBatches: useSapiActiveBatches, useApply: useApplySapiTaskTemplate },
     domba_penggemukan: { useActiveBatches: useDombaActiveBatches, useApply: useApplyDombaTaskTemplate },
-    kambing_penggemukan: { useActiveBatches: useDombaActiveBatches, useApply: useApplyDombaTaskTemplate }, // reuse for now
+    kambing_penggemukan: { useActiveBatches: useKambingActiveBatches, useApply: useApplyKambingTaskTemplate },
   }
   const hooks = hookMap[livestockType] || { useActiveBatches: () => ({ data: [] }), useApply: () => ({ mutate: () => {}, isPending: false }) }
   

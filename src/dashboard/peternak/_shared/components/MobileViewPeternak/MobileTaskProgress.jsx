@@ -65,7 +65,7 @@ export function MobileTaskProgress({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: 0.1 }}
       onClick={onNavigate}
-      className="bg-white/[0.03] border border-white/[0.06] rounded-[1.25rem] p-4 shadow-lg cursor-pointer active:scale-[0.98] transition-transform"
+      className="bg-white/[0.03] border border-white/[0.03] rounded-[1.25rem] p-4 shadow-lg cursor-pointer active:scale-[0.98] transition-transform"
     >
       <div className="flex items-center gap-4">
         {/* Donut ring */}

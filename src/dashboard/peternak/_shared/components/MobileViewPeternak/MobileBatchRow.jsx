@@ -44,7 +44,7 @@ export function MobileBatchRow({ batch, targetDays = 60, onClick, className = ''
         tone={isOverdue ? 'danger' : isNearHarvest ? 'warn' : 'accent'} 
       />
 
-      <div className="grid grid-cols-3 gap-1 mt-3.5 pt-3.5 border-t border-white/10">
+      <div className="grid grid-cols-3 gap-1 mt-3.5 pt-3.5 border-t border-white/[0.04]">
         <BatchMini label="ADG" value={`${batch.adg || 0}g`} colorClass={adgColorClass} />
         <BatchMini label="Bobot" value={`${batch.avgWeight || 0} kg`} />
         <BatchMini 

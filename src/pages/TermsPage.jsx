@@ -44,7 +44,7 @@ export default function TermsPage() {
               Syarat & <span className="text-emerald-500">Ketentuan</span>
             </h1>
             <p className="text-[#4B6478] text-lg max-w-2xl leading-relaxed">
-              Terakhir diperbarui: 3 April 2026 • Versi 2.0
+              Terakhir diperbarui: 1 Juni 2026 • Versi 2.1
             </p>
             <p className="text-[#4B6478] text-sm mt-2 leading-relaxed">
               Harap baca dokumen ini dengan seksama sebelum mendaftar atau menggunakan layanan TernakOS. Dengan mengakses platform ini, Anda menyatakan telah membaca, memahami, dan terikat secara hukum oleh ketentuan berikut.
@@ -86,27 +86,38 @@ export default function TermsPage() {
           </TermSection>
 
           {/* 03 */}
-          <TermSection number="03" title="Deskripsi Layanan">
-            <p>TernakOS adalah platform manajemen bisnis berbasis cloud yang menyediakan fitur-fitur berikut sesuai tipe akun:</p>
-            <ul className="mt-4 space-y-2">
-              <BulletItem><strong className="text-white">Broker Ayam & Telur:</strong> Manajemen transaksi beli-jual, pelacakan pengiriman, laporan profit otomatis, manajemen piutang RPA, dan analitik pasar.</BulletItem>
-              <BulletItem><strong className="text-white">Peternak:</strong> Manajemen siklus kandang, pencatatan deplesi dan mortalitas, estimasi panen, listing stok ke broker, dan laporan performa kandang.</BulletItem>
-              <BulletItem><strong className="text-white">Rumah Potong Ayam (RPA):</strong> Manajemen riwayat pembelian, pelacakan piutang, dan profil buyer.</BulletItem>
-            </ul>
+          <TermSection number="03" title="Deskripsi Layanan & Produk">
+            <p>
+              TernakOS adalah platform digital berbasis web Software-as-a-Service (SaaS) yang dirancang khusus untuk mempermudah pencatatan operasional usaha dan manajemen peternakan di Indonesia.
+            </p>
             <p className="mt-4">
-              TernakOS menyediakan layanan dalam bentuk <em>as-is</em> dan terus dikembangkan. Kami berhak menambahkan, mengubah, atau menghentikan fitur tertentu dengan pemberitahuan wajar kepada Pengguna yang terpengaruh.
+              Platform kami membantu Pengguna mengelola data operasional penting yang mencakup:
+            </p>
+            <ul className="mt-4 space-y-2">
+              <BulletItem>Manajemen data ternak (domba, kambing, sapi, dll.) dan siklus kandang.</BulletItem>
+              <BulletItem>Pencatatan persediaan pakan, sisa pakan, dan efisiensi konsumsi pakan.</BulletItem>
+              <BulletItem>Pelacakan berat badan harian dan pencapaian Average Daily Gain (ADG).</BulletItem>
+              <BulletItem>Pencatatan pengeluaran harian dan biaya operasional.</BulletItem>
+              <BulletItem>Manajemen tugas harian petugas kandang (daily tasks).</BulletItem>
+              <BulletItem>Pencatatan penjualan ternak dan komoditas, serta laporan profitabilitas otomatis.</BulletItem>
+              <BulletItem>Manajemen hak akses tim dan pembagian tugas staff/anak kandang.</BulletItem>
+              <BulletItem>Dashboard visualisasi bisnis terpadu untuk monitoring kondisi peternakan.</BulletItem>
+            </ul>
+            <p className="mt-4 font-semibold text-emerald-400">
+              Pernyataan Penting: TernakOS merupakan produk layanan digital murni berbasis langganan (subscription). Kami menyediakan akses elektronik ke aplikasi web, dan TIDAK menjual atau mengirimkan komoditas fisik/barang fisik melalui logistik kurir.
             </p>
           </TermSection>
 
           {/* 04 */}
           <TermSection number="04" title="Pendaftaran Akun & Keamanan">
-            <p>Untuk menggunakan layanan TernakOS, Anda wajib membuat akun dengan informasi yang akurat, lengkap, dan terkini. Anda bertanggung jawab atas:</p>
+            <p>Untuk menggunakan layanan TernakOS, Anda wajib membuat akun dan masuk (login) menggunakan alamat email aktif yang sah. Pengguna bertanggung jawab atas:</p>
             <ul className="mt-4 space-y-2">
-              <BulletItem>Kerahasiaan kata sandi dan kredensial akun Anda.</BulletItem>
-              <BulletItem>Seluruh aktivitas yang terjadi di bawah akun Anda, baik yang Anda lakukan maupun yang dilakukan pihak lain dengan izin Anda.</BulletItem>
-              <BulletItem>Segera memberitahu kami di <a href="mailto:support@ternakos.id" className="text-emerald-400 hover:underline">support@ternakos.id</a> apabila terdapat akses tidak sah ke akun Anda.</BulletItem>
+              <BulletItem>Keakuratan, kelengkapan, dan kebenaran data bisnis serta informasi akun yang diisikan ke dalam sistem.</BulletItem>
+              <BulletItem>Kerahasiaan kata sandi, kode akses sekali pakai (OTP), dan seluruh kredensial akun Anda.</BulletItem>
+              <BulletItem>Seluruh aktivitas yang terjadi di bawah akun Anda, baik yang Anda lakukan sendiri maupun pihak ketiga yang mengakses akun Anda.</BulletItem>
+              <BulletItem>Segera melaporkan jika mendapati aktivitas mencurigakan atau akses tidak sah melalui email <a href="mailto:support@ternakos.id" className="text-emerald-400 hover:underline">support@ternakos.id</a>.</BulletItem>
             </ul>
-            <p className="mt-4">Anda dilarang mendaftarkan lebih dari satu akun untuk satu entitas bisnis tanpa izin tertulis dari TernakOS. Pembuatan akun dengan identitas palsu atau menyesatkan merupakan pelanggaran yang dapat berujung pada pemblokiran akun tanpa pengembalian dana.</p>
+            <p className="mt-4">Pembuatan akun menggunakan informasi palsu atau menyamar sebagai bisnis lain merupakan pelanggaran berat yang dapat menyebabkan penangguhan akun secara permanen.</p>
           </TermSection>
 
           {/* 05 */}
@@ -149,62 +160,116 @@ export default function TermsPage() {
           </TermSection>
 
           {/* 07 */}
-          <TermSection number="07" title="Paket Berlangganan & Pembayaran">
-            <p>TernakOS menawarkan model berlangganan dengan detail sebagai berikut:</p>
+          <TermSection number="07" title="Paket Layanan & Skema Langganan">
+            <p>TernakOS menawarkan skema akses layanan dengan ketentuan sebagai berikut:</p>
             <div className="mt-6 grid md:grid-cols-3 gap-4">
               <PlanCard name="Starter" color="text-[#94A3B8]" border="border-white/10">
-                <p>Gratis selamanya. Akses fitur dasar dengan 1 kandang. Tidak memerlukan pembayaran.</p>
+                <p>Gratis selamanya untuk fitur dasar dengan batasan kapasitas minimal (misalnya kapasitas 1 kandang). Tanpa biaya pembayaran.</p>
               </PlanCard>
               <PlanCard name="Pro" color="text-emerald-400" border="border-emerald-500/30">
-                <p>Berbayar, akses fitur lengkap hingga 2 kandang. Tagihan bulanan atau tahunan.</p>
+                <p>Berbayar, membuka fitur operasional lengkap hingga kapasitas menengah. Tersedia opsi pembayaran berkala.</p>
               </PlanCard>
               <PlanCard name="Business" color="text-amber-400" border="border-amber-500/30">
-                <p>Berbayar, akses fitur penuh tanpa batas kandang. Diperuntukkan bisnis skala besar.</p>
+                <p>Berbayar, membuka seluruh kapasitas data dan fitur tanpa batas kandang. Diperuntukkan bisnis skala menengah/besar.</p>
               </PlanCard>
             </div>
             <ul className="mt-6 space-y-3">
-              <BulletItem><strong className="text-white">Prabayar:</strong> Semua pembayaran dilakukan di muka sebelum periode berlangganan dimulai.</BulletItem>
-              <BulletItem><strong className="text-white">Metode Pembayaran:</strong> Transfer bank ke rekening resmi TernakOS yang tertera di halaman pembayaran. Bukti transfer wajib diunggah untuk verifikasi manual oleh tim kami.</BulletItem>
-              <BulletItem><strong className="text-white">Aktivasi:</strong> Akun diaktifkan dalam 1x24 jam kerja setelah pembayaran diverifikasi.</BulletItem>
-              <BulletItem><strong className="text-white">Kegagalan Pembayaran:</strong> Akses fitur Pro/Business akan ditangguhkan sementara jika langganan tidak diperbarui setelah periode berakhir. Data Anda tetap aman selama masa tenggang 30 hari.</BulletItem>
-              <BulletItem><strong className="text-white">Perubahan Harga:</strong> Harga berlangganan dapat berubah. Pengguna aktif akan diberitahu minimal 30 hari sebelum perubahan berlaku dan harga lama tetap berlaku hingga akhir periode berjalan.</BulletItem>
+              <BulletItem><strong className="text-white">Uji Coba Gratis:</strong> Pengguna dapat mendaftar dan menggunakan akun gratis (Starter) untuk mencoba operasional dasar sebelum melakukan upgrade.</BulletItem>
+              <BulletItem><strong className="text-white">Upgrade Berbayar:</strong> Pengguna dapat meningkatkan status akun menjadi Pro atau Business kapan saja melalui halaman upgrade/subscription di dalam aplikasi untuk memperoleh fitur yang lebih lengkap.</BulletItem>
+              <BulletItem><strong className="text-white">Masa Langganan:</strong> Fitur berbayar yang aktif disesuaikan dengan jenis paket layanan yang dipilih dan durasi berlangganan aktif yang diajukan oleh pengguna saat checkout.</BulletItem>
             </ul>
           </TermSection>
 
           {/* 08 */}
-          <TermSection number="08" title="Kebijakan Pengembalian Dana (Refund)">
-            <p>TernakOS memberikan jaminan uang kembali (<em>money-back guarantee</em>) dengan ketentuan berikut:</p>
-            <ul className="mt-4 space-y-3">
-              <BulletItem><strong className="text-white">Jangka Waktu:</strong> Refund dapat diajukan dalam 7 hari kalender pertama sejak tanggal aktivasi paket berbayar.</BulletItem>
-              <BulletItem><strong className="text-white">Syarat:</strong> Refund hanya diberikan jika platform mengalami gangguan teknis yang signifikan dan tidak dapat diselesaikan dalam waktu wajar, sehingga secara material menghalangi penggunaan layanan.</BulletItem>
-              <BulletItem><strong className="text-white">Pengecualian:</strong> Tidak ada refund untuk pembatalan sepihak tanpa alasan teknis, ketidakcocokan ekspektasi yang bersifat subjektif, atau perpindahan ke kompetitor.</BulletItem>
-              <BulletItem><strong className="text-white">Proses:</strong> Ajukan permintaan refund ke <a href="mailto:support@ternakos.id" className="text-emerald-400 hover:underline">support@ternakos.id</a> disertai bukti gangguan teknis. Tim kami akan merespons dalam 3 hari kerja.</BulletItem>
-              <BulletItem><strong className="text-white">Metode Pengembalian:</strong> Dana dikembalikan melalui transfer bank ke rekening yang sama dengan pembayaran asal, dalam waktu 5-10 hari kerja setelah persetujuan.</BulletItem>
-            </ul>
+          <TermSection number="08" title="Alur Pemesanan & Pembayaran (Midtrans)">
+            <p>Proses pemesanan layanan berlangganan TernakOS dan pembayarannya mengikuti langkah-langkah berikut:</p>
+            <ol className="mt-4 space-y-3 list-none pl-0">
+              <li className="flex gap-4">
+                <span className="text-emerald-500 font-black font-display w-6 shrink-0">1.</span>
+                <span className="text-[#94A3B8]">Pengguna mengakses website resmi TernakOS di <a href="https://ternakos.my.id" target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline">https://ternakos.my.id</a>.</span>
+              </li>
+              <li className="flex gap-4">
+                <span className="text-emerald-500 font-black font-display w-6 shrink-0">2.</span>
+                <span className="text-[#94A3B8]">Pengguna melakukan pendaftaran akun baru atau login menggunakan alamat email yang sah.</span>
+              </li>
+              <li className="flex gap-4">
+                <span className="text-emerald-500 font-black font-display w-6 shrink-0">3.</span>
+                <span className="text-[#94A3B8]">Pengguna melengkapi data usaha awal atau memilih profil usaha yang ingin dikelola di dashboard aplikasi.</span>
+              </li>
+              <li className="flex gap-4">
+                <span className="text-emerald-500 font-black font-display w-6 shrink-0">4.</span>
+                <span className="text-[#94A3B8]">Pengguna menavigasi ke halaman upgrade/subscription, lalu memilih paket berlangganan (Pro/Business) serta jangka waktu tagihan yang diinginkan.</span>
+              </li>
+              <li className="flex gap-4">
+                <span className="text-emerald-500 font-black font-display w-6 shrink-0">5.</span>
+                <span className="text-[#94A3B8]">Sistem menampilkan ringkasan checkout yang berisi nama paket, durasi langganan, harga paket, potongan voucher (bila ada), dan total tagihan akhir yang harus dibayarkan.</span>
+              </li>
+              <li className="flex gap-4">
+                <span className="text-emerald-500 font-black font-display w-6 shrink-0">6.</span>
+                <span className="text-[#94A3B8]">Pengguna menekan tombol untuk melanjutkan checkout, lalu sistem TernakOS otomatis menerbitkan invoice tagihan dengan status awal <code>pending</code>.</span>
+              </li>
+              <li className="flex gap-4">
+                <span className="text-emerald-500 font-black font-display w-6 shrink-0">7.</span>
+                <span className="text-[#94A3B8]">Pengguna diarahkan ke antarmuka gerbang pembayaran aman Midtrans Snap.</span>
+              </li>
+              <li className="flex gap-4">
+                <span className="text-emerald-500 font-black font-display w-6 shrink-0">8.</span>
+                <span className="text-[#94A3B8]">Pengguna memilih metode pembayaran yang tersedia di Midtrans (seperti QRIS, Virtual Account bank, atau E-Wallet).</span>
+              </li>
+              <li className="flex gap-4">
+                <span className="text-emerald-500 font-black font-display w-6 shrink-0">9.</span>
+                <span className="text-[#94A3B8]">Pengguna menyelesaikan pembayaran melalui channel pembayaran yang dipilih sesuai jumlah persis tagihan akhir.</span>
+              </li>
+              <li className="flex gap-4">
+                <span className="text-emerald-500 font-black font-display w-6 shrink-0">10.</span>
+                <span className="text-[#94A3B8]">Midtrans secara otomatis mengirimkan notifikasi pembayaran (webhook) ke sistem backend TernakOS.</span>
+              </li>
+              <li className="flex gap-4">
+                <span className="text-emerald-500 font-black font-display w-6 shrink-0">11.</span>
+                <span className="text-[#94A3B8]">Sistem TernakOS memverifikasi notifikasi pembayaran dari Midtrans dengan memvalidasi order ID, status transaksi, nominal bayar, dan keaslian signature key.</span>
+              </li>
+              <li className="flex gap-4">
+                <span className="text-emerald-500 font-black font-display w-6 shrink-0">12.</span>
+                <span className="text-[#94A3B8]">Apabila verifikasi sukses, status invoice diperbarui menjadi <code>paid</code>/<code>success</code>, dan paket berlangganan akun Pengguna otomatis aktif atau diperpanjang. Pengguna kini dapat kembali ke aplikasi untuk mengakses fitur premium.</span>
+              </li>
+              <li className="flex gap-4">
+                <span className="text-emerald-500 font-black font-display w-6 shrink-0">13.</span>
+                <span className="text-[#94A3B8]">Apabila transaksi pending, gagal, kedaluwarsa, atau dibatalkan, status invoice disesuaikan dengan kondisi transaksi dan Pengguna dapat mencoba melakukan checkout ulang untuk memicu pembayaran baru.</span>
+              </li>
+            </ol>
           </TermSection>
 
           {/* 09 */}
-          <TermSection number="09" title="Pembatalan & Penghentian Layanan">
-            <p><strong className="text-white">Pembatalan oleh Pengguna:</strong> Anda dapat berhenti menggunakan dan berlangganan TernakOS kapan saja. Akses ke fitur berbayar tetap berjalan hingga akhir periode berlangganan yang sudah dibayar. Tidak ada biaya pembatalan.</p>
-            <p className="mt-4"><strong className="text-white">Penghentian oleh TernakOS:</strong> Kami berhak menangguhkan atau menghentikan akun Anda tanpa pemberitahuan sebelumnya apabila:</p>
+          <TermSection number="09" title="Pengiriman Digital & Ketentuan Pembayaran">
+            <p><strong className="text-white">Metode Pengiriman Layanan:</strong> Mengingat TernakOS adalah produk perangkat lunak digital berbasis cloud (SaaS), maka seluruh pengiriman akses layanan dilakukan secara elektronik langsung ke akun Anda. Tidak ada pengiriman barang secara fisik melalui kurir atau kargo. Layanan premium langsung aktif setelah pembayaran dikonfirmasi oleh sistem.</p>
+            <p className="mt-4"><strong className="text-white">Ketentuan Transaksi Pembayaran:</strong></p>
             <ul className="mt-2 space-y-2">
-              <BulletItem>Terdapat pelanggaran terhadap Syarat & Ketentuan ini.</BulletItem>
-              <BulletItem>Ditemukan aktivitas penipuan, ilegal, atau berbahaya yang dilakukan melalui akun Anda.</BulletItem>
-              <BulletItem>Akun tidak aktif selama lebih dari 12 bulan berturut-turut tanpa pembayaran.</BulletItem>
+              <BulletItem>Seluruh pembayaran langganan diproses dengan aman melalui Midtrans atau channel resmi yang kami tunjuk.</BulletItem>
+              <BulletItem>Opsi channel pembayaran yang aktif bergantung pada konfigurasi aktif akun Midtrans TernakOS.</BulletItem>
+              <BulletItem>Pengguna berkewajiban melakukan transfer dana sesuai dengan nominal tagihan yang tertera di checkout. Aktivasi otomatis bergantung sepenuhnya pada kecocokan data verifikasi pembayaran.</BulletItem>
             </ul>
-            <p className="mt-4"><strong className="text-white">Retensi Data Pasca-Penghentian:</strong> Setelah akun dinonaktifkan, data Anda disimpan selama 90 hari masa tenggang. Setelah itu, data dihapus secara permanen dari sistem kami kecuali diwajibkan oleh hukum untuk menyimpannya lebih lama (misalnya untuk keperluan perpajakan atau audit).</p>
           </TermSection>
 
           {/* 10 */}
-          <TermSection number="10" title="Kepemilikan Data & Hak Kekayaan Intelektual">
+          <TermSection number="10" title="Kebijakan Pembatalan & Pengembalian Dana (Refund)">
+            <p><strong className="text-white">Pembatalan Berlangganan:</strong> Pengguna dapat membatalkan atau berhenti memperpanjang langganan berbayar mereka kapan saja. Hak akses fitur premium akan tetap berlaku hingga periode akhir berlangganan berjalan yang telah dilunasi selesai. Tidak ada pengenaan denda pembatalan.</p>
+            <p className="mt-4"><strong className="text-white">Kebijakan Pengembalian Dana (Refund):</strong></p>
+            <ul className="mt-2 space-y-2">
+              <BulletItem>Semua transaksi pembayaran paket berlangganan digital yang telah sukses diproses bersifat final dan tidak dapat dikembalikan (non-refundable) setelah akses fitur premium aktif, kecuali jika terdapat kekeliruan sistematis (seperti transaksi ganda/duplicate charge) atau gangguan teknis fatal berkepanjangan pada aplikasi yang terverifikasi secara resmi oleh tim pengembang kami.</BulletItem>
+              <BulletItem>Pengguna dapat mengajukan peninjauan kasus pembayaran ganda ke email bantuan resmi TernakOS. Kami meninjau dan memproses pengembalian dana secara case-by-case.</BulletItem>
+            </ul>
+          </TermSection>
+
+          {/* 11 */}
+          <TermSection number="11" title="Kepemilikan Data & Hak Kekayaan Intelektual">
             <p><strong className="text-white">Data Bisnis Anda:</strong> Seluruh Data Bisnis yang Anda masukkan ke dalam platform adalah milik Anda sepenuhnya. TernakOS tidak mengklaim hak kepemilikan atas data tersebut. Kami hanya berperan sebagai penyedia infrastruktur dan pengolah data atas instruksi Anda.</p>
             <p className="mt-4"><strong className="text-white">Lisensi Terbatas:</strong> Dengan menggunakan layanan kami, Anda memberikan TernakOS lisensi terbatas, non-eksklusif, dan dapat dicabut untuk memproses Data Bisnis Anda semata-mata dalam rangka menyediakan layanan yang Anda minta.</p>
             <p className="mt-4"><strong className="text-white">Hak TernakOS:</strong> Seluruh elemen platform TernakOS — termasuk namun tidak terbatas pada kode sumber, desain antarmuka, algoritma, merek, dan logo — adalah milik eksklusif TernakOS Indonesia dan dilindungi oleh hukum hak cipta dan hak kekayaan intelektual Republik Indonesia. Anda tidak diperkenankan menyalin, memodifikasi, mendistribusikan, atau menggunakan elemen tersebut tanpa izin tertulis.</p>
             <p className="mt-4"><strong className="text-white">Data Agregat Anonim:</strong> TernakOS dapat menggunakan data yang dianonimkan dan diagregasikan (tanpa informasi yang dapat mengidentifikasi bisnis atau individu Anda) untuk keperluan peningkatan layanan, pengembangan fitur, dan referensi harga pasar komoditas peternakan Indonesia.</p>
           </TermSection>
 
-          {/* 11 */}
-          <TermSection number="11" title="Batasan Tanggung Jawab">
+          {/* 12 */}
+          <TermSection number="12" title="Batasan Tanggung Jawab">
             <p>Sejauh yang diizinkan oleh hukum yang berlaku di Republik Indonesia:</p>
             <ul className="mt-4 space-y-3">
               <BulletItem><strong className="text-white">Tidak Ada Jaminan:</strong> Layanan TernakOS disediakan "sebagaimana adanya" (<em>as-is</em>) dan "sebagaimana tersedia" (<em>as-available</em>). Kami tidak memberikan jaminan bahwa layanan akan bebas dari gangguan, kesalahan, atau kehilangan data.</BulletItem>
@@ -214,15 +279,23 @@ export default function TermsPage() {
             </ul>
           </TermSection>
 
-          {/* 12 */}
-          <TermSection number="12" title="Keadaan Kahar (Force Majeure)">
-            <p>
-              TernakOS tidak bertanggung jawab atas kegagalan atau keterlambatan dalam pelaksanaan layanan yang disebabkan oleh keadaan di luar kendali wajar kami, termasuk namun tidak terbatas pada: bencana alam, gangguan infrastruktur internet nasional, pemadaman layanan pihak ketiga (Supabase, Google Cloud, AWS), tindakan pemerintah, epidemi, atau peristiwa <em>force majeure</em> lainnya. Kami akan segera menginformasikan gangguan tersebut dan berupaya memulihkan layanan secepat mungkin.
+          {/* 13 */}
+          <TermSection number="13" title="Ketersediaan Layanan & Gangguan Sistem">
+            <p><strong className="text-white">Komitmen Ketersediaan Layanan:</strong> Kami berupaya semaksimal mungkin untuk menjaga keandalan dan ketersediaan aplikasi TernakOS. Namun, akses dapat terganggu sewaktu-waktu karena aktivitas pemeliharaan terjadwal (scheduled maintenance) atau pembaruan sistem berkala.</p>
+            <p className="mt-4"><strong className="text-white">Batasan Tanggung Jawab Sistem:</strong> Kami tidak bertanggung jawab atas kegagalan akses sistem atau keterlambatan proses yang disebabkan oleh faktor eksternal di luar kendali wajar kami, seperti gangguan pada jaringan internet nasional, gangguan server cloud pihak ketiga (Supabase/Google Cloud), kegagalan integrasi payment gateway Midtrans, atau peristiwa keadaan kahar (force majeure) lainnya.</p>
+          </TermSection>
+
+          {/* 14 */}
+          <TermSection number="14" title="Tanggung Jawab Data Pengguna & Keamanan Pembayaran">
+            <p><strong className="text-white">Tanggung Jawab Input Data:</strong> Pengguna memegang kendali dan tanggung jawab penuh terhadap kebenaran serta legalitas seluruh data bisnis operasional yang dimasukkan ke dalam aplikasi.</p>
+            <p className="mt-4"><strong className="text-white">Penyimpanan Data Bisnis:</strong> Kami memproses dan menyimpan data bisnis Anda semata-mata untuk menjalankan seluruh fitur aplikasi, menjaga riwayat siklus kandang, serta menampilkan laporan analitis usaha Anda.</p>
+            <p className="mt-4 font-semibold text-emerald-400">
+              Keamanan Pembayaran: Demi alasan keamanan data, Anda dilarang keras menginput informasi sensitif perbankan seperti nomor kartu kredit, PIN, atau kredensial perbankan lainnya di dalam form isian data TernakOS. Seluruh pemrosesan pembayaran dan input data finansial kartu kredit/debit ditangani secara aman oleh sistem gerbang pembayaran eksternal Midtrans yang telah tersertifikasi standar keamanan tinggi (PCI-DSS).
             </p>
           </TermSection>
 
-          {/* 13 */}
-          <TermSection number="13" title="Perubahan Layanan & Ketentuan">
+          {/* 15 */}
+          <TermSection number="15" title="Perubahan Layanan & Ketentuan">
             <p>
               TernakOS berhak mengubah Syarat & Ketentuan ini sewaktu-waktu. Untuk perubahan yang bersifat material — seperti perubahan harga, pembatasan fitur, atau kebijakan data — kami akan memberikan pemberitahuan melalui:
             </p>
@@ -235,8 +308,8 @@ export default function TermsPage() {
             </p>
           </TermSection>
 
-          {/* 14 */}
-          <TermSection number="14" title="Hukum yang Berlaku & Penyelesaian Sengketa">
+          {/* 16 */}
+          <TermSection number="16" title="Hukum yang Berlaku & Penyelesaian Sengketa">
             <p>
               Syarat & Ketentuan ini tunduk pada dan ditafsirkan berdasarkan hukum Republik Indonesia. Setiap sengketa yang timbul dari atau sehubungan dengan ketentuan ini akan diselesaikan secara bertahap sebagai berikut:
             </p>
@@ -256,8 +329,8 @@ export default function TermsPage() {
             </ol>
           </TermSection>
 
-          {/* 15 */}
-          <TermSection number="15" title="Privasi & Perlindungan Data Pribadi">
+          {/* 17 */}
+          <TermSection number="17" title="Privasi & Perlindungan Data Pribadi">
             <p>
               Pengumpulan, penggunaan, dan perlindungan data pribadi Anda diatur secara terpisah dan terperinci dalam <Link to="/privacy" className="text-emerald-400 hover:underline font-semibold">Kebijakan Privasi TernakOS</Link>, yang merupakan satu kesatuan tidak terpisahkan dari Syarat & Ketentuan ini.
             </p>
@@ -266,8 +339,8 @@ export default function TermsPage() {
             </p>
           </TermSection>
 
-          {/* 16 */}
-          <TermSection number="16" title="Ketentuan Lain-Lain">
+          {/* 18 */}
+          <TermSection number="18" title="Ketentuan Lain-Lain">
             <ul className="space-y-3">
               <BulletItem><strong className="text-white">Keterpisahan:</strong> Jika suatu ketentuan dalam dokumen ini dinyatakan tidak sah atau tidak dapat dilaksanakan oleh pengadilan yang berwenang, ketentuan tersebut akan diubah seminimal mungkin untuk membuatnya dapat dilaksanakan, dan ketentuan lainnya tetap berlaku penuh.</BulletItem>
               <BulletItem><strong className="text-white">Tidak Ada Pengabaian:</strong> Kegagalan TernakOS untuk menegakkan suatu hak atau ketentuan tidak akan dianggap sebagai pengabaian hak tersebut.</BulletItem>
@@ -276,8 +349,8 @@ export default function TermsPage() {
             </ul>
           </TermSection>
 
-          {/* 17 */}
-          <TermSection number="17" title="Hubungi Kami">
+          {/* 19 */}
+          <TermSection number="19" title="Hubungi Kami">
             <p>Untuk pertanyaan, keluhan, atau permintaan terkait Syarat & Ketentuan ini, silakan hubungi kami melalui:</p>
             <div className="mt-6 p-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 flex flex-col md:flex-row items-center justify-between gap-4">
               <div>

@@ -100,7 +100,7 @@ export default function AkunPage() {
     }
   }
 
-  const canDeleteBusiness = role === 'owner' && !isSuperadmin && !!activeTenant?.id
+  const canDeleteBusiness = role === 'owner' && !!activeTenant?.id
   const canEditBisnis = role === 'owner' && !!activeTenant?.id
 
   const [editProfileOpen, setEditProfileOpen] = useState(false)

@@ -25,7 +25,7 @@ export function Card({ children, className = '', onClick, padded = true }) {
   return (
     <div 
       onClick={onClick} 
-      className={`bg-[#0A0E0C] border border-white/10 rounded-[20px] shadow-sm ${padded ? 'p-5' : 'p-0'} ${onClick ? 'cursor-pointer active:scale-[0.98] transition-transform' : ''} ${className}`}
+      className={`bg-[#0A0E0C] border border-white/[0.03] rounded-[20px] shadow-sm ${padded ? 'p-5' : 'p-0'} ${onClick ? 'cursor-pointer active:scale-[0.98] transition-transform' : ''} ${className}`}
     >
       {children}
     </div>

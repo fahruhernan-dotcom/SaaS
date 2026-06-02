@@ -443,7 +443,7 @@ function WelcomeModal({ step, steps, stepIdx, direction, accent, accentDim, onNe
 }
 
 export default function TutorialOverlay({ steps, storageKey, accent, accentDim }) {
-  const { profile, tenant } = useAuth()
+  const { user, profile, tenant } = useAuth()
   const isDesktop = useIsDesktop()
 
   const [visible, setVisible]       = useState(false)
@@ -453,14 +453,11 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
   const [targetRect, setTargetRect] = useState(null)
   const retryRef = useRef(null)
 
-  // CLAUDE.md canonical pattern: profile.profile_id is an alias set only when
-  // there is a matching tenant_memberships row. Brand-new profiles created by
-  // create_new_business RPC don't yet have a membership row, so profile_id is
-  // undefined and only the legacy `id` (actual profiles.id) is available.
-  const actualProfileId = profile?.profile_id ?? profile?.id
+  const targetAuthId = user?.id || profile?.auth_user_id
+  const targetTenantId = tenant?.id || profile?.tenant_id
 
   useEffect(() => {
-    if (!tenant?.id || !actualProfileId) return
+    if (!targetTenantId || !targetAuthId) return
 
     // Fast path: localStorage already has a value
     try {
@@ -471,7 +468,8 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
     supabase
       .from('profiles')
       .select('tutorials_completed')
-      .eq('id', actualProfileId)
+      .eq('auth_user_id', targetAuthId)
+      .eq('tenant_id', targetTenantId)
       .single()
       .then(({ data }) => {
         if (data?.tutorials_completed?.[storageKey]) {
@@ -480,7 +478,7 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
           setVisible(true)
         }
       })
-  }, [tenant?.id, actualProfileId, storageKey])
+  }, [targetTenantId, targetAuthId, storageKey])
 
   const queryTarget = useCallback((step) => {
     if (!step?.selector) { setTargetRect(null); return }
@@ -532,12 +530,13 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
     // only accepts (p_key, p_value) — passing p_tenant_id makes the RPC return
     // 404. The authenticated role has GRANT UPDATE on tutorials_completed
     // (see supabase/17_column_grants.sql), so a read-merge-write works fine.
-    if (actualProfileId && tenant?.id) {
+    if (targetAuthId && targetTenantId) {
       try {
         const { data: current, error: readErr } = await supabase
           .from('profiles')
           .select('tutorials_completed')
-          .eq('id', actualProfileId)
+          .eq('auth_user_id', targetAuthId)
+          .eq('tenant_id', targetTenantId)
           .single()
 
         if (readErr) {
@@ -555,7 +554,8 @@ export default function TutorialOverlay({ steps, storageKey, accent, accentDim }
           const { error: writeErr } = await supabase
             .from('profiles')
             .update({ tutorials_completed: merged })
-            .eq('id', actualProfileId)
+            .eq('auth_user_id', targetAuthId)
+            .eq('tenant_id', targetTenantId)
 
           if (writeErr) {
             logSupabaseError(writeErr, {

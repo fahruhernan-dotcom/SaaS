@@ -355,69 +355,65 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         business_vertical: model.key,
       })
 
-      const profilePayload = {
-        auth_user_id: targetAuthId,
-        tenant_id: resolvedTenantId,
-        user_type: model.user_type,
-        business_model_selected: true,
-        onboarded: true,
-        full_name: profile?.full_name || user?.user_metadata?.full_name || '',
-        role: profile?.role || 'owner',
-        phone: profile?.phone || user?.user_metadata?.phone || '',
-        is_active: profile?.is_active ?? true,
-      }
-      if (profile && 'sub_type' in profile) {
-        profilePayload.sub_type = model.sub_type || null
+      // Skip the profile update after RPC success since create_new_business() already handles it.
+      if (!shouldCreateViRPC) {
+        const profilePayload = {
+          user_type: model.user_type,
+          business_model_selected: true,
+          onboarded: true,
+          onboarding_completed_at: new Date().toISOString(),
+        }
+
+        // We use a safe update filtered by auth_user_id and tenant_id.
+        const { error: profError } = await supabase
+          .from('profiles')
+          .update(profilePayload)
+          .eq('auth_user_id', targetAuthId)
+          .eq('tenant_id', resolvedTenantId)
+
+        if (profError) {
+          console.warn('[Onboarding] profiles update failed (non-fatal):', {
+            code: profError.code,
+            message: profError.message,
+            details: profError.details,
+            hint: profError.hint,
+            payload: { user_type: model.user_type, auth_user_id: targetAuthId, tenant_id: resolvedTenantId },
+          })
+          logSupabaseError(profError, {
+            table: 'profiles',
+            operation: 'update',
+            component: 'BusinessModelOverlay',
+            actionName: 'onboarding.update_profile',
+          })
+        } else {
+          console.log('[Onboarding] profiles update success')
+        }
       } else {
-        profilePayload.sub_type = model.sub_type || null
+        console.log('[Onboarding] Skipping redundant profiles update after RPC success')
       }
-      if (profile?.avatar_url) {
-        profilePayload.avatar_url = profile.avatar_url
-      }
-
-      // SCOPED BY tenant_id: user may have multiple profile rows (multi-tenant).
-      // We use upsert with onConflict to allow recovery of missing profiles for legacy users.
-      const { error: profError } = await supabase
-        .from('profiles')
-        .upsert(profilePayload, { onConflict: 'auth_user_id,tenant_id' })
-
-      if (profError) {
-        console.error('[Onboarding] profiles upsert failed:', {
-          code: profError.code,
-          message: profError.message,
-          details: profError.details,
-          hint: profError.hint,
-          payload: { user_type: model.user_type, auth_user_id: targetAuthId, tenant_id: resolvedTenantId },
-        })
-        logSupabaseError(profError, {
-          table: 'profiles',
-          operation: 'upsert',
-          component: 'BusinessModelOverlay',
-          actionName: 'onboarding.update_profile',
-        })
-        throw profError
-      }
-      console.log('[Onboarding] profiles upsert success')
 
       // --- DEFENSIVE RECOVERY: Ensure owner tenant membership exists ---
       // Scoped strictly to the active onboarding tenant (resolvedTenantId) and current authenticated user (targetAuthId).
-      const { error: memberError } = await supabase
-        .from('tenant_memberships')
-        .upsert({
-          tenant_id: resolvedTenantId,
-          auth_user_id: targetAuthId,
-          role: profile?.role || 'owner',
-          full_name: profile?.full_name || user?.user_metadata?.full_name || '',
-        }, { onConflict: 'auth_user_id,tenant_id' })
+      // Skip if the business was created via create_new_business RPC as it already handles owner membership.
+      if (!shouldCreateViRPC) {
+        const { error: memberError } = await supabase
+          .from('tenant_memberships')
+          .upsert({
+            tenant_id: resolvedTenantId,
+            auth_user_id: targetAuthId,
+            role: profile?.role || 'owner',
+            full_name: profile?.full_name || user?.user_metadata?.full_name || '',
+          }, { onConflict: 'auth_user_id,tenant_id' })
 
-      if (memberError) {
-        console.warn('[Onboarding] Defensive tenant_memberships upsert failed:', memberError.message)
-        logSupabaseError(memberError, {
-          table: 'tenant_memberships',
-          operation: 'upsert',
-          component: 'BusinessModelOverlay',
-          actionName: 'onboarding.defensive_membership_upsert',
-        })
+        if (memberError) {
+          console.warn('[Onboarding] Defensive tenant_memberships upsert failed:', memberError.message)
+          logSupabaseError(memberError, {
+            table: 'tenant_memberships',
+            operation: 'upsert',
+            component: 'BusinessModelOverlay',
+            actionName: 'onboarding.defensive_membership_upsert',
+          })
+        }
       }
 
       if (resolvedTenantId) {
@@ -649,9 +645,9 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               transition={{ delay: 0.1, type: 'spring', stiffness: 260, damping: 18 }}
               className="w-28 h-28 rounded-full flex items-center justify-center"
               style={{
-                background: 'radial-gradient(ellipse at 40% 30%, rgba(2, 26, 2,0.25), rgba(2, 26, 2,0.06))',
-                border: '2px solid rgba(2, 26, 2,0.35)',
-                boxShadow: '0 0 40px rgba(2, 26, 2,0.2)',
+                background: 'radial-gradient(ellipse at 40% 30%, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.03))',
+                border: '2px solid rgba(34, 197, 94, 0.35)',
+                boxShadow: '0 0 40px rgba(34, 197, 94, 0.2)',
               }}
             >
               <span className="text-5xl select-none">{emoji}</span>
@@ -660,20 +656,20 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
             <motion.div
               animate={{ scale: [1, 1.5], opacity: [0.4, 0] }}
               transition={{ duration: 1.4, repeat: Infinity }}
-              className="absolute inset-0 rounded-full border border-emerald-500/30"
+              className="absolute inset-0 rounded-full border border-green-500/30"
             />
             {/* Pulse ring 2 */}
             <motion.div
               animate={{ scale: [1, 1.8], opacity: [0.2, 0] }}
               transition={{ duration: 1.4, repeat: Infinity, delay: 0.4 }}
-              className="absolute inset-0 rounded-full border border-emerald-500/15"
+              className="absolute inset-0 rounded-full border border-green-500/15"
             />
             {/* Checkmark badge */}
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.35, type: 'spring', stiffness: 300, damping: 18 }}
-              className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/40"
+              className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-500/40"
             >
               <Check size={18} strokeWidth={3} className="text-white" />
             </motion.div>
@@ -684,7 +680,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-xs font-black uppercase tracking-widest text-emerald-400 mb-1"
+              className="text-xs font-black uppercase tracking-widest text-green-400 mb-1"
             >
               {t('onboarding_success_title', 'Bisnis Berhasil Dibuat!')}
             </motion.p>
@@ -718,7 +714,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                 key={i}
                 animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1, 0.8] }}
                 transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.2 }}
-                className="w-1.5 h-1.5 rounded-full bg-emerald-500"
+                className="w-1.5 h-1.5 rounded-full bg-green-500"
               />
             ))}
           </motion.div>
@@ -735,7 +731,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         className="relative w-full max-w-[460px] m-auto bg-[#0C1319]/80 border border-white/5 rounded-[28px] p-6 sm:p-8 shadow-2xl backdrop-blur-md overflow-hidden"
       >
         {/* Animated Background Orbs */}
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none" />
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-green-500/10 rounded-full blur-[80px] pointer-events-none" />
         <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none" />
 
         {/* Close Button */}
@@ -747,11 +743,11 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
         </button>
 
         {/* Top accent line */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent shadow-[0_0_15px_rgba(2, 26, 2,0.3)]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-px bg-gradient-to-r from-transparent via-green-400/40 to-transparent shadow-[0_0_15px_rgba(34,197,94,0.3)]" />
 
         <div className="text-center mb-6 relative z-10">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="p-1 bg-emerald-500/10 rounded-lg border border-emerald-500/20 shadow-inner">
+            <div className="p-1 bg-green-500/10 rounded-lg border border-green-500/20 shadow-inner">
               <img src="/logo.png" alt="TernakOS" className="w-7 h-7 rounded-md object-cover" />
             </div>
             <span className="font-display font-black text-lg tracking-tight text-white">TernakOS</span>
@@ -772,12 +768,12 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                     <div className={cn(
                       'h-1 w-full rounded-full transition-all duration-500',
                       isDone || isActive
-                        ? 'bg-emerald-500 shadow-[0_0_8px_rgba(2, 26, 2,0.35)]'
+                        ? 'bg-green-400 shadow-[0_0_8px_rgba(34,197,94,0.35)]'
                         : 'bg-white/10'
                     )} />
                     <span className={cn(
                       'text-[8px] font-black uppercase tracking-wider transition-colors duration-300 leading-none',
-                      isActive ? 'text-emerald-400' : isDone ? 'text-emerald-600' : 'text-white/15'
+                      isActive ? 'text-green-400' : isDone ? 'text-green-400' : 'text-white/15'
                     )}>
                       {stepLabelMap[label] || label}
                     </span>
@@ -1007,10 +1003,10 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               <div className="mb-6">
                 <label className="flex items-center gap-2.5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 ml-1">
                   <Building2 size={12} className="text-slate-500" />
-                  {category === 'peternak' ? t('onboarding_name_label_farm', 'Nama Farm') : t('onboarding_name_label_biz', 'Nama Bisnis')} <span className="text-emerald-500/50">*</span>
+                  {category === 'peternak' ? t('onboarding_name_label_farm', 'Nama Farm') : t('onboarding_name_label_biz', 'Nama Bisnis')} <span className="text-green-400/50">*</span>
                 </label>
                 <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500/20 to-teal-500/20 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
                   <input
                     type="text"
                     value={businessName}
@@ -1024,7 +1020,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                       nameTaken 
                         ? "border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.1)]" 
                         : businessName.trim().length >= 3 && !nameChecking
-                          ? "border-emerald-500/30 focus:border-emerald-500/60"
+                          ? "border-green-500/30 focus:border-green-500/60"
                           : "border-white/5 focus:border-white/10"
                     )}
                   />
@@ -1049,7 +1045,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                     </p>
                   )}
                   {businessName.trim().length >= 3 && !nameChecking && !nameTaken && (
-                    <p className="text-[12px] text-emerald-500 font-bold animate-in fade-in slide-in-from-left-2 duration-300">
+                    <p className="text-[12px] text-green-400 font-bold animate-in fade-in slide-in-from-left-2 duration-300">
                       {t('onboarding_name_available', '✅ {name} tersedia').replace('{name}', toTitleCase(businessName))}
                     </p>
                   )}
@@ -1060,11 +1056,11 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
               <div className="mb-8 relative">
                 <label className="flex items-center gap-2.5 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 ml-1">
                   <MapPin size={12} className="text-slate-500" />
-                  {t('onboarding_province_label', 'Provinsi')} <span className="text-emerald-500/50">*</span>
+                  {t('onboarding_province_label', 'Provinsi')} <span className="text-green-500/50">*</span>
                 </label>
                 
                 <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500/20 to-teal-500/20 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
                   <input
                     type="text"
                     value={provinceOpen ? provinceSearch : province}
@@ -1079,7 +1075,7 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                     placeholder={province || t('onboarding_province_placeholder', 'Ketik nama provinsi...')}
                     className={cn(
                       "relative w-full h-14 pl-5 pr-12 bg-[#111C24] border rounded-2xl text-white font-medium text-[15px] outline-none transition-all duration-300",
-                      province ? "border-emerald-500/30 shadow-[0_0_15px_rgba(2, 26, 2,0.05)]" : "border-white/5 focus:border-white/10"
+                      province ? "border-green-500/30 shadow-[0_0_15px_rgba(34,197,94,0.05)]" : "border-white/5 focus:border-white/10"
                     )}
                   />
                   <div 
@@ -1111,12 +1107,12 @@ export default function BusinessModelOverlay({ user, profile, isNewBusiness, onC
                             className={cn(
                               "w-full px-4 py-3.5 text-left rounded-xl text-[14px] font-medium transition-all mb-1 flex items-center justify-between",
                               province === p 
-                                ? "bg-emerald-500/10 text-emerald-400 font-bold" 
+                                ? "bg-green-500/10 text-green-400 font-bold" 
                                 : "text-slate-300 hover:bg-white/5 hover:text-white"
                             )}
                           >
                             <span>{p}</span>
-                            {province === p && <Check size={14} className="text-emerald-400 font-black" />}
+                            {province === p && <Check size={14} className="text-green-400 font-black" />}
                           </button>
                         ))
                       ) : (
@@ -1226,25 +1222,25 @@ function CategoryCard({ cat, onClick }) {
   return (
     <motion.div
       whileTap={{ scale: 0.98 }}
-      whileHover={{ scale: 1.01, borderColor: 'rgba(2, 26, 2,0.2)' }}
+      whileHover={{ scale: 1.01, borderColor: 'rgba(34, 197, 94, 0.2)' }}
       onClick={onClick}
-      className="group relative bg-[#111C24] border border-white/5 rounded-2xl p-5 cursor-pointer transition-all duration-300 hover:bg-[#15232d] shadow-lg hover:shadow-emerald-500/5"
+      className="group relative bg-[#111C24] border border-white/5 rounded-2xl p-5 cursor-pointer transition-all duration-300 hover:bg-[#15232d] shadow-lg hover:shadow-green-500/5"
     >
       <div className="flex items-center gap-5">
-        <div className="w-14 h-14 bg-emerald-500/10 rounded-xl flex items-center justify-center text-3xl flex-shrink-0 group-hover:scale-110 transition-transform duration-500 border border-emerald-500/10 group-hover:border-emerald-500/30 group-hover:bg-emerald-500/20 overflow-hidden">
+        <div className="w-14 h-14 bg-green-500/10 rounded-xl flex items-center justify-center text-3xl flex-shrink-0 group-hover:scale-110 transition-transform duration-500 border border-green-500/10 group-hover:border-green-500/30 group-hover:bg-green-500/20 overflow-hidden">
           {typeof cat.icon === 'string' && cat.icon.includes('/')
             ? <img src={cat.icon} alt={t(labelKey, cat.label)} className="w-full h-full object-cover scale-110" />
             : cat.icon}
         </div>
         <div className="flex-1">
-          <h4 className="font-display font-bold text-[16px] text-white group-hover:text-emerald-400 transition-colors duration-300">
+          <h4 className="font-display font-bold text-[16px] text-white group-hover:text-green-400 transition-colors duration-300">
             {t(labelKey, cat.label)}
           </h4>
           <p className="font-body text-[12px] text-slate-500 mt-1 leading-relaxed">
             {t(descKey, cat.description)}
           </p>
         </div>
-        <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-600 group-hover:text-emerald-400 group-hover:bg-emerald-500/10 transition-all duration-300">
+        <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-600 group-hover:text-green-400 group-hover:bg-green-500/10 transition-all duration-300">
           ›
         </div>
       </div>
@@ -1266,14 +1262,14 @@ function ModelCard({ model, selected, onClick }) {
         "group relative border rounded-2xl p-4 transition-all duration-300 flex items-center gap-4",
         model.comingSoon ? "bg-white/[0.02] border-white/5 opacity-50 cursor-not-allowed" : 
         selected 
-          ? "bg-emerald-500/5 border-emerald-500/40 shadow-[0_0_15px_rgba(2, 26, 2,0.1)] cursor-pointer" 
+          ? "bg-green-500/5 border-green-500/40 shadow-[0_0_15px_rgba(34,197,94,0.1)] cursor-pointer" 
           : "bg-[#111C24] border-white/5 hover:border-white/10 hover:bg-[#15232d] cursor-pointer"
       )}
     >
       <div className={cn(
         "w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 transition-all duration-500 border overflow-hidden",
         selected
-          ? "bg-emerald-500/20 border-emerald-500/30 shadow-inner"
+          ? "bg-green-500/20 border-green-500/30 shadow-inner"
           : "bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/10"
       )}>
         {typeof model.icon === 'string' && model.icon.includes('/')
@@ -1284,7 +1280,7 @@ function ModelCard({ model, selected, onClick }) {
         <div className="flex items-center gap-2.5 mb-1">
           <h4 className={cn(
             "font-display font-bold text-[15px] truncate transition-colors",
-            selected ? "text-emerald-400" : "text-white"
+            selected ? "text-green-400" : "text-white"
           )}>
             {t(labelKey, model.label)}
           </h4>
@@ -1301,7 +1297,7 @@ function ModelCard({ model, selected, onClick }) {
       <div className={cn(
         "w-6 h-6 rounded-full flex items-center justify-center transition-all duration-500 border-1.5",
         selected 
-          ? "bg-emerald-500 border-transparent shadow-[0_0_10px_rgba(2, 26, 2,0.3)]" 
+          ? "bg-green-500 border-transparent shadow-[0_0_10px_rgba(34,197,94,0.3)]" 
           : "border-white/10"
       )}>
         {model.comingSoon ? <Lock size={10} className="text-white/20" /> : selected && <Check size={12} className="text-[#052c1e] font-black" strokeWidth={4} />}

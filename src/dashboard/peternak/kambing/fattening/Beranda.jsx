@@ -19,7 +19,7 @@ const KAMBING_CONFIG = {
   mortalityThreshold: 3,
   mortalityWarn: 1.5,
   animalEmoji: '🐐',
-  chartColors: ['#A78BFA', '#7C3AED', '#8B5CF6', '#C4B5FD', '#6D28D9', '#DDD6FE', '#F59E0B', '#FCD34D', '#021a02', '#021a02'],
+  chartColors: ['#A78BFA', '#7C3AED', '#8B5CF6', '#C4B5FD', '#6D28D9', '#DDD6FE', '#F59E0B', '#FCD34D', '#6366F1', '#EC4899'],
   BASE: '/peternak/peternak_kambing_penggemukan',
   calcHariDiFarm,
   calcMortalitas: calcMortalitasKambing,

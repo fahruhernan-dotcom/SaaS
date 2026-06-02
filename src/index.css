@@ -183,12 +183,12 @@ section h1, section h2, section h3 {
     --sidebar-ring: 160 84% 39%;
 
     /* Extended Color Variables for Light Mode */
-    --emerald-50: #021a02;
-    --emerald-300: #021a02;
-    --emerald-400: #021a02;
-    --emerald-500: #021a02;
-    --emerald-600: #021a02;
-    --em-500: #021a02;
+    --emerald-50: #f0fdf4;
+    --emerald-300: #86efac;
+    --emerald-400: #4ade80;
+    --emerald-500: #22c55e;
+    --emerald-600: #16a34a;
+    --em-500: #22c55e;
   
     --bg-base-val: #FAFAFA; /* off-white bersih */
     --bg-1-val: #FFFFFF;    /* white panels */
@@ -232,9 +232,9 @@ section h1, section h2, section h3 {
     --brand-200: #A7F3D0;
     --brand-300: #6EE7B7;
     --brand-400: #34D399;
-    --brand-500: #021a02;
-    --brand-600: #059669;
-    --brand-700: #047857;
+    --brand-500: #22c55e;
+    --brand-600: #16a34a;
+    --brand-700: #15803d;
 
     /* Semantic Variables */
     --bg-page: #FBFCF8;
@@ -247,7 +247,7 @@ section h1, section h2, section h3 {
     --border-muted: #EDF2F7;
 
     /* Status Colors */
-    --success: #021a02;
+    --success: #22c55e;
     --info: #0EA5E9;
     --warning: #F59E0B;
     --danger: #EF4444;
@@ -331,16 +331,16 @@ section h1, section h2, section h3 {
     --text-primary: #F8FAFC;
     --text-secondary: rgba(248, 250, 252, 0.72);
     --text-muted: rgba(248, 250, 252, 0.52);
-    --brand-500: #4e734e; /* main brand green for dark mode — muted forest */
-    --brand-600: #3d5c3d; /* CTA hover override for dark mode */
+    --brand-500: #22c55e; /* main brand green for dark mode — bright green */
+    --brand-600: #16a34a; /* CTA hover override for dark mode */
 
-    /* Extended Color Variables for Dark Mode — based on #4e734e forest scale */
-    --emerald-50:  #e8f0e8; /* lightest tint */
-    --emerald-300: #8cb88c; /* light accent */
-    --emerald-400: #6b9a6b; /* icon / text accent */
-    --emerald-500: #4e734e; /* base brand green */
-    --emerald-600: #3d5c3d; /* darker — hover backgrounds */
-    --em-500: #4e734e;
+    /* Extended Color Variables for Dark Mode — based on #22c55e green scale */
+    --emerald-50:  #f0fdf4; /* lightest tint */
+    --emerald-300: #86efac; /* light accent */
+    --emerald-400: #4ade80; /* icon / text accent */
+    --emerald-500: #22c55e; /* base brand green */
+    --emerald-600: #16a34a; /* darker — hover backgrounds */
+    --em-500: #22c55e;
   
     --bg-base-val: #06090F;
     --bg-1-val: #0C1319;
@@ -349,7 +349,7 @@ section h1, section h2, section h3 {
     --text-primary-val: #F1F5F9;
     --text-secondary-val: #94A3B8;
     --text-muted-val: #4B6478;
-    --text-accent-val: #6b9a6b;  /* emerald-400 tone — readable on dark bg */
+    --text-accent-val: #22c55e;  /* green-500 tone — readable on dark bg */
     
     --border-sub-val: rgba(255, 255, 255, 0.05);
     --border-def-val: rgba(255, 255, 255, 0.09);
@@ -654,9 +654,9 @@ html:not(.dark) .bg-\[\#06090F\]\/90 { background-color: rgba(250, 250, 250, 0.9
 html:not(.dark) .bg-\[\#06090F\]\/95 { background-color: rgba(250, 250, 250, 0.96) !important; }
 
 /* ── Color accent colors — gelap di light mode ── */
-html:not(.dark) .text-emerald-300 { color: #021a02 !important; }
-html:not(.dark) .text-emerald-400 { color: #021a02 !important; }
-html:not(.dark) .text-emerald-500 { color: #021a02 !important; }
+html:not(.dark) .text-emerald-300 { color: #86efac !important; }
+html:not(.dark) .text-emerald-400 { color: #4ade80 !important; }
+html:not(.dark) .text-emerald-500 { color: #22c55e !important; }
 html:not(.dark) .text-\[\#021a02\] { color: #021a02 !important; }
 html:not(.dark) .text-\[\#021a02\] { color: #021a02 !important; }
 html:not(.dark) .text-amber-300   { color: #D97706 !important; }
@@ -911,11 +911,11 @@ html:not(.dark) .fitur-page .py-24 {
 /* emerald/accent text in dark preserve */
 .dark-preserve .text-emerald-300 { color: #6EE7B7 !important; }
 .dark-preserve .text-emerald-400 { color: #34D399 !important; }
-.dark-preserve .text-emerald-500 { color: #021a02 !important; }
-.dark-preserve .text-emerald-600 { color: #059669 !important; }
-.dark-preserve .text-em-400 { color: #34D399 !important; }
-.dark-preserve .text-em-500 { color: #021a02 !important; }
-.dark-preserve .text-em-600 { color: #059669 !important; }
+.dark-preserve .text-emerald-500 { color: #22c55e !important; }
+.dark-preserve .text-emerald-600 { color: #16a34a !important; }
+.dark-preserve .text-em-400 { color: #4ade80 !important; }
+.dark-preserve .text-em-500 { color: #22c55e !important; }
+.dark-preserve .text-em-600 { color: #16a34a !important; }
 
 
 

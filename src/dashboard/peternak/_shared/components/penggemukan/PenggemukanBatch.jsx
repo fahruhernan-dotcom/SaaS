@@ -447,9 +447,9 @@ function CreateBatchSheet({ config, hooks, onClose }) {
     )
   }
 
-  const labelStyle = "flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#4B6478] mb-3 ml-1"
+  const labelStyle = "flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#94A3B8] mb-3 ml-1"
   const inputContainerStyle = "relative transition-all duration-300 group/input"
-  const inputClass = "w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-6 text-sm font-bold text-white placeholder:text-[#4B6478]/50 focus:border-green-500/50 focus:bg-white/[0.05] transition-all outline-none"
+  const inputClass = "w-full h-14 bg-white/[0.03] border border-white/10 rounded-2xl px-6 text-sm font-bold text-white placeholder:text-white/20 focus:border-green-500/50 focus:bg-white/[0.05] transition-all outline-none"
 
   return (
     <motion.div

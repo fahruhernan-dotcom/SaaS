@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { logSupabaseError } from '../logger/supabaseLogger'
 import { TEMPLATE_150_HARI, TEMPLATE_180_HARI } from '../constants/sapiTaskTemplates'
 import { TEMPLATE_DOMBA_PENGGEMUKAN_90, TEMPLATE_DOMBA_INTENSIF_90 } from '../constants/taskTemplates/dombaTaskTemplates'
+import { TEMPLATE_KAMBING_PENGGEMUKAN_90 } from '../constants/taskTemplates/kambingTaskTemplates'
 
 /**
  * Hook mirror: useSapiPenggemukanData.js
@@ -591,6 +592,54 @@ export function useApplyDombaTaskTemplate() {
       qc.invalidateQueries({ queryKey: ['peternak-task-templates', tenant?.id] })
       qc.invalidateQueries({ queryKey: ['peternak-task-instances'] })
       toast.success('Template TernakOS Domba berhasil diterapkan!')
+    },
+    onError: (err) => toast.error('Gagal menerapkan template: ' + err.message),
+  })
+}
+
+/**
+ * Apply a Kambing task template package.
+ */
+export function useApplyKambingTaskTemplate() {
+  const qc = useQueryClient()
+  const { tenant } = useAuth()
+
+  return useMutation({
+    mutationFn: async ({ templateType, batchStartDate, kandangName }) => {
+      const templates = TEMPLATE_KAMBING_PENGGEMUKAN_90
+      const baseDate = new Date(batchStartDate)
+
+      const rows = templates.map(t => ({
+        tenant_id: tenant.id,
+        kandang_name: kandangName,
+        livestock_type: 'kambing_penggemukan',
+        title: t.title,
+        description: t.description,
+        task_type: t.task_type,
+        recurring_type: t.recurring_type,
+        recurring_days_of_week: t.recurring_days_of_week,
+        recurring_interval_days: t.recurring_interval_days,
+        due_time: t.due_time,
+        linked_data_entry: t.linked_data_entry,
+        start_date: format(addDays(baseDate, t.phase_start_offset), 'yyyy-MM-dd'),
+        end_date: format(addDays(baseDate, t.phase_end_offset), 'yyyy-MM-dd'),
+        is_active: true,
+        is_deleted: false,
+      }))
+
+      const { error } = await supabase
+        .from('peternak_task_templates')
+        .insert(rows)
+
+      if (error) {
+        logSupabaseError(error, { table: 'peternak_task_templates', operation: 'insert', component: 'usePeternakTaskData', actionName: 'task.template.apply_kambing', tenantId: tenant?.id })
+        throw error
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['peternak-task-templates', tenant?.id] })
+      qc.invalidateQueries({ queryKey: ['peternak-task-instances'] })
+      toast.success('Template TernakOS Kambing berhasil diterapkan!')
     },
     onError: (err) => toast.error('Gagal menerapkan template: ' + err.message),
   })

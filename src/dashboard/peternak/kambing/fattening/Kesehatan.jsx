@@ -6,6 +6,7 @@ import {
   useKambingAnimals,
   useKambingAnimalsByBatches,
   useAddKambingHealthLog,
+  useDeleteKambingHealthLog,
 } from '@/lib/hooks/useKambingPenggemukanData'
 
 const VACC_SCHEDULE = [
@@ -37,7 +38,7 @@ const KAMBING_HOOKS = {
   useAnimals: useKambingAnimals,
   useAnimalsByBatches: useKambingAnimalsByBatches,
   useAddHealthLog: useAddKambingHealthLog,
-  useDeleteHealthLog: null,
+  useDeleteHealthLog: useDeleteKambingHealthLog,
 }
 
 export default function KambingKesehatan() {

@@ -20,6 +20,8 @@ import { CONTAINER_PRESETS } from '@/lib/constants/taskTemplates'
 import { usePeternakFarms } from '@/lib/hooks/usePeternakData'
 import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 import { calculateDistance, getCurrentPosition, getRelativeXY } from '@/dashboard/peternak/_shared/utils/geofenceUtils'
+import { BCS_OPTIONS, FAMACHA_OPTIONS, FAMACHA_COLOR, BCS_LABEL, WEIGH_METHOD_LABEL } from './ternak/constants'
+import { supabase } from '@/lib/supabase'
 
 
 const EMPTY_ARRAY = []
@@ -339,8 +341,9 @@ export function CompleteTaskSheet({
 }) {
   const [notes, setNotes] = useState('')
   const [reportData, setReportData] = useState({})
-  const [weighingData, setWeighingData] = useState({ animal_id: '', weight_kg: '', girth_cm: '' })
+  const [weighingData, setWeighingData] = useState({ animal_id: '', weight_kg: '', girth_cm: '', bcs: '', famacha_score: '', notes: '' })
   const [weighingEntries, setWeighingEntries] = useState([])
+  const [healthData, setHealthData] = useState({ animal_id: '', medicine_name: '', dosage: '', notes: '' })
   const [healthEntries, setHealthEntries] = useState([])
   const [ortsCategory, setOrtsCategory] = useState(null)
   const [showSuccess, setShowSuccess] = useState(false)
@@ -351,9 +354,18 @@ export function CompleteTaskSheet({
   const permissions = usePeternakPermissions()
   const isStaff = permissions.isStaff && !permissions.isOwner && !permissions.isManajer
 
+  const addWeight = hooks.useAddWeight()
+  const addHealth = hooks.useAddHealth ? hooks.useAddHealth() : null
+  const addFeed = hooks.useAddFeed()
+
   const isAuditMode = isOwnerView && task?.status === 'selesai'
   const isMultiAnimalTask = (task?.task_type === 'timbang' || task?.task_type === 'vaksinasi' || task?.task_type === 'obat_cacing') && config?.usesIndividualAnimals && !isAuditMode
   const reportConfig = isMultiAnimalTask ? null : (task ? TASK_REPORT_CONFIG[task.task_type] : null)
+  const isHealthTask = task?.task_type === 'vaksinasi' || task?.task_type === 'obat_cacing'
+  const unweighedAnimals = animals.filter(a => !weighingEntries.find(e => e.animal_id === a.id))
+  const untreatedAnimals = animals.filter(a => !healthEntries.find(e => e.animal_id === a.id))
+  const entriesCount = task?.task_type === 'timbang' ? weighingEntries.length : healthEntries.length
+  const animalsDone = animals.length > 0 && entriesCount >= animals.length
 
   const [locChecking, setLocChecking] = useState(false)
   const [locDistance, setLocDistance] = useState(null)
@@ -507,12 +519,18 @@ export function CompleteTaskSheet({
     return 'required'
   }, [locChecking, locError, locVerified, locDistance, activeFarm])
 
-  const isCtaDisabled = locChecking || (isStaff && locError === 'NO_COORDINATES')
+  const isCtaDisabled = locChecking || (isStaff && locError === 'NO_COORDINATES') || (isCompleting && isMultiAnimalTask && !animalsDone)
 
   let ctaLabel = 'Cek Lokasi'
   if (task && (task.status === 'pending' || task.status === 'in_progress')) {
     const isStart = reportConfig || isMultiAnimalTask ? !isCompleting : false
-    const baseVerb = isStart ? 'Mulai Tugas' : (isCompleting ? 'Selesaikan Tugas' : 'Tandai Selesai')
+    const baseVerb = isStart 
+      ? 'Mulai Tugas' 
+      : (isCompleting 
+          ? (isMultiAnimalTask 
+              ? `Selesaikan Tugas (${entriesCount}/${animals.length})` 
+              : 'Selesaikan Tugas') 
+          : 'Tandai Selesai')
     
     if (locChecking) {
       ctaLabel = 'Mengecek Lokasi...'
@@ -528,8 +546,7 @@ export function CompleteTaskSheet({
   }
 
 
-  const addWeight = hooks.useAddWeight()
-  const addFeed = hooks.useAddFeed()
+
 
   const { data: activeBatchesData } = hooks.useActiveBatches()
   const activeBatches = useMemo(() => {
@@ -568,6 +585,10 @@ export function CompleteTaskSheet({
           setNotes(parsed.notes || '')
           setWeighingEntries(parsed.weighing_entries || [])
           setHealthEntries(parsed.health_entries || [])
+          if (parsed.health_entries?.length > 0 && !healthData.medicine_name) {
+            const last = parsed.health_entries[parsed.health_entries.length - 1]
+            setHealthData(h => ({ ...h, medicine_name: last.medicine_name, dosage: last.dosage }))
+          }
         } else {
           setNotes(task.notes || '')
           setReportData({})
@@ -580,7 +601,8 @@ export function CompleteTaskSheet({
         setWeighingEntries([])
         setHealthEntries([])
       }
-      setWeighingData({ animal_id: '', weight_kg: '', girth_cm: '' })
+      setWeighingData({ animal_id: '', weight_kg: '', girth_cm: '', bcs: '', famacha_score: '', notes: '' })
+      setHealthData({ animal_id: '', medicine_name: healthData.medicine_name || '', dosage: healthData.dosage || '', notes: '' })
 
       // Init batch splits for farm-wide pakan tasks (no specific batch_id)
       const isPakanTask = task.task_type === 'pakan' || task.task_type === 'pemberian_pakan'
@@ -600,16 +622,127 @@ export function CompleteTaskSheet({
       setIsCompleting(false)
       setNotes('')
       setReportData({})
-      setWeighingData({ animal_id: '', weight_kg: '', girth_cm: '' })
+      setWeighingData({ animal_id: '', weight_kg: '', girth_cm: '', bcs: '', famacha_score: '', notes: '' })
+      setHealthData({ animal_id: '', medicine_name: '', dosage: '', notes: '' })
       setWeighingEntries([])
       setHealthEntries([])
       setOrtsCategory(null)
       setShowSuccess(false)
       setBatchSplits([])
     }
-  }, [open, task, activeBatches])
+  }, [open, task, activeBatches]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!task) return null
+
+  const handleAddWeighing = (e) => {
+    if (e) e.stopPropagation()
+    if (!weighingData.animal_id || !weighingData.weight_kg) {
+      return toast.error(`Pilih ${config.animalLabel} dan masukkan berat`)
+    }
+    handleLaporAction(async () => {
+      try {
+        const selectedAnimal = animals.find(a => a.id === weighingData.animal_id)
+        const record = await addWeight.mutateAsync({
+          animal_id: weighingData.animal_id,
+          batch_id: effectiveBatchId,
+          entry_date: selectedAnimal?.entry_date,
+          entry_weight_kg: selectedAnimal?.entry_weight_kg,
+          weigh_date: format(new Date(), 'yyyy-MM-dd'),
+          weight_kg: parseFloat(weighingData.weight_kg),
+          girth_cm: weighingData.girth_cm ? parseFloat(weighingData.girth_cm) : null,
+          bcs: weighingData.bcs ? parseInt(weighingData.bcs) : null,
+          famacha_score: weighingData.famacha_score ? parseInt(weighingData.famacha_score) : null,
+          weigh_method: 'timbang_langsung',
+          notes: weighingData.notes ? `Auto: ${task.title}. ${weighingData.notes}` : `Auto: ${task.title}`,
+        })
+        const newEntry = {
+          animal_id: weighingData.animal_id,
+          eartag: selectedAnimal?.name || selectedAnimal?.ear_tag || selectedAnimal?.id?.substring(0, 8),
+          weight_kg: parseFloat(weighingData.weight_kg),
+          girth_cm: weighingData.girth_cm ? parseFloat(weighingData.girth_cm) : null,
+          bcs: weighingData.bcs ? parseInt(weighingData.bcs) : null,
+          famacha_score: weighingData.famacha_score ? parseInt(weighingData.famacha_score) : null,
+          notes: weighingData.notes || null,
+          weighed_at: new Date().toISOString(),
+          record_id: record?.id,
+        }
+        const newEntries = [...weighingEntries, newEntry]
+        const newNotes = JSON.stringify({ 
+          _version: '2.0', 
+          report: {}, 
+          weighing_entries: newEntries,
+          batch_id: effectiveBatchId
+        })
+        await updateStatus.mutateAsync({ id: task.id, status: 'in_progress', notes: newNotes })
+        if (record?.id) await linkRecord.mutateAsync({ id: task.id, linked_record_id: record.id, linked_record_table: hooks.weightTable })
+        setWeighingEntries(newEntries)
+        setWeighingData({ animal_id: '', weight_kg: '', girth_cm: '', bcs: '', famacha_score: '', notes: '' })
+        toast.success(`${newEntry.eartag} ditimbang (${newEntries.length}/${animals.length})`)
+
+        if (triggerMedicalInterventionTemplate && newEntry.famacha_score >= 4) {
+          await createTask.mutateAsync({
+            ...triggerMedicalInterventionTemplate,
+            batch_id: effectiveBatchId,
+            due_date: format(new Date(), 'yyyy-MM-dd'),
+            description: `${triggerMedicalInterventionTemplate.description} (Deteksi: ${newEntry.eartag})`,
+            livestock_type: livestockType
+          })
+          toast.warning(`Peringatan: Skor FAMACHA Tinggi. Tugas Intervensi Medis telah ditambahkan secara otomatis.`, {
+            duration: 6000,
+            icon: <AlertTriangle className="text-amber-500" />
+          })
+        }
+      } catch (err) { console.error(err); toast.error('Gagal menyimpan timbangan') }
+    })
+  }
+
+  const handleAddHealth = (e) => {
+    if (e) e.stopPropagation()
+    const isVax = task.task_type === 'vaksinasi'
+    const name = healthData.medicine_name
+    const dose = healthData.dosage
+    if (!healthData.animal_id || !name) {
+      return toast.error(`Pilih ${config.animalLabel} dan isi nama ${isVax ? 'vaksin' : 'obat'}`)
+    }
+    handleLaporAction(async () => {
+      try {
+        const selectedAnimal = animals.find(a => a.id === healthData.animal_id)
+        const record = await addHealth.mutateAsync({
+          animal_id: healthData.animal_id,
+          batch_id: effectiveBatchId,
+          log_date: format(new Date(), 'yyyy-MM-dd'),
+          log_type: isVax ? 'vaksin' : 'medis',
+          medicine_name: !isVax ? name : undefined,
+          vaccine_name: isVax ? name : undefined,
+          medicine_dose: dose,
+          action_taken: isVax ? 'Vaksinasi Terjadwal' : 'Pemberian Obat Cacing',
+          notes: healthData.notes ? `Auto: ${task.title}. ${healthData.notes}` : `Auto: ${task.title}`,
+          handled_by: _profile?.full_name || 'Staff'
+        })
+        const newEntry = {
+          animal_id: healthData.animal_id,
+          eartag: selectedAnimal?.name || selectedAnimal?.ear_tag || selectedAnimal?.id?.substring(0, 8),
+          medicine_name: name,
+          dosage: dose,
+          notes: healthData.notes || null,
+          recorded_at: new Date().toISOString(),
+          record_id: record?.id
+        }
+        const newEntries = [...healthEntries, newEntry]
+        const newNotes = JSON.stringify({
+          _version: '2.0',
+          report: {},
+          weighing_entries: weighingEntries,
+          health_entries: newEntries,
+          batch_id: effectiveBatchId
+        })
+        await updateStatus.mutateAsync({ id: task.id, status: 'in_progress', notes: newNotes })
+        setHealthEntries(newEntries)
+        setHealthData(h => ({ ...h, animal_id: '', notes: '' }))
+        toast.success(`${newEntry.eartag} tercatat (${newEntries.length}/${animals.length})`)
+      } catch (err) { console.error(err); toast.error('Gagal menyimpan record kesehatan') }
+    })
+  }
 
   async function handleComplete() {
     const isPakan = task.task_type === 'pakan' || task.task_type === 'pemberian_pakan'
@@ -621,38 +754,8 @@ export function CompleteTaskSheet({
     try {
       let linkedId = null
       if (isMultiAnimalTask) {
-        if (!weighingData.animal_id || !weighingData.weight_kg) return toast.error('Data timbangan wajib diisi')
-        const animal = animals.find(a => a.id === weighingData.animal_id)
-        if (!animal) return toast.error(`${config.animalLabel} tidak ditemukan`)
-        
-        const record = await addWeight.mutateAsync({ 
-          animal_id: weighingData.animal_id, 
-          batch_id: effectiveBatchId, 
-          entry_date: animal.entry_date, 
-          entry_weight_kg: animal.entry_weight_kg, 
-          weigh_date: format(new Date(), 'yyyy-MM-dd'), 
-          weight_kg: parseFloat(weighingData.weight_kg), 
-          girth_cm: weighingData.girth_cm ? parseFloat(weighingData.girth_cm) : null,
-          weigh_method: 'timbang_langsung', 
-          notes: `Auto: ${task.title}`,
-          ...weighingData // Include extra data like FAMACHA
-        })
-        
-        if (record?.id) linkedId = record.id
-
-        // AUTO-TASKING LOGIC (e.g. FAMACHA 4/5 for Domba)
-        if (triggerMedicalInterventionTemplate && weighingData.famacha_score >= 4) {
-          await createTask.mutateAsync({
-            ...triggerMedicalInterventionTemplate,
-            batch_id: effectiveBatchId,
-            due_date: format(new Date(), 'yyyy-MM-dd'),
-            description: `${triggerMedicalInterventionTemplate.description} (Deteksi: ${animal.ear_tag || animal.name})`,
-            livestock_type: livestockType
-          })
-          toast.warning(`Peringatan: Skor FAMACHA Tinggi. Tugas Intervensi Medis telah ditambahkan secara otomatis.`, {
-            duration: 6000,
-            icon: <AlertTriangle className="text-amber-500" />
-          })
+        if (weighingEntries.length === 0 && healthEntries.length === 0) {
+          return toast.error(`Belum ada data ${config.animalLabel} yang dicatat`)
         }
       }
 
@@ -877,36 +980,332 @@ export function CompleteTaskSheet({
                       )}
 
                       <div className="grid grid-cols-1 gap-8">
-                         {isMultiAnimalTask && !isAuditMode && animals.length === 0 && (
+{isMultiAnimalTask && !isAuditMode && animals.length === 0 && (
                            <div className="flex items-center gap-3 p-4 bg-orange-500/10 border border-orange-500/20 rounded-2xl">
                              <AlertTriangle className="text-orange-500 shrink-0" size={18} />
                              <p className="text-[10px] font-bold text-orange-200/80 uppercase tracking-wider leading-relaxed">Belum ada batch aktif yang terdeteksi untuk lapor data {TASK_TYPE_CFG[task.task_type]?.label?.toLowerCase()}</p>
                            </div>
                          )}
                          {isMultiAnimalTask && !isAuditMode && animals.length > 0 && (
-                            <div className="space-y-6 pt-2 pb-6 border-b border-white/5">
-                               <div className="space-y-4">
-                                  <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">Pilih {config.animalLabel} (Identitas) *</label>
-                                  <Select value={weighingData.animal_id} onValueChange={v => {
-                                      const animal = animals.find(a => a.id === v);
-                                      setWeighingData(w => ({ ...w, animal_id: v, weight_kg: animal?.entry_weight_kg ? animal.entry_weight_kg.toString() : w.weight_kg }));
-                                  }}>
-                                     <SelectTrigger className="h-12 lg:h-16 rounded-xl lg:rounded-[28px] bg-black/40 border border-white/5 px-4 lg:px-8 text-white focus:ring-0"><SelectValue placeholder={`Pilih Tag/Eartag ${config.animalLabel}...`} /></SelectTrigger>
-                                     <SelectContent className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-3xl max-h-[300px]">
-                                        {animals.map(a => (
+                            <div className="space-y-6">
+                               <div className="space-y-4 text-left">
+                                  <label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-4">Pilih {config.animalLabel} *</label>
+                                  <Select 
+                                    value={task.task_type === 'timbang' ? weighingData.animal_id : healthData.animal_id} 
+                                    onValueChange={v => {
+                                      if (task.task_type === 'timbang') {
+                                        setWeighingData(w => ({...w, animal_id: v, weight_kg: '', girth_cm: '', bcs: '', famacha_score: '', notes: ''}))
+                                      } else {
+                                        setHealthData(h => ({...h, animal_id: v}))
+                                      }
+                                    }}
+                                  >
+                                     <SelectTrigger className="h-12 rounded-xl bg-black/40 border border-white/5 px-4 text-white focus:ring-0">
+                                       <SelectValue placeholder={`Pilih ${config.animalLabel}...`} />
+                                     </SelectTrigger>
+                                     <SelectContent className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-2xl max-h-[300px]">
+                                        {(task.task_type === 'timbang' ? unweighedAnimals : untreatedAnimals).map(a => (
                                           <SelectItem key={a.id} value={a.id} className="rounded-xl focus:bg-purple-500/10 focus:text-purple-300">
-                                            {a.name || a.ear_tag || `ID: ${a.id.substring(0,8)}`} {a.entry_weight_kg ? `(${a.entry_weight_kg} kg awal)` : ''}
+                                            {a.name || a.ear_tag || `ID: ${a.id.substring(0,8)}`}
                                           </SelectItem>
                                         ))}
                                      </SelectContent>
                                   </Select>
                                </div>
-                               <div className="grid grid-cols-2 gap-4">
-                                  <div className="space-y-3 lg:space-y-4"><label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-2 lg:ml-4">Berat Aktual *</label><InputNumber value={weighingData.weight_kg} onChange={v => setWeighingData(w => ({ ...w, weight_kg: v }))} suffix=" kg" placeholder="0.0" className="h-12 lg:h-16 rounded-xl lg:rounded-[28px] bg-black/40 border-white/5 font-display text-lg lg:text-xl px-4 lg:px-8 focus:bg-black/60 transition-all border-none shadow-inner w-full" /></div>
-                                  <div className="space-y-3 lg:space-y-4"><label className="text-[10px] font-black text-[#64748B] uppercase tracking-[0.4em] block ml-2 lg:ml-4">Lingkar Dada</label><InputNumber value={weighingData.girth_cm} onChange={v => setWeighingData(w => ({ ...w, girth_cm: v }))} suffix=" cm" placeholder="0.0" className="h-12 lg:h-16 rounded-xl lg:rounded-[28px] bg-black/40 border-white/5 font-display text-lg lg:text-xl px-4 lg:px-8 focus:bg-black/60 transition-all border-none shadow-inner w-full" /></div>
-                               </div>
 
-                               {renderExtraReportFields && renderExtraReportFields('timbang', weighingData, setWeighingData)}
+                               {task.task_type === 'timbang' && (
+                                  <>
+                                     {weighingData.animal_id ? (() => {
+                                        const selectedAnimal = animals.find(a => a.id === weighingData.animal_id)
+                                        const weightRecords = selectedAnimal?.weight_records ?? []
+                                        const records = [...weightRecords]
+                                          .sort((a, b) => new Date(b.weigh_date) - new Date(a.weigh_date))
+                                          .slice(0, 4)
+                                        const latestW = selectedAnimal ? (selectedAnimal.latest_weight_kg ?? selectedAnimal.entry_weight_kg) : 0
+                                        return (
+                                           <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300 text-left">
+                                              {selectedAnimal && (
+                                                 <div className="flex justify-between items-center bg-white/[0.02] border border-white/[0.04] p-3.5 rounded-2xl">
+                                                    <div>
+                                                       <h4 className="font-['Sora'] font-extrabold text-base text-white">{selectedAnimal.name || selectedAnimal.ear_tag}</h4>
+                                                       <p className="text-[10px] text-[#4B6478] font-bold uppercase tracking-wider mt-0.5">{selectedAnimal.breed || '—'} · {selectedAnimal.sex === 'betina' ? 'Betina' : 'Jantan'}</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                       <p className="text-[10px] text-[#4B6478] font-bold">Berat Terakhir</p>
+                                                       <p className="font-['Sora'] font-black text-base text-white">{latestW} <span className="text-xs text-[#4B6478]">kg</span></p>
+                                                    </div>
+                                                 </div>
+                                              )}
+
+                                              {records.length > 0 && selectedAnimal && (
+                                                 <div>
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] mb-2">Riwayat Timbang</p>
+                                                    <div className="space-y-1.5">
+                                                       {records.map((r, i) => {
+                                                          const diff = i < records.length - 1
+                                                            ? (r.weight_kg - records[i + 1].weight_kg).toFixed(1)
+                                                            : (r.weight_kg - selectedAnimal.entry_weight_kg).toFixed(1)
+                                                          const methodCfg = WEIGH_METHOD_LABEL[r.weigh_method]
+                                                          return (
+                                                             <div key={r.id} className="flex items-center justify-between py-2 px-3 bg-white/[0.03] rounded-xl text-xs">
+                                                                <div className="flex items-center gap-2">
+                                                                   <div className={`w-1.5 h-1.5 rounded-full ${i === 0 ? 'bg-green-400' : 'bg-white/20'}`} />
+                                                                   <span className="text-[11px] text-[#4B6478] font-bold">
+                                                                      {new Date(r.weigh_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit' })}
+                                                                   </span>
+                                                                   {methodCfg && <span className={`text-[9px] font-black uppercase ${methodCfg.color}`}>{methodCfg.label}</span>}
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                   <span className={`text-[10px] font-bold ${parseFloat(diff) > 0 ? 'text-green-400' : parseFloat(diff) < 0 ? 'text-rose-400' : 'text-[#4B6478]'}`}>
+                                                                      {parseFloat(diff) > 0 ? `+${diff}` : diff} kg
+                                                                   </span>
+                                                                   <span className="font-['Sora'] font-black text-white">{r.weight_kg} kg</span>
+                                                                </div>
+                                                             </div>
+                                                          )
+                                                       })}
+                                                       <div className="flex items-center justify-between py-2 px-3 bg-white/[0.02] rounded-xl border border-white/[0.04] text-xs">
+                                                          <div className="flex items-center gap-2">
+                                                             <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
+                                                             <span className="text-[11px] text-[#4B6478] font-bold">
+                                                                {new Date(selectedAnimal.entry_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit' })}
+                                                             </span>
+                                                             <span className="text-[9px] font-black uppercase text-[#4B6478]/60">Masuk</span>
+                                                          </div>
+                                                          <span className="font-['Sora'] font-black text-[#4B6478]">{selectedAnimal.entry_weight_kg} kg</span>
+                                                       </div>
+                                                    </div>
+                                                 </div>
+                                              )}
+
+                                              <div className="grid grid-cols-2 gap-4">
+                                                 <div className="space-y-2 col-span-1">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] block">Berat Sekarang (kg) *</label>
+                                                    <div className="relative">
+                                                       <InputNumber
+                                                         value={weighingData.weight_kg}
+                                                         onChange={v => setWeighingData(w => ({ ...w, weight_kg: v }))}
+                                                         placeholder={`Terakhir: ${latestW} kg`}
+                                                         className="w-full h-12 bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 text-white font-['Sora'] font-black text-lg focus:outline-none"
+                                                       />
+                                                       <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#4B6478] font-bold text-sm">kg</span>
+                                                    </div>
+                                                 </div>
+                                                 <div className="space-y-2 col-span-1">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] block">Lkr Dada (CM) (opsional)</label>
+                                                    <InputNumber
+                                                      value={weighingData.girth_cm}
+                                                      onChange={v => setWeighingData(w => ({ ...w, girth_cm: v }))}
+                                                      placeholder="Contoh: 65"
+                                                      className="h-12 bg-black/40 border-white/5 rounded-xl w-full"
+                                                    />
+                                                 </div>
+
+                                                 <div className="col-span-2 space-y-2">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] block">BCS <span className="text-[#4B6478]/50">(opsional)</span></label>
+                                                    <div className="flex gap-2">
+                                                       {BCS_OPTIONS.map(n => (
+                                                          <button
+                                                            key={n}
+                                                            type="button"
+                                                            onClick={() => setWeighingData(w => ({ ...w, bcs: w.bcs === String(n) ? '' : String(n) }))}
+                                                            className={cn(
+                                                              'flex-1 h-11 rounded-xl text-sm font-black border transition-all',
+                                                              weighingData.bcs === String(n)
+                                                                ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                                                                : 'bg-white/[0.03] border-white/[0.06] text-[#4B6478]'
+                                                            )}
+                                                          >
+                                                            {n}
+                                                          </button>
+                                                       ))}
+                                                    </div>
+                                                    {weighingData.bcs && (
+                                                       <p className="text-[10px] text-[#4B6478] mt-1 ml-1">{BCS_LABEL[parseInt(weighingData.bcs)]}</p>
+                                                    )}
+                                                 </div>
+
+                                                 <div className="col-span-2 space-y-2">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] block">Famacha <span className="text-[#4B6478]/50">(opsional)</span></label>
+                                                    <div className="mb-2 rounded-xl overflow-hidden border border-white/[0.06] bg-white/[0.02]">
+                                                       <img src="/famacha_guide_v2.png" alt="Famacha guide" className="w-full object-cover" />
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                       {FAMACHA_OPTIONS.map(n => (
+                                                          <button
+                                                            key={n}
+                                                            type="button"
+                                                            onClick={() => setWeighingData(w => ({ ...w, famacha_score: w.famacha_score === String(n) ? '' : String(n) }))}
+                                                            className={cn(
+                                                              'flex-1 h-11 rounded-xl text-sm font-black border transition-all',
+                                                              weighingData.famacha_score === String(n)
+                                                                ? `bg-white/10 border-white/20 ${FAMACHA_COLOR[n]}`
+                                                                : 'bg-white/[0.03] border-white/[0.06] text-[#4B6478]'
+                                                            )}
+                                                          >
+                                                            {n}
+                                                          </button>
+                                                       ))}
+                                                    </div>
+                                                    {weighingData.famacha_score && (
+                                                       <p className={cn('text-[10px] mt-1 ml-1 font-bold', FAMACHA_COLOR[parseInt(weighingData.famacha_score)])}>
+                                                          Skor {weighingData.famacha_score} — {parseInt(weighingData.famacha_score) <= 2 ? 'Normal' : parseInt(weighingData.famacha_score) === 3 ? 'Perhatian' : 'Perlu Tindakan'}
+                                                       </p>
+                                                    )}
+                                                 </div>
+
+                                                 <div className="col-span-2 space-y-2">
+                                                    <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] block">Catatan</label>
+                                                    <textarea
+                                                      value={weighingData.notes || ''}
+                                                      onChange={e => setWeighingData(w => ({ ...w, notes: e.target.value }))}
+                                                      rows={2}
+                                                      placeholder="Kondisi ternak, observasi, dll..."
+                                                      className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-white text-sm placeholder:text-[#4B6478]/50 focus:outline-none focus:border-green-500/50 resize-none transition-all"
+                                                    />
+                                                 </div>
+
+                                                 {renderExtraReportFields && renderExtraReportFields('timbang', weighingData, setWeighingData)}
+
+                                                 <Button onClick={handleAddWeighing} disabled={addWeight.isPending} className="col-span-2 h-12 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-black uppercase tracking-widest shadow-xl shadow-purple-900/40 border-none transition-all">
+                                                    {addWeight.isPending ? <LoadingSpinner /> : 'Simpan Timbangan'}
+                                                 </Button>
+                                              </div>
+                                           </div>
+                                        )
+                                     })() : (
+                                        <div className="py-8 text-center border border-dashed border-white/5 rounded-2xl bg-white/[0.01]">
+                                           <p className="text-[11px] font-bold text-slate-400">Silakan pilih {config.animalLabel} terlebih dahulu untuk memasukkan data timbangan.</p>
+                                        </div>
+                                     )}
+                                  </>
+                               )}
+
+                               {isHealthTask && (
+                                  <>
+                                     {healthData.animal_id ? (
+                                        <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300 text-left">
+                                           <div className="grid grid-cols-2 gap-4">
+                                              <div className="space-y-2 col-span-1">
+                                                 <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] block">Nama {task.task_type === 'vaksinasi' ? 'Vaksin' : 'Obat'} *</label>
+                                                 <input className="w-full h-12 bg-black/40 border border-white/[0.08] rounded-xl px-4 text-sm text-white focus:outline-none focus:border-purple-500/50" value={healthData.medicine_name || ''} onChange={e => setHealthData(h => ({...h, medicine_name: e.target.value}))} placeholder="Contoh: Anthrax B-12" />
+                                              </div>
+                                              <div className="space-y-2 col-span-1">
+                                                 <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] block">Dosis (ML/Gram) (opsional)</label>
+                                                 <input className="w-full h-12 bg-black/40 border border-white/[0.08] rounded-xl px-4 text-sm text-white focus:outline-none focus:border-purple-500/50" value={healthData.dosage || ''} onChange={e => setHealthData(h => ({...h, dosage: e.target.value}))} placeholder="Contoh: 2ml" />
+                                              </div>
+                                              <div className="col-span-2 space-y-2">
+                                                 <label className="text-[10px] font-black uppercase tracking-widest text-[#4B6478] block">Catatan (opsional)</label>
+                                                 <textarea
+                                                   value={healthData.notes || ''}
+                                                   onChange={e => setHealthData(h => ({ ...h, notes: e.target.value }))}
+                                                   rows={2}
+                                                   placeholder="Catatan penanganan, reaksi obat, dll..."
+                                                   className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-white text-sm placeholder:text-[#4B6478]/50 focus:outline-none focus:border-green-500/50 resize-none transition-all"
+                                                 />
+                                              </div>
+                                              <Button onClick={handleAddHealth} disabled={addHealth?.isPending} className="col-span-2 h-12 rounded-xl bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-black uppercase tracking-widest shadow-xl shadow-purple-900/40 border-none transition-all">
+                                                 {addHealth?.isPending ? <LoadingSpinner /> : 'Catat Penanganan'}
+                                              </Button>
+                                           </div>
+                                        </div>
+                                     ) : (
+                                        <div className="py-8 text-center border border-dashed border-white/5 rounded-2xl bg-white/[0.01]">
+                                           <p className="text-[11px] font-bold text-slate-400">Silakan pilih {config.animalLabel} terlebih dahulu untuk mencatat data kesehatan.</p>
+                                        </div>
+                                     )}
+                                  </>
+                               )}
+
+                               {/* List of completed weight entries */}
+                               {weighingEntries.length > 0 && task.task_type === 'timbang' && (
+                                  <div className="border-t border-white/5 pt-4 space-y-2 text-left">
+                                     <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Sudah Ditimbang ({weighingEntries.length})</p>
+                                     <div className="grid grid-cols-1 gap-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
+                                        {weighingEntries.map((entry) => (
+                                           <div key={entry.animal_id} className="flex items-center justify-between py-2 px-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl text-xs">
+                                              <div className="flex items-center gap-2">
+                                                 <span className="font-bold text-white">{entry.eartag}</span>
+                                                 {entry.bcs && <span className="text-[9px] font-bold bg-white/5 border border-white/10 px-1.5 py-0.25 rounded text-emerald-400">BCS {entry.bcs}</span>}
+                                                 {entry.famacha_score && <span className={cn("text-[9px] font-bold bg-white/5 border border-white/10 px-1.5 py-0.25 rounded", FAMACHA_COLOR[entry.famacha_score])}>FAMACHA {entry.famacha_score}</span>}
+                                              </div>
+                                              <div className="flex items-center gap-3">
+                                                 <span className="font-['Sora'] font-black text-white">{entry.weight_kg} kg</span>
+                                                 <button
+                                                    onClick={async (ev) => {
+                                                       ev.stopPropagation()
+                                                       try {
+                                                          if (entry.record_id) {
+                                                             await supabase.from(hooks.weightTable).update({ is_deleted: true }).eq('id', entry.record_id)
+                                                          }
+                                                          const updatedEntries = weighingEntries.filter(e => e.animal_id !== entry.animal_id)
+                                                          const newNotes = JSON.stringify({ 
+                                                             _version: '2.0', 
+                                                             report: {}, 
+                                                             weighing_entries: updatedEntries,
+                                                             batch_id: effectiveBatchId
+                                                          })
+                                                          await updateStatus.mutateAsync({ id: task.id, status: 'in_progress', notes: newNotes })
+                                                          setWeighingEntries(updatedEntries)
+                                                          toast.success('Timbangan dihapus')
+                                                       } catch (_err) {
+                                                          toast.error('Gagal menghapus data')
+                                                       }
+                                                    }}
+                                                    className="text-rose-400 hover:text-rose-300 p-1 cursor-pointer bg-transparent border-none outline-none"
+                                                 >
+                                                    <Trash2 size={12} />
+                                                 </button>
+                                              </div>
+                                           </div>
+                                        ))}
+                                     </div>
+                                  </div>
+                               )}
+
+                               {/* List of completed health entries */}
+                               {healthEntries.length > 0 && isHealthTask && (
+                                  <div className="border-t border-white/5 pt-4 space-y-2 text-left">
+                                     <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Sudah Dicatat ({healthEntries.length})</p>
+                                     <div className="grid grid-cols-1 gap-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
+                                        {healthEntries.map((entry) => (
+                                           <div key={entry.animal_id} className="flex items-center justify-between py-2 px-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl text-xs">
+                                              <div className="flex items-center gap-2">
+                                                 <span className="font-bold text-white">{entry.eartag}</span>
+                                                 <span className="text-[10px] text-slate-400">{entry.medicine_name} {entry.dosage && `(${entry.dosage})`}</span>
+                                              </div>
+                                              <button
+                                                 onClick={async (ev) => {
+                                                    ev.stopPropagation()
+                                                    try {
+                                                       if (entry.record_id) {
+                                                          const healthTable = hooks.healthTable || hooks.weightTable.replace('_weight_records', '_health_logs')
+                                                          await supabase.from(healthTable).update({ is_deleted: true }).eq('id', entry.record_id)
+                                                       }
+                                                       const updatedEntries = healthEntries.filter(e => e.animal_id !== entry.animal_id)
+                                                       const newNotes = JSON.stringify({ 
+                                                          _version: '2.0', 
+                                                          report: {}, 
+                                                          weighing_entries: weighingEntries,
+                                                          health_entries: updatedEntries,
+                                                          batch_id: effectiveBatchId
+                                                       })
+                                                       await updateStatus.mutateAsync({ id: task.id, status: 'in_progress', notes: newNotes })
+                                                       setHealthEntries(updatedEntries)
+                                                       toast.success('Log kesehatan dihapus')
+                                                    } catch (_err) {
+                                                       toast.error('Gagal menghapus data')
+                                                    }
+                                                 }}
+                                                 className="text-rose-400 hover:text-rose-300 p-1 cursor-pointer bg-transparent border-none outline-none"
+                                              >
+                                                 <Trash2 size={12} />
+                                              </button>
+                                           </div>
+                                        ))}
+                                     </div>
+                                  </div>
+                               )}
                             </div>
                          )}
 

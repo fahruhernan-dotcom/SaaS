@@ -7,7 +7,7 @@ export function KPICard({ label, value, sub, color = 'text-white', icon: Icon, g
   }
   const glowClass = glow ? glowMap[glow] ?? '' : ''
   return (
-    <div className={`bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 transition-all duration-300 shadow-lg ${glowClass}`}>
+    <div className={`bg-white/[0.03] border border-white/[0.03] rounded-2xl p-4 transition-all duration-300 shadow-lg ${glowClass}`}>
       {Icon && (
         <div className={`inline-flex items-center justify-center w-6 h-6 rounded-lg mb-2.5 ${
           glow === 'green' ? 'bg-green-500/10' :
