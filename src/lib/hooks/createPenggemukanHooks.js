@@ -583,15 +583,22 @@ export function createPenggemukanHooks(prefix) {
       mutationFn: async ({ batch_id, animals }) => {
         const parseW = (v) => v ? Number(String(v).replace(',', '.')) || 0 : 0
         const rows = animals.map(a => {
-          const { entry_age_months, age_confidence, acquisition_type, ...rest } = a
+          const { entry_age_months, age_confidence, acquisition_type, price_per_kg, ...rest } = a
+          const entryWeight = parseW(a.entry_weight_kg)
+          const priceKg = a.price_per_kg ? Number(a.price_per_kg) : 0
+          const purchasePrice = a.purchase_price_idr 
+            ? Number(a.purchase_price_idr)
+            : (entryWeight > 0 && priceKg > 0 ? Math.round(entryWeight * priceKg) : 0)
+
           return {
             ...rest,
             tenant_id: tenant.id,
             batch_id,
-            entry_weight_kg: parseW(a.entry_weight_kg),
+            entry_weight_kg: entryWeight,
             entry_bcs: a.entry_bcs ? String(a.entry_bcs).replace(',', '.') : null,
             age_estimate: entry_age_months ? String(entry_age_months) : null,
-            latest_weight_kg: parseW(a.entry_weight_kg),
+            purchase_price_idr: purchasePrice,
+            latest_weight_kg: entryWeight,
             latest_weight_date: a.entry_date,
             status: 'active'
           }
