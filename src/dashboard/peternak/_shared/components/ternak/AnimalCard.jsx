@@ -26,7 +26,7 @@ export function AnimalCard({ animal, onClick, onWeigh, batchLabel }) {
       {/* Header Row (Law of Common Region / Fitts's Law) */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="font-['Sora'] font-bold text-sm text-white tracking-tight">{animal.ear_tag}</span>
+          <span className="font-sans font-bold text-sm text-white tracking-tight">{animal.ear_tag}</span>
           <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-bold ${st.color}`}>
             {st.label}
           </span>
@@ -55,7 +55,7 @@ export function AnimalCard({ animal, onClick, onWeigh, batchLabel }) {
         {/* Ras & Kelamin */}
         <div>
           <span className="text-[8px] font-black text-[#4B6478] uppercase tracking-wider mb-0.5 block">Ras & Kelamin</span>
-          <p className="text-[11px] font-bold text-white font-['Sora'] truncate max-w-full">
+          <p className="text-[11px] font-bold text-white font-sans truncate max-w-full">
             {animal.breed || 'Breed'} · {animal.sex === 'betina' ? 'Betina' : 'Jantan'}
           </p>
         </div>
@@ -63,7 +63,7 @@ export function AnimalCard({ animal, onClick, onWeigh, batchLabel }) {
         {/* B. Masuk (Initial Weight) */}
         <div>
           <span className="text-[8px] font-black text-[#4B6478] uppercase tracking-wider mb-0.5 block">B. Masuk</span>
-          <p className="text-[11px] font-black text-white font-['Sora']">
+          <p className="text-[11px] font-black text-white font-sans">
             {animal.entry_weight_kg ? (
               <>
                 {animal.entry_weight_kg} <span className="text-[9px] text-[#4B6478] font-normal">kg</span>
@@ -75,7 +75,7 @@ export function AnimalCard({ animal, onClick, onWeigh, batchLabel }) {
         {/* B. Terkini (Current Weight & Gain) */}
         <div>
           <span className="text-[8px] font-black text-[#4B6478] uppercase tracking-wider mb-0.5 block">B. Terkini</span>
-          <p className="text-[11px] font-black text-white font-['Sora']">
+          <p className="text-[11px] font-black text-white font-sans">
             {latestW} <span className="text-[9px] text-[#4B6478] font-normal">kg</span>
             {parseFloat(gain) !== 0 && (
               <span className={`text-[9px] font-bold ml-1.5 ${parseFloat(gain) > 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -88,7 +88,7 @@ export function AnimalCard({ animal, onClick, onWeigh, batchLabel }) {
         {/* ADG Harian */}
         <div>
           <span className="text-[8px] font-black text-[#4B6478] uppercase tracking-wider mb-0.5 block">ADG Harian</span>
-          <p className={`text-[11px] font-black font-['Sora'] ${adg >= 150 ? 'text-green-400' : adg > 0 ? 'text-amber-400' : 'text-[#4B6478]'}`}>
+          <p className={`text-[11px] font-black font-sans ${adg >= 150 ? 'text-green-400' : adg > 0 ? 'text-amber-400' : 'text-[#4B6478]'}`}>
             {adg ? (adg >= 1000 ? `+${(adg / 1000).toFixed(2)} kg` : `+${adg.toFixed(0)}g`) : '—'}
           </p>
         </div>
@@ -96,13 +96,13 @@ export function AnimalCard({ animal, onClick, onWeigh, batchLabel }) {
         {/* Hari di Farm */}
         <div>
           <span className="text-[8px] font-black text-[#4B6478] uppercase tracking-wider mb-0.5 block">Hari di Farm</span>
-          <p className="text-[11px] font-bold text-white font-['Sora']">{hari} hari</p>
+          <p className="text-[11px] font-bold text-white font-sans">{hari} hari</p>
         </div>
 
         {/* Timbang Terakhir */}
         <div>
           <span className="text-[8px] font-black text-[#4B6478] uppercase tracking-wider mb-0.5 block">Timbang Terakhir</span>
-          <p className="text-[10px] font-bold text-white font-['Sora'] truncate max-w-full">
+          <p className="text-[10px] font-bold text-white font-sans truncate max-w-full">
             {animal.latest_weight_date ? (
               <>
                 {new Date(animal.latest_weight_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
