@@ -55,6 +55,7 @@ export const useAddKambingSale             = hooks.useAddSale
 export const useUpdateKambingSale          = hooks.useUpdateSale
 export const useDeleteKambingSale          = hooks.useDeleteSale
 export const useKambingHppBatch            = hooks.useHppBatch
+export const useKambingBatchRecord         = hooks.useBatchRecord
 export const useDeleteKambingFeedLog       = hooks.useDeleteFeedLog
 export const useDeleteKambingWeightRecord  = hooks.useDeleteWeightRecord
 export const useDeleteKambingHealthLog     = hooks.useDeleteHealthLog

@@ -421,7 +421,8 @@ function CreateBatchSheet({ config, hooks, onClose }) {
     defaultValues: {
       batch_code: generateBatchCode(),
       kandang_name: tenant?.business_name || '',
-      start_date: new Date().toISOString().split('T')[0]
+      start_date: new Date().toISOString().split('T')[0],
+      hpp_mode: 'simple'
     }
   })
   const [isKandangLocked, setIsKandangLocked] = useState(true)
@@ -442,6 +443,7 @@ function CreateBatchSheet({ config, hooks, onClose }) {
         start_date:      data.start_date,
         target_end_date: data.target_end_date || null,
         notes:           data.notes?.trim() || null,
+        hpp_mode:        data.hpp_mode,
       },
       { onSuccess: onClose }
     )
@@ -567,6 +569,57 @@ function CreateBatchSheet({ config, hooks, onClose }) {
                 )}
               />
             </div>
+          </div>
+
+          <div className={inputContainerStyle}>
+            <label className={labelStyle}>
+              <TrendingUp size={14} className="text-green-500" />
+              Metode Hitung HPP <span className="text-red-500/50">*</span>
+            </label>
+            <Controller
+              name="hpp_mode"
+              control={control}
+              rules={{ required: true }}
+              render={({ field }) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => field.onChange('simple')}
+                    className={cn(
+                      "flex flex-col text-left p-4 rounded-2xl border transition-all duration-300",
+                      field.value === 'simple'
+                        ? "bg-green-500/10 border-green-500/50 shadow-[0_0_20px_rgba(34,197,94,0.15)] text-white"
+                        : "bg-white/[0.02] border-white/10 text-white/50 hover:bg-white/[0.04] hover:text-white"
+                    )}
+                  >
+                    <span className="font-['Sora'] font-black text-xs uppercase tracking-wider mb-1">
+                      Mode Sederhana
+                    </span>
+                    <span className="text-[10px] text-white/40 leading-relaxed font-medium">
+                      Mode Buku Kas Batch — Praktis & instan. HPP dihitung dari modal beli, biaya cash batch, biaya kesehatan, dikurangi penyesuaian sisa.
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => field.onChange('detail')}
+                    className={cn(
+                      "flex flex-col text-left p-4 rounded-2xl border transition-all duration-300",
+                      field.value === 'detail'
+                        ? "bg-violet-500/10 border-violet-500/50 shadow-[0_0_20px_rgba(139,92,246,0.15)] text-white"
+                        : "bg-white/[0.02] border-white/10 text-white/50 hover:bg-white/[0.04] hover:text-white"
+                    )}
+                  >
+                    <span className="font-['Sora'] font-black text-xs uppercase tracking-wider mb-1">
+                      Mode Detail
+                    </span>
+                    <span className="text-[10px] text-white/40 leading-relaxed font-medium">
+                      Mode Stok & Konsumsi. Akurat & komprehensif. Menghitung FCR, ADG, penyusutan pakan harian, dan overhead gaji periodik.
+                    </span>
+                  </button>
+                </div>
+              )}
+            />
           </div>
 
           <div className={inputContainerStyle}>

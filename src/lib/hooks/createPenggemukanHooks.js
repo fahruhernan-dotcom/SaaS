@@ -21,6 +21,7 @@ import { logSupabaseError } from '@/lib/logger/supabaseLogger'
 import { logError } from '@/lib/logger/errorLogger'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
+import { calculateSimpleHpp } from '../hpp/penggemukanHppCalcs'
 import {
   calcADG, calcHariDiFarm,
 } from './useKdPenggemukanData'
@@ -422,16 +423,34 @@ export function createPenggemukanHooks(prefix) {
     })
   }
 
+  function useBatchRecord(batchId) {
+    const { tenant } = useAuth()
+    return useQuery({
+      queryKey: [`${K}-batch-record`, batchId],
+      queryFn: async () => {
+        const { data, error } = await supabase
+          .from(T.batches)
+          .select('*')
+          .eq('id', batchId)
+          .single()
+        if (error) throw error
+        return data
+      },
+      enabled: !!batchId && !!tenant?.id,
+    })
+  }
+
   // ─── MUTATION HOOKS ────────────────────────────────────────────────────────
 
   function useCreateBatch() {
     const qc = useQueryClient()
     const { tenant } = useAuth()
     return useMutation({
-      mutationFn: async ({ batch_code, kandang_name, start_date, target_end_date, notes }) => {
+      mutationFn: async ({ batch_code, kandang_name, start_date, target_end_date, notes, hpp_mode }) => {
         const { error } = await supabase.from(T.batches).insert({
           tenant_id: tenant.id,
           batch_code, kandang_name, start_date, target_end_date, notes,
+          hpp_mode: hpp_mode || 'simple',
           status: 'active',
         })
         if (error) {
@@ -1415,6 +1434,7 @@ export function createPenggemukanHooks(prefix) {
   }
 
   function useHppBatch(batchId) {
+    const { data: batchRecord, isLoading: lBatch } = useBatchRecord(batchId)
     const { data: animalList = [], isLoading: l1 } = useAnimals(batchId)
     const { data: salesList,        isLoading: l2 } = useSales(batchId)
 
@@ -1435,9 +1455,19 @@ export function createPenggemukanHooks(prefix) {
     // were present on each specific calendar day.
     const { data: allAnimalsForType = [], isLoading: l7 } = useAllAnimalsForType()
 
-    const isLoading = l1 || l2 || l3 || l4 || l5 || l6 || l7
+    const isLoading = lBatch || l1 || l2 || l3 || l4 || l5 || l6 || l7
 
     const hpp = React.useMemo(() => {
+      if (batchRecord?.hpp_mode === 'simple') {
+        return calculateSimpleHpp({
+          animalList,
+          salesList,
+          thisBatchOpsCosts,
+          healthLogs,
+          leftoverAdjustmentIdr: batchRecord.leftover_adjustment_idr || 0
+        })
+      }
+
       // ── Modal Beli ─────────────────────────────────────────────────────────
       const totalModalBeli = animalList.reduce((s, a) => s + (Number(a.purchase_price_idr) || 0), 0)
 
@@ -1999,7 +2029,7 @@ export function createPenggemukanHooks(prefix) {
         overheadActiveHeadSample,  // rata-rata ekor aktif lintas-batch (weighted by allocation cost)
         overheadPeriods,           // detail per-payment untuk audit
       }
-    }, [animalList, salesList, thisBatchFeedLogs, thisBatchOpsCosts, healthLogs, batchId, allWorkerPayments, allAnimalsForType])
+    }, [animalList, salesList, thisBatchFeedLogs, thisBatchOpsCosts, healthLogs, batchId, allWorkerPayments, allAnimalsForType, batchRecord])
 
     return { isLoading, ...hpp }
   }
@@ -2099,6 +2129,7 @@ export function createPenggemukanHooks(prefix) {
     useAddOperationalCost,
     useDeleteOperationalCost,
     useHppBatch,
+    useBatchRecord,
   }
 }
 

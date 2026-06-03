@@ -41,6 +41,7 @@ export const useDombaOperationalCostsByBatches   = hooks.useOperationalCostsByBa
 export const useDombaHealthLogsByBatches         = hooks.useHealthLogsByBatches
 export const useDombaOperationalCosts     = hooks.useOperationalCosts
 export const useDombaHppBatch             = hooks.useHppBatch
+export const useDombaBatchRecord          = hooks.useBatchRecord
 
 // Mutations
 export const useCreateDombaBatch         = hooks.useCreateBatch

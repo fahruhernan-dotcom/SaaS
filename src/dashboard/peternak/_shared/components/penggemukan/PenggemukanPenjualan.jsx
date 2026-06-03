@@ -90,6 +90,7 @@ function HppPanel({ batchId, useHppBatch }) {
     warnPakanTanpaBiaya, ternakTanpaHarga = 0, allDead,
     animalDaysBatch = 0, overheadActiveHeadSample = 0,
     animalDaysFormulaText = '',
+    isSimpleMode = false,
   } = hpp
 
   const isProfitable = profitLoss >= 0
@@ -529,7 +530,17 @@ function HppPanel({ batchId, useHppBatch }) {
             <Calculator size={14} className="text-amber-400" />
           </div>
           <div className="text-left">
-            <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest leading-none">Kalkulasi HPP</p>
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <p className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest leading-none">Kalkulasi HPP</p>
+              <span className={cn(
+                'text-[8px] font-black px-1.5 py-0.5 rounded-md border uppercase tracking-widest leading-none',
+                isSimpleMode
+                  ? 'bg-sky-500/10 border-sky-500/20 text-sky-400'
+                  : 'bg-violet-500/10 border-violet-500/20 text-violet-400'
+              )}>
+                {isSimpleMode ? 'Buku Kas' : 'Stok & Konsumsi'}
+              </span>
+            </div>
             <p className="text-sm font-black text-white font-['Sora']">Rp {fmt(totalHpp)}</p>
           </div>
         </div>
@@ -558,6 +569,33 @@ function HppPanel({ batchId, useHppBatch }) {
             className="overflow-hidden"
           >
             <div className="px-4 pb-4 space-y-4 border-t border-white/[0.05]">
+
+              {/* ── Simple Mode info banner ──────────────────────────────────── */}
+              {isSimpleMode && (
+                <div className="mt-3 bg-sky-500/5 border border-sky-500/15 rounded-xl p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sky-400 text-sm">📖</span>
+                    <p className="text-[10px] font-black text-sky-400 uppercase tracking-widest">Mode Buku Kas (Sederhana)</p>
+                  </div>
+                  <p className="text-[10px] text-[#94A3B8] leading-relaxed">
+                    HPP dihitung dari <span className="text-white font-bold">kas keluar langsung</span>: modal beli ternak + biaya pakan (catatan kas) + biaya operasional + biaya kesehatan.
+                    Overhead periodik harian <span className="text-sky-300 font-bold">tidak dialokasikan</span> ke batch ini — cocok untuk pencatatan sederhana tanpa manajemen stok.
+                  </p>
+                  <div className="grid grid-cols-2 gap-1.5 pt-1">
+                    {[
+                      { label: 'Modal Beli', value: totalModalBeli, color: 'text-blue-400' },
+                      { label: 'Biaya Pakan', value: totalBiayaPakan, color: 'text-emerald-400' },
+                      { label: 'Biaya Ops', value: totalBiayaOpsLain, color: 'text-violet-400' },
+                      { label: 'Kesehatan', value: totalBiayaKesehatan, color: 'text-rose-400' },
+                    ].map(item => (
+                      <div key={item.label} className="bg-white/[0.02] border border-white/[0.04] rounded-lg px-2.5 py-2">
+                        <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-widest">{item.label}</p>
+                        <p className={cn('text-xs font-black', item.color)}>Rp {fmt(item.value)}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* ── Warning: Pakan tanpa biaya ──────────────────────────────── */}
               {warnPakanTanpaBiaya && (

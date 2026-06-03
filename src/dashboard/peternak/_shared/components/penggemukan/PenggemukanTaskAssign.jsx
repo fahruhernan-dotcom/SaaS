@@ -124,14 +124,14 @@ function DraggableTaskCard({ task, assignmentOverride, isDragOverlay = false, dr
       {...(!isEffectivelyLocked ? listeners : {})}
       {...(!isEffectivelyLocked ? attributes : {})}
       className={cn(
-        'flex items-center gap-2.5 rounded-2xl border p-3 transition-all select-none',
-        isComplete ? 'bg-white/[0.02] border-white/5 opacity-80' : 'bg-white/[0.03]',
+        'flex items-center gap-2.5 rounded-2xl border p-3 transition-all select-none group',
+        isComplete ? 'bg-white/[0.02] border-white/[0.03] opacity-80' : 'bg-white/[0.03] border-white/[0.03]',
         !isDragOverlay && 'anime-task-card',
         isDragOverlay
           ? cn('shadow-2xl shadow-black/60 bg-[#0C1521]', accent.dragBorder)
           : isDragging
             ? 'opacity-30'
-            : !isEffectivelyLocked && 'border-white/5 hover:border-white/10 cursor-grab active:cursor-grabbing',
+            : !isEffectivelyLocked && 'hover:border-white/10 cursor-grab active:cursor-grabbing',
         isUnlocked && 'ring-1 ring-amber-500/30'
       )}
     >
@@ -140,19 +140,19 @@ function DraggableTaskCard({ task, assignmentOverride, isDragOverlay = false, dr
           "shrink-0 transition-colors flex items-center justify-center w-5 h-5 -ml-1",
           isEffectivelyLocked
             ? "text-white/20 hover:text-white/60 cursor-pointer pointer-events-auto"
-            : "text-white/20 group-hover:text-white/40 pointer-events-none"
+            : "text-white/20 pointer-events-none"
         )}
         onClick={isEffectivelyLocked ? (e) => { e.stopPropagation(); setIsUnlocked(true) } : undefined}
         title={isEffectivelyLocked ? "Klik untuk membuka gembok" : undefined}
       >
         {isEffectivelyLocked
           ? <Lock size={12} />
-          : <GripVertical size={14} className={isUnlocked ? "text-amber-500/50" : "text-[#4B6478]"} />
+          : <GripVertical size={14} className={cn("transition-opacity", isUnlocked ? "text-amber-500/50" : "text-[#4B6478] opacity-40 group-hover:opacity-100")} />
         }
       </div>
 
-      <div className={cn('w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-inner border', typeCfg.bg, typeCfg.border)}>
-        <TypeIcon size={14} className={typeCfg.color} />
+      <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center shrink-0 shadow-inner border', typeCfg.bg, typeCfg.border)}>
+        <TypeIcon size={13} className={typeCfg.color} />
       </div>
 
       <div className="flex-1 min-w-0">
@@ -205,38 +205,53 @@ function WorkerColumn({ worker, tasks, assignmentOverrides, accent }) {
     return Object.keys(groups).sort().map(k => ({ dateString: k, tasks: groups[k] }))
   }, [tasks])
 
+  const totalCount = tasks.length
+  const doneCount = tasks.filter(t => t.status === 'selesai').length
+  const progressPercent = totalCount > 0 ? (doneCount / totalCount) * 100 : 0
+
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        'anime-worker-column flex flex-col min-w-0 rounded-2xl border-2 border-dashed p-3 transition-all min-h-[300px]',
-        isOver ? accent.columnOver : 'border-white/[0.04] bg-transparent'
+        'anime-worker-column flex flex-col min-w-0 rounded-2xl p-3 transition-all min-h-[300px] shadow-[inset_0_1px_1px_rgba(255,255,255,0.02)]',
+        isOver
+          ? cn('border-2 border-dashed', accent.columnOver)
+          : 'border border-white/[0.03] bg-white/[0.01]'
       )}
     >
       <div className={cn(
-        'flex items-center gap-3 rounded-xl border p-3.5 mb-3 transition-all',
+        'flex flex-col rounded-xl border mb-3 transition-all relative overflow-hidden',
         isOver ? accent.workerHeaderOver : 'border-white/[0.06] bg-white/[0.02]'
       )}>
-        <div className={cn('w-9 h-9 rounded-xl border flex items-center justify-center font-black text-xs shrink-0 uppercase shadow-inner', accent.workerAvatar)}>
-          {worker.full_name?.slice(0, 2) ?? 'XX'}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-white truncate leading-tight">{worker.full_name}</p>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="text-[10px] text-[#4B6478] font-bold uppercase tracking-wider">{tasks.length} TUGAS</span>
-            <div className="w-1 h-1 rounded-full bg-white/10" />
-            <span className={cn("text-[10px] font-bold uppercase tracking-wider", accent.doneText)}>{tasks.filter(t => t.status === 'selesai').length} SELESAI</span>
+        <div className="flex items-center gap-3 p-3.5 pb-3">
+          <div className={cn('w-9 h-9 rounded-xl border flex items-center justify-center font-black text-xs shrink-0 uppercase shadow-inner', accent.workerAvatar)}>
+            {worker.full_name?.slice(0, 2) ?? 'XX'}
           </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-white truncate leading-tight">{worker.full_name}</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="text-[10px] text-[#4B6478] font-bold uppercase tracking-wider">{totalCount} TUGAS</span>
+              <div className="w-1 h-1 rounded-full bg-white/10" />
+              <span className={cn("text-[10px] font-bold uppercase tracking-wider", accent.doneText)}>{doneCount} SELESAI</span>
+            </div>
+          </div>
+        </div>
+        {/* Subtle progress bar at the bottom */}
+        <div className="w-full h-1 bg-white/[0.04] mt-auto">
+          <div
+            className={cn("h-full transition-all duration-500 ease-out", accent.doneText.replace('text-', 'bg-'))}
+            style={{ width: `${progressPercent}%` }}
+          />
         </div>
       </div>
 
       <div className="flex-1 space-y-2 overflow-y-auto pr-1 custom-scrollbar">
         {tasks.length === 0 && (
-          <div className="h-24 flex flex-col items-center justify-center opacity-40">
-            <div className="w-10 h-10 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center mb-2">
-              <Plus size={16} className="text-white/40" />
+          <div className="h-24 flex flex-col items-center justify-center opacity-30">
+            <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-2">
+              <Plus size={14} className="text-[#4B6478]" />
             </div>
-            <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-wider">Tarik tugas ke sini</p>
+            <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-wider">Tarik tugas ke sini</p>
           </div>
         )}
         {groupedTasks.map(group => (
@@ -281,14 +296,18 @@ function UnassignedDropZone({ tasks, assignmentOverrides, accent }) {
     <div
       ref={setNodeRef}
       className={cn(
-        'rounded-2xl border-2 border-dashed p-3 space-y-2 min-h-[120px] transition-all',
-        isOver ? 'border-slate-500/40 bg-slate-500/5' : 'border-white/[0.04] bg-white/[0.01]'
+        'rounded-2xl p-3 space-y-2 min-h-[120px] transition-all',
+        isOver
+          ? 'border-2 border-dashed border-slate-500/40 bg-slate-500/5'
+          : 'border border-white/[0.03] bg-white/[0.01] shadow-[inset_0_1px_1px_rgba(255,255,255,0.02)]'
       )}
     >
       {tasks.length === 0 ? (
-        <div className="h-24 flex flex-col items-center justify-center opacity-40">
-          <CheckCircle2 size={24} className="text-green-500/40 mb-2" />
-          <p className="text-[10px] font-bold text-[#4B6478] uppercase tracking-widest text-center">Tugas Selesai Ter-assign</p>
+        <div className="h-24 flex flex-col items-center justify-center opacity-30">
+          <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-2">
+            <CheckCircle2 size={14} className="text-green-400" />
+          </div>
+          <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-wider text-center">Tugas Selesai Ter-assign</p>
         </div>
       ) : (
         groupedTasks.map(group => (
@@ -491,80 +510,80 @@ export function PenggemukanTaskAssign({ config }) {
   if (tasksLoading || workersLoading) return <LoadingSpinner fullPage />
 
   return (
-    <div className="flex flex-col h-full bg-[#06090F] w-full max-w-full overflow-x-hidden">
-      <BrokerPageHeader
-        title={config.pageTitle ?? 'Board Penugasan'}
-        subtitle={format(new Date(selectedDate), 'd MMMM yyyy', { locale: idLocale })}
-        icon={<Users2 size={20} className={accent.iconColor} />}
-      />
+    <div className="flex flex-col h-full bg-[#06090F] w-full overflow-x-hidden">
+      <div className="w-full max-w-6xl mx-auto flex flex-col h-full">
+        <BrokerPageHeader
+          title={config.pageTitle ?? 'Board Penugasan'}
+          subtitle={format(new Date(selectedDate), 'd MMMM yyyy', { locale: idLocale })}
+        />
 
-      {/* Controls Strip — horizontal scroll on mobile */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar px-4 pb-3 md:px-5 shrink-0">
-        {/* Date navigation */}
-        <div className="flex items-center gap-1 p-1 bg-white/[0.03] border border-white/[0.08] rounded-xl shrink-0">
-          <button
-            onClick={() => {
-              const d = new Date(selectedDate)
-              d.setDate(d.getDate() - 1)
-              setSelectedDate(d.toISOString().split('T')[0])
-            }}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#4B6478] hover:text-white hover:bg-white/10 transition-colors"
-          >
-            ‹
-          </button>
-          <button
-            onClick={() => setSelectedDate(today)}
-            className={cn(
-              'px-3 h-8 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap',
-              selectedDate === today
-                ? accent.todayActive
-                : 'border-transparent text-[#4B6478] hover:text-white'
-            )}
-          >
-            Hari Ini
-          </button>
-          <button
-            onClick={() => {
-              const d = new Date(selectedDate)
-              d.setDate(d.getDate() + 1)
-              setSelectedDate(d.toISOString().split('T')[0])
-            }}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-[#4B6478] hover:text-white hover:bg-white/10 transition-colors"
-          >
-            ›
-          </button>
-        </div>
+        {/* Controls Strip — horizontal scroll on mobile */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar px-4 pb-3 md:px-5 shrink-0">
+          {/* Date navigation */}
+          <div className="flex items-center gap-1 p-1 bg-white/[0.03] border border-white/[0.08] rounded-xl shrink-0 h-10">
+            <button
+              onClick={() => {
+                const d = new Date(selectedDate)
+                d.setDate(d.getDate() - 1)
+                setSelectedDate(d.toISOString().split('T')[0])
+              }}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[#4B6478] hover:text-white hover:bg-white/10 transition-colors"
+            >
+              ‹
+            </button>
+            <button
+              onClick={() => setSelectedDate(today)}
+              className={cn(
+                'px-3 h-8 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all whitespace-nowrap',
+                selectedDate === today
+                  ? accent.todayActive
+                  : 'border-transparent text-[#4B6478] hover:text-white'
+              )}
+            >
+              Hari Ini
+            </button>
+            <button
+              onClick={() => {
+                const d = new Date(selectedDate)
+                d.setDate(d.getDate() + 1)
+                setSelectedDate(d.toISOString().split('T')[0])
+              }}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[#4B6478] hover:text-white hover:bg-white/10 transition-colors"
+            >
+              ›
+            </button>
+          </div>
 
-        {/* View Range */}
-        <div className="shrink-0">
-          <Select value={viewRange} onValueChange={setViewRange}>
-            <SelectTrigger className="h-9 w-[130px] rounded-xl bg-white/[0.03] border-white/[0.08] px-3 text-[11px] font-black uppercase tracking-widest text-[#4B6478] focus:ring-0">
-              <SelectValue placeholder="Tampilan" />
-            </SelectTrigger>
-            <SelectContent className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-2xl p-1.5 shadow-2xl">
-              <SelectItem value="hari_ini" className="text-xs font-bold rounded-xl cursor-pointer py-2.5">Hari Ini Saja</SelectItem>
-              <SelectItem value="minggu_ini" className="text-xs font-bold rounded-xl cursor-pointer py-2.5">Minggu Ini</SelectItem>
-              <SelectItem value="bulan_ini" className="text-xs font-bold rounded-xl cursor-pointer py-2.5">Bulan Ini</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+          {/* View Range */}
+          <div className="shrink-0">
+            <Select value={viewRange} onValueChange={setViewRange}>
+              <SelectTrigger className="h-10 w-[130px] rounded-xl bg-white/[0.03] border-white/[0.08] px-3 text-[11px] font-black uppercase tracking-widest text-[#4B6478] focus:ring-0">
+                <SelectValue placeholder="Tampilan" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-2xl p-1.5 shadow-2xl">
+                <SelectItem value="hari_ini" className="text-xs font-bold rounded-xl cursor-pointer py-2.5">Hari Ini Saja</SelectItem>
+                <SelectItem value="minggu_ini" className="text-xs font-bold rounded-xl cursor-pointer py-2.5">Minggu Ini</SelectItem>
+                <SelectItem value="bulan_ini" className="text-xs font-bold rounded-xl cursor-pointer py-2.5">Bulan Ini</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* Auto-assign */}
-        <div className="shrink-0">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                disabled={autoAssignBatch.isPending || (unassignedTasks.length === 0 && workers.length === 0)}
-                className={cn(
-                  'flex items-center gap-2 px-4 h-9 rounded-xl text-white text-[11px] font-black uppercase tracking-widest transition-all disabled:opacity-40 whitespace-nowrap',
-                  accent.btn,
-                  accent.btnShadow
-                )}
-              >
-                <Wand2 size={13} className={cn(autoAssignBatch.isPending && "animate-spin")} />
-                {autoAssignBatch.isPending ? 'Memproses...' : 'Auto-Assign'}
-              </button>
-            </DropdownMenuTrigger>
+          {/* Auto-assign */}
+          <div className="shrink-0">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  disabled={autoAssignBatch.isPending || (unassignedTasks.length === 0 && workers.length === 0)}
+                  className={cn(
+                    'flex items-center gap-2 px-4 h-10 rounded-xl text-white text-[11px] font-black uppercase tracking-widest transition-all disabled:opacity-40 whitespace-nowrap',
+                    accent.btn,
+                    accent.btnShadow
+                  )}
+                >
+                  <Wand2 size={13} className={cn(autoAssignBatch.isPending && "animate-spin")} />
+                  {autoAssignBatch.isPending ? 'Memproses...' : 'Auto-Assign'}
+                </button>
+              </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64 bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-2xl p-2 z-[9999] shadow-2xl">
               <div className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-[#4B6478]">Alokasi Dasar</div>
               <DropdownMenuItem onClick={() => handleAutoAssignAction('auto')} className="text-xs font-bold text-white hover:bg-white/10 rounded-xl cursor-pointer p-3">
@@ -583,112 +602,142 @@ export function PenggemukanTaskAssign({ config }) {
         </div>
       </div>
 
-      {/* Board area */}
-      <div className={cn(
-        "flex-1 min-h-0 px-4 pb-28 md:px-5 md:pb-5",
-        isMobile ? "overflow-y-auto" : "overflow-hidden flex gap-5"
-      )}>
-        <DndContext
-          sensors={sensors}
-          collisionDetection={pointerWithin}
-          onDragStart={handleDragStart}
-          onDragMove={handleDragMove}
-          onDragEnd={handleDragEnd}
-        >
-          {/* On desktop: side-by-side; on mobile: stacked */}
-          <div className={cn(isMobile ? "flex flex-col gap-4" : "flex gap-5 h-full")}>
+        {/* Board area */}
+        <div className={cn(
+          "flex-1 min-h-0 px-4 pb-28 md:px-5 md:pb-5",
+          isMobile ? "overflow-y-auto" : "overflow-hidden flex gap-5"
+        )}>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={pointerWithin}
+            onDragStart={handleDragStart}
+            onDragMove={handleDragMove}
+            onDragEnd={handleDragEnd}
+          >
+            {/* On desktop: side-by-side; on mobile: stacked */}
+            <div className={cn(isMobile ? "flex flex-col gap-4" : "flex gap-5 h-full w-full")}>
 
-            {/* Worker columns area */}
-            <div className={cn(
-              isMobile ? "w-full" : "flex-1 min-w-0 overflow-y-auto pr-2 custom-scrollbar"
-            )}>
-              {workers.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-center opacity-40">
-                  <div className="w-14 h-14 md:w-20 md:h-20 rounded-3xl bg-white/5 flex items-center justify-center mb-3 border border-dashed border-white/10">
-                    <Users2 size={28} className="text-[#4B6478] md:hidden" />
-                    <Users2 size={40} className="text-[#4B6478] hidden md:block" />
+              {/* Worker columns area */}
+              <div className={cn(
+                isMobile ? "w-full" : "flex-1 min-w-0 overflow-y-auto pr-2 custom-scrollbar"
+              )}>
+                {workers.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 text-center opacity-40">
+                    <div className="w-14 h-14 md:w-20 md:h-20 rounded-3xl bg-white/5 flex items-center justify-center mb-3 border border-dashed border-white/10">
+                      <Users2 size={28} className="text-[#4B6478] md:hidden" />
+                      <Users2 size={40} className="text-[#4B6478] hidden md:block" />
+                    </div>
+                    <p className="text-sm font-bold text-white mb-1 uppercase tracking-widest">Pekerja Tidak Ditemukan</p>
+                    <p className="text-[11px] text-[#4B6478] max-w-xs font-bold">Undang anggota tim atau atur role pekerja di pengaturan pengguna.</p>
                   </div>
-                  <p className="text-sm font-bold text-white mb-1 uppercase tracking-widest">Pekerja Tidak Ditemukan</p>
-                  <p className="text-[11px] text-[#4B6478] max-w-xs font-bold">Undang anggota tim atau atur role pekerja di pengaturan pengguna.</p>
+                ) : (
+                  <div
+                    className={cn(isMobile ? "flex flex-col gap-3" : "grid gap-4")}
+                    style={isMobile ? undefined : { gridTemplateColumns: `repeat(${Math.max(1, Math.min(workers.length, isPageWide ? 4 : 3))}, 1fr)` }}
+                  >
+                    {workers.map(worker => (
+                      <WorkerColumn
+                        key={worker.id}
+                        worker={worker}
+                        tasks={workerTaskMap.get(worker.profile_id ?? worker.id) ?? []}
+                        assignmentOverrides={assignmentOverrides}
+                        accent={accent}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column Stack: Antrean Tugas & Tips Pintar */}
+              {!isMobile ? (
+                <div className="w-72 shrink-0 flex flex-col gap-4 h-full">
+                  {/* Antrean Tugas (Unassigned pool) */}
+                  <div className="anime-unassigned-pool flex-1 min-h-0 flex flex-col bg-white/[0.01] border border-white/[0.03] rounded-3xl p-4 shadow-[inset_0_1px_1px_rgba(255,255,255,0.02)]">
+                    <div className="flex items-center justify-between mb-3 px-1">
+                      <div className="flex items-center gap-2">
+                        <ClipboardList size={14} className="text-[#4B6478]" />
+                        <p className="text-xs font-black uppercase tracking-widest text-white">Antrean Tugas</p>
+                      </div>
+                      {unassignedTasks.length > 0 && (
+                        <span className="text-[10px] font-black bg-amber-500 text-black rounded-lg px-2 py-0.5">
+                          {unassignedTasks.length}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
+                      <UnassignedDropZone
+                        tasks={unassignedTasks}
+                        assignmentOverrides={assignmentOverrides}
+                        accent={accent}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Tips Pintar */}
+                  <div className="p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/10 flex flex-col gap-1.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.02)]">
+                    <div className="flex items-center gap-2">
+                      <Wand2 size={12} className="text-amber-400 shrink-0" />
+                      <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest whitespace-nowrap">Tips Pintar</p>
+                    </div>
+                    <p className="text-[10px] text-[#4B6478] font-bold leading-relaxed">
+                      Gunakan <span className="text-white">Auto-Assign</span> untuk mendistribusikan tugas ke pekerja yang tersedia secara cepat.
+                    </p>
+                  </div>
                 </div>
               ) : (
-                <div
-                  className={cn(isMobile ? "flex flex-col gap-3" : "grid gap-4")}
-                  style={isMobile ? undefined : { gridTemplateColumns: `repeat(${Math.max(1, Math.min(workers.length, isPageWide ? 4 : 3))}, 1fr)` }}
-                >
-                  {workers.map(worker => (
-                    <WorkerColumn
-                      key={worker.id}
-                      worker={worker}
-                      tasks={workerTaskMap.get(worker.profile_id ?? worker.id) ?? []}
-                      assignmentOverrides={assignmentOverrides}
-                      accent={accent}
-                    />
-                  ))}
+                /* Mobile layout: stacked */
+                <div className="w-full flex flex-col gap-4">
+                  {/* Antrean Tugas (Unassigned pool) */}
+                  <div className="anime-unassigned-pool flex flex-col bg-white/[0.01] border border-white/[0.03] rounded-3xl p-4">
+                    <div className="flex items-center justify-between mb-3 px-1">
+                      <div className="flex items-center gap-2">
+                        <ClipboardList size={14} className="text-[#4B6478]" />
+                        <p className="text-xs font-black uppercase tracking-widest text-white">Antrean Tugas</p>
+                      </div>
+                      {unassignedTasks.length > 0 && (
+                        <span className="text-[10px] font-black bg-amber-500 text-black rounded-lg px-2 py-0.5">
+                          {unassignedTasks.length}
+                        </span>
+                      )}
+                    </div>
+
+                    <div>
+                      <UnassignedDropZone
+                        tasks={unassignedTasks}
+                        assignmentOverrides={assignmentOverrides}
+                        accent={accent}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Tips Pintar */}
+                  <div className="p-2.5 rounded-2xl bg-amber-500/5 border border-amber-500/10 flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <Wand2 size={12} className="text-amber-400 shrink-0" />
+                      <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest whitespace-nowrap">Tips Pintar</p>
+                    </div>
+                    <p className="text-[10px] text-[#4B6478] font-bold">
+                      Gunakan <span className="text-white">Auto-Assign</span> di atas untuk distribusi cepat.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Antrean Tugas (Unassigned pool) */}
-            <div className={cn(
-              "anime-unassigned-pool flex flex-col bg-white/[0.01] border border-white/[0.04] rounded-3xl p-4",
-              isMobile ? "w-full" : "w-72 shrink-0"
-            )}>
-              <div className="flex items-center justify-between mb-3 px-1">
-                <div className="flex items-center gap-2">
-                  <ClipboardList size={14} className="text-[#4B6478]" />
-                  <p className="text-xs font-black uppercase tracking-widest text-white">Antrean Tugas</p>
-                </div>
-                {unassignedTasks.length > 0 && (
-                  <span className="text-[10px] font-black bg-amber-500 text-black rounded-lg px-2 py-0.5">
-                    {unassignedTasks.length}
-                  </span>
-                )}
-              </div>
-
-              <div className={cn(isMobile ? "" : "flex-1 overflow-y-auto pr-1 custom-scrollbar")}>
-                <UnassignedDropZone
-                  tasks={unassignedTasks}
-                  assignmentOverrides={assignmentOverrides}
+            <DragOverlay>
+              {activeTask ? (
+                <DraggableTaskCard
+                  task={activeTask}
+                  assignmentOverride={assignmentOverrides.get(activeTask.id)}
+                  isDragOverlay
+                  dragRotation={dragRotation}
                   accent={accent}
                 />
-              </div>
-
-              {/* Tips Pintar — compact on mobile */}
-              <div className={cn(
-                "mt-3 p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20",
-                isMobile && "flex items-center gap-3"
-              )}>
-                <div className={cn("flex items-center gap-2", !isMobile && "mb-1")}>
-                  <Wand2 size={12} className="text-amber-400 shrink-0" />
-                  <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest whitespace-nowrap">Tips Pintar</p>
-                </div>
-                {!isMobile && (
-                  <p className="text-[10px] text-[#4B6478] font-bold leading-relaxed">
-                    Gunakan <span className="text-white">Auto-Assign</span> untuk mendistribusikan tugas ke pekerja yang tersedia secara cepat.
-                  </p>
-                )}
-                {isMobile && (
-                  <p className="text-[10px] text-[#4B6478] font-bold">
-                    Gunakan <span className="text-white">Auto-Assign</span> di atas untuk distribusi cepat.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <DragOverlay>
-            {activeTask ? (
-              <DraggableTaskCard
-                task={activeTask}
-                assignmentOverride={assignmentOverrides.get(activeTask.id)}
-                isDragOverlay
-                dragRotation={dragRotation}
-                accent={accent}
-              />
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        </div>
       </div>
     </div>
   )

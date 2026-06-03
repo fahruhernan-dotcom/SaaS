@@ -4,6 +4,7 @@ import { supabase } from '../supabase'
 import { useAuth } from './useAuth'
 import { toast } from 'sonner'
 import { logSupabaseError } from '@/lib/logger/supabaseLogger'
+import { calculateSimpleHpp } from '../hpp/penggemukanHppCalcs'
 
 // ─── Pure KPI Calculations ────────────────────────────────────────────────────
 
@@ -107,6 +108,24 @@ export function useSapiBatches() {
       return data ?? []
     },
     enabled: !!tenant?.id,
+  })
+}
+
+// ── useSapiBatchRecord ─────────────────────────────────────────────────────────
+export function useSapiBatchRecord(batchId) {
+  const { tenant } = useAuth()
+  return useQuery({
+    queryKey: ['sapi-batch-record', batchId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sapi_penggemukan_batches')
+        .select('*')
+        .eq('id', batchId)
+        .single()
+      if (error) throw error
+      return data
+    },
+    enabled: !!batchId && !!tenant?.id,
   })
 }
 
@@ -364,17 +383,28 @@ export function useSapiFeedLogsByBatches(batchIds) {
 }
 
 // ── useSapiOperationalCosts ───────────────────────────────────────────────────
-// NOTE: sapi does not have a dedicated operational_costs table yet — returns empty list
-export function useSapiOperationalCosts(_batchId) {
+export function useSapiOperationalCosts(batchId) {
   return useQuery({
-    queryKey: ['sapi-operational-costs-stub'],
-    queryFn: async () => [],
-    staleTime: Infinity,
+    queryKey: ['sapi-operational-costs', batchId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sapi_penggemukan_operational_costs')
+        .select('*')
+        .eq('batch_id', batchId)
+        .eq('is_deleted', false)
+        .order('log_date', { ascending: false })
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: !!batchId,
   })
 }
 
 // ── useSapiOperationalCostsByBatches ─────────────────────────────────────────
-// NOTE: sapi does not have a dedicated operational_costs table yet — returns empty list
+// TODO (MVP+): Sapi detail HPP operational cost integration was previously stubbed
+// and should be handled as a separate scoped fix, not Phase 1A.
+// The detail path in useSapiHppBatch consumes allOpsCosts from this hook; keeping
+// it as a stub ensures Sapi detail HPP behavior is identical to pre-Phase 1A.
 export function useSapiOperationalCostsByBatches(_batchIds) {
   return useQuery({
     queryKey: ['sapi-operational-costs-multi-stub'],
@@ -413,12 +443,13 @@ export function useCreateSapiBatch() {
   const qc = useQueryClient()
   const { tenant } = useAuth()
   return useMutation({
-    mutationFn: async ({ batch_code, kandang_name, start_date, target_end_date, notes }) => {
+    mutationFn: async ({ batch_code, kandang_name, start_date, target_end_date, notes, hpp_mode }) => {
       const { error } = await supabase
         .from('sapi_penggemukan_batches')
         .insert({
           tenant_id: tenant.id,
           batch_code, kandang_name, start_date, target_end_date, notes,
+          hpp_mode: hpp_mode || 'simple',
           status: 'active',
           batch_purpose: 'potong',
         })
@@ -877,6 +908,7 @@ export function useDeleteSapiSale() {
 
 // ── useSapiHppBatch ───────────────────────────────────────────────────────────
 export function useSapiHppBatch(batchId) {
+  const { data: batchRecord, isLoading: lBatch } = useSapiBatchRecord(batchId)
   const { data: animalList = [], isLoading: l1 } = useSapiAnimals(batchId)
   const { data: salesList,        isLoading: l2 } = useSapiSales(batchId)
   const { data: activeBatches = [], isLoading: l3 } = useSapiActiveBatches()
@@ -887,12 +919,27 @@ export function useSapiHppBatch(batchId) {
   )
   const { data: allFeedLogs = [], isLoading: l4 } = useSapiFeedLogsByBatches(activeBatchIds)
   const { data: allOpsCosts = [], isLoading: l5 } = useSapiOperationalCostsByBatches(activeBatchIds)
+  const { data: thisBatchOpsCosts = [], isLoading: lOps } = useSapiOperationalCosts(batchId)
+  const { data: healthLogs = [], isLoading: lHealth } = useSapiHealthLogs(batchId)
 
-  const isLoading = l1 || l2 || l3 || l4 || l5
+  const isLoading = lBatch || l1 || l2 || l3 || l4 || l5 || lOps || lHealth
 
   const hpp = React.useMemo(() => {
-    const totalModalBeli = animalList.reduce((s, a) => s + (Number(a.purchase_price_idr) || 0), 0)
+    if (batchRecord?.hpp_mode === 'simple') {
+      return calculateSimpleHpp({
+        animalList,
+        salesList,
+        thisBatchOpsCosts,
+        healthLogs,
+        leftoverAdjustmentIdr: batchRecord.leftover_adjustment_idr || 0
+      })
+    }
 
+    // TODO (MVP+): Sapi detail HPP operational cost integration was previously stubbed
+    // and should be handled as a separate scoped fix, not Phase 1A.
+    // allOpsCosts is always [] here (useSapiOperationalCostsByBatches returns stub).
+    // This means totalBiayaOps and pakan cost will be 0 — identical to pre-Phase 1A behavior.
+    const totalModalBeli = animalList.reduce((s, a) => s + (Number(a.purchase_price_idr) || 0), 0)
     const pakanPurchases = allOpsCosts.filter(c => c.category === 'pakan')
     const totalKgPurchased = pakanPurchases.reduce((s, c) => s + (Number(c.quantity) || 0), 0)
     const totalPakanPurchaseCost = pakanPurchases.reduce((s, c) => s + (Number(c.amount_idr) || 0), 0)
@@ -941,7 +988,7 @@ export function useSapiHppBatch(batchId) {
       hppPerEkor, bepPerEkor, bepSisa, sisaHpp, profitLoss,
       kgPakanTotal, hargaRataPerKg,
     }
-  }, [animalList, salesList, activeBatches, allFeedLogs, allOpsCosts, batchId])
+  }, [animalList, salesList, activeBatches, allFeedLogs, allOpsCosts, batchId, batchRecord, thisBatchOpsCosts, healthLogs])
 
   return { isLoading, ...hpp }
 }

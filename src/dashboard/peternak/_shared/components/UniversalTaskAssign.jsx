@@ -90,14 +90,14 @@ function DraggableTaskCard({ task, assignmentOverride, isDragOverlay = false }) 
       {...(!isEffectivelyLocked ? listeners : {})}
       {...(!isEffectivelyLocked ? attributes : {})}
       className={cn(
-        'flex items-center gap-2.5 rounded-xl border p-2.5 transition-all select-none',
-        isComplete ? 'bg-[#0A1118]/70 border-white/5 opacity-80' : 'bg-[#0F1A23]',
+        'flex items-center gap-2.5 rounded-2xl border p-3 transition-all select-none group',
+        isComplete ? 'bg-[#0A1118]/70 border-white/[0.03] opacity-80' : 'bg-[#0F1A23] border-white/[0.03]',
         !isDragOverlay && 'anime-task-card',
         isDragOverlay
           ? 'shadow-2xl shadow-black/60 rotate-1 scale-105 border-[#7C3AED]/40 bg-[#12202E]'
           : isDragging
             ? 'opacity-30'
-            : !isEffectivelyLocked && 'border-white/5 hover:border-white/10 cursor-grab active:cursor-grabbing',
+            : !isEffectivelyLocked && 'hover:border-white/10 cursor-grab active:cursor-grabbing',
         isUnlocked && 'ring-1 ring-amber-500/30'
       )}
     >
@@ -105,30 +105,30 @@ function DraggableTaskCard({ task, assignmentOverride, isDragOverlay = false }) 
       <div 
         className={cn(
           "shrink-0 transition-colors flex items-center justify-center w-5 h-5 -ml-1", 
-          isEffectivelyLocked ? "text-white/20 hover:text-white/60 cursor-pointer pointer-events-auto" : "text-white/20 group-hover:text-white/40 pointer-events-none"
+          isEffectivelyLocked ? "text-white/20 hover:text-white/60 cursor-pointer pointer-events-auto" : "text-white/20 pointer-events-none"
         )}
         onClick={isEffectivelyLocked ? (e) => { e.stopPropagation(); setIsUnlocked(true); } : undefined}
         title={isEffectivelyLocked ? "Klik untuk membuka gembok" : undefined}
       >
-        {isEffectivelyLocked ? <Lock size={12} /> : <GripVertical size={14} className={isUnlocked ? "text-amber-500/50" : ""} />}
+        {isEffectivelyLocked ? <Lock size={12} /> : <GripVertical size={14} className={cn("transition-opacity", isUnlocked ? "text-amber-500/50" : "text-[#4B6478] opacity-40 group-hover:opacity-100")} />}
       </div>
 
       {/* Type icon */}
-      <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center shrink-0', typeCfg.bg, typeCfg.border, 'border')}>
+      <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center shrink-0 shadow-inner border', typeCfg.bg, typeCfg.border)}>
         <TypeIcon size={13} className={typeCfg.color} />
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
         <p className="text-xs font-bold text-white truncate leading-tight">{task.title ?? task.template?.title ?? '—'}</p>
-        <div className="flex items-center gap-2 mt-0.5">
+        <div className="flex items-center gap-2 mt-1">
           {task.kandang_name && (
-            <span className="text-[10px] text-[#4B6478] font-medium truncate">{task.kandang_name}</span>
+            <span className="text-[10px] text-[#4B6478] font-bold uppercase tracking-wider truncate">{task.kandang_name}</span>
           )}
           {task.due_time && (
-            <span className="flex items-center gap-0.5 text-[10px] text-[#4B6478]">
-              <Clock size={9} />
-              {task.due_time.slice(0, 5)}
+            <span className="flex items-center gap-1 text-[10px] text-[#4B6478] font-bold">
+              <Clock size={10} className={task.status === 'terlambat' ? "text-red-500" : "text-[#4B6478]"} />
+              <span className={cn(task.status === 'terlambat' && "text-red-400 font-black")}>{task.due_time.slice(0, 5)}</span>
             </span>
           )}
         </div>
@@ -136,11 +136,11 @@ function DraggableTaskCard({ task, assignmentOverride, isDragOverlay = false }) 
 
       {/* Assigned badge */}
       {assignedName ? (
-        <span className="text-[9px] font-bold bg-[#7C3AED]/15 text-[#A78BFA] border border-[#7C3AED]/25 rounded-full px-2 py-0.5 shrink-0 truncate max-w-[72px]">
+        <span className="text-[9px] font-black uppercase tracking-widest bg-[#7C3AED]/15 text-[#A78BFA] border border-[#7C3AED]/25 rounded-lg px-2 py-1 shrink-0 truncate max-w-[80px]">
           {assignedName.split(' ')[0]}
         </span>
       ) : (
-        <span className={cn('text-[9px] font-bold rounded-full px-2 py-0.5 shrink-0 border', statusCfg.bg, statusCfg.color, statusCfg.border)}>
+        <span className={cn('text-[9px] font-black uppercase tracking-widest rounded-lg px-2 py-1 shrink-0 border', statusCfg.bg, statusCfg.color, statusCfg.border)}>
           {statusCfg.label}
         </span>
       )}
@@ -163,33 +163,55 @@ function WorkerColumn({ worker, tasks, assignmentOverrides }) {
     return Object.keys(groups).sort().map(k => ({ dateString: k, tasks: groups[k] }))
   }, [tasks])
 
+  const totalCount = tasks.length
+  const doneCount = tasks.filter(t => t.status === 'selesai').length
+  const progressPercent = totalCount > 0 ? (doneCount / totalCount) * 100 : 0
+
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        'anime-worker-column flex flex-col min-w-0 rounded-xl border-2 border-dashed p-2 transition-all min-h-[200px]',
-        isOver ? 'border-[#7C3AED]/50 bg-[#7C3AED]/5' : 'border-white/5 bg-transparent'
+        'anime-worker-column flex flex-col min-w-0 rounded-2xl p-3 transition-all min-h-[300px] shadow-[inset_0_1px_1px_rgba(255,255,255,0.02)]',
+        isOver 
+          ? 'border-2 border-dashed border-[#7C3AED]/50 bg-[#7C3AED]/5' 
+          : 'border border-white/[0.03] bg-white/[0.01]'
       )}
     >
       {/* Worker header */}
       <div className={cn(
-        'flex items-center gap-2.5 rounded-lg border p-3 mb-2 transition-all',
-        isOver ? 'border-[#7C3AED]/40 bg-[#7C3AED]/10' : 'border-white/8 bg-[#0C1521]'
+        'flex flex-col rounded-xl border mb-3 transition-all relative overflow-hidden',
+        isOver ? 'border-[#7C3AED]/40 bg-[#7C3AED]/10' : 'border-white/[0.06] bg-white/[0.02]'
       )}>
-        <div className="w-8 h-8 rounded-full bg-[#7C3AED]/20 border border-[#7C3AED]/30 flex items-center justify-center font-bold text-[11px] text-[#A78BFA] shrink-0 uppercase">
-          {worker.full_name?.slice(0, 2) ?? 'XX'}
+        <div className="flex items-center gap-3 p-3.5 pb-3">
+          <div className="w-9 h-9 rounded-xl bg-[#7C3AED]/20 border border-[#7C3AED]/30 flex items-center justify-center font-black text-xs text-[#A78BFA] shrink-0 uppercase shadow-inner">
+            {worker.full_name?.slice(0, 2) ?? 'XX'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-white truncate leading-tight">{worker.full_name}</p>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="text-[10px] text-[#4B6478] font-bold uppercase tracking-wider">{totalCount} TUGAS</span>
+              <div className="w-1 h-1 rounded-full bg-white/10" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#A78BFA]">{doneCount} SELESAI</span>
+            </div>
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-white truncate leading-tight">{worker.full_name}</p>
-          <p className="text-[10px] text-[#4B6478] font-medium">{tasks.length} tugas</p>
+        {/* Subtle progress bar at the bottom */}
+        <div className="w-full h-1 bg-white/[0.04] mt-auto">
+          <div
+            className="h-full bg-[#A78BFA] transition-all duration-500 ease-out"
+            style={{ width: `${progressPercent}%` }}
+          />
         </div>
       </div>
 
       {/* Task list */}
-      <div className="flex-1 space-y-1.5 overflow-y-auto">
+      <div className="flex-1 space-y-2 overflow-y-auto pr-1 custom-scrollbar">
         {tasks.length === 0 && (
-          <div className="h-16 flex items-center justify-center">
-            <p className="text-[10px] text-[#4B6478] text-center">Seret tugas ke sini</p>
+          <div className="h-24 flex flex-col items-center justify-center opacity-30">
+            <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-2">
+              <Plus size={14} className="text-[#4B6478]" />
+            </div>
+            <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-wider">Tarik tugas ke sini</p>
           </div>
         )}
         {groupedTasks.map(group => (
@@ -233,15 +255,18 @@ function UnassignedDropZone({ tasks, assignmentOverrides }) {
     <div
       ref={setNodeRef}
       className={cn(
-        'rounded-xl border-2 border-dashed p-2 space-y-1.5 min-h-[80px] transition-all',
+        'rounded-2xl p-3 space-y-2 min-h-[120px] transition-all',
         isOver
-          ? 'border-slate-500/50 bg-slate-500/5'
-          : 'border-white/5'
+          ? 'border-2 border-dashed border-slate-500/50 bg-slate-500/5'
+          : 'border border-white/[0.03] bg-white/[0.01] shadow-[inset_0_1px_1px_rgba(255,255,255,0.02)]'
       )}
     >
       {tasks.length === 0 ? (
-        <div className="h-16 flex items-center justify-center">
-          <p className="text-[10px] text-[#4B6478]">Semua tugas sudah di-assign</p>
+        <div className="h-24 flex flex-col items-center justify-center opacity-30">
+          <div className="w-8 h-8 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-2">
+            <CheckCircle2 size={14} className="text-green-400" />
+          </div>
+          <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-wider text-center">Tugas Selesai Ter-assign</p>
         </div>
       ) : (
         groupedTasks.map(group => (
@@ -485,22 +510,25 @@ export default function UniversalTaskAssign({ livestockType = 'sapi_penggemukan'
   if (isLoading) return <LoadingSpinner fullPage />
 
   return (
-    <div className="flex flex-col h-full">
-      <BrokerPageHeader
-        title="Penugasan"
-        subtitle={`${format(new Date(selectedDate), 'd MMMM yyyy', { locale: idLocale })}`}
-        icon={<Users2 size={20} className="text-[#A78BFA]" />}
-        actionButton={
+    <div className="flex flex-col h-full bg-[#06090F] w-full overflow-x-hidden">
+      <div className="w-full max-w-6xl mx-auto flex flex-col h-full">
+        <BrokerPageHeader
+          title="Penugasan"
+          subtitle={`${format(new Date(selectedDate), 'd MMMM yyyy', { locale: idLocale })}`}
+        />
+
+        {/* Controls Strip */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar px-4 pb-3 md:px-5 shrink-0">
           <div className="flex items-center gap-2">
             {/* Date navigation */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 p-1 bg-white/[0.03] border border-white/[0.08] rounded-xl shrink-0 h-10">
               <button
                 onClick={() => {
                   const d = new Date(selectedDate)
                   d.setDate(d.getDate() - 1)
                   setSelectedDate(d.toISOString().split('T')[0])
                 }}
-                className="w-8 h-8 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
               >
                 ‹
               </button>
@@ -521,7 +549,7 @@ export default function UniversalTaskAssign({ livestockType = 'sapi_penggemukan'
                   d.setDate(d.getDate() + 1)
                   setSelectedDate(d.toISOString().split('T')[0])
                 }}
-                className="w-8 h-8 rounded-lg bg-white/5 border border-white/8 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
               >
                 ›
               </button>
@@ -529,13 +557,13 @@ export default function UniversalTaskAssign({ livestockType = 'sapi_penggemukan'
 
             {/* View Range Toggle */}
             <Select value={viewRange} onValueChange={setViewRange}>
-              <SelectTrigger className="h-8 w-[130px] rounded-lg bg-white/5 border-white/8 px-3 text-[11px] font-bold text-slate-300 focus:ring-0">
+              <SelectTrigger className="h-10 w-[130px] rounded-xl bg-white/[0.03] border-white/[0.08] px-3 text-[11px] font-black uppercase tracking-widest text-[#4B6478] focus:ring-0">
                 <SelectValue placeholder="Tampilan" />
               </SelectTrigger>
-              <SelectContent className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-xl">
-                <SelectItem value="hari_ini" className="text-xs font-bold rounded-lg cursor-pointer">Hari Ini Saja</SelectItem>
-                <SelectItem value="minggu_ini" className="text-xs font-bold rounded-lg cursor-pointer">Minggu Ini</SelectItem>
-                <SelectItem value="bulan_ini" className="text-xs font-bold rounded-lg cursor-pointer">Bulan Ini</SelectItem>
+              <SelectContent className="bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-2xl p-1.5 shadow-2xl">
+                <SelectItem value="hari_ini" className="text-xs font-bold rounded-xl cursor-pointer py-2.5">Hari Ini Saja</SelectItem>
+                <SelectItem value="minggu_ini" className="text-xs font-bold rounded-xl cursor-pointer py-2.5">Minggu Ini</SelectItem>
+                <SelectItem value="bulan_ini" className="text-xs font-bold rounded-xl cursor-pointer py-2.5">Bulan Ini</SelectItem>
               </SelectContent>
             </Select>
 
@@ -544,7 +572,7 @@ export default function UniversalTaskAssign({ livestockType = 'sapi_penggemukan'
               <DropdownMenuTrigger asChild>
                 <button
                   disabled={autoAssignBatch.isPending || (unassignedTasks.length === 0 && workers.length === 0)}
-                  className="flex items-center gap-1.5 px-3 h-8 rounded-lg bg-[#7C3AED]/15 border border-[#7C3AED]/30 text-[#A78BFA] text-[11px] font-bold hover:bg-[#7C3AED]/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed group"
+                  className="flex items-center gap-1.5 px-4 h-10 rounded-xl bg-[#7C3AED]/15 border border-[#7C3AED]/30 text-[#A78BFA] text-[11px] font-bold hover:bg-[#7C3AED]/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed group shadow-[0_4px_15px_rgba(124,58,237,0.3)]"
                 >
                   <Wand2 size={13} className={cn(autoAssignBatch.isPending && "animate-spin")} />
                   {autoAssignBatch.isPending ? 'Memproses...' : 'Auto-Assign'}
@@ -581,125 +609,120 @@ export default function UniversalTaskAssign({ livestockType = 'sapi_penggemukan'
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        }
-      />
+        </div>
 
-      <div className="flex-1 overflow-hidden flex gap-4 p-4">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={pointerWithin}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          {/* Left: worker columns */}
-          <div className="flex-1 min-w-0 overflow-y-auto pr-1">
-            {workers.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-48 text-center">
-                <div className="w-12 h-12 rounded-2xl bg-[#7C3AED]/10 border border-[#7C3AED]/20 flex items-center justify-center mb-3">
-                  <Users2 size={20} className="text-[#7C3AED]/60" />
-                </div>
-                <p className="text-sm font-bold text-white/60 mb-1">Belum Ada Pekerja</p>
-                <p className="text-[11px] text-[#4B6478]">Undang anggota tim di menu Tim & Akses terlebih dahulu.</p>
-              </div>
-            ) : (
-              <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(workers.length, 3)}, 1fr)` }}>
-                {workers.map(worker => (
-                  <WorkerColumn
-                    key={worker.id}
-                    worker={worker}
-                    tasks={workerTaskMap.get(worker.profile_id ?? worker.id) ?? []}
-                    assignmentOverrides={assignmentOverrides}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Right: unassigned pool */}
-          <div className="anime-unassigned-pool w-64 shrink-0 flex flex-col">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-                <ClipboardList size={12} className="text-slate-400" />
-              </div>
-              <p className="text-xs font-black uppercase tracking-widest text-[#4B6478]">
-                Belum Di-assign
-              </p>
-              {unassignedTasks.length > 0 && (
-                <div className="ml-auto flex items-center gap-2">
-                  <span className="text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full px-2 py-0.5">
-                    {unassignedTasks.length}
-                  </span>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        disabled={autoAssignBatch.isPending}
-                        title="Auto Assign (Bagi Rata)"
-                        className="w-6 h-6 rounded-full bg-[#7C3AED]/20 text-[#A78BFA] hover:bg-[#7C3AED]/40 hover:text-white border border-[#7C3AED]/30 flex items-center justify-center transition-all overflow-hidden relative group disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <div className="absolute inset-0 bg-[#7C3AED]/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                        <Wand2 size={12} className={cn("relative z-10 group-active:scale-90 transition-transform", autoAssignBatch.isPending && "animate-spin")} />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56 bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-2xl p-2 z-[9999]">
-                      <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#4B6478]">
-                        Isi Yang Kosong Saja
-                      </div>
-                      <DropdownMenuItem 
-                        onClick={() => autoAssignBatch.mutate({ startDate: dateFrom, endDate: dateTo, workers, action: 'auto' })}
-                        className="text-xs font-bold text-white hover:bg-white/10 focus:bg-white/10 rounded-xl cursor-pointer"
-                      >
-                        Sesuai Tampilan {viewRange === 'hari_ini' ? '(Hari Ini)' : viewRange === 'minggu_ini' ? '(Minggu Ini)' : '(Bulan Ini)'}
-                      </DropdownMenuItem>
-
-                      <div className="h-px bg-white/10 my-1 mx-2" />
-                      
-                      <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-amber-500/70">
-                        Opsi Lanjutan
-                      </div>
-                      <DropdownMenuItem 
-                        onClick={() => autoAssignBatch.mutate({ startDate: dateFrom, endDate: dateTo, workers, action: 'rebalance' })}
-                        className="text-xs font-bold text-amber-500 hover:bg-amber-500/10 focus:bg-amber-500/10 rounded-xl cursor-pointer mb-1"
-                      >
-                        Kocok Ulang & Bagi Rata Semua
-                      </DropdownMenuItem>
-                      <DropdownMenuItem 
-                        onClick={() => autoAssignBatch.mutate({ startDate: dateFrom, endDate: dateTo, workers, action: 'reset' })}
-                        className="text-xs font-bold text-red-400 hover:bg-red-500/10 focus:bg-red-500/10 rounded-xl cursor-pointer"
-                      >
-                        Reset (Kosongkan Semua)
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              )}
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
-              {tasks.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-32 text-center rounded-xl border border-dashed border-white/5">
-                  <CheckCircle2 size={18} className="text-emerald-400/40 mb-2" />
-                  <p className="text-[11px] text-[#4B6478]">Tidak ada tugas hari ini</p>
+        <div className="flex-1 overflow-hidden flex gap-5 p-4 md:p-5">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={pointerWithin}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            {/* Left: worker columns */}
+            <div className="flex-1 min-w-0 overflow-y-auto pr-2 custom-scrollbar">
+              {workers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-48 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-[#7C3AED]/10 border border-[#7C3AED]/20 flex items-center justify-center mb-3">
+                    <Users2 size={20} className="text-[#7C3AED]/60" />
+                  </div>
+                  <p className="text-sm font-bold text-white/60 mb-1">Belum Ada Pekerja</p>
+                  <p className="text-[11px] text-[#4B6478]">Undang anggota tim di menu Tim & Akses terlebih dahulu.</p>
                 </div>
               ) : (
-                <UnassignedDropZone
-                  tasks={unassignedTasks}
-                  assignmentOverrides={assignmentOverrides}
-                />
+                <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(workers.length, 3)}, 1fr)` }}>
+                  {workers.map(worker => (
+                    <WorkerColumn
+                      key={worker.id}
+                      worker={worker}
+                      tasks={workerTaskMap.get(worker.profile_id ?? worker.id) ?? []}
+                      assignmentOverrides={assignmentOverrides}
+                    />
+                  ))}
+                </div>
               )}
             </div>
-          </div>
 
-          {/* Drag overlay */}
-          <DragOverlay>
-            {activeTask ? (
-              <DraggableTaskCard
-                task={activeTask}
-                assignmentOverride={assignmentOverrides.get(activeTask.id)}
-                isDragOverlay
-              />
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+            {/* Right Stack: Unassigned Pool */}
+            <div className="w-64 shrink-0 flex flex-col gap-4 h-full">
+              <div className="anime-unassigned-pool flex-1 min-h-0 flex flex-col bg-white/[0.01] border border-white/[0.03] rounded-3xl p-4 shadow-[inset_0_1px_1px_rgba(255,255,255,0.02)]">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-6 h-6 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                    <ClipboardList size={12} className="text-slate-400" />
+                  </div>
+                  <p className="text-xs font-black uppercase tracking-widest text-white">
+                    Belum Di-assign
+                  </p>
+                  {unassignedTasks.length > 0 && (
+                    <div className="ml-auto flex items-center gap-2">
+                      <span className="text-[10px] font-bold bg-[#7C3AED]/15 text-[#A78BFA] border border-[#7C3AED]/25 rounded-full px-2 py-0.5">
+                        {unassignedTasks.length}
+                      </span>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            disabled={autoAssignBatch.isPending}
+                            title="Auto Assign (Bagi Rata)"
+                            className="w-6 h-6 rounded-full bg-[#7C3AED]/20 text-[#A78BFA] hover:bg-[#7C3AED]/40 hover:text-white border border-[#7C3AED]/30 flex items-center justify-center transition-all overflow-hidden relative group disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <div className="absolute inset-0 bg-[#7C3AED]/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                            <Wand2 size={12} className={cn("relative z-10 group-active:scale-90 transition-transform", autoAssignBatch.isPending && "animate-spin")} />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56 bg-[#0C1319]/95 backdrop-blur-xl border-white/10 rounded-2xl p-2 z-[9999]">
+                          <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#4B6478]">
+                            Isi Yang Kosong Saja
+                          </div>
+                          <DropdownMenuItem 
+                            onClick={() => autoAssignBatch.mutate({ startDate: dateFrom, endDate: dateTo, workers, action: 'auto' })}
+                            className="text-xs font-bold text-white hover:bg-white/10 focus:bg-white/10 rounded-xl cursor-pointer"
+                          >
+                            Sesuai Tampilan {viewRange === 'hari_ini' ? '(Hari Ini)' : viewRange === 'minggu_ini' ? '(Minggu Ini)' : '(Bulan Ini)'}
+                          </DropdownMenuItem>
+
+                          <div className="h-px bg-white/10 my-1 mx-2" />
+                          
+                          <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-amber-500/70">
+                            Opsi Lanjutan
+                          </div>
+                          <DropdownMenuItem 
+                            onClick={() => autoAssignBatch.mutate({ startDate: dateFrom, endDate: dateTo, workers, action: 'rebalance' })}
+                            className="text-xs font-bold text-amber-500 hover:bg-amber-500/10 focus:bg-amber-500/10 rounded-xl cursor-pointer mb-1"
+                          >
+                            Kocok Ulang & Bagi Rata Semua
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => autoAssignBatch.mutate({ startDate: dateFrom, endDate: dateTo, workers, action: 'reset' })}
+                            className="text-xs font-bold text-red-400 hover:bg-red-500/10 focus:bg-red-500/10 rounded-xl cursor-pointer"
+                          >
+                            Reset (Kosongkan Semua)
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
+                  <UnassignedDropZone
+                    tasks={unassignedTasks}
+                    assignmentOverrides={assignmentOverrides}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Drag overlay */}
+            <DragOverlay>
+              {activeTask ? (
+                <DraggableTaskCard
+                  task={activeTask}
+                  assignmentOverride={assignmentOverrides.get(activeTask.id)}
+                  isDragOverlay
+                />
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        </div>
       </div>
     </div>
   )
