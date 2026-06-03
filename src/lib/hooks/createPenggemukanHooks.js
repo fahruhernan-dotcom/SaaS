@@ -650,14 +650,15 @@ export function createPenggemukanHooks(prefix) {
           }
         }
       },
-      onSuccess: (_, { _batch_id }) => {
+      onSuccess: (_, variables) => {
         qc.invalidateQueries({ queryKey: [`${K}-animals`] })
         qc.invalidateQueries({ queryKey: [`${K}-animals-multi`] })
         qc.invalidateQueries({ queryKey: [`${K}-batches`, tenant?.id] })
         qc.invalidateQueries({ queryKey: ['ternak-limit', tenant?.id, 'domba_kambing'] })
-        toast.success('Semua ternak berhasil ditambahkan!')
+        const count = variables?.animals?.length || 0
+        toast.success(`Berhasil menyimpan ${count} data ternak`)
       },
-      onError: (err) => toast.error('Gagal tambah bulk: ' + err.message),
+      onError: () => toast.error('Gagal menyimpan data ternak. Coba lagi atau hubungi admin.'),
     })
   }
 

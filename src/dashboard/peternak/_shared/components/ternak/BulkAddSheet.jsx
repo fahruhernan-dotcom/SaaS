@@ -28,7 +28,7 @@ export function BulkAddSheet({ batchId, animalsCount, onBulkAdd, isPending, anim
 
   const [globalPrice, setGlobalPrice] = useState(0)
 
-  const { control, register, handleSubmit, watch, setValue } = useForm({
+  const { control, register, handleSubmit, setValue, getValues } = useForm({
     defaultValues: {
       rows: [0, 1, 2].map(i => ({
         ear_tag: getEarTag(i), sex: 'jantan',
@@ -43,19 +43,61 @@ export function BulkAddSheet({ batchId, animalsCount, onBulkAdd, isPending, anim
     setGlobalPrice(val)
     fields.forEach((_, i) => {
       setValue(`rows.${i}.price_per_kg`, val)
-      const w = parseFloat(watch(`rows.${i}.entry_weight_kg`))
+      const w = parseFloat(getValues(`rows.${i}.entry_weight_kg`))
       if (!isNaN(w) && w > 0) setValue(`rows.${i}.purchase_price_idr`, Math.round(w * val))
     })
   }
 
   const onSubmit = (data) => {
-    const valid = data.rows.filter(r => r.ear_tag && (r.entry_weight_kg || r.purchase_price_idr))
-    if (!valid.length) return
-    const missingPrice = valid.filter(r => !r.purchase_price_idr || r.purchase_price_idr <= 0)
-    if (missingPrice.length > 0) {
-      toast.error('Harga Beli wajib diisi untuk seluruh ternak agar HPP akurat!')
+    const activeRows = data.rows.filter(r => {
+      return r.breed || r.entry_weight_kg || r.price_per_kg || r.purchase_price_idr
+    })
+
+    if (activeRows.length === 0) {
+      toast.error('Lengkapi data ternak terlebih dahulu')
       return
     }
+
+    for (let i = 0; i < data.rows.length; i++) {
+      const r = data.rows[i]
+      const rowNum = i + 1
+      
+      const isActive = r.breed || r.entry_weight_kg || r.price_per_kg || r.purchase_price_idr
+      if (!isActive) continue
+
+      if (!r.ear_tag || !r.ear_tag.trim()) {
+        toast.error(`Baris ${rowNum}: Ear Tag wajib diisi`)
+        return
+      }
+      if (!r.breed) {
+        toast.error(`Baris ${rowNum}: Breed wajib diisi`)
+        return
+      }
+      if (!r.sex) {
+        toast.error(`Baris ${rowNum}: Kelamin wajib diisi`)
+        return
+      }
+      const weight = parseFloat(r.entry_weight_kg)
+      if (isNaN(weight) || weight <= 0) {
+        toast.error(`Baris ${rowNum}: Berat wajib diisi dan harus lebih dari 0 kg`)
+        return
+      }
+      if (!r.entry_date) {
+        toast.error(`Baris ${rowNum}: Tgl Masuk wajib diisi`)
+        return
+      }
+      const price = parseFloat(r.purchase_price_idr)
+      if (isNaN(price) || price <= 0) {
+        toast.error(`Baris ${rowNum}: Harga Beli wajib diisi dan harus lebih dari Rp 0`)
+        return
+      }
+    }
+
+    const valid = activeRows.map(r => ({
+      ...r,
+      ear_tag: r.ear_tag.trim(),
+    }))
+
     onBulkAdd({ batch_id: batchId, animals: valid }, { onSuccess: onClose })
   }
 
@@ -126,13 +168,15 @@ export function BulkAddSheet({ batchId, animalsCount, onBulkAdd, isPending, anim
                           value={field.value}
                           onChange={val => {
                             field.onChange(val)
-                            const pkg = parseFloat(watch(`rows.${i}.price_per_kg`))
+                            const pkg = parseFloat(getValues(`rows.${i}.price_per_kg`))
                             if (!isNaN(val) && !isNaN(pkg) && val > 0 && pkg > 0)
                               setValue(`rows.${i}.purchase_price_idr`, Math.round(val * pkg))
                           }}
-                          className="bg-transparent text-white text-[13px] font-black outline-none border-b border-white/5 focus:border-green-500/50 w-full text-right pr-4 font-['Sora'] h-8 rounded-none px-0"
+                          className="bg-transparent text-white text-[13px] font-black outline-none border-b border-white/5 focus:border-green-500/50 w-full text-right font-['Sora'] h-8 rounded-none px-0"
                           placeholder="0"
                           suffix="kg"
+                          hideSpinners={true}
+                          suffixPosition="right"
                         />
                       )} />
                     </div>
@@ -141,7 +185,7 @@ export function BulkAddSheet({ batchId, animalsCount, onBulkAdd, isPending, anim
                     <Controller control={control} name={`rows.${i}.price_per_kg`} render={({ field }) => (
                       <InputRupiah value={field.value} onChange={v => {
                         field.onChange(v)
-                        const w = parseFloat(watch(`rows.${i}.entry_weight_kg`))
+                        const w = parseFloat(getValues(`rows.${i}.entry_weight_kg`))
                         if (!isNaN(w) && w > 0) setValue(`rows.${i}.purchase_price_idr`, Math.round(w * v))
                       }} className="h-8 text-[11px] font-bold bg-transparent border-0 border-b border-white/5 rounded-none px-0" />
                     )} />
@@ -150,7 +194,7 @@ export function BulkAddSheet({ batchId, animalsCount, onBulkAdd, isPending, anim
                     <Controller control={control} name={`rows.${i}.purchase_price_idr`} render={({ field }) => (
                       <InputRupiah value={field.value} onChange={v => {
                         field.onChange(v)
-                        const w = parseFloat(watch(`rows.${i}.entry_weight_kg`))
+                        const w = parseFloat(getValues(`rows.${i}.entry_weight_kg`))
                         if (!isNaN(w) && w > 0) setValue(`rows.${i}.price_per_kg`, Math.round(v / w))
                       }} className="h-8 text-[11px] font-bold bg-transparent border-0 border-b border-white/5 rounded-none px-0" />
                     )} />
