@@ -21,7 +21,7 @@ export function AnimalCard({ animal, onClick, onWeigh, batchLabel }) {
     <motion.div
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 cursor-pointer active:bg-white/[0.05] transition-colors"
+      className="bg-[#111C24] border border-white/[0.08] hover:border-white/[0.15] rounded-2xl p-4 cursor-pointer hover:bg-[#162530] transition-all shadow-[0_4px_16px_rgba(0,0,0,0.2)]"
     >
       <div className="flex items-start justify-between mb-3">
         <div>
@@ -52,7 +52,7 @@ export function AnimalCard({ animal, onClick, onWeigh, batchLabel }) {
           {onWeigh && (
             <button
               onClick={(e) => { e.stopPropagation(); onWeigh(animal) }}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-black uppercase tracking-widest active:scale-95 transition-transform"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-black uppercase tracking-widest hover:bg-green-500/20 active:scale-95 transition-all"
             >
               <Scale size={11} />
               Timbang
@@ -61,18 +61,28 @@ export function AnimalCard({ animal, onClick, onWeigh, batchLabel }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 text-center mt-3 pt-3 border-t border-white/[0.04]">
+      <div className="grid grid-cols-4 gap-2 text-center mt-3 pt-3 border-t border-white/[0.05]">
         <div>
           <p className="text-[11px] font-black text-white">{hari}</p>
           <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-wider">Hari</p>
         </div>
-        <div className="border-x border-white/[0.06]">
+        <div className="border-l border-white/[0.05]">
+          <p className="text-[11px] font-black text-white">
+            {animal.entry_weight_kg ? (
+              <>
+                {animal.entry_weight_kg} <span className="text-[9px] text-[#4B6478] font-normal">kg</span>
+              </>
+            ) : '—'}
+          </p>
+          <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-wider">B. Masuk</p>
+        </div>
+        <div className="border-l border-white/[0.05]">
           <p className={`text-[11px] font-black ${adg >= 150 ? 'text-green-400' : adg > 0 ? 'text-amber-400' : 'text-[#4B6478]'}`}>
             {adg ? (adg >= 1000 ? `${(adg / 1000).toFixed(2)}kg` : `${adg.toFixed(0)}g`) : '—'}
           </p>
           <p className="text-[9px] font-bold text-[#4B6478] uppercase tracking-wider">ADG/hr</p>
         </div>
-        <div>
+        <div className="border-l border-white/[0.05]">
           <p className="text-[11px] font-black text-white">
             {animal.entry_age_months || animal.age_estimate || '—'}{(animal.entry_age_months || animal.age_estimate) ? ' bln' : ''}
           </p>
@@ -81,7 +91,7 @@ export function AnimalCard({ animal, onClick, onWeigh, batchLabel }) {
       </div>
 
       {animal.latest_weight_date && weightRecords.length > 0 && (
-        <div className="mt-2.5 pt-2.5 border-t border-white/[0.04] flex justify-between items-center">
+        <div className="mt-2.5 pt-2.5 border-t border-white/[0.05] flex justify-between items-center">
           <span className="text-[10px] text-[#4B6478] font-medium">
             Timbang: {new Date(animal.latest_weight_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
           </span>
