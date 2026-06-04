@@ -21,10 +21,10 @@ export function useTernakLimit(speciesGroup) {
 
       if (speciesGroup === 'domba_kambing') {
         const [dombaF, dombaB, kambingF, kambingB] = await Promise.all([
-          supabase.from('domba_penggemukan_animals').select('*', { count: 'exact', head: true }).in('status', ['active', 'aktif']).eq('is_deleted', false),
-          supabase.from('domba_breeding_animals').select('*', { count: 'exact', head: true }).in('status', ['active', 'aktif']).eq('is_deleted', false),
-          supabase.from('kambing_penggemukan_animals').select('*', { count: 'exact', head: true }).in('status', ['active', 'aktif']).eq('is_deleted', false),
-          supabase.from('kambing_breeding_animals').select('*', { count: 'exact', head: true }).in('status', ['active', 'aktif']).eq('is_deleted', false),
+          supabase.from('domba_penggemukan_animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['active', 'aktif']).eq('is_deleted', false),
+          supabase.from('domba_breeding_animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['active', 'aktif']).eq('is_deleted', false),
+          supabase.from('kambing_penggemukan_animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['active', 'aktif']).eq('is_deleted', false),
+          supabase.from('kambing_breeding_animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['active', 'aktif']).eq('is_deleted', false),
         ])
 
         if (dombaF.error) throw dombaF.error
@@ -35,8 +35,8 @@ export function useTernakLimit(speciesGroup) {
         currentCount = (dombaF.count || 0) + (dombaB.count || 0) + (kambingF.count || 0) + (kambingB.count || 0)
       } else if (speciesGroup === 'sapi') {
         const [sapiF, sapiB] = await Promise.all([
-          supabase.from('sapi_penggemukan_animals').select('*', { count: 'exact', head: true }).in('status', ['active', 'aktif']).eq('is_deleted', false),
-          supabase.from('sapi_breeding_animals').select('*', { count: 'exact', head: true }).in('status', ['active', 'aktif', 'bunting']).eq('is_deleted', false),
+          supabase.from('sapi_penggemukan_animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['active', 'aktif']).eq('is_deleted', false),
+          supabase.from('sapi_breeding_animals').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId).in('status', ['active', 'aktif', 'bunting']).eq('is_deleted', false),
         ])
 
         if (sapiF.error) throw sapiF.error
