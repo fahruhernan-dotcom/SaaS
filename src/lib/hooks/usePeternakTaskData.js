@@ -52,12 +52,41 @@ export function usePeternakTaskTemplates(filters = {}) {
  * Fetch task instances with dynamic filters.
  */
 export function usePeternakTaskInstances(filters = {}) {
-  const { tenant } = useAuth()
+  const { tenant, profile } = useAuth()
   const { due_date_from, due_date_to, status, kandangName, workerProfileId, livestockType } = filters
 
   return useQuery({
     queryKey: ['peternak-task-instances', tenant?.id, filters],
     queryFn: async () => {
+      if (tenant?.id && due_date_from && due_date_to) {
+        try {
+          const { error: rpcError } = await supabase.rpc('materialize_peternak_task_instances', {
+            p_tenant_id: tenant.id,
+            p_start_date: due_date_from,
+            p_end_date: due_date_to,
+            p_livestock_type: livestockType || null,
+          })
+          if (rpcError) {
+            logSupabaseError(rpcError, {
+              table: 'peternak_task_instances',
+              operation: 'rpc',
+              component: 'usePeternakTaskData',
+              actionName: 'peternak.task.materialize_daily',
+              tenantId: tenant.id,
+              metadata: {
+                tenant_id: tenant.id,
+                profile_id: profile?.id ?? profile?.profile_id ?? null,
+                start_date: due_date_from,
+                end_date: due_date_to,
+                livestock_type: livestockType || null,
+              },
+            })
+          }
+        } catch (rpcErr) {
+          console.warn('[usePeternakTaskInstances] Materialization RPC failed:', rpcErr)
+        }
+      }
+
       let query = supabase
         .from('peternak_task_instances')
         .select(`
@@ -109,10 +138,39 @@ export function usePeternakTaskInstances(filters = {}) {
  */
 export function useTodayTaskInstances() {
   const today = new Date().toISOString().split('T')[0]
-  const { tenant } = useAuth()
+  const { tenant, profile } = useAuth()
   return useQuery({
     queryKey: ['peternak-task-instances-today', tenant?.id],
     queryFn: async () => {
+      if (tenant?.id) {
+        try {
+          const { error: rpcError } = await supabase.rpc('materialize_peternak_task_instances', {
+            p_tenant_id: tenant.id,
+            p_start_date: today,
+            p_end_date: today,
+            p_livestock_type: null,
+          })
+          if (rpcError) {
+            logSupabaseError(rpcError, {
+              table: 'peternak_task_instances',
+              operation: 'rpc',
+              component: 'usePeternakTaskData',
+              actionName: 'peternak.task.materialize_daily',
+              tenantId: tenant.id,
+              metadata: {
+                tenant_id: tenant.id,
+                profile_id: profile?.id ?? profile?.profile_id ?? null,
+                start_date: today,
+                end_date: today,
+                livestock_type: null,
+              },
+            })
+          }
+        } catch (rpcErr) {
+          console.warn('[useTodayTaskInstances] Materialization RPC failed:', rpcErr)
+        }
+      }
+
       const { data, error } = await supabase
         .from('peternak_task_instances')
         .select(`
