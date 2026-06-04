@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, X, Wheat, Calendar, Info, Trash2, ArrowLeft, Share2,
   Receipt, Wallet, TrendingUp, Package, Zap, Heart, Users, MoreHorizontal,
-  ShoppingCart, Filter, ChevronDown,
+  ShoppingCart, Filter, ChevronDown, Scale, Wand2, CheckCircle2,
 } from 'lucide-react'
 import { InputRupiah } from '@/components/ui/InputRupiah'
 import { InputNumber } from '@/components/ui/InputNumber'
@@ -12,6 +12,7 @@ import usePeternakPermissions from '@/lib/hooks/usePeternakPermissions'
 import LoadingSpinner from '@/dashboard/_shared/components/LoadingSpinner'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { CONTAINER_PRESETS } from '@/lib/constants/taskTemplates'
 
 // ─── Stable stubs for optional hooks ──────────────────────────────────────────
 
@@ -381,6 +382,412 @@ function BiayaTab({
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+// ─── ContainerHelper (self-contained, no Radix) ────────────────────────────────
+
+function ContainerHelper({ feedType, value: _value, onChange }) {
+  // feedType: 'hijauan' | 'konsentrat'
+  const [preset, setPreset] = useState('')
+  const [qty, setQty] = useState('1')
+
+  function applyPreset(label, qtyVal) {
+    const p = CONTAINER_PRESETS.find(x => x.label === label)
+    if (!p) return
+    const kg = (p[feedType] * (parseFloat(qtyVal) || 1)).toFixed(1)
+    onChange(kg)
+  }
+
+  function handlePreset(e) {
+    const label = e.target.value
+    setPreset(label)
+    applyPreset(label, qty)
+  }
+
+  function handleQty(e) {
+    const q = e.target.value
+    setQty(q)
+    applyPreset(preset, q)
+  }
+
+  const selected = CONTAINER_PRESETS.find(p => p.label === preset)
+  const kgPerUnit = selected ? selected[feedType] : null
+  const displayKg = selected ? (kgPerUnit * (parseFloat(qty) || 1)).toFixed(1) : null
+
+  return (
+    <div className="space-y-2">
+      <div className="flex gap-2">
+        <select
+          value={preset}
+          onChange={handlePreset}
+          className="flex-1 appearance-none bg-black/40 border border-white/[0.06] rounded-xl px-3 py-2.5 text-[12px] text-white focus:outline-none focus:border-emerald-500/40 transition-colors"
+        >
+          <option value="" className="bg-[#0C1319]">Pilih wadah... (opsional)</option>
+          {CONTAINER_PRESETS.map(p => (
+            <option key={p.label} value={p.label} className="bg-[#0C1319]">
+              {p.label} · ±{feedType === 'hijauan' ? p.hijauan : p.konsentrat} kg/unit
+            </option>
+          ))}
+        </select>
+        {preset && (
+          <input
+            type="number"
+            min="1"
+            value={qty}
+            onChange={handleQty}
+            className="w-16 bg-black/40 border border-white/[0.06] rounded-xl text-center text-sm font-black text-white focus:outline-none focus:border-emerald-500/40 transition-colors"
+            placeholder="1"
+          />
+        )}
+      </div>
+      {displayKg && (
+        <div className="flex items-center justify-between px-4 py-2.5 rounded-2xl bg-emerald-500/5 border border-emerald-500/10 animate-in fade-in slide-in-from-top-1 duration-300">
+          <div className="flex flex-col">
+            <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest leading-none mb-0.5">Estimasi</span>
+            <span className="text-[10px] text-white/40">{qty} × {kgPerUnit} kg</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-emerald-400">
+            <Wand2 size={13} className="opacity-60" />
+            <span className="text-lg font-black">{displayKg} kg</span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── FeedLogSheet ──────────────────────────────────────────────────────────────
+
+const SISA_OPTIONS = [
+  { id: 'habis',   label: 'Habis 🟢',   kg: 0,   cls: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300' },
+  { id: 'sedikit', label: 'Sedikit 🟡', kg: null, cls: 'border-amber-500/40 bg-amber-500/10 text-amber-300' },
+  { id: 'banyak',  label: 'Banyak 🔴',  kg: null, cls: 'border-rose-500/40 bg-rose-500/10 text-rose-300' },
+]
+
+function FeedLogSheet({
+  show, onClose, onSubmit, isSubmitting,
+  form, setForm, batches, isAllBatches,
+  formBatchId, setFormBatchId, activeBatch,
+  config, focusCls, btnCls,
+}) {
+  const [sisaMode, setSisaMode] = useState(null) // 'habis' | 'sedikit' | 'banyak' | null
+
+  // Derive the batch shown in the context card
+  const ctxBatch = isAllBatches
+    ? (formBatchId ? batches.find(b => b.id === formBatchId) : batches[0])
+    : activeBatch
+
+  // When user picks Habis, zero out sisa_pakan_kg
+  function handleSisaMode(mode) {
+    setSisaMode(mode)
+    if (mode === 'habis') {
+      setForm(f => ({ ...f, sisa_pakan_kg: '0' }))
+    } else if (mode === 'sedikit' || mode === 'banyak') {
+      // Clear it so they can optionally type a number
+      setForm(f => ({ ...f, sisa_pakan_kg: '' }))
+    }
+  }
+
+  // Compute total input kg for display
+  const totalInput = (
+    (parseFloat(form.hijauan_kg) || 0) +
+    (parseFloat(form.konsentrat_kg) || 0) +
+    (parseFloat(form.dedak_kg) || 0) +
+    (parseFloat(form.other_feed_kg) || 0)
+  )
+
+  if (!show) return null
+
+  return (
+    <div className="fixed inset-0 z-[4000] flex flex-col justify-end sm:justify-center sm:items-center sm:p-4">
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-[#06090F]/80 backdrop-blur-sm"
+      />
+      <motion.div
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        className="relative w-full max-w-md bg-[#0C1319] border-t sm:border border-white/[0.06] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col h-[100dvh] min-h-[100dvh] max-h-[100dvh] sm:h-auto sm:min-h-0 sm:max-h-[90vh] overflow-hidden no-scrollbar"
+      >
+        {/* ── Sticky Header ── */}
+        <div className="sticky top-0 shrink-0 bg-[#0C1319] z-10 px-5 py-4 flex items-center justify-between border-b border-white/[0.04]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+              <Wheat size={15} className="text-emerald-400" />
+            </div>
+            <div>
+              <h3 className="font-['Sora'] font-black text-[15px] text-white leading-tight">Log Pemberian Pakan</h3>
+              {ctxBatch && (
+                <p className="text-[10px] text-[#4B6478] leading-none mt-0.5">{ctxBatch.batch_code}</p>
+              )}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-10 h-10 flex items-center justify-center text-[#4B6478] hover:text-white transition-colors rounded-xl hover:bg-white/5"
+            aria-label="Tutup form"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={onSubmit} className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto overscroll-contain no-scrollbar pb-32">
+
+            {/* ── Context Card ── */}
+            <div className="px-5 pt-4 pb-2">
+              <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl px-4 py-3 flex items-center gap-3">
+                <Calendar size={14} className="text-[#4B6478] shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] text-[#4B6478] uppercase tracking-widest font-black">Tanggal Pemberian</p>
+                  <input
+                    type="date"
+                    required
+                    value={form.log_date}
+                    onChange={e => setForm({ ...form, log_date: e.target.value })}
+                    className="mt-0.5 w-full bg-transparent text-[13px] font-bold text-white focus:outline-none"
+                  />
+                </div>
+                {isAllBatches && (
+                  <select
+                    required
+                    value={formBatchId || batches[0]?.id}
+                    onChange={e => setFormBatchId(e.target.value)}
+                    className="appearance-none bg-transparent border-l border-white/[0.06] pl-3 text-[11px] font-black text-emerald-300 focus:outline-none"
+                  >
+                    {batches.map(b => (
+                      <option key={b.id} value={b.id} className="bg-[#0C1319]">{b.batch_code}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            </div>
+
+            {/* ── Kandang fields (if kandang schema) ── */}
+            {config.logSchema === 'kandang' && (
+              <div className="px-5 pb-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Nama Kandang *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="KDG-F2"
+                      value={form.kandang_name}
+                      onChange={e => setForm({ ...form, kandang_name: e.target.value })}
+                      className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none transition-colors', focusCls)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Jumlah Ternak *</label>
+                    <InputNumber
+                      placeholder="12"
+                      value={form.animal_count}
+                      onChange={val => setForm({ ...form, animal_count: val })}
+                      className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] transition-colors', focusCls)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Reporting Schema Section ── */}
+            <div className="px-5 pt-3">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Skema Pelaporan</span>
+                <div className="h-px bg-white/[0.05] flex-1" />
+              </div>
+
+              {/* Hijauan */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[11px] font-black text-emerald-300 uppercase tracking-widest flex items-center gap-1.5">
+                    <span>🌿</span> Hijauan
+                  </label>
+                  <span className="text-[10px] text-[#4B6478] font-mono">
+                    {form.hijauan_kg ? `${form.hijauan_kg} kg` : '—'}
+                  </span>
+                </div>
+                <ContainerHelper
+                  feedType="hijauan"
+                  value={form.hijauan_kg}
+                  onChange={val => setForm(f => ({ ...f, hijauan_kg: val }))}
+                />
+                <div className="mt-2">
+                  <InputNumber
+                    step={0.1}
+                    placeholder="0.0"
+                    value={form.hijauan_kg}
+                    suffix="kg"
+                    onChange={val => setForm({ ...form, hijauan_kg: val })}
+                    className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] transition-colors', focusCls)}
+                  />
+                </div>
+              </div>
+
+              {/* Konsentrat */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[11px] font-black text-blue-300 uppercase tracking-widest flex items-center gap-1.5">
+                    <span>🌾</span> Konsentrat
+                  </label>
+                  <span className="text-[10px] text-[#4B6478] font-mono">
+                    {form.konsentrat_kg ? `${form.konsentrat_kg} kg` : '—'}
+                  </span>
+                </div>
+                <ContainerHelper
+                  feedType="konsentrat"
+                  value={form.konsentrat_kg}
+                  onChange={val => setForm(f => ({ ...f, konsentrat_kg: val }))}
+                />
+                <div className="mt-2">
+                  <InputNumber
+                    step={0.1}
+                    placeholder="0.0"
+                    value={form.konsentrat_kg}
+                    suffix="kg"
+                    onChange={val => setForm({ ...form, konsentrat_kg: val })}
+                    className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] transition-colors', focusCls)}
+                  />
+                </div>
+              </div>
+
+              {/* Dedak + Lainnya row */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">🟤 Dedak</label>
+                  <InputNumber
+                    step={0.1}
+                    placeholder="0.0"
+                    value={form.dedak_kg}
+                    suffix="kg"
+                    onChange={val => setForm({ ...form, dedak_kg: val })}
+                    className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] transition-colors', focusCls)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">📦 Lainnya</label>
+                  <InputNumber
+                    step={0.1}
+                    placeholder="0.0"
+                    value={form.other_feed_kg}
+                    suffix="kg"
+                    onChange={val => setForm({ ...form, other_feed_kg: val })}
+                    className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] transition-colors', focusCls)}
+                  />
+                </div>
+              </div>
+
+              {/* Total input summary */}
+              {totalInput > 0 && (
+                <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.05] mb-4">
+                  <span className="text-[10px] font-black text-[#4B6478] uppercase tracking-widest">Total Input</span>
+                  <span className="text-sm font-black text-white">{totalInput.toFixed(1)} <span className="text-[10px] font-normal text-[#4B6478]">kg</span></span>
+                </div>
+              )}
+
+              {/* ── Sisa Pakan Feedback ── */}
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Sisa Pakan</span>
+                  <div className="h-px bg-white/[0.05] flex-1" />
+                </div>
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  {SISA_OPTIONS.map(opt => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => handleSisaMode(opt.id)}
+                      className={cn(
+                        'py-2.5 rounded-xl border text-[11px] font-black transition-all',
+                        sisaMode === opt.id ? opt.cls : 'border-white/[0.06] bg-white/[0.02] text-[#4B6478]',
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                {/* Numeric input — shown when sedikit/banyak, or always as fallback */}
+                {(sisaMode === 'sedikit' || sisaMode === 'banyak' || !sisaMode) && (
+                  <InputNumber
+                    step={0.1}
+                    placeholder={sisaMode === 'sedikit' ? '0.1 – 5 kg' : sisaMode === 'banyak' ? '> 5 kg' : '0.0'}
+                    value={form.sisa_pakan_kg}
+                    suffix="kg"
+                    onChange={val => setForm({ ...form, sisa_pakan_kg: val })}
+                    className={cn('bg-white/[0.03] border-amber-500/20 text-amber-300 placeholder:text-[#4B6478] font-black transition-colors', focusCls)}
+                  />
+                )}
+              </div>
+
+              {/* ── Biaya Pakan (kandang schema only) ── */}
+              {config.logSchema === 'kandang' && (
+                <div className="mb-4">
+                  <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">
+                    Biaya Pakan Hari Ini (Rp){' '}
+                    <span className="normal-case text-amber-400/70 font-medium">— penting untuk HPP</span>
+                  </label>
+                  <InputRupiah
+                    placeholder="0"
+                    value={form.feed_cost_idr}
+                    onChange={val => setForm({ ...form, feed_cost_idr: val })}
+                    className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] transition-colors', focusCls)}
+                  />
+                </div>
+              )}
+
+              {/* ── Catatan Observasi ── */}
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[9px] font-black text-[#4B6478] uppercase tracking-widest">Catatan Observasi</span>
+                  <div className="h-px bg-white/[0.05] flex-1" />
+                </div>
+                <textarea
+                  placeholder="Kondisi ternak, nafsu makan, hal yang perlu dicatat..."
+                  rows={2}
+                  value={form.notes}
+                  onChange={e => setForm({ ...form, notes: e.target.value })}
+                  className={cn(
+                    'w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none resize-none transition-colors',
+                    focusCls,
+                  )}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ── Sticky Footer ── */}
+          <div
+            className="sticky bottom-0 shrink-0 bg-[#0C1319] border-t border-white/[0.04] px-5 py-4 sm:py-5 flex gap-3 z-10"
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
+          >
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 min-h-[48px] bg-white/[0.04] hover:bg-white/[0.08] text-[#4B6478] hover:text-white font-bold rounded-2xl transition-all"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className={cn(
+                'flex-2 min-h-[48px] px-6 text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2',
+                btnCls,
+              )}
+            >
+              {isSubmitting ? (
+                <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Menyimpan...</>
+              ) : (
+                <><CheckCircle2 size={16} /> Simpan Log Pakan</>
+              )}
+            </button>
+          </div>
+        </form>
+      </motion.div>
     </div>
   )
 }
@@ -946,130 +1353,22 @@ export function PenggemukanPakan({ config, hooks }) {
       {/* ── ADD FEED LOG MODAL ── */}
       <AnimatePresence>
         {showAdd && (
-          <div className="fixed inset-0 z-[4000] flex flex-col justify-end sm:justify-center sm:items-center sm:p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setShowAdd(false)}
-              className="absolute inset-0 bg-[#06090F]/80 backdrop-blur-sm" />
-            <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              className="relative w-full max-w-md bg-[#0C1319] border-t sm:border border-white/[0.06] rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col h-[100dvh] min-h-[100dvh] max-h-[100dvh] sm:h-auto sm:min-h-0 sm:max-h-[90vh] overflow-hidden no-scrollbar">
-              
-              <div className="sticky top-0 shrink-0 bg-[#0C1319] z-10 px-6 py-4 flex items-center justify-between border-b border-white/[0.04]">
-                <h3 className="font-['Sora'] font-black text-lg text-white">Input Log Pakan</h3>
-                <button
-                  type="button"
-                  onClick={() => setShowAdd(false)}
-                  className="w-11 h-11 -mr-2 flex items-center justify-center text-[#4B6478] hover:text-white transition-colors"
-                  aria-label="Tutup form"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
-                <div className="flex-1 overflow-y-auto overscroll-contain no-scrollbar px-6 py-4 space-y-4 pb-28">
-                  {isAllBatches && (
-                    <div>
-                      <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Pilih Batch</label>
-                      <select required value={formBatchId || batches[0]?.id} onChange={e => setFormBatchId(e.target.value)}
-                        className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors', focusCls)}>
-                        {batches.map(b => <option key={b.id} value={b.id} className="bg-[#0C1319]">{b.batch_code}</option>)}
-                      </select>
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Tanggal Pemberian</label>
-                    <input type="date" required value={form.log_date}
-                      onChange={e => setForm({ ...form, log_date: e.target.value })}
-                      className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors', focusCls)} />
-                  </div>
-
-                  {config.logSchema === 'kandang' && (
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Nama Kandang *</label>
-                        <input type="text" required placeholder="KDG-F2" value={form.kandang_name}
-                          onChange={e => setForm({ ...form, kandang_name: e.target.value })}
-                          className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none transition-colors', focusCls)} />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Jumlah Ternak *</label>
-                        <InputNumber placeholder="12" value={form.animal_count}
-                          onChange={val => setForm({ ...form, animal_count: val })}
-                          className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors', focusCls)} />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-4">
-                    {[['hijauan_kg','Hijauan (kg)'],['konsentrat_kg','Konsentrat (kg)']].map(([key, label]) => (
-                      <div key={key}>
-                        <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">{label}</label>
-                        <InputNumber step={0.1} placeholder="0.0" value={form[key]} suffix="kg"
-                          onChange={val => setForm({ ...form, [key]: val })}
-                          className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors', focusCls)} />
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Dedak (kg)</label>
-                      <InputNumber step={0.1} placeholder="0.0" value={form.dedak_kg} suffix="kg"
-                        onChange={val => setForm({ ...form, dedak_kg: val })}
-                        className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors', focusCls)} />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-amber-400 uppercase mb-1.5 ml-1 tracking-widest">Sisa Pakan (kg)</label>
-                      <InputNumber step={0.1} placeholder="0.0" value={form.sisa_pakan_kg} suffix="kg"
-                        onChange={val => setForm({ ...form, sisa_pakan_kg: val })}
-                        className={cn('bg-white/[0.03] border-white/[0.06] text-amber-400 placeholder:text-[#4B6478] font-black focus:border-violet-500/50 transition-colors', focusCls)} />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Lainnya (kg)</label>
-                    <InputNumber step={0.1} placeholder="0.0" value={form.other_feed_kg} suffix="kg"
-                      onChange={val => setForm({ ...form, other_feed_kg: val })}
-                      className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors', focusCls)} />
-                  </div>
-
-                  {config.logSchema === 'kandang' && (
-                    <div>
-                      <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Biaya Pakan Hari Ini (Rp) <span className="normal-case text-amber-400/70 font-medium">— penting untuk HPP</span></label>
-                      <InputRupiah placeholder="0" value={form.feed_cost_idr}
-                        onChange={val => setForm({ ...form, feed_cost_idr: val })}
-                        className={cn('bg-white/[0.03] border-white/[0.06] text-white placeholder:text-[#4B6478] focus:border-violet-500/50 transition-colors', focusCls)} />
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="block text-[10px] font-black text-[#4B6478] uppercase mb-1.5 ml-1 tracking-widest">Catatan</label>
-                    <textarea placeholder="Catatan pakan..." rows={2} value={form.notes}
-                      onChange={e => setForm({ ...form, notes: e.target.value })}
-                      className={cn('w-full bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#4B6478] focus:outline-none resize-none transition-colors', focusCls)} />
-                  </div>
-                </div>
-
-                <div className="sticky bottom-0 shrink-0 bg-[#0C1319] border-t border-white/[0.04] px-6 py-4 sm:py-6 flex gap-3 z-10" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}>
-                  <button
-                    type="button"
-                    onClick={() => setShowAdd(false)}
-                    className="flex-1 min-h-[44px] bg-white/[0.04] hover:bg-white/[0.08] text-[#4B6478] hover:text-white font-bold rounded-2xl transition-all"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className={cn('flex-1 min-h-[44px] text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2', btnCls)}
-                  >
-                    {isSubmitting ? 'Menyimpan...' : 'Simpan Log Pakan'}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
+          <FeedLogSheet
+            show={showAdd}
+            onClose={() => setShowAdd(false)}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+            form={form}
+            setForm={setForm}
+            batches={batches}
+            isAllBatches={isAllBatches}
+            formBatchId={formBatchId}
+            setFormBatchId={setFormBatchId}
+            activeBatch={activeBatch}
+            config={config}
+            focusCls={focusCls}
+            btnCls={btnCls}
+          />
         )}
       </AnimatePresence>
 
