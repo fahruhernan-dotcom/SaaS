@@ -25,14 +25,14 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 import { getBusinessModel } from '@/lib/businessModel'
 import ThemePicker from '@/components/ui/ThemePicker'
-import { isSuperadmin, isOwner, isStaff, isViewOnly } from '@/lib/auth'
+import { isSuperadmin as checkIsSuperadmin, isOwner, isStaff, isViewOnly } from '@/lib/auth'
 const ICON_MAP = {
   Truck, Wallet, BarChart2, BarChart3, Car, Calculator, User, Users,
   Package, RefreshCw, ClipboardList, ShoppingCart, CreditCard, History, Store, LayoutGrid, Shield,
 }
 
 export default function DrawerLainnya({ isOpen, onClose, userType }) {
-  const { profile, tenant, profiles, switchTenant } = useAuth()
+  const { profile, tenant, profiles, isSuperadmin, switchTenant } = useAuth()
   const navigate = useNavigate()
   const model = getBusinessModel(userType, profile?.sub_type)
 
@@ -44,14 +44,14 @@ export default function DrawerLainnya({ isOpen, onClose, userType }) {
 
     // Peternak role filtering
     if (userType === 'peternak') {
-      if (item.label === 'Tim & Akses') return isOwner(profile) || isSuperadmin(profile)
+      if (item.label === 'Tim & Akses') return isOwner(profile) || isSuperadmin
       if (item.label === 'Stok & Pakan') return !isViewOnly(profile)
       return true
     }
 
     if (userType !== 'broker') return true // only apply to broker
     
-    if (isOwner(profile) || isSuperadmin(profile)) return true
+    if (isOwner(profile) || isSuperadmin) return true
     if (isStaff(profile)) {
       if (profile?.sub_type?.includes('sembako') || tenant?.business_vertical === 'distributor_sembako') {
         return ['Dashboard', 'Manajemen Produk', 'Riwayat Penjualan', 'Gudang & Stok', 'Manajemen Pegawai', 'Laporan Bisnis', 'Akun & Profil'].includes(item.label)
@@ -136,11 +136,11 @@ export default function DrawerLainnya({ isOpen, onClose, userType }) {
                 })}
 
                 {/* Admin Panel — superadmin only */}
-                {isSuperadmin(profile) && (
+                {isSuperadmin && (
                   <motion.div
                     whileTap={{ scale: 0.98 }}
                     onClick={() => {
-                      const adminProfile = profiles?.find(p => isSuperadmin(p))
+                      const adminProfile = profiles?.find(p => checkIsSuperadmin(p))
                       if (adminProfile) switchTenant(adminProfile.tenant_id)
                       navigate('/admin')
                       onClose()

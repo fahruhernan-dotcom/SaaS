@@ -73,7 +73,6 @@ const AdminSettings     = lazy(() => import('./dashboard/admin/AdminSettings'))
 const AdminInfo         = lazy(() => import('./dashboard/admin/AdminInfo'))
 
 import { getXBasePath, resolveBusinessVertical, BUSINESS_MODELS } from './lib/businessModel'
-import { isSuperadmin } from '@/lib/auth'
 import { isCapacitor } from '@/lib/capacitor'
 
 // ── Vertical-aware beranda path ───────────────────────────────────────────────
@@ -131,14 +130,14 @@ const AuthHashRedirect = () => {
 };
 
 function ProtectedRoute({ children, requiredType, requiredVertical }) {
-  const { user, profile, tenant, loading } = useAuth();
+  const { user, profile, tenant, isSuperadmin: authIsSuperadmin, loading } = useAuth();
   const location = useLocation();
 
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
 
   // Superadmin bypass — uses centralized helper (migration-safe dual-mode)
-  if (isSuperadmin(profile)) return children;
+  if (authIsSuperadmin) return children;
 
   if (profile && !profile.onboarded && location.pathname !== '/onboarding' && location.pathname !== '/welcome' && profile.role === 'owner') {
     return <Navigate to="/onboarding" replace />;
@@ -192,12 +191,12 @@ function RoleGuard({ allowedRoles, children }) {
 }
 
 function RoleRedirector() {
-  const { profile, tenant, loading } = useAuth();
+  const { profile, tenant, isSuperadmin: authIsSuperadmin, loading } = useAuth();
   const location = useLocation();
   if (loading) return <LoadingScreen />;
   
   // Superadmin redirects to /admin only if not explicitly on a business path
-  if (isSuperadmin(profile) && ['/', '/home', '/dashboard', '/app'].includes(location.pathname)) {
+  if (authIsSuperadmin && ['/', '/home', '/dashboard', '/app'].includes(location.pathname)) {
     return <Navigate to="/admin" replace />;
   }
 
@@ -257,12 +256,12 @@ function DashboardLayout({ children }) {
 }
 
 function AdminRoute({ children }) {
-  const { user, profile, tenant, loading } = useAuth();
+  const { user, profile, tenant, isSuperadmin: authIsSuperadmin, loading } = useAuth();
 
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
   
-  if (!isSuperadmin(profile)) {
+  if (!authIsSuperadmin) {
     return <Navigate to={getVerticalBeranda(tenant, profile)} replace />;
   }
 

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { isSuperadmin } from './app-roles';
 import { isOwner } from './business-roles';
 
 // ── Auth Telemetry Helper (remove in Phase 5) ────────────────────────────────
@@ -16,12 +15,12 @@ function logAuthCheck(guard, profile, location, result) {
 }
 
 export const RequireSuperadmin = ({ children }) => {
-  const { profile, loading } = useAuth();
+  const { profile, isSuperadmin: authIsSuperadmin, loading } = useAuth();
   const location = useLocation();
 
   if (loading) return null;
 
-  if (!isSuperadmin(profile)) {
+  if (!authIsSuperadmin) {
     logAuthCheck('RequireSuperadmin', profile, location, 'DENIED');
     return <Navigate to="/dashboard" state={{ from: location }} replace />;
   }
@@ -31,12 +30,12 @@ export const RequireSuperadmin = ({ children }) => {
 };
 
 export const RequireOwner = ({ children }) => {
-  const { profile, loading } = useAuth();
+  const { profile, isSuperadmin: authIsSuperadmin, loading } = useAuth();
   const location = useLocation();
 
   if (loading) return null;
 
-  if (!isOwner(profile) && !isSuperadmin(profile)) {
+  if (!isOwner(profile) && !authIsSuperadmin) {
     logAuthCheck('RequireOwner', profile, location, 'DENIED');
     return <Navigate to="/dashboard" state={{ from: location }} replace />;
   }
@@ -46,12 +45,12 @@ export const RequireOwner = ({ children }) => {
 };
 
 export const RequireCapability = ({ children, capabilityCheck, capabilityName = 'unknown' }) => {
-  const { profile, loading } = useAuth();
+  const { profile, isSuperadmin: authIsSuperadmin, loading } = useAuth();
   const location = useLocation();
 
   if (loading) return null;
 
-  if (!isSuperadmin(profile) && !capabilityCheck(profile)) {
+  if (!authIsSuperadmin && !capabilityCheck(profile)) {
     logAuthCheck(`RequireCapability:${capabilityName}`, profile, location, 'DENIED');
     return <Navigate to="/dashboard" state={{ from: location }} replace />;
   }

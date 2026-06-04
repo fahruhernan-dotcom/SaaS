@@ -16,7 +16,6 @@
  */
 
 import { useAuth } from '@/lib/hooks/useAuth'
-import { isSuperadmin } from '@/lib/auth'
 
 /**
  * Pure helper — pass role string, get permission object.
@@ -114,9 +113,9 @@ export function peternakPermissions(role) {
 
 /** React hook — reads role from auth context */
 export default function usePeternakPermissions() {
-  const { profile } = useAuth()
+  const { profile, isSuperadmin: authIsSuperadmin } = useAuth()
   // Superadmin gets full owner-level access in the peternak permission matrix
-  const effectiveRole = isSuperadmin(profile) ? 'owner' : (profile?.role ?? 'view_only')
+  const effectiveRole = authIsSuperadmin ? 'owner' : (profile?.role ?? 'view_only')
   return peternakPermissions(effectiveRole)
 }
 

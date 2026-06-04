@@ -292,7 +292,7 @@ function ActiveCycleSection({ cycle, farmId, navigate, peternakBase, vaccRecords
 export default function FarmBeranda() {
   const { farmId } = useParams()
   const navigate   = useNavigate()
-  const { profile } = useAuth()
+  const { profile, isSuperadmin: isSuperadminGlobal } = useAuth()
   const p          = usePeternakPermissions()
   const peternakBase = `/peternak/${profile?.sub_type || 'peternak_broiler'}`
 
@@ -421,7 +421,7 @@ export default function FarmBeranda() {
             <span className="text-[11px] font-bold text-slate-300 bg-white/[0.05] border border-white/[0.08] px-2.5 py-1 rounded-full whitespace-nowrap flex-shrink-0">
               {livestockLabel}
             </span>
-            {(isOwner(profile) || isSuperadmin(profile)) && (
+            {(isOwner(profile) || isSuperadminGlobal) && (
               <button
                 onClick={() => navigate(`${peternakBase}/kandang/${farmId}/atur`)}
                 className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors cursor-pointer"

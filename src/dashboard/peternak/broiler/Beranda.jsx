@@ -125,7 +125,7 @@ function getGreeting() {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function PeternakBeranda() {
-  const { profile, tenant } = useAuth()
+  const { profile, tenant, isSuperadmin: isSuperadminGlobal } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const { setSidebarOpen: _setSidebarOpen } = useOutletContext() || {}
@@ -404,7 +404,7 @@ export default function PeternakBeranda() {
         )}
 
         {/* Modal Berjalan (Cashflow Global) */}
-        {(isOwner(profile) || isSuperadmin(profile)) && activeCycles.length > 0 && (
+        {(isOwner(profile) || isSuperadminGlobal) && activeCycles.length > 0 && (
           <section className="mt-4">
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -466,7 +466,7 @@ export default function PeternakBeranda() {
         )}
 
         {/* ── Leaderboard & Konsolidasi Performa Kandang ── */}
-        {(isOwner(profile) || isSuperadmin(profile)) && farmRanking.length > 0 && (
+        {(isOwner(profile) || isSuperadminGlobal) && farmRanking.length > 0 && (
           <section className="mt-7">
             <div className="flex items-center justify-between mb-3.5">
               <h2 className="font-['Sora'] text-sm font-extrabold text-slate-100">🏆 Leaderboard Kandang</h2>

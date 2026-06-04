@@ -118,13 +118,13 @@ import { getLivestockTypeFromSubType } from '@/lib/constants/taskTemplates'
 import { useAuth } from '@/lib/hooks/useAuth'
 import PeternakTutorialOverlay from './_shared/components/PeternakTutorialOverlay'
 import WelcomeOnlyOverlay from '@/dashboard/_shared/components/WelcomeOnlyOverlay'
-import { isOwner, isManager, isSuperadmin as isSuperadminRole } from '@/lib/auth'
+import { isOwner, isManager } from '@/lib/auth'
 
 // ─── Route Guards ─────────────────────────────────────────────────────────────
 function PeternakAdminGuard({ children }) {
-  const { profile, loading } = useAuth()
+  const { profile, isSuperadmin, loading } = useAuth()
   if (loading) return <LoadingSpinner fullPage />
-  const isAllowed = isOwner(profile) || isSuperadminRole(profile)
+  const isAllowed = isOwner(profile) || isSuperadmin
   if (!isAllowed) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center text-slate-400">
@@ -166,9 +166,9 @@ function PeternakPlanGuard({ children }) {
 }
 
 function PeternakManagerGuard({ children }) {
-  const { profile, loading } = useAuth()
+  const { profile, isSuperadmin, loading } = useAuth()
   if (loading) return <LoadingSpinner fullPage />
-  const isAllowed = isOwner(profile) || isManager(profile) || isSuperadminRole(profile)
+  const isAllowed = isOwner(profile) || isManager(profile) || isSuperadmin
   if (!isAllowed) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center text-slate-400">

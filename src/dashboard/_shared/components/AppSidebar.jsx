@@ -440,7 +440,7 @@ export default function AppSidebar({ open, onClose }) {
     ...group,
     items: group.items.filter(item => {
       if (!item.roles) return true // default accessible to all roles
-      return item.roles.includes(profile?.role) || checkIsSuperadmin(profile)
+      return item.roles.includes(profile?.role) || isSuperadmin
     })
   })).filter(group => group.items.length > 0)
 
@@ -1108,6 +1108,21 @@ export default function AppSidebar({ open, onClose }) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
+              {isSuperadmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname.startsWith('/admin')} 
+                    className="rounded-xl mb-0.5 hover:bg-white/[0.03]"
+                    style={location.pathname.startsWith('/admin') ? { background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.25)', color: '#F59E0B' } : {}}
+                  >
+                    <NavLink to="/admin" className="flex items-center gap-3 w-full">
+                      <Shield size={18} style={location.pathname.startsWith('/admin') ? { color: '#F59E0B' } : {}} className={location.pathname.startsWith('/admin') ? '' : 'text-amber-500 group-hover:text-amber-400 transition-colors'} />
+                      <span className={`font-body text-[14px] ${location.pathname.startsWith('/admin') ? 'font-semibold text-white' : 'font-medium text-amber-500/90 group-hover:text-amber-400 transition-colors'}`} style={location.pathname.startsWith('/admin') ? { color: '#F59E0B' } : {}}>Admin Panel</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -1138,13 +1153,19 @@ export default function AppSidebar({ open, onClose }) {
 
       <SidebarFooter className="p-2 pb-6">
         <SidebarSeparator className="mb-2" />
-        <div style={{
-          margin: '0 4px 8px',
-          padding: '10px 12px',
-          background: sub.status === 'expired' ? 'rgba(248,113,113,0.06)' : 'rgba(255,255,255,0.03)',
-          border: `1px solid ${getStatusColor(sub.status).border}`,
-          borderRadius: '12px',
-        }}>
+        <div 
+          onClick={isSuperadmin ? handleGoToAdmin : undefined}
+          style={{
+            margin: '0 4px 8px',
+            padding: '10px 12px',
+            background: isSuperadmin ? 'rgba(245,158,11,0.03)' : (sub.status === 'expired' ? 'rgba(248,113,113,0.06)' : 'rgba(255,255,255,0.03)'),
+            border: isSuperadmin ? '1px solid rgba(245,158,11,0.15)' : `1px solid ${getStatusColor(sub.status).border}`,
+            borderRadius: '12px',
+            cursor: isSuperadmin ? 'pointer' : 'default',
+            transition: 'all 0.2s',
+          }}
+          className={isSuperadmin ? 'hover:bg-amber-500/10 hover:border-amber-500/35 transition-all' : ''}
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <p style={{

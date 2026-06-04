@@ -488,6 +488,38 @@ export function CompleteTaskSheet({
     }
   }
 
+  const { data: activeBatchesData } = hooks.useActiveBatches()
+  const activeBatches = useMemo(() => {
+    return activeBatchesData || EMPTY_ARRAY
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeBatchesData?.map(b => `${b.id}-${b.total_animals || 0}`).join(',')])
+  const effectiveBatchId = useMemo(() => {
+    if (task?.batch_id) return task.batch_id
+    if (!activeBatches.length) return null
+    if (task?.kandang_name) {
+      const match = activeBatches.find(b => b.kandang_name === task.kandang_name)
+      if (match) return match.id
+    }
+    return activeBatches[0].id
+  }, [task?.batch_id, task?.kandang_name, activeBatches])
+
+  const animalsQuery = hooks.useAnimals(effectiveBatchId)
+  const animals = useMemo(() => {
+    const rawAnimals = animalsQuery.data || []
+    if (!task) return rawAnimals
+    const isSampling = task.title?.includes('Sampling')
+    if (isSampling && rawAnimals.length > 0) {
+      const seed = `${task.batch_id || effectiveBatchId}-${task.due_date}`
+      return getRandomizedSample(rawAnimals, seed, 0.1)
+    }
+    return rawAnimals
+  }, [animalsQuery.data, task, effectiveBatchId])
+
+  const unweighedAnimals = animals.filter(a => !weighingEntries.find(e => e.animal_id === a.id))
+  const untreatedAnimals = animals.filter(a => !healthEntries.find(e => e.animal_id === a.id))
+  const entriesCount = task?.task_type === 'timbang' ? weighingEntries.length : healthEntries.length
+  const animalsDone = animals.length > 0 && entriesCount >= animals.length
+
   const handleLaporAction = async (normalAction) => {
     if (locVerified) {
       normalAction()
@@ -541,41 +573,6 @@ export function CompleteTaskSheet({
       ctaLabel = 'Cek Lokasi'
     }
   }
-
-
-
-
-  const { data: activeBatchesData } = hooks.useActiveBatches()
-  const activeBatches = useMemo(() => {
-    return activeBatchesData || EMPTY_ARRAY
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeBatchesData?.map(b => `${b.id}-${b.total_animals || 0}`).join(',')])
-  const effectiveBatchId = useMemo(() => {
-    if (task?.batch_id) return task.batch_id
-    if (!activeBatches.length) return null
-    if (task?.kandang_name) {
-      const match = activeBatches.find(b => b.kandang_name === task.kandang_name)
-      if (match) return match.id
-    }
-    return activeBatches[0].id
-  }, [task?.batch_id, task?.kandang_name, activeBatches])
-
-  const animalsQuery = hooks.useAnimals(effectiveBatchId)
-  const animals = useMemo(() => {
-    const rawAnimals = animalsQuery.data || []
-    if (!task) return rawAnimals
-    const isSampling = task.title?.includes('Sampling')
-    if (isSampling && rawAnimals.length > 0) {
-      const seed = `${task.batch_id || effectiveBatchId}-${task.due_date}`
-      return getRandomizedSample(rawAnimals, seed, 0.1)
-    }
-    return rawAnimals
-  }, [animalsQuery.data, task, effectiveBatchId])
-
-  const unweighedAnimals = animals.filter(a => !weighingEntries.find(e => e.animal_id === a.id))
-  const untreatedAnimals = animals.filter(a => !healthEntries.find(e => e.animal_id === a.id))
-  const entriesCount = task?.task_type === 'timbang' ? weighingEntries.length : healthEntries.length
-  const animalsDone = animals.length > 0 && entriesCount >= animals.length
 
   useEffect(() => {
     if (open && task) {
